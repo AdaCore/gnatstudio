@@ -1001,15 +1001,13 @@ package body Custom_Module is
       Contextual_Class : constant Class_Type := New_Class
         (Kernel, "Contextual");
    begin
-      Custom_Module_ID := new Custom_Module_ID_Record;
+      Custom_Module_ID := new Module_ID_Record;
       Register_Module
-        (Module                  => Module_ID (Custom_Module_ID),
+        (Module                  => Custom_Module_ID,
          Kernel                  => Kernel,
          Module_Name             => "Custom",
          Priority                => Low_Priority,
          Customization_Handler   => Customize'Access);
-
-      Custom_Module_ID.Kernel := Kernel_Handle (Kernel);
 
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
