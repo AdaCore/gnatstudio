@@ -1446,6 +1446,8 @@ package body Gtkada.File_Selector is
                Change_Directory (Win, Dir);
             elsif Is_Directory (Win.Current_Directory.all & Dir) then
                Change_Directory (Win, Win.Current_Directory.all & Dir);
+               Set_Text (Win.Selection_Entry, Base);
+               Set_Position (Win.Selection_Entry, Base'Length);
             else
                --  Dir is a non-existing directory: exit now
 
