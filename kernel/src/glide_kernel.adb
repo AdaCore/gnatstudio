@@ -133,7 +133,12 @@ package body Glide_Kernel is
       Handle.Predefined_Source_Path := null;
       Handle.Predefined_Object_Path := null;
       Handle.Gnatls_Cache := null;
-      Recompute_View (Handle);
+
+      --  Note: we do not compute the view of this project yet. This will be
+      --  done only if no other project was loaded from the command line, which
+      --  is more efficient in case the current directory has lots of source
+      --  files.
+
       Reset_Source_Info_List (Handle);
 
       Gtk_New (Handle.Tooltips);
