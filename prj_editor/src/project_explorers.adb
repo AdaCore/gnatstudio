@@ -1063,7 +1063,7 @@ package body Project_Explorers is
 
          File_Node_Index := File_Node'First;
          for S in Files'Range loop
-            if Dir_Name (Files (S)).all = Data (Dir_Node) then
+            if File_Equal (Dir_Name (Files (S)).all, Data (Dir_Node)) then
                File_Node (File_Node_Index) := Files (S);
                File_Node_Index := File_Node_Index + 1;
             end if;
@@ -1768,7 +1768,7 @@ package body Project_Explorers is
 
       for J in Files_In_Project'Range loop
          if New_File (J)
-           and then Dir_Name (Files_In_Project (J)).all = Dir
+           and then File_Equal (Dir_Name (Files_In_Project (J)).all, Dir)
          then
             Append_File
               (Explorer.Kernel,
