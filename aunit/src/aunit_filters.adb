@@ -138,7 +138,7 @@ package body Aunit_Filters is
    exception
       when Use_Error =>
          null;
-      when Device_Error =>
+      when GNAT.OS_Lib.Device_Error =>
          Close (F);
    end Get_Suite_Name;
 
