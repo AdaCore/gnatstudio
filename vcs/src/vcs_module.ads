@@ -20,9 +20,11 @@
 
 --  This package defines the GLIDE module for communication with VCS.
 
-with Glide_Kernel;
+with Glide_Kernel;              use Glide_Kernel;
 
 package VCS_Module is
+
+   VCS_Module_ID : Module_ID;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
