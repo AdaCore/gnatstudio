@@ -291,7 +291,7 @@ package body Docgen_Module is
          if Is_Spec_File (Kernel, File)
            or else Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
          then
-            LI := Locate_From_Source_And_Complete (Kernel, File);
+            LI := Locate_From_Source_And_Complete (Kernel, File, False);
             Append
               (List,
                (File_Name        => File,
@@ -574,23 +574,27 @@ package body Docgen_Module is
       Source_File_List : Type_Source_File_List.List;
       LI               : LI_File_Ptr;
       Body_File        : Virtual_File;
+      Is_Spec          : Boolean;
 
    begin
-      if not Is_Spec_File (Kernel, File)
-        and then not
-          Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
-      then
+      if not Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files then
          return;
       end if;
 
-      LI := Locate_From_Source_And_Complete (Kernel, File);
+      Is_Spec := Is_Spec_File (Kernel, File);
+
+      if not Is_Spec then
+         return;
+      end if;
+
+      LI := Locate_From_Source_And_Complete (Kernel, File, False);
       Append
         (Source_File_List,
          (File_Name        => File,
           Package_Name     => new String'(Get_Unit_Name (LI, File)),
           Other_File_Found => True));
 
-      if Is_Spec_File (Kernel, File)
+      if Is_Spec
         and then Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
       then
          Body_File := Get_Other_File_Of (LI, File);
@@ -619,6 +623,14 @@ package body Docgen_Module is
       use Docgen.Docgen_Backend;
    begin
       Push_State (Kernel, Busy);
+
+      --  Reset all the LI files currently in memory. For optimization
+      --  purposes, docgen will not check the timestamp of the LI files on the
+      --  disk once they are in memory, so we just make sure that we have
+      --  a clean list.
+
+      Reset_LI_File_List (Kernel);
+
 
       case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
          when HTML =>
