@@ -45,13 +45,15 @@ package body XML_Parsers is
    ------------------
 
    procedure Parse_Buffer
-     (Buffer : Glib.UTF8_String;
-      Tree   : out Glib.Xml_Int.Node_Ptr;
-      Error  : out GNAT.OS_Lib.String_Access)
+     (Buffer     : Glib.UTF8_String;
+      From_File  : String := "<input>";
+      Start_Line : Natural := 1;
+      Tree       : out Glib.Xml_Int.Node_Ptr;
+      Error      : out GNAT.OS_Lib.String_Access)
    is
       Err : Unicode.CES.Byte_Sequence_Access;
    begin
-      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err);
+      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err, From_File, Start_Line);
       Error := GNAT.OS_Lib.String_Access (Err);
    end Parse_Buffer;
 

@@ -31,9 +31,14 @@ package XML_Parsers is
    --  The resulting value must be freed by the user
 
    procedure Parse_Buffer
-     (Buffer : Glib.UTF8_String;
-      Tree   : out Glib.Xml_Int.Node_Ptr;
-      Error  : out GNAT.OS_Lib.String_Access);
-   --  Same as above, but the XML string is already in memory
+     (Buffer     : Glib.UTF8_String;
+      From_File  : String  := "<input>";
+      Start_Line : Natural := 1;
+      Tree       : out Glib.Xml_Int.Node_Ptr;
+      Error      : out GNAT.OS_Lib.String_Access);
+   --  Same as above, but the XML string is already in memory.
+   --  (From_File, Start_Line) indicate where the buffer was read from. This
+   --  is in particular useful when reading strings in script files through
+   --  calls to parse_xml()
 
 end XML_Parsers;

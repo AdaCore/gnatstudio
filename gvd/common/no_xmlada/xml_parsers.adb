@@ -45,9 +45,13 @@ package body XML_Parsers is
    ------------------
 
    procedure Parse_Buffer
-     (Buffer : Glib.UTF8_String;
-      Tree   : out Glib.Xml_Int.Node_Ptr;
-      Error  : out GNAT.OS_Lib.String_Access) is
+     (Buffer     : Glib.UTF8_String;
+      From_File  : String := "<input>";
+      Start_Line : Natural := 1;
+      Tree       : out Glib.Xml_Int.Node_Ptr;
+      Error      : out GNAT.OS_Lib.String_Access)
+   is
+      pragma Unreferenced (From_File, Start_Line);
    begin
       Tree := Glib.Xml_Int.Parse_Buffer (Buffer);
       if Tree = null then
