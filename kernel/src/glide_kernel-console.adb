@@ -55,10 +55,6 @@ package body Glide_Kernel.Console is
       Kernel  : Kernel_Handle);
    --  Called when the console has been destroyed.
 
-   function Interactive_Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Prevent the destrution of the console in the MDI
-
    procedure Interactive_Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
@@ -67,10 +63,6 @@ package body Glide_Kernel.Console is
    function Console_Delete_Event
      (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
    --  Prevent the destruction of the console in the MDI
-
-   function Results_Delete_Event
-     (Results : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Prevent the destrution of the results view in the MDI
 
    procedure Results_Destroyed
      (Results : access Glib.Object.GObject_Record'Class;
@@ -216,18 +208,6 @@ package body Glide_Kernel.Console is
       end if;
    end Interactive_Console_Destroyed;
 
-   --------------------------------------
-   -- Interactive_Console_Delete_Event --
-   --------------------------------------
-
-   function Interactive_Console_Delete_Event
-     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Console);
-   begin
-      return True;
-   end Interactive_Console_Delete_Event;
-
    -----------------------
    -- Console_Destroyed --
    -----------------------
@@ -275,18 +255,6 @@ package body Glide_Kernel.Console is
          Glide_Page.Glide_Page (Get_Current_Process (Top)).Results := null;
       end if;
    end Results_Destroyed;
-
-   --------------------------
-   -- Results_Delete_Event --
-   --------------------------
-
-   function Results_Delete_Event
-     (Results : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Results);
-   begin
-      return True;
-   end Results_Delete_Event;
 
    ------------------------
    -- On_Save_Console_As --
@@ -392,7 +360,8 @@ package body Glide_Kernel.Console is
         and then Get_Current_Process (Top) /= null
       then
          Gtk_New (Console, Kernel);
-         Child := Put (Get_MDI (Kernel), Console);
+         Child := Put
+           (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button);
          Set_Title (Child, -"Messages");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
@@ -403,13 +372,16 @@ package body Glide_Kernel.Console is
                   Interpret_Command_Handler'Access,
                   GObject (Kernel),
                   Get_Pref (Kernel, Keyword_Font));
-         Child := Put (Get_MDI (Kernel), Interactive_Console);
+         Child := Put
+           (Get_MDI (Kernel), Interactive_Console,
+            Iconify_Button or Maximize_Button);
          Set_Title (Child, -"Console");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
 
          Gtk_New (Results, Kernel_Handle (Kernel));
-         Child := Put (Get_MDI (Kernel), Results);
+         Child := Put
+           (Get_MDI (Kernel), Results, Iconify_Button or Maximize_Button);
          Set_Title (Child, -"Results");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
@@ -427,14 +399,13 @@ package body Glide_Kernel.Console is
            (Console, "delete_event",
             Return_Callback.To_Marshaller (Console_Delete_Event'Access));
 
-
          Kernel_Callback.Connect
            (Results, "destroy",
             Kernel_Callback.To_Marshaller (Results_Destroyed'Access),
             Kernel_Handle (Kernel));
          Return_Callback.Connect
            (Results, "delete_event",
-            Return_Callback.To_Marshaller (Results_Delete_Event'Access));
+            Return_Callback.To_Marshaller (Console_Delete_Event'Access));
 
          Kernel_Callback.Connect
            (Interactive_Console, "destroy",
@@ -443,8 +414,7 @@ package body Glide_Kernel.Console is
             Kernel_Handle (Kernel));
          Return_Callback.Connect
            (Interactive_Console, "delete_event",
-            Return_Callback.To_Marshaller
-              (Interactive_Console_Delete_Event'Access));
+            Return_Callback.To_Marshaller (Console_Delete_Event'Access));
       end if;
    end Initialize_Console;
 
