@@ -84,7 +84,7 @@ with VCS.CVS;
 with VCS.ClearCase;
 with VFS_Module;
 with Vdiff_Module;
-with Vdiff2_Module;
+--  with Vdiff2_Module;
 with Builder_Module;
 with Glide_Kernel.Console;
 with Navigation_Module;
@@ -830,7 +830,7 @@ procedure GPS is
       GVD_Module.Register_Module (GPS.Kernel);
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
-      Vdiff2_Module.Register_Module (GPS.Kernel);
+--      Vdiff2_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
