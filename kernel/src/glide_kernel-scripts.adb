@@ -26,11 +26,14 @@ with Gtkada.Types;         use Gtkada.Types;
 with Gtk.Widget;           use Gtk.Widget;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Actions; use Glide_Kernel.Actions;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Custom;  use Glide_Kernel.Custom;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with Histories;            use Histories;
+with Interactive_Consoles; use Interactive_Consoles;
 with Entities.Queries;     use Entities, Entities.Queries;
 with String_Hash;
 with System;               use System;
@@ -111,11 +114,16 @@ package body Glide_Kernel.Scripts is
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Gtk_Widget);
-   procedure On_Widget_Destroyed
-     (Data : System.Address; Widget : System.Address);
-   pragma Convention (C, On_Widget_Destroyed);
    --  Called when Widget is destroyed, to break its associated with a
    --  Class_Instance
+
+   procedure On_Widget_Data_Destroyed (Inst : Class_Instance);
+   --  Called when the widget associated with Inst is destroyed
+
+   procedure On_Console_Destroy
+     (Console : access Gtk_Widget_Record'Class;
+      Subprogram : Subprogram_Type);
+   --  Called when an interactive console is destroyed
 
    package Widget_User_Data is new Glib.Object.User_Data
      (Data_Type => Class_Instance);
@@ -165,6 +173,15 @@ package body Glide_Kernel.Scripts is
       Context  : Selection_Context_Access);
    --  Set the data for an instance
 
+   function On_Console_Input
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String; User_Data : System.Address) return String;
+   --  Called when input is available on a console
+
+   procedure Console_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles command related to GPS.Console
+
    procedure Free (File : in out File_Info);
    --  Free the contents of File_Info
 
@@ -210,6 +227,14 @@ package body Glide_Kernel.Scripts is
      (1 => Prefix_Cst'Access);
    Set_Sensitive_Parameters : constant Cst_Argument_List :=
      (1 => Sensitive_Cst'Access);
+
+   On_Input_Cst     : aliased constant String := "on_input";
+   On_Destroy_Cst   : aliased constant String := "on_destroy";
+   Console_Constructor_Args : constant Cst_Argument_List :=
+     (Name_Cst'Access, On_Input_Cst'Access, On_Destroy_Cst'Access);
+
+   Text_Cst         : aliased constant String := "text";
+   Console_Write_Args : constant Cst_Argument_List := (1 => Text_Cst'Access);
 
    ----------
    -- Free --
@@ -414,16 +439,16 @@ package body Glide_Kernel.Scripts is
       Entity   : Entity_Information)
    is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type := Get_Entity_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
       Ref (Entity);
       Set_Data
         (Instance,
+         Class      => Class,
          Value      => Entity.all'Address,
          On_Destroy => On_Destroy_Entity'Access);
    end Set_Data;
@@ -450,17 +475,17 @@ package body Glide_Kernel.Scripts is
       Loc    : constant File_Location_Info_Access :=
         new File_Location_Info'(Location);
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type :=
+        Get_File_Location_Class (Get_Kernel (Script));
 
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance),
-         Get_File_Location_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
       Set_Data
         (Instance,
+         Class      => Class,
          Value      => Loc.all'Address,
          On_Destroy => On_Destroy_File_Location'Access);
    end Set_Data;
@@ -504,11 +529,10 @@ package body Glide_Kernel.Scripts is
       Ent    : File_Info_Access;
       Script : constant Scripting_Language := Get_Script (Instance);
       Kernel : constant Kernel_Handle := Get_Kernel (Script);
+      Class  : constant Class_Type := Get_File_Class (Kernel);
 
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_File_Class (Kernel))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
@@ -517,6 +541,7 @@ package body Glide_Kernel.Scripts is
 
       Set_Data
         (Instance,
+         Class      => Class,
          Value      => Ent.all'Address,
          On_Destroy => On_Destroy_File'Access);
    end Set_Data;
@@ -541,18 +566,18 @@ package body Glide_Kernel.Scripts is
       Script : Scripting_Language;
       Value  : System.Address;
       Ent    : File_Info_Access;
+      Class  : Class_Type;
    begin
       if Instance = null then
          return No_File;
       end if;
 
       Script := Get_Script (Instance);
-      Value  := Get_Data (Instance);
+      Class  := Get_File_Class (Get_Kernel (Script));
+      Value  := Get_Data (Instance, Class);
       Ent    := Convert (Value);
 
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
@@ -568,14 +593,15 @@ package body Glide_Kernel.Scripts is
       Project  : Project_Type)
    is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type := Get_Project_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_Project_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
-      Set_Data (Instance, Value => Integer (Name_Id'(Project_Name (Project))));
+      Set_Data (Instance,
+                Class => Class,
+                Value => Integer (Name_Id'(Project_Name (Project))));
    end Set_Data;
 
    --------------
@@ -585,9 +611,10 @@ package body Glide_Kernel.Scripts is
    function Get_Data
      (Data : Callback_Data; N : Positive) return Project_Type
    is
+      Class : constant Class_Type := Get_Project_Class (Get_Kernel (Data));
       Inst  : constant Class_Instance := Nth_Arg
-        (Callback_Data'Class (Data), N, Get_Project_Class (Get_Kernel (Data)));
-      Value : constant Integer := Get_Data (Inst);
+        (Callback_Data'Class (Data), N, Class);
+      Value : constant Integer := Get_Data (Inst, Class);
       Project : constant Project_Type := Get_Project_From_Name
         (Project_Registry (Get_Registry (Get_Kernel (Data))),
          Name_Id (Value));
@@ -1273,13 +1300,159 @@ package body Glide_Kernel.Scripts is
       null;
    end Destroy;
 
+   ----------------------
+   -- On_Console_Input --
+   ----------------------
+
+   function On_Console_Input
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String; User_Data : System.Address) return String
+   is
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Subprogram_Type);
+      Instance : constant Class_Instance := Get_Instance (Console);
+      On_Input : constant Subprogram_Type := Convert (User_Data);
+      C : Callback_Data'Class := Create (Get_Script (On_Input.all), 2);
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Set_Nth_Arg (C, 1, Instance);
+      Set_Nth_Arg (C, 2, Input);
+      Tmp := Execute (On_Input, C);
+      Free (C);
+      return "";   --  ??? Should this be the output of the command
+   end On_Console_Input;
+
+   ------------------------
+   -- On_Console_Destroy --
+   ------------------------
+
+   procedure On_Console_Destroy
+     (Console    : access Gtk_Widget_Record'Class;
+      Subprogram : Subprogram_Type)
+   is
+      Inst : constant Class_Instance := Get_Instance (Console);
+      C : Callback_Data'Class := Create (Get_Script (Subprogram.all), 1);
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Set_Nth_Arg (C, 1, Inst);
+      Tmp := Execute (Subprogram, C);
+      Free (C);
+   end On_Console_Destroy;
+
+   -----------------------------
+   -- Console_Command_Handler --
+   -----------------------------
+
+   procedure Console_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel        : constant Kernel_Handle := Get_Kernel (Data);
+      Console_Class : constant Class_Type := New_Class (Kernel, "Console2");
+      Inst      : constant Class_Instance := Nth_Arg (Data, 1, Console_Class);
+      Console   : Interactive_Console;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Console_Constructor_Args);
+         declare
+            Title : constant String := Nth_Arg (Data, 2, "");
+            On_Input : constant Subprogram_Type := Nth_Arg (Data, 3, null);
+            On_Destroy : constant Subprogram_Type := Nth_Arg (Data, 4, null);
+         begin
+            Console := Create_Interactive_Console
+              (Kernel              => Get_Kernel (Data),
+               Title               => Title,
+               History             => History_Key ("console_" & Title),
+               Create_If_Not_Exist => True);
+            Set_Data (Inst, Widget => Gtk_Widget (Console));
+
+            if On_Input /= null then
+               Set_Command_Handler
+                 (Console, On_Console_Input'Access, On_Input.all'Address);
+            end if;
+
+            if On_Destroy /= null then
+               Subprogram_Callback.Connect
+                 (Console, "destroy",
+                  Subprogram_Callback.To_Marshaller
+                    (On_Console_Destroy'Access),
+                  User_Data => On_Destroy);
+            end if;
+         end;
+
+      elsif Command = "write" then
+         Name_Parameters (Data, Console_Write_Args);
+         Insert
+           (Interactive_Console (Gtk_Widget'(Get_Data (Inst))),
+            Text   => Nth_Arg (Data, 2),
+            Add_LF => False);
+
+      elsif Command = "clear" then
+         Clear (Interactive_Console (Gtk_Widget'(Get_Data (Inst))));
+
+      elsif Command = "flush" then
+         null;
+         --  Do nothing, only needed for compatibility with Python's
+         --  stdout stream
+
+      elsif Command = "isatty" then
+         Set_Return_Value (Data, False);
+
+      elsif Command = "read" then
+         Set_Return_Value (Data, "");
+
+      elsif Command = "readline" then
+         Set_Return_Value (Data, "");
+
+      end if;
+
+      Free (Inst);
+   end Console_Command_Handler;
+
    --------------------------------------
    -- Register_Default_Script_Commands --
    --------------------------------------
 
    procedure Register_Default_Script_Commands
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Console_Class : constant Class_Type :=
+        New_Class (Kernel, "Console2", Base => Get_GUI_Class (Kernel));
    begin
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args => 0,
+         Maximum_Args => 4,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "write",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "clear",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "flush",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "isatty",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "read",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+      Register_Command
+        (Kernel, "readline",
+         Class        => Console_Class,
+         Handler      => Console_Command_Handler'Access);
+
       Register_Command
         (Kernel, "get_system_dir",
          Handler => Default_Command_Handler'Access);
@@ -1697,7 +1870,7 @@ package body Glide_Kernel.Scripts is
         (Callback_Data'Class (Data), N, Class, Allow_Null);
       Result : System.Address;
    begin
-      Result := Get_Data (Inst);
+      Result := Get_Data (Inst, Class);
       Free (Inst);
       return Result;
    end Nth_Arg_Data;
@@ -2133,18 +2306,17 @@ package body Glide_Kernel.Scripts is
       Context  : Selection_Context_Access)
    is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type :=
+        Get_File_Context_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_File_Context_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       end if;
 
       Ref (Context);
       Set_Data
         (Instance,
+         Class      => Class,
          Value      => Context.all'Address,
          On_Destroy => On_Destroy_Context'Access);
    end Set_Data;
@@ -2256,13 +2428,12 @@ package body Glide_Kernel.Scripts is
      (Instance : Class_Instance) return Gtk.Widget.Gtk_Widget
    is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type := Get_GUI_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_GUI_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       else
-         return Convert (Get_Data (Instance));
+         return Convert (Get_Data (Instance, Class));
       end if;
    end Get_Data;
 
@@ -2275,46 +2446,42 @@ package body Glide_Kernel.Scripts is
       Widget   : Gtk.Widget.Gtk_Widget)
    is
       Script : constant Scripting_Language := Get_Script (Instance);
+      Class  : constant Class_Type := Get_GUI_Class (Get_Kernel (Script));
    begin
-      if not Is_Subclass
-        (Script, Get_Class (Instance), Get_GUI_Class (Get_Kernel (Script)))
-      then
+      if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
       elsif Widget /= null then
          Ref (Instance);
 
          --  Nothing to do when the instance is destroyed. The instance is
          --  destroyed only when the widget itself has already been destroyed,
-         --  since the latter keeps a ref to the widget.
+         --  since the latter keeps a ref to the instance.
          Set_Data
            (Instance,
+            Class      => Class,
             Value      => Widget.all'Address,
             On_Destroy => null);
          Widget_User_Data.Set
-           (Widget, Instance, "GPS-script-instance");
-         Weak_Ref (Widget, Notify => On_Widget_Destroyed'Access);
+           (Widget, Instance, "GPS-script-instance",
+            On_Destroyed => On_Widget_Data_Destroyed'Access);
       else
-         Set_Data (Instance, Value => System.Null_Address);
+         Set_Data (Instance,
+                   Class => Class,
+                   Value => System.Null_Address);
       end if;
    end Set_Data;
 
-   -------------------------
-   -- On_Widget_Destroyed --
-   -------------------------
+   ------------------------------
+   -- On_Widget_Data_Destroyed --
+   ------------------------------
 
-   procedure On_Widget_Destroyed
-     (Data : System.Address; Widget : System.Address)
-   is
-      pragma Unreferenced (Data);
-      Stub : Gtk.Widget.Gtk_Widget_Record;
-      Inst : constant Class_Instance :=
-        Get_Instance (Gtk_Widget (Get_User_Data (Widget, Stub)));
+   procedure On_Widget_Data_Destroyed (Inst : Class_Instance) is
    begin
       if Inst /= null then
          Set_Data (Inst, Widget => null);
          Free (Inst);
       end if;
-   end On_Widget_Destroyed;
+   end On_Widget_Data_Destroyed;
 
    ------------------
    -- Get_Instance --
