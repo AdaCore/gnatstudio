@@ -78,6 +78,10 @@ package body Vsearch_Ext is
       --  Global variable that contains the list of all registered search
       --  functions.
 
+      Search : Vsearch_Extended;
+      --  The extended search widget, stored for the whole life of GPS, so that
+      --  histories are kept
+
       Next_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
       Prev_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
    end record;
@@ -922,28 +926,43 @@ package body Vsearch_Ext is
       Raise_Widget : Boolean := False) return Vsearch_Extended
    is
       Child  : MDI_Child;
-      Vsearch : Vsearch_Extended;
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Vsearch_Extended_Record'Tag);
 
+      --  If not currently displayed
       if Child = null then
-         Gtk_New (Vsearch, Kernel_Handle (Kernel));
+
+         --  Create if if not done yet
+         if Vsearch_Module_Id.Search = null then
+            Gtk_New (Vsearch_Module_Id.Search, Kernel_Handle (Kernel));
+         end if;
+
+         --  keep a reference on it so that it isn't destroyed when the MDI
+         --  child is destroyed.
+
+         --  ??? Commenting this will break the search, but will make a MDI bug
+         --  apparent: click on the close button => Storage_Error, because gtk+
+         --  is still trying to access the close_button after it has been
+         --  destroyed.
+         Ref (Vsearch_Module_Id.Search);
 
          --  Temporarily remove the options frame, to avoid immediate resizing
          --  of the floating window, whose size_request would include it,
-         Ref (Vsearch.Options_Frame);
-         Remove (Vsearch.Vbox_Search, Vsearch.Options_Frame);
+         Ref (Vsearch_Module_Id.Search.Options_Frame);
+         Remove (Vsearch_Module_Id.Search.Vbox_Search,
+                 Vsearch_Module_Id.Search.Options_Frame);
 
-         Child := Put (Get_MDI (Kernel), Vsearch);
+         Child := Put (Get_MDI (Kernel), Vsearch_Module_Id.Search);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
          Float_Child (Child, True);
 
          --  Put back the options frame under control
          Pack_Start
-           (Vsearch.Vbox_Search, Vsearch.Options_Frame, True, True, 0);
-         Unref (Vsearch.Options_Frame);
+           (Vsearch_Module_Id.Search.Vbox_Search,
+            Vsearch_Module_Id.Search.Options_Frame, True, True, 0);
+         Unref (Vsearch_Module_Id.Search.Options_Frame);
 
          Widget_Callback.Connect
            (Child, "float_child",
@@ -951,16 +970,13 @@ package body Vsearch_Ext is
          Widget_Callback.Connect
            (Child, "unfloat_child",
             Widget_Callback.To_Marshaller (Unfloat_Vsearch'Access));
-
-      else
-         Vsearch := Vsearch_Extended (Get_Initial_Window (Child));
       end if;
 
       if Raise_Widget then
          Raise_Child (Child);
       end if;
 
-      return Vsearch;
+      return Vsearch_Module_Id.Search;
    end Get_Or_Create_Vsearch;
 
    --------------------
@@ -978,6 +994,8 @@ package body Vsearch_Ext is
       --  context, otherwise it would return the context of the search widget
       --  itself
       Vsearch := Get_Or_Create_Vsearch (Kernel, Raise_Widget => True);
+      Set_Text (Vsearch_Module_Id.Search.Pattern_Entry, "");
+      Set_Text (Vsearch_Module_Id.Search.Replace_Entry, "");
 
       if Module /= null then
          declare
