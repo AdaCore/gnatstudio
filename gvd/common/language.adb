@@ -24,6 +24,7 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;
 with GNAT.IO; use GNAT.IO;
+with Ada.Unchecked_Conversion;
 
 package body Language is
 
@@ -481,10 +482,30 @@ package body Language is
       Buffer_Length : Natural;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      function To_Unchecked_String_Access is new Ada.Unchecked_Conversion
+        (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
+
+      S      : Unchecked_String_Access := To_Unchecked_String_Access (Buffer);
+      Index  : Natural := Buffer_Length - 1;
+      Blanks : Natural;
+
    begin
-      Indent      := 0;
-      Next_Indent := 0;
+      while Index > 1 and then S (Index - 1) /= ASCII.LF loop
+         Index := Index - 1;
+      end loop;
+
+      Blanks := Index;
+
+      while Blanks < Buffer_Length
+        and then (S (Blanks) = ' ' or else S (Blanks) = ASCII.HT)
+      loop
+         Blanks := Blanks + 1;
+      end loop;
+
+      Indent      := Blanks - Index;
+      Next_Indent := Indent;
    end Next_Indentation;
 
 end Language;
