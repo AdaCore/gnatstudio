@@ -2605,7 +2605,11 @@ package body Src_Editor_Buffer is
             return;
          end if;
 
-         while Is_Alphanumeric (Get_Char (Prev)) loop
+         --  ??? Src_Editor_Box.Is_Entity_Letter should be used here.
+
+         while Is_Alphanumeric (Get_Char (Prev))
+           or else Get_Char (Prev) = '_'
+         loop
             Backward_Char (Prev, Success);
             exit when not Success;
          end loop;
