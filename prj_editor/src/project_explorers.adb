@@ -1680,6 +1680,7 @@ package body Project_Explorers is
    function Has_Entries (Project : Project_Id; Directory : String)
       return Boolean
    is
+      Dir   : constant String := Name_As_Directory (Directory);
       Files : Basic_Types.String_Array_Access;
       First : Integer;
    begin
@@ -1690,10 +1691,8 @@ package body Project_Explorers is
 
       for F in Files'Range loop
          First := Files (F)'First;
-         if Files (F)'Length > Directory'Length
-           and then Files (F)(First .. First + Directory'Length - 1) =
-           Directory
-           and then Files (F)(First + Directory'Length) = Directory_Separator
+         if Files (F)'Length > Dir'Length
+           and then Files (F)(First .. First + Dir'Length - 1) = Dir
          then
             Free (Files);
             return True;
