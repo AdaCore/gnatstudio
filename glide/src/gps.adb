@@ -193,6 +193,7 @@ procedure GPS is
             --  Create a default configuration file for the traces.
             --  This should be left while GPS is considered as not fully
             --  stable.
+
             Create
               (File,
                Name => String_Utils.Name_As_Directory (Dir.all)
@@ -205,6 +206,9 @@ procedure GPS is
             Put_Line (File, "DEBUG.STACK_TRACE=no");
             Put_Line (File, "DEBUG.LOCATION=no");
             Put_Line (File, "DEBUG.ENCLOSING_ENTITY=no");
+            Put_Line (File, "SRC_INFO.ALI=no");
+            Put_Line (File, "CPP.INFO=no");
+            Put_Line (File, "CPP.FAIL=no");
             Close (File);
          end if;
 
@@ -402,7 +406,14 @@ procedure GPS is
 
       if Project_Name /= null then
          Trace (Me, "Loading project: " & Project_Name.all);
-         Load_Project (GPS.Kernel, Project_Name.all);
+
+         if File_Extension (Project_Name.all) = Project_File_Extension then
+            Load_Project (GPS.Kernel, Project_Name.all);
+         else
+            Load_Project
+              (GPS.Kernel, Project_Name.all & Project_File_Extension);
+         end if;
+
          Free (Project_Name);
       else
          Recompute_View (GPS.Kernel);
