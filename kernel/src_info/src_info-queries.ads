@@ -71,7 +71,7 @@ package Src_Info.Queries is
    --  Free the memory associated with the entity;
 
    function Get_Name (Entity : Entity_Information) return String;
-   --  Return the name of the entity associated with Node.
+   --  Return the name of the entity associateped with Node.
 
    function Get_Declaration_Line_Of
      (Entity : Entity_Information) return Positive;
@@ -90,10 +90,18 @@ package Src_Info.Queries is
    --  Return the kind of the entity. See glide_kernel.ads on how to convert
    --  this to a string.
 
+   function Is_Subtype
+     (Decl_File : LI_File_Ptr;
+      Entity    : Entity_Information) return Boolean;
+   --  Return true if Entity is a subtype, as opposed to a type in Ada.
+
    function Is_Predefined_Entity (Entity : Entity_Information) return Boolean;
    --  Return True if the entity is one of the predefined entities for the
    --  language, ie there are no declaration for it in the user's code (Like
    --  Integer in Ada, or int in C).
+
+   function Is_Subprogram (Entity : Entity_Information) return Boolean;
+   --  Return True if Entity is a subprogram (procedure, function,...)
 
    function Get_Scope (Entity : Entity_Information) return E_Scope;
    --  Return the scope of the entity.  See glide_kernel.ads on how to convert
@@ -186,10 +194,8 @@ package Src_Info.Queries is
       Line                   : Positive;
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
-      Source_Info_List       : in out LI_File_List;
+      Source_Info_List       : LI_File_List;
       Project                : Projects.Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
       Location               : out File_Location;
       Status                 : out Find_Decl_Or_Body_Query_Status);
    --  Find the location of the body for the entity. If the entity has multiple
@@ -275,13 +281,11 @@ package Src_Info.Queries is
      (Root_Project           : Projects.Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
       Project                : Projects.Project_Type := Projects.No_Project;
       LI_Once                : Boolean := False;
-      In_File                : String := "";
-      Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "");
+      In_File                : String := "");
    --  Find all the references to the entity described in Decl.
    --  Root_Project should be the root project under which we are looking.
    --  Source files that don't belong to Root_Project or one of its imported
@@ -305,7 +309,7 @@ package Src_Info.Queries is
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
       Iterator : in out Entity_Reference_Iterator;
-      List     : in out LI_File_List);
+      List     : LI_File_List);
    --  Get the next reference to the entity
 
    function Get (Iterator : Entity_Reference_Iterator) return E_Reference;
@@ -498,12 +502,10 @@ package Src_Info.Queries is
      (Root_Project    : Projects.Project_Type;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Source_Filename : String;
-      List            : in out LI_File_List;
+      List            : LI_File_List;
       Iterator        : out Dependency_Iterator;
       Project         : Projects.Project_Type := Projects.No_Project;
       Include_Self    : Boolean := False;
-      Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "";
       LI_Once         : Boolean := False;
       Single_Source_File : Boolean := False);
    --  Prepare Iterator to return the list of all files that directly import
@@ -541,7 +543,7 @@ package Src_Info.Queries is
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
       Iterator : in out Dependency_Iterator;
-      List     : in out LI_File_List);
+      List     : LI_File_List);
    --  Get the next reference to the entity
 
    function Get (Iterator : Dependency_Iterator) return Dependency;

@@ -597,10 +597,8 @@ package body Src_Info.Queries is
       Line                   : Positive;
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
-      Source_Info_List       : in out LI_File_List;
+      Source_Info_List       : LI_File_List;
       Project                : Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String;
       Location               : out File_Location;
       Status                 : out Find_Decl_Or_Body_Query_Status)
    is
@@ -647,9 +645,7 @@ package body Src_Info.Queries is
                File                   => Body_LI,
                Source_Filename        => Get_Declaration_File_Of (Entity),
                List                   => Source_Info_List,
-               Project                => Project,
-               Predefined_Source_Path => Predefined_Source_Path,
-               Predefined_Object_Path => Predefined_Object_Path);
+               Project                => Project);
 
             Internal_Find_Declaration_Or_Body
               (Lib_Info         => Body_LI,
@@ -956,6 +952,15 @@ package body Src_Info.Queries is
       return Is_Subprogram_Entity (Node.Decl.Kind.Kind)
         and then (Node.Typ = Declaration
                   or else not Is_End_Reference (Node.Ref.Kind));
+   end Is_Subprogram;
+
+   -------------------
+   -- Is_Subprogram --
+   -------------------
+
+   function Is_Subprogram (Entity : Entity_Information) return Boolean is
+   begin
+      return Is_Subprogram_Entity (Entity.Kind.Kind);
    end Is_Subprogram;
 
    --------------
@@ -1422,24 +1427,27 @@ package body Src_Info.Queries is
 
                Add_Single_Entity (New_Item, T);
                Add_References (List.Value, T, Start_Of_Scope);
+
+               --  If the entity has an End_Of_Spec reference, and is a package
+               --  (the one in which we are), we need to add it to the spec
+               --  tree as well.
+               --  It might already be there however, if the package has no
+               --  body
+
+               if List.Value.Declaration.End_Of_Scope /= No_Reference
+                 and then List.Value.Declaration.Kind.Kind = Package_Kind
+                 and then Start_Of_Scope.File.Part /= Unit_Spec
+               then
+                  New_Item := new Scope_Node'
+                    (Typ         => Declaration,
+                     Decl        => List.Value.Declaration'Unrestricted_Access,
+                     Contents    => null,
+                     Start_Of_Scope => List.Value.Declaration.Location,
+                     Parent      => null,
+                     Sibling     => null);
+                  Add_Single_Entity (New_Item, T);
+               end if;
             end;
-
-            --  If the entity has an End_Of_Spec reference, we need to add it
-            --  to the spec tree as well, and is a package (the one in which
-            --  we are
-
-            if List.Value.Declaration.End_Of_Scope /= No_Reference
-              and then List.Value.Declaration.Kind.Kind = Package_Kind
-            then
-               New_Item := new Scope_Node'
-                 (Typ            => Declaration,
-                  Decl           => List.Value.Declaration'Unrestricted_Access,
-                  Contents       => null,
-                  Start_Of_Scope => List.Value.Declaration.Location,
-                  Parent         => null,
-                  Sibling        => null);
-               Add_Single_Entity (New_Item, T);
-            end if;
 
             List := List.Next;
          end loop;
@@ -2015,7 +2023,7 @@ package body Src_Info.Queries is
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
       Iterator     : in out Entity_Reference_Iterator;
-      List         : in out LI_File_List)
+      List         : LI_File_List)
    is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List;
@@ -2209,13 +2217,11 @@ package body Src_Info.Queries is
      (Root_Project           : Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
       Project                : Project_Type := No_Project;
       LI_Once                : Boolean := False;
-      In_File                : String := "";
-      Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "") is
+      In_File                : String := "") is
    begin
       Iterator.Entity := Copy (Entity);
       Iterator.LI_Once := LI_Once;
@@ -2227,9 +2233,7 @@ package body Src_Info.Queries is
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
-            LI_Once                => True,
-            Predefined_Source_Path => Predefined_Source_Path,
-            Predefined_Object_Path => Predefined_Object_Path);
+            LI_Once                => True);
       else
          Find_Ancestor_Dependencies
            (Root_Project, Lang_Handler, In_File, List,
@@ -2237,9 +2241,7 @@ package body Src_Info.Queries is
             Project                => Project,
             Include_Self           => True,
             LI_Once                => True,
-            Single_Source_File     => True,
-            Predefined_Source_Path => Predefined_Source_Path,
-            Predefined_Object_Path => Predefined_Object_Path);
+            Single_Source_File     => True);
       end if;
 
       Next (Lang_Handler, Iterator, List);
@@ -2252,7 +2254,7 @@ package body Src_Info.Queries is
    procedure Next
      (Lang_Handler : Language_Handlers.Language_Handler;
       Iterator : in out Dependency_Iterator;
-      List     : in out LI_File_List)
+      List     : LI_File_List)
    is
       function Check_File return Dependency_File_Info_List;
       --  Check the current file in the iterator, and return the list of
@@ -2298,9 +2300,7 @@ package body Src_Info.Queries is
                      Source_Filename        =>
                        Iterator.Source_Files (Iterator.Current_File).all,
                      List                   => List,
-                     Project                => Current (Iterator.Importing),
-                     Predefined_Source_Path => "",
-                     Predefined_Object_Path => "");
+                     Project                => Current (Iterator.Importing));
 
                   Assert (Me, LI = null or else LI.LI.Parsed,
                           "Unparsed LI returned for file "
@@ -2516,12 +2516,10 @@ package body Src_Info.Queries is
      (Root_Project    : Project_Type;
       Lang_Handler : Language_Handlers.Language_Handler;
       Source_Filename : String;
-      List            : in out LI_File_List;
+      List            : LI_File_List;
       Iterator        : out Dependency_Iterator;
       Project         : Project_Type := No_Project;
       Include_Self    : Boolean := False;
-      Predefined_Source_Path : String := "";
-      Predefined_Object_Path : String := "";
       LI_Once         : Boolean := False;
       Single_Source_File : Boolean := False)
    is
@@ -2558,9 +2556,7 @@ package body Src_Info.Queries is
          File                   => Iterator.Decl_LI,
          Source_Filename        => Source_Filename,
          List                   => List,
-         Project                => Decl_Project,
-         Predefined_Source_Path => Predefined_Source_Path,
-         Predefined_Object_Path => Predefined_Object_Path);
+         Project                => Decl_Project);
 
       Assert (Me,
               Iterator.Decl_LI /= null,
@@ -3372,7 +3368,7 @@ package body Src_Info.Queries is
      (Lib_Info : LI_File_Ptr;
       Entity   : Entity_Information) return Entity_Information is
    begin
-      return Process_Parents (Lib_Info, Entity, Parent_Type);
+      return Process_Parents (Lib_Info, Entity, Container_Type);
    end Get_Variable_Type;
 
    ------------------
@@ -3413,7 +3409,10 @@ package body Src_Info.Queries is
          return (Lib_Info => Lib_Info, Current => null);
       else
          Parent := Decl.Value.Declaration.Parent_Location;
-         while Parent /= null and then Parent.Kind /= Parent_Type loop
+         while Parent /= null
+           and then Parent.Kind /= Parent_Type
+           and then Parent.Kind /= Container_Type
+         loop
             Parent := Parent.Next;
          end loop;
 
@@ -3431,6 +3430,7 @@ package body Src_Info.Queries is
          Iter.Current := Iter.Current.Next;
          while Iter.Current /= null
            and then Iter.Current.Kind /= Parent_Type
+           and then Iter.Current.Kind /= Container_Type
          loop
             Iter.Current := Iter.Current.Next;
          end loop;
@@ -3585,7 +3585,8 @@ package body Src_Info.Queries is
                   --  Any parent matches ?
                   Parent := Iter.Current.Value.Declaration.Parent_Location;
                   while Parent /= null loop
-                     if Parent.Kind = Parent_Type
+                     if (Parent.Kind = Parent_Type
+                         or else Parent.Kind = Container_Type)
                        and then Location_Matches
                        (Parent.Value,
                         Get_Declaration_File_Of (Iter.Entity),
@@ -3657,5 +3658,34 @@ package body Src_Info.Queries is
          return Create (Iter.Current.Value.Declaration);
       end if;
    end Get;
+
+   ----------------
+   -- Is_Subtype --
+   ----------------
+
+   function Is_Subtype
+     (Decl_File : LI_File_Ptr;
+      Entity    : Entity_Information) return Boolean
+   is
+      Decl : constant E_Declaration_Info_List := Find_Declaration_In_LI
+        (Decl_File, Entity);
+      Parent : File_Location_List;
+   begin
+      if Decl = null
+        or else not Decl.Value.Declaration.Kind.Is_Type
+      then
+         return False;
+      end if;
+
+      Parent := Decl.Value.Declaration.Parent_Location;
+      while Parent /= null loop
+         if Parent.Kind = Container_Type then
+            return True;
+         end if;
+         Parent := Parent.Next;
+      end loop;
+
+      return False;
+   end Is_Subtype;
 
 end Src_Info.Queries;
