@@ -374,7 +374,6 @@ package body Creation_Wizard is
         (Get_Text (Wiz.Project_Location));
       Name           : constant String := Get_Text (Wiz.Project_Name);
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
-      Changed        : Boolean := False;
       Languages      : Argument_List := Get_Languages (Wiz);
       Project        : Project_Node_Id;
 
@@ -389,18 +388,6 @@ package body Creation_Wizard is
          Scenario_Variables => (1 .. 0 => Empty_Node),
          Attribute_Name     => Get_String (Name_Languages),
          Values             => Languages);
-
-      for P in 1 .. Project_Editor_Pages_Count (Wiz.Kernel) loop
-         if Project_Editor
-           (Get_Nth_Project_Editor_Page (Wiz.Kernel, P),
-            Project, No_Project,
-            Wiz.Kernel, Get_Nth_Page (Wiz, 1 + P),
-            Scenario_Variables => (1 .. 0 => Empty_Node),
-            Ref_Project => Project)'Length /= 0
-         then
-            Changed := True;
-         end if;
-      end loop;
 
       --  Mark the project as modified, otherwise it won't actually be saved
       --  in case we are overwritting an existing file.
