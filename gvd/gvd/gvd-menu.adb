@@ -322,8 +322,15 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
-      Button : Message_Dialog_Buttons;
+      Tab         : constant Debugger_Process_Tab :=
+        Get_Current_Process (Object);
+      Button      : Message_Dialog_Buttons;
+      Button2     : Boolean_Access := null;
+      Multitasks  : aliased Boolean := False;
+      Multi_Msg   : aliased String := -"Enable VxWorks multi-tasks mode";
+      No_Msg      : aliased String := "";
+      Msg         : Basic_Types.String_Access := No_Msg'Unchecked_Access;
+      WTX_Version : Natural;
 
    begin
       if Tab = null then
@@ -340,6 +347,16 @@ package body GVD.Menu is
          return;
       end if;
 
+      --  If we are debugging against VxWorks enable the multi-tasks
+      --  mode checkbox
+
+      Info_WTX (Tab.Debugger, WTX_Version);
+
+      if WTX_Version = 2 then
+         Button2 := Multitasks'Unchecked_Access;
+         Msg := Multi_Msg'Unchecked_Access;
+      end if;
+
       declare
          Is_Start  : aliased Boolean;
          Arguments : constant String := Display_Entry_Dialog
@@ -348,11 +365,27 @@ package body GVD.Menu is
             Message => -"Run arguments:",
             Key     => "gvd_run_arguments",
             Check_Msg => -"Stop at beginning of main subprogram",
-            Button_Active => Is_Start'Access);
+            Check_Msg2 => Msg.all,
+            Button_Active => Is_Start'Access,
+            Button2_Active => Button2);
       begin
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
+            if Button2 /= null then
+               if Multitasks then
+                  Process_User_Command
+                    (Tab,
+                     "set multi-tasks-mode on",
+                     Output_Command => False);
+               else
+                  Process_User_Command
+                    (Tab,
+                     "set multi-tasks-mode off",
+                     Output_Command => False);
+               end if;
+            end if;
+
             if Is_Start then
                Start (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
             else
