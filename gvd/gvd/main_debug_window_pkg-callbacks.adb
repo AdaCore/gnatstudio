@@ -100,6 +100,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --      <remote_host_1>
    --      <remote_target_1>
    --      <protocol_1>
+   --      <debugger_name_1>
    --  [History]
    --    <number of commands for process 1>
    --    <command>
@@ -111,6 +112,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --      <remote_host_2>
    --      <remote_target_2>
    --      <protocol_2>
+   --      <debugger_name_2>
    --  [History]
    --    <number of commands for process 2>
    --    <command>
@@ -124,42 +126,48 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Program1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      S   : constant String := File_Selection_Dialog;
+      Tab : Debugger_Process_Tab;
+
+   begin
+      if S /= "" then
+         Tab := Get_Current_Process (Object);
+         Set_Executable (Tab.Debugger, S);
+         Free (Tab.Descriptor.Program);
+         Tab.Descriptor.Program := new String' (S);
+      end if;
+   end On_Open_Program1_Activate;
+
+   --------------------------------
+   -- On_Open_Debugger1_Activate --
+   --------------------------------
+
+   procedure On_Open_Debugger1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
       Program : Program_Descriptor;
       List    : Argument_List (1 .. 0);
       Process : Debugger_Process_Tab;
       Top     : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
-      Tab     : Debugger_Process_Tab;
 
    begin
       Open_Program (Top.Open_Program, Program);
 
-      case Program.Launch is
-         when Current_Debugger =>
-            Tab := Get_Current_Process (Object);
-            Set_Executable (Tab.Debugger, Program.Program.all);
-            Tab.Descriptor := Program;
-
-         when New_Debugger =>
-            Process  :=
-              Create_Debugger
-                (Main_Debug_Window_Access (Object),
-                 Program.Debugger,
-                 Program.Program.all,
-                 List,
-                 Program.Remote_Host.all,
-                 Program.Remote_Target.all,
-                 Program.Protocol.all);
-            Tab := Get_Current_Process (Object);
-            Tab.Descriptor := Program;
-
-         when None =>
-            null;
-      end case;
-
-      --  Why is this call commented out ???
-      --  Free (Program);
-   end On_Open_Program1_Activate;
+      if Program.Launch = New_Debugger then
+         Process :=
+           Create_Debugger
+             (Main_Debug_Window_Access (Object),
+              Program.Debugger,
+              Program.Program.all,
+              List,
+              Program.Remote_Host.all,
+              Program.Remote_Target.all,
+              Program.Protocol.all,
+              Program.Debugger_Name.all);
+         Process.Descriptor := Program;
+      end if;
+   end On_Open_Debugger1_Activate;
 
    ---------------------------------
    -- On_Open_Core_Dump1_Activate --
@@ -236,6 +244,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Get_Line (File, Buffer, Last);
             Program.Protocol := new String' (Buffer (1 .. Last));
             Get_Line (File, Buffer, Last);
+            Program.Debugger_Name := new String' (Buffer (1 .. Last));
+            Get_Line (File, Buffer, Last);
             Process :=
               Create_Debugger
                 (Main_Debug_Window_Access (Object),
@@ -244,7 +254,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
                  List,
                  Program.Remote_Host.all,
                  Program.Remote_Target.all,
-                 Program.Protocol.all);
+                 Program.Protocol.all,
+                 Program.Debugger_Name.all);
             Tab := Get_Current_Process (Object);
             Tab.Descriptor := Program;
 
@@ -305,6 +316,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Put_Line (File, Tab.Descriptor.Remote_Host.all);
                Put_Line (File, Tab.Descriptor.Remote_Target.all);
                Put_Line (File, Tab.Descriptor.Protocol.all);
+               Put_Line (File, Tab.Descriptor.Debugger_Name.all);
                Put_Line (File, "[History]");
                Wind (Tab.Command_History, Backward);
                Move_To_Next (Tab.Command_History);
@@ -895,28 +907,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Command_History1_Activate;
 
-   ---------------------------
-   -- On_Previous1_Activate --
-   ---------------------------
-
-   procedure On_Previous1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Previous1_Activate;
-
-   -----------------------
-   -- On_Next2_Activate --
-   -----------------------
-
-   procedure On_Next2_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Next2_Activate;
-
    --------------------------------
    -- On_Find_Backward1_Activate --
    --------------------------------
@@ -938,39 +928,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Find_Forward1_Activate;
-
-   ------------------------------
-   -- On_Quit_Search1_Activate --
-   ------------------------------
-
-   procedure On_Quit_Search1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Quit_Search1_Activate;
-
-   ---------------------------
-   -- On_Complete1_Activate --
-   ---------------------------
-
-   procedure On_Complete1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Complete1_Activate;
-
-   ------------------------
-   -- On_Apply1_Activate --
-   ------------------------
-
-   procedure On_Apply1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Apply1_Activate;
 
    -----------------------------
    -- On_Clear_Line1_Activate --
