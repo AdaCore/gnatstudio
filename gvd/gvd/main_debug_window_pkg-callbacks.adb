@@ -67,6 +67,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    begin
       Free (Top.Command_History);
+
       loop
          Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
 
@@ -116,8 +117,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       begin
          if S /= "" then
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
-            Free (Tab.Descriptor.Program);
-            Tab.Descriptor.Program := new String' (S);
          end if;
       end;
    end On_Open_Program1_Activate;
@@ -513,7 +512,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Arguments : constant String := Display_Entry_Dialog
            (Parent  => Tab.Window,
             Title   => -"Arguments Selection",
-            Message => -"Enter the arguments to your application::",
+            Message => -"Enter the arguments to your application:",
             Key     => "odd_run_arguments",
             Check_Msg => -"Stop at beginning of main subprogram",
             Button_Active => Is_Start'Access);
@@ -741,10 +740,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       use String_History;
 
    begin
-      if Top.History_Dialog = null then
-         Gtk_New (Top.History_Dialog, Gtk_Window (Top));
-      end if;
-
       Show_All (Top.History_Dialog);
       Update (Top.History_Dialog, Tab);
    end On_Command_History1_Activate;
@@ -808,10 +803,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
-      if Top.Backtrace_Dialog = null then
-         Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object));
-      end if;
-
       Show_All (Top.Backtrace_Dialog);
       Update (Top.Backtrace_Dialog, Tab);
    end On_Backtrace1_Activate;
@@ -829,10 +820,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       if Tab = null then
          return;
-      end if;
-
-      if Top.Task_Dialog = null then
-         Gtk_New (Top.Task_Dialog, Gtk_Window (Object));
       end if;
 
       Show_All (Top.Task_Dialog);
