@@ -1321,7 +1321,7 @@ package body Project_Viewers is
    begin
       if Has_Project_Information (File) then
          declare
-            Name : constant String :=
+            Name : constant Virtual_File :=
               Select_File
                 (-"Select Project",
                  Dir,
@@ -1334,8 +1334,9 @@ package body Project_Viewers is
                  History           => Get_History (Get_Kernel (File)));
 
          begin
-            if Name /= "" then
-               Add_Dependency_Internal (Get_Kernel (File), Prj, Name);
+            if Name /= VFS.No_File then
+               Add_Dependency_Internal
+                 (Get_Kernel (File), Prj, Full_Name (Name));
             end if;
          end;
       end if;
@@ -1639,7 +1640,7 @@ package body Project_Viewers is
       --------------
 
       procedure Add_File (Base_Dir : String := "") is
-         File : constant String := Select_File
+         File : constant Virtual_File := Select_File
            (Title             => -"Select the main file to add",
             Base_Directory    => Base_Dir,
             File_Pattern      => "*.ad*",
@@ -1650,7 +1651,7 @@ package body Project_Viewers is
             History           => Get_History (Ed.Kernel));
 
       begin
-         if File /= "" then
+         if File /= VFS.No_File then
             if Base_Dir = "" then
                if Is_Directory (Dir_Name (File)) then
                   Change_Dir (Dir_Name (File));
