@@ -30,45 +30,6 @@ Index: common/src/stubs.c
 +   return (!ret && S_ISLNK (statbuf.st_mode));
 + #endif
 + }
-*** gps-1.0.1/gvd/gvd_common.gpr	Tue Apr 16 12:10:06 2002
---- gvd/gvd_common.gpr	Fri May 31 18:02:42 2002
-***************
-*** 1,5 ****
---- 1,6 ----
-  with "../gtkada/gtkada";
-  with "../shared";
-+ with "../gnat";
-  
-  project GVD_Common is
-  
-*** gps-1.0.1/Makefile.gnat	Thu May 16 18:50:48 2002
---- Makefile.gnat	Fri May 31 19:50:04 2002
-***************
-*** 22,27 ****
---- 22,44 ----
-    fmap.adb \
-    fname.ads \
-    fname.adb \
-+   g-comlin.ads \
-+   g-comlin.adb \
-+   g-dirope.ads \
-+   g-dirope.adb \
-+   g-expect.ads \
-+   g-expect.adb \
-+   g-os_lib.ads \
-+   g-os_lib.adb \
-+   g-string.ads \
-+   g-string.adb \
-+   gpr2make.ads \
-+   gpr2make.adb \
-+   gprcmd.adb   \
-+   bld.ads      \
-+   bld.adb      \
-+   bld-io.ads   \
-+   bld-io.adb   \
-    gnatvsn.ads \
-    hostparm.ads \
-    krunch.ads \
 *** shared.gpr.old	Tue Oct  1 18:21:51 2002
 --- shared.gpr	Tue Oct  1 18:22:03 2002
 ***************
