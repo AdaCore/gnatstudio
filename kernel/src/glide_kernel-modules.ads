@@ -427,6 +427,11 @@ package Glide_Kernel.Modules is
    --    - after Ref_Item if the latter is not the empty string and Add_Before
    --      is false
    --    - at the end of the menu
+   --
+   --  To register a separator, do the following:
+   --      Mitem : Gtk_Menu_Item;
+   --      Gtk_New (Mitem);
+   --      Register_Menu (Kernel, "/Parent_Path", Mitem);
 
    procedure Register_Menu
      (Kernel      : access Kernel_Handle_Record'Class;
