@@ -99,6 +99,7 @@ install_binaries() {
 
   rm -f bin/gps
   (cd $current_dir; tar cf - bin lib doc share) | tar xf -
+  sed -e "s^@prefix@^$basedir^" share/gps/pangorc.in > share/gps/pangorc
 }
 
 ##
