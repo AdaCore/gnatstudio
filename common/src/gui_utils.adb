@@ -939,6 +939,7 @@ package body GUI_Utils is
             Row_Found);
 
          if Path = null then
+            Iter := Null_Iter;
             return;
          end if;
 
