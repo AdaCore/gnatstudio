@@ -45,6 +45,21 @@ package body Breakpoints_Pkg.Callbacks is
       Args   : Gtk.Arguments.Gtk_Args);
    --  Called when a row of the breakpoint editor was selected.
 
+   use Gtk.Arguments;
+
+   ---------------------------------
+   -- On_Breakpoints_Delete_Event --
+   ---------------------------------
+
+   function On_Breakpoints_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+   begin
+      Hide (Object);
+      return True;
+   end On_Breakpoints_Delete_Event;
+
    ------------------------------
    -- On_Notebook1_Switch_Page --
    ------------------------------

@@ -49,6 +49,8 @@ package body Odd.Dialogs is
    pragma Suppress (All_Checks);
    --  Checks are expensive (in code size) and not needed in this package.
 
+   type Odd_Dialog_Access is access all Odd_Dialog;
+
    Question_Titles : constant Chars_Ptr_Array :=
      "" + "Choice";
    --  ??? Should be translatable.
@@ -103,6 +105,12 @@ package body Odd.Dialogs is
       Key      : String := "") return String;
    --  Internal version of Simple_Entry_Dialog, where Dialog is already
    --  created.
+
+   function Delete_Dialog
+     (Dialog : access Gtk_Widget_Record'Class)
+     return Boolean;
+   --  Called when the user deletes a dialog by clicking on the small
+   --  button in the title bar of the window.
 
    -------------
    -- Gtk_New --
@@ -302,6 +310,10 @@ package body Odd.Dialogs is
 
       Gtk_New (Dialog.Close_Button, -"Close");
       Add (Dialog.Hbuttonbox1, Dialog.Close_Button);
+
+      Return_Callback.Connect
+        (Dialog, "delete_event",
+         Return_Callback.To_Marshaller (Delete_Dialog'Access));
    end Initialize;
 
    ----------------
@@ -470,9 +482,10 @@ package body Odd.Dialogs is
          Set_Transient_For (Dialog, Parent);
          Set_Modal (Dialog);
          Set_Position (Dialog, Position);
-         Return_Callback.Connect
+         Gtkada.Handlers.Return_Callback.Connect
            (Dialog, "delete_event",
-            Return_Callback.To_Marshaller (Delete_Simple_Entry'Access));
+            Gtkada.Handlers.Return_Callback.To_Marshaller
+            (Delete_Simple_Entry'Access));
 
          Gtk_New_Vbox (Vbox);
          Pack_Start (Get_Vbox (Dialog), Vbox);
@@ -669,5 +682,18 @@ package body Odd.Dialogs is
          return S;
       end;
    end Display_Entry_Dialog;
+
+   -------------------
+   -- Delete_Dialog --
+   -------------------
+
+   function Delete_Dialog
+     (Dialog : access Gtk_Widget_Record'Class)
+     return Boolean
+   is
+   begin
+      Hide (Dialog);
+      return True;
+   end Delete_Dialog;
 
 end Odd.Dialogs;

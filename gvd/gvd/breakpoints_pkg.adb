@@ -58,6 +58,8 @@ procedure Initialize (Breakpoints : access Breakpoints_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Breakpoints, Window_Toplevel);
+   Return_Callback.Connect
+     (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
    Set_Title (Breakpoints, -"Breakpoints");
    Set_Policy (Breakpoints, True, True, False);
    Set_Position (Breakpoints, Win_Pos_Center);

@@ -2,6 +2,10 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Arguments; use Gtk.Arguments;
 
 package Breakpoints_Pkg.Callbacks is
+   function On_Breakpoints_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean;
+
    procedure On_Notebook1_Switch_Page
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
