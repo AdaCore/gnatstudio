@@ -244,7 +244,7 @@ is highlighted.
 Close the search dialog by clicking on the @code{Close} button.
 
 Note that in this specific case, a simpler way to locate a file in the
-explorer is to use from the source editor the contextual menu
+explorer is to use the contextual menu from the source editor:
 @code{Locate in explorer: tokens.ads}.
 
 @c --------------------------------------------------------------------
