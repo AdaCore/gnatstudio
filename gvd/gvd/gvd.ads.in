@@ -93,4 +93,8 @@ package GVD is
    Default_Opaque_MDI : constant Boolean := @OPAQUE_MDI@;
    --  Default value for the MDI opaque preference.
 
+   Gtk_Extra_Refresh : constant Boolean := @GTK_EXTRA_REFRESH@;
+   --  True if Gtk+ does not perform all necessary refresh, and manual updates
+   --  are sometimes needed.
+
 end GVD;
