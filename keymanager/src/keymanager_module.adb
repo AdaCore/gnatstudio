@@ -134,6 +134,9 @@ package body KeyManager_Module is
       Table : Key_Htable.HTable;
    end record;
 
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Keymap_Record, Keymap_Access);
+
    type Key_Manager_Record is new Glide_Kernel.Key_Handler_Record with record
       Kernel : Kernel_Handle;
       Table  : Key_Htable.HTable;
@@ -297,8 +300,8 @@ package body KeyManager_Module is
    function Hash (Key : Key_Binding) return Keys_Header_Num is
    begin
       return Keys_Header_Num
-      ((Integer (Key.Key) + Integer (Key.Modifier) * 16#FFFF#)
-         mod Integer (Keys_Header_Num'Last + 1));
+        ((Integer (Key.Key) + Integer (Key.Modifier) * 16#FFFF#)
+          mod Integer (Keys_Header_Num'Last + 1));
    end Hash;
 
    ----------
@@ -308,14 +311,18 @@ package body KeyManager_Module is
    procedure Free (Element : in out Key_Description_List) is
       Current : Key_Description_List := Element;
       N       : Key_Description_List;
+      Keymap  : Keymap_Access;
    begin
       while Current /= null loop
          N := Next (Current);
-         Free (Current.Action);
 
-         --  Do not free the context, since it is shared
-         --  among key bindings
-
+         if Current.Action = null then
+            Keymap := Get_Keymap (Current);
+            Reset (Keymap.Table);
+            Unchecked_Free (Keymap);
+         else
+            Free (Current.Action);
+         end if;
          Unchecked_Free (Current);
          Current := N;
       end loop;

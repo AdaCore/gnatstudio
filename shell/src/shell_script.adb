@@ -451,6 +451,7 @@ package body Shell_Script is
    procedure Free (X : in out Command_Information) is
    begin
       Free (X.Command);
+      Free (X.Short_Command);
       Free (X.Usage);
       Free (X.Description);
    end Free;
