@@ -1,17 +1,15 @@
 with "../gtkada/gtkada";
 with "../gvd/gvd_common";
 with "../common/common";
-with "../kernel/kernel";
+with "vsearch";
 
-project Vsearch is
+project Vsearch_Test is
 
-   for Source_Dirs use ("src");
+   for Source_Dirs use ("tests");
    for Object_Dir use "obj";
 
    package Compiler is
       for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
-      for Switches ("vsearch_pkg.adb") use ("-g", "-O2");
-      for Switches ("files_extra_info_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
-end Vsearch;
+end Vsearch_Test;
