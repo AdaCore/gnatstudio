@@ -1,2 +1,2 @@
 all build compile link ada c c++ clean internal-clean :
-	$(MAKE) -s -f Makefile.aunit $@
+	$(MAKE) -s -f Makefile.custom $@
