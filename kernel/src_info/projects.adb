@@ -467,7 +467,7 @@ package body Projects is
    is
       Full : constant String := Get_Full_Path_From_File
         (Project_Registry (Get_Registry (Project)), Base_Name,
-         Use_Source_Path, Use_Object_Path);
+         Use_Source_Path, Use_Object_Path, Project);
    begin
       if Full = "" then
          return VFS.No_File;
