@@ -70,11 +70,17 @@ package body Commands is
    -------------
 
    procedure Enqueue
-     (Queue  : Command_Queue;
-      Action : access Root_Command) is
+     (Queue         : Command_Queue;
+      Action        : access Root_Command;
+      High_Priority : Boolean := False) is
    begin
       Action.Queue := Queue;
-      Append (Queue.The_Queue, Command_Access (Action));
+
+      if High_Priority then
+         Prepend (Queue.The_Queue, Command_Access (Action));
+      else
+         Append (Queue.The_Queue, Command_Access (Action));
+      end if;
 
       if not Queue.Command_In_Progress then
          Execute_Next_Action (Queue);
