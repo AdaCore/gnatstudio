@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -66,7 +66,6 @@ package body VCS.Generic_VCS is
    type VCS_Generic_Module_ID_Access is access
      all VCS_Generic_Module_ID_Record'Class;
 
-   Generic_VCS_Name        : constant String := "Generic VCS";
    VCS_Generic_Module_Name : constant String := "Generic VCS connectivity";
    VCS_Generic_Module_ID   : VCS_Generic_Module_ID_Access;
 
@@ -88,6 +87,38 @@ package body VCS.Generic_VCS is
      (Kernel : Kernel_Handle;
       File   : Virtual_File) return Selection_Context_Access;
    --  Create a file context corresponding to File.
+
+   procedure Generic_Command
+     (Ref    : access Generic_VCS_Record;
+      Files  : String_List.List;
+      Action : VCS_Action);
+   --  Launch a generic command corresponding to Action.
+
+   procedure Generic_Command
+     (Ref    : access Generic_VCS_Record;
+      File   : VFS.Virtual_File;
+      Action : VCS_Action);
+   --  Launch a generic command corresponding to Action.
+
+   function Lookup_Action
+     (Kernel : Kernel_Handle;
+      Action : String_Access) return Action_Record;
+   --  Wrapper for Lookup_Action.
+
+   -------------------
+   -- Lookup_Action --
+   -------------------
+
+   function Lookup_Action
+     (Kernel : Kernel_Handle;
+      Action : String_Access) return Action_Record is
+   begin
+      if Action = null then
+         return No_Action;
+      else
+         return Lookup_Action (Kernel, Action.all);
+      end if;
+   end Lookup_Action;
 
    -------------------------
    -- Create_File_Context --
@@ -177,9 +208,12 @@ package body VCS.Generic_VCS is
    ----------
 
    function Name (Ref : access Generic_VCS_Record) return String is
-      pragma Unreferenced (Ref);
    begin
-      return Generic_VCS_Name;
+      if Ref.Id /= null then
+         return Ref.Id.all;
+      else
+         return "";
+      end if;
    end Name;
 
    ----------
@@ -192,6 +226,87 @@ package body VCS.Generic_VCS is
       null;
    end Free;
 
+   ---------------------
+   -- Generic_Command --
+   ---------------------
+
+   procedure Generic_Command
+     (Ref    : access Generic_VCS_Record;
+      Files  : String_List.List;
+      Action : VCS_Action)
+   is
+      Kernel : Kernel_Handle renames Ref.Kernel;
+
+      The_Action : constant Action_Record :=
+        Lookup_Action (Kernel, Ref.Commands (Action));
+
+      Node   : List_Node := First (Files);
+
+      Custom : Command_Access;
+
+      Args   : GNAT.OS_Lib.String_List_Access;
+      Index  : Natural := 1;
+   begin
+      if The_Action = No_Action
+        or else Is_Empty (Files)
+      then
+         return;
+      end if;
+
+      --  ??? Where is Args freed ?
+      Args := new GNAT.OS_Lib.String_List (1 .. Length (Files));
+
+      while Node /= Null_Node loop
+         Args (Index) := new String'(Data (Node));
+         Index := Index + 1;
+         Node := Next (Node);
+      end loop;
+
+      Custom := Create_Proxy
+        (The_Action.Command,
+         (null,
+          null,
+          Args));
+
+      Launch_Background_Command
+        (Kernel,
+         Custom,
+         True,
+         True,
+         Ref.Id.all,
+         True);
+   end Generic_Command;
+
+   procedure Generic_Command
+     (Ref    : access Generic_VCS_Record;
+      File   : VFS.Virtual_File;
+      Action : VCS_Action)
+   is
+      Kernel     : Kernel_Handle renames Ref.Kernel;
+      The_Action : constant Action_Record :=
+        Lookup_Action (Kernel, Ref.Commands (Action));
+      Custom     : Command_Access;
+   begin
+      if The_Action = No_Action then
+         return;
+      end if;
+
+      Custom := Create_Proxy
+        (The_Action.Command,
+         (null,
+          Create_File_Context (Kernel, File),
+          new GNAT.OS_Lib.String_List'
+            ((1 => new String'(Full_Name (File).all)))));
+
+      Launch_Background_Command
+        (Kernel,
+         Custom,
+         True,
+         True,
+         Ref.Id.all,
+         True);
+   end Generic_Command;
+
    ----------------
    -- Get_Status --
    ----------------
@@ -202,33 +317,8 @@ package body VCS.Generic_VCS is
       Clear_Logs  : Boolean := False)
    is
       pragma Unreferenced (Clear_Logs);
-      Kernel : Kernel_Handle renames Rep.Kernel;
-
-      Action : constant Action_Record :=
-        Lookup_Action (Kernel, Rep.Commands (Status).all);
-
-      Node : List_Node := First (Filenames);
-
-      Custom : Command_Access;
-
    begin
-      while Node /= Null_Node loop
-         Custom := Create_Proxy
-           (Action.Command,
-            (null,
-             Create_File_Context (Kernel, Create (Data (Node))),
-             new GNAT.OS_Lib.String_List'((1 => new String'(Data (Node))))));
-
-         Launch_Background_Command
-           (Kernel,
-            Custom,
-            True,
-            True,
-            Rep.Id.all,
-            True);
-
-         Node := Next (Node);
-      end loop;
+      Generic_Command (Rep, Filenames, Status);
    end Get_Status;
 
    ----------------------
@@ -268,9 +358,9 @@ package body VCS.Generic_VCS is
       Filenames : String_List.List;
       User_Name : String := "")
    is
-      pragma Unreferenced (Rep, User_Name, Filenames);
+      pragma Unreferenced (User_Name);
    begin
-      null;
+      Generic_Command (Rep, Filenames, Open);
    end Open;
 
    ------------
@@ -280,11 +370,50 @@ package body VCS.Generic_VCS is
    procedure Commit
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List)
+      Log       : String)
    is
-      pragma Unreferenced (Logs, Rep, Filenames);
+      Kernel : Kernel_Handle renames Rep.Kernel;
+
+      The_Action : constant Action_Record :=
+        Lookup_Action (Kernel, Rep.Commands (Commit));
+
+      Node   : List_Node := First (Filenames);
+
+      Custom : Command_Access;
+
+      Args   : GNAT.OS_Lib.String_List_Access;
+      Index  : Natural := 2;
    begin
-      null;
+      if The_Action = No_Action
+        or else Is_Empty (Filenames)
+      then
+         return;
+      end if;
+
+      --  ??? Where is Args freed ?
+      Args := new GNAT.OS_Lib.String_List (1 .. Length (Filenames) + 1);
+
+      Args (1) := new String'(Log);
+
+      while Node /= Null_Node loop
+         Args (Index) := new String'(Data (Node));
+         Index := Index + 1;
+         Node := Next (Node);
+      end loop;
+
+      Custom := Create_Proxy
+        (The_Action.Command,
+         (null,
+          null,
+          Args));
+
+      Launch_Background_Command
+        (Kernel,
+         Custom,
+         True,
+         True,
+         Rep.Id.all,
+         True);
    end Commit;
 
    ------------
@@ -293,11 +422,9 @@ package body VCS.Generic_VCS is
 
    procedure Update
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
-   is
-      pragma Unreferenced (Rep, Filenames);
+      Filenames : String_List.List) is
    begin
-      null;
+      Generic_Command (Rep, Filenames, Update);
    end Update;
 
    -----------
@@ -362,9 +489,12 @@ package body VCS.Generic_VCS is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      pragma Unreferenced (Rep, File, Version_2, Version_1);
+      pragma Unreferenced (Version_2, Version_1);
+      Filenames : String_List.List;
    begin
-      null;
+      --  ??? This will only diff against the head revision.
+      Generic_Command (Rep, File, Diff_Head);
+      Free (Filenames);
    end Diff;
 
    ---------
@@ -376,9 +506,10 @@ package body VCS.Generic_VCS is
       File : VFS.Virtual_File;
       Rev  : String)
    is
-      pragma Unreferenced (Rep, Rev, File);
+      pragma Unreferenced (Rev);
    begin
-      null;
+      --  ??? Will not work for specified revision history
+      Generic_Command (Rep, File, History);
    end Log;
 
    --------------
@@ -455,7 +586,7 @@ package body VCS.Generic_VCS is
                  (Get_Attribute (Node, "action", ""));
 
                Ref.Labels (A) := new String'
-                 (Get_Attribute (Node, "action", To_Lower (A'Img)));
+                 (Get_Attribute (Node, "label", To_Lower (A'Img)));
                --  ??? Should we use better than To_Lower here ?
             else
                Trace (Me, "Warning: no command provided for action " & A'Img);
@@ -619,6 +750,16 @@ package body VCS.Generic_VCS is
 
       return Status;
    end Parse_Status;
+
+   ----------------------------
+   -- Get_Identified_Actions --
+   ----------------------------
+
+   function Get_Identified_Actions
+     (Rep : access Generic_VCS_Record) return Action_Array is
+   begin
+      return Rep.Labels;
+   end Get_Identified_Actions;
 
    ---------------------
    -- Register_Module --
