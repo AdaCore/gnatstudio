@@ -36,15 +36,13 @@ with Src_Editor_Module;           use Src_Editor_Module;
 with Pango.Layout;                use Pango.Layout;
 
 with Traces;                      use Traces;
-with Basic_Types;                 use Basic_Types;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 
-with Basic_Types;               use Basic_Types;
 with System;
 
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 
 with Pango.Layout;              use Pango.Layout;
@@ -481,7 +479,7 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer     : access Source_Buffer_Record'Class;
       Identifier : String;
       Box        : Gtk_Widget;
-      Info       : Glide_Kernel.Modules.Line_Information_Data)
+      Info       : Standard_Hooks.Line_Information_Data)
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
