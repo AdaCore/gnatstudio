@@ -108,6 +108,7 @@ package body Src_Info.ALI is
       '^'    => Subprogram_Access_Parameter,
       'b'    => Body_Entity,
       'c'    => Completion_Of_Private_Or_Incomplete_Type,
+      'd'    => Discriminant,
       'e'    => End_Of_Spec,
       'i'    => Implicit,
       'k'    => Parent_Package,
