@@ -308,6 +308,7 @@ package body Glide_Result_View is
    is
       File_Iter : Gtk_Tree_Iter;
       File_Path : Gtk_Tree_Path;
+      Loc_Iter  : Gtk_Tree_Iter;
       Category  : GNAT.OS_Lib.String_Access;
    begin
       --  Unhighight all the lines and remove all marks in children of the
@@ -345,6 +346,25 @@ package body Glide_Result_View is
               (Full_Filename => Get_String
                  (View.Tree.Model, File_Iter, Absolute_Name_Column)),
             0, Category.all, False);
+
+         --  Delete the marks corresponding to all locations in this file.
+         Loc_Iter := Children (View.Tree.Model, File_Iter);
+
+         while Loc_Iter /= Null_Iter loop
+            declare
+               Mark : constant String :=
+                 Get_String (View.Tree.Model, Loc_Iter, Mark_Column);
+               Args : GNAT.OS_Lib.Argument_List := (1 => new String'(Mark));
+            begin
+               if Mark /= "" then
+                  Execute_GPS_Shell_Command (View.Kernel, "delete_mark", Args);
+               end if;
+
+               Free (Args);
+            end;
+
+            Next (View.Tree.Model, Loc_Iter);
+         end loop;
 
          Next (View.Tree.Model, File_Iter);
       end loop;
