@@ -46,8 +46,6 @@ with Log_Utils;                   use Log_Utils;
 with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with GVD.Dialogs;                 use GVD.Dialogs;
-
 with Basic_Types;                 use Basic_Types;
 
 with Projects.Registry;           use Projects, Projects.Registry;
@@ -166,6 +164,11 @@ package body VCS_View_API is
      (Context : Selection_Context_Access;
       Action  : VCS_Action);
    --  Generic callback for an action that requires associated logs.
+
+   procedure Comparison
+     (Context : Selection_Context_Access;
+      One_Rev : Boolean);
+   --  Factorize code between On_Menu_Diff_Specific and On_Menu_Diff2.
 
    ---------------------
    -- Get_Current_Ref --
@@ -432,6 +435,7 @@ package body VCS_View_API is
 
             Add_Action (Diff_Head, On_Menu_Diff'Access);
             Add_Action (Diff, On_Menu_Diff_Specific'Access);
+            Add_Action (Diff2, On_Menu_Diff2'Access);
 
             Gtk_New (Item);
             Append (Menu, Item);
@@ -2305,12 +2309,51 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      use String_List;
       pragma Unreferenced (Widget);
+   begin
+      Comparison (Context, True);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff_Specific;
 
-      Files  : String_List.List;
-      Ref    : constant VCS_Access := Get_Current_Ref (Context);
+   -------------------
+   -- On_Menu_Diff2 --
+   -------------------
 
+   procedure On_Menu_Diff2
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Comparison (Context, False);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff2;
+
+   ----------------
+   -- Comparison --
+   ----------------
+
+   procedure Comparison
+     (Context : Selection_Context_Access;
+      One_Rev : Boolean)
+   is
+      use String_List;
+
+      Files      : String_List.List;
+      Ref        : constant VCS_Access := Get_Current_Ref (Context);
+
+      Kernel     : constant Kernel_Handle := Get_Kernel (Context);
+      Explorer   : constant VCS_View_Access :=
+        Get_Explorer (Kernel);
+      Status     : File_Status_Record;
+      Revision_1 : String_Access;
+      Revision_2 : String_Access;
+      Str        : String_Access;
+      Index      : Natural;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -2321,34 +2364,70 @@ package body VCS_View_API is
          return;
       end if;
 
-      if not Save_Files (Get_Kernel (Context), Files) then
+      if not Save_Files (Kernel, Files) then
          return;
       end if;
 
-      declare
-         Str : constant String :=
-           Simple_Entry_Dialog
-             (Get_Main_Window (Get_Kernel (Context)),
-              -"Compare against revision...",
-              -"Enter revision: ");
-      begin
-         if Str'Length /= 0
-           and then Str (Str'First) /= ASCII.NUL
-         then
+      Status := Get_Cached_Status (Explorer, Create (Head (Files)), Ref);
+
+      if not One_Rev then
+         if Is_Empty (Status.Repository_Revision) then
+            Revision_2 := new String'("");
+         else
+            Revision_2 := new String'(Head (Status.Repository_Revision));
+         end if;
+      end if;
+
+      if Is_Empty (Status.Working_Revision) then
+         Revision_1 := new String'("");
+      else
+         Revision_1 := new String'(Head (Status.Working_Revision));
+      end if;
+
+      if One_Rev then
+         Str := new String'
+           (Execute_GPS_Shell_Command
+              (Kernel,
+               "MDI.input_dialog"
+               & " ""Compare against revison:"""
+               & " ""Revision=" & Revision_1.all & """"));
+      else
+         Str := new String'
+           (Execute_GPS_Shell_Command
+              (Kernel,
+               "MDI.input_dialog"
+               & " ""Compare between two revisons:"""
+               & " ""Revision 1=" & Revision_1.all & """"
+               & " ""Revision 2=" & Revision_2.all & """"));
+      end if;
+
+      if One_Rev then
+         if Str'Length /= 0 then
             Diff
               (Ref,
                Create (Full_Filename => Head (Files)),
-               Str,
+               Str.all,
                "");
          end if;
-      end;
+      else
+         if Str'Length /= 0 then
+            Index := Str'First;
+            Skip_To_Char (Str.all, Index, ASCII.LF);
+            Diff
+              (Ref,
+               Create (Full_Filename => Head (Files)),
+               Str (Str'First .. Index - 1),
+               Str (Index + 1 .. Str'Last));
+         end if;
+
+         Free (Revision_2);
+      end if;
+
+      Free (Revision_1);
+      Free (Str);
 
       String_List.Free (Files);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Menu_Diff_Specific;
+   end Comparison;
 
    ------------------------
    -- On_Menu_Diff_Local --
