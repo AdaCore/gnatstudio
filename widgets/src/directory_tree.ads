@@ -42,8 +42,10 @@ with Gdk.Window;
 with Gtk.Box;
 with Gtk.Clist;
 with Gtk.Ctree;
+with Gtk.Dialog;
 with Gtk.Menu;
 with Gtk.Main;
+with Gtk.Window;
 with GNAT.OS_Lib;
 
 package Directory_Tree is
@@ -131,19 +133,18 @@ package Directory_Tree is
    --  array of size 1 is returned.
    --  The return list must be freed by the caller
 
-   function Single_Directory_Selector_Dialog (Initial_Directory : String)
-      return String;
-   --  Open a dialog in which the user can select a directory.
-   --  Initial_Directory is the directory that is selected initially.
-
-   function Multiple_Directories_Selector_Dialog
-     (Initial_Directory : String;
-      Initial_Selection : GNAT.OS_Lib.Argument_List := No_Selection)
-      return GNAT.OS_Lib.Argument_List;
-   --  Open a dialog for the selection of multiple directories by the user.
-   --  Return the list of directories selected by the user.
-   --  It is the responsability of the caller to free the array.
-
+   function Run
+     (Selector : access Directory_Selector_Record'Class;
+      Title    : String;
+      Parent   : access Gtk.Window.Gtk_Window_Record'Class)
+      return Gtk.Dialog.Gtk_Response_Type;
+   --  Open a new dialog, that contains Selector, and run it until the user
+   --  presses either OK or Cancel.
+   --  On exit, either Gtk_Response_OK or Gtk_Response_Cancel is
+   --  returned. Selector is removed from the dialog, but is not destroyed, and
+   --  you should do it yourself. If you got Gtk_Response_OK, you should read
+   --  the selection yourself with Get_Single_Selection or
+   --  Get_Multiple_Selection.
 
 private
    type Dir_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record

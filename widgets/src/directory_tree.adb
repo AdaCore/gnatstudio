@@ -47,6 +47,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
@@ -55,7 +56,6 @@ with Pixmaps_IDE;               use Pixmaps_IDE;
 with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 with Unchecked_Deallocation;
-with Ada.Text_IO; use Ada.Text_IO;
 
 package body Directory_Tree is
 
@@ -170,10 +170,6 @@ package body Directory_Tree is
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use when the user clicks in the list of
    --  selected directories
-
-   procedure Ok_Clicked_Cb (Dialog : access Gtk_Widget_Record'Class);
-   procedure Cancel_Clicked_Cb (Dialog : access Gtk_Widget_Record'Class);
-   --  Callback for the buttons in the high-level dialogs
 
    function Select_Directory_Idle (Data : Idle_Data_Access) return Boolean;
    --  Select a new directory in an idle loop (so that we can properly display
@@ -958,7 +954,6 @@ package body Directory_Tree is
             Length : constant Gint := Get_Rows (Selector.List);
             Args : Argument_List (1 .. Natural (Length));
          begin
-            Put_Line ("Num selections=" & Length'Img);
             for A in Args'Range loop
                Args (A) := new String'
                  (Get_Text (Selector.List, Gint (A) - 1, 0));
@@ -968,125 +963,37 @@ package body Directory_Tree is
       end if;
    end Get_Multiple_Selection;
 
-   -------------------
-   -- Ok_Clicked_Cb --
-   -------------------
+   ---------
+   -- Run --
+   ---------
 
-   procedure Ok_Clicked_Cb (Dialog : access Gtk_Widget_Record'Class) is
-   begin
-      My_Dialog_Record (Dialog.all).Cancelled := False;
-      Main_Quit;
-   end Ok_Clicked_Cb;
-
-   -----------------------
-   -- Cancel_Clicked_Cb --
-   -----------------------
-
-   procedure Cancel_Clicked_Cb (Dialog : access Gtk_Widget_Record'Class) is
-   begin
-      My_Dialog_Record (Dialog.all).Cancelled := True;
-      Main_Quit;
-   end Cancel_Clicked_Cb;
-
-   --------------------------------------
-   -- Single_Directory_Selector_Dialog --
-   --------------------------------------
-
-   function Single_Directory_Selector_Dialog (Initial_Directory : String)
-      return String
+   function Run
+     (Selector : access Directory_Selector_Record'Class;
+      Title    : String;
+      Parent   : access Gtk.Window.Gtk_Window_Record'Class)
+      return Gtk.Dialog.Gtk_Response_Type
    is
       Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      Selector : Directory_Selector;
+      Button : Gtk_Widget;
+      Response : Gtk_Response_Type;
    begin
-      Dialog := new My_Dialog_Record;
-      Gtk.Dialog.Initialize (Dialog);
-      Set_Title (Dialog, "Select directory");
-      Set_Default_Size (Dialog, 600, 480);
+      Gtk_New (Dialog,
+               Title => Title,
+               Parent => Parent,
+               Flags => Modal or Destroy_With_Parent);
+      Set_Default_Size (Dialog, 640, 480);
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
-      Gtk_New (Selector, Initial_Directory, Multiple_Directories => False);
       Pack_Start (Get_Vbox (Dialog), Selector, Fill => True, Expand => True);
-
-      Gtk_New (Button, "OK");
-      Pack_Start
-        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Ok_Clicked_Cb'Access), Dialog);
-
-      Gtk_New (Button, "Cancel");
-      Pack_Start
-        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Cancel_Clicked_Cb'Access), Dialog);
-
       Show_All (Dialog);
-      Main;
 
-      if My_Dialog_Record (Dialog.all).Cancelled then
-         Destroy (Dialog);
-         return "";
-      else
-         declare
-            Name : constant String := Get_Single_Selection (Selector);
-         begin
-            Destroy (Dialog);
-            return Name;
-         end;
-      end if;
-   end Single_Directory_Selector_Dialog;
+      Response := Run (Dialog);
+      Ref (Selector);
+      Remove (Get_Vbox (Dialog), Selector);
+      Destroy (Dialog);
 
-   ------------------------------------------
-   -- Multiple_Directories_Selector_Dialog --
-   ------------------------------------------
-
-   function Multiple_Directories_Selector_Dialog
-     (Initial_Directory : String;
-      Initial_Selection : GNAT.OS_Lib.Argument_List := No_Selection)
-      return GNAT.OS_Lib.Argument_List
-   is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Button;
-      Selector : Directory_Selector;
-   begin
-      Dialog := new My_Dialog_Record;
-      Gtk.Dialog.Initialize (Dialog);
-      Set_Title (Dialog, "Select multiple directories");
-      Set_Default_Size (Dialog, 600, 480);
-
-      Gtk_New (Selector, Initial_Directory, Multiple_Directories => True,
-              Initial_Selection => Initial_Selection);
-      Pack_Start (Get_Vbox (Dialog), Selector, Fill => True, Expand => True);
-
-      Gtk_New (Button, "OK");
-      Pack_Start
-        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Ok_Clicked_Cb'Access), Dialog);
-
-      Gtk_New (Button, "Cancel");
-      Pack_Start
-        (Get_Action_Area (Dialog), Button, Fill => False, Expand => False);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Cancel_Clicked_Cb'Access), Dialog);
-
-      Show_All (Dialog);
-      Main;
-
-      if My_Dialog_Record (Dialog.all).Cancelled then
-         Destroy (Dialog);
-         return (2 .. 1 => null);
-      else
-         declare
-            List : constant Argument_List := Get_Multiple_Selection (Selector);
-         begin
-            Destroy (Dialog);
-            return List;
-         end;
-      end if;
-   end Multiple_Directories_Selector_Dialog;
+      return Response;
+   end Run;
 
 end Directory_Tree;
