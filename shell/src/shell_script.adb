@@ -1191,6 +1191,30 @@ package body Shell_Script is
       Command : String;
       Errors  : access Boolean) return String
    is
+      function Unprotect (Str : String) return String;
+      --  Remove the \ protections in Str
+
+      function Unprotect (Str : String) return String is
+         Result : String (Str'Range);
+         Index  : Natural := Result'First;
+         S      : Natural := Str'First;
+      begin
+         while S <= Str'Last loop
+            if Str (S) = '\' then
+               Result (Index) := Str (S + 1);
+               S := S + 2;
+            else
+               Result (Index) := Str (S);
+               S := S + 1;
+            end if;
+
+            Index := Index + 1;
+         end loop;
+
+         return Result (Result'First .. Index - 1);
+      end Unprotect;
+
+
       Args         : Argument_List_Access;
       First, Last  : Integer;
       Tmp          : GNAT.OS_Lib.String_Access;
@@ -1232,32 +1256,39 @@ package body Shell_Script is
 
             Args := Argument_String_To_List (Command (First .. Last - 1));
 
-            --  Cleanup the arguments to remove unnecessary quoting
-            for J in Args'Range loop
-               if Args (J) (Args (J)'First) = '"'
-                 and then Args (J) (Args (J)'Last) = '"'
-               then
-                  Tmp := Args (J);
-                  Args (J) := new String'(Tmp (Tmp'First + 1 .. Tmp'Last - 1));
-                  Free (Tmp);
-               end if;
-            end loop;
+            if Args = null or else Args'Length = 0 then
+               Trace (Me, "Couldn't parse argument string for "
+                      & Command (First .. Last - 1));
+               Trace (Me, "Whole command is " & Command & "--");
+            else
+               --  Cleanup the arguments to remove unnecessary quoting
+               for J in Args'Range loop
+                  if Args (J) (Args (J)'First) = '"'
+                    and then Args (J) (Args (J)'Last) = '"'
+                  then
+                     Tmp := Args (J);
+                     Args (J) := new String'
+                       (Unprotect (Tmp (Tmp'First + 1 .. Tmp'Last - 1)));
+                     Free (Tmp);
+                  end if;
+               end loop;
 
-            Trace (Me, "Executing command "
-                   & Command (First .. Last - 1));
-            declare
-               R : constant String := Execute_GPS_Shell_Command
-                 (Kernel,
-                  Command => Args (Args'First).all,
-                  Args    => Args (Args'First + 1 .. Args'Last),
-                  Errors  => Errors);
-            begin
-               Free (Args);
+               Trace (Me, "Executing command "
+                      & Command (First .. Last - 1));
+               declare
+                  R : constant String := Execute_GPS_Shell_Command
+                    (Kernel,
+                     Command => Args (Args'First).all,
+                     Args    => Args (Args'First + 1 .. Args'Last),
+                     Errors  => Errors);
+               begin
+                  Free (Args);
 
-               if Last > Command'Last then
-                  return R;
-               end if;
-            end;
+                  if Last > Command'Last then
+                     return R;
+                  end if;
+               end;
+            end if;
 
             First := Last + 1;
          end loop;
