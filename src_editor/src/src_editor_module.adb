@@ -53,6 +53,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Text_Mark;             use Gtk.Text_Mark;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
 with Gtkada.Handlers;           use Gtkada.Handlers;
@@ -67,19 +68,37 @@ with Prj_API;                   use Prj_API;
 with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
 
+with Generic_List;
+
 package body Src_Editor_Module is
 
    Me : constant Debug_Handle := Create ("Src_Editor_Module");
 
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
 
+   type Mark_Identifier_Record is record
+      Id     : Natural;
+      Child  : MDI_Child;
+      File   : Basic_Types.String_Access;
+      Mark   : Gtk_Text_Mark;
+   end record;
+
+   procedure Free (X : in out Mark_Identifier_Record);
+   --  Free memory associated to X.
+
+   package Mark_Identifier_List is new Generic_List (Mark_Identifier_Record);
+
    type Source_Editor_Module_Record is new Module_ID_Record with record
       Reopen_Menu_Item         : Gtk_Menu_Item;
       List                     : String_List_Utils.String_List.List;
       Source_Lines_Revealed_Id : Handler_Id := No_Handler;
       File_Edited_Id           : Handler_Id := No_Handler;
+      File_Closed_Id           : Handler_Id := No_Handler;
       Location_Open_Id         : Idle_Handler_Id := 0;
       Display_Line_Numbers     : Boolean    := False;
+
+      Stored_Marks             : Mark_Identifier_List.List;
+      Next_Mark_Id             : Natural := 0;
    end record;
    type Source_Editor_Module is access all Source_Editor_Module_Record'Class;
 
@@ -301,6 +320,19 @@ package body Src_Editor_Module is
       Kernel  : Kernel_Handle);
    --  Callback for the "file_edited" signal.
 
+   procedure File_Closed_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_closed" signal.
+
+   procedure File_Saved_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle);
+   --  Callback for the "file_saved" signal.
+   pragma Unreferenced (File_Saved_Cb);
+
    procedure Preferences_Changed
      (K : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the preferences have changed.
@@ -310,6 +342,15 @@ package body Src_Editor_Module is
       Command : String;
       Args    : String_List_Utils.String_List.List) return String;
    --  Interactive command handler for the source editor module.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Mark_Identifier_Record) is
+   begin
+      Free (X.File);
+   end Free;
 
    --------------------------
    -- Edit_Command_Handler --
@@ -321,13 +362,15 @@ package body Src_Editor_Module is
       Args    : String_List_Utils.String_List.List) return String
    is
       use String_List_Utils.String_List;
+      Id       : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
 
       Node : List_Node;
       Filename : Basic_Types.String_Access;
-      Line   : Natural := 1;
-      Column : Natural := 1;
+      Line     : Natural := 1;
+      Column   : Natural := 1;
    begin
-      if Command = "edit" then
+      if Command = "edit" or else Command = "create_mark" then
          Node := First (Args);
 
          while Node /= Null_Node loop
@@ -336,7 +379,7 @@ package body Src_Editor_Module is
 
                if Node = Null_Node then
                   Free (Filename);
-                  return -"edit: option -c requires a value";
+                  return Command & ": " & (-"option -c requires a value");
                end if;
 
                declare
@@ -345,7 +388,8 @@ package body Src_Editor_Module is
                exception
                   when others =>
                      Free (Filename);
-                     return -"edit: option -c requires a numerical value";
+                     return Command
+                     & ": " & (-"option -c requires a numerical value");
                end;
 
             elsif Data (Node) = "-l" then
@@ -353,7 +397,7 @@ package body Src_Editor_Module is
 
                if Node = Null_Node then
                   Free (Filename);
-                  return -"edit: option -l requires a value";
+                  return Command & ": " & (-"option -l requires a value");
                end if;
 
                declare
@@ -362,31 +406,73 @@ package body Src_Editor_Module is
                exception
                   when others =>
                      Free (Filename);
-                     return -"edit: option -l requires a numerical value";
+                     return Command
+                     & ": " & (-"option -l requires a numerical value");
                end;
 
             elsif Filename = null then
                Filename := new String'(Data (Node));
             else
                Free (Filename);
-               return -"edit: too many parameters";
+               return Command & ": " & (-"too many parameters");
             end if;
 
             Node := Next (Node);
          end loop;
 
          if Filename /= null then
-            Open_File_Editor
-              (Kernel,
-               Filename.all,
-               Line,
-               Column);
+            if Command = "edit" then
+               Open_File_Editor
+                 (Kernel,
+                  Filename.all,
+                  Line,
+                  Column);
+            elsif Command = "create_mark" then
+               declare
+                  MDI        : constant MDI_Window := Get_MDI (Kernel);
+                  Box        : Source_Box;
+                  Child      : MDI_Child;
+                  Iter       : Child_Iterator := First_Child (MDI);
+                  Mark_Record : Mark_Identifier_Record;
+               begin
+                  loop
+                     Child := Get (Iter);
+                     exit when Child = null
+                       or else Get_Title (Child) = Filename.all;
+                     Next (Iter);
+                  end loop;
+
+                  if Child /= null then
+                     Box := Source_Box (Get_Widget (Child));
+                     --  Create a new mark record and insert it in the list.
+
+                     Mark_Record.File := new String'(Filename.all);
+                     Mark_Record.Id := Id.Next_Mark_Id;
+
+                     Id.Next_Mark_Id := Id.Next_Mark_Id + 1;
+
+                     Mark_Record.Child := Child;
+
+                     Mark_Record.Mark :=
+                       Create_Mark (Box.Editor, Line, Column);
+
+                     Mark_Identifier_List.Append
+                       (Id.Stored_Marks, Mark_Record);
+
+                     Free (Filename);
+                     return Mark_Record.Id'Img;
+                  else
+                     Free (Filename);
+                     return -"File not open, use command edit to open it.";
+                  end if;
+               end;
+            end if;
 
             Free (Filename);
 
             return "";
          else
-            return -"edit: missing parameter file_name";
+            return Command & ": " & (-"missing parameter file_name");
          end if;
 
       elsif Command = "close" then
@@ -410,6 +496,66 @@ package body Src_Editor_Module is
             return "";
          else
             return -"close: missing parameter file_name";
+         end if;
+
+      elsif Command = "goto_mark" then
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Filename = null then
+               Filename := new String'(Data (Node));
+            else
+               Free (Filename);
+               return -"goto_mark: too many parameters";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if Filename /= null then
+            declare
+               use type Mark_Identifier_List.List_Node;
+
+               Mark_Node   : Mark_Identifier_List.List_Node;
+               Mark_Record : Mark_Identifier_Record;
+               Found       : Boolean := False;
+            begin
+               Mark_Node := Mark_Identifier_List.First (Id.Stored_Marks);
+
+               while Mark_Node /= Mark_Identifier_List.Null_Node loop
+                  Mark_Record := Mark_Identifier_List.Data (Mark_Node);
+
+                  if Mark_Record.Id'Img = " " & Filename.all then
+                     if Mark_Record.Child /= null then
+                        Raise_Child (Mark_Record.Child);
+                        Set_Focus_Child (Mark_Record.Child);
+                        Grab_Focus
+                          (Source_Box
+                             (Get_Widget (Mark_Record.Child)).Editor);
+                     end if;
+
+                     Scroll_To_Mark
+                       (Source_Box (Get_Widget (Mark_Record.Child)).Editor,
+                        Mark_Record.Mark);
+
+                     Found := True;
+                     exit;
+                  end if;
+
+                  Mark_Node := Mark_Identifier_List.Next (Mark_Node);
+               end loop;
+
+               Free (Filename);
+
+               if Found then
+                  return "";
+               else
+                  return "Mark not found.";
+               end if;
+            end;
+
+         else
+            return -"goto_mark: missing parameter file_name";
          end if;
 
       else
@@ -458,6 +604,75 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
+   --------------------
+   -- File_Closed_Cb --
+   --------------------
+
+   procedure File_Closed_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
+
+      use Mark_Identifier_List;
+
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+      File  : constant String := Get_String (Nth (Args, 1));
+
+      L         : List := Id.Stored_Marks;
+
+      Node      : List_Node;
+      Prev_Node : List_Node := Null_Node;
+   begin
+      --  Remove the marks corresponding to File from the list
+      --  of stored marks.
+
+      Node := First (Id.Stored_Marks);
+
+      while Node /= Null_Node loop
+         if Data (Node).File /= null
+           and then Data (Node).File.all = File
+         then
+            Remove_Nodes (L, Prev_Node, Node);
+
+            if Prev_Node = Null_Node then
+               Node := First (L);
+            else
+               Node := Prev_Node;
+            end if;
+
+            if Node = Null_Node then
+               return;
+            end if;
+         end if;
+
+         Prev_Node := Node;
+         Node := Next (Node);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end File_Closed_Cb;
+
+   -------------------
+   -- File_Saved_Cb --
+   -------------------
+
+   procedure File_Saved_Cb
+     (Widget  : access Glib.Object.GObject_Record'Class;
+      Args    : GValues;
+      Kernel  : Kernel_Handle) is
+      pragma Unreferenced (Widget, Args, Kernel);
+   begin
+      null;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end File_Saved_Cb;
+
    ---------------------
    -- Delete_Callback --
    ---------------------
@@ -471,6 +686,11 @@ package body Src_Editor_Module is
       return Save_Function
         (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
         = Cancel;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Delete_Callback;
 
    ------------------------
@@ -481,6 +701,11 @@ package body Src_Editor_Module is
    begin
       File_Edited (Get_Kernel (D.Edit), Get_Filename (D.Edit));
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end File_Edit_Callback;
 
    ------------------
@@ -2084,12 +2309,38 @@ package body Src_Editor_Module is
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          User_Data   => Kernel_Handle (Kernel));
 
+      Source_Editor_Module (Src_Editor_Module_Id).File_Closed_Id :=
+        Kernel_Callback.Connect
+          (Kernel,
+           File_Closed_Signal,
+           File_Closed_Cb'Access,
+           Kernel_Handle (Kernel));
+
       Register_Command
         (Kernel,
          Command => "edit",
          Help    => -"Usage:" & ASCII.LF
          & "  edit [-l line] [-c column] file_name" & ASCII.LF
          & (-"Open a file editor for file_name."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "create_mark",
+         Help    => -"Usage:" & ASCII.LF
+         & "  create_mark [-l line] [-c column] file_name" & ASCII.LF
+           & (-"Create a mark for file_name," &
+              " at position given by line and column.") & ASCII.LF
+           & (-"The identifier of the mark is returned.") & ASCII.LF
+           & (-"Use the command goto_mark to jump to this mark."),
+         Handler => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "goto_mark",
+         Help    => -"Usage:" & ASCII.LF
+         & "  goto_mark identifier" & ASCII.LF
+         & (-"Jump to the location of the mark corresponding to identifier."),
          Handler => Edit_Command_Handler'Access);
 
       Register_Command
