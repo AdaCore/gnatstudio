@@ -15,13 +15,14 @@ foreach $line (<IMPUNIT>) {
        $filename=$1;
        $unit=$2;
        $filename =~ s/\s*$//g;
-       $unit =~ s/_/__/g;
+       $double_unit = $unit;
+       $double_unit =~ s/_/__/g;
        ($hierarchy) = ($unit =~ /^([^.]+)\./);
 
        print OUT "<documentation_file>
    <shell>Editor.edit \"$filename.ads\"</shell>
    <descr>$unit</descr>
-   <menu>/Help/GNAT Runtime/$hierarchy/$unit</menu>
+   <menu>/Help/GNAT Runtime/$hierarchy/$double_unit</menu>
    <category>GNAT Runtime</category>
 </documentation_file>\n";
    }
