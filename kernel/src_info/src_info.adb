@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
 with Types;                     use Types;
 with Traces;                    use Traces;
@@ -101,7 +99,8 @@ package body Src_Info is
 
    procedure Reset (LIFL : in out LI_File_List) is
    begin
-      Reset (LIFL.Table);
+      LIFL.Table := new LI_File_HTable.HTable;
+      Reset (LIFL.Table.all);
    end Reset;
 
    ------------
@@ -113,7 +112,7 @@ package body Src_Info is
       LI_Filename : String)
       return LI_File_Ptr is
    begin
-      return Get (List.Table, LI_Filename);
+      return Get (List.Table.all, LI_Filename);
    end Locate;
 
    ------------------------
@@ -128,7 +127,7 @@ package body Src_Info is
       Short_Filename : constant String := Source_Filename;
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
-      Table : LI_File_HTable.HTable := List.Table;
+      Table : LI_File_HTable.HTable := List.Table.all;
       --  ??? Make a copy of the table since Get_First and Get_Next need
       --  a Read/Writable HTable. This is temporary since we should stop
       --  using Get_First/Next soon. See ??? comment below.
@@ -533,15 +532,13 @@ package body Src_Info is
    function Make_Source_File
      (Source_Filename        : String;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String) return Internal_File
+      Project                : Projects.Project_Type) return Internal_File
    is
       LI : constant String := LI_Filename_From_Source
         (Handler                => Get_LI_Handler_From_File
            (Glide_Language_Handler (Handler), Source_Filename),
          Source_Filename        => Source_Filename,
-         Project                => Project,
-         Predefined_Source_Path => Predefined_Source_Path);
+         Project                => Project);
 
    begin
       return (File_Name => new String'(Source_Filename),
@@ -643,65 +640,6 @@ package body Src_Info is
 
       Parse_File_Constructs (Lang, File_Name, Result);
    end Parse_File_Constructs;
-
-   ------------------------
-   -- Get_Directory_Name --
-   ------------------------
-
-   function Get_Directory_Name
-     (File                   : File_Info_Ptr;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String) return String
-   is
-      Ts : Timestamp := 0;
-   begin
-      --  If the timestamps mismatch, then we'll simply recompute the location
-      --  of the file. Generally, it will be because the file has been edited
-      --  since then (and it would be fine to use the same path), but it might
-      --  also be because the project has changed and we are pointing to some
-      --  other files.
-
-      if File.Directory_Name /= null then
-         Ts := To_Timestamp (File_Time_Stamp
-            (File.Directory_Name.all & File.Source_Filename.all));
-
-         if File.File_Timestamp /= Ts then
-            Trace (Me, "Get_Directory_Name: timestamps mismatch for file "
-                   & File.Source_Filename.all
-                   & Ts'Img
-                   & File.File_Timestamp'Img);
-            Free (File.Directory_Name);
-         end if;
-      end if;
-
-      if File.Directory_Name = null then
-         Trace (Me, "Computing directory name for "
-                & File.Source_Filename.all);
-         File.Directory_Name := new String'
-           (Dir_Name
-            (Find_File (File.Source_Filename.all,
-                        Include_Path (Project, True),
-                        Predefined_Source_Path)));
-      end if;
-
-      --  Memorize the timestamp if necessary. This case is when we
-      --  have created a dummy entry for the file, because another
-      --  file depended on it. However, since we didn't actually parse
-      --  its LI file, we don't have any timestamp
-      --  information. Memorizing it here will allow the cache for the
-      --  directory name to work properly.
-
-      if File.File_Timestamp = 0 then
-         if Ts = 0 then
-            Ts := To_Timestamp (File_Time_Stamp
-              (File.Directory_Name.all & File.Source_Filename.all));
-         end if;
-
-         File.File_Timestamp := Ts;
-      end if;
-
-      return File.Directory_Name.all;
-   end Get_Directory_Name;
 
    ------------------
    -- To_Timestamp --

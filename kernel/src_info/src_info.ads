@@ -96,8 +96,7 @@ package Src_Info is
    function Make_Source_File
      (Source_Filename : String;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project         : Projects.Project_Type;
-      Predefined_Source_Path : String) return Internal_File;
+      Project         : Projects.Project_Type) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
    --  The returned result will need to be destroyed.
    --
@@ -190,10 +189,8 @@ package Src_Info is
      (Handler                : access LI_Handler_Record;
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
-      List                   : in out LI_File_List;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String) is abstract;
+      List                   : LI_File_List;
+      Project                : Projects.Project_Type) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
    --  yet.
    --  On calling this subprogram, File is always null, and must be looked for
@@ -206,8 +203,7 @@ package Src_Info is
    function LI_Filename_From_Source
      (Handler                : access LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String)
+      Project                : Projects.Project_Type)
       return String is abstract;
    --  Return the name of the Library Information file associated with
    --  Source_Filename. In Ada, there is one such file per source
@@ -223,11 +219,9 @@ package Src_Info is
 
    procedure Parse_All_LI_Information
      (Handler                : access LI_Handler_Record;
-      List                   : in out LI_File_List;
+      List                   : LI_File_List;
       In_Directory           : String;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String;
-      Predefined_Object_Path : String) is abstract;
+      Project                : Projects.Project_Type) is abstract;
    --  Parse all the existing LI information in the directory In_Directory, and
    --  store it in the internal structures. No recompilation or parsing of the
    --  sources needs to be done in general.
@@ -768,13 +762,17 @@ private
    --  The fields Line and Column are chosen so that this constant is different
    --  from Null_File_Location.
 
-   type Parent_Kind is (Pointed_Type, Parent_Type, Returned_Type);
+   type Parent_Kind is
+     (Pointed_Type, Parent_Type, Container_Type, Returned_Type);
    --  The type of an entity in Parent_Location:
    --     - Pointed_Type: for access types, this means that the location is
    --       in fact the designed type by the access. This is also the contents
    --       type for an array.
-   --     - Parent_Type: for type and subtypes, this is one of the parent
-   --       types. This also contains the type of objects.
+   --     - Parent_Type: for type, this is one of the parent types. This also
+   --       contains the type of objects.
+   --     - Container_Type: for subtypes, point to the parent type. For
+   --       enumeration literals, point to the enumeration type. For objects
+   --       and components, point to the type.
    --     - Returned_Type: for subprograms, the type of the returned data
    --  We need this to distinguish between the kinds, since for instance an
    --  access type might either have a pointed type, or be a subtype of another
@@ -928,18 +926,6 @@ private
 
    type File_Info_Ptr is access File_Info;
 
-   function Get_Directory_Name
-     (File                   : File_Info_Ptr;
-      Project                : Projects.Project_Type;
-      Predefined_Source_Path : String) return String;
-   --  Return the directory name for File, and cache it for future usage.
-   --  This function checks the timestamp of the file, to handle the following
-   --  scenario:
-   --  imagine a project with two sources with the same name (e.g. for Windows
-   --  and linux), but one common object directory. Changing the platform would
-   --  not reparse the LI file, but we need to detect that the timestamp for
-   --  the file is incorrect, and thus recompute the directory.
-
    type File_Info_Ptr_Node;
    type File_Info_Ptr_List is access File_Info_Ptr_Node;
    type File_Info_Ptr_Node is record
@@ -1071,8 +1057,10 @@ private
    --  (we almost rewrite HTables.Simple_HTable, ie 120 SLOCs), but potentially
    --  saves a fair bit of memory.
 
+   type LI_HTable_Access is access LI_File_HTable.HTable;
+
    type LI_File_List is record
-      Table : LI_File_HTable.HTable;
+      Table : LI_HTable_Access;
    end record;
    --  The list of LI_File is implemented as a hash-table rather than
    --  a plain chained list to improve the lookup performances.
