@@ -64,6 +64,7 @@ with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_View;           use Src_Editor_View;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
@@ -1202,8 +1203,9 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Params);
    begin
-      return Save_Function
-        (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
+      return Get_Ref_Count (Source_Box (Widget).Editor) = 1
+        and then Save_Function
+          (Get_Kernel (Source_Box (Widget).Editor), Gtk_Widget (Widget), False)
         = Cancel;
 
    exception
@@ -1491,7 +1493,7 @@ package body Src_Editor_Module is
          Set_Focus_Child (Child);
 
          declare
-            Im : constant String := Image (Get_Ref_Count (Editor));
+            Im : constant String := Image (Get_Total_Ref_Count (Editor));
          begin
             Set_Title
               (Child,
@@ -3497,6 +3499,42 @@ package body Src_Editor_Module is
          return Child;
       end if;
    end Find_Editor;
+
+   -----------------------
+   -- Find_Other_Editor --
+   -----------------------
+
+   function Find_Other_Editor
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      View   : Gtk_Text_View;
+      Buffer : Gtk_Text_Buffer) return Src_Editor_Box.Source_Editor_Box
+   is
+      Iter   : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Editor : Src_Editor_Box.Source_Editor_Box;
+      Child  : MDI_Child;
+      Source : Source_Buffer;
+   begin
+      Child := Get (Iter);
+
+      while Child /= null loop
+         if Get_Widget (Child).all in Source_Box_Record'Class then
+            Editor := Source_Box (Get_Widget (Child)).Editor;
+
+            Source := Get_Buffer (Editor);
+
+            if Gtk_Text_Buffer (Source) = Buffer
+              and then Gtk_Text_View (Get_View (Editor)) /= View
+            then
+               return Editor;
+            end if;
+         end if;
+
+         Next (Iter);
+         Child := Get (Iter);
+      end loop;
+
+      return null;
+   end Find_Other_Editor;
 
    ----------------
    -- Find_Child --
