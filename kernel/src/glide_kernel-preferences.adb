@@ -449,14 +449,10 @@ package body Glide_Kernel.Preferences is
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
-      Pref    : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint is
+      Pref   : Glib.Properties.Creation.Param_Spec_Int) return Glib.Gint is
    begin
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
@@ -465,20 +461,12 @@ package body Glide_Kernel.Preferences is
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
 
-   --------------
-   -- Get_Pref --
-   --------------
-
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Creation.Param_Spec_String) return String is
    begin
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
@@ -487,20 +475,12 @@ package body Glide_Kernel.Preferences is
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
 
-   --------------
-   -- Get_Pref --
-   --------------
-
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Param_Spec_Font) return Pango.Font.Pango_Font_Description is
    begin
       return Get_Pref (Kernel.Preferences, Pref);
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
