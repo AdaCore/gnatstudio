@@ -479,7 +479,15 @@ package body Task_Manager.GUI is
          Unchecked_Free (View.Lines);
       end if;
 
-      if Manager.Queues = null then
+      if Manager.Queues = null
+        or else Manager.Queues'Length = 0
+      then
+         if View /= null
+           and then View.Dialog /= null
+         then
+            Widget_Callback.Emit_By_Name (View.Dialog, "response");
+         end if;
+
          return;
       end if;
 
@@ -701,10 +709,11 @@ package body Task_Manager.GUI is
 
    procedure Gtk_New
      (View    : out Task_Manager_Interface;
-      Manager : Task_Manager_Access) is
+      Manager : Task_Manager_Access;
+      Dialog  : Gtk_Widget := null) is
    begin
       View := new Task_Manager_Interface_Record;
-      Initialize (View, Manager);
+      Initialize (View, Manager, Dialog);
    end Gtk_New;
 
    ----------------
@@ -713,13 +722,15 @@ package body Task_Manager.GUI is
 
    procedure Initialize
      (View    : access Task_Manager_Interface_Record'Class;
-      Manager : Task_Manager_Access)
+      Manager : Task_Manager_Access;
+      Dialog  : Gtk_Widget := null)
    is
       Scrolled : Gtk_Scrolled_Window;
    begin
       Initialize_Hbox (View);
 
       View.Manager := Manager;
+      View.Dialog := Dialog;
 
       --  Initialize the tree.
 
