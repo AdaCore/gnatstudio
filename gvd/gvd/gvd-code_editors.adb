@@ -830,8 +830,14 @@ package body Odd.Code_Editors is
          Length := Positive (File_Length (F));
 
          --  Allocate the buffer
-         Editor.Buffer := new String (1 .. Length);
-         Length := Read (F, Editor.Buffer (1)'Address, Length);
+         --  and strip the ^Ms from the string
+         declare
+            S : String (1 .. Length);
+         begin
+            Length := Read (F, S'Address, Length);
+            Editor.Buffer := new String'(Strip_Control_M (S));
+         end;
+
          Close (F);
       end if;
 
