@@ -11,6 +11,13 @@ New features in GPS 2.1.0
 - Customability enhancements: New project attributes and new preferences can
   now be defined in XML files
 
+- New preference "Multi language build" to choose between gnatmake and gprmake
+  to build projects with Ada and C/C++.
+
+- New multi-language build tool: gprmake
+  This tool replaces the gpr2make tool. This is a preliminary version,
+  still under development.
+
 - Minor updates in python support: GPS.Hook.add now takes a subprogram as a
   parameter, instead of a string. This is the more usual syntax for python
   users
