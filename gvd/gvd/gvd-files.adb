@@ -75,7 +75,7 @@ package body GVD.Files is
       F             : File_Descriptor;
       Length        : Positive;
       Name          : aliased constant String :=
-        Cache.File_Name.all & ASCII.NUL;
+        To_Host_Pathname (Cache.File_Name.all) & ASCII.NUL;
       Tmp_File      : GNAT.OS_Lib.Temp_File_Name;
       Args          : Argument_List (1 .. 2);
       Result        : Expect_Match;
@@ -174,7 +174,7 @@ package body GVD.Files is
          --  Allocate the buffer
          --  and strip the ^Ms from the string
          declare
-            S : String (1 .. Length);
+            S   : String (1 .. Length);
             Pos : Natural;
          begin
             Length := Read (F, S'Address, Length);
@@ -186,12 +186,14 @@ package body GVD.Files is
             --  & LF)
             if not Cache.CR_Stripped then
                Pos := S'First;
+
                while Pos <= S'Last
                  and then S (Pos) /= ASCII.CR
                  and then S (Pos) /= ASCII.LF
                loop
                   Pos := Pos + 1;
                end loop;
+
                Cache.CR_Stripped := Pos <= S'Last and then S (Pos) = ASCII.CR;
             end if;
 
@@ -202,6 +204,7 @@ package body GVD.Files is
             end if;
 
             --  Only save the contents in the cache for remote files
+
             if Remote_Host /= null
               and then Remote_Host.all /= ""
             then
