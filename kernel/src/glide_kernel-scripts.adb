@@ -480,7 +480,7 @@ package body Glide_Kernel.Scripts is
          begin
             Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
             if Lib_Info = No_LI_File then
-               Set_Error_Msg (Data, -"File not found: " & File);
+               Set_Error_Msg (Data, -"File not found: """ & File & '"');
                return;
             end if;
 
