@@ -770,6 +770,11 @@ package body Project_Explorers_Files is
          end;
 
          Success := Expand_Row (T.File_Tree, Path, False);
+         Scroll_To_Cell
+           (T.File_Tree,
+            Path, null, True,
+            0.1, 0.1);
+
          T.Expanding := False;
       end if;
 
