@@ -930,9 +930,10 @@ package body Project_Viewers is
       else
          Gtk_New (Viewer, Kernel);
          Child := Put
-           (Get_MDI (Kernel), Viewer,
+           (Kernel, Viewer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Module => Prj_Editor_Module_ID);
          Set_Title (Child, -"Switches editor");
       end if;
 
@@ -2793,7 +2794,6 @@ package body Project_Viewers is
          Kernel                  => Kernel,
          Module_Name             => Project_Editor_Module_Name,
          Priority                => Default_Priority,
-         MDI_Child_Tag           => Project_Viewer_Record'Tag,
          Contextual_Menu_Handler => Project_Editor_Contextual'Access);
 
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
@@ -2878,7 +2878,7 @@ package body Project_Viewers is
       Register_Command
         (Kernel,
          Command      => "add_main_unit",
-         Usage        => "(main1, [main2 ...]) -> None",
+         Params       => "(main1, [main2 ...])",
          Description  =>
            -("Add some main units to the current project, and for the"
              & ASCII.LF
