@@ -1733,7 +1733,6 @@ package body Src_Editor_Module is
 
          if File /= VFS.No_File then
             Set_Title (Child, Full_Name (File), Base_Name (File));
-            File_Edited (Kernel, File);
          else
             --  Determine the number of "Untitled" files open.
 
@@ -1774,9 +1773,10 @@ package body Src_Editor_Module is
                end if;
 
                Set_Filename (Editor, Get_Filename (Child));
-               File_Edited (Kernel, Get_Filename (Child));
             end;
          end if;
+
+         File_Edited (Kernel, Get_Filename (Child));
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
