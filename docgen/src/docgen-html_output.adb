@@ -1182,18 +1182,19 @@ package body Docgen.Html_Output is
      (File   : in Ada.Text_IO.File_Type;
       Info   : in out Doc_Info) is
    begin
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Body_Text.all,
-                   Info.Body_File.all,
-                   "",
-                   First_File_Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   True,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Body_Text.all,
+         Info.Body_File.all,
+         "",
+         First_File_Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         True,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
    end Doc_HTML_Body;
 
    ------------------------
