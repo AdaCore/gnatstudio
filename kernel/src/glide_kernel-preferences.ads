@@ -83,7 +83,7 @@ package Glide_Kernel.Preferences is
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
    Animated_Image        : Param_Spec_String;
-   Splash_Screen         : Param_Spec_String;
+   Splash_Screen         : Param_Spec_Boolean;
    Tmp_Dir               : Param_Spec_String;
 
    -- Console --

@@ -66,14 +66,15 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Animated_Image), -"General");
 
-      Splash_Screen := Param_Spec_String (Gnew_String
+      Splash_Screen := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Splash-Screen",
-         Nick    => -"Splash screen",
-         Blurb   => -"Splash screen displayed (if found) when starting GPS",
-         Default => "gps-splash.jpg",
-         Flags   => Param_Readable));
+         Nick    => -"Display splash screen",
+         Blurb   => -("True if a splash screen should be displayed when"
+                      & " starting GPS"),
+         Default => True));
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
+
 
       Tmp_Dir := Param_Spec_String (Gnew_String
         (Name    => "General-Tmp-Dir",
