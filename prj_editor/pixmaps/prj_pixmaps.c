@@ -1,2 +1,2 @@
-#include "logo.xpm"
-#include "delete_var.xpm"
+#include "logo_xpm"
+#include "delete_var_xpm"
