@@ -1510,7 +1510,7 @@ package body KeyManager_Module is
       Initialize
         (Editor,
          Title  => -"Key shortcuts",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent or Modal);
       Set_Default_Size (Editor, 640, 480);
       Editor.Kernel  := Kernel;
@@ -1811,7 +1811,7 @@ package body KeyManager_Module is
          Name    : constant Virtual_File :=
            Select_File
              (Title             => -"Load Macro",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -1856,7 +1856,7 @@ package body KeyManager_Module is
          Name    : constant Virtual_File :=
            Select_File
              (Title             => -"Save Macro As",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Save_File,
               History           => Get_History (Kernel));

@@ -2127,20 +2127,20 @@ package body Switches_Editors is
       if Files'Length > 1 then
          Gtk_New (Dialog,
                   Title  => -"Editing switches for multiple files",
-                  Parent => Get_Main_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
 
       elsif Files'Length = 1 then
          Gtk_New (Dialog,
                   Title  => -"Editing switches for specific file",
-                  Parent => Get_Main_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
 
       else
          Gtk_New (Dialog,
                   Title  => (-"Editing default switches for project ")
                     & Project_Name (Project),
-                  Parent => Get_Main_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel),
                   Flags  => Modal or Destroy_With_Parent);
       end if;
 

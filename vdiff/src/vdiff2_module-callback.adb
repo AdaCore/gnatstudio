@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -58,7 +58,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select Common Ancestor",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -75,7 +75,7 @@ package body Vdiff2_Module.Callback is
            Select_File
              (Title             => -"Select First Changes",
               Base_Directory    => "",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
@@ -92,7 +92,7 @@ package body Vdiff2_Module.Callback is
               Select_File
                 (Title             => -"Select Second Changes",
                  Base_Directory    => "",
-                 Parent            => Get_Main_Window (Kernel),
+                 Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
@@ -122,7 +122,7 @@ package body Vdiff2_Module.Callback is
         Select_File
           (Title             => -"Select First File",
            Base_Directory    => "",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -139,7 +139,7 @@ package body Vdiff2_Module.Callback is
            Select_File
              (Title             => -"Select Second File",
               Base_Directory    => "",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
@@ -170,7 +170,7 @@ package body Vdiff2_Module.Callback is
         Select_File
           (Title             => -"Select Common Ancestor",
            Base_Directory    => "",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -187,7 +187,7 @@ package body Vdiff2_Module.Callback is
            Select_File
              (Title             => -"Select First Changes",
               Base_Directory    => "",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
@@ -202,7 +202,7 @@ package body Vdiff2_Module.Callback is
               Select_File
                 (Title             => -"Select Second Changes",
                  Base_Directory    => "",
-                 Parent            => Get_Main_Window (Kernel),
+                 Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
@@ -220,7 +220,7 @@ package body Vdiff2_Module.Callback is
                  Select_File
                    (Title             => -"Select Merge File",
                     Base_Directory    => "",
-                    Parent            => Get_Main_Window (Kernel),
+                    Parent            => Get_Current_Window (Kernel),
                     Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                     Kind              => Unspecified,
                     History           => Get_History (Kernel));
@@ -250,7 +250,7 @@ package body Vdiff2_Module.Callback is
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -267,7 +267,7 @@ package body Vdiff2_Module.Callback is
            Select_File
              (Title             => -"Select Second File",
               Base_Directory    => "",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Unspecified,
               History           => Get_History (Kernel));
@@ -284,7 +284,7 @@ package body Vdiff2_Module.Callback is
               Select_File
                 (Title             => -"Select Merge File",
                  Base_Directory    => "",
-                 Parent            => Get_Main_Window (Kernel),
+                 Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));

@@ -328,7 +328,7 @@ package body Action_Editor is
       Initialize
         (Dialog,
          Title  => -"Editing action """ & Action_Name & """",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent);
       Set_Default_Size (Dialog, 800, 600);
 
@@ -699,7 +699,7 @@ package body Action_Editor is
       Editor.Kernel := Kernel_Handle (Kernel);
       Initialize (Editor,
                   Title  => -"Actions editor",
-                  Parent => Get_Main_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel),
                   Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 640, 400);
 

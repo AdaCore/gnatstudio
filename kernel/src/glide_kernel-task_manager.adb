@@ -128,7 +128,7 @@ package body Glide_Kernel.Task_Manager is
       Gtk_New
         (Dialog,
          Title  => -"Tasks are running",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New

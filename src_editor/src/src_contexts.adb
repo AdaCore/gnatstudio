@@ -688,7 +688,7 @@ package body Src_Contexts is
             "",
             -"Continue search ?",
             Justify_Center,
-            Get_Main_Window (Kernel));
+            Get_Current_Window (Kernel));
 
          return Buttons = Button_Yes;
       end Continue_Dialog;
@@ -1431,7 +1431,7 @@ package body Src_Contexts is
                   Title   => -"Search",
                   Buttons => Button_Yes or Button_No,
                   Justification => Justify_Left,
-                  Parent  => Get_Main_Window (Kernel));
+                  Parent  => Get_Current_Window (Kernel));
 
                if Button = Button_Yes then
                   Move_To_First_File (C);

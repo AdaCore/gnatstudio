@@ -99,7 +99,7 @@ package body Refactoring.Rename is
       Gtk.Dialog.Initialize
         (Dialog,
          Title  => -"Renaming entity",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Destroy_With_Parent);
 
       Gtk_New (Label, -"Renaming " & Get_Full_Name (Entity => Entity));

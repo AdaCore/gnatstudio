@@ -64,7 +64,7 @@ package body Refactoring is
 
       Gtk_New (Dialog,
                Title  => -"Missing cross-reference",
-               Parent => Get_Main_Window (Kernel),
+               Parent => Get_Current_Window (Kernel),
                Flags  => Destroy_With_Parent or Modal);
       Set_Default_Size (Dialog, -1, 350);
 

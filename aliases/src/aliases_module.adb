@@ -843,7 +843,7 @@ package body Aliases_Module is
             if Dialog = null then
                Gtk_New (Dialog,
                         Title  => -"Alias Parameter Selection",
-                        Parent => Get_Main_Window (Kernel),
+                        Parent => Get_Current_Window (Kernel),
                         Flags  => Destroy_With_Parent);
                Gtk_New (S);
 
@@ -1688,7 +1688,7 @@ package body Aliases_Module is
       Editor := new Alias_Editor_Record;
       Initialize (Editor,
                   Title  => -"Aliases edition",
-                  Parent => Get_Main_Window (Kernel),
+                  Parent => Get_Current_Window (Kernel),
                   Flags  => Destroy_With_Parent);
       Set_Default_Size (Editor, 640, 400);
 

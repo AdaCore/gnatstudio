@@ -582,7 +582,7 @@ package body Docgen_Module is
       File  : aliased Virtual_File :=
         Select_File
           (Title             => -"Generate Documentation For",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));

@@ -2645,7 +2645,7 @@ package body Src_Editor_Module is
          Filename : constant Virtual_File :=
            Select_File
              (Title             => -"Open File",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -2682,7 +2682,7 @@ package body Src_Editor_Module is
       Push_State (Kernel,  Busy);
       Gtk_New (Open_File_Dialog,
                Title  => -"Open file from project",
-               Parent => Get_Main_Window (Kernel),
+               Parent => Get_Current_Window (Kernel),
                Flags  => Modal or Destroy_With_Parent);
       Set_Default_Size (Open_File_Dialog, 300, 200);
       Set_Position (Open_File_Dialog, Win_Pos_Mouse);
@@ -2845,7 +2845,7 @@ package body Src_Editor_Module is
             New_Name : constant Virtual_File :=
               Select_File
                 (Title             => -"Save File As",
-                 Parent            => Get_Main_Window (Kernel),
+                 Parent            => Get_Current_Window (Kernel),
                  Base_Directory    => Dir_Name (Old_Name).all,
                  Default_Name      => Base_Name (Old_Name),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
@@ -3011,7 +3011,7 @@ package body Src_Editor_Module is
             F      : constant Virtual_File :=
               Select_File
                 (Title             => -"Insert File",
-                 Parent            => Get_Main_Window (Kernel),
+                 Parent            => Get_Current_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Open_File,
                  History           => Get_History (Kernel));

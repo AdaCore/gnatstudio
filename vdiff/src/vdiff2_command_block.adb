@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -257,7 +257,7 @@ package body Vdiff2_Command_Block is
          Button := Message_Dialog
            (Msg     => -"No differences found.",
             Buttons => Button_OK,
-            Parent  => Get_Main_Window (Kernel));
+            Parent  => Get_Current_Window (Kernel));
          return;
       end if;
 

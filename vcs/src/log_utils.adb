@@ -90,7 +90,7 @@ package body Log_Utils is
                Dialog_Type => Warning,
                Title   => -"Corrupted file.",
                Buttons => Button_OK,
-               Parent  => Get_Main_Window (Kernel));
+               Parent  => Get_Current_Window (Kernel));
 
             Delete (Mapping);
 

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               GPS                                 --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is  free software;  you can redistribute it and/or modify  it --
@@ -223,7 +223,7 @@ package body Scenario_Views is
          Buttons       => Button_OK or Button_Cancel,
          Title         => -"Deleting a variable",
          Justification => Justify_Left,
-         Parent        => Get_Main_Window (Data.View.Kernel));
+         Parent        => Get_Current_Window (Data.View.Kernel));
    begin
       if Response = Button_OK then
          Delete_External_Variable

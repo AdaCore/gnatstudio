@@ -710,7 +710,7 @@ package body Glide_Main_Window is
               (Msg     => Nth_Arg (Data, 1),
                Buttons => Button_OK,
                Justification => Justify_Left,
-               Parent  => Get_Main_Window (Kernel));
+               Parent  => Get_Current_Window (Kernel));
          end;
 
       elsif Command = "yes_no_dialog" then
@@ -721,7 +721,7 @@ package body Glide_Main_Window is
              Buttons       => Button_Yes + Button_No,
              Justification => Justify_Left,
              Dialog_Type   => Confirmation,
-             Parent        => Get_Main_Window (Kernel)) = Button_Yes);
+             Parent        => Get_Current_Window (Kernel)) = Button_Yes);
 
       elsif Command = "input_dialog" then
          declare
@@ -776,7 +776,7 @@ package body Glide_Main_Window is
             Gtk_New
               (Dialog,
                Title  => Get_Text (Label),
-               Parent => Get_Main_Window (Kernel),
+               Parent => Get_Current_Window (Kernel),
                Flags  => Modal);
 
             Set_Alignment (Label, 0.0, 0.5);

@@ -1058,7 +1058,7 @@ package body GVD_Module is
       Gtk_New
         (Dialog,
          Title  => -"Connect to board",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
       Set_Default_Size (Dialog, 300, 100);
@@ -1140,7 +1140,7 @@ package body GVD_Module is
              (Title             => -"Select File to Debug",
               File_Pattern      => "*" & Exec_Suffix,
               Pattern_Name      => -"Executable files",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -1209,7 +1209,7 @@ package body GVD_Module is
              (Title             => -"Select Core File",
               File_Pattern      => "core*",
               Pattern_Name      => -"Core files",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));

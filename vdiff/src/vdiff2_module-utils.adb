@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -544,7 +544,7 @@ package body Vdiff2_Module.Utils is
       Button := Message_Dialog
         (Msg     => -"One of these files is already used in VDiff",
          Buttons => Button_OK,
-         Parent  => Get_Main_Window (Kernel));
+         Parent  => Get_Current_Window (Kernel));
    end Process_Differences;
 
    ------------------
@@ -1032,7 +1032,7 @@ package body Vdiff2_Module.Utils is
          Button := Message_Dialog
            (Msg         => -"Would you overwrite this file: "& Merge,
             Buttons     => Button_Yes or Button_No,
-            Parent      => Get_Main_Window (Kernel));
+            Parent      => Get_Current_Window (Kernel));
 
          if Button = Button_No then
             return;
@@ -1085,7 +1085,7 @@ package body Vdiff2_Module.Utils is
          Button := Message_Dialog
            (Msg         => -"No differences found.",
             Buttons     => Button_OK,
-            Parent      => Get_Main_Window (Id.Kernel));
+            Parent      => Get_Current_Window (Id.Kernel));
          return;
       end if;
 
@@ -1125,7 +1125,7 @@ package body Vdiff2_Module.Utils is
          Button := Message_Dialog
            (Msg         => -"No differences found.",
             Buttons     => Button_OK,
-            Parent      => Get_Main_Window (Id.Kernel));
+            Parent      => Get_Current_Window (Id.Kernel));
          return False;
       end if;
 

@@ -2544,7 +2544,7 @@ package body Src_Editor_Buffer is
                Default_Button => Button_No,
                Title          => -"File is read-only",
                Justification  => Justify_Left,
-               Parent         => Get_Main_Window (Buffer.Kernel));
+               Parent         => Get_Current_Window (Buffer.Kernel));
 
             if Buttons = Button_Yes then
                Force_Write := True;
@@ -3766,7 +3766,7 @@ package body Src_Editor_Buffer is
                   Dialog_Type   => Confirmation,
                   Title         => -"File changed on disk",
                   Justification => Justify_Left,
-                  Parent        => Get_Main_Window (Buffer.Kernel));
+                  Parent        => Get_Current_Window (Buffer.Kernel));
 
                Button := Add_Button (Dialog, -"Ignore", Gtk_Response_Yes);
                Button := Add_Button (Dialog, -"Reload", Gtk_Response_No);

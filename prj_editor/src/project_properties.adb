@@ -688,7 +688,7 @@ package body Project_Properties is
       Gtk.Dialog.Initialize
         (Dialog => Editor,
          Title  => -"Properties for " & Project_Name (Project),
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Set_Policy
         (Editor,
@@ -1164,7 +1164,7 @@ package body Project_Properties is
                Buttons => Button_OK,
                Dialog_Type => Error,
                Title   => -"Error",
-               Parent  => Get_Main_Window (Kernel));
+               Parent  => Get_Current_Window (Kernel));
 
          elsif not Is_Directory
            (Name_As_Directory (Get_Text (Editor.Path)))
@@ -1175,7 +1175,7 @@ package body Project_Properties is
                Buttons => Button_OK,
                Dialog_Type => Error,
                Title   => -"Error",
-               Parent  => Get_Main_Window (Kernel));
+               Parent  => Get_Current_Window (Kernel));
 
          else
             declare
@@ -1195,7 +1195,7 @@ package body Project_Properties is
                      Buttons => Button_Yes or Button_No,
                      Dialog_Type => Error,
                      Title   => -"Error",
-                     Parent  => Get_Main_Window (Kernel));
+                     Parent  => Get_Current_Window (Kernel));
 
                   if Response2 = Button_Yes then
                      exit;

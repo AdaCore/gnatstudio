@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2003                    --
+--                        Copyright (C) 2001-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -196,7 +196,7 @@ package body Vdiff_Module is
       File1  : constant Virtual_File :=
         Select_File
           (Title             => -"Select First File",
-           Parent            => Get_Main_Window (Kernel),
+           Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
@@ -211,7 +211,7 @@ package body Vdiff_Module is
 
       File2 := Select_File
         (Title             => -"Select Second File",
-         Parent            => Get_Main_Window (Kernel),
+         Parent            => Get_Current_Window (Kernel),
          Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
          Kind              => Unspecified,
          History           => Get_History (Kernel));

@@ -1628,7 +1628,8 @@ package body Src_Editor_Box is
    begin
       declare
          Str : constant String := Simple_Entry_Dialog
-           (Get_Main_Window (Kernel), -"Goto Line...", -"Enter line number:",
+           (Get_Current_Window (Kernel),
+            -"Goto Line...", -"Enter line number:",
             Win_Pos_Mouse, Get_History (Kernel), "Goto_Line");
 
       begin
@@ -2031,7 +2032,7 @@ package body Src_Editor_Box is
                Name : constant Virtual_File :=
                  Select_File
                    (Title             => -"Save File As",
-                    Parent            => Get_Main_Window (Editor.Kernel),
+                    Parent            => Get_Current_Window (Editor.Kernel),
                     Default_Name      => New_Base_Name.all,
                     Use_Native_Dialog =>
                       Get_Pref (Editor.Kernel, Use_Native_Dialogs),
@@ -2053,7 +2054,7 @@ package body Src_Editor_Box is
                      Dialog_Type => Confirmation,
                      Buttons => Button_OK or Button_Cancel,
                      Title => "Confirm overwriting",
-                     Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+                     Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
                   then
                      Success := False;
                   end if;
@@ -2071,7 +2072,7 @@ package body Src_Editor_Box is
                  Dialog_Type => Confirmation,
                  Buttons => Button_OK or Button_Cancel,
                  Title => -"File changed on disk",
-                 Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+                 Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
             then
                Success := False;
             else
@@ -2087,7 +2088,7 @@ package body Src_Editor_Box is
                Dialog_Type => Confirmation,
                Buttons => Button_OK or Button_Cancel,
                Title => "Confirm overwriting",
-               Parent => Get_Main_Window (Editor.Kernel)) /= Button_OK
+               Parent => Get_Current_Window (Editor.Kernel)) /= Button_OK
             then
                Success := False;
             end if;

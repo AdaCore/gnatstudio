@@ -1179,7 +1179,7 @@ package body Project_Viewers is
       Gtk_New
         (Dialog,
          Title  => -"Select name for project",
-         Parent => Get_Main_Window (Kernel),
+         Parent => Get_Current_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
       Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
       Widget := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
@@ -1415,7 +1415,7 @@ package body Project_Viewers is
             Dialog_Type => Gtkada.Dialogs.Error,
             Buttons     => Button_OK or Button_Cancel,
             Title       => -"Project already exists",
-            Parent      => Get_Main_Window (Kernel));
+            Parent      => Get_Current_Window (Kernel));
 
          exit when Result = Button_Cancel;
 
@@ -1458,7 +1458,7 @@ package body Project_Viewers is
                  Dir,
                  File_Pattern      => "*.gpr",
                  Pattern_Name      => "Project files",
-                 Parent            => Get_Main_Window (Get_Kernel (File)),
+                 Parent            => Get_Current_Window (Get_Kernel (File)),
                  Use_Native_Dialog =>
                    Get_Pref (Get_Kernel (File), Use_Native_Dialogs),
                  Kind              => Unspecified,
@@ -3125,7 +3125,7 @@ package body Project_Viewers is
                Default_Button => Button_Yes,
                Title          => -"Adding directory to project",
                Justification  => Justify_Left,
-               Parent         => Get_Main_Window (Kernel)) = Button_Yes
+               Parent         => Get_Current_Window (Kernel)) = Button_Yes
             then
                Update_Attribute_Value_In_Scenario
                  (Get_Project (Kernel),

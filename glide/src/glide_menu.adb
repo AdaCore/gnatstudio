@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -113,7 +113,7 @@ package body Glide_Menu is
              (-"Open Project",
               File_Pattern      => "*.gpr",
               Pattern_Name      => -"Project files",
-              Parent            => Get_Main_Window (Kernel),
+              Parent            => Get_Current_Window (Kernel),
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
               Kind              => Open_File,
               History           => Get_History (Kernel));
@@ -144,7 +144,7 @@ package body Glide_Menu is
       Dir    : constant String := Select_Directory
         (-"Select a directory",
          History => Get_History (Kernel),
-         Parent  => Gtk_Window (Get_Main_Window (Kernel)));
+         Parent  => Gtk_Window (Get_Current_Window (Kernel)));
 
    begin
       if Dir /= "" then
