@@ -1142,9 +1142,9 @@ package body Src_Contexts is
 
       --  Test whether the current context text contains the search string.
       --  Warning: we cannot use selection here, since apparently there can
-      --  be only only one selection in the whole GPS window, and the
-      --  selection in the source buffer will be erased when the focus is
-      --  given to the search dialog.
+      --  be only one selection in the whole GPS window, and the selection in
+      --  the source buffer will be erased when the focus is given to the
+      --  search dialog.
 
       if Context.Begin_Line > 0
         and then Context.Begin_Column > 0

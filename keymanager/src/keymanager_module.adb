@@ -1156,21 +1156,22 @@ package body KeyManager_Module is
             elsif W.all in Gtk_Menu_Item_Record'Class then
                --  ??? The best thing would be to get the accel_path for W.
                --  However, the function _gtk_widget_get_accel_path is not
-               --  exported by gtk+ (at least on some architectures like
-               --  Solaris), so we have to emulate this as best we can...
+               --  exported by gtk+, so we have to emulate this as best we
+               --  can...
                --
                --  This approach is however not really good, since menus
                --  with no accel_path are still referenced. Maybe we should
-               --  general the accel_path on the fly when saving this dialog...
+               --  generate the accel_path on the fly when saving this dialog.
 
                Child := Get_Child (Gtk_Menu_Item (W));
 
                --  Child is null for separators
-               if Child /= null then
 
+               if Child /= null then
                   --  The child is not an accel label only for togglemenu items
                   --  as far as could be seen (Window menu), and we do not want
                   --  to generate shortcuts for these anyway
+
                   if Child.all in Gtk_Label_Record'Class then
                      declare
                         Label : constant String :=
@@ -1239,6 +1240,7 @@ package body KeyManager_Module is
       Sep       : Gtk_Separator;
       Color     : Gdk_Color;
       pragma Unreferenced (Button, Num);
+
    begin
       Dialog := new Add_Editor_Record;
       Initialize (Dialog,
