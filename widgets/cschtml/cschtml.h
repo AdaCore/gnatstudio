@@ -142,6 +142,8 @@ GtkType    csc_html_get_type  (void);
 GtkWidget *csc_html_new       (void);
 void       csc_html_construct (GtkWidget *htmlw);
 
+HTMLEngine *csc_html_get_engine (CscHTML *html);
+
 /* Debugging.  */
 void  csc_html_enable_debug  (CscHTML  *html,
 			      gboolean  debug);
