@@ -175,17 +175,15 @@ package body Glide_Kernel.Console is
    procedure Insert
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Highlight_Sloc : Boolean := True;
       Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info;
-      Location_Id    : String := "")
+      Mode           : Message_Type := Info)
    is
       Console : constant Glide_Console := Get_Console (Kernel);
    begin
       if Console = null then
          Put_Line (Text);
       else
-         Insert (Console, Text, Highlight_Sloc, Add_LF, Mode, Location_Id);
+         Insert (Console, Text, Add_LF, Mode);
       end if;
    end Insert;
 

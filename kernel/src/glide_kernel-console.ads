@@ -41,16 +41,12 @@ package Glide_Kernel.Console is
    procedure Insert
      (Kernel         : access Kernel_Handle_Record'Class;
       Text           : String;
-      Highlight_Sloc : Boolean := True;
       Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info;
-      Location_Id    : String := "");
+      Mode           : Message_Type := Info);
    --  Insert Text in the GPS's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
-   --  Location_Id is the category that will be filled if the text contains
-   --  source locations.
 
    procedure Insert_Result
      (Kernel   : access Kernel_Handle_Record'Class;
