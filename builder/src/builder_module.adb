@@ -20,6 +20,7 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with Gtk.Accel_Group;         use Gtk.Accel_Group;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
 with Gtk.Enums;
@@ -807,6 +808,14 @@ package body Builder_Module is
                     (Length  => Mains (M)'Length,
                      Project => Current (Iter),
                      File    => Mains (M).all));
+
+               --  The first item in the make menu should have a key binding
+               if not Has_Child then
+                  Add_Accelerator
+                    (Mitem, "activate", Get_Default_Accelerators (Kernel),
+                     GDK_F4, 0, Gtk.Accel_Group.Accel_Visible);
+               end if;
+
                Has_Child := True;
 
                declare
