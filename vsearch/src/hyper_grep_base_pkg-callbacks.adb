@@ -38,6 +38,10 @@ with GNAT.OS_Lib;
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 
+with Glide_Kernel.Project;
+with Glide_Kernel.Console;
+with Basic_Types;           use Basic_Types;
+with String_Utils;          use String_Utils;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gdk.Color;             use Gdk.Color;
 with Gtk.Main;
@@ -54,9 +58,6 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
      (Hyper_Grep_Window : access Hyper_Grep_Base_Record'Class);
    --  Close the window and quit the main loop.
 
-   function Get_Project_Files return Project_Files_Access;
-   --  Return the project file list.
-
    ------------------
    -- Close_Window --
    ------------------
@@ -69,15 +70,6 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
 
       Gtk.Main.Main_Quit;
    end Close_Window;
-
-   -----------------------
-   -- Get_Project_Files --
-   -----------------------
-
-   function Get_Project_Files return Project_Files_Access is
-   begin
-      return null;
-   end Get_Project_Files;
 
    ------------------------------
    -- On_Browse_Button_Clicked --
@@ -157,13 +149,16 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
    procedure On_Start_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
+      use Glide_Kernel;
+      use Glide_Kernel.Project;
+
       Highlight_File : constant String := "#FF0000000000";
 
       S         : Code_Search;
       RE        : Regexp;
       Continue  : Boolean := True;
       Highlight : Gdk_Color;
-
+      Sources   : String_Array_Access;
 
       Hyper_Grep_Window : constant Hyper_Grep_Access :=
         Hyper_Grep_Access (Get_Toplevel (Object));
@@ -210,10 +205,9 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
          Dummy : Boolean;
       begin
          if Match_Found then
-            --  ??? Console.Insert_Line
-            --    (Kernel, File & ":" & Image (Line_Nr) & ":" &
-            --             Line_Text & ASCII.LF);
-            null;
+            Console.Insert
+              (Hyper_Grep_Window.Kernel, File & ":" & Image (Line_Nr) & ":" &
+               Line_Text);
          end if;
 
          while Gtk.Main.Events_Pending loop
@@ -253,14 +247,17 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       end if;
 
       if Get_Active (Hyper_Grep_Window.Only_Project_Check) then
-         Init_Search
-           (S,
-            Get_Text (Hyper_Grep_Window.Pattern_Entry),
-            Get_Project_Files,
-            Get_Active (Hyper_Grep_Window.Case_Check),
-            Get_Active (Hyper_Grep_Window.Whole_Word_Check),
-            Get_Active (Hyper_Grep_Window.Regexp_Check),
-            Scope);
+         if Hyper_Grep_Window.Kernel /= null then
+            Sources := Get_Source_Files (Hyper_Grep_Window.Kernel);
+            Init_Search
+              (S,
+               Get_Text (Hyper_Grep_Window.Pattern_Entry),
+               Sources,
+               Get_Active (Hyper_Grep_Window.Case_Check),
+               Get_Active (Hyper_Grep_Window.Whole_Word_Check),
+               Get_Active (Hyper_Grep_Window.Regexp_Check),
+               Scope);
+         end if;
       else
          RE := Compile
            (Get_Text (Hyper_Grep_Window.Files_Entry), Glob => True);
@@ -280,7 +277,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       Set_Sensitive (Hyper_Grep_Window.Stop_Button,  True);
       Set_Sensitive (Hyper_Grep_Window.Start_Button, False);
 
-      if Hyper_Grep_Window.Glide = null then
+      if Hyper_Grep_Window.Kernel = null then
          Search_Callback.Reset_Search;
          Do_Search (S, Search_Callback.Callback'Access);
       else
@@ -291,6 +288,7 @@ package body Hyper_Grep_Base_Pkg.Callbacks is
       Set_Sensitive (Hyper_Grep_Window.Stop_Button,  False);
       Set_Sensitive (Hyper_Grep_Window.Start_Button, True);
       Free (S);
+      Free (Sources);
 
    exception
       when Error_In_Regexp =>
