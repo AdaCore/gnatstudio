@@ -24,7 +24,7 @@ with Gdk.Event;    use Gdk.Event;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Glib.Xml_Int; use Glib.Xml_Int;
-with Commands;     use Commands;
+with Commands.Interactive;     use Commands, Commands.Interactive;
 with HTables;      use HTables;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GUI_Utils;    use GUI_Utils;
@@ -68,9 +68,7 @@ package body KeyManager_Module is
    type Key_Description;
    type Key_Description_List is access Key_Description;
    type Key_Description is record
-      Name    : String_Access;
-      Tooltip : String_Access;
-      Command : Command_Access;
+      Action  : String_Access;
       Context : Key_Context;
       Next    : Key_Description_List;
    end record;
@@ -84,10 +82,6 @@ package body KeyManager_Module is
      (System.Address, Key_Context);
    function Convert is new Ada.Unchecked_Conversion
      (Key_Context, System.Address);
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Command_Access);
-   function Convert is new Ada.Unchecked_Conversion
-     (Command_Access, System.Address);
 
    package Key_Htable is new Simple_HTable
      (Header_Num   => Keys_Header_Num,
@@ -109,29 +103,17 @@ package body KeyManager_Module is
    end record;
    type Key_Manager_Access is access all Key_Manager_Record'Class;
 
-   procedure Register_Key
+   procedure Bind_Default_Key
      (Handler        : access Key_Manager_Record;
-      Name           : String;
+      Action         : String;
       Default_Key    : Gdk.Types.Gdk_Key_Type;
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : access Commands.Root_Command'Class;
-      Tooltip        : String := "";
       Context        : Key_Context := null);
    function Process_Event
      (Handler  : access Key_Manager_Record;
-      Event    : Event_Data) return Boolean;
+      Event    : Gdk_Event) return Boolean;
    procedure Free (Handler : in out Key_Manager_Record);
    --  See documentation for imported subprograms
-
-   procedure Register_Key_Internal
-     (Handler        : access Key_Manager_Record'Class;
-      Name           : String;
-      Default_Key    : Gdk.Types.Gdk_Key_Type;
-      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : Commands.Command_Access := null;
-      Tooltip        : String := "";
-      Context        : Key_Context := null);
-   --  Internal version of Register_Key.
 
    procedure Load_Custom_Keys
      (Kernel  : access Kernel_Handle_Record'Class;
@@ -160,18 +142,16 @@ package body KeyManager_Module is
 
    procedure Lookup_Command_By_Name
      (Handler : access Key_Manager_Record'Class;
-      Name    : String;
+      Action  : String;
       Key     : out Key_Binding;
       Binding : out Key_Description_List);
    --  Search the description of a command in the table
 
-   Name_Column    : constant := 0;
+   Action_Column  : constant := 0;
    Key_Column     : constant := 1;
    Modif_Column   : constant := 2;
    Image_Column   : constant := 3;
    Context_Column : constant := 4;
-   Tooltip_Column : constant := 5;
-   Command_Column : constant := 6;
 
    ----------
    -- Hash --
@@ -194,10 +174,9 @@ package body KeyManager_Module is
    begin
       while Current /= null loop
          Next := Current.Next;
-         Free (Current.Name);
-         Free (Current.Tooltip);
+         Free (Current.Action);
 
-         --  Do not free the command or the context, since these are shared
+         --  Do not free the context, since this are shared
          --  among key bindings
 
          Current := Next;
@@ -210,7 +189,7 @@ package body KeyManager_Module is
 
    procedure Lookup_Command_By_Name
      (Handler : access Key_Manager_Record'Class;
-      Name    : String;
+      Action  : String;
       Key     : out Key_Binding;
       Binding : out Key_Description_List)
    is
@@ -226,7 +205,7 @@ package body KeyManager_Module is
          exit when Bind = No_Key;
 
          while Bind /= null loop
-            if Bind.Name.all = Name then
+            if Bind.Action.all = Action then
                Key     := Get_Key (Iter);
                Binding := Bind;
                return;
@@ -241,17 +220,15 @@ package body KeyManager_Module is
       Binding := null;
    end Lookup_Command_By_Name;
 
-   ---------------------------
-   -- Register_Key_Internal --
-   ---------------------------
+   ----------------------
+   -- Bind_Default_Key --
+   ----------------------
 
-   procedure Register_Key_Internal
-     (Handler        : access Key_Manager_Record'Class;
-      Name           : String;
+   procedure Bind_Default_Key
+     (Handler        : access Key_Manager_Record;
+      Action         : String;
       Default_Key    : Gdk.Types.Gdk_Key_Type;
       Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : Commands.Command_Access := null;
-      Tooltip        : String := "";
       Context        : Key_Context := null)
    is
       Binding, Binding2 : Key_Description_List;
@@ -259,23 +236,18 @@ package body KeyManager_Module is
    begin
       --  Chech whether command is already associated with a key binding
 
-      Lookup_Command_By_Name (Handler, Name, Key, Binding);
+      Lookup_Command_By_Name (Handler, Action, Key, Binding);
       if Binding /= null then
          --  Keep the current key binding, since it was probably
          --  customized by the user
-         Free (Binding.Name);
-         Binding.Name := new String'(Name);
-         Free (Binding.Tooltip);
-         Binding.Tooltip := new String'(Tooltip);
-         Binding.Command := Command;
+         Free (Binding.Action);
+         Binding.Action  := new String'(Action);
          Binding.Context := Context;
          return;
       end if;
 
       Binding2 := new Key_Description'
-        (Name           => new String'(Name),
-         Tooltip        => new String'(Tooltip),
-         Command        => Command,
+        (Action         => new String'(Action),
          Context        => Context,
          Next           => null);
       Binding := Get (Handler.Table, Key_Binding'(Default_Key, Default_Mod));
@@ -286,25 +258,7 @@ package body KeyManager_Module is
       else
          Set (Handler.Table, Key_Binding'(Default_Key, Default_Mod), Binding2);
       end if;
-   end Register_Key_Internal;
-
-   ------------------
-   -- Register_Key --
-   ------------------
-
-   procedure Register_Key
-     (Handler        : access Key_Manager_Record;
-      Name           : String;
-      Default_Key    : Gdk.Types.Gdk_Key_Type;
-      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Command        : access Commands.Root_Command'Class;
-      Tooltip        : String := "";
-      Context        : Key_Context := null) is
-   begin
-      Register_Key_Internal
-        (Handler, Name, Default_Key, Default_Mod,
-         Command_Access (Command), Tooltip, Context);
-   end Register_Key;
+   end Bind_Default_Key;
 
    -------------------
    -- Process_Event --
@@ -312,22 +266,26 @@ package body KeyManager_Module is
 
    function Process_Event
      (Handler  : access Key_Manager_Record;
-      Event    : Event_Data) return Boolean
+      Event    : Gdk.Event.Gdk_Event) return Boolean
    is
-      Key   : constant Gdk_Key_Type      := Get_Key_Val (Get_Event (Event));
-      Modif : constant Gdk_Modifier_Type := Get_State (Get_Event (Event));
+      Key     : constant Gdk_Key_Type      := Get_Key_Val (Event);
+      Modif   : constant Gdk_Modifier_Type := Get_State (Event);
       Binding : Key_Description_List;
+      Command : Interactive_Command_Access;
    begin
       if Handler.Active
-        and then Get_Event_Type (Get_Event (Event)) = Key_Press
+        and then Get_Event_Type (Event) = Key_Press
       then
          Binding := Get (Handler.Table, (Key, Modif));
 
          while Binding /= No_Key loop
-            if Binding.Command /= null
-              and then (Binding.Context = null
-                        or else Context_Matches (Binding.Context, Event))
-              and then Execute (Binding.Command) = Success
+            Command := Lookup_Action (Handler.Kernel, Binding.Action.all);
+
+            if Command /= null
+              and then
+                (Binding.Context = null
+                 or else Context_Matches (Binding.Context, Handler.Kernel))
+              and then Execute (Command, Event) = Success
             then
                return True;
             end if;
@@ -360,7 +318,7 @@ package body KeyManager_Module is
          while Binding /= null loop
             Child := new Node;
             Child.Tag := new String'("Key");
-            Set_Attribute (Child, "name", Binding.Name.all);
+            Set_Attribute (Child, "action", Binding.Action.all);
             Child.Value := new String'
               (Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier));
 
@@ -399,12 +357,11 @@ package body KeyManager_Module is
 
          while Child /= null loop
             Value (Child.Value.all, Key, Modif);
-            Register_Key_Internal
+            Bind_Default_Key
               (Manager,
-               Name        => Get_Attribute (Child, "name"),
+               Action      => Get_Attribute (Child, "action"),
                Default_Key => Key,
-               Default_Mod => Modif,
-               Command     => null);
+               Default_Mod => Modif);
             Child := Child.Next;
          end loop;
 
@@ -433,9 +390,7 @@ package body KeyManager_Module is
          Descr   : String;
          Key     : Gdk_Key_Type := 0;
          Modif   : Gdk_Modifier_Type := 0;
-         Context : Key_Context := null;
-         Tooltip : String := "";
-         Command : Command_Access := null) return Gtk_Tree_Iter;
+         Context : Key_Context := null) return Gtk_Tree_Iter;
       --  Add a new line into the model
 
       function Find_Parent (Context : Key_Context) return Gtk_Tree_Iter;
@@ -450,9 +405,7 @@ package body KeyManager_Module is
          Descr   : String;
          Key     : Gdk_Key_Type := 0;
          Modif   : Gdk_Modifier_Type := 0;
-         Context : Key_Context := null;
-         Tooltip : String := "";
-         Command : Command_Access := null) return Gtk_Tree_Iter
+         Context : Key_Context := null) return Gtk_Tree_Iter
       is
          procedure Internal
            (Tree, Iter : System.Address;
@@ -461,8 +414,6 @@ package body KeyManager_Module is
             Col3  : Gint; Value3 : Gint;
             Col4  : Gint; Value4 : String;
             Col5  : Gint; Value5 : System.Address;
-            Col6  : Gint; Value6 : String;
-            Col7  : Gint; Value7 : System.Address;
             Final : Gint := -1);
          pragma Import (C, Internal, "gtk_tree_store_set");
 
@@ -471,13 +422,11 @@ package body KeyManager_Module is
          Append (Editor.Model, Iter, Parent);
          Internal
            (Get_Object (Editor.Model), Iter'Address,
-            Col1 => Name_Column,    Value1 => Descr & ASCII.NUL,
+            Col1 => Action_Column,  Value1 => Descr & ASCII.NUL,
             Col2 => Key_Column,     Value2 => Gint (Key),
             Col3 => Modif_Column,   Value3 => Gint (Modif),
             Col4 => Image_Column,   Value4 => Image (Key, Modif) & ASCII.NUL,
-            Col5 => Context_Column, Value5 => Convert (Context),
-            Col6 => Tooltip_Column, Value6 => Tooltip & ASCII.NUL,
-            Col7 => Command_Column, Value7 => Convert (Command));
+            Col5 => Context_Column, Value5 => Convert (Context));
          return Iter;
       end Set;
 
@@ -519,7 +468,7 @@ package body KeyManager_Module is
       begin
          if Context = null then
             while Parent /= Null_Iter loop
-               if Get_String (Editor.Model, Parent, Name_Column) =
+               if Get_String (Editor.Model, Parent, Action_Column) =
                  -"General"
                then
                   return Parent;
@@ -534,7 +483,7 @@ package body KeyManager_Module is
                C : constant String := Get_Description (Context);
             begin
                while Parent /= Null_Iter loop
-                  if Get_String (Editor.Model, Parent, Name_Column) = C then
+                  if Get_String (Editor.Model, Parent, Action_Column) = C then
                      return Parent;
                   end if;
                   Next (Editor.Model, Parent);
@@ -567,12 +516,10 @@ package body KeyManager_Module is
          while Binding /= null loop
             Parent := Find_Parent (Binding.Context);
             Parent := Set (Parent  => Parent,
-                           Descr   => Binding.Name.all,
+                           Descr   => Binding.Action.all,
                            Key     => Get_Key (Table_Iter).Key,
                            Modif   => Get_Key (Table_Iter).Modifier,
-                           Context => Binding.Context,
-                           Tooltip => Binding.Tooltip.all,
-                           Command => Binding.Command);
+                           Context => Binding.Context);
             Binding := Binding.Next;
          end loop;
 
@@ -597,7 +544,7 @@ package body KeyManager_Module is
       while Context_Iter /= Null_Iter loop
          --  Special handling for menus
 
-         if Get_String (Editor.Model, Context_Iter, Name_Column) =
+         if Get_String (Editor.Model, Context_Iter, Action_Column) =
            -Menu_Context_Name
          then
             null;
@@ -606,18 +553,14 @@ package body KeyManager_Module is
          else
             Child := Children (Editor.Model, Context_Iter);
             while Child /= Null_Iter loop
-               Register_Key_Internal
+               Bind_Default_Key
                  (Handler,
-                  Name         =>
-                    Get_String (Editor.Model, Child, Name_Column),
+                  Action       =>
+                    Get_String (Editor.Model, Child, Action_Column),
                   Default_Key  =>
                     Gdk_Key_Type (Get_Int (Editor.Model, Child, Key_Column)),
                   Default_Mod  => Gdk_Modifier_Type
                     (Get_Int (Editor.Model, Child, Modif_Column)),
-                  Command   => Convert
-                    (Get_Address (Editor.Model, Child, Command_Column)),
-                  Tooltip   =>
-                    Get_String (Editor.Model, Child, Tooltip_Column),
                   Context   => Convert
                     (Get_Address (Editor.Model, Child, Context_Column)));
                Next (Editor.Model, Child);
@@ -713,13 +656,11 @@ package body KeyManager_Module is
          Editor);
 
       Gtk_New (Editor.Model,
-               (Name_Column    => GType_String,
+               (Action_Column   => GType_String,
                 Key_Column     => GType_Int,
                 Modif_Column   => GType_Int,
                 Image_Column   => GType_String,
-                Context_Column => GType_Pointer,
-                Tooltip_Column => GType_String,
-                Command_Column => GType_Pointer));
+                Context_Column => GType_Pointer));
       Gtk_New (Editor.View, Editor.Model);
       Add (Scrolled, Editor.View);
 
@@ -729,10 +670,10 @@ package body KeyManager_Module is
       Num := Append_Column (Editor.View, Col);
       Set_Title (Col, -"Action");
       Pack_Start (Col, Render, True);
-      Add_Attribute (Col, Render, "text", Name_Column);
+      Add_Attribute (Col, Render, "text", Action_Column);
       Set_Clickable (Col, True);
       Set_Resizable (Col, True);
-      Set_Sort_Column_Id (Col, Name_Column);
+      Set_Sort_Column_Id (Col, Action_Column);
 
       Clicked (Col);
 
