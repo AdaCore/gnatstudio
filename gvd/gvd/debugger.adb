@@ -780,7 +780,7 @@ package body Debugger is
 
          if Need_To_Strip_CR then
             Strip_CR (S, Last, CR_Found);
-            return Strip_CR (S (S'First .. Last));
+            return S (S'First .. Last);
          else
             return S;
          end if;
