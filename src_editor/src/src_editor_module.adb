@@ -612,11 +612,18 @@ package body Src_Editor_Module is
    begin
       if Source /= null then
          declare
-            Name : constant String := Select_File
-              (-"Save File As",
-               Base_Directory => Dir_Name (Get_Filename (Source)));
+            Child    : MDI_Child := Find_Current_Editor (Kernel);
+            New_Name : constant String := Select_File (-"Save File As");
          begin
-            Save_To_File (Kernel, Name, Success);
+            if New_Name = "" then
+               return;
+            else
+               Save_To_File (Source, New_Name, Success);
+               Set_Title
+                 (Child, Get_Filename (Source),
+                  Base_Name (Get_Filename (Source)));
+               Recompute_View (Kernel);
+            end if;
          end;
       end if;
 
