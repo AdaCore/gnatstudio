@@ -700,7 +700,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Empty all the buffers to avoid waiting for a long time that all
       --  the output is processed.
       Interrupt (Tab.Debugger);
-      Flush (Get_Descriptor (Get_Process (Tab.Debugger)).all, Timeout => 500);
+      Flush (Get_Descriptor (Get_Process (Tab.Debugger)).all, Timeout => 100);
 
       --  Make sure a final prompt is displayed for the user.
       --  If we are already processing a command (such as "run"), that command
