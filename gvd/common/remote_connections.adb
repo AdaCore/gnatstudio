@@ -56,6 +56,8 @@ package body Remote_Connections is
    --  Regexps used in various part of this package. These are inspired from
    --  Emacs's tramp.el mode
 
+   procedure C_Free (S : Interfaces.C.Strings.chars_ptr);
+   pragma Import (C, C_Free, "free");
 
    procedure Do_Nothing (Factory : in out Remote_Connection);
    package Factory_Hash is new String_Hash
@@ -351,10 +353,10 @@ package body Remote_Connections is
    function User_Login_Name return String is
       function Internal return Interfaces.C.Strings.chars_ptr;
       pragma Import (C, Internal, "user_login_name");
-      S : chars_ptr := Internal;
+      S : constant chars_ptr := Internal;
       Result : constant String := Value (S);
    begin
-      Free (S);
+      C_Free (S);
       return Result;
    end User_Login_Name;
 
