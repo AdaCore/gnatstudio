@@ -451,6 +451,10 @@ package Debugger is
       Line     : Positive) return Line_Kind is abstract;
    --  Indicate whether a given file and line number contain executable code.
 
+   ----------------
+   -- Exceptions --
+   ----------------
+
    Unknown_Command : exception;
    --  Raised when a command is not recognized either by the debugger, or for
    --  the currently activate language.
