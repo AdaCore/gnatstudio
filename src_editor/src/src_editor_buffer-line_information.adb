@@ -61,6 +61,7 @@ with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
+with Src_Editor_Buffer.Blocks; use Src_Editor_Buffer.Blocks;
 
 package body Src_Editor_Buffer.Line_Information is
 
@@ -95,6 +96,13 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Recalculate_Side_Column_Width
      (Buffer : access Source_Buffer_Record'Class);
    --  Recalculate the total width of the left column side.
+
+   function Fold_Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      Fold   : Boolean) return Boolean;
+   --  Fold or unfold the block containing Line.
+   --  Return True when an operation was executed, False otherwise.
 
    -----------------------------------
    -- Recalculate_Side_Column_Width --
@@ -1812,6 +1820,65 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
    end Unfold_All;
 
+   ----------------------
+   -- Fold_Unfold_Line --
+   ----------------------
+
+   function Fold_Unfold_Line
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type;
+      Fold   : Boolean) return Boolean
+   is
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
+      Editable_Lines : Editable_Line_Array_Access renames
+        Buffer.Editable_Lines;
+
+      Command        : Command_Access;
+      Buffer_Line    : Buffer_Line_Type;
+      Returned       : Command_Return_Type;
+      pragma Unreferenced (Returned);
+   begin
+      if Buffer.Block_Highlighting_Column = -1 then
+         return False;
+      end if;
+
+      Buffer.Modifying_Real_Lines := True;
+
+      for L in reverse Editable_Lines'First .. Line loop
+         if Editable_Lines (L).Where = In_Buffer then
+            Buffer_Line := Get_Buffer_Line (Buffer, L);
+
+            if Buffer_Lines (Buffer_Line).Side_Info_Data /= null
+              and then Buffer_Lines
+                (Buffer_Line).Side_Info_Data
+                (Buffer.Block_Highlighting_Column).Info /= null
+            then
+               Command :=
+                 Buffer_Lines (Buffer_Line).Side_Info_Data
+                 (Buffer.Block_Highlighting_Column).Info.Associated_Command;
+
+               if Command /= null
+                 and then
+                   ((Fold and then
+                       Command.all in Hide_Editable_Lines_Type'Class)
+                    or else
+                      (not Fold and then
+                         Command.all in Unhide_Editable_Lines_Type'Class))
+               then
+                  Buffer.Modifying_Real_Lines := False;
+                  Returned := Execute (Command);
+                  return True;
+               end if;
+            end if;
+
+            exit;
+         end if;
+      end loop;
+
+      Buffer.Modifying_Real_Lines := False;
+      return False;
+   end Fold_Unfold_Line;
+
    -----------------
    -- Unfold_Line --
    -----------------
@@ -1820,51 +1887,35 @@ package body Src_Editor_Buffer.Line_Information is
      (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type)
    is
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
-
-      Command        : Command_Access;
-      Buffer_Line    : Buffer_Line_Type;
    begin
-      if Buffer.Block_Highlighting_Column = -1 then
+      if Lines_Are_Real (Buffer) then
          return;
       end if;
 
-      Buffer.Modifying_Real_Lines := True;
-
       while Editable_Lines (Line).Where /= In_Buffer loop
-         --  Find the command unfolding the enclosing block.
-
-         for L in reverse Editable_Lines'First .. Line loop
-            if Editable_Lines (L).Where = In_Buffer then
-               Buffer_Line := Get_Buffer_Line (Buffer, L);
-
-               if Buffer_Lines (Buffer_Line).Side_Info_Data /= null
-                 and then Buffer_Lines
-                   (Buffer_Line).Side_Info_Data
-                   (Buffer.Block_Highlighting_Column).Info /= null
-               then
-                  Command :=
-                    Buffer_Lines (Buffer_Line).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column).Info.Associated_Command;
-
-                  if Command /= null
-                    and then Command.all in Unhide_Editable_Lines_Type'Class
-                  then
-                     if Execute (Command) /= Success then
-                        Buffer.Modifying_Real_Lines := False;
-                        return;
-                     end if;
-                  end if;
-               end if;
-               exit;
-            end if;
-         end loop;
+         exit when not Fold_Unfold_Line (Buffer, Line, Fold => False);
       end loop;
-
-      Buffer.Modifying_Real_Lines := False;
    end Unfold_Line;
+
+   ----------------
+   -- Fold_Block --
+   ----------------
+
+   procedure Fold_Block
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type)
+   is
+      Result : Boolean;
+      pragma Unreferenced (Result);
+   begin
+      if Buffer.Blocks_Need_Parsing then
+         Compute_Blocks (Buffer);
+      end if;
+
+      Result := Fold_Unfold_Line (Buffer, Line, Fold => True);
+   end Fold_Block;
 
    -----------------------------------
    -- Remove_Block_Folding_Commands --
