@@ -328,7 +328,7 @@ private
    function Get_Name (Data : File_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : File_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -336,7 +336,7 @@ private
    function Get_Name (Data : Context_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Context_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -344,7 +344,7 @@ private
    function Get_Name (Data : File_Line_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : File_Line_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -352,7 +352,7 @@ private
    function Get_Name (Data : Source_File_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Source_File_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -360,7 +360,7 @@ private
    function Get_Name (Data : Compilation_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Compilation_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -368,7 +368,7 @@ private
    function Get_Name (Data : Location_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Location_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -376,7 +376,7 @@ private
    function Get_Name (Data : Diff_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Diff_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -384,7 +384,7 @@ private
    function Get_Name (Data : Html_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Html_Hooks_Args) return Boolean;
    --  See inherited doc
@@ -392,7 +392,7 @@ private
    function Get_Name (Data : Exit_Before_Action_Hooks_Args) return String;
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Exit_Before_Action_Hooks_Args) return Boolean;
 

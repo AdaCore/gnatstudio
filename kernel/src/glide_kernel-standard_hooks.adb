@@ -626,7 +626,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Context_Hooks_Args) return Boolean
    is
@@ -636,7 +636,7 @@ package body Glide_Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, C);
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (C);
       Free (D);
       return Tmp;
@@ -658,7 +658,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : File_Hooks_Args) return Boolean
    is
@@ -668,7 +668,7 @@ package body Glide_Kernel.Standard_Hooks is
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
       Set_Nth_Arg (D, 2, F);
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F);
       Free (D);
       return Tmp;
@@ -690,7 +690,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Source_File_Hooks_Args) return Boolean
    is
@@ -707,7 +707,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 7, Data.New_File);
       Set_Nth_Arg (D, 8, Data.Force_Reload);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F);
       Free (D);
       return Tmp;
@@ -729,7 +729,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : File_Line_Hooks_Args) return Boolean
    is
@@ -744,7 +744,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 5, Data.Every_Line);
       Set_Nth_Arg (D, 6, Data.Normalize);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F);
       Free (D);
       return Tmp;
@@ -766,7 +766,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Location_Hooks_Args) return Boolean
    is
@@ -782,7 +782,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 6, Data.Column);
       Set_Nth_Arg (D, 7, Data.Message);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F);
       Free (D);
       return Tmp;
@@ -804,7 +804,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Html_Hooks_Args) return Boolean
    is
@@ -817,7 +817,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 3, Data.Enable_Navigation);
       Set_Nth_Arg (D, 4, Data.Anchor);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F);
       Free (D);
       return Tmp;
@@ -839,7 +839,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Diff_Hooks_Args) return Boolean
    is
@@ -854,7 +854,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 3, F2);
       Set_Nth_Arg (D, 4, F3);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (F1);
       Free (F2);
       Free (F3);
@@ -878,7 +878,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Compilation_Hooks_Args) return Boolean
    is
@@ -890,7 +890,7 @@ package body Glide_Kernel.Standard_Hooks is
       Set_Nth_Arg (D, 2, F);
       Set_Nth_Arg (D, 3, Data.Category);
 
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (D);
       return Tmp;
    end Execute_Shell;
@@ -911,7 +911,7 @@ package body Glide_Kernel.Standard_Hooks is
 
    function Execute_Shell
      (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
-      Command   : String;
+      Command   : Glide_Kernel.Scripts.Subprogram_Type;
       Hook_Name : String;
       Data      : Exit_Before_Action_Hooks_Args) return Boolean
    is
@@ -920,7 +920,7 @@ package body Glide_Kernel.Standard_Hooks is
       pragma Unreferenced (Data);
    begin
       Set_Nth_Arg (D, 1, Hook_Name);
-      Tmp := Execute_Command (Script, Command, D);
+      Tmp := Execute (Command, D);
       Free (D);
       return Tmp;
    end Execute_Shell;
