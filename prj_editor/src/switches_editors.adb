@@ -1,3 +1,31 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Glib;              use Glib;
 with Gtk.Box;           use Gtk.Box;
 with Gtk.Check_Button;  use Gtk.Check_Button;
@@ -7,6 +35,7 @@ with Gtk.Radio_Button;  use Gtk.Radio_Button;
 with Gtk.Spin_Button;   use Gtk.Spin_Button;
 with Gtk.Table;         use Gtk.Table;
 with Gtk.Widget;        use Gtk.Widget;
+with Gtk.GEntry;        use Gtk.GEntry;
 
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -417,6 +446,80 @@ package body Switches_Editors is
             null;
       end case;
    end Filter_Switches;
+
+   --------------------
+   -- Update_Cmdline --
+   --------------------
+
+   procedure Update_Cmdline
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
+   is
+      Cmd_Line : Gtk_Entry;
+   begin
+      --  Don't do anything if the callbacks were blocked, to avoid infinite
+      --  loops while we are updating the command line, and it is updating
+      --  the buttons, that are updating the command line,...
+      if Editor.Block_Refresh then
+         return;
+      end if;
+
+      case Tool is
+         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
+         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
+         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+      end case;
+
+      declare
+         Arr : Argument_List := Get_Switches (Editor, Tool);
+         Current : Argument_List_Access;
+      begin
+         Current := Argument_String_To_List (Get_Chars (Cmd_Line));
+         Delete_Text (Cmd_Line);
+         for J in Arr'Range loop
+            Append_Text (Cmd_Line, Arr (J).all & " ");
+         end loop;
+
+         --  Keep the switches set manually by the user
+         Filter_Switches (Editor, Tool, Current.all);
+
+         for K in Current'Range loop
+            if Current (K) /= null then
+               Append_Text (Cmd_Line, Current (K).all & " ");
+            end if;
+         end loop;
+
+         Free (Arr);
+         Free (Current);
+      end;
+   end Update_Cmdline;
+
+   -----------------------------
+   -- Update_Gui_From_Cmdline --
+   -----------------------------
+
+   procedure Update_Gui_From_Cmdline
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
+   is
+      Cmd_Line : Gtk_Entry;
+   begin
+      case Tool is
+         when Gnatmake => Cmd_Line := Editor.Make_Switches_Entry;
+         when Compiler => Cmd_Line := Editor.Compiler_Switches_Entry;
+         when Binder   => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker   => Cmd_Line := Editor.Linker_Switches_Entry;
+      end case;
+
+      declare
+         Arg : Argument_List_Access :=
+           Argument_String_To_List (Get_Chars (Cmd_Line));
+      begin
+         Editor.Block_Refresh := True;
+         Set_Switches (Editor, Tool, Arg.all);
+         Free (Arg);
+         Editor.Block_Refresh := False;
+      end;
+   end Update_Gui_From_Cmdline;
 
    ----------
    -- Free --
