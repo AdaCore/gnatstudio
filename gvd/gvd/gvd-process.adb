@@ -407,7 +407,7 @@ package body Odd.Process is
       File_First  : Natural := 0;
       File_Last   : Positive;
       Line        : Natural := 0;
-      First, Last : Natural;
+      First, Last : Natural := 0;
       Addr_First  : Natural := 0;
       Addr_Last   : Natural;
 
@@ -648,7 +648,7 @@ package body Odd.Process is
 
       --  Add a new page to the notebook
 
-       Gtk_New (Label, "");
+      Gtk_New (Label, "");
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
