@@ -1162,6 +1162,9 @@ package body GVD.Process is
                      Link_Name      => Link_Name.all,
                      Default_Entity => Entity);
                end if;
+               if Item /= null then
+                  Show_Item (Process.Data_Canvas, Item);
+               end if;
             end;
 
          --  A quoted name or standard name
@@ -1215,6 +1218,7 @@ package body GVD.Process is
 
                if Item /= null then
                   Put (Process.Data_Canvas, Item);
+                  Show_Item (Process.Data_Canvas, Item);
                   Recompute_All_Aliases
                     (Process.Data_Canvas, Recompute_Values => False);
                end if;
@@ -1245,6 +1249,9 @@ package body GVD.Process is
                      Auto_Refresh  => Enable,
                      Link_From     => Link_From,
                      Link_Name     => Link_Name.all);
+               end if;
+               if Item /= null then
+                  Show_Item (Process.Data_Canvas, Item);
                end if;
             end if;
          end if;
