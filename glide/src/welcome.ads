@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Check_Button;
+with Gtk.Radio_Button;
 with Gtk.Combo;
 with Gtk.GEntry;
 
@@ -47,10 +48,13 @@ package Welcome is
 
 private
    type Welcome_Screen_Record is new Logo_Boxes.Logo_Box_Record with record
-      Default_Dir  : Gtk.GEntry.Gtk_Entry;
-      Open_Project : Gtk.Combo.Gtk_Combo;
-      Always_Show  : Gtk.Check_Button.Gtk_Check_Button;
-      Kernel       : Glide_Kernel.Kernel_Handle;
+      Default_Dir         : Gtk.GEntry.Gtk_Entry;
+      Open_Project        : Gtk.Combo.Gtk_Combo;
+      Always_Show         : Gtk.Check_Button.Gtk_Check_Button;
+      Default_Project     : Gtk.Radio_Button.Gtk_Radio_Button;
+      Create_Project      : Gtk.Radio_Button.Gtk_Radio_Button;
+      Open_Project_Button : Gtk.Radio_Button.Gtk_Radio_Button;
+      Kernel              : Glide_Kernel.Kernel_Handle;
    end record;
 
 end Welcome;
