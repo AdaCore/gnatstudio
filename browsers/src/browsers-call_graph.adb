@@ -29,13 +29,14 @@ with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.MDI;       use Gtkada.MDI;
 
-with Src_Info;         use Src_Info;
-with Src_Info.Queries; use Src_Info.Queries;
-with Glide_Kernel;     use Glide_Kernel;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with String_Utils;     use String_Utils;
+with Src_Info;                 use Src_Info;
+with Src_Info.Queries;         use Src_Info.Queries;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with String_Utils;             use String_Utils;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
@@ -53,14 +54,7 @@ package body Browsers.Call_Graph is
    Call_Graph_Module_Id : Module_ID;
    Call_Graph_Module_Name : constant String := "Call_Graph";
 
-   Default_Browser_Width  : constant := 400;
-   Default_Browser_Height : constant := 400;
-   --  <preference> Default size for the browsers
-
    Margin : constant := 2;
-
-   Vertical_Layout : Boolean := True;
-   --  <preferences> Should the layout of the graph be vertical or horizontal ?
 
    type Entity_Idle_Data is record
       Kernel : Kernel_Handle;
@@ -194,7 +188,7 @@ package body Browsers.Call_Graph is
    -------------------------------
 
    function Create_Call_Graph_Browser
-     (Kernel       : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
       return Call_Graph_Browser
    is
       Browser : Call_Graph_Browser;
@@ -208,7 +202,9 @@ package body Browsers.Call_Graph is
          ID              => Call_Graph_Module_Id,
          Context_Func    => Default_Browser_Context_Factory'Access);
       Set_Size_Request
-        (Browser, Default_Browser_Width, Default_Browser_Height);
+        (Browser,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Call_Graph_Browser;
 
@@ -371,7 +367,7 @@ package body Browsers.Call_Graph is
       Set_Auto_Layout (Get_Canvas (Browser), True);
       Layout (Get_Canvas (Browser),
               Force => False,
-              Vertical_Layout => Vertical_Layout);
+              Vertical_Layout => Get_Pref (Kernel, Browsers_Vertical_Layout));
       Refresh_Canvas (Get_Canvas (Browser));
 
       Pop_State (Kernel_Handle (Kernel));
@@ -393,6 +389,7 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       C : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
    begin
@@ -417,11 +414,11 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Widget);
 
-      Entity   : Entity_Selection_Context_Access :=
+      Entity      : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Lib_Info : LI_File_Ptr;
-      Decl     : E_Declaration_Info;
-      Node_Entity   : Entity_Information;
+      Lib_Info    : LI_File_Ptr;
+      Decl        : E_Declaration_Info;
+      Node_Entity : Entity_Information;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
@@ -652,10 +649,12 @@ package body Browsers.Call_Graph is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Call_Graph_Module_Id := Register_Module
-        (Module_Name             => Call_Graph_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Call_Graph_Module_Name,
          Priority                => Default_Priority,
          Initializer             => null,
          Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access);

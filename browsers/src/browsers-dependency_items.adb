@@ -38,6 +38,7 @@ with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
 with Src_Info.Queries;          use Src_Info.Queries;
@@ -62,13 +63,6 @@ package body Browsers.Dependency_Items is
    Dependency_Browser_Module_ID : Module_ID;
 
    Me : Debug_Handle := Create ("Browsers.Dependency");
-
-   Default_Browser_Width  : constant := 400;
-   Default_Browser_Height : constant := 400;
-   --  <preference> Default size for the browsers
-
-   Vertical_Layout : Boolean := True;
-   --  <preference> Should the layout of the graph be vertical or horizontal ?
 
    procedure Examine_Dependencies
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -227,7 +221,9 @@ package body Browsers.Dependency_Items is
          ID              => Dependency_Browser_Module_ID,
          Context_Func    => Browser_Context_Factory'Access);
       Set_Size_Request
-        (Browser, Default_Browser_Width, Default_Browser_Height);
+        (Browser,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Dependency_Browser;
 
@@ -344,7 +340,8 @@ package body Browsers.Dependency_Items is
          Set_Auto_Layout (Get_Canvas (In_Browser), True);
          Layout (Get_Canvas (In_Browser),
                  Force => False,
-                 Vertical_Layout => Vertical_Layout);
+                 Vertical_Layout =>
+                   Get_Pref (Kernel, Browsers_Vertical_Layout));
          Refresh_Canvas (Get_Canvas (In_Browser));
       end if;
 
@@ -547,10 +544,12 @@ package body Browsers.Dependency_Items is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Dependency_Browser_Module_ID := Register_Module
-        (Module_Name             => Dependency_Browser_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
          Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
@@ -602,8 +601,8 @@ package body Browsers.Dependency_Items is
       File  : Internal_File)
    is
       use type Gdk_Window;
-      Str : constant String := Get_Source_Filename (File);
-      Font : Gdk_Font;
+      Str           : constant String := Get_Source_Filename (File);
+      Font          : Gdk_Font;
       Width, Height : Gint;
 
    begin

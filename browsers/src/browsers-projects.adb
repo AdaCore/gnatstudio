@@ -18,35 +18,32 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Browsers.Canvas;      use Browsers.Canvas;
-with Gint_Xml;             use Gint_Xml;
-with Gdk.Drawable;         use Gdk.Drawable;
-with Gdk.Event;            use Gdk.Event;
-with Gdk.Font;             use Gdk.Font;
-with Glib.Graphs;          use Glib.Graphs;
-with Glib;                 use Glib;
-with Glib.Object;          use Glib.Object;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Intl;           use Glide_Intl;
-with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
-with Gtk.Widget;           use Gtk.Widget;
-with Gtkada.Canvas;        use Gtkada.Canvas;
-with Gtkada.MDI;           use Gtkada.MDI;
-with Namet;                use Namet;
-with Prj.Tree;             use Prj.Tree;
-with Prj_API;              use Prj_API;
-with Project_Browsers;     use Project_Browsers;
-with Types;                use Types;
+with Browsers.Canvas;          use Browsers.Canvas;
+with Gint_Xml;                 use Gint_Xml;
+with Gdk.Drawable;             use Gdk.Drawable;
+with Gdk.Event;                use Gdk.Event;
+with Gdk.Font;                 use Gdk.Font;
+with Glib.Graphs;              use Glib.Graphs;
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Intl;               use Glide_Intl;
+with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Canvas;            use Gtkada.Canvas;
+with Gtkada.MDI;               use Gtkada.MDI;
+with Namet;                    use Namet;
+with Prj.Tree;                 use Prj.Tree;
+with Prj_API;                  use Prj_API;
+with Project_Browsers;         use Project_Browsers;
+with Types;                    use Types;
 
 package body Browsers.Projects is
 
    Margin : constant := 2;
-
-   Default_Browser_Width  : constant := 400;
-   Default_Browser_Height : constant := 400;
-   --  <preference> Default size for the browsers
 
    Project_Browser_Module_ID : Module_ID;
 
@@ -236,7 +233,9 @@ package body Browsers.Projects is
          ID              => Project_Browser_Module_ID,
          Context_Func    => Default_Browser_Context_Factory'Access);
       Set_Size_Request
-        (Browser, Default_Browser_Width, Default_Browser_Height);
+        (Browser,
+         Get_Pref (Kernel, Default_Widget_Width),
+         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Project_Browser;
 
@@ -331,10 +330,12 @@ package body Browsers.Projects is
    -- Register_Module --
    ---------------------
 
-   procedure Register_Module is
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Project_Browser_Module_ID := Register_Module
-        (Module_Name             => Project_Browser_Module_Name,
+        (Kernel                  => Kernel,
+         Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
          Initializer             => null,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access);

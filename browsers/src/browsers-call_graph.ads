@@ -30,7 +30,8 @@ package Browsers.Call_Graph is
      with null record;
    type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
 
-   procedure Register_Module;
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    ------------------

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -33,7 +33,8 @@ package Browsers.Dependency_Items is
      with null record;
    type Dependency_Browser is access all Dependency_Browser_Record'Class;
 
-   procedure Register_Module;
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
    ----------------
