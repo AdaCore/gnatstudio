@@ -52,8 +52,6 @@ with GUI_Utils;             use GUI_Utils;
 
 package body GVD.Dialogs is
 
-   type GVD_Dialog_Access is access all GVD_Dialog;
-
    Question_Titles : constant Chars_Ptr_Array := "" + (-"Choice");
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
