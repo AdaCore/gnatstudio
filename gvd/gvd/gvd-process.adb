@@ -1224,14 +1224,14 @@ package body GVD.Process is
                   Put (Process.Data_Canvas, Item);
 
                else
-                  Gtk_New_And_Put
+                  Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
                      Variable_Name  => Expr,
                      Debugger       => Process,
                      Auto_Refresh   => Enable,
+                     Default_Entity => Entity,
                      Link_From      => Link_From,
-                     Link_Name      => Link_Name.all,
-                     Default_Entity => Entity);
+                     Link_Name      => Link_Name.all);
                end if;
 
                if Item /= null then
@@ -1303,7 +1303,7 @@ package body GVD.Process is
                end if;
 
                if Enable_Block_Search then
-                  Gtk_New_And_Put
+                  Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
                      Variable_Name => Variable_Name_With_Frame
                      (Process.Debugger, Cmd (First .. Last)),
@@ -1314,7 +1314,7 @@ package body GVD.Process is
                end if;
 
                if Item = null then
-                  Gtk_New_And_Put
+                  Gtk_New
                     (Item, Get_Window (Process.Data_Canvas),
                      Variable_Name => Cmd (First .. Last),
                      Debugger      => Process,
