@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Generic_List;
 with Unchecked_Deallocation;
 with Commands;             use Commands;
@@ -190,7 +191,8 @@ package body VCS is
       C : Update_Files_Command_Access;
    begin
       Create (C, Rep.Kernel, Filenames);
-      Enqueue (Rep.Queue, C);
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (C), False, Name (VCS_Access (Rep)));
    end Check_Files;
 
 end VCS;
