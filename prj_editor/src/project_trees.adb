@@ -202,6 +202,20 @@ package body Project_Trees is
    --  automatically adding the children of the current node if they are not
    --  there already.
 
+   --------------------
+   -- Updating nodes --
+   --------------------
+
+   procedure Update_Project_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
+   --  Recompute the directories for the project.
+
+   procedure Update_Directory_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
+   --  Recompute the files for the directory. This procedure tries to keep the
+   --  existing files if they are in the project view, so as to keep the
+   --  expanded status
+
    ----------------------------
    -- Retrieving information --
    ----------------------------
@@ -264,6 +278,8 @@ package body Project_Trees is
 
    procedure Refresh (Tree : access Gtk_Widget_Record'Class);
    --  Refresh the contents of the tree after the project view has changed.
+   --  This procedure tries to keep as many things as possible in the current
+   --  state (expanded nodes,...)
 
    -------------
    -- Gtk_New --
@@ -977,6 +993,170 @@ package body Project_Trees is
       end if;
    end Select_Directory;
 
+   -------------------------
+   -- Update_Project_Node --
+   -------------------------
+
+   procedure Update_Project_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+   is
+      Count : Natural := 0;
+      Src   : String_List_Id;
+      Index : Natural;
+      N, N2 : Gtk_Ctree_Node;
+      Current_Dir : constant String := String (Get_Current_Dir);
+   begin
+      --  The goal here is to keep the directories if their current state
+      --  (expanded or not), while doing the update.
+
+      --  Count the number of subdirectories
+
+      Src := Projects.Table (Get_Project_View (Tree.Manager)).Source_Dirs;
+      while Src /= Nil_String loop
+         Count := Count + 1;
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      declare
+         Sources : array (1 .. Count) of String_Id;
+      begin
+         --  Store the directories
+         Index := Sources'First;
+         Src := Projects.Table (Get_Project_View (Tree.Manager)).Source_Dirs;
+         while Src /= Nil_String loop
+            Sources (Index) := String_Elements.Table (Src).Value;
+            Index := Index + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         --  Remove from the tree all the directories that are no longer in the
+         --  project
+
+         N := Row_Get_Children (Node_Get_Row (Node));
+         while N /= null loop
+            N2 := Row_Get_Sibling (Node_Get_Row (N));
+
+            declare
+               User : constant User_Data := Node_Get_Row_Data (Tree, N);
+            begin
+               if User.Node_Type = Directory_Node then
+                  Index := Sources'First;
+                  while Index <= Sources'Last loop
+                     if Sources (Index) /= No_String
+                       and then String_Equal (Sources (Index), User.Directory)
+                     then
+                        Sources (Index) := No_String;
+                        exit;
+                     end if;
+                     Index := Index + 1;
+                  end loop;
+
+                  if Index > Sources'Last then
+                     Remove_Node (Tree, N);
+                  else
+                     Update_Directory_Node (Tree, N);
+                  end if;
+               end if;
+            end;
+            N := N2;
+         end loop;
+
+         --  Then add all the new directories
+
+         for J in Sources'Range loop
+            if Sources (J) /= No_String then
+               String_To_Name_Buffer (Sources (J));
+               N := Add_Directory_Node
+                 (Tree             => Tree,
+                  Directory        => Name_Buffer (1 .. Name_Len),
+                  Parent_Node      => Node,
+                  Current_Dir      => Current_Dir,
+                  Directory_String => Sources (J),
+                  Object_Directory => False);
+            end if;
+         end loop;
+      end;
+   end Update_Project_Node;
+
+   ---------------------------
+   -- Update_Directory_Node --
+   ---------------------------
+
+   procedure Update_Directory_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+   is
+      Count : Natural := 0;
+      Src   : String_List_Id;
+      Index : Natural;
+      N, N2 : Gtk_Ctree_Node;
+   begin
+      --  The goal here is to keep the files and subdirectories if their
+      --  current state (expanded or not), while doing the update.
+
+      --  Count the number of subdirectories
+
+      Src := Projects.Table (Get_Project_View (Tree.Manager)).Sources;
+      while Src /= Nil_String loop
+         Count := Count + 1;
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      declare
+         Sources : array (1 .. Count) of String_Id;
+      begin
+         --  Store the source files
+         Index := Sources'First;
+         Src := Projects.Table (Get_Project_View (Tree.Manager)).Sources;
+         while Src /= Nil_String loop
+            Sources (Index) := String_Elements.Table (Src).Value;
+            String_To_Name_Buffer (Sources (Index));
+            Index := Index + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         --  Remove from the tree all the directories that are no longer in the
+         --  project
+
+         N := Row_Get_Children (Node_Get_Row (Node));
+         while N /= null loop
+            N2 := Row_Get_Sibling (Node_Get_Row (N));
+
+            declare
+               User : constant User_Data := Node_Get_Row_Data (Tree, N);
+            begin
+               if User.Node_Type = File_Node then
+                  Index := Sources'First;
+                  while Index <= Sources'Last loop
+                     if Sources (Index) /= No_String
+                       and then String_Equal (Sources (Index), User.File)
+                     then
+                        Sources (Index) := No_String;
+                        exit;
+                     end if;
+                     Index := Index + 1;
+                  end loop;
+
+                  if Index > Sources'Last then
+                     Remove_Node (Tree, N);
+                  end if;
+               end if;
+            end;
+            N := N2;
+         end loop;
+
+         --  Then add all the new directories
+
+         for J in Sources'Range loop
+            if Sources (J) /= No_String then
+               N := Add_File_Node
+                 (Tree             => Tree,
+                  File             => Sources (J),
+                  Parent_Node      => Node);
+            end if;
+         end loop;
+      end;
+   end Update_Directory_Node;
+
    -----------------
    -- Update_Node --
    -----------------
@@ -988,58 +1168,47 @@ package body Project_Trees is
       N, N2 : Gtk_Ctree_Node;
 
    begin
+      --  If the information about the node hasn't been computed before,
+      --  then we don't need to do anything. This will be done when the
+      --  node is actually expanded by the user
+
+      if not Data.Up_To_Date then
+         return;
+      end if;
+
+      --  Likewise, if a node is not expanded, we simply remove all underlying
+      --  information
+      --  ??? This means that when the user will open them, he won't find the
+      --  ??? status that was there before.
+
       case Data.Node_Type is
-
-         when Project_Node =>
-            --  Nodes that are not expanded should remain that way. Their
-            --  contents will be computed only when the user tries to expand
-            --  them.
-            --  However, if the contents has been computed before, we need to
-            --  clean things up.
-
+         when Project_Node | Modified_Project_Node
+           | Directory_Node | Obj_Directory_Node | File_Node
+           =>
             if not Row_Get_Expanded (Node_Get_Row (Node)) then
-               if Data.Up_To_Date then
-                  Data.Up_To_Date := False;
-                  Node_Set_Row_Data (Tree, Node, Data);
-
-                  N := Row_Get_Children (Node_Get_Row (Node));
-                  while N /= null loop
-                     N2 := Row_Get_Sibling (Node_Get_Row (N));
-                     Remove_Node (Tree, N);
-                     N := N2;
-                  end loop;
-
-                  Add_Dummy_Node (Tree, Node);
-               end if;
-
-            --  Else the node was expanded, we need to replace its contents
-            --  with the new one.
-
-            else
-
-               --  First remove old directories
+               Data.Up_To_Date := False;
+               Node_Set_Row_Data (Tree, Node, Data);
 
                N := Row_Get_Children (Node_Get_Row (Node));
                while N /= null loop
                   N2 := Row_Get_Sibling (Node_Get_Row (N));
-
-                  if Node_Get_Row_Data (Tree, N).Node_Type = Project_Node then
-                     Update_Node (Tree, N);
-                  else
-                     Remove_Node (Tree, N);
-                  end if;
-
+                  Remove_Node (Tree, N);
                   N := N2;
                end loop;
 
-               --  Then put the new ones
-               --  Add_Node_Directories
-               --    (Tree, Node, Get_Project_View_From_Name (Data.Name));
+               Add_Dummy_Node (Tree, Node);
             end if;
 
          when others =>
             null;
+      end case;
 
+      case Data.Node_Type is
+         when Project_Node   => Update_Project_Node (Tree, Node);
+         when Directory_Node => Update_Directory_Node (Tree, Node);
+
+         when others =>
+            null;
       end case;
    end Update_Node;
 
@@ -1082,6 +1251,7 @@ package body Project_Trees is
          end if;
 
          Update_Node (T, Node_Nth (T, 0));
+         Sort_Recursive (T);
 
          --  Restore the selection. Note that this also resets the project
          --  view clist, with the contents of all the files.
