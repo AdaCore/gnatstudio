@@ -56,30 +56,29 @@ package Glide_Kernel is
    --  the modules can add entries in the menus and the MDI.
    --  Only the modules that haven't been initialized yet are processed.
 
-   procedure Set_Source_Path
+   procedure Set_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record;
       Path   : String);
-   --  Set the Source_Path for the given Kernel Handle.
-   --  ??? Should this be renamed to something like Set_Extra_Source_Path
+   --  Set the predefined Source_Path for the given Kernel Handle. This is
+   --  the path where the compiler searches for source files when they are
+   --  not part of the Project.
 
-   function Get_Source_Path
+   function Get_Predefined_Source_Path
      (Handle : access Kernel_Handle_Record) return String;
-   --  Return the Source_Path associated to the given Kernel Handle.
+   --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the empty string if no source path has been set yet.
-   --  ??? Needs more comments.
 
-   procedure Set_Object_Path
+   procedure Set_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record;
       Path   : String);
-   --  Set the Object_Path for the given Kernel Handle.
-   --  ??? Needs more comments.
-   --  ??? Should this be renamed to something like Set_Extra_Object_Path
+   --  Set the predefined Object_Path for the given Kernel Handle. This is
+   --  the path where the compiler searches for object and ALI files when they
+   --  are not associated to a source file that is part of the project.
 
-   function Get_Object_Path
+   function Get_Predefined_Object_Path
      (Handle : access Kernel_Handle_Record) return String;
-   --  Return the Object_Path associated to the given Kernel Handle.
+   --  Return the predefined Object_Path associated to the given Kernel Handle.
    --  Return the empty string if no object path has been set yet.
-   --  ??? Needs more comments.
 
    procedure Parse_ALI_File
      (Handle       : access Kernel_Handle_Record;
@@ -300,11 +299,11 @@ private
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main glide window
 
-      Source_Path : GNAT.OS_Lib.String_Access;
+      Predefined_Source_Path : GNAT.OS_Lib.String_Access;
       --  The path of the sources used to compile the project which are not
       --  directly part of the project (eg the Ada run-time files).
 
-      Object_Path : GNAT.OS_Lib.String_Access;
+      Predefined_Object_Path : GNAT.OS_Lib.String_Access;
       --  The path for the object files associated the sources in the
       --  Source Path above.
 
