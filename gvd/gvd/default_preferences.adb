@@ -1466,9 +1466,9 @@ package body Default_Preferences is
                Set (Model, Child, 0, Name (First .. Last - 1));
                Set (Model, Child, 1, GObject (Table));
 
-               Set_Child_Visible (Table, False);
                Attach (Main_Table, Table, 1, 2, 2, 3,
                        Ypadding => 0, Xpadding => 10);
+               Set_Child_Visible (Table, False);
             end if;
 
             Current := Child;
