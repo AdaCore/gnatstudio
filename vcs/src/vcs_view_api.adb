@@ -920,7 +920,7 @@ package body VCS_View_API is
             Success := Save_Child (Kernel, Child, True) /= Cancel;
          end if;
 
-         Append (Logs, Get_Log (Kernel, Head (Files)));
+         Append (Logs, Get_Log (Kernel, Data (Files_Temp)));
          Files_Temp := Next (Files_Temp);
       end loop;
 
