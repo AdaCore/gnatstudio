@@ -102,6 +102,8 @@ package GVD.Text_Box.Source_Editor is
    function Get_Widget
      (Editor : access Source_Editor_Record) return Gtk.Widget.Gtk_Widget;
    --  Return the widget associated with Editor.
+   --  WARNING: do not add or remove this widget in a container.
+   --  Instead, use the Attach/Detach routines provided in this package.
 
 private
    type Source_Editor_Record is abstract tagged record
