@@ -1,0 +1,48 @@
+*** configure.old	Thu May 23 23:20:40 2002
+--- configure	Wed Jun 12 18:13:21 2002
+***************
+*** 13989,13995 ****
+  
+  IFS="${IFS= 	}"; gtk_save_ifs="$IFS"; IFS=","
+  for loader in $included_loaders; do
+!  if echo "$all_loaders" | grep "\(^\|\,\)$loader\(\$\|\,\)" > /dev/null; then
+     :
+   else
+     { { echo "$as_me:$LINENO: error: the specified loader $loader does not exist" >&5
+--- 13989,13995 ----
+  
+  IFS="${IFS= 	}"; gtk_save_ifs="$IFS"; IFS=","
+  for loader in $included_loaders; do
+!  if echo "$all_loaders" | grep -E "(^|,)$loader($|,)" > /dev/null; then
+     :
+   else
+     { { echo "$as_me:$LINENO: error: the specified loader $loader does not exist" >&5
+***************
+*** 14160,14172 ****
+  
+  if $dynworks ; then
+    STATIC_LIB_DEPS=
+!   if echo "$included_loaders" | grep "\(^\|\,\)tiff\(\$\|\,\)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBTIFF"
+    fi
+!   if echo "$included_loaders" | grep "\(^\|\,\)jpeg\(\$\|\,\)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBJPEG"
+    fi
+!   if echo "$included_loaders" | grep "\(^\|\,\)png\(\$\|\,\)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBPNG"
+    fi
+  else
+--- 14160,14172 ----
+  
+  if $dynworks ; then
+    STATIC_LIB_DEPS=
+!   if echo "$included_loaders" | grep -E "(^|,)tiff($|,)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBTIFF"
+    fi
+!   if echo "$included_loaders" | grep -E "(^|,)jpeg($|,)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBJPEG"
+    fi
+!   if echo "$included_loaders" | grep -E "(^|,)png($|,)" > /dev/null; then
+      STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBPNG"
+    fi
+  else
