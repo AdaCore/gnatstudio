@@ -29,9 +29,11 @@ package body Codefix is
    ------------
 
    procedure Assign (This : in out Dynamic_String; Value : String) is
+      Garbage : Dynamic_String := This;
+      --  Used to prevent usage like 'Assign (Str, Str.all)'
    begin
-      Free (This);
       This := new String'(Value);
+      Free (Garbage);
    end Assign;
 
    ------------
@@ -39,9 +41,13 @@ package body Codefix is
    ------------
 
    procedure Assign (This : in out Dynamic_String; Value : Dynamic_String) is
+      Garbage : Dynamic_String := This;
+      --  Used to prevent usage like 'Assign (Str, Str)'
    begin
-      Free (This);
-      This := new String'(Value.all);
+      if Value /= null then
+         This := new String'(Value.all);
+      end if;
+      Free (Garbage);
    end Assign;
 
    --------------
@@ -91,5 +97,14 @@ package body Codefix is
    begin
       Put_Line (File, This.all);
    end Put_Line;
+
+   function Clone (This : Dynamic_String) return Dynamic_String is
+   begin
+      if This = null then
+         return null;
+      else
+         return new String'(This.all);
+      end if;
+   end Clone;
 
 end Codefix;
