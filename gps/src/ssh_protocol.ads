@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                               G P S                               --
+--                            G P S                                  --
 --                                                                   --
---                   Copyright (C) 2003                              --
---                            ACT-Europe                             --
+--                   Copyright (C) 2003-2005                         --
+--                           AdaCore                                 --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -21,5 +21,6 @@
 package SSH_Protocol is
 
    procedure Register_Protocol;
-   --  Make available various protocols based on ssh
+   --  Make available various protocols based on ssh, rsh, telnet, ...
+
 end SSH_Protocol;
