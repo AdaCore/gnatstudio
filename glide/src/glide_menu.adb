@@ -59,6 +59,12 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->Save Desktop menu
 
+   procedure On_Change_Dir
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  File->Change Directory... menu
+
    procedure On_Exit
      (Object : Data_Type_Access;
       Action : Guint;
@@ -108,6 +114,24 @@ package body Glide_Menu is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project;
+
+   -------------------
+   -- On_Change_Dir --
+   -------------------
+
+   procedure On_Change_Dir
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      pragma Unreferenced (Object, Action, Widget);
+
+      Dir : constant String := Select_Directory (-"Select a directory");
+   begin
+      if Dir /= "" then
+         Change_Dir (Dir);
+      end if;
+   end On_Change_Dir;
 
    --------------
    -- On_Close --
@@ -219,11 +243,14 @@ package body Glide_Menu is
       return new Gtk_Item_Factory_Entry_Array'
         (Gtk_New (File & (-"Save...") & '/' & (-"Desktop"), "",
                   On_Save_Desktop'Access),
+         Gtk_New (File & "sep1", Item_Type => Separator),
+         Gtk_New (File & (-"Change Directory..."), "", "",
+                  On_Change_Dir'Access),
          Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
          Gtk_New (File & (-"Close All"), "", null),
-         Gtk_New (File & "sep3", Item_Type => Separator),
+         Gtk_New (File & "sep2", Item_Type => Separator),
          Gtk_New (File & (-"Print"), "", Stock_Print, null),
-         Gtk_New (File & "sep4", Item_Type => Separator),
+         Gtk_New (File & "sep3", Item_Type => Separator),
          Gtk_New (File & (-"Exit"), "<control>Q",
                   Stock_Quit, On_Exit'Access),
 
