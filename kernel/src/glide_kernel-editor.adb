@@ -400,7 +400,8 @@ package body Glide_Kernel.Editor is
    procedure Goto_Declaration_Or_Body
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+      Top          : constant Glide_Window :=
+        Glide_Window (Kernel.Main_Window);
       Source       : Source_Editor_Box := Get_Current_Editor (Top);
       Source_Info  : LI_File_Ptr;
       Filename     : String_Access;
@@ -408,6 +409,7 @@ package body Glide_Kernel.Editor is
       Start_Column : Positive;
       End_Line     : Positive;
       End_Column   : Positive;
+
    begin
       if Get_Filename (Source) = "" then
          Console.Insert
@@ -460,7 +462,6 @@ package body Glide_Kernel.Editor is
       Unhighlight_All (Source);
       Highlight_Region
         (Source, Start_Line, Start_Column, End_Line, End_Column);
-
    end Goto_Declaration_Or_Body;
 
 end Glide_Kernel.Editor;

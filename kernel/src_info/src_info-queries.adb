@@ -227,6 +227,7 @@ package body Src_Info.Queries is
            (Lib_Info.Spec_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
             File_Name_Found, Start_Line, Start_Column, End_Line, End_Column);
+
          if File_Name_Found /= null then
             return;
          end if;
@@ -239,6 +240,7 @@ package body Src_Info.Queries is
          Find_Spec_Or_Body
            (Lib_Info.Body_Info.Declarations,
             File_Name, Entity_Name, Line, Column,
+
             File_Name_Found, Start_Line, Start_Column, End_Line, End_Column);
          if File_Name_Found /= null then
             return;
@@ -254,10 +256,12 @@ package body Src_Info.Queries is
                File_Name, Entity_Name, Line, Column,
                File_Name_Found, Start_Line, Start_Column,
                End_Line, End_Column);
+
             if File_Name_Found /= null then
                return;
             end if;
          end if;
+
          Current_Sep := Current_Sep.Next;
       end loop;
 
@@ -270,10 +274,12 @@ package body Src_Info.Queries is
                File_Name, Entity_Name, Line, Column,
                File_Name_Found, Start_Line, Start_Column,
                End_Line, End_Column);
+
             if File_Name_Found /= null then
                return;
             end if;
          end if;
+
          Current_Dep := Current_Dep.Next;
       end loop;
 
