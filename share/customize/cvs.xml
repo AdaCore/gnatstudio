@@ -270,7 +270,7 @@
       <status label="Locally modified" stock="gps-vcs-modified" />
       <status label="Needs merge" stock="gps-vcs-needs-merge" />
       <status label="Needs update" stock="gps-vcs-needs-update" />
-      <status label="Had conflicts on merge" stock="gps-vcs-merge-conflicts" />
+      <status label="Contains merge conflicts" stock="gps-vcs-has-conflicts" />
       <status label="Removed" stock="gps-vcs-removed" />
 
       <status_parser>
@@ -288,6 +288,7 @@
          <status_matcher label="Added">Locally Added</status_matcher>
          <status_matcher label="Removed">Locally Removed</status_matcher>
          <status_matcher label="Removed">Entry Invalid</status_matcher>
+         <status_matcher label="Contains merge conflicts">File had conflicts on merge</status_matcher>
       </status_parser>
 
       <local_status_parser>
