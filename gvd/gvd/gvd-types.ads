@@ -33,6 +33,12 @@ package GVD.Types is
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
 
+   type Position_Type is new Natural;
+   --  Indicates the position in a file.
+   --  Note that these positions are relative to the real contents of the
+   --  editor, not necessarily the positions visible to the user (which
+   --  might be different because of ASCII.HT handling)
+
    type Command_Type is (Internal, Hidden, Visible, User);
    --  Internal commands are not stored into the command history. No output
    --  will be visible to the user.
