@@ -65,7 +65,7 @@ begin
      2, 0);
 
    Gtk_New (Vsearch.Replace_Combo);
-   Set_Case_Sensitive (Vsearch.Replace_Combo, False);
+   Set_Case_Sensitive (Vsearch.Replace_Combo, True);
    Set_Use_Arrows (Vsearch.Replace_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Replace_Combo, False);
    String_List.Append (Replace_Combo_Items, -"");
@@ -102,7 +102,7 @@ begin
    Set_Tip (Tooltips, Vsearch.Context_Entry, -"The context of the search");
 
    Gtk_New (Vsearch.Pattern_Combo);
-   Set_Case_Sensitive (Vsearch.Pattern_Combo, False);
+   Set_Case_Sensitive (Vsearch.Pattern_Combo, True);
    Set_Use_Arrows (Vsearch.Pattern_Combo, True);
    Set_Use_Arrows_Always (Vsearch.Pattern_Combo, False);
    String_List.Append (Pattern_Combo_Items, -"");
