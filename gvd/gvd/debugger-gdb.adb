@@ -1916,11 +1916,7 @@ package body Debugger.Gdb is
    function Line_Contains_Code
      (Debugger : access Gdb_Debugger;
       File     : String;
-      Line     : Positive) return Line_Kind
-   is
-      Line_String : constant String := Positive'Image (Line);
-      --  Use a temporary variable to remove the leading space.
-
+      Line     : Positive) return Line_Kind is
    begin
       Set_Parse_File_Name (Get_Process (Debugger), False);
 
@@ -1928,11 +1924,10 @@ package body Debugger.Gdb is
          S : constant String :=
            Send (Debugger, "info line "
                    & Base_File_Name (File)
-                   & ':' &
-                   Line_String (Line_String'First + 1 .. Line_String'Last),
+                   & ':' & Image (Line),
                  Mode => Internal);
-      begin
 
+      begin
          Set_Parse_File_Name (Get_Process (Debugger), True);
 
          if Index (S, "starts at address") /= 0 then
@@ -1943,7 +1938,6 @@ package body Debugger.Gdb is
             return No_Code;
          end if;
       end;
-
    end Line_Contains_Code;
 
    --------------------------
@@ -2704,6 +2698,7 @@ package body Debugger.Gdb is
                   end if;
                end if;
 
+--  ??? Why is this code commented out
 --               Br (Num).Info := new String'(S (Tmp .. Index - 2));
             end loop;
 
@@ -2744,49 +2739,6 @@ package body Debugger.Gdb is
       Send (Debugger, "delete" & Breakpoint_Identifier'Image (Num),
             Mode => Mode);
    end Remove_Breakpoint;
-
-   ------------------------------
-   -- Variable_Name_With_Frame --
-   ------------------------------
-
-   function Variable_Name_With_Frame
-     (Debugger : access Gdb_Debugger;
-      Var      : String) return String
-   is
-      Bt        : Backtrace_Array (1 .. 1);
-      Len       : Natural;
-      Name_Last : Natural;
-
-   begin
-      Name_Last := Var'First;
-      Skip_To_Char (Var, Name_Last, ':');
-
-      --  Is there already a block indication ? If yes, do nothing
-
-      if Name_Last < Var'Last and then Var (Name_Last + 1) = ':' then
-         return Var;
-      end if;
-
-      --  Else, extract the name of the block from the backtrace.
-      --  ??? This should be done directly from the sources, since this would
-      --  be closer to what the user would expect.
-
-      Set_Parse_File_Name (Get_Process (Debugger), False);
-      Parse_Backtrace_Info
-        (Send (Debugger, "frame", Mode => Internal), Bt, Len);
-      Set_Parse_File_Name (Get_Process (Debugger), True);
-
-      if Len >= 1 then
-         Name_Last := Bt (1).Subprogram'First;
-         Skip_To_Blank (Bt (1).Subprogram.all, Name_Last);
-         Name_Last := Name_Last - 1;
-
-         return Bt (1).Subprogram (Bt (1).Subprogram'First .. Name_Last)
-           & "::" & Var;
-      else
-         return Var;
-      end if;
-   end Variable_Name_With_Frame;
 
    ---------------------
    -- List_Exceptions --
