@@ -29,128 +29,13 @@ my %default_values = (
 ## MAIN
 ##
 
-if ( -1 == $#ARGV ) {
-    print "Usage: perl find-fn-gen.pl <input-table-description.file>\n\n";
-    exit (0);
-}
-
-my @tables = parse (read_file $ARGV[0]);
-open (ADB_FILE, ">sn-find_fns.adb") or die "Failed to open sn-find-fns.adb";
-print ADB_FILE <<EOS;
-with SN.DB_Structures,
-     Ada.Unchecked_Deallocation,
-     DB_API;
-use  SN.DB_Structures,
-     DB_API;
-
-package body SN.Find_Fns is
-      procedure Delete is
-         new Ada.Unchecked_Deallocation (String, String_Access);
-EOS
+my @tables = parse (read_file "tables.dat");
+open (ADB_FILE, ">-") or die "$!";
 
 foreach my $table (@tables) {
    generate_find_fns (\*ADB_FILE, $table, 0);
 }
-
-   print ADB_FILE <<EOS;
-      procedure To_String (P : in Point; Str : in String_Access;
-            Where : in out Integer) is
-         Line_Img : String := Integer'Image (P.Line);
-         Col_Img  : String := Integer'Image (P.Column);
-      begin
-         Str (Where .. Where + 9) := "000000.000";
-         Str (Where + 5 - Line_Img'Length + 2 .. Where + 5)
-            := Line_Img (2 .. Line_Img'Length);
-         Where := Where + 7;
-         Str (Where + 2 - Col_Img'Length + 2 .. Where + 2)
-            := Col_Img (2 .. Col_Img'Length);
-         Where := Where + 3;
-      end To_String;
-
-      procedure To_String (Sym_Type : in Symbol_Type; Str : in String_Access;
-          Where : in out Integer) is
-      begin
-         case Sym_Type is
-            when CL    => Str (Where .. Where + 1) := "cl";
-                        Where := Where + 2;
-            when COM   => Str (Where .. Where + 2) := "com";
-                        Where := Where + 3;
-            when COV   => Str (Where .. Where + 2) := "cov";
-                        Where := Where + 3;
-            when CON   => Str (Where .. Where + 2) := "con";
-                        Where := Where + 3;
-            when E     => Str (Where .. Where) := "e";
-                        Where := Where + 1;
-            when EC    => Str (Where .. Where + 1) := "ec";
-                        Where := Where + 2;
-            when FD    => Str (Where .. Where + 1) := "fd";
-                        Where := Where + 2;
-            when FR    => Str (Where .. Where + 1) := "fr";
-                        Where := Where + 2;
-            when FU    => Str (Where .. Where + 1) := "fu";
-                        Where := Where + 2;
-            when GV    => Str (Where .. Where + 1) := "gv";
-                        Where := Where + 1;
-            when IV    => Str (Where .. Where + 1) := "iv";
-                        Where := Where + 2;
-            when LV    => Str (Where .. Where + 1) := "lv";
-                        Where := Where + 2;
-            when MA    => Str (Where .. Where + 1) := "ma";
-                        Where := Where + 2;
-            when MD    => Str (Where .. Where + 1) := "md";
-                        Where := Where + 2;
-            when MI    => Str (Where .. Where + 1) := "mi";
-                        Where := Where + 2;
-            when SU    => Str (Where .. Where + 1) := "su";
-                        Where := Where + 2;
-            when T     => Str (Where .. Where) := "t";
-                        Where := Where + 1;
-            when UN    => Str (Where .. Where + 1) := "un";
-                        Where := Where + 2;
-            when IU    => Str (Where .. Where + 1) := "iu";
-                        Where := Where + 2;
-            when others => raise Invalid_Symbol_Type;
-         end case;
-      end To_String;
-end SN.Find_Fns;
-
-EOS
 close (ADB_FILE);
-
-open (ADS_FILE, ">sn-find_fns.ads") or die "Failed to open sn-find-fns.ads";
-print ADS_FILE <<EOS;
-with SN.DB_Structures,
-     DB_API;
-use  SN.DB_Structures,
-     DB_API;
-
-package SN.Find_Fns is
-      Not_Found           : exception;
-      --  raised by the find function when key does
-      --  not correspond to a variable
-
-      Invalid_Symbol_Type : exception;
-      --  raised when a bad symbol passed to To_String function
-
-      procedure To_String (Sym_Type : in Symbol_Type; Str : in String_Access;
-          Where : in out Integer);
-      --  converts symbol type into string
-
-      procedure To_String (P : in Point; Str : in String_Access;
-                           Where : in out Integer);
-      --  converts Point to 000000.000 string
-
-EOS
-
-foreach my $table (@tables) {
-   generate_find_fns (\*ADS_FILE, $table, 1);
-}
-
-   print ADS_FILE <<EOS;
-end SN.Find_Fns;
-
-EOS
-close (ADS_FILE);
 
 exit (0);
 
@@ -230,9 +115,10 @@ sub parse ($) {
 #
 sub generate_find_fns (*$$) {
   my ($file, $table, $spec) = @_;
-  print $file "\n", ' 'x6, "--  Find functions for $table->{'description'} table\n";
+  print $file "   -----------\n   -- Find --\n   ----------";
+  print $file "\n", ' 'x3, "--  Find functions for $table->{'description'} table\n\n";
   # form argument list
-  print $file "      function Find (DB : DB_File;\n";
+  print $file ' 'x3, "function Find\n",' 'x5,"(DB : DB_File;\n";
   my @args = ();
   foreach my $arg (@{$table->{'keys'}}) {
       my $type_str = exists $data_types {$arg} ? $data_types {$arg} 
@@ -243,93 +129,93 @@ sub generate_find_fns (*$$) {
       $sarg =~ s/-/ /g;
       $sarg =~ s/\b(.)/\u$1/g;
       $sarg =~ s/ /_/g;
-      print $file ' 'x12, "$sarg : $type_str := $def_val";
+      $sarg =~ s/_(.)/_\u$1/g;
+      print $file ' 'x6, "$sarg : $type_str := $def_val";
       print $file ";\n" if ( $arg ne ${$table->{'keys'}}[$#{$table->{'keys'}}] );
       push (@args, { 'name' => $sarg, 'type' => $type_str, 'def_value' => $def_val });
   }
   if ( $spec ) {
-     print $file ")\n      return \U$table->{'suffix'}\E_Table;\n";
+     print $file ") return \U$table->{'suffix'}\E_Table;\n";
   } else {
-     print $file ")\n      return \U$table->{'suffix'}\E_Table is\n";
+     print $file ") return \U$table->{'suffix'}\E_Table\n",' 'x3,"is\n";
      print $file <<"EOS";
-         P    : Pair_Ptr;
-         Tab  : \U$table->{'suffix'}\E_Table;
-         Key  : String_Access;
-         Fall : Boolean := False;
-         Len  : Integer := 0;
-         Pos  : Integer := 1;
-      begin
+      P    : Pair_Ptr;
+      Tab  : \U$table->{'suffix'}\E_Table;
+      Key  : String_Access;
+      Fall : Boolean := False;
+      Len  : Integer := 0;
+      Pos  : Integer := 1;
+   begin
 EOS
        # count pass
        for ( my $j = 0; $j <= $#args; ++$j ) {
            print $file <<"EOS";
-         if not Fall then
-            if $args[$j]{'name'} = $args[$j]{'def_value'} then
-               Fall := True;
-            else
+      if not Fall then
+         if $args[$j]{'name'} = $args[$j]{'def_value'} then
+            Fall := True;
+         else
 EOS
            if ( $args[$j]{'type'} eq 'String' ) {
               if ( $j != $#args ) {
-                  print $file ' 'x15, "Len := Len + $args[$j]{'name'}'Length + 1;\n";
+                  print $file ' 'x12, "Len := Len + $args[$j]{'name'}'Length + 1;\n";
               } else {
-                  print $file ' 'x15, "Len := Len + $args[$j]{'name'}'Length;\n";
+                  print $file ' 'x12, "Len := Len + $args[$j]{'name'}'Length;\n";
               }
            } elsif ( $args[$j]{'type'} eq 'Point' ) {
               if ( $j != $#args ) {
-                 print $file ' 'x15, "Len := Len + 11;\n";
+                 print $file ' 'x12, "Len := Len + 11;\n";
               } else {
-                 print $file ' 'x15, "Len := Len + 10;\n";
+                 print $file ' 'x12, "Len := Len + 10;\n";
               }
            } elsif ( $args[$j]{'type'} eq 'Symbol_Type') {
               if ( $j != $#args ) {
-                  print $file ' 'x15, "--  Symbol type is 3 letters at most\n";
-                  print $file ' 'x15, "Len := Len + 3 + 1;\n";
+                  print $file ' 'x12, "--  Symbol type is 3 letters at most\n";
+                  print $file ' 'x12, "Len := Len + 3 + 1;\n";
               } else {
-                  print $file ' 'x15, "--  Symbol type is 3 letters at most\n";
-                  print $file ' 'x15, "Len := Len + 3;\n";
+                  print $file ' 'x12, "--  Symbol type is 3 letters at most\n";
+                  print $file ' 'x12, "Len := Len + 3;\n";
               }
            } else {
               die "Unknown type: $args[$j]{'type'}, can't find length of its string representation";
            }
-           print $file ' 'x12, "end if;\n", ' 'x9, "end if;\n";
+           print $file ' 'x9, "end if;\n", ' 'x6, "end if;\n";
        }
-       print $file "\n", ' 'x9, "Key := new String (1 .. Len);\n", ' 'x9, "Fall := False;\n\n";
+       print $file "\n", ' 'x6, "Key := new String (1 .. Len);\n", ' 'x6, "Fall := False;\n\n";
        for ( my $j = 0; $j <= $#args; ++$j ) {
            print $file <<"EOS";
-         if not Fall then
-            if $args[$j]{'name'} = $args[$j]{'def_value'} then
-               Fall := True;
-            else
+      if not Fall then
+         if $args[$j]{'name'} = $args[$j]{'def_value'} then
+            Fall := True;
+         else
 EOS
            if ( $args[$j]{'type'} eq 'String' ) {
               print $file <<"EOS";
-               Key (Pos .. Pos + $args[$j]{'name'}'Length - 1)
-                  := $args[$j]{'name'};
-               Pos := Pos + $args[$j]{'name'}'Length;
+            Key (Pos .. Pos + $args[$j]{'name'}'Length - 1)
+              := $args[$j]{'name'};
+            Pos := Pos + $args[$j]{'name'}'Length;
 EOS
            } else {
-              print $file ' 'x15, "To_String ($args[$j]{'name'}, Key, Pos);\n";
+              print $file ' 'x12, "To_String ($args[$j]{'name'}, Key.all, Pos);\n";
            }
 
            if ( $j != $#args ) {
-               print $file ' 'x15, "Key (Pos) := Field_Sep;\n";
-               print $file ' 'x15, "Pos := Pos + 1;\n";
+               print $file ' 'x12, "Key (Pos) := Field_Sep;\n";
+               print $file ' 'x12, "Pos := Pos + 1;\n";
            }
-           print $file ' 'x12, "end if;\n", ' 'x9, "end if;\n";
+           print $file ' 'x9, "end if;\n", ' 'x6, "end if;\n";
        }
        print $file <<"EOS";
-         Set_Cursor (DB, By_Key, Key.all, False);
-         Delete (Key);
-         P   := Get_Pair (DB, Next_By_Key);
-         Release_Cursor (DB);
-         if null = P then
-            raise Not_Found;
-         end if;
-         Tab := Parse_Pair (P.all);
-         Free (P);
-         return Tab;
-      end Find;
-
+      Set_Cursor (DB, By_Key, Key.all, False);
+      Free (Key);
+      P   := Get_Pair (DB, Next_By_Key);
+      Release_Cursor (DB);
+      if null = P then
+         raise Not_Found;
+      end if;
+      Tab := Parse_Pair (P.all);
+      Free (P);
+      return Tab;
+   end Find;
 
 EOS
     }
