@@ -102,7 +102,7 @@ package body Socket_Module is
    --  Accept new connections on the Server socket.
 
    function Idle_Read (Data : Read_Data_Access) return Boolean;
-   --  ???
+   --  Read input on Data.Socket and process it.
 
    -------------
    -- Destroy --
