@@ -246,12 +246,10 @@ package body Help_Module is
      (Data    : in out Callback_Data'Class; Command : String) is
    begin
       if Command = "html.browse" then
-         if Number_Of_Arguments (Data) = 2 then
-            Open_HTML_File
-              (Get_Kernel (Data), Nth_Arg (Data, 1), Nth_Arg (Data, 2));
-         else
-            Open_HTML_File (Get_Kernel (Data), Nth_Arg (Data, 1));
-         end if;
+         Open_HTML_File
+           (Get_Kernel (Data),
+            File   => Nth_Arg (Data, 1),
+            Anchor => Nth_Arg (Data, 2, Default => ""));
       end if;
    end Command_Handler;
 
