@@ -12,6 +12,19 @@ package body Open_Session_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   --------------------------
+   -- On_List_Select_Child --
+   --------------------------
+
+   procedure On_List_Select_Child
+     (Object : access Gtk_List_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
+   begin
+      null;
+   end On_List_Select_Child;
+
    ---------------------------
    -- On_Select_All_Clicked --
    ---------------------------

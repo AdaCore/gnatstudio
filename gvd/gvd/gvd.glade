@@ -5401,6 +5401,11 @@ remote
 	    <widget>
 	      <class>GtkList</class>
 	      <name>list</name>
+	      <signal>
+		<name>select_child</name>
+		<handler>on_list_select_child</handler>
+		<last_modification_time>Wed, 13 Sep 2000 19:35:45 GMT</last_modification_time>
+	      </signal>
 	      <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
 	    </widget>
 	  </widget>

@@ -1460,7 +1460,6 @@ pragma Eliminate (Callbacks_Odd, List_Callback.Marshallers.Void_Marshaller.Call)
 pragma Eliminate (Callbacks_Odd, List_Callback.Marshallers.Void_Marshaller.To_Handler);
 pragma Eliminate (Callbacks_Odd, List_Callback.Marshallers.Void_Marshaller.To_General_Handler);
 pragma Eliminate (Callbacks_Odd, List_Callback.Marshallers.Void_Marshaller.Emit_By_Name.Internal);
-pragma Eliminate (Callbacks_Odd, List_Callback.Connect);
 pragma Eliminate (Callbacks_Odd, List_Callback.Object_Connect);
 pragma Eliminate (Callbacks_Odd, List_Callback.Gint_Marshaller.To_Marshaller);
 pragma Eliminate (Callbacks_Odd, List_Callback.Gint_Marshaller.Emit_By_Name);
@@ -1497,8 +1496,6 @@ pragma Eliminate (Callbacks_Odd, List_Callback.Emit_By_Name);
 pragma Eliminate (Callbacks_Odd, List_Callback.To_Handler);
 pragma Eliminate (Callbacks_Odd, List_Callback.To_General_Handler);
 pragma Eliminate (Callbacks_Odd, List_Callback.Convert);
-pragma Eliminate (Callbacks_Odd, List_Callback.Free_Data);
-pragma Eliminate (Callbacks_Odd, List_Callback.First_Marshaller);
 pragma Eliminate (Callbacks_Odd, List_Callback.Free_Data.Internal);
 pragma Eliminate (Callbacks_Odd, List_Callback.Emit_By_Name.Internal);
 pragma Eliminate (Gtkada.Canvas, Gtk_New);
@@ -1662,8 +1659,6 @@ pragma Eliminate (Odd.Code_Editors, Editor_Mode_Cb.Notebook_Page_Marshaller.Emit
 pragma Eliminate (Odd.Code_Editors, Editor_Mode_Cb.Notebook_Page_Marshaller.Emit_By_Name.Internal);
 pragma Eliminate (Odd.Code_Editors, Editor_Mode_Cb.Emit_By_Name);
 pragma Eliminate (Odd.Code_Editors, Editor_Mode_Cb.Emit_By_Name.Internal);
-pragma Eliminate (Open_Session_Pkg, Create_Buttons);
-pragma Eliminate (Open_Session_Pkg.Callbacks, On_List_Select_Child);
 pragma Eliminate (Odd.Dialogs, Free);
 pragma Eliminate (Odd.Dialogs.Callbacks, On_Backtrace_Process_Stopped);
 pragma Eliminate (Odd.Dialogs.Callbacks, On_Task_Process_Stopped);

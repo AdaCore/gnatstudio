@@ -83,6 +83,8 @@ begin
    Set_Shadow_Type (Open_Session.Viewport1, Shadow_In);
 
    Gtk_New (Open_Session.List);
+   List_Callback.Connect
+     (Open_Session.List, "select_child", On_List_Select_Child'Access);
    Add (Open_Session.Viewport1, Open_Session.List);
    Set_Selection_Mode (Open_Session.List, Selection_Single);
 
@@ -445,7 +447,7 @@ begin
                Tab := Processes (Gint'Value (Buffer (1 .. Index)));
                Skip_To_Blank (Buffer (Index .. Last), Index);
                Set_Busy_Cursor (Tab, True);
-                  
+
                if Buffer (Index + 1) = 'H' then
                   Send
                     (Tab.Debugger,
