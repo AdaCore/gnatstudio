@@ -362,7 +362,7 @@ package body Glide_Kernel.Scripts is
    procedure On_Destroy_File_Location (Value : System.Address) is
       File : File_Location_Info_Access := Convert (Value);
    begin
-      --  ??? Do we need to destroy File.File
+      Free (File.File);
       Unchecked_Free (File);
    end On_Destroy_File_Location;
 
