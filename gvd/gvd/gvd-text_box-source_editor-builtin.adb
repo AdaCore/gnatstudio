@@ -518,6 +518,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Widget_Breakpoint_Handler.To_Marshaller (Set_Breakpoint'Access),
          Data);
 
+      if Line = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
       Gtk_New
         (Mitem, Label => -"Continue Until Line" & Integer'Image (Line));
       Append (Source.Editor.Contextual_Menu, Mitem);
@@ -525,6 +529,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
         (Mitem, "activate",
          Widget_Breakpoint_Handler.To_Marshaller (Till_Breakpoint'Access),
          Data);
+
+      if Line = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
 
       Gtk_New (Mitem);
       Append (Source.Editor.Contextual_Menu, Mitem);
@@ -919,7 +927,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    procedure Load_File
      (Editor      : access Builtin_Record;
       File_Name   : String;
-      Set_Current : Boolean := True)
+      Set_Current : Boolean := True;
+      Force       : Boolean := False)
    is
       Edit      : constant Builtin_Text_Box :=
         Builtin_Text_Box (Editor.Widget);
@@ -933,7 +942,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  This also solves the problem of recursive loops ("info line" in gdb,
       --  with annotation level set to 1 will print a file reference as well).
 
-      if Editor.Current_File /= null
+      if not Force
+        and then Editor.Current_File /= null
         and then Editor.Current_File.all = File_Name
       then
          return;
@@ -1200,18 +1210,22 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Box : access Gtk_Widget_Record'Class)
    is
       Editor : constant Builtin := Builtin_Text_Box (Box).Editor;
+      Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
       Name   : constant String := Editor.Debugger_Current_File.all;
       Lang   : Language_Access;
 
    begin
       if Name /= "" then
          Lang := Get_Language_From_File (Name);
-         Set_Current_Language (Editor, Lang);
+         Set_Current_Language (Process.Editor_Text, Lang);
+         --  Refresh the code editor itself, so that both the source window
+         --  and the explorer are correctly updated.
          Load_File
-           (Editor,
-            Find_File (Debugger_Process_Tab (Editor.Process).Debugger, Name),
-            Set_Current => False);
+           (Process.Editor_Text,
+            Find_File (Process.Debugger, Name),
+            Set_Current => True);
          Set_Line (Editor, Get_Line (Editor), Set_Current => True);
+         Highlight_Current_Line (Editor);
       end if;
    end Show_Current_Line_Menu;
 
@@ -1621,10 +1635,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  Pretend we have changed the contents of the buffer. This removes
       --  all highlighting of the current line, and reset any marker we
       --  might have
-      Free (Editor.Current_File);
       Clear_Cache (Debugger_Process_Tab (Editor.Process).Window,
                    Force => False);
-      Load_File (Editor, File_Name, False);
+      Load_File (Editor, File_Name, False, Force => True);
       Set_Value (Get_Vadj (Get_Child (Edit)), Value);
 
       --  If the file is the one containing the current location, go to that

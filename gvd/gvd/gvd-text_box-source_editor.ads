@@ -69,13 +69,15 @@ package GVD.Text_Box.Source_Editor is
    procedure Load_File
      (Editor      : access Source_Editor_Record;
       File_Name   : String;
-      Set_Current : Boolean := True) is abstract;
+      Set_Current : Boolean := True;
+      Force       : Boolean := False) is abstract;
    --  Load and append a file in the editor.
    --  The contents is highlighted based on the current language.
    --  Debugger is used to calculate which lines should get icons on the side,
    --  through calls to Line_Contains_Code.
    --  If Set_Current is True, then File_Name becomes the current file for the
    --  debugger (ie the one that contains the current execution line).
+   --  If the file is already displayed, nothing is done unless Force is True.
 
    procedure Highlight_Current_Line
      (Editor : access Source_Editor_Record) is abstract;

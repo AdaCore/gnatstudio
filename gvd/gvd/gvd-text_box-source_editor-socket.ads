@@ -67,7 +67,8 @@ package GVD.Text_Box.Source_Editor.Socket is
    procedure Load_File
      (Editor      : access Socket_Record;
       File_Name   : String;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Force       : Boolean := False);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Highlight_Current_Line (Editor : access Socket_Record);

@@ -264,9 +264,10 @@ package body GVD.Code_Editors is
    procedure Load_File
      (Editor      : access Code_Editor_Record;
       File_Name   : String;
-      Set_Current : Boolean := True) is
+      Set_Current : Boolean := True;
+      Force       : Boolean := False) is
    begin
-      Load_File (Editor.Source, File_Name, Set_Current);
+      Load_File (Editor.Source, File_Name, Set_Current, Force);
 
       --  Create the explorer tree.
       if Set_Current then

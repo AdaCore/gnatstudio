@@ -146,7 +146,8 @@ package body GVD.Text_Box.Source_Editor.Socket is
    procedure Load_File
      (Editor      : access Socket_Record;
       File_Name   : String;
-      Set_Current : Boolean := True) is
+      Set_Current : Boolean := True;
+      Force       : Boolean := False) is
    begin
       Free (Editor.Current_File);
       Editor.Current_File := new String' (File_Name);

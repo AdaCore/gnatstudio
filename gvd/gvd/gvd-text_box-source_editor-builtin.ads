@@ -115,7 +115,8 @@ package GVD.Text_Box.Source_Editor.Builtin is
    procedure Load_File
      (Editor      : access Builtin_Record;
       File_Name   : String;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Force       : Boolean := False);
    --  See GVD.Text_Boxes.Source_Editor for more information.
 
    procedure File_Not_Found

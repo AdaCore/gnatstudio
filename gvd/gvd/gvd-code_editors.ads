@@ -76,10 +76,12 @@ package GVD.Code_Editors is
    procedure Load_File
      (Editor      : access Code_Editor_Record;
       File_Name   : String;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Force       : Boolean := False);
    --  Load and append a file in the editor.
    --  If Set_Current is True, then File_Name becomes the current file for the
    --  debugger (ie the one that contains the current execution line).
+   --  If the file is already displayed, nothing is done unless Force is True.
 
    procedure Set_Line
      (Editor      : access Code_Editor_Record;
