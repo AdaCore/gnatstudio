@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;           use Gdk.Color;
+with Gdk.Types;           use Gdk.Types;
+with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Glib;                use Glib;
 with Glib.Properties;     use Glib.Properties;
 with Gdk.Color;           use Gdk.Color;
@@ -300,6 +302,15 @@ package body Glide_Kernel.Preferences is
          Flags   => Param_Readable));
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor:General");
+
+      Indentation_Key := Gnew_Key
+        (Name  => "Src-Editor-Auto-Indent-Key",
+         Nick  => -"Auto-indentation",
+         Blurb => -"Key used for auto-indenting lines or block of lines",
+         Default_Modifier => Control_Mask,
+         Default_Key      => GDK_Tab);
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Indentation_Key), -"Editor:General");
 
       Default_Keyword_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Keyword-Color",
@@ -760,6 +771,15 @@ package body Glide_Kernel.Preferences is
       Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Gint is
    begin
       return Get_Pref (Kernel.Preferences, Pref);
+   end Get_Pref;
+
+   procedure Get_Pref
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Key;
+      Modifier : out Gdk_Modifier_Type;
+      Key      : out Gdk_Key_Type) is
+   begin
+      Get_Pref (Kernel.Preferences, Pref, Modifier, Key);
    end Get_Pref;
 
    --------------

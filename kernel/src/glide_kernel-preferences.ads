@@ -21,6 +21,7 @@
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Default_Preferences;      use Default_Preferences;
 with Gdk.Color;
+with Gdk.Types;
 with Pango.Font;
 with GVD.Preferences;
 
@@ -69,6 +70,11 @@ package Glide_Kernel.Preferences is
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Creation.Param_Spec_Enum) return Glib.Gint;
+   procedure Get_Pref
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Key;
+      Modifier : out Gdk.Types.Gdk_Modifier_Type;
+      Key      : out Gdk.Types.Gdk_Key_Type);
    pragma Inline (Get_Pref);
    --  See Default_Preferences.Get_Pref
 
@@ -132,6 +138,8 @@ package Glide_Kernel.Preferences is
    Display_Tooltip           : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
    Tab_Width                 : Param_Spec_Int;
+
+   Indentation_Key           : Param_Spec_Key;
 
    -- Languages --
    Ada_Automatic_Indentation : Param_Spec_Boolean;
