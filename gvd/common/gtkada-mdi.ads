@@ -375,6 +375,10 @@ package Gtkada.MDI is
       --  registered.
    end Desktop;
 
+   function Desktop_Was_Loaded (MDI : access MDI_Window_Record) return Boolean;
+   --  Return True if a desktop was loaded, False if the MDI is only the result
+   --  of calls to Gtk_New and Put.
+
    -------------
    -- Signals --
    -------------
@@ -491,6 +495,9 @@ private
       --  If the value is 0, this means there is no dock on that size.
       --  If the value is -1, this means that the value should be
       --  recomputed based on the size requested by the dock itself.
+
+      Desktop_Was_Loaded : Boolean := False;
+      --  True if a desktop was loaded
 
       Handles : Window_Array;
       --  The four handles that can be manipulated by the user to resize

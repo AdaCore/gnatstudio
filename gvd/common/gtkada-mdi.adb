@@ -3379,6 +3379,7 @@ package body Gtkada.MDI is
          State      : State_Type;
       begin
          pragma Assert (From_Tree.Tag.all = "MDI");
+         MDI.Desktop_Was_Loaded := True;
 
          while Child_Node /= null loop
 
@@ -3590,5 +3591,14 @@ package body Gtkada.MDI is
       end if;
    end Get;
 
+   ------------------------
+   -- Desktop_Was_Loaded --
+   ------------------------
+
+   function Desktop_Was_Loaded (MDI : access MDI_Window_Record)
+      return Boolean is
+   begin
+      return MDI.Desktop_Was_Loaded;
+   end Desktop_Was_Loaded;
 
 end Gtkada.MDI;
