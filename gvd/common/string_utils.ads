@@ -309,6 +309,14 @@ package String_Utils is
    --  Arguments that contain spaces but do not already contain quotes
    --  will be put into quotes.
 
+   function Argument_String_To_List_With_Triple_Quotes
+     (Arg_String : String)
+      return       GNAT.OS_Lib.Argument_List_Access;
+   --  This is similar to GNAT.OS_Lib.Argument_String_To_List, except that
+   --  if part of the string is surrounded by triple quotes, any special
+   --  character is ignored till the closing triple quotes. This is the same
+   --  behavior as in Python, and is needed for easier quoting of string.
+
 private
    pragma Inline (Is_Blank);
    pragma Inline (Looking_At);

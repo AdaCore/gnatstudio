@@ -1165,4 +1165,113 @@ package body String_Utils is
          return Default;
    end Safe_Value;
 
+   ------------------------------------------------
+   -- Argument_String_To_List_With_Triple_Quotes --
+   ------------------------------------------------
+
+   function Argument_String_To_List_With_Triple_Quotes
+     (Arg_String : String)
+      return       Argument_List_Access
+   is
+      Max_Args : constant Integer := Arg_String'Length;
+      New_Argv : Argument_List (1 .. Max_Args);
+      New_Argc : Natural := 0;
+      Idx      : Integer;
+
+   begin
+      Idx := Arg_String'First;
+
+      loop
+         exit when Idx > Arg_String'Last;
+
+         declare
+            Quoted  : Boolean := False;
+            Backqd  : Boolean := False;
+            Old_Idx : Integer;
+            Triple_Quoted : constant Boolean :=
+              Idx + 2 <= Arg_String'Last
+              and then Arg_String (Idx) = '"'
+              and then Arg_String (Idx + 1) = '"'
+              and then Arg_String (Idx + 2) = '"';
+
+         begin
+            if Triple_Quoted then
+               Idx := Idx + 3;
+            end if;
+
+            Old_Idx := Idx;
+
+            loop
+               --  An unquoted space is the end of an argument
+
+               if not (Backqd or Quoted or Triple_Quoted)
+                 and then Arg_String (Idx) = ' '
+               then
+                  exit;
+
+               --  Start of a quoted string
+
+               elsif not (Backqd or Quoted or Triple_Quoted)
+                 and then Arg_String (Idx) = '"'
+               then
+                  Quoted := True;
+
+               --  End of a quoted string and end of an argument
+
+               elsif (Quoted and not Backqd)
+                 and then Arg_String (Idx) = '"'
+               then
+                  Idx := Idx + 1;
+                  exit;
+
+               --  End of triple quoted string
+
+               elsif (Triple_Quoted and not Backqd)
+                 and then Idx + 2 <= Arg_String'Last
+                 and then Arg_String (Idx) = '"'
+                 and then Arg_String (Idx + 1) = '"'
+                 and then Arg_String (Idx + 2) = '"'
+               then
+                  Idx := Idx + 3;
+                  exit;
+
+               --  Following character is backquoted
+
+               elsif Arg_String (Idx) = '\' then
+                  Backqd := True;
+
+               --  Turn off backquoting after advancing one character
+
+               elsif Backqd then
+                  Backqd := False;
+
+               end if;
+
+               Idx := Idx + 1;
+               exit when Idx > Arg_String'Last;
+            end loop;
+
+            --  Found an argument
+
+            New_Argc := New_Argc + 1;
+
+            if Triple_Quoted then
+               New_Argv (New_Argc) :=
+                 new String'(Arg_String (Old_Idx .. Idx - 4));
+            else
+               New_Argv (New_Argc) :=
+                 new String'(Arg_String (Old_Idx .. Idx - 1));
+            end if;
+
+            --  Skip extraneous spaces
+
+            while Idx <= Arg_String'Last and then Arg_String (Idx) = ' ' loop
+               Idx := Idx + 1;
+            end loop;
+         end;
+      end loop;
+
+      return new Argument_List'(New_Argv (1 .. New_Argc));
+   end Argument_String_To_List_With_Triple_Quotes;
+
 end String_Utils;
