@@ -131,6 +131,12 @@ package Src_Editor_Buffer is
    --  Return the cursor position corresponding to Iter, after expanding all
    --  the tabs.
 
+   procedure Get_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Gint;
+      Column : out Gint);
+   --  Same as above, for the cursor position
+
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Gint;
@@ -181,6 +187,9 @@ package Src_Editor_Buffer is
    --  Return the text located between (Start_Line, Start_Column) and
    --  (End_Line, End_Column). The first line is 0, the first column is 0
    --  If End_Line = -1, contents are taken until the end of the buffer.
+   --
+   --  The text returned is converted to the charset defined in the preferences
+   --  (ISO-8859-1 by default).
    --
    --  The validity of both start and end positions must be verified before
    --  invoking this function. An incorrect position will cause an
