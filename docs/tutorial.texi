@@ -520,6 +520,11 @@ the tutorial in another browser.
 
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
+
+The first page of the wizard allows you to select what kind of project you
+want to build, depending on the information you have. Select the default
+choice @code{From Scratch}, and press @code{Forward}.
+
 Type @i{sdc2} in the project name field.
 
 Click on @code{Forward}: we are now on the language selection page.
