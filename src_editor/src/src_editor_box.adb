@@ -2539,4 +2539,48 @@ package body Src_Editor_Box is
       Replace_Slice (Editor, Begin_Iter, End_Iter, Text);
    end Replace_Slice;
 
+   --------------
+   -- Get_Line --
+   --------------
+
+   function Get_Line
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark)
+     return Positive
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
+      return To_Box_Line (Get_Line (Iter));
+   end Get_Line;
+
+   ----------------
+   -- Get_Column --
+   ----------------
+
+   function Get_Column
+     (Editor   : access Source_Editor_Box_Record;
+      Position : Gtk.Text_Mark.Gtk_Text_Mark)
+     return Positive
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Editor.Source_Buffer, Iter, Position);
+      return To_Box_Column (Get_Line_Offset (Iter));
+   end Get_Column;
+
+   -------------------
+   -- Get_Last_Line --
+   -------------------
+
+   function Get_Last_Line
+     (Editor   : access Source_Editor_Box_Record)
+     return Positive
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_End_Iter (Editor.Source_Buffer, Iter);
+      return To_Box_Line (Get_Line (Iter));
+   end Get_Last_Line;
+
 end Src_Editor_Box;
