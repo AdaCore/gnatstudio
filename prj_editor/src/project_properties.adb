@@ -80,6 +80,7 @@ with Gtk.Event_Box;             use Gtk.Event_Box;
 with VFS;                       use VFS;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils;              use String_Utils;
+with GUI_Utils;                 use GUI_Utils;
 
 package body Project_Properties is
    use Widget_List;
@@ -2749,6 +2750,8 @@ package body Project_Properties is
       Add_Attribute (Col, Text, "text", Attribute_Col);
       Add_Attribute (Col, Text, "editable", Editable_Col);
       Set_Sort_Column_Id (Col, Attribute_Col);
+
+      Set_Editable_And_Callback (Ed.Model, Text, Attribute_Col);
 
       return Ed;
    end Create_Indexed_Attribute_Editor;
