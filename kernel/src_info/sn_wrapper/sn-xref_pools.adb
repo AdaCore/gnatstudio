@@ -113,26 +113,33 @@ package body SN.Xref_Pools is
 
    procedure Load (Pool : in out Xref_Pool; Filename : String) is
    begin
-
       Init (Pool);
 
       if not Is_Regular_File (Filename) then
          return;
       end if;
 
-      --  open file and read its content to hashtable
+      --  Open file and read its content to hashtable
       --  file format: <src_file_name>\n<valid_FLAG><xref_files_name>\n...
       --  where <valid_flag> is either '0' or '1'
+
       declare
-         FD : File_Type;
-         Src_Buf : String (1 .. Max_Filename_Length);
-         Ref_Buf : String (1 .. Max_Filename_Length);
+         FD           : File_Type;
+         Src_Buf      : String (1 .. Max_Filename_Length);
+         Ref_Buf      : String (1 .. Max_Filename_Length);
          Src_Buf_Last : Natural;
          Ref_Buf_Last : Natural;
+
       begin
+         --  ??? Should use GNAT.OS_Lib Open/Read instead, would be more
+         --  efficient
+
          Open (FD, In_File, Filename);
+
          if Is_Open (FD) then
             loop
+               exit when End_Of_File (FD);
+
                Get_Line (FD, Src_Buf, Src_Buf_Last);
                Get_Line (FD, Ref_Buf, Ref_Buf_Last);
 
@@ -147,15 +154,19 @@ package body SN.Xref_Pools is
                     new String' (Src_Buf (Src_Buf'First .. Src_Buf_Last));
                   Xref_Elmt.Xref_Filename :=
                     new String' (Ref_Buf (Ref_Buf'First + 1 .. Ref_Buf_Last));
+
                   if Ref_Buf (Ref_Buf'First) = '1' then
                      Xref_Elmt.Valid := True;
                   end if;
+
                   STable.Set (Pool.HTable, Xref_Elmt);
                end;
 
             end loop;
          end if;
+
          Close (FD);
+
       exception
          when others => -- ignore errors
             begin
