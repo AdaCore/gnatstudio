@@ -1682,7 +1682,7 @@ begin
    Add_Parser (new Possible_Interpretation);
    Add_Parser (new Hidden_Declaration);
    Add_Parser (new Redundant_Conversion);
---   Add_Parser (new Missplaced_With);
+   Add_Parser (new Missplaced_With);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
