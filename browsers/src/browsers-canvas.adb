@@ -50,17 +50,6 @@ with Layouts;                   use Layouts;
 
 package body Browsers.Canvas is
 
-   Selected_Link_Color : constant String := "#FF0000";
-   --  <preferences> Color to use links whose ends are selected.
-
-   Selected_Item_Color : constant String := "#888888";
-   --  <preferences> Color to use to draw the selected item.
-
-   Parent_Linked_Item_Color : constant String := "#AAAAAA";
-   Child_Linked_Item_Color : constant String := "#DDDDDD";
-   --  <preferences> Color to use to draw the items that are linked to the
-   --  selected item.
-
    Zoom_Levels : constant array (Positive range <>) of Guint :=
      (25, 50, 75, 100, 150, 200, 300, 400);
    --  All the possible zoom levels. We have to use such an array, instead
@@ -189,29 +178,28 @@ package body Browsers.Canvas is
 
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
       use type Gdk.Gdk_GC;
-      B : Glide_Browser := Glide_Browser (Browser);
-      Color : Gdk_Color;
-      Desc : Pango_Font_Description;
+
+      B      : Glide_Browser := Glide_Browser (Browser);
+      Color  : Gdk_Color;
+      Desc   : Pango_Font_Description;
+      Kernel : constant Kernel_Handle := Get_Kernel (B);
+
    begin
       if B.Selected_Link_GC = null then
          Gdk_New (B.Selected_Link_GC, Get_Window (B.Canvas));
-         Color := Parse (Selected_Link_Color);
-         Alloc (Get_Default_Colormap, Color);
+         Color := Get_Pref (Kernel, Selected_Link_Color);
          Set_Foreground (B.Selected_Link_GC, Color);
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
-         Color := Parse (Selected_Item_Color);
-         Alloc (Get_Default_Colormap, Color);
+         Color := Get_Pref (Kernel, Selected_Item_Color);
          Set_Foreground (B.Selected_Item_GC, Color);
 
          Gdk_New (B.Parent_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Parse (Parent_Linked_Item_Color);
-         Alloc (Get_Default_Colormap, Color);
+         Color := Get_Pref (Kernel, Parent_Linked_Item_Color);
          Set_Foreground (B.Parent_Linked_Item_GC, Color);
 
          Gdk_New (B.Child_Linked_Item_GC, Get_Window (B.Canvas));
-         Color := Parse (Child_Linked_Item_Color);
-         Alloc (Get_Default_Colormap, Color);
+         Color := Get_Pref (Kernel, Child_Linked_Item_Color);
          Set_Foreground (B.Child_Linked_Item_GC, Color);
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
