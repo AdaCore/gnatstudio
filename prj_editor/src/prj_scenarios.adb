@@ -34,6 +34,8 @@ with Prj.Tree;      use Prj.Tree;
 with Stringt;       use Stringt;
 with Namet;         use Namet;
 
+with Unchecked_Deallocation;
+
 package body Prj_Scenarios is
 
    Scenario_Attribute_Name : constant String := "scenario";
@@ -44,6 +46,9 @@ package body Prj_Scenarios is
 
    function Build_Key (Values : String_Id_Array) return String;
    --  Return the key to use in the htable for a given set of values.
+
+   procedure Free is new Unchecked_Deallocation
+     (Table, Table_Access);
 
    ---------------
    -- Build_Key --
@@ -56,9 +61,10 @@ package body Prj_Scenarios is
       for V in Values'Range loop
          pragma Assert (Values (V) /= No_String);
 
+         String_To_Name_Buffer (Values (V));
          declare
             T : constant String := Positive'Image (V) & "="
-              & String_Id'Image (Values (V) - No_String) & ",";
+              & Name_Buffer (1 .. Name_Len) & ",";
          begin
             S (Index .. Index + T'Length - 1) := T;
             Index := Index + T'Length - 1;
@@ -77,9 +83,12 @@ package body Prj_Scenarios is
    is
    begin
       Free (Manager.Variables);
-      Clear (Manager.Names);
+      Free (Manager.Names);
 
       Manager.Variables := new Project_Node_Array' (Variables);
+      Manager.Names := new Table (20);
+      --  The size for Names is an estimated of the number of named scenarios
+      --  in the GUI. It is not a hard limit.
    end Initialize;
 
    ------------------------
@@ -88,7 +97,8 @@ package body Prj_Scenarios is
 
    function Get_Scenario_Names
      (Manager : Scenario_Manager;
-      Values  : String_Id_Array)
+      Values  : String_Id_Array;
+      Create  : Boolean := False)
       return String_Id_Array
    is
       Num : Positive := 1;
@@ -101,7 +111,17 @@ package body Prj_Scenarios is
       end loop;
 
       if Num = 1 then
-         return (1 => Get (Manager.Names, Build_Key (Values)));
+         declare
+            N : String_Id := Get (Manager.Names.all, Build_Key (Values));
+         begin
+            if Create and then N = No_String then
+               Start_String;
+               Store_String_Chars (Build_Key (Values));
+               N := End_String;
+               Set (Manager.Names.all, Build_Key (Values), N);
+            end if;
+            return (1 => N);
+         end;
 
       else
          declare
@@ -130,7 +150,13 @@ package body Prj_Scenarios is
 
                --  Output the current status
 
-               Output (Index) := Get (Manager.Names, Build_Key (Val));
+               Output (Index) := Get (Manager.Names.all, Build_Key (Val));
+               if Create and then Output (Index) = No_String then
+                  Start_String;
+                  Store_String_Chars (Build_Key (Val));
+                  Output (Index) := End_String;
+                  Set (Manager.Names.all, Build_Key (Val), Output (Index));
+               end if;
                Index := Index + 1;
                Var_Index := Var_Index - 1;
 
@@ -166,7 +192,7 @@ package body Prj_Scenarios is
    begin
       Start_String;
       Store_String_Chars (Name);
-      Set (Manager.Names, Build_Key (Values), End_String);
+      Set (Manager.Names.all, Build_Key (Values), End_String);
    end Set_Scenario_Name;
 
    --------------------
@@ -288,7 +314,7 @@ package body Prj_Scenarios is
 
          --  "For Scenario use " & Name
 
-         Str := Get (Manager.Names, Build_Key (Strings));
+         Str := Get (Manager.Names.all, Build_Key (Strings));
 
          if Str /= No_String then
             Set_Expression_Of
@@ -316,6 +342,43 @@ package body Prj_Scenarios is
          Index := Index + 1;
       end loop Main_Loop;
    end Append_Declaration;
+
+   --------------------------------
+   -- Get_Scenario_Var_Reference --
+   --------------------------------
+
+   function Get_Scenario_Var_Reference
+     (Manager : Scenario_Manager; Internal_Project : Project_Node_Id)
+      return Prj.Tree.Project_Node_Id
+   is
+      Ref : Project_Node_Id;
+   begin
+      Ref := Default_Project_Node (N_Variable_Reference);
+
+      Name_Len := Scenario_Attribute_Name'Length;
+      Name_Buffer (Name_Buffer'First .. Name_Len) := Scenario_Attribute_Name;
+      Set_Name_Of (Ref, Name_Find);
+
+      Set_Expression_Kind_Of (Ref, Prj.Single);
+
+      Set_Project_Node_Of (Ref, Internal_Project);
+
+      Set_String_Type_Of (Ref, Empty_Node);
+      return Ref;
+   end Get_Scenario_Var_Reference;
+
+   --------------------
+   -- Variable_Count --
+   --------------------
+
+   function Variable_Count (Manager : Scenario_Manager) return Natural is
+   begin
+      if Manager.Variables = null then
+         return 0;
+      else
+         return Manager.Variables'Length;
+      end if;
+   end Variable_Count;
 
 end Prj_Scenarios;
 

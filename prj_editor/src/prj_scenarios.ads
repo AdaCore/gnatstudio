@@ -88,10 +88,14 @@ package Prj_Scenarios is
    --  No element in Values can be equal to No_String.
 
    function Get_Scenario_Names
-     (Manager : Scenario_Manager; Values  : String_Id_Array)
+     (Manager : Scenario_Manager;
+      Values  : String_Id_Array;
+      Create  : Boolean := False)
       return String_Id_Array;
    --  Return the list scenario names that match a specific set of Values of
    --  the environment variables.
+   --  If Create is true, new names are created when the scenario hasn't been
+   --  named yet.
 
    function Variable_Index
      (Manager : Scenario_Manager; Env_Variable_Name : Types.String_Id)
@@ -111,6 +115,17 @@ package Prj_Scenarios is
    --  Only the cases that have named projects associated with them are
    --  generated.
 
+   function Get_Scenario_Var_Reference
+     (Manager : Scenario_Manager; Internal_Project : Prj.Tree.Project_Node_Id)
+      return Prj.Tree.Project_Node_Id;
+   --  Return a N_Variable_Reference for the variable used to define
+   --  scenarios. This can be used in a N_Case_Construction.
+   --  Internal_Project is a reference to the internal project that contains
+   --  the definition of the scenarios.
+
+   function Variable_Count (Manager : Scenario_Manager) return Natural;
+   --  return the number of scenario variables in Manager
+
 private
 
    type Header_Num is range 0 .. 20;
@@ -126,6 +141,7 @@ private
       Null_Value => Types.No_String,
       Img        => Types.String_Id'Image,
       "="        => Types."=");
+   type Table_Access is access Name_Htables.Table;
 
    type Scenario_Manager is record
       Variables : Prj_API.Project_Node_Array_Access;
@@ -136,15 +152,14 @@ private
       --  variable. These would be consider as aliases, and only one such entry
       --  is created.
 
-      Names : Name_Htables.Table (100);
+      Names : Table_Access;
       --  The name of the scenario associated with a given value for all the
       --  scenario variables. The key should be a string similar to
-      --    "1=11,2=22",
-      --  where "1" and "2" are the indexes of the variables, and "11" and "22"
-      --  their values (as string_id).
-      --
-      --  The size for Names is an estimated of the number of named scenarios
-      --  in the GUI. It is not a hard limit.
+      --    "1=val1,2=val2",
+      --  where "1" and "2" are the indexes of the variables, and "val1"
+      --  and "val2" their values.
+      --  We use an access type so that this field can be updated in
+      --  Get_Scenario_Names.
    end record;
 
 end Prj_Scenarios;
