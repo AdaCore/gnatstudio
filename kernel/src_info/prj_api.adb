@@ -3205,6 +3205,70 @@ package body Prj_API is
       end loop;
    end Save_Project;
 
+   ---------------------------------
+   -- Find_All_Projects_Importing --
+   ---------------------------------
+
+   function Find_All_Projects_Importing
+     (Root_Project : Project_Node_Id; Project : Project_Id)
+      return Project_Id_Array
+   is
+      type Boolean_Array is array (Positive range <>) of Boolean;
+      List : Name_Id_Array := Topological_Sort (Root_Project);
+      Include : Boolean_Array (List'Range) := (others => False);
+      Result : Project_Id_Array (List'Range);
+      Name : constant Name_Id := Projects.Table (Project).Name;
+      Index : Integer := List'Last;
+      Prj : Project_List;
+   begin
+      --  We first start by the lower possible project, then go up to the root
+      --  project. Note that no project that appears before Project can import
+      --  it, so we can save some time.
+
+      while Index >= List'First loop
+         if Name = List (Index) then
+            Include (Index) := True;
+            Result (Index) := Project;
+            exit;
+         end if;
+         Index := Index - 1;
+      end loop;
+
+      Index := Index - 1;
+
+      while Index >= List'First loop
+         Result (Index) := Get_Project_View_From_Name (List (Index));
+         Prj := Projects.Table (Result (Index)).Imported_Projects;
+
+         Imported_Projects_Loop :
+         while Prj /= Empty_Project_List loop
+            for N in Index + 1 .. Include'Last loop
+               if Include (N)
+                 and then List (N) = Projects.Table
+                 (Project_Lists.Table (Prj).Project).Name
+               then
+                  Include (Index) := True;
+                  exit Imported_Projects_Loop;
+               end if;
+            end loop;
+
+            Prj := Project_Lists.Table (Prj).Next;
+         end loop Imported_Projects_Loop;
+
+         Index := Index - 1;
+      end loop;
+
+      Index := Result'First;
+      for N in Include'Range loop
+         if Include (N) then
+            Result (Index) := Result (N);
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      return Result (Result'First .. Index - 1);
+   end Find_All_Projects_Importing;
+
    -----------
    -- Start --
    -----------
@@ -3320,7 +3384,9 @@ package body Prj_API is
    ----------------------
 
    function Get_Source_Files
-     (Project : Prj.Tree.Project_Node_Id; Recursive : Boolean)
+     (Project : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean;
+      Full_Path : Boolean := True)
       return String_Array_Access
    is
       Src     : String_List_Id;
@@ -3356,9 +3422,14 @@ package body Prj_API is
             Src := Projects.Table (View).Sources;
 
             while Src /= Nil_String loop
-               Sources (Index) := Basic_Types.String_Access
-                 (Locate_Regular_File
-                  (Get_String (String_Elements.Table (Src).Value), Path));
+               if Full_Path then
+                  Sources (Index) := Basic_Types.String_Access
+                    (Locate_Regular_File
+                     (Get_String (String_Elements.Table (Src).Value), Path));
+               else
+                  Sources (Index) := new String'
+                    (Get_String (String_Elements.Table (Src).Value));
+               end if;
                if Sources (Index) = null then
                   Trace (Me, "File not found "
                          & Get_String (String_Elements.Table (Src).Value)

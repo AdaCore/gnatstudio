@@ -42,6 +42,7 @@ package Prj_API is
    type Project_Node_Array_Access is access Project_Node_Array;
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
    type Project_Id_Array is array (Positive range <>) of Project_Id;
+   type Project_Id_Array_Access is access Project_Id_Array;
 
    Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
    C_String   : constant String := "c";    --  See also Snames.Name_C
@@ -58,6 +59,8 @@ package Prj_API is
 
    procedure Free is new Unchecked_Deallocation
      (Project_Node_Array, Project_Node_Array_Access);
+   procedure Free is new Unchecked_Deallocation
+     (Project_Id_Array, Project_Id_Array_Access);
 
    function Get_Project_View_From_Name
      (Name : Types.Name_Id) return Project_Id;
@@ -133,12 +136,16 @@ package Prj_API is
    --  includes the source path for all imported projects.
 
    function Get_Source_Files
-     (Project : Prj.Tree.Project_Node_Id; Recursive : Boolean)
+     (Project : Prj.Tree.Project_Node_Id;
+      Recursive : Boolean;
+      Full_Path : Boolean := True)
       return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
    --  Handle. Only the direct sources of the project are currently returned,
-   --  i.e. not those found in subprojects.
+   --  i.e. not those found in subprojects, unless Recursive is True.
    --  It is the caller's responsability to free the list.
+   --  If Full_Path is true, then the file names will also include the
+   --  directory.
 
    --------------------
    -- Creating nodes --
@@ -302,6 +309,12 @@ package Prj_API is
 
    procedure Next (Iterator : in out Imported_Project_Iterator);
    --  Move to the next imported project.
+
+   function Find_All_Projects_Importing
+     (Root_Project : Project_Node_Id; Project : Project_Id)
+      return Project_Id_Array;
+   --  Return the list of all the projects that import Project, either directly
+   --  or indirectly.
 
    -------------------
    -- Finding nodes --
