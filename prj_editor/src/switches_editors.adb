@@ -1291,8 +1291,10 @@ package body Switches_Editors is
    is
       L     : Gtk_Label;
       S     : constant Switch_Combo_Widget_Access := new Switch_Combo_Widget
-        (Separator'Length, Switch'Length, Default_No_Switch'Length,
-         Default_No_Digit'Length);
+        (Sep_Length       => Separator'Length,
+         Switch_Length    => Switch'Length,
+         No_Digit_Length  => Default_No_Digit'Length,
+         No_Switch_Length => Default_No_Switch'Length);
       Hbox  : Gtk_Box;
       Item  : Combo_List_Item;
    begin
