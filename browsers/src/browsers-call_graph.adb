@@ -1124,6 +1124,8 @@ package body Browsers.Call_Graph is
         (Entity   => Get_Entity (C),
          Location => Location);
 
+      Add_Navigation_Location (Get_Kernel (C), -"Call graph Browser");
+
       if Location /= Entities.No_File_Location then
          Open_File_Editor
            (Get_Kernel (C),
@@ -1159,6 +1161,9 @@ package body Browsers.Call_Graph is
                  (-"Couldn't find cross-reference information for ")
                  & '"' & Entity_Name_Information (C) & '"');
       else
+         Add_Navigation_Location
+           (Get_Kernel (Context.Context), -"Call graph Browser");
+
          Open_File_Editor
            (Get_Kernel (Context.Context),
             Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -2218,6 +2223,8 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Event);
    begin
+      Add_Navigation_Location (Callback.Kernel, -"Call graph Browser");
+
       Open_File_Editor
         (Callback.Kernel,
          Filename => Get_Filename (Get_File (Callback.Location)),
