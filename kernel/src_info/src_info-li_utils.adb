@@ -1,4 +1,5 @@
 with Text_IO; use Text_IO;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 package body Src_Info.LI_Utils is
 
    procedure Insert_Declaration_Internal
@@ -94,7 +95,8 @@ package body Src_Info.LI_Utils is
                 Source_Filename => new String'(Source_Filename),
                 Directory_Name => null,
          --  ??? we should extract Directory_Name from Source_Filename
-                File_Timestamp => 0,
+                File_Timestamp => To_Timestamp
+                                    (File_Time_Stamp (Source_Filename)),
                 Original_Filename => null,
                 Original_Line => 1,
                 Declarations => null);
@@ -165,7 +167,8 @@ package body Src_Info.LI_Utils is
                        Spec_Info    => Tmp_LI_File.Spec_Info,
                        Body_Info    => Tmp_LI_File.Body_Info,
                        Separate_Info     => Tmp_LI_File.Separate_Info,
-                       LI_Timestamp      => 0,
+                       LI_Timestamp      =>
+                         To_Timestamp (File_Time_Stamp (Source_Filename)),
                        Compilation_Errors_Found => False,
                        Dependencies_Info => null);
          end if;
@@ -179,7 +182,7 @@ package body Src_Info.LI_Utils is
            (File              => Tmp_LI_File_Ptr,
             Handler           => Handler,
             Source_Filename   => Referred_Filename,
-            Parsed            => False);
+            Parsed            => True);
          Create_File_Info
            (FI_Ptr            => Tmp_LI_File_Ptr.LI.Body_Info,
             Source_Filename   => Referred_Filename,
