@@ -166,8 +166,8 @@ package body Gtkada.File_Selector is
       then
          return "";
       else
-         return Dialog.Current_Directory.all
-                 & Get_Text (Dialog.Selection_Entry);
+         return Normalize_Pathname
+           (Dialog.Current_Directory.all & Get_Text (Dialog.Selection_Entry));
       end if;
    end Get_Selection;
 
@@ -263,9 +263,9 @@ package body Gtkada.File_Selector is
       end if;
    end Select_File;
 
-   -----------------
+   ----------------------
    -- Select_Directory --
-   -----------------
+   ----------------------
 
    function Select_Directory
      (File_Selector : File_Selector_Window_Access) return String
@@ -297,7 +297,8 @@ package body Gtkada.File_Selector is
          return "";
       else
          declare
-            File : constant String := Get_Text (File_Selector.Selection_Entry);
+            File : constant String := Normalize_Pathname
+              (Get_Text (File_Selector.Selection_Entry));
          begin
             Destroy (File_Selector);
             return File;
