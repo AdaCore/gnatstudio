@@ -174,8 +174,46 @@ package body Codefix.Errors_Manager is
       Choice : Extract'Class)
    is
       pragma Unreferenced (Error);
+
+      Line_This, Line_Choice : Ptr_Extract_Line;
    begin
-      Append (This.Valid_Corrections, Clone (Choice));
+      Line_This := Get_First_Line (This.Fix_List);
+      Line_Choice := Get_First_Line (Choice);
+
+      while Line_Choice /= null and then Line_This /= null loop
+         if Get_Context (Line_Choice.all) = Line_Created then
+            Add_Element
+              (Line_This,
+               null,
+               new Extract_Line'(Clone (Line_Choice.all, False)),
+               This.Fix_List);
+            Line_This := Next (Line_This.all);
+            Line_Choice := Next (Line_Choice.all);
+         elsif Get_Context (Line_This.all) = Line_Created then
+            Line_This := Next (Line_This.all);
+         elsif Get_Cursor (Line_This.all) < Get_Cursor (Line_Choice.all) then
+            Line_This := Next (Line_This.all);
+         elsif Get_Cursor (Line_Choice.all) < Get_Cursor (Line_This.all) then
+            Add_Element
+              (Line_This,
+               null,
+               new Extract_Line'(Clone (Line_Choice.all, False)),
+               This.Fix_List);
+            Line_This := Next (Line_This.all);
+            Line_Choice := Next (Line_Choice.all);
+         else
+            Assign (Line_This.all, Line_Choice.all);
+            Line_This := Next (Line_This.all);
+            Line_Choice := Next (Line_Choice.all);
+         end if;
+      end loop;
+
+      if Line_Choice /= null then
+         Add_Element
+           (This.Fix_List,
+            new Extract_Line'(Clone (Line_Choice.all, True)));
+      end if;
+
    end Validate;
 
    ------------
@@ -184,35 +222,13 @@ package body Codefix.Errors_Manager is
 
    procedure Commit
      (This         : in out Correction_Manager;
-      Success      : out Boolean;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Callback     : Ambiguous_Callback := null)
+      Current_Text : in out Text_Navigator_Abstr'Class)
    is
-      Current_Node     : Line_List.List_Node;
-      Modifs_List      : Line_List.List;
-      Offset_Line      : Integer := 0;
-      No_More_Problems : Boolean;
-
+      Offset_Line : Integer := 0;
    begin
-      Success := False;
-      Check_Ambiguities
-        (This.Valid_Corrections, Callback, Current_Text, No_More_Problems);
-
-      if not No_More_Problems then
-         return;
-      end if;
-
-      Modifs_List := Sort (This.Valid_Corrections);
-      Current_Node := First (Modifs_List);
-
-      while Current_Node /= Line_List.Null_Node loop
-         Commit (Data (Current_Node), Current_Text, Offset_Line);
-         Current_Node := Next (Current_Node);
-      end loop;
-
-      Free (Modifs_List);
+      Commit (This.Fix_List, Current_Text, Offset_Line);
       Commit (Current_Text);
-      Success := True;
+      Free (This.Fix_List);
    end Commit;
 
    ----------
@@ -222,169 +238,8 @@ package body Codefix.Errors_Manager is
    procedure Free (This : in out Correction_Manager) is
    begin
       Free (This.Potential_Corrections);
-      Free (This.Valid_Corrections, True);
+      Free (This.Fix_List);
    end Free;
-
-   -----------------------
-   -- Check_Ambiguities --
-   -----------------------
-
-   procedure Check_Ambiguities
-     (Solutions        : in out Solution_List;
-      Callback         : Ambiguous_Callback;
-      Current_Text     : Text_Navigator_Abstr'Class;
-      No_More_Problems : out Boolean)
-   is
-      function Delete_And_Next
-        (Node : Extract_List.List_Node) return Extract_List.List_Node;
-      --  Delete the current node after having got the next one.
-
-      function Conflict (Extract_1, Extract_2 : Extract'Class) return Boolean;
-      --  Is True when Extract_1 and Extract_2 have at least one line in
-      --  common.
-
-      Node_I, Node_J     : Extract_List.List_Node;
-      Delete_I, Delete_J : Boolean;
-      Choice             : Alternative_Choice;
-
-      ---------------------
-      -- Delete_And_Next --
-      ---------------------
-
-      function Delete_And_Next
-        (Node : Extract_List.List_Node) return Extract_List.List_Node
-      is
-         Garbage, Next_Node : Extract_List.List_Node;
-      begin
-         Garbage := Node;
-         Next_Node := Next (Node);
-         Remove_Nodes (Solutions, Prev (Solutions, Garbage), Garbage);
-         return Next_Node;
-      end Delete_And_Next;
-
-      -------------
-      -- Conflit --
-      -------------
-
-      function Conflict (Extract_1, Extract_2 : Extract'Class) return Boolean
-      is
-         Num_1, Num_2   : Natural;
-         Line_1, Line_2 : Extract_Line;
-
-      begin
-         Num_1 := Get_Number_Lines (Extract_1);
-         Num_2 := Get_Number_Lines (Extract_2);
-
-         for I_1 in 1 .. Num_1 loop
-            Line_1 := Get_Record (Extract_1, I_1).all;
-
-            for I_2 in 1 .. Num_2 loop
-               Line_2 := Get_Record (Extract_2, I_2).all;
-
-               if Get_Cursor (Line_1).Line = Get_Cursor (Line_2).Line
-                 and then Get_Context (Line_1) = Line_Modified
-                 and then Get_Context (Line_2) = Line_Modified
-               then
-                  return True;
-               end if;
-            end loop;
-         end loop;
-
-         return False;
-      end Conflict;
-
-   begin
-      No_More_Problems := True;
-      Node_I := First (Solutions);
-
-      while Node_I /= Extract_List.Null_Node loop
-         Node_J := Next (Node_I);
-         Delete_I := False;
-
-         while Node_J /= Extract_List.Null_Node loop
-            Delete_J := False;
-
-            if Conflict (Data (Node_I), Data (Node_J))then
-               if Callback = null then
-                  No_More_Problems := False;
-                  return;
-               else
-                  Callback
-                    (Data (Node_I), Data (Node_J), Current_Text, Choice);
-
-                  case Choice is
-                     when 0 =>
-                        No_More_Problems := False;
-                     when 1 =>
-                        Delete_I := True;
-                        exit;
-                     when 2 =>
-                        Delete_J := True;
-                  end case;
-               end if;
-            end if;
-
-            if Delete_J then
-               Node_J := Delete_And_Next (Node_J);
-            else
-               Node_J := Next (Node_J);
-            end if;
-         end loop;
-
-         if Delete_I then
-            Node_I := Delete_And_Next (Node_I);
-         else
-            Node_I := Next (Node_I);
-         end if;
-      end loop;
-   end Check_Ambiguities;
-
-   ----------
-   -- Sort --
-   ----------
-
-   function Sort (List : Solution_List) return Line_List.List is
-      Node_Solution : Extract_List.List_Node;
-      Node_Line     : Line_List.List_Node;
-      Line_Temp     : Extract_Line;
-      Result_List   : Line_List.List;
-      Recorded      : Boolean;
-
-   begin
-      Node_Solution := First (List);
-
-      while Node_Solution /= Extract_List.Null_Node loop
-
-         for J in 1 .. Get_Number_Lines (Data (Node_Solution)) loop
-            Node_Line := First (Result_List);
-            Line_Temp := Clone
-              (Get_Record (Data (Node_Solution), J).all,
-               False);
-
-            Recorded := False;
-
-            while not Recorded and then Node_Line /= Line_List.Null_Node loop
-               if Get_Cursor (Data (Node_Line)).Line >
-                 Get_Cursor (Line_Temp).Line
-               then
-                  Prepend (Result_List, Node_Line, Line_Temp);
-                  Recorded := True;
-               end if;
-
-               Node_Line := Next (Node_Line);
-            end loop;
-
-            if not Recorded then
-               Append (Result_List, Line_Temp);
-            end if;
-
-         end loop;
-
-         Node_Solution := Next (Node_Solution);
-      end loop;
-
-      return Result_List;
-   end Sort;
 
    ---------------
    -- Add_Error --
@@ -436,72 +291,106 @@ package body Codefix.Errors_Manager is
    --------------------
 
    procedure Update_Changes
-     (This         : Correction_Manager;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Object       : in out Extract'Class;
-      Success      : out Boolean) is
+     (This          : Correction_Manager;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Object        : in out Extract'Class;
+      Success       : out Boolean;
+      Already_Fixed : out Boolean) is
 
-      Current_Extract          : Extract_List.List_Node;
-      Line_Object, Line_Merged : Ptr_Extract_Line;
-      Merged_Extract           : Extract;
+      Line_Object, Line_This : Ptr_Extract_Line;
+      Merged_Extract         : Extract;
+      Little_Fix_List        : Extract;
+      Old_Cursor             : File_Cursor;
 
    begin
       Success := True;
-      Current_Extract := First (This.Valid_Corrections);
 
-      while Current_Extract /= Extract_List.Null_Node loop
-         Merge
-           (Merged_Extract,
-            Data (Current_Extract),
-            Object,
-            Current_Text,
-            Success,
-            True);
+      Line_This := Get_First_Line (This.Fix_List);
+      Line_Object := Get_First_Line (Object);
 
-         exit when not Success;
+      while Line_This /= null and then Line_Object /= null loop
+         if Get_Cursor (Line_This.all) > Get_Cursor (Line_Object.all) then
+            Line_Object := Next (Line_Object.all);
+         elsif Get_Cursor (Line_Object.all) > Get_Cursor (Line_This.all) then
+            Line_This := Next (Line_This.all);
+         elsif Get_Cursor (Line_This.all) = Get_Cursor (Line_Object.all) then
+            Add_Element
+              (Little_Fix_List,
+               new Extract_Line'(Clone (Line_This.all, False)));
+            Old_Cursor := File_Cursor (Get_Cursor (Line_This.all));
+            Line_This := Next (Line_This.all);
 
-         if Get_Number_Lines (Merged_Extract) > 0 then
-            Line_Object := Get_First_Line (Object);
-            Line_Merged := Get_First_Line (Merged_Extract);
+            if Line_This /= null
+              and then File_Cursor (Get_Cursor (Line_This.all)) /= Old_Cursor
+            then
+               Old_Cursor := File_Cursor (Get_Cursor (Line_Object.all));
 
-            while Line_Merged /= null loop
-               if Get_Cursor (Line_Merged.all) =
-                 Get_Cursor (Line_Object.all)
-               then
-                  if Get_Context (Line_Merged.all) = Line_Created then
-                     while Line_Merged /= null
-                       and then Get_Context (Line_Merged.all) = Line_Created
-                     loop
-                        Add_Line
-                          (Object,
-                           Get_Cursor (Line_Merged.all),
-                           Get_String (Line_Merged.all));
-                        --  ??? Maybe sth faster could be written with
-                        --  Add_Element ?
-                        Line_Merged := Next (Line_Merged.all);
-                        Line_Object := Next (Line_Object.all);
-                        Set_Coloration (Line_Object.all, False);
-                     end loop;
-                  else
-
-                     if Get_Context (Line_Object.all) = Original_Line then
-                        Assign (Line_Object.all, Line_Merged.all);
-                        Set_Coloration (Line_Object.all, False);
-                     else
-                        Assign (Line_Object.all, Line_Merged.all);
-                     end if;
-
-                     Line_Merged := Next (Line_Merged.all);
-                  end if;
-               else
+               while Line_Object /= null
+                 and then Old_Cursor =
+                 File_Cursor (Get_Cursor (Line_Object.all))
+               loop
                   Line_Object := Next (Line_Object.all);
+               end loop;
+            end if;
+         end if;
+      end loop;
+
+      Merge
+        (Merged_Extract,
+         Little_Fix_List,
+         Object,
+         Current_Text,
+         Success);
+
+      if not Success then
+         return;
+      end if;
+
+      Set_Caption (Merged_Extract, Get_Caption (Object));
+      Free (Object);
+      Unchecked_Assign (Object, Merged_Extract);
+
+      Line_Object := Get_First_Line (Object);
+      Line_This := Get_First_Line (This.Fix_List);
+
+      Already_Fixed := True;
+
+      while Line_Object /= null loop
+         if Get_Context (Line_Object.all) /= Line_Created then
+            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
+
+            if Line_This = null then
+               Line_This := Get_First_Line (This.Fix_List);
+               Already_Fixed := False;
+            else
+               if Get_Context (Line_Object.all) = Original_Line
+                 or else Line_Object.all = Line_This.all
+               then
+                  Set_Coloration (Line_Object.all, False);
+               else
+                  Already_Fixed := False;
                end if;
+            end if;
+         else
+            Line_This := Get_Line (Line_This, Get_Cursor (Line_Object.all));
+
+            while Line_This /= null
+              and then Get_Cursor (Line_This.all) =
+              Get_Cursor (Line_Object.all)
+            loop
+               if Line_Object.all = Line_This.all then
+                  Set_Coloration (Line_Object.all, False);
+                  exit;
+               end if;
+               Line_This := Next (Line_This.all);
             end loop;
+
+            if Get_Coloration (Line_Object.all) then
+               Already_Fixed := False;
+            end if;
          end if;
 
-         Free (Merged_Extract);
-
-         Current_Extract := Next (Current_Extract);
+         Line_Object := Next (Line_Object.all);
       end loop;
 
    end Update_Changes;

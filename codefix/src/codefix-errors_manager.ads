@@ -96,41 +96,21 @@ package Codefix.Errors_Manager is
       Error  : Error_Id;
       Choice : Natural);
    --  Specify a choice between the differents correction'possibilities
-   --  of a message.
+   --  of a message. Warning : each modifications on lines already validate
+   --  are erased.
 
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
       Choice : Extract'Class);
    --  Specify a choice between the differents correction'possibilities
-   --  of a message.
-
-   subtype Alternative_Choice is Natural range 0 .. 2;
-
-   type Ambiguous_Callback is access procedure
-     (Alternative_1, Alternative_2 : Extract'Class;
-      Current_Text                 : Text_Navigator_Abstr'Class;
-      Delete_Choice                : out Alternative_Choice);
-   --  Is called when ambiguities appears. If Delete_Choice is 0, no solution
-   --  are chosen and the ambiguity stay. Otherwise, the choice is deleted.
+   --  of a message. Warning : each modifications on lines already validate
+   --  are erased.
 
    procedure Commit
      (This         : in out Correction_Manager;
-      Success      : out Boolean;
-      Current_Text : in out Text_Navigator_Abstr'Class;
-      Callback     : Ambiguous_Callback := null);
-   --  Check amiguities and call the callback to solve them. If all
-   --  ambiguities are solved, then success is True and the modifications
-   --  made in the correction manager are updated in the real text.
-
-   procedure Check_Ambiguities
-     (Solutions        : in out Solution_List;
-      Callback         : Ambiguous_Callback;
-      Current_Text     : Text_Navigator_Abstr'Class;
-      No_More_Problems : out Boolean);
-   --  Call the Callback when 2 solutions concerns the same line. If, at the
-   --  end, there are no more ambiguities then No_More_Problems is Ture.
-   --  Otherwise, it is false.
+      Current_Text : in out Text_Navigator_Abstr'Class);
+   --  Commit modifications made in the current_text.
 
    procedure Free (This : in out Correction_Manager);
    --  Free the memory associated to a Correction_Manager.
@@ -144,10 +124,11 @@ package Codefix.Errors_Manager is
    --  the message. If this error does not exist, Null_Error_Id is returned.
 
    procedure Update_Changes
-     (This         : Correction_Manager;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Object       : in out Extract'Class;
-      Success      : out Boolean);
+     (This          : Correction_Manager;
+      Current_Text  : Text_Navigator_Abstr'Class;
+      Object        : in out Extract'Class;
+      Success       : out Boolean;
+      Already_Fixed : out Boolean);
 
 private
 
@@ -170,7 +151,7 @@ private
 
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.List;
-      Valid_Corrections     : Solution_List;
+      Fix_List              : Extract;
       Offset_Line           : Integer := 0;
    end record;
 
@@ -179,11 +160,5 @@ private
       Message   : Error_Message;
       Solutions : Solution_List;
       New_Error : out Error_Id);
-
-   package Line_List is new Generic_List (Extract_Line, Free);
-   use Line_List;
-
-   function Sort (List : Solution_List) return Line_List.List;
-   --  ??? Can't we use List_Utils.Sort instead
 
 end Codefix.Errors_Manager;
