@@ -497,7 +497,7 @@ package body Src_Info.Debug is
    begin
       case Kind is
          when Overloaded_Entity                => return "@";
-         when Unresolved_Entity                => return "#";
+         when Unresolved_Entity                => return "?";
          when Access_Object                    => return "p";
          when Access_Type                      => return "P";
          when Array_Object                     => return "a";
