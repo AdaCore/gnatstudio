@@ -177,6 +177,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_View_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Diff_Local
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -402,11 +406,8 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
    begin
-      --  ??? Not implemented yet.
-      --  On_Menu_View_Log (Widget, Get_Current_Context (Kernel));
-      null;
+      On_Menu_View_Log (Widget, Get_Current_Context (Kernel));
    end View_Log;
 
    -------------------
@@ -508,6 +509,14 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                   (On_Menu_Open'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label => -"View changelog");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_View_Log'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Compare against head revision");
@@ -1557,6 +1566,30 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Diff;
+
+   ----------------------
+   -- On_Menu_View_Log --
+   ----------------------
+
+   procedure On_Menu_View_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Files    : String_List.List;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      while not String_List.Is_Empty (Files) loop
+         Log (Get_Current_Ref (Context), String_List.Head (Files));
+         String_List.Next (Files);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_View_Log;
 
    ------------------------
    -- On_Menu_Diff_Local --
