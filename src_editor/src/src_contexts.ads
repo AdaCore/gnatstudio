@@ -32,6 +32,8 @@ with Files_Extra_Info_Pkg;
 with Language_Handlers;
 with VFS;
 
+with Src_Editor_Buffer; use Src_Editor_Buffer;
+
 package Src_Contexts is
 
    type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with private;
@@ -269,7 +271,8 @@ private
       --  Whether the current search item that the context refers to
       --  is acceptable for a replace operation.
 
-      Begin_Line, Begin_Column, End_Line, End_Column : Natural := 0;
+      Begin_Line, End_Line     : Editable_Line_Type := 0;
+      Begin_Column, End_Column : Natural := 0;
       --  Begin_Line is set to 0 if no match was found
 
       All_Occurrences : Boolean := False;
