@@ -66,7 +66,8 @@ package body Glide_Kernel is
      (1 => New_String (Project_Changed_Signal),
       2 => New_String (Project_View_Changed_Signal),
       3 => New_String (Context_Changed_Signal),
-      4 => New_String (Variable_Changed_Signal));
+      4 => New_String (Variable_Changed_Signal),
+      5 => New_String (Source_Lines_Revealed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -107,7 +108,7 @@ package body Glide_Kernel is
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
         (1 .. 2 | 4 => (1 => GType_None),
-         3          => (1 => GType_Pointer));
+         3      | 5 => (1 => GType_Pointer));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -461,6 +462,27 @@ package body Glide_Kernel is
       Free (Handle.Scenario_Variables);
       Object_Callback.Emit_By_Name (Handle, Variable_Changed_Signal);
    end Variable_Changed;
+
+   ---------------------------
+   -- Source_Lines_Revealed --
+   ---------------------------
+
+   procedure Source_Lines_Revealed
+     (Handle  : access Kernel_Handle_Record;
+      Context : access Selection_Context'Class)
+   is
+      procedure Internal
+        (Handle  : System.Address;
+         Signal  : String;
+         Context : Selection_Context_Access);
+      pragma Import (C, Internal, "g_signal_emit_by_name");
+   begin
+      --  ??? code duplication from Context_Changed, see below.
+      Internal
+        (Get_Object (Handle),
+         Source_Lines_Revealed_Signal & ASCII.NUL,
+         Selection_Context_Access (Context));
+   end Source_Lines_Revealed;
 
    ---------------------
    -- Context_Changed --
