@@ -8,23 +8,26 @@ IMAGES = assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
 breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif
 
 all: doc clean-temp-files
+non-ps: common clean-temp-files
 static:
 
-doc: gvd.texi
+common: gvd.texi
+	perl texi2html -menu -monolithic gvd.texi
+	makeinfo --force -o gvd.info gvd.texi
+	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
+
+doc: common
 	echo x | tex gvd.texi
 	texindex gvd.cp
 	tex gvd.texi
 	tex gvd.texi
 	dvips gvd.dvi -o gvd.ps
-	perl texi2html -menu -monolithic gvd.texi
-	makeinfo --force -o gvd.info gvd.texi
-	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
 
 install:
 	$(MKDIR) $(docdir)
 	$(INSTALL_DATA) gvd.html $(docdir)
 	$(INSTALL_DATA) gvd.info $(docdir)
-	$(INSTALL_DATA) gvd.ps   $(docdir)
+	-$(INSTALL_DATA) gvd.ps  $(docdir)
 	$(INSTALL_DATA) gvd.txt  $(docdir)
 	for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir); \
