@@ -195,6 +195,9 @@ package body VCS_View_Pkg is
      return Boolean;
    --  Callback for the "delete_event" signal
 
+   procedure On_Destroy (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "destroy" signal, connected before.
+
    procedure File_Edited_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
@@ -345,13 +348,37 @@ package body VCS_View_Pkg is
          Page := VCS_Page_Access
            (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
 
-         Destroy_Tooltip (Page.Tooltip);
          Free (Page.Stored_Status);
          Free (Page.Cached_Status);
       end loop;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Delete;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (View     : access Gtk_Widget_Record'Class) is
+      The_View : constant VCS_View_Access := VCS_View_Access (View);
+      Page     : VCS_Page_Access;
+   begin
+      for J in 1 .. The_View.Number_Of_Pages loop
+         Page := VCS_Page_Access
+           (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
+
+         Destroy_Tooltip (Page.Tooltip);
+      end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Destroy;
 
    -------------
    -- Refresh --
@@ -1204,6 +1231,13 @@ package body VCS_View_Pkg is
            (On_Delete'Access),
          VCS_View,
          After => False);
+
+      Gtkada.Handlers.Widget_Callback.Object_Connect
+        (VCS_View,
+         "destroy",
+         Gtkada.Handlers.Widget_Callback.To_Marshaller
+           (On_Destroy'Access),
+         VCS_View);
 
       declare
          VCS_List : constant GNAT.OS_Lib.Argument_List :=
