@@ -18,36 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Command_Line;         use Ada.Command_Line;
-with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Command_Line;       use Ada.Command_Line;
+with Ada.Exceptions;         use Ada.Exceptions;
 
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Gtk.GEntry;               use Gtk.GEntry;
-with Gtk.Combo;                use Gtk.Combo;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Notebook;             use Gtk.Notebook;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Main;                 use Gtk.Main;
-with Gtk.Clist;                use Gtk.Clist;
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Combo;              use Gtk.Combo;
+with Gtk.Enums;              use Gtk.Enums;
+with Gtk.Notebook;           use Gtk.Notebook;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Main;               use Gtk.Main;
+with Gtk.Clist;              use Gtk.Clist;
 
-with Diff_Utils;               use Diff_Utils;
-with Vdiff_Pkg;                use Vdiff_Pkg;
-with Vdiff_Utils;              use Vdiff_Utils;
+with Diff_Utils;             use Diff_Utils;
+with Vdiff_Pkg;              use Vdiff_Pkg;
+with Vdiff_Utils;            use Vdiff_Utils;
 
-with Codefix;                  use Codefix;
-with Codefix.Text_Manager;     use Codefix.Text_Manager;
-with Codefix.Errors_Manager;   use Codefix.Errors_Manager;
-with Codefix.Errors_Parser;    use Codefix.Errors_Parser;
-with Codefix.Formal_Errors;    use Codefix.Formal_Errors;
+with Codefix;                use Codefix;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Errors_Manager; use Codefix.Errors_Manager;
+with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Extract_List;
-with Codefix.File_Io;          use Codefix.File_Io;
+with Codefix.File_Io;        use Codefix.File_Io;
 with Codefix.Text_Navigators;
 
-with Final_Window_Pkg;         use Final_Window_Pkg;
+with Final_Window_Pkg;       use Final_Window_Pkg;
 
-with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Interfaces.C.Strings;   use Interfaces.C.Strings;
 
 package body Codefix.Graphics is
 
@@ -390,7 +390,10 @@ package body Codefix.Graphics is
               (Graphic_Codefix.Choices_Proposed,
                Gint (Current_Nb_Tabs));
          end loop;
-         Remove_Nodes (Graphic_Codefix.Vdiff_List, Current_Vdiff);
+
+         Remove_Nodes
+           (Graphic_Codefix.Vdiff_List,
+            Prev (Graphic_Codefix.Vdiff_List, Current_Vdiff));
       end if;
 
       Graphic_Codefix.Nb_Tabs := Current_Nb_Tabs;
@@ -400,7 +403,7 @@ package body Codefix.Graphics is
 
       Set_Current_Page (Graphic_Codefix.Choices_Proposed, 0);
 
-      --  Maybe an other function to print changes in notebook ?
+      --  ???  Maybe an other function to print changes in notebook ?
       Show_All (Graphic_Codefix);
    end Load_Next_Error;
 
