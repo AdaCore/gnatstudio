@@ -2658,7 +2658,7 @@ package body Codefix.Text_Manager is
       if Start.Line = Stop.Line then
          Current_Line := Get_Line (This, Line_Cursor);
 
-         Delete (Current_Line.Content, Start.Col, 1);
+         Delete (Current_Line.Content, Start.Col, Stop.Col - Start.Col + 1);
 
          if Is_Blank (To_String (Current_Line.Content)) then
             Current_Line.Context := Unit_Deleted;
