@@ -1195,8 +1195,8 @@ package body Directory_Tree is
 
                --  Are we on the target directory ?
 
-               if D.Norm_Dest.all = D.Norm_Dir.all & Dir
-                  & Directory_Separator
+               if File_Equal
+                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator)
                then
                   declare
                      Success   : Boolean;
@@ -1539,6 +1539,11 @@ package body Directory_Tree is
 
          Select_Path (Get_Selection (T.File_Tree), T.Path);
          Set_Cursor (T.File_Tree, T.Path, null, False);
+
+         --  Under Windows, scrolling while processing the expose event does
+         --  not invalidate the event, therefore we need to force a redraw on
+         --  the widget, in order to avoid having a garbled tree view.
+         Queue_Draw (T.File_Tree);
       end if;
 
       --  When the tree is resized, try to scroll the currently selected
@@ -1594,6 +1599,8 @@ package body Directory_Tree is
          end;
 
          Success := Expand_Row (T.File_Tree, Path, False);
+         Set_Cursor (T.File_Tree, Path, null, False);
+
          Scroll_To_Cell
            (T.File_Tree,
             Path, null, True,
