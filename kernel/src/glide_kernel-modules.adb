@@ -108,6 +108,12 @@ package body Glide_Kernel.Modules is
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Search_Regexps_Array, Search_Regexps_Array_Access);
 
+   function Help_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String;
+   --  Command handler for the "help" and "echo" commands.
+
    ---------------------
    -- Compute_Tooltip --
    ---------------------
@@ -1613,6 +1619,81 @@ package body Glide_Kernel.Modules is
         (Kernel.Modules_Data).Search_Regexps (Num).Regexp.all;
    end Get_Nth_Search_Regexp;
 
+   ------------------
+   -- Help_Command --
+   ------------------
+
+   function Help_Command
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : String_List_Utils.String_List.List) return String
+   is
+      use String_List_Utils.String_List;
+      use type Command_List.List_Node;
+
+      Command_Node : Command_List.List_Node;
+      Args_Node    : List_Node;
+
+      Result : GNAT.OS_Lib.String_Access;
+      procedure Insert (S : String);
+      --  Appends S & ASCII.LF to Result.
+      --  Result must not be set to Null when calling this subprogram.
+
+      procedure Insert (S : String) is
+         R : constant String := Result.all & S & ASCII.LF;
+      begin
+         Free (Result);
+         Result := new String'(R);
+      end Insert;
+   begin
+      Result := new String'("");
+
+      if Command = "help" then
+         if Is_Empty (Args) then
+            Insert (-"The following commands are defined:");
+         end if;
+
+         Command_Node := Command_List.First (Kernel.Commands_List);
+
+         while Command_Node /= Command_List.Null_Node loop
+            declare
+               Data : constant Command_Information :=
+                 Command_List.Data (Command_Node);
+            begin
+               if Is_Empty (Args) then
+                  Insert ("  " & Data.Command.all);
+               else
+                  if Data.Command.all = Head (Args) then
+                     Insert (Data.Help.all);
+                  end if;
+               end if;
+            end;
+
+            Command_Node := Command_List.Next (Command_Node);
+         end loop;
+
+         if Is_Empty (Args) then
+            Insert ("Type ""help <command>"" to" &
+                    " get help about a specific command.");
+         end if;
+
+      elsif Command = "echo" then
+         Args_Node := First (Args);
+
+         while Args_Node /= Null_Node loop
+            Insert (Data (Args_Node));
+            Args_Node := Next (Args_Node);
+         end loop;
+      end if;
+
+      declare
+         R : constant String := Result.all;
+      begin
+         Free (Result);
+         return R;
+      end;
+   end Help_Command;
+
    ----------------
    -- Initialize --
    ----------------
@@ -1622,6 +1703,18 @@ package body Glide_Kernel.Modules is
       Kernel.Modules_Data := new Real_Kernel_Module_Data_Record;
       Real_Module_Data (Kernel.Modules_Data).Search_Regexps :=
         new Search_Regexps_Array (1 .. 0);
+
+      Register_Command
+        (Kernel,
+         "help",
+         "Brings up the list of recognized commands.",
+         Help_Command'Access);
+
+      Register_Command
+        (Kernel,
+         "echo",
+         "Display a line of text.",
+         Help_Command'Access);
    end Initialize;
 
    ----------------------
@@ -1676,7 +1769,6 @@ package body Glide_Kernel.Modules is
       Args         : Argument_List_Access;
       The_Command  : GNAT.OS_Lib.String_Access;
       The_Args     : String_List_Utils.String_List.List;
-      Args_Node    : String_List_Utils.String_List.List_Node;
 
       Command_Node : Command_List.List_Node;
 
@@ -1707,65 +1799,24 @@ package body Glide_Kernel.Modules is
          String_List_Utils.String_List.Append (The_Args, Args (J).all);
       end loop;
 
-      if The_Command.all = "help" then
          Command_Node := Command_List.First (Kernel.Commands_List);
 
-         if Is_Empty (The_Args) then
-            Insert (-"The following commands are defined:");
-         else
-            The_Command := new String'(Head (The_Args));
-         end if;
+      while Command_Node /= Command_List.Null_Node loop
+         declare
+            Data : constant Command_Information :=
+              Command_List.Data (Command_Node);
+         begin
+            if Data.Command.all = The_Command.all then
+               Insert (Data.Command_Handler
+                         (Kernel,
+                          The_Command.all,
+                          The_Args));
+               exit;
+            end if;
+         end;
 
-         while Command_Node /= Command_List.Null_Node loop
-            declare
-               Data : constant Command_Information :=
-                 Command_List.Data (Command_Node);
-            begin
-               if Is_Empty (The_Args) then
-                  Insert ("  " & Data.Command.all);
-               else
-                  if Data.Command.all = The_Command.all then
-                     Insert (Data.Help.all);
-                  end if;
-               end if;
-            end;
-
-            Command_Node := Command_List.Next (Command_Node);
-         end loop;
-
-         if Is_Empty (The_Args) then
-            Insert ("Type ""help <command>"" to" &
-                    " get help about a specific command.");
-         end if;
-
-      elsif The_Command.all = "echo" then
-         Args_Node := First (The_Args);
-
-         while Args_Node /= Null_Node loop
-            Insert (Data (Args_Node));
-            Args_Node := Next (Args_Node);
-         end loop;
-
-      else
-         Command_Node := Command_List.First (Kernel.Commands_List);
-
-         while Command_Node /= Command_List.Null_Node loop
-            declare
-               Data : constant Command_Information :=
-                 Command_List.Data (Command_Node);
-            begin
-               if Data.Command.all = The_Command.all then
-                  Insert (Data.Command_Handler
-                            (Kernel,
-                             The_Command.all,
-                             The_Args));
-                  exit;
-               end if;
-            end;
-
-            Command_Node := Command_List.Next (Command_Node);
-         end loop;
-      end if;
+         Command_Node := Command_List.Next (Command_Node);
+      end loop;
 
       Free (The_Command);
       Free (The_Args);
