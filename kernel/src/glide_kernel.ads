@@ -38,10 +38,6 @@ with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Language_Handlers;
-with Project_Hash;
-with Prj.Tree;
-with Prj;
-with Prj_API;
 with Src_Info;
 with Src_Info.Queries;
 with String_List_Utils;
@@ -50,6 +46,7 @@ with Ada.Unchecked_Conversion;
 with Default_Preferences;
 with Basic_Types;
 with Histories;
+with Projects.Registry;
 
 package Glide_Kernel is
 
@@ -203,9 +200,9 @@ package Glide_Kernel is
      (Kernel       : access Kernel_Handle_Record;
       Entity       : Src_Info.Queries.Entity_Information;
       Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
       In_File      : String := "";
-      LI_Once      : Boolean := False);
+      LI_Once      : Boolean := False;
+      Project      : Projects.Project_Type := Projects.No_Project);
    --  See Src_Info.Queries.
    --  This function needs to be in this package, since it requires access to
    --  the list of LI files.
@@ -219,7 +216,7 @@ package Glide_Kernel is
      (Kernel          : access Kernel_Handle_Record;
       Source_Filename : String;
       Iterator        : out Src_Info.Queries.Dependency_Iterator;
-      Project         : Prj.Project_Id := Prj.No_Project);
+      Project         : Projects.Project_Type := Projects.No_Project);
    --  See Src_Info.Queries.
    --  This function needs to be in this package, since it requires access to
    --  the list of LI files.
@@ -535,7 +532,7 @@ package Glide_Kernel is
    --  General Idle loop for a GObject.
 
    type File_Project_Record (Length : Natural) is record
-      Project : Prj.Project_Id;
+      Project : Projects.Project_Type;
       File    : String (1 .. Length);
    end record;
 
@@ -773,29 +770,14 @@ private
       Modules_List : Module_List.List;
       --  The list of all the modules that have been registered in this kernel.
 
-      Project : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
-      --  The project currently loaded. This is the tree form, independent of
-      --  the current value of the environment variables.
-
-      Project_Is_Default : Boolean;
-      --  True when the current project is still the default project. This is
-      --  set to False as soon as the user loads a new project
-
-      Project_View : Prj.Project_Id := Prj.No_Project;
-      --  The current project view. This is the same Project, after it has been
-      --  evaluated based on the current value of the environment variables.
-
-      Projects_Data : Project_Hash.Project_Htable.HTable;
-      --  Information stored about each loaded project (and the imported
-      --  projects).
-      --  ??? This wouldn't be necessary if we could save user data in
-      --  Project_Node_Record.
-
       Main_Window : Gtk.Window.Gtk_Window;
       --  The main glide window
 
       Tooltips : Gtk.Tooltips.Gtk_Tooltips;
       --  The widget used to register all tooltips
+
+      Registry : Projects.Registry.Project_Registry_Access;
+      --  The project registry
 
       Predefined_Object_Path : GNAT.OS_Lib.String_Access;
       --  Predefined object path for the runtime library
@@ -816,11 +798,6 @@ private
 
       Preferences : Default_Preferences.Preferences_Manager;
       --  The current setting for the preferences.
-
-      Scenario_Variables : Prj_API.Project_Node_Array_Access := null;
-      --  The (cached) list of scenario variables for the current project. Note
-      --  that this list depends on which project was loaded in Glide, and
-      --  might change when new dependencies are added.
 
       Last_Context_For_Contextual : Selection_Context_Access := null;
       --  The context used in the last contextual menu.

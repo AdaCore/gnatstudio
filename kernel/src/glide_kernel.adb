@@ -64,15 +64,13 @@ with Basic_Mapper;              use Basic_Mapper;
 with Basic_Types;               use Basic_Types;
 with Histories;                 use Histories;
 
+with Projects.Registry;         use Projects, Projects.Registry;
+
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
-with Prj_API;                   use Prj_API;
 with Generic_List;
 
 with Language_Handlers;         use Language_Handlers;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
-
-with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
 
 with Traces;                    use Traces;
 
@@ -114,6 +112,9 @@ package body Glide_Kernel is
 
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Project_Registry'Class, Project_Registry_Access);
 
    procedure Reset_Source_Info_List
      (Handle : access Kernel_Handle_Record'Class);
@@ -187,8 +188,9 @@ package body Glide_Kernel is
       Glide_Window (Handle.Main_Window).Lang_Handler :=
         Handle.Lang_Handler;
 
-      Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
-      Handle.Project_Is_Default     := True;
+      Handle.Registry := new Project_Registry;
+      Load_Default_Project (Handle.Registry.all, Get_Current_Dir);
+
       Handle.Gnatls_Cache           := null;
 
       --  Note: we do not compute the view of this project yet. This will be
@@ -449,20 +451,14 @@ package body Glide_Kernel is
      (Handle          : access Kernel_Handle_Record;
       Source_Filename : String) return Src_Info.LI_File_Ptr
    is
-      use type Prj.Project_Id;
       File : LI_File_Ptr;
-      Project : Prj.Project_Id := Get_Project_From_File
-        (Get_Project_View (Handle), Base_Name (Source_Filename));
+      Project : constant Project_Type := Get_Project_From_File
+        (Handle.Registry.all, Base_Name (Source_Filename));
    begin
-      if Project = Prj.No_Project then
-         Project := Get_Project_View (Handle);
-      end if;
-
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
            (Glide_Language_Handler (Handle.Lang_Handler),
-            Source_Filename,
-            Project),
+            Source_Filename),
          File                   => File,
          Source_Filename        => Source_Filename,
          List                   => Handle.Source_Info_List,
@@ -487,9 +483,9 @@ package body Glide_Kernel is
      (Kernel       : access Kernel_Handle_Record;
       Entity       : Src_Info.Queries.Entity_Information;
       Iterator     : out Src_Info.Queries.Entity_Reference_Iterator;
-      Project      : Prj.Project_Id := Prj.No_Project;
       In_File      : String := "";
-      LI_Once      : Boolean := False) is
+      LI_Once      : Boolean := False;
+      Project      : Project_Type := No_Project) is
    begin
       Find_All_References
         (Get_Project (Kernel),
@@ -520,7 +516,7 @@ package body Glide_Kernel is
      (Kernel          : access Kernel_Handle_Record;
       Source_Filename : String;
       Iterator        : out Dependency_Iterator;
-      Project         : Prj.Project_Id := Prj.No_Project) is
+      Project         : Projects.Project_Type := No_Project) is
    begin
       Find_Ancestor_Dependencies
         (Get_Project (Kernel),
@@ -627,7 +623,6 @@ package body Glide_Kernel is
 
    procedure Variable_Changed (Handle : access Kernel_Handle_Record) is
    begin
-      Free (Handle.Scenario_Variables);
       Object_Callback.Emit_By_Name (Handle, Variable_Changed_Signal);
    end Variable_Changed;
 
@@ -885,7 +880,8 @@ package body Glide_Kernel is
       MDI  : constant MDI_Window := Get_MDI (Handle);
       File_Name   : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
-      Project_Name : constant String := Get_Project_File_Name (Handle);
+      Project_Name : constant String :=
+        Project_Directory (Get_Project (Handle));
       File : File_Type;
       N    : Node_Ptr;
       M    : Node_Ptr;
@@ -994,7 +990,8 @@ package body Glide_Kernel is
       Node   : Node_Ptr;
       File   : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
-      Project_Name : constant String := Get_Project_File_Name (Handle);
+      Project_Name : constant String :=
+        Project_Directory (Get_Project (Handle));
       Child  : Node_Ptr;
       Desktop_Node : Node_Ptr;
       Width  : Gint := 640;
@@ -1319,23 +1316,15 @@ package body Glide_Kernel is
       Source_Filename : String;
       Full_Name       : Boolean := True) return String
    is
-      Project : Project_Id := Get_Project_From_File
-        (Get_Project_View (Kernel), Source_Filename);
+      Project : constant Project_Type := Get_Project_From_File
+        (Kernel.Registry.all, Source_Filename);
+      Other : constant String := Other_File_Name (Project, Source_Filename);
    begin
-      if Project = No_Project then
-         Project := Get_Project_View (Kernel);
+      if Full_Name then
+         return Find_On_Path (Project, Other, False);
+      else
+         return Other;
       end if;
-
-      declare
-         Other : constant String := Other_File_Name (Project, Source_Filename);
-      begin
-         if Full_Name then
-            return Find_On_Path
-              (Get_Project_From_View (Project), Project, Other, False);
-         else
-            return Other;
-         end if;
-      end;
    end Other_File_Name;
 
    ------------------------------
@@ -1360,7 +1349,7 @@ package body Glide_Kernel is
               (LI,
                Kernel.Source_Info_List,
                In_Directory,
-               Get_Project_View (Kernel),
+               Get_Project (Kernel),
                Get_Predefined_Source_Path (Kernel),
                Get_Predefined_Object_Path (Kernel));
          end if;
@@ -1381,20 +1370,15 @@ package body Glide_Kernel is
       Location    : out Src_Info.File_Location;
       Status      : out Find_Decl_Or_Body_Query_Status)
    is
-      Project : Prj.Project_Id := Get_Project_From_File
-        (Get_Project_View (Kernel), File_Name);
+      Project : constant Project_Type := Get_Project_From_File
+        (Kernel.Registry.all, File_Name);
       Entity : Entity_Information;
 
    begin
-      if Project = Prj.No_Project then
-         Project := Get_Project_View (Kernel);
-      end if;
-
       Find_Next_Body
         (Lib_Info, File_Name, Entity_Name, Line, Column,
          Get_LI_Handler_From_File
-           (Glide_Language_Handler (Kernel.Lang_Handler),
-            File_Name, Project),
+           (Glide_Language_Handler (Kernel.Lang_Handler), File_Name),
          Kernel.Source_Info_List,
          Project,
          Get_Predefined_Source_Path (Kernel),
@@ -1648,10 +1632,11 @@ package body Glide_Kernel is
       Unchecked_Free (Handle.History);
 
       Destroy (Handle.Preferences);
-      Project_Hash.Project_Htable.Reset (Handle.Projects_Data);
       Free (Handle.Gnatls_Cache);
       Free (Handle.Home_Dir);
-      Free (Handle.Scenario_Variables);
+
+      Destroy (Handle.Registry.all);
+      Unchecked_Free (Handle.Registry);
 
       if Handle.Current_Context /= null then
          Free (Handle.Current_Context);
@@ -1760,9 +1745,6 @@ package body Glide_Kernel is
          Node := Null_Scope_Tree_Node;
          return;
       end if;
-
-      Trace (Me, "Get_Scope_Tree: using LI file: "
-             & Get_LI_Filename (Lib_Info));
 
       Tree := Create_Tree (Lib_Info);
 
