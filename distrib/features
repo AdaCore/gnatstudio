@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Desktops are now project specific
+
 - Improved user interface of the welcome dialog
 
 - The project browser now behaves like all other browsers, with arrows drawn on
