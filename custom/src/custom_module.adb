@@ -24,8 +24,10 @@ with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Icon_Factory;          use Gtk.Icon_Factory;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with Glib.Object;               use Glib.Object;
 
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -56,10 +58,34 @@ with VFS;                       use VFS;
 with Custom_Combos;             use Custom_Combos;
 with Expect_Interface;          use Expect_Interface;
 
+with Traces;                    use Traces;
+
 package body Custom_Module is
+
+   Me : constant Debug_Handle := Create ("custom_module");
 
    package Action_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Action_Record_Access);
+
+   Path_Cst        : aliased constant String := "path";
+   On_Activate_Cst : aliased constant String := "on_activate";
+   Add_Before_Cst  : aliased constant String := "add_before";
+   Ref_Cst         : aliased constant String := "ref";
+   Menu_Get_Params : constant Cst_Argument_List :=
+     (1 => Path_Cst'Access);
+   Menu_Create_Params : constant Cst_Argument_List :=
+     (1 => Path_Cst'Access,
+      2 => On_Activate_Cst'Access,
+      3 => Ref_Cst'Access,
+      4 => Add_Before_Cst'Access);
+
+   type Subprogram_Type_Menu_Record is new Gtk_Menu_Item_Record with record
+      On_Activate : Subprogram_Type;
+   end record;
+   type Subprogram_Type_Menu is access all Subprogram_Type_Menu_Record'Class;
+
+   procedure On_Activate (Menu : access Gtk_Widget_Record'Class);
+   --  Called when a Subprogram_Type_Menu is activated
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
@@ -83,6 +109,10 @@ package body Custom_Module is
    procedure Contextual_Action
      (Kernel : access GObject_Record'Class; Action : Action_Record_Access);
    --  Execute action
+
+   procedure Menu_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handles all shell commands for GPS.Menu
 
    -----------------------
    -- Contextual_Action --
@@ -877,6 +907,90 @@ package body Custom_Module is
       end loop;
    end Customize;
 
+   -----------------
+   -- On_Activate --
+   -----------------
+
+   procedure On_Activate (Menu : access Gtk_Widget_Record'Class) is
+      M : constant Subprogram_Type_Menu := Subprogram_Type_Menu (Menu);
+   begin
+      if M.On_Activate /= null then
+         declare
+            Inst : constant Class_Instance := Get_Instance (M);
+            C : Callback_Data'Class := Create
+              (Get_Script (Inst), Arguments_Count => 1);
+            Tmp : Boolean;
+            pragma Unreferenced (Tmp);
+         begin
+            Trace (Me, "Callback for menu");
+            Set_Nth_Arg (C, 1, Inst);
+            Tmp := Execute (M.On_Activate, C);
+            Free (C);
+         end;
+      end if;
+   end On_Activate;
+
+   ------------------
+   -- Menu_Handler --
+   ------------------
+
+   procedure Menu_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Menu_Class : constant Class_Type := New_Class (Kernel, "Menu");
+   begin
+      if Command = Constructor_Method then
+         Set_Error_Msg
+           (Data, -("Cannot build instances of GPS.Menu directly."
+                    & " Use GPS.Menu.get() or GPS.Menu.create() instead"));
+      elsif Command = "get" then
+         Name_Parameters (Data, Menu_Get_Params);
+         declare
+            Path : constant String := Nth_Arg (Data, 1);
+            Menu : constant Gtk_Menu_Item := Find_Menu_Item (Kernel, Path);
+            Inst : Class_Instance;
+         begin
+            if Menu = null then
+               Set_Error_Msg (Data, -"No such menu: " & Path);
+            else
+               Inst := Get_Instance (Widget => Menu);
+               if Inst = null then
+                  Inst := New_Instance (Get_Script (Data), Menu_Class);
+                  Set_Data (Inst, Widget => Gtk_Widget (Menu));
+               end if;
+
+               Set_Return_Value (Data, Inst);
+            end if;
+         end;
+
+      elsif Command = "create" then
+         Name_Parameters (Data, Menu_Create_Params);
+         declare
+            Inst : Class_Instance;
+            Path : constant String := Nth_Arg (Data, 1);
+            Menu : constant Subprogram_Type_Menu :=
+              new Subprogram_Type_Menu_Record;
+         begin
+            Gtk.Menu_Item.Initialize (Menu, Label => Base_Name (Path));
+            Menu.On_Activate := Nth_Arg (Data, 2, null);
+            Widget_Callback.Connect
+              (Menu, "activate",
+               Widget_Callback.To_Marshaller (On_Activate'Access));
+
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path => Dir_Name (Path),
+               Item        => Gtk_Menu_Item (Menu),
+               Ref_Item    => Nth_Arg (Data, 3, ""),
+               Add_Before  => Nth_Arg (Data, 4, True));
+            Inst := New_Instance (Get_Script (Data), Menu_Class);
+            Set_Data (Inst, Widget => Gtk_Widget (Menu));
+            Set_Return_Value (Data, Inst);
+         end;
+      end if;
+   end Menu_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -884,8 +998,8 @@ package body Custom_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
---  why is this code commented out ???
---      Menu_Class : constant Class_Type := New_Instance (Kernel, "Menu");
+      Menu_Class : constant Class_Type := New_Class
+        (Kernel, "Menu", Base => Get_GUI_Class (Kernel));
    begin
       Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
@@ -901,13 +1015,24 @@ package body Custom_Module is
       Expect_Interface.Register_Commands (Kernel);
       Custom_Combos.Register_Commands (Kernel);
 
---  why is this code commented out ???
---        Register_Command
---          (Kernel, Constructor_Method,
---           Minimum_Args => 1,
---           Maximum_Args => 2,
---           Class        => Menu_Class,
---           Handler      => Menu_Handler'Access);
+      Register_Command
+        (Kernel, Constructor_Method,
+         Class        => Menu_Class,
+         Handler      => Menu_Handler'Access);
+      Register_Command
+        (Kernel, "get",
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Class         => Menu_Class,
+         Static_Method => True,
+         Handler       => Menu_Handler'Access);
+      Register_Command
+        (Kernel, "create",
+         Minimum_Args  => 1,
+         Maximum_Args  => 4,
+         Static_Method => True,
+         Class         => Menu_Class,
+         Handler       => Menu_Handler'Access);
    end Register_Module;
 
    ----------
