@@ -703,22 +703,16 @@ package body Glide_Kernel.Modules is
 
    procedure Add_Default_Desktop_Item
      (Kernel      : access Kernel_Handle_Record'Class;
-      Node        : Glib.Xml_Int.Node_Ptr;
-      X           : Integer := 100;
-      Y           : Integer := 100;
-      Width       : Integer := 100;
-      Height      : Integer := 100;
-      State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
+      Tag_Name    : String;
       Position    : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
       Focus       : Boolean := False;
       Raised      : Boolean := False)
    is
+      N        : Glib.Xml_Int.Node_Ptr;
    begin
-      Add_To_Tree
-        (Kernel.Default_Desktop,
-         Node,
-         X, Y, Width, Height,
-         State, Position, Focus, Raised);
+      N := new Glib.Xml_Int.Node;
+      N.Tag := new String'(Tag_Name);
+      Add_To_Tree (Kernel.Default_Desktop, N, Position, Focus, Raised);
    end Add_Default_Desktop_Item;
 
    --------------------

@@ -127,7 +127,6 @@
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
-with Glib.Xml_Int;
 with Gdk.Types;
 with Gtk.Image;
 with Gtk.Handlers;
@@ -233,23 +232,19 @@ package Glide_Kernel.Modules is
 
    procedure Add_Default_Desktop_Item
      (Kernel      : access Kernel_Handle_Record'Class;
-      Node        : Glib.Xml_Int.Node_Ptr;
-      X           : Integer := 100;
-      Y           : Integer := 100;
-      Width       : Integer := 100;
-      Height      : Integer := 100;
-      State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
+      Tag_Name    : String;
       Position    : Gtkada.MDI.Child_Position := Gtkada.MDI.Position_Default;
       Focus       : Boolean := False;
       Raised      : Boolean := False);
    --  Add an item to the default desktop.
-   --  Node is a node that will generate the desired widget when
-   --  passed to the Kernel.Desktop.Load_Desktop_Function.
    --  If Focus is True, then the widget will be given the focus, unless
    --  another widget is also registered later on with Focus set to True.
    --  If Raised is True and the child is docked, then this widget will appear
    --  on top unless another widget is also registered later on with Raised set
    --  to True and in the same Dock.
+   --  It isn't possible currently to define a node with subnodes for specific
+   --  data, so your Load_Desktop procedure should be ready to handle such a
+   --  childless XML node (the most typical case).
 
    ----------------------
    -- Contextual menus --
