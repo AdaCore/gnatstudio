@@ -26,7 +26,6 @@ with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 with GNAT.Strings;
 
 with Ada.Exceptions;             use Ada.Exceptions;
-with Ada.Unchecked_Deallocation;
 
 with Traces;                     use Traces;
 with Glide_Intl;                 use Glide_Intl;
@@ -176,16 +175,12 @@ package body Commands.External is
          end if;
       else
          declare
-            Args      : GNAT.OS_Lib.Argument_List (1 .. Length (Command.Args));
+            Len       : constant Natural := Length (Command.Args);
+            Args      : GNAT.OS_Lib.Argument_List (1 .. Len);
             Real_Args : GNAT.OS_Lib.Argument_List_Access;
-
-            procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-              (GNAT.OS_Lib.Argument_List, GNAT.OS_Lib.Argument_List_Access);
-
-            Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
             Temp_Args : List_Node := First (Command.Args);
-
             Old_Dir   : constant Dir_Name_Str := Get_Current_Dir;
+
          begin
             --  ??? Must add many checks for empty lists, etc.
 
@@ -218,34 +213,27 @@ package body Commands.External is
             --  commands should not be system-dependant
 
             if Host = Windows then
-               Exec_Command_Args :=
-                 GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+               declare
+                  Exec_Command_Args : GNAT.OS_Lib.Argument_List_Access;
+               begin
+                  Exec_Command_Args :=
+                    GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+                  Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
+                  Real_Args (1) := new String'(Command.Command.all);
 
-               Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
+                  Non_Blocking_Spawn
+                    (Command.Fd,
+                     Exec_Command_Args (Exec_Command_Args'First).all,
+                     Exec_Command_Args
+                       (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
+                     & Real_Args.all
+                     & Args,
+                     Err_To_Out => True,
+                     Buffer_Size => 0);
 
-               Real_Args (1) := new String'(Command.Command.all);
-
-               Non_Blocking_Spawn
-                 (Command.Fd,
-                  Exec_Command_Args (Exec_Command_Args'First).all,
-                  Exec_Command_Args
-                    (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
-                  & Real_Args.all
-                  & Args,
-                  Err_To_Out => True,
-                  Buffer_Size => 0);
-
-               for J in Real_Args'Range loop
-                  GNAT.OS_Lib.Free (Real_Args (J));
-               end loop;
-
-               Unchecked_Free (Real_Args);
-
-               for J in Exec_Command_Args'Range loop
-                  GNAT.OS_Lib.Free (Exec_Command_Args (J));
-               end loop;
-
-               Unchecked_Free (Exec_Command_Args);
+                  GNAT.OS_Lib.Free (Real_Args);
+                  GNAT.OS_Lib.Free (Exec_Command_Args);
+               end;
 
             else
                Non_Blocking_Spawn
