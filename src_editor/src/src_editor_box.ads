@@ -239,17 +239,6 @@ package Src_Editor_Box is
    --  function. An incorrect location will cause an Assertion_Failure when
    --  compiled with assertion checks, or an undefined behavior otherwise.
 
-   procedure Insert
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive;
-      Column  : Positive;
-      Text    : String);
-   --  Insert the given text in at the specified location.
-   --
-   --  The validity of the given location must be verified before invoking this
-   --  procedure. An incorrect location  will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior otherwise.
-
    procedure Replace_Slice
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
@@ -261,18 +250,6 @@ package Src_Editor_Box is
    --
    --  The validity of the given locations must be verified before invoking
    --  this procedure. An incorrect location  will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Delete_Slice
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive);
-   --  Replace the text between the start and end locations by Text.
-   --
-   --  The validity of the given locations must be verified before invoking
-   --  this procedure. An incorrect location will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Select_Region

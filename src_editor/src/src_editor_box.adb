@@ -2094,22 +2094,6 @@ package body Src_Editor_Box is
          To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
    end Get_Slice;
 
-   ------------
-   -- Insert --
-   ------------
-
-   procedure Insert
-     (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive;
-      Column  : Positive;
-      Text    : String) is
-   begin
-      Insert
-        (Editor.Source_Buffer,
-         To_Buffer_Line (Line), To_Buffer_Column (Column),
-         Text);
-   end Insert;
-
    -------------------
    -- Replace_Slice --
    -------------------
@@ -2136,23 +2120,6 @@ package body Src_Editor_Box is
       External_End_Action (Editor.Source_Buffer);
       Enqueue (Get_Queue (Editor.Source_Buffer), Command_Access (C));
    end Replace_Slice;
-
-   ------------------
-   -- Delete_Slice --
-   ------------------
-
-   procedure Delete_Slice
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive) is
-   begin
-      Delete_Slice
-        (Editor.Source_Buffer,
-         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
-         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
-   end Delete_Slice;
 
    ----------------
    -- Select_All --
