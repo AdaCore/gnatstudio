@@ -1532,6 +1532,7 @@ package body Src_Editor_Buffer is
       Entity_End         : Gtk_Text_Iter;
       Tags               : Highlighting_Tags renames Buffer.Syntax_Tags;
       Slice_Offset       : Gint;
+      pragma Unreferenced (Slice_Offset);
       Result             : Boolean;
 
       function Highlight_Cb
@@ -1559,15 +1560,24 @@ package body Src_Editor_Buffer is
         (Entity         : Language_Entity;
          Sloc_Start     : Source_Location;
          Sloc_End       : Source_Location;
-         Partial_Entity : Boolean) return Boolean is
+         Partial_Entity : Boolean) return Boolean
+      is
+         Success : Boolean;
       begin
-         --  ??? Currently fails since Sloc_Start.Index is an index in bytes,
-         --  not in characters.
-         Get_Iter_At_Offset
+         Get_Iter_At_Line_Index
            (Buffer, Entity_Start,
-            Gint (Sloc_Start.Index) + Slice_Offset - 1);
-         Get_Iter_At_Offset
-           (Buffer, Entity_End, Gint (Sloc_End.Index) + Slice_Offset);
+            Gint (Sloc_Start.Line) - 1, Gint (Sloc_Start.Column) - 1);
+
+         if Sloc_End.Column = 0 then
+            Get_Iter_At_Line_Index
+              (Buffer, Entity_End,
+               Gint (Sloc_End.Line), Gint (Sloc_End.Column));
+         else
+            Get_Iter_At_Line_Index
+              (Buffer, Entity_End,
+               Gint (Sloc_End.Line) - 1, Gint (Sloc_End.Column) - 1);
+            Forward_Char (Entity_End, Success);
+         end if;
 
          if Partial_Entity then
             Highlight_Complete := False;
@@ -1952,8 +1962,7 @@ package body Src_Editor_Buffer is
       Buffer.Inserting := False;
       Buffer.Modified_Auto := False;
 
-      Buffer.Timestamp := To_Timestamp
-        (File_Time_Stamp (Full_Name (Filename)));
+      Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
 
       Empty_Queue (Buffer.Queue);
       Buffer.Current_Command := null;
@@ -2010,7 +2019,7 @@ package body Src_Editor_Buffer is
 
       if FD = Invalid_FD
         and then Is_Regular_File (Filename)
-        and then not Is_Writable_File (Locale_Filename)
+        and then not Is_Writable (Filename)
       then
          declare
             Buttons : Message_Dialog_Buttons;
@@ -2189,7 +2198,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Buffer.Timestamp := To_Timestamp
-        (File_Time_Stamp (Full_Name (Get_Filename (Buffer))));
+        (File_Time_Stamp (Get_Filename (Buffer)));
 
       if Buffer.Filename /= VFS.No_File then
          Delete (Create (Full_Filename =>
@@ -3168,8 +3177,7 @@ package body Src_Editor_Buffer is
       if Buffer.Filename /= VFS.No_File
         and then Is_Regular_File (Buffer.Filename)
       then
-         New_Timestamp := To_Timestamp
-           (File_Time_Stamp (Full_Name (Buffer.Filename)));
+         New_Timestamp := To_Timestamp (File_Time_Stamp (Buffer.Filename));
 
          if New_Timestamp > Buffer.Timestamp then
             if Force then
