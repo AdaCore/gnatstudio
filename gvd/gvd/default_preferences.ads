@@ -29,14 +29,13 @@
 with Glib; use Glib;
 with Glib.Properties;
 with Glib.Properties.Creation;
-with Basic_Types;
 with Gdk.Color;
 with Gdk.Types;
 with Pango.Font;
-with Glib.XML;
 with Gtk.Tooltips;
 with Gtk.Widget;
 with Gtk.Window;
+with String_Hash;
 
 package Default_Preferences is
 
@@ -212,22 +211,17 @@ package Default_Preferences is
 
 
 private
-   type Preference_Information;
-   type Preference_Information_Access is access Preference_Information;
-   type Preference_Information is record
-      Page       : Basic_Types.String_Access;
-      Param      : Glib.Param_Spec;
-      Next       : Preference_Information_Access;
-   end record;
+   type Pref_Description;
+   type Pref_Description_Access is access Pref_Description;
 
-   type XML_Cache is record
-      Descr      : Pango.Font.Pango_Font_Description;
-   end record;
-   package XML_Font is new Glib.XML (XML_Cache);
+   procedure Free (Data : in out Pref_Description_Access);
+   --  Free the memory occupied by Data
+
+   package Pref_Hash is new String_Hash (Pref_Description_Access, Free, null);
 
    type Preferences_Manager_Record is tagged record
-      Default     : Preference_Information_Access;
-      Preferences : XML_Font.Node_Ptr;
+      Preferences : Pref_Hash.String_Hash_Table.HTable;
+      Current_Index : Natural := 0;
    end record;
 
 end Default_Preferences;
