@@ -1,0 +1,13 @@
+with "../shared";
+with "../kernel/kernel";
+with "../gtkada/gtkada";
+
+project Python is
+
+   for Source_Dirs use ("@PYTHON_ADA_SOURCE@");
+   for Object_Dir use "obj";
+
+   package Compiler renames Shared.Compiler;
+   package IDE renames Shared.IDE;
+
+end Python;
