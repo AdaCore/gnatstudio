@@ -980,19 +980,32 @@ package body Help_Module is
    is
       use ASCII;
 
-      Button : Message_Dialog_Buttons;
+      Button     : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
+      Top        : constant Glide_Window := Glide_Window
+        (Get_Main_Window (Kernel));
+      About_File : constant String :=
+        Format_Pathname (Top.Prefix_Directory.all & "/share/gps/about.txt");
+      Contents   : GNAT.OS_Lib.String_Access;
+
    begin
+      Contents := Read_File (About_File);
+
+      if Contents = null then
+         Contents := new String'("");
+      end if;
+
       Button := Message_Dialog
         ("GPS " & GVD.Version & " (" & GVD.Source_Date &
            (-") hosted on ") & GVD.Target & LF &
          (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
-         (-"the GNAT Programming System") & LF & LF &
+         (-"the GNAT Programming System") & LF & Contents.all & LF &
          "(c) 2001-2003 ACT-Europe",
          Buttons => Button_OK,
          Title   => -"About...",
          Parent  => Get_Main_Window (Kernel));
+      Free (Contents);
 
    exception
       when E : others =>
