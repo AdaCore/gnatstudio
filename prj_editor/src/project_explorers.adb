@@ -1295,12 +1295,11 @@ package body Project_Explorers is
                   Context := new File_Selection_Context;
                end if;
 
-               Set_File_Name_Information
-                 (Context      => File_Name_Selection_Context_Access (Context),
-                  Directory    => Get_Directory_From_Node (T, Node),
-                  File_Name    => Base_Name (Get_File_From_Node (T, Node)));
-
                if Data.Node_Type = Entity_Node then
+                  Set_File_Information
+                    (Context   => File_Selection_Context_Access (Context),
+                     Directory    => Get_Directory_From_Node (T, Node),
+                     File_Name    => Base_Name (Get_File_From_Node (T, Node)));
                   Set_Entity_Information
                     (Context     => Entity_Selection_Context_Access (Context),
                      Entity_Name => Data.Entity_Name,
@@ -1315,7 +1314,9 @@ package body Project_Explorers is
                   end if;
 
                   Set_File_Information
-                    (Context      => File_Selection_Context_Access (Context),
+                    (Context   => File_Selection_Context_Access (Context),
+                     Directory    => Get_Directory_From_Node (T, Node),
+                     File_Name    => Base_Name (Get_File_From_Node (T, Node)),
                      Project_View => Get_Project_From_Node (T, Node),
                      Importing_Project => Importing_Project);
                end if;
@@ -1348,7 +1349,7 @@ package body Project_Explorers is
                      File := new String'
                        (Get_String
                         (T.File_Model, Iter, Absolute_Name_Column));
-                     Context := new File_Name_Selection_Context;
+                     Context := new File_Selection_Context;
 
                   when Entity_Node =>
                      Context := new Entity_Selection_Context;
@@ -1360,12 +1361,11 @@ package body Project_Explorers is
             end if;
 
             if File /= null then
-               if Context.all in File_Name_Selection_Context'Class then
-                  Set_File_Name_Information
-                    (Context
-                     => File_Name_Selection_Context_Access (Context),
-                     Directory    => Dir_Name (File.all),
-                     File_Name    => Base_Name (File.all));
+               if Context.all in File_Selection_Context'Class then
+                  Set_File_Information
+                    (Context   => File_Selection_Context_Access (Context),
+                     Directory => Dir_Name (File.all),
+                     File_Name => Base_Name (File.all));
                end if;
             end if;
 
@@ -1543,12 +1543,10 @@ package body Project_Explorers is
    begin
       Context := new File_Selection_Context;
       Set_Context_Information (Context, T.Kernel, Explorer_Module_ID);
-      Set_File_Name_Information
-        (Context,
-         Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_Name (Get_File_From_Node (T, Node)));
       Set_File_Information
         (Context,
+         Directory    => Get_Directory_From_Node (T, Node),
+         File_Name    => Base_Name (Get_File_From_Node (T, Node)),
          Project_View => Get_Project_From_Node (T, Node));
       Context_Changed (T.Kernel, Selection_Context_Access (Context));
       Free (Selection_Context_Access (Context));

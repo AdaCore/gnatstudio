@@ -368,25 +368,19 @@ package body VCS_View_API is
       pragma Unreferenced (Object);
       Item : Gtk_Menu_Item;
 
-      File      : File_Selection_Context_Access;
-      File_Name : File_Name_Selection_Context_Access;
+      File_Name : File_Selection_Context_Access;
 
       Kernel    : Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Name_Selection_Context'Class then
-         File_Name := File_Name_Selection_Context_Access (Context);
-      end if;
-
       if Context.all in File_Selection_Context'Class then
-         File := File_Selection_Context_Access (Context);
+         File_Name := File_Selection_Context_Access (Context);
       end if;
 
-      if File_Name /= null and then
-        Has_File_Information (File_Name)
+      if File_Name /= null
+        and then Has_File_Information (File_Name)
       then
          declare
-            File_S : String
-              := Directory_Information (File_Name)
+            File_S : constant String := Directory_Information (File_Name)
               & File_Information (File_Name);
          begin
             if File_S'Length > 4
@@ -395,7 +389,7 @@ package body VCS_View_API is
                declare
                   Original : String := Get_File_From_Log (Kernel, File_S);
                begin
-                  Set_File_Name_Information
+                  Set_File_Information
                     (File_Name,
                      Dir_Name (Original),
                      Base_Name (Original));
@@ -473,8 +467,7 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_File_Information (File_Name)
         and then (Has_Directory_Information (File_Name)
-                  or else (File /= null
-                           and then Has_Project_Information (File)))
+                  or else Has_Project_Information (File_Name))
       then
          Gtk_New (Item);
          Append (Menu, Item);
@@ -500,16 +493,16 @@ package body VCS_View_API is
             Selection_Context_Access (File_Name));
       end if;
 
-      if File /= null
-        and then Has_Project_Information (File)
+      if File_Name /= null
+        and then Has_Project_Information (File_Name)
         and then Has_Directory_Information (File_Name)
       then
          Gtk_New (Item);
          Append (Menu, Item);
       end if;
 
-      if File /= null
-        and then Has_Project_Information (File)
+      if File_Name /= null
+        and then Has_Project_Information (File_Name)
       then
          Gtk_New (Item, Label => -"Query status for project");
          Append (Menu, Item);
@@ -517,7 +510,7 @@ package body VCS_View_API is
            (Item, "activate",
             Context_Callback.To_Marshaller
             (On_Menu_Get_Status_Project'Access),
-            Selection_Context_Access (File));
+            Selection_Context_Access (File_Name));
 
          Gtk_New (Item, Label => -"Update project");
          Append (Menu, Item);
@@ -525,7 +518,7 @@ package body VCS_View_API is
            (Item, "activate",
             Context_Callback.To_Marshaller
             (On_Menu_Update_Project'Access),
-            Selection_Context_Access (File));
+            Selection_Context_Access (File_Name));
       end if;
    end VCS_Contextual_Menu;
 
@@ -540,7 +533,7 @@ package body VCS_View_API is
       pragma Unreferenced (Object);
       Context      : Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
-      File         : File_Name_Selection_Context_Access;
+      File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
       Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
@@ -552,8 +545,8 @@ package body VCS_View_API is
          return;
       end if;
 
-      if Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File) then
             String_List.Append (Dirs, Directory_Information (File));
@@ -616,13 +609,13 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       List     : String_List.List;
       Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Get_Creator (Context) = VCS_Module_ID then
             Explorer := Get_Explorer (Kernel);
@@ -771,15 +764,15 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
          Commit (Widget, Kernel);
 
-      elsif Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
             String_List.Append (Files,
@@ -802,13 +795,13 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       List     : String_List.List;
       Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
    begin
-      if Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Get_Creator (Context) = VCS_Module_ID then
             Explorer := Get_Explorer (Kernel);
@@ -846,15 +839,15 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
    begin
       if Get_Creator (Context) = VCS_Module_ID then
          Update (Widget, Kernel);
 
-      elsif Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
             String_List.Append (Files,
@@ -875,7 +868,7 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
       Files    : String_List.List;
 
@@ -885,8 +878,8 @@ package body VCS_View_API is
       if Get_Creator (Context) = VCS_Module_ID then
          Get_Status (Widget, Kernel);
 
-      elsif Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
             String_List.Append (Files,
@@ -910,13 +903,13 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files        : String_List.List;
-      File_Context : File_Name_Selection_Context_Access;
+      File_Context : File_Selection_Context_Access;
 
    begin
       Open_Explorer (Get_Kernel (Context));
 
-      if Context.all in File_Name_Selection_Context'Class then
-         File_Context := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File_Context) then
             String_List.Append (Files, Directory_Information (File_Context));
@@ -937,12 +930,12 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files        : String_List.List;
-      File_Context : File_Name_Selection_Context_Access;
+      File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Get_Kernel (Context));
 
-      if Context.all in File_Name_Selection_Context'Class then
-         File_Context := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File_Context) then
             String_List.Append (Files, Directory_Information (File_Context));
@@ -1037,15 +1030,15 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      File     : File_Name_Selection_Context_Access;
+      File     : File_Selection_Context_Access;
       Kernel   : Kernel_Handle := Get_Kernel (Context);
 
    begin
       if Get_Creator (Context) = VCS_Module_ID then
          View_Diff (Widget, Kernel);
 
-      elsif Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
             Diff (Get_Current_Ref (Kernel),
@@ -1067,7 +1060,7 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files  : String_List.List;
-      File   : File_Name_Selection_Context_Access;
+      File   : File_Selection_Context_Access;
       Ref    : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
       Status : File_Status_List.List;
       Status_Temp : List_Node;
@@ -1077,7 +1070,7 @@ package body VCS_View_API is
          Files  := Get_Selected_Files (Get_Kernel (Context));
 
       else
-         File := File_Name_Selection_Context_Access (Context);
+         File := File_Selection_Context_Access (Context);
 
          if Has_File_Information (File) then
             String_List.Append (Files,

@@ -470,11 +470,11 @@ package body Project_Viewers is
          File := new File_Selection_Context;
          Set_Context_Information
            (File, Kernel => V.Kernel, Creator => Prj_Editor_Module_ID);
-         Set_File_Name_Information
+         Set_File_Information
            (File,
             Directory    => Get_String (User.Directory),
-            File_Name    => Get_String (User.File_Name));
-         Set_File_Information (File, Project_View => V.Project_Filter);
+            File_Name    => Get_String (User.File_Name),
+            Project_View => V.Project_Filter);
 
          Callback (V, Column, File);
          Free (Selection_Context_Access (File));
@@ -505,14 +505,14 @@ package body Project_Viewers is
    is
       User : User_Data;
       Rows : Gint;
-      File : File_Name_Selection_Context_Access;
+      File : File_Selection_Context_Access;
       Child : MDI_Child;
 
    begin
       if Context /= null
-        and then Context.all in File_Name_Selection_Context'Class
+        and then Context.all in File_Selection_Context'Class
       then
-         File := File_Name_Selection_Context_Access (Context);
+         File := File_Selection_Context_Access (Context);
 
          Child := Find_MDI_Child (Get_MDI (Viewer.Kernel), Viewer);
          if Child = null then
@@ -1153,8 +1153,7 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget);
-      Context : File_Selection_Context_Access :=
-        new File_Selection_Context;
+      Context : File_Selection_Context_Access := new File_Selection_Context;
       V : Project_Viewer := Project_Viewer (Object);
       Item : Gtk_Menu_Item;
       Row, Column : Gint;
@@ -1174,12 +1173,15 @@ package body Project_Viewers is
 
       User := Project_User_Data.Get (V.List, Row);
       if User.File_Name /= No_String then
-         Set_File_Name_Information
+         Set_File_Information
            (Context,
             Directory    => Get_String (User.Directory),
-            File_Name    => Get_String (User.File_Name));
+            File_Name    => Get_String (User.File_Name),
+            Project_View => V.Project_Filter);
+      else
+         Set_File_Information
+           (Context, Project_View => V.Project_Filter);
       end if;
-      Set_File_Information (Context, Project_View => V.Project_Filter);
 
       if V.Project_Filter /= No_Project then
          Gtk_New (Item, -"Edit default switches");

@@ -770,7 +770,7 @@ package body Src_Editor_Box is
         (Context => Context,
          Kernel  => Kernel,
          Creator => Src_Editor_Module_Id);
-      Set_File_Name_Information
+      Set_File_Information
         (Context,
          Directory => Dir_Name (Editor.Filename.all),
          File_Name => Base_Name (Editor.Filename.all));

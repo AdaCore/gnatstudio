@@ -138,7 +138,7 @@ package body VCS_Module is
       Submenu      : Gtk_Menu;
       Menu_Item    : Gtk_Menu_Item;
    begin
-      if Context.all in File_Name_Selection_Context'Class then
+      if Context.all in File_Selection_Context'Class then
          Gtk_New (Menu_Item, Label => -"VCS");
          Gtk_New (Submenu);
          VCS_View_API.VCS_Contextual_Menu (Object, Context, Submenu);

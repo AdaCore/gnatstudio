@@ -441,8 +441,7 @@ package body Project_Properties is
       C : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
    begin
-      Edit_Properties
-        (Project_Information (C), Get_Kernel (Context));
+      Edit_Properties (Project_Information (C), Get_Kernel (Context));
    end Edit_Project_Properties;
 
 end Project_Properties;

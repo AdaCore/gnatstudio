@@ -657,8 +657,8 @@ package body External_Editor_Module is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : File_Name_Selection_Context_Access :=
-        File_Name_Selection_Context_Access (Context);
+      File : File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context);
       Line   : Integer := 1;
       Column : Integer := 1;
       Current_Client : External_Client_Information_Access;
@@ -701,11 +701,11 @@ package body External_Editor_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
-      File  : File_Name_Selection_Context_Access;
+      File  : File_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
    begin
-      if Context.all in File_Name_Selection_Context'Class then
-         File := File_Name_Selection_Context_Access (Context);
+      if Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File)
            and then Has_File_Information (File)

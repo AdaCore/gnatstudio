@@ -592,7 +592,8 @@ package body VCS_View_Pkg is
       Menu     : Gtk_Menu;
       Check    : Gtk_Check_Menu_Item;
       Mitem    : Gtk_Menu_Item;
-      Context  : File_Selection_Context_Access := new File_Selection_Context;
+      Context  : File_Selection_Context_Access :=
+        new File_Selection_Context;
 
       Files    : String_List.List;
       Explorer : VCS_View_Access := VCS_View_Access (View);
@@ -649,13 +650,10 @@ package body VCS_View_Pkg is
               (Context,
                Kernel,
                VCS_Module_ID);
-            Set_File_Name_Information
-              (Context,
-               Dir_Name (First_File),
-               Base_Name (First_File));
             Set_File_Information
               (Context,
-               Get_Project_From_File (Get_Project_View (Kernel), First_File));
+               Directory => Dir_Name (First_File),
+               File_Name => Base_Name (First_File));
             VCS_Contextual_Menu (Explorer, Context, Menu);
 
             Gtk_New (Mitem);
@@ -793,12 +791,12 @@ package body VCS_View_Pkg is
      return String
    is
       Context : Selection_Context_Access := Get_Current_Context (Kernel);
-      File    : File_Name_Selection_Context_Access := null;
+      File    : File_Selection_Context_Access := null;
    begin
       if Context /= null
-        and then Context.all in File_Name_Selection_Context'Class
+        and then Context.all in File_Selection_Context'Class
       then
-         File := File_Name_Selection_Context_Access (Context);
+         File := File_Selection_Context_Access (Context);
 
          if Has_Directory_Information (File) then
             Trace (Me, "Directory= " & Directory_Information (File));
@@ -821,7 +819,7 @@ package body VCS_View_Pkg is
 
    function Get_Current_File (Kernel : Kernel_Handle) return String is
       Context : Selection_Context_Access := Get_Current_Context (Kernel);
-      File    : File_Selection_Context_Access := null;
+      File    : File_Selection_Context_Access;
    begin
       if Context /= null
         and then Context.all in File_Selection_Context'Class

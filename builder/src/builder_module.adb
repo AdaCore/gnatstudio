@@ -155,10 +155,10 @@ package body Builder_Module is
 
    begin
       if Context /= null
-        and then Context.all in File_Name_Selection_Context'Class
+        and then Context.all in File_Selection_Context'Class
       then
          File := new String'
-           (File_Information (File_Name_Selection_Context_Access (Context)));
+           (File_Information (File_Selection_Context_Access (Context)));
          Project := new String' (Get_Subproject_Name (Kernel, File.all));
          Cmd := new String'
            ("gnatmake -P" & Project.all & " " &
@@ -221,7 +221,7 @@ package body Builder_Module is
 
    begin
       if Context = null
-        or else not (Context.all in File_Name_Selection_Context'Class)
+        or else not (Context.all in File_Selection_Context'Class)
       then
          return;
       end if;
@@ -229,8 +229,8 @@ package body Builder_Module is
       declare
          Top  : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
-         File_Context : constant File_Name_Selection_Context_Access :=
-           File_Name_Selection_Context_Access (Context);
+         File_Context : constant File_Selection_Context_Access :=
+           File_Selection_Context_Access (Context);
 
          File : constant String := Directory_Information (File_Context) &
            File_Information (File_Context);
@@ -278,7 +278,7 @@ package body Builder_Module is
 
    begin
       if Context = null
-        or else not (Context.all in File_Name_Selection_Context'Class)
+        or else not (Context.all in File_Selection_Context'Class)
       then
          Trace (Me, "On_Compile: context doesn't contain file name");
          return;
@@ -288,7 +288,7 @@ package body Builder_Module is
          Top     : constant Glide_Window :=
            Glide_Window (Get_Main_Window (Kernel));
          File    : constant String :=
-           File_Information (File_Name_Selection_Context_Access (Context));
+           File_Information (File_Selection_Context_Access (Context));
          Project : constant String := Get_Subproject_Name (Kernel, File);
          Cmd     : constant String := "gnatmake -q -u ";
 

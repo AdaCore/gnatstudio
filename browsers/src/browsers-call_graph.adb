@@ -1057,8 +1057,8 @@ package body Browsers.Call_Graph is
          Use_Predefined_Source_Path => True);
       Mitem : Gtk_Menu_Item;
    begin
-      Set_File_Name_Information
-        (File_Name_Selection_Context_Access (Context),
+      Set_File_Information
+        (File_Selection_Context_Access (Context),
          Directory    => Dir_Name (Filename),
          File_Name    => Base_Name (Filename));
       Set_Entity_Information

@@ -233,16 +233,16 @@ package body Navigation_Module is
    is
       pragma Unreferenced (Widget);
       Context : Selection_Context_Access := Get_Current_Context (Kernel);
-      File : File_Name_Selection_Context_Access;
+      File : File_Selection_Context_Access;
    begin
       Push_State (Kernel, Busy);
 
       if Context /= null
-        and then Context.all in File_Name_Selection_Context'Class
+        and then Context.all in File_Selection_Context'Class
         and then Has_File_Information
-          (File_Name_Selection_Context_Access (Context))
+          (File_Selection_Context_Access (Context))
       then
-         File := File_Name_Selection_Context_Access (Context);
+         File := File_Selection_Context_Access (Context);
          declare
             Other_File : constant String := Get_Other_File_Of
               (Kernel, File_Information (File));
