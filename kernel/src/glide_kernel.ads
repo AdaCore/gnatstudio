@@ -437,9 +437,8 @@ package Glide_Kernel is
 
    function Filter_Matches_Primitive
      (Filter  : access Action_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean is abstract;
-   --  Whether the current context matches Filter.
+      Context : access Selection_Context'Class) return Boolean is abstract;
+   --  Whether the context matches Filter.
    --  Context doesn't need to be Ref-ed or Unref-ed.
 
    type Base_Action_Filter_Record (<>)
@@ -448,8 +447,7 @@ package Glide_Kernel is
 
    function Filter_Matches_Primitive
      (Filter  : access Base_Action_Filter_Record;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
    --  See docs for inherited subprograms
 
    function Create
@@ -485,8 +483,7 @@ package Glide_Kernel is
 
    function Filter_Matches
      (Filter  : Action_Filter;
-      Context : Selection_Context_Access;
-      Kernel  : access Kernel_Handle_Record'Class) return Boolean;
+      Context : access Selection_Context'Class) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
 
    procedure Register_Filter
