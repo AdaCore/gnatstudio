@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -67,5 +67,8 @@ package Glide_Main_Window is
 
    function Anim_Cb (Kernel : Glide_Kernel.Kernel_Handle) return Boolean;
    --  Function called when the glide animation needs to be updated.
+
+   procedure Quit (Main_Window : access Glide_Window_Record'Class);
+   --  Ask the user whether the MDI childs should be saved, then exit GPS.
 
 end Glide_Main_Window;
