@@ -15,11 +15,13 @@ def generate_doc (entity):
      Return the name of the HTML file that was created.
      The documentation is generated in the object directory of the root
      project"""
+  GPS.set_busy()
   obj_dir = GPS.Project.root().object_dirs (recursive=False) [0]
   cwd = os.getcwd()
   os.chdir (obj_dir)
   pydoc.writedoc (entity)
   os.chdir (cwd)
+  GPS.unset_busy()
   return obj_dir + "/" + entity.__name__ + ".html"
 
 
