@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -53,6 +53,7 @@ with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Intl;               use Glide_Intl;
 with Projects.Registry;        use Projects.Registry;
+with Shell;                    use Shell;
 
 with Traces;                   use Traces;
 with Commands;                 use Commands;
