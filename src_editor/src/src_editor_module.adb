@@ -3519,6 +3519,10 @@ package body Src_Editor_Module is
       File_Data : constant File_Hooks_Args := File_Hooks_Args (Data);
       Buffer    : Source_Buffer;
    begin
+      if File_Data.File = VFS.No_File then
+         return;
+      end if;
+
       Buffer := Get_Buffer
         (Get_Source_Box_From_MDI (Find_Editor (Kernel, File_Data.File)));
       Autocase_Last_Word (Buffer);
