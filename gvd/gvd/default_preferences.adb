@@ -393,6 +393,8 @@ package body Default_Preferences is
       else
          Free (Info.Page);
          Info.Page := new String'(Page);
+
+         Info.Param := Param;
       end if;
    end Register_Property;
 
