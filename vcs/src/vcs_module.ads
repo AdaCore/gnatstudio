@@ -21,6 +21,7 @@
 --  This package defines the GLIDE module for communication with VCS.
 
 package VCS_Module is
-   pragma Elaborate_Body;
+   procedure Register_Module;
+   --  Register the module into the list
 
 end VCS_Module;

@@ -33,6 +33,9 @@ package Project_Viewers is
 
    type View_Type is (System, Version_Control, Switches);
 
+   procedure Register_Module;
+   --  Register the module into the list
+
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Initialize the project editor module. This must be invoked prior to any

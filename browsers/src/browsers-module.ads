@@ -46,4 +46,7 @@ package Browsers.Module is
       Context : Glide_Kernel.Selection_Context_Access);
    --  Open the file described in Context for analysis in the browser.
 
+   procedure Register_Module;
+   --  Register the module into the list
+
 end Browsers.Module;

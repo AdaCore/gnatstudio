@@ -1440,10 +1440,17 @@ package body Project_Viewers is
          Kernel_Handle (Kernel));
    end Initialize_Module;
 
-begin
-   Prj_Editor_Module_ID := Register_Module
-     (Module_Name             => Project_Editor_Module_Name,
-      Priority                => Default_Priority,
-      Initializer             => Initialize_Module'Access,
-      Contextual_Menu_Handler => Project_Editor_Contextual'Access);
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Prj_Editor_Module_ID := Register_Module
+        (Module_Name             => Project_Editor_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => Initialize_Module'Access,
+         Contextual_Menu_Handler => Project_Editor_Contextual'Access);
+   end Register_Module;
+
 end Project_Viewers;

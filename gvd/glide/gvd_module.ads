@@ -21,8 +21,10 @@
 --  This package defines the GLIDE module for communication with GVD.
 
 package GVD_Module is
-   pragma Elaborate_Body;
 
    GVD_Module_Name : constant String := "Debugger";
+
+   procedure Register_Module;
+   --  Register the module into the list
 
 end GVD_Module;

@@ -84,10 +84,16 @@ package body Metrics_Module is
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
    end Initialize_Module;
 
-begin
-   Metrics_Module_ID := Register_Module
-     (Module_Name             => Metrics_Module_Name,
-      Priority                => Default_Priority,
-      Initializer             => Initialize_Module'Access,
-      Contextual_Menu_Handler => null);
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Metrics_Module_ID := Register_Module
+        (Module_Name             => Metrics_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => Initialize_Module'Access,
+         Contextual_Menu_Handler => null);
+   end Register_Module;
 end Metrics_Module;

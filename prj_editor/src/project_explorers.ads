@@ -50,6 +50,9 @@ package Project_Explorers is
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
+   procedure Register_Module;
+   --  Register the module into the list
+
    -------------
    -- Signals --
    -------------

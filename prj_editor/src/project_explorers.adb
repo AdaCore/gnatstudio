@@ -1891,12 +1891,19 @@ package body Project_Explorers is
       end if;
    end Initialize_Module;
 
-begin
-   Explorer_Module_ID := Register_Module
-     (Module_Name             => Explorer_Module_Name,
-      Priority                => Default_Priority,
-      Initializer             => Initialize_Module'Access,
-      Contextual_Menu_Handler => null);
-   Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-     (Save_Desktop'Access, Load_Desktop'Access);
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Explorer_Module_ID := Register_Module
+        (Module_Name             => Explorer_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => Initialize_Module'Access,
+         Contextual_Menu_Handler => null);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+   end Register_Module;
+
 end Project_Explorers;

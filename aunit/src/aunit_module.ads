@@ -21,6 +21,8 @@
 --  This package defines the GLIDE module for Unit testing.
 
 package Aunit_Module is
-   pragma Elaborate_Body;
+
+   procedure Register_Module;
+   --  Register the module into the list
 
 end Aunit_Module;

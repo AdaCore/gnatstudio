@@ -108,10 +108,17 @@ package body GVD_Module is
         (Button, "clicked", On_Continue'Access, Window);
    end Initialize_Module;
 
-begin
-   GVD_Module_ID := Register_Module
-     (Module_Name             => GVD_Module_Name,
-      Priority                => Default_Priority,
-      Initializer             => Initialize_Module'Access,
-      Contextual_Menu_Handler => null);
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      GVD_Module_ID := Register_Module
+        (Module_Name             => GVD_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => Initialize_Module'Access,
+         Contextual_Menu_Handler => null);
+   end Register_Module;
+
 end GVD_Module;

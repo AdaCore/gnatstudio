@@ -498,10 +498,17 @@ package body Browsers.Module is
       end if;
    end Browser_Contextual_Menu;
 
-begin
-   Dependency_Browser_Module_ID := Register_Module
-     (Module_Name             => Dependency_Browser_Module_Name,
-      Priority                => Default_Priority,
-      Initializer             => Initialize_Module'Access,
-      Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module is
+   begin
+      Dependency_Browser_Module_ID := Register_Module
+        (Module_Name             => Dependency_Browser_Module_Name,
+         Priority                => Default_Priority,
+         Initializer             => Initialize_Module'Access,
+         Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+   end Register_Module;
+
 end Browsers.Module;
