@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,11 +13,10 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
-
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Notebook; use Gtk.Notebook;
@@ -27,7 +26,7 @@ with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Spin_Button; use Gtk.Spin_Button;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text; use Gtk.Text;
+with Gtk.Text_View; use Gtk.Text_View;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
@@ -52,7 +51,7 @@ package Advanced_Breakpoint_Pkg is
       Vbox35 : Gtk_Vbox;
       Label106 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
-      Command_Descr : Gtk_Text;
+      Command_Descr : Gtk_Text_View;
       Hbuttonbox12 : Gtk_Hbutton_Box;
       Record_Button : Gtk_Button;
       End_Button : Gtk_Button;
