@@ -32,12 +32,16 @@ with Src_Info;         use Src_Info;
 with Src_Info.Queries; use Src_Info.Queries;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Glide_Kernel.Project; use Glide_Kernel.Project;
+
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Language;         use Language;
 
 with Ada.Exceptions;   use Ada.Exceptions;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Traces;           use Traces;
 
 package body Browsers.Call_Graph is
@@ -94,6 +98,11 @@ package body Browsers.Call_Graph is
    --  Create a new call graph browser.
    --  It is now added automatically to the MDI
 
+   procedure Edit_Source_From_Contextual
+     (Widget : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Open an editor for the entity described in Context.
+
    -------------
    -- Gtk_New --
    -------------
@@ -130,7 +139,7 @@ package body Browsers.Call_Graph is
       Set_Screen_Size_And_Pixmap
         (Item, Get_Window (Browser), Width, Height);
 
-      Set_Orthogonal_Links (Get_Canvas (Browser), True);
+      --  Set_Orthogonal_Links (Get_Canvas (Browser), True);
 
       Refresh (Browser, Item);
    end Initialize;
@@ -294,6 +303,8 @@ package body Browsers.Call_Graph is
         (Tree, Entity_Name, Entity_Line, Entity_Column);
 
       if Node = Null_Scope_Tree_Node then
+         Insert (Kernel,
+                 -"Couldn't find the call graph for " & Entity_Name);
          Trace (Me, "Couldn't find entity "
                 & Entity_Name & " in "
                 & Get_LI_Filename (Lib_Info)
@@ -359,6 +370,25 @@ package body Browsers.Call_Graph is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
 
+   ---------------------------------
+   -- Edit_Source_From_Contextual --
+   ---------------------------------
+
+   procedure Edit_Source_From_Contextual
+     (Widget : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      C : Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+   begin
+      Open_File_Editor
+        (Get_Kernel (Context),
+         Directory_Information (C) & File_Information (C),
+         Line   => Line_Information (C),
+         Column => Column_Information (C));
+   end Edit_Source_From_Contextual;
+
    --------------------------------------------
    -- Edit_Entity_Call_Graph_From_Contextual --
    --------------------------------------------
@@ -372,6 +402,9 @@ package body Browsers.Call_Graph is
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Lib_Info : LI_File_Ptr;
+      Decl     : E_Declaration_Info;
+      Status   : Find_Decl_Or_Body_Query_Status;
+      Location : File_Location;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
@@ -386,19 +419,44 @@ package body Browsers.Call_Graph is
          return;
       end if;
 
-      Examine_Entity_Call_Graph
-        (Get_Kernel (Entity),
-         Lib_Info,
-         Entity_Name_Information (Entity),
-         Line_Information (Entity),
-         Column_Information (Entity));
+      Find_Declaration_Or_Body
+        (Lib_Info           => Lib_Info,
+         File_Name          => File_Information (Entity),
+         Entity_Name        => Entity_Name_Information (Entity),
+         Line               => Line_Information (Entity),
+         Column             => Column_Information (Entity),
+         Entity_Declaration => Decl,
+         Location           => Location,
+         Status             => Status);
+
+      --  ??? Should check that Decl.Kind is a subprogram
+
+      if Status = Success then
+         Lib_Info := Locate_From_Source_And_Complete
+           (Get_Kernel (Entity), Get_File (Get_Location (Decl)));
+
+         Examine_Entity_Call_Graph
+           (Get_Kernel (Entity),
+            Lib_Info,
+            Entity_Name_Information (Entity),
+            Get_Line (Get_Location (Decl)),
+            Get_Column (Get_Location (Decl)));
+      else
+         Insert (Get_Kernel (Entity),
+                 -"No call graph available for "
+                 & Entity_Name_Information (Entity));
+      end if;
 
       Pop_State (Get_Kernel (Entity));
 
    exception
       when E : others =>
-         Pop_State (Get_Kernel (Entity));
+         Insert (Get_Kernel (Entity),
+                 -"Internal error when creating the call graph for "
+                 & Entity_Name_Information (Entity),
+                 Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Get_Kernel (Entity));
    end Edit_Entity_Call_Graph_From_Contextual;
 
    ---------------------
@@ -461,6 +519,46 @@ package body Browsers.Call_Graph is
          end if;
       end if;
    end Call_Graph_Contextual_Menu;
+
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   function Contextual_Factory
+     (Item  : access Entity_Item_Record;
+      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access
+   is
+      pragma Unreferenced (Event);
+      Context : Selection_Context_Access := new Entity_Selection_Context;
+      Filename : constant String := Find_Source_File
+        (Kernel                     => Get_Kernel (Browser),
+         Short_File_Name            => Get_Declaration_File_Of (Item.Entity),
+         Use_Predefined_Source_Path => True);
+      Mitem : Gtk_Menu_Item;
+   begin
+      Set_File_Name_Information
+        (File_Name_Selection_Context_Access (Context),
+         Directory    => Dir_Name (Filename),
+         File_Name    => Base_Name (Filename));
+      Set_Entity_Information
+        (Entity_Selection_Context_Access (Context),
+         Entity_Name => Get_Name (Item.Entity),
+         Line        => Get_Declaration_Line_Of (Item.Entity),
+         Column      => Get_Declaration_Column_Of (Item.Entity),
+         Category    => Language.Cat_Procedure);
+
+      Gtk_New (Mitem, -"Edit source");
+      Append (Menu, Mitem);
+      Context_Callback.Connect
+        (Mitem, "activate",
+         Context_Callback.To_Marshaller
+         (Edit_Source_From_Contextual'Access),
+         Selection_Context_Access (Context));
+
+      return Context;
+   end Contextual_Factory;
 
    ---------------------
    -- Register_Module --

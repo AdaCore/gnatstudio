@@ -19,6 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gdk.Event;
+with Gtk.Menu;
+with Glide_Kernel;
 with Browsers.Canvas;
 with Src_Info.Queries;
 
@@ -65,6 +67,15 @@ package Browsers.Call_Graph is
    procedure On_Button_Click
      (Item  : access Entity_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button);
+   --  Handle button clicks on the item
+
+   function Contextual_Factory
+     (Item  : access Entity_Item_Record;
+      Browser : access Browsers.Canvas.Glide_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for this item
+
 
 private
    type Entity_Item_Record is new Browsers.Canvas.Glide_Browser_Item_Record
