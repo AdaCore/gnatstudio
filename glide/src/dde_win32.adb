@@ -164,8 +164,6 @@ package body DDE is
                   when FileOpen =>
                      Glide_Kernel.Modules.Open_File_Editor
                        (Kernel_Local, Argument);
-                  when others =>
-                     return 0;
                end case;
 
             exception
