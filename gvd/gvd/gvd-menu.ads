@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib; use Glib;
-with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Factory_Data;
 
 package GVD.Menu is
@@ -35,12 +34,6 @@ package GVD.Menu is
       Widget : Limited_Widget);
    --  Callback for File->Open Program
 
-   procedure On_Open_Debugger
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->New Debugger
-
    procedure On_Open_Core_Dump
      (Object : Data_Type_Access;
       Action : Guint;
@@ -52,36 +45,6 @@ package GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Callback for File->Add Symbols
-
-   procedure On_Edit_Source
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Edit Source
-
-   procedure On_Open_Source
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Open Source
-
-   procedure On_Reload_Sources
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Reload Sources
-
-   procedure On_Open_Session
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Open Session
-
-   procedure On_Save_Session_As
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Save Session As
 
    procedure On_Attach_To_Process
      (Object : Data_Type_Access;
@@ -101,190 +64,136 @@ package GVD.Menu is
       Widget : Limited_Widget);
    --  Callback for File->Change Directory
 
-   procedure On_Close
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Close
-
-   procedure On_Exit
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for File->Exit
-
-   procedure On_Undo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Undo
-
-   procedure On_Redo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Redo
-
-   procedure On_Cut
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Cut
-
-   procedure On_Copy
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Copy
-
-   procedure On_Paste
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Paste
-
-   procedure On_Select_All
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Select All
-
-   procedure On_Preferences
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Callback for Edit->Preferences
-
    procedure On_Run
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Run
 
    procedure On_Step
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Step
 
    procedure On_Step_Instruction
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Step Instruction
 
    procedure On_Next
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Next
 
    procedure On_Next_Instruction
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Next Instruction
 
    procedure On_Finish
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Finish
 
    procedure On_Continue
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Continue
 
    procedure On_Kill
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Kill
 
    procedure On_Interrupt
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Program->Interrupt
 
    procedure On_Command_History
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Command->History
 
    procedure On_Clear_Window
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Command->Clear Window
 
    procedure On_Call_Stack
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Call Stack
 
    procedure On_Threads
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Threads
 
    procedure On_Tasks
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Tasks
 
    procedure On_Edit_Breakpoints
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Edit Breakpoints
 
    procedure On_Examine_Memory
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Examine Memory
 
    procedure On_Display_Local_Variables
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Display Local Variables
 
    procedure On_Display_Arguments
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Display Arguments
 
    procedure On_Display_Registers
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-
-   procedure On_Display_Expression (Object : Data_Type_Access);
+   --  Callback for Data->Display Registers
 
    procedure On_Display_Expression
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Display Expression
 
    procedure On_Refresh
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
+   --  Callback for Data->Refresh
 
    procedure On_Show
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
-
-   procedure On_Manual
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-
-   procedure On_About_GVD
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-
-   --------------------
-   -- GVD_Menu_Items --
-   --------------------
-
-   type Gtk_Item_Factory_Entry_Access is access Gtk_Item_Factory_Entry_Array;
-
-   function GVD_Menu_Items return Gtk_Item_Factory_Entry_Access;
-   --  Return a pointer to the Factory_Entry_Array needed to create the
-   --  GVD menu items.
+   --  Callback for Data->Show
 
 end GVD.Menu;
