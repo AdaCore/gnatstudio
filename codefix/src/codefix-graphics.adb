@@ -177,8 +177,8 @@ package body Codefix.Graphics is
       Current_Vdiff       : Vdiff_Lists.List_Node;
       Extended_Extract    : Extract;
       Success_Update      : Boolean;
+      Already_Fixed       : Boolean;
       New_Popdown_Str     : String_List.Glist;
-      Possible_Correction : Boolean;
 
       -----------------
       -- Display_Sol --
@@ -317,7 +317,6 @@ package body Codefix.Graphics is
       Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
       Current_Nb_Tabs := 0;
-      Possible_Correction := False;
 
       while Current_Sol /= Extract_List.Null_Node loop
          Extended_Extract := Clone (Extract (Data (Current_Sol)));
@@ -335,33 +334,34 @@ package body Codefix.Graphics is
            (Graphic_Codefix.Corrector,
             Graphic_Codefix.Current_Text,
             Extended_Extract,
-            Success_Update);
+            Success_Update,
+            Already_Fixed);
 
-         if Success_Update then
-            Reduce
-              (Extended_Extract,
-               Display_Lines_Before,
-               Display_Lines_After);
+         exit when Already_Fixed or else not Success_Update;
 
-            Possible_Correction := True;
+         Reduce
+           (Extended_Extract,
+            Display_Lines_Before,
+            Display_Lines_After);
 
-            if Current_Vdiff /= Vdiff_Lists.Null_Node then
-               Modify_Tab;
-               Current_Vdiff := Next (Current_Vdiff);
-            else
-               Add_Tab;
-            end if;
-
-            Current_Nb_Tabs := Current_Nb_Tabs + 1;
-            String_List.Append
-              (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
+         if Current_Vdiff /= Vdiff_Lists.Null_Node then
+            Modify_Tab;
+            Current_Vdiff := Next (Current_Vdiff);
+         else
+            Add_Tab;
          end if;
 
-         Free (Extended_Extract);
+         Current_Nb_Tabs := Current_Nb_Tabs + 1;
+         String_List.Append
+           (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
+
+         Reduce (Extended_Extract, 0, 0);
+         Set_Data (Current_Sol, Extended_Extract);
+
          Current_Sol := Next (Current_Sol);
       end loop;
 
-      if not Possible_Correction then
+      if not Success_Update or else Already_Fixed  then
          Load_Next_Error (Graphic_Codefix);
          return;
       end if;
