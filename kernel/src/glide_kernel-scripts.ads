@@ -666,6 +666,15 @@ package Glide_Kernel.Scripts is
    --  Return a new file.
    --  File mustn't be destroyed after this call.
 
+   ----------------
+   -- Hook_Class --
+   ----------------
+
+   function Get_Hook_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the class used to provide an interface to hooks.
+
    -------------------
    -- Project_Class --
    -------------------
