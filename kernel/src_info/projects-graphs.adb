@@ -192,8 +192,15 @@ package body Projects.Graphs is
          Extended    : Project_Node_Id;
       begin
          while With_Clause /= Empty_Node loop
-            Add_Project (Project_Node_Of (With_Clause),
-                         Prj.Tree.Name_Of (With_Clause));
+            --  We have to ignore links back to the root project, which could
+            --  only happen with "limited with", since otherwise the root
+            --  project would not appear first in the topological sort, and
+            --  then Projects.Start returns invalid results at least when
+            --  its Recursive parameters is set to False.
+            if Project_Node_Of (With_Clause) /= Root_Project then
+               Add_Project (Project_Node_Of (With_Clause),
+                            Prj.Tree.Name_Of (With_Clause));
+            end if;
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
 
