@@ -84,7 +84,7 @@ package Glide_Kernel.Preferences is
    --  Default height for the widgets put in the MDI
 
    Animated_Image : constant Glib.Properties.Property_String :=
-     Register_Property ("General:Animated_Image", "glide-animation.gif");
+     Register_Property ("General:Animated_Image", "gps-animation.gif");
    --  Animated image used to inform the user about a command in process.
 
    Tmp_Dir : constant Glib.Properties.Property_String :=
