@@ -129,10 +129,6 @@ package body Language is
       Looking_At (Lang, Buffer, Entity, Next_Char, Line, Column);
    end Looking_At;
 
-   ----------------
-   -- Looking_At --
-   ----------------
-
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
@@ -142,14 +138,15 @@ package body Language is
       Column    : out Natural)
    is
       Matched : Match_Array (0 .. 1);
-      Context : constant Language_Context :=
+      Context : constant Language_Context_Access :=
         Get_Language_Context (Language_Access (Lang));
-      Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
-      Comm1, Comm2 : Character;
-      C : Gunichar;
+      Keys    : constant Pattern_Matcher := Keywords (Language_Access (Lang));
+      Comm1   : Character;
+      Comm2   : Character;
+      C       : Gunichar;
 
    begin
-      Line := 1;
+      Line   := 1;
       Column := 1;
 
       if Buffer (Buffer'First) = ASCII.LF then
@@ -221,28 +218,33 @@ package body Language is
          Entity := String_Text;
          Next_Char := Buffer'First;
 
-         loop
-            Next_Char := Next_Char + 1;
+         if Next_Char < Buffer'Last
+           and then Buffer (Next_Char + 1) /= ASCII.LF
+         then
+            loop
+               Next_Char := Next_Char + 1;
+               Column := Column + 1;
+
+               exit when Next_Char >= Buffer'Last
+                 or else Buffer (Next_Char + 1) = ASCII.LF
+                 or else
+                   (Buffer (Next_Char) = Context.String_Delimiter
+                      and then
+                        (Context.Quote_Character = ASCII.NUL
+                         or else
+                           Buffer (Next_Char - 1) /= Context.Quote_Character));
+            end loop;
+         end if;
+
+         Next_Char := Next_Char + 1;
+
+         if Buffer (Next_Char) = ASCII.LF then
+            Line   := Line + 1;
+            Column := 1;
+         else
             Column := Column + 1;
+         end if;
 
-            exit when Next_Char >= Buffer'Last
-              or else Buffer (Next_Char) = ASCII.LF
-              or else
-                (Buffer (Next_Char) = Context.String_Delimiter
-                   and then
-                     (Context.Quote_Character = ASCII.NUL
-                        or else
-                          Buffer (Next_Char - 1) /= Context.Quote_Character));
-         end loop;
-
-         --  ??? why is this code commented out
-         --  if Buffer (Next_Char) = ASCII.LF then
-         --     Line := Line + 1;
-         --     Column := 0;
-         --  end if;
-
-         --  Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
-         --  Column    := Column + 1;
          return;
       end if;
 
