@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -161,11 +161,11 @@ package body Vdiff2_Module.Utils.Text is
       Current_Line      : String_Access;
 
    begin
-      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines);
-      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines);
+      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark);
+      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark);
 
-      First_Dest := Get_Line_Number (Kernel, Dest_Range.Mark.all);
-      First_Source := Get_Line_Number (Kernel, Source_Range.Mark.all);
+      First_Dest := Dest_Range.First;
+      First_Source := Source_Range.First;
 
       Trace (Me, "VALEUR DE FIRST DEST : "& Integer'Image (First_Dest));
       Trace (Me, "VALEUR DE FIRST SOURCE : "& Integer'Image (First_Source));
@@ -236,15 +236,13 @@ package body Vdiff2_Module.Utils.Text is
       First_Dest        : Natural;
 
    begin
-      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines);
-      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines);
-      First_Dest := Get_Line_Number (Kernel, Dest_Range.Mark.all);
+      Remove_Blank_Lines (Kernel, Dest_Range.Blank_Lines_Mark);
+      Remove_Blank_Lines (Kernel, Source_Range.Blank_Lines_Mark);
+      First_Dest := Dest_Range.First;
 
       for J in 1 .. Offset_Dest loop
          Delete_Line (Kernel, Dest_File, (First_Dest));
       end loop;
-      Delete_Mark (Kernel, Dest_Range.Mark.all);
-      Delete_Mark (Kernel, Source_Range.Mark.all);
    end Delete_Block;
 
    -------------
