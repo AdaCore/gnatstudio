@@ -1603,11 +1603,11 @@ the editor, and select the entity in the contextual menu.
 The following special entities are currently defined:
 
 @table @b
-@item $_
+@item %_
 This is the position where the cursor should be put once the
 replacement text has been inserted in the editor.
 
-@item $(name)
+@item %(name)
 This is the name of a parameter. @i{name} can be any string you want,
 excluding closing parenthesis. See below for more information on
 parameters.
@@ -1617,7 +1617,7 @@ parameters.
 
 The third part of the aliases editor, at the top right corner, lists
 the parameters for the currently selected alias. Any time you insert a
-@i{$(name)} string in the expansion text, GPS automatically detects
+@i{%(name)} string in the expansion text, GPS automatically detects
 there is a new parameter reference (or an old reference has changed
 name or was removed); the list of parameters is automatically updated
 to show the current list.
@@ -1627,7 +1627,7 @@ Each parameters has three attributes:
 @table @b
 @item name
 This is the name you use in the expansion text of the alias in the
-@i{$(name)} special entity.
+@i{%(name)} special entity.
 
 @item Environment
 This specifies whether the default value of the parameter comes from
@@ -1641,7 +1641,7 @@ you can also specify a fixed text.
 
 When an alias that contains parameters is expanded, GPS will first
 display a dialog to ask for the value of the parameters. You can
-interactively enter this value, which replaces all the @i{$(name)}
+interactively enter this value, which replaces all the @i{%(name)}
 entities in the expansion text.
 
 
@@ -1659,9 +1659,9 @@ example. Each alias has its own @i{<alias>} tag.
   <alias name="proc" >
     <param name="p" >Proc1</param>
     <param environment="true" name="env" />
-    <text>procedure $(p) is
-$(env)$_
-end $(p);</text>
+    <text>procedure %(p) is
+%(env)%_
+end %(p);</text>
   </alias>
 </Aliases>
 @end smallexample
@@ -1677,7 +1677,7 @@ before pressing @key{control-o}.
 @item param
 These are children of the @code{alias} node. There is one per
 parameter of the alias. They have one mandatory attribute,
-@code{name}, which is the name to type between @i{$(name)} in the
+@code{name}, which is the name to type between @i{%(name)} in the
 alias expansion text.
 
 They have one optional attribute, @code{environment}, which indicates
