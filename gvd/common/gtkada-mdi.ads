@@ -366,6 +366,7 @@ private
       --  Current size and location of the widget that is currently
       --  resized. This is used for non-opaque resizing.
 
+      Back_GC : Gdk.GC.Gdk_GC;
       GC   : Gdk.GC.Gdk_GC;
       Resize_GC : Gdk.GC.Gdk_GC;
       Focus_GC : Gdk.GC.Gdk_GC;

@@ -79,6 +79,9 @@ package body Gtkada.MDI is
    Title_Bar_Height : constant Gint := 15;
    --  <preference> Height of the title bar for the children
 
+   MDI_Background_Color : constant String := "#666666";
+   --  <preference> Background color to use for the MDI window
+
    Border_Thickness : constant Gint := 4;
    --  <preference> Thickness of the windows in the MDI
 
@@ -433,6 +436,13 @@ package body Gtkada.MDI is
       Region    : Gdk.Region.Gdk_Region := Null_Region;
 
    begin
+      --  ???  Should use directly a color provided by the user
+      Gdk_New (M.Back_GC, Get_Window (MDI));
+      Color := Parse (MDI_Background_Color);
+      Alloc (Get_Default_Colormap, Color);
+      Set_Background (M.Back_GC, Color);
+      Set_Exposures (M.Back_GC, False);
+
       Gdk_New (M.GC, Get_Window (MDI));
       Color := Parse (Title_Bar_Color);
       Alloc (Get_Default_Colormap, Color);
@@ -756,7 +766,7 @@ package body Gtkada.MDI is
       if Child.State = Docked then
          Draw_Rectangle
            (Get_Window (Child),
-            Get_Background_GC (Get_Style (MDI), State_Normal),
+            MDI.Back_GC,
             True,
             Bt,
             Bt + Title_Bar_Height,
