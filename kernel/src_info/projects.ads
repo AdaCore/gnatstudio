@@ -195,6 +195,10 @@ package Projects is
    function Direct_Sources_Count (Project : Project_Type) return Natural;
    --  Return the number of direct source files for Project
 
+   function Get_Source_Files
+     (Project : Project_Type; Index : Positive) return VFS.Virtual_File;
+   --  Return the Index-th source file in the project, or VFS.No_File if there
+   --  is no more direct source.
 
    --------------------
    -- Naming schemes --

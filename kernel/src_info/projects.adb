@@ -475,6 +475,21 @@ package body Projects is
       end if;
    end Create;
 
+   ----------------------
+   -- Get_Source_Files --
+   ----------------------
+
+   function Get_Source_Files
+     (Project : Project_Type; Index : Positive) return VFS.Virtual_File is
+   begin
+      Ensure_Source_Files (Project);
+      if Index <= Project.Data.Files'Last then
+         return Project.Data.Files (Index);
+      else
+         return VFS.No_File;
+      end if;
+   end Get_Source_Files;
+
    -------------------------
    -- Ensure_Source_Files --
    -------------------------
