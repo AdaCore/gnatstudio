@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               GPS                                 --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS   is free software; you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,12 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Diff_Utils; use Diff_Utils;
+with Diff_Utils2; use Diff_Utils2;
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TDiff is
-
+   use Diff_Chunk_List;
    procedure Print (R : Diff_Range);
    --  Print a given line range on standard output.
 
@@ -38,7 +38,9 @@ procedure TDiff is
       end if;
    end Print;
 
-   Result, Tmp : Diff_Occurrence_Link;
+   Result : Diff_List;
+   Tmp_Node : Diff_List_Node;
+   Tmp : Diff_Chunk_Access;
 
 begin
    if Argument_Count /= 2 then
@@ -46,21 +48,22 @@ begin
       return;
    end if;
 
-   Result := Diff_Utils.Diff (Argument (1), Argument (2));
-   Tmp := Result;
-
+   Result := Diff (Argument (1), Argument (2));
+   Tmp_Node := First (Result);
    loop
-      exit when Tmp = null;
-
-      Put (Diff_Action'Image (Tmp.Action));
+      exit when Tmp_Node = Null_Node;
+      Tmp := Data (Tmp_Node);
+      Put (Diff_Action'Image (Tmp.Range2.Action));
       Put (" from");
       Print (Tmp.Range1);
       Put (" to");
       Print (Tmp.Range2);
       New_Line;
 
-      Tmp := Tmp.Next;
+      Tmp_Node := Next (Tmp_Node);
    end loop;
 
    Free (Result);
 end TDiff;
+
+
