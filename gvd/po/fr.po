@@ -1,0 +1,903 @@
+msgid  "   --debugger DEBUG  use DEBUG as the underlying debugger."
+msgstr "   --debugger DEBUG  utilise DEBUG comme moteur de debugger."
+
+msgid  "   --host HOST       Run inferior debugger on HOST."
+msgstr "   --host HOST       Executer le deboggueur sur HOST."
+
+msgid  "   --jdb             assume a java debugger."
+msgstr "   --jdb             suppose un deboggueur java."
+
+msgid  "   --log-level [0-4] Set level of logging (Default is 3)."
+msgstr "   --log-level [0-4] Selectionner le niveau de log (3 par defaut)."
+
+msgid  "   --no-explorer     Do not display explorer window."
+msgstr "   --no-explorer     Ne pas afficher l'explorateur."
+
+msgid  "   --target TARG:PRO "
+msgstr "   --target TARG:PRO "
+
+msgid  "   --tty             Use controlling tty as additional "
+msgstr "   --tty             Utilise le terminal comme additionel "
+
+msgid  "   --version         Show the GVD version and exit."
+msgstr "   --version         Afficher la version de GVD et quitter."
+
+msgid  "   gvd [options...] executable-file"
+msgstr "   gvd [options...] fichier-executable"
+
+msgid  "  debugger: "
+msgstr "  deboggueur: "
+
+msgid  "  machine: "
+msgstr "  machine: "
+
+msgid  "  using protocol: "
+msgstr "  en utilisant le protocole: "
+
+msgid  " Could not find core file: "
+msgstr " Impossible de trouver le fichier core : "
+
+msgid  " Could not find file: "
+msgstr " Impossible de trouver le fichier : "
+
+msgid  " in path."
+msgstr " dans le chemin."
+
+msgid  "..."
+msgstr "..."
+
+msgid  "3D Look"
+msgstr "Apparence 3D"
+
+msgid  ": File not found"
+msgstr ": Fichier non trouve"
+
+msgid  ": The GNU Visual Debugger"
+msgstr ": The GNU Visual Debugger"
+
+msgid  "<file not found>"
+msgstr "<fichier non trouve>"
+
+msgid  "ASCII"
+msgstr "ASCII"
+
+msgid  "Abort"
+msgstr "Avorter"
+
+msgid  "About GVD..."
+msgstr "A propos de GVD..."
+
+msgid  "About..."
+msgstr "A propos..."
+
+msgid  "Action"
+msgstr "Action"
+
+msgid  "Add"
+msgstr "Ajouter"
+
+msgid  "Address"
+msgstr "Adresse"
+
+msgid  "Advanced Breakpoint Settings"
+msgstr "Point d'arret. Parametres avances"
+
+msgid  "Advanced..."
+msgstr "Plus..."
+
+msgid  "Align On Grid"
+msgstr "Aligner sur la grille"
+
+msgid  "All assertions"
+msgstr "Toutes les assertions"
+
+msgid  "All exceptions"
+msgstr "Toutes les exceptions"
+
+msgid  "Arguments Selection"
+msgstr "Selection des arguments"
+
+msgid  "Assembly"
+msgstr "Assembleur"
+
+msgid  "Attach To Process..."
+msgstr "S'attacher a un processus..."
+
+msgid  "Auto-Align Displays on Nearest Grid Point"
+msgstr "Aligner automatiquement sur la grille"
+
+msgid  "Auto-Refreshed"
+msgstr "Reaffichage automatique"
+
+msgid  "Automatic Display of Button Hints"
+msgstr "Affichage automatique de l'aide sur les boutons"
+
+msgid  "Automatic Display of Variable Values"
+msgstr "Affichage automatique des valeurs de variables"
+
+msgid  "Big Item Height"
+msgstr "Hauteur des gros elements"
+
+msgid  "Break On Exceptions"
+msgstr "Stopper sur les exceptions"
+
+msgid  "Break on exception:"
+msgstr "Stopper sur l'exception :"
+
+msgid  "Break only when following condition is true:"
+msgstr "Stopper seulement lorsque la condition suivante est verifiee :"
+
+msgid  "Break when the variable:"
+msgstr "Stopper lorsque la variable :"
+
+msgid  "Breakpoints"
+msgstr "Points d'arret"
+
+msgid  "Bug detected in GVD"
+msgstr "Bug detecte dans GVD"
+
+msgid  "Byte"
+msgstr "Octet"
+
+msgid  "Call Stack"
+msgstr "Pile d'appel"
+
+msgid  "Cancel"
+msgstr "Annuler"
+
+msgid  "Cannot create config directory "
+msgstr "Impossible de create le repoertoire de configuration "
+
+msgid  "Cannot find sessions directory "
+msgstr "Impossible de trouver le repertoire de sessions"
+
+msgid  "Change Directory..."
+msgstr "Changer de repertoire..."
+
+msgid  "Changed Data"
+msgstr "Donnee changee"
+
+msgid  "Clear Window"
+msgstr "Effacer la fenetre"
+
+msgid  "Click in the 'Enb' column to change the status"
+msgstr "Cliquer sur la colonne 'Act' pour changer le statut"
+
+msgid  "Clickable Item"
+msgstr "Element cliquable"
+
+msgid  "Clone"
+msgstr "Cloner"
+
+msgid  "Close"
+msgstr "Fermer"
+
+msgid  "Color Hilighting"
+msgstr "Mise en couleur"
+
+msgid  "Command History"
+msgstr "Historique des commandes"
+
+msgid  "Command History..."
+msgstr "Historique des commandes..."
+
+msgid  "Command"
+msgstr "Commande"
+
+msgid  "Commands"
+msgstr "Commandes"
+
+msgid  "Comments"
+msgstr "Commentaires"
+
+msgid  "Condition"
+msgstr "Condition"
+
+msgid  "Continue Until Line"
+msgstr "Continuer jusqu'a la ligne"
+
+msgid  "Continue program being debugged, after signal or breakpoint"
+msgstr "Continuer le programme en cours de deboggage, apres un signal ou un point d'arret"
+
+msgid  "Continue without Signal"
+msgstr "Continuer sans signal"
+
+msgid  "Continue"
+msgstr "Continuer"
+
+msgid  "Copy"
+msgstr "Copier"
+
+msgid  "Could not find executable "
+msgstr "Impossible de trouver l'executable "
+
+msgid  "Could not get the type of "
+msgstr "Impossible d'obtenir le type de "
+
+msgid  "Could not get the value of "
+msgstr "Impossible d'obtenir la valeur de "
+
+msgid  "Could not parse type or value for "
+msgstr "Impossible d'obtenir le type ou la valeur de "
+
+msgid  "Could not spawn the remote process: "
+msgstr "Impossible de lancer le processus distant: "
+
+msgid  "Created config directory "
+msgstr "Cree le repertoire de configuration "
+
+msgid  "Current Line"
+msgstr "Ligne courante"
+
+msgid  "Cut"
+msgstr "Couper"
+
+msgid  "DBX"
+msgstr "DBX"
+
+msgid  "Data"
+msgstr "Donnee"
+
+msgid  "Debugger Host"
+msgstr "Hote pour le deboggueur"
+
+msgid  "Debugger Name"
+msgstr "Nom du deboggueur"
+
+msgid  "Debugger"
+msgstr "Deboggueur"
+
+msgid  "Decimal"
+msgstr "Decimal"
+
+msgid  "Define Command..."
+msgstr "Definir une commande..."
+
+msgid  "Delete Files Not Found"
+msgstr "Supprimer les fichiers non trouves"
+
+msgid  "Detach Process"
+msgstr "Detacher le processus"
+
+msgid  "Detect Aliases (shared data structures)"
+msgstr "Detecter les alias (structures de donnees partagees)"
+
+msgid  "Detect Aliases"
+msgstr "Detecter les alias"
+
+msgid  "Disp"
+msgstr "Aff"
+
+msgid  "Display "
+msgstr "Afficher "
+
+msgid  "Display Any Expression..."
+msgstr "Afficher une expression..."
+
+msgid  "Display Arguments"
+msgstr "Afficher les arguments"
+
+msgid  "Display Explorer Tree"
+msgstr "Afficher l'explorateur"
+
+msgid  "Display Expression..."
+msgstr "Afficher une expression..."
+
+msgid  "Display Files In Shared Libraries"
+msgstr "Recalculer la liste de fichiers"
+
+msgid  "Display Grid Points"
+msgstr "Afficher les points sur la grille"
+
+msgid  "Display Line Numbers"
+msgstr "Afficher les numeros de ligne"
+
+msgid  "Display Local Variables"
+msgstr "Afficher les variables locales"
+
+msgid  "Display Registers"
+msgstr "Afficher les registres"
+
+msgid  "Edit Breakpoints..."
+msgstr "Editer les point d'arrets..."
+
+msgid  "Edit Buttons..."
+msgstr "Editer les boutons..."
+
+msgid  "Edit Displays..."
+msgstr "Editer les valeurs affiches..."
+
+msgid  "Edit Source..."
+msgstr "Editer le fichier source..."
+
+msgid  "Edit Sources"
+msgstr "Edition de fichiers"
+
+msgid  "Edit"
+msgstr "Editer"
+
+msgid  "Enb"
+msgstr "Act"
+
+msgid  "Enter an expression to display:"
+msgstr "Entrer une expression a afficher :"
+
+msgid  "Enter commands to execute when program stops:"
+msgstr "Entrer les commandes a executer lorsque le programme s'arretera :"
+
+msgid  "Enter the arguments to your application:"
+msgstr "Entrer les arguments pour l'application :"
+
+msgid  "Enter the number of times to skip before stopping:"
+msgstr "Entrer le nombre de fois a ignorer avant de stopper :"
+
+msgid  "Enter the process id to debug:"
+msgstr "Entrer l'identifiant du processus a debogguer :"
+
+msgid  "Examine Memory..."
+msgstr "Examiner la memoire..."
+
+msgid  "Exception"
+msgstr "Exception"
+
+msgid  "Execute until selected stack frame returns"
+msgstr "Executer jusqu'a ce que l'appel selectionne finisse"
+
+msgid  "Exit"
+msgstr "Quitter"
+
+msgid  "Exiting..."
+msgstr "Cliquer pour terminer..."
+
+msgid  "Explorer"
+msgstr "Explorateur"
+
+msgid  "Expression Selection"
+msgstr "Selection d'une expression"
+
+msgid  "Expression is a subprogram call"
+msgstr "L'expression est une commande du deboggueur"
+
+msgid  "File Location"
+msgstr "Situation d'un fichier"
+
+msgid  "File Name Background"
+msgstr "Couleur de fond"
+
+msgid  "File not found: "
+msgstr "Fichier non trouve : "
+
+msgid  "File"
+msgstr "Fichier"
+
+msgid  "File/Variable"
+msgstr "Fichier/Variable"
+
+msgid  "File:"
+msgstr "Fichier :"
+
+msgid  "Find"
+msgstr "Trouver"
+
+msgid  "Finish"
+msgstr "Remonter"
+
+msgid  "Font"
+msgstr "Fonte"
+
+msgid  "Format: "
+msgstr "Format : "
+
+msgid  "Frame Number"
+msgstr "Numero de frame"
+
+msgid  "Frozen"
+msgstr "Bloque"
+
+msgid  "Functions"
+msgstr "Fonctions"
+
+msgid  "GDB Settings..."
+msgstr "Configuration de GDB..."
+
+msgid  "GDB"
+msgstr "GDB"
+
+msgid  "General"
+msgstr "General"
+
+msgid  "Get Core File"
+msgstr "Generer un fichier core"
+
+msgid  "Getting assembly code..."
+msgstr "Calcul du code assembleur..."
+
+msgid  "Halfword"
+msgstr "Demi-mot"
+
+msgid  "Help"
+msgstr "Aide"
+
+msgid  "Helpers"
+msgstr "Support externe"
+
+msgid  "Hex"
+msgstr "Hex"
+
+msgid  "Hide Big Items"
+msgstr "Cacher les gros elements"
+
+msgid  "Hide System Files"
+msgstr "Cacher les fichiers systemes"
+
+msgid  "Hide all "
+msgstr "Cacher "
+
+msgid  "Ignore"
+msgstr "Ignorer"
+
+msgid  "Info"
+msgstr "Info"
+
+msgid  "Interrupt debugged program"
+msgstr "Interrompre le programme deboggue"
+
+msgid  "Interrupt"
+msgstr "Interrompre"
+
+msgid  "Item Name"
+msgstr "Nom de l'element"
+
+msgid  "Item Type"
+msgstr "Nom du type"
+
+msgid  "Item Value"
+msgstr "Valeur de l'element"
+
+msgid  "JDB"
+msgstr "JDB"
+
+msgid  "Keywords"
+msgstr "Mots clefs"
+
+msgid  "Kill"
+msgstr "Tuer"
+
+msgid  "Line"
+msgstr "Ligne"
+
+msgid  "Line:"
+msgstr "Ligne :"
+
+msgid  "List Processes"
+msgstr "Lister les processus"
+
+msgid  "List Select"
+msgstr "Selectionner la liste"
+
+msgid  "Load List"
+msgstr "Charger la liste"
+
+msgid  "Location"
+msgstr "Endroit"
+
+msgid  "Memory View"
+msgstr "Affichage de la memoire"
+
+msgid  "More Status Display..."
+msgstr "Autres affichages..."
+
+msgid  "New Debugger..."
+msgstr "Nouveau deboggueur..."
+
+msgid  "Next Instruction"
+msgstr "Instruction suivante"
+
+msgid  "Next"
+msgstr "Suivant"
+
+msgid  "No extension files"
+msgstr "Fichiers sans extension"
+
+msgid  "Num"
+msgstr "Num"
+
+msgid  "OK"
+msgstr "OK"
+
+msgid  "Octal"
+msgstr "Octal"
+
+msgid  "On Item..."
+msgstr "Sur un element..."
+
+msgid  "Open Core Dump..."
+msgstr "Ouvrir fichier core..."
+
+msgid  "Open Program in a New Debugger"
+msgstr "Ouvrir programme dans un nouveau deboggueur"
+
+msgid  "Open Program..."
+msgstr "Ouvrir programme..."
+
+msgid  "Open Recent"
+msgstr "Ouvrir fichiers recents"
+
+msgid  "Open Session"
+msgstr "Ouvrir session"
+
+msgid  "Open Session..."
+msgstr "Ouvrir session..."
+
+msgid  "Options:"
+msgstr "Options :"
+
+msgid  "Other arguments are passed to the underlying debugger."
+msgstr "Les autres arguments sont passes au deboggueur."
+
+msgid  "Overview..."
+msgstr "Survol..."
+
+msgid  "PC"
+msgstr "PC"
+
+msgid  "PYDB"
+msgstr "PYDB"
+
+msgid  "Packages"
+msgstr "Paquetages"
+
+msgid  "Page size:"
+msgstr "Taille de page :"
+
+msgid  "Parameters"
+msgstr "Parametres"
+
+msgid  "Paste"
+msgstr "Coller"
+
+msgid  "Perl"
+msgstr "Perl"
+
+msgid  "Please report with the contents of the file "
+msgstr "Veuillez reporter avec le contenu du fichier "
+
+msgid  "Preferences"
+msgstr "Preferences"
+
+msgid  "Preferences..."
+msgstr "Preferences..."
+
+msgid  "Print "
+msgstr "Afficher "
+
+msgid  "Process Selection"
+msgstr "Selectionner un processus"
+
+msgid  "Processes..."
+msgstr "Processus..."
+
+msgid  "Program Counter"
+msgstr "Compteur de programme"
+
+msgid  "Program File"
+msgstr "Fichier du programme"
+
+msgid  "Program Host"
+msgstr "Hote pour le programme"
+
+msgid  "Program"
+msgstr "Programme"
+
+msgid  "Protected"
+msgstr "Objets Proteges"
+
+msgid  "Protocol"
+msgstr "Protocole"
+
+msgid  "Recent message (most recent first):"
+msgstr "Messages recents (le plus recent d'abord):"
+
+msgid  "Record"
+msgstr "Enregistrer"
+
+msgid  "Redo"
+msgstr "Refaire"
+
+msgid  "Refresh"
+msgstr "Raffraichir"
+
+msgid  "Regular expression"
+msgstr "Expression reguliere"
+
+msgid  "Reload Source"
+msgstr "Recharger source"
+
+msgid  "Remove"
+msgstr "Supprimer"
+
+msgid  "Replay selection"
+msgstr "Rejouer la selection"
+
+msgid  "Reset"
+msgstr "Remise a zero"
+
+msgid  "Run/Start..."
+msgstr "Executer..."
+
+msgid  "Save Session As..."
+msgstr "Sauver session comme..."
+
+msgid  "Search"
+msgstr "Chercher"
+
+msgid  "Search..."
+msgstr "Chercher..."
+
+msgid  "Select All"
+msgstr "Tout selectionner"
+
+msgid  "Select and print stack frame called by this one"
+msgstr "Selectionner la procedure appellee"
+
+msgid  "Select and print stack frame that called this one"
+msgstr "Selectionner la procedure appelante"
+
+msgid  "Selection :"
+msgstr "Selection :"
+
+msgid  "Session List"
+msgstr "Liste des sessions"
+
+msgid  "Session:"
+msgstr "Session :"
+
+msgid  "Set Breakpoint on Line"
+msgstr "Mettre un point d'arret sur la ligne"
+
+msgid  "Set Value"
+msgstr "Affecter"
+
+msgid  "Show Asm Code"
+msgstr "Afficher Assembleur"
+
+msgid  "Show Asm and Source"
+msgstr "Afficher Assembleur et Source"
+
+msgid  "Show Current File"
+msgstr "Afficher le fichier courant"
+
+msgid  "Show Current Location"
+msgstr "Afficher l'endroit courant"
+
+msgid  "Show Line Numbers"
+msgstr "Afficher les numeros de lignes"
+
+msgid  "Show Lines with Code"
+msgstr "Afficher les lignes avec code"
+
+msgid  "Show Source Code"
+msgstr "Afficher Source"
+
+msgid  "Show Type"
+msgstr "Afficher le typage"
+
+msgid  "Show Value + Type"
+msgstr "Afficher valeur + typage"
+
+msgid  "Show Value"
+msgstr "Afficher la valeur"
+
+msgid  "Show all "
+msgstr "Montrer "
+
+msgid  "Signals..."
+msgstr "Signaux..."
+
+msgid  "Source location"
+msgstr "Endroit du source"
+
+msgid  "Source"
+msgstr "Source"
+
+msgid  "Specs"
+msgstr "Specs"
+
+msgid  "Start the debugged program"
+msgstr "Demarrer le programme a debogguer"
+
+msgid  "Start the debugged program, stopping at the beginning of the main procedure"
+msgstr "Demarrer le programme a debogguer en s'arretant au debut de la procedure principale"
+
+msgid  "Status Bar Time Out"
+msgstr "Temps d'expiration de la barre de statut"
+
+msgid  "Step Instruction"
+msgstr "Avancer d'une instruction"
+
+msgid  "Step one instruction exactly"
+msgstr "Avancer d'une instruction"
+
+msgid  "Step one instruction, but proceed through subroutine calls"
+msgstr "Avancer d'une instruction en ignorant les appels de procedures"
+
+msgid  "Step program until it reaches a different source line"
+msgstr "Avancer jusqu'a ce que le programme atteigne une ligne differente"
+
+msgid  "Step program, proceeding through subroutine calls"
+msgstr "Avancer d'une ligne en ignorant les appels de procedures"
+
+msgid  "Step"
+msgstr "Avancer"
+
+msgid  "Stop always"
+msgstr "Toujours arreter"
+
+msgid  "Stop at beginning of main subprogram"
+msgstr "Arreter au debut de la procedure principale"
+
+msgid  "Stop if not handled"
+msgstr "Arreter si non geree"
+
+msgid  "Stop recording"
+msgstr "Arret de l'enregistrement"
+
+msgid  "Strings"
+msgstr "Chaines"
+
+msgid  "Submit changes"
+msgstr "Confirmer"
+
+msgid  "Subprogram Name"
+msgstr "Nom de la routine"
+
+msgid  "Subprogram"
+msgstr "Routine"
+
+msgid  "Subprograms"
+msgstr "Routines"
+
+msgid  "Syntax Highlighting"
+msgstr "Mise en evidence de la syntaxe"
+
+msgid  "Task Status"
+msgstr "Etat des taches"
+
+msgid  "Tasks"
+msgstr "Taches"
+
+msgid  "Temporary breakpoint"
+msgstr "Point d'arret temporaire"
+
+msgid  "The GNU Visual Debugger"
+msgstr "The GNU Visual Debugger"
+
+msgid  "The underlying debugger died unexpectedly. Closing it"
+msgstr "The deboggueur sous-jacent a termine de maniere impromptue. Fermeture de ce deboggueur"
+
+msgid  "This is the About information box."
+msgstr "Ceci est la boite d'information a propos."
+
+msgid  "Threads..."
+msgstr "Taches..."
+
+msgid  "Tip Of The Day..."
+msgstr "Truc du jour..."
+
+msgid  "Title Background"
+msgstr "Titre"
+
+msgid  "Type"
+msgstr "Type"
+
+msgid  "Types"
+msgstr "Types"
+
+msgid  "Undo changes"
+msgstr "Defaire"
+
+msgid  "Undo"
+msgstr "Defaire"
+
+msgid  "Unit size: "
+msgstr "Taille unitaire: "
+
+msgid  "Unknown Language"
+msgstr "Langage inconnu"
+
+msgid  "Unselect all"
+msgstr "Tout deselectionner"
+
+msgid  "Update Value"
+msgstr "Mettre a jour la valeur"
+
+msgid  "Usage:"
+msgstr "Utilisation :"
+
+msgid  "Variable"
+msgstr "Variable"
+
+msgid  "Version: "
+msgstr "Version: "
+
+msgid  "View"
+msgstr "Voir"
+
+msgid  "Warn if Multiple GVD Instances are Running"
+msgstr "Avertir si plusieurs instances de GVD sont en cours d'execution"
+
+msgid  "Web Browser"
+msgstr "Navigateur Web"
+
+msgid  "What Now ... ?"
+msgstr "Et maintenant... ?"
+
+msgid  "Word"
+msgstr "Mot"
+
+msgid  "XDB"
+msgstr "XDB"
+
+msgid  "You must select at least one of the choices"
+msgstr "Vous devez selectionner au moins un des choix"
+
+msgid  "and the following information:"
+msgstr "et les informations suivantes :"
+
+msgid  "as Popup Tips"
+msgstr "comme boites jaillissantes"
+
+msgid  "break"
+msgstr "break"
+
+msgid  "bytes"
+msgstr "octets"
+
+msgid  "delete"
+msgstr "supprimer"
+
+msgid  "disable"
+msgstr "desactiver"
+
+msgid  "in the Status Line"
+msgstr "dans la barre de statut"
+
+msgid  "is"
+msgstr "est"
+
+msgid  "keep"
+msgstr "garder"
+
+msgid  "label15"
+msgstr "label15"
+
+msgid  "label16"
+msgstr "label16"
+
+msgid  "list of files"
+msgstr "liste de fichiers"
+
+msgid  "ms"
+msgstr "ms"
+
+msgid  "read or written"
+msgstr "lue ou ecrite"
+
+msgid  "read"
+msgstr "lue"
+
+msgid  "remote"
+msgstr "distant"
+
+msgid  "vxworks"
+msgstr "vxworks"
+
+msgid  "watch"
+msgstr "watch"
+
+msgid  "written"
+msgstr "Ecrite"
+
+msgid  "wtx"
+msgstr "wtx"
+
