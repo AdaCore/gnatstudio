@@ -584,6 +584,12 @@ package Glide_Kernel.Modules is
    --  If From_Path is True and the file doesn't contain any directory, then it
    --  is searched on the source path for the current project.
 
+   procedure Clear_Highlighting
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : String);
+   --  If Filename is currently open, clear all highlighting currently
+   --  associated to it.
+
    procedure Close_File_Editors
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : String);
