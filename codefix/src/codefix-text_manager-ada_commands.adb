@@ -430,6 +430,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Spec_Begin, Spec_End : File_Cursor;
       Body_Begin, Body_End : File_Cursor;
+      Garbage_Cursor       : File_Cursor;
    begin
 
       Get_Entity
@@ -438,12 +439,26 @@ package body Codefix.Text_Manager.Ada_Commands is
          Spec_Begin, Spec_End,
          Body_Begin, Body_End);
 
+      --  ??? The use of the function Search_String will be removed when the
+      --  Sloc_End given from the Ada parser will be right positioned.
+
       if Spec_Begin /= Null_File_Cursor then
+         Garbage_Cursor := Spec_End;
+         Spec_End := File_Cursor
+           (Search_String (Current_Text, Garbage_Cursor, ";", Std_Ada_Escape));
+         Free (Garbage_Cursor);
+
          This.Spec_Begin := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Spec_Begin));
          This.Spec_End := new Mark_Abstr'Class'
            (Get_New_Mark (Current_Text, Spec_End));
       end if;
+
+      Garbage_Cursor := Body_End;
+      Body_End := File_Cursor
+        (Search_String (Current_Text, Garbage_Cursor, ";", Std_Ada_Escape));
+      Free (Garbage_Cursor);
+
 
       This.Body_Begin := new Mark_Abstr'Class'
         (Get_New_Mark (Current_Text, Body_Begin));
