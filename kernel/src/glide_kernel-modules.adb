@@ -48,6 +48,7 @@ with String_Utils;      use String_Utils;
 with Traces;            use Traces;
 with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with Ada.Exceptions;    use Ada.Exceptions;
 
 package body Glide_Kernel.Modules is
 
