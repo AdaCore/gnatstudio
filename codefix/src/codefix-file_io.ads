@@ -105,7 +105,14 @@ package Codefix.File_Io is
 
 private
 
-   package List_Str is new Generic_List (Dynamic_String);
+   type Line_Record is record
+      Content           : Dynamic_String;
+      Original_Position : Natural := 0;
+   end record;
+
+   procedure Free (This : in out Line_Record);
+
+   package List_Str is new Generic_List (Line_Record);
    use List_Str;
 
    type File_Interface is new Text_Interface with record

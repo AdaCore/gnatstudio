@@ -35,6 +35,15 @@ package body Codefix.File_Io is
       Free (Text_Interface (This));
    end Free;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Line_Record) is
+   begin
+      Free (This.Content);
+   end Free;
+
    ---------
    -- Get --
    ---------
@@ -44,7 +53,7 @@ package body Codefix.File_Io is
       Cursor : Text_Cursor'Class;
       Len    : Natural) return String is
    begin
-      return Data (Get_Line_Node (This, Cursor.Line)).all
+      return Data (Get_Line_Node (This, Cursor.Line)).Content
         (Cursor.Col .. Cursor.Col + Len - 1);
    end Get;
 
@@ -58,7 +67,7 @@ package body Codefix.File_Io is
    is
       Element : Dynamic_String;
    begin
-      Element := Data (Get_Line_Node (This, Cursor.Line));
+      Element := Data (Get_Line_Node (This, Cursor.Line)).Content;
       return Element.all (Cursor.Col .. Element.all'Last);
    end Get_Line;
 
@@ -72,14 +81,16 @@ package body Codefix.File_Io is
       Len       : Natural;
       New_Value : String)
    is
-      Element  : Dynamic_String;
+      Line_Node : List_Str.List_Node;
+      Line      : Line_Record;
    begin
-      Element := Data (Get_Line_Node (This, Cursor.Line));
-      Set_Data
-       (Get_Line_Node (This, Cursor.Line),
-        new String '(Element.all (1 .. Cursor.Col - 1) &
-                     New_Value &
-                     Element.all (Cursor.Col + Len .. Element.all'Last)));
+      Line_Node := Get_Line_Node (This, Cursor.Line);
+      Line := Data (Line_Node);
+      Line.Content := new String'
+        (Line.Content.all (1 .. Cursor.Col - 1) &
+           New_Value &
+             Line.Content.all (Cursor.Col + Len .. Line.Content.all'Last));
+      Set_Data (Line_Node, Line);
    end Replace;
 
    --------------
@@ -92,12 +103,12 @@ package body Codefix.File_Io is
       New_Line    : String) is
    begin
       if Cursor.Line = 0 then
-         Prepend (This.Content, new String'(New_Line));
+         Prepend (This.Content, (new String'(New_Line), 0));
       else
          Append
            (This.Content,
             Get_Line_Node (This, Cursor.Line),
-            new String'(New_Line));
+            (new String'(New_Line), 0));
       end if;
    end Add_Line;
 
@@ -130,7 +141,7 @@ package body Codefix.File_Io is
    begin
       Current_Node := First (This.Content);
 
-      for J in 1 .. Position - 1 loop
+      while Data (Current_Node).Original_Position /= Position loop
          Current_Node := Next (Current_Node);
       end loop;
 
@@ -145,8 +156,9 @@ package body Codefix.File_Io is
      (This : in out File_Interface;
       Path : String)
    is
-      File     : File_Type;
-      Line_Red : Dynamic_String;
+      File        : File_Type;
+      Line_Red    : Dynamic_String;
+      Line_Number : Positive := 1;
    begin
       --  ??? Need to search File in the project source path
       Open (File, In_File, Path);
@@ -154,7 +166,11 @@ package body Codefix.File_Io is
       while not End_Of_File (File) loop
          Line_Red := null; --  to avoid erasing the line red before
          Get_Line (File, Line_Red);
-         Append (This.Content, Line_Red);
+         if Line_Red = null then
+            Put_Line ("NULL");
+         end if;
+         Append (This.Content, (Line_Red, Line_Number));
+         Line_Number := Line_Number + 1;
       end loop;
 
       Close (File);
@@ -170,7 +186,7 @@ package body Codefix.File_Io is
    end Read_File;
 
    ------------
-   -- Update --
+   -- Commit --
    ------------
 
    procedure Commit (This : File_Interface) is
@@ -180,7 +196,7 @@ package body Codefix.File_Io is
       Open (Current_File, Out_File, Get_File_Name (This));
 
       while Current_Node /= List_Str.Null_Node loop
-         Put_Line (Current_File, Data (Current_Node).all);
+         Put_Line (Current_File, Data (Current_Node).Content.all);
          Current_Node := Next (Current_Node);
       end loop;
 
