@@ -265,6 +265,11 @@ package body Src_Info.Queries is
    --  Internal version of Next, which doesn't move Iter.Current if it
    --  matches.
 
+   function Next_Real_Reference
+     (Ref : E_Reference_List) return E_Reference_List;
+   --  Return the next element in Ref that is a real reference to the entity.
+   --  This can include Ref itself
+
    -------------------------
    -- Search_Is_Completed --
    -------------------------
@@ -2024,6 +2029,24 @@ package body Src_Info.Queries is
       return No_Entity_Information;
    end Find_Declaration_In_LI_Or_Dependencies;
 
+   -------------------------
+   -- Next_Real_Reference --
+   -------------------------
+
+   function Next_Real_Reference (Ref : E_Reference_List)
+                                    return E_Reference_List
+   is
+      R : E_Reference_List := Ref;
+   begin
+      while R /= null loop
+         if Is_Real_Reference (R.Value.Kind) then
+            return R;
+         end if;
+         R := R.Next;
+      end loop;
+      return null;
+   end Next_Real_Reference;
+
    ----------
    -- Next --
    ----------
@@ -2044,27 +2067,6 @@ package body Src_Info.Queries is
       function Check_Decl_File return E_Reference_List;
       --  Check the next declaration list in Iterator.LI.
 
-      function Next_Reference (Ref : E_Reference_List) return E_Reference_List;
-      --  Return the next element in Ref that is a real reference to the entity
-
-      --------------------
-      -- Next_Reference --
-      --------------------
-
-      function Next_Reference (Ref : E_Reference_List)
-         return E_Reference_List
-      is
-         R : E_Reference_List := Ref;
-      begin
-         while R /= null loop
-            if Is_Real_Reference (R.Value.Kind) then
-               return R;
-            end if;
-            R := R.Next;
-         end loop;
-         return null;
-      end Next_Reference;
-
       ------------------------
       -- Check_Declarations --
       ------------------------
@@ -2072,11 +2074,15 @@ package body Src_Info.Queries is
       function Check_Declarations (Declarations : E_Declaration_Info_List)
          return E_Reference_List
       is
-         D : constant E_Declaration_Info_List :=
-           Find_Declaration (Declarations, Iterator.Entity);
+         D : E_Declaration_Info_List;
       begin
-         if D /= null then
-            return Next_Reference (D.Value.References);
+         if Declarations = null then
+            return null;
+         else
+            D := Find_Declaration (Declarations, Iterator.Entity);
+            if D /= null then
+               return Next_Real_Reference (D.Value.References);
+            end if;
          end if;
          return null;
       end Check_Declarations;
@@ -2179,7 +2185,7 @@ package body Src_Info.Queries is
 
       --  If there are still some references
       if Iterator.References /= null then
-         Iterator.References := Next_Reference (Iterator.References.Next);
+         Iterator.References := Next_Real_Reference (Iterator.References.Next);
       end if;
 
       if Iterator.References = null then
@@ -2256,6 +2262,220 @@ package body Src_Info.Queries is
 
       Next (Lang_Handler, Iterator, List);
    end Find_All_References;
+
+   ---------------------------------
+   -- Find_All_References_In_File --
+   ---------------------------------
+
+   function Find_All_References_In_File
+     (Lib_Info    : LI_File_Ptr;
+      Source_File : VFS.Virtual_File) return Local_Entities_Iterator
+   is
+      Iter : Local_Entities_Iterator;
+   begin
+      Iter.Part := Unit_Spec;
+      Iter.File := Source_File;
+      Iter.New_Decl := False;
+      Iter.LI := Lib_Info;
+      Next (Iter);
+      return Iter;
+   end Find_All_References_In_File;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Iterator : Local_Entities_Iterator) return Entity_Information is
+   begin
+      if Iterator.Current_Decl = null then
+         return No_Entity_Information;
+      else
+         return Get_Entity (Iterator.Current_Decl.Value.Declaration);
+      end if;
+   end  Get;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Local_Entities_Iterator) return E_Reference is
+   begin
+      if Iterator.New_Decl or else Iterator.Current_Decl = null then
+         return No_Reference;
+      elsif Iterator.Reference = null then
+         return (Location => Iterator.Current_Decl.Value.Declaration.Location,
+                 Kind     => Reference);
+      else
+         return Iterator.Reference.Value;
+      end if;
+   end Get;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iterator : in out Local_Entities_Iterator) is
+      procedure Next_File;
+      --  Move to the next file to analyze
+
+      function Next_Reference (Ref : E_Reference_List) return E_Reference_List;
+      --  Move to the next reference
+
+      procedure Next_Decl;
+      --  Move to the next declaration
+
+      function Check_File (File : File_Info_Ptr) return Boolean;
+      --  Return whether File matches the iterator
+
+      ----------------
+      -- Check_File --
+      ----------------
+
+      function Check_File (File : File_Info_Ptr) return Boolean is
+      begin
+         if File /= null
+           and then File.Declarations /= null
+         then
+            Iterator.Current_Decl := File.Declarations;
+            return True;
+         end if;
+
+         return False;
+      end Check_File;
+
+      ---------------
+      -- Next_File --
+      ---------------
+
+      procedure Next_File is
+      begin
+         if Iterator.Part = Unit_Spec then
+            Iterator.Part := Unit_Body;
+
+            if Check_File (Iterator.LI.LI.Spec_Info) then
+               return;
+            end if;
+         end if;
+
+         if Iterator.Part = Unit_Body then
+            Iterator.Part := Unit_Separate;
+            if Check_File (Iterator.LI.LI.Body_Info) then
+               return;
+            end if;
+         end if;
+
+         if Iterator.Part = Unit_Separate then
+            if Iterator.Current_Separate = null then
+               Iterator.Current_Separate := Iterator.LI.LI.Separate_Info;
+            else
+               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+            end if;
+
+            while Iterator.Current_Separate /= null loop
+               if Check_File (Iterator.Current_Separate.Value) then
+                  return;
+               end if;
+
+               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+            end loop;
+
+            Iterator.Part := Unit_Dependency;
+         end if;
+
+         if Iterator.Part = Unit_Dependency then
+            if Iterator.Current_Dep = null then
+               Iterator.Current_Dep := Iterator.LI.LI.Dependencies_Info;
+            else
+               Iterator.Current_Dep := Iterator.Current_Dep.Next;
+            end if;
+
+            while Iterator.Current_Dep /= null loop
+               if Get_Source_Filename (Iterator.Current_Dep.Value.File) =
+                   Iterator.File
+                 and then Iterator.Current_Dep.Value.Declarations /= null
+               then
+                  Iterator.Current_Decl :=
+                    Iterator.Current_Dep.Value.Declarations;
+                  return;
+               end if;
+
+               Iterator.Current_Dep := Iterator.Current_Dep.Next;
+            end loop;
+         end if;
+
+         Iterator.Part := None;
+         Iterator.Current_Decl := null;
+      end Next_File;
+
+      ---------------
+      -- Next_Decl --
+      ---------------
+
+      procedure Next_Decl is
+      begin
+         Iterator.Current_Decl := Iterator.Current_Decl.Next;
+         Iterator.Reference    := null;
+         Iterator.New_Decl     := True;
+
+         if Iterator.Current_Decl = null then
+            Next_File;
+         end if;
+      end Next_Decl;
+
+      --------------------
+      -- Next_Reference --
+      --------------------
+
+      function Next_Reference
+        (Ref : E_Reference_List) return E_Reference_List
+      is
+         E : E_Reference_List := Ref;
+      begin
+         loop
+            exit when E = null
+              or else Get_File (Get_Location (E.Value)) = Iterator.File;
+            E := Next_Real_Reference (E.Next);
+         end loop;
+
+         if E = null then
+            Next_Decl;
+         end if;
+
+         return E;
+      end Next_Reference;
+
+   begin
+      --  No more entities to display in the current ilfe ?
+
+      if Iterator.Current_Decl = null then
+         Next_File;
+
+      elsif Iterator.Reference /= null then
+         Iterator.Reference := Next_Reference (Iterator.Reference.Next);
+
+      else
+         if Iterator.New_Decl then
+            Iterator.New_Decl := False;
+
+            if Get_Source_Filename
+              (Iterator.Current_Decl.Value.Declaration.Location.File) =
+              Iterator.File
+            then
+               --  We'll return a reference to the declaration
+               return;
+            end if;
+         end if;
+
+         --  Move to first reference
+         Iterator.Reference :=
+           Next_Reference (Iterator.Current_Decl.Value.References);
+
+         if Iterator.Reference = null then
+            Next_Decl;
+         end if;
+      end if;
+   end Next;
 
    ----------
    -- Next --

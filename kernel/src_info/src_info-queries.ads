@@ -341,6 +341,49 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
    --  Free the memory occupied by the iterator.
 
+   ----------------------
+   -- Local references --
+   ----------------------
+
+   type Local_Entities_Iterator is private;
+
+   function Find_All_References_In_File
+     (Lib_Info    : LI_File_Ptr;
+      Source_File : VFS.Virtual_File) return Local_Entities_Iterator;
+   --  Return the list of all entities referenced in Source_File, as well as
+   --  all the locations at which they are referenced.
+   --  This function is a lot more efficient than searching for all the
+   --  entities with Find_All_Possible_Declarations, and then the lists of
+   --  references with Find_All_References.
+   --
+   --  An example of usage is:
+   --     Iter := Find_All_References_In_File (...);
+   --     loop
+   --        Ref := Get (Iter);
+   --        if Ref = No_Reference then
+   --           --  we have a new entity, analyze it
+   --           Destroy (Current_Entity);
+   --           Current_Entity := Get (Iter);
+   --           exit when Current_Entity = No_Entity_Information;
+   --        end if;
+   --     end loop;
+
+   function Get (Iterator : Local_Entities_Iterator) return Entity_Information;
+   --  Return the current entity.
+   --  The returned value must be freed by the caller
+   --  It is set to No_Entity_Information when there are no more entities in
+   --  the file.
+
+   function Get (Iterator : Local_Entities_Iterator) return E_Reference;
+   --  Return the current reference
+   --  Return No_Reference if the iterator is now working on a new entity.
+   --  A reference will be returned for the declaration of an entity, if that
+   --  declaration takes place in the file passed in argument to
+   --  Find_All_References_In_File.
+
+   procedure Next (Iterator : in out Local_Entities_Iterator);
+   --  Move to the next reference
+
    -------------
    -- Parents --
    -------------
@@ -896,6 +939,19 @@ private
       --  True if the iterator should also return true for indirect imports of
       --  Source_Filename.
    end record;
+
+   type Local_Entities_Iterator is record
+      Current_Decl : E_Declaration_Info_List;
+      Reference : E_Reference_List;
+      File      : VFS.Virtual_File;
+      New_Decl  : Boolean;
+      LI        : LI_File_Ptr;
+
+      Part               : Analyzed_Part := None;
+      Current_Separate   : File_Info_Ptr_List;
+      Current_Dep        : Dependency_File_Info_List;
+   end record;
+
 
    type Entity_Reference_Iterator is record
       Entity    : Entity_Information;
