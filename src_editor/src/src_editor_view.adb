@@ -424,7 +424,7 @@ package body Src_Editor_View is
    -----------------------
 
    procedure Invalidate_Window (User : Source_View) is
-      Win           : constant Gdk.Window.Gdk_Window :=
+      Win           : Gdk.Window.Gdk_Window :=
         Get_Window (User, Text_Window_Text);
       X, Y, W, H, D : Gint;
 
@@ -435,6 +435,16 @@ package body Src_Editor_View is
 
       Get_Geometry (Win, X, Y, W, H, D);
       Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
+
+      Win := Get_Window (User.Area);
+
+      if Win = null then
+         return;
+      end if;
+
+      Get_Geometry (Win, X, Y, W, H, D);
+      Gdk.Window.Invalidate_Rect (Win, (X, Y, W, H), True);
+      Redraw_Speed_Column (User);
    end Invalidate_Window;
 
    -----------------------------------
@@ -1807,6 +1817,7 @@ package body Src_Editor_View is
       Right_Window := Get_Window (View.Area);
 
       Get_Geometry (Right_Window, X, Y, Width, Height, Depth);
+
       Total_Lines := Get_Line_Count (Src_Buffer);
 
       if View.Speed_Column_Buffer = null then
@@ -1847,9 +1858,15 @@ package body Src_Editor_View is
          end loop;
 
          if Info_Exists then
-            Show_All (View.Area);
+            if Width = 1 then
+               Set_Size_Request (View.Area, Speed_Column_Width, -1);
+            end if;
+            null;
          else
-            Hide_All (View.Area);
+            if Width = Speed_Column_Width then
+               Set_Size_Request (View.Area, 1, -1);
+            end if;
+
             return;
          end if;
       end if;
@@ -1862,6 +1879,10 @@ package body Src_Editor_View is
          Ysrc     => 0,
          Xdest    => 0,
          Ydest    => 0);
+
+      if Width = 1 then
+         return;
+      end if;
 
       Draw_Rectangle
         (Drawable => Right_Window,
