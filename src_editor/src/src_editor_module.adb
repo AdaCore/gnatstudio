@@ -140,6 +140,13 @@ package body Src_Editor_Module is
    Project_Search_Parameters : constant Cst_Argument_List :=
      File_Search_Parameters & (5 => Recursive_Cst'Access);
 
+   type Editor_Child_Record is new GPS_MDI_Child_Record
+      with null record;
+
+   function Dnd_Data
+     (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
+   --  See inherited documentation
+
    type Clipboard_Kind is (Cut, Copy, Paste);
    type Clipboard_Command is new Interactive_Command with record
       Kernel : Kernel_Handle;
@@ -427,6 +434,26 @@ package body Src_Editor_Module is
 
    procedure Map_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Create the module-wide GCs.
+
+   --------------
+   -- Dnd_Data --
+   --------------
+
+   function Dnd_Data
+     (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child
+   is
+      Editor : Source_Editor_Box;
+      Kernel : Kernel_Handle;
+   begin
+      if Copy then
+         Editor := Get_Source_Box_From_MDI (MDI_Child (Child));
+         Kernel := Get_Kernel (Editor);
+         return Find_MDI_Child
+           (Get_MDI (Kernel), New_View (Kernel, Editor));
+      else
+         return MDI_Child (Child);
+      end if;
+   end Dnd_Data;
 
    ------------
    -- Map_Cb --
@@ -1526,7 +1553,7 @@ package body Src_Editor_Module is
    -----------------------------
 
    function Get_Source_Box_From_MDI
-     (Child : Gtkada.MDI.MDI_Child) return Source_Editor_Box is
+     (Child : MDI_Child) return Source_Editor_Box is
    begin
       if Child = null then
          return null;
@@ -1593,8 +1620,10 @@ package body Src_Editor_Module is
          Gtk_New (Box, Editor);
          Attach (Editor, Box);
 
+         Child := new Editor_Child_Record;
+         Initialize (Child, Box, All_Buttons);
          Child := Put
-           (Kernel, Box,
+           (Kernel, Child,
             Focus_Widget => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
@@ -1781,8 +1810,10 @@ package body Src_Editor_Module is
          Gtk_New (Box, Editor);
          Attach (Editor, Box);
 
+         Child := new Editor_Child_Record;
+         Initialize (Child, Box, All_Buttons);
          Child := Put
-           (Kernel, Box, Focus_Widget => Gtk_Widget (Get_View (Editor)),
+           (Kernel, Child, Focus_Widget => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module => Src_Editor_Module_Id);
