@@ -753,6 +753,10 @@ begin
    Gtk_New (Main_Debug_Window.Statusbar1);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
 
+   Gtk_New
+     (Main_Debug_Window.Backtrace_Dialog, Gtk_Window (Main_Debug_Window));
+   Gtk_New (Main_Debug_Window.Task_Dialog, Gtk_Window (Main_Debug_Window));
+   Gtk_New (Main_Debug_Window.History_Dialog, Gtk_Window (Main_Debug_Window));
    Lock (The_Accel_Group);
    Lock (Gtk.Accel_Group.Get_Default);
 end Initialize;
@@ -798,15 +802,9 @@ end Initialize;
          Tab := Get_Current_Process (Window);
       end if;
 
-      if Tab /= null and then Window.Backtrace_Dialog /= null then
+      if Tab /= null then
          Update (Window.Backtrace_Dialog, Tab);
-      end if;
-
-      if Tab /= null and then Window.Task_Dialog /= null then
          Update (Window.Task_Dialog, Tab);
-      end if;
-
-      if Tab /= null and then Window.History_Dialog /= null then
          Update (Window.History_Dialog, Tab);
       end if;
    end Update_External_Dialogs;
