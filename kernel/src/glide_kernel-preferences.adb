@@ -86,10 +86,10 @@ package body Glide_Kernel.Preferences is
 
       Toolbar_Show_Text := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Toolbar-Text",
-         Nick    => -"Images and text in tool bar",
+         Nick    => -"Show text in tool bar",
          Blurb   => -("True if the tool bar should show both text and icons,"
                       & " False if it should only show icons"),
-         Default => True));
+         Default => False));
       Register_Property
         (Kernel.Preferences, Param_Spec (Toolbar_Show_Text), -"General");
 
