@@ -67,7 +67,7 @@ package Vdiff2_Command is
 
    procedure Next_Difference
      (Kernel : Kernel_Handle;
-      Diff   : in out  Diff_Head);
+      Diff   : in out Diff_Head);
    --  Goto Next difference
 
    procedure Prev_Difference
