@@ -131,6 +131,10 @@ private
       --  The project currently loaded. This is the tree form, independent of
       --  the current value of the environment variables.
 
+      Project_Is_Default : Boolean;
+      --  True when the current project is still the default project. This is
+      --  set to False as soon as the user loads a new project
+
       Project_View : Prj.Project_Id := Prj.No_Project;
       --  The current project view. This is the same Project, after it has been
       --  evaluated based on the current value of the environment variables.
