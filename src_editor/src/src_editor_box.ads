@@ -427,7 +427,7 @@ private
       --  mouse.
 
       Modified             : Boolean := False;
-      Writable             : Boolean := False;
+      Writable             : Boolean := True;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
