@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -343,8 +343,8 @@ package body Welcome is
    -- On_Load_Project --
    ---------------------
 
-   function On_Load_Project (Screen : access Gtk_Widget_Record'Class)
-      return Boolean
+   function On_Load_Project
+     (Screen : access Gtk_Widget_Record'Class) return Boolean
    is
       S            : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Normalize_Pathname
@@ -364,6 +364,7 @@ package body Welcome is
          end if;
 
          Load_Project (S.Kernel, Project_Name);
+
       else
          if not Is_Regular_File (Project_Name & Project_File_Extension) then
             Button := Message_Dialog
