@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
@@ -201,7 +201,7 @@ package body Project_Properties is
       Set_Sensitive (Editor.Executables, False);
       Set_Sensitive (Label, False);
 
-      Gtk_New (Label, -"Gnatls command:");
+      Gtk_New (Label, -"Gnatls:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 4, 5, Xoptions => Fill);
       Gtk_New (Editor.Gnatls);
@@ -210,7 +210,7 @@ package body Project_Properties is
         (Editor.Gnatls,
          Get_Attribute_Value (Project_View, Gnatlist_Attribute, Ide_Package));
 
-      Gtk_New (Label, -"Debugger command:");
+      Gtk_New (Label, -"Debugger:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 5, 6, Xoptions => Fill);
       Gtk_New (Editor.Debugger);
@@ -223,7 +223,7 @@ package body Project_Properties is
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
 
-      Gtk_New (Label, -"Compiler commands:");
+      Gtk_New (Label, (-"Languages") & " & " & ASCII.LF & (-"Compilers:"));
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill);
       Gtk_New (Lang, Rows => Languages'Length, Columns => 2,
