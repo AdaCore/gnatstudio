@@ -46,10 +46,44 @@ package Commands is
    type Root_Command is abstract tagged limited private;
    type Command_Access is access all Root_Command'Class;
 
+   type Progress_Activity is (Running, Stalled, Unknown);
+
+   type Progress_Record is record
+      Activity : Progress_Activity := Unknown;
+      --  The current activity type.
+
+      Current  : Natural := 0;
+      --  The current progress indicator.
+
+      Total    : Natural := 1;
+      --  The total progress indicator.
+   end record;
+
    function Name (Command : access Root_Command) return String;
    --  Gives a description of the command.
 
-   function Execute (Command : access Root_Command) return Boolean is abstract;
+   function Progress (Command : access Root_Command) return Progress_Record;
+   --  Return the current progress of the command.
+
+   type Command_Return_Type is
+     (Success,
+      --  The command terminated with success.
+
+      Failure,
+      --  The command terminated and failed.
+
+      Execute_Again,
+      --  The command should be executed again as soon as possible.
+
+      Lower_Priority,
+      --  Same as Execute_Again, and lower the priority of the command.
+
+      Raise_Priority
+      --  Same as Execute_Again, and raise the priority of the command.
+      );
+
+   function Execute
+     (Command : access Root_Command) return Command_Return_Type is abstract;
    --  Executes Command. Return value indicates whether the operation was
    --  successful.
    --  IMPORTANT: every implementation for Execute must guarantee
@@ -129,6 +163,20 @@ package Commands is
    package Command_Queues is
      new Generic_List (Command_Access, Free => Destroy);
 
+   function Get_Consequence_Actions
+     (Item : access Root_Command'Class) return Command_Queues.List;
+   --  Get the consequence actions for Item.
+   --  Result must be freed by the user.
+   --  Calling this function removes the consequences and alternate actions
+   --  previously associated with Item.
+
+   function Get_Alternate_Actions
+     (Item : access Root_Command'Class) return Command_Queues.List;
+   --  Get the alternate actions for Item.
+   --  Result must be freed by the user.
+   --  Calling this function removes the consequences and alternate actions
+   --  previously associated with Item.
+
    procedure Add_Queue_Change_Hook
      (Queue      : Command_Queue;
       Command    : Command_Access;
@@ -140,6 +188,20 @@ package Commands is
    --  and replaced by Command.
    --  The caller is responsible for freeing Command when it is no longer
    --  used.
+
+   function Interrupt (Command : access Root_Command) return Boolean;
+   --  Interrupts the execution of Command. Return True if command could be
+   --  successfully interrupted.
+   --  By default this function does nothing and returns false.
+
+   function Continue (Command : access Root_Command) return Boolean;
+   --  Continues the execution of an interrupted Command. Return True if
+   --  Command could be successfully interrupted.
+   --  By default this function does nothing and returns false.
+
+   procedure Launch_Synchronous (Command : Command_Access);
+   --  Launch Command and all the consequent/alternate actions recursively,
+   --  then return.
 
 private
 
@@ -214,6 +276,9 @@ private
       Next_Commands      : Command_Queues.List;
       Alternate_Commands : Command_Queues.List;
       Mode               : Command_Mode := Normal;
+
+      Progress           : Progress_Record;
+      --  The current progress of the command.
 
       --  The following booleans are used to avoid cases when execution of
       --  a command might cause this command to be destroyed in the process.
