@@ -764,8 +764,7 @@ package body Src_Editor_View is
    -- Redraw_Columns --
    --------------------
 
-   procedure Redraw_Columns (View : access Source_View_Record'Class)
-   is
+   procedure Redraw_Columns (View : access Source_View_Record'Class) is
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
 
@@ -780,7 +779,8 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       Dummy_Boolean              : Boolean;
 
-      Nodes : array (View.Line_Info.all'Range) of List_Node;
+      Nodes : array (View.Line_Info'Range) of List_Node;
+
    begin
       for J in Nodes'Range loop
          Nodes (J) := First (View.Line_Info (J).Column_Info);
@@ -808,16 +808,20 @@ package body Src_Editor_View is
 
       Drawing_Loop :
       while Current_Line <= View.Bottom_Line loop
-
          --  Get buffer coords and line height of current line
+
          Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
+
          --  Convert the buffer coords back to window coords
+
          Buffer_To_Window_Coords
            (View, Text_Window_Left,
             Buffer_X => 0, Buffer_Y => Y_In_Buffer,
             Window_X => Dummy_Gint, Window_Y => Y_In_Window);
+
          --  And finally add the font height (ascent + descent) to get
          --  the Y coordinates of the line base
+
          Y_In_Window :=
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
@@ -844,6 +848,7 @@ package body Src_Editor_View is
          end loop;
 
          Forward_Line (Iter, Dummy_Boolean);
+
          exit Drawing_Loop when Dummy_Boolean = False;
 
          Current_Line := Natural (Get_Line (Iter)) + 1;
@@ -889,8 +894,7 @@ package body Src_Editor_View is
      (View       : access Source_View_Record;
       Identifier : String;
       Width      : Integer;
-      Column     : out Integer)
-   is
+      Column     : out Integer) is
    begin
       for J in View.Line_Info.all'Range loop
          if View.Line_Info (J).Identifier.all = Identifier then
@@ -1044,8 +1048,7 @@ package body Src_Editor_View is
    -- Free --
    ----------
 
-   procedure Free (X : in out Line_Information_Access)
-   is
+   procedure Free (X : in out Line_Information_Access) is
       procedure Free is new Unchecked_Deallocation
         (Line_Information_Record, Line_Information_Access);
    begin
