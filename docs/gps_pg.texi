@@ -120,7 +120,7 @@ Most of these external tools and libraries are available from
 @table @bullet
 @item GNAT 3.15 or above
 GNAT is the GNU Ada Compiler, integrated into the gcc tool chain, and
-developped by @b{AdaCore} and @b{ACT Europe}. GPS will not compile
+developed by @b{Ada Core Technologies} and @b{ACT Europe}. GPS will not compile
 with other Ada compilers than GNAT.
 
 You also need to download the sources of GNAT, since GPS uses some of
@@ -139,7 +139,7 @@ read-only access to the CVS repository, and therefore to the most
 up-to-date version.
 
 @item GVD
-GVD is the GNU visual debugger, also developped in Ada. You need to
+GVD is the GNU visual debugger, also developed in Ada. You need to
 get the most recent version from the CVS repository.
 
 @item GPS sources
