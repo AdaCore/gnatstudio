@@ -287,6 +287,7 @@ package body GPS.Kernel.Scripts is
          for L in List'Range loop
             if List (L) /= null then
                Free (List (L));
+               List (L) := null;
             end if;
          end loop;
       end if;
@@ -333,6 +334,10 @@ package body GPS.Kernel.Scripts is
 
       for T in Tmp'Range loop
          if Tmp (T) = Script then
+            if List (T) /= null then
+               Free (List (T));
+            end if;
+
             List (T) := Inst;
             Ref (Inst);
             exit;
@@ -2558,7 +2563,7 @@ package body GPS.Kernel.Scripts is
          Scripting_Language (Script));
       Old_Context : Selection_Context_Access;
    begin
-      --  Has the context changes since we stored the instances ?
+      --  Has the context changed since we stored the instances ?
       if Instance /= null then
          Old_Context := Convert
            (Get_Data (Instance, Get_Context_Class (Kernel)));
@@ -2567,6 +2572,12 @@ package body GPS.Kernel.Scripts is
             Free (Scripting_Data (Kernel.Scripts).Context_Instances);
             Instance := null;
          end if;
+      end if;
+
+      if Instance /= null then
+         Ref (Instance);
+         --  Since it will be unrefed by the caller, and we
+         --  want to keep a reference in the list
       end if;
 
       if Instance = null then
