@@ -30,10 +30,12 @@ with Ada.Text_IO;       use Ada.Text_IO;
 with Unchecked_Conversion;
 
 with Glib;              use Glib;
+with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
 with Gdk.Input;
 with Gdk.Types;
 
+with Odd_Intl;          use Odd_Intl;
 with GVD;               use GVD;
 with Items;             use Items;
 with Process_Proxies;   use Process_Proxies;
@@ -208,14 +210,15 @@ package body Debugger is
                Err_To_Out => True);
          else
             declare
-               Buttons :  Message_Dialog_Buttons;
+               Buttons : Message_Dialog_Buttons;
             begin
-               Buttons := Message_Dialog ("GVD could not find executable "
-                                          & '"' & Debugger_Name & '"'
-                                          & " in path.",
-                                          Error,
-                                          Button_OK,
-                                          Button_OK);
+               Buttons :=
+                 Message_Dialog
+                   (-("Could not find executable ") &
+                      '"' & Debugger_Name & '"' & (-" in path."),
+                    Error,
+                    Button_OK,
+                    Button_OK);
                OS_Exit (1);
             end;
          end if;
@@ -229,7 +232,7 @@ package body Debugger is
 
             Non_Blocking_Spawn
               (Descriptor.all,
-               Remote_Protocol,
+               Current_Preferences.Remote_Protocol.all,
                Real_Arguments,
                Buffer_Size => 0,
                Err_To_Out => True);
@@ -238,13 +241,14 @@ package body Debugger is
          exception
             when Invalid_Process =>
                declare
-                  Buttons :  Message_Dialog_Buttons;
+                  Buttons : Message_Dialog_Buttons;
                begin
                   Buttons := Message_Dialog
-                    ("GVD could not spawn the remote process : " & ASCII.LF
-                     & "  debugger : " & Debugger_Name & ASCII.LF
-                     & "  machine : " & Remote_Machine & ASCII.LF
-                     & "  using protocol : " & Remote_Protocol,
+                    ((-"Could not spawn the remote process: ") & ASCII.LF
+                     & (-"  debugger: ") & Debugger_Name & ASCII.LF
+                     & (-"  machine: ") & Remote_Machine & ASCII.LF
+                     & (-"  using protocol: ")
+                     & Current_Preferences.Remote_Protocol.all,
                      Error,
                      Button_OK,
                      Button_OK);
@@ -382,6 +386,18 @@ package body Debugger is
                 (Process.Debugger, Process.Current_Command.all));
          Free (Process.Current_Command);
       end if;
+
+   exception
+      when Process_Died =>
+         --  Will close the debugger in GVD.Process when getting this
+         --  exception the next time.
+
+         Gdk.Input.Remove (Process.Input_Id);
+         Process.Input_Id := 0;
+         Set_Command_In_Process (Get_Process (Process.Debugger), False);
+         Set_Busy_Cursor (Process, False);
+         Unregister_Dialog (Process);
+         Free (Process.Current_Command);
    end Output_Available;
 
    -----------------------
@@ -490,6 +506,8 @@ package body Debugger is
       Process : Debugger_Process_Tab;
       Last    : Positive := Cmd'First;
       First   : Positive;
+      Button  : Message_Dialog_Buttons;
+
    begin
       --  ???Note: Handling of several commands inside the same string,
       --  separated by ASCII.LF is just a temporary workaround for the
@@ -566,6 +584,22 @@ package body Debugger is
                Last := Last + 1;
             end loop;
       end case;
+
+   exception
+      when Process_Died =>
+         Process := Convert (Debugger.Window, Debugger);
+
+         if Process.Exiting then
+            return;
+         end if;
+
+         Button := Message_Dialog
+           (-"The underlying debugger died unexpectedly. Closing it",
+            Error, Button_OK);
+         Set_Command_In_Process (Get_Process (Debugger), False);
+         Set_Busy_Cursor (Process, False);
+         Unregister_Dialog (Process);
+         Close_Debugger (Process);
    end Send;
 
    ---------------
@@ -577,7 +611,9 @@ package body Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Invisible_Command := Hidden) return String is
+      Mode            : Invisible_Command := Hidden) return String
+   is
+      Process : Debugger_Process_Tab;
    begin
       --  ??? We should always avoid concurrent calls to Wait, or the exact
       --  behavior of the application will depend on specific timing, which is
@@ -611,6 +647,15 @@ package body Debugger is
       end if;
 
       return "";
+
+   exception
+      when Process_Died =>
+         Process := Convert (Debugger.Window, Debugger);
+         Set_Command_In_Process (Get_Process (Debugger), False);
+         Set_Busy_Cursor (Process, False);
+         Unregister_Dialog (Process);
+         Close_Debugger (Process);
+         return "";
    end Send_Full;
 
    --------------------
@@ -706,5 +751,30 @@ package body Debugger is
          Send (Debugger, S, Mode => Visible);
       end if;
    end Set_Variable;
+
+   -----------------------
+   -- Wait_User_Command --
+   -----------------------
+
+   procedure Wait_User_Command (Debugger : access Debugger_Root) is
+      Tmp        : Boolean;
+      Num_Events : Positive;
+      Max_Events : constant := 30;
+      --  Limit the number of events to process in one iteration
+
+   begin
+      --  Wait until the command has been processed
+
+      while Command_In_Process (Get_Process (Debugger)) loop
+         Num_Events := 1;
+
+         while Gtk.Main.Events_Pending
+           and then Num_Events <= Max_Events
+         loop
+            Tmp := Gtk.Main.Main_Iteration;
+            Num_Events := Num_Events + 1;
+         end loop;
+      end loop;
+   end Wait_User_Command;
 
 end Debugger;
