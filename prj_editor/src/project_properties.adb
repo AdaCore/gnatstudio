@@ -344,7 +344,8 @@ package body Project_Properties is
             Append (Items, "mips-wrs-vxworks-gnatmake");
             Append (Items, "sparc-wrs-vxworks-gnatmake");
             Append (Items, "sparc64-wrs-vxworks-gnatmake");
-            Append (Items, "strongarm-wrs-vxworks-gnatmake");
+            Append (Items, "arm-wrs-vxworks-gnatmake");
+            Append (Items, "xscale-wrs-vxworks-gnatmake");
             Append (Items, "alpha-dec-vxworks-gnatmake");
             Append (Items, "powerpc-xcoff-lynxos-gnatmake");
             Append (Items, "gnaampmake");
@@ -413,7 +414,8 @@ package body Project_Properties is
          Append (Items, "mips-wrs-vxworks-gnatls");
          Append (Items, "sparc-wrs-vxworks-gnatls");
          Append (Items, "sparc64-wrs-vxworks-gnatls");
-         Append (Items, "strongarm-wrs-vxworks-gnatls");
+         Append (Items, "arm-wrs-vxworks-gnatls");
+         Append (Items, "xscale-wrs-vxworks-gnatls");
          Append (Items, "alpha-dec-vxworks-gnatls");
          Append (Items, "powerpc-xcoff-lynxos-gnatls");
          Append (Items, "gnaampls");
@@ -460,7 +462,8 @@ package body Project_Properties is
       Append (Items, "mips-wrs-vxworks-gdb");
       Append (Items, "sparc-wrs-vxworks-gdb");
       Append (Items, "sparc64-wrs-vxworks-gdb");
-      Append (Items, "strongarm-wrs-vxworks-gdb");
+      Append (Items, "arm-wrs-vxworks-gdb");
+      Append (Items, "xscale-wrs-vxworks-gdb");
       Append (Items, "alpha-dec-vxworks-gdb");
       Append (Items, "powerpc-xcoff-lynxos-gdb");
       Set_Popdown_Strings (Combo, Items);
