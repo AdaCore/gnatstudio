@@ -16,11 +16,6 @@ with Gtk.Button; use Gtk.Button;
 package Switches_Editor_Pkg is
 
    type Switches_Editor_Record is new Gtk_Window_Record with record
-      Block_Refresh : Boolean := False;
-      --  If this is True, then clicking on the toggle buttons in the
-      --  editor will not refresh the command lines. This is required so that
-      --  people can edit the command lines manually.
-
       Vbox2 : Gtk_Vbox;
       Notebook1 : Gtk_Notebook;
       Make_Switches : Gtk_Table;
