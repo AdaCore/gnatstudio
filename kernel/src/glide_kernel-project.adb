@@ -448,10 +448,13 @@ package body Glide_Kernel.Project is
    is
       Button : Message_Dialog_Buttons;
    begin
-      if Force and then Status (Get_Project (Kernel)) /= From_File then
-         Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+      if not Project_Modified (Get_Project (Kernel), Recursive => True) then
+         return Saved;
+      end if;
 
-      elsif Project_Modified (Get_Project (Kernel), Recursive => True) then
+      if Force then
+         Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
+      else
          Button := Message_Dialog
            (Msg            => -"Do you want to save the projects ?",
             Dialog_Type    => Confirmation,
@@ -479,6 +482,7 @@ package body Glide_Kernel.Project is
                return Cancel;
          end case;
       end if;
+
       return Saved;
    end Save_Project_Conditional;
 
