@@ -269,6 +269,7 @@ package body Socket_Module is
                      begin
                         if Data.Buffer (1 .. Data.Index - 1) = "logout" then
                            return False;
+
                         elsif Data.Index > 4
                           and then Data.Buffer (1 .. 3) = "id "
                         then
@@ -277,12 +278,23 @@ package body Socket_Module is
                              new String'(Data.Buffer (4 .. Data.Index - 1));
                            String'Write (Data.Channel, "id set to '" &
                              Data.Name.all & "'" & ASCII.LF & "GPS>> ");
+
+                        elsif Data.Index > 8
+                          and then Data.Buffer (1 .. 7) = "python "
+                        then
+                           Create
+                             (Command,
+                              Module_Data.Kernel,
+                              Data.Buffer (8 .. Data.Index - 1),
+                              "Python",
+                              Data.Channel);
+                           Result := Execute (Command);
                         else
                            Create
                              (Command,
                               Module_Data.Kernel,
                               Data.Buffer (1 .. Data.Index - 1),
-                              Data.Channel);
+                              Stream => Data.Channel);
                            Result := Execute (Command);
                         end if;
                      end;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -30,12 +30,14 @@ package body Commands.Socket is
      (Item    : out Socket_Command_Access;
       Kernel  : Kernel_Handle;
       Command : String;
+      Shell   : String := Glide_Kernel.Scripts.GPS_Shell_Name;
       Stream  : Stream_Access) is
    begin
-      Item := new Socket_Command;
-      Item.Kernel := Kernel;
+      Item         := new Socket_Command;
+      Item.Kernel  := Kernel;
       Item.Command := new String'(Command);
-      Item.Stream := Stream;
+      Item.Shell   := new String'(Shell);
+      Item.Stream  := Stream;
    end Create;
 
    ----------
@@ -45,6 +47,7 @@ package body Commands.Socket is
    procedure Free (X : in out Socket_Command) is
    begin
       Free (X.Command);
+      Free (X.Shell);
    end Free;
 
    -------------
@@ -54,11 +57,15 @@ package body Commands.Socket is
    function Execute
      (Command : access Socket_Command) return Command_Return_Type
    is
+      Errors : aliased Boolean;
    begin
       if Command.Command /= null then
          String'Write
            (Command.Stream,
-            Execute_GPS_Shell_Command (Command.Kernel, Command.Command.all) &
+            Execute_Command
+              (Lookup_Scripting_Language (Command.Kernel, Command.Shell.all),
+               Command.Command.all, null, True, True,
+               Errors'Unchecked_Access) &
             ASCII.LF & "GPS>> ");
       end if;
 

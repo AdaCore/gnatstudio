@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -21,16 +21,22 @@
 with Glide_Kernel; use Glide_Kernel;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GNAT.Sockets; use GNAT.Sockets;
+with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 
 package Commands.Socket is
 
    type Socket_Command is new Root_Command with private;
    type Socket_Command_Access is access all Socket_Command;
 
+   ------------
+   -- Create --
+   ------------
+
    procedure Create
      (Item    : out Socket_Command_Access;
       Kernel  : Kernel_Handle;
       Command : String;
+      Shell   : String := GPS_Shell_Name;
       Stream  : Stream_Access);
    --  Create a new custom command.
 
@@ -47,6 +53,7 @@ private
    type Socket_Command is new Root_Command with record
       Kernel  : Kernel_Handle;
       Command : String_Access;
+      Shell   : String_Access;
       Stream  : Stream_Access;
    end record;
 
