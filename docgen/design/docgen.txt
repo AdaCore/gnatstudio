@@ -157,7 +157,7 @@ programmer can avoid the writing of long HTML code in his comments, as
 his variables will be replaced as defined in the config file. In this
 context Adabrowse distinguishes between several mechanisms (like
 user-defined tags, user-defined variables and user-definded mark-up) and
-offers also a waste possibilities for executing other formatting
+offers also vast possibilities for executing other formatting
 programs and pipelining.
 
 For each element found the generator will search for the first line of
