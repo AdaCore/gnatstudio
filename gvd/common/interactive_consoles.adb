@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -682,15 +682,15 @@ package body Interactive_Consoles is
    ----------------
 
    procedure Initialize
-     (Console   : access Interactive_Console_Record'Class;
-      Prompt    : String;
-      Handler   : Command_Handler;
-      User_Data : GObject;
-      Font      : Pango.Font.Pango_Font_Description;
-      History_List : Histories.History;
-      Key          : Histories.History_Key;
-      Highlight    : Gdk_Color := Null_Color;
-      Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
+     (Console             : access Interactive_Console_Record'Class;
+      Prompt              : String;
+      Handler             : Command_Handler;
+      User_Data           : GObject;
+      Font                : Pango.Font.Pango_Font_Description;
+      History_List        : Histories.History;
+      Key                 : Histories.History_Key;
+      Highlight           : Gdk_Color := Null_Color;
+      Wrap_Mode           : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False)
    is
       Iter : Gtk_Text_Iter;
