@@ -242,6 +242,7 @@ package body Python_Module is
    function Get_Script (Instance : access Python_Class_Instance_Record)
       return Scripting_Language;
    procedure Primitive_Free (Instance : in out Python_Class_Instance_Record);
+   procedure Ref (Instance : access Python_Class_Instance_Record);
    --  See doc from inherited subprogram
 
    ------------------
@@ -1900,5 +1901,14 @@ package body Python_Module is
    begin
       Py_DECREF (Instance.Data);
    end Primitive_Free;
+
+   ---------
+   -- Ref --
+   ---------
+
+   procedure Ref (Instance : access Python_Class_Instance_Record) is
+   begin
+      Py_INCREF (Instance.Data);
+   end Ref;
 
 end Python_Module;
