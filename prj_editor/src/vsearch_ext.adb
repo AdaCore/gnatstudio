@@ -195,9 +195,9 @@ package body Vsearch_Ext is
    ----------------
 
    procedure On_Destroy (Object : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Object);
    begin
       Search_Modules_List.Free (Search_Modules);
+      Unref (Vsearch_Extended (Object).Next_Menu_Item);
    end On_Destroy;
 
    ------------------------------
@@ -558,9 +558,11 @@ package body Vsearch_Ext is
          Show_All (Align);
 
          Set_Sensitive (Vsearch.Next_Menu_Item, True);
+
       else
-         Set_Label (Vsearch.Search_Next_Button, Stock_Find);
-         Set_Sensitive (Vsearch.Next_Menu_Item, False);
+         null;
+         --  Set_Label (Vsearch.Search_Next_Button, Stock_Find);
+         --  Set_Sensitive (Vsearch.Next_Menu_Item, False);
       end if;
    end Set_First_Next_Mode;
 
@@ -573,10 +575,17 @@ package body Vsearch_Ext is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Handle);
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended
+        (Get_Search_Module (Kernel));
    begin
-      Set_First_Next_Mode
-        (Vsearch_Extended (Get_Search_Module (Kernel)),
-         Find_Next => False);
+      --  We might be in the process of destroying GPS (for instance, the
+      --  current search context detects that the current MDI_Child was
+      --  destroyed, and resets the context).
+      if Vsearch /= null then
+         Set_First_Next_Mode
+           (Vsearch_Extended (Get_Search_Module (Kernel)),
+            Find_Next => False);
+      end if;
    end Set_First_Next_Mode_Cb;
 
    ---------------
@@ -712,6 +721,7 @@ package body Vsearch_Ext is
          Stock_Find, Search_Next_Cb'Access,
          Ref_Item => -"Search", Add_Before => False,
          Accel_Key => GDK_N, Accel_Mods => Control_Mask);
+      Ref (Vsearch.Next_Menu_Item);
       Set_Sensitive (Vsearch.Next_Menu_Item, False);
 
       --  Create the widget
