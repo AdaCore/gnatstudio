@@ -3,7 +3,7 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
-- Added a Speed Column
+- Speed Column
   This column appears on the left of the editors to show an overview of the
   lines highlighted in the file, for example to show the current debugger
   location, or compilation errors.
@@ -12,9 +12,9 @@ New features in GPS 2.0.0
   When searching in an editor, if a search result is off the screen, scrolling
   will ensure that some context is visible before and after the search result.
 
-- Added support for hooks, including from scripting languages
+- Support for hooks, including from scripting languages
 
-- Added support for themes (colors, keys,...)
+- Support for themes (predefined set of colors, keys, ...)
 
 - Ability to reformat text when automatic indentation is disabled.
   The key used to indent the current line/selection is now active even
