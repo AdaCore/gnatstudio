@@ -1,4 +1,3 @@
-pragma Warnings (Off);
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -59,6 +58,16 @@ package body ALI_Parser is
      (Handler         : access ALI_Handler_Record;
       Project         : Projects.Project_Type;
       In_Directory    : String := "");
+   function Generate_LI_For_Project
+     (Handler   : access ALI_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False) return LI_Handler_Iterator'Class;
+   --  See doc for inherited subprograms
+
+   type ALI_Handler_Iterator is new LI_Handler_Iterator with null record;
+   procedure Continue
+     (Iterator : in out ALI_Handler_Iterator; Finished : out Boolean);
+   procedure Destroy (Iterator : in out ALI_Handler_Iterator);
    --  See doc for inherited subprograms
 
 
@@ -265,7 +274,6 @@ package body ALI_Parser is
      (LI            : LI_File;
       Entity        : Entity_Information;
       Sfiles        : Sdep_To_Sfile_Table;
-      Is_Operator   : Boolean;
       Current_Ref   : Xref_Record;
       Current_Sfile : in out Sdep_Id);
    --  Process a reference to the entity
@@ -528,10 +536,7 @@ package body ALI_Parser is
    procedure Process_Withs
      (Sunits  : Unit_To_Sfile_Table;
       Deps    : Sdep_To_Sfile_Table;
-      Imported_Projects : Project_Type_Array)
-   is
-      Sep_File : Source_File;
-      Found    : Boolean;
+      Imported_Projects : Project_Type_Array) is
    begin
       for Unit in Sunits'Range loop
          if Sunits (Unit) /= null then
@@ -630,8 +635,7 @@ package body ALI_Parser is
       Current_Sfile := Xref_Sect.File_Num;
       for Xref_Id in Xref_Ent.First_Xref .. Xref_Ent.Last_Xref loop
          Process_Entity_Ref
-           (LI, Entity, Sfiles, Is_Operator,
-            Xref.Table (Xref_Id), Current_Sfile);
+           (LI, Entity, Sfiles, Xref.Table (Xref_Id), Current_Sfile);
       end loop;
    end Process_Xref_Entity;
 
@@ -643,7 +647,6 @@ package body ALI_Parser is
      (LI            : LI_File;
       Entity        : Entity_Information;
       Sfiles        : Sdep_To_Sfile_Table;
-      Is_Operator   : Boolean;
       Current_Ref   : Xref_Record;
       Current_Sfile : in out Sdep_Id)
    is
@@ -662,11 +665,6 @@ package body ALI_Parser is
                       Column => Integer (Current_Ref.Col));
 
          if Is_End_Reference (Kind) then
-            --  For operators, ignore the quotes
---              if Is_Operator then
---                 Location.Column := Location.Column + 1;
---              end if;
-
             --  The info for the body is always seen second, and will override
             --  the one for the spec
             declare
@@ -713,6 +711,14 @@ package body ALI_Parser is
       Line     : Nat;
       Column   : Nat) return Entity_Information is
    begin
+      --  ??? Must search in references also. For instance, we have in
+      --  rename/rename.adb:
+      --     32i4 X{integer} 33m24 50m4
+      --     33i4 Y=33:24{integer} 51r4
+
+      Trace (Me, "Find_Entity_In_ALI : "
+             & Base_Name (Get_Filename (Sfiles (File_Num).File))
+             & Line'Img & Column'Img);
       for Sect in Xref_Section.First .. Xref_Section.Last loop
          if Xref_Section.Table (Sect).File_Num = File_Num then
             for Entity in Xref_Section.Table (Sect).First_Entity ..
@@ -733,7 +739,12 @@ package body ALI_Parser is
          end if;
       end loop;
 
-      return null;
+      return Get_Or_Create
+        (Db   => Get_Database (LI),
+         Name => "",   --  Partial entity
+         File => Sfiles (File_Num).File,
+         Line => Integer (Line),
+         Column => Integer (Column));
    end Find_Entity_In_ALI;
 
    --------------------------
@@ -753,6 +764,11 @@ package body ALI_Parser is
    begin
       if Renaming /= null then
          Set_Is_Renaming_Of (Entity, Renaming);
+      else
+         Trace (Me, "Couldn't resolve renaming at "
+                & Xref_Sect.File_Num'Img
+                & Xref_Ent.Rref_Line'Img
+                & Xref_Ent.Rref_Col'Img);
       end if;
    end Process_Renaming_Ref;
 
@@ -774,8 +790,8 @@ package body ALI_Parser is
             Name   => Locale_To_UTF8
               (To_Lower (Get_String (Xref_Ent.Tref_Standard_Entity))),
             File   => Get_Predefined_File (Get_Database (LI)),
-            Line   => 0,
-            Column => 0);
+            Line   => Predefined_Line,
+            Column => Predefined_Column);
       else
          Parent := Find_Entity_In_ALI
            (LI       => LI,
@@ -1222,8 +1238,24 @@ package body ALI_Parser is
    is
       pragma Unreferenced (Handler, Project, In_Directory);
    begin
+      --  ??? Needs implementation, see src_info-ali.adb
       null;
    end Parse_All_LI_Information;
+
+   -----------------------------
+   -- Generate_LI_For_Project --
+   -----------------------------
+
+   function Generate_LI_For_Project
+     (Handler   : access ALI_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False) return LI_Handler_Iterator'Class
+   is
+      pragma Unreferenced (Handler, Project, Recursive);
+      Iterator : ALI_Handler_Iterator;
+   begin
+      return Iterator;
+   end Generate_LI_For_Project;
 
    ------------------------
    -- Create_ALI_Handler --
@@ -1240,5 +1272,27 @@ package body ALI_Parser is
       ALI.Registry := Registry;
       return LI_Handler (ALI);
    end Create_ALI_Handler;
+
+   --------------
+   -- Continue --
+   --------------
+
+   procedure Continue
+     (Iterator : in out ALI_Handler_Iterator; Finished : out Boolean)
+   is
+      pragma Unreferenced (Iterator);
+   begin
+      Finished := True;
+   end Continue;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out ALI_Handler_Iterator) is
+      pragma Unreferenced (Iterator);
+   begin
+      null;
+   end Destroy;
 
 end ALI_Parser;
