@@ -342,6 +342,22 @@ procedure GPS is
       OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
       Projects.Registry.Initialize;
 
+      --  Reset the environment that was set before GPS was started (since
+      --  starting GPS will generally imply a change in LD_LIBRARY_PATH and
+      --  PATH to point to the right libraries
+
+      Tmp := Getenv ("GPS_STARTUP_LD_LIBRARY_PATH");
+      if Tmp /= null then
+         Setenv ("LD_LIBRARY_PATH", Tmp.all);
+         Free (Tmp);
+      end if;
+
+      Tmp := Getenv ("GPS_STARTUP_PATH");
+      if Tmp /= null then
+         Setenv ("PATH", Tmp.all);
+         Free (Tmp);
+      end if;
+
       --  Reset any artificial memory limit
 
       Setenv ("GNAT_MEMORY_LIMIT", "");
