@@ -36,6 +36,7 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File                    : out LI_File_Ptr;
+      Xref_Filename           : in String;
       Handler                 : in LI_Handler;
       Source_Filename         : in String;
       Parsed                  : in Boolean);
@@ -63,6 +64,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -82,6 +84,7 @@ package body Src_Info.LI_Utils is
          Create_LI_File
            (Handler           => Handler,
             File              => File,
+            Xref_Filename     => Xref_Filename,
             Source_Filename   => Source_Filename,
             Parsed            => True);
       else
@@ -89,9 +92,11 @@ package body Src_Info.LI_Utils is
 
          --  ??? MANU: using Base_Name here is a hack, we should really keep
          --  the directory specified in the sources for #include "dir/file.h"
-         Assert (Me, Base_Name (File.LI.LI_Filename.all) =
-                 Base_Name (Source_Filename),
-                 "Invalid Source Filename");
+         --  Taras: This assert is commented out to implement
+         --  new behaviour with xref-names as LI_Filenames
+         --  Assert (Me, Base_Name (File.LI.LI_Filename.all) =
+         --        Base_Name (Source_Filename),
+         --        "Invalid Source Filename");
          Assert (Me, LI_Handler (Handler) = File.LI.Handler,
                  "Invalid Handler");
       end if;
@@ -139,6 +144,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Dependency
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Source_Filename         : in String;
       Referred_Filename       : in String)
@@ -152,6 +158,7 @@ package body Src_Info.LI_Utils is
       if File = No_LI_File then
          Create_LI_File
            (File            => File,
+            Xref_Filename   => Xref_Filename,
             Handler         => Handler,
             Source_Filename => Source_Filename,
             Parsed          => True);
@@ -178,10 +185,11 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table, Xref_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
+            Xref_Filename     => Xref_Filename,
             Handler           => Handler,
             Source_Filename   => Referred_Filename,
             Parsed            => True);
@@ -249,6 +257,7 @@ package body Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Referred_Filename       : in String;
@@ -273,6 +282,7 @@ package body Src_Info.LI_Utils is
       if File = No_LI_File then
          Create_LI_File
            (File => File,
+            Xref_Filename => Xref_Filename,
             Handler => Handler,
             Source_Filename => Source_Filename,
             Parsed => True);
@@ -298,11 +308,12 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table, Xref_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
             File               => Tmp_LI_File_Ptr,
+            Xref_Filename      => Xref_Filename,
             List               => List,
             Symbol_Name        => Symbol_Name,
             Source_Filename    => Referred_Filename,
@@ -328,6 +339,7 @@ package body Src_Info.LI_Utils is
                Insert_Declaration
                  (Handler            => Handler,
                   File               => Tmp_LI_File_Ptr,
+                  Xref_Filename      => Xref_Filename,
                   List               => List,
                   Symbol_Name        => Symbol_Name,
                   Source_Filename    => Referred_Filename,
@@ -452,6 +464,7 @@ package body Src_Info.LI_Utils is
             FL_Ptr := FL_Ptr.Next;
          end loop;
       end if;
+      --  TODO we should search by Xref_filename of the parent filename
       Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
       if Tmp_LI_File_Ptr = No_LI_File then
          if Parent_Filename = Get_Source_Filename
@@ -661,6 +674,7 @@ package body Src_Info.LI_Utils is
          if Source_Filename = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
+            --  TODO we should check for Xref_Filename of the parent!
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exist?
@@ -756,34 +770,38 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File                    : out LI_File_Ptr;
+      Xref_Filename           : in String;
       Handler                 : in LI_Handler;
       Source_Filename         : in String;
       Parsed                  : in Boolean) is
+      pragma Unreferenced (Source_Filename);
    begin
       if (Parsed) then
          File := new LI_File_Constrained'
            (LI => (Parsed => True,
                    Handler => LI_Handler (Handler),
-                   LI_Filename => new String' (Source_Filename),
+                   LI_Filename => new String' (Xref_Filename),
                    Body_Info => null,
                    Spec_Info => null,
                    Dependencies_Info => null,
                    Compilation_Errors_Found => False,
                    Separate_Info => null,
                    LI_Timestamp => To_Timestamp
-                     (File_Time_Stamp (Source_Filename))));
+                     (File_Time_Stamp (Xref_Filename))));
+                     --  ??? We have to provide full path to the DB_Directory
          --  ??? If source_filename is incorrect?
 
       else
          File := new LI_File_Constrained'
            (LI =>  (Parsed => False,
                     Handler => LI_Handler (Handler),
-                    LI_Filename => new String' (Source_Filename),
+                    LI_Filename => new String' (Xref_Filename),
                     Body_Info => null,
                     Spec_Info => null,
                     Separate_Info => null,
                     LI_Timestamp => To_Timestamp
-                      (File_Time_Stamp (Source_Filename))));
+                      (File_Time_Stamp (Xref_Filename))));
+                     --  ??? We have to provide full path to the DB_Directory
          --  ??? If source_filename is incorrect?
       end if;
    end Create_LI_File;

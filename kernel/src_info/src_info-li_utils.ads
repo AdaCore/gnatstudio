@@ -7,6 +7,8 @@ private package Src_Info.LI_Utils is
       --  Library Information handler
       File                    : in out LI_File_Ptr;
       --  root pointer to whole LI_File structure
+      Xref_Filename           : in String;
+      --  this names will be assigned to the LI_File
       List                    : in out LI_File_List;
       --  common list of LI_Files
       Symbol_Name             : in String;
@@ -46,6 +48,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Dependency
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Source_Filename         : in String;
       Referred_Filename       : in String);
@@ -54,6 +57,7 @@ private package Src_Info.LI_Utils is
    procedure Insert_Dependency_Declaration
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
+      Xref_Filename           : in String;
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Referred_Filename       : in String;
