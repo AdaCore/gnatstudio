@@ -2418,6 +2418,7 @@ package body Gtkada.MDI is
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+         List := Widget_List.Next (List);
 
          if (C.State = Normal or else C.State = Iconified)
            and then C /= MDI.Focus_Child
@@ -2433,8 +2434,6 @@ package body Gtkada.MDI is
             Raise_Child (C);
             Level := Level + Title_Bar_Height;
          end if;
-
-         List := Widget_List.Next (List);
       end loop;
 
       if MDI.Focus_Child /= null
@@ -2494,6 +2493,7 @@ package body Gtkada.MDI is
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
+         List := Widget_List.Next (List);
 
          if C.State = Normal then
             C.X := Level;
@@ -2506,8 +2506,6 @@ package body Gtkada.MDI is
             Size_Allocate (C, Alloc);
             Level := Level + W;
          end if;
-
-         List := Widget_List.Next (List);
       end loop;
 
       Queue_Resize (MDI);
