@@ -29,7 +29,7 @@ with GNAT.OS_Lib;
 with Glib.Object;
 with Src_Info.Queries;
 with Projects;
-with Glide_Kernel.Modules;
+with Glide_Kernel.Contexts;
 with Interactive_Consoles;
 
 package Glide_Kernel.Scripts is
@@ -366,12 +366,22 @@ package Glide_Kernel.Scripts is
       Hide_Output        : Boolean := False;
       Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
-   --  Execute a command, and return its result as a displayable string.
+   --  Execute a command, and return its output as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot
    --  capture the output of their interpreter. This command is mostly useful
-   --  for the GPS shell.
+   --  for the GPS shell, but also supported by python.
    --  Command can never be a list of commands (no semicolon or newline
    --  separated).
+
+   function Execute_Command
+     (Script             : access Scripting_Language_Record;
+      Command            : String;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
+      Errors             : access Boolean) return Boolean is abstract;
+   --  Execute a command and evaluate its return value (*not* its output) as a
+   --  boolean. This is different from the version returning a string, in that
+   --  only the return value is considered, not the full output.
 
    function Execute_Command_With_Args
      (Script             : access Scripting_Language_Record;
@@ -631,12 +641,12 @@ package Glide_Kernel.Scripts is
    --  Return a class for a File_Selection_Context
 
    function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.File_Selection_Context_Access;
+      return Glide_Kernel.Contexts.File_Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.File_Selection_Context_Access)
+      Context : Glide_Kernel.Contexts.File_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
 
@@ -646,12 +656,12 @@ package Glide_Kernel.Scripts is
    --  Return a class for an Entity_Selection_Context
 
    function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.Entity_Selection_Context_Access;
+      return Glide_Kernel.Contexts.Entity_Selection_Context_Access;
    --  Retrieve some context information from instance
 
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.Entity_Selection_Context_Access)
+      Context : Glide_Kernel.Contexts.Entity_Selection_Context_Access)
       return Class_Instance;
    --  Create a new context
 
