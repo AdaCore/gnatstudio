@@ -4063,8 +4063,17 @@ package body Src_Editor_Module is
       String_List_Utils.String_List.Free (Id.Unopened_Files);
       Mark_Identifier_List.Free (Id.Stored_Marks);
 
-      Unref (Id.Post_It_Note_GC);
-      Unref (Id.Blank_Lines_GC);
+      --  Post_It_Note_GC and Blank_Lines_GC are initialized only when the
+      --  main window is mapped. Therefore, if the window was never displayed,
+      --  these values are not initialized.
+
+      if Id.Post_It_Note_GC /= null then
+         Unref (Id.Post_It_Note_GC);
+      end if;
+
+      if Id.Blank_Lines_GC /= null then
+         Unref (Id.Blank_Lines_GC);
+      end if;
 
       --  Destroy graphics
       Unref (Remove_Blank_Lines_Pixbuf);
