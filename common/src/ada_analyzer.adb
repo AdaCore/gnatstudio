@@ -2494,6 +2494,12 @@ package body Ada_Analyzer is
                when '(' =>
                   Prev_Token := Tok_Left_Paren;
 
+                  if Continuation_Val > Indent_Continue
+                    and then Top (Indents).Level /= None
+                  then
+                     Continuation_Val := 0;
+                  end if;
+
                   if P > Buffer'First then
                      Char := Buffer (Prev_Char (P));
                   else
@@ -2514,7 +2520,9 @@ package body Ada_Analyzer is
                      --  Indent with extra spaces if the '(' is the first
                      --  non blank character on the line
 
-                     if Prev_Prev_Token = Tok_Comma then
+                     if Prev_Prev_Token = Tok_Comma
+                       or else Prev_Prev_Token = Tok_Ampersand
+                     then
                         Do_Indent (P, Num_Spaces);
                      else
                         if Prev_Prev_Token = Tok_Colon_Equal
