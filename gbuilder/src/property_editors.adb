@@ -654,7 +654,7 @@ package body Property_Editors is
                         (Gtk_Widget (Widget), Param));
                   end;
 
-               when GType_Bool =>
+               when GType_Boolean =>
                   declare
                      Prop : constant Property_Boolean :=
                        Build (Pspec_Name (Param));
