@@ -515,18 +515,15 @@ package body Src_Editor_View is
 
             Find_Top_Line :
             while Top_Line <= Bottom_Line loop
-               if Line_Needs_Refresh (Buffer, Top_Line) then
-                  exit Find_Top_Line;
-               end if;
+               exit Find_Top_Line when Line_Needs_Refresh (Buffer, Top_Line);
 
                Top_Line := Top_Line + 1;
             end loop Find_Top_Line;
 
             Find_Bottom_Line :
             while Bottom_Line >= Top_Line loop
-               if Line_Needs_Refresh (Buffer, Bottom_Line) then
-                  exit Find_Bottom_Line;
-               end if;
+               exit Find_Bottom_Line when
+                 Line_Needs_Refresh (Buffer, Bottom_Line);
 
                Bottom_Line := Bottom_Line - 1;
             end loop Find_Bottom_Line;
@@ -1292,7 +1289,8 @@ package body Src_Editor_View is
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Total_Width);
 
-      --  Create the graphical elements.
+      --  Create the graphical elements
+
       Left_Window := Get_Window (View, Text_Window_Left);
 
       if View.Side_Column_Buffer /= null
@@ -1310,7 +1308,8 @@ package body Src_Editor_View is
             Xdest    => 0,
             Ydest    => 0);
       else
-         --  The lines have changed or the cache is not created : create it.
+         --  The lines have changed or the cache is not created: create it.
+
          if View.Side_Column_Buffer /= null then
             Gdk.Pixmap.Unref (View.Side_Column_Buffer);
          end if;
