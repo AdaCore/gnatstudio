@@ -1202,7 +1202,6 @@ package body Vsearch_Ext is
                        Default_Width => 1, Default_Height => 1,
                        Module => Vsearch_Module_Id,
                        Desktop_Independent => True);
-         Set_Focus_Child (Child);
          Set_Title (Child, -"Search");
          Set_Dock_Side (Child, Left);
 
@@ -1211,6 +1210,7 @@ package body Vsearch_Ext is
             Widget_Callback.To_Marshaller (Float_Vsearch'Access));
 
          Float_Child (Child, Float_Widget);
+         Set_Focus_Child (Child);
 
          On_Options_Toggled (Vsearch_Module_Id.Search);
       end if;
