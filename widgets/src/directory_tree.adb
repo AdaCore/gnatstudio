@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -34,13 +35,16 @@ with Gtk.Clist;                 use Gtk.Clist;
 with Gtk.Ctree;                 use Gtk.Ctree;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.Types;              use Gtkada.Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
@@ -49,9 +53,12 @@ with Glide_Intl;                use Glide_Intl;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
+with Traces;                    use Traces;
 with Unchecked_Deallocation;
 
 package body Directory_Tree is
+
+   Me : Debug_Handle := Create ("Directory_Tree");
 
    package Boolean_Data is new Gtk.Ctree.Row_Data (Boolean);
 
@@ -88,12 +95,21 @@ package body Directory_Tree is
    --  Return the directory associated with node. This doesn't include the
    --  absolute path to the directory, unless Absolute is True.
 
+   function Find_Node
+     (Tree : access Dir_Tree_Record'Class;
+      Directory : String) return Gtk_Ctree_Node;
+   --  Return the node for Directory, or null if not found.
+
    procedure Add_Sub_Directories
      (Tree : access Dir_Tree_Record'Class;
       N    : Gtk_Ctree_Node);
    --  Check on the disk what the subdirectories of Directory (N) are, and
    --  add them to the tree.
    --  Nothing is done if the subdirectories of N have already been parsed
+
+   procedure Create_Directory_Cb
+     (W : access Gtk_Widget_Record'Class);
+   --  Create a new subdirectory of the selected directory.
 
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -156,6 +172,11 @@ package body Directory_Tree is
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use when the user clicks in the list of
    --  selected directories
+
+   function Single_List_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu;
+   --  Return the contextual menu to use for a single directory selector.
 
    function Select_Directory_Idle (Data : Idle_Data_Access) return Boolean;
    --  Select a new directory in an idle loop (so that we can properly display
@@ -251,6 +272,53 @@ package body Directory_Tree is
       end if;
    end Directory;
 
+   ---------------
+   -- Find_Node --
+   ---------------
+
+   function Find_Node
+     (Tree : access Dir_Tree_Record'Class;
+      Directory : String) return Gtk_Ctree_Node
+   is
+      Current : Gtk_Ctree_Node := Node_Nth (Tree, 0);
+      Children : Gtk_Ctree_Node;
+      First, Last : Integer;
+   begin
+      --  Skip the first '/'
+      First := Directory'First + 1;
+      Last := First;
+      while Last <= Directory'Last
+        and then Directory (Last) /= '/'
+        and then Directory (Last) /= Directory_Separator
+      loop
+         Last := Last + 1;
+      end loop;
+
+      Children := Row_Get_Children (Node_Get_Row (Current));
+      while Children /= null loop
+         if Node_Get_Text (Tree, Children, 0) = Directory (First .. Last) then
+            Current := Children;
+            Children := Row_Get_Children (Node_Get_Row (Current));
+            First := Last + 1;
+            Last := First;
+            while Last <= Directory'Last
+              and then Directory (Last) /= '/'
+              and then Directory (Last) /= Directory_Separator
+            loop
+               Last := Last + 1;
+            end loop;
+
+            if Last > Directory'Last then
+               return Current;
+            end if;
+         else
+            Children := Row_Get_Sibling (Node_Get_Row (Children));
+         end if;
+      end loop;
+
+      return null;
+   end Find_Node;
+
    ------------
    -- Filter --
    ------------
@@ -344,6 +412,7 @@ package body Directory_Tree is
       N2      : Gtk_Ctree_Node;
       Num_Dir : Natural := 0;
       Num_Subdirectories : Integer;
+      Has_Dummy_Node : Boolean;
 
    begin
       --  Have we already parsed the subdirectories ?
@@ -353,6 +422,8 @@ package body Directory_Tree is
       end if;
 
       Freeze (Tree);
+
+      Has_Dummy_Node := Row_Get_Children (Node_Get_Row (N)) /= null;
 
       declare
          Absolute : constant String := Directory (Tree, N, Absolute => True);
@@ -387,8 +458,10 @@ package body Directory_Tree is
       --  parent node is collapsed, thus causing another dummy node to be
       --  inserted.
 
-      Remove_Node (Tree, Row_Get_Children (Node_Get_Row (N)));
-      Boolean_Data.Node_Set_Row_Data (Tree, N, True);
+      if Has_Dummy_Node then
+         Remove_Node (Tree, Row_Get_Children (Node_Get_Row (N)));
+         Boolean_Data.Node_Set_Row_Data (Tree, N, True);
+      end if;
 
       if Num_Dir /= 0 then
          Sort_Node (Tree, N);
@@ -774,12 +847,9 @@ package body Directory_Tree is
       Selected_Row : Gint;
       Selected_Col : Gint;
       Is_Valid     : Boolean;
+      Menu         : Gtk_Menu;
 
    begin
-      if Selector.Tree_Contextual_Menu /= null then
-         Destroy (Selector.Tree_Contextual_Menu);
-      end if;
-
       Get_Selection_Info
         (Selector.Directory,
          Gint (Get_X (Event)), Gint (Get_Y (Event)),
@@ -788,13 +858,13 @@ package body Directory_Tree is
       if Is_Valid then
          Select_Row (Selector.Directory, Selected_Row, Selected_Col);
 
-         Gtk_New (Selector.Tree_Contextual_Menu);
+         Gtk_New (Menu);
          Gtk_New (Item, -"Add directory recursive");
          Widget_Callback.Object_Connect
            (Item, "activate",
             Widget_Callback.To_Marshaller (Add_Directory_Cb'Access),
             Selector);
-         Append (Selector.Tree_Contextual_Menu, Item);
+         Append (Menu, Item);
 
          Gtk_New (Item, -"Add directory");
          Widget_Callback.Object_Connect
@@ -802,9 +872,9 @@ package body Directory_Tree is
             Widget_Callback.To_Marshaller
             (Add_Single_Directory_Cb'Access),
             Selector);
-         Append (Selector.Tree_Contextual_Menu, Item);
+         Append (Menu, Item);
 
-         return Selector.Tree_Contextual_Menu;
+         return Menu;
       end if;
 
       return null;
@@ -828,27 +898,38 @@ package body Directory_Tree is
      (Selector : Directory_Selector;
       Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
    is
-      pragma Unreferenced (Event);
+      --  pragma Unreferenced (Event);
 
       use type Gint_List.Glist;
 
       Item     : Gtk_Menu_Item;
       Is_Valid : constant Boolean :=
         Get_Selection (Selector.List) /= Gint_List.Null_List;
+      Menu     : Gtk_Menu;
+      Row, Column : Gint;
+      Valid : Boolean;
 
    begin
-      if Selector.List_Contextual_Menu /= null then
-         Destroy (Selector.List_Contextual_Menu);
+      Get_Selection_Info
+        (Selector.Directory,
+         Gint (Get_X (Event)),
+         Gint (Get_Y (Event)),
+         Row, Column, Valid);
+
+      if not Valid then
+         return null;
       end if;
 
-      Gtk_New (Selector.List_Contextual_Menu);
+      Select_Row (Selector.Directory, Row, Column);
+
+      Gtk_New (Menu);
       Gtk_New (Item, -"Remove directory recursive");
       Widget_Callback.Object_Connect
         (Item, "activate",
          Widget_Callback.To_Marshaller (Remove_Directory_Cb'Access),
          Selector);
       Set_Sensitive (Item, Is_Valid);
-      Append (Selector.List_Contextual_Menu, Item);
+      Append (Menu, Item);
 
       Gtk_New (Item, -"Remove directory");
       Widget_Callback.Object_Connect
@@ -857,10 +938,130 @@ package body Directory_Tree is
          (Remove_Single_Directory_Cb'Access),
          Selector);
       Set_Sensitive (Item, Is_Valid);
-      Append (Selector.List_Contextual_Menu, Item);
+      Append (Menu, Item);
 
-      return Selector.List_Contextual_Menu;
+      Gtk_New (Menu);
+      Gtk_New (Item, -"Create new subdirectory");
+      Append (Menu, Item);
+      Widget_Callback.Object_Connect
+        (Item, "activate",
+         Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
+         Selector);
+
+      return Menu;
    end List_Contextual_Menu;
+
+   -------------------------
+   -- Create_Directory_Cb --
+   -------------------------
+
+   procedure Create_Directory_Cb
+     (W : access Gtk_Widget_Record'Class)
+   is
+      Selector : Directory_Selector := Directory_Selector (W);
+      Current_Dir : constant String := Get_Selection (Selector.Directory);
+      Dialog : Gtk_Dialog;
+      Label : Gtk_Label;
+      Ent : Gtk_Entry;
+      Widget : Gtk_Widget;
+      N, Parent : Gtk_Ctree_Node;
+   begin
+      Gtk_New (Dialog,
+               Title  => -"Create directory",
+               Parent => Gtk_Window (Get_Toplevel (W)),
+               Flags  => Modal or Destroy_With_Parent);
+
+      Gtk_New (Label, -"Directory Name:");
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Fill => True);
+
+      Gtk_New (Ent, Max => 1024);
+      Set_Width_Chars (Ent, 30);
+      Set_Text (Ent, Current_Dir);
+      Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
+
+      Widget := Add_Button (Dialog, -"Create", Gtk_Response_OK);
+      Widget := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      if Run (Dialog) = Gtk_Response_OK then
+         declare
+            D : constant String := Name_As_Directory (Get_Text (Ent));
+            Parent_D : constant String := Dir_Name
+              (D (D'First .. D'Last - 1));
+            Base_D : constant String :=
+              Name_As_Directory (Base_Name (D (D'First .. D'Last - 1)));
+
+         begin
+            --  Make sure the parent is expanded first. This will read the
+            --  currently existing directories, and will avoid duplicating the
+            --  new one, which would happen if we did if afterwards.
+            Parent := Find_Node (Selector.Directory, Parent_D);
+            if Parent /= null then
+               Expand (Selector.Directory, Parent);
+            end if;
+
+            --  ??? Should we create the intermediate directories.
+            Make_Dir (Get_Text (Ent));
+
+            --  Refresh the tree to show the new directory
+            if Parent /= null then
+               N := Add_Directory_Node (Selector.Directory, Base_D, Parent, 0);
+               Sort_Node (Selector.Directory, Parent);
+               Node_Moveto (Selector.Directory, N, 0, 0.5, 0.5);
+            end if;
+
+         exception
+            when Directory_Error =>
+               Trace (Me, "Cannot create directory " & Get_Text (Ent));
+               --  Insert (Kernel, "Cannot create directory" & Get_Text (Ent));
+         end;
+      end if;
+
+      Destroy (Dialog);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Create_Directory_Cb;
+
+   ---------------------------------
+   -- Single_List_Contextual_Menu --
+   ---------------------------------
+
+   function Single_List_Contextual_Menu
+     (Selector : Directory_Selector;
+      Event    : Gdk.Event.Gdk_Event) return Gtk_Menu
+   is
+      --  pragma Unreferenced (Event);
+      Menu : Gtk_Menu;
+      Item : Gtk_Menu_Item;
+      Row, Column : Gint;
+      Valid : Boolean;
+
+   begin
+      Get_Selection_Info
+        (Selector.Directory,
+         Gint (Get_X (Event)),
+         Gint (Get_Y (Event)),
+         Row, Column, Valid);
+
+      if not Valid then
+         return null;
+      end if;
+
+      Select_Row (Selector.Directory, Row, Column);
+
+      Gtk_New (Menu);
+      Gtk_New (Item, -"Create new subdirectory");
+      Append (Menu, Item);
+      Widget_Callback.Object_Connect
+        (Item, "activate",
+         Widget_Callback.To_Marshaller (Create_Directory_Cb'Access),
+         Selector);
+
+      return Menu;
+   end Single_List_Contextual_Menu;
 
    -------------
    -- Gtk_New --
@@ -957,6 +1158,11 @@ package body Directory_Tree is
          --  the scrollbar does not allow us to scroll as far right as
          --  possible...
          Set_Column_Auto_Resize (Selector.List, 0, True);
+
+      else
+         Widget_Menus.Register_Contextual_Menu
+           (Selector.Directory, Directory_Selector (Selector),
+            Single_List_Contextual_Menu'Access);
       end if;
    end Initialize;
 

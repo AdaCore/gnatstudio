@@ -155,7 +155,6 @@ private
       Directory : Dir_Tree;
       List      : Gtk.Clist.Gtk_Clist;
       Tree_Contextual_Menu : Gtk.Menu.Gtk_Menu;
-      List_Contextual_Menu : Gtk.Menu.Gtk_Menu;
    end record;
 
 end Directory_Tree;
