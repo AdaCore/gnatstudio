@@ -39,8 +39,8 @@ package Aunit_Filters is
 
    procedure Get_Suite_Name
      (File_Name : in String;
-      Package_Name : out String_Access;
-      Suite_Name : out String_Access);
+      Package_Name : out GNAT.OS_Lib.String_Access;
+      Suite_Name   : out GNAT.OS_Lib.String_Access);
    --  Open File_Name, do a basic parsing on it to look for aunit tests or
    --  tests suite. If found, then Suite_Name is initialized to this test/suite
    --  name, and Package_Name to the name of the main unit in the file.
@@ -83,7 +83,7 @@ package Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access);
+      Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Ada.
    --  Text is set to the name of the main unit in the file.
 
@@ -95,7 +95,7 @@ package Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access);
+      Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Suites.
    --  Text is set to the name of the suite found in the file.
 
@@ -107,7 +107,7 @@ package Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access);
+      Text      : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Tests.
    --  Text is set to the name of the suite/test case found in the file.
 

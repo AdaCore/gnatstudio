@@ -31,8 +31,12 @@ with Ada.Text_IO;               use Ada.Text_IO;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;
+with Ada_Analyzer; use Ada_Analyzer;
+with Basic_Types;  use Basic_Types;
+with Language;         use Language;
 
 package body Aunit_Filters is
+   subtype String_Access is Basic_Types.String_Access;
 
    ----------------
    -- Suite_Name --
@@ -40,110 +44,122 @@ package body Aunit_Filters is
 
    procedure Get_Suite_Name
      (File_Name    : in String;
-      Package_Name : out String_Access;
-      Suite_Name   : out String_Access)
+      Package_Name : out GNAT.OS_Lib.String_Access;
+      Suite_Name   : out GNAT.OS_Lib.String_Access)
    is
-      File         : File_Type;
-      Index        : Integer;
-      Index_End    : Integer;
-      Line         : String (1 .. 256);
-      Line_Last    : Integer;
-      Current_Name : String_Access;
-      Found        : Boolean := False;
+      Index       : Integer;
+      F           : File_Descriptor;
+      Length      : Integer;
+      Indent      : Natural;
+      Next_Indent : Natural;
+      File_Buffer : String_Access;
+      New_Buffer  : Extended_Line_Buffer;
+      Constructs  : aliased Construct_List;
+      Current_Construct : Construct_Access;
+
+      Found       : Boolean := False;
 
    begin
-      if File_Name'Length <= 4 then
+      if not Is_Regular_File (File_Name)
+        or else File_Name'Length <= 4
+        or else File_Name (File_Name'Last - 3 .. File_Name'Last - 1) /= ".ad"
+      then
          return;
       end if;
 
-      Ada.Text_IO.Open (File, In_File, File_Name);
+      F           := Open_Read (File_Name, Binary);
+      File_Buffer := new String (1 .. Integer (File_Length (F)));
+      Length      := Read (F, File_Buffer.all'Address, File_Buffer'Length);
+      Close (F);
 
-      --  Find the name of the main unit.
+      Analyze_Ada_Source
+        (To_Unchecked_String (File_Buffer.all'Address),
+         Length,
+         New_Buffer,
+         Default_Indent_Parameters,
+         Reserved_Casing  => Unchanged,
+         Ident_Casing     => Unchanged,
+         Format_Operators => False,
+         Indent           => False,
+         Constructs       => Constructs'Unchecked_Access,
+         Current_Indent   => Next_Indent,
+         Prev_Indent      => Indent);
 
-      while not Found loop
-         Get_Line (File, Line, Line_Last);
-         Index_End := 1;
-         Skip_To_String (Line, Index_End, "--");
-
-         if Index_End > Line_Last - 2 then
-            Index_End := 1;
-            Skip_To_String (Line, Index_End, " is");
-
-            if Index_End < Line_Last - 1 then
-               Index := Index_End - 1;
-
-               while Index >= Line'First
-                 and then Line (Index) /= ' ' loop
-                  Index := Index - 1;
-               end loop;
-
-               Package_Name := new String'(Line (Index + 1 .. Index_End - 1));
-               Found := True;
-            end if;
-         end if;
-      end loop;
-
-      Reset (File);
-      Found := False;
+      Current_Construct := Constructs.First;
 
       --  Find the name of the suite or test case.
 
       if File_Name (File_Name'Last - 3 .. File_Name'Last) = ".ads" then
-         while not Found loop
-            Get_Line (File, Line, Line_Last);
-            Index := 1;
-            Skip_To_String (To_Lower (Line), Index, "type");
+         while not Found
+           and then Current_Construct /= null
+         loop
+            if Current_Construct.Category = Cat_Class
+              and then Current_Construct.Name /= null
+            then
+               Index := Current_Construct.Sloc_Start.Index;
 
-            if Index < Line_Last - 4 then
-               Index_End := Index;
-               Skip_To_String
-                 (To_Lower (Line), Index_End, "test_case");
+               while Index + 2 <= Current_Construct.Sloc_End.Index
+                 and then To_Lower (File_Buffer (Index .. Index + 2))
+                 /= "new"
+               loop
+                  Index := Index + 1;
+               end loop;
 
-               if Index_End < Line_Last - 9 then
-                  Index := 1;
-                  Skip_To_String (To_Lower (Line), Index, "type ");
-                  Index_End := Index + 5;
-                  Skip_To_String
-                    (To_Lower (Line), Index_End, " is ");
-                  Suite_Name := new String'(Line (Index + 5 .. Index_End - 1));
+               while Index + 8 <= Current_Construct.Sloc_End.Index
+                 and then To_Lower (File_Buffer (Index .. Index + 8))
+                 /= "test_case"
+               loop
+                  Index := Index + 1;
+               end loop;
+
+               if Index + 8 <= Current_Construct.Sloc_End.Index then
                   Found := True;
+                  Suite_Name := GNAT.OS_Lib.String_Access
+                    (Current_Construct.Name);
                end if;
             end if;
+
+            Current_Construct := Current_Construct.Next;
          end loop;
-
       elsif File_Name (File_Name'Last - 3 .. File_Name'Last) = ".adb" then
-         while not Found loop
-            Get_Line (File, Line, Line_Last);
-            Index := 1;
-            Skip_To_String (To_Lower (Line), Index, "function");
+         while not Found
+           and then Current_Construct /= null
+         loop
+            if Current_Construct.Category = Cat_Function
+              and then Current_Construct.Name /= null
+            then
+               Index := Current_Construct.Sloc_Start.Index;
 
-            if Index < Line_Last - 8 then
-               Index_End := Index;
-               Skip_To_String
-                 (To_Lower (Line), Index_End, "access_test_suite");
+               while Index + 16 <= Current_Construct.Sloc_End.Index
+                 and then To_Lower (File_Buffer (Index .. Index + 16))
+                 /= "access_test_suite"
+               loop
+                  Index := Index + 1;
+               end loop;
 
-               if Index_End < Line_Last - 15 then
-                  Index := 1;
-                  Skip_To_String
-                    (To_Lower (Line), Index, "function ");
-                  Index_End := Index + 9;
-                  Skip_To_String
-                    (To_Lower (Line), Index_End, " return ");
-                  Suite_Name := new String'(Line (Index + 9 .. Index_End - 1));
+               if Index + 16 <= Current_Construct.Sloc_End.Index then
                   Found := True;
+                  Suite_Name := GNAT.OS_Lib.String_Access
+                    (Current_Construct.Name);
                end if;
             end if;
+
+            Current_Construct := Current_Construct.Next;
          end loop;
       end if;
 
-      Free (Current_Name);
-      Close (File);
+      --  Find the name of the main unit.
+
+      if Found then
+         Package_Name := GNAT.OS_Lib.String_Access
+           (Constructs.Last.Name);
+      end if;
 
    exception
       when Use_Error =>
          null;
-      when End_Error =>
-         Close (File);
+      when Device_Error =>
+         Close (F);
    end Get_Suite_Name;
 
    ---------------------
@@ -158,11 +174,10 @@ package body Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access)
+      Text      : out GNAT.OS_Lib.String_Access)
    is
-      Suite_Name   : String_Access := null;
-      Package_Name : String_Access;
-
+      Suite_Name   : GNAT.OS_Lib.String_Access := null;
+      Package_Name : GNAT.OS_Lib.String_Access;
    begin
       --  To find suites, look for tests and suites in body files.
 
@@ -176,12 +191,12 @@ package body Aunit_Filters is
             Text := Suite_Name;
             Pixmap := Filter.Suite_Pixmap;
             Mask := Filter.Suite_Bitmap;
-         else
-            State := Invisible;
-            Text := new String'("");
-            Pixmap := Gdk.Pixmap.Null_Pixmap;
-            Mask   := Gdk.Bitmap.Null_Bitmap;
          end if;
+      else
+         State := Invisible;
+         Text := new String'("");
+         Pixmap := Gdk.Pixmap.Null_Pixmap;
+         Mask   := Gdk.Bitmap.Null_Bitmap;
       end if;
    end Use_File_Filter;
 
@@ -197,11 +212,10 @@ package body Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access)
+      Text      : out GNAT.OS_Lib.String_Access)
    is
-      Suite_Name   : String_Access;
-      Package_Name : String_Access;
-
+      Suite_Name   : GNAT.OS_Lib.String_Access;
+      Package_Name : GNAT.OS_Lib.String_Access;
    begin
       Get_Suite_Name (Dir & File, Package_Name, Suite_Name);
 
@@ -230,7 +244,8 @@ package body Aunit_Filters is
       State     : out File_State;
       Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out String_Access) is
+      Text      : out GNAT.OS_Lib.String_Access)
+   is
    begin
       if File'Length >= 4
         and then (File (File'Last - 3 .. File'Last) = ".ads"
@@ -273,7 +288,6 @@ package body Aunit_Filters is
             when End_Error =>
                Close (File_T);
          end;
-
       elsif File'Length >= 4
         and then File (File'Last - 3 .. File'Last) = ".gpr"
       then

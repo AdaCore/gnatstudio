@@ -148,7 +148,6 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Filter_A : Filter_Show_All_Access := new Filter_Show_All;
       Filter_B : Filter_Show_Ada_Access := new Filter_Show_Ada;
       Filter_C : Filter_Show_Tests_Access := new Filter_Show_Tests;
-
    begin
       if Suite_Window.Explorer = null then
          Gtk_New (Suite_Window.Explorer, "");
@@ -276,7 +275,6 @@ package body Make_Suite_Window_Pkg.Callbacks is
             declare
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
             begin
-
                if Package_Name /= "" then
                   Mixed_Case (Package_Name);
                   Put_Line (File, "with " & Package_Name & ";");
@@ -302,7 +300,6 @@ package body Make_Suite_Window_Pkg.Callbacks is
             declare
                S : String := Get_Text (Win.Test_List, Get_Data (List), 1);
                Package_Name : String := Get (Win.Test_List, Get_Data (List));
-
             begin
                if Package_Name /= "" then
                   Mixed_Case (S);
