@@ -40,7 +40,6 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
-with Src_Info.ALI;              use Src_Info.ALI;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
 with Traces;                    use Traces;
@@ -50,7 +49,7 @@ with Prj;                       use Prj;
 with Prj.Tree;                  use Prj.Tree;
 with Types;                     use Types;
 
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -503,6 +502,15 @@ package body Browsers.Dependency_Items is
         (Get_Kernel (Context),
          Dependency_Browser (Get_Widget (Browser)),
          File_Information (File_Selection_Context_Access (Context)));
+   exception
+      when E : Unsupported_Language =>
+         Insert (Get_Kernel (Context), Exception_Message (E),
+                 Mode => Glide_Kernel.Console.Error);
+
+      when E : others =>
+         Trace (Me,
+                "Unexpected exception in Edit_Dependencies_From_Contextual "
+                & Exception_Information (E));
    end Edit_Dependencies_From_Contextual;
 
    -----------------------
@@ -603,15 +611,14 @@ package body Browsers.Dependency_Items is
       Win             : Gdk_Window;
       Browser         : access Glide_Browser_Record'Class;
       Kernel          : access Kernel_Handle_Record'Class;
-      Source_Filename : String)
-   is
-      ALI : constant String := ALI_Filename_From_Source
-        (Source_Filename, Get_Project_View (Kernel),
-         Get_Predefined_Source_Path (Kernel));
+      Source_Filename : String) is
    begin
       Item := new File_Item_Record;
-      Initialize (Item, Win, Browser, Kernel,
-                  Make_Source_File (Source_Filename, ALI));
+      Initialize
+        (Item, Win, Browser, Kernel,
+         Make_Source_File (Source_Filename,
+                           Get_Project_View (Kernel),
+                           Get_Predefined_Source_Path (Kernel)));
    end Gtk_New;
 
    ----------------
