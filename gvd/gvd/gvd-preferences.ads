@@ -68,6 +68,16 @@ package Odd.Preferences is
    Keywords_Color : constant String := "#0000FF";
    --  Color used for keywords (blue).
 
+   type Tooltips_In_Source_Type is (None, Simple, Full);
+   --  The types of tooltips that can be displayed in the source window:
+   --    None: no tooltips will be displayed.
+   --    Simple: the output of gdb is displayed, no post-processing
+   --    Full: the variable is parsed and the tooltip will contain the
+   --          equivalent of the canvas'items.
+
+   Tooltips_In_Source : constant Tooltips_In_Source_Type := Full;
+   --  What kind of tooltips we want in the source window
+
    ---------------------
    -- Assembly Window --
    ---------------------
