@@ -3377,12 +3377,7 @@ package body Src_Info.CPP is
             End_Of_Scope_Location => End_Position,
             Declaration_Info      => Decl_Info);
       else
-         Info ("Setting end of scope: "
-            & Get_LI_Filename (File) & " for " & Fu_Id);
-         Set_End_Of_Scope
-           (Decl_Info,
-            File,
-            End_Position);
+         Set_End_Of_Scope (Decl_Info, File, End_Position);
       end if;
 
       if Body_Position /= Invalid_Point then
