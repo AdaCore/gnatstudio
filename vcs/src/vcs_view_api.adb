@@ -106,6 +106,11 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure Change_Context
+     (Explorer : VCS_View_Access;
+      Context  : Selection_Context_Access);
+   --  Fill the explorer with files that correspond to Context
+
    procedure On_Context_Changed
      (Object  : access Gtk_Widget_Record'Class;
       Args    : Gtk_Args);
@@ -560,22 +565,23 @@ package body VCS_View_API is
       end if;
    end VCS_Contextual_Menu;
 
-   ------------------------
-   -- On_Context_Changed --
-   ------------------------
+   --------------------
+   -- Change_Context --
+   --------------------
 
-   procedure On_Context_Changed
-     (Object : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
+   procedure Change_Context
+     (Explorer : VCS_View_Access;
+      Context  : Selection_Context_Access)
    is
-      pragma Unreferenced (Object);
-      Context      : Selection_Context_Access :=
-        To_Selection_Context_Access (To_Address (Args, 1));
       File         : File_Selection_Context_Access;
       Status       : File_Status_List.List;
       Dirs         : String_List.List;
-      Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
+      Files_Temp   : String_List.List_Node;
       Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+      Blank_Status : File_Status_Record;
+      Current_Status : File_Status_Record;
+
+      use String_List;
    begin
       if Context = null
         or else Explorer = null
@@ -595,8 +601,45 @@ package body VCS_View_API is
             Clear (Explorer);
             Display_File_Status (Get_Kernel (Context), Status, False, True);
             File_Status_List.Free (Status);
+            String_List.Free (Dirs);
+
+         elsif Has_Project_Information (File)
+           and then not Has_Directory_Information (File)
+         then
+            Dirs := Get_Files_In_Project (Project_Information (File), False);
+
+            Files_Temp := String_List.First (Dirs);
+
+            while Files_Temp /= String_List.Null_Node loop
+               Current_Status := Blank_Status;
+               Append (Current_Status.File_Name,
+                       String_List.Data (Files_Temp));
+               Files_Temp := String_List.Next (Files_Temp);
+               File_Status_List.Append (Status, Current_Status);
+            end loop;
+
+            Clear (Explorer);
+            Display_File_Status (Get_Kernel (Context), Status, False, True);
+            File_Status_List.Free (Status);
+            String_List.Free (Dirs);
          end if;
       end if;
+   end Change_Context;
+
+   ------------------------
+   -- On_Context_Changed --
+   ------------------------
+
+   procedure On_Context_Changed
+     (Object : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
+   is
+      pragma Unreferenced (Object);
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (To_Address (Args, 1));
+      Explorer     : VCS_View_Access := Get_Explorer (Get_Kernel (Context));
+   begin
+      Change_Context (Explorer, Context);
    end On_Context_Changed;
 
    -------------------
@@ -609,10 +652,7 @@ package body VCS_View_API is
       MDI      : MDI_Window := Get_MDI (Kernel);
       Explorer : VCS_View_Access := Get_Explorer (Kernel);
       Child    : MDI_Child;
-      Ref      : VCS_Access := Get_Current_Ref (Kernel);
-
       Dirs     : String_List.List;
-      Status   : File_Status_List.List;
 
    begin
       if Explorer = null then
@@ -625,18 +665,15 @@ package body VCS_View_API is
          Child := Put (MDI, Explorer);
          Set_Title (Child, -"VCS Explorer");
 
-         Status :=  Local_Get_Status (Ref, Dirs);
-         String_List.Free (Dirs);
-
-         Clear (Explorer);
-         Display_File_Status (Kernel, Status, False, True);
-         File_Status_List.Free (Status);
-
          Widget_Callback.Object_Connect
            (Kernel,
             Context_Changed_Signal,
             On_Context_Changed'Access,
             Explorer);
+
+         if Get_Current_Context (Kernel) /= null then
+            Change_Context (Explorer, Get_Current_Context (Kernel));
+         end if;
       end if;
    end Open_Explorer;
 
