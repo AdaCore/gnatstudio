@@ -107,6 +107,9 @@ procedure GVD_Main is
    --  return the same thing as GNAT.Command_Line.Parameter, but strips the
    --  leading '=' if any, so that users can say '--log-level=4' for instance.
 
+   procedure Ctrl_C_Handler;
+   --  Handler for Ctrl-C events.
+
    ----------
    -- Init --
    ----------
@@ -270,7 +273,20 @@ procedure GVD_Main is
       end if;
    end Clean_Parameter;
 
+   --------------------
+   -- Ctrl_C_Handler --
+   --------------------
+
+   procedure Ctrl_C_Handler is
+   begin
+      --  Ignore Ctrl-C events
+
+      null;
+   end Ctrl_C_Handler;
+
 begin
+   OS_Utils.Install_Ctrl_C_Handler (Ctrl_C_Handler'Unrestricted_Access);
+
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
