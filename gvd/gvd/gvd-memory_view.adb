@@ -457,9 +457,16 @@ package body GVD.Memory_View is
 
       View.Number_Of_Lines := Integer (Height) /
         Integer (Get_Ascent (View.View_Font) +
-        Get_Descent (View.View_Font) + 1);
+                 Get_Descent (View.View_Font) + 1);
 
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
+
+      if View.Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
+        > View.Values'Length
+      then
+         Display_Memory (View, View.Starting_Address);
+         return;
+      end if;
 
       Freeze (View.View);
       Clear_View (View);
@@ -573,7 +580,6 @@ package body GVD.Memory_View is
       end loop;
 
       Thaw (View.View);
-      Set_Position (View.View, Gint (View.Cursor_Position));
    end Update_Display;
 
    --------------------
@@ -586,26 +592,47 @@ package body GVD.Memory_View is
    is
       Process : constant Debugger_Process_Tab :=
         Get_Current_Process (View.Window);
-      Values : String (1 .. 2 * View.Number_Of_Bytes);
 
+      Width      : Gint;
+      Height     : Gint;
    begin
-      Set_Busy (Process, True);
-      Set_Busy_Cursor (Get_Window (View), True);
-      Values := Get_Memory
-        (Process.Debugger,
-         View.Number_Of_Bytes,
-         "0x" & To_Standard_Base (Address, 16));
-      View.Starting_Address := Address;
-      Free (View.Values);
-      Free (View.Flags);
-      View.Values := new String' (Values);
-      View.Flags  := new String' (Values);
-      View.Data   := Byte;
-      Update_Display (View);
-      Set_Text (View.Address_Entry,
-                "0x" & To_Standard_Base (Address, 16, Address_Length));
-      Set_Busy (Process, False);
-      Set_Busy_Cursor (Get_Window (View), False);
+      Get_Size (Get_Text_Area (View.View), Width, Height);
+
+      View.Number_Of_Lines := Integer (Height) /
+        Integer (Get_Ascent (View.View_Font) +
+                 Get_Descent (View.View_Font) + 1);
+
+      View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
+
+      if View.Values = null
+        or else View.Number_Of_Lines * View.Number_Of_Columns * View.Unit_Size
+        /= View.Values'Length
+      then
+         View.Number_Of_Bytes := View.Number_Of_Lines * View.Number_Of_Columns
+           * 2 / View.Unit_Size;
+      end if;
+
+      declare
+         Values : String (1 .. 2 * View.Number_Of_Bytes);
+      begin
+         Set_Busy (Process, True);
+         Set_Busy_Cursor (Get_Window (View), True);
+         Values := Get_Memory
+           (Process.Debugger,
+            View.Number_Of_Bytes,
+            "0x" & To_Standard_Base (Address, 16));
+         View.Starting_Address := Address;
+         Free (View.Values);
+         Free (View.Flags);
+         View.Values := new String' (Values);
+         View.Flags  := new String' (Values);
+         View.Data   := Byte;
+         Update_Display (View);
+         Set_Text (View.Address_Entry,
+                   "0x" & To_Standard_Base (Address, 16, Address_Length));
+         Set_Busy (Process, False);
+         Set_Busy_Cursor (Get_Window (View), False);
+      end;
    end Display_Memory;
 
    --------------------
