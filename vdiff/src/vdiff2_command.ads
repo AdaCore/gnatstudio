@@ -23,6 +23,7 @@
 with Glide_Kernel; use Glide_Kernel;
 with Commands;     use Commands;
 with Diff_Utils2;   use Diff_Utils2;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package Vdiff2_Command is
 
@@ -44,14 +45,24 @@ package Vdiff2_Command is
       Kernel    : Kernel_Handle;
       List_Diff : Diff_Head_List_Access;
       Action    : Handler_Action);
-      --  Create a command with all information needed by this
+   --  Create a command with all information needed by this
+
+   procedure Unchecked_Execute
+     (Command : access Diff_Command;
+      Diff    : in out Diff_Head_List.List_Node);
+   --  Execute the command Command
+   --  without control of existence in diff list
 
    function Execute
      (Command : access Diff_Command) return Command_Return_Type;
    --  Execute the command Command
    --  Search in the global List of Diff the current diff end apply Action on
    --  this
-
+   function Is_In_Diff_List
+     (Selected_File : String_Access;
+      List          : Diff_Head_List.List)
+      return Diff_Head_List.List_Node;
+   --  ???
    procedure Next_Difference
      (Kernel : Kernel_Handle;
       Diff   : in out  Diff_Head_Access);
@@ -97,4 +108,5 @@ package Vdiff2_Command is
       Link   : Diff_Chunk_Access);
 
 end Vdiff2_Command;
+
 
