@@ -183,30 +183,31 @@ package body Docgen_Backend_HTML is
    -----------------------
 
    procedure Format_Identifier
-     (B                : access Backend_HTML;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File   : in out List_Reference_In_File.List;
-      Start_Index      : Natural;
-      Start_Line       : Natural;
-      Start_Column     : Natural;
-      End_Index        : Natural;
-      End_Line         : Natural;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : Ada.Text_IO.File_Type;
-      LI_Unit          : LI_File_Ptr;
-      Text             : String;
-      File_Name        : VFS.Virtual_File;
-      Entity_Line      : Natural;
-      Line_In_Body     : Natural;
-      Source_File_List : Type_Source_File_List.List;
-      Link_All         : Boolean;
-      Is_Body          : Boolean;
-      Process_Body     : Boolean;
-      Info             : Doc_Info;
+     (B                   : access Backend_HTML;
+      Entity_List         : in out Type_Entity_List.List;
+      List_Ref_In_File    : in out List_Reference_In_File.List;
+      Start_Index         : Natural;
+      Start_Line          : Natural;
+      Start_Column        : Natural;
+      End_Index           : Natural;
+      End_Line            : Natural;
+      Kernel              : access Kernel_Handle_Record'Class;
+      File                : Ada.Text_IO.File_Type;
+      LI_Unit             : LI_File_Ptr;
+      Text                : String;
+      File_Name           : VFS.Virtual_File;
+      Entity_Line         : Natural;
+      Line_In_Body        : Natural;
+      Source_File_List    : Type_Source_File_List.List;
+      Link_All            : Boolean;
+      Is_Body             : Boolean;
+      Process_Body        : Boolean;
+      Info                : Doc_Info;
       Call_Graph_Entities : in out Type_Entity_List.List)
    is
       pragma Unreferenced (End_Line);
       Line_Body : Natural := Line_In_Body;
+
    begin
       --  In html, each identifier may have a link,
       --  Each link is made by the subprogram Format_Link (see just below).
@@ -241,12 +242,13 @@ package body Docgen_Backend_HTML is
    ----------------------
 
    procedure Print_Ref_List
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
+     (B           : access Backend_HTML;
+      Kernel      : access Kernel_Handle_Record'Class;
+      File        : in Ada.Text_IO.File_Type;
       Name_Entity : String_Access;
       Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean) is
+      Called_Subp : Boolean)
+   is
       pragma Unreferenced (B);
    begin
       Print_Ref_List_HTML
@@ -261,14 +263,13 @@ package body Docgen_Backend_HTML is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+      Info   : Doc_Info)
+   is
       pragma Unreferenced (B, Kernel);
    begin
-      Put_Line
-        (File, "</PRE>");
-      --  It's necessary to close this tag
+      Put_Line (File, "</PRE>");
       Put_Line (File, "<BR><H2> Call Graph for package <I>"
-                &Get_Name (Info.Package_Entity.Entity)
+                & Get_Name (Info.Package_Entity.Entity)
                 & "</I></H2>");
    end Call_Graph_Packages_Header;
 
@@ -280,13 +281,13 @@ package body Docgen_Backend_HTML is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+      Info   : Doc_Info)
+   is
       pragma Unreferenced (B, Kernel, Info);
    begin
-      Put_Line
-        (File,
-         "<PRE>");
-      --  We open this tag that we have closed in Call_Graph_Packages_Header
+      Put_Line (File, "<PRE>");
+      --  This tag is closed in Call_Graph_Packages_Header
+      --  ??? Look the wrong way around
    end Call_Graph_Packages_Footer;
 
    -----------------
@@ -353,7 +354,7 @@ package body Docgen_Backend_HTML is
          end if;
 
          Put (File,
-              "<A href="""
+              "<A HREF="""
               & Get_Html_File_Name
                 (Kernel, Other_File_Name
                    (Kernel, Get_Declaration_File_Of (Entity_Info)))
@@ -382,7 +383,7 @@ package body Docgen_Backend_HTML is
 
          Line_To_Use := Get_Declaration_Line_Of (Entity_Info);
          Put (File,
-              "<A href="""
+              "<A HREF="""
               & Get_Html_File_Name
                 (Kernel, Get_Declaration_File_Of (Entity_Info))
               & "#" & Image (Line_To_Use) &
@@ -488,13 +489,14 @@ package body Docgen_Backend_HTML is
    -----------------------
 
    function Get_Doc_Directory
-     (B : access Backend_HTML;
-      Kernel : Kernel_Handle) return String is
+     (B      : access Backend_HTML;
+      Kernel : Kernel_Handle) return String
+   is
       pragma Unreferenced (B);
    begin
       return File_Utils.Name_As_Directory
-           (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
-                         False)) & "html/";
+        (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
+                      False)) & "html/";
    end Get_Doc_Directory;
 
 end Docgen_Backend_HTML;
