@@ -101,8 +101,10 @@ with GNAT.Expect;
 with GNAT.Regpat;
 with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel;              use Glide_Kernel;
+with Gtk.Combo;                 use Gtk.Combo;
 with HTables;
 with Generic_List;
+
 with Ada.Unchecked_Deallocation;
 
 package Custom_Module is
@@ -159,6 +161,41 @@ package Custom_Module is
      (Header_Num, Custom_Action_Access, Free,
       No_Custom_Action'Access, Integer, Hash, "=");
 
+   ------------------------------------------
+   -- Definitions for custom combo entries --
+   ------------------------------------------
+
+   type Entry_Action_Record is record
+      Label   : String_Access;
+      --  This is an allocated string identifying the action.
+      --  This can never be null.
+
+      Command : Action_Record_Access;
+      --  This should not be allocated/deallocated.
+   end record;
+
+   procedure Free (X : in out Entry_Action_Record);
+   --  Free memory associated to X.
+
+   package Entry_List is new Generic_List (Entry_Action_Record);
+
+   type GPS_Combo_Record is record
+      Label            : String_Access;
+      Combo            : Gtk_Combo;
+      On_Change_Action : Action_Record_Access;
+      Entries          : Entry_List.List;
+   end record;
+
+   type GPS_Combo_Access is access GPS_Combo_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GPS_Combo_Record, GPS_Combo_Access);
+
+   procedure Free (X : in out GPS_Combo_Access);
+   --  Free memory associated to X.
+
+   package Combo_List is new Generic_List (GPS_Combo_Access);
+   --  ??? Should this be a HTable ?
+
    --------------------------------------
    -- Definitions for contextual menus --
    --------------------------------------
@@ -182,6 +219,8 @@ package Custom_Module is
 
       Processes    : Processes_Hash.HTable;
       Available_Id : Integer := 1;
+
+      Combos       : Combo_List.List;
    end record;
    type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
 
