@@ -39,11 +39,7 @@ package VCS.CVS is
 
    procedure Get_Status
      (Rep         : access CVS_Record;
-      Filenames   : String_List.List;
-      Get_Status  : Boolean := True;
-      Get_Version : Boolean := True;
-      Get_Tags    : Boolean := False;
-      Get_Users   : Boolean := False);
+      Filenames   : String_List.List);
 
    function Local_Get_Status
      (Rep       : access CVS_Record;
@@ -73,6 +69,10 @@ package VCS.CVS is
       Filenames : String_List.List);
 
    procedure Remove
+     (Rep       : access CVS_Record;
+      Filenames : String_List.List);
+
+   procedure Revert
      (Rep       : access CVS_Record;
       Filenames : String_List.List);
 
