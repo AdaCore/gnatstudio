@@ -504,7 +504,9 @@ package body GVD.Text_Boxes is
    begin
       case Get_Button (Event) is
          when 3 =>
-            if Get_Event_Type (Event) = Button_Press then
+            if Get_Event_Type (Event) = Button_Press
+              and then Box.Buffer /= null
+            then
 
                Y := Gint (Get_Y (Event)) - 1
                  + Gint (Get_Value (Get_Vadj (Box.Child)));
