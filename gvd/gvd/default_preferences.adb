@@ -1092,38 +1092,37 @@ package body Default_Preferences is
       Reset_Specific_Data (Manager.Preferences);
 
       loop
-         begin
-            case Run (Dialog) is
-               when Gtk_Response_OK =>
-                  Free (Saved_Pref);
-                  Destroy (Dialog);
-                  if On_Changed /= null then
-                     On_Changed (Manager);
-                  end if;
-                  exit;
+         case Run (Dialog) is
+            when Gtk_Response_OK =>
+               Free (Saved_Pref);
+               Destroy (Dialog);
+               if On_Changed /= null then
+                  On_Changed (Manager);
+               end if;
+               exit;
 
-               when Gtk_Response_Apply =>
-                  if On_Changed /= null then
-                     On_Changed (Manager);
-                  end if;
-                  Had_Apply := True;
+            when Gtk_Response_Apply =>
+               if On_Changed /= null then
+                  On_Changed (Manager);
+               end if;
+               Had_Apply := True;
 
-               when others =>  --  including Cancel
-                  Free (Manager.Preferences);
-                  Manager.Preferences := Saved_Pref;
-                  Destroy (Dialog);
-                  if Had_Apply and then On_Changed /= null then
-                     On_Changed (Manager);
-                  end if;
-                  exit;
-            end case;
-         exception
-            when others =>
-               null;
-         end;
+            when others =>  --  including Cancel
+               Free (Manager.Preferences);
+               Manager.Preferences := Saved_Pref;
+               Destroy (Dialog);
+               if Had_Apply and then On_Changed /= null then
+                  On_Changed (Manager);
+               end if;
+               exit;
+         end case;
       end loop;
 
       Destroy (Tips);
+
+   exception
+      when others =>
+         Destroy (Dialog);
    end Edit_Preferences;
 
 end Default_Preferences;
