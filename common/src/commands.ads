@@ -160,7 +160,6 @@ private
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;
       The_Queue           : Command_Queues.List;
-      Queue_Node          : Command_Queues.List_Node;
 
       Undo_Queue          : Command_Queues.List;
       --  This contains the actions that have already been done,
