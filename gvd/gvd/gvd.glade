@@ -6273,7 +6273,7 @@ remote
 	    <widget>
 	      <class>GtkLabel</class>
 	      <name>label95</name>
-	      <label>Address</label>
+	      <label>Location</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
 	      <xalign>0.5</xalign>
