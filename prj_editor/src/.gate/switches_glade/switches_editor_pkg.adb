@@ -196,7 +196,7 @@ begin
      (Switches_Editor.Compile_Interunit_Inlining, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Comp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Frame22, -"Run time errors");
+   Gtk_New (Switches_Editor.Frame22, -"Run time checks");
    Set_Border_Width (Switches_Editor.Frame22, 5);
    Set_Shadow_Type (Switches_Editor.Frame22, Shadow_Etched_In);
    Attach (Switches_Editor.Compiler_Switches, Switches_Editor.Frame22, 1, 2, 0, 1,
