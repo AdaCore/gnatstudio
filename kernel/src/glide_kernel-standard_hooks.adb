@@ -333,7 +333,9 @@ package body Glide_Kernel.Standard_Hooks is
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
-      Focus             : Boolean := True)
+      Focus             : Boolean := True;
+      Position          : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Default)
    is
       Data : aliased Source_File_Hooks_Args :=
         (Kernel            => Kernel_Handle (Kernel),
@@ -344,7 +346,8 @@ package body Glide_Kernel.Standard_Hooks is
          Enable_Navigation => Enable_Navigation,
          New_File          => New_File,
          Force_Reload      => Force_Reload,
-         Focus             => Focus);
+         Focus             => Focus,
+         Position          => Position);
    begin
       if Enable_Navigation then
          declare
@@ -384,7 +387,8 @@ package body Glide_Kernel.Standard_Hooks is
          Enable_Navigation => False,
          New_File          => False,
          Force_Reload      => False,
-         Focus             => False);
+         Focus             => False,
+         Position          => Gtkada.MDI.Position_Default);
    begin
       if not Run_Hook_Until_Success
         (Kernel, Open_File_Action_Hook, Data'Unchecked_Access)
@@ -466,7 +470,9 @@ package body Glide_Kernel.Standard_Hooks is
                Enable_Navigation => Nth_Arg (Data, 6),
                New_File          => Nth_Arg (Data, 7),
                Force_Reload      => Nth_Arg (Data, 8),
-               Focus             => Nth_Arg (Data, 9, True));
+               Focus             => Nth_Arg (Data, 9, True),
+               Position          => Gtkada.MDI.Child_Position
+                 (Nth_Arg (Data, 10, Natural (Gtkada.MDI.Position_Default))));
       Set_Return_Value
         (Data, Run_Hook_Until_Success (Kernel, Name, Args'Unchecked_Access));
    end Open_File_Run_Hook_Handler;
