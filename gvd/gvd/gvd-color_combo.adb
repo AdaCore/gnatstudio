@@ -1,3 +1,22 @@
+-----------------------------------------------------------------------
+--                   GVD - The GNU Visual Debugger                   --
+--                                                                   --
+--                     Copyright (C) 2000, 2001                      --
+--                              ACT-Europe                           --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
 
 with Glib;                use Glib;
 with Gtk.Extra.Combo_Box; use Gtk.Extra.Combo_Box;
@@ -14,6 +33,11 @@ with Gdk.Bitmap;          use Gdk.Bitmap;
 with GVD.Pixmaps;         use GVD.Pixmaps;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Button;          use Gtk.Button;
+--  For some reason, GNAT incorrectly reports these two packages as
+--  being unused ???
+pragma Warnings (Off, Gtk.Frame);
+pragma Warnings (Off, Gtk.Button);
+
 with Gdk.Window;          use Gdk.Window;
 with Ada.Text_IO;         use Ada.Text_IO;
 
@@ -130,13 +154,11 @@ package body GVD.Color_Combo is
    -- Display_Button --
    --------------------
 
-   procedure Display_Button
-     (Combo : access Gvd_Color_Combo_Record'Class)
-   is
-      Tmp_Gc   : Gdk_GC;
-      Pixmap   : Gtk_Pixmap;
-      Val  : Gdk_Pixmap;
-      Mask : Gdk_Bitmap;
+   procedure Display_Button (Combo : access Gvd_Color_Combo_Record'Class) is
+      Tmp_Gc : Gdk_GC;
+      Pixmap : Gtk_Pixmap;
+      Val    : Gdk_Pixmap;
+      Mask   : Gdk_Bitmap;
       use type Gdk_Window;
 
    begin
@@ -180,4 +202,5 @@ package body GVD.Color_Combo is
       Set_Color (Combo, Combo.Color);
       Show (Combo.Selection);
    end Arrow_Selected;
+
 end GVD.Color_Combo;
