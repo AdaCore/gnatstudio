@@ -38,6 +38,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 
 with Traces;                    use Traces;
@@ -64,7 +65,7 @@ package body VCS_Module is
 
    Me : constant Debug_Handle := Create (VCS_Module_Name);
 
-   Auto_Detect : constant String := "None";
+   Auto_Detect  : constant String := "None";
 
    type VCS_Module_ID_Record is new Module_ID_Record with record
       VCS_List : Argument_List_Access;
@@ -573,6 +574,74 @@ package body VCS_Module is
          File_Edited_Signal,
          File_Edited_Cb'Access,
          Kernel_Handle (Kernel));
+
+      --  Register VCS commands.
+      --  ??? We should create a Class for VCS.
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.get_status",
+         Usage        => "(file) -> None",
+         Description  => -"Query the status for file",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.update",
+         Usage        => "(file) -> None",
+         Description  => -"Update file",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.commit",
+         Usage        => "(file) -> None",
+         Description  => -"Commit file",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.diff_head",
+         Usage        => "(file) -> None",
+         Description  =>
+           -"Show differences between local file and the head revision",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.diff_working",
+         Usage        => "(file) -> None",
+         Description  =>
+           -"Show differences between local file and the working revision",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.annotate",
+         Usage        => "(file) -> None",
+         Description  => -"Display the annotations for file",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "vcs.remove_annotations",
+         Usage        => "(file) -> None",
+         Description  => -"Remove the annotations for file",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => VCS_Command_Handler'Access);
    end Register_Module;
 
    --------------------
