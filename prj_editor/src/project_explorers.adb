@@ -1451,9 +1451,9 @@ package body Project_Explorers is
                   while Index <= Sources'Last loop
                      if Sources (Index) /= No_String
                        and then
-                       (Get_String (Sources (Index)) = Dir
-                        or else Is_Same_Directory
-                        (Get_String (Sources (Index)), Dir))
+                         (Get_String (Sources (Index)) = Dir
+                          or else Is_Same_Directory
+                            (Get_String (Sources (Index)), Dir))
                      then
                         Sources (Index) := No_String;
                         exit;
