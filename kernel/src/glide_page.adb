@@ -27,16 +27,20 @@ package body Glide_Page is
      (Page   : access Glide_Page_Record'Class;
       Window : access Glide_Window_Record'Class)
    is
-      Child    : MDI_Child;
-      Iter     : Child_Iterator;
+      Child : MDI_Child;
+      Iter  : Child_Iterator;
 
    begin
       GVD.Process.Initialize (Page, Window);
+      Set_Priorities
+        (Page.Process_Mdi, (Left => 2, Right => 4, Top => 1, Bottom => 3));
 
       if Load_Desktop (Window.Kernel) then
          Iter := First_Child (Page.Process_Mdi);
+
          loop
             Child := Get (Iter);
+
             exit when Child = null;
 
             if Get_Widget (Child).all in Project_Explorer_Record'Class then
@@ -44,8 +48,10 @@ package body Glide_Page is
             elsif Get_Widget (Child).all in Glide_Console_Record'Class then
                Page.Console := Glide_Console (Get_Widget (Child));
             end if;
+
             Next (Iter);
          end loop;
+
       else
          Gtk_New (Page.Console, Window.Kernel);
          Child := Put (Page.Process_Mdi, Page.Console);
