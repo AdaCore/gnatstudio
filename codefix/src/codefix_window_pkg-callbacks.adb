@@ -105,11 +105,8 @@ package body Codefix_Window_Pkg.Callbacks is
    is
       Graphic_Codefix : constant Graphic_Codefix_Access :=
         Graphic_Codefix_Access (Object);
-
-      pragma Unreferenced (Graphic_Codefix);
-
    begin
-      null;
+      Quit (Graphic_Codefix);
    end On_Cancel_Changes_Clicked;
 
    ------------------------------
