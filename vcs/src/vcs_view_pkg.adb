@@ -236,7 +236,7 @@ package body VCS_View_Pkg is
       Event    : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
-      The_View : VCS_View_Access := VCS_View_Access (View);
+      The_View : constant VCS_View_Access := VCS_View_Access (View);
       Page     : VCS_Page_Access;
    begin
       for J in 1 .. The_View.Number_Of_Pages loop
@@ -321,8 +321,8 @@ package body VCS_View_Pkg is
       if Clear_Logs then
          while Status_Temp /= File_Status_List.Null_Node loop
             declare
-               S      : File_Status_Record
-                 := File_Status_List.Data (Status_Temp);
+               S      : constant File_Status_Record :=
+                 File_Status_List.Data (Status_Temp);
                File   : constant String := String_List.Head (S.File_Name);
             begin
                if S.Status = Up_To_Date then
@@ -920,8 +920,9 @@ package body VCS_View_Pkg is
       Args    : GValues;
       Kernel  : Kernel_Handle)
    is
-      Explorer : VCS_View_Access := VCS_View_Access (Widget);
+      Explorer : constant VCS_View_Access := VCS_View_Access (Widget);
       Log      : constant String := Get_String (Nth (Args, 1));
+
    begin
       if Log'Length > 4
         and then Log (Log'Last - 3 .. Log'Last) = "$log"
@@ -1012,7 +1013,8 @@ package body VCS_View_Pkg is
          After => False);
 
       declare
-         VCS_List : GNAT.OS_Lib.Argument_List := Get_VCS_List (VCS_Module_ID);
+         VCS_List : constant GNAT.OS_Lib.Argument_List :=
+           Get_VCS_List (VCS_Module_ID);
       begin
          for J in VCS_List'Range loop
             Dummy_Page := Get_Page_For_Identifier

@@ -1164,7 +1164,8 @@ package body VCS_View_API is
       pragma Unreferenced (Widget);
 
       Files    : String_List.List;
-      Ref      : VCS_Access := Get_Current_Ref (Context);
+      Ref      : constant VCS_Access := Get_Current_Ref (Context);
+
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1222,7 +1223,7 @@ package body VCS_View_API is
 
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
-      Ref          : VCS_Access := Get_Current_Ref (Context);
+      Ref          : constant VCS_Access := Get_Current_Ref (Context);
 
    begin
       Open_Explorer (Get_Kernel (Context), Context);
@@ -1283,7 +1284,8 @@ package body VCS_View_API is
    is
       Files        : String_List.List;
       File_Context : File_Selection_Context_Access;
-      Ref          : VCS_Access := Get_Current_Ref (Context);
+      Ref          : constant VCS_Access := Get_Current_Ref (Context);
+
    begin
       Open_Explorer (Get_Kernel (Context), Context);
 
@@ -1345,20 +1347,18 @@ package body VCS_View_API is
       Real_Query : Boolean;
       Recursive  : Boolean)
    is
-      procedure Query_Status_For_Project
-        (The_Project : Project_Id);
+      procedure Query_Status_For_Project (The_Project : Project_Id);
       --  Display the status for The_Project only.
 
-      procedure Query_Status_For_Project
-        (The_Project : Project_Id)
-      is
+      procedure Query_Status_For_Project (The_Project : Project_Id) is
          use String_List;
          Status         : File_Status_List.List;
          Blank_Status   : File_Status_Record;
          Current_Status : File_Status_Record;
          Files          : String_List.List;
          Files_Temp     : String_List.List_Node;
-         Ref            : VCS_Access := Get_Current_Ref (The_Project);
+         Ref            : constant VCS_Access := Get_Current_Ref (The_Project);
+
       begin
          if Ref = Unknown_VCS_Reference then
             Insert
@@ -1669,8 +1669,9 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Ref      : VCS_Access := Get_Current_Ref (Kernel);
+      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
       Explorer : VCS_View_Access;
+
    begin
       Open_Explorer (Kernel, null);
       Explorer := Get_Explorer (Kernel);
