@@ -33,6 +33,7 @@ with GVD.Process;           use GVD.Process;
 with Odd_Intl;              use Odd_Intl;
 pragma Elaborate_All (Odd_Intl);
 with Gtk.Check_Menu_Item;   use Gtk.Check_Menu_Item;
+with Gtk.Item_Factory;      use Gtk.Item_Factory;
 with Gtk.GEntry;            use Gtk.GEntry;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtk.Main;              use Gtk.Main;
@@ -48,7 +49,6 @@ with Process_Proxies;       use Process_Proxies;
 with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
 with GVD.Utils;             use GVD.Utils;
-with Odd_Intl;              use Odd_Intl;
 
 package body GVD.Dialogs is
 
@@ -302,7 +302,9 @@ package body GVD.Dialogs is
 
    begin
       --  Do nothing if the stack list has been hidden
-      if not Get_Active (Tab.Window.Call_Stack) then
+      if not Get_Active (Gtk_Check_Menu_Item (Get_Item
+        (Tab.Window.Factory, -"/Data/Call Stack")))
+      then
          return;
       end if;
 
