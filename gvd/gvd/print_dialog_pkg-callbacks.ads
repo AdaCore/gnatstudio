@@ -25,6 +25,6 @@ package Print_Dialog_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Cancel_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
 end Print_Dialog_Pkg.Callbacks;

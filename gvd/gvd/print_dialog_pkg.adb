@@ -82,13 +82,15 @@ begin
    Gtk_New (Print_Dialog.Print_Button, "Print");
    Widget_Callback.Object_Connect
      (Print_Dialog.Print_Button, "clicked",
-      Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access), Print_Dialog);
+      Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access),
+      Print_Dialog);
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Print_Button);
 
    Gtk_New (Print_Dialog.Cancel_Button, "Cancel");
-   Button_Callback.Connect
+   Widget_Callback.Object_Connect
      (Print_Dialog.Cancel_Button, "clicked",
-      Button_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access));
+      Widget_Callback.To_Marshaller (On_Cancel_Button_Clicked'Access),
+      Print_Dialog);
    Add (Print_Dialog.Hbuttonbox1, Print_Dialog.Cancel_Button);
 
    Gtk_New (Print_Dialog.Help_Button, "Help");
