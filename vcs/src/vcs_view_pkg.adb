@@ -1053,7 +1053,7 @@ package body VCS_View_Pkg is
       end if;
 
       if Get_Button (Event) = 1 then
-         Free (Selection_Context_Access (Context));
+         Unref (Selection_Context_Access (Context));
          return False;
       end if;
 
@@ -1123,7 +1123,7 @@ package body VCS_View_Pkg is
              Activate_Time => Gdk.Event.Get_Time (Event));
       Emit_Stop_By_Name (Page.Tree, "button_press_event");
 
-      Free (Selection_Context_Access (Context));
+      Unref (Selection_Context_Access (Context));
       return True;
 
    exception
@@ -1456,7 +1456,7 @@ package body VCS_View_Pkg is
       Context  : Selection_Context_Access) is
    begin
       if Explorer.Context /= null then
-         Free (Explorer.Context);
+         Unref (Explorer.Context);
          Explorer.Context := null;
       end if;
 
