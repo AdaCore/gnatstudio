@@ -303,8 +303,8 @@ package body Project_Explorers is
       return Boolean;
    --  Callback for the "button_press" event
 
-   function Filter_Category (Category : Language_Category)
-      return Language_Category;
+   function Filter_Category
+     (Category : Language_Category) return Language_Category;
    --  Return the category to use when an entity is Category.
    --  This is used to group subprograms (procedures and functions together),
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
@@ -1237,8 +1237,8 @@ package body Project_Explorers is
    -- Filter_Category --
    ---------------------
 
-   function Filter_Category (Category : Language_Category)
-      return Language_Category is
+   function Filter_Category
+     (Category : Language_Category) return Language_Category is
    begin
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
