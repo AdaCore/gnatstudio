@@ -980,7 +980,7 @@ package body GVD.Process is
       end if;
 
       Child := Put (Process.Process_Mdi, Process.Data_Paned);
-      Set_Title (Child, "Data");
+      Set_Title (Child, "Debugger Data");
       Set_Dock_Side (Child, Top);
       Dock_Child (Child);
 
