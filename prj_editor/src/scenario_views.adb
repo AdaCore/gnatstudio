@@ -314,7 +314,8 @@ package body Scenario_Views is
                Gtk_New
                  (Label, Get_String (External_Reference_Of (Scenar_Var (J))));
                Set_Alignment (Label, 0.0, 0.5);
-               Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill);
+               Attach (V, Label, 2, 3, Row, Row + 1, Xoptions => Fill,
+                       Xpadding => 5);
 
                Gtk_New (Combo);
                Set_Editable (Get_Entry (Combo), False);
