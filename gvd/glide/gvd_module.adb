@@ -1824,7 +1824,7 @@ package body GVD_Module is
       Top.Cont_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
-         Text     => -"Start",
+         Text     => -"Go",
          Tooltip_Text => -"Start/Continue the debugged program",
          Icon => Gtk_Widget (Create_Pixmap (run_xpm, Window)));
       Widget_Callback.Object_Connect
@@ -1855,7 +1855,7 @@ package body GVD_Module is
       Top.Finish_Button := Append_Element
         (Toolbar => Toolbar,
          The_Type => Toolbar_Child_Button,
-         Text     => -"Cont",
+         Text     => -"Finish",
          Tooltip_Text => -"Execute until selected stack frame returns",
          Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
       Widget_Callback.Object_Connect
