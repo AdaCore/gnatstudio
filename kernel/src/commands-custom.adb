@@ -1132,11 +1132,6 @@ package body Commands.Custom is
               (Command.Kernel, Output_Location);
          end if;
 
-         --  Ensure there is at least one new line between two commands
-         if Console /= null then
-            Insert (Console, "", Add_LF => True);
-         end if;
-
          --  If substitution failed
          if not Success then
             null;
@@ -1199,7 +1194,7 @@ package body Commands.Custom is
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Console       => Console,
+               Console       => null,
                Callback      => Store_Command_Output'Access,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
