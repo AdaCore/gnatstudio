@@ -21,12 +21,12 @@
 with Glib;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with Gtk.Item_Factory; use Gtk.Item_Factory;
+with Gtk.Main;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
-with GVD.Session_Dialog; use GVD.Session_Dialog;
 with GVD.Dialogs; use GVD.Dialogs;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Basic_Types;
@@ -60,7 +60,7 @@ package GVD.Main_Window is
       Memory_View         : GVD.Memory_View.GVD_Memory_View;
       GVD_Preferences     : GVD_Preferences_Access;
       Open_Program        : GVD_Open_Program;
-      Open_Session        : GVD_Session_Dialog;
+      Open_Session        : Gtk.Window.Gtk_Window;
       History_Dialog      : History_Dialog_Access;
       Thread_Dialog       : Thread_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
@@ -105,6 +105,8 @@ package GVD.Main_Window is
    end record;
    type GVD_Main_Window is access all GVD_Main_Window_Record'Class;
 
+   package Main_Window_Idle is new Gtk.Main.Idle (GVD_Main_Window);
+
    procedure Gtk_New
      (Main_Window : out GVD_Main_Window;
       Key         : String;
@@ -144,6 +146,11 @@ package GVD.Main_Window is
      (Window : access GVD_Main_Window_Record'Class);
    --  Emit the "preferences_changed" signal, which indicates a change in
    --  the preferences. The exact change is not accessible as a parameter.
+
+   procedure Prepare_Cleanup_Debuggers
+     (Window : access GVD_Main_Window_Record'Class);
+   --  Prepare call to Cleanup_Debuggers below by stopping all the debuggers
+   --  contained in the main notebook.
 
    procedure Cleanup_Debuggers (Window : access GVD_Main_Window_Record'Class);
    --  Close all the debuggers associated with a given main debug window

@@ -35,6 +35,7 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Process;         use GVD.Process;
 with GVD.Memory_View;     use GVD.Memory_View;
 with Debugger;            use Debugger;
+with Process_Proxies;     use Process_Proxies;
 
 with Language.Ada; use Language.Ada;
 with Language.C;   use Language.C;
@@ -49,6 +50,29 @@ package body GVD.Main_Window is
    Signals : constant Gtkada.Types.Chars_Ptr_Array :=
      (1 => New_String ("preferences_changed"));
    Class_Record : GObject_Class := Uninitialized_Class;
+
+   -------------------------------
+   -- Prepare_Cleanup_Debuggers --
+   -------------------------------
+
+   procedure Prepare_Cleanup_Debuggers
+     (Window : access GVD_Main_Window_Record'Class)
+   is
+      Tab          : Debugger_Process_Tab;
+      Page         : Gtk_Widget;
+      Num_Children : Gint :=
+        Gint (Page_List.Length (Get_Children (Window.Process_Notebook)));
+
+   begin
+      for J in 0 .. Num_Children - 1 loop
+         Page := Get_Nth_Page (Window.Process_Notebook, J);
+         Tab  := Process_User_Data.Get (Page);
+
+         if Command_In_Process (Get_Process (Tab.Debugger)) then
+            Interrupt (Tab.Debugger);
+         end if;
+      end loop;
+   end Prepare_Cleanup_Debuggers;
 
    -----------------------
    -- Cleanup_Debuggers --
