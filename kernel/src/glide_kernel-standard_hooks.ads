@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2003-2005                      --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -252,6 +252,7 @@ package Glide_Kernel.Standard_Hooks is
    --  ??? Explain when Info is freed
    --  If Normalize is True, the file name will be normalized.
    --  See File_Line_Action_Hook
+   --  Infos must be freed by caller.
 
    procedure Add_Editor_Label
      (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class;
