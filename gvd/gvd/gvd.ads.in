@@ -78,4 +78,7 @@ package GVD is
    Layout_Width : constant := 20;
    --  Width for the area reserved for the buttons in the source/asm editor.
 
+   Exec_Command : constant String := "sh -c";
+   --  Command used to run helpers.
+
 end GVD;
