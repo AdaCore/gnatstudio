@@ -1518,7 +1518,12 @@ package body Projects.Registry is
          if Use_Source_Path then
             Info := Get (Registry.Data.Sources, Filename);
 
-            if Info.Directory /= No_Name then
+            if Info.Directory = Name_A then
+               --  Not found previously, we do not try again
+               Name_Len := 0;
+               return;
+
+            elsif Info.Directory /= No_Name then
                Get_Name_String (Info.Directory);
                return;
             end if;
@@ -1617,6 +1622,15 @@ package body Projects.Registry is
                end if;
             end;
          else
+            --  Still update the cache, to avoid further system calls to
+            --  Locate_Regular_File
+            if Use_Source_Path then
+               Info := (Project   => No_Project,
+                        Lang      => No_Name,
+                        Directory => Name_A);
+               Set (Registry.Data.Sources, Filename, Info);
+            end if;
+
             Name_Len := 0;
          end if;
       end if;
