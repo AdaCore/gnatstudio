@@ -425,8 +425,7 @@ package Glide_Kernel is
       Level  : Customization_Level);
    --  Subprogram called when a new customization has been parsed.
    --  It is initially called just after all modules have been registered,
-   --  and gets passed the first child of the XML file (that is you must go
-   --  through the list, following the Next nodes).
+   --  and gets passed a single XML node.
    --  File is the XML file that is currently being parsed.
 
    --------------------
