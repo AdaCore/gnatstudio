@@ -206,6 +206,9 @@ package body Glide_Kernel.Help is
    package On_Welcome is new HTML_Loader ("gps-welcome.html");
    --  Menu Help->Welcome
 
+   package On_GPS_Tutorial is new HTML_Loader ("gps-tutorial.html");
+   --  Menu Help->GPS Tutorial
+
    package On_GPS_Help is new HTML_Loader ("gps.html");
    --  Menu Help->Using GPS
 
@@ -792,6 +795,8 @@ package body Glide_Kernel.Help is
         (Kernel, Help, -"Open HTML File...", "", On_Open_HTML'Access);
 
       On_Welcome.Register_Menu (Kernel, -"Welcome");
+      On_GPS_Tutorial.Register_Menu
+        (Kernel, -"GNAT Programming System Tutorial");
       On_GPS_Help.Register_Menu (Kernel, -"Using the GNAT Programming System");
       On_GVD_Help.Register_Menu (Kernel, -"Using the GNU Visual Debugger");
       On_GNAT_UG_Help.Register_Menu (Kernel, -"GNAT User's Guide");
