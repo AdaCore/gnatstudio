@@ -21,7 +21,6 @@
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Widget;                use Gtk.Widget;
 
@@ -30,15 +29,17 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
 
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Intl;                use Glide_Intl;
 with Diff_Utils;                use Diff_Utils;
 with Vdiff_Pkg;                 use Vdiff_Pkg;
 with Vdiff_Utils;               use Vdiff_Utils;
 with OS_Utils;                  use OS_Utils;
 
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
 with VFS;                       use VFS;
@@ -47,11 +48,9 @@ package body Vdiff_Module is
 
    Me : constant Debug_Handle := Create (Vdiff_Module_Name);
 
-   function Mime_Action
+   function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
+      Data      : Hooks_Data'Class) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
    procedure On_Compare_Two_Files
@@ -237,86 +236,65 @@ package body Vdiff_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Compare_Two_Files;
 
-   -----------------
-   -- Mime_Action --
-   -----------------
+   ---------------
+   -- Diff_Hook --
+   ---------------
 
-   function Mime_Action
+   function Diff_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+      Data      : Hooks_Data'Class) return Boolean
    is
+      D       : constant Diff_Hooks_Args := Diff_Hooks_Args (Data);
       Child   : MDI_Child;
-      pragma Unreferenced (Mode, Child);
-
+      pragma Unreferenced (Child);
    begin
-      if Mime_Type = Mime_Diff_File then
+      if D.Orig_File = VFS.No_File then
+         if D.New_File = VFS.No_File then
+            return False;
+         end if;
+
          declare
-            Orig_File : constant String := Get_String (Data (Data'First));
-            New_File  : constant String := Get_String (Data (Data'First + 1));
-            Diff_File : constant String := Get_String (Data (Data'First + 2));
-            New_F, Orig_F, Diff_F : Virtual_File;
-
+            Base     : constant String := Base_Name (D.New_File);
+            Ref_File : constant Virtual_File :=
+              Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
          begin
-            if Orig_File = "" then
-               if New_File = "" then
-                  return False;
-               end if;
-
-               New_F  := Create (Full_Filename => New_File);
-               Diff_F := Create (Full_Filename => Diff_File);
-
-               declare
-                  Base     : constant String := Base_Name (New_File);
-                  Ref_File : constant Virtual_File :=
-                    Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
-
-               begin
-                  Child := Compare_Two_Files
-                    (Kernel, Ref_File, New_F,
-                     Base & (-" <reference>"), New_File,
-                     Diff (Kernel, Ref_File, New_F, Diff_F, Revert => True));
-                  Delete (Ref_File);
-               end;
-
-            elsif New_File = "" then
-               if Orig_File = "" then
-                  return False;
-               end if;
-
-               Orig_F := Create (Full_Filename => Orig_File);
-               Diff_F := Create (Full_Filename => Diff_File);
-
-               declare
-                  Base     : constant String := Base_Name (Orig_File);
-                  Ref_File : constant Virtual_File :=
-                    Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
-               begin
-                  Child := Compare_Two_Files
-                    (Kernel, Orig_F, Ref_File,
-                     Orig_File, Base & (-" <reference>"),
-                     Diff (Kernel, Orig_F, Ref_File, Diff_F));
-                  Delete (Ref_File);
-               end;
-
-            else
-               --  All arguments are specified
-
-               Orig_F := Create (Full_Filename => Orig_File);
-               Diff_F := Create (Full_Filename => Diff_File);
-               New_F  := Create (Full_Filename => New_File);
-               Child := Compare_Two_Files
-                 (Kernel, Orig_F, New_F, Orig_File, New_File,
-                  Diff (Kernel, Orig_F, New_F, Diff_F));
-            end if;
-
-            return True;
+            Child := Compare_Two_Files
+              (Kernel, Ref_File, D.New_File,
+               Base & (-" <reference>"), Full_Name (D.New_File).all,
+               Diff (Kernel, Ref_File, D.New_File, D.Diff_File,
+                     Revert => True));
+            Delete (Ref_File);
          end;
+
+      elsif D.New_File = VFS.No_File then
+         if D.Orig_File = VFS.No_File then
+            return False;
+         end if;
+
+         declare
+            Base     : constant String := Base_Name (D.Orig_File);
+            Ref_File : constant Virtual_File :=
+              Create (Full_Filename => Get_Tmp_Dir & Base & "$ref");
+         begin
+            Child := Compare_Two_Files
+              (Kernel, D.Orig_File, Ref_File,
+               Full_Name (D.Orig_File).all, Base & (-" <reference>"),
+               Diff (Kernel, D.Orig_File, Ref_File, D.Diff_File));
+            Delete (Ref_File);
+         end;
+
+      else
+         --  All arguments are specified
+
+         Child := Compare_Two_Files
+           (Kernel, D.Orig_File, D.New_File,
+            Full_Name (D.Orig_File).all,
+            Full_Name (D.New_File).all,
+            Diff (Kernel, D.Orig_File, D.New_File, D.Diff_File));
       end if;
 
-      return False;
-   end Mime_Action;
+      return True;
+   end Diff_Hook;
 
    ---------------------
    -- Default_Factory --
@@ -370,8 +348,8 @@ package body Vdiff_Module is
          Kernel                  => Kernel,
          Module_Name             => Vdiff_Module_Name,
          Priority                => Default_Priority,
-         Mime_Handler            => Mime_Action'Access,
          Default_Context_Factory => Default_Factory'Access);
+      Add_Hook (Kernel, Diff_Action_Hook, Diff_Hook'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
