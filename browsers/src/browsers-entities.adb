@@ -948,7 +948,7 @@ package body Browsers.Entities is
         (List,
          Entity_As_Link (Entity) & " ("
          & (-Kind_To_String (Get_Kind (Entity))) & ')',
-         Callback => Build (Item, Entity));
+         Callback => (1 => Build (Item, Entity)));
       --  Do not free Entity, it's needed for callbacks
    end Add_Subprogram;
 
@@ -992,7 +992,7 @@ package body Browsers.Entities is
             Get_Name (Parameter) & ": "
             & Image (Get_Type (Subs)) & " " & Entity_As_Link (Typ),
             Length1 => Get_Name (Parameter)'Length + 1,
-            Callback => Build (Item, Typ));
+            Callback => (1 => Build (Item, Typ)));
          --  Do not free Typ, it is needed for callbacks
 
          Destroy (Parameter);
@@ -1004,7 +1004,7 @@ package body Browsers.Entities is
            (List,
             "return " & Entity_As_Link (Returned),
             Length1 => 7,
-            Callback => Build (Item, Returned));
+            Callback => (1 => Build (Item, Returned)));
          --  Do not free Returned, it is needed for callbacks.
       end if;
    end Add_Parameters;
@@ -1029,7 +1029,7 @@ package body Browsers.Entities is
    begin
       if Parent /= No_Entity_Information then
          Add_Line (General_List, "Parent: " & Entity_As_Link (Parent),
-                   Callback => Build (Item, Parent));
+                   Callback => (1 => Build (Item, Parent)));
          --  Do not destroy parent, needed for callbacks
       end if;
 
@@ -1071,12 +1071,12 @@ package body Browsers.Entities is
                      Add_Line
                        (Attr_List, Name & "(subtype)",
                         Length1 => Name'Length,
-                        Callback => Build (Item, Arr (A), ""));
+                        Callback => (1 => Build (Item, Arr (A), "")));
                   else
                      Add_Line
                        (Attr_List, Name & "(type)",
                         Length1 => Name'Length,
-                        Callback => Build (Item, Arr (A), ""));
+                        Callback => (1 => Build (Item, Arr (A), "")));
                   end if;
                end;
 
@@ -1186,7 +1186,7 @@ package body Browsers.Entities is
            (List,
             Prefix & ": " & Entity_As_Link (Typ),
             Length1 => Prefix'Length + 2,
-            Callback => Build (Item, Typ, Prefix));
+            Callback => (1 => Build (Item, Typ, Prefix)));
          --  Do not free Typ, needed for callbacks
       end if;
    end Add_Type;
@@ -1208,7 +1208,7 @@ package body Browsers.Entities is
       if Typ /= No_Entity_Information then
          Add_Line
            (List, "array of " & Entity_As_Link (Typ),
-            Callback => Build (Item, Typ));
+            Callback => (1 => Build (Item, Typ)));
          --  Do not destroy Typ, needed for callbacks
          Info_Added := True;
       else
@@ -1232,7 +1232,7 @@ package body Browsers.Entities is
       if Typ /= No_Entity_Information then
          Add_Line
            (List, "access to " & Entity_As_Link (Typ),
-            Callback => Build (Item, Typ));
+            Callback => (1 => Build (Item, Typ)));
          --  Do not destroy Typ, needed for callbacks
          Info_Added := True;
       else
@@ -1479,7 +1479,7 @@ package body Browsers.Entities is
          Parent := Get_Variable_Type (Lib_Info, Item.Entity);
          Add_Line
            (Attr_Lines, -"subtype of " & Entity_As_Link (Parent),
-            Callback => Build (Item, Parent));
+            Callback => (1 => Build (Item, Parent)));
          --  Do not destroy Parent, needed for callbacks
 
       else
