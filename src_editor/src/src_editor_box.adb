@@ -509,7 +509,9 @@ package body Src_Editor_Box is
 
       if Filename.all /= "" then
          Open_File_Editor
-           (Kernel, Filename.all, L, C, C + Length, False, From_Path => False);
+           (Kernel, Filename.all, L, C, C + Length,
+            Enable_Navigation => True,
+            From_Path => False);
       else
          Free (Filename);
          Destroy (Entity);
