@@ -20,6 +20,7 @@
 
 with Glib;                use Glib;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Container;       use Gtk.Container;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Menu;            use Gtk.Menu;
@@ -568,7 +569,9 @@ package body GVD.Code_Editors is
    procedure Preferences_Changed
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Edit : constant Code_Editor := Code_Editor (Editor);
+      Edit   : constant Code_Editor := Code_Editor (Editor);
+      Parent : Gtk_Container;
+
    begin
       if Edit.Mode = Source or else Edit.Mode = Source_Asm then
          GVD.Text_Box.Source_Editor.Preferences_Changed (Edit.Source);
@@ -579,6 +582,8 @@ package body GVD.Code_Editors is
          Highlight_Address_Range (Edit.Asm, Edit.Source_Line);
       end if;
 
+      Parent := Gtk_Container (Get_Parent (Get_Widget (Edit.Source)));
+
       if Get_Pref (Display_Explorer) then
          if Get_Parent (Edit.Explorer_Editor_Pane) = null then
             Detach (Edit.Source);
@@ -588,7 +593,7 @@ package body GVD.Code_Editors is
             Add (Edit, Edit.Explorer_Editor_Pane);
             Add1 (Edit.Explorer_Editor_Pane, Edit.Explorer_Scroll);
             Add2 (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
-            Attach (Edit.Source, Edit.Editor_Container);
+            Attach (Edit.Source, Parent);
             Show_All (Edit);
          end if;
 
@@ -605,7 +610,7 @@ package body GVD.Code_Editors is
             Remove (Edit.Explorer_Editor_Pane, Edit.Editor_Container);
 
             Add (Edit, Edit.Editor_Container);
-            Attach (Edit.Source, Edit.Editor_Container);
+            Attach (Edit.Source, Parent);
             Show_All (Edit);
          end if;
       end if;

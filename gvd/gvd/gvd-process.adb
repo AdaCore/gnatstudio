@@ -1659,6 +1659,7 @@ package body GVD.Process is
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
       Widget  : Gtk_Widget;
+      Parent  : Gtk_Container;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1685,16 +1686,18 @@ package body GVD.Process is
 
       if Process.Separate_Data /= Get_Pref (Separate_Data) then
          Process.Separate_Data := not Process.Separate_Data;
+         Parent := Gtk_Container
+           (Get_Parent (Get_Widget (Get_Source (Process.Editor_Text))));
+         Detach (Get_Source (Process.Editor_Text));
+
+         if Get_Active (Main.Call_Stack) then
+            Widget := Gtk_Widget (Process.Data_Paned);
+         else
+            Widget := Gtk_Widget (Process.Data_Scrolledwindow);
+         end if;
 
          if Process.Separate_Data then
-            Detach (Get_Source (Process.Editor_Text));
-
-            if Get_Active (Main.Call_Stack) then
-               Widget := Gtk_Widget (Process.Data_Paned);
-            else
-               Widget := Gtk_Widget (Process.Data_Scrolledwindow);
-            end if;
-
+            --  Reuse the Process window since nobody else needs it.
             Reparent (Widget, Process);
 
             --  Ref the widget so that it is not destroyed.
@@ -1708,20 +1711,10 @@ package body GVD.Process is
                Reparent (Process.Editor_Vbox, Process.Process_Paned);
             end if;
 
-            Attach
-              (Get_Source (Process.Editor_Text),
-               Get_Editor_Container (Process.Editor_Text));
             Show_All (Process);
 
          else
-            Detach (Get_Source (Process.Editor_Text));
             Hide (Process);
-
-            if Get_Active (Main.Call_Stack) then
-               Widget := Gtk_Widget (Process.Data_Paned);
-            else
-               Widget := Gtk_Widget (Process.Data_Scrolledwindow);
-            end if;
 
             --  Put back the Data into the paned
 
@@ -1735,11 +1728,10 @@ package body GVD.Process is
             end if;
 
             Unref (Process.Data_Editor_Paned);
-            Attach
-              (Get_Source (Process.Editor_Text),
-               Get_Editor_Container (Process.Editor_Text));
             Show_All (Process.Process_Hbox);
          end if;
+
+         Attach (Get_Source (Process.Editor_Text), Parent);
       end if;
    end Preferences_Changed;
 
