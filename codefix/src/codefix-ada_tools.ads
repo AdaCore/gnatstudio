@@ -67,8 +67,8 @@ private
    end record;
 
    type Ptr_Use is access all Use_Type;
-   procedure Free is new Ada.Unchecked_Deallocation (Use_Type, Ptr_Use);
-   --  ??? Has to be changed
+
+   procedure Free (This : in out Ptr_Use);
 
    type Arr_Use is array (Natural range <>) of Ptr_Use;
 
@@ -81,8 +81,8 @@ private
    end record;
 
    type Ptr_With is access all With_Type;
-   procedure Free is new Ada.Unchecked_Deallocation (With_Type, Ptr_With);
-   --  ??? Has to be changed
+
+   procedure Free (This : in out Ptr_With);
 
    package With_Lists is new Generic_List (Ptr_With);
    use With_Lists;
@@ -91,29 +91,30 @@ private
    use Use_Lists;
 
    function Get_Parts_Number (Str : String) return Positive;
-   --  ???
+   --  Return the number of parts separed with dots in String.
 
    function Get_Arr_Str (Str : String) return Arr_Str;
-   --  ???
+   --  Return an array in witch each line is initialized with a part of Str.
 
    procedure Try_Link_Clauses
      (With_Clause : Ptr_With; Use_Clause  : Ptr_Use);
-   --  ???
+   --  Make the link between With_Clause and Use_Clause if the use is a use of
+   --  a package evocated in With_Clause.
 
    function List_All_With
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : String) return With_Lists.List;
-   --  ???
+   --  List all the with clauses existing in File_Name.
 
    function List_All_Use
      (Current_Text : Text_Navigator_Abstr'Class;
       File_Name    : String) return Use_Lists.List;
-   --  ???
+   --  List all the use clauses existing in File_Name.
 
    procedure Link_All_Clauses
      (List_Of_With : in out With_Lists.List;
       List_Of_Use  : in out Use_Lists.List);
-   --  ???
+   --  Link all with clauses to use clauses when possible.
 
    type Ada_Escape_Str is new Escape_Str_Manager with record
       null;
