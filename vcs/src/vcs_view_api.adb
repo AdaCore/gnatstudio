@@ -2369,13 +2369,15 @@ package body VCS_View_API is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
       if Context = null then
          Console.Insert (Kernel, -"No directory selected", Mode => Error);
       else
+         Ref (Context);
          On_Menu_Get_Status_Dir (Widget, Context);
+         Unref (Context);
       end if;
 
    exception
