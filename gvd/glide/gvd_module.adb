@@ -212,9 +212,15 @@ package body GVD_Module is
    procedure Generic_Debug_Command
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
    begin
-      Debug_Command (Top.all'Access, 0, Null_Widget);
+      if Page.Debugger /= null then
+         Debug_Command (Top.all'Access, 0, Null_Widget);
+      end if;
 
    exception
       when E : others =>
