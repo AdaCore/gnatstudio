@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -422,6 +422,8 @@ package body Projects.Registry is
      (Registry : in out Project_Registry;
       Errors   : Projects.Error_Report)
    is
+      Set_As_Incomplete_When_Errors : Boolean := True;
+
       procedure Report_Error (S : String; Project : Project_Id);
       --  Handler called when the project parser finds an error
 
@@ -429,19 +431,25 @@ package body Projects.Registry is
          P    : Project_Type;
       begin
          if Project = Prj.No_Project then
-            declare
-               Iter : Imported_Project_Iterator := Start (Registry.Data.Root);
-            begin
-               while Current (Iter) /= No_Project loop
-                  Set_View_Is_Complete (Current (Iter), False);
-                  Next (Iter);
-               end loop;
-            end;
+            if Set_As_Incomplete_When_Errors then
+               declare
+                  Iter : Imported_Project_Iterator :=
+                    Start (Registry.Data.Root);
+               begin
+                  while Current (Iter) /= No_Project loop
+                     Set_View_Is_Complete (Current (Iter), False);
+                     Next (Iter);
+                  end loop;
+               end;
+            end if;
 
          else
             P := Get_Project_From_Name
               (Registry, Prj.Projects.Table (Project).Name);
-            Set_View_Is_Complete (P, False);
+
+            if Set_As_Incomplete_When_Errors then
+               Set_View_Is_Complete (P, False);
+            end if;
          end if;
 
          Trace (Me, "Recompute_View: error " & S);
@@ -477,6 +485,11 @@ package body Projects.Registry is
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
          Report_Error'Unrestricted_Access);
+
+      --  Do not set the project as incomplete if no sources existed for a
+      --  given language. Otherwise, a dialog is displayed when editing the
+      --  project properties, and this might be confusing for the user.
+      Set_As_Incomplete_When_Errors := False;
       Parse_Source_Files (Registry, Report_Error'Unrestricted_Access);
    end Recompute_View;
 
