@@ -18,11 +18,11 @@ include $(BASE_DIR)/Makefile.vsearch
 BASE_DIR=$(ADA_MODULE_BASE_DIR)/../prj_editor
 include $(BASE_DIR)/Makefile.prj_editor
 
-ADA_MODULE_SRC_DIRS = $(PRJ_EDITOR_BASE_DIR)/src $(PRJ_EDITOR_BASE_DIR)/pixmaps
+ADA_MODULE_SRC_DIRS = $(ADA_MODULE_BASE_DIR)/src 
 SRC_DIRS += $(ADA_MODULE_SRC_DIRS)
 C_SRCS = \
   $(foreach name,$(ADA_MODULE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
-ADA_MODULE_OBJ_DIR = $(PRJ_EDITOR_BASE_DIR)/obj
+ADA_MODULE_OBJ_DIR = $(ADA_MODULE_BASE_DIR)/obj
 OBJ_DIR = $(ADA_MODULE_OBJ_DIR)
 
 CFLAGS = -g -O2
@@ -33,7 +33,7 @@ LIBS := $(ADA_MODULE_OBJ_DIR)/libada_module$(AR_EXT) $(LIBS)
 ifeq ($(ADA_MODULE_ROOT),True)
    include ../builder/src/Makefile.generic
 else
-   DEPS_PROJECTS += $(ADA_MODULE_BASE_DIR)/prj_editor
+   DEPS_PROJECTS += $(ADA_MODULE_BASE_DIR)/ada_module
 endif
 
 endif
