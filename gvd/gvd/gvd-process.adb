@@ -1067,8 +1067,8 @@ package body GVD.Process is
          Process.Debugger_Text_Font,
          History_List => History,
          Key          => "gvd_console");
-      Set_Max_Length (History, 100, "gvd_console");
-      Allow_Duplicates (History, "gvd_console", True, True);
+      Histories.Set_Max_Length (History.all, 100, "gvd_console");
+      Histories.Allow_Duplicates (History.all, "gvd_console", True, True);
 
       Set_Highlight_Color
         (Process.Debugger_Text,
@@ -1424,8 +1424,9 @@ package body GVD.Process is
             Process.Debugger_Text_Font,
             History_List => History,
             Key          => "gvd_tty_console");
-         Set_Max_Length (History, 100, "gvd_tty_console");
-         Allow_Duplicates (History, "gvd_tty_console", True, True);
+         Histories.Set_Max_Length (History.all, 100, "gvd_tty_console");
+         Histories.Allow_Duplicates
+           (History.all, "gvd_tty_console", True, True);
 
          Object_Return_Callback.Object_Connect
            (Process.Debuggee_Console, "delete_event",
