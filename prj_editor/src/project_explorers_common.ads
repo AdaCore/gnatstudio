@@ -196,6 +196,9 @@ package Project_Explorers_Common is
    -- Misc --
    ----------
 
+   function Entity_Name_Of (Construct : Construct_Information) return String;
+   --  Return the string to use to display the entity
+
    function Filter_Category
      (Category : Language.Language_Category) return Language.Language_Category;
    --  Return the category to use when an entity is Category.

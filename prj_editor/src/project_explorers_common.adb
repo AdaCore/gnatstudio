@@ -195,6 +195,29 @@ package body Project_Explorers_Common is
       return N;
    end Append_Category_Node;
 
+   -------------
+   -- Name_Of --
+   -------------
+
+   function Entity_Name_Of (Construct : Construct_Information) return String is
+   begin
+      if Construct.Is_Declaration then
+         if Construct.Profile /= null then
+            return Locale_To_UTF8
+              (Reduce (Construct.Name.all) & " (spec) " &
+               Reduce (Construct.Profile.all));
+         else
+            return Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec)");
+         end if;
+
+      elsif Construct.Profile /= null then
+         return Locale_To_UTF8
+           (Reduce (Construct.Name.all & " " & Construct.Profile.all));
+      else
+         return Locale_To_UTF8 (Reduce (Construct.Name.all));
+      end if;
+   end Entity_Name_Of;
+
    ------------------------
    -- Append_Entity_Node --
    ------------------------
@@ -228,33 +251,11 @@ package body Project_Explorers_Common is
       end if;
 
       Set (Model, N, Absolute_Name_Column, Locale_Full_Name (File));
-
-      if Construct.Is_Declaration then
-         if Construct.Profile /= null then
-            Set (Model, N, Base_Name_Column,
-                 Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec) " &
-                                 Reduce (Construct.Profile.all)));
-         else
-            Set (Model, N, Base_Name_Column,
-                 Locale_To_UTF8 (Reduce (Construct.Name.all) & " (spec)"));
-
-         end if;
-
-      elsif Construct.Profile /= null then
-         Set (Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Reduce (Construct.Name.all & " " &
-                                      Construct.Profile.all)));
-      else
-         Set (Model, N, Base_Name_Column,
-              Locale_To_UTF8 (Reduce (Construct.Name.all)));
-      end if;
-
+      Set (Model, N, Base_Name_Column, Entity_Name_Of (Construct));
       Set (Model, N, Entity_Base_Column,
            Locale_To_UTF8 (Reduce (Construct.Name.all)));
-
       Set (Model, N, Icon_Column, C_Proxy (Close_Pixbufs (Entity_Node)));
       Set (Model, N, Node_Type_Column, Gint (Node_Types'Pos (Entity_Node)));
-
       Set (Model, N, Line_Column, Gint (Construct.Sloc_Entity.Line));
       Set (Model, N, Column_Column, Gint (Construct.Sloc_Entity.Column));
       Set (Model, N, Up_To_Date_Column, True);
@@ -308,8 +309,7 @@ package body Project_Explorers_Common is
 
       Push_State (Kernel, Busy);
 
-      Lang := Get_Language_From_File
-        (Glide_Language_Handler (Get_Language_Handler (Kernel)), File_Name);
+      Lang := Get_Language_From_File (Languages, File_Name);
 
       if Lang /= null then
          Parse_File_Constructs
