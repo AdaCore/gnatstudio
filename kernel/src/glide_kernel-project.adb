@@ -225,6 +225,10 @@ package body Glide_Kernel.Project is
             Entities.Reset (Get_Database (Kernel));
          end if;
 
+         if Get_Predefined_Source_Path (Kernel.Registry.all) = "" then
+            Compute_Predefined_Paths (Kernel);
+         end if;
+
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,
