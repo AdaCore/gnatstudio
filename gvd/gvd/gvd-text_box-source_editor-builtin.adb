@@ -1621,9 +1621,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          --  Convert from line to visual buffer position (i.e include handling
          --  of ASCII.HT characters).
 
-         while Current_Line < Line
-           and then Text_Pos <= Buffer'Last
-         loop
+         while Current_Line < Line loop
             if Buffer (Text_Pos) = ASCII.LF then
                Col := 1;
                Index := Index + 1;
@@ -1642,6 +1640,12 @@ package body GVD.Text_Box.Source_Editor.Builtin is
             end if;
 
             Text_Pos := Text_Pos + 1;
+
+            --  We couldn't find the line in the file, so there is nothing
+            --  to highlight
+            if Text_Pos > Buffer'Last then
+               return;
+            end if;
          end loop;
 
          Index := Index + Line * Natural (Invisible_Column_Width (Edit));
