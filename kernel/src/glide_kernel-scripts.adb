@@ -633,7 +633,6 @@ package body Glide_Kernel.Scripts is
             Group  : Gtk_Size_Group;
             Hbox   : Gtk_Hbox;
             Button : Gtk_Widget;
-            pragma Unreferenced (Button);
 
             type Ent_Array
                is array (2 .. Number_Of_Arguments (Data)) of Gtk_Entry;
@@ -661,10 +660,12 @@ package body Glide_Kernel.Scripts is
                Pack_Start (Hbox, Label, Expand => False);
 
                Gtk_New (Ent (Num));
+               Set_Activates_Default (Ent (Num),  True);
                Pack_Start (Hbox, Ent (Num));
             end loop;
 
             Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+            Grab_Default (Button);
             Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
             Show_All (Dialog);
@@ -903,8 +904,6 @@ package body Glide_Kernel.Scripts is
          List  : Argument_List := Get_Attribute_Value
            (Project, Build (Pkg, Attr), Index);
       begin
-         Trace (Me, "MANU " & Attr & ' ' & Index & ' ' & Attr);
-
          if As_List then
             Set_Return_Value_As_List (Data);
          end if;
@@ -1670,11 +1669,10 @@ package body Glide_Kernel.Scripts is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List := No_Args) return String is
+      Command : String) return String is
    begin
       return Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args);
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, False);
    end Execute_GPS_Shell_Command;
 
    -------------------------------
@@ -1684,10 +1682,37 @@ package body Glide_Kernel.Scripts is
    procedure Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List := No_Args)
+      Args    : GNAT.OS_Lib.Argument_List) is
+   begin
+      Execute_GPS_Shell_Command
+        (Kernel,
+         Command & ' ' & Argument_List_To_Quoted_String (Args));
+   end Execute_GPS_Shell_Command;
+
+   -------------------------------
+   -- Execute_GPS_Shell_Command --
+   -------------------------------
+
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String is
+   begin
+      return Execute_GPS_Shell_Command
+        (Kernel,
+         Command & ' ' & Argument_List_To_Quoted_String (Args));
+   end Execute_GPS_Shell_Command;
+
+   -------------------------------
+   -- Execute_GPS_Shell_Command --
+   -------------------------------
+
+   procedure Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String)
    is
       Str : constant String := Execute_Command
-        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args);
+        (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, False);
       pragma Unreferenced (Str);
    begin
       null;
@@ -1698,15 +1723,12 @@ package body Glide_Kernel.Scripts is
    ---------------------
 
    function Execute_Command
-     (Script  : access Scripting_Language_Record;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
-   is
-      Cmd : constant String := Command & ' '
-        & Argument_List_To_String (Args);
+     (Script             : access Scripting_Language_Record;
+      Command            : String;
+      Display_In_Console : Boolean := True) return String is
    begin
       Execute_Command
-        (Scripting_Language (Script), Cmd, Display_In_Console => False);
+        (Scripting_Language (Script), Command, Display_In_Console);
       return "";
    end Execute_Command;
 

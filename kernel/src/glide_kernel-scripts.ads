@@ -342,9 +342,9 @@ package Glide_Kernel.Scripts is
    --  execute, often semicolon or newline separated.
 
    function Execute_Command
-     (Script  : access Scripting_Language_Record;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String;
+     (Script             : access Scripting_Language_Record;
+      Command            : String;
+      Display_In_Console : Boolean := True) return String;
    --  Execute a command, and return its result as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot
    --  capture the output of their interpreter. This command is mostly useful
@@ -467,12 +467,18 @@ package Glide_Kernel.Scripts is
 
    function Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List := No_Args) return String;
+      Command : String) return String;
+   procedure Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String);
    procedure Execute_GPS_Shell_Command
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command : String;
-      Args    : GNAT.OS_Lib.Argument_List := No_Args);
+      Args    : GNAT.OS_Lib.Argument_List);
+   function Execute_GPS_Shell_Command
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute the command in the GPS shell.
    --  This is only intended as a simpler form of
    --     Execute_Command
