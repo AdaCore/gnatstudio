@@ -383,4 +383,21 @@ package body Odd.Strings is
       return Result (Result'First .. Len - 1);
    end Reduce;
 
+   ---------------------
+   -- Strip_Control_M --
+   ---------------------
+
+   function Strip_Control_M (Text : String) return String is
+      To    : String (1 .. Text'Length);
+      Index_To : Positive := 1;
+   begin
+      for Index in Text'Range loop
+         if Text (Index) /= ASCII.CR then
+            To (Index_To) := Text (Index);
+            Index_To := Index_To + 1;
+         end if;
+      end loop;
+      return To (1 .. Index_To - 1);
+   end Strip_Control_M;
+
 end Odd.Strings;

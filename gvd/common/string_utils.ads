@@ -117,6 +117,10 @@ package Odd.Strings is
    --  and replace multiple spaces with a single one.
    --  Return the resulting string.
 
+   function Strip_Control_M (Text : String) return String;
+   --  Return a version of Text after stripping all the ^M from the string.
+   --  This function is used on Windows.
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);
