@@ -5,7 +5,7 @@ project Docgen is
 
    for Source_Dirs use ("src/");
    for Object_Dir use "obj/";
-   for Main use ("docgen.adb");
+   for Main use ("docgen-main.adb");
    for Languages use ("Ada");
 
    package Builder is
