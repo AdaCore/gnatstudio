@@ -51,7 +51,7 @@ package body Browsers.Projects is
    Project_Browser_Module_ID : Module_ID;
 
    procedure On_Examine_Prj_Hierarchy
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Open the project hierarchy browser for a specific project
 
@@ -183,7 +183,7 @@ package body Browsers.Projects is
    ------------------------------
 
    procedure On_Examine_Prj_Hierarchy
-     (Widget  : access Gtk_Widget_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       Browser : MDI_Child;
