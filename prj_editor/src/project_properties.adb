@@ -1412,40 +1412,35 @@ package body Project_Properties is
       Level  : Customization_Level)
    is
       pragma Unreferenced (File, Level);
-      N     : Node_Ptr := Node;
    begin
-      while N /= null loop
-         if N.Tag.all = "project_attribute" then
-            declare
-               Editor_Page : constant Natural := Find_Editor_Page_By_Name
-                 (Get_Attribute (N, "editor_page", Default => "General"));
-               Editor_Section : constant Natural := Find_Editor_Section_By_Name
-                 (Editor_Page, Get_Attribute (N, "editor_section"));
-               Name    : String := Get_Attribute (N, "name");
-               Pkg     : String := Get_Attribute (N, "package");
-               Indexed : constant Boolean := N.Child /= null
-                 and then (N.Child.Tag.all = "index"
-                           or else N.Child.Tag.all = "specialized_index");
-               Attribute : Attribute_Description_Access;
-            begin
-               To_Lower (Pkg);
-               To_Lower (Name);
+      if Node.Tag.all = "project_attribute" then
+         declare
+            Editor_Page : constant Natural := Find_Editor_Page_By_Name
+              (Get_Attribute (Node, "editor_page", Default => "General"));
+            Editor_Section : constant Natural := Find_Editor_Section_By_Name
+              (Editor_Page, Get_Attribute (Node, "editor_section"));
+            Name    : String := Get_Attribute (Node, "name");
+            Pkg     : String := Get_Attribute (Node, "package");
+            Indexed : constant Boolean := Node.Child /= null
+              and then (Node.Child.Tag.all = "index"
+                        or else Node.Child.Tag.all = "specialized_index");
+            Attribute : Attribute_Description_Access;
+         begin
+            To_Lower (Pkg);
+            To_Lower (Name);
 
-               if Name = "" then
-                  Insert
-                    (Kernel,
-                     -"<project_attribute> must specify a ""name"" attribute",
-                     Mode => Error);
-               end if;
+            if Name = "" then
+               Insert
+                 (Kernel,
+                  -"<project_attribute> must specify a ""name"" attribute",
+                  Mode => Error);
+            end if;
 
-               Attribute := Find_Attribute_By_Name
-                 (Editor_Page, Editor_Section, Name, Pkg, Indexed);
-               Parse_Attribute_Description (Kernel, N, Attribute);
-            end;
-         end if;
-
-         N := N.Next;
-      end loop;
+            Attribute := Find_Attribute_By_Name
+              (Editor_Page, Editor_Section, Name, Pkg, Indexed);
+            Parse_Attribute_Description (Kernel, Node, Attribute);
+         end;
+      end if;
    end Customize;
 
    ------------------------

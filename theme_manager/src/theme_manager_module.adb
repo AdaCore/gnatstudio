@@ -245,69 +245,64 @@ package body Theme_Manager_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level);
-      N : Node_Ptr := Node;
       Themes : Theme_Description_Access;
       Str : GNAT.OS_Lib.String_Access;
       Active : constant String := Get_Pref (Kernel, Active_Themes);
    begin
-      while N /= null loop
-         if N.Tag.all = "theme" then
-            declare
-               Name  : constant String := Get_Attribute (N, "name");
-               Descr : constant String := Get_Attribute (N, "description");
-               Cat   : constant String := Get_Attribute
-                 (N, "category", "General");
-            begin
-               if Name = "" then
-                  Insert (Kernel, -"<theme> nodes must have a name attribute");
-                  raise Assert_Failure;
-               end if;
+      if Node.Tag.all = "theme" then
+         declare
+            Name  : constant String := Get_Attribute (Node, "name");
+            Descr : constant String := Get_Attribute (Node, "description");
+            Cat   : constant String := Get_Attribute
+              (Node, "category", "General");
+         begin
+            if Name = "" then
+               Insert (Kernel, -"<theme> nodes must have a name attribute");
+               raise Assert_Failure;
+            end if;
 
-               Themes := Theme_Manager_Module.Themes;
-               while Themes /= null
-                 and then Themes.Name.all /= Name
-               loop
-                  Themes := Themes.Next;
-               end loop;
+            Themes := Theme_Manager_Module.Themes;
+            while Themes /= null
+              and then Themes.Name.all /= Name
+            loop
+               Themes := Themes.Next;
+            end loop;
 
-               if Themes = null then
-                  Themes := new Theme_Description'
-                    (Name        => new String'(Name),
-                     Description => new String'(Descr),
-                     Category    => new String'(Cat),
-                     Xml         => new Glib.Xml_Int.Node,
-                     Active      => Index (Active, '@' & Name & '@') /= 0,
-                     Next        => Theme_Manager_Module.Themes);
-                  Theme_Manager_Module.Themes := Themes;
-                  Trace (Me, "Registering new theme: " & Name
-                         & " Active=" & Themes.Active'Img);
+            if Themes = null then
+               Themes := new Theme_Description'
+                 (Name        => new String'(Name),
+                  Description => new String'(Descr),
+                  Category    => new String'(Cat),
+                  Xml         => new Glib.Xml_Int.Node,
+                  Active      => Index (Active, '@' & Name & '@') /= 0,
+                  Next        => Theme_Manager_Module.Themes);
+               Theme_Manager_Module.Themes := Themes;
+               Trace (Me, "Registering new theme: " & Name
+                      & " Active=" & Themes.Active'Img);
 
-               elsif Descr /= "" then
-                  Str := new String'
-                    (Themes.Description.all & ASCII.LF & Descr);
-                  Free (Themes.Description);
-                  Themes.Description := Str;
-               end if;
+            elsif Descr /= "" then
+               Str := new String'
+                 (Themes.Description.all & ASCII.LF & Descr);
+               Free (Themes.Description);
+               Themes.Description := Str;
+            end if;
 
-               Add_Child (Themes.Xml, Deep_Copy (N.Child), Append => True);
+            Add_Child (Themes.Xml, Deep_Copy (Node.Child), Append => True);
 
-               if Themes.Active then
-                  Load_XML_Theme (Kernel, File, N.Child);
-               end if;
-            end;
+            if Themes.Active then
+               Load_XML_Theme (Kernel, File, Node.Child);
+            end if;
+         end;
 
-         elsif N.Tag.all = "pref" then
-            declare
-               Name : constant String := Get_Attribute (N, "name");
-            begin
-               if Name /= "" then
-                  Set_Pref (Kernel, Name, N.Value.all);
-               end if;
-            end;
-         end if;
-
-         N := N.Next;
-      end loop;
+      elsif Node.Tag.all = "pref" then
+         declare
+            Name : constant String := Get_Attribute (Node, "name");
+         begin
+            if Name /= "" then
+               Set_Pref (Kernel, Name, Node.Value.all);
+            end if;
+         end;
+      end if;
    end Customize;
 
    -----------------------

@@ -350,38 +350,32 @@ package body Casing_Exceptions is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Kernel, Level, File);
-      N : Node_Ptr := Node;
    begin
-      while N /= null loop
+      if Node.Tag.all = "case_exceptions" then
+         --  Ok this is a case exceptions node
 
-         if N.Tag.all = "case_exceptions" then
-            --  Ok this is a case exceptions node
+         declare
+            Child : Node_Ptr := Node.Child;
+         begin
+            while Child /= null loop
+               if Child.Tag.all = "word" then
+                  --  This is a full word exception
+                  Add_Exception
+                    (Casing_Module_Id.Casing_Exceptions_Table,
+                     Child.Value.all,
+                     Read_Only => True);
 
-            declare
-               Child : Node_Ptr := N.Child;
-            begin
-               while Child /= null loop
-                  if Child.Tag.all = "word" then
-                     --  This is a full word exception
-                     Add_Exception
-                       (Casing_Module_Id.Casing_Exceptions_Table,
-                        Child.Value.all,
-                        Read_Only => True);
-
-                  elsif Child.Tag.all = "substring" then
-                     --  This is substring exception
-                     Add_Substring_Exception
-                       (Casing_Module_Id.Casing_Exceptions_Table,
-                        Child.Value.all,
-                        Read_Only => True);
-                  end if;
-                  Child := Child.Next;
-               end loop;
-            end;
-         end if;
-
-         N := N.Next;
-      end loop;
+               elsif Child.Tag.all = "substring" then
+                  --  This is substring exception
+                  Add_Substring_Exception
+                    (Casing_Module_Id.Casing_Exceptions_Table,
+                     Child.Value.all,
+                     Read_Only => True);
+               end if;
+               Child := Child.Next;
+            end loop;
+         end;
+      end if;
    end Casing_Customize;
 
    -----------------------

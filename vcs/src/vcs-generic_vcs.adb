@@ -874,8 +874,6 @@ package body VCS.Generic_VCS is
    is
       pragma Unreferenced (Level, File);
 
-      N   : Node_Ptr := Node;
-
       function Parse_Node (M : Node_Ptr) return Boolean;
       --  Parse one node that contains VCS information.
 
@@ -1128,17 +1126,13 @@ package body VCS.Generic_VCS is
       end Parse_Node;
 
    begin
-      while N /= null loop
-         if N.Tag /= null
-           and then To_Lower (N.Tag.all) = "vcs"
-         then
-            if not Parse_Node (N) then
-               Trace (Me, "Could not parse generic VCS information");
-            end if;
+      if Node.Tag /= null
+        and then To_Lower (Node.Tag.all) = "vcs"
+      then
+         if not Parse_Node (Node) then
+            Trace (Me, "Could not parse generic VCS information");
          end if;
-
-         N := N.Next;
-      end loop;
+      end if;
    end Customize;
 
    -------------

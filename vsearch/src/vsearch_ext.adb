@@ -1608,30 +1608,25 @@ package body Vsearch_Ext is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level, File);
-      N : Node_Ptr := Node;
       Patt, Name : Node_Ptr;
    begin
-      while N /= null loop
-         if N.Tag.all = "vsearch-pattern" then
-            Name := Find_Tag (N.Child, "name");
-            Patt := Find_Tag (N.Child, "regexp");
-            if Patt = null then
-               Patt := Find_Tag (N.Child, "string");
-            end if;
-
-            if Patt /= null and then Name /= null then
-               Register_Search_Pattern
-                 (Kernel         => Kernel,
-                  Name           => Name.Value.all,
-                  Regexp         => Patt.Value.all,
-                  Case_Sensitive =>
-                    To_Lower (Get_Attribute (Patt, "case-sensitive")) = "true",
-                  Is_Regexp      => Patt.Tag.all = "regexp");
-            end if;
+      if Node.Tag.all = "vsearch-pattern" then
+         Name := Find_Tag (Node.Child, "name");
+         Patt := Find_Tag (Node.Child, "regexp");
+         if Patt = null then
+            Patt := Find_Tag (Node.Child, "string");
          end if;
 
-         N := N.Next;
-      end loop;
+         if Patt /= null and then Name /= null then
+            Register_Search_Pattern
+              (Kernel         => Kernel,
+               Name           => Name.Value.all,
+               Regexp         => Patt.Value.all,
+               Case_Sensitive =>
+                 To_Lower (Get_Attribute (Patt, "case-sensitive")) = "true",
+               Is_Regexp      => Patt.Tag.all = "regexp");
+         end if;
+      end if;
    end Customize;
 
    ---------------------

@@ -1493,75 +1493,70 @@ package body Help_Module is
       pragma Unreferenced (Level);
       Name, Descr, Menu, Cat : Node_Ptr;
       Shell, Shell_Lang : GNAT.OS_Lib.String_Access;
-      N     : Node_Ptr := Node;
       Field : Node_Ptr;
    begin
-      while N /= null loop
-         if N.Tag.all = "documentation_file" then
-            Name  := null;
-            Descr := null;
-            Menu  := null;
-            Cat   := null;
-            Shell := null;
-            Shell_Lang := null;
+      if Node.Tag.all = "documentation_file" then
+         Name  := null;
+         Descr := null;
+         Menu  := null;
+         Cat   := null;
+         Shell := null;
+         Shell_Lang := null;
 
-            Field := N.Child;
-            while Field /= null loop
-               if Field.Tag.all = "name" then
-                  Name := Field;
-               elsif Field.Tag.all = "descr" then
-                  Descr := Field;
-               elsif Field.Tag.all = "menu" then
-                  Menu := Field;
-               elsif Field.Tag.all = "category" then
-                  Cat := Field;
-               elsif Field.Tag.all = "shell" then
-                  Shell := new String'(Field.Value.all);
-                  Shell_Lang := new String'
-                    (Get_Attribute (Field, "lang", "shell"));
-               else
-                  Insert
-                    (Kernel,
-                     -"Invalid node in customization file "
-                     & Full_Name (File).all & ": " & Field.Tag.all);
-               end if;
+         Field := Node.Child;
+         while Field /= null loop
+            if Field.Tag.all = "name" then
+               Name := Field;
+            elsif Field.Tag.all = "descr" then
+               Descr := Field;
+            elsif Field.Tag.all = "menu" then
+               Menu := Field;
+            elsif Field.Tag.all = "category" then
+               Cat := Field;
+            elsif Field.Tag.all = "shell" then
+               Shell := new String'(Field.Value.all);
+               Shell_Lang := new String'
+                 (Get_Attribute (Field, "lang", "shell"));
+            else
+               Insert
+                 (Kernel,
+                  -"Invalid node in customization file "
+                  & Full_Name (File).all & ": " & Field.Tag.all);
+            end if;
 
-               Field := Field.Next;
-            end loop;
+            Field := Field.Next;
+         end loop;
 
-            if Name /= null then
-               Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
+         if Name /= null then
+            Trace (Me, "Adding " & Name.Value.all & ' ' & Menu.Value.all);
+            Register_Help
+              (Kernel,
+               HTML_File  => Create_Html (Name.Value.all, Kernel),
+               Descr      => Descr.Value.all,
+               Category   => Cat.Value.all,
+               Menu_Path  => Menu.Value.all);
+         else
+            if Shell = null then
+               Insert
+                 (Kernel,
+                  -("<documentation_file> customization must specify either"
+                    & " a <name> or a <shell> node"),
+                  Mode => Error);
+            else
                Register_Help
                  (Kernel,
-                  HTML_File  => Create_Html (Name.Value.all, Kernel),
+                  HTML_File  => VFS.No_File,
+                  Shell_Cmd  => Shell.all,
+                  Shell_Lang => Shell_Lang.all,
                   Descr      => Descr.Value.all,
                   Category   => Cat.Value.all,
                   Menu_Path  => Menu.Value.all);
-            else
-               if Shell = null then
-                  Insert
-                    (Kernel,
-                     -("<documentation_file> customization must specify either"
-                       & " a <name> or a <shell> node"),
-                     Mode => Error);
-               else
-                  Register_Help
-                    (Kernel,
-                     HTML_File  => VFS.No_File,
-                     Shell_Cmd  => Shell.all,
-                     Shell_Lang => Shell_Lang.all,
-                     Descr      => Descr.Value.all,
-                     Category   => Cat.Value.all,
-                     Menu_Path  => Menu.Value.all);
-               end if;
             end if;
-
-            Free (Shell);
-            Free (Shell_Lang);
          end if;
 
-         N := N.Next;
-      end loop;
+         Free (Shell);
+         Free (Shell_Lang);
+      end if;
    end Customize;
 
    ----------------------

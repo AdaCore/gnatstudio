@@ -1909,42 +1909,37 @@ package body KeyManager_Module is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level, File);
-      N : Node_Ptr := Node;
    begin
-      while N /= null loop
-         if N.Tag.all = "key" then
-            declare
-               Action : constant String := Get_Attribute (N, "action");
-            begin
-               if Action = "" then
-                  Insert (Kernel, -"<key> nodes must have an action attribute",
-                          Mode => Error);
-                  raise Assert_Failure;
-               end if;
+      if Node.Tag.all = "key" then
+         declare
+            Action : constant String := Get_Attribute (Node, "action");
+         begin
+            if Action = "" then
+               Insert (Kernel, -"<key> nodes must have an action attribute",
+                       Mode => Error);
+               raise Assert_Failure;
+            end if;
 
-               if N.Value = null then
-                  Insert (Kernel,
-                            -"Invalid key binding for action " & Action,
-                          Mode => Error);
-                  raise Assert_Failure;
-               end if;
+            if Node.Value = null then
+               Insert (Kernel,
+                       -"Invalid key binding for action " & Action,
+                       Mode => Error);
+               raise Assert_Failure;
+            end if;
 
-               if N.Child /= null then
-                  Insert
-                    (Kernel,
-                     -"Invalid child node for <key> tag", Mode => Error);
-                  raise Assert_Failure;
-               end if;
+            if Node.Child /= null then
+               Insert
+                 (Kernel,
+                  -"Invalid child node for <key> tag", Mode => Error);
+               raise Assert_Failure;
+            end if;
 
-               Bind_Default_Key
-                 (Keymanager_Module.Key_Manager,
-                  Action      => Action,
-                  Default_Key => N.Value.all);
-            end;
-         end if;
-
-         N := N.Next;
-      end loop;
+            Bind_Default_Key
+              (Keymanager_Module.Key_Manager,
+               Action      => Action,
+               Default_Key => Node.Value.all);
+         end;
+      end if;
    end Customize;
 
    ---------------------

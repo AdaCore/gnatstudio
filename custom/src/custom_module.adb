@@ -903,12 +903,8 @@ package body Custom_Module is
          end if;
       end Add_Child;
 
-      N : Node_Ptr := Node;
    begin
-      while N /= null loop
-         Add_Child ("/", N);
-         N := N.Next;
-      end loop;
+      Add_Child ("/", Node);
    end Customize;
 
    -----------------

@@ -960,7 +960,9 @@ package body Project_Viewers is
 
    exception
       when E : others =>
-         Destroy (Wiz);
+         if Wiz /= null then
+            Destroy (Wiz);
+         end if;
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end On_New_Project;
@@ -2921,66 +2923,61 @@ package body Project_Viewers is
       Level  : Customization_Level)
    is
       pragma Unreferenced (Level, File);
-      N : Node_Ptr := Node;
       N2, Child : Node_Ptr;
       Creator : XML_Switches;
       Valid : Boolean;
    begin
-      while N /= null loop
-         if N.Tag.all = "tool" then
-            declare
-               Tool_Name : constant String := Get_Attribute (N, "name");
-            begin
-               if Tool_Name = "" then
-                  Glide_Kernel.Console.Insert
-                    (Kernel, -"Invalid <tool> node, no name specified");
-               else
-                  N2 := N.Child;
-                  while N2 /= null loop
-                     if N2.Tag.all = "switches" then
-                        Valid := True;
+      if Node.Tag.all = "tool" then
+         declare
+            Tool_Name : constant String := Get_Attribute (Node, "name");
+         begin
+            if Tool_Name = "" then
+               Glide_Kernel.Console.Insert
+                 (Kernel, -"Invalid <tool> node, no name specified");
+            else
+               N2 := Node.Child;
+               while N2 /= null loop
+                  if N2.Tag.all = "switches" then
+                     Valid := True;
 
-                        Child := N2.Child;
-                        while Child /= null loop
-                           if Child.Tag.all /= "title"
-                             and then Child.Tag.all /= "check"
-                             and then Child.Tag.all /= "spin"
-                             and then Child.Tag.all /= "radio"
-                             and then Child.Tag.all /= "combo"
-                             and then Child.Tag.all /= "field"
-                             and then Child.Tag.all /= "popup"
-                             and then Child.Tag.all /= "dependency"
-                             and then Child.Tag.all /= "expansion"
-                           then
-                              Insert (Kernel,
-                                      -("Invalid child tag for <switches>"
-                                        & " in customization files: <")
-                                      & Child.Tag.all & '>',
-                                      Mode => Glide_Kernel.Console.Error);
-                              Valid := False;
-                           end if;
-
-                           Child := Child.Next;
-                        end loop;
-
-                        if Valid then
-                           Creator := new XML_Switches_Record'
-                             (Switches_Page_Creator_Record with
-                              XML_Node  => Deep_Copy (N2),
-                              Tool_Name => new String'(Tool_Name),
-                              Languages => Get_Languages_From_Tool_Node (N));
-                           Register_Switches_Page (Kernel, Creator);
+                     Child := N2.Child;
+                     while Child /= null loop
+                        if Child.Tag.all /= "title"
+                          and then Child.Tag.all /= "check"
+                          and then Child.Tag.all /= "spin"
+                          and then Child.Tag.all /= "radio"
+                          and then Child.Tag.all /= "combo"
+                          and then Child.Tag.all /= "field"
+                          and then Child.Tag.all /= "popup"
+                          and then Child.Tag.all /= "dependency"
+                          and then Child.Tag.all /= "expansion"
+                        then
+                           Insert (Kernel,
+                                   -("Invalid child tag for <switches>"
+                                     & " in customization files: <")
+                                   & Child.Tag.all & '>',
+                                   Mode => Glide_Kernel.Console.Error);
+                           Valid := False;
                         end if;
+
+                        Child := Child.Next;
+                     end loop;
+
+                     if Valid then
+                        Creator := new XML_Switches_Record'
+                          (Switches_Page_Creator_Record with
+                           XML_Node  => Deep_Copy (N2),
+                           Tool_Name => new String'(Tool_Name),
+                           Languages => Get_Languages_From_Tool_Node (Node));
+                        Register_Switches_Page (Kernel, Creator);
                      end if;
+                  end if;
 
-                     N2 := N2.Next;
-                  end loop;
-               end if;
-            end;
-         end if;
-
-         N := N.Next;
-      end loop;
+                  N2 := N2.Next;
+               end loop;
+            end if;
+         end;
+      end if;
    end Customize;
 
    ---------------------
