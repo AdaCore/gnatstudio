@@ -24,7 +24,7 @@ with VCS_Module;                use VCS_Module;
 
 package body VCS.Unknown_VCS is
 
-   Unknown_VCS_Name      : constant String := "Unknown VCS";
+   Unknown_VCS_Name : constant String := "Unknown VCS";
 
    use String_List;
 
@@ -42,8 +42,7 @@ package body VCS.Unknown_VCS is
    begin
       Insert
         (Unknown_VCS_Reference.Kernel,
-         -"Warning: could not determine a proper VCS system for file "
-           & File);
+         -"Warning: no VCS set in project properties for " & File);
    end Error;
 
    ------------------
