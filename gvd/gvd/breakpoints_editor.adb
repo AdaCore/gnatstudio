@@ -230,7 +230,7 @@ package body Breakpoints_Editor is
                Set_Active (Editor.Location_Selected, True);
                Add_Unique_Combo_Entry (Editor.File_Combo, Br.File.all);
                Set_Text (Get_Entry (Editor.File_Combo), Br.File.all);
-               Set_Value (Editor.Line_Spin, Gfloat (Br.Line));
+               Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
             else
                Set_Active (Editor.Address_Selected, True);
                Add_Unique_Combo_Entry (Editor.Address_Combo, Br.Address.all);
@@ -303,7 +303,7 @@ package body Breakpoints_Editor is
             Set_Text (Get_Entry (Advanced.Condition_Combo), "");
          end if;
 
-         Set_Value (Advanced.Ignore_Count_Combo, Gfloat (Br.Ignore));
+         Set_Value (Advanced.Ignore_Count_Combo, Grange_Float (Br.Ignore));
 
          Delete_Text (Advanced.Command_Descr);
 
@@ -332,7 +332,8 @@ package body Breakpoints_Editor is
               Get_Text (Get_Entry (Adv.Condition_Combo));
             C : constant Integer :=
               Integer (Get_Value_As_Int (Adv.Ignore_Count_Combo));
-            T : constant String := Get_Text (Adv.Command_Descr);
+            T : constant String := Get_Chars (Adv.Command_Descr);
+
          begin
             --  Send all these commands in "internal" mode, so that no
             --  "info breakpoint" is emitted each time. However, we must
