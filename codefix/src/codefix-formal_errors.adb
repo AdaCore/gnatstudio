@@ -751,7 +751,6 @@ package body Codefix.Formal_Errors is
       Name             : String) return Solution_List
    is
       Str_Array   : array (1 .. Length (Solution_Cursors)) of Dynamic_String;
-      New_Command : Insert_Word_Cmd;
       Cursor_Node : Cursor_Lists.List_Node;
       Index_Str   : Positive := 1;
       Word        : Word_Cursor;
@@ -760,35 +759,37 @@ package body Codefix.Formal_Errors is
       Cursor_Node := First (Solution_Cursors);
 
       while Cursor_Node /= Cursor_Lists.Null_Node loop
-         Assign
-           (Str_Array (Index_Str),
-            Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
+         declare
+            New_Command : Insert_Word_Cmd;
+         begin
+            Assign
+              (Str_Array (Index_Str),
+               Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
 
-         for J in 1 ..  Index_Str - 1 loop
-            if Str_Array (J).all = Str_Array (Index_Str).all then
-               --  ???  Free
-               return Command_List.Null_List;
-            end if;
-         end loop;
+            for J in 1 ..  Index_Str - 1 loop
+               if Str_Array (J).all = Str_Array (Index_Str).all then
+                  --  ???  Free
+                  return Command_List.Null_List;
+               end if;
+            end loop;
 
-         Word :=
-           (File_Cursor (Error_Cursor) with
-            String_Match => new String'(Str_Array (Index_Str).all & "."),
-            Mode         => Text_Ascii);
+            Word :=
+              (File_Cursor (Error_Cursor) with
+               String_Match => new String'(Str_Array (Index_Str).all & "."),
+               Mode         => Text_Ascii);
 
-         Initialize (New_Command, Current_Text, Word);
+            Initialize (New_Command, Current_Text, Word);
 
-         Set_Caption
-           (New_Command,
-            "Prefix """ & Name & """ by """ &
-              Str_Array (Index_Str).all & """");
+            Set_Caption
+              (New_Command,
+               "Prefix """ & Name & """ by """ &
+                 Str_Array (Index_Str).all & """");
 
-         Append (Result, New_Command);
+            Append (Result, New_Command);
 
-         Unchecked_Free (New_Command);
-
-         Index_Str := Index_Str + 1;
-         Cursor_Node := Next (Cursor_Node);
+            Index_Str := Index_Str + 1;
+            Cursor_Node := Next (Cursor_Node);
+         end;
       end loop;
 
       return Result;
