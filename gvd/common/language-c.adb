@@ -21,6 +21,7 @@
 with GNAT.Regpat;       use GNAT.Regpat;
 with Pixmaps_IDE;       use Pixmaps_IDE;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Basic_Types;       use Basic_Types;
 
 package body Language.C is
 
@@ -189,5 +190,133 @@ package body Language.C is
          Quote_Character               => '\',
          Constant_Character            => ''');
    end Get_Language_Context;
+
+   ----------------------
+   -- Next_Indentation --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access C_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang);
+
+      S           : Unchecked_String_Access := To_Unchecked_String (Buffer);
+      First       : Natural := Buffer_Length - 1;
+      Index       : Natural;
+      Offset      : Integer := 0;
+      No_Contents : Boolean := True;
+
+   begin
+      --  Go to beginning of line
+
+      while First > 1 and then S (First - 1) /= ASCII.LF loop
+         First := First - 1;
+      end loop;
+
+      Index := First;
+
+      while Index < Buffer_Length
+        and then (S (Index) = ' ' or else S (Index) = ASCII.HT)
+      loop
+         Index := Index + 1;
+      end loop;
+
+      Indent := Index - First;
+
+      while Index < Buffer_Length loop
+         case S (Index) is
+            when ASCII.NUL .. ' ' =>
+               null;
+
+            when '{' | '(' =>
+               Offset := Offset + Indent_Params.Indent_Level;
+
+            when '}' | ')' =>
+               Offset := Offset - Indent_Params.Indent_Level;
+
+            when '"' =>
+               No_Contents := False;
+
+               --  Skip string
+
+               Index := Index + 1;
+
+               while Index < Buffer_Length
+                 and then (S (Index) /= '"' or else S (Index - 1) = '\')
+                 and then S (Index) /= ASCII.LF
+               loop
+                  Index := Index + 1;
+               end loop;
+
+            when ''' =>
+               No_Contents := False;
+
+               --  Skip character
+
+               Index := Index + 1;
+
+               while Index < Buffer_Length
+                 and then (S (Index) /= ''' or else S (Index - 1) = '\')
+                 and then S (Index) /= ASCII.LF
+               loop
+                  Index := Index + 1;
+               end loop;
+
+            when '/' =>
+               No_Contents := False;
+
+               --  Comment ?
+
+               if S (Index + 1) = '/' then
+                  --  C++ style comment, skip whole line
+
+                  Index := Index + 2;
+
+                  while Index < Buffer_Length
+                    and then S (Index) /= ASCII.LF
+                  loop
+                     Index := Index + 1;
+                  end loop;
+
+               elsif S (Index + 1) = '*' then
+                  --  Skip comment
+
+                  Index := Index + 3;
+
+                  while Index < Buffer_Length
+                    and then (S (Index - 1) /= '*'
+                      or else S (Index) /= '/')
+                  loop
+                     Index := Index + 1;
+                  end loop;
+               end if;
+
+            when others =>
+               No_Contents := False;
+         end case;
+
+         Index := Index + 1;
+      end loop;
+
+      if -Offset > Indent then
+         Next_Indent := 0;
+
+         if No_Contents then
+            Indent := 0;
+         end if;
+
+      else
+         Next_Indent := Indent + Offset;
+
+         if Offset < 0 and then No_Contents then
+            Indent := Next_Indent;
+         end if;
+      end if;
+   end Next_Indentation;
 
 end Language.C;

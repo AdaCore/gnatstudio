@@ -46,11 +46,12 @@ package Language.C is
      (Lang : access C_Language) return Language_Context;
 
    C_Keywords_Regexp : constant String :=
-     "do|e(lse|xtern)|for|if|s(t(atic|ruct)|witch)|union|while|typedef";
+     "auto|c(ase|onst)|do|e(lse|xtern)|for|if|register|" &
+     "s(t(atic|ruct)|witch)|union|volatile|while|typedef";
    --  Regexp used to highlight keywords in C.
    --  Do not use this directly, use the function Keywords instead.
-   --  ("struct" "union" "extern" "for" "if" "do" "else" "while" "switch"
-   --  "static" "typedef")
+   --  ("auto" "case" "const" "struct" "union" "extern" "for" "if" "do"
+        "else" "while" "register" "switch" "static" "typedef" "volatile")
 
    --------------
    -- Explorer --
@@ -76,6 +77,18 @@ package Language.C is
      (Lang  : access C_Language;
       Name  : String;
       Field : String) return String;
+
+   ----------------------
+   -- Source Analyzing --
+   ----------------------
+
+   procedure Next_Indentation
+     (Lang          : access C_Language;
+      Buffer        : Interfaces.C.Strings.chars_ptr;
+      Buffer_Length : Natural;
+      Indent        : out Natural;
+      Next_Indent   : out Natural;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
 private
    type C_Language is new Language_Root with null record;
