@@ -1645,6 +1645,8 @@ package body Src_Editor_Buffer is
 
       Slice_Offset_Column : Gint;
       Result              : Boolean;
+      Slice               : Unchecked_String_Access;
+      pragma Suppress (Access_Check, Slice);
 
       function Highlight_Cb
         (Entity         : Language_Entity;
@@ -1673,9 +1675,14 @@ package body Src_Editor_Buffer is
          Sloc_End       : Source_Location;
          Partial_Entity : Boolean) return Boolean
       is
-         Success     : Boolean;
-         Col, Line   : Gint;
-         Buffer_Line : Buffer_Line_Type;
+         Success      : Boolean;
+         First_Line   : Gint;
+         Start_Line   : Integer := 0;
+         End_Index    : Integer;
+         Col, Line    : Gint;
+         Offset       : Gint;
+         Buffer_Line  : Buffer_Line_Type;
+
       begin
          --  Some parsers currently leave line numbers to 0. Don't highlight in
          --  this case, since we cannot use from the byte index due to
@@ -1688,12 +1695,13 @@ package body Src_Editor_Buffer is
          --  Don't need to take into account the offset column, unless we are
          --  still on the same line that we started at.
 
-         if Gint (Sloc_Start.Line) = 1 then
-            Col := Gint (Sloc_Start.Column) + Slice_Offset_Column - 1;
+         if Sloc_Start.Line = 1 then
+            Offset := Slice_Offset_Column;
          else
-            Col := Gint (Sloc_Start.Column) - 1;
+            Offset := 0;
          end if;
 
+         Col := Gint (Sloc_Start.Column) + Offset - 1;
          Buffer_Line := Buffer_Line_Type (Sloc_Start.Line) + Slice_Offset_Line;
 
          if Buffer_Line = 0 then
@@ -1703,10 +1711,19 @@ package body Src_Editor_Buffer is
          Line := Gint (Buffer_Line - 1);
 
          if not Is_Valid_Position (Buffer, Line, Col) then
-            Trace (Me, "invalid position");
-            return False;
+            --  Most likely, Slice is containing UTF8 chars, so count them
+            --  to convert the column in number of utf8 chars
+
+            Start_Line := Line_Start (Slice.all, Sloc_Start.Index);
+            Col := Gint (UTF8_Strlen (Slice (Start_Line .. Sloc_Start.Index)));
+
+            if not Is_Valid_Position (Buffer, Line, Col) then
+               Trace (Me, "invalid position");
+               return False;
+            end if;
          end if;
 
+         First_Line := Line;
          Get_Iter_At_Line_Index (Buffer, Entity_Start, Line, Col);
 
          --  If the column is 0, the entity really ended on the end of the
@@ -1726,14 +1743,30 @@ package body Src_Editor_Buffer is
 
          else
             if Gint (Sloc_End.Line) = 1 then
-               Col := Gint (Sloc_End.Column) + Slice_Offset_Column - 1;
+               Offset := Slice_Offset_Column;
             else
-               Col := Gint (Sloc_End.Column) - 1;
+               Offset := 0;
             end if;
 
+            Col := Gint (Sloc_End.Column) + Offset - 1;
+
             if not Is_Valid_Position (Buffer, Line, Col) then
-               Trace (Me, "invalid position");
-               return False;
+               End_Index := Sloc_End.Index;
+
+               if First_Line /= Line or else Start_Line = 0 then
+                  if Slice (Sloc_End.Index) = ASCII.LF then
+                     End_Index := Sloc_End.Index - 1;
+                  end if;
+
+                  Start_Line := Line_Start (Slice.all, End_Index);
+               end if;
+
+               Col := Gint (UTF8_Strlen (Slice (Start_Line .. End_Index)));
+
+               if not Is_Valid_Position (Buffer, Line, Col) then
+                  Trace (Me, "invalid position");
+                  return False;
+               end if;
             end if;
 
             Get_Iter_At_Line_Index (Buffer, Entity_End, Line, Col);
@@ -1758,9 +1791,6 @@ package body Src_Editor_Buffer is
       procedure Local_Highlight is
          UTF8   : constant Interfaces.C.Strings.chars_ptr :=
            Get_Slice (Entity_Start, Entity_End);
-         Slice : constant Unchecked_String_Access :=
-           To_Unchecked_String (UTF8);
-         pragma Suppress (Access_Check, Slice);
 
          --  Can't use Get_Offset (Entity_End) - Get_Offset (Entity_Start)
          --  since this would give the number of chars, not bytes.
@@ -1768,6 +1798,7 @@ package body Src_Editor_Buffer is
          Length : constant Integer := Integer (Strlen (UTF8));
 
       begin
+         Slice := To_Unchecked_String (UTF8);
          Highlight_Complete  := True;
          Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
@@ -1782,6 +1813,7 @@ package body Src_Editor_Buffer is
            (Buffer.Lang,
             Slice (1 .. Length),
             Highlight_Cb'Unrestricted_Access);
+         Slice := null;
          g_free (UTF8);
       end Local_Highlight;
 
