@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -189,8 +189,7 @@ package body Creation_Wizard is
          declare
             Project  : constant String := Get_Text (W.Project_Name);
             Prj_File : constant String := To_File_Name (Project);
-            Location : constant String :=
-              Dir_Name (Get_Text (W.Project_Location));
+            Location : constant String := Get_Text (W.Project_Location);
 
          begin
             if not Is_Valid_Project_Name (Project) then
@@ -229,7 +228,12 @@ package body Creation_Wizard is
                   Dialog_Type => Information,
                   Buttons => Button_Yes or Button_No) = Button_Yes
                then
-                  Make_Dir (Location);
+                  begin
+                     Make_Dir (Location);
+                  exception
+                     when Directory_Error =>
+                        null;
+                  end;
                end if;
             end if;
          end;
@@ -344,7 +348,7 @@ package body Creation_Wizard is
         (Title          => -"Select project file location",
          Parent         => Gtk_Window (Get_Toplevel (W)),
          Base_Directory => Name_As_Directory
-         (Get_Text (Prj_Wizard (W).Project_Location)),
+           (Get_Text (Prj_Wizard (W).Project_Location)),
          History        => Get_History (Prj_Wizard (W).Kernel));
    begin
       if Name /= "" then
