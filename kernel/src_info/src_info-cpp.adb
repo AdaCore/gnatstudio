@@ -61,9 +61,9 @@ package body Src_Info.CPP is
                            SN_Table : in out SN_Table_Array);
 
    procedure Sym_GV_Handler (Sym : FIL_Table; File : in out LI_File_Ptr;
-                           SN_Table : in out SN_Table_Array);
+                             SN_Table : in out SN_Table_Array);
    procedure Sym_FU_Handler (Sym : FIL_Table; File : in out LI_File_Ptr;
-                           SN_Table : in out SN_Table_Array);
+                             SN_Table : in out SN_Table_Array);
    ---------
    -- Ext --
    ---------
@@ -239,31 +239,37 @@ package body Src_Info.CPP is
       null;
    end Sym_Default_Handler;
 
-   procedure Builtin_Type_To_Kind (Type_Name : in String; Kind : out E_Kind;
-      Success : out Boolean);
+   type CType_Description is
+      record
+         Kind         : E_Kind;
+         IsVolatile   : Boolean;
+         IsConst      : Boolean;
+      end record;
+
+   procedure Builtin_Type_To_Kind (Type_Name : in String;
+      Desc : out CType_Description; Success : out Boolean);
    --  Attempts to convert string into E_Kind assuming that the string
    --  is a builtin C type. If conversion fails returns False
 
    --------------------------
    -- Builtin_Type_To_Kind --
    --------------------------
-   procedure Builtin_Type_To_Kind (Type_Name : in String; Kind : out E_Kind;
-      Success : out Boolean) is
+   procedure Builtin_Type_To_Kind (Type_Name : in String;
+      Desc : out CType_Description; Success : out Boolean) is
    begin
-      -- TODO volatile modifier
       if Type_Name = "char"          or Type_Name = "signed char"
          or Type_Name = "int"        or Type_Name = "signed int"
          or Type_Name = "long"       or Type_Name = "signed long"
          or Type_Name = "long long"  or Type_Name = "signed long long"
          or Type_Name = "short"      or Type_Name = "signed short" then
-         Kind := Signed_Integer_Type;
+         Desc.Kind := Signed_Integer_Type;
          Success := True;
       elsif Type_Name = "unsigned char"
          or Type_Name = "unsigned int"
          or Type_Name = "unsigned long"
          or Type_Name = "unsigned long long"
          or Type_Name = "unsigned short" then
-         Kind := Modular_Integer_Type;
+         Desc.Kind := Modular_Integer_Type;
          Success := True;
       else
          Success := False;
@@ -271,29 +277,64 @@ package body Src_Info.CPP is
    end Builtin_Type_To_Kind;
 
    procedure Type_Name_To_Kind (SN_Table : in out SN_Table_Array;
-      Type_Name : in String; Kind : out E_Kind; Success : out Boolean);
+      Type_Name : in String; Desc : out CType_Description;
+      Success : out Boolean);
    --  Attempts to convert type name into E_Kind. Searches up for
    --  the name in the class, typedef, etc. tables.
 
    Function_Type_Pat : constant Pattern_Matcher
                      := Compile ("\(([^\)]+)\)\s*\(\)\s*$");
+   --  Regexp used to cut functional type definition
+   --  example: int (*[]) ()
+   --                ^^^ this is cut
+
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
    procedure Type_Name_To_Kind (SN_Table : in out SN_Table_Array;
-      Type_Name : in String; Kind : out E_Kind; Success : out Boolean) is
-      Matches  : Match_Array (1 .. 1);
+      Type_Name : in String; Desc : out CType_Description;
+      Success : out Boolean) is
+      Matches      : Match_Array (1 .. 1);
+      Volatile_Str : constant String := "volatile ";
+      Const_Str    : constant String := "const ";
 
    begin
+      Desc.IsVolatile := False;
+      Desc.IsConst    := False;
+      --  check for leading volatile/const modifier
+      if Type_Name'Length > Volatile_Str'Length
+         and then Type_Name (Type_Name'First ..
+                    Type_Name'First + Volatile_Str'Length - 1)
+                    = Volatile_Str then
+         --  Put_Line ("volatile ");
+         Type_Name_To_Kind (SN_Table, Type_Name
+            (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
+            Desc, Success);
+         Desc.IsVolatile := True;
+         return;
+      end if;
+
+      if Type_Name'Length > Const_Str'Length
+         and then Type_Name (Type_Name'First ..
+                    Type_Name'First + Const_Str'Length - 1)
+                    = Const_Str then
+         --  Put_Line ("const ");
+         Type_Name_To_Kind (SN_Table, Type_Name
+            (Type_Name'First + Const_Str'Length .. Type_Name'Last),
+            Desc, Success);
+         Desc.IsConst := True;
+         return;
+      end if;
       --  first try builtin type
-      Builtin_Type_To_Kind (Type_Name, Kind, Success);
+      Builtin_Type_To_Kind (Type_Name, Desc, Success);
       if Success then
+         --  Put_Line ("builtin type");
          return;
       end if;
 
       if Type_Name (Type_Name'Last) = '*' then
-         Success := True;
-         Kind    := Access_Type;
+         Success      := True;
+         Desc.Kind    := Access_Type;
          return;
       end if;
 
@@ -304,16 +345,18 @@ package body Src_Info.CPP is
             Success := False;
             return;
          end if;
+         --  Put_Line ("functional ");
          Type_Name_To_Kind (SN_Table,
             Type_Name (Matches (1).First ..  Matches (1).Last),
-            Kind, Success);
+            Desc, Success);
          return;
       end if;
 
       if Type_Name (Type_Name'Last) = ']' then
          --  array
-         Success := True;
-         Kind    := Array_Type;
+         Success      := True;
+         Desc.Kind    := Array_Type;
+         --  Put_Line ("pointer");
          return;
       end if;
 
@@ -324,7 +367,7 @@ package body Src_Info.CPP is
          Typedef   := Find (SN_Table (T), Type_Name);
          Type_Name_To_Kind (SN_Table, Typedef.Buffer (
                  Typedef.Original.First .. Typedef.Original.Last),
-                 Kind, Success);
+                 Desc, Success);
          if Success then
             Free (Typedef);
             Success := True;
@@ -346,7 +389,7 @@ package body Src_Info.CPP is
       begin
          Class_Def := Find (SN_Table (CL), Type_Name);
          Free (Class_Def);
-         Kind := Record_Type;
+         Desc.Kind := Record_Type;
          Success := True;
          return;
       exception
@@ -364,7 +407,7 @@ package body Src_Info.CPP is
    procedure Sym_GV_Handler (Sym : FIL_Table;
                            File : in out LI_File_Ptr;
                            SN_Table : in out SN_Table_Array) is
-      Kind       : E_Kind;
+      Desc       : CType_Description;
       Var        : GV_Table;
       Success    : Boolean;
       tmp_ptr    : E_Declaration_Info_List;
@@ -378,14 +421,14 @@ package body Src_Info.CPP is
       Var := Find (SN_Table (GV), Sym.Buffer
          (Sym.Identifier.First .. Sym.Identifier.Last));
       Type_Name_To_Kind (SN_Table, Var.Buffer
-         (Var.Value_Type.First .. Var.Value_Type.Last), Kind, Success);
+         (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
       if not Success then
          Free (Var);
          return; -- type not found, ignore errors
       end if;
       Attributes := SN_Attributes (Var.Attributes);
       if (Attributes and SN_STATIC) = SN_STATIC then
-         Scope := Statis_Local;
+         Scope := Static_Local;
       end if;
       Insert_Declaration (
          Handler => LI_Handler (Global_CPP_Handler),
@@ -395,7 +438,7 @@ package body Src_Info.CPP is
          Source_Filename =>
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
          Location => Sym.Start_Position,
-         Kind => Kind,
+         Kind => Desc.Kind,
          Scope => Scope,
          Declaration_Info => tmp_ptr
       );
