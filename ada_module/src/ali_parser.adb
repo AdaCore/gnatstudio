@@ -762,7 +762,7 @@ package body ALI_Parser is
          end if;
       end loop;
 
-      Trace (Me, "Need to resolve closure: parsing "
+      Trace (Assert_Me, "Need to resolve closure: parsing "
              & Base_Name (Get_Filename (Sfiles (File_Num).File))
                & " at " & Line'Img & Column'Img);
 
@@ -961,7 +961,10 @@ package body ALI_Parser is
 
          Result := Scan_ALI
            (Namet.Name_Find, Convert (Buffer),
-            Ignore_ED => True, Err => True, Read_Xref => True);
+            Ignore_ED     => True,
+            Err           => True,
+            Ignore_Errors => True,
+            Read_Xref     => True);
          Free (Buffer);
 
          return Result;

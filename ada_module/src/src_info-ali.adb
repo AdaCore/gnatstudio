@@ -864,8 +864,10 @@ package body Src_Info.ALI is
 
          return Scan_ALI
            (Filename_Id, Buffer_Ptr,
-            Ignore_ED => True, Err => True,
-            Read_Xref => True);
+            Ignore_ED     => True,
+            Err           => True,
+            Ignore_Errors => True,
+            Read_Xref     => True);
          --  Notes:
          --    - Ignored_ED = True because we don't need the Elaboration
          --      Desirable indications for the moment...
