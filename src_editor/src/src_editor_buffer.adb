@@ -41,6 +41,8 @@ with System;
 with String_Utils;           use String_Utils;
 with OS_Utils;               use OS_Utils;
 
+with Commands.Editor;        use Commands.Editor;
+
 package body Src_Editor_Buffer is
 
    use type System.Address;
@@ -140,6 +142,12 @@ package body Src_Editor_Buffer is
    --  done before the deletion and the location of deletion.
    --
    --  This procedure assumes that the language has been set.
+
+   procedure Delete_Range_Before_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Handler connected to the "delete_range" signal, but which occurs before
+   --  the actual deletion.
 
    procedure Delete_Range_Handler
      (Buffer : access Source_Buffer_Record'Class;
@@ -324,26 +332,73 @@ package body Src_Editor_Buffer is
 
    procedure First_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
-      Params : Glib.Values.GValues) is
+      Params : Glib.Values.GValues)
+   is
+      Pos         : Gtk_Text_Iter;
+      Length      : constant Gint := Get_Int (Nth (Params, 3));
+      Text        : constant String :=
+        Get_String (Nth (Params, 2), Length => Length);
+      Command     : Editor_Command
+        := Editor_Command (Buffer.Current_Command);
    begin
       if Buffer.Inserting then
          return;
       end if;
 
+      Get_Text_Iter (Nth (Params, 1), Pos);
+
+      if Is_Null_Command (Command) then
+         Create (Command,
+                 Insertion,
+                 Source_Buffer (Buffer),
+                 True,
+                 Natural (Get_Line (Pos)),
+                 Natural (Get_Line_Offset (Pos)));
+         Add_Text (Command, Text);
+         Buffer.Current_Command := Command_Access (Command);
+
+      else
+         if Get_Mode (Command) = Insertion then
+            if Length = 1
+              and then (Text (1) = ASCII.LF
+                        or else Text (1) = ' ')
+            then
+               End_Action (Buffer);
+               Create (Command,
+                       Insertion,
+                       Source_Buffer (Buffer),
+                       True,
+                       Natural (Get_Line (Pos)),
+                       Natural (Get_Line_Offset (Pos)));
+               Add_Text (Command, Text);
+               Buffer.Current_Command := Command_Access (Command);
+
+            else
+               Add_Text (Command, Text);
+               Buffer.Current_Command := Command_Access (Command);
+            end if;
+
+         else
+            End_Action (Buffer);
+            Create (Command,
+                    Insertion,
+                    Source_Buffer (Buffer),
+                    True,
+                    Natural (Get_Line (Pos)),
+                    Natural (Get_Line_Offset (Pos)));
+            Add_Text (Command, Text);
+            Buffer.Current_Command := Command_Access (Command);
+         end if;
+      end if;
+
       if Automatic_Indentation and then Buffer.Lang /= null then
          declare
-            Pos         : Gtk_Text_Iter;
-            Length      : constant Gint := Get_Int (Nth (Params, 3));
-            Text        : constant String :=
-              Get_String (Nth (Params, 2), Length => Length);
             Indent      : Natural;
             Next_Indent : Natural;
             Line, Col   : Gint;
             C_Str       : Gtkada.Types.Chars_Ptr;
 
          begin
-            Get_Text_Iter (Nth (Params, 1), Pos);
-
             if Length = 1 and then Text (1) = ASCII.LF then
                Get_Cursor_Position (Buffer, Line, Col);
 
@@ -466,6 +521,48 @@ package body Src_Editor_Buffer is
          end;
       end if;
    end Delete_Range_Handler;
+
+   ---------------------------------
+   -- Delete_Range_Before_Handler --
+   ---------------------------------
+
+   procedure Delete_Range_Before_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+
+      Command : Editor_Command
+        := Editor_Command (Buffer.Current_Command);
+   begin
+      Get_Text_Iter (Nth (Params, 1), Start_Iter);
+      Get_Text_Iter (Nth (Params, 2), End_Iter);
+
+      if not Buffer.Inserting then
+         if not Is_Null_Command (Command)
+           and then Get_Mode (Command) /= Deletion
+         then
+            End_Action (Buffer);
+            Command := Editor_Command (Buffer.Current_Command);
+         end if;
+
+         if Is_Null_Command (Command) then
+            Create (Command,
+                    Deletion,
+                    Source_Buffer (Buffer),
+                    True,
+                    Natural (Get_Line (Start_Iter)),
+                    Natural (Get_Line_Offset (Start_Iter)));
+         end if;
+
+         Add_Text (Command,
+                   Get_Slice (Buffer, Start_Iter, End_Iter, True),
+                   Natural (Get_Line (Start_Iter)),
+                   Natural (Get_Line_Offset (Start_Iter)));
+         Buffer.Current_Command := Command_Access (Command);
+      end if;
+   end Delete_Range_Before_Handler;
 
    ------------------------------
    -- Emit_New_Cursor_Position --
@@ -723,6 +820,10 @@ package body Src_Editor_Buffer is
       --  access it very often.
       Buffer.Insert_Mark := Get_Insert (Buffer);
 
+      --  Initialize the queue for editor commands
+
+      Buffer.Queue := New_Queue;
+
       --  And finally, connect ourselves to the interestings signals
 
       Buffer_Callback.Connect
@@ -742,6 +843,10 @@ package body Src_Editor_Buffer is
         (Buffer, "delete_range",
          Cb => Delete_Range_Handler'Access,
          After => True);
+      Buffer_Callback.Connect
+        (Buffer, "delete_range",
+         Cb => Delete_Range_Before_Handler'Access,
+         After => False);
    end Initialize;
 
    ---------------
@@ -769,6 +874,7 @@ package body Src_Editor_Buffer is
       end if;
 
       Clear (Buffer);
+      Buffer.Inserting := True;
 
       if Lang_Autodetect then
          Set_Language
@@ -794,6 +900,7 @@ package body Src_Editor_Buffer is
       Free (Contents);
       Strip_Ending_Line_Terminator (Buffer);
       Set_Modified (Buffer, False);
+      Buffer.Inserting := False;
    end Load_File;
 
    ------------------
@@ -1139,18 +1246,60 @@ package body Src_Editor_Buffer is
    ------------
 
    procedure Insert
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint;
-      Text    : String)
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Text        : String;
+      Enable_Undo : Boolean := True)
    is
       Iter : Gtk_Text_Iter;
+      Previous_Inserting_Value : Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
+      if not Enable_Undo then
+         Buffer.Inserting := True;
+      end if;
+
       Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
       Insert (Buffer, Iter, Text);
+
+      if not Enable_Undo then
+         Buffer.Inserting := Previous_Inserting_Value;
+      end if;
    end Insert;
+
+   ------------
+   -- Delete --
+   ------------
+
+   procedure Delete
+     (Buffer      : access Source_Buffer_Record;
+      Line        : Gint;
+      Column      : Gint;
+      Length      : Gint;
+      Enable_Undo : Boolean := True)
+   is
+      Iter     : Gtk_Text_Iter;
+      End_Iter : Gtk_Text_Iter;
+      Result   : Boolean;
+      Previous_Inserting_Value : Boolean := Buffer.Inserting;
+   begin
+      pragma Assert (Is_Valid_Position (Buffer, Line, Column));
+
+      if not Enable_Undo then
+         Buffer.Inserting := True;
+      end if;
+
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+      Copy (Iter, End_Iter);
+      Forward_Chars (End_Iter, Length, Result);
+      Delete (Buffer, Iter, End_Iter);
+
+      if not Enable_Undo then
+         Buffer.Inserting := Previous_Inserting_Value;
+      end if;
+   end Delete;
 
    -------------------
    -- Replace_Slice --
@@ -1344,5 +1493,44 @@ package body Src_Editor_Buffer is
       Get_End_Iter (Buffer, End_Iter);
       Remove_Tag (Buffer, Buffer.HL_Region_Tag, Start_Iter, End_Iter);
    end Unhighlight_All;
+
+   ----------------
+   -- End_Action --
+   ----------------
+
+   procedure End_Action (Buffer : access Source_Buffer_Record)
+   is
+      Command : Editor_Command
+        := Editor_Command (Buffer.Current_Command);
+   begin
+      if not Is_Null_Command (Command) then
+         Enqueue (Buffer.Queue, Command);
+         Buffer.Current_Command := null;
+      end if;
+   end End_Action;
+
+   ----------
+   -- Redo --
+   ----------
+
+   procedure Redo (Buffer : access Source_Buffer_Record) is
+   begin
+      Redo (Buffer.Queue);
+   end Redo;
+
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (Buffer : access Source_Buffer_Record) is
+      Command : Editor_Command
+        := Editor_Command (Buffer.Current_Command);
+   begin
+      if not Is_Null_Command (Command) then
+         End_Action (Buffer);
+      end if;
+
+      Undo (Buffer.Queue);
+   end Undo;
 
 end Src_Editor_Buffer;
