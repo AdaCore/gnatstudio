@@ -2449,8 +2449,15 @@ window, see @ref{The Locations Tree}.
 This capability requires support for cross-references.
 This item is also accessible through the editor's contextual menu
 
-@c @item Start Of Statement
-@c @item End Of Statement
+@item Start Of Statement
+@cindex Start Of Statement
+Move the cursor position to the start of the current statement, does
+nothing if the current position is not inside a statement.
+
+@item End Of Statement
+@cindex End Of Statement
+Move the current cursor position to the end of the statement, does
+nothing if the current position is not inside a statement.
 
 @item Next Subprogram
 @cindex Next Subprogram
@@ -5565,11 +5572,15 @@ end case;
 
 @item Reserved word casing
 How the editor should handle reserved words casing.
-The 4 possible values are: @code{Unchanged, Upper, Lower, Mixed}.
+The 5 possible values are: @code{Unchanged, Upper, Lower, Mixed, Smart_Mixed}.
 @code{Unchanged} will keep the casing as-is;
 @code{Upper} will change the casing of all reserved words to upper case;
 @code{Lower} will change the casing to lower case;
-@code{Mixed} will change the casing to mixed case.
+@code{Mixed} will change the casing to mixed case (all characters to
+lower case except first character and characters after an underscore
+which are set to upper case).
+@code{Smart_Mixed} As above but do not force upper case characters to
+lower case.
 
 @item Identifier casing
 How the editor should handle identifiers casing.
