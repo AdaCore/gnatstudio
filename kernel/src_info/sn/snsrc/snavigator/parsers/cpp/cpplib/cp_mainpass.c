@@ -120,6 +120,11 @@ extern int get_class_or_typedef( char *name, char *type )
    return 0;
 }
 
+int get_template_argument (const char* class_name, const char* fn_name,
+                                                const char* type_name) {
+    return 0;
+}
+
 extern int put_cross_ref ( int type,int scope_type,int scope_lev,
    char *fnc_cls,char *fnc,char *fnc_arg_types,char *scope,char *what,
    char *arg_types,char *file,int lineno,int charno,int acc)

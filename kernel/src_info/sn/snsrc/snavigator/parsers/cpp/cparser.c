@@ -182,6 +182,39 @@ struct sDeclarator
    int name_charno_beg;
 };
 
+
+/*
+ * Template parameters have two kinds: type and value
+ *
+ * 1. Type parameters
+ *   - class identifier
+ *   - class identifier = typeid
+ *   - typename identifier
+ *   - typename identifier = typeid
+ *   - template <template parameter list> identifier
+ *   - template <template parameter list> identifier = id-expr
+ * 2. Value parameters, just like function arguments
+ */
+enum template_param_kind {
+    TPK_CLASS,
+    TPK_TYPENAME,
+    TPK_TEMPLATE,
+    TPK_VALUE
+};
+
+typedef struct template_param_tag {
+    enum template_param_kind kind;
+
+    LongString type; /* contains either class, typename or template */
+    int type_lineno, type_charno; /* the end may be computed */
+    LongString name;
+    int name_lineno, name_charno; /* the end may be computed */
+
+    struct template_param_tag* params;
+
+    struct template_param_tag* next;
+} template_param;
+
 static int depth;
 
 struct sIfstack
@@ -294,7 +327,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
 extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t Declarator );
 extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t Declarator, int lineno_end, int charno_end, int lineno_brace_beg, int charno_brace_beg, char *comment );
 extern void class_empty_declarator_list( Class_t Class, Declaration_t Declaration );
-extern void template_argument_skip( LongString *plstr );
+extern template_param* template_argument_skip( LongString *plstr );
 extern int namespace_name( LongString *plstr );
 extern void skip_declaration( void );
 extern int skip_member_declaration( void );
@@ -361,6 +394,8 @@ extern void f_read_end( void );
 extern void HighLightBeg( void );
 extern void HighLight( void );
 extern void HighLightEnd( void );
+
+void free_template_param (template_param* tp);
 
 extern void start_parser( char *filename_a, int is_cpp, FILE *pf_hig, int mode )
 {
@@ -480,10 +515,13 @@ extern void declaration( Declaration_t Declaration )
 #endif
 }
 
+template_param* g_tp = 0;
+
 extern int _declaration( Declaration_t Declaration )
 {
    int iRetval;
    sDeclaration_t sDeclaration;
+   template_param* tp;
 
    niveau++;
 
@@ -585,10 +623,15 @@ extern int template_declaration( Declaration_t Declaration )
       }
    }
 
+
    if( token( 0 ) == '<' )
    {
-      template_argument_skip( &Declaration->name );
+      g_tp = template_argument_skip( &Declaration->name );
       declaration( Declaration );
+      if ( g_tp ) {
+          free_template_param (g_tp);
+          g_tp = 0;
+      }
       niveau--;
       return True;
    }
@@ -1026,6 +1069,7 @@ extern int declarator_list( Declaration_t Declaration )
             char *comment = get_comment( f_lineno( -1 ));
             char *classname_save = classname_g;             /* 08.04.97 */
             char *funcname_save = funcname_g;               /* 08.04.97 */
+
 
             classname_g = my_strdup( get_scope( sDeclarator.name.buf )); /* 07.04.97 */
             funcname_g  = my_strdup( get_name ( sDeclarator.name.buf )); /* 07.04.97 */
@@ -1658,6 +1702,7 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
    int t;
    char *comment;
    char *classname_save;         /* 08.04.97 rigo */
+   template_param* tp = 0, *tp_save;
 
    niveau++;
 
@@ -1716,7 +1761,7 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
 
       if( token( 0 ) == '<' )
       {
-         template_argument_skip( &Class->name );
+         g_tp = template_argument_skip( &Class->name );
       }
 
       Class->lineno_end = f_lineno( -1 );
@@ -1738,7 +1783,10 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
          comment = get_comment( Class->lineno_end );
          classname_save = classname_g;                   /* 08.04.97 */
          classname_g = my_strdup( Class->name.buf );         /* 07.04.97 */
+         tp_save = g_tp;
+         g_tp = 0; /* prevent class members from being template */
          member_list( Class );
+         g_tp = tp_save;
          while(( t = token( 0 )) != RBRACE && t != 0 )   /* t != 0 10.02.97 rigo */
          {
             step( 1 );
@@ -1778,11 +1826,38 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
                    , Class->lineno_end
                    , Class->charno_end
                    );
+
+           for ( tp = g_tp; tp; tp = tp->next ) {
+                 Put_symbol( PAF_TEMPLATE_ARG_DEF
+                           , get_name( Class->name.buf )
+                           , tp->name.buf
+                           , filename_g
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->type_lineno
+                           , tp->type_charno
+                           , 0 /* attrs */
+                           , tp->type.buf
+                           , template_args
+                           , (char *) 0
+                           , 0
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->name_lineno
+                           , tp->name_charno + strlen (tp->name.buf)
+                           );
+           } 
+
+           if ( g_tp ) {
+              free_template_param (g_tp);
+              g_tp = 0;
+           }
       }
       if( Declaration )
       {
          LongStringsMyAppend( &Declaration->type_name, &Class->name );
       }
+
       niveau--;
       return True;
 
@@ -2330,6 +2405,30 @@ extern int _member_declaration( Class_t Class )
             Restore_d();
             Return( False )
          }
+         break;
+
+      case SN_TEMPLATE : {
+         template_param* save_tp = g_tp;
+         g_tp = 0;
+         if ( token (1) == '<' ) {
+             step (1);
+             g_tp = template_argument_skip( &sDeclaration.name );
+             if( member_declaration( Class )) {
+                 free_template_param (g_tp);
+                 g_tp = save_tp;
+                 Return( True )
+             } else {
+                 free_template_param (g_tp);
+                 g_tp = save_tp;
+                 Restore_d();
+                 Return( False )
+             }
+         } else {
+            g_tp = save_tp;
+            Restore_d();
+            Return( False )
+         }
+      }
          break;
 
       default         :
@@ -2992,7 +3091,7 @@ extern void qualified_class_name( LongString *plstr )
 
    if( token( 0 ) == '<' )
    {
-      template_argument_skip( plstr );
+      free_template_param (template_argument_skip( plstr ));
    }
 
    if( token( 0 ) == SN_CLCL && token( 1 ) == SN_IDENTIFIER )
@@ -3036,7 +3135,7 @@ extern int qualified_name( LongString *plstr, int *plineno, int *pcharno )
       }
 
       step( 1 );
-      template_argument_skip( plstr );
+      free_template_param (template_argument_skip( plstr ));
       if( token( 0 ) == SN_CLCL )
       {
          step( 1 );
@@ -3971,6 +4070,7 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
       int paf;
       char *scope = get_scope( Declarator->name.buf );
       char *name  = get_name ( Declarator->name.buf );
+      template_param* tp;
 
       if( scope )
       {
@@ -4027,6 +4127,27 @@ extern void function( Declaration_t Declaration, Declarator_t Declarator, int li
                 , Declaration->lineno_beg
                 , Declaration->charno_beg
                 );
+
+           for ( tp = g_tp; tp; tp = tp->next ) {
+                 Put_symbol( PAF_TEMPLATE_ARG_DEF
+                           , name
+                           , tp->name.buf
+                           , filename_g
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->type_lineno
+                           , tp->type_charno
+                           , 0 /* attrs */
+                           , tp->type.buf
+                           , Declaration->name.buf /* template args */
+                           , (char *) 0
+                           , 0
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->name_lineno
+                           , tp->name_charno + strlen (tp->name.buf)
+                           );
+           } 
    }
    LongStringMyFree( &type );
    niveau--;
@@ -4129,6 +4250,7 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
 
       if (paf != PAF_FUNC_DCL)   /* Zsolt Koppany, 1-may-97 */
       {                          /* If it is a friend we don't report it. */
+          template_param* tp;
           Put_symbol( paf
                 , scope
                 , name
@@ -4147,6 +4269,28 @@ extern void class_member( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->lineno_end
                 , Declarator->charno_end
                 );
+
+           for ( tp = g_tp; tp; tp = tp->next ) {
+                 Put_symbol( PAF_TEMPLATE_ARG_DEF
+                           , name
+                           , tp->name.buf
+                           , filename_g
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->type_lineno
+                           , tp->type_charno
+                           , 0 /* attrs */
+                           , tp->type.buf
+                           , Declaration->name.buf /* template args */
+                           , (char *) 0
+                           , 0
+                           , tp->name_lineno
+                           , tp->name_charno
+                           , tp->name_lineno
+                           , tp->name_charno + strlen (tp->name.buf)
+                           );
+           } 
+
      }
    }
    else  /* class member variable */
@@ -4252,6 +4396,7 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
       int paf_dcl;
       char *scope = Class->name.buf;
       char *name  = get_name( Declarator->name.buf );
+      template_param* tp;
 
       attr |= PAF_INLINE;
 
@@ -4352,6 +4497,27 @@ extern void class_method( Class_t Class, Declaration_t Declaration, Declarator_t
                 , Declarator->lineno_end
                 , Declarator->charno_end
                 );
+
+       for ( tp = g_tp; tp; tp = tp->next ) {
+         Put_symbol( PAF_TEMPLATE_ARG_DEF
+                   , name
+                   , tp->name.buf
+                   , filename_g
+                   , tp->name_lineno
+                   , tp->name_charno
+                   , tp->type_lineno
+                   , tp->type_charno
+                   , 0 /* attrs */
+                   , tp->type.buf
+                   , Declaration->name.buf /* template args */
+                   , (char *) 0
+                   , 0
+                   , tp->name_lineno
+                   , tp->name_charno
+                   , tp->name_lineno
+                   , tp->name_charno + strlen (tp->name.buf)
+                   );
+       } 
    }
    type.free(&type);    /* 17.11.97 zsolt */
    niveau--;
@@ -4427,10 +4593,31 @@ extern void class_empty_declarator_list( Class_t Class, Declaration_t Declaratio
    }
 }
 
-extern void template_argument_skip( LongString *plstr )
+void free_template_param (template_param* tp) {
+    template_param* tp1;
+    while ( tp ) {
+        if ( tp->kind == TPK_TEMPLATE ) {
+            free_template_param (tp->params);
+        }
+
+        LongStringMyFree (&tp->name);
+        LongStringMyFree (&tp->type);
+        tp1 = tp->next;
+        free (tp);
+        tp = tp1;
+    }
+}
+
+void get_pos (const char* str, int* line, int* col) {
+    char c;
+    sscanf (str, "%d%c%d", line, &c, col);
+}
+
+extern template_param* template_argument_skip( LongString *plstr )
 {
    int i;
-   int bFirst = True;
+   int bFirst = True, bSeekNext = False;
+   template_param* tp = 0, *root = 0;
 
    niveau++;
 
@@ -4450,7 +4637,7 @@ extern void template_argument_skip( LongString *plstr )
          case '>': i--; break;
          case  0 :
             niveau--;
-            return;
+            return tp;
       }
 
       if( i == 0 )
@@ -4458,30 +4645,118 @@ extern void template_argument_skip( LongString *plstr )
          break;
       }
 
-      if( plstr )
-      {
-         sString_t sIdent = ident( 0 );
+      if ( !bSeekNext && token (0) == SN_CLASS ) {
+         if ( token (1) == SN_IDENTIFIER ) {
+             tp = (template_param*) malloc (sizeof (template_param));
+             if  ( !tp ) {
+                fprintf (stderr, "memory allocation error\n");
+                abort ();
+             }
 
-         if( bFirst )
-         {
-            bFirst = False;
-         }
-         else
-         {
-            unsigned char c;
-            /* 12.02.97 rigo ( '_' -t es '$' -t is vizsgalni kell ) */
-            if(( isalnum( c = plstr->buf[plstr->len-1] ) || c == '_' || c == '$' )
-            && ( isalnum( c = sIdent.text[ 0] ) || c == '_' || c == '$' ))
-            {
-               LongStringMyAppend( plstr, " " );
-            }
-         }
+             tp->kind = TPK_CLASS;
+             LongStringInit (&tp->name, -1);
+             LongStringMyAppend (&tp->name, StringToText (ident (1)));
+             tp->name_lineno = f_lineno (1);
+             tp->name_charno = f_charno (1);
+             LongStringInit (&tp->type, -1);
+             LongStringMyAppend (&tp->type, StringToText (ident (0)));
+             tp->type_lineno = f_lineno (0);
+             tp->type_charno = f_charno (0);
+             tp->params = 0;
+             tp->next = root;
 
-         LongStringIdAppend( plstr, sIdent );
+             root = tp;
+
+             bSeekNext = True;
+
+             LongStringMyAppend (plstr, StringToText (ident (0)));
+             /* skip name: it is really of no use
+             LongStringMyAppend (plstr, " ");
+             LongStringMyAppend (plstr, StringToText (ident (1)));
+             */
+             step( 2 );
+         }
+      } else if ( !bSeekNext && token (0) == SN_TEMPLATE ) {
+         if ( token (1) == '<' ) {
+             tp = (template_param*) malloc (sizeof (template_param));
+             if  ( !tp ) {
+                fprintf (stderr, "memory allocation error\n");
+                abort ();
+             }
+
+             tp->kind = TPK_TEMPLATE;
+             tp->type_lineno = f_lineno (0);
+             tp->type_charno = f_charno (0);
+             LongStringInit (&tp->name, -1);
+             LongStringInit (&tp->type, -1);
+
+             step( 1 );
+
+             LongStringMyAppend (&tp->type, "template ");
+             tp->params = template_argument_skip (&tp->type);
+
+             if ( token (0) != SN_IDENTIFIER )
+                 return 0;
+
+             LongStringMyAppend (&tp->name, StringToText (ident (0)));
+             tp->name_lineno = f_lineno (0);
+             tp->name_charno = f_charno (0);
+             tp->next = root;
+
+             root = tp;
+
+             bSeekNext = True;
+
+             LongStringMyAppend (plstr, tp->type.buf);
+             /* skip name: it is really of no use
+             LongStringMyAppend (plstr, " ");
+             LongStringMyAppend (plstr, tp->name.buf);
+             */
+             step (1);
+         } else {
+             return 0;
+         }
+      } else if ( !bSeekNext ) {
+         LongString type, name, arg_pos, arg_type_pos;
+         LongStringInit (&type, -1);
+         LongStringInit (&name, -1);
+         LongStringInit (&arg_pos, -1);
+         LongStringInit (&arg_type_pos, -1);
+
+         function_argument_declaration (&type, &name, &arg_pos, &arg_type_pos);
+
+         tp = (template_param*) malloc (sizeof (template_param));           
+         if  ( !tp ) {                                                      
+            fprintf (stderr, "memory allocation error\n");                  
+            abort ();                                                       
+         }                                                                  
+                                                                            
+         tp->kind = TPK_VALUE;                                              
+         tp->name = name;                                                   
+         get_pos (arg_pos.buf, &tp->name_lineno, &tp->name_charno);         
+         tp->type = type;                                                   
+         get_pos (arg_type_pos.buf, &tp->type_lineno, &tp->type_charno);    
+         tp->params = 0;                                                    
+         tp->next = root;                                                   
+                                                                            
+         root = tp;                                                         
+                                                                            
+         bSeekNext = True;                                                  
+         LongStringsMyAppend (plstr, &type);                                
+         /* skip name: it is really of no use                               
+         LongStringMyAppend (plstr, " ");                                   
+         LongStringsMyAppend (plstr, &name);                                
+         */                                                                 
+         LongStringMyFree (&arg_pos);                                       
+         LongStringMyFree (&arg_type_pos);                                  
+      } else if ( bSeekNext && token (0) == ',' ) {
+         bSeekNext = False;
+         LongStringMyAppend (plstr, ", ");
+         step (1);
       }
-
-      step( 1 );
    }
+
+   /* concat all argument types here */
 
    if( plstr )
    {
@@ -4490,7 +4765,7 @@ extern void template_argument_skip( LongString *plstr )
 
    step( 1 );
    niveau--;
-   return;
+   return tp;
 }
 
 extern int namespace_name( LongString *plstr )
@@ -5083,7 +5358,7 @@ extern void function_argument_class( int storage_class, LongString *plstr )
 
       if( token( 0 ) == '<' )
       {
-         template_argument_skip( plstr );
+         free_template_param (template_argument_skip( plstr ));
       }
 
       if( token( 0 ) == ':' )
@@ -5295,7 +5570,7 @@ extern int function_argument_declarator_one( Declarator_t Declarator )
    {
       t = token( 0 );
 
-      if( t == ',' || t == ')' || t == SN_ELLIPSIS )
+      if( t == ',' || t == ')' || t == SN_ELLIPSIS || t == '>' )
       {
          niveau--;
          return True;
@@ -5335,6 +5610,7 @@ extern void skip_expression( void )
          paren--;
          break;
 
+      case '>': /* to skip expressions in templates */
       case ',':
          if( paren == 0 )
          {
@@ -5342,6 +5618,8 @@ extern void skip_expression( void )
             return;
          }
          break;
+      case 0:
+         return;
       }
       step( 1 );
    }
@@ -7427,5 +7705,3 @@ extern void HighLightEnd( void )
       }
    }
 }
-
-

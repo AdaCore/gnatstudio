@@ -636,16 +636,19 @@ static Boolean_t f_TemplateArgList( char *pname )
       }
       else
       {
+         template_arg = True;
          if(( Expr = f_Expression()))
          {
             f_ExprDestroy( Expr );
          }
          else
          {
+            template_arg = False;
             niveau--;
             Restore();
             return False;
          }
+         template_arg = False;
       }
       
       switch( token( 0 ))

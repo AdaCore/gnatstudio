@@ -121,7 +121,7 @@ static  char    *acc_strings[] = {
 static char *SN_symbol_types[] = {
 	"f", "t", "cl", "mi", "iv", "e", "con", "ma", "fu", "su",
 	"gv", "com", "cov", "in", "fil", "by", "to","md","fd","ec",
-	"un","fr","na","ex","lv","vd","iu","rem","cpp","ud",
+	"un","fr","na","ex","lv","vd","iu","rem","cpp","ta","ud",
 	"xfi",NULL,NULL,NULL,NULL,NULL,NULL
 };
 
@@ -1113,6 +1113,7 @@ db_remove_file_def(int softdel,char *file)
 		case PAF_COMMON_MBR_VAR_DEF:
 		case PAF_CLASS_INHERIT:
 		case PAF_LOCAL_VAR_DEF:
+		case PAF_TEMPLATE_ARG_DEF:
 			/* Key format: class member lineno filename */
 			delkey.copy(&delkey,
 				pars.field_value[2],
@@ -2009,11 +2010,11 @@ load_class_members(int type, char *class_name)
 	LongString	tmp_class_name;
 	LongString key_buf;
 	LongString data_buf;
-	char	*nm;
+	char	*nm, *mbr_name, *ptr;
 	u_int	flag;
 	unsigned int	len;
 	char	*pend;
-	int	mbr_name_beg,mbr_name_end;
+	int	mbr_name_len;
 
 	if (!dbp)
 		return;
@@ -2022,7 +2023,7 @@ load_class_members(int type, char *class_name)
 	LongStringInit(&key_buf,0);
 	LongStringInit(&data_buf,0);
 
-	tmp_class_name.copystrings(&tmp_class_name,class_name," ",NULL);
+	tmp_class_name.copystrings(&tmp_class_name,class_name,NULL);
 	nm = tmp_class_name.buf;
 	len = tmp_class_name.len;
 
@@ -2036,27 +2037,26 @@ load_class_members(int type, char *class_name)
 		{
 			break;
 		}
-		/*
-		 * Skip field */
-		read_next_field (key.data, NULL, 0, DB_FLDSEP_CHR);
-		/*
-		 * read integer field */
-		mbr_name_beg = read_next_int_field (NULL, DB_FLDSEP_CHR);
-		/*
-		 * Skip field */
-		read_next_field (NULL, NULL, 0, DB_FLDSEP_CHR);
-		/*
-		 * read integer field */
-		mbr_name_end = read_next_int_field (NULL, DB_FLDSEP_CHR);
 
+		/*
+		 * Skip field (class name)
+      */
+		mbr_name = read_next_field (key.data, NULL, 0, DB_FLDSEP_CHR);
+      ptr = strchr (mbr_name, DB_FLDSEP_CHR);
+      if ( !ptr ) break;
+      mbr_name_len = ptr - mbr_name;
+
+      /* get attributes (the second field in data) */
 		inher_access = strchr (data.data, DB_FLDSEP_CHR) + 1;
 		pend = strchr (inher_access, DB_FLDSEP_CHR);
 		inher_access_len = pend - inher_access;
 
+      /* get member type (the third field in data, enclosed in {}) */
 		mbr_type = strchr(pend + 1,'{') + 1;
 		pend = strchr(mbr_type,'}');
 		mbr_type_len = pend - mbr_type;
 
+      /* get arguments of the method: the fourth field in data */
 		mbr_pars = strchr(pend + 1,'{') + 1;
 		pend = strchr(mbr_pars,'}');
 		mbr_pars_len = pend - mbr_pars;
@@ -2066,10 +2066,14 @@ load_class_members(int type, char *class_name)
  */
 		key_buf.copystrings(&key_buf, class_name, DB_FLDSEP_STR, NULL);
 
-		key_buf.append(&key_buf,
-			(char *)key.data + mbr_name_beg, mbr_name_end - mbr_name_beg);
+		key_buf.append(&key_buf, mbr_name, mbr_name_len);
+		key_buf.append(&key_buf, DB_FLDSEP_STR, 1);
 
-		key_buf.append(&key_buf,mbr_pars,mbr_pars_len);
+      if ( type == PAF_MBR_FUNC_DCL ) {
+		    key_buf.append (&key_buf, mbr_pars, mbr_pars_len);
+      }
+
+		key_buf.append(&key_buf, DB_FLDSEP_STR, 1);
 
 		data_buf.copystrings(&data_buf,
 			class_name,  DB_FLDSEP_STR,
@@ -2150,6 +2154,7 @@ load_class(char *class_name)
 	key.data = (void *)class_name;
 	key.size = strlen(class_name);
 
+
 	if (dbp->get(dbp,&key,&data,0) == 0)
 	{
 		return;		/* It has already been loaded, don't do it again! */
@@ -2161,7 +2166,7 @@ load_class(char *class_name)
 
 	LongStringInit(&tmp_class_name,0);
 
-	tmp_class_name.copystrings(&tmp_class_name,class_name," ",NULL);
+	tmp_class_name.copystrings(&tmp_class_name,class_name,NULL);
 	nm = tmp_class_name.buf;
 	len = tmp_class_name.len;
 
@@ -2222,6 +2227,7 @@ load_class(char *class_name)
 
 	load_class_members(PAF_MBR_VAR_DEF, class_name);
 	load_class_members(PAF_MBR_FUNC_DCL, class_name);
+	load_class_members(PAF_TEMPLATE_ARG_DEF, class_name);
 }
 
 void
@@ -2274,6 +2280,7 @@ open_tables_for_cross_ref()
 	create_table(PAF_MBR_FUNC_DCL,O_RDONLY,db_cachesize);
 	create_table(PAF_ENUM_CONST_DEF,O_RDONLY,db_cachesize);
 	create_table(PAF_ENUM_DEF,O_RDONLY,db_cachesize);
+	create_table(PAF_TEMPLATE_ARG_DEF,O_RDONLY,db_cachesize);
 #if PAF_UNION_DEF != PAF_CLASS_DEF
 	create_table(PAF_UNION_DEF,O_RDONLY,db_cachesize);
 #endif /* PAF_UNION_DEF != PAF_CLASS_DEF */
@@ -2343,6 +2350,7 @@ next:
 		return (value);\
 	}
 
+
 static int
 search_for_symbol(char *global_class_name,char *local_class_name,
 	char *name,char *arg_types,int db_type,char *scope,char *ret_type,
@@ -2400,7 +2408,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 				? local_class_name
 				: global_class_name, DB_FLDSEP_STR,
 			name,                    DB_FLDSEP_STR,
-			arg_types ? arg_types : NULL,
+			arg_types ? arg_types : DB_FLDSEP_STR, /* DB_FLDSEP_STR or NULL ?*/
 			NULL);
 		length = buf.len + 1;
 	}
@@ -2429,6 +2437,7 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 	{
 		RETURN_FROM_SEARCH(FALSE);
 	}
+
 	if (fetch == 1 || (int)key.size <  length ||
 		memcmp(buf.buf,key.data,length) != 0)
 	{
@@ -2672,9 +2681,14 @@ search_for_symbol(char *global_class_name,char *local_class_name,
 
 		pars.free(&pars);
 
-		if (sym_type[0] == SN_symbol_types[PAF_MBR_VAR_DEF][0])		/* "iv" ? */
+		if ( !strncmp (sym_type, SN_symbol_types[PAF_MBR_VAR_DEF], 2) )		/* "iv" ? */
 		{
 			RETURN_FROM_SEARCH(PAF_MBR_VAR_DEF);
+		}
+
+		if ( !strncmp (sym_type, SN_symbol_types[PAF_TEMPLATE_ARG_DEF], 2) )
+		{
+			RETURN_FROM_SEARCH(PAF_TEMPLATE_ARG_DEF);
 		}
 #if BUG_TRACE
 		fprintf(trace_fp,"4 name: <%s> scope: <%s> access: <%s> ret_type: <%s> arg_types: <%s>\n",
@@ -2779,8 +2793,61 @@ static struct check_symbol_types {
 	{PAF_MACRO_DEF, FALSE, FALSE},	/* Macros such as BUFSIZE */
 	{PAF_GLOB_VAR_DEF, FALSE, FALSE},
 	{PAF_CONS_DEF, FALSE, FALSE},
-	{PAF_ENUM_CONST_DEF, FALSE, FALSE}
+	{PAF_ENUM_CONST_DEF, FALSE, FALSE},
+	{PAF_TEMPLATE_ARG_DEF, TRUE, FALSE}
 };
+
+int get_template_argument (const char* class_name, const char* fn_name,
+                const char* name, char* type_name) {
+    /* first search type_name among func template arguments */
+	 DBT	key;
+	 DBT	data;
+	 DB   *dbp = db_syms [PAF_TEMPLATE_ARG_DEF];
+    LongString key_str;
+    LongString fields;
+
+    if ( !dbp ) return 0;
+
+    LongStringInit (&key_str, 0);
+    key_str.copystrings (&key_str, fn_name, DB_FLDSEP_STR,
+                                   name, DB_FLDSEP_STR, 0);
+    key.data = (void*) key_str.buf;
+    key.size = key_str.len;
+
+    if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR) ) {
+       key_str.free (&key_str);
+
+       if ( type_name ) {
+           LongStringInit(&fields, 0);
+           fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
+           memcpy (type_name, fields.field_value [2], fields.field_size [2]);
+           type_name [fields.field_size [2]] = 0;
+           fields.free (&fields);
+       }
+       return PAF_TEMPLATE_ARG_DEF;
+    }
+
+    /* then search type_name among class template arguments */
+    key_str.copystrings (&key_str, class_name, DB_FLDSEP_STR,
+                                   name, DB_FLDSEP_STR, 0);
+    key.data = (void*) key_str.buf;
+    key.size = key_str.len;
+
+    if ( 0 == dbp->seq (dbp, &key, &data, R_CURSOR) ) {
+       key_str.free (&key_str);
+       if ( type_name ) {
+           LongStringInit(&fields, 0);
+           fields.split (&fields, data.data, data.size - 1, FALSE, DB_FLDSEP_CHR, 4);
+           memcpy (type_name, fields.field_value [2], fields.field_size [2]);
+           type_name [fields.field_size [2]] = 0;
+           fields.free (&fields);
+       }
+       return PAF_TEMPLATE_ARG_DEF;
+    }
+
+    key_str.free (&key_str);
+    return 0;
+}
 
 static int check_class_typedeff_enum_union[] = {
 	PAF_CLASS_DEF,PAF_ENUM_DEF,PAF_UNION_DEF,PAF_TYPE_DEF,0

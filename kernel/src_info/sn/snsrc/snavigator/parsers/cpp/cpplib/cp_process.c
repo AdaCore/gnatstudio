@@ -1216,6 +1216,10 @@ static Type_t get_variable_type( char *scope_global, char *scope, char *name, in
                                      , type_ret
                                      , define_ret /* 16.02.98 rigo */
                                      , 0 );
+   if ( !*paf_type_ret ) {
+       *paf_type_ret = get_template_argument (scope_global, sym_name_g, name, type_ret);
+   }
+
    if( *paf_type_ret  )
    {
 #ifdef PRINT

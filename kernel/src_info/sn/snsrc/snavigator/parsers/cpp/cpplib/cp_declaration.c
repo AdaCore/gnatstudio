@@ -64,6 +64,9 @@ static void _DeclarationSpecialProcess( DeclarationSpecial_t DeclarationSpecial,
 static Type_t f_TypeDeclaratorConcat( Type_t Type, Declarator_t Declarator );
 unsigned long attr_from_declaration( Declaration_t Declaration );
 
+int get_template_argument (const char* class_name, const char* fn_name,
+    const char* name, char* /*out*/ type_name);
+
 extern Declaration_t f_Declaration( int iLevel )
 {
    Declaration_t Declaration;
@@ -1805,7 +1808,7 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
     * (limited only for 3 levels)
     */
 #  define PREV_I 3
-   char *name_prev[PREV_I] = {0, 0, 0};
+   char *name_prev[PREV_I] = {0, 0, 0}, *ptr;
    int i=0, j=0, cmp_prev=0;
    
    while( True )
@@ -1830,10 +1833,15 @@ extern Type_t f_TypeBasic( Type_t Type, int lineno, int charno )
       if (cmp_prev)
           break;
 
-      if(( paf_type = Get_class_or_typedef( name, acType )) == 0 )
+      /* for now template arguments are not supported */
+      if ( ptr = strchr (name, '<') ) *ptr = 0;
+
+      if ( (paf_type = Get_class_or_typedef( name, acType )) == 0
+          && (paf_type = get_template_argument (scope_g, sym_name_g, name, 0)) == 0 )
       {
 	      break;
       }
+
    
       Put_cross_ref( paf_type
                    , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
@@ -1955,11 +1963,15 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
       Oper_t Oper = (Oper_t) d_ElemFirst( Type->Declarator->ListOper );
       if( Oper == 0 || Oper->type == ARRAY ) /* tiszta class, vagy class tömb */
       {
-         char *name;
+         char *name, *ptr;
          if(( name = f_NameFromType( Type )))
          {
             int paf_type;
             char acType[10000];  /* old: 1000 */
+            /*
+             * so far we don't process template arguments, so just cut them off
+             */
+            if ( ptr = strchr (name, '<') ) *ptr = 0;
             if(( paf_type = Get_class_or_typedef( name, acType )) == PAF_REF_TO_CLASS )
             {
                char acName[10000];     /* old: 1000 */
@@ -1980,6 +1992,7 @@ extern void f_PutConstructor( Type_t Type, int lineno, int charno, int mode )
                                                 , NULL
                                                 , 0 )))
                   {
+                       printf ("!!!cons!!!\n");
                      Put_cross_ref( PAF_REF_TO_MBR_FUNC
                                   , scope_g[0] ? PAF_MBR_FUNC_DEF : PAF_FUNC_DEF
                                   , PAF_REF_SCOPE_GLOBAL
@@ -2047,7 +2060,9 @@ extern void f_PutConstructorByNewOrDelete( Type_t Type, int lineno, int charno, 
       if(( name = f_NameFromType( Type )))
       {
          int paf_type;
-         char acType[10000];  /* old: 1000 */
+         char acType[10000], *ptr;  /* old: 1000 */
+         /* for now template arguments are not supported */
+         if ( ptr = strchr (name, '<') ) *ptr = 0;
          if(( paf_type = Get_class_or_typedef( name, acType )) == PAF_REF_TO_CLASS )
          {
             char acName[10000];     /* old: 1000 */

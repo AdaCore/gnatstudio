@@ -69,7 +69,7 @@ static Expr_t ExprCreateType( Type_t Type );
 static Expr_t ExprCreateNew( Expr_t Expr1, Init_t Init, List_t ListExpr );
 static Boolean_t f_IsNameSimpleTypeName( Name_t Name );
 
-extern Expr_t f_Expression( void )
+extern Expr_t f_Expression(void )
 {
    return expression();
 }
@@ -234,8 +234,8 @@ static Expr_t assignment_expression( void )
       }
 
       if ( Expr1 = ExprCreateOp2( operator, Expr1, Expr2 ) ) {
-	 Expr1->lineno_beg = lineno;
-	 Expr1->charno_beg = charno;
+           Expr1->lineno_beg = lineno;
+           Expr1->charno_beg = charno;
       }
       
    }
