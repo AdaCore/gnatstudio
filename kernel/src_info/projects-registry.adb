@@ -934,8 +934,11 @@ package body Projects.Registry is
       Sources_Specified : Boolean := False;
       Specified_Sources_Count : Natural := 0;
 
-      procedure Record_Source (Dir, File : String; Lang : Name_Id);
+      procedure Record_Source
+        (Dir, File, Display_File : String; Lang : Name_Id);
       --  Add file to the list of source files for Project.
+      --  File's casing must have been normalized, whereas Display_File is the
+      --  name with the same casing as on the disk
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
@@ -981,13 +984,15 @@ package body Projects.Registry is
       -- Record_Source --
       -------------------
 
-      procedure Record_Source (Dir, File : String; Lang : Name_Id) is
-         Full_Path : constant Name_Id := Get_String (Dir & File);
+      procedure Record_Source
+        (Dir, File, Display_File : String; Lang : Name_Id)
+      is
+         Full_Path : constant Name_Id := Get_String (Dir & Display_File);
       begin
          String_Elements.Increment_Last;
          String_Elements.Table (String_Elements.Last) :=
            (Value         => Full_Path,
-            Display_Value => Get_String (File),
+            Display_Value => Get_String (Display_File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
             Index         => 0,
@@ -1132,15 +1137,15 @@ package body Projects.Registry is
             --  Get_Unit_Part_And_Name_From_Filename will do the same again,
             --  which is slightly inefficient
 
-            Canonical_Case_File_Name (Buffer (1 .. Length));
-
             --  Convert the file to UTF8
 
             declare
-               UTF8 : constant String := Locale_To_UTF8 (Buffer (1 .. Length));
+               UTF8 : String := Locale_To_UTF8 (Buffer (1 .. Length));
                Part : Unit_Part;
                Unit_Name : Name_Id;
             begin
+               Canonical_Case_File_Name (UTF8);
+
                --  Check if the file is in the list of sources for this,
                --  project, as specified in the project file.
 
@@ -1175,7 +1180,8 @@ package body Projects.Registry is
                   then
                      for Index in Languages2'Range loop
                         if Languages2 (Index) = Lang then
-                           Record_Source (Dirs (D).all, UTF8, Lang);
+                           Record_Source (Dirs (D).all, UTF8,
+                                          Buffer (1 .. Length), Lang);
                            Has_File := True;
                            Languages3 (Index) := No_Name;
                            exit;

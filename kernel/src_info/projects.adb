@@ -312,11 +312,13 @@ package body Projects is
    ------------------
 
    function Project_Path (Project : Project_Type) return String is
+      View : constant Project_Id := Get_View (Project);
    begin
-      if Project = No_Project or else Status (Project) /= From_File then
+      if View = Prj.No_Project or else Status (Project) /= From_File then
          return "";
       else
-         return Get_String (Path_Name_Of (Project.Node));
+         return Get_String
+           (Prj.Projects.Table (View).Display_Path_Name);
       end if;
    end Project_Path;
 
@@ -326,11 +328,7 @@ package body Projects is
 
    function Project_Directory (Project : Project_Type) return String is
    begin
-      if Project = No_Project then
-         return "";
-      else
-         return Name_As_Directory (Get_String (Directory_Of (Project.Node)));
-      end if;
+      return Name_As_Directory (Dir_Name (Project_Path (Project)));
    end Project_Directory;
 
    -----------------
@@ -394,7 +392,7 @@ package body Projects is
             Sources (Index) := new String'
               (Name_As_Directory
                  (Normalize_Pathname
-                    (Get_String (String_Elements.Table (Src).Value))));
+                    (Get_String (String_Elements.Table (Src).Display_Value))));
             Index := Index + 1;
             Src   := String_Elements.Table (Src).Next;
          end loop;
