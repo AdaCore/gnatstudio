@@ -27,7 +27,7 @@
 -----------------------------------------------------------------------
 
 with Gtkada.MDI;
-with Browsers;
+with Browsers.Canvas;
 
 package Glide_Kernel.Browsers is
 
@@ -40,5 +40,12 @@ package Glide_Kernel.Browsers is
    --  Browser_Type.
    --  If there is already a browser in Glide2 that handles all the types
    --  Browser_Type, we re-use this one instead.
+
+   procedure Examine_Dependencies
+     (Kernel     : access Kernel_Handle_Record'Class;
+      In_Browser : access Standard.Browsers.Canvas.Glide_Browser_Record'Class;
+      File       : String);
+   --  Examine the dependencies for File in In_Browser.
+   --  The browser is not cleared first.
 
 end Glide_Kernel.Browsers;
