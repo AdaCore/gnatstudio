@@ -2027,7 +2027,7 @@ package body Src_Editor_Buffer.Line_Information is
    procedure Highlight_Range
      (Buffer    : access Source_Buffer_Record'Class;
       Category  : String;
-      Line      : Natural;
+      Line      : Editable_Line_Type;
       Start_Col : Integer;
       End_Col   : Integer;
       Remove    : Boolean := False)
@@ -2071,7 +2071,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       else
          The_Line :=
-           Gint (Get_Buffer_Line (Buffer, Editable_Line_Type (Line)) - 1);
+           Gint (Get_Buffer_Line (Buffer, Line) - 1);
 
          if The_Line < 0 then
             return;
@@ -2083,8 +2083,8 @@ package body Src_Editor_Buffer.Line_Information is
          then
             Get_Iter_At_Line (Buffer, Start_Iter, The_Line);
          else
-            Get_Iter_At_Line_Offset
-              (Buffer, Start_Iter, The_Line, Gint (Start_Col - 1));
+            Get_Iter_At_Screen_Position
+              (Buffer, Start_Iter, Line, Start_Col);
 
             if Ends_Line (Start_Iter) then
                Backward_Char (Start_Iter, Result);
@@ -2097,8 +2097,8 @@ package body Src_Editor_Buffer.Line_Information is
             Copy (Start_Iter, End_Iter);
             Forward_To_Line_End (End_Iter, Result);
          else
-            Get_Iter_At_Line_Offset
-              (Buffer, End_Iter, The_Line, Gint (End_Col - 1));
+            Get_Iter_At_Screen_Position
+              (Buffer, End_Iter, Line, End_Col);
          end if;
       end if;
 
