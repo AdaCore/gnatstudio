@@ -65,11 +65,6 @@ package body Src_Info is
    --  Return a pointer to the file info whose File_Name matches
    --  Return null if such unit could not be found.
 
-   function Find_Source_File
-     (Source_Info_List : LI_File_List; File : Internal_File)
-      return Source_File;
-   --  Create a new Source_File structure matching File.
-
    ----------------------------
    -- Get_Separate_File_Info --
    ----------------------------
@@ -565,7 +560,7 @@ package body Src_Info is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return Internal_File
    is
-      ALI : constant String := LI_Filename_From_Source
+      LI : constant String := LI_Filename_From_Source
         (Handler                => Get_LI_Handler_From_File
            (Glide_Language_Handler (Handler), Source_Filename),
          Source_Filename        => Source_Filename,
@@ -574,7 +569,7 @@ package body Src_Info is
 
    begin
       return (File_Name => new String' (Source_Filename),
-              LI_Name   => new String' (ALI));
+              LI_Name   => new String' (LI));
    end Make_Source_File;
 
    -------------
@@ -608,25 +603,6 @@ package body Src_Info is
       return File.File_Name.all;
    end Get_Source_Filename;
 
-   ------------------------------
-   -- Get_Full_Source_Filename --
-   ------------------------------
-
-   function Get_Full_Source_Filename
-     (File                   : Internal_File;
-      Source_Info_List       : Src_Info.LI_File_List;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String) return String
-   is
-      SF  : Source_File := Find_Source_File (Source_Info_List, File);
-      Ptr : File_Info_Ptr := Get_File_Info (SF);
-      Dir : constant String := Get_Directory_Name
-        (Ptr, Project, Predefined_Source_Path);
-
-   begin
-      return Dir & Ptr.Source_Filename.all;
-   end Get_Full_Source_Filename;
-
    -------------------------
    -- Get_Source_Filename --
    -------------------------
@@ -638,54 +614,6 @@ package body Src_Info is
    end Get_Source_Filename;
 
    ----------------------
-   -- Find_Source_File --
-   ----------------------
-
-   function Find_Source_File
-     (Source_Info_List : LI_File_List; File : Internal_File)
-      return Source_File
-   is
-      Source       : constant String := Get_Source_Filename (File);
-      LI           : LI_File_Ptr :=
-        Get (Source_Info_List.Table, File.LI_Name.all);
-      Current_Node : File_Info_Ptr_List;
-
-   begin
-      --  We must have found an LI file. However, it might still be
-      --  incomplete. But since we have the filename, it has to be associated
-      --  with the LI file already.
-
-      pragma Assert (LI /= No_LI_File);
-
-      if LI.LI.Spec_Info /= null
-        and then LI.LI.Spec_Info.Source_Filename.all = Source
-      then
-         return (LI              => LI,
-                 Source_Filename => null,
-                 Part            => Unit_Spec);
-
-      elsif LI.LI.Body_Info /= null
-        and then LI.LI.Body_Info.Source_Filename.all = Source
-      then
-         return (LI              => LI,
-                 Source_Filename => null,
-                 Part            => Unit_Body);
-
-      else
-         Current_Node := LI.LI.Separate_Info;
-
-         while Current_Node /= null loop
-            if Current_Node.Value.Source_Filename.all = Source then
-               return (LI        => LI,
-                       Source_Filename => Current_Node.Value.Source_Filename,
-                       Part      => Unit_Separate);
-            end if;
-         end loop;
-      end if;
-
-      return No_Source_File;
-   end Find_Source_File;
-
    -------------------
    -- Get_Unit_Part --
    -------------------

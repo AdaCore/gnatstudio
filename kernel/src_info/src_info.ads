@@ -100,13 +100,7 @@ package Src_Info is
    --  both the naming scheme and the search path are correct).
 
    function Get_Source_Filename (File : Internal_File) return String;
-   function Get_Full_Source_Filename
-     (File                   : Internal_File;
-      Source_Info_List       : Src_Info.LI_File_List;
-      Project                : Prj.Project_Id;
-      Predefined_Source_Path : String) return String;
    --  Return the Filename for the given File.
-   --  The second version returns the full file name, including directory
 
    function Get_Unit_Part
      (Lib_Info : LI_File_Ptr; File : String) return Unit_Part;
