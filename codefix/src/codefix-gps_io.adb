@@ -114,12 +114,11 @@ package body Codefix.GPS_Io is
    ----------
 
    procedure Undo (This : in out Console_Interface) is
-      Garbage : Dynamic_String;
+      Garbage : String := Interpret_Command
+        (This.Kernel, "edit_undo " & Get_File_Name (This));
+      pragma Unreferenced (Garbage);
    begin
-      Garbage := new String'
-        (Interpret_Command
-           (This.Kernel, "edit_undo " & Get_File_Name (This)));
-      Free (Garbage);
+      null;
    end Undo;
 
    ---------
@@ -177,41 +176,45 @@ package body Codefix.GPS_Io is
      (This      : in out Console_Interface;
       Cursor    : Text_Cursor'Class;
       Len       : Natural;
-      New_Value : String)
-   is
-      Garbage : Dynamic_String;
+      New_Value : String) is
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       if Cursor.Line /= 0 then
-         Garbage := new String'
-           (Interpret_Command
+         declare
+            Garbage : String := Interpret_Command
               (This.Kernel,
                "replace_text -l" & Natural'Image (Cursor.Line)
                & " -c" & Natural'Image (Cursor.Col) & " "
                & Find_Source_File
-                   (This.Kernel, Get_File_Name (This))
+                 (This.Kernel, Get_File_Name (This))
                & " -a" & Natural'Image (Len)
                & " -b 0"
-               & " """ & New_Value & """"));
+               & " """ & New_Value & """");
+            pragma Unreferenced (Garbage);
+         begin
+            null;
+         end;
       else
-         Garbage := new String'
-           (Interpret_Command
+         declare
+            Garbage : String := Interpret_Command
               (This.Kernel,
                "replace_text -l 1"
                & " -c 1 "
                & Find_Source_File
-                   (This.Kernel, Get_File_Name (This))
+                 (This.Kernel, Get_File_Name (This))
                & " -a 0"
                & " -b 0"
-               & " """ & New_Value & """"));
+               & " """ & New_Value & """");
+            pragma Unreferenced (Garbage);
+         begin
+            null;
+         end;
       end if;
 
       --  ??? Should use new Interpret_Command procedure with a string_list
       --  to avoid wrong cutting of parameters.
-
-      Free (Garbage);
    end Replace;
 
    --------------
@@ -247,22 +250,24 @@ package body Codefix.GPS_Io is
 
    procedure Delete_Line
      (This : in out Console_Interface;
-      Cursor : Text_Cursor'Class)
-   is
-      Garbage : Dynamic_String;
+      Cursor : Text_Cursor'Class) is
    begin
       This.File_Modified.all := True;
       Text_Has_Changed (This);
 
-      Garbage := new String'
-        (Interpret_Command
+      declare
+         Garbage : String := Interpret_Command
            (This.Kernel,
             "replace_text -l" & Natural'Image (Cursor.Line)
             & " -c" & Natural'Image (Cursor.Col) & " "
             & Find_Source_File
-                (This.Kernel, Get_File_Name (This))
-            & " """""));
-      Free (Garbage);
+              (This.Kernel, Get_File_Name (This))
+            & " """"");
+
+         pragma Unreferenced (Garbage);
+      begin
+         null;
+      end;
    end Delete_Line;
 
    ----------------
@@ -444,6 +449,5 @@ package body Codefix.GPS_Io is
         (This.Errors_Buffer, Interpret_Command (Kernel, "get_build_output"));
       This.Kernel := Kernel;
    end Get_Last_Output;
-
 
 end Codefix.GPS_Io;
