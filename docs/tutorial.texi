@@ -122,7 +122,7 @@ several areas:
 @noindent
 
 In the project explorer, open the @code{common} directory by clicking
-on the triangle on the left of @code{common}.
+on the @code{[+]} sign on the left of @code{common}.
 This will open the directory and display a list of source files located
 in this directory.
 
@@ -252,7 +252,7 @@ explorer is to use the contextual menu from the source editor:
 @c --------------------------------------------------------------------
 
 @noindent
-Click on the triangle to open @file{tokens.ads} entities.
+Click on the @code{[+]} sign to open @file{tokens.ads} entities.
 When you click on a file in the explorer, you get
 language sensitive information about the file, such as
 @code{packages}, @code{subprograms}, @code{tasks}, ... for @code{Ada}.
@@ -636,7 +636,7 @@ directory and click on the @code{projects} subdirectory. Select the file
 
 You can see the new dependencies added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
-the @code{prj1} icon by clicking on the triangle, and then
+the @code{prj1} icon by clicking on the @code{[+]} sign, and then
 similarly open the @code{prj2} icon, you will notice that the project
 @code{prj4} is displayed twice: once as a dependency of @code{prj2}, and
 once as a dependency of @code{prj1}.
