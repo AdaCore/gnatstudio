@@ -3,6 +3,7 @@ with "../gtkada/gtkada";
 with "../common/common";
 with "../widgets/widgets";
 with "../gvd/gvd";
+with "../shared";
 
 project Kernel is
 
@@ -14,5 +15,7 @@ project Kernel is
       for Default_Switches ("Ada") use
         ("-g", "-gnata", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Kernel;

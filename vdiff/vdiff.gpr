@@ -1,6 +1,7 @@
 with "../gtkada/gtkada";
 with "../common/common";
 with "../kernel/kernel";
+with "../shared";
 
 project VDiff is
 
@@ -11,5 +12,7 @@ project VDiff is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("vdiff_pkg.adb") use ("-g", "-O2");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end VDiff;

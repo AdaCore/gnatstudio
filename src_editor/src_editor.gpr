@@ -2,6 +2,7 @@ with "../common/common";
 with "../gtkada/gtkada";
 with "../kernel/kernel";
 with "../gvd/gvd_common";
+with "../shared";
 
 project Src_Editor is
 
@@ -11,5 +12,7 @@ project Src_Editor is
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Src_Editor;

@@ -1,6 +1,7 @@
 with "../gtkada/gtkada";
 with "../gvd/gvd_common";
 with "../common/common";
+with "../shared";
 
 project Widgets is
 
@@ -11,5 +12,7 @@ project Widgets is
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Widgets;

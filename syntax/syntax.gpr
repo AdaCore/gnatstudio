@@ -1,4 +1,5 @@
 with "../gvd/gvd_common";
+with "../shared";
 
 project Syntax is
 
@@ -8,5 +9,7 @@ project Syntax is
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Syntax;

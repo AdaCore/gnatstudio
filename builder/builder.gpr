@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "../kernel/kernel";
+with "../shared";
 
 project Builder is
 
@@ -9,5 +10,7 @@ project Builder is
    package Compiler is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Builder;

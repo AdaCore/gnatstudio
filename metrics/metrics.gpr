@@ -1,4 +1,5 @@
 with "../kernel/kernel";
+with "../shared";
 
 project Metrics is
 
@@ -9,5 +10,7 @@ project Metrics is
       for Default_Switches ("Ada") use
         ("-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Metrics;

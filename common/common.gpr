@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "../gnat";
+with "../shared";
 
 project Common is
 
@@ -11,5 +12,7 @@ project Common is
       for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
       for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end Common;

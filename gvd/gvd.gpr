@@ -1,5 +1,6 @@
 with "../gtkada/gtkada";
 with "gvd_common";
+with "../shared";
 
 project GVD is
 
@@ -28,5 +29,7 @@ project GVD is
    package Binder is
       for Default_Switches ("Ada") use ("-E");
    end Binder;
+
+   package IDE renames Shared.IDE;
 
 end GVD;

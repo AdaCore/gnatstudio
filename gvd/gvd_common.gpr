@@ -1,4 +1,5 @@
 with "../gtkada/gtkada";
+with "../shared";
 
 project GVD_Common is
 
@@ -15,5 +16,7 @@ project GVD_Common is
         ("-gnata", "-g", "-O2", "-gnaty", "-gnatwu", "-gnatwe");
       for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
    end Compiler;
+
+   package IDE renames Shared.IDE;
 
 end GVD_Common;
