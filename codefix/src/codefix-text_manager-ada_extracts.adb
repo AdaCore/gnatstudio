@@ -348,6 +348,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    ----------
 
    procedure Free (This : in out Element) is
+      pragma Unreferenced (This);
    begin
       null;
    end Free;
@@ -429,7 +430,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
      (This        : in out Ada_List;
       Destination : out Ada_List;
       First       : Natural;
-      Last        : Natural := 0) is
+      Last        : Natural := 0)
+   is
+      pragma Unreferenced (This, First, Last);
+      pragma Warnings (Off, Destination);
    begin
       null;
    end Cut_Off_Elements;
@@ -442,7 +446,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
      (This        : in out Ada_List;
       Destination : out Ada_List;
       First       : String;
-      Last        : String := "") is
+      Last        : String := "")
+   is
+      pragma Unreferenced (This, First, Last);
+      pragma Warnings (Off, Destination);
    begin
       null;
    end Cut_Off_Elements;
@@ -452,6 +459,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -------------------------
 
    function Get_Number_Elements (This : Ada_List) return Natural is
+      pragma Unreferenced (This);
    begin
       return 0;
    end Get_Number_Elements;
@@ -517,6 +525,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -----------------
 
    function Get_Element (This : Ada_List; Num : Natural) return String is
+      pragma Unreferenced (This, Num);
    begin
       return "";
    end Get_Element;

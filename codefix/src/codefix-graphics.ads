@@ -25,9 +25,7 @@ with Vdiff_Pkg;              use Vdiff_Pkg;
 with Generic_List;
 
 with Codefix;                use Codefix;
-with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.File_Io;        use Codefix.File_Io;
 with Codefix.Text_Navigators;
@@ -40,8 +38,8 @@ package Codefix.Graphics is
    package Navigator is new Text_Navigators (File_Interface);
    use Navigator;
 
-   Display_Lines_Before : constant Integer := 3;
-   Display_Lines_After  : constant Integer := 3;
+   Display_Lines_Before : constant Integer := 5;
+   Display_Lines_After  : constant Integer := 5;
 
    procedure Free (This : in out Vdiff_Access);
 

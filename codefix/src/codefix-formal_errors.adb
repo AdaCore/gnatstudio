@@ -154,7 +154,7 @@ package body Codefix.Formal_Errors is
          Replace_Word (New_Extract, Message, Str_Expected);
          Set_Caption
            (New_Extract,
-            "Replace missplelled word by """ & Str_Expected & """");
+            "Replace misspelled word by """ & Str_Expected & """");
       else
          Replace_Word
            (New_Extract, Message, Str_Expected, "^(" & Str_Red & ")");
@@ -393,6 +393,8 @@ package body Codefix.Formal_Errors is
       Cursor         : File_Cursor'Class;
       Missing_Clause : String) return Extract
    is
+      pragma Unreferenced (Current_Text);
+
       New_Cursor  : File_Cursor := (0, 1, Cursor.File_Name);
       New_Extract : Extract;
    begin
@@ -404,7 +406,7 @@ package body Codefix.Formal_Errors is
       Set_Caption
         (New_Extract,
          "Add with and use clause for package """ & Missing_Clause &
-           """at the begining of the file");
+           """ at the begining of the file");
 
       return New_Extract;
    end With_Clause_Missing;
@@ -585,12 +587,10 @@ package body Codefix.Formal_Errors is
       -----------------
 
       function Delete_With return Extract is
-
          New_Extract         : Ada_List;
-         With_Info, Use_Info : Construct_Information;
+         --  With_Info, Use_Info : Construct_Information;
 
       begin
-
          --  With_Info := Get_Unit (Current_Text, Cursor, Before);
          --  Use_Info := Search_Unit
          --    (Current_Text, Cursor.File_Name.all, Cat_Use, Name);
