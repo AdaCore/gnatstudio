@@ -70,13 +70,13 @@ package body Prj_Manager is
 
    function Find_Scenario_Variables
      (Manager : access Project_Manager_Record)
-      return Prj_API.Variable_Decl_Array is
+      return Prj_API.Project_Node_Array is
    begin
       if Manager.Scenario_Variables /= null then
          return Manager.Scenario_Variables.all;
       end if;
 
-      Manager.Scenario_Variables := new Variable_Decl_Array'
+      Manager.Scenario_Variables := new Project_Node_Array'
         (Find_Scenario_Variables (Manager.Project));
       return Manager.Scenario_Variables.all;
    end Find_Scenario_Variables;

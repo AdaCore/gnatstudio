@@ -97,7 +97,7 @@ package Prj_Manager is
 
    function Find_Scenario_Variables
      (Manager : access Project_Manager_Record)
-      return Prj_API.Variable_Decl_Array;
+      return Prj_API.Project_Node_Array;
    --  Return the list of scenario variables defined in project or one of its
    --  imported projects. The results are cached, since it could take a while
    --  to compute them in big projects.
@@ -142,8 +142,6 @@ package Prj_Manager is
    --  <signals>
 
 private
-   type Variable_Decl_Array_Access is access Prj_API.Variable_Decl_Array;
-
    type Project_Manager_Record is new Gtk.Object.Gtk_Object_Record with record
       Project : Prj.Tree.Project_Node_Id;
       Project_View : Prj.Project_Id;
@@ -152,9 +150,10 @@ private
       --  True when Project has been normalized. See Prj_Normalize for more
       --  information.
 
-      Scenario_Variables : Variable_Decl_Array_Access := null;
+      Scenario_Variables : Prj_API.Project_Node_Array_Access := null;
       --  Cached result of Find_Scenario_Variables. This is computed only the
       --  first time Find_Scenario_Variables is called for every project.
+      --  ??? Should be put inside a Scenario_Manager instead
    end record;
 
 
