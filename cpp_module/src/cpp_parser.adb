@@ -120,10 +120,9 @@ package body CPP_Parser is
    type Segment_Array is array (Natural range <>) of Segment;
 
    All_Types_Table : constant Boolean_Table_Array :=
-     (T | MD | MI | CL | UN | E => True,
-      others                    => False);
+     (T | MD | MI | CL | UN | E | TA => True,
+      others                         => False);
    --  All tables that contain type declarations
-
 
    type CPP_Handler_Record is new LI_Handler_Record with record
       Db       : Entities_Database;
@@ -224,7 +223,7 @@ package body CPP_Parser is
 
    procedure Parse_GV_Table
      (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+      Source  : Source_File;
       Sym     : FIL_Table);
    procedure Parse_T_Table
      (Handler : access CPP_Handler_Record'Class;
@@ -249,6 +248,10 @@ package body CPP_Parser is
    procedure Parse_FU_Table
      (Handler : access CPP_Handler_Record'Class;
       Source  : Source_File;
+      Sym     : FIL_Table);
+   procedure Parse_TA_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
       Sym     : FIL_Table);
    procedure Parse_TO_Table
      (Handler   : access CPP_Handler_Record'Class;
@@ -333,7 +336,8 @@ package body CPP_Parser is
       Entity           : Entity_Information;
       Parent_Name      : String;
       Parent_Reference : Point := Invalid_Point;
-      Entity_Is_A_Type : Boolean := False);
+      Entity_Is_A_Type : Boolean := False;
+      Class_Or_Function : String := Invalid_String);
    --  Set the parent information for Entity.
    --  Parent_Reference is also registered as a reference to the parent
 
@@ -358,6 +362,26 @@ package body CPP_Parser is
    procedure Set_Kind_From_Table_If_Not_Set
      (Entity : Entity_Information; Table : Symbol_Type);
    --  Guess the kind of the entity from the table in which it is declared
+
+   function Get_Static_Field
+     (Handler : access CPP_Handler_Record'Class;
+      Source  : Source_File;
+      G       : GV_Table) return Entity_Information;
+   --  Return the declaration for the static class field defined in G.
+   --  G must have a class name defined.
+
+   procedure Skip_Brackets
+     (Name    : String;
+      Index   : in out Natural;
+      Opening : Character;
+      Closing : Character);
+   --  Skip to the matching opening or closing bracket. If Index currently
+   --  points to an opening bracket, moves forward until it finds a matching
+   --  closing one.
+   --  If Index currently points to a closing bracket, moves backward.
+   --  Nested brackets are properly handled
+   --
+   --  ??? Move to string_utils.ads
 
    ---------------------
    -- Table_Extension --
@@ -586,6 +610,8 @@ package body CPP_Parser is
             Kind := String_Entity;
          elsif Clean_Name (Name_Start .. Clean_Name'Last) = "void" then
             Kind := Void_Entity;
+         elsif Clean_Name (Name_Start .. Clean_Name'Last) = "class" then
+            Kind := Class_Entity;
          else
             return null;
          end if;
@@ -653,6 +679,40 @@ package body CPP_Parser is
       end if;
    end Set_Kind_From_Table_If_Not_Set;
 
+   -------------------
+   -- Skip_Brackets --
+   -------------------
+
+   procedure Skip_Brackets
+     (Name    : String;
+      Index   : in out Natural;
+      Opening : Character;
+      Closing : Character)
+   is
+      Num_Brackets : Natural := 1;
+   begin
+      if Name (Index) = Opening then
+         while Index < Name'Last and then Num_Brackets /= 0 loop
+            Index := Index + 1;
+            if Name (Index) = Opening then
+               Num_Brackets := Num_Brackets + 1;
+            elsif Name (Index) = Closing then
+               Num_Brackets := Num_Brackets - 1;
+            end if;
+         end loop;
+
+      elsif Name (Index) = Closing then
+         while Index > Name'First and then Num_Brackets /= 0 loop
+            Index := Index - 1;
+            if Name (Index) = Opening then
+               Num_Brackets := Num_Brackets - 1;
+            elsif Name (Index) = Closing then
+               Num_Brackets := Num_Brackets + 1;
+            end if;
+         end loop;
+      end if;
+   end Skip_Brackets;
+
    -----------------------------
    -- Lookup_Entity_In_Tables --
    -----------------------------
@@ -683,7 +743,12 @@ package body CPP_Parser is
         or else Name (Last) = '['
         or else Name (Last) = ']'
         or else Name (Last) = ' '
+        or else Name (Last) = '>'
       loop
+         if Name (Last) = '>' then
+            Skip_Brackets (Name, Last, '<', '>');
+         end if;
+
          Last := Last - 1;
       end loop;
 
@@ -718,8 +783,10 @@ package body CPP_Parser is
                         exit when Entity /= null;
                      end if;
 
-                  when IV | MI | MD =>
-                     if Class_Or_Function /= "" then
+                  when IV | MI | MD | TA =>
+                     if Class_Or_Function /= ""
+                       and then Class_Or_Function /= "#"
+                     then
                         Find_Key (Handler.SN_Table (Table_Type),
                                   Class       => Class_Or_Function,
                                   Name        => Name (Name'First .. Last),
@@ -764,7 +831,7 @@ package body CPP_Parser is
                         exit when Entity /= null;
                      end if;
 
-                  when IU | COM | COV | SN_IN | SU | TA | UD =>
+                  when IU | COM | COV | SN_IN | SU | UD =>
                      Trace (Me, "Do not know how to lookup entities in "
                             & Table_Type'Img & " table");
                end case;
@@ -788,6 +855,12 @@ package body CPP_Parser is
          loop
             Last := Last + 1;
             exit when Last > Name'Last;
+
+            if Name (Last) = '<' then
+               Skip_Brackets (Name, Last, '<', '>');
+               Last := Last + 1;
+               exit when Last > Name'Last;
+            end if;
 
             if Name (Last) /= ' ' then
                Real_Entity := Get_Or_Create
@@ -824,6 +897,58 @@ package body CPP_Parser is
       return Entity;
    end Lookup_Entity_In_Tables;
 
+   ----------------------
+   -- Get_Static_Field --
+   ----------------------
+
+   function Get_Static_Field
+     (Handler : access CPP_Handler_Record'Class;
+      Source  : Source_File;
+      G       : GV_Table) return Entity_Information
+   is
+      Entity, Class  : Entity_Information;
+      Var     : IV_Table;
+      Success : Boolean;
+   begin
+      Find (DB            => Handler.SN_Table (IV),
+            Class         => G.Data (G.Class.First .. G.Class.Last),
+            Variable_Name => G.Key  (G.Name.First .. G.Name.Last),
+            Tab           => Var,
+            Success       => Success);
+
+      if Success then
+         Entity := Get_Or_Create
+           (Db     => Handler.Db,
+            Name   => G.Key (G.Name.First .. G.Name.Last),
+            File   => Get_Or_Create
+              (Handler, Var.Key (Var.File_Name.First .. Var.File_Name.Last)),
+            Line   => Var.Start_Position.Line,
+            Column => Var.Start_Position.Column);
+         Add_Reference
+           (Entity   => Entity,
+            Location => (File   => Source,
+                         Line   => G.Start_Position.Line,
+                         Column => G.Start_Position.Column),
+            Kind     => Body_Entity);
+
+         --  Also register a new reference for the type (int in "int A::s;").
+         --  We shouldn't set the parent through Set_Parent, since this is
+         --  already done at the declaration of the field.
+
+         Class := Get_Type_Of (Entity);
+         if Class /= null then
+            Add_Reference
+              (Entity   => Class,
+               Location => (File   => Source,
+                            Line   => G.Type_Start_Position.Line,
+                            Column => G.Type_Start_Position.Column),
+               Kind     => Reference);
+         end if;
+      end if;
+
+      return Entity;
+   end Get_Static_Field;
+
    --------------------
    -- Parse_GV_Table --
    --------------------
@@ -832,11 +957,14 @@ package body CPP_Parser is
 
    procedure Parse_GV_Table
      (Handler : access CPP_Handler_Record'Class;
-      Entity  : Entity_Information;
+      Source  : Source_File;
       Sym     : FIL_Table)
    is
-      G : GV_Table;
+      Entity  : Entity_Information;
+      G       : GV_Table;
       Success : Boolean;
+      Class   : Entity_Information;
+      Length  : Natural;
    begin
       Find (DB       => Handler.SN_Table (GV),
             Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
@@ -846,12 +974,51 @@ package body CPP_Parser is
             Success  => Success);
 
       if Success then
-         Set_Parent
-           (Handler        => Handler,
-            Entity         => Entity,
-            Parent_Name    => G.Data (G.Value_Type.First .. G.Value_Type.Last),
-            Parent_Reference => G.Type_Start_Position,
-            Entity_Is_A_Type => False);
+
+         --  If we have a class name, this means that we are providing the
+         --  actual declaration for a class static variable, as in
+         --     "int A::my_static = 0"
+         --  In this case, we need to reference the actual declaration
+
+         Length := G.Class.Last - G.Class.First + 1;
+
+         if Length > 0 then
+            Entity := Get_Static_Field (Handler, Source, G);
+         end if;
+
+         if Entity = null then
+            Entity := Entity_From_FIL (Handler, Sym, Source);
+
+            Set_Parent
+              (Handler        => Handler,
+               Entity         => Entity,
+               Parent_Name    =>
+                 G.Data (G.Value_Type.First .. G.Value_Type.Last),
+               Parent_Reference => G.Type_Start_Position,
+               Entity_Is_A_Type => False);
+         end if;
+
+         --  Register an approximate reference to the class (workaround
+         --  limitation in SN)
+
+         if Length > 0
+           and then Sym.Start_Position.Column - 2 - Length > 0
+         then
+            Class := Lookup_Entity_In_Tables
+              (Handler,
+               G.Data (G.Class.First .. G.Class.Last),
+               Current_Source => Get_File (Get_Declaration_Of (Entity)));
+
+            if Class /= null then
+               Add_Reference
+                 (Entity   => Class,
+                  Location =>
+                    (File   => Get_File (Get_Declaration_Of (Entity)),
+                     Line   => Sym.Start_Position.Line,
+                     Column => Sym.Start_Position.Column - 2 - Length),
+                  Kind     => Reference);
+            end if;
+         end if;
       end if;
    end Parse_GV_Table;
 
@@ -916,6 +1083,17 @@ package body CPP_Parser is
          if Original /= null then
             Set_Is_Renaming_Of (Entity, Renaming_Of => Original);
             Set_Kind           (Entity, Get_Kind (Original));
+
+            --  Register an approximate reference to the renamed entity. At
+            --  least, the "look around" algorithms in the queries will know
+            --  to look for a reference in the neighborood.
+            Add_Reference
+              (Entity   => Original,
+               Location =>
+                 (File   => Get_File (Get_Declaration_Of (Entity)),
+                  Line   => Get_Line (Get_Declaration_Of (Entity)),
+                  Column => Get_Column (Get_Declaration_Of (Entity))),
+               Kind     => Reference);
          end if;
       end if;
    end Parse_T_Table;
@@ -944,11 +1122,16 @@ package body CPP_Parser is
             Success  => Success);
 
       if Success then
+         --  Register a reference to the parent where the entity is defined.
+         --  This is not accurate, but at least will provide enough information
+         --  for the "look around" algorithms in the queries
          Set_Parent
            (Handler     => Handler,
             Entity      => Entity,
             Parent_Name =>
-              Var.Data (Var.Value_Type.First .. Var.Value_Type.Last));
+              Var.Data (Var.Value_Type.First .. Var.Value_Type.Last),
+            Parent_Reference => Sym.Start_Position,
+            Class_Or_Function => Sym.Key (Sym.Class.First .. Sym.Class.Last));
       end if;
    end Parse_IV_Table;
 
@@ -1251,6 +1434,38 @@ package body CPP_Parser is
       end if;
    end Parse_CL_Table;
 
+   --------------------
+   -- Parse_TA_Table --
+   --------------------
+   --  The following information is not used currently:
+   --    Attributes, Template_Parameters, Class_Name
+
+   procedure Parse_TA_Table
+     (Handler : access CPP_Handler_Record'Class;
+      Entity  : Entity_Information;
+      Sym     : FIL_Table)
+   is
+      T : TA_Table;
+      Success : Boolean;
+   begin
+      Find (DB       => Handler.SN_Table (TA),
+            Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+            Start_Position => Sym.Start_Position,
+            Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
+            Class    => Sym.Key (Sym.Class.First .. Sym.Class.Last),
+            Tab      => T,
+            Success  => Success);
+
+      if Success then
+         Set_Parent
+           (Handler        => Handler,
+            Entity         => Entity,
+            Parent_Name    => T.Data (T.Value_Type.First .. T.Value_Type.Last),
+            Parent_Reference => T.Type_Position,
+            Entity_Is_A_Type => True);
+      end if;
+   end Parse_TA_Table;
+
    ---------------------
    -- Parse_CON_Table --
    ---------------------
@@ -1298,32 +1513,34 @@ package body CPP_Parser is
       P      : Pair;
       FD_Tab : FD_Table;
    begin
-      Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
+      if Is_Open (Handler.SN_Table (FD)) then
+         Set_Cursor (Handler.SN_Table (FD), By_Key, Name & Field_Sep, False);
 
-      loop
-         Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
-         exit when P = No_Pair;
+         loop
+            Get_Pair (Handler.SN_Table (FD), Next_By_Key, Result => P);
+            exit when P = No_Pair;
 
-         Parse_Pair (P, FD_Tab);
-         exit when Filename =
-           FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last);
+            Parse_Pair (P, FD_Tab);
+            exit when Filename =
+              FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last);
 
-         --  ??? Should compare prototypes. However, we have no garantee that
-         --  the forward declaration includes the full prototype
-      end loop;
+            --  ??? Should compare prototypes. However, we have no garantee
+            --  that the forward declaration includes the full prototype
+         end loop;
 
-      Release_Cursor (Handler.SN_Table (FD));
+         Release_Cursor (Handler.SN_Table (FD));
 
-      if P /= No_Pair then
-         return Get_Or_Create
-           (Db     => Handler.Db,
-            Name   => Name,
-            File   => Source,
-            Line   => FD_Tab.Start_Position.Line,
-            Column => FD_Tab.Start_Position.Column);
-      else
-         return null;
+         if P /= No_Pair then
+            return Get_Or_Create
+              (Db     => Handler.Db,
+               Name   => Name,
+               File   => Source,
+               Line   => FD_Tab.Start_Position.Line,
+               Column => FD_Tab.Start_Position.Column);
+         end if;
       end if;
+
+      return null;
    end Find_Forward_Declaration;
 
    --------------------------------
@@ -1491,6 +1708,21 @@ package body CPP_Parser is
                   Column       => Predefined_Column,
                   Allow_Create => True);
                Set_Kind (Ref, Function_Entity);
+
+            elsif R.Referred_Symbol = TA then
+               --  Bug in SN: the class for a TA is left to "#", so we use the
+               --  name of the generic entity instead
+               Ref := Lookup_Entity_In_Tables
+                 (Handler => Handler,
+                  Name    => R.Key
+                    (R.Referred_Symbol_Name.First
+                     .. R.Referred_Symbol_Name.Last),
+                  Current_Source    => Ref_Source,
+                  Class_Or_Function => Sym_Name,
+                  Tables                         => Arr,
+                  Check_Predefined               => False,
+                  Check_Template_Arguments       => False,
+                  Check_Class_Template_Arguments => False);
 
             else
                Ref := Lookup_Entity_In_Tables
@@ -1694,7 +1926,8 @@ package body CPP_Parser is
       Entity           : Entity_Information;
       Parent_Name      : String;
       Parent_Reference : Point := Invalid_Point;
-      Entity_Is_A_Type : Boolean := False)
+      Entity_Is_A_Type : Boolean := False;
+      Class_Or_Function : String := Invalid_String)
    is
       Parent     : Entity_Information;
       Name_Start : Integer;
@@ -1704,7 +1937,8 @@ package body CPP_Parser is
 
       Parent := Lookup_Entity_In_Tables
         (Handler, Parent_Name (Name_Start .. Parent_Name'Last),
-         Current_Source   => Get_File (Get_Declaration_Of (Entity)));
+         Current_Source    => Get_File (Get_Declaration_Of (Entity)),
+         Class_Or_Function => Class_Or_Function);
 
       if Parent /= null then
          Set_Type_Of (Entity, Is_Of_Type => Parent);
@@ -1768,8 +2002,7 @@ package body CPP_Parser is
 
          case Sym.Symbol is
             when GV =>
-               Entity := Entity_From_FIL (Handler, Sym, Source);
-               Parse_GV_Table (Handler, Entity, Sym);
+               Parse_GV_Table (Handler, Source, Sym);
 
             when IU =>
                Parse_IU_Table (Handler, Source, Sym);
@@ -1803,12 +2036,14 @@ package body CPP_Parser is
             when MI =>
                Parse_MI_Table (Handler, Sym, Source);
 
+            when TA =>
+               Entity := Entity_From_FIL (Handler, Sym, Source);
+               Parse_TA_Table (Handler, Entity, Sym);
+
             when FD    => null; --  Parsed when handling FU
             when SN_IN => null; --  Parsed when handling CL
 
-            when E | EC | UN
-               | Undef | COM | COV | FR | LV | SU | TA | UD =>
-
+            when E | EC | UN | Undef | COM | COV | FR | LV | SU | UD =>
                Trace
                  (Me, "Parse_FIL_Table: "
                   & Base_Name (Get_Filename (Source))
