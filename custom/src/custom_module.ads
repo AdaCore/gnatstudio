@@ -88,12 +88,12 @@
 --    -> facilities for creating toolbar buttons
 --    -> be able to position the custom menus relatively to
 --       other menus
---    -> add icons to the menus (using stock icons)
+--    -> add icons to the menus (using stock icons or image files)
 --    -> make the file syntax a little more flexible
 --       (right now it's very case-sensitive, and so on)
 --    -> Use GPS commands as well as shell commands
---    -> implement a GUI to create those menus graphically
 --    -> give access to the contextual menu factories
+--    -> implement a GUI to create those menus graphically
 
 with Glide_Kernel;
 
