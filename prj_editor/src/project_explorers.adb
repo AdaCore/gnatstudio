@@ -342,7 +342,7 @@ package body Project_Explorers is
    procedure Compute_Children
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Ctree_Node);
-   --  COmpute the children of Node, if they haven't been computed yet.
+   --  Compute the children of Node, if they haven't been computed yet.
 
    ---------------------
    -- Expanding nodes --
