@@ -158,12 +158,9 @@ package Odd.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "";
-      Title           : String := "") return Debugger_Process_Tab;
+      Debugger_Name   : String := "") return Debugger_Process_Tab;
    --  Create a debugger with a given list of arguments.
-   --  A new page is added to the window's main notebook. Title is used as the
-   --  name of the tab, or if it is the empty string an automatic name is
-   --  chosen.
+   --  A new page is added to the window's main notebook.
    --
    --  Kind specifies which debugger should be launched.
    --  Currently, only gdb and jdb are supported.
@@ -227,8 +224,11 @@ package Odd.Process is
    --  Emit the "context_changed" and "process_stopped" signal.
 
    procedure Executable_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class);
+     (Debugger : access Debugger_Process_Tab_Record'Class;
+      Executable_Name : String);
    --  Emit the "executable_changed" signal.
+   --  This basically warns all listeners that the associated debugger is now
+   --  editing a file called Executable_Name
 
    procedure Close_Debugger
      (Debugger : Debugger_Process_Tab);

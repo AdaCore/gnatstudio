@@ -520,25 +520,24 @@ package body Odd.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "";
-      Title           : String := "") return Debugger_Process_Tab
+      Debugger_Name   : String := "") return Debugger_Process_Tab
    is
       Process : Debugger_Process_Tab;
       --  Id      : Gint;
       Label   : Gtk_Label;
-      Program : Program_Descriptor;
    begin
-
-      Program.Debugger := Kind;
-      Program.Remote_Host := new String' (Remote_Host);
-      Program.Remote_Target := new String' (Remote_Target);
-      Program.Protocol := new String' (Remote_Protocol);
-      Program.Program := new String' (Executable);
-      Program.Debugger_Name := new String' (Debugger_Name);
 
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
+
+      Process.Descriptor.Debugger := Kind;
+      Process.Descriptor.Remote_Host := new String' (Remote_Host);
+      Process.Descriptor.Remote_Target := new String' (Remote_Target);
+      Process.Descriptor.Protocol := new String' (Remote_Protocol);
+      Process.Descriptor.Program := new String' (Executable);
+      Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
+
       Process.Window := Window.all'Access;
 
       Widget_Callback.Object_Connect
@@ -601,25 +600,7 @@ package body Odd.Process is
 
       --  Add a new page to the notebook
 
-      if Title = "" then
-         declare
-            Debug : constant String := Debugger_Type'Image (Kind);
-         begin
-            if Executable'Length > 0 then
-               Gtk_New
-                 (Label, Debug (1 .. Debug'Last - 5) & " - "
-                  & Base_File_Name (Executable));
-            else
-               Gtk_New
-                 (Label, Debug (1 .. Debug'Last - 5) & " -" &
-                  Guint'Image (Page_List.Length (Get_Children
-                    (Window.Process_Notebook)) + 1));
-            end if;
-         end;
-      else
-         Gtk_New (Label, Title);
-      end if;
-
+      Gtk_New (Label, "");
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
@@ -676,8 +657,6 @@ package body Odd.Process is
       --  file.
       Initialize (Process.Debugger);
 
-      Process.Descriptor := Program;
-
       return Process;
    end Create_Debugger;
 
@@ -697,8 +676,24 @@ package body Odd.Process is
    ------------------------
 
    procedure Executable_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class) is
+     (Debugger : access Debugger_Process_Tab_Record'Class;
+      Executable_Name : String)
+   is
+      Debug : constant String :=
+        Debugger_Type'Image (Debugger.Descriptor.Debugger);
+      Label : Gtk_Widget;
    begin
+
+      --  Changes the title of the tab for that debugger
+
+      Label :=  Get_Tab_Label
+        (Debugger.Window.Process_Notebook, Debugger.Process_Paned);
+      Set_Text (Gtk_Label (Label),
+                Debug (1 .. Debug'Last - 5) & " - "
+                & Base_File_Name (Executable_Name));
+
+      --  Emit the signal
+
       Widget_Callback.Emit_By_Name
         (Gtk_Widget (Debugger), "executable_changed");
    end Executable_Changed;
