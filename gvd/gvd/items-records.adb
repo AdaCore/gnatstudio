@@ -429,7 +429,7 @@ package body Items.Records is
             GC   => Context.GC,
             X    => X + Left_Border + Border_Spacing,
             Y    => Current_Y + Get_Ascent (Context.Type_Font),
-            Text => Item.Type_Name.all);
+            Text => Get_Type_Name (Item'Access, Context));
          Current_Y := Current_Y +
            Get_Ascent (Context.Type_Font) +
            Get_Descent (Context.Type_Font);
@@ -525,7 +525,8 @@ package body Items.Records is
          Total_Height := Total_Height + Item.Type_Height;
          Total_Width := Gint'Max
            (Total_Width,
-            Text_Width (Context.Type_Font, Item.Type_Name.all));
+            Text_Width (Context.Type_Font,
+                        Get_Type_Name (Item'Access, Context)));
 
       else
          Item.Type_Height := 0;

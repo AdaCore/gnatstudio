@@ -70,6 +70,10 @@ package Items is
    --  Iterator used to traverse all the children of an item. For a record
    --  type, this would point to each of the fields.
 
+   Unknown_Type_Prefix : constant String := "???";
+   --  Prefix to indicate that a type has not been parsed yet, and needs some
+   --  more parsing.
+
    ---------------
    -- Iterators --
    ---------------
@@ -108,6 +112,7 @@ package Items is
       Type_Font   : Gdk.Font.Gdk_Font;
       Pixmap      : Gdk.Pixmap.Gdk_Pixmap;
       Mode        : Display_Mode;
+      Lang        : Language.Language_Access;
    end record;
    --  This structure contains all the information needed to draw items on
    --  the canvas.
@@ -275,8 +280,13 @@ package Items is
       Name : String);
    --  Change the type of the item
 
-   function Get_Type_Name (Item : access Generic_Type) return String;
-   --  Return the type of Item
+   function Get_Type_Name
+     (Item    : access Generic_Type;
+      Context : Drawing_Context)
+     return String;
+   --  Return the type of Item.
+   --  If the type has not been evaluated yet (lazy evaluation), this is done
+   --  at this point.
 
    ---------------
    -- Constants --
@@ -353,6 +363,12 @@ private
 
       Type_Name : Odd.Types.String_Access := null;
       --  The type of the item.
+      --  As a special case, this starts with Unknown_Type_Prefix if some extra
+      --  info needs to be extracted from the debugger. In that case, the
+      --  format is
+      --     Unknown_Type_Prefix & "entity" & ASCII.LF & "default",
+      --  as for the arguments for Get_Type_Info. This is used so that we do
+      --  not need to query extra information every time.
    end record;
 
    procedure Free_Internal is new Unchecked_Deallocation

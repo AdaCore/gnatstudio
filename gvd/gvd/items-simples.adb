@@ -159,7 +159,7 @@ package body Items.Simples is
             GC   => Text_GC,
             X    => X,
             Y    => Y2 + Get_Ascent (Context.Type_Font),
-            Text => Item.Type_Name.all);
+            Text => Get_Type_Name (Item'Access, Context));
          Y2 := Y2 + Get_Ascent (Context.Type_Font) +
            Get_Descent (Context.Type_Font);
       end if;
@@ -206,7 +206,8 @@ package body Items.Simples is
       then
          Item.Width := Gint'Max
            (Item.Width,
-            Text_Width (Context.Type_Font, Item.Type_Name.all));
+            Text_Width (Context.Type_Font,
+                        Get_Type_Name (Item'Access, Context)));
          Item.Height := Item.Height +
            Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
       end if;
@@ -406,7 +407,7 @@ package body Items.Simples is
             GC   => Text_GC,
             X    => X,
             Y    => Y2 + Get_Ascent (Context.Type_Font),
-            Text => Item.Type_Name.all);
+            Text => Get_Type_Name (Item'Access, Context));
          Y2 := Y2 + Get_Ascent (Context.Type_Font) +
            Get_Descent (Context.Type_Font);
       end if;

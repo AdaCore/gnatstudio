@@ -18,15 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;         use Glib;
-with Gdk.Font;     use Gdk.Font;
-with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.Pixmap;   use Gdk.Pixmap;
-with Gdk.Bitmap;   use Gdk.Bitmap;
-with Gdk.GC;       use Gdk.GC;
-with Gdk.Window;   use Gdk.Window;
-with Language;     use Language;
-with Odd.Types;    use Odd.Types;
+with Glib;              use Glib;
+with Gdk.Font;          use Gdk.Font;
+with Gdk.Drawable;      use Gdk.Drawable;
+with Gdk.Pixmap;        use Gdk.Pixmap;
+with Gdk.Bitmap;        use Gdk.Bitmap;
+with Gdk.GC;            use Gdk.GC;
+with Gdk.Window;        use Gdk.Window;
+with Language;          use Language;
+with Odd.Types;         use Odd.Types;
+with Debugger;          use Debugger;
+with Language.Debugger; use Language.Debugger;
+with Process_Proxies;   use Process_Proxies;
 
 package body Items is
 
@@ -239,10 +242,45 @@ package body Items is
    -- Get_Type_Name --
    -------------------
 
-   function Get_Type_Name (Item : access Generic_Type) return String is
+   function Get_Type_Name
+     (Item    : access Generic_Type;
+      Context : Drawing_Context)
+     return String is
    begin
       if Item.Type_Name = null then
          return "";
+
+      --  Lazy evaluation ?
+      elsif Item.Type_Name'Length > Unknown_Type_Prefix'Length
+        and then Item.Type_Name
+        (Item.Type_Name'First
+         .. Item.Type_Name'First + Unknown_Type_Prefix'Length - 1) =
+        Unknown_Type_Prefix
+      then
+         declare
+            Entity_Start, Default_Start : Positive;
+            Debugger : constant Debugger_Access :=
+              Get_Debugger (Language_Debugger_Access (Context.Lang));
+         begin
+            Entity_Start := Item.Type_Name'First + Unknown_Type_Prefix'Length;
+
+            Default_Start := Entity_Start;
+            while Default_Start < Item.Type_Name'Last
+              and then Item.Type_Name (Default_Start) /= ASCII.LF
+            loop
+               Default_Start := Default_Start + 1;
+            end loop;
+
+            Push_Internal_Command_Status (Get_Process (Debugger), True);
+            Set_Type_Name
+              (Item,
+               Get_Type_Info
+               (Debugger,
+                Item.Type_Name (Entity_Start .. Default_Start - 1),
+                Item.Type_Name (Default_Start + 1 .. Item.Type_Name'Last)));
+            Pop_Internal_Command_Status (Get_Process (Debugger));
+            return Item.Type_Name.all;
+         end;
       else
          return Item.Type_Name.all;
       end if;
