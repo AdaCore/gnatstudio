@@ -372,10 +372,13 @@ package body Glide_Menu is
          end;
       end loop;
 
-      Free (Title);
+      --  Note: The loop above can only exit via an exception (expected
+      --  exception is Process_Died), so put any clean up code in the handlers
+      --  below, not here.
 
    exception
       when Process_Died =>
+         Free (Title);
          Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
          --  ??? Check returned status.
 
@@ -395,6 +398,7 @@ package body Glide_Menu is
          Close (Fd);
 
       when E : others =>
+         Free (Title);
          Close (Fd);
          Set_Busy (Top.Kernel, False);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
