@@ -151,8 +151,7 @@ package body Src_Editor_View is
      (View          : access Source_View_Record;
       Identifier    : String;
       Width         : Integer;
-      Column        : out Integer;
-      Stick_To_Data : Boolean := True);
+      Column        : out Integer);
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
@@ -337,10 +336,12 @@ package body Src_Editor_View is
             Find_Top_Line :
             while Top_Line <= Bottom_Line loop
                for J in View.Line_Info'Range loop
-                  Info := Get_Side_Info (View, Top_Line, J);
+                  if View.Line_Info (J).Every_Line then
+                     Info := Get_Side_Info (View, Top_Line, J);
 
-                  if Info.Width = 0 then
-                     exit Find_Top_Line;
+                     if Info.Width = 0 then
+                        exit Find_Top_Line;
+                     end if;
                   end if;
                end loop;
 
@@ -350,10 +351,12 @@ package body Src_Editor_View is
             Find_Bottom_Line :
             while Bottom_Line >= Top_Line loop
                for J in View.Line_Info'Range loop
-                  Info := Get_Side_Info (View, Bottom_Line, J);
+                  if View.Line_Info (J).Every_Line then
+                     Info := Get_Side_Info (View, Bottom_Line, J);
 
-                  if Info.Width = 0 then
-                     exit Find_Bottom_Line;
+                     if Info.Width = 0 then
+                        exit Find_Bottom_Line;
+                     end if;
                   end if;
                end loop;
 
@@ -916,8 +919,7 @@ package body Src_Editor_View is
    procedure Add_File_Information
      (View          : access Source_View_Record;
       Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data;
-      Stick_To_Data : Boolean := True)
+      Info          : Glide_Kernel.Modules.Line_Information_Data)
    is
       Column : Integer;
       Buffer : Integer;
@@ -955,10 +957,7 @@ package body Src_Editor_View is
         (View,
          Identifier,
          Width,
-         Column,
-         Stick_To_Data);
-
-      View.Line_Info (Column).Stick_To_Data := Stick_To_Data;
+         Column);
 
       --  Update the stored data.
       for J in Info'Range loop
@@ -971,6 +970,76 @@ package body Src_Editor_View is
       Redraw_Columns (View);
    end Add_File_Information;
 
+   ------------------------------------
+   -- Create_Line_Information_Column --
+   ------------------------------------
+
+   procedure Create_Line_Information_Column
+     (View           : access Source_View_Record;
+      Identifier     : String;
+      Stick_To_Data  : Boolean;
+      Every_Line     : Boolean)
+   is
+      Col : Integer;
+   begin
+      Get_Column_For_Identifier
+        (View, Identifier, -1, Col);
+      View.Line_Info (Col).Stick_To_Data := Stick_To_Data;
+      View.Line_Info (Col).Every_Line    := Every_Line;
+   end Create_Line_Information_Column;
+
+   ------------------------------------
+   -- Remove_Line_Information_Column --
+   ------------------------------------
+
+   procedure Remove_Line_Information_Column
+     (View           : access Source_View_Record;
+      Identifier     : String)
+   is
+      Col   : Integer;
+      Width : Integer;
+
+      procedure Free is new Unchecked_Deallocation
+        (Line_Info_Width_Array, Line_Info_Width_Array_Access);
+      procedure Free is new Unchecked_Deallocation
+        (Line_Info_Display_Record, Line_Info_Display_Access);
+
+   begin
+      Get_Column_For_Identifier (View, Identifier, -1, Col);
+
+      Width := View.Line_Info (Col).Width;
+
+      for J in View.Line_Info (Col).Column_Info'Range loop
+         Free (View.Line_Info (Col).Column_Info (J));
+      end loop;
+
+      Free (View.Line_Info (Col).Identifier);
+      Free (View.Line_Info (Col).Column_Info);
+      Free (View.Line_Info (Col));
+
+      declare
+         A : Line_Info_Display_Array
+           (View.Line_Info.all'First .. View.Line_Info.all'Last - 1);
+      begin
+         A (View.Line_Info.all'First .. Col - 1) :=
+           View.Line_Info (View.Line_Info.all'First .. Col - 1);
+         A (Col .. View.Line_Info.all'Last - 1) :=
+           View.Line_Info (Col + 1 .. View.Line_Info.all'Last);
+         View.Line_Info := new Line_Info_Display_Array' (A);
+      end;
+
+      for J in Col .. View.Line_Info.all'Last loop
+         View.Line_Info (J).Starting_X
+           := View.Line_Info (J).Starting_X - Width - 2;
+      end loop;
+
+      View.Total_Column_Width := View.Total_Column_Width - Width - 2;
+      Set_Border_Window_Size (View, Enums.Text_Window_Left,
+                              Gint (View.Total_Column_Width));
+
+      Redraw_Columns (View);
+   end Remove_Line_Information_Column;
+
    -------------------------------
    -- Get_Column_For_Identifier --
    -------------------------------
@@ -979,8 +1048,7 @@ package body Src_Editor_View is
      (View          : access Source_View_Record;
       Identifier    : String;
       Width         : Integer;
-      Column        : out Integer;
-      Stick_To_Data : Boolean := True) is
+      Column        : out Integer) is
    begin
 
       --  Browse through existing columns and try to match Identifier.
@@ -1026,8 +1094,10 @@ package body Src_Editor_View is
             Starting_X  => View.Total_Column_Width + 2,
             Width       => Width,
             Column_Info => new Line_Info_Width_Array' (New_Column),
-            Stick_To_Data => Stick_To_Data);
+            Stick_To_Data => False,
+            Every_Line    => False);
          View.Line_Info := new Line_Info_Display_Array' (A);
+
          Column := View.Line_Info.all'Last;
 
          View.Total_Column_Width := View.Total_Column_Width + Width + 2;
@@ -1119,7 +1189,10 @@ package body Src_Editor_View is
       procedure Free is new Unchecked_Deallocation
         (Line_Information_Record, Line_Information_Access);
    begin
-      Free (X.Info.all);
+      if X.Info /= null then
+         Free (X.Info.all);
+      end if;
+
       Free (X.Info);
    end Free;
 
