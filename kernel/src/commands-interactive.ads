@@ -23,6 +23,7 @@
 --  instance)
 
 with Gdk.Event;
+with Glib.Xml_Int;
 with GNAT.OS_Lib;
 with Glide_Kernel;
 with Gtk.Widget;
@@ -92,6 +93,12 @@ package Commands.Interactive is
    --  command that it executes. This is used when listing all the components
    --  of an action
 
+   procedure To_XML
+     (Component   : access Command_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr) is abstract;
+   --  Create an XML node for the Component, and add it to Child, which should
+   --  describe the command itself.
+
    -------------------------
    -- Interactive_Command --
    -------------------------
@@ -143,6 +150,14 @@ package Commands.Interactive is
       Editor  : Gtk.Widget.Gtk_Widget);
    --  Edit the properties of the command from the editor returned by
    --  Command_Editor
+
+   procedure To_XML
+     (Command     : access Interactive_Command;
+      Action_Node : Glib.Xml_Int.Node_Ptr);
+   --  Create XML nodes for Command. This should add attributes to Action_Node,
+   --  and new children if needed.
+   --  This should also save all components of the command
+   --  By default, this does nothing
 
    -------------------------
    --  Component_Iterator --

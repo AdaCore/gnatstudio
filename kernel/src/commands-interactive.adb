@@ -23,6 +23,7 @@ with Glide_Intl;  use Glide_Intl;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Gtk.Label;   use Gtk.Label;
 with Ada.Unchecked_Deallocation;
+with Glib.Xml_Int; use Glib.Xml_Int;
 
 package body Commands.Interactive is
 
@@ -48,6 +49,9 @@ package body Commands.Interactive is
       Editor    : access Gtk.Widget.Gtk_Widget_Record'Class);
    function Get_Name
      (Component : access Internal_Component_Record) return String;
+   procedure To_XML
+     (Component   : access Internal_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr);
    --  See docs for inherited subprograms
 
 
@@ -291,5 +295,33 @@ package body Commands.Interactive is
    begin
       return -"Built-in command";
    end Get_Name;
+
+   ------------
+   -- To_XML --
+   ------------
+
+   procedure To_XML
+     (Component   : access Internal_Component_Record;
+      Action_Node : Glib.Xml_Int.Node_Ptr)
+   is
+      pragma Unreferenced (Component);
+      C : constant Node_Ptr := new Node;
+   begin
+      C.Tag := new String'("builtin");
+      Add_Child (Action_Node, C);
+   end To_XML;
+
+   ------------
+   -- To_XML --
+   ------------
+
+   procedure To_XML
+     (Command     : access Interactive_Command;
+      Action_Node : Glib.Xml_Int.Node_Ptr)
+   is
+      pragma Unreferenced (Command);
+   begin
+      Set_Attribute (Action_Node, "built-in", "true");
+   end To_XML;
 
 end Commands.Interactive;
