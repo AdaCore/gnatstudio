@@ -63,10 +63,12 @@ package body Creation_Wizard is
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Show_Toc            : Boolean := True) is
+      Show_Toc            : Boolean := True;
+      Auto_Save_On_Exit   : Boolean := True;
+      Project             : Projects.Project_Type := Projects.No_Project) is
    begin
       Wiz := new Project_Wizard_Record;
-      Initialize (Wiz, Kernel, Show_Toc);
+      Initialize (Wiz, Kernel, Show_Toc, Auto_Save_On_Exit, Project);
    end Gtk_New;
 
    --------------------------------
@@ -98,13 +100,17 @@ package body Creation_Wizard is
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Show_Toc            : Boolean := True) is
+      Show_Toc            : Boolean := True;
+      Auto_Save_On_Exit   : Boolean := True;
+      Project             : Projects.Project_Type := Projects.No_Project) is
    begin
       Wizards.Initialize
         (Wiz,
          Kernel   => Kernel,
          Title    => -"Project setup",
          Show_Toc => Show_Toc);
+      Wiz.Project := Project;
+      Wiz.Auto_Save_On_Exit := Auto_Save_On_Exit;
    end Initialize;
 
    -----------------
@@ -349,7 +355,14 @@ package body Creation_Wizard is
             Changed            => Changed);
       end loop;
 
-      Tmp := Save_Single_Project (Get_Kernel (Wiz), Wiz.Project);
+      if Changed then
+         Recompute_View (Get_Kernel (Wiz));
+      end if;
+
+      if Wiz.Auto_Save_On_Exit then
+         Tmp := Save_Single_Project (Get_Kernel (Wiz), Wiz.Project);
+      end if;
+
       Pop_State (Get_Kernel (Wiz));
 
    exception
@@ -360,6 +373,16 @@ package body Creation_Wizard is
          Trace (Exception_Handle, "Unexpected exception: "
                 & Exception_Information (E));
    end Perform_Finish;
+
+   -----------------
+   -- Get_Project --
+   -----------------
+
+   function Get_Project
+     (Wiz : access Project_Wizard_Record'Class) return Projects.Project_Type is
+   begin
+      return Wiz.Project;
+   end Get_Project;
 
    ---------
    -- Run --

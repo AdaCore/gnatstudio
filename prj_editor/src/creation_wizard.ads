@@ -47,6 +47,8 @@ package Creation_Wizard is
 
    Invalid_Project_Page : exception;
 
+
+
    type Project_Wizard_Record is
       new Wizards.Wizard_Record with private;
    type Project_Wizard is access all Project_Wizard_Record'Class;
@@ -54,9 +56,11 @@ package Creation_Wizard is
    procedure Gtk_New
      (Wiz                 : out Project_Wizard;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Show_Toc            : Boolean := True);
-   --  Create a new project wizard.
-   --  The goal of such a wizard is to create a new project.
+      Show_Toc            : Boolean := True;
+      Auto_Save_On_Exit   : Boolean := True;
+      Project             : Projects.Project_Type := Projects.No_Project);
+   --  Create a new project wizard, or edit an existing one if Project is
+   --  specified.
    --  All pages added to the wizard must be children of
    --  Project_Wizard_Page_Record.
    --  The project is not loaded automatically on exit;
@@ -64,7 +68,9 @@ package Creation_Wizard is
    procedure Initialize
      (Wiz                 : access Project_Wizard_Record'Class;
       Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Show_Toc            : Boolean := True);
+      Show_Toc            : Boolean := True;
+      Auto_Save_On_Exit   : Boolean := True;
+      Project             : Projects.Project_Type := Projects.No_Project);
    --  Initialize a new project wizard.
 
    function Run (Wiz : access Project_Wizard_Record) return String;
@@ -72,7 +78,13 @@ package Creation_Wizard is
    --  of the project that was created (and not loaded).
    --  The empty string is returned if the user pressed Cancel.
 
-
+   function Get_Project
+     (Wiz : access Project_Wizard_Record'Class) return Projects.Project_Type;
+   --  Return the project being modified.
+   --  Most of the time, this will be null, except when the wizard is used to
+   --  edit an existing project.
+   --  Once the wizard has been completed (and before it is being destroyed),
+   --  this will return the newly created project.
 
    type Name_And_Location_Page is new Project_Wizard_Page_Record with private;
    type Name_And_Location_Page_Access
@@ -134,6 +146,7 @@ private
    type Project_Wizard_Record is new Wizards.Wizard_Record with
       record
          Project : Projects.Project_Type;
+         Auto_Save_On_Exit : Boolean;
       end record;
 
 end Creation_Wizard;
