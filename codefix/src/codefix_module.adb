@@ -35,8 +35,8 @@ with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gdk.Pixbuf;             use Gdk.Pixbuf;
 
 with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
@@ -165,9 +165,8 @@ package body Codefix_Module is
    --  if possible.
 
    procedure Compilation_Finished_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Initializes the fix list of Codefix.
 
    type GPS_Navigator is new Text_Navigator_Abstr with null record;
@@ -448,17 +447,17 @@ package body Codefix_Module is
    -----------------------------
 
    procedure Compilation_Finished_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      pragma Unreferenced (Widget, Args);
+      pragma Unreferenced (Data);
       Compilation_Category : constant String := -"Builder results";
       --  ??? This is a duplicate from commands-builder.ads
 
    begin
       Activate_Codefix
-        (Kernel, Execute_GPS_Shell_Command (Kernel, "get_build_output"),
+        (Kernel_Handle (Kernel),
+         Execute_GPS_Shell_Command (Kernel, "get_build_output"),
          Compilation_Category);
    exception
       when E : others =>
@@ -663,7 +662,7 @@ package body Codefix_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Codefix_Contextual_Menu'Access);
 
---      --  ??? Disabled for now, as the UI is not quite ready yet.
+      --  ??? Disabled for now, as the UI is not quite ready yet.
 
       Register_Menu
         (Kernel      => Kernel,
@@ -672,11 +671,8 @@ package body Codefix_Module is
          Callback    => Codefix_Handler'Access,
          Sensitive   => False);
 
-      Kernel_Callback.Connect
-        (Kernel,
-         Compilation_Finished_Signal,
-         Compilation_Finished_Cb'Access,
-         Kernel_Handle (Kernel));
+      Add_Hook
+        (Kernel, Compilation_Finished_Hook, Compilation_Finished_Cb'Access);
 
       Codefix_Module_ID.Codefix_Class := New_Class
         (Kernel, "Codefix", "Automatically fixes errors in source files");
