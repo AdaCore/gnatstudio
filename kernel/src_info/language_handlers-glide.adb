@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -128,9 +128,10 @@ package body Language_Handlers.Glide is
       Project         : Prj.Project_Id) return String
    is
       --  ??? Could be optimized, since both Get_Project_From_File and
-      --  ??? Get_Language_Of traverse the project structure
+      --  Get_Language_Of traverse the project structure
       Proj : Project_Id := Project;
       Lang : Name_Id;
+
    begin
       if Project = No_Project then
          Proj := Get_Project_From_File
@@ -145,7 +146,6 @@ package body Language_Handlers.Glide is
       Lang := Get_Language_Of (Proj, Base_Name (Source_Filename));
 
       if Lang = No_Name then
-         --  raise Unsupported_Language;
          return "";
       else
          return Get_Name_String (Lang);
