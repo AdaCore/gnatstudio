@@ -242,6 +242,9 @@ package body Python.GUI is
             end if;
 
             Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
+
+         else
+            Trace (Me, Text);
          end if;
       end if;
    end Insert_Text;
