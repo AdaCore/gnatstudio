@@ -84,11 +84,7 @@ begin
    Set_Handle_Size (Process_Tab.Data_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
-   --  Set_Title (Put (Process_Tab.Process_Mdi, Process_Tab.Data_Paned), "Data");
    Set_USize (Process_Tab.Data_Paned, 100, 100);
-   Child := Put (Process_Tab.Process_Mdi, Process_Tab.Data_Paned);
-   Set_Title (Child, "Data");
-   Dock_Child (Child, Side => Top);
    --  Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Data_Paned, True, True, 0);
    Return_Callback.Object_Connect
      (Process_Tab.Data_Paned, "delete_event", On_Data_Paned_Delete_Event'Access, Process_Tab);

@@ -925,11 +925,6 @@ package body GVD.Process is
            (Next     => null,
             Debugger => Gtk_Widget (Process));
       end if;
-
-      --  Initialize the pixmaps and colors for the canvas
-
-      Realize (Process.Data_Canvas);
-      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
    end Initialize;
 
    ---------------
@@ -945,8 +940,19 @@ package body GVD.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") is
+      Debugger_Name   : String := "")
+   is
+      Child : MDI_Child;
    begin
+      --  Initialize the pixmaps and colors for the canvas
+
+      Child := Put (Process.Process_Mdi, Process.Data_Paned);
+      Set_Title (Child, "Data");
+      Dock_Child (Child, Side => Top);
+
+      Realize (Process.Data_Canvas);
+      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
+
       Process.Descriptor.Debugger := Kind;
       Process.Descriptor.Remote_Host := new String' (Remote_Host);
 
