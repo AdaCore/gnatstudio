@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                 GVD - The Other Display Debugger                  --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -787,27 +787,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Edit_Buttons1_Activate;
-
-   ----------------------------
-   -- On_Backtrace1_Activate --
-   ----------------------------
-
-   procedure On_Backtrace1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Top      : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Top);
-
-   begin
-      if Tab = null then
-         return;
-      end if;
-
-      Show_All (Top.Backtrace_Dialog);
-      Gdk_Raise (Get_Window (Top.Backtrace_Dialog));
-      Update (Top.Backtrace_Dialog, Tab);
-   end On_Backtrace1_Activate;
 
    --------------------------
    -- On_Threads1_Activate --
