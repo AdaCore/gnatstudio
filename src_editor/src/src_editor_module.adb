@@ -553,12 +553,24 @@ package body Src_Editor_Module is
 
          if Filename /= null then
             if Command = "edit" then
-               Open_File_Editor
-                 (Kernel,
-                  Filename.all,
-                  Line,
-                  Column,
-                  From_Path => True);
+               if Length = 0 then
+                  Open_File_Editor
+                    (Kernel,
+                     Filename.all,
+                     Line,
+                     Column,
+                     Enable_Navigation => False,
+                     From_Path => True);
+               else
+                  Open_File_Editor
+                    (Kernel,
+                     Filename.all,
+                     Line,
+                     Column,
+                     Column + Length,
+                     Enable_Navigation => False,
+                     From_Path => True);
+               end if;
 
             elsif Command = "create_mark" then
                declare
@@ -1067,6 +1079,10 @@ package body Src_Editor_Module is
       Child : MDI_Child;
       Box   : Source_Box;
    begin
+      if File = "" then
+         return;
+      end if;
+
       loop
          Child := Get (Iter);
 
@@ -1275,6 +1291,14 @@ package body Src_Editor_Module is
             if Src /= null then
                Dummy := File_Edit_Callback
                  ((Src.Editor, Line, Column, 0, User));
+
+               --  Add the location in the navigations button.
+               Interpret_Command
+                 (User,
+                  "add_location_command """ &
+                  "edit -l " & Image (Line) & " -c " & Image (Column) & " "
+                  & File.all
+                  & """");
             end if;
          end if;
       end if;
@@ -3103,10 +3127,11 @@ package body Src_Editor_Module is
       Register_Command
         (Kernel,
          Command      => "edit",
-         Usage        => "edit [-l line] [-c column] file_name",
-         Description  => -"Open a file editor for file_name.",
+         Usage        => "edit [-l line] [-c column] [-L Len] file_name",
+         Description  => -"Open a file editor for file_name." & ASCII.LF
+           & (-"Len is the number of characters to select after the cursor."),
          Minimum_Args => 1,
-         Maximum_Args => 5,
+         Maximum_Args => 7,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
