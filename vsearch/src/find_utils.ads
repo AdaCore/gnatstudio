@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -63,14 +63,17 @@ package Find_Utils is
    -- Options --
    -------------
 
-   type Search_Scope is (Whole,
-                         Comments_Only,
-                         Comments_And_Strings,
-                         Strings_Only,
-                         All_But_Comments);
+   type Search_Scope is
+     (Whole,
+      Comments_Only,
+      Comments_And_Strings,
+      Strings_Only,
+      All_But_Comments);
    --  Scope wanted for the search.
    --  Whole scope means never use any context (i.e. files are whole scanned).
-   --  This scope mostly applies to code editors.
+   --  This scope mostly applies to source files.
+   --  Warning: do not change the contents or order of this type without
+   --  synchronizing with vsearch.glade and Scan_Buffer.
 
    type Search_Options is record
       Scope          : Search_Scope := Whole;
@@ -274,13 +277,13 @@ private
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
    type Match_Result (Length : Natural) is record
-      Index, Line, Column : Natural;
+      Index, Line, Column, End_Column : Natural;
       Text : String (1 .. Length);
    end record;
    --  The result of a match. This is a discriminated type so that we don't
    --  have to worry who is responsible to free it.
 
-   No_Result : constant Match_Result := (0, 0, 0, 0, "");
+   No_Result : constant Match_Result := (0, 0, 0, 0, 0, "");
 
    type Match_Result_Access is access Match_Result;
    type Match_Result_Array is array (Positive range <>) of Match_Result_Access;
@@ -305,7 +308,15 @@ private
    procedure Free (D : in out Dir_Data_Access);
    package Directory_List is new Generic_List (Dir_Data_Access);
 
-   type Current_File_Context is new Search_Context with null record;
+   type Current_File_Context is new Search_Context with record
+      Next_Matches_In_File : Match_Result_Array_Access := null;
+      Last_Match_Returned  : Natural := 0;
+      --  These two fields are used to memorize the list of matches in the
+      --  current file. It is always faster to search the whole file at once,
+      --  and memorize the matches so that each call to Search only
+      --  returns one match.
+   end record;
+
    --  No additional data is needed for searching in the current file.
 
    type Files_Context is new Search_Context with record
@@ -317,10 +328,6 @@ private
       Current_File         : GNAT.OS_Lib.String_Access;
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural := 0;
-      --  The last two fields are used to memorize the list of matches in the
-      --  current file. It is always faster to search the whole file at once,
-      --  and memorize the matches so that each call to Search_Files only
-      --  returns one match.
    end record;
 
    type Files_Project_Context is new Search_Context with record
@@ -329,10 +336,6 @@ private
 
       Next_Matches_In_File : Match_Result_Array_Access := null;
       Last_Match_Returned  : Natural := 0;
-      --  The last two fields are used to memorize the list of matches in the
-      --  current file. It is always faster to search the whole file at once,
-      --  and memorize the matches so that each call to Search_Files only
-      --  returns one match.
    end record;
 
 end Find_Utils;

@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,7 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Check_Button;        use Gtk.Check_Button;
@@ -41,18 +42,20 @@ with Language;                use Language;
 with Language_Handlers;       use Language_Handlers;
 with OS_Utils;                use OS_Utils;
 
+with Src_Editor_Box;          use Src_Editor_Box;
+with Src_Editor_Module;       use Src_Editor_Module;
+
 package body Find_Utils is
 
    Me : Debug_Handle := Create ("Find_Utils");
-   pragma Unreferenced (Me);
 
-   procedure Free_Pattern_Matcher is new Unchecked_Deallocation
+   procedure Free_Pattern_Matcher is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
 
-   procedure Free_Match_Array is new Unchecked_Deallocation
+   procedure Free_Match_Array is new Ada.Unchecked_Deallocation
      (Match_Array, Match_Array_Access);
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Match_Result_Array, Match_Result_Array_Access);
 
    type Recognized_Lexical_States is
@@ -67,19 +70,28 @@ package body Find_Utils is
    type Scan_Callback is access procedure (Match : Match_Result);
    --  Callback for a match in a buffer
 
-   procedure Scan_Buffer
+   procedure Scan_Buffer_No_Scope
      (Buffer     : String;
       Context    : access Search_Context'Class;
       Callback   : Scan_Callback;
-      Ref_Index,
-      Ref_Line,
+      Ref_Index  : in out Integer;
+      Ref_Line   : in out Integer;
       Ref_Column : in out Integer);
    --  Scan Buffer for possible matches. Buffer is assumes to be a single valid
    --  scope, and thus no scope handling is performed.
    --  Ref_Index is assumed to correspond to position Ref_Line and
    --  Ref_Column in the original file. They are automatically updated when new
    --  positions are computed, so that they can be used during the next call to
-   --  Scan_Buffer.
+   --  Scan_Buffer_No_Scope.
+
+   procedure Scan_Buffer
+     (Buffer   : String;
+      Context  : access Search_Context'Class;
+      Callback : Scan_Callback;
+      Lang     : Language_Access := null);
+   --  Search Context in buffer, searching only in the appropriate scope.
+   --  Buffer is assumed to contain complete contexts (e.g the contents of
+   --  a whole file).
 
    procedure Scan_File
      (Context  : access Search_Context'Class;
@@ -89,13 +101,17 @@ package body Find_Utils is
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
 
-   function Scan_File_And_Store
+   function Scan_And_Store
      (Context  : access Search_Context'Class;
       Kernel   : access Kernel_Handle_Record'Class;
-      Name : String) return Match_Result_Array_Access;
+      Str      : String;
+      Is_File  : Boolean;
+      Lang     : Language_Access := null) return Match_Result_Array_Access;
    --  Same as above, but behaves as if there was a default callback that
    --  prints the result in the Glide console.
-   --  It returns the list of matches that were found in the file, or null if
+   --  Str can be either a file name or a file contents, depending whether
+   --  Is_File is resp. True or False.
+   --  It returns the list of matches that were found in the buffer, or null if
    --  no match was found. It is the responsability of the caller to free the
    --  returned array.
 
@@ -121,7 +137,7 @@ package body Find_Utils is
    ----------
 
    procedure Free (Result : in out Match_Result_Array_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Match_Result, Match_Result_Access);
    begin
       if Result /= null then
@@ -160,16 +176,16 @@ package body Find_Utils is
       return Buffer'Last;
    end End_Of_Line;
 
-   -----------------
-   -- Scan_Buffer --
-   -----------------
+   --------------------------
+   -- Scan_Buffer_No_Scope --
+   --------------------------
 
-   procedure Scan_Buffer
+   procedure Scan_Buffer_No_Scope
      (Buffer     : String;
       Context    : access Search_Context'Class;
       Callback   : Scan_Callback;
-      Ref_Index,
-      Ref_Line,
+      Ref_Index  : in out Integer;
+      Ref_Line   : in out Integer;
       Ref_Column : in out Integer)
    is
       Last_Line_Start : Natural := Buffer'First;
@@ -192,8 +208,8 @@ package body Find_Utils is
       begin
          for J in Ref_Index .. Pos - 1 loop
             if Buffer (J) = ASCII.LF then
-               Ref_Line := Ref_Line + 1;
-               Ref_Column := 1;
+               Ref_Line        := Ref_Line + 1;
+               Ref_Column      := 1;
                Last_Line_Start := J + 1;
             else
                Ref_Column := Ref_Column + 1;
@@ -214,21 +230,24 @@ package body Find_Utils is
          loop
             Match
               (RE, Buffer (Pos .. Buffer'Last), Context.Sub_Matches.all);
+
             exit when Context.Sub_Matches (0) = No_Match;
 
             Pos := Context.Sub_Matches (0).First;
-
             To_Line_Column (Pos);
+
             declare
                Line : constant String :=
                  Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
             begin
-               Callback
-                 (Match_Result' (Length => Line'Length,
-                                 Index  => Pos,
-                                 Line   => Ref_Line,
-                                 Column => Ref_Column,
-                                 Text   => Line));
+               Callback (Match_Result'
+                 (Length     => Line'Length,
+                  Index      => Pos,
+                  Line       => Ref_Line,
+                  Column     => Ref_Column,
+                  End_Column =>
+                    Ref_Column + Context.Sub_Matches (0).Last - Pos + 1,
+                  Text       => Line));
             end;
 
             Pos := Pos + 1;
@@ -240,7 +259,7 @@ package body Find_Utils is
       ---------------
 
       procedure BM_Search is
-         BM : Boyer_Moore.Pattern;
+         BM  : Boyer_Moore.Pattern;
          Pos : Integer := Buffer'First;
       begin
          Context_As_Boyer_Moore (Context, BM);
@@ -270,12 +289,13 @@ package body Find_Utils is
                   Line : constant String :=
                     Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
                begin
-                  Callback
-                    (Match_Result' (Length => Line'Length,
-                                    Index  => Pos,
-                                    Line   => Ref_Line,
-                                    Column => Ref_Column,
-                                    Text   => Line));
+                  Callback (Match_Result'
+                    (Length     => Line'Length,
+                     Index      => Pos,
+                     Line       => Ref_Line,
+                     Column     => Ref_Column,
+                     End_Column => Ref_Column + Context.Look_For'Length,
+                     Text       => Line));
                end;
             end if;
 
@@ -296,35 +316,34 @@ package body Find_Utils is
    exception
       when Invalid_Context =>
          null;
-   end Scan_Buffer;
+   end Scan_Buffer_No_Scope;
 
-   ---------------
-   -- Scan_File --
-   ---------------
+   -----------------
+   -- Scan_Buffer --
+   -----------------
 
-   procedure Scan_File
-     (Context  : access Search_Context'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Name     : String;
-      Callback : Scan_Callback)
+   procedure Scan_Buffer
+     (Buffer     : String;
+      Context    : access Search_Context'Class;
+      Callback   : Scan_Callback;
+      Lang       : Language_Access := null)
    is
+      Scope            : constant Search_Scope := Context.Options.Scope;
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
-        := (Statements     => Context.Options.Scope = All_But_Comments,
-            Strings        => Context.Options.Scope in
-              Comments_And_Strings .. All_But_Comments,
-            Mono_Comments  => Context.Options.Scope in
-              Comments_Only .. Comments_And_Strings,
-            Multi_Comments => Context.Options.Scope in
-              Comments_Only .. Comments_And_Strings);
+        := (Statements     => Scope = Whole or else Scope = All_But_Comments,
+            Strings        => Scope = Whole
+              or else Scope in Comments_And_Strings .. All_But_Comments,
+            Mono_Comments  => Scope in Whole .. Comments_And_Strings,
+            Multi_Comments => Scope in Whole .. Comments_And_Strings);
       --  Indicates what lexical states are valid, depending on the current
       --  scope.
 
       procedure Next_Scope_Transition
-        (Buffer : String;
-         Pos    : in out Positive;
-         State  : in out Recognized_Lexical_States;
+        (Buffer      : String;
+         Pos         : in out Positive;
+         State       : in out Recognized_Lexical_States;
          Section_End : out Integer;
-         Lang   : Language_Context);
+         Lang        : Language_Context);
       --  Move Pos to the first character in buffer that isn't in the same
       --  lexical state as State (ie if State is one we want to search in, then
       --  Pos will be left on the first character we do not want to search).
@@ -338,11 +357,11 @@ package body Find_Utils is
       ---------------------------
 
       procedure Next_Scope_Transition
-        (Buffer : String;
-         Pos    : in out Positive;
-         State  : in out Recognized_Lexical_States;
+        (Buffer      : String;
+         Pos         : in out Positive;
+         State       : in out Recognized_Lexical_States;
          Section_End : out Integer;
-         Lang   : Language_Context)
+         Lang        : Language_Context)
       is
          Str_Delim     : Character renames Lang.String_Delimiter;
          Quote_Char    : Character renames Lang.Quote_Character;
@@ -359,7 +378,6 @@ package body Find_Utils is
            and then Scanning_Allowed (State) /= Looking_For
          loop
             case State is
-
                --  Statements end on any other state
 
                when Statements =>
@@ -418,12 +436,14 @@ package body Find_Utils is
                   end loop;
 
                --  Single line comments end on ASCII.LF characters
+
                when Mono_Comments =>
                   while Pos <= Buffer'Last
                     and then Buffer (Pos) /= ASCII.LF
                   loop
                      Pos := Pos + 1;
                   end loop;
+
                   Section_End := Pos - 1;
                   Pos := Pos + 1;
                   State := Statements;
@@ -449,7 +469,6 @@ package body Find_Utils is
          end loop;
       end Next_Scope_Transition;
 
-      FD            : constant File_Descriptor := Open_Read (Name, Text);
       Pos           : Positive := 1;
       Line_Start    : Positive;
       Line          : Natural := 1;
@@ -458,8 +477,68 @@ package body Find_Utils is
       Section_End   : Integer;
       Lexical_State : Recognized_Lexical_States := Statements;
       Old_State     : Recognized_Lexical_States;
+
+   begin
+      --  If the language is null, we simply use the more efficient algorithm
+
+      if Context.Options.Whole_Word or else Lang = null then
+         Scan_Buffer_No_Scope
+           (Buffer,
+            Context,
+            Callback,
+            Pos, Line, Column);
+         return;
+      end if;
+
+      declare
+         Language : Language_Context := Get_Language_Context (Lang);
+      begin
+         --  Always find the longest possible range, so that we can benefit
+         --  as much as possible from the efficient string searching
+         --  algorithms.
+
+         while Pos <= Buffer'Last loop
+            Line_Start := Pos;
+            Old_State  := Lexical_State;
+
+            Next_Scope_Transition
+              (Buffer, Pos, Lexical_State, Section_End, Language);
+
+            if Scanning_Allowed (Old_State) then
+               Scan_Buffer_No_Scope
+                 (Buffer (Line_Start .. Section_End), Context,
+                  Callback, Last_Index, Line, Column);
+            end if;
+
+            for J in Last_Index .. Pos - 1 loop
+               if Buffer (J) = ASCII.LF then
+                  Line := Line + 1;
+                  Column := 0;
+               else
+                  Column := Column + 1;
+               end if;
+            end loop;
+
+            Last_Index := Pos;
+         end loop;
+      end;
+   end Scan_Buffer;
+
+   ---------------
+   -- Scan_File --
+   ---------------
+
+   procedure Scan_File
+     (Context  : access Search_Context'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Name     : String;
+      Callback : Scan_Callback)
+   is
+      Max_File_Len  : constant := 2 ** 21;
+      FD            : constant File_Descriptor := Open_Read (Name, Text);
       Lang          : Language_Access;
       Len           : Natural;
+      Buffer        : Basic_Types.String_Access;
 
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
@@ -473,70 +552,24 @@ package body Find_Utils is
 
       Len := Natural (File_Length (FD));
 
-      --  ??? Temporary, until we are sure that we only manipulate text
-      --  files. We could also allocate buffer on the heap rather than on the
-      --  stack, but the search takes very long for binary files anyway.
+      --  ??? Temporary, until we are sure that we only manipulate text files.
 
-      if Len > 5_000_000 then
+      if Len > Max_File_Len then
          Close (FD);
          return;
       end if;
 
-      declare
-         Buffer : aliased String (1 .. Len);
-      begin
-         Len := Read (FD, Buffer'Address, Len);
-         Close (FD);
+      Buffer := new String (1 .. Len);
+      Len := Read (FD, Buffer.all'Address, Len);
+      Close (FD);
 
-         --  If the language couldn't be found, we simply use the more
-         --  efficient algorithm
-
-         if Context.Options.Whole_Word or else Lang = null then
-            Scan_Buffer
-              (Buffer,
-               Context,
-               Callback,
-               Pos, Line, Column);
-            return;
-         end if;
-
-         declare
-            Language : Language_Context := Get_Language_Context (Lang);
-         begin
-            --  Always find the longest possible range, so that we can benefit
-            --  as much as possible from the efficient string searching
-            --  algorithms.
-
-            while Pos <= Buffer'Last loop
-               Line_Start := Pos;
-               Old_State  := Lexical_State;
-
-               Next_Scope_Transition
-                 (Buffer, Pos, Lexical_State, Section_End, Language);
-
-               if Scanning_Allowed (Old_State) then
-                  Scan_Buffer
-                    (Buffer (Line_Start .. Section_End), Context,
-                     Callback, Last_Index, Line, Column);
-               end if;
-
-               for J in Last_Index .. Pos - 1 loop
-                  if Buffer (J) = ASCII.LF then
-                     Line := Line + 1;
-                     Column := 0;
-                  else
-                     Column := Column + 1;
-                  end if;
-               end loop;
-
-               Last_Index := Pos;
-            end loop;
-         end;
-      end;
+      Scan_Buffer (Buffer (1 .. Len), Context, Callback, Lang);
+      Free (Buffer);
 
    exception
       when Invalid_Context =>
          Close (FD);
+         Free (Buffer);
    end Scan_File;
 
    ----------------------
@@ -555,14 +588,16 @@ package body Find_Utils is
               & " " & Match.Text);
    end Highlight_Result;
 
-   -------------------------
-   -- Scan_File_And_Store --
-   -------------------------
+   --------------------
+   -- Scan_And_Store --
+   --------------------
 
-   function Scan_File_And_Store
+   function Scan_And_Store
      (Context  : access Search_Context'Class;
       Kernel   : access Kernel_Handle_Record'Class;
-      Name : String) return Match_Result_Array_Access
+      Str      : String;
+      Is_File  : Boolean;
+      Lang     : Language_Access := null) return Match_Result_Array_Access
    is
       Result : Match_Result_Array_Access := null;
       Count  : Natural := 0;
@@ -571,12 +606,13 @@ package body Find_Utils is
       --  Save Match in the result array.
 
       procedure Callback (Match : Match_Result) is
-         Tmp : Match_Result_Array_Access;
+         Tmp  : Match_Result_Array_Access;
          Size : Natural := 0;
       begin
          Count := Count + 1;
+
          if Result = null then
-            Size := 10;
+            Size := 16;
          elsif Count > Result'Last then
             Size := Result'Last * 2;
          end if;
@@ -586,7 +622,7 @@ package body Find_Utils is
             Result := new Match_Result_Array (1 .. Size);
 
             if Tmp /= null then
-               Result (1 .. Tmp'Last) := Tmp.all;
+               Result (1 .. Count - 1) := Tmp (1 .. Count - 1);
                Unchecked_Free (Tmp);
             end if;
          end if;
@@ -595,16 +631,21 @@ package body Find_Utils is
       end Callback;
 
    begin
-      Scan_File (Context, Kernel, Name, Callback'Unrestricted_Access);
+      if Is_File then
+         Scan_File (Context, Kernel, Str, Callback'Unrestricted_Access);
+      else
+         Scan_Buffer (Str, Context, Callback'Unrestricted_Access, Lang);
+      end if;
+
       return Result;
-   end Scan_File_And_Store;
+   end Scan_And_Store;
 
    -----------------------
    -- Context_As_String --
    -----------------------
 
-   function Context_As_String (Context : access Search_Context)
-      return String is
+   function Context_As_String
+     (Context : access Search_Context) return String is
    begin
       if Context.Look_For = null or else Context.Options.Regexp then
          raise Invalid_Context;
@@ -718,7 +759,7 @@ package body Find_Utils is
    ----------
 
    procedure Free (Context : in out Search_Context_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Search_Context'Class, Search_Context_Access);
    begin
       if Context /= null then
@@ -857,9 +898,71 @@ package body Find_Utils is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      pragma Unreferenced (Context, Kernel, Search_Backward);
+      pragma Unreferenced (Search_Backward);
+
+      Editor       : constant Source_Editor_Box :=
+        Find_Current_Editor (Kernel);
+      Lang         : Language_Access;
+      Match        : Match_Result_Access;
+
    begin
-      return False;
+      --  If there are still some matches in the current file that we haven't
+      --  returned , do it now.
+
+      if Context.Next_Matches_In_File /= null then
+         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
+
+         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
+           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
+             /= null
+         then
+            Match :=
+              Context.Next_Matches_In_File (Context.Last_Match_Returned);
+            Unhighlight_All (Editor);
+            Highlight_Region
+              (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+            Set_Cursor_Location (Editor, Match.Line, Match.Column);
+            return True;
+
+         else
+            Free (Context.Next_Matches_In_File);
+            return False;
+         end if;
+      end if;
+
+      if Editor = null then
+         return False;
+      end if;
+
+      --  First search
+
+      Lang := Get_Language_From_File
+        (Get_Language_Handler (Kernel), Get_Filename (Editor));
+
+      declare
+         Buffer : constant String := Get_Slice (Editor, 1, 1);
+      begin
+         Context.Next_Matches_In_File := Scan_And_Store
+           (Context, Kernel, Buffer, Is_File => False, Lang => Lang);
+      end;
+
+      if Context.Next_Matches_In_File = null then
+         return False;
+      end if;
+
+      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
+      Match :=
+        Context.Next_Matches_In_File (Context.Last_Match_Returned);
+      Unhighlight_All (Editor);
+      Highlight_Region
+        (Editor, Match.Line, Match.Column, Match.Line, Match.End_Column);
+      Set_Cursor_Location (Editor, Match.Line, Match.Column);
+      return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "unexpected exception: " & Exception_Information (E));
+         return False;
    end Search;
 
    function Search
@@ -897,8 +1000,9 @@ package body Find_Utils is
             return False;
          end if;
 
-         Context.Next_Matches_In_File := Scan_File_And_Store
-           (Context, Kernel, Context.Files (Context.Current_File).all);
+         Context.Next_Matches_In_File := Scan_And_Store
+           (Context, Kernel, Context.Files (Context.Current_File).all,
+            Is_File => True);
          Context.Current_File := Context.Current_File + 1;
 
          exit when Context.Next_Matches_In_File /= null;
@@ -980,7 +1084,8 @@ package body Find_Utils is
                --  ??? Should check that we have a text file
                elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
                   Context.Next_Matches_In_File :=
-                    Scan_File_And_Store (Context, Kernel, Full_Name);
+                    Scan_And_Store
+                      (Context, Kernel, Full_Name, Is_File => True);
 
                   if Context.Next_Matches_In_File /= null then
                      Free (Context.Current_File);
@@ -1007,7 +1112,7 @@ package body Find_Utils is
    ----------
 
    procedure Free (D : in out Dir_Data_Access) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Dir_Data, Dir_Data_Access);
    begin
       Close (D.Dir);
