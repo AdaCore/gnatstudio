@@ -150,8 +150,14 @@ private
    type Code_Editor_Record is new Gtk.Box.Gtk_Box_Record with record
       Text            : Gtk.Text.Gtk_Text;
       Buttons         : Gtk.Layout.Gtk_Layout;
+
       Explorer        : Gtk.Ctree.Gtk_Ctree;
       Explorer_Scroll : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
+
+      Explorer_Root        : Gtk.Ctree.Gtk_Ctree_Node;
+      Explorer_Is_Computed : Boolean := False;
+      Explorer_Dummy_Node  : Gtk.Ctree.Gtk_Ctree_Node;
+      --  Dummy node put in the explorer before it is computed
 
       Current_File    : String_Access;
       Buffer          : String_Access;

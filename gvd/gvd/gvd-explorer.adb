@@ -103,12 +103,14 @@ package body Odd.Explorer is
    -- Explore --
    -------------
 
-   function Explore
-     (Window    : access Gtk_Widget_Record'Class;
+   procedure Explore
+     (Tree      : access Gtk.Ctree.Gtk_Ctree_Record'Class;
+      Root      : Gtk.Ctree.Gtk_Ctree_Node;
+      Window    : access Gtk_Widget_Record'Class;
       Buffer    : String;
       Lang      : Language.Language_Access;
       File_Name : String;
-      Handler   : Explorer_Handler := null) return Gtk_Ctree
+      Handler   : Explorer_Handler := null)
    is
       Matches            : Match_Array (0 .. 10);
 
@@ -117,18 +119,14 @@ package body Odd.Explorer is
       Internal_Cat       : Internal_Categories (Categories'Range);
 
       First              : Natural;
-      Tree               : Gtk_Ctree;
       Folder_Pixmap      : Gdk_Pixmap;
       Folder_Mask        : Gdk_Bitmap;
       Folder_Open_Pixmap : Gdk_Pixmap;
       Folder_Open_Mask   : Gdk_Bitmap;
       Node               : Gtk_Ctree_Node;
-      Root               : Gtk_Ctree_Node;
 
    begin
-      Gtk_New (Tree, 1);
       Realize (Window);
-
       Freeze (Tree);
 
       Tree_Cb.Connect
@@ -152,11 +150,6 @@ package body Odd.Explorer is
       Create_From_Xpm_D
         (Folder_Pixmap, Get_Window (Window), Folder_Mask, Null_Color,
          mini_folder_xpm);
-
-      Root := Insert_Node
-        (Tree, null, null, Null_Array + File_Name,
-         5, Null_Pixmap, Null_Bitmap, Null_Pixmap, Null_Bitmap, False, True);
-
 
       --  For each category, parse the file
 
@@ -226,7 +219,6 @@ package body Odd.Explorer is
       Set_Column_Auto_Resize (Tree, 0, True);
 
       Thaw (Tree);
-      return Tree;
    end Explore;
 
 end Odd.Explorer;

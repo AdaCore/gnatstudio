@@ -40,6 +40,8 @@ with Gtk.Widget;          use Gtk.Widget;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Style;           use Gtk.Style;
 with Gtkada.Types;        use Gtkada.Types;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtk.Arguments;       use Gtk.Arguments;
 with Language;            use Language;
 with Debugger;            use Debugger;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -88,7 +90,7 @@ package body Odd.Code_Editors is
    --  Type of strings used to display line numbers.
 
    package Editor_Cb is new Callback (Code_Editor_Record);
-   package Editor_Event_Cb is new Return_Callback
+   package Editor_Event_Cb is new Gtk.Handlers.Return_Callback
      (Code_Editor_Record, Boolean);
 
    procedure Free is new Unchecked_Deallocation (String, String_Access);
@@ -111,6 +113,12 @@ package body Odd.Code_Editors is
    procedure Update_Buttons (Editor : access Code_Editor_Record'Class);
    --  Update the display of line-breaks buttons.
    --  If this feature is disabled for the editor, then they are all removed.
+
+   procedure Expand_Explorer_Tree
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Args   : Gtk_Args);
+   --  Compute the contents of the explorer if needed. This is not done
+   --  systematically, so as to speed things up.
 
    -------------
    -- Jump_To --
@@ -352,8 +360,8 @@ package body Odd.Code_Editors is
       Editor.File_Name_Style := Copy (Get_Style (Editor.Text));
       Set_Base (Editor.File_Name_Style, State_Normal, Color);
       Set_Base (Editor.File_Name_Style, State_Selected, Color);
-      Set_Background (Editor.File_Name_Style, State_Normal, Color);
-      Set_Background (Editor.File_Name_Style, State_Selected, Color);
+      Set_Foreground (Editor.File_Name_Style, State_Active,
+                      Black (Get_System));
 
       --  ???Unfortunately, it is not possible currently to specify the
       --  step_increment for the adjustments, since this is overriden in
@@ -714,6 +722,32 @@ package body Odd.Code_Editors is
       Thaw (Editor.Buttons);
    end Update_Buttons;
 
+   --------------------------
+   -- Expand_Explorer_Tree --
+   --------------------------
+
+   procedure Expand_Explorer_Tree
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
+   is
+      Editor : Code_Editor := Code_Editor (Widget);
+      Node   : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
+   begin
+      if Node = Editor.Explorer_Root
+        and then not Editor.Explorer_Is_Computed
+      then
+         Remove_Node (Editor.Explorer, Editor.Explorer_Dummy_Node);
+
+         Editor.Explorer_Is_Computed := True;
+         Explore
+           (Editor.Explorer, Editor.Explorer_Root,
+            Editor, Editor.Buffer.all, Editor.Lang,
+            Base_File_Name (Editor.Current_File.all), Jump_To'Access);
+         Show_All (Editor.Explorer);
+         Gtk.Ctree.Expand (Editor.Explorer, Editor.Explorer_Root);
+      end if;
+   end Expand_Explorer_Tree;
+
    --------------------
    -- File_Not_Found --
    --------------------
@@ -783,9 +817,25 @@ package body Odd.Code_Editors is
             Remove (Editor.Explorer_Scroll, Editor.Explorer);
          end if;
 
-         Editor.Explorer :=
-           Explore (Editor, Editor.Buffer.all, Editor.Lang,
-                    Base_File_Name (Editor.Current_File.all), Jump_To'Access);
+         Gtk_New (Editor.Explorer, 1);
+
+         Editor.Explorer_Root := Insert_Node
+           (Editor.Explorer, null, null,
+            Null_Array + Base_File_Name (File_Name),
+            5, Null_Pixmap, Null_Bitmap,
+            Null_Pixmap, Null_Bitmap, False, False);
+         Editor.Explorer_Is_Computed := False;
+
+         --  Insert a dummy node so that the ctree displays a [+] button on
+         --  the left side.
+         Editor.Explorer_Dummy_Node := Insert_Node
+           (Editor.Explorer, Editor.Explorer_Root, null,
+            Null_Array + "",
+            5, Null_Pixmap, Null_Bitmap, null, null, True, False);
+
+         Widget_Callback.Object_Connect
+           (Editor.Explorer, "tree_expand",
+            Expand_Explorer_Tree'Access, Editor);
 
          Set_Cell_Style (Editor.Explorer, 0, 0, Editor.File_Name_Style);
 
