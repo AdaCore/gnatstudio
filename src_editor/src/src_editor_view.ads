@@ -36,6 +36,8 @@ with Src_Editor_Buffer;
 
 with Basic_Types; use Basic_Types;
 
+with Unchecked_Deallocation;
+
 package Src_Editor_View is
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
@@ -156,6 +158,8 @@ private
      of Line_Info_Display_Access;
 
    type Line_Info_Display_Array_Access is access Line_Info_Display_Array;
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Line_Info_Display_Array, Line_Info_Display_Array_Access);
 
    type Natural_Array is array (Natural range <>) of Natural;
    type Natural_Array_Access is access Natural_Array;
