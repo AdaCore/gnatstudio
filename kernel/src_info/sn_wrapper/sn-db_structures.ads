@@ -379,77 +379,123 @@ package SN.DB_Structures is
    --                 Parse functions                     --
    ---------------------------------------------------------
 
-   function Parse_Pair (Key_Data_Pair : Pair) return BY_Table;
-   --  Function for parsing BY_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out BY_Table);
+   --  Procedure for parsing BY_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return CL_Table;
-   --  Function for parsing CL_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out CL_Table);
+   --  Procedure for parsing CL_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return COM_Table;
-   --  Function for parsing COM_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out COM_Table);
+   --  Procedure for parsing COM_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return CON_Table;
-   --  Function for parsing CON_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out CON_Table);
+   --  Procedure for parsing CON_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return COV_Table;
-   --  Function for parsing COV_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out COV_Table);
+   --  Procedure for parsing COV_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return E_Table;
-   --  Function for parsing E_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out E_Table);
+   --  Procedure for parsing E_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return EC_Table;
-   --  Function for parsing EC_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out EC_Table);
+   --  Procedure for parsing EC_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return F_Table;
-   --  Function for parsing F_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out F_Table);
+   --  Procedure for parsing F_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return FD_Table;
-   --  Function for parsing FD_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out FD_Table);
+   --  Procedure for parsing FD_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return FIL_Table;
-   --  Function for parsing FIL_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out FIL_Table);
+   --  Procedure for parsing FIL_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return FR_Table;
-   --  Function for parsing FR_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out FR_Table);
+   --  Procedure for parsing FR_Table key-data pair
 
    function Parse_Pair (Key_Data_Pair : Pair) return FU_Table;
-   --  Function for parsing FU_Table key-data pair
+   --  Procedure for parsing FU_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return GV_Table;
-   --  Function for parsing GV_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out GV_Table);
+   --  Procedure for parsing GV_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return IN_Table;
-   --  Function for parsing IN_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out IN_Table);
+   --  Procedure for parsing IN_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return IU_Table;
-   --  Function for parsing IU_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out IU_Table);
+   --  Procedure for parsing IU_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return IV_Table;
-   --  Function for parsing IV_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out IV_Table);
+   --  Procedure for parsing IV_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return LV_Table;
-   --  Function for parsing LV_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out LV_Table);
+   --  Procedure for parsing LV_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return MA_Table;
-   --  Function for parsing MA_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out MA_Table);
+   --  Procedure for parsing MA_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return MD_Table;
-   --  Function for parsing MD_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out MD_Table);
+   --  Procedure for parsing MD_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return REM_Table;
-   --  Function for parsing REM_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out REM_Table);
+   --  Procedure for parsing REM_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return SU_Table;
-   --  Function for parsing SU_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out SU_Table);
+   --  Procedure for parsing SU_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return T_Table;
-   --  Function for parsing T_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out T_Table);
+   --  Procedure for parsing T_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return TA_Table;
-   --  Function for parsing TA_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out TA_Table);
+   --  Procedure for parsing TA_Table key-data pair
 
-   function Parse_Pair (Key_Data_Pair : Pair) return TO_Table;
-   --  Function for parsing TO_Table key-data pair
+   procedure Parse_Pair
+     (Key_Data_Pair : Pair;
+      Tab           : out TO_Table);
+   --  Procedure for parsing TO_Table key-data pair
 
    ---------------------------------------------------------
 
