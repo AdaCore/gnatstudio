@@ -282,24 +282,6 @@ Boston, MA 02111-1307, USA.  */
 
 #endif /* not LINUX_QMAGIC */
 
-#if 0
-/* In 19.23 and 19.24, configure sometimes fails to define these.
-   It has to do with the fact that configure uses CFLAGS when linking
-   while Makefile.in.in (erroneously) fails to do so when linking temacs.  */
-#ifndef HAVE_GETTIMEOFDAY
-#define HAVE_GETTIMEOFDAY
-#endif
-#ifndef HAVE_MKDIR
-#define HAVE_MKDIR
-#endif
-#ifndef HAVE_RMDIR
-#define HAVE_RMDIR
-#endif
-#ifndef HAVE_XSCREENNUMBEROFSCREEN
-#define HAVE_XSCREENNUMBEROFSCREEN
-#endif
-#endif /* 0 */
-
 /* This is to work around mysterious gcc failures in some system versions.
    It is unlikely that Emacs changes will work around this problem;
    therefore, this should remain permanently.  */
