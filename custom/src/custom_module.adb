@@ -196,6 +196,8 @@ package body Custom_Module is
       procedure Parse_Tool_Node (Node : Node_Ptr);
       procedure Parse_Stock_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
+      procedure Parse_Submenu_Node
+        (Node : Node_Ptr; Parent_Path : UTF8_String);
       function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
 
@@ -518,6 +520,89 @@ package body Custom_Module is
          Free (Pixmap);
       end Parse_Button_Node;
 
+      ------------------------
+      -- Parse_Submenu_Node --
+      ------------------------
+
+      procedure Parse_Submenu_Node
+        (Node : Node_Ptr; Parent_Path : UTF8_String)
+      is
+         Child : Node_Ptr := Node.Child;
+         Title : String_Access := new String'("");
+         Before : constant String := Get_Attribute (Node, "before");
+         After  : constant String := Get_Attribute (Node, "after");
+      begin
+         --  First look for the title of the submenu
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "title" then
+               if Title.all /= "" then
+                  Insert (Kernel,
+                          -"Only one <title> node allowed in <submenu>",
+                          Mode => Error);
+                  raise Assert_Failure;
+               end if;
+
+               Free (Title);
+               Title := new String'(Child.Value.all);
+            end if;
+            Child := Child.Next;
+         end loop;
+
+         Child := Node.Child;
+
+         --  If specific locations are specified, create the menu now
+
+         if Before /= "" then
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path =>
+                 Name_As_Directory (Parent_Path, UNIX) & Title.all,
+               Item        => null,
+               Ref_Item    => Before,
+               Add_Before  => True);
+         elsif After /= "" then
+            Register_Menu
+              (Kernel      => Kernel,
+               Parent_Path =>
+                 Name_As_Directory (Parent_Path, UNIX) & Title.all,
+               Item        => null,
+               Ref_Item    => After,
+               Add_Before  => False);
+         end if;
+
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "title" then
+               null; --  Already handled
+            elsif To_Lower (Child.Tag.all) = "submenu" then
+               Parse_Submenu_Node
+                 (Child, Name_As_Directory (Parent_Path, UNIX) & Title.all);
+            elsif To_Lower (Child.Tag.all) = "menu" then
+               Parse_Menu_Node
+                 (Child, Name_As_Directory (Parent_Path, UNIX) & Title.all);
+            elsif To_Lower (Child.Tag.all) = "menu_item"
+              or else To_Lower (Child.Tag.all) = "toolbar_item"
+            then
+               Insert
+                 (Kernel,
+                  -("<menu_item> and <toolbar_item> are no longer"
+                    & " supported. Please use the program"
+                    & " gps2custom-1.3 to convert to the new format."),
+                  Mode => Error);
+               raise Assert_Failure;
+            else
+               Insert (Kernel,
+                       -"Invalid child node for <submenu>: "
+                       & Child.Tag.all,
+                       Mode => Error);
+               raise Assert_Failure;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         Free (Title);
+      end Parse_Submenu_Node;
+
       ---------------------
       -- Parse_Menu_Node --
       ---------------------
@@ -545,6 +630,7 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
+         --  Special case to allow separators
          if Action = ""
            and then Title.all /= ""
          then
@@ -580,7 +666,7 @@ package body Custom_Module is
                      Stock_Image => "",
                      Callback    => null,
                      Action      => Command,
-                     Ref_Item    => Before,
+                     Ref_Item    => After,
                      Add_Before  => False);
 
                else
@@ -671,9 +757,7 @@ package body Custom_Module is
       ---------------
 
       procedure Add_Child (Parent_Path : String; Current_Node : Node_Ptr) is
-         Child : Node_Ptr;
          Lang  : Custom_Language_Access;
-         Title : String_Access;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -687,41 +771,10 @@ package body Custom_Module is
             Initialize (Lang, Handler, Kernel, Current_Node);
 
          elsif Current_Node.Tag.all = "menu" then
-            Parse_Menu_Node (Current_Node, "");
+            Parse_Menu_Node (Current_Node, Parent_Path);
 
          elsif To_Lower (Current_Node.Tag.all) = "submenu" then
-            Child := Current_Node.Child;
-            Title := new String'("");
-            while Child /= null loop
-               if To_Lower (Child.Tag.all) = "title" then
-                  Free (Title);
-                  Title := new String'(Child.Value.all);
-               elsif To_Lower (Child.Tag.all) = "submenu" then
-                  Add_Child (Parent_Path & '/' & Title.all, Child);
-               elsif To_Lower (Child.Tag.all) = "menu" then
-                  Parse_Menu_Node (Child, Parent_Path & '/' & Title.all);
-               elsif To_Lower (Child.Tag.all) = "menu_item"
-                 or else To_Lower (Child.Tag.all) = "toolbar_item"
-               then
-                  Insert
-                    (Kernel,
-                     -("<menu_item> and <toolbar_item> are no longer"
-                       & " supported. Please use the program"
-                       & " gps2custom-1.3 to convert to the new format."),
-                     Mode => Error);
-                  raise Assert_Failure;
-               else
-                  Insert (Kernel,
-                            -"Invalid child node for <submenu>: "
-                          & Child.Tag.all,
-                          Mode => Error);
-                  raise Assert_Failure;
-               end if;
-
-               Child := Child.Next;
-            end loop;
-
-            Free (Title);
+            Parse_Submenu_Node (Current_Node, Parent_Path);
 
          elsif To_Lower (Current_Node.Tag.all) = "action" then
             Parse_Action_Node (Current_Node);
@@ -765,7 +818,7 @@ package body Custom_Module is
       N : Node_Ptr := Node;
    begin
       while N /= null loop
-         Add_Child ("", N);
+         Add_Child ("/", N);
          N := N.Next;
       end loop;
    end Customize;
