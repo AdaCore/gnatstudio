@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib; use Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtk.Notebook; use Gtk.Notebook;
