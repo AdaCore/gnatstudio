@@ -89,7 +89,7 @@ package body Src_Editor_Buffer.Blocks is
             Block := new Block_Record'
               (Indentation_Level => 0,
                Offset_Start      => Current.Sloc_Start.Column,
-               Offset_End        => Current.Sloc_End.Column,
+               Stored_Offset     => Current.Sloc_Start.Column,
                First_Line        => Line_Start,
                Last_Line         => Line_End,
                Block_Type        => Current.Category,
@@ -165,22 +165,28 @@ package body Src_Editor_Buffer.Blocks is
       Free (Constructs);
    end Compute_Blocks;
 
-   -----------------------
-   -- Get_Screen_Offset --
-   -----------------------
+   -----------------------------
+   -- Calculate_Screen_Offset --
+   -----------------------------
 
-   function Get_Screen_Offset
+   procedure Calculate_Screen_Offset
      (Buffer : access Source_Buffer_Record'Class;
-      Block  : Block_Record) return Integer
+      Block  : in out Block_Record)
    is
-      Iter             : Gtk_Text_Iter;
-      Line, Col1, Col2 : Gint;
+      Iter      : Gtk_Text_Iter;
+      Line, Col : Gint;
    begin
+      if not Blocks_Valid (Buffer) then
+         return;
+      end if;
+
       --  The heuristics to determine the right offset for a block is to look
-      --  at the offsets of the first and last lines of the block, and to hope
-      --  that no line of the block will be indented less than either of those
-      --  lines. This is in order to get a good compromise between aesthetics
-      --  and speed.
+      --  at the offsets of the first line of the block.
+
+      --  ??? Looking at the last line of the block is too costly right now.
+      --  We should be able to compute the right information for the whole
+      --  block, and to cache it while the text of the block is not being
+      --  modified.
 
       Get_Iter_At_Line_Offset
         (Buffer,
@@ -188,17 +194,9 @@ package body Src_Editor_Buffer.Blocks is
          Gint (Get_Buffer_Line (Buffer, Block.First_Line) - 1),
          Gint (Block.Offset_Start));
 
-      Get_Screen_Position (Buffer, Iter, Line, Col1);
+      Get_Screen_Position (Buffer, Iter, Line, Col);
 
-      Get_Iter_At_Line_Offset
-        (Buffer,
-         Iter,
-         Gint (Get_Buffer_Line (Buffer, Block.Last_Line) - 1),
-         Gint (Block.Offset_End));
-
-      Get_Screen_Position (Buffer, Iter, Line, Col2);
-
-      return Integer'Min (Integer (Col1), Integer (Col2));
-   end Get_Screen_Offset;
+      Block.Stored_Offset := Integer (Col);
+   end Calculate_Screen_Offset;
 
 end Src_Editor_Buffer.Blocks;

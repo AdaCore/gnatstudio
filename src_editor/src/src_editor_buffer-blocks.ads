@@ -24,9 +24,9 @@ package Src_Editor_Buffer.Blocks is
    --  Fill the buffer information with the data necessary to handle block
    --  folding.
 
-   function Get_Screen_Offset
+   procedure Calculate_Screen_Offset
      (Buffer : access Source_Buffer_Record'Class;
-      Block  : Block_Record) return Integer;
+      Block  : in out Block_Record);
    --  Return the screen position, after TAB expansion, of the block.
 
 end Src_Editor_Buffer.Blocks;
