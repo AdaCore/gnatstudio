@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -70,6 +70,12 @@ package body Glide_Kernel.Modules is
       Event_Widget : Gtk_Widget;
    end record;
 
+   type Menu_Factory_User_Data is record
+      Kernel  : Kernel_Handle;
+      Factory : Dynamic_Menu_Factory;
+      Menu    : Gtk_Menu;
+   end record;
+
    package Kernel_Contextuals is new GUI_Utils.User_Contextual_Menus
      (Contextual_Menu_User_Data);
 
@@ -92,8 +98,16 @@ package body Glide_Kernel.Modules is
       Command : Non_Interactive_Action);
    --  Execute a single command.
 
+   procedure Create_Menu
+     (Widget  : access GObject_Record'Class;
+      Data    : Menu_Factory_User_Data);
+   --  Create a menu using the data in Factory.
+
    package Command_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Non_Interactive_Action);
+
+   package Menu_Factory_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Menu_Factory_User_Data);
 
    ---------------------
    -- Compute_Tooltip --
@@ -595,6 +609,103 @@ package body Glide_Kernel.Modules is
 
       return Item;
    end Register_Menu;
+
+   -----------------
+   -- Create_Menu --
+   -----------------
+
+   procedure Create_Menu
+     (Widget  : access GObject_Record'Class;
+      Data    : Menu_Factory_User_Data)
+   is
+      pragma Unreferenced (Widget);
+
+      procedure Remove_Item
+        (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
+      --  Remove one item from Data.Menu.
+
+      procedure Remove_Item
+        (Item : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      begin
+         Remove (Data.Menu, Item);
+      end Remove_Item;
+
+   begin
+      --  Remove all items in the menu.
+
+      Forall (Data.Menu, Remove_Item'Unrestricted_Access);
+
+      --  Unref the previous context used for a global or contextual menu,
+      --  if any.
+
+      if Data.Kernel.Last_Context_For_Contextual /= null then
+         Unref (Data.Kernel.Last_Context_For_Contextual);
+      end if;
+
+      --  Append all items in the menu.
+
+      Data.Kernel.Last_Context_For_Contextual :=
+        Get_Current_Context (Data.Kernel);
+
+      --  The context must live until the menu is unmapped, therefore
+      --  we need to Ref it.
+      Ref (Data.Kernel.Last_Context_For_Contextual);
+      Data.Factory
+        (Data.Kernel, Data.Kernel.Last_Context_For_Contextual, Data.Menu);
+      Show_All (Data.Menu);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end Create_Menu;
+
+   ---------------------------
+   -- Register_Dynamic_Menu --
+   ---------------------------
+
+   procedure Register_Dynamic_Menu
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Parent_Path : String;
+      Text        : String;
+      Stock_Image : String := "";
+      Ref_Item    : String := "";
+      Add_Before  : Boolean := True;
+      Factory     : Dynamic_Menu_Factory)
+   is
+      Item  : Gtk_Menu_Item;
+      Image : Gtk_Image_Menu_Item;
+      Pix   : Gtk_Image;
+      Menu  : Gtk_Menu;
+
+   begin
+      if Stock_Image = "" then
+         Gtk_New_With_Mnemonic (Item, Text);
+      else
+         Gtk_New_With_Mnemonic (Image, Text);
+         Gtk_New (Pix, Stock_Image, Icon_Size_Menu);
+         Set_Image (Image, Pix);
+         Item := Gtk_Menu_Item (Image);
+      end if;
+
+      Item := Find_Or_Create_Menu_Tree
+        (Menu_Bar     => Glide_Window (Kernel.Main_Window).Menu_Bar,
+         Menu         => null,
+         Path         => Name_As_Directory (Parent_Path, UNIX),
+         Accelerators => Get_Default_Accelerators (Kernel),
+         Add_Before   => Add_Before,
+         Ref_Item     => Ref_Item,
+         Allow_Create => True);
+
+      Gtk_New (Menu);
+      Set_Submenu (Item, Menu);
+
+      if Factory /= null then
+         Menu_Factory_Callback.Connect
+           (Menu, "map",
+            Menu_Factory_Callback.To_Marshaller (Create_Menu'Access),
+            User_Data => (Kernel_Handle (Kernel), Factory, Menu));
+      end if;
+   end Register_Dynamic_Menu;
 
    ---------------------
    -- Register_Button --
