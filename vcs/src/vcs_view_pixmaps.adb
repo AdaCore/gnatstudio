@@ -1,4 +1,8 @@
-package body Vcs_View_Pixmaps is
+package body VCS_View_Pixmaps is
+
+   -------------------
+   -- Init_Graphics --
+   -------------------
 
    procedure Init_Graphics is
    begin
@@ -20,4 +24,4 @@ package body Vcs_View_Pixmaps is
       end if;
    end Init_Graphics;
 
-end Vcs_View_Pixmaps;
+end VCS_View_Pixmaps;

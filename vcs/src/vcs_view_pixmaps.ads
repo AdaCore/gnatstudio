@@ -2,7 +2,7 @@ with Glib; use Glib;
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
 with Basic_Types; use Basic_Types;
 
-package Vcs_View_Pixmaps is
+package VCS_View_Pixmaps is
 
    Status_Unknown_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
    Status_Not_Registered_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
@@ -38,4 +38,4 @@ private
    Needs_Update_Xpm : aliased Pixmap_Array;
    pragma Import (C, Needs_Update_Xpm, "needs_update_xpm");
 
-end Vcs_View_Pixmaps;
+end VCS_View_Pixmaps;
