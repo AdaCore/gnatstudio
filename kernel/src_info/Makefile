@@ -1,6 +1,7 @@
 build:
 	gnatmake -Pstandalone read_ali
 	gnatmake -Pstandalone read_scope_tree
+	gnatmake -Pstandalone find_ref
 
 distrib:
 	@-mkdir gvd gnat > /dev/null 2>&1
