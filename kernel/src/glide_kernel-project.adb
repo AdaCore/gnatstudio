@@ -86,6 +86,10 @@ package body Glide_Kernel.Project is
          Free (Gnatls_Args);
 
       else
+         Insert (Handle,
+                 -"Command not found in path: " & Gnatls_Args (1).all,
+                 Mode => Glide_Kernel.Console.Error);
+
          Set_Predefined_Source_Path (Handle.Registry.all, "");
          Set_Predefined_Object_Path (Handle.Registry.all, "");
          Free (Gnatls_Args);
