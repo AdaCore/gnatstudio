@@ -585,27 +585,11 @@ package body Codefix.Formal_Errors is
       Name         : String) return Solution_List
    is
 
---      function Delete_Entity return Extract;
-      --  Delete the body, and if it exisits the declaration, of an unit
-      --  (typically, a subprogram).
-
 --      function Add_Pragma return Extract;
       --  Add a pragma after the declaration or, if there is no declaration,
       --  after the body.
 
 --      function Add_Parameter_Pragma return Extract;
-
-      -------------------
-      -- Delete_Entity --
-      -------------------
-
---      function Delete_Entity return Extract is
---         New_Extract : Extract;
---      begin
---         Get_Entity (New_Extract, Current_Text, Cursor);
---         Delete_All_Lines (New_Extract);
---         return New_Extract;
---      end Delete_Entity;
 
       ----------------
       -- Add_Pragma --
@@ -669,6 +653,7 @@ package body Codefix.Formal_Errors is
 
       case Category is
          when Cat_Variable =>
+
             declare
                New_Command : Remove_Elements_Cmd;
                Var_Cursor  : Word_Cursor :=
@@ -681,13 +666,17 @@ package body Codefix.Formal_Errors is
                Append (Result, New_Command);
             end;
 
---         when Cat_Function | Cat_Procedure =>
+         when Cat_Function | Cat_Procedure =>
 
---            New_Extract := Delete_Entity;
---            Set_Caption
---              (New_Extract,
---              "Delete subprogram """ & Name & """");
---            Append (New_Solutions, New_Extract);
+            declare
+               Delete_Command : Remove_Entity_Cmd;
+            begin
+               Initialize (Delete_Command, Current_Text, Cursor);
+               Set_Caption
+                 (Delete_Command,
+                  "Delete subprogram """ & Name & """");
+               Append (Result, Delete_Command);
+            end;
 
 --            New_Extract := Add_Pragma;
 --            Set_Caption
@@ -695,13 +684,17 @@ package body Codefix.Formal_Errors is
 --               "Add pragma Unreferenced to subprogram """ & Name & """");
 --            Append (New_Solutions, New_Extract);
 
---         when Cat_Type =>
+         when Cat_Type =>
 
---            New_Extract := Delete_Entity;
---            Set_Caption
---              (New_Extract,
---               "Delete type """ & Name & """");
---            Append (New_Solutions, New_Extract);
+            declare
+               Delete_Command : Remove_Entity_Cmd;
+            begin
+               Initialize (Delete_Command, Current_Text, Cursor);
+               Set_Caption
+                 (Delete_Command,
+                  "Delete type """ & Name & """");
+               Append (Result, Delete_Command);
+            end;
 
 --            New_Extract := Add_Pragma;
 --            Set_Caption
@@ -718,6 +711,7 @@ package body Codefix.Formal_Errors is
 --            Append (New_Solutions, New_Extract);
 
          when Cat_With =>
+
             declare
                New_Command : Remove_Pkg_Clauses_Cmd;
                With_Cursor : Word_Cursor :=
@@ -729,7 +723,9 @@ package body Codefix.Formal_Errors is
                   "Remove all clauses for package " & Name);
                Append (Result, New_Command);
             end;
+
          when others =>
+
             Raise_Exception
               (Codefix_Panic'Identity,
                "Wrong category given : " & Language_Category'Image (Category));
