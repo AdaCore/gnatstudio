@@ -17,8 +17,6 @@ end Gtk_New;
 
 procedure Initialize (Vdiff : access Vdiff_Record'Class) is
    pragma Suppress (All_Checks);
-   Search_Combo_Items : String_List.Glist;
-
 begin
    Gtk.Window.Initialize (Vdiff, Window_Toplevel);
    Set_Title (Vdiff, -"Visual Comparison");
@@ -26,105 +24,43 @@ begin
    Set_Position (Vdiff, Win_Pos_None);
    Set_Modal (Vdiff, False);
 
-   Gtk_New_Vbox (Vdiff.Main_Box, False, 5);
+   Gtk_New_Hbox (Vdiff.Main_Box, True, 2);
    Add (Vdiff, Vdiff.Main_Box);
 
-   Gtk_New (Vdiff.Toolbar, Orientation_Horizontal, Toolbar_Icons);
-   Set_Border_Width (Vdiff.Toolbar, 4);
-   Set_Space_Size (Vdiff.Toolbar, 5);
-   Set_Space_Style (Vdiff.Toolbar, Toolbar_Space_Empty);
-   Set_Tooltips (Vdiff.Toolbar, True);
-   Set_Button_Relief (Vdiff.Toolbar, Relief_Normal);
-   Vdiff.Button1 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button2 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button3 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button4 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button5 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button6 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button7 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Vdiff.Button8 := Append_Element
-     (Toolbar => Vdiff.Toolbar,
-      The_Type => Toolbar_Child_Button,
-      Text => -"button1");
-   Pack_Start (Vdiff.Main_Box, Vdiff.Toolbar, False, False, 0);
+   Gtk_New_Vbox (Vdiff.Vbox1, False, 0);
+   Pack_Start (Vdiff.Main_Box, Vdiff.Vbox1, True, True, 0);
 
-   Gtk_New (Vdiff.Search_Combo);
-   Set_Case_Sensitive (Vdiff.Search_Combo, False);
-   Set_Use_Arrows (Vdiff.Search_Combo, True);
-   Set_Use_Arrows_Always (Vdiff.Search_Combo, False);
-   String_List.Append (Search_Combo_Items, -"");
-   Combo.Set_Popdown_Strings (Vdiff.Search_Combo, Search_Combo_Items);
-   Free_String_List (Search_Combo_Items);
-   Append_Widget (Vdiff.Toolbar, Vdiff.Search_Combo);
+   Gtk_New_Hbox (Vdiff.File_Hbox1, False, 0);
+   Pack_Start (Vdiff.Vbox1, Vdiff.File_Hbox1, False, False, 0);
 
-   Vdiff.Combo_Entry1 := Get_Entry (Vdiff.Search_Combo);
-   Set_Editable (Vdiff.Combo_Entry1, True);
-   Set_Max_Length (Vdiff.Combo_Entry1, 0);
-   Set_Text (Vdiff.Combo_Entry1, -"");
-   Set_Visibility (Vdiff.Combo_Entry1, True);
+   Gtk_New (Vdiff.Label1, -("File1:"));
+   Set_Alignment (Vdiff.Label1, 0.5, 0.5);
+   Set_Padding (Vdiff.Label1, 0, 0);
+   Set_Justify (Vdiff.Label1, Justify_Center);
+   Set_Line_Wrap (Vdiff.Label1, False);
+   Pack_Start (Vdiff.File_Hbox1, Vdiff.Label1, False, False, 5);
 
-   Gtk_New (Vdiff.Main_Frame);
-   Set_Shadow_Type (Vdiff.Main_Frame, Shadow_Etched_In);
-   Pack_Start (Vdiff.Main_Box, Vdiff.Main_Frame, True, True, 0);
-
-   Gtk_New_Hbox (Vdiff.Hbox2, False, 0);
-   Add (Vdiff.Main_Frame, Vdiff.Hbox2);
-
-   Gtk_New_Vbox (Vdiff.Vbox2, False, 0);
-   Pack_Start (Vdiff.Hbox2, Vdiff.Vbox2, True, True, 0);
-
-   Gtk_New_Hbox (Vdiff.Hbox4, False, 0);
-   Pack_Start (Vdiff.Vbox2, Vdiff.Hbox4, False, False, 0);
-
-   Gtk_New (Vdiff.Label5, -("File1:"));
-   Set_Alignment (Vdiff.Label5, 0.5, 0.5);
-   Set_Padding (Vdiff.Label5, 0, 0);
-   Set_Justify (Vdiff.Label5, Justify_Center);
-   Set_Line_Wrap (Vdiff.Label5, False);
-   Pack_Start (Vdiff.Hbox4, Vdiff.Label5, False, False, 5);
-
-   Gtk_New (Vdiff.Frame3);
-   Set_Shadow_Type (Vdiff.Frame3, Shadow_In);
-   Pack_Start (Vdiff.Hbox4, Vdiff.Frame3, True, True, 0);
+   Gtk_New (Vdiff.Frame_Label1);
+   Set_Shadow_Type (Vdiff.Frame_Label1, Shadow_In);
+   Pack_Start (Vdiff.File_Hbox1, Vdiff.Frame_Label1, True, True, 0);
 
    Gtk_New (Vdiff.File_Label1, -("File"));
    Set_Alignment (Vdiff.File_Label1, 7.45058e-09, 0.5);
    Set_Padding (Vdiff.File_Label1, 0, 0);
    Set_Justify (Vdiff.File_Label1, Justify_Center);
    Set_Line_Wrap (Vdiff.File_Label1, False);
-   Add (Vdiff.Frame3, Vdiff.File_Label1);
+   Add (Vdiff.Frame_Label1, Vdiff.File_Label1);
 
    Gtk_New_Hbox (Vdiff.File1_Box, False, 5);
    Set_Border_Width (Vdiff.File1_Box, 5);
-   Pack_Start (Vdiff.Vbox2, Vdiff.File1_Box, True, True, 0);
+   Pack_Start (Vdiff.Vbox1, Vdiff.File1_Box, True, True, 0);
 
-   Gtk_New (Vdiff.Frame5);
-   Set_Shadow_Type (Vdiff.Frame5, Shadow_In);
-   Pack_Start (Vdiff.File1_Box, Vdiff.Frame5, False, True, 0);
+   Gtk_New (Vdiff.Frame_Draw1);
+   Set_Shadow_Type (Vdiff.Frame_Draw1, Shadow_In);
+   Pack_Start (Vdiff.File1_Box, Vdiff.Frame_Draw1, False, True, 0);
 
    Gtk_New (Vdiff.Drawingarea1);
-   Add (Vdiff.Frame5, Vdiff.Drawingarea1);
+   Add (Vdiff.Frame_Draw1, Vdiff.Drawingarea1);
 
    Gtk_New (Vdiff.Scrolledwindow1);
    Set_Policy (Vdiff.Scrolledwindow1, Policy_Always, Policy_Always);
@@ -152,43 +88,40 @@ begin
    Set_Line_Wrap (Vdiff.Label9, False);
    Set_Column_Widget (Vdiff.Clist1, 1, Vdiff.Label9);
 
-   Gtk_New_Vseparator (Vdiff.Vseparator1);
-   Pack_Start (Vdiff.Hbox2, Vdiff.Vseparator1, False, True, 5);
+   Gtk_New_Vbox (Vdiff.Vbox2, False, 0);
+   Pack_Start (Vdiff.Main_Box, Vdiff.Vbox2, True, True, 0);
 
-   Gtk_New_Vbox (Vdiff.Vbox3, False, 0);
-   Pack_Start (Vdiff.Hbox2, Vdiff.Vbox3, True, True, 0);
+   Gtk_New_Hbox (Vdiff.File_Hbox2, False, 0);
+   Pack_Start (Vdiff.Vbox2, Vdiff.File_Hbox2, False, False, 0);
 
-   Gtk_New_Hbox (Vdiff.Hbox5, False, 0);
-   Pack_Start (Vdiff.Vbox3, Vdiff.Hbox5, False, False, 0);
+   Gtk_New (Vdiff.Label2, -("File2:"));
+   Set_Alignment (Vdiff.Label2, 0.5, 0.5);
+   Set_Padding (Vdiff.Label2, 0, 0);
+   Set_Justify (Vdiff.Label2, Justify_Center);
+   Set_Line_Wrap (Vdiff.Label2, False);
+   Pack_Start (Vdiff.File_Hbox2, Vdiff.Label2, False, False, 5);
 
-   Gtk_New (Vdiff.Label7, -("File2:"));
-   Set_Alignment (Vdiff.Label7, 0.5, 0.5);
-   Set_Padding (Vdiff.Label7, 0, 0);
-   Set_Justify (Vdiff.Label7, Justify_Center);
-   Set_Line_Wrap (Vdiff.Label7, False);
-   Pack_Start (Vdiff.Hbox5, Vdiff.Label7, False, False, 5);
-
-   Gtk_New (Vdiff.Frame4);
-   Set_Shadow_Type (Vdiff.Frame4, Shadow_In);
-   Pack_Start (Vdiff.Hbox5, Vdiff.Frame4, True, True, 0);
+   Gtk_New (Vdiff.Frame_Label2);
+   Set_Shadow_Type (Vdiff.Frame_Label2, Shadow_In);
+   Pack_Start (Vdiff.File_Hbox2, Vdiff.Frame_Label2, True, True, 0);
 
    Gtk_New (Vdiff.File_Label2, -("File"));
    Set_Alignment (Vdiff.File_Label2, 7.45058e-09, 0.5);
    Set_Padding (Vdiff.File_Label2, 0, 0);
    Set_Justify (Vdiff.File_Label2, Justify_Center);
    Set_Line_Wrap (Vdiff.File_Label2, False);
-   Add (Vdiff.Frame4, Vdiff.File_Label2);
+   Add (Vdiff.Frame_Label2, Vdiff.File_Label2);
 
    Gtk_New_Hbox (Vdiff.File2_Box, False, 5);
    Set_Border_Width (Vdiff.File2_Box, 5);
-   Pack_Start (Vdiff.Vbox3, Vdiff.File2_Box, True, True, 0);
+   Pack_Start (Vdiff.Vbox2, Vdiff.File2_Box, True, True, 0);
 
-   Gtk_New (Vdiff.Frame6);
-   Set_Shadow_Type (Vdiff.Frame6, Shadow_In);
-   Pack_Start (Vdiff.File2_Box, Vdiff.Frame6, False, True, 0);
+   Gtk_New (Vdiff.Frame_Draw2);
+   Set_Shadow_Type (Vdiff.Frame_Draw2, Shadow_In);
+   Pack_Start (Vdiff.File2_Box, Vdiff.Frame_Draw2, False, True, 0);
 
    Gtk_New (Vdiff.Drawingarea2);
-   Add (Vdiff.Frame6, Vdiff.Drawingarea2);
+   Add (Vdiff.Frame_Draw2, Vdiff.Drawingarea2);
 
    Gtk_New (Vdiff.Scrolledwindow2);
    Set_Policy (Vdiff.Scrolledwindow2, Policy_Always, Policy_Always);
@@ -215,9 +148,6 @@ begin
    Set_Justify (Vdiff.Label11, Justify_Center);
    Set_Line_Wrap (Vdiff.Label11, False);
    Set_Column_Widget (Vdiff.Clist2, 1, Vdiff.Label11);
-
-   Gtk_New (Vdiff.Statusbar);
-   Pack_Start (Vdiff.Main_Box, Vdiff.Statusbar, False, False, 0);
 
 end Initialize;
 
