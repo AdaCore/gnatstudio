@@ -275,11 +275,13 @@ package Codefix.Text_Manager is
    function Get_New_Mark
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class) return Mark_Abstr'Class;
-   --  Create a new mark at the position specified by the cursor.
+   --  Create a new mark at the position specified by the cursor. If the line
+   --  defined by the cursor is 0, then the call of Get_Current_Cursor will
+   --  restitute this 0.
 
    function Get_Current_Cursor
-     (Current_Text : Text_Navigator_Abstr;
-      Mark         : Mark_Abstr'Class) return File_Cursor'Class is abstract;
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Mark         : Mark_Abstr'Class) return File_Cursor'Class;
    --  Return the current position of the mark.
 
    procedure Free (This : in out Text_Navigator_Abstr);
@@ -1060,7 +1062,8 @@ private
    --  exists.
 
    type Mark_Abstr is abstract tagged record
-      null;
+      Is_First_Line : Boolean := False;
+      File_Name     : Dynamic_String;
    end record;
 
    ----------------------------------------------------------------------------
