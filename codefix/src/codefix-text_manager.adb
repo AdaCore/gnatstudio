@@ -202,6 +202,10 @@ package body Codefix.Text_Manager is
                  and then Text_Cursor (Left) < Text_Cursor (Right));
    end "<";
 
+   ------------
+   -- Assign --
+   ------------
+
    procedure Assign
      (This : in out File_Cursor'Class; Source : File_Cursor'Class) is
    begin
@@ -222,6 +226,18 @@ package body Codefix.Text_Manager is
    begin
       Free (This);
    end Free_Data;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Mark) is
+      procedure Free_Pool is new
+        Ada.Unchecked_Deallocation (Mark_Abstr'Class, Ptr_Mark);
+   begin
+      Free (This.all);
+      Free_Pool (This);
+   end Free;
 
    ----------
    -- Free --
@@ -602,16 +618,16 @@ package body Codefix.Text_Manager is
    begin
       Unit_Info := Get_Unit (Current_Text, Cursor);
 
-      Assign (Body_Begin.File_Name, Cursor.File_Name);
-      Assign (Body_End.File_Name, Cursor.File_Name);
-      Assign (Spec_Begin.File_Name, Cursor.File_Name);
-      Assign (Spec_End.File_Name, Cursor.File_Name);
-
       if Unit_Info.Is_Declaration then
          Body_Info := Search_Body
            (Current_Text,
             Cursor.File_Name.all,
             Unit_Info);
+
+         Assign (Body_Begin.File_Name, Cursor.File_Name);
+         Assign (Body_End.File_Name, Cursor.File_Name);
+         Assign (Spec_Begin.File_Name, Cursor.File_Name);
+         Assign (Spec_End.File_Name, Cursor.File_Name);
 
          Body_Begin.Col := Body_Info.Sloc_Start.Column;
          Body_Begin.Line := Body_Info.Sloc_Start.Line;
@@ -624,13 +640,16 @@ package body Codefix.Text_Manager is
          Spec_End.Line := Unit_Info.Sloc_End.Line;
 
       else
-         Spec_Begin.Col := Body_Info.Sloc_Start.Column;
-         Spec_Begin.Line := Body_Info.Sloc_Start.Line;
-         Spec_End.Col := Body_Info.Sloc_End.Column;
-         Spec_End.Line := Body_Info.Sloc_End.Line;
+         Body_Begin.Col := Unit_Info.Sloc_Start.Column;
+         Body_Begin.Line := Unit_Info.Sloc_Start.Line;
+         Body_End.Col := Unit_Info.Sloc_End.Column;
+         Body_End.Line := Unit_Info.Sloc_End.Line;
 
-         Assign (Body_Begin, Null_File_Cursor);
-         Assign (Body_End, Null_File_Cursor);
+         Assign (Body_Begin.File_Name, Cursor.File_Name);
+         Assign (Body_End.File_Name, Cursor.File_Name);
+
+         Assign (Spec_Begin, Null_File_Cursor);
+         Assign (Spec_End, Null_File_Cursor);
       end if;
 
    end Get_Entity;
@@ -1342,15 +1361,17 @@ package body Codefix.Text_Manager is
 
    procedure Commit
      (This         : Extract_Line;
-      Current_Text : in out Text_Navigator_Abstr'Class)
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Offset_Line  : in out Integer)
    is
+
+      Cursor  : File_Cursor := This.Cursor;
 
       procedure Commit_Modified_Line;
 
       procedure Commit_Modified_Line is
          It      : Mask_Iterator;
          Len     : Natural;
-         Cursor  : File_Cursor := This.Cursor;
          Info    : Merge_Info;
          Content : constant String := Get_String (This);
       begin
@@ -1387,16 +1408,21 @@ package body Codefix.Text_Manager is
       end Commit_Modified_Line;
 
    begin
+
+      Cursor.Line := This.Cursor.Line + Offset_Line;
+
       case This.Context is
          when Unit_Created =>
             Add_Line
               (Current_Text,
-               This.Cursor,
+               Cursor,
                To_String (This.Content));
+            Offset_Line := Offset_Line + 1;
          when Unit_Deleted =>
             Delete_Line
               (Current_Text,
-               This.Cursor);
+               Cursor);
+            Offset_Line := Offset_Line - 1;
          when Unit_Modified =>
             Commit_Modified_Line;
          when Original_Unit =>
@@ -2029,9 +2055,10 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class)
    is
       Current_Extract : Ptr_Extract_Line := This.First;
+      Offset_Line     : Integer := 0;
    begin
       while Current_Extract /= null loop
-         Commit (Current_Extract.all, Current_Text);
+         Commit (Current_Extract.all, Current_Text, Offset_Line);
          Current_Extract := Current_Extract.Next;
       end loop;
    end Commit;
@@ -2667,7 +2694,7 @@ package body Codefix.Text_Manager is
          end if;
       else
          Current_Line := Get_Line (This, Line_Cursor);
-         Delete (Current_Line.Content, Start.Col, Stop.Col - Start.Col + 1);
+         Delete (Current_Line.Content, Start.Col);
 
          if Is_Blank (To_String (Current_Line.Content)) then
             Current_Line.Context := Unit_Deleted;
