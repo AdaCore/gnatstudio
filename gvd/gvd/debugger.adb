@@ -52,7 +52,7 @@ package body Debugger is
 
    use String_History;
 
-   Timeout : constant Guint32 := 50;
+   Debug_Timeout : constant Guint32 := 150;
    --  Timeout in millisecond to check input from the underlying debugger.
 
    package Debugger_Timeout is new Gtk.Main.Timeout (Debugger_Process_Tab);
@@ -413,7 +413,6 @@ package body Debugger is
                return False;
             end if;
 
-            Set_Command_In_Process (Get_Process (Debugger));
             Final_Post_Process (Process, Mode);
 
             if Is_Load_Command (Debugger, Current_Command) then
@@ -439,7 +438,6 @@ package body Debugger is
             Update_Breakpoints
               (Process,
                Force => Is_Break_Command (Debugger, Current_Command));
-            Set_Command_In_Process (Get_Process (Debugger), False);
 
             --  In case a command has been queued while handling the signals
             --  and breakpoints above.
@@ -543,7 +541,6 @@ package body Debugger is
       end if;
 
       if Debugger.Window /= null then
-         Set_Command_In_Process (Get_Process (Debugger));
          Process := Convert (Debugger.Window, Debugger);
          Final_Post_Process (Process, Mode);
 
@@ -559,8 +556,6 @@ package body Debugger is
             Update_Breakpoints
               (Process, Force => Is_Break_Command (Debugger, Cmd));
          end if;
-
-         Set_Command_In_Process (Get_Process (Debugger), False);
 
          if Mode >= Visible then
             Set_Busy (Process, False);
@@ -639,7 +634,7 @@ package body Debugger is
                         pragma Assert (Process.Timeout_Id = 0);
 
                         Process.Timeout_Id := Debugger_Timeout.Add
-                          (Timeout, Output_Available'Access, Process);
+                          (Debug_Timeout, Output_Available'Access, Process);
                      end if;
 
                   else
@@ -684,6 +679,8 @@ package body Debugger is
    is
       Process : Debugger_Process_Tab;
    begin
+      pragma Assert (not Command_In_Process (Get_Process (Debugger)));
+
       Send_Internal_Pre (Debugger, Cmd, Mode => Mode);
       Wait_Prompt (Debugger);
 
