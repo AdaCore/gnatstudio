@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk.Main;       use Gtk.Main;
-with Traces;         use Traces;
-with Ada.Exceptions; use Ada.Exceptions;
+with Gtk.Progress_Bar; use Gtk.Progress_Bar;
+with Gtk.Main;         use Gtk.Main;
+with Traces;           use Traces;
+with Ada.Exceptions;   use Ada.Exceptions;
 
 with Task_Manager.GUI; use Task_Manager.GUI;
 
@@ -94,9 +95,7 @@ package body Task_Manager is
    begin
       Result := Execute_Incremental (Manager, False);
 
-      if Manager.GUI /= null then
-         Refresh (Task_Manager_Interface (Manager.GUI));
-      end if;
+      Refresh (Manager);
 
       --  The passive loop ends when there are no more queues left.
 
@@ -199,6 +198,12 @@ package body Task_Manager is
                  (Manager.Queues (Current).Queue)
                then
                   Free (Manager.Queues (Current).Id);
+
+                  if Manager.Queues (Current).Bar /= null then
+                     Destroy (Manager.Queues (Current).Bar);
+                     Manager.Queues (Current).Bar := null;
+                  end if;
+
                   Manager.Need_Global_Refresh := True;
 
                   if Manager.Queues'Length = 1 then
@@ -371,5 +376,17 @@ package body Task_Manager is
 
       Run (Manager, Active);
    end Add_Command;
+
+   -----------------------
+   -- Set_Progress_Area --
+   -----------------------
+
+   procedure Set_Progress_Area
+     (Manager : Task_Manager_Access;
+      Area    : Gtk.Box.Gtk_Hbox)
+   is
+   begin
+      Manager.Progress_Area := Area;
+   end Set_Progress_Area;
 
 end Task_Manager;
