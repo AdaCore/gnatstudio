@@ -21,6 +21,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Text_IO;               use Ada.Text_IO;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -76,23 +77,32 @@ package body Src_Contexts is
    --  Multi_Comments  (possibly) multi-line comments
 
    procedure Scan_Buffer
-     (Buffer   : String;
-      Context  : access Search_Context'Class;
-      Callback : Scan_Callback;
+     (Buffer     : String;
+      Context    : access Search_Context'Class;
+      Callback   : Scan_Callback;
       Scope      : Search_Scope;
-      Lang     : Language_Access := null);
+      Lang       : Language_Access := null;
+      Ref_Line   : Natural := 1;
+      Ref_Column : Natural := 1);
    --  Search Context in buffer, searching only in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
    --  a whole file).
+   --  (Ref_Line, Ref_Column) is the position in the actual file that Buffer
+   --  starts at
 
    procedure Scan_File
-     (Context  : access Search_Context'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Name     : String;
-      Callback : Scan_Callback;
-      Scope    : Search_Scope);
+     (Context      : access Search_Context'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Callback     : Scan_Callback;
+      Scope        : Search_Scope;
+      Start_Line   : Natural := 1;
+      Start_Column : Natural := 1);
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
+   --  If there is already an opened editor for this file, its contents will be
+   --  used, otherwise the file is read from the disk.
+   --  The search will start at position (Start_Line, Start_Column)
 
    function Scan_And_Store
      (Context  : access Search_Context'Class;
@@ -102,7 +112,7 @@ package body Src_Contexts is
       Scope    : Search_Scope;
       Lang     : Language_Access := null) return Match_Result_Array_Access;
    --  Same as above, but behaves as if there was a default callback that
-   --  prints the result in the Glide console.
+   --  stores the results in an array
    --  Str can be either a file name or a file contents, depending whether
    --  Is_File is resp. True or False.
    --  It returns the list of matches that were found in the buffer, or null if
@@ -126,16 +136,23 @@ package body Src_Contexts is
    --  and column will always be correct.
    --  null is returned if there is no match.
 
+   function First_Match
+     (Context      : access Search_Context'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Scope        : Search_Scope;
+      Start_Line   : Natural := 1;
+      Start_Column : Natural := 1) return Match_Result_Access;
+   --  Lightweight interface that returns the first occurence of Context in the
+   --  file Name.
+   --  The returned value must be freed by the caller
+
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
       File_Name   : String;
       Match       : Match_Result;
       Interactive : Boolean);
    --  Print the result of the search in the glide console
-
-   function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
-   pragma Inline (End_Of_Line);
-   --  Return the index for the end of the line containing Pos
 
    function Is_Word_Delimiter (C : Character) return Boolean;
    pragma Inline (Is_Word_Delimiter);
@@ -150,13 +167,13 @@ package body Src_Contexts is
    --  Initialize the combo box with all the entries for the selection of the
    --  scope.
 
-   procedure Auxiliary_Search
+   function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Success         : out Boolean);
+      Search_Backward : Boolean) return Boolean;
    --  Auxiliary function, factorizes code between Search and Replace.
+   --  Return True in case of success
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -168,24 +185,6 @@ package body Src_Contexts is
    end Is_Word_Delimiter;
 
    -----------------
-   -- End_Of_Line --
-   -----------------
-
-   function End_Of_Line (Buffer : String; Pos : Natural) return Integer is
-      J : Integer := Pos;
-   begin
-      while J < Buffer'Last loop
-         if Buffer (J) = ASCII.LF then
-            return J - 1;
-         end if;
-
-         J := J + 1;
-      end loop;
-
-      return Buffer'Last;
-   end End_Of_Line;
-
-   -----------------
    -- Scan_Buffer --
    -----------------
 
@@ -194,7 +193,9 @@ package body Src_Contexts is
       Context    : access Search_Context'Class;
       Callback   : Scan_Callback;
       Scope      : Search_Scope;
-      Lang       : Language_Access := null)
+      Lang       : Language_Access := null;
+      Ref_Line   : Natural := 1;
+      Ref_Column : Natural := 1)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
         := (Statements     => Scope = Whole or else Scope = All_But_Comments,
@@ -342,11 +343,11 @@ package body Src_Contexts is
          end if;
       end Next_Scope_Transition;
 
-      Pos           : Positive := 1;
+      Pos           : Positive := Buffer'First;
       Line_Start    : Positive;
-      Line          : Natural := 1;
-      Column        : Natural := 1;
-      Last_Index    : Positive := 1;
+      Line          : Natural := Ref_Line;
+      Column        : Natural := Ref_Column;
+      Last_Index    : Positive := Buffer'First;
       Section_End   : Integer;
       Lexical_State : Recognized_Lexical_States := Statements;
       Old_State     : Recognized_Lexical_States;
@@ -406,11 +407,13 @@ package body Src_Contexts is
    ---------------
 
    procedure Scan_File
-     (Context  : access Search_Context'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Name     : String;
-      Callback : Scan_Callback;
-      Scope    : Search_Scope)
+     (Context      : access Search_Context'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Callback     : Scan_Callback;
+      Scope        : Search_Scope;
+      Start_Line   : Natural := 1;
+      Start_Column : Natural := 1)
    is
       Max_File_Len  : constant := 2 ** 21;
       FD            : File_Descriptor;
@@ -418,6 +421,9 @@ package body Src_Contexts is
       Len           : Natural;
       Buffer        : Basic_Types.String_Access;
       Child         : MDI_Child;
+      Start         : Natural;
+      Line          : Natural;
+      Box           : Source_Editor_Box;
 
    begin
       --  ??? Would be nice to handle backward search, which is extremely hard
@@ -451,13 +457,35 @@ package body Src_Contexts is
          Len := Read (FD, Buffer.all'Address, Len);
          Close (FD);
 
+         Line  := 1;
+         Start := Buffer'First;
+         while Line < Start_Line loop
+            Start := Start + 1;
+            exit when Start > Buffer'Last;
+
+            if Buffer (Start) = ASCII.LF then
+               Line := Line + 1;
+            end if;
+         end loop;
+
+         Start := Start + Start_Column - 1;
+
       else
-         Buffer := new String'
-           (Get_Slice (Get_Source_Box_From_MDI (Child), 1, 1));
-         Len := Buffer'Last;
+         Box := Get_Source_Box_From_MDI (Child);
+
+         if not Is_Valid_Location (Box, Start_Line, Start_Column) then
+            return;
+         end if;
+
+         Buffer := new String'(Get_Slice (Box, Start_Line, Start_Column));
+         Start := Buffer'First;
       end if;
 
-      Scan_Buffer (Buffer (1 .. Len), Context, Callback, Scope, Lang);
+      if Start <= Buffer'Last then
+         Scan_Buffer
+           (Buffer (Start .. Buffer'Last), Context, Callback, Scope, Lang,
+            Start_Line, Start_Column);
+      end if;
       Free (Buffer);
 
    exception
@@ -567,7 +595,8 @@ package body Src_Contexts is
       else
          Scan_Buffer
            (Get_Slice (Editor, Current_Line, Current_Column), Context,
-            Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
+            Stop_At_First_Callback'Unrestricted_Access, Scope, Lang,
+            Current_Line, Current_Column);
 
          --  Start from the beginning if necessary
          if Result = null then
@@ -576,13 +605,6 @@ package body Src_Contexts is
             Scan_Buffer
               (Get_Slice (Editor, 1, 1), Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope, Lang);
-         else
-            if Result.Line = 1 then
-               Result.Column     := Result.Column + Current_Column - 1;
-               Result.End_Column := Result.End_Column + Current_Column - 1;
-            end if;
-
-            Result.Line := Result.Line + Current_Line - 1;
          end if;
       end if;
 
@@ -635,6 +657,35 @@ package body Src_Contexts is
       return Result;
    end Scan_And_Store;
 
+   -----------------
+   -- First_Match --
+   -----------------
+
+   function First_Match
+     (Context      : access Search_Context'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Name         : String;
+      Scope        : Search_Scope;
+      Start_Line   : Natural := 1;
+      Start_Column : Natural := 1) return Match_Result_Access
+   is
+      Result : Match_Result_Access;
+
+      function Callback (Match : Match_Result) return Boolean;
+      --  Save Match in the result array.
+
+      function Callback (Match : Match_Result) return Boolean is
+      begin
+         Result := new Match_Result'(Match);
+         return False;
+      end Callback;
+
+   begin
+      Scan_File (Context, Kernel, Name, Callback'Unrestricted_Access, Scope,
+                 Start_Line, Start_Column);
+      return Result;
+   end First_Match;
+
    ----------
    -- Free --
    ----------
@@ -650,24 +701,17 @@ package body Src_Contexts is
       end if;
    end Free;
 
-   procedure Free (Context : in out Current_File_Context) is
-   begin
-      Free (Context.Next_Matches_In_File);
-   end Free;
-
    procedure Free (Context : in out Files_Context) is
    begin
       Directory_List.Free (Context.Dirs);
       Free (Context.Directory);
       Free (Context.Current_File);
-      Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
 
    procedure Free (Context : in out Files_Project_Context) is
    begin
       Free (Context.Files);
-      Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
 
@@ -680,9 +724,8 @@ package body Src_Contexts is
       Files   : Basic_Types.String_Array_Access) is
    begin
       Free (Context.Files);
-      Free (Context.Next_Matches_In_File);
       Context.Files := Files;
-      Context.Current_File := Context.Files'First;
+      Context.Current_File := Context.Files'First - 1;
    end Set_File_List;
 
    -------------------
@@ -696,7 +739,6 @@ package body Src_Contexts is
       Recurse       : Boolean := False) is
    begin
       Free (Context.Directory);
-      Free (Context.Next_Matches_In_File);
       Context.Files_Pattern := Files_Pattern;
       Context.Recurse := Recurse;
 
@@ -734,6 +776,7 @@ package body Src_Contexts is
 
          Context2 := new Files_Project_Context;
          Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+         Context2.All_Occurrences := True;
 
          Editor := Get_Source_Box_From_MDI (Child);
 
@@ -761,12 +804,13 @@ package body Src_Contexts is
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (All_Occurrences);
       Context : Files_Project_Context_Access;
       Scope   : constant Scope_Selector := Scope_Selector (Extra_Information);
    begin
       Context := new Files_Project_Context;
       Context.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line := 0;
 
       Set_File_List
         (Context,
@@ -784,7 +828,7 @@ package body Src_Contexts is
       Extra_Information  : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access
    is
-      pragma Unreferenced (Kernel, All_Occurrences);
+      pragma Unreferenced (Kernel);
 
       Context : Files_Context_Access;
       Extra   : constant Files_Extra_Scope := Files_Extra_Scope
@@ -796,6 +840,7 @@ package body Src_Contexts is
          Context := new Files_Context;
 
          Context.Scope := Search_Scope'Val (Get_Index_In_List (Extra.Combo));
+         Context.All_Occurrences := All_Occurrences;
 
          Re := Compile
            (Get_Text (Extra.Files_Entry),
@@ -806,6 +851,9 @@ package body Src_Contexts is
             Files_Pattern => Re,
             Directory     => Get_Text (Extra.Directory_Entry),
             Recurse       => Get_Active (Extra.Subdirs_Check));
+
+         Move_To_Next_File (Context);
+
          return Search_Context_Access (Context);
       end if;
 
@@ -819,67 +867,19 @@ package body Src_Contexts is
    -- Auxiliary_Search --
    ----------------------
 
-   procedure Auxiliary_Search
+   function Auxiliary_Search
      (Context         : access Current_File_Context;
       Editor          : Source_Editor_Box;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Success         : out Boolean)
+      Search_Backward : Boolean) return Boolean
    is
       Lang   : Language_Access;
       Match  : Match_Result_Access;
       Line, Column : Natural;
 
    begin
-      Success := False;
-
       Assert (Me, not Context.All_Occurrences,
               "All occurences not supported for current_file_context");
-
-      --  If there are still some matches in the current file that we haven't
-      --  returned, do it now (only the case when searching for all
-      --  occurrences)
-
-      if Context.Next_Matches_In_File /= null then
-         if Search_Backward then
-            Context.Last_Match_Returned := Context.Last_Match_Returned - 1;
-         else
-            Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
-         end if;
-
-         --  Start from the beginning again if possible
-         if Context.Last_Match_Returned <= 0
-           or else Context.Last_Match_Returned
-             > Context.Next_Matches_In_File'Last
-           or else Context.Next_Matches_In_File (Context.Last_Match_Returned)
-           = null
-         then
-            Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
-         end if;
-
-         Match := Context.Next_Matches_In_File (Context.Last_Match_Returned);
-
-         if Is_Valid_Location (Editor, Match.Line, Match.End_Column) then
-            Context.Begin_Line := Match.Line;
-            Context.Begin_Column := Match.Column;
-            Context.End_Line := Match.Line;
-            Context.End_Column := Match.End_Column;
-            Success := True;
-
-            --  ??? Match is not freed here ?
-            return;
-
-         else
-            Free (Context.Next_Matches_In_File);
-            return;
-         end if;
-      end if;
-
-      --  Search either all occurrences at once, or only the next matching
-      --  one. Note that when searching backward, we have to search from the
-      --  beginning, since otherwise we don't know how to handle regular
-      --  expressions and the search engine computed for Boyer-Moore is only
-      --  for forward searches.
 
       Lang := Get_Language_From_File
         (Get_Language_Handler (Kernel), Get_Filename (Editor));
@@ -894,19 +894,30 @@ package body Src_Contexts is
          Current_Column => Column,
          Backward       => Search_Backward);
 
-      if Match = null then
-         return;
+      if Match /= null then
+         Context.Begin_Line   := Match.Line;
+         Context.Begin_Column := Match.Column;
+         Context.End_Line     := Match.Line;
+         Context.End_Column   := Match.End_Column;
+         Unchecked_Free (Match);
+
+         Set_Cursor_Location
+           (Editor, Context.Begin_Line, Context.Begin_Column);
+         Select_Region
+           (Editor,
+            Context.Begin_Line,
+            Context.Begin_Column,
+            Context.End_Line,
+            Context.End_Column);
+         return True;
+
+      else
+         --  The search could not be made, invalidate the context
+         --  in case it was the last search in the file.
+         Context.End_Line   := Context.Begin_Line;
+         Context.End_Column := Context.Begin_Column;
+         return False;
       end if;
-
-      Context.Begin_Line := Match.Line;
-      Context.Begin_Column := Match.Column;
-      Context.End_Line := Match.Line;
-      Context.End_Column := Match.End_Column;
-      Success := True;
-
-      Unchecked_Free (Match);
-
-      return;
    end Auxiliary_Search;
 
    ------------
@@ -916,16 +927,10 @@ package body Src_Contexts is
    function Search
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean
-
+      Search_Backward : Boolean) return Boolean
    is
-      pragma Unreferenced (Interactive);
-
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
-      Editor  : Source_Editor_Box;
-
-      Success      : Boolean;
+      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Editor : Source_Editor_Box;
 
    begin
       if Child = null then
@@ -935,21 +940,7 @@ package body Src_Contexts is
       Editor := Get_Source_Box_From_MDI (Child);
       Raise_Child (Child);
       Minimize_Child (Child, False);
-
-      Auxiliary_Search (Context, Editor, Kernel, Search_Backward, Success);
-
-      if Success then
-         Set_Cursor_Location
-           (Editor, Context.Begin_Line, Context.Begin_Column);
-         Select_Region
-           (Editor,
-            Context.Begin_Line,
-            Context.Begin_Column,
-            Context.End_Line,
-            Context.End_Column);
-      end if;
-
-      return Success;
+      return Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
 
    exception
       when E : others =>
@@ -965,13 +956,10 @@ package body Src_Contexts is
      (Context         : access Current_File_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean
+      Search_Backward : Boolean) return Boolean
    is
-      pragma Unreferenced (Interactive);
       Child   : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor  : Source_Editor_Box;
-
       Success      : Boolean;
       Begin_Line   : Natural;
       Begin_Column : Natural;
@@ -994,10 +982,10 @@ package body Src_Contexts is
                             End_Line, End_Column, Success);
 
       if Success
-        and then Begin_Line = Context.Begin_Line
+        and then Begin_Line   = Context.Begin_Line
         and then Begin_Column = Context.Begin_Column
-        and then End_Line = Context.End_Line
-        and then End_Column = Context.End_Column
+        and then End_Line     = Context.End_Line
+        and then End_Column   = Context.End_Column
       then
          Replace_Slice
            (Editor,
@@ -1010,26 +998,7 @@ package body Src_Contexts is
 
       --  Search for next replaceable entity.
 
-      Auxiliary_Search (Context, Editor, Kernel, Search_Backward, Success);
-
-      if Success then
-         Set_Cursor_Location
-           (Editor, Context.Begin_Line, Context.Begin_Column);
-         Select_Region
-           (Editor,
-            Context.Begin_Line,
-            Context.Begin_Column,
-            Context.End_Line,
-            Context.End_Column);
-      else
-         --  The search could not be made, invalidate the context
-         --  in case it was the last search in the file.
-
-         Context.End_Line := Context.Begin_Line;
-         Context.End_Column := Context.Begin_Column;
-      end if;
-
-      return Success;
+      return Auxiliary_Search (Context, Editor, Kernel, Search_Backward);
 
    exception
       when E : others =>
@@ -1042,61 +1011,110 @@ package body Src_Contexts is
    ------------
 
    function Search
-     (Context         : access Files_Project_Context;
+     (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean
+      Search_Backward : Boolean) return Boolean
    is
       pragma Unreferenced (Search_Backward);
-   begin
-      --  If there are still some matches in the current file that we haven't
-      --  returned, do it now.
+      Interactive : constant Boolean := not Context.All_Occurrences;
+      Match       : Match_Result_Access;
+      Matches     : Match_Result_Array_Access;
 
-      if Context.Next_Matches_In_File /= null then
-         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
-         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
-           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
-         /= null
-         then
-            Highlight_Result
-              (Kernel, Context.Files (Context.Current_File - 1).all,
-               Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
-               Interactive);
+      C           : constant Abstract_Files_Context_Access :=
+        Abstract_Files_Context_Access (Context);
+      --  For dispatching purposes
+
+   begin
+      if Interactive then
+         --  Are there any more match in the current file ?
+         --  Stop looking in this file if the editor was closed (we know it was
+         --  opened when the first match was seen)
+
+         if Context.Begin_Line /= 0 then
+            Match := First_Match
+              (Context      => Context,
+               Kernel       => Kernel,
+               Name         => Current_File (C),
+               Scope        => Context.Scope,
+               Start_Line   => Context.Begin_Line,
+               Start_Column => Context.Begin_Column + 1);
+
+            if Match /= null then
+               Context.Begin_Line   := Match.Line;
+               Context.Begin_Column := Match.Column;
+               Context.End_Line     := Match.Line;
+               Context.End_Column   := Match.End_Column;
+
+               Highlight_Result
+                 (Kernel      => Kernel,
+                  File_Name   => Current_File (C),
+                  Match       => Match.all,
+                  Interactive => True);
+               Unchecked_Free (Match);
+               return True;
+            end if;
+         end if;
+
+         loop
+            --  Move to next file
+            Move_To_Next_File (C);
+            if Current_File (C) = "" then
+               return False;
+            end if;
+
+            Match := First_Match
+              (Context  => Context,
+               Kernel   => Kernel,
+               Name     => Current_File (C),
+               Scope    => Context.Scope);
+
+            if Match /= null then
+               Context.Begin_Line   := Match.Line;
+               Context.Begin_Column := Match.Column;
+               Context.End_Line     := Match.Line;
+               Context.End_Column   := Match.End_Column;
+
+               Highlight_Result
+                 (Kernel      => Kernel,
+                  File_Name   => Current_File (C),
+                  Match       => Match.all,
+                  Interactive => True);
+               Unchecked_Free (Match);
+               return True;
+            end if;
+         end loop;
+
+
+      --  Non interactive mode
+      else
+         Move_To_Next_File (C);
+         if Current_File (C) = "" then
+            return False;
+
+         else
+            Matches := Scan_And_Store
+              (Context => Context,
+               Kernel  => Kernel,
+               Str     => Current_File (C),
+               Is_File => True,
+               Scope   => Context.Scope,
+               Lang    => Get_Language_From_File
+                 (Get_Language_Handler (Kernel), Current_File (C)));
+
+            if Matches /= null then
+               for M in Matches'Range loop
+                  Highlight_Result
+                    (Kernel      => Kernel,
+                     File_Name   => Current_File (C),
+                     Match       => Matches (M).all,
+                     Interactive => False);
+               end loop;
+               Free (Matches);
+            end if;
 
             return True;
-         else
-            Free (Context.Next_Matches_In_File);
          end if;
       end if;
-
-      if Context.Files = null then
-         return False;
-      end if;
-
-      --  ??? Should handle the case where the file has changed, when we are
-      --  not searching for all occurrences.
-
-      --  Loop until at least one match
-      loop
-         if Context.Current_File > Context.Files'Last then
-            return False;
-         end if;
-
-         Context.Next_Matches_In_File := Scan_And_Store
-           (Context, Kernel, Context.Files (Context.Current_File).all,
-            Scope   => Context.Scope,
-            Is_File => True);
-         Context.Current_File := Context.Current_File + 1;
-
-         exit when Context.Next_Matches_In_File /= null;
-      end loop;
-
-      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
-      Highlight_Result
-        (Kernel, Context.Files (Context.Current_File - 1).all,
-         Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
-         Interactive);
-      return True;
    end Search;
 
    -------------
@@ -1104,124 +1122,211 @@ package body Src_Contexts is
    -------------
 
    function Replace
-     (Context         : access Files_Project_Context;
+     (Context         : access Abstract_Files_Context;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean is
+      Search_Backward : Boolean) return Boolean
+   is
+      C           : constant Abstract_Files_Context_Access :=
+        Abstract_Files_Context_Access (Context);
+      --  For dispatching purposes
+
+      Interactive  : constant Boolean := not Context.All_Occurrences;
+
+      Child        : MDI_Child;
+      Editor       : Source_Editor_Box;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive;
+      Success      : Boolean;
+      Matches      : Match_Result_Array_Access;
+
    begin
-      if Context.Files = null
-        or else Context.Current_File not in Context.Files'Range
-        or else Context.Files (Context.Current_File) = null
-      then
-         return False;
-      end if;
+      --  If we already have an occurrence, and the file is still open, the
+      --  selection still there,... (which means the user hasn't touched
+      --  anything), then do the actual replacement
 
-      if not Interactive
-        and then not Is_Open (Kernel, Context.Files (Context.Current_File).all)
-      then
-         return False;
+      if Interactive then
+         if Context.Begin_Line /= 0
+           and then Is_Open (Kernel, Current_File (C))
+         then
+            Child := Find_Current_Editor (Kernel);
 
-         --  ??? We do not replace strings in non-open buffers yet.
-      else
-         --  If the current location is valid, replace it.
-         declare
-            Start_Line   : Positive;
-            Start_Column : Positive;
-            End_Line     : Positive;
-            End_Column   : Positive;
-            Success      : Boolean;
-            Editor       : Source_Editor_Box;
-            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
-         begin
             if Child /= null then
                Editor := Get_Source_Box_From_MDI (Child);
 
-               if Get_Filename (Editor)
-                 = Context.Files (Context.Current_File - 1).all
-               then
+               if Get_Filename (Editor) = Current_File (C) then
                   Get_Selection_Bounds
                     (Editor,
                      Start_Line, Start_Column, End_Line, End_Column,
                      Success);
 
                   if Success
-                    and then Context.Next_Matches_In_File /= null
-                    and then Context.Last_Match_Returned
-                  in Context.Next_Matches_In_File'Range
-                    and then Context.Next_Matches_In_File
-                      (Context.Last_Match_Returned) /= null
+                    and then Context.Begin_Line   = Start_Line
+                    and then Context.Begin_Column = Start_Column
+                    and then Context.End_Line     = End_Line
+                    and then Context.End_Column   = End_Column
                   then
-                     declare
-                        Match : constant Match_Result
-                          := Context.Next_Matches_In_File
-                            (Context.Last_Match_Returned).all;
-                     begin
-                        if Match.Line = Start_Line
-                          and then Match.Column = Start_Column
-                          and then Match.Line = End_Line
-                          and then Match.End_Column = End_Column
-                        then
-                           Replace_Slice
-                             (Editor,
-                              Start_Line, Start_Column, End_Line, End_Column,
-                              Replace_String);
-
-                           return
-                             Search
-                               (Context,
-                                Kernel,
-                                Search_Backward,
-                                Interactive);
-                        end if;
-                     end;
+                     Replace_Slice
+                       (Editor,
+                        Start_Line, Start_Column, End_Line, End_Column,
+                        Replace_String);
                   end if;
                end if;
             end if;
-         end;
-      end if;
+         end if;
 
-      return False;
+         --  Else search the next occurrence
+         return Search (C, Kernel, Search_Backward);
+
+      --  Non interactive case
+      else
+         Move_To_Next_File (C);
+         if Current_File (C) = "" then
+            return False;
+         end if;
+
+         Matches := Scan_And_Store
+           (Context => Context,
+            Kernel  => Kernel,
+            Str     => Current_File (C),
+            Is_File => True,
+            Scope   => Context.Scope,
+            Lang    => Get_Language_From_File
+            (Get_Language_Handler (Kernel), Current_File (C)));
+
+         if Matches /= null then
+            --  If the file is loaded in an editor, do the replacement directly
+            --  there.
+
+            Child := Find_Editor (Kernel, Current_File (C));
+
+            if Child /= null then
+               Editor := Get_Source_Box_From_MDI (Child);
+
+               --  Replace starting from the end, so as to preserve lines and
+               --  columns
+               for M in reverse Matches'Range loop
+                  Replace_Slice
+                    (Editor,
+                     Matches (M).Line,
+                     Matches (M).Column,
+                     Matches (M).Line,
+                     Matches (M).End_Column,
+                     Replace_String);
+               end loop;
+
+            --  Else, file isn't loaded, so we replace directly in the physical
+            --  file.
+            else
+               --  ??? Could be more efficient, since we have already read the
+               --  file to do the search
+
+               declare
+                  FD       : File_Descriptor;
+                  Len      : Natural;
+                  Buffer   : Basic_Types.String_Access;
+                  File     : Ada.Text_IO.File_Type;
+               begin
+                  FD := Open_Read (Current_File (C), Text);
+                  if FD /= Invalid_FD then
+                     Len := Natural (File_Length (FD));
+                     Buffer := new String (1 .. Len);
+                     Len := Read (FD, Buffer.all'Address, Len);
+                     Close (FD);
+
+                     Create (File, Out_File, Current_File (C));
+
+                     Put
+                       (File, Buffer
+                        (Buffer'First .. Matches (Matches'First).Index - 1));
+                     Put (File, Replace_String);
+
+                     for M in Matches'First + 1 .. Matches'Last loop
+                        Put
+                          (File, Buffer
+                           (Matches (M - 1).Index
+                            + Matches (M - 1).End_Column
+                            - Matches (M - 1).Column
+                              .. Matches (M).Index - 1));
+                        Put (File, Replace_String);
+                     end loop;
+
+                     Put
+                       (File,
+                        Buffer (Matches (Matches'Last).Index
+                                + Matches (Matches'Last).End_Column
+                                - Matches (Matches'Last).Column
+                                .. Buffer'Last));
+
+                     Close (File);
+                     Free (Buffer);
+                  end if;
+               end;
+            end if;
+
+            Free (Matches);
+         end if;
+
+         return True;
+      end if;
    end Replace;
 
-   ------------
-   -- Search --
-   ------------
+   ------------------
+   -- Current_File --
+   ------------------
 
-   function Search
-     (Context         : access Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean
+   function Current_File
+     (Context : access Files_Project_Context) return String
    is
-      pragma Unreferenced (Search_Backward);
+   begin
+      if Context.Files /= null
+        and then Context.Current_File in Context.Files'Range
+      then
+         return Context.Files (Context.Current_File).all;
+      else
+         return "";
+      end if;
+   end Current_File;
 
+   -----------------------
+   -- Move_To_Next_File --
+   -----------------------
+
+   procedure Move_To_Next_File (Context : access Files_Project_Context) is
+   begin
+      Context.Current_File := Context.Current_File + 1;
+   end Move_To_Next_File;
+
+   ------------------
+   -- Current_File --
+   ------------------
+
+   function Current_File (Context : access Files_Context) return String is
+   begin
+      if Context.Current_File /= null then
+         return Context.Current_File.all;
+      else
+         return "";
+      end if;
+   end Current_File;
+
+   -----------------------
+   -- Move_To_Next_File --
+   -----------------------
+
+   procedure Move_To_Next_File (Context : access Files_Context) is
       use Directory_List;
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;
 
    begin
-      --  If there are still some matches in the current file that we haven't
-      --  returned , do it now.
+      Free (Context.Current_File);
 
-      if Context.Next_Matches_In_File /= null then
-         Context.Last_Match_Returned := Context.Last_Match_Returned + 1;
-         if Context.Last_Match_Returned <= Context.Next_Matches_In_File'Last
-           and then Context.Next_Matches_In_File (Context.Last_Match_Returned)
-           /= null
-         then
-            Highlight_Result
-              (Kernel, Context.Current_File.all,
-               Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
-               Interactive);
-            return True;
-         else
-            Free (Context.Next_Matches_In_File);
-         end if;
-      end if;
-
+      --  If not at the end
       if Context.Directory = null then
-         return False;
+         return;
       end if;
 
       if Context.Dirs = Null_List then
@@ -1230,14 +1335,17 @@ package body Src_Contexts is
          Open (Head (Context.Dirs).Dir, Context.Directory.all);
       end if;
 
-      while Context.Next_Matches_In_File = null loop
+      while Context.Current_File = null loop
+
          Read (Head (Context.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
             Next (Context.Dirs);
 
             if Context.Dirs = Null_List then
-               return False;
+               --  No more searches
+               Free (Context.Directory);
+               return;
             end if;
 
          else
@@ -1250,9 +1358,9 @@ package body Src_Contexts is
                     and then File_Name (1 .. Last) /= "."
                     and then File_Name (1 .. Last) /= ".."
                     and then not Is_Symbolic_Link (File_Name (1 .. Last))
-                  --  ??? Do not try to follow symbolic links for now,
-                  --  so that we avoid infinite recursions.
                   then
+                     --  ??? Do not try to follow symbolic links for now,
+                     --  so that we avoid infinite recursions.
                      Prepend (Context.Dirs, new Dir_Data);
                      Head (Context.Dirs).Name := new String'
                        (Name_As_Directory (Full_Name));
@@ -1261,109 +1369,17 @@ package body Src_Contexts is
 
                --  ??? Should check that we have a text file
                elsif Match (File_Name (1 .. Last), Context.Files_Pattern) then
-                  Context.Next_Matches_In_File := Scan_And_Store
-                    (Context, Kernel, Full_Name,
-                     Scope   => Context.Scope,
-                     Is_File => True);
-
-                  if Context.Next_Matches_In_File /= null then
-                     Free (Context.Current_File);
-                     Context.Current_File := new String'(Full_Name);
-                  end if;
+                  Context.Current_File := new String'(Full_Name);
+                  return;
                end if;
             end;
          end if;
       end loop;
 
-      Context.Last_Match_Returned := Context.Next_Matches_In_File'First;
-      Highlight_Result
-        (Kernel, Context.Current_File.all,
-         Context.Next_Matches_In_File (Context.Last_Match_Returned).all,
-         Interactive);
-      return True;
-
    exception
       when Directory_Error =>
-         return False;
-   end Search;
-
-   -------------
-   -- Replace --
-   -------------
-
-   function Replace
-     (Context         : access Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean is
-   begin
-      if Context.Current_File = null then
-         return False;
-      end if;
-
-      if not Is_Open (Kernel, Context.Current_File.all) then
-         return False;
-
-         --  ??? We do not replace string in non-open buffers yet.
-      else
-         --  If the current location is valid, replace it.
-         declare
-            Start_Line   : Positive;
-            Start_Column : Positive;
-            End_Line     : Positive;
-            End_Column   : Positive;
-            Success      : Boolean;
-            Editor       : Source_Editor_Box;
-            Child        : constant MDI_Child := Find_Current_Editor (Kernel);
-         begin
-            if Child /= null then
-               Editor := Get_Source_Box_From_MDI (Child);
-
-               if Get_Filename (Editor) = Context.Current_File.all then
-                  Get_Selection_Bounds
-                    (Editor,
-                     Start_Line, Start_Column, End_Line, End_Column,
-                     Success);
-
-                  if Success
-                    and then Context.Next_Matches_In_File /= null
-                    and then Context.Last_Match_Returned
-                  in Context.Next_Matches_In_File'Range
-                    and then Context.Next_Matches_In_File
-                      (Context.Last_Match_Returned) /= null
-                  then
-                     declare
-                        Match : constant Match_Result
-                          := Context.Next_Matches_In_File
-                            (Context.Last_Match_Returned).all;
-                     begin
-                        if Match.Line = Start_Line
-                          and then Match.Column = Start_Column
-                          and then Match.Line = End_Line
-                          and then Match.End_Column = End_Column
-                        then
-                           Replace_Slice
-                             (Editor,
-                              Start_Line, Start_Column, End_Line, End_Column,
-                              Replace_String);
-
-                           return
-                             Search
-                               (Context,
-                                Kernel,
-                                Search_Backward,
-                                Interactive);
-                        end if;
-                     end;
-                  end if;
-               end if;
-            end if;
-         end;
-      end if;
-
-      return False;
-   end Replace;
+         null;
+   end Move_To_Next_File;
 
    ----------
    -- Free --

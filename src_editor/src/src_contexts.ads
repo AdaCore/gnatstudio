@@ -65,23 +65,13 @@ package Src_Contexts is
    --  A special context for searching interactively in the current file.
    --  It doesn't support All_Occurrences.
 
-   procedure Free (Context : in out Current_File_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Search function for "Current File"
-
-   function Replace
-     (Context         : access Current_File_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Replace function for "Current File"
+   function Current_File_Factory
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Current File". A Files_Project_Context is returned if
+   --  searching for All_Occurrences
 
    -------------------
    -- Files context --
@@ -98,23 +88,12 @@ package Src_Contexts is
       Recurse       : Boolean := False);
    --  Set the list of files to search
 
-   procedure Free (Context : in out Files_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Search function for "Files..."
-
-   function Replace
-     (Context         : access Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Replace function for "Files..."
+   function Files_Factory
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences    : Boolean;
+      Extra_Information  : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Files..."
 
    --------------------------------
    -- Files From Project context --
@@ -129,36 +108,6 @@ package Src_Contexts is
    --  Set the list of files to search.
    --  No copy of Files is made, the memory will be freed automatically.
 
-   procedure Free (Context : in out Files_Project_Context);
-   --  Free the memory allocated for the context
-
-   function Search
-     (Context         : access Files_Project_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Search function for "Files From Project"
-
-   function Replace
-     (Context         : access Files_Project_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Replace_String  : String;
-      Search_Backward : Boolean;
-      Interactive     : Boolean) return Boolean;
-   --  Replace function for "Files From Project"
-
-   -----------------------------
-   -- Standard search support --
-   -----------------------------
-
-   function Current_File_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
-   --  Factory for "Current File". A Files_Project_Context is returned if
-   --  searching for All_Occurrences
-
    function Files_From_Project_Factory
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
@@ -166,14 +115,20 @@ package Src_Contexts is
       return Search_Context_Access;
    --  Factory for "Files From Project"
 
-   function Files_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
-      return Search_Context_Access;
-   --  Factory for "Files..."
-
 private
+
+   function Search
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Current File"
+
+   function Replace
+     (Context         : access Current_File_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean) return Boolean;
+   --  Replace function for "Current File"
 
    type Search_Scope is
      (Whole,
@@ -186,7 +141,6 @@ private
    --  This scope mostly applies to source files.
    --  Warning: do not change the contents or order of this type without
    --  synchronizing with vsearch.glade and Scan_Buffer.
-
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
@@ -208,41 +162,67 @@ private
       --  is acceptable for a replace operation.
 
       Begin_Line, Begin_Column, End_Line, End_Column : Natural;
+      --  Begin_Line is set to 0 if no match was found
+
+      All_Occurrences : Boolean;
+      Scope           : Search_Scope := Whole;
    end record;
 
-   type Current_File_Context is new File_Search_Context with record
-      Scope                : Search_Scope              := Whole;
-      All_Occurrences      : Boolean;
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural                   := 0;
-      --  These two fields are used to memorize the list of matches in the
-      --  current file. It is always faster to search the whole file at once,
-      --  and memorize the matches so that each call to Search only
-      --  returns one match.
-   end record;
+   type Current_File_Context is new File_Search_Context with null record;
 
-   --  No additional data is needed for searching in the current file.
+   type Abstract_Files_Context is abstract new File_Search_Context
+     with null record;
 
-   type Files_Context is new File_Search_Context with record
-      Scope         : Search_Scope              := Whole;
+   --  Base context for all contexts that search in multiple files (possibly
+   --  not opened in an editor)
+   type Abstract_Files_Context_Access is access all
+     Abstract_Files_Context'Class;
+
+   function Search
+     (Context         : access Abstract_Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Files From Project"
+
+   function Replace
+     (Context         : access Abstract_Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Replace_String  : String;
+      Search_Backward : Boolean) return Boolean;
+   --  Replace function for "Files From Project"
+
+   function Current_File
+     (Context : access Abstract_Files_Context) return String is abstract;
+   --  Return the current file.
+   --  Return the empty string if there are no more files to examine
+
+   procedure Move_To_Next_File
+     (Context : access Abstract_Files_Context) is abstract;
+   --  Move to the next file in the list.
+
+   type Files_Context is new Abstract_Files_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;
-      Directory     : GNAT.OS_Lib.String_Access := null;
       Recurse       : Boolean                   := False;
       Dirs          : Directory_List.List;
+      Current_File  : GNAT.OS_Lib.String_Access;
 
-      Current_File         : GNAT.OS_Lib.String_Access;
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural                   := 0;
+      Directory     : GNAT.OS_Lib.String_Access := null;
+      --  Set to null at the end of the search
    end record;
 
-   type Files_Project_Context is new File_Search_Context with record
-      Scope        : Search_Scope                    := Whole;
-      Files        : Basic_Types.String_Array_Access := null;
-      Current_File : Natural;
-
-      Next_Matches_In_File : Match_Result_Array_Access := null;
-      Last_Match_Returned  : Natural                   := 0;
+   type Files_Project_Context is new Abstract_Files_Context with record
+      Files         : Basic_Types.String_Array_Access := null;
+      Current_File  : Natural;
    end record;
+
+   function Current_File
+     (Context : access Files_Project_Context) return String;
+   procedure Move_To_Next_File (Context : access Files_Project_Context);
+   procedure Free (Context : in out Files_Project_Context);
+
+   function Current_File (Context : access Files_Context) return String;
+   procedure Move_To_Next_File (Context : access Files_Context);
+   procedure Free (Context : in out Files_Context);
 
    type Scope_Selector_Record is new Gtk.Frame.Gtk_Frame_Record with record
       Combo : Gtk.Combo.Gtk_Combo;
