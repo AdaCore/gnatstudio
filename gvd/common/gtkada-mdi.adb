@@ -352,7 +352,9 @@ package body Gtkada.MDI is
          --  The widget is currently either a notebook or the Gtk_Fixed. Get
          --  its focus widget, which is the one we are really interested in.
          Widget := Get_Focus_Child (Gtk_Container (Widget));
-         Set_Focus_Child (MDI_Window (MDI), Containing => Widget);
+         if Widget /= null then
+            Set_Focus_Child (MDI_Window (MDI), Containing => Widget);
+         end if;
       end if;
    end Set_Focus_Child_MDI;
 
