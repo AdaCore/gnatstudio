@@ -1088,6 +1088,16 @@ package body VCS_View_Pkg is
                VCS_Module_ID);
             Set_File_Information (Context, File => First_File);
 
+            --  ??? This is a temporary separator at the beginning of the menu
+            --  used to prevent the fact that the first menu item is sometimes
+            --  activated when clicking to display the contextual menu.
+            --  This is a Windows specific problem that appears only after a
+            --  number of clicks to display the contextual menu.
+            --  I don't understand the reason behind this, I need a gtk+
+            --  compiled with debug info under Windows to understand this.
+            Gtk_New (Mitem);
+            Append (Menu, Mitem);
+
             Set_Current_Context (Explorer, Selection_Context_Access (Context));
             VCS_Contextual_Menu
               (Kernel_Handle (Kernel), Explorer.Context, Menu, False);
@@ -1115,7 +1125,10 @@ package body VCS_View_Pkg is
           Widget_Callback.To_Marshaller (Change_Hide_Not_Registered'Access),
           Explorer);
 
-      Grab_Focus (Page.Tree);
+      if Context /= null then
+         Gtk_New (Mitem);
+         Append (Menu, Mitem);
+      end if;
 
       return Selection_Context_Access (Context);
 
