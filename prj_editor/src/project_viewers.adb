@@ -1182,9 +1182,9 @@ package body Project_Viewers is
       end if;
    end Project_Editor_Contextual;
 
-   ----------------------------
-   -- Viewer_Contextual_Menu --
-   ----------------------------
+   ------------------------------------
+   -- Project_Editor_Context_Factory --
+   ------------------------------------
 
    function Project_Editor_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
@@ -1194,12 +1194,14 @@ package body Project_Viewers is
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
       pragma Unreferenced (Kernel, Event_Widget);
-      Context : File_Selection_Context_Access := new File_Selection_Context;
-      V : Project_Viewer := Project_Viewer (Object);
-      Item : Gtk_Menu_Item;
+
+      Context     : File_Selection_Context_Access :=
+        new File_Selection_Context;
+      V           : Project_Viewer := Project_Viewer (Object);
+      Item        : Gtk_Menu_Item;
       Row, Column : Gint;
-      Is_Valid : Boolean;
-      User : User_Data;
+      Is_Valid    : Boolean;
+      User        : User_Data;
 
    begin
       --  ??? Should call Project_Editor_Contextual
@@ -1213,6 +1215,7 @@ package body Project_Viewers is
       end if;
 
       User := Project_User_Data.Get (V.List, Row);
+
       if User.File_Name /= No_String then
          Set_File_Information
            (Context,
