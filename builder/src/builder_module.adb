@@ -341,7 +341,7 @@ package body Builder_Module is
             --  make -s -C dir -f Makefile.project build VAR1=value1 ...
 
             Vars := Argument_String_To_List
-              (Scenario_Variables_Cmd_Line (Kernel, "-X"));
+              (Scenario_Variables_Cmd_Line (Kernel, ""));
 
             declare
                Lang : String := Get_Language_From_File
