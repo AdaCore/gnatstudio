@@ -118,6 +118,16 @@ package body SN.DB_Structures is
       end if;
    end Copy;
 
+   ---------------
+   -- Get_Field --
+   ---------------
+
+   procedure Get_Field (Key : CSF; Index : Positive; Result : out Segment) is
+   begin
+      Result.First := Key.Fields (Index - 1) + Buffer_String'First;
+      Result.Last  := Key.Fields (Index) - 2 + Buffer_String'First;
+   end Get_Field;
+
    ----------------
    -- Get_Symbol --
    ----------------
@@ -398,16 +408,6 @@ package body SN.DB_Structures is
             return Undef;
       end case;
    end Get_Symbol;
-
-   ---------------
-   -- Get_Field --
-   ---------------
-
-   procedure Get_Field (Key : CSF; Index : Positive; Result : out Segment) is
-   begin
-      Result := (Key.Fields (Index - 1) + Buffer_String'First,
-                 Key.Fields (Index) - 2 + Buffer_String'First);
-   end Get_Field;
 
    ---------------
    -- Parse_Key --
