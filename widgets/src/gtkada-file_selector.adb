@@ -26,32 +26,33 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
-with Glib;            use Glib;
-with Gtk;             use Gtk;
-with Gdk;             use Gdk;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Arguments;   use Gtk.Arguments;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Stock;       use Gtk.Stock;
+with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
+with Gtk;                       use Gtk;
+with Gdk;                       use Gdk;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Arguments;             use Gtk.Arguments;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Main;
-with Gtk.Ctree;       use Gtk.Ctree;
-with Gtk.Paned;       use Gtk.Paned;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Toolbar;     use Gtk.Toolbar;
-with Gdk.Event;       use Gdk.Event;
-with Gdk.Pixmap;      use Gdk.Pixmap;
-with Gdk.Bitmap;      use Gdk.Bitmap;
-with Gdk.Color;       use Gdk.Color;
-with GUI_Utils;       use GUI_Utils;
+with Gtk.Ctree;                 use Gtk.Ctree;
+with Gtk.Paned;                 use Gtk.Paned;
+with Gtk.Hbutton_Box;           use Gtk.Hbutton_Box;
+with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Pixmap;                use Gdk.Pixmap;
+with Gdk.Bitmap;                use Gdk.Bitmap;
+with Gdk.Color;                 use Gdk.Color;
+with GUI_Utils;                 use GUI_Utils;
 
-with Gtkada.Types;    use Gtkada.Types;
-with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.Intl;     use Gtkada.Intl;
+with Gtkada.Types;              use Gtkada.Types;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtkada.Intl;               use Gtkada.Intl;
 
-with File_Utils;      use File_Utils;
-with GUI_Utils;       use GUI_Utils;
-with Traces;          use Traces;
+with File_Utils;                use File_Utils;
+with GUI_Utils;                 use GUI_Utils;
+with Traces;                    use Traces;
 
 with GNAT.Regexp;               use GNAT.Regexp;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -286,7 +287,8 @@ package body Gtkada.File_Selector is
          return "";
       else
          return Normalize_Pathname
-           (Dialog.Current_Directory.all & Get_Text (Dialog.Selection_Entry));
+           (Dialog.Current_Directory.all &
+            Locale_From_UTF8 (Get_Text (Dialog.Selection_Entry)));
       end if;
    end Get_Selection;
 
@@ -321,6 +323,7 @@ package body Gtkada.File_Selector is
       Base_Directory    : String  := "";
       File_Pattern      : String  := "";
       Pattern_Name      : String  := "";
+      Default_Name      : String  := "";
       Use_Native_Dialog : Boolean := False;
       History           : Histories.History := null) return String
    is
@@ -331,6 +334,11 @@ package body Gtkada.File_Selector is
       Gtk_New
         (File_Selector, (1 => Directory_Separator), Base_Directory, Title,
          History => History);
+
+      if Default_Name /= "" then
+         Set_Text
+           (File_Selector.Selection_Entry, Locale_To_UTF8 (Default_Name));
+      end if;
 
       if File_Pattern /= "" then
          Register_Filter
@@ -432,7 +440,7 @@ package body Gtkada.File_Selector is
       else
          declare
             File : constant String := Normalize_Pathname
-              (Get_Text (File_Selector.Selection_Entry));
+              (Locale_From_UTF8 (Get_Text (File_Selector.Selection_Entry)));
          begin
             Destroy (File_Selector);
             return File;
@@ -503,11 +511,12 @@ package body Gtkada.File_Selector is
 
       if Style /= null then
          Set_Row_Style (Win.File_List, Current_Row, Style);
-
-         Set_Text (Win.File_List, Current_Row, 1, Data (Win.Remaining_Files));
+         Set_Text (Win.File_List, Current_Row, 1,
+                   Locale_To_UTF8 (Data (Win.Remaining_Files)));
 
          if Text /= null then
-            Set_Text (Win.File_List, Current_Row, 2, Text.all);
+            Set_Text (Win.File_List, Current_Row, 2,
+                      Locale_To_UTF8 (Text.all));
          end if;
 
          if Pixmap /= Null_Pixmap then
@@ -651,7 +660,8 @@ package body Gtkada.File_Selector is
       declare
          use Filter_List;
 
-         S : constant String := Get_Text (Win.Filter_Combo_Entry);
+         S : constant String :=
+           Locale_From_UTF8 (Get_Text (Win.Filter_Combo_Entry));
          C : Filter_List.List_Node := First (Win.Filters);
 
       begin
@@ -735,7 +745,8 @@ package body Gtkada.File_Selector is
             Win.Moving_Through_History := False;
          else
             Push (Win.Past_History,
-                  new String'(Get_Text (Win.Location_Combo_Entry)));
+                  new String'(Locale_From_UTF8
+                                (Get_Text (Win.Location_Combo_Entry))));
             Clear (Win.Future_History);
             Set_Sensitive (Win.Back_Button);
             Set_Sensitive (Win.Forward_Button, False);
@@ -747,8 +758,8 @@ package body Gtkada.File_Selector is
             end if;
          end if;
 
-         if Get_Text (Win.Location_Combo_Entry) /= Dir then
-            Set_Text (Win.Location_Combo_Entry, Dir);
+         if Locale_From_UTF8 (Get_Text (Win.Location_Combo_Entry)) /= Dir then
+            Set_Text (Win.Location_Combo_Entry, Locale_To_UTF8 (Dir));
          end if;
 
          --  If the new directory is not the one currently shown
@@ -761,7 +772,7 @@ package body Gtkada.File_Selector is
          end if;
 
          if Win.File_List = null then
-            Set_Text (Win.Selection_Entry, Dir);
+            Set_Text (Win.Selection_Entry, Locale_To_UTF8 (Dir));
             Set_Position (Win.Selection_Entry, Dir'Length);
          else
             Refresh_Files (Win);
@@ -792,9 +803,10 @@ package body Gtkada.File_Selector is
       end if;
 
       Push (Win.Future_History,
-            new String'(Get_Text (Win.Location_Combo_Entry)));
+            new String'(Locale_From_UTF8
+                          (Get_Text (Win.Location_Combo_Entry))));
 
-      Set_Text (Win.Location_Combo_Entry, S.all);
+      Set_Text (Win.Location_Combo_Entry, Locale_To_UTF8 (S.all));
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S.all);
       Free (S);
@@ -894,9 +906,10 @@ package body Gtkada.File_Selector is
       end if;
 
       Push (Win.Past_History,
-            new String'(Get_Text (Win.Location_Combo_Entry)));
+            new String'(Locale_From_UTF8
+                          (Get_Text (Win.Location_Combo_Entry))));
 
-      Set_Text (Win.Location_Combo_Entry, S.all);
+      Set_Text (Win.Location_Combo_Entry, Locale_To_UTF8 (S.all));
       Win.Moving_Through_History := True;
       Show_Directory (Win.Explorer_Tree, S.all);
 
@@ -921,7 +934,9 @@ package body Gtkada.File_Selector is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
    begin
-      Change_Directory (Win, Get_Text (Win.Location_Combo_Entry));
+      Change_Directory
+        (Win, Locale_From_UTF8
+           (Get_Text (Win.Location_Combo_Entry)));
    end Directory_Selected;
 
    ---------------------
@@ -946,7 +961,8 @@ package body Gtkada.File_Selector is
    is
       Win : constant File_Selector_Window_Access :=
         File_Selector_Window_Access (Get_Toplevel (Object));
-      S   : constant String := Get_Text (Win.Location_Combo_Entry);
+      S   : constant String := Locale_From_UTF8
+        (Get_Text (Win.Location_Combo_Entry));
    begin
       if Is_Directory (S) then
          Change_Directory (Win, S);
@@ -1118,7 +1134,7 @@ package body Gtkada.File_Selector is
 
    begin
       declare
-         S     : constant String := Get_String (Event);
+         S     : constant String := Locale_From_UTF8 (Get_String (Event));
          Found : Boolean := False;
       begin
          if S'Length /= 0
@@ -1129,7 +1145,8 @@ package body Gtkada.File_Selector is
                exit when Found;
 
                declare
-                  T : constant String := Get_Text (Win.File_List, J, 1);
+                  T : constant String :=
+                    Locale_From_UTF8 (Get_Text (Win.File_List, J, 1));
                begin
                   if T'Length /= 0
                     and then T (T'First) = S (S'First)
@@ -1169,7 +1186,8 @@ package body Gtkada.File_Selector is
    begin
       if Get_Key_Val (Event) = GDK_Return then
          declare
-            S : constant String := Get_Text (Win.Location_Combo_Entry);
+            S : constant String := Locale_From_UTF8
+              (Get_Text (Win.Location_Combo_Entry));
          begin
             if Is_Directory (S) then
                Change_Directory (Win, S);
@@ -1195,8 +1213,10 @@ package body Gtkada.File_Selector is
 
       Found           : Boolean := False;
       Event           : constant Gdk_Event := To_Event (Params, 1);
-      S               : constant String := Get_Text (Win.Selection_Entry);
-      G               : constant String := Get_String (Event);
+      S               : constant String :=
+        Locale_From_UTF8 (Get_Text (Win.Selection_Entry));
+      G               : constant String :=
+        Locale_From_UTF8 (Get_String (Event));
 
       First_Match     : Gint := -1;
       --  The first column that completely matches S.
@@ -1296,7 +1316,9 @@ package body Gtkada.File_Selector is
 
             if Win.File_List /= null then
                for J in 0 .. Get_Rows (Win.File_List) - 1 loop
-                  Matcher (Base, Get_Text (Win.File_List, J, 1), J);
+                  Matcher (Base,
+                           Locale_From_UTF8 (Get_Text (Win.File_List, J, 1)),
+                           J);
                end loop;
             end if;
 
@@ -1320,7 +1342,7 @@ package body Gtkada.File_Selector is
                   Select_Row (Win.File_List, First_Match, 1);
                   Moveto (Win.File_List, First_Match, 1, 0.0, 0.0);
                   Set_Text (Win.Selection_Entry,
-                            Best_Match (1 .. Suffix_Length));
+                            Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
                end if;
 
@@ -1329,7 +1351,7 @@ package body Gtkada.File_Selector is
 
                if Suffix_Length > 0 then
                   Set_Text (Win.Selection_Entry,
-                            Best_Match (1 .. Suffix_Length));
+                            Locale_To_UTF8 (Best_Match (1 .. Suffix_Length)));
                   Set_Position (Win.Selection_Entry, Gint (Suffix_Length));
                end if;
 
@@ -1355,8 +1377,10 @@ package body Gtkada.File_Selector is
             exit when Found;
 
             declare
-               T : constant String := Get_Text (Win.File_List, J, 1);
-               S : constant String := Get_Text (Win.Selection_Entry) & G;
+               T : constant String :=
+                 Locale_From_UTF8 (Get_Text (Win.File_List, J, 1));
+               S : constant String :=
+                 Locale_From_UTF8 (Get_Text (Win.Selection_Entry)) & G;
             begin
                if T'Length >= S'Length
                  and then T (T'First .. T'First + S'Length - 1)
@@ -1779,14 +1803,15 @@ package body Gtkada.File_Selector is
 
    procedure Browse_Location (Ent : access Gtk_Widget_Record'Class) is
       Result : constant Gtk_Entry := Gtk_Entry (Ent);
-      Name : constant String := Select_Directory
+      Name   : constant String := Select_Directory
         (-"Select directory",
          Base_Directory =>
            Dir_Name (Normalize_Pathname
-                     (Get_Text (Result), Resolve_Links => False)));
+                       (Locale_From_UTF8 (Get_Text (Result)),
+                        Resolve_Links => False)));
    begin
       if Name /= "" then
-         Set_Text (Result, Name);
+         Set_Text (Result, Locale_To_UTF8 (Name));
       end if;
    end Browse_Location;
 
