@@ -83,12 +83,11 @@ private
    --  Convenience subprogram : same as function Execute, but does not
    --  return any value.
 
-   procedure Command_Finished (Queue   : Command_Queue;
-                               Action  : access Root_Command;
-                               Success : Boolean);
+   procedure Command_Finished
+     (Action  : access Root_Command;
+      Success : Boolean);
    --  This procedure should be called every time the execution of a Command
-   --  ends. This starts the execution of the next Command in the
-   --  Queue.
+   --  ends. This starts the execution of the next Command in Action.Queue.
    --  Action is the Action that has just finished. Success indicates
    --  the success of Action.
 
@@ -98,6 +97,7 @@ private
    type Command_Queue_Record is record
       Command_In_Progress : Boolean := False;
       The_Queue           : Command_Queues.List;
+      Queue_Node          : Command_Queues.List_Node;
    end record;
    type Command_Queue is access Command_Queue_Record;
 
