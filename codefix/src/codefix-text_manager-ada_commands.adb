@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2002-2003                      --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,12 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Characters.Handling;           use Ada.Characters.Handling;
 
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with GNAT.Regpat;                       use GNAT.Regpat;
 
-with String_Utils; use String_Utils;
+with Case_Handling;                     use Case_Handling;
+with String_Utils;                      use String_Utils;
 
 with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 with Codefix.Ada_Tools;                 use Codefix.Ada_Tools;
