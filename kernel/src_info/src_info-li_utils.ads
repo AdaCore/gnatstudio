@@ -40,6 +40,8 @@ private package Src_Info.LI_Utils is
    --  This procedure:
    --    1. Inserts new declaration into the LI structrure tree
    --    2. Returns pointer to created declaration (Declaration_Info param)
+   --  Throws Parent_Not_Available exception if LI_Structure for the source
+   --  file with parent is not created yet.
 
    procedure Insert_Dependency
      (Handler                 : in LI_Handler;
@@ -67,6 +69,8 @@ private package Src_Info.LI_Utils is
       Declaration_Info        : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
+   --  Throws Parent_Not_Available exception if LI_Structure for the source
+   --  file with parent is not created yet.
 
    procedure Add_Parent
      (Declaration_Info        : in out E_Declaration_Info_List;

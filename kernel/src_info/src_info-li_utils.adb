@@ -49,6 +49,8 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
+--   function Convert_Filename_To_LI (Filename : String) return String;
+
    -------------------------------------------------------------------------
 
    --------------------------
@@ -157,12 +159,15 @@ package body Src_Info.LI_Utils is
                      "Invalid Handler");
          if File.LI.Parsed = False then
             Tmp_LI_File := File.LI;
-            Create_LI_File
-              (File              => File,
-               Handler           => Handler,
-               Source_Filename   => Source_Filename,
-               Parsed            => True);
-            File.LI.Body_Info := Tmp_LI_File.Body_Info;
+            File.LI := (Parsed    => True,
+                       Handler   => Tmp_LI_File.Handler,
+                       LI_Filename  => Tmp_LI_File.LI_Filename,
+                       Spec_Info    => Tmp_LI_File.Spec_Info,
+                       Body_Info    => Tmp_LI_File.Body_Info,
+                       Separate_Info     => Tmp_LI_File.Separate_Info,
+                       LI_Timestamp      => 0,
+                       Compilation_Errors_Found => False,
+                       Dependencies_Info => null);
          end if;
       end if;
       --  Now we are searching through common list of LI_Files and
@@ -275,12 +280,15 @@ package body Src_Info.LI_Utils is
                      "Invalid Handler");
          if File.LI.Parsed = False then
             Tmp_LI_File := File.LI;
-            Create_LI_File
-              (File => File,
-               Handler => Handler,
-               Source_Filename => Source_Filename,
-               Parsed => True);
-            File.LI.Body_Info := Tmp_LI_File.Body_Info;
+            File.LI := (Parsed    => True,
+                       Handler   => Tmp_LI_File.Handler,
+                       LI_Filename  => Tmp_LI_File.LI_Filename,
+                       Spec_Info    => Tmp_LI_File.Spec_Info,
+                       Body_Info    => Tmp_LI_File.Body_Info,
+                       Separate_Info     => Tmp_LI_File.Separate_Info,
+                       LI_Timestamp      => 0,
+                       Compilation_Errors_Found => False,
+                       Dependencies_Info => null);
          end if;
       end if;
       --  Now we are searching through common list of LI_Files and
@@ -745,7 +753,9 @@ package body Src_Info.LI_Utils is
          File := new LI_File_Constrained'
                   (LI =>  (Parsed => True,
                            Handler => LI_Handler (Handler),
-                           LI_Filename => new String'(Source_Filename),
+                           LI_Filename => new String'
+                                (Source_Filename),
+--                              (Convert_Filename_To_LI (Source_Filename)),
                            Body_Info => null,
                            Spec_Info => null,
                            Dependencies_Info => null,
@@ -756,7 +766,9 @@ package body Src_Info.LI_Utils is
          File := new LI_File_Constrained'
                   (LI =>  (Parsed => False,
                            Handler => LI_Handler (Handler),
-                           LI_Filename => new String'(Source_Filename),
+                           LI_Filename => new String'
+                                (Source_Filename),
+--                              (Convert_Filename_To_LI (Source_Filename)),
                            Body_Info => null,
                            Spec_Info => null,
                            Separate_Info => null,
@@ -817,6 +829,23 @@ package body Src_Info.LI_Utils is
       end loop;
       return False;
    end Belongs_To_Class;
+
+   -------------------------------
+   --  Convert_File_Name_To_LI  --
+   -------------------------------
+
+--   function Convert_Filename_To_LI (Filename : String) return String is
+--      buf : String (Filename'First .. Filename'Last);
+--   begin
+--      for i in Filename'First .. Filename'Last loop
+--         if Filename (i) = '/' or Filename (i) = '\' then
+--            buf (i) := '_';
+--         else
+--            buf (i) := Filename (i);
+--         end if;
+--      end loop;
+--      return buf;
+--   end Convert_Filename_To_LI;
 
    -------------------------------------------------------------------------
 
