@@ -69,6 +69,11 @@ package Glide_Kernel.Project is
    --
    --  ??? What do we do if the project couldn't be loaded.
 
+   function Get_Subproject_Name
+     (Handle    : access Kernel_Handle_Record'Class;
+      File_Name : String) return String;
+   --  Return the absolute path to the project containing File_Name.
+
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class)
       return Prj.Tree.Project_Node_Id;

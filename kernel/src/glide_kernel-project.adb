@@ -112,6 +112,25 @@ package body Glide_Kernel.Project is
       end if;
    end Get_Project_File_Name;
 
+   -------------------------
+   -- Get_Subproject_Name --
+   -------------------------
+
+   function Get_Subproject_Name
+     (Handle    : access Kernel_Handle_Record'Class;
+      File_Name : String) return String
+   is
+      Project : Project_Node_Id;
+   begin
+      if Handle.Project_Is_Default then
+         return "";
+      else
+         Project := Get_Project_From_View
+           (Get_Project_From_File (Handle.Project_View, File_Name));
+         return Get_Name_String (Directory_Of (Project))
+           & Get_Name_String (Prj.Tree.Name_Of (Project));
+      end if;
+   end Get_Subproject_Name;
 
    ------------------------------
    -- Compute_Predefined_Paths --
