@@ -30,7 +30,7 @@ with Gtk; use Gtk;
 with Gtk.Main;
 with Gtk.Widget; use Gtk.Widget;
 
-with Hyper_Grep_Window_Pkg; use Hyper_Grep_Window_Pkg;
+with Hyper_Grep_Base_Pkg; use Hyper_Grep_Base_Pkg;
 
 with Language;      use Language;
 with Language.Ada;  use Language.Ada;
@@ -39,7 +39,7 @@ with Language.Cpp;  use Language.Cpp;
 with Language.Java; use Language.Java;
 
 procedure Hypergrep_Main is
-   HG_Window : Hyper_Grep_Window_Access;
+   HG_Window : Hyper_Grep_Base_Access;
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
