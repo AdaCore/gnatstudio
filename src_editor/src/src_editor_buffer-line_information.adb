@@ -685,6 +685,7 @@ package body Src_Editor_Buffer.Line_Information is
       EL : Columns_Config_Access renames Editor.Editable_Line_Info_Columns;
 
       procedure Draw_Info (Starting_X : Gint);
+      --  Draw the info contained in Line_Info, at offset Starting_X.
 
       procedure Draw_Info (Starting_X : Gint) is
       begin
