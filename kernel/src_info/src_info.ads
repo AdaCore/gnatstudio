@@ -355,6 +355,9 @@ private
    --    - its unit part
    --    - its file name when it is a separate, so that it can be found in the
    --      LI file
+   --  Note that the reason we have both Part and Source_Filename is so that we
+   --  don't have to always allocate memory for the file name for the two
+   --  default files allowed per LI_File.
 
    No_Source_File : constant Source_File :=
      (LI              => null,
@@ -374,6 +377,8 @@ private
    end record;
    --  A location in a source file.
    --  Column might be null for generic instantiations.
+   --  Note that a tabulation character in the source file should count as 8
+   --  columns in this structure.
 
    Null_File_Location : constant File_Location :=
      (File   => No_Source_File,
