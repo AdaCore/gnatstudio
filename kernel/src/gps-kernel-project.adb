@@ -186,13 +186,22 @@ package body GPS.Kernel.Project is
       Project : String;
       No_Save : Boolean := False)
    is
+      Location_Category : constant String := "Project";
+
       procedure Report_Error (S : String);
       --  Output error messages from the project parser to the console.
 
       procedure Report_Error (S : String) is
+         Old_Pref : constant Boolean := Get_Pref (Kernel, Auto_Jump_To_First);
       begin
+         --  Temporarily unset this, to handle the following case:
+         --  the project file contains errors and couldn't be loaded, but it
+         --  was also saved in the desktop. If that is the case, the project
+         --  would be open twice otherwise
+         Set_Pref (Kernel, Auto_Jump_To_First, False);
          Console.Insert (Kernel, S, Mode => Console.Error, Add_LF => False);
-         Parse_File_Locations (Kernel, S, "Project");
+         Parse_File_Locations (Kernel, S, Location_Category);
+         Set_Pref (Kernel, Auto_Jump_To_First, Old_Pref);
       end Report_Error;
 
       Had_Project_Desktop : Boolean;
@@ -241,6 +250,7 @@ package body GPS.Kernel.Project is
             Compute_Predefined_Paths (Kernel);
          end if;
 
+         Remove_Location_Category (Kernel, Location_Category);
          Load (Registry           => Kernel.Registry.all,
                Root_Project_Path  => Project,
                Errors             => Report_Error'Unrestricted_Access,
