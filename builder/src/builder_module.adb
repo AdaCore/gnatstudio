@@ -275,7 +275,7 @@ package body Builder_Module is
    begin
       Console.Clear (Kernel);
 
-      Remove_Result_Category (Kernel, Error_Category);
+      Remove_Result_Category (Kernel, -Error_Category);
 
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
@@ -1701,21 +1701,21 @@ package body Builder_Module is
       Args : Argument_List (1 .. 2);
    begin
       Args :=
-        (1 => new String'(Error_Category),
+        (1 => new String'(-Error_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Error_Src_Highlight))));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
 
       Args :=
-        (1 => new String'(Style_Category),
+        (1 => new String'(-Style_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Style_Src_Highlight))));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
 
       Args :=
-        (1 => new String'(Warning_Category),
+        (1 => new String'(-Warning_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Warning_Src_Highlight))));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
