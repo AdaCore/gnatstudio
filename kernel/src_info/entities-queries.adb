@@ -18,16 +18,16 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with VFS;      use VFS;
-with Traces;   use Traces;
-with Projects; use Projects;
-with Projects.Registry; use Projects.Registry;
+with VFS;                     use VFS;
+with Traces;                  use Traces;
+with Projects;                use Projects;
+with Projects.Registry;       use Projects.Registry;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 
-with Glib.Unicode; use Glib.Unicode;
+with Glib.Unicode;            use Glib.Unicode;
 
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body Entities.Queries is
    Me : constant Debug_Handle := Create ("Entities.Queries");
@@ -74,7 +74,7 @@ package body Entities.Queries is
       Check_Decl_Only        : Boolean;
       Entity                 : out Entity_Information;
       Status                 : out Find_Decl_Or_Body_Query_Status);
-   --  Find the closest entity to (Line, Column) in Source.
+   --  Find the closest entity to (Line, Column) in Source
 
    procedure Find_Any_Entity
      (File            : Source_File;
@@ -979,8 +979,8 @@ package body Entities.Queries is
    is
    begin
       Update_Xref (File, File_Has_No_LI_Report);
-      Iter := (Dep_Index             => Dependency_Arrays.First,
-               File                  => File);
+      Iter := (Dep_Index => Dependency_Arrays.First,
+               File      => File);
    end Find_Dependencies;
 
    -----------------
@@ -1888,7 +1888,7 @@ package body Entities.Queries is
    begin
       return not Iter.Processing_Entities
         and then (Iter.EL = null
-                  or else Iter.Index_In_EL > Last (Iter.EL.all));
+                    or else Iter.Index_In_EL > Last (Iter.EL.all));
    end At_End;
 
    ---------

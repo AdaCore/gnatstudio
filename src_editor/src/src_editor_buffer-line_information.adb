@@ -725,17 +725,17 @@ package body Src_Editor_Buffer.Line_Information is
       Layout      : in out Pango_Layout;
       Drawable    : in out Gdk.Pixmap.Gdk_Pixmap)
    is
-      Current_Line : Buffer_Line_Type;
-      Iter         : Gtk_Text_Iter;
-      Y_In_Buffer                : Gint;
-      Y_Pix_In_Window            : Gint;
-      Line_Height                : Gint;
-      Dummy_Gint                 : Gint;
-      Dummy_Boolean              : Boolean;
-      Line_Info                  : Line_Info_Width;
-      Editable_Line : Editable_Line_Type;
+      Current_Line    : Buffer_Line_Type;
+      Iter            : Gtk_Text_Iter;
+      Y_In_Buffer     : Gint;
+      Y_Pix_In_Window : Gint;
+      Line_Height     : Gint;
+      Dummy_Gint      : Gint;
+      Dummy_Boolean   : Boolean;
+      Line_Info       : Line_Info_Width;
+      Editable_Line   : Editable_Line_Type;
 
-      Buffer_Line_Starting_X     : Gint := 0;
+      Buffer_Line_Starting_X : Gint := 0;
 
       BL : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
       EL : Columns_Config_Access renames Buffer.Editable_Line_Info_Columns;
@@ -743,6 +743,10 @@ package body Src_Editor_Buffer.Line_Information is
       procedure Draw_Info (Starting_X : Gint);
       pragma Inline (Draw_Info);
       --  Draw the info contained in Line_Info, at offset Starting_X.
+
+      ---------------
+      -- Draw_Info --
+      ---------------
 
       procedure Draw_Info (Starting_X : Gint) is
       begin
@@ -1004,8 +1008,8 @@ package body Src_Editor_Buffer.Line_Information is
       Command     : Command_Access;
       Image       : Gdk_Pixbuf)
    is
-      Width   : Integer;
-      BL      : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
+      Width : Integer;
+      BL    : Columns_Config_Access renames Buffer.Buffer_Line_Info_Columns;
    begin
       if Buffer_Line not in Buffer.Line_Data'Range then
          return;
@@ -1088,6 +1092,10 @@ package body Src_Editor_Buffer.Line_Information is
       procedure Expand_Lines
         (N : Buffer_Line_Type);
       --  Expand the line-indexed arrays to contain N lines in size.
+
+      ------------------
+      -- Expand_Lines --
+      ------------------
 
       procedure Expand_Lines (N : Buffer_Line_Type) is
          H : constant Line_Data_Array := Buffer_Lines.all;
@@ -1907,11 +1915,11 @@ package body Src_Editor_Buffer.Line_Information is
       Remove    : Boolean := False)
    is
       Start_Iter, End_Iter : Gtk_Text_Iter;
-      Result   : Boolean;
-      The_Line : Gint;
-      Color    : Gdk_Color;
-      Tag      : Gtk_Text_Tag;
-      New_Tag  : Boolean := False;
+      Result               : Boolean;
+      The_Line             : Gint;
+      Color                : Gdk_Color;
+      Tag                  : Gtk_Text_Tag;
+      New_Tag              : Boolean := False;
    begin
       --  Get the text tag, create it if necessary.
 
@@ -2016,7 +2024,7 @@ package body Src_Editor_Buffer.Line_Information is
    function Get_Column
      (Buffer   : access Source_Buffer_Record'Class;
       Position : Gtk.Text_Mark.Gtk_Text_Mark)
-     return Positive
+      return Positive
    is
       Iter : Gtk_Text_Iter;
    begin

@@ -111,8 +111,7 @@ package body Glide_Kernel.Hooks is
       Data    : Callback_Data'Class);
    --  See inherited doc
    --  This wrapper is used to give access to hooks defined in shell
-   --  languages
-
+   --  languages.
 
    type Shell_Wrapper_No_Args_Record is new Hook_No_Args_Record with record
       Func   : Glide_Kernel.Scripts.Subprogram_Type;
