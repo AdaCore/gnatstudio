@@ -505,7 +505,9 @@ package body Src_Editor_View is
       Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
    begin
       --  We want to use the alignments, so that the line appears in the middle
-      --  of the screen if possible. This provides a more user-friendly behavior
+      --  of the screen if possible. This provides a more user-friendly
+      --  behavior.
+
       Scroll_To_Mark
         (View, Insert_Mark, Use_Align => True,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
