@@ -1093,8 +1093,7 @@ package body Interactive_Consoles is
 
    function Get_View
      (Console : access Interactive_Console_Record)
-      return Gtk.Text_View.Gtk_Text_View
-   is
+      return Gtk.Text_View.Gtk_Text_View is
    begin
       return Console.View;
    end Get_View;
