@@ -128,6 +128,7 @@ package body Src_Info.LI_Utils is
 
    procedure Convert_To_Parsed
      (File               : in out LI_File_Ptr;
+      Full_LI_Name       : String;
       Update_Timestamp   : Boolean := True;
       Compilation_Errors : Boolean := False) is
    begin
@@ -145,10 +146,9 @@ package body Src_Info.LI_Utils is
       end if;
 
       if Update_Timestamp
-        and then Is_Regular_File (File.LI.LI_Filename.all)
+        and then Is_Regular_File (Full_LI_Name)
       then
-         File.LI.LI_Timestamp := To_Timestamp
-           (File_Time_Stamp (File.LI.LI_Filename.all));
+         File.LI.LI_Timestamp := To_Timestamp (File_Time_Stamp (Full_LI_Name));
       end if;
    end Convert_To_Parsed;
 

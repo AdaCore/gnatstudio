@@ -171,6 +171,7 @@ private package Src_Info.LI_Utils is
 
    procedure Convert_To_Parsed
      (File               : in out LI_File_Ptr;
+      Full_LI_Name       : String;
       Update_Timestamp   : Boolean := True;
       Compilation_Errors : Boolean := False);
    --  Set File as parsed, ie indicate that the actual database has been parsed
@@ -179,6 +180,9 @@ private package Src_Info.LI_Utils is
    --  recomputed.
    --  Compilation_Errors should be true if the xref information is potentially
    --  incomplete because the source file could not be compiled correctly.
+   --  Full_LI_Name is the name of the file on which we need to check the
+   --  timestamp. This is required since some backends only store basenames in
+   --  the LI structure.
 
    function Find_Reference
      (Declaration_Info        : E_Declaration_Info_List;
