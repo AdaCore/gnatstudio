@@ -52,6 +52,10 @@ package Prj_API is
    Cpp_String : constant String := "c++";  --  See also Snames.Name_Cpp
    --  Strings used for the various languages supported by Glide
 
+   Any_Attribute : constant String := "@@";
+   --  Special value for all the subprograms that take an Attribute_Index
+   --  parameter. When this is used, no matching is done on the indexes.
+
    function Get_String (Str : Types.String_Id) return String;
    --  This functional form returns the value of Str as a string without
    --  affecting the contents of either Name_Buffer or Name_Len.
@@ -283,6 +287,8 @@ package Prj_API is
    --  Remove all declarations for the attribute Attribute_Name in the current
    --  scenario. This effectively reverses to the default behavior for the
    --  attribute.
+   --  If Attribute_Index is Any_Attribute, then this subprogram will not try
+   --  to match the attribute.
 
    procedure Delete_Package (Project : Project_Node_Id; Pkg_Name : String);
    --  Remove package and all its declarative items from Project.

@@ -93,6 +93,7 @@ package body Prj_API is
       Attribute_Index : String) return Boolean;
    --  Return True if Node is an attribute declaration matching Attribute_Name
    --  and Attribute_Index.
+   --  If Attribute_Index is Any_Attribute, no matching is done on the index.
 
    procedure Remove_Attribute_Declarations
      (Parent          : Project_Node_Id;
@@ -100,6 +101,7 @@ package body Prj_API is
       Attribute_Index : String);
    --  Remove all declarations for Attribute_Name in the declarative item list
    --  of Parent.
+   --  If Attribute_Index is Any_Attribute, no matching is done on the index.
 
    procedure Add_Node_To_List
      (To   : in out Project_Node_Array_Access;
@@ -1577,7 +1579,8 @@ package body Prj_API is
       return Kind_Of (Node) = N_Attribute_Declaration
         and then Prj.Tree.Name_Of (Node) = Attribute_Name
         and then
-        ((Attribute_Index = ""
+        (Attribute_Index = Any_Attribute
+         or else (Attribute_Index = ""
           and then Associative_Array_Index_Of (Node) = No_String)
          or else (Attribute_Index /= ""
                   and then Associative_Array_Index_Of (Node) /= No_String
