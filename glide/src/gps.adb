@@ -21,6 +21,7 @@
 with Glib.Error;                use Glib.Error;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
@@ -279,17 +280,27 @@ procedure GPS is
 
       Log : constant String :=
         String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
+
+      Key : constant String :=
+        String_Utils.Name_As_Directory (Dir.all) & "custom_key";
+
    begin
       --  Parse the system's RC file
-      Trace (Me, "Parsing System RC file " & System_Rc);
       if Is_Regular_File (System_Rc) then
+         Trace (Me, "Parsing System RC file " & System_Rc);
          Gtk.Rc.Parse (System_Rc);
       end if;
 
       --  Parse the user's RC file
-      Trace (Me, "Parsing RC file " & Rc);
       if Is_Regular_File (Rc) then
+         Trace (Me, "Parsing RC file " & Rc);
          Gtk.Rc.Parse (Rc);
+      end if;
+
+      --  Load the custom key bindings, if any
+      if Is_Regular_File (Key) then
+         Trace (Me, "Loading key bindings from " & Key);
+         Gtk.Accel_Map.Load (Key);
       end if;
 
       --  ??? Should have a cleaner way of initializing Log_File
@@ -528,6 +539,9 @@ begin
    Save_Preferences
      (GPS.Kernel,
       String_Utils.Name_As_Directory (Dir.all) & "preferences");
+
+   Gtk.Accel_Map.Save
+     (String_Utils.Name_As_Directory (Dir.all) & "custom_key");
 
    Free (Home);
    Free (Dir);
