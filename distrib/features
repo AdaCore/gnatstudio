@@ -7,6 +7,9 @@ New features in GPS 2.1.0
 
 - GPS can recompute the indentation for an alias after its expansion
 
+[ Note: the following two entries will only be provided when GPS is built with
+  XML/Ada ]
+
 - Better error messages when parsing customization XML files.
 
 - Full support of XML features in XML customization files
