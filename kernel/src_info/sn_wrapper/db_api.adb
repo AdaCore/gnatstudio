@@ -122,7 +122,6 @@ package body DB_API is
            Error_Message (DB));
       end if;
 
-      Set_Cursor (DB, First);
    end Open;
 
    ---------
