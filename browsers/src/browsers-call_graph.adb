@@ -782,7 +782,8 @@ package body Browsers.Call_Graph is
          Show_Item (Get_Canvas (Data.Callback.Browser), Data.Callback.Item);
 
          Weak_Unref (Data.Callback.Browser,
-                     Ancestors_Browser_Destroyed_While_Computed'Access);
+                     Ancestors_Browser_Destroyed_While_Computed'Access,
+                     Data.all'Address);
       end if;
       Clean;
 
