@@ -1,16 +1,8 @@
-with Glib;            use Glib;
-with Gint_Xml;        use Gint_Xml;
-with Gdk.Event;       use Gdk.Event;
-with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtkada.MDI;      use Gtkada.MDI;
-with Gtkada.Handlers; use Gtkada.Handlers;
 with GVD.Process;
-with GNAT.Regpat;     use GNAT.Regpat;
 with Glide_Kernel;    use Glide_Kernel;
-with Glide_Kernel.Editor; use Glide_Kernel.Editor;
 with Project_Explorers; use Project_Explorers;
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Glide_Consoles;  use Glide_Consoles;
 
 package body Glide_Page is
