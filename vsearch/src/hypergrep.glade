@@ -14,7 +14,7 @@
 
 <widget>
   <class>GtkWindow</class>
-  <name>Hyper_Grep</name>
+  <name>Hyper_Grep_Window</name>
   <signal>
     <name>delete_event</name>
     <handler>on_Hyper_Grep_delete_event</handler>
@@ -30,7 +30,7 @@
 
   <widget>
     <class>GtkVBox</class>
-    <name>Main_box</name>
+    <name>Main_table</name>
     <homogeneous>False</homogeneous>
     <spacing>0</spacing>
 
@@ -49,7 +49,7 @@
 
       <widget>
 	<class>GtkTable</class>
-	<name>TblFind</name>
+	<name>search_table</name>
 	<border_width>5</border_width>
 	<rows>5</rows>
 	<columns>3</columns>
@@ -197,7 +197,7 @@
 
 	<widget>
 	  <class>GtkLabel</class>
-	  <name>label8</name>
+	  <name>search_for_label</name>
 	  <label>Search for:</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
@@ -260,7 +260,7 @@
 
 	<widget>
 	  <class>GtkLabel</class>
-	  <name>label9</name>
+	  <name>options_label</name>
 	  <label>Options:</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
@@ -286,8 +286,8 @@
 
 	<widget>
 	  <class>GtkLabel</class>
-	  <name>label10</name>
-	  <label>Search through:</label>
+	  <name>scan_in_label</name>
+	  <label>Scan in:</label>
 	  <justify>GTK_JUSTIFY_CENTER</justify>
 	  <wrap>False</wrap>
 	  <xalign>0</xalign>
@@ -314,7 +314,7 @@
 
     <widget>
       <class>GtkFrame</class>
-      <name>frame4</name>
+      <name>files_frame</name>
       <border_width>5</border_width>
       <label>Files</label>
       <label_xalign>0.01</label_xalign>
@@ -327,7 +327,7 @@
 
       <widget>
 	<class>GtkTable</class>
-	<name>table3</name>
+	<name>files_table</name>
 	<border_width>5</border_width>
 	<rows>4</rows>
 	<columns>3</columns>
@@ -543,7 +543,7 @@
 
     <widget>
       <class>GtkHButtonBox</class>
-      <name>hbuttonbox2</name>
+      <name>hbuttonbox</name>
       <layout_style>GTK_BUTTONBOX_SPREAD</layout_style>
       <spacing>30</spacing>
       <child_min_width>85</child_min_width>
