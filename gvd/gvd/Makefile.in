@@ -9,7 +9,7 @@ EXEC = odd
 
 all: $(EXEC)
 
-stylechk: clean
+stylechk:
 	gcc -c $(ALL_CFLAGS) *_pkg.adb
 	make CFLAGS="-gnaty $(CFLAGS)"
 
