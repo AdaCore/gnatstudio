@@ -120,6 +120,7 @@ package body Docgen is
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
             Partial_Entity : Boolean) return Boolean;
+         --  ??? What does this function do
 
          --------------
          -- Callback --
@@ -129,8 +130,9 @@ package body Docgen is
            (Entity         : Language_Entity;
             Sloc_Start     : Source_Location;
             Sloc_End       : Source_Location;
-            Partial_Entity : Boolean) return Boolean  is
-         pragma Unreferenced (Partial_Entity);
+            Partial_Entity : Boolean) return Boolean
+         is
+            pragma Unreferenced (Partial_Entity);
          begin
             case Entity is
                when Comment_Text =>
@@ -201,8 +203,10 @@ package body Docgen is
                when others =>
                   null;
             end case;
+
             return False;
          end Callback;
+
       begin
          Initialize (B, Text);
          Parse_Entities (Get_Language_From_File
@@ -210,6 +214,7 @@ package body Docgen is
                             Text,
                             Callback'Unrestricted_Access);
          Finish (B, File, Text, Entity_Line);
+
       exception
          when E : others =>
             Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -471,12 +476,13 @@ package body Docgen is
    ----------
    -- Free --
    ----------
+
    procedure Free (X : in out Reference_In_File) is
    begin
       Free (X.Name);
       --  Memory accessed by the field Entity is free separately: those
-      --     records are saved in a list. When we destroy this list, it calls
-      --     subprogram Free(Entity_Information).
+      --  records are saved in a list. When we destroy this list, it calls
+      --  subprogram Free (Entity_Information).
    end Free;
 
    ----------
@@ -535,8 +541,8 @@ package body Docgen is
          Entity       => Copy (Entity.Entity),
          Is_Private   => Entity.Is_Private,
          Line_In_Body => Entity.Line_In_Body,
-         Calls_list   => Type_Reference_List.Null_List,    --  ???
-         Called_List  => Type_Reference_List.Null_List);    --  ???
+         Calls_list   => Type_Reference_List.Null_List,   --  ???
+         Called_List  => Type_Reference_List.Null_List);  --  ???
    end Clone;
 
    -------------------------
