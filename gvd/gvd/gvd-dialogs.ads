@@ -222,7 +222,7 @@ package GVD.Dialogs is
       Check_Msg      : String;
       Key            : String := "";
       Button_Active  : access Boolean;
-      Check_Msg2     : String := "";
+      Check_Msg2    : String := "";
       Button2_Active : Boolean_Access := null) return String;
    --  A dialog, like Simple_Entry_Dialog, specifically set up to enter
    --  expressions to display.
