@@ -28,11 +28,15 @@
 
 --  Gnat sources dependencies
 with Prj;       use Prj;
+pragma Elaborate_All (Prj);
 with Prj.Tree;  use Prj.Tree;
 with Snames;    use Snames;
+pragma Elaborate_All (Snames);
 with Namet;     use Namet;
+pragma Elaborate_All (Namet);
 with Types;     use Types;
 with Csets;     use Csets;
+pragma Elaborate_All (Csets);
 with Stringt;   use Stringt;
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -48,14 +52,15 @@ package body Prj_API is
    --  Internal version for Get_Or_Create_Attribute. If Array_Index is not
    --  No_String, then the variable is defined for a specific index.
 
-   function String_As_Expression (Value : String_Id) return Project_Node_Id;
-   --  Return an N_Expression node that represents the simple string Value.
-
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
    --  Set Var as the expression to use for the value of Var. This
    --  properly handles standard variables and variables defined through
    --  references to external environment variables.
+
+   function String_As_Expression (Value : String_Id) return Project_Node_Id;
+   --  Return an N_Expression node that represents the static string Value.
+   --  ??? Could be implemented in terms of Concatenate
 
    --------------------
    -- Create_Project --
@@ -113,6 +118,9 @@ package body Prj_API is
       Previous_Decl : Project_Node_Id := Empty_Node;
       N : Name_Id;
    begin
+      --  ??? Should insert the attribute or the variable in the list
+      --  Prj_Or_Pkg.Variables if needed
+
       pragma Assert
         (Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Package_Declaration
          or else Project_Nodes.Table (Prj_Or_Pkg).Kind = N_Project);
@@ -193,12 +201,6 @@ package body Prj_API is
 
       if Array_Index /= No_String then
          Project_Nodes.Table (Var).Value := Array_Index;
-      end if;
-
-      if Kind = Prj.List then
-         Project_Nodes.Append
-           (Default_Project_Node (N_Literal_String_List, List));
-         Project_Nodes.Table (Var).Field1 := Project_Nodes.Last;
       end if;
       return Var;
    end Internal_Get_Or_Create_Attribute;
@@ -358,46 +360,14 @@ package body Prj_API is
    --------------------
 
    procedure Append_To_List (Var : Project_Node_Id; Value : String) is
-      List, Expr, Term, Str : Project_Node_Id;
    begin
       pragma Assert (Var /= Empty_Node);
       pragma Assert (Project_Nodes.Table (Var).Expr_Kind = Prj.List);
 
-      List := Project_Nodes.Table (Var).Field1;
-
-      pragma Assert (List /= Empty_Node);
-      pragma Assert (Project_Nodes.Table (List).Kind = N_Literal_String_List);
-
-      --  Create a new expression
-      Project_Nodes.Append (Default_Project_Node (N_Expression));
-      Term := Project_Nodes.Last;
-
-      --  Create a new list if required
-      Expr := Project_Nodes.Table (List).Field1;
-      if Expr = Empty_Node then
-         Project_Nodes.Table (List).Field1 := Term;
-
-      --  Else append at the end of list
-      else
-         while Project_Nodes.Table (Expr).Field2 /= Empty_Node loop
-            Expr := Project_Nodes.Table (Expr).Field2;
-         end loop;
-
-         Project_Nodes.Table (Expr).Field2 := Term;
-      end if;
-      Expr := Term;
-
-      Project_Nodes.Append (Default_Project_Node (N_Term));
-      Term := Project_Nodes.Last;
-      Project_Nodes.Table (Expr).Field1 := Term;
-
-      Project_Nodes.Append (Default_Project_Node (N_Literal_String));
-      Str := Project_Nodes.Last;
-      Project_Nodes.Table (Term).Field1 := Str;
-
       Start_String;
       Store_String_Chars (Value);
-      Project_Nodes.Table (Str).Value := End_String;
+      Concatenate_List
+        (Project_Nodes.Table (Var).Field1, String_As_Expression (End_String));
    end Append_To_List;
 
    --------------------------
@@ -466,12 +436,13 @@ package body Prj_API is
 
             raise Invalid_Value;
 
-         when N_Variable_Declaration =>
+         when N_Variable_Declaration | N_Attribute_Declaration =>
             Start_String;
             Store_String_Chars (Value);
             Set_Expression (Var, String_As_Expression (End_String));
 
          when others => null;
+            Put_Line ("Set_Value: " & Project_Nodes.Table (Var).Kind'Img);
             raise Program_Error;
       end case;
    end Set_Value;
@@ -660,7 +631,7 @@ package body Prj_API is
    --------------
 
    function Value_Of (Var : Project_Node_Id) return String_List_Iterator is
-      V : Project_Node_Id;
+      V, Expr : Project_Node_Id;
    begin
       pragma Assert (Var /= Empty_Node);
       pragma Assert
@@ -670,20 +641,131 @@ package body Prj_API is
       V := Project_Nodes.Table (Var).Field1;
 
       case Project_Nodes.Table (V).Kind is
-         when N_Expression | N_Literal_String =>
-            return (Current => V);
+         when N_Expression =>
+            Expr := Project_Nodes.Table (V).Field1;
+            pragma Assert
+              (Expr /= Empty_Node
+               and then Project_Nodes.Table (Expr).Kind = N_Term);
+            Expr := Project_Nodes.Table (Expr).Field1;
+
+            if Expr /= Empty_Node
+              and then Project_Nodes.Table (Expr).Kind = N_Literal_String_List
+            then
+               return (Current => Project_Nodes.Table (Expr).Field1);
+            else
+               return (Current => V);
+            end if;
 
          when N_External_Value =>
             return (Current => Project_Nodes.Table (V).Field2);
-
-         when N_Literal_String_List =>
-            return (Current => Project_Nodes.Table (V).Field1);
 
          when others =>
             Put_Line ("Value_Of: " & Project_Nodes.Table (V).Kind'Img);
             raise Program_Error;
       end case;
    end Value_Of;
+
+   -----------------
+   -- Concatenate --
+   -----------------
+
+   procedure Concatenate
+     (Expr : in out Project_Node_Id; Node : Project_Node_Id)
+   is
+      Term : Project_Node_Id;
+   begin
+      pragma Assert (Expr = Empty_Node
+                     or else Project_Nodes.Table (Expr).Kind = N_Expression);
+      pragma Assert (Node /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Node).Kind /= N_Expression);
+
+      --  Create the expression if needed
+
+      if Expr = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Expression, Single));
+         Expr := Project_Nodes.Last;
+      end if;
+
+      --  Create the first term if needed
+
+      Term := Project_Nodes.Table (Expr).Field1;
+      pragma Assert (Term = Empty_Node
+                     or else Project_Nodes.Table (Term).Kind = N_Term);
+      if Term = Empty_Node then
+         if Project_Nodes.Table (Node).Kind = N_Term then
+            Project_Nodes.Table (Node).Field2 := Empty_Node;
+            Term := Node;
+         else
+            Project_Nodes.Append (Default_Project_Node (N_Term, Single));
+            Term := Project_Nodes.Last;
+            Project_Nodes.Table (Term).Field1 := Node;
+         end if;
+         Project_Nodes.Table (Expr).Field1 := Term;
+
+      else
+         --  We append at the end
+
+         while Project_Nodes.Table (Term).Field2 /= Empty_Node loop
+            Term := Project_Nodes.Table (Term).Field2;
+         end loop;
+
+         if Project_Nodes.Table (Node).Kind = N_Term then
+            Project_Nodes.Table (Node).Field2 := Empty_Node;
+            Project_Nodes.Table (Term).Field2 := Node;
+            Term := Node;
+         else
+            Project_Nodes.Append (Default_Project_Node (N_Term, Single));
+            Project_Nodes.Table (Term).Field2 := Project_Nodes.Last;
+            Term := Project_Nodes.Last;
+            Project_Nodes.Table (Term).Field1 := Node;
+         end if;
+      end if;
+   end Concatenate;
+
+   ----------------------
+   -- Concatenate_List --
+   ----------------------
+
+   procedure Concatenate_List
+     (Expr : in out Project_Node_Id; Expr2 : Project_Node_Id)
+   is
+      Term, L, E : Project_Node_Id;
+   begin
+      pragma Assert (Expr = Empty_Node
+                     or else Project_Nodes.Table (Expr).Kind = N_Expression);
+      pragma Assert (Expr2 /= Empty_Node);
+      pragma Assert (Project_Nodes.Table (Expr2).Kind = N_Expression);
+
+      if Expr = Empty_Node then
+         Project_Nodes.Append (Default_Project_Node (N_Expression, List));
+         Expr := Project_Nodes.Last;
+         Project_Nodes.Append (Default_Project_Node (N_Term, List));
+         Term := Project_Nodes.Last;
+         Project_Nodes.Table (Expr).Field1 := Term;
+         Project_Nodes.Append
+           (Default_Project_Node (N_Literal_String_List, List));
+         L := Project_Nodes.Last;
+         Project_Nodes.Table (Term).Field1 := L;
+         Project_Nodes.Table (L).Field1 := Expr2;
+      else
+         Term := Project_Nodes.Table (Expr).Field1;
+         pragma Assert (Term /= Empty_Node
+                        and then Project_Nodes.Table (Term).Kind = N_Term);
+         L := Project_Nodes.Table (Term).Field1;
+         pragma Assert
+           (L /= Empty_Node
+            and then Project_Nodes.Table (L).Kind = N_Literal_String_List);
+
+         E := Project_Nodes.Table (L).Field1;
+         pragma Assert (Project_Nodes.Table (E).Kind = N_Expression);
+
+         while Project_Nodes.Table (E).Field2 /= Empty_Node loop
+            E := Project_Nodes.Table (E).Field2;
+         end loop;
+         Project_Nodes.Table (E).Field2 := Expr2;
+      end if;
+   end Concatenate_List;
+
 
 begin
    Namet.Initialize;

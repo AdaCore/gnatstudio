@@ -120,6 +120,29 @@ package Prj_API is
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
 
+   -----------------
+   -- Expressions --
+   -----------------
+
+   procedure Concatenate
+     (Expr : in out Project_Node_Id; Node : Project_Node_Id);
+   --  Concatenate Node to the last term in the N_Expression Expr.
+   --
+   --  If Expr is Empty_Node, then a new expression is created for Node.
+   --  if Expr doesn't contain any term, Node is inserted as the first and
+   --  only term.
+   --
+   --  If Node is a N_Term, it is added as is to the expression.
+   --  If Node is a N_Expression, this is an error
+   --  Otherwise, Node is first encapsulated into a N_Term
+
+   procedure Concatenate_List
+     (Expr : in out Project_Node_Id; Expr2 : Project_Node_Id);
+   --  Concatenate two N_Expression nodes into a list.
+   --  if Expr already contains a list, Expr2 is appended at the end.
+   --  If Expr is Empty_Node, a new list is created.
+   --  Expr2 mustn't be a N_Literal_String_List expression itself.
+
    -----------
    -- Lists --
    -----------
@@ -145,10 +168,12 @@ package Prj_API is
    --  N_Typed_Variable_Declaration or N_String_Type_Declaration Var.
 
    function Value_Of (Var : Project_Node_Id) return String_List_Iterator;
-   --  Return an iterator over the value of the variable. If the variable
-   --  is a single element, the list will have only one item.
-   --  For variables defined as external references, this return a pointer
-   --  to the default value.
+   --  Return an iterator over the value of the variable.
+   --  If the variable is a single element, the list will have only one item.
+   --  If the variable is a list, this returns a pointer to the first
+   --  expression in the list.
+   --  If the variable is defined as an external reference, this return a
+   --  pointer to the default value.
 
    Invalid_Value : exception;
 
