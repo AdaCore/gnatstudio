@@ -872,8 +872,7 @@ package body Src_Editor_Box is
       Box    : Source_Editor_Box)
    is
       pragma Unreferenced (Buffer, Params);
-      Child : constant MDI_Child := Find_Editor
-        (Box.Kernel, Get_Filename (Box.Source_Buffer));
+      Child : constant MDI_Child := Find_Child (Box.Kernel, Box);
    begin
       case Get_Status (Box.Source_Buffer) is
          when Unmodified =>
