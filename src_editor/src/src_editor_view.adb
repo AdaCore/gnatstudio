@@ -67,6 +67,7 @@ with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;
 with Language;                    use Language;
+with Config;
 
 package body Src_Editor_View is
 
@@ -1174,7 +1175,7 @@ package body Src_Editor_View is
       Insert_Iter : Gtk_Text_Iter;
       Hook : Preferences_Hook;
       F_Hook : File_Hook;
-      use GVD;
+      use Config;
 
    begin
       --  Initialize the Source_View. Some of the fields can not be initialized
