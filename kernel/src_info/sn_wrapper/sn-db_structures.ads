@@ -76,9 +76,9 @@ package SN.DB_Structures is
 
       End_Position        : Point;
       Attributes          : SN_Attributes;
-      Template_Parameters : Segment;
-      --  Comments        : Segment;
-      Data                : Buffer_String;
+--      Template_Parameters : Segment;
+--      Comments        : Segment;
+--      Data                : Buffer_String;
 
       DBI                 : Integer;
    end record;
@@ -94,11 +94,11 @@ package SN.DB_Structures is
       Start_Position      : Point;
       Key                 : Buffer_String;
 
-      End_Position        : Point;
-      Attributes          : SN_Attributes;
+--      End_Position        : Point;
+--      Attributes          : SN_Attributes;
       Declared_Type       : Segment;
       Type_Start_Position : Point;
-      Comments            : Segment;
+--      Comments            : Segment;
       Data                : Buffer_String;
 
       DBI                 : Integer;
@@ -116,9 +116,9 @@ package SN.DB_Structures is
       Key                 : Buffer_String;
 
       End_Position        : Point;
-      Attributes          : SN_Attributes;
-      --  Comments        : Segment;
-      Data                : Buffer_String;
+--      Attributes          : SN_Attributes;
+--      Comments        : Segment;
+--      Data                : Buffer_String;
 
       DBI                 : Integer;
    end record;
@@ -134,8 +134,8 @@ package SN.DB_Structures is
       Start_Position      : Point;
       Key                 : Buffer_String;
 
-      End_Position        : Point;
-      Attributes          : SN_Attributes;
+--      End_Position        : Point;
+--      Attributes          : SN_Attributes;
       Enumeration_Name    : Segment;
       Data                : Buffer_String;
 
@@ -165,13 +165,13 @@ package SN.DB_Structures is
       Key                 : Buffer_String;
 
       End_Position        : Point;
-      Attributes          : SN_Attributes;
-      Return_Type         : Segment;
-      Arg_Types           : Segment;
-      --  Arg_Names : Segment_Vector.Node_Access;
-      Comments            : Segment;
-      Template_Parameters : Segment;
-      Data                : Buffer_String;
+--      Attributes          : SN_Attributes;
+--      Return_Type         : Segment;
+--      Arg_Types           : Segment;
+--      Arg_Names : Segment_Vector.Node_Access;
+--      Comments            : Segment;
+--      Template_Parameters : Segment;
+--      Data                : Buffer_String;
 
       DBI                 : Integer;
    end record;
@@ -235,12 +235,12 @@ package SN.DB_Structures is
       Key                      : Buffer_String;
 
       End_Position             : Point;
-      Attributes               : SN_Attributes;
+--      Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
       Arg_Names                : Segment;
-      Comments                 : Segment;
-      Template_Parameters      : Segment;
+--      Comments                 : Segment;
+--      Template_Parameters      : Segment;
       Data                     : Buffer_String;
 
       DBI                      : Integer;
@@ -259,12 +259,12 @@ package SN.DB_Structures is
       Start_Position           : Point;
       Key                      : Buffer_String;
 
-      End_Position             : Point;
-      Attributes               : SN_Attributes;
+--      End_Position             : Point;
+--      Attributes               : SN_Attributes;
       Value_Type               : Segment;
       Class                    : Segment;
-      --  Template_Parameters  : Segment;
-      Comments                 : Segment;
+--      Template_Parameters  : Segment;
+--      Comments                 : Segment;
       Type_Start_Position      : Point;
       Data                     : Buffer_String;
 
@@ -287,7 +287,7 @@ package SN.DB_Structures is
       Attributes               : SN_Attributes;
       --  Class_Template       : Segment
       --  Comments             : Segment;
-      Data                     : Buffer_String;
+--      Data                     : Buffer_String;
 
       DBI                      : Integer;
    end record;
@@ -319,8 +319,8 @@ package SN.DB_Structures is
       Start_Position          : Point;
       Key                     : Buffer_String;
 
-      End_Position            : Point;
-      Attributes              : SN_Attributes;
+--      End_Position            : Point;
+--      Attributes              : SN_Attributes;
       Value_Type              : Segment;
       --  Comments            : Segment;
       Data                    : Buffer_String;
@@ -340,13 +340,13 @@ package SN.DB_Structures is
       Start_Position          : Point;
       Key                     : Buffer_String;
 
-      End_Position            : Point;
-      Attributes              : SN_Attributes;
+--      End_Position            : Point;
+--      Attributes              : SN_Attributes;
       Class                   : Segment;
       Value_Type              : Segment;
       Arg_Types               : Segment;
-      Comments                : Segment;
-      Type_Start_Position     : Point;
+--      Comments                : Segment;
+--      Type_Start_Position     : Point;
       Data                    : Buffer_String;
 
       DBI                     : Integer;
@@ -364,9 +364,9 @@ package SN.DB_Structures is
       Key                     : Buffer_String;
 
       End_Position            : Point;
-      Attributes              : SN_Attributes;
+--      Attributes              : SN_Attributes;
       --  Comments            : Segment;
-      Data                    : Buffer_String;
+--      Data                    : Buffer_String;
 
       DBI                     : Integer;
    end record;
@@ -392,12 +392,12 @@ package SN.DB_Structures is
       Key                      : Buffer_String;
 
       End_Position             : Point;
-      Attributes               : SN_Attributes;
+--      Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
       Arg_Names                : Segment;
-      Template_Parameters      : Segment;
-      Comments                 : Segment;
+--      Template_Parameters      : Segment;
+--      Comments                 : Segment;
       Data                     : Buffer_String;
 
       DBI                      : Integer;
@@ -415,11 +415,11 @@ package SN.DB_Structures is
       Start_Position           : Point;
       Key                      : Buffer_String;
 
-      End_Position             : Point;
-      Attributes               : SN_Attributes;
+--      End_Position             : Point;
+--      Attributes               : SN_Attributes;
       Original                 : Segment; -- either "type" or "A::type"
-      Comments                 : Segment;
-      Class_Name               : Segment; -- name of enclosing class for Name
+--      Comments                 : Segment;
+--      Class_Name               : Segment; -- name of enclosing class for Name
       Data                     : Buffer_String;
 
       DBI                      : Integer;
@@ -438,11 +438,11 @@ package SN.DB_Structures is
       Key                    : Buffer_String;
 
       Type_Position          : Point;
-      Attributes             : SN_Attributes;
+--      Attributes             : SN_Attributes;
       Value_Type             : Segment;
-      Template_Parameters    : Segment;
-      Class_Name             : Segment; -- name of method's class
-      Comments               : Segment;
+--      Template_Parameters    : Segment;
+--      Class_Name             : Segment; -- name of method's class
+--      Comments               : Segment;
       Data                   : Buffer_String;
 
       DBI                    : Integer;

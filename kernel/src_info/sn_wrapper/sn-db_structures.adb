@@ -22,6 +22,7 @@ with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with System;               use System;
 with Traces;               use Traces;
+with Ada.Unchecked_Conversion;
 
 package body SN.DB_Structures is
 
@@ -30,17 +31,25 @@ package body SN.DB_Structures is
    Bad_Input : exception;
    --  Raised by internal procedures in the case of bad input data
 
+   type C_Buffer_String_Array is array (Positive) of Character;
+   pragma Convention (C, C_Buffer_String_Array);
+   type C_Buffer_String is access all C_Buffer_String_Array;
+   function Convert is new Ada.Unchecked_Conversion
+     (Interfaces.C.Strings.chars_ptr, C_Buffer_String);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, C_Buffer_String);
+
    procedure Get_Position
      (Key : CSF; Field : Integer;
-      Buffer : Buffer_String; Position : out Point);
+      Buffer : C_Buffer_String; Position : out Point);
    --  Parse the Field-th field in Key as a position ("Line.Column" or "Line")
 
    procedure Parse_Position
-     (Buffer : Buffer_String; Seg : Segment; Position : out Point);
+     (Buffer : C_Buffer_String; Seg : Segment; Position : out Point);
    --  Parse Buffer ("Line.Column" or "Line") to extract the position info.
 
    procedure Get_Hex
-     (Key : CSF; Field : Integer; Buffer : Buffer_String;
+     (Key : CSF; Field : Integer; Buffer : C_Buffer_String;
       Attr : out SN_Attributes);
    --  Converts C-style hexadecimal string like "0xffff" to integer number
 
@@ -54,20 +63,11 @@ package body SN.DB_Structures is
    --  Same as Get_Field, but omits the surrounding {}.
 
    function Get_Position_From_Comment
-     (Buffer   : Buffer_String;
+     (Buffer   : C_Buffer_String;
       Comment  : Segment;
       Name     : String) return Point;
    --  Parses comment string to find Name=Value pair, then
    --  parses value into point
-   --  For efficiency, it is assumed that Name ends with '='.
-
-   function Get_Segment_From_Comment
-     (Buffer  : Buffer_String;
-      Comment : Segment;
-      Name    : String) return Segment;
-   --  Parses comment string to find Name=Value pair, then
-   --  returns segment coordinates that spans upto next semicolon or
-   --  end of string
    --  For efficiency, it is assumed that Name ends with '='.
 
    procedure Parse_Key
@@ -429,7 +429,8 @@ package body SN.DB_Structures is
    begin
       Get_Field    (Key, Start_Index,     Name);
       Get_Field    (Key, Start_Index + 2, File_Name);
-      Get_Position (Key, Start_Index + 1, Buffer, Start_Position);
+      Get_Position
+        (Key, Start_Index + 1, Convert (Buffer'Address), Start_Position);
    end Parse_Key;
 
    ----------------
@@ -438,18 +439,18 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CL_Table) is
       Key, Data : CSF;
+      Buffer : C_Buffer_String;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
-      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
+      Buffer       := Convert (Key_Data_Pair.Data);
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
-      Get_No_Brackets (Data, 4, Tab.Template_Parameters);
+      Get_Position (Data, 1, Buffer, Tab.End_Position);
+      Get_Hex      (Data, 2, Buffer, Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -458,6 +459,7 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CON_Table) is
       Key, Data : CSF;
+      Comments : Segment;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
       CSF_Init (Key_Data_Pair.Data, Data);
@@ -467,12 +469,10 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Declared_Type);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Type_Start_Position :=
-        Get_Position_From_Comment (Tab.Data, Tab.Comments, "type_beg=");
+      Get_No_Brackets (Data, 6, Comments);
+      Tab.Type_Start_Position := Get_Position_From_Comment
+          (Convert (Key_Data_Pair.Data), Comments, "type_beg=");
    end Parse_Pair;
 
    ----------------
@@ -481,17 +481,17 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out E_Table) is
       Key, Data : CSF;
+      Buffer    : C_Buffer_String;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
-      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
+      Buffer := Convert (Key_Data_Pair.Data);
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex      (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Buffer, Tab.End_Position);
    end Parse_Pair;
 
    ----------------
@@ -509,8 +509,6 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Enumeration_Name);
    end Parse_Pair;
 
@@ -537,22 +535,17 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FD_Table) is
       Key, Data : CSF;
+      Buffer : C_Buffer_String;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
       CSF_Init (Key_Data_Pair.Data, Data);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
-      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
+      Buffer := Convert (Key_Data_Pair.Data);
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
-      Get_No_Brackets (Data, 3, Tab.Return_Type);
-      Get_No_Brackets (Data, 4, Tab.Arg_Types);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Template_Parameters :=
-        Get_Segment_From_Comment (Tab.Data, Tab.Comments, "template_args=");
+      Get_Position    (Data, 1, Buffer, Tab.End_Position);
    end Parse_Pair;
 
    ----------------
@@ -570,14 +563,16 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Get_Field    (Key, 1, Tab.File_Name);
-      Get_Position (Key, 2, Tab.Key, Tab.Start_Position);
+      Get_Position (Key, 2, Convert (Key_Data_Pair.Key), Tab.Start_Position);
       Get_Field    (Key, 3, Tab.Class);
       Get_Field    (Key, 4, Tab.Identifier);
       Tab.Symbol := Get_Symbol (Key, 5, Tab.Key);
 
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Position    (Data, 2, Tab.Data, Tab.Highlight_Start_Position);
-      Get_Position    (Data, 3, Tab.Data, Tab.Highlight_End_Position);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
+      Get_Position
+        (Data, 2, Convert (Key_Data_Pair.Data), Tab.Highlight_Start_Position);
+      Get_Position
+        (Data, 3, Convert (Key_Data_Pair.Data), Tab.Highlight_End_Position);
       Get_No_Brackets (Data, 4, Tab.Types_Of_Arguments);
    end Parse_Pair;
 
@@ -596,8 +591,8 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
+      Get_Hex      (Data, 2, Convert (Key_Data_Pair.Data), Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
    end Parse_Pair;
@@ -632,14 +627,10 @@ package body SN.DB_Structures is
          Get_Field (Key, 1, Tab.Class);
       end if;
 
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
       Get_No_Brackets (Data, 5, Tab.Arg_Names);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Template_Parameters := Get_Segment_From_Comment
-        (Tab.Data, Tab.Comments, "template_args=");
    end Parse_Pair;
 
    ----------------
@@ -648,6 +639,7 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out GV_Table) is
       Key, Data : CSF;
+      Comments  : Segment;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
       CSF_Init (Key_Data_Pair.Data, Data);
@@ -657,13 +649,11 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key   (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Value_Type);
       Get_No_Brackets (Data, 4, Tab.Class);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Type_Start_Position :=
-        Get_Position_From_Comment (Tab.Data, Tab.Comments, "type_beg=");
+      Get_No_Brackets (Data, 6, Comments);
+      Tab.Type_Start_Position := Get_Position_From_Comment
+        (Convert (Key_Data_Pair.Data), Comments, "type_beg=");
    end Parse_Pair;
 
    ----------------
@@ -678,13 +668,12 @@ package body SN.DB_Structures is
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
-      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key
         (Key, Tab.Key, Tab.Base_Class, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field    (Key,  1, Tab.Class);
-      Get_Position (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex      (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
+      Get_Hex      (Data, 2, Convert (Key_Data_Pair.Data), Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -701,7 +690,8 @@ package body SN.DB_Structures is
 
       Get_Field    (Key, 1, Tab.Included_File);
       Get_Field    (Key, 3, Tab.Included_From_File);
-      Get_Position (Key, 3, Tab.Key, Tab.Included_At_Position);
+      Get_Position
+        (Key, 3, Convert (Key_Data_Pair.Key), Tab.Included_At_Position);
    end Parse_Pair;
 
    ----------------
@@ -721,8 +711,6 @@ package body SN.DB_Structures is
       Parse_Key
         (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Class);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Value_Type);
    end Parse_Pair;
 
@@ -742,14 +730,9 @@ package body SN.DB_Structures is
 
       Parse_Key (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Function_Name);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Class);
       Get_No_Brackets (Data, 4, Tab.Value_Type);
       Get_No_Brackets (Data, 5, Tab.Arg_Types);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Type_Start_Position :=
-        Get_Position_From_Comment (Tab.Data, Tab.Comments, "type_beg=");
    end Parse_Pair;
 
    ----------------
@@ -764,11 +747,9 @@ package body SN.DB_Structures is
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
-      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex      (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
    end Parse_Pair;
 
    ----------------
@@ -787,14 +768,10 @@ package body SN.DB_Structures is
 
       Parse_Key (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Class);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position (Data, 1, Convert (Key_Data_Pair.Data), Tab.End_Position);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
       Get_No_Brackets (Data, 5, Tab.Arg_Names);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Template_Parameters :=
-        Get_Segment_From_Comment (Tab.Data, Tab.Comments, "template_args=");
    end Parse_Pair;
 
    ----------------
@@ -812,12 +789,7 @@ package body SN.DB_Structures is
       Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Parse_Key   (Key,  Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
-      Get_Position    (Data, 1, Tab.Data, Tab.End_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Original);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Class_Name :=
-        Get_Segment_From_Comment (Tab.Data, Tab.Comments, "class=");
    end Parse_Pair;
 
    ----------------
@@ -837,13 +809,9 @@ package body SN.DB_Structures is
       Parse_Key
         (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position, 2);
       Get_Field       (Key,  1, Tab.Class);
-      Get_Position    (Data, 1, Tab.Data, Tab.Type_Position);
-      Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
+      Get_Position
+        (Data, 1, Convert (Key_Data_Pair.Data), Tab.Type_Position);
       Get_No_Brackets (Data, 3, Tab.Value_Type);
-      Get_No_Brackets (Data, 4, Tab.Template_Parameters);
-      Get_No_Brackets (Data, 6, Tab.Comments);
-      Tab.Class_Name :=
-        Get_Segment_From_Comment (Tab.Data, Tab.Comments, "class=");
    end Parse_Pair;
 
    ----------------
@@ -868,7 +836,7 @@ package body SN.DB_Structures is
       Tab.Referred_Symbol := Get_Symbol (Key, 6, Tab.Key);
       Get_Field       (Key,  7, Tab.Access_Type);
       Get_Field       (Key,  9, Tab.File_Name);
-      Get_Position    (Key,  8, Tab.Key, Tab.Position);
+      Get_Position    (Key,  8, Convert (Key_Data_Pair.Key), Tab.Position);
       Get_No_Brackets (Data, 1, Tab.Caller_Argument_Types);
       Get_No_Brackets (Data, 2, Tab.Referred_Argument_Types);
    end Parse_Pair;
@@ -878,7 +846,10 @@ package body SN.DB_Structures is
    ------------------
 
    procedure Get_Position
-     (Key : CSF; Field : Integer; Buffer : Buffer_String; Position : out Point)
+     (Key      : CSF;
+      Field    : Integer;
+      Buffer   : C_Buffer_String;
+      Position : out Point)
    is
       Seg : Segment;
    begin
@@ -891,7 +862,7 @@ package body SN.DB_Structures is
    --------------------
 
    procedure Parse_Position
-     (Buffer : Buffer_String; Seg : Segment; Position : out Point)
+     (Buffer : C_Buffer_String; Seg : Segment; Position : out Point)
    is
       Num1   : Integer := 0;
       Num2   : Integer := 0;
@@ -924,7 +895,7 @@ package body SN.DB_Structures is
    -------------
 
    procedure Get_Hex
-     (Key : CSF; Field : Integer; Buffer : Buffer_String;
+     (Key : CSF; Field : Integer; Buffer : C_Buffer_String;
       Attr : out SN_Attributes)
    is
       Seg    : Segment;
@@ -974,7 +945,7 @@ package body SN.DB_Structures is
    -------------------------------
 
    function Get_Position_From_Comment
-     (Buffer  : Buffer_String;
+     (Buffer  : C_Buffer_String;
       Comment : Segment;
       Name    : String) return Point
    is
@@ -999,34 +970,6 @@ package body SN.DB_Structures is
 
       return Pos;
    end Get_Position_From_Comment;
-
-   ------------------------------
-   -- Get_Segment_From_Comment --
-   ------------------------------
-
-   function Get_Segment_From_Comment
-     (Buffer  : Buffer_String;
-      Comment : Segment;
-      Name    : String) return Segment
-   is
-      J, K : Natural;
-   begin
-      J := Ada.Strings.Fixed.Index
-         (String (Buffer (Comment.First .. Comment.Last)), Name);
-
-      if J /= 0 then
-         J := J + Name'Length;
-         K := J;
-
-         while K <= Comment.Last and then Buffer (K) /= ';' loop
-            K := K + 1;
-         end loop;
-
-         return (J, K - 1);
-      end if;
-
-      return Empty_Segment;
-   end Get_Segment_From_Comment;
 
    --------------------
    -- Get_Class_Name --
