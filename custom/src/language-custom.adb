@@ -39,8 +39,10 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Intl;                use Glide_Intl;
 with Project_Viewers;           use Project_Viewers;
 with Naming_Editors;            use Naming_Editors;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 
 package body Language.Custom is
@@ -330,7 +332,7 @@ package body Language.Custom is
         (Handler, Get_Name (Lang),
          LI     => Dummy_Handler);
       Register_Default_Language_Extension
-        (Get_Registry (Kernel),
+        (Get_Registry (Kernel).all,
          Language_Name       => Get_Name (Lang),
          Default_Spec_Suffix =>
            Get_String (Get_Field (Top, "Spec_Suffix")).all,
@@ -344,7 +346,7 @@ package body Language.Custom is
       while Node /= null loop
          if Node.Tag.all = "Extension" then
             Add_Language_Extension
-              (Get_Registry (Kernel),
+              (Get_Registry (Kernel).all,
                Language_Name => Get_Name (Lang),
                Extension     => Node.Value.all);
          end if;
@@ -497,6 +499,10 @@ package body Language.Custom is
             Lang.Keywords := new Pattern_Matcher'
               (Compile ("^(" & Keywords & ")", Flags and not Multiple_Lines));
          end if;
+      exception
+         when Expression_Error =>
+            Insert (Kernel, -"Invalid regexp in <keywords>: ^("
+                    & Keywords & ")", Mode => Error);
       end;
 
       Parent := Find_Tag (Top.Child, "Categories");
