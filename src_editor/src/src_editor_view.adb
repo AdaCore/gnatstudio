@@ -657,14 +657,14 @@ package body Src_Editor_View is
             Buffer           : constant Source_Buffer :=
               Source_Buffer (Get_Buffer (View));
 
-            procedure Draw_Block (B : Block_Record);
+            procedure Draw_Block (B : in out Block_Record);
             --  Draw block B at line L.
 
             ----------------
             -- Draw_Block --
             ----------------
 
-            procedure Draw_Block (B : Block_Record) is
+            procedure Draw_Block (B : in out Block_Record) is
                Block_Begin_Y : Gint;
                Y             : Gint;
                Height        : Gint;
@@ -681,9 +681,11 @@ package body Src_Editor_View is
                Last          : Gint :=
                  Gint (Get_Buffer_Line (Buffer, B.Last_Line) - 1);
 
-               Offset        : constant Integer :=
-                 Get_Screen_Offset (Buffer, B);
+               Offset        : Integer;
             begin
+               Calculate_Screen_Offset (Buffer, B);
+               Offset := B.Stored_Offset;
+
                --  Do not draw blocks that are on the first column.
 
                if Offset <= 1 then
