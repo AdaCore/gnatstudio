@@ -136,6 +136,11 @@ private
    type Ptr_String_List is access all String_List.List;
    type Ptr_Natural is access all Natural;
 
+   procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
+   procedure Free is new Ada.Unchecked_Deallocation
+     (String_List.List, Ptr_String_List);
+   procedure Free is new Ada.Unchecked_Deallocation (Natural, Ptr_Natural);
+
    type Console_Interface is new Text_Interface with record
       Lines         : Ptr_String_List := new String_List.List;
       Lines_Number  : Ptr_Natural := new Natural'(0);
