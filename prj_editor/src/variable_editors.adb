@@ -597,6 +597,10 @@ package body Variable_Editors is
       end if;
 
       if Changed then
+         Set_Project_Modified
+           (Editor.Kernel, Get_Project (Editor.Kernel), True);
+         --  Recompute the view so that the explorer is updated graphically.
+         Recompute_View (Editor.Kernel);
          Variable_Changed (Editor.Kernel);
       end if;
       return True;
