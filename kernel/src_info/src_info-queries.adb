@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Unicode;            use Glib.Unicode;
 with Unchecked_Deallocation;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -313,6 +314,7 @@ package body Src_Info.Queries is
    begin
       --  ??? Could be faster by avoiding the function returning unconstrained
       --  type.
+
       if Location.File = No_Source_File
         or else Get_Source_Filename (Location.File) /= File_Name
       then
@@ -388,7 +390,6 @@ package body Src_Info.Queries is
       while Current_Decl /= null loop
          --  Check the entity name to limit a bit the search in the
          --  Xref lists
-
          if Entity_Name = ""
            or else Current_Decl.Value.Declaration.Name.all = Entity_Name
          then
@@ -473,7 +474,7 @@ package body Src_Info.Queries is
 
    begin
       if Case_Insensitive_Identifiers (Lib_Info.LI.Handler) then
-         E_Name := To_Lower (E_Name);
+         E_Name := Utf8_Strdown (E_Name);
       end if;
 
       Decl   := No_Declaration_Info;
