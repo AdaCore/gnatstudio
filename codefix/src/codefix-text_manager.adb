@@ -640,6 +640,21 @@ package body Codefix.Text_Manager is
       return Get_Structure (Get_File (This, File_Name).all);
    end Get_Structure;
 
+   ----------------
+   -- Update_All --
+   ----------------
+
+   procedure Update_All
+     (This : Text_Navigator_Abstr'Class)
+   is
+      Node : Text_List.List_Node := First (This.Files.all);
+   begin
+      while Node /= Text_List.Null_Node loop
+         Constrain_Update (Data (Node).all);
+         Node := Next (Node);
+      end loop;
+   end Update_All;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -1501,7 +1516,7 @@ package body Codefix.Text_Manager is
    ------------
 
    procedure Commit
-     (This         : Extract_Line;
+     (This         : in out Extract_Line;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Integer)
    is
@@ -1523,6 +1538,7 @@ package body Codefix.Text_Manager is
          Content : constant String := Get_String (This);
       begin
          Reset (It);
+         This.Number_Actions := 0;
 
          loop
             Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
@@ -1536,18 +1552,21 @@ package body Codefix.Text_Manager is
                      Cursor,
                      Len,
                      Content (Cursor.Col .. Cursor.Col + Len - 1));
+                  This.Number_Actions := This.Number_Actions + 1;
                when Unit_Created =>
                   Replace
                     (Current_Text,
                      Cursor,
                      0,
                      Content (Cursor.Col .. Cursor.Col + Len - 1));
+                  This.Number_Actions := This.Number_Actions + 1;
                when Unit_Deleted =>
                   Replace
                     (Current_Text,
                      Cursor,
                      Len,
                      "");
+                  This.Number_Actions := This.Number_Actions + 1;
                when Original_Unit =>
                   null;
             end case;
@@ -1564,11 +1583,13 @@ package body Codefix.Text_Manager is
               (Current_Text,
                Cursor,
                To_String (This.Content));
+            This.Number_Actions := 1;
             Offset_Line := Offset_Line + 1;
          when Unit_Deleted =>
             Delete_Line
               (Current_Text,
                Cursor);
+            This.Number_Actions := 1;
             Offset_Line := Offset_Line - 1;
          when Unit_Modified =>
             Commit_Modified_Line;
@@ -1696,7 +1717,8 @@ package body Codefix.Text_Manager is
          Original_Length => Len,
          Content         => To_Mergable_String (Get (This, Cursor, Len)),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         Number_Actions  => 0);
    end Get;
 
    --------------
@@ -1718,7 +1740,8 @@ package body Codefix.Text_Manager is
          Original_Length => Str.all'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         Number_Actions  => 0);
       Free (Str);
    end Get_Line;
 
@@ -1741,7 +1764,8 @@ package body Codefix.Text_Manager is
          Original_Length => Str'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True);
+         Coloration      => True,
+         Number_Actions  => 0);
       Free (Str);
    end Get_Line;
 
@@ -2132,7 +2156,8 @@ package body Codefix.Text_Manager is
             Original_Length => Len,
             Content         => To_Mergable_String (Get (This, Cursor, Len)),
             Next            => null,
-            Coloration      => True));
+            Coloration      => True,
+            Number_Actions  => 0));
    end Get;
 
    --------------
@@ -2154,7 +2179,8 @@ package body Codefix.Text_Manager is
             Original_Length => Str'Length,
             Content         => To_Mergable_String (Str),
             Next            => null,
-            Coloration      => True));
+            Coloration      => True,
+            Number_Actions  => 0));
    end Get_Line;
 
    ----------------
@@ -2636,7 +2662,8 @@ package body Codefix.Text_Manager is
           Original_Length => 0,
           Content         => To_Mergable_String (Text),
           Next            => null,
-          Coloration      => True));
+          Coloration      => True,
+          Number_Actions  => 0));
    end Add_Line;
 
    -----------------------
@@ -2692,7 +2719,8 @@ package body Codefix.Text_Manager is
               To_Mergable_String ((1 .. Next_Indent => ' ') &
                                    Text (First_Char .. Text'Last)),
            Next            => null,
-           Coloration      => True));
+           Coloration      => True,
+           Number_Actions  => 0));
    end Add_Indented_Line;
 
    -----------------
@@ -3129,6 +3157,22 @@ package body Codefix.Text_Manager is
       end loop;
    end Delete_Empty_Lines;
 
+   ------------------------
+   -- Get_Number_Actions --
+   ------------------------
+
+   function Get_Number_Actions (This : Extract) return Natural is
+      Line  : Ptr_Extract_Line := Get_First_Line (This);
+      Total : Natural := 0;
+   begin
+      while Line /= null loop
+         Total := Total + Line.Number_Actions;
+         Line := Next (Line);
+      end loop;
+
+      return Total;
+   end Get_Number_Actions;
+
    ----------------------------------------------------------------------------
    --  type Text_Command
    ----------------------------------------------------------------------------
@@ -3159,6 +3203,20 @@ package body Codefix.Text_Manager is
       return This.Caption.all;
    end Get_Caption;
 
+   procedure Secured_Execute
+     (This         : Text_Command'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : out Extract'Class;
+      Success      : out Boolean) is
+   begin
+      Success := True;
+      Update_All (Current_Text);
+      Execute (This, Current_Text, New_Extract);
+
+   exception
+      when Codefix_Panic =>
+         Success := False;
+   end Secured_Execute;
 
    -----------------
    -- Word_Cursor --
