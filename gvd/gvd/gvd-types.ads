@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -51,6 +51,14 @@ package Odd.Types is
    --  in the command window. These commands are inserted into the history,
    --  their output is visible in the command window, but the command itself
    --  is not printed
+
+   subtype Invisible_Command is Command_Type range Internal .. Hidden;
+   --  Invisible commands
+   --  This type of command is always handled synchronousely
+
+   subtype Visible_Command is Command_Type range Visible .. User;
+   --  Visible commands
+   --  This type of command is always handled asynchronousely
 
    -----------------
    -- Breakpoints --
