@@ -22,7 +22,6 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Namet;                   use Namet;
 with Types;                   use Types;
 with Projects;                use Projects;
-with VFS;                     use VFS;
 with Glib.Convert;            use Glib.Convert;
 
 package body Src_Info.Prj_Utils is
@@ -33,13 +32,12 @@ package body Src_Info.Prj_Utils is
 
    function Get_Source_Filename
      (Unit_Name : Unit_Name_Type;
-      Project : Project_Type;
-      File_Must_Exist : Boolean := True) return VFS.Virtual_File
+      Project : Project_Type) return String
    is
       N : constant String := Locale_To_UTF8 (Get_String (Unit_Name));
       --  Need to do a copy, since Name_Buffer is modified afterward
    begin
-      return Get_Source_Filename (N, Project, File_Must_Exist);
+      return Get_Source_Filename (N, Project);
    end Get_Source_Filename;
 
    -------------------------
@@ -48,19 +46,17 @@ package body Src_Info.Prj_Utils is
 
    function Get_Source_Filename
      (Unit_Name : String;
-      Project   : Project_Type;
-      File_Must_Exist : Boolean := True) return VFS.Virtual_File
+      Project   : Project_Type) return String
    is
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
       Part        : Unit_Part;
       Iter : Imported_Project_Iterator := Start (Project, Recursive => True);
-      N    : Virtual_File;
    begin
       --  Check that the '%' marker is there
       if Unit_Name'Length < Part_Marker_Len + 1
         or else Unit_Name (Unit_Name'Last - 1) /= '%'
       then
-         return VFS.No_File;
+         return "";
       end if;
 
       --  Compute the Unit_Part, strip the part marker from the Unit_Name
@@ -69,19 +65,20 @@ package body Src_Info.Prj_Utils is
       case Unit_Name (Unit_Name'Last) is
          when 'b'    => Part := Unit_Body;
          when 's'    => Part := Unit_Spec;
-         when others => return VFS.No_File;  --  Incorrect unit name
+         when others => return "";  --  Incorrect unit name
       end case;
 
       while Current (Iter) /= No_Project loop
-         N := Get_Filename_From_Unit
-           (Current (Iter),
-            Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
-            Part,
-            File_Must_Exist);
-
-         if N /= VFS.No_File then
-            return N;
-         end if;
+         declare
+            N : constant String := Get_Filename_From_Unit
+              (Current (Iter),
+               Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
+               Part);
+         begin
+            if N /= "" then
+               return N;
+            end if;
+         end;
          Next (Iter);
       end loop;
 
@@ -89,11 +86,9 @@ package body Src_Info.Prj_Utils is
       --  standard GNAT extensions. The name will be krunched appropriately by
       --  Process_With anyway
 
-      N := Get_Filename_From_Unit
+      return Get_Filename_From_Unit
         (Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part,
-         File_Must_Exist, Check_Predefined_Library => True);
-
-      return N;
+         Check_Predefined_Library => True);
    end Get_Source_Filename;
 
    -------------------
