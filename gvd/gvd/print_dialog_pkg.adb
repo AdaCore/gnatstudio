@@ -1,7 +1,24 @@
-with Glib; use Glib;
+-----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
@@ -16,8 +33,6 @@ begin
 end Gtk_New;
 
 procedure Initialize (Print_Dialog : access Print_Dialog_Record'Class) is
-   Combo1_Items : String_List.Glist;
-
 begin
    Gtk.Dialog.Initialize (Print_Dialog);
    Set_Title (Print_Dialog, "Print Dialog");
@@ -45,9 +60,6 @@ begin
    Set_Case_Sensitive (Print_Dialog.Combo1, False);
    Set_Use_Arrows (Print_Dialog.Combo1, True);
    Set_Use_Arrows_Always (Print_Dialog.Combo1, False);
---     String_List.Append (Combo1_Items, "");
---     Combo.Set_Popdown_Strings (Print_Dialog.Combo1, Combo1_Items);
---     Free_String_List (Combo1_Items);
 
    Print_Dialog.Combo_Entry1 := Get_Entry (Print_Dialog.Combo1);
    Set_Editable (Print_Dialog.Combo_Entry1, True);
@@ -68,8 +80,6 @@ begin
    Set_Child_Ipadding (Print_Dialog.Hbuttonbox1, 7, 0);
 
    Gtk_New (Print_Dialog.Print_Button, "Print");
---   Set_Flags (Print_Dialog.Print_Button, Can_Default);
---   Grab_Default (Print_Dialog.Print_Button);
    Widget_Callback.Object_Connect
      (Print_Dialog.Print_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access), Print_Dialog);
@@ -89,7 +99,6 @@ begin
      (Print_Dialog.Combo_Entry1, "activate",
       Widget_Callback.To_Marshaller (On_Print_Button_Clicked'Access),
       Print_Dialog);
-
 end Initialize;
 
 end Print_Dialog_Pkg;
