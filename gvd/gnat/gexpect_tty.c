@@ -1975,10 +1975,64 @@ gvd_waitpid (struct GVD_Process* p)
 }
 #endif /* !WIN32 */
 
+/* TTY handling */
+
+typedef struct {
+  int tty_fd;        /* descriptor for the tty */
+  char tty_name[24]; /* Name of TTY device */
+} TTY_Handle;
+
+int
+gvd_tty_supported ()
+{
+#ifdef HAVE_PTYS
+  return 1;
+#else
+  return 0;
+#endif
+}
+
 /* Return the tty name associated with p */
 
 char *
-gvd_tty_name (struct GVD_Process* p)
+gvd_tty_name (TTY_Handle* t)
 {
-  return p->tty_name;
+  return t->tty_name;
+}
+
+int
+gvd_tty_fd (TTY_Handle* t)
+{
+  return t->tty_fd;
+}
+
+TTY_Handle*
+gvd_new_tty ()
+{
+#ifdef HAVE_PTYS
+  TTY_Handle *handle = (TTY_Handle*) malloc (sizeof (TTY_Handle));
+
+  handle->tty_fd = allocate_pty ();
+  strcpy (handle->tty_name, pty_name);
+  child_setup_tty (handle->tty_fd);
+  return handle;
+
+#else
+  return (struct TTY_Handle*)0;
+#endif
+}
+
+void
+gvd_reset_tty (TTY_Handle* t)
+{
+#ifdef HAVE_PTYS
+  child_setup_tty (t->tty_fd);
+#endif
+}
+
+void
+gvd_close_tty (TTY_Handle* t)
+{
+  gvd_close (t->tty_fd);
+  free (t);
 }
