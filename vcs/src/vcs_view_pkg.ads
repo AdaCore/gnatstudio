@@ -115,6 +115,11 @@ package VCS_View_Pkg is
      (Explorer : access VCS_View_Record;
       Context  : Selection_Context_Access);
 
+   procedure Refresh_Log
+     (Explorer : access VCS_View_Record;
+      File     : String);
+   --  Refresh the "Log" column for File.
+
 
 private
    type Line_Record is record
