@@ -124,6 +124,7 @@ Environment
 * Environment Variables::
 * Files::
 * Reporting Suggestions and Bugs::
+* Solving Problems::
 
 @end detailmenu
 @end menu
@@ -812,6 +813,7 @@ easier, since you can specify it directly in the preferences dialog.
 * Environment Variables::
 * Files::
 * Reporting Suggestions and Bugs::
+* Solving Problems::
 @end menu
 
 @node Command Line Options
@@ -980,8 +982,33 @@ sources to reproduce it if possible/needed, and/or a scenario describing the
 actions performed to reproduce the problem, as well as the tools (e.g
 @i{debugger}, @i{compiler}) involved.
 
-The files $HOME/.gps/log and $HOME/.gps/debugger.log may also bring some
-useful information when reporting a bug.
+The files @file{$HOME/.gps/log} and @file{$HOME/.gps/debugger.log} may also
+bring some useful information when reporting a bug.
+
+@c --------------------------------------------------------------------
+@node Solving Problems
+@section Solving Problems
+@c --------------------------------------------------------------------
+
+@noindent
+This section addresses some common problems that arise when installing GPS
+on a new machine.
+
+@table @samp
+
+@item Non-priviledged users cannot start GPS
+Q: I have installed GPS originally as super user, and ran GPS successfully,
+but normal users can't.
+
+A: You should check the permissions of the directory $HOME/.gps and its
+subdirectories, they should be owned by the user itself.
+
+@item GPS crashes whenever I open a source editor
+This is usually due to font problems. Typically, editing the file
+@file{$HOME/.gps/preferences} and changing the name of the fonts, e.g
+changing @i{Courier} by @i{Courier Medium}, and @i{Helvetica} by @i{Sans}.
+
+@end table
 
 @c @printindex cp
 
