@@ -391,6 +391,9 @@ msgstr "Configuration de GDB..."
 msgid  "General"
 msgstr "General"
 
+msgid  "GVD Manual..."
+msgstr "Manuel de GVD..."
+
 msgid  "   gvd [options...] executable-file "
 msgstr "   gvd [options...] fichier-executable"
 
@@ -417,6 +420,9 @@ msgstr "Cacher les fichiers systemes"
 
 msgid  "   --host HOST       Run inferior debugger on HOST."
 msgstr "   --host HOST       Executer le deboggueur sur HOST."
+
+msgid  "HTML Browser"
+msgstr "Navigateur HTML"
 
 msgid  "Ignore"
 msgstr "Ignorer"
@@ -538,9 +544,6 @@ msgstr "Octal"
 msgid  "OK"
 msgstr "OK"
 
-msgid  "On Item..."
-msgstr "Sur un element..."
-
 msgid  "Open Core Dump..."
 msgstr "Ouvrir fichier core..."
 
@@ -568,9 +571,6 @@ msgstr "Options :"
 msgid  "Other arguments are passed to the underlying debugger."
 msgstr "Les autres arguments sont passes au deboggueur."
 
-msgid  "Overview..."
-msgstr "Survol..."
-
 msgid  "Packages"
 msgstr "Paquetages"
 
@@ -586,8 +586,8 @@ msgstr "PC"
 msgid  "Perl"
 msgstr "Perl"
 
-msgid  "Please report with the contents of the file "
-msgstr "Veuillez reporter avec le contenu du fichier "
+msgid  "Please report to gvd-devel@lists.act-europe.fr"
+msgstr "Veuillez reporter a gvd-devel@lists.act-europe.fr"
 
 msgid  "Preferences..."
 msgstr "Preferences..."
@@ -631,7 +631,7 @@ msgstr "lue"
 msgid  "read or written"
 msgstr "lue ou ecrite"
 
-msgid  "Recent message (most recent first):"
+msgid  "Recent messages (most recent first):"
 msgstr "Messages recents (le plus recent d'abord):"
 
 msgid  "Record"
@@ -726,6 +726,9 @@ msgstr "Afficher Assembleur et Source"
 
 msgid  "Show Asm Code"
 msgstr "Afficher Assembleur"
+
+msgid  "Show Call Stack"
+msgstr "Afficher la pile d'appel"
 
 msgid  "Show Current File"
 msgstr "Afficher le fichier courant"
@@ -832,6 +835,9 @@ msgstr "Routines"
 msgid  "Syntax Highlighting"
 msgstr "Mise en evidence de la syntaxe"
 
+msgid  "Target: "
+msgstr "Cible : "
+
 msgid  "   --target TARG:PRO "
 msgstr "   --target TARG:PRO "
 
@@ -864,9 +870,6 @@ msgstr "Ceci est la boite d'information a propos."
 
 msgid  "Threads..."
 msgstr "Taches..."
-
-msgid  "Tip Of The Day..."
-msgstr "Truc du jour..."
 
 msgid  "Title Background"
 msgstr "Titre"
@@ -928,8 +931,8 @@ msgstr "Avertir si plusieurs instances de GVD sont en cours d'execution"
 msgid  "watch"
 msgstr "watch"
 
-msgid  "What Now ... ?"
-msgstr "Et maintenant... ?"
+msgid  "with the contents of the file "
+msgstr "avec le contenu du fichier "
 
 msgid  "Word"
 msgstr "Mot"
