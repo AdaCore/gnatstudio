@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.IO_Exceptions;        use Ada.IO_Exceptions;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with GUI_Utils;                use GUI_Utils;
@@ -114,8 +115,20 @@ package body Aliases_Module is
      (Alias_Record, Free, No_Alias);
    use Aliases_Hash.String_Hash_Table;
 
+   type Expansion_Function_Record;
+   type Expansion_Function_List is access Expansion_Function_Record;
+   type Expansion_Function_Record (Length : Natural) is record
+      Descr : String (1 .. Length);
+      Func : Alias_Expansion_Function;
+      Next : Expansion_Function_List;
+   end record;
+
+   type Expansion_Function_Array is array (Character) of
+     Expansion_Function_List;
+
    type Aliases_Module_Id_Record is new Module_ID_Record with record
       Aliases : Aliases_Hash.String_Hash_Table.HTable;
+      Module_Funcs : Expansion_Function_Array;
 
       Key      : Gdk_Key_Type;
       Modifier : Gdk_Modifier_Type;
@@ -175,8 +188,7 @@ package body Aliases_Module is
    --  ??? Should accept unicode
 
    function Expand_Alias
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name : String; Cursor : access Integer)
+     (Data : Event_Data; Name : String; Cursor : access Integer)
       return String;
    --  Return the expanded version of Name.
    --  Cursor is the index in the returnef string for the cursor position.
@@ -354,8 +366,19 @@ package body Aliases_Module is
    -------------
 
    procedure Destroy (Module : in out Aliases_Module_Id_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Expansion_Function_Record, Expansion_Function_List);
+      Tmp : Expansion_Function_List;
    begin
       Reset (Module.Aliases);
+
+      for C in Module.Module_Funcs'Range loop
+         while Module.Module_Funcs (C) /= null loop
+            Tmp := Module.Module_Funcs (C).Next;
+            Unchecked_Free (Module.Module_Funcs (C));
+            Module.Module_Funcs (C) := Tmp;
+         end loop;
+      end loop;
    end Destroy;
 
    -----------
@@ -548,18 +571,29 @@ package body Aliases_Module is
       Current_Pos : Integer;
       First, Last : out Integer) is
    begin
-      First := Current_Pos;
-      while First >= Text'First
-        and then Is_Entity_Letter (Text (First))
-      loop
-         First := First - 1;
-      end loop;
-
       Last := Current_Pos;
       while Last <= Text'Last
         and then Is_Entity_Letter (Text (Last))
       loop
          Last := Last + 1;
+      end loop;
+
+      First := Current_Pos;
+      loop
+         while First >= Text'First
+           and then Is_Entity_Letter (Text (First))
+         loop
+            First := First - 1;
+         end loop;
+
+         exit when Get (Aliases_Module_Id.Aliases,
+                        Text (First + 1 .. Last - 1)) /= No_Alias;
+
+         while First >= Text'First
+           and then not Is_Entity_Letter (Text (First))
+         loop
+            First := First - 1;
+         end loop;
       end loop;
    end Find_Current_Entity;
 
@@ -611,8 +645,7 @@ package body Aliases_Module is
    ------------------
 
    function Expand_Alias
-     (Kernel : access Kernel_Handle_Record'Class;
-      Name : String; Cursor : access Integer)
+     (Data : Event_Data; Name : String; Cursor : access Integer)
       return String
    is
       function Find_And_Replace_Cursor (Str : String) return String;
@@ -624,23 +657,52 @@ package body Aliases_Module is
       -----------------------------
 
       function Find_And_Replace_Cursor (Str : String) return String is
+         use type Ada.Strings.Unbounded.Unbounded_String;
+         Tmp    : Expansion_Function_List;
+         Result : Ada.Strings.Unbounded.Unbounded_String;
+         First  : Natural := Str'First;
+         S      : Natural := Str'First;
       begin
-         for S in Str'First .. Str'Last - 1 loop
-            if Str (S) = Special
-              and then Str (S + 1) = '_'
-            then
-               Cursor.all := S - Str'First;
+         Cursor.all := Str'Length;
 
-               if S + 2 <= Str'Last then
-                  return Str (Str'First .. S - 1) & Str (S + 2 .. Str'Last);
+         while S <= Str'Last - 1 loop
+            if Str (S) = Special then
+               Result := Result & Str (First .. S - 1);
+               First := S + 2;
+
+               if Str (S + 1) = '_' then
+                  Cursor.all := Ada.Strings.Unbounded.Length (Result);
+
                else
-                  return Str (Str'First .. S - 1);
+                  Tmp := Aliases_Module_Id.Module_Funcs (Str (S + 1));
+
+                  while Tmp /= null loop
+                     declare
+                        Replace : constant String :=
+                          Tmp.Func (Data, Str (S + 1));
+                     begin
+                        if Replace /= Invalid_Expansion then
+                           Result := Result & Replace;
+                           exit;
+                        end if;
+                     end;
+
+                     Tmp := Tmp.Next;
+                  end loop;
                end if;
+
+               S := S + 2;
+
+            else
+               S := S + 1;
             end if;
          end loop;
 
-         Cursor.all := Str'Length;
-         return Str;
+         if First <= Str'Last then
+            Result := Result & Str (First .. Str'Last);
+         end if;
+
+         return Ada.Strings.Unbounded.To_String (Result);
       end Find_And_Replace_Cursor;
 
       Alias : constant Alias_Record := Get
@@ -671,7 +733,7 @@ package body Aliases_Module is
             if Dialog = null then
                Gtk_New (Dialog,
                            Title  => -"Alias Parameter Selection",
-                        Parent => Get_Main_Window (Kernel),
+                        Parent => Get_Main_Window (Get_Kernel (Data)),
                         Flags  => Destroy_With_Parent);
                Gtk_New (S);
 
@@ -751,7 +813,7 @@ package body Aliases_Module is
                   declare
                      Cursor : aliased Integer;
                      Replace : constant String := Expand_Alias
-                       (Get_Kernel (Data),
+                       (Data,
                         Text (First + 1 .. Last - 1),
                         Cursor'Unchecked_Access);
                   begin
@@ -773,14 +835,23 @@ package body Aliases_Module is
                   Buffer : constant Gtk_Text_Buffer := Get_Buffer
                     (Gtk_Text_View (W));
                   First_Iter, Last_Iter : Gtk_Text_Iter;
+                  Success : Boolean := True;
                begin
                   Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
                   Search_Entity_Bounds (First_Iter, Last_Iter);
 
+                  while Success
+                    and then Get
+                    (Aliases_Module_Id.Aliases,
+                     Get_Slice (Buffer, First_Iter, Last_Iter)) = No_Alias
+                  loop
+                     Backward_Word_Start (First_Iter, Success);
+                  end loop;
+
                   declare
                      Cursor : aliased Integer;
                      Replace : constant String := Expand_Alias
-                       (Get_Kernel (Data),
+                       (Data,
                         Get_Slice (Buffer, First_Iter, Last_Iter),
                         Cursor'Unchecked_Access);
                      Result : Boolean;
@@ -952,20 +1023,18 @@ package body Aliases_Module is
                  Get_String (Ed.Aliases_Model, Iter, 0);
                Alias : constant Alias_Record := Get_Value (Ed, Old);
             begin
-               for N in Name'Range loop
-                  if not Is_Entity_Letter (Name (N)) then
-                     Set (Ed.Aliases_Model, Iter, 0, Old);
-                     Message := Message_Dialog
-                       (Msg => -"Error: invalid name for alias: " & Name
-                          & ASCII.LF
-                          & (-"Only ASCII letters and digits are authorized"),
-                        Dialog_Type => Error,
-                        Buttons => Button_OK,
-                        Title => -"Invalid alias name",
-                        Parent => Gtk_Window (Editor));
-                     return;
-                  end if;
-               end loop;
+               if not Is_Entity_Letter (Name (Name'First)) then
+                  Set (Ed.Aliases_Model, Iter, 0, Old);
+                  Message := Message_Dialog
+                    (Msg => -"Error: invalid name for alias: " & Name
+                     & ASCII.LF
+                     & (-"Alias names must start with a letter"),
+                     Dialog_Type => Error,
+                     Buttons => Button_OK,
+                     Title => -"Invalid alias name",
+                     Parent => Gtk_Window (Editor));
+                  return;
+               end if;
 
                if Name /= Old then
                   if Alias /= No_Alias then
@@ -1095,7 +1164,10 @@ package body Aliases_Module is
                Copy (Source => Current, Dest => Start);
 
             elsif All_Specials
-              and then Get_Char (Current) = '_'
+              and then
+                (Get_Char (Current) = '_'
+                 or else Aliases_Module_Id.Module_Funcs (Get_Char (Current))
+                   /= null)
             then
                Forward_Char (Current, Result);
                return;
@@ -1276,6 +1348,7 @@ package body Aliases_Module is
       View : constant Gtk_Text_View := Gtk_Text_View (Widget);
       Menu : Gtk_Menu;
       Item : String_Menu_Item;
+      Tmp  : Expansion_Function_List;
    begin
       Gtk_New (Menu);
 
@@ -1290,6 +1363,18 @@ package body Aliases_Module is
       Widget_Callback.Connect
         (Item, "activate",
          Widget_Callback.To_Marshaller (Insert_Special'Access));
+
+      for C in Aliases_Module_Id.Module_Funcs'Range loop
+         Tmp := Aliases_Module_Id.Module_Funcs (C);
+         while Tmp /= null loop
+            Gtk_New (Item, View, Tmp.Descr, Special & C);
+            Add (Menu, Item);
+            Widget_Callback.Connect
+              (Item, "activate",
+               Widget_Callback.To_Marshaller (Insert_Special'Access));
+            Tmp := Tmp.Next;
+         end loop;
+      end loop;
 
       return Menu;
    end Contextual_Factory;
@@ -1620,6 +1705,28 @@ package body Aliases_Module is
       Destroy (Editor);
    end On_Edit_Aliases;
 
+   -----------------------------------
+   -- Register_Special_Alias_Entity --
+   -----------------------------------
+
+   procedure Register_Special_Alias_Entity
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Description : String;
+      Entity  : Character;
+      Func    : Alias_Expansion_Function)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Assert (Me, Aliases_Module_Id /= null,
+              "Register_Special_Alias_Entity: module not initialized");
+      Aliases_Module_Id.Module_Funcs (Entity) :=
+        new Expansion_Function_Record'
+          (Length => Description'Length,
+           Descr  => Description,
+           Func   => Func,
+           Next   => Aliases_Module_Id.Module_Funcs (Entity));
+   end Register_Special_Alias_Entity;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1646,8 +1753,9 @@ package body Aliases_Module is
 
       Register_Menu
         (Kernel, Edit, -"_Aliases",
-         Ref_Item => -"Preferences",
-         Callback => On_Edit_Aliases'Access);
+         Ref_Item   => -"Preferences",
+         Add_Before => False,
+         Callback   => On_Edit_Aliases'Access);
 
       Load_Aliases
         (Kernel, Name_As_Directory (Get_Home_Dir (Kernel)) & "aliases");
