@@ -219,8 +219,9 @@ package body Glide_Kernel.Console is
    is
       Console : constant String := '/' & (-"File") & '/' & (-"Console");
    begin
-      Console_Module_Id := Register_Module
-        (Kernel       => Kernel,
+      Register_Module
+        (Module       => Console_Module_Id,
+         Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
          Priority     => Default_Priority);
 

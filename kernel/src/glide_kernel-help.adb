@@ -138,7 +138,7 @@ package body Glide_Kernel.Help is
          Free (Buffer);
          Success := True;
       else
-         Trace (Me, "link not found");
+         Trace (Me, "link not found: " & File);
          Success := False;
       end if;
 
@@ -511,8 +511,9 @@ package body Glide_Kernel.Help is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
-      Help_Module_ID := Register_Module
-        (Kernel                  => Kernel,
+      Register_Module
+        (Module                  => Help_Module_ID,
+         Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority,
          Contextual_Menu_Handler => null,
