@@ -117,11 +117,6 @@ package Glide_Kernel.Project is
    --  scenario variables.
    --  This emits the "project_view_changed" signal.
 
-   procedure Open_Project_Editor (Handle : access Kernel_Handle_Record'Class);
-   --  Open a project editor for the current project.
-   --  Depending on the preferences, this might open a new view of the project
-   --  editor, or simply select the existing one.
-
    function Get_Source_Files
      (Handle : access Kernel_Handle_Record'Class)
       return Basic_Types.String_Array_Access;
