@@ -189,7 +189,9 @@ package body Src_Info.Queries is
       --  same column.
 
    begin
-      if Get_Source_Filename (Location.File) /= File_Name then
+      if Location.File = No_Source_File
+        or else Get_Source_Filename (Location.File) /= File_Name
+      then
          return Integer'Last;
 
       elsif Location.Line = Line
