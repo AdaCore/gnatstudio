@@ -30,13 +30,18 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
+with System;                    use System;
 
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Tags;                  use Ada.Tags;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Unchecked_Deallocation;
 with Gint_Xml;                  use Gint_Xml;
+with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
@@ -46,6 +51,7 @@ with Src_Info;                  use Src_Info;
 with Src_Info.ALI;
 
 with Prj_API;                  use Prj_API;
+with Generic_List;
 
 with Language;                 use Language;
 with Language.Ada;             use Language.Ada;
@@ -58,18 +64,20 @@ with Snames;                    use Snames;
 with Stringt;                   use Stringt;
 with Types;                     use Types;
 
-package body Glide_Kernel is
+with Traces;                    use Traces;
 
-   Project_Changed_Signal      : constant String := "project_changed";
-   Project_View_Changed_Signal : constant String := "project_view_changed";
+package body Glide_Kernel is
 
    Signals : constant chars_ptr_array :=
      (1 => New_String (Project_Changed_Signal),
-      2 => New_String (Project_View_Changed_Signal));
+      2 => New_String (Project_View_Changed_Signal),
+      3 => New_String (Context_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
    --  The class structure for this object
+
+   Me : Debug_Handle := Create ("glide_kernel");
 
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
@@ -162,8 +170,8 @@ package body Glide_Kernel is
       Main_Window : Gtk.Window.Gtk_Window)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 => (1 => GType_None), 2 => (1 => GType_None));
-
+        (1 .. 2 => (1 => GType_None),
+         3      => (1 => GType_Pointer));
    begin
       Handle := new Kernel_Handle_Record;
       Handle.Main_Window := Main_Window;
@@ -191,6 +199,23 @@ package body Glide_Kernel is
       Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
       Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
    end Gtk_New;
+
+   ----------------------------
+   -- Initialize_All_Modules --
+   ----------------------------
+
+   procedure Initialize_All_Modules (Handle : access Kernel_Handle_Record) is
+      Module : Module_List.List := Global_Modules_List;
+   begin
+      while not Module_List.Is_Empty (Module) loop
+         Trace (Me, "Initializing module "
+                & Module_List.Head (Module).Name);
+         if Module_List.Head (Module).Initializer /= null then
+            Module_List.Head (Module).Initializer (Handle);
+         end if;
+         Module := Module_List.Next (Module);
+      end loop;
+   end Initialize_All_Modules;
 
    ---------------------
    -- Set_Source_Path --
@@ -320,6 +345,26 @@ package body Glide_Kernel is
       Object_Callback.Emit_By_Name (Handle, Project_View_Changed_Signal);
    end Project_View_Changed;
 
+   ---------------------
+   -- Context_Changed --
+   ---------------------
+
+   procedure Context_Changed
+     (Handle  : access Kernel_Handle_Record;
+      Context : access Selection_Context'Class)
+   is
+      procedure Internal
+        (Handle  : System.Address;
+         Signal  : String;
+         Context : Selection_Context_Access);
+      pragma Import (C, Internal, "g_signal_emit_by_name");
+   begin
+      Internal
+        (Get_Object (Handle),
+         Context_Changed_Signal & ASCII.NUL,
+         Selection_Context_Access (Context));
+   end Context_Changed;
+
    ------------------
    -- Save_Desktop --
    ------------------
@@ -427,5 +472,87 @@ package body Glide_Kernel is
          end;
       end if;
    end Complete_ALI_File_If_Needed;
+
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Selection_Context_Access) is
+      procedure Internal is new Unchecked_Deallocation
+        (Selection_Context'Class, Selection_Context_Access);
+   begin
+      Destroy (Context.all);
+      Internal (Context);
+   end Free;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Context : access Selection_Context)
+      return Kernel_Handle is
+   begin
+      return Context.Kernel;
+   end Get_Kernel;
+
+   -----------------
+   -- Get_Creator --
+   -----------------
+
+   function Get_Creator (Context : access Selection_Context)
+      return Module_ID is
+   begin
+      return Context.Creator;
+   end Get_Creator;
+
+   -----------------------------
+   -- Set_Context_Information --
+   -----------------------------
+
+   procedure Set_Context_Information
+     (Context : access Selection_Context;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Creator : Module_ID) is
+   begin
+      Context.Kernel := Kernel_Handle (Kernel);
+      Context.Creator := Creator;
+   end Set_Context_Information;
+
+   -------------
+   -- Get_MDI --
+   -------------
+
+   function Get_MDI (Handle : access Kernel_Handle_Record)
+      return Gtkada.MDI.MDI_Window
+   is
+      Top        : constant Glide_Window := Glide_Window (Handle.Main_Window);
+      Page       : Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+   begin
+      return Page.Process_MDI;
+   end Get_MDI;
+
+   ---------------------------
+   -- Find_MDI_Child_By_Tag --
+   ---------------------------
+
+   function Find_MDI_Child_By_Tag
+     (Handle : access Kernel_Handle_Record; Tag : Ada.Tags.Tag)
+      return Gtkada.MDI.MDI_Child
+   is
+      MDI   : MDI_Window := Get_MDI (Handle);
+      Child : MDI_Child;
+      Iter  : Child_Iterator := First_Child (MDI);
+   begin
+      loop
+         Child := Get (Iter);
+         exit when Child = null
+           or else Get_Widget (Child)'Tag = Tag;
+         Next (Iter);
+      end loop;
+
+      return Get (Iter);
+   end Find_MDI_Child_By_Tag;
 
 end Glide_Kernel;
