@@ -26,9 +26,13 @@ with Gtk.Image;               use Gtk.Image;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with System.Assertions;       use System.Assertions;
 
 with Glide_Kernel;            use Glide_Kernel;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
+with Glide_Intl;              use Glide_Intl;
 
 with Language;                use Language;
 with Language.Custom;         use Language.Custom;
@@ -87,7 +91,7 @@ package body Custom_Module is
             return;
          end if;
 
-         if Current_Node.Tag.all = "Language" then
+         if To_Lower (Current_Node.Tag.all) = "language" then
             Lang := new Language.Custom.Custom_Language;
             Initialize (Lang, Current_Node);
             Register_Language
@@ -98,10 +102,10 @@ package body Custom_Module is
                Default_Spec_Suffix => Get_Spec_Suffix (Lang),
                Default_Body_Suffix => Get_Body_Suffix (Lang));
 
-         elsif Current_Node.Tag.all = "Submenu" then
+         elsif To_Lower (Current_Node.Tag.all) = "submenu" then
             Current_Child := Current_Node.Child;
 
-            if Current_Child.Tag.all = "Title" then
+            if To_Lower (Current_Child.Tag.all) = "title" then
                Current_Title := new String'
                  (Parent_Path & "/" & Current_Child.Value.all);
 
@@ -113,17 +117,17 @@ package body Custom_Module is
                end loop;
             end if;
 
-         elsif Current_Node.Tag.all = "Menu_Item"
-           or else Current_Node.Tag.all = "Toolbar_Item"
+         elsif To_Lower (Current_Node.Tag.all) = "menu_item"
+           or else To_Lower (Current_Node.Tag.all) = "toolbar_item"
          then
-            if Current_Node.Tag.all = "Menu_Item" then
+            if To_Lower (Current_Node.Tag.all) = "menu_item" then
                Menuitem := True;
             end if;
 
             Current_Child := Current_Node.Child;
 
             while Current_Child /= null loop
-               if Current_Child.Tag.all = "Title" then
+               if To_Lower (Current_Child.Tag.all) = "title" then
                   if Current_Title /= null then
                      Free (Current_Title);
                   end if;
@@ -131,7 +135,7 @@ package body Custom_Module is
                   Current_Title := new String'(Current_Child.Value.all);
                end if;
 
-               if Current_Child.Tag.all = "Pixmap" then
+               if To_Lower (Current_Child.Tag.all) = "pixmap" then
                   if Current_Pixmap /= null then
                      Free (Current_Pixmap);
                   end if;
@@ -139,8 +143,8 @@ package body Custom_Module is
                   Current_Pixmap := new String'(Current_Child.Value.all);
                end if;
 
-               if Current_Child.Tag.all = "Action"
-                 or else Current_Child.Tag.all = "GPS_Action"
+               if To_Lower (Current_Child.Tag.all) = "action"
+                 or else To_Lower (Current_Child.Tag.all) = "gps_action"
                then
                   declare
                      Args : Argument_List_Access :=
@@ -157,7 +161,7 @@ package body Custom_Module is
                           (Args (Args'First + 1 .. Args'Last));
                      end if;
 
-                     if Current_Child.Tag.all = "Action" then
+                     if To_Lower (Current_Child.Tag.all) = "action" then
                         GPS_Command := False;
                      end if;
 
@@ -206,6 +210,7 @@ package body Custom_Module is
                      Command,
                      Image);
                end if;
+
             elsif Menuitem then
                Gtk_New (Item);
                Register_Menu (Kernel, Locale_To_UTF8 (Parent_Path), Item);
@@ -224,8 +229,6 @@ package body Custom_Module is
       end if;
 
       File_Node := Parse (File).Child;
-      --  ??? Should catch Assert_Failure and display a parse error
-
       Node := File_Node;
 
       Register_Module
@@ -243,6 +246,10 @@ package body Custom_Module is
       Free (File_Node);
 
    exception
+      when Assert_Failure =>
+         Console.Insert
+           (Kernel, -"could not parse custom file", Mode => Error);
+
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Register_Module;
