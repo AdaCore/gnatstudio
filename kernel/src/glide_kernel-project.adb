@@ -70,7 +70,9 @@ package body Glide_Kernel.Project is
 
    procedure Change_Project_Dir
      (Handle : access Kernel_Handle_Record'Class;
-      Dir    : String) is
+      Dir    : String)
+   is
+      pragma Unreferenced (Handle);
    begin
       Change_Dir (Dir);
 
