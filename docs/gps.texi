@@ -5540,7 +5540,7 @@ in the current directory, which depends on the context.
   <GPS_Action lang="shell">cd %d</GPS_Action>
   <Action>xterm</Action>
 </Menu_Item>
-@endsmallexample
+@end smallexample
 
 @end table
 
@@ -6606,7 +6606,7 @@ course you can run these commands again to get a new reference.
 
 
 The return value of the 9 previous commands can easily be recalled by
-passing @code{%1}, @code{%2},@dots on the command line. For instance,
+passing @code{%1}, @code{%2},@dots{} on the command line. For instance,
 the previous example could be rewritten as
 
 @smallexample
@@ -6614,6 +6614,14 @@ GPS> Entity my_entity file_name.adb
 <Entity_0x09055790>
 GPS> Entity.find_all_refs %1
 @end smallexample
+
+These return values will be modified also for internal commands sent
+by GPS, so you should really only use this when you emit multiple
+commands at the same time, and don't do any other action in GPS. This
+is mostly useful when used for command-line scripts (see @code{--eval}
+and @code{--load}), or for custom files, @xref{Customizing the Menu
+and Tool Bar}.
+
 
 In future versions of GPS, it will be possible to use more advanced scripting
 languages such as @code{Python}.
