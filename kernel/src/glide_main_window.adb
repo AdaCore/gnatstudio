@@ -121,8 +121,7 @@ package body Glide_Main_Window is
          when Unmaximize =>
             Maximize_Children (Get_MDI (Command.Kernel), False);
          when Single =>
-            Maximize_Children (Get_MDI (Command.Kernel), False);
-            Maximize_Children (Get_MDI (Command.Kernel), True);
+            Single_Window (Get_MDI (Command.Kernel));
       end case;
       return Success;
    end Execute;
@@ -263,9 +262,7 @@ package body Glide_Main_Window is
    begin
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
-      Set_Priorities
-        (Main_Window.Process_Mdi,
-         (Left => 1, Top => 2, Bottom => 3, Right => 4));
+      Set_Priorities (Main_Window.Process_Mdi, (Left, Top, Bottom, Right));
       Main_Window.Home_Dir := new String'(Home_Dir);
       Main_Window.Prefix_Directory := new String'(Prefix_Directory);
       Main_Window.Standalone := False;
