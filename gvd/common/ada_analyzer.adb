@@ -2351,11 +2351,19 @@ package body Ada_Analyzer is
 
                   Start_Of_Line := P;
 
-                  while P < Buffer_Last
-                    and then (Buffer (P) = ' ' or else Buffer (P) = ASCII.HT)
-                  loop
-                     P := P + 1;
-                  end loop;
+                  if P /= Buffer_Last then
+                     while Buffer (P) = ' ' or else Buffer (P) = ASCII.HT loop
+                        P := P + 1;
+
+                        if P = Buffer_Last then
+                           if Buffer (P) = ASCII.LF then
+                              New_Line (Line_Count);
+                           end if;
+
+                           exit;
+                        end if;
+                     end loop;
+                  end if;
 
                   exit when P = Buffer_Last or else Buffer (P) /= ASCII.LF;
                end loop;
@@ -2363,6 +2371,14 @@ package body Ada_Analyzer is
                End_Of_Line := Line_End (Buffer, P);
                Indent_Done := False;
                Padding     := 0;
+
+               if Buffer (P) = ASCII.LF then
+                  --  Indent last buffer line before exiting, to position
+                  --  the cursor at the right location
+
+                  pragma Assert (P = Buffer_Last);
+                  Do_Indent (P, Ref_Indent);
+               end if;
 
                if Callback /= null then
                   if Callback
