@@ -1,2 +1,2 @@
 all build compile link ada c c++ clean internal-clean :
-	$(MAKE) -s -f Makefile.navigaton $@
+	$(MAKE) -s -f Makefile.navigation $@
