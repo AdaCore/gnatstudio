@@ -56,11 +56,13 @@ with Gtk.Label;                   use Gtk.Label;
 with Gtk.Menu;                    use Gtk.Menu;
 with Gtk.Menu_Item;               use Gtk.Menu_Item;
 with Gtk.Main;                    use Gtk.Main;
+with Gtk.Rc;                      use Gtk.Rc;
 with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
+with Gtk.Window;                  use Gtk.Window;
 with Gtkada.Entry_Completion;     use Gtkada.Entry_Completion;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
@@ -80,6 +82,8 @@ with Aliases_Module;              use Aliases_Module;
 with Commands.Interactive;        use Commands, Commands.Interactive;
 with VFS;                         use VFS;
 with Casing_Exceptions;           use Casing_Exceptions;
+with Default_Preferences;         use Default_Preferences;
+with Glib.Properties.Creation;    use Glib.Properties.Creation;
 
 with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -174,6 +178,9 @@ package body Src_Editor_Module is
       2 => Last_Line_Cst'Access,
       3 => Start_Column_Cst'Access,
       4 => End_Column_Cst'Access);
+
+   Cursor_Color        : Param_Spec_Color;
+   Cursor_Aspect_Ratio : Param_Spec_Int;
 
    type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
@@ -4442,6 +4449,27 @@ package body Src_Editor_Module is
       Remove_Blank_Lines_Pixbuf := Gdk_New_From_Xpm_Data (close_block_xpm);
       Hide_Block_Pixbuf   := Gdk_New_From_Xpm_Data (fold_block_xpm);
       Unhide_Block_Pixbuf := Gdk_New_From_Xpm_Data (unfold_block_xpm);
+
+      --  Register preferences
+
+      Cursor_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Editor-Cursor-Color",
+         Default => "black",
+         Blurb   => -"Color to use for the cursor in editors",
+         Nick    => -"Cursor color"));
+      Register_Property
+        (Kernel, Param_Spec (Cursor_Color), -"Editor:Fonts & Colors");
+
+      Cursor_Aspect_Ratio := Param_Spec_Int (Gnew_Int
+        (Name    => "Editor-Cursor-Aspect-Ratio",
+         Default => 10,
+         Minimum => 1,
+         Maximum => 100,
+         Nick    => -"Cursor aspect ratio",
+         Blurb   => -("Size of the cursor, proportionaly to one character. 100"
+                      & "means the same size as a character")));
+      Register_Property
+        (Kernel, Param_Spec (Cursor_Aspect_Ratio), -"Editor:Fonts & Colors");
    end Register_Module;
 
    -------------------------
@@ -4501,37 +4529,47 @@ package body Src_Editor_Module is
          Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
       end if;
 
-      if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
-         return;
-      end if;
+      Parse_String ("style ""gps-style"" { " & ASCII.LF
+                    & "GtkTextView::cursor-color="""
+                    & Get_Pref (Kernel, Cursor_Color)
+                    & """" & ASCII.LF
+                    & "GtkTextView::cursor-aspect-ratio="
+                    & Float'Image
+                      (Float (Get_Pref (Kernel, Cursor_Aspect_Ratio))
+                       / 100.0)
+                    & ASCII.LF
+                    & "}" & ASCII.LF
+                    & "class ""GtkTextView"" style ""gps-style""");
 
-      Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
+      if Pref_Display_Line_Numbers /= Id.Display_Line_Numbers then
+         Id.Display_Line_Numbers := Pref_Display_Line_Numbers;
 
-      --  Connect necessary signal to display line numbers.
-      if Pref_Display_Line_Numbers then
-         if Id.Lines_Hook = null then
-            Id.Lines_Hook := new Lines_Revealed_Hook_Record;
-            Add_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+         --  Connect necessary signal to display line numbers.
+         if Pref_Display_Line_Numbers then
+            if Id.Lines_Hook = null then
+               Id.Lines_Hook := new Lines_Revealed_Hook_Record;
+               Add_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
 
-            declare
-               Files : constant VFS.File_Array := Open_Files (Kernel);
-            begin
-               for Node in Files'Range loop
-                  Create_Line_Information_Column
-                    (Kernel,
-                     Files (Node),
-                     Src_Editor_Module_Name,
-                     Stick_To_Data => False,
-                     Every_Line    => True);
-               end loop;
-            end;
+               declare
+                  Files : constant VFS.File_Array := Open_Files (Kernel);
+               begin
+                  for Node in Files'Range loop
+                     Create_Line_Information_Column
+                       (Kernel,
+                        Files (Node),
+                        Src_Editor_Module_Name,
+                        Stick_To_Data => False,
+                        Every_Line    => True);
+                  end loop;
+               end;
+            end if;
+
+         elsif Id.Lines_Hook /= null then
+            Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
+            Id.Lines_Hook := null;
+            Remove_Line_Information_Column
+              (Kernel, VFS.No_File, Src_Editor_Module_Name);
          end if;
-
-      elsif Id.Lines_Hook /= null then
-         Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
-         Id.Lines_Hook := null;
-         Remove_Line_Information_Column
-           (Kernel, VFS.No_File, Src_Editor_Module_Name);
       end if;
    end Preferences_Changed;
 
