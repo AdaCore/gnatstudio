@@ -1,4 +1,9 @@
+This file lists a summary of the new features introduced in GPS. For more
+details, look at the documentation.
+
 New features in GPS 1.2.0
+
+- Support for project file pathname in custom file
 
 - C306-012 New "flat view" option in the project explorer
 
