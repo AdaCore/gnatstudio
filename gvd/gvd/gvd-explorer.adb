@@ -199,9 +199,10 @@ package body Odd.Explorer is
       --  scrollbar does not allow us to scroll as far right as possible...
       Set_Column_Auto_Resize (Explorer, 0, True);
 
---       Set_Indent (Explorer, 20);
---       Set_Spacing (Explorer, 0);
---       Set_Expander_Style (Explorer, Ctree_Expander_None);
+      --  ???
+      --  Set_Indent (Explorer, 20);
+      --  Set_Spacing (Explorer, 0);
+      --  Set_Expander_Style (Explorer, Ctree_Expander_None);
    end Gtk_New;
 
    --------------------
@@ -267,6 +268,7 @@ package body Odd.Explorer is
       Tab       : Debugger_Process_Tab := Convert (Explorer);
       Lang      : Language_Access;
       Line      : Natural := 1;
+
    begin
       --  ???  Should set Data.Line to the current line for the current
       --  selection, so that when the user selects the same file again, we
@@ -285,10 +287,12 @@ package body Odd.Explorer is
          Load_File (Code_Editor (Explorer.Code_Editor),
                     Find_File (Tab.Debugger, Data.Extension),
                     Set_Current => False);
+
          if File_Node = Explorer.Current_File_Node then
             Set_Line (Code_Editor (Explorer.Code_Editor),
                       Explorer.Current_Line, Set_Current => True);
          end if;
+
          Highlight_Word (Get_Source (Code_Editor (Explorer.Code_Editor)),
                          Row_Data_Explorer.Node_Get_Row_Data (Explorer, Node));
 
@@ -296,16 +300,20 @@ package body Odd.Explorer is
 
       else
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
+
          if Data.Is_File_Node then
             Lang := Get_Language_From_File (Data.Extension);
             Set_Current_Language
               (Code_Editor (Explorer.Code_Editor), Lang);
+
             if Node = Explorer.Current_File_Node then
                Line := Explorer.Current_Line;
             end if;
+
             Load_File (Code_Editor (Explorer.Code_Editor),
                        Find_File (Tab.Debugger, Data.Extension),
                        Set_Current => False);
+
             if Line /= 1 then
                Set_Line (Code_Editor (Explorer.Code_Editor), Line,
                          Set_Current => True);
@@ -315,6 +323,7 @@ package body Odd.Explorer is
             end if;
          end if;
       end if;
+
    exception
       --  Raise when the node was not associated with some data (for nodes
       --  associated with entity categories)
@@ -363,6 +372,7 @@ package body Odd.Explorer is
          if Categories (C).Make_Entry /= null then
             Node := null;
             First := Buffer'First;
+
             loop
                Match (Categories (C).Regexp.all,
                       Buffer (First .. Buffer'Last),
@@ -372,8 +382,9 @@ package body Odd.Explorer is
 
                declare
                   Cat : aliased Category_Index := C;
-                  S : String := Categories (C).Make_Entry
+                  S   : String := Categories (C).Make_Entry
                     (Buffer, Matches, Cat'Access);
+
                begin
                   --  Create the parent node for the category, if needed.
 
@@ -428,8 +439,10 @@ package body Odd.Explorer is
       Explorer    : Explorer_Access := Explorer_Access (Widget);
       Node        : Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Data        : Node_Data_Access;
+
    begin
       Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
+
       if Data.Is_File_Node
         and then not Data.Computed
       then
@@ -460,6 +473,7 @@ package body Odd.Explorer is
                   --  Need to read the file independently from the
                   --  code_editor.
                   Lang := Get_Language_From_File (Full_Name);
+
                   if Lang /= null then
                      Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
                   else
@@ -531,7 +545,9 @@ package body Odd.Explorer is
       end if;
 
       --  First find the parent row for the new node
+
       Extension_Nodes := Get_Row_List (Tree);
+
       if Extension_Nodes /= Row_List.Null_List then
          Extension_Node :=
            Find_Node_Ptr (Tree, Row_List.Get_Data (Extension_Nodes));
@@ -577,6 +593,7 @@ package body Odd.Explorer is
                Is_Leaf       => False,
                Expanded      => False);
          end if;
+
          Data := new Node_Data'(Length       => Extension'Length,
                                 Extension    => Extension,
                                 Is_File_Node => False,
@@ -633,6 +650,7 @@ package body Odd.Explorer is
       List : Odd.Types.String_Array) is
    begin
       Freeze (Tree);
+
       for File in List'Range loop
          if List (File) /= null then
             Add_File_Node (Tree, List (File).all);
@@ -650,8 +668,7 @@ package body Odd.Explorer is
 
    function Find_Node_From_File
      (Explorer  : access Explorer_Record'Class;
-      File_Name : String)
-     return Gtk_Ctree_Node
+      File_Name : String) return Gtk_Ctree_Node
    is
       use type Row_List.Glist;
       Base_Name       : String := Base_File_Name (File_Name);
@@ -669,12 +686,15 @@ package body Odd.Explorer is
       then
          Extension_Node :=
            Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
+
          while Extension_Node /= null loop
             Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Extension_Node);
+
             if Data.Extension = Extension then
                Row_Found := True;
                exit;
             end if;
+
             Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
          end loop;
       end if;
@@ -687,11 +707,14 @@ package body Odd.Explorer is
       --  Find the node
       Row_Found := False;
       Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+
       while Node /= null loop
          Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
+
          if Data.Extension = Base_Name then
             return Node;
          end if;
+
          Node := Row_Get_Sibling (Node_Get_Row (Node));
       end loop;
 
@@ -703,16 +726,16 @@ package body Odd.Explorer is
    ----------------------
 
    procedure Set_Current_File
-     (Tree : access Explorer_Record;
+     (Tree      : access Explorer_Record;
       File_Name : String)
    is
       use type Row_List.Glist;
-      Node            : Gtk_Ctree_Node :=
+      Node : Gtk_Ctree_Node :=
         Find_Node_From_File (Tree, File_Name);
 
    begin
-
       --  Get rid of the highlight on the previous current file
+
       if Tree.Current_File_Node /= null then
          Node_Set_Row_Style (Tree, Tree.Current_File_Node, Null_Style);
          Tree.Current_File_Node := null;
@@ -746,8 +769,9 @@ package body Odd.Explorer is
    procedure On_Executable_Changed
      (Explorer : access Explorer_Record'Class)
    is
-      Tab  : Debugger_Process_Tab := Convert (Explorer);
+      Tab  : constant Debugger_Process_Tab := Convert (Explorer);
       List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
+
    begin
       Clear_Explorer (Explorer);
       Add_List_Of_Files (Explorer, List);
@@ -769,11 +793,12 @@ package body Odd.Explorer is
       then
          Menu := Explorer_Contextual_Menu (Explorer);
          Popup (Menu,
-                Button            => Gdk.Event.Get_Button (Event),
-                Activate_Time     => Gdk.Event.Get_Time (Event));
+                Button        => Gdk.Event.Get_Button (Event),
+                Activate_Time => Gdk.Event.Get_Time (Event));
          Emit_Stop_By_Name (Explorer, "button_press_event");
          return True;
       end if;
+
       return False;
    end Button_Press_Cb;
 
@@ -791,6 +816,7 @@ package body Odd.Explorer is
       Mitem : Gtk_Menu_Item;
       Tips  : Gtk_Tooltips;
       Process : Debugger_Process_Tab := Convert (Explorer);
+
    begin
       begin
          Menu := Menu_User_Data.Get (Explorer, Explorer_Contextual_Menu_Name);
@@ -896,16 +922,21 @@ package body Odd.Explorer is
       Node            : Gtk_Ctree_Node;
       Next            : Gtk_Ctree_Node;
       Process         : Debugger_Process_Tab := Convert (Explorer);
+
    begin
       Freeze (Explorer);
       Set_Busy_Cursor (Process, True);
+
       --  Find the extension node for the current file
+
       if Extension_Nodes /= Row_List.Null_List then
          Extension_Node :=
            Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
+
          while Extension_Node /= null loop
 
             Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+
             while Node /= null loop
                Next := Row_Get_Sibling (Node_Get_Row (Node));
                Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
@@ -922,6 +953,7 @@ package body Odd.Explorer is
             Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
          end loop;
       end if;
+
       Set_Busy_Cursor (Process, False);
       Thaw (Explorer);
    end Delete_Not_Found;
@@ -955,7 +987,9 @@ package body Odd.Explorer is
       if Tree.Current_File_Node = null then
          return "";
       end if;
+
       Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Tree.Current_File_Node);
+
       if Data = null then
          return "";
       else
@@ -976,21 +1010,26 @@ package body Odd.Explorer is
       Next            : Gtk_Ctree_Node;
       Process         : Debugger_Process_Tab := Convert (Explorer);
       Lang            : Language_Access;
+
    begin
       Freeze (Explorer);
       Set_Busy_Cursor (Process, True);
+
       --  Find the extension node for the current file
+
       if Extension_Nodes /= Row_List.Null_List then
          Extension_Node :=
            Find_Node_Ptr (Explorer, Row_List.Get_Data (Extension_Nodes));
-         while Extension_Node /= null loop
 
+         while Extension_Node /= null loop
             Node := Row_Get_Children (Node_Get_Row (Extension_Node));
+
             while Node /= null loop
                Next := Row_Get_Sibling (Node_Get_Row (Node));
                Data := Row_Data_Pkg.Node_Get_Row_Data (Explorer, Node);
 
                Lang := Get_Language_From_File (Data.Extension);
+
                if Lang /= null
                  and then Is_System_File (Lang, Data.Extension)
                then
@@ -1003,6 +1042,7 @@ package body Odd.Explorer is
             Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
          end loop;
       end if;
+
       Set_Busy_Cursor (Process, False);
       Thaw (Explorer);
    end Show_System_Files;

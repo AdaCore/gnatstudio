@@ -1219,8 +1219,7 @@ end Initialize;
 
    function Find_In_Cache
      (Window    : access Main_Debug_Window_Record'Class;
-      File_Name : String)
-     return File_Cache_Access
+      File_Name : String) return File_Cache_Access
    is
       Tmp : Cache_List := Window.File_Caches;
    begin
@@ -1230,13 +1229,14 @@ end Initialize;
          then
             return Tmp.Cache;
          end if;
+
          Tmp := Tmp.Next;
       end loop;
 
-      Window.File_Caches := new Cache_List_Record
-        '(File_Name => new String'(File_Name),
-          Cache     => new File_Cache,
-          Next      => Window.File_Caches);
+      Window.File_Caches := new Cache_List_Record'
+        (File_Name => new String' (File_Name),
+         Cache     => new File_Cache,
+         Next      => Window.File_Caches);
       return Window.File_Caches.Cache;
    end Find_In_Cache;
 
