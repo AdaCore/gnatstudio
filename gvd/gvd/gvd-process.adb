@@ -642,8 +642,13 @@ package body GVD.Process is
 
       --  Initialize the canvas
 
-      if not Display_Grid then
-         Configure (Process.Data_Canvas, Grid_Size => 0);
+      if Display_Grid then
+         Configure
+           (Process.Data_Canvas, Annotation_Height => Annotation_Font_Size);
+      else
+         Configure
+           (Process.Data_Canvas, Grid_Size => 0,
+            Annotation_Height => Annotation_Font_Size);
       end if;
 
       --  Set the user data, so that we can easily convert afterwards.
