@@ -1,0 +1,17 @@
+#!/bin/sh
+# .gnat_wrapper
+#
+# Copyright 2000-2001 by Ada Core Technologies, Inc.
+
+prog=`basename $0`
+GCC_ROOT=`dirname $0`
+
+# Strip 'bin' directory to retrieve the real root
+
+GCC_ROOT=`dirname $GCC_ROOT`
+GNAT_ROOT=$GCC_ROOT
+BINUTILS_ROOT=$GCC_ROOT
+LD_LIBRARY_PATH=$GCC_ROOT/lib:$LD_LIBRARY_PATH
+PATH=$GCC_ROOT/bin/real:$PATH
+export GCC_ROOT GNAT_ROOT BINUTILS_ROOT PATH LD_LIBRARY_PATH
+exec $GCC_ROOT/bin/real/$prog "$@"
