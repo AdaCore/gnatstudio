@@ -1642,7 +1642,9 @@ package body Gtkada.File_Selector is
       Result : constant Gtk_Entry := Gtk_Entry (Ent);
       Name : constant String := Select_Directory
         (-"Select directory",
-         Base_Directory => Get_Text (Result));
+         Base_Directory =>
+           Dir_Name (Normalize_Pathname
+                     (Get_Text (Result), Resolve_Links => False)));
    begin
       if Name /= "" then
          Set_Text (Result, Name);
