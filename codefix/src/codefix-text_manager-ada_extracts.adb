@@ -22,6 +22,8 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 
 with String_Utils; use String_Utils;
 
+with Codefix.Ada_Tools; use Codefix.Ada_Tools;
+
 package body Codefix.Text_Manager.Ada_Extracts is
 
    ----------------------------------------------------------------------------
@@ -129,13 +131,29 @@ package body Codefix.Text_Manager.Ada_Extracts is
    begin
 
       C_Declare := File_Cursor
-        (Search_String (Current_Text, Position, Str_Declare, Reverse_Step));
+        (Search_String
+           (Current_Text,
+            Position,
+            Str_Declare,
+            Std_Ada_Escape,
+            Reverse_Step));
       C_Begin := File_Cursor
-        (Search_String (Current_Text, Position, Str_Begin, Reverse_Step));
+        (Search_String
+           (Current_Text,
+            Position,
+            Str_Begin,
+            Std_Ada_Escape,
+            Reverse_Step));
       C_Is := File_Cursor
-        (Search_String (Current_Text, Position, Str_Is, Reverse_Step));
+        (Search_String
+           (Current_Text, Position, Str_Is, Std_Ada_Escape, Reverse_Step));
       C_Semicolon := File_Cursor
-        (Search_String (Current_Text, Position, Str_Semicolon, Reverse_Step));
+        (Search_String
+           (Current_Text,
+            Position,
+            Str_Semicolon,
+            Std_Ada_Escape,
+            Reverse_Step));
 
       if Is_Closest (C_Declare, C_Begin, C_Is, C_Semicolon) then
          Destination.Start := Clone (C_Declare);
@@ -163,7 +181,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
       end loop;
 
       Destination.Stop := File_Cursor
-        (Search_String (Current_Text, Destination.Start, ";"));
+        (Search_String (Current_Text, Destination.Start, ";", Std_Ada_Escape));
 
       Line_Cursor.File_Name := Destination.Start.File_Name;
       Line_Cursor.Col := 1;

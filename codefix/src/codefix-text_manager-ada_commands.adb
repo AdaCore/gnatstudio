@@ -583,7 +583,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          if To_Lower (Next_Str.all) = To_Lower (This.Name.all) then
             Pragma_Cursor := File_Cursor
-              (Search_String (Current_Text, Pragma_Cursor, ")"));
+              (Search_String
+                 (Current_Text, Pragma_Cursor, ")", Std_Ada_Escape));
             Line_Cursor := Pragma_Cursor;
             Line_Cursor.Col := 1;
             Get_Line (Current_Text, Line_Cursor, New_Extract);
@@ -644,7 +645,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       if Get_Number_Of_Elements (Work_Extract) = 1 then
          Replace_Word
            (Work_Extract,
-            Search_String (Work_Extract, ":"),
+            Search_String (Work_Extract, ":", Std_Ada_Escape),
             ": constant",
             ":");
       else
@@ -736,7 +737,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Erase
         (Work_Extract,
          Cursor,
-         Search_String (Work_Extract, "(", Cursor));
+         Search_String (Work_Extract, "(", Std_Ada_Escape, Cursor));
 
       Current_Index := Cursor.Col;
 
@@ -776,9 +777,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       Source_Begin, Source_End           : File_Cursor;
    begin
       Destination_Begin := File_Cursor
-        (Search_String (Current_Text, Destination, "("));
+        (Search_String
+           (Current_Text, Destination, "(", Std_Ada_Escape));
       Source_Begin := File_Cursor
-        (Search_String (Current_Text, Source, "("));
+        (Search_String
+           (Current_Text, Source, "(", Std_Ada_Escape));
 
       Destination_End := File_Cursor
         (Get_Right_Paren (Current_Text, Destination_Begin));
