@@ -33,6 +33,7 @@ with Glide_Intl;                use Glide_Intl;
 with Namet;                     use Namet;
 with Opt;                       use Opt;
 with Output;                    use Output;
+with Osint;                     use Osint;
 with OS_Utils;                  use OS_Utils;
 with Prj.Ext;                   use Prj.Ext;
 with Prj.PP;                    use Prj.PP;
@@ -166,6 +167,13 @@ package body Projects.Registry is
    function Normalize_Project_Path (Path : String) return String;
    --  Normalize the full path to a project (and make sure the project file
    --  extension is set)
+
+   procedure Canonicalize_File_Names_In_Project (Registry : Project_Registry);
+   --  Canonicalize the file and directory names in the project tree, as
+   --  needed.
+
+   procedure Canonicalize_File_Names_In_Project (P : Project_Type);
+   --  Canonicalize the file and directory names for a single project
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Scenario_Variable_Array, Scenario_Variable_Array_Access);
@@ -519,7 +527,7 @@ package body Projects.Registry is
 
          loop
             while Last >= Directory'First
-              and then not Is_Directory_Separator (Directory (Last))
+              and then not OS_Utils.Is_Directory_Separator (Directory (Last))
             loop
                Last := Last - 1;
             end loop;
@@ -584,6 +592,9 @@ package body Projects.Registry is
             Sources := String_Elements.Table (Sources).Next;
          end loop;
 
+         --  Canonicalize the file names in the naming exception lists
+         Canonicalize_File_Names_In_Project (Registry);
+
          --  Add the other languages' files
 
          Add_Foreign_Source_Files (Registry, P, Errors);
@@ -591,6 +602,70 @@ package body Projects.Registry is
          Next (Iter);
       end loop;
    end Parse_Source_Files;
+
+   ----------------------------------------
+   -- Canonicalize_File_Names_In_Project --
+   ----------------------------------------
+
+   procedure Canonicalize_File_Names_In_Project (P : Project_Type) is
+      procedure Process_List (List : Array_Element_Id);
+      --  Canonicalize all the files in the given list
+
+      procedure Process_List (List : Array_Element_Id) is
+         Arr : Array_Element_Id := List;
+         Str : String_List_Id;
+
+      begin
+         while Arr /= No_Array_Element loop
+            case Array_Elements.Table (Arr).Value.Kind is
+               when Undefined | Single =>
+                  null;  --  Unexpected case, but probably not an error
+                  Trace (Me, "Canonicalize_File_Names, error in type");
+
+               when Prj.List =>
+                  Str := Array_Elements.Table (Arr).Value.Values;
+                  while Str /= Nil_String loop
+                     Get_Name_String (String_Elements.Table (Str).Value);
+                     Canonical_Case_File_Name (Name_Buffer (1 .. Name_Len));
+                     String_Elements.Table (Str).Value := Name_Find;
+                     Str := String_Elements.Table (Str).Next;
+                  end loop;
+            end case;
+
+            Arr := Array_Elements.Table (Arr).Next;
+         end loop;
+      end Process_List;
+
+      Naming : constant Naming_Data :=
+        Prj.Projects.Table (Get_View (P)).Naming;
+   begin
+      Process_List (Naming.Implementation_Exceptions);
+      Process_List (Naming.Specification_Exceptions);
+   end Canonicalize_File_Names_In_Project;
+
+   ----------------------------------------
+   -- Canonicalize_File_Names_In_Project --
+   ----------------------------------------
+
+   procedure Canonicalize_File_Names_In_Project
+     (Registry : Project_Registry)
+   is
+      Iter : Imported_Project_Iterator;
+      P    : Project_Type;
+   begin
+      if True or else not Filenames_Are_Case_Sensitive then
+         Iter := Start (Registry.Data.Root);
+
+         loop
+            P := Current (Iter);
+            exit when P = No_Project;
+
+            Canonicalize_File_Names_In_Project (P);
+
+            Next (Iter);
+         end loop;
+      end if;
+   end Canonicalize_File_Names_In_Project;
 
    ----------------------------------
    -- Create_Environment_Variables --
