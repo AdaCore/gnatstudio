@@ -91,7 +91,7 @@ case "${host}" in
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \
-    | rs6000-*-solaris2*)
+    | rs6000-*-solaris2* | sparc*-linux*-gnu )
     case "${host}" in
       m68*-sunos1* )    machine=sun1 ;;
       m68*-sunos2* )    machine=sun2 ;;
@@ -128,6 +128,9 @@ case "${host}" in
       *-sunos5* | *-solaris* )
                 opsys=sol2-5
                 ;;
+      *-linux-gnu* )
+  	        opsys=gnu-linux
+		;;
       *) opsys=bsd4-2   ;;
     esac;;
 
