@@ -28,6 +28,7 @@
 
 with Gtkada.Canvas;
 with Glide_Kernel;
+with Gtk.Menu;
 with Gtk.Scrolled_Window;
 
 package Browsers.Canvas is
@@ -66,6 +67,7 @@ private
          Canvas    : Gtkada.Canvas.Interactive_Canvas;
          Kernel    : Glide_Kernel.Kernel_Handle;
          Mask      : Browser_Type_Mask;
+         Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
       end record;
 
    pragma Inline (Get_Mask);
