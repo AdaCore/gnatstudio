@@ -443,12 +443,14 @@ procedure GPS is
 
          --  Remove the splash screen, since it conflicts with the welcome
          --  dialog.
+
          if Splash /= null then
             Destroy (Splash);
             Splash := null;
          end if;
 
-         --  If the user wants to quite immediately, so be it.
+         --  If the user wants to quit immediately, so be it.
+
          if not Run (Screen) then
             Destroy (Screen);
             Gtk.Main.Main_Quit;
@@ -465,6 +467,7 @@ procedure GPS is
       end if;
 
       --  Load_Desktop should call Show_All.
+
       Glide_Page.Load_Desktop (GPS);
 
       --  Then load all the source files given on the command line.
