@@ -1390,7 +1390,7 @@ package body Project_Viewers is
       if Dirs'Length = 0 then
          declare
             File : constant String := Select_File
-              (Title          => -"Select the main unit to add",
+              (Title          => -"Select the main file to add",
                Base_Directory => Dir_Name (Project_Path (Ed.Project_View)));
          begin
             if File /= "" then
@@ -1401,7 +1401,7 @@ package body Project_Viewers is
       else
          declare
             File : constant String := Select_File
-              (Title          => -"Select the main unit to add",
+              (Title          => -"Select the main file to add",
                Base_Directory => Get_String (Dirs (Dirs'First)));
          begin
             if File /= "" then
@@ -1512,6 +1512,7 @@ package body Project_Viewers is
          end;
       end if;
 
+      Show_All (Box);
       return Gtk_Widget (Box);
    end Widget_Factory;
 
@@ -1621,6 +1622,7 @@ package body Project_Viewers is
          end;
       end if;
 
+      Show_All (Src_Dir_Selection);
       return Gtk_Widget (Src_Dir_Selection);
    end Widget_Factory;
 
@@ -1742,6 +1744,7 @@ package body Project_Viewers is
             Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
       end if;
 
+      Show_All (Obj_Dir_Selection);
       return Gtk_Widget (Obj_Dir_Selection);
    end Widget_Factory;
 
@@ -1848,15 +1851,9 @@ package body Project_Viewers is
       Switches : Switches_Editors.Switches_Edit;
    begin
       Gtk_New (Switches);
+      Show_All (Get_Window (Switches));
 
       if Project_View /= No_Project then
-         declare
-            Languages : Argument_List := Get_Languages (Project_View);
-         begin
-            Set_Visible_Pages (Switches, Languages);
-            Free (Languages);
-         end;
-
          Set_Switches (Switches, Project_View);
       end if;
 
@@ -1913,9 +1910,11 @@ package body Project_Viewers is
    begin
       if Project_View /= No_Project then
          Gtk_New (Editor, Project_View);
+         Show_All (Editor);
          Show_Project_Settings (Editor, Project_View);
       else
          Gtk_New (Editor, Known_Languages (Get_Language_Handler (Kernel)));
+         Show_All (Editor);
       end if;
 
       return Gtk_Widget (Editor);
