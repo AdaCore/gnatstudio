@@ -21,8 +21,7 @@
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
 with Glib.Values;             use Glib.Values;
-with Gdk.Drawable;            use Gdk.Drawable;
-with Gdk.Font;                use Gdk.Font;
+with Gdk.Color;               use Gdk.Color;
 with Gdk.Pixmap;              use Gdk.Pixmap;
 with Gdk.Types;               use Gdk.Types;
 with Gdk.Types.Keysyms;       use Gdk.Types.Keysyms;
@@ -53,12 +52,12 @@ with Factory_Data;            use Factory_Data;
 with Display_Items;           use Display_Items;
 with Dock_Paned;              use Dock_Paned;
 with Items;                   use Items;
-with GVD.Canvas;              use GVD.Canvas;
 with GVD.Code_Editors;        use GVD.Code_Editors;
 with GVD.Dialogs;             use GVD.Dialogs;
 with GVD.Main_Window;         use GVD.Main_Window;
 with GVD.Memory_View;         use GVD.Memory_View;
 with GVD.Menu;                use GVD.Menu;
+with GVD.Preferences;         use GVD.Preferences;
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
 with GVD.Types;               use GVD.Types;
 with GVD.Toolbar;             use GVD.Toolbar;
@@ -83,6 +82,7 @@ with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Intl;              use Glide_Intl;
 with Pixmaps_IDE;             use Pixmaps_IDE;
 with Traces;                  use Traces;
+with GUI_Utils;               use GUI_Utils;
 
 with Ada.Exceptions;          use Ada.Exceptions;
 
@@ -99,7 +99,6 @@ package body GVD_Module is
    Me : constant Debug_Handle := Create ("Debugger");
 
    Max_Tooltip_Width : constant := 400;
-   Max_Tooltip_Height : constant := 300;
    --  Maximum size to use for the tooltip windows
 
    type File_Line_Record is record
@@ -891,11 +890,6 @@ package body GVD_Module is
       Kernel         : Kernel_Handle;
       Value          : Basic_Types.String_Access;
       Context        : Items.Drawing_Context;
-      Chars_Per_Line : Gint;
-      Index          : Natural;
-      Line           : Gint;
-      Max            : Natural;
-      W              : Gint;
 
    begin
       Pixmap := null;
@@ -923,93 +917,32 @@ package body GVD_Module is
          Variable_Name : constant String :=
            Entity_Name_Information (Selection);
       begin
-         if Variable_Name /= ""
-           and then Can_Tooltip_On_Entity
-             (Get_Language (Debugger.Debugger), Variable_Name)
+         if Variable_Name = ""
+           or else not Can_Tooltip_On_Entity
+           (Get_Language (Debugger.Debugger), Variable_Name)
          then
-            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
-
-            if Value.all = "" then
-               Free (Value);
-               Pop_State (Kernel);
-               return;
-            end if;
-
-         else
             Pop_State (Kernel);
             return;
+
+         else
+            Value := new String'(Value_Of (Debugger.Debugger, Variable_Name));
          end if;
 
-         Context := Create_Tooltip_Drawing_Context
-           (Debugger.Data_Canvas, Null_Pixmap);
-         Chars_Per_Line :=
-           Max_Tooltip_Width / Char_Width (Context.Font, Character'('m'));
+         if Value.all /= "" then
+            Context := Create_Tooltip_Drawing_Context
+              (Debugger.Data_Canvas, Null_Pixmap);
 
-         Height := Get_Ascent (Context.Font) + Get_Descent (Context.Font);
-
-         if Value'Length > Chars_Per_Line then
-            Width := Gint'Min
-              (Max_Tooltip_Width,
-               Chars_Per_Line * Char_Width (Context.Font, Character'('m'))
-               + 4);
-            Height := Gint'Min
-              (Max_Tooltip_Height,
-               (1 + Value'Length / Chars_Per_Line) * Height + 2);
-         else
-            Width := Gint'Min
-              (Max_Tooltip_Width, String_Width (Context.Font, Value.all) + 4);
+            Create_Pixmap_From_Text
+              (Text       => Value.all,
+               Font       => Get_Pref (GVD_Prefs, Value_Font),
+               Bg_Color   => White (Get_Default_Colormap),
+               Widget     => Get_Main_Window (Kernel),
+               Pixmap     => Pixmap,
+               Width      => Width,
+               Height     => Height,
+               Wrap_Width => Max_Tooltip_Width);
          end if;
       end;
-
-      if Width /= 0 and then Height /= 0 then
-         Gdk.Pixmap.Gdk_New
-           (Pixmap, Get_Window (Gtk_Window (Debugger.Window)), Width, Height);
-         Context := Create_Tooltip_Drawing_Context
-           (Debugger.Data_Canvas, Pixmap);
-
-         Draw_Rectangle
-           (Pixmap,
-            Get_Box_Context (GVD_Canvas (Debugger.Data_Canvas)).Thaw_Bg_GC,
-            Filled => True,
-            X      => 0,
-            Y      => 0,
-            Width  => Width - 1,
-            Height => Height - 1);
-
-         Index := Value'First;
-         Line  := 0;
-         W     := 0;
-
-         while Index <= Value'Last loop
-            Max := Index + Natural (Chars_Per_Line) - 1;
-
-            if Max > Value'Last then
-               Max := Value'Last;
-            end if;
-
-            Draw_Text
-              (Pixmap, Context.Font, Context.GC,
-               2, Line *
-               (Get_Ascent (Context.Font) + Get_Descent (Context.Font))
-               + Get_Ascent (Context.Font),
-               Value (Index .. Max));
-            W := Gint'Max
-              (W, String_Width (Context.Font, Value (Index .. Max)));
-            Index := Max + 1;
-            Line := Line + 1;
-         end loop;
-
-         Width := W + 4;
-
-         Draw_Rectangle
-           (Pixmap,
-            Context.GC,
-            Filled => False,
-            X      => 0,
-            Y      => 0,
-            Width  => Width - 1,
-            Height => Height - 1);
-      end if;
 
       Free (Value);
       Pop_State (Kernel);
