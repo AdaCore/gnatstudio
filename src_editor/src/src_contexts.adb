@@ -1931,7 +1931,7 @@ package body Src_Contexts is
       Add (Selector, Box);
 
       Gtk_New (Selector.Combo);
-      Pack_Start (Box, Selector.Combo, True, True, 2);
+      Pack_Start (Box, Selector.Combo, False, True, 2);
       Initialize_Scope_Combo (Selector.Combo, Kernel);
    end Gtk_New;
 
