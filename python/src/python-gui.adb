@@ -830,6 +830,11 @@ package body Python.GUI is
                Interpreter.History_Position := -1;
 
                Run_Command (Interpreter, Get_Slice (Buffer, Prompt_End, Iter));
+
+               --  Preserve the focus on the console after interactive
+               --  execution
+               Grab_Focus (Interpreter.Console);
+
             end if;
             return True;
 
