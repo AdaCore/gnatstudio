@@ -22,7 +22,7 @@
 
 with Interfaces.C;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Glide_Kernel.Modules;
+with Glide_Kernel.Standard_Hooks;
 with System;
 with VFS; use VFS;
 
@@ -171,7 +171,7 @@ package body DDE is
                   when Unsupported =>
                      null;
                   when FileOpen =>
-                     Glide_Kernel.Modules.Open_File_Editor
+                     Glide_Kernel.Standard_Hooks.Open_File_Editor
                        (Kernel_Local, Create (Full_Filename => Argument));
                end case;
 
