@@ -1011,16 +1011,32 @@ package body VCS.CVS is
       Version_1 : String := "";
       Version_2 : String := "")
    is
-      use String_List;
+      use String_List, GNAT.OS_Lib;
+
       C               : External_Command_Access;
       Command_Head    : List;
       Args            : List;
+      Diff_Args       : Argument_List_Access :=
+        Argument_String_To_List (Get_Pref (Rep.Kernel, Diff_Cmd));
+
    begin
       --  Use -f to avoid e.g. -u or -c options set in ~/.cvsrc
 
       Append (Args, "-f");
-
       Append (Args, "diff");
+
+      --  Take into account diff arguments (e.g. -b).
+      --  Try to avoid obviously incompatible switches: -u, -c
+
+      for J in Diff_Args'First + 1 .. Diff_Args'Last loop
+         if Diff_Args (J).all /= "-u"
+           and then Diff_Args (J).all /= "-c"
+         then
+            Append (Args, Diff_Args (J).all);
+         end if;
+      end loop;
+
+      Free (Diff_Args);
 
       if Version_1 /= "" then
          Append (Args, "-r" & Version_1);
