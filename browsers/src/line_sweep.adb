@@ -751,4 +751,3 @@ package body Line_Sweep is
    end Intersections_Count;
 
 end Line_Sweep;
-
