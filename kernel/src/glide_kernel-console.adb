@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,7 +49,6 @@ package body Glide_Kernel.Console is
 
    type Console_Module_Id_Record is new Module_ID_Record with record
       Console : Interactive_Consoles.Interactive_Console;
-      Interactive_Console : Interactive_Consoles.Interactive_Console;
    end record;
 
    type Console_Module_Id_Access is access all Console_Module_Id_Record'Class;
@@ -63,11 +62,6 @@ package body Glide_Kernel.Console is
    Me : constant Debug_Handle := Create (Console_Module_Name);
 
    procedure Console_Destroyed
-     (Console : access Glib.Object.GObject_Record'Class;
-      Kernel  : Kernel_Handle);
-   --  Called when the console has been destroyed.
-
-   procedure Interactive_Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
    --  Called when the console has been destroyed.
@@ -87,44 +81,6 @@ package body Glide_Kernel.Console is
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Clear menu.
-
-   function Interpret_Command_Handler
-     (Input  : String;
-      Kernel : access GObject_Record'Class) return String;
-   --  Launch the command interpreter for Input and return the output.
-
-   -------------------------------
-   -- Interpret_Command_Handler --
-   -------------------------------
-
-   function Interpret_Command_Handler
-     (Input  : String;
-      Kernel : access GObject_Record'Class) return String
-   is
-      S : constant String := Interpret_Command (Kernel_Handle (Kernel), Input);
-   begin
-      if S = ""
-        or else S (S'Last) = ASCII.LF
-        or else S (S'Last) = ASCII.CR
-      then
-         return S;
-      else
-         return S & ASCII.LF;
-      end if;
-   end Interpret_Command_Handler;
-
-   -----------------------------
-   -- Get_Interactive_Console --
-   -----------------------------
-
-   function Get_Interactive_Console
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Interactive_Console
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Console_Module_Id.Interactive_Console;
-   end Get_Interactive_Console;
 
    -------------------------------
    -- Get_Or_Create_Result_View --
@@ -344,19 +300,6 @@ package body Glide_Kernel.Console is
       end if;
    end Remove_Result_Category;
 
-   -----------------------------------
-   -- Interactive_Console_Destroyed --
-   -----------------------------------
-
-   procedure Interactive_Console_Destroyed
-     (Console : access Glib.Object.GObject_Record'Class;
-      Kernel  : Kernel_Handle)
-   is
-      pragma Unreferenced (Console, Kernel);
-   begin
-      Console_Module_Id.Interactive_Console := null;
-   end Interactive_Console_Destroyed;
-
    -----------------------
    -- Console_Destroyed --
    -----------------------
@@ -491,10 +434,6 @@ package body Glide_Kernel.Console is
       if Module.Console /= null then
          Destroy (Module.Console);
       end if;
-
-      if Module.Interactive_Console /= null then
-         Destroy (Module.Interactive_Console);
-      end if;
    end Destroy;
 
    ------------------------
@@ -505,7 +444,6 @@ package body Glide_Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       Console     : Interactive_Console;
-      Interactive : Interactive_Console;
       Child       : MDI_Child;
 
    begin
@@ -533,31 +471,7 @@ package body Glide_Kernel.Console is
       Dock_Child (Child);
       Raise_Child (Child);
 
-      Gtk_New (Interactive,
-               "GPS> ",
-               Interpret_Command_Handler'Access,
-               GObject (Kernel),
-               Get_Pref (Kernel, Source_Editor_Font),
-               History_List => Get_History (Kernel),
-               Key          => "shell",
-               Wrap_Mode    => Wrap_Char);
-      Set_Completion_Handler (Interactive, Commands_As_List'Access);
-      Child := Put
-        (Get_MDI (Kernel), Interactive,
-         Iconify_Button or Maximize_Button,
-         Focus_Widget => Gtk_Widget (Get_View (Interactive)),
-         Default_Width => 400,
-         Default_Height => 100);
-      Set_Title (Child, -"Shell");
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
-
-      --  Only remember the last 100 commands.
-      Set_Max_Length (Get_History (Kernel).all, 100, "shell");
-      Allow_Duplicates (Get_History (Kernel).all, "shell", True, True);
-
       Console_Module_Id.Console := Console;
-      Console_Module_Id.Interactive_Console := Interactive;
 
       Kernel_Callback.Connect
         (Console, "destroy",
@@ -565,15 +479,6 @@ package body Glide_Kernel.Console is
          Kernel_Handle (Kernel));
       Return_Callback.Connect
         (Console, "delete_event",
-         Return_Callback.To_Marshaller (Console_Delete_Event'Access));
-
-      Kernel_Callback.Connect
-        (Interactive, "destroy",
-            Kernel_Callback.To_Marshaller
-         (Interactive_Console_Destroyed'Access),
-         Kernel_Handle (Kernel));
-      Return_Callback.Connect
-        (Interactive, "delete_event",
          Return_Callback.To_Marshaller (Console_Delete_Event'Access));
    end Initialize_Console;
 

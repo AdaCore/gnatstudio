@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -75,11 +75,6 @@ package Glide_Kernel.Console is
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
    --  Clear all the text in the Console.
-
-   function Get_Interactive_Console
-     (Kernel : access Kernel_Handle_Record'Class)
-      return Interactive_Console;
-   --  Return the interactive console associated with the kernel.
 
    function Get_Console
      (Kernel : access Kernel_Handle_Record'Class)
