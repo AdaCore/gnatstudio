@@ -22,7 +22,6 @@ with GNAT.IO;  use GNAT.IO;
 
 with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.GC;       use Gdk.GC;
 with Pango.Enums;  use Pango.Enums;
 with Pango.Font;   use Pango.Font;
 with Pango.Layout; use Pango.Layout;
@@ -446,7 +445,6 @@ package body Items.Records is
             Y      => Y,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       if Show_Type (Context.Mode)
@@ -511,10 +509,6 @@ package body Items.Records is
             Y      => Y,
             Width  => Item.Width - 1,
             Height => Item.Height - 1);
-      end if;
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 

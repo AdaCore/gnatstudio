@@ -21,7 +21,6 @@
 with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
 with Gdk.Drawable;    use Gdk.Drawable;
-with Gdk.GC;          use Gdk.GC;
 with Pango.Layout;    use Pango.Layout;
 with Language;        use Language;
 with GVD.Preferences; use GVD.Preferences;
@@ -163,7 +162,6 @@ package body Items.Repeats is
             Y      => Y,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       Set_Text (Context.Layout, Str);
@@ -187,10 +185,6 @@ package body Items.Repeats is
          Y      => Y,
          Width  => Item.Width - 1,
          Height => Item.Height - 1);
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
-      end if;
    end Paint;
 
    ------------------

@@ -23,7 +23,6 @@ with Ada.Tags; use Ada.Tags;
 
 with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
-with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 with Pango.Layout; use Pango.Layout;
 
@@ -604,7 +603,6 @@ package body Items.Arrays is
             Y      => Y,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       if Show_Type (Context.Mode)
@@ -657,10 +655,6 @@ package body Items.Arrays is
          Y      => Y,
          Width  => Item.Width - 1,
          Height => Item.Height - 1);
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
-      end if;
    end Paint;
 
    ------------------

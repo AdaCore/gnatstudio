@@ -156,7 +156,6 @@ package body Items.Simples is
             Y      => Y2,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       if Item.Has_Changed then
@@ -189,10 +188,6 @@ package body Items.Simples is
             X        => X,
             Y        => Y2,
             Layout   => Context.Layout);
-      end if;
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
       end if;
    end Paint_Simple;
 
@@ -536,7 +531,6 @@ package body Items.Simples is
             Y      => Y,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       Line_Start := Item.Value'First;
@@ -579,10 +573,6 @@ package body Items.Simples is
          X        => X,
          Y        => Line,
          Layout   => Context.Layout);
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
-      end if;
    end Paint;
 
    ---------------

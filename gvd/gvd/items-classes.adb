@@ -212,7 +212,6 @@ package body Items.Classes is
             Y      => Y,
             Width  => Item.Width,
             Height => Item.Height);
-         Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for A in Item.Ancestors'Range loop
@@ -263,10 +262,6 @@ package body Items.Classes is
             Y      => Y,
             Width  => Item.Width - 1,
             Height => Item.Height - 1);
-      end if;
-
-      if Item.Selected then
-         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
