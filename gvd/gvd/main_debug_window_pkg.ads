@@ -35,7 +35,6 @@ with Gtk.Arrow; use Gtk.Arrow;
 with Gtk.Status_Bar; use Gtk.Status_Bar;
 with Odd_Preferences_Pkg; use Odd_Preferences_Pkg;
 with Open_Program_Pkg; use Open_Program_Pkg;
-with Open_Session_Pkg; use Open_Session_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
@@ -54,7 +53,6 @@ package Main_Debug_Window_Pkg is
 
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
-      Open_Session        : Open_Session_Access;
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
