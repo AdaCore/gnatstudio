@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.2.0
 
+- Question dialogs are off by one character
+  Problem:    When GVD pops up a question with a list of choices, the last
+              choice is truncated by one character.
+  Workaround: The complete message appears in the console window.
+
 - Editor contextual menu doesn't take the selection into account in C mode
   Problem:    If you are debugging a C file, and select some text in the
               source editor, then the contextual menu doesn't reference this
