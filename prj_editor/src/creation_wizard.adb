@@ -353,8 +353,17 @@ package body Creation_Wizard is
    begin
       Push_State (Wiz.Kernel, Processing);
 
-      Project := Create_Project
-        (Get_Registry (Wiz.Kernel), Name => Name, Path => Dir);
+      if Name'Length > 4
+        and then Name (Name'Last - 3 .. Name'Last) = ".gpr"
+      then
+         Project := Create_Project
+           (Get_Registry (Wiz.Kernel),
+            Name => Name (Name'First .. Name'Last - 4), Path => Dir);
+      else
+         Project := Create_Project
+           (Get_Registry (Wiz.Kernel), Name => Name, Path => Dir);
+      end if;
+
       if Relative_Paths then
          Set_Paths_Type (Project, Relative);
       else
