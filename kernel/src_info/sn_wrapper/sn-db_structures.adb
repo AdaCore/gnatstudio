@@ -115,7 +115,7 @@ package body SN.DB_Structures is
 
    begin
       if Size >= Buffer_String_Size then
-         To (To'First) := ASCII.Nul;
+         To (To'First) := ASCII.NUL;
       else
          strcpy (To'Address, From);
       end if;
