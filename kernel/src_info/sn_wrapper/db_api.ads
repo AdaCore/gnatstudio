@@ -41,9 +41,9 @@ package DB_API is
    --  Standard field separator
 
    type CSF is limited private;
-   --  CSV stands for "Character Separated Fields".
+   --  CSF stands for "Character Separated Fields".
    --  Represents key or data value ("CSF" in term of SN team).
-   --  Value can contain 0 or more string fileds.
+   --  Value can contain 0 or more string fields.
    --  Each field can be retrieved by Get_Field function.
    --  ("data base thang" in terms of SN team).
 
@@ -122,7 +122,6 @@ package DB_API is
    pragma Inline (Get_Field_Count);
    --  Returns number of fields in specified CSF.
 
-   function Get_Field (The_CSF : CSF; Index : Positive) return String;
    procedure Get_Field
      (The_CSF : CSF;
       Index   : Positive;
@@ -138,15 +137,6 @@ package DB_API is
      (The_CSF : CSF; Index : Positive) return Integer;
    pragma Inline (Get_Field_Length);
    --  Returns length of field from CSF with specified index.
-
-   function Get_All_Fields
-     (The_CSF   : CSF;
-      Separator : Character := ' ') return String;
-   --  Returns all fields, separated by specified separator;
-
-   function Get_Total_Length (The_CSF : CSF) return Natural;
-   pragma Inline (Get_Total_Length);
-   --  Return summary length of all fields
 
    DB_Error             : exception;
    DB_Close_Error       : exception;

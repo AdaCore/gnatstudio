@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,10 +20,9 @@
 
 with Interfaces.C;
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with System;
-with Interfaces.C.Strings;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with String_Utils;
 
 package body DB_API is
@@ -80,42 +79,31 @@ package body DB_API is
          File_Names   : System.Address) return DB_File;
       pragma Import (C, Internal_Open, "ada_db_open");
 
-      procedure Free (List : in out String_List);
-      --  Frees elements of specified list from memory
-
-      procedure Free (List : in out String_List) is
-      begin
-         for J in List'Range loop
-            Free (List (J));
-         end loop;
-      end Free;
-
-      C_File_Names : String_List (File_Names'Range);
-      C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
+      C_File_Names : aliased array (File_Names'Range) of chars_ptr;
 
    begin
-      Success := True;
-
-      for J in File_Names'Range loop
-         C_File_Names (J) := new String'(File_Names (J).all & ASCII.NUL);
-         C_P_P_Char (J) := C_File_Names (J).all'Address;
+      for J in C_File_Names'Range loop
+         C_File_Names (J) := New_String (File_Names (J).all);
       end loop;
 
-      DB := Internal_Open (C_File_Names'Length, C_P_P_Char'Address);
+      DB := Internal_Open (C_File_Names'Length, C_File_Names'Address);
 
-      Free (C_File_Names);
+      for J in C_File_Names'Range loop
+         Free (C_File_Names (J));
+      end loop;
 
       if DB = null then
          Success := False;
          return;
-      end if;
 
-      if Last_ErrNo (DB) /= 0 then
+      elsif Last_ErrNo (DB) /= 0 then
          Internal_Free (DB);
          DB      := null;
          Success := False;
-      end if;
 
+      else
+         Success := True;
+      end if;
    end Open;
 
    ---------
@@ -229,7 +217,6 @@ package body DB_API is
      (DB       : DB_File;
       Movement : Cursor_Movement := Next) return Pair_Ptr
    is
-
       P        : Pair_Ptr;
       I_Pair   : System.Address;
 
@@ -266,10 +253,9 @@ package body DB_API is
             return null;
 
          else
-            P := new Pair;
-            P.Key  := I_Get_Key  (I_Pair);
-            P.Data := I_Get_Data (I_Pair);
-            P.DBI  := I_Get_DBI  (I_Pair);
+            P := new Pair'(Key  => I_Get_Key  (I_Pair),
+                           Data => I_Get_Data (I_Pair),
+                           DBI  => I_Get_DBI  (I_Pair));
             I_Free (I_Pair);
             return P;
          end if;
@@ -297,29 +283,6 @@ package body DB_API is
       Pair_Free  (The_Pair);
    end Free;
 
-   --------------------
-   -- Get_All_Fields --
-   --------------------
-
-   function Get_All_Fields
-     (The_CSF : CSF;
-      Separator : Character := ' ') return String
-   is
-      N : constant Natural := Get_Field_Count (The_CSF);
-      S : Unbounded_String;
-   begin
-      for F in 1 .. N - 1 loop
-         Append (S, Get_Field (The_CSF, F));
-         Append (S, Separator);
-      end loop;
-
-      if N > 0 then
-         Append (S, Get_Field (The_CSF, N));
-      end if;
-
-      return To_String (S);
-   end Get_All_Fields;
-
    ---------------------
    -- Get_Field_Count --
    ---------------------
@@ -331,36 +294,9 @@ package body DB_API is
       return Natural (I_Get_Field_Count (The_CSF));
    end Get_Field_Count;
 
-   ----------------------
-   -- Get_Total_Length --
-   ----------------------
-
-   function Get_Total_Length (The_CSF : CSF) return Natural is
-      function I_Get_Total_Length (The_CSF : CSF) return C.int;
-      pragma Import (C, I_Get_Total_Length, "csf_get_total_length");
-   begin
-      return Natural (I_Get_Total_Length (The_CSF));
-   end Get_Total_Length;
-
    ---------------
    -- Get_Field --
    ---------------
-
-   function Get_Field (The_CSF : CSF; Index : Positive) return String is
-      function I_Get_Field
-        (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
-      pragma Import (C, I_Get_Field, "csf_get_field");
-
-      R : constant CStrings.chars_ptr :=
-        I_Get_Field (The_CSF, C.int (Index));
-
-   begin
-      if R = CStrings.Null_Ptr then
-         raise Index_Out_Of_Range;
-      else
-         return CStrings.Value (R);
-      end if;
-   end Get_Field;
 
    procedure Get_Field
      (The_CSF : CSF;
@@ -372,16 +308,17 @@ package body DB_API is
         (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
       pragma Import (C, I_Get_Field, "csf_get_field");
 
-      R : constant CStrings.chars_ptr :=
-        I_Get_Field (The_CSF, C.int (Index));
-
+      R : CStrings.chars_ptr;
    begin
-      if R = CStrings.Null_Ptr then
-         raise Index_Out_Of_Range;
-      else
-         pragma Assert (Len <= Field'Length);
+      if Len /= 0 then
+         R := I_Get_Field (The_CSF, C.int (Index));
+         if R = CStrings.Null_Ptr then
+            raise Index_Out_Of_Range;
+         else
+            pragma Assert (Len <= Field'Length);
 
-         String_Utils.Copy_String (R, Field, Len);
+            String_Utils.Copy_String (R, Field, Len);
+         end if;
       end if;
    end Get_Field;
 
