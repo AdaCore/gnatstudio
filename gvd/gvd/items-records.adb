@@ -960,5 +960,4 @@ package body Items.Records is
       return True;
    end Structurally_Equivalent;
 
-
 end Items.Records;
