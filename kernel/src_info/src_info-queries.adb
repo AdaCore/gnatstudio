@@ -39,6 +39,7 @@ package body Src_Info.Queries is
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
    type E_Kind_To_Boolean_Map is array (E_Kind) of Boolean;
+   pragma Pack (E_Kind_To_Boolean_Map);
 
    Is_Scope_Entity : constant E_Kind_To_Boolean_Map :=
      (Overloaded_Entity                => False,
@@ -1321,7 +1322,7 @@ package body Src_Info.Queries is
             if R.Value.Kind /= Label
               and then R.Value.Location /= Decl_Start
               and then R.Value.Location /=
-              Decl.Declaration.End_Of_Scope.Location
+                Decl.Declaration.End_Of_Scope.Location
             then
                New_Item := new Scope_Node'
                  (Typ         => Reference,
@@ -1377,12 +1378,12 @@ package body Src_Info.Queries is
 
             if List.Value.Declaration.End_Of_Scope /= No_Reference
               and then
-              (List.Value.Declaration.Kind = Non_Generic_Package
-               or else List.Value.Declaration.Kind = Generic_Package)
+                (List.Value.Declaration.Kind = Non_Generic_Package
+                 or else List.Value.Declaration.Kind = Generic_Package)
             then
                New_Item := new Scope_Node'
                  (Typ            => Declaration,
-                  Decl     => List.Value.Declaration'Unrestricted_Access,
+                  Decl           => List.Value.Declaration'Unrestricted_Access,
                   Contents       => null,
                   Start_Of_Scope => List.Value.Declaration.Location,
                   Parent         => null,
