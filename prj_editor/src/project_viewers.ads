@@ -28,6 +28,7 @@
 
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Clist;
+with Gtk.Menu;
 with Gtk.Style;
 
 with Prj;
@@ -100,6 +101,8 @@ private
       --  The project to which the files currently in the viewer belong. This
       --  indicates which project file should be normalized when a modification
       --  takes place.
+
+      Contextual_Menu : Gtk.Menu.Gtk_Menu;
 
       Project_Filter : Prj.Project_Id := Prj.No_Project;
    end record;

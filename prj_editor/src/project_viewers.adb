@@ -37,6 +37,8 @@ with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Label;       use Gtk.Label;
+with Gtk.Menu;        use Gtk.Menu;
+with Gtk.Menu_Item;   use Gtk.Menu_Item;
 with Gtk.Notebook;    use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;       use Gtk.Stock;
@@ -59,6 +61,7 @@ with Prj_Normalize;        use Prj_Normalize;
 with Project_Trees;        use Project_Trees;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+with GUI_Utils;            use GUI_Utils;
 
 with Prj;           use Prj;
 with Prj.Tree;      use Prj.Tree;
@@ -266,6 +269,10 @@ package body Project_Viewers is
    procedure Explorer_Selection_Changed
      (Viewer : access Gtk_Widget_Record'Class);
    --  Called every time the selection has changed in the tree
+
+   function Viewer_Contextual_Menu
+     (Viewer : access Gtk_Widget_Record'Class) return Gtk_Menu;
+   --  Return the contextual menu to use for the project viewer
 
    -------------------------
    -- Find_In_Source_Dirs --
@@ -503,6 +510,8 @@ package body Project_Viewers is
       New_Decl : Project_Node_Id;
 
    begin
+      pragma Assert (Project /= Empty_Node);
+
       --  Normalize the subproject we are currently working on, since we only
       --  know how to modify normalized subprojects.
       --  ??? Should check whether the project is already normalized.
@@ -882,6 +891,8 @@ package body Project_Viewers is
       Scrolled : Gtk_Scrolled_Window;
    begin
       Gtk.Notebook.Initialize (Viewer);
+      Register_Contextual_Menu (Viewer, Viewer_Contextual_Menu'Access);
+
       Viewer.Kernel := Kernel_Handle (Kernel);
       Viewer.Explorer := Project_Tree (Explorer);
 
@@ -923,6 +934,28 @@ package body Project_Viewers is
       --  the explorer, without forcing the user to do a new selection.
       Explorer_Selection_Changed (Viewer);
    end Initialize;
+
+   ----------------------------
+   -- Viewer_Contextual_Menu --
+   ----------------------------
+
+   function Viewer_Contextual_Menu
+     (Viewer : access Gtk_Widget_Record'Class) return Gtk_Menu
+   is
+      V : Project_Viewer := Project_Viewer (Viewer);
+      Item : Gtk_Menu_Item;
+   begin
+      if V.Contextual_Menu /= null then
+         Destroy (V.Contextual_Menu);
+      end if;
+
+      Gtk_New (V.Contextual_Menu);
+
+      Gtk_New (Item, "Edit switches");
+      Add (V.Contextual_Menu, Item);
+
+      return V.Contextual_Menu;
+   end Viewer_Contextual_Menu;
 
    ------------------
    -- Current_Page --
