@@ -19,29 +19,33 @@
 -----------------------------------------------------------------------
 
 with System;            use System;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+with Ada.Tags;          use Ada.Tags;
 with GNAT.Regpat;       use GNAT.Regpat;
 with GNAT.Expect;       use GNAT.Expect;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
+
+with Gtk.Window;        use Gtk.Window;
+
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 with Debugger.Gdb.C;    use Debugger.Gdb.C;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
-with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Unchecked_Conversion;
 with Odd.Strings;       use Odd.Strings;
-with Gtk.Window;        use Gtk.Window;
 with Odd.Dialogs;       use Odd.Dialogs;
-with Language.Debugger; use Language.Debugger;
-with Items;             use Items;
-with Ada.Tags;          use Ada.Tags;
 with Odd.Types;         use Odd.Types;
-with Items.Simples; use Items.Simples;
-with Items.Arrays;  use Items.Arrays;
-with Items.Records; use Items.Records;
-with Items.Classes; use Items.Classes;
+with Odd.Trace;         use Odd.Trace;
+with Items;             use Items;
+with Items.Simples;     use Items.Simples;
+with Items.Arrays;      use Items.Arrays;
+with Items.Records;     use Items.Records;
+with Items.Classes;     use Items.Classes;
+
+with Unchecked_Conversion;
 
 package body Debugger.Gdb is
 
@@ -52,8 +56,11 @@ package body Debugger.Gdb is
    ---------------
 
    Prompt_Regexp : constant Pattern_Matcher :=
-     Compile ("^\(gdb\) ", Multiple_Lines);
+     Compile ("^\(gdb\) |\(gdb\) $", Multiple_Lines);
    --  Regular expressions used to recognize the prompt.
+   --  ??? The second part of this expression should not be needed but when
+   --  communicating with gdb using a remote protocol (e.g rsh), it seems
+   --  that this case (prompt at the end of the line) is occurring.
 
    Prompt_Length : constant := 6;
    --  Length of the prompt ("(gdb) ").
@@ -448,9 +455,9 @@ package body Debugger.Gdb is
         and then Main_Debug_Window_Access (Window).Debug_Mode
       then
          Add_Output_Filter
-           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all, Output_Filter'Access);
          Add_Input_Filter
-           (Get_Descriptor (Debugger.Process).all, Trace_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all, Input_Filter'Access);
 
       elsif Window /= null
         and then Main_Debug_Window_Access (Window).TTY_Mode
