@@ -497,7 +497,7 @@ package body Src_Editor_Buffer is
             if Get_Char (An_Iter) /= Lang_Context.String_Delimiter or else
                not Has_Tag (An_Iter, Tags (String_Text))
             then
-               Forward_To_End (Entity_End);
+               Forward_To_Line_End (Entity_End);
                Local_Highlight (From => Entity_Start, To => Entity_End);
             end if;
 
