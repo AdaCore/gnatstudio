@@ -227,6 +227,10 @@ package body Debugger.Gdb is
             Language := new Gdb_C_Language;
          elsif Lang = "c++" then
             Language := new Gdb_Cpp_Language;
+         elsif Lang = "auto" then
+            --  Do not change the current language if gdb isn't able to
+            --  tell what the new language is
+            return;
          else
             Output_Error
               (Process.Window,
@@ -3011,6 +3015,21 @@ package body Debugger.Gdb is
    begin
       if Debugger.Stored_Language /= null then
          Send (Debugger, "set lang " & Debugger.Stored_Language.all);
+
+         declare
+            S : constant String :=
+              Send (Debugger, "show lang", Mode => Internal);
+         begin
+            --  If gdb isn't able to figure out what the current language
+            --  is, default to Ada. This is the case if gdb prints:
+            --  <<The current source language is "auto".>>
+
+            if S'Length > 4
+              and then S (S'Last - 5 .. S'Last - 2) = "auto"
+            then
+               Send (Debugger, "set lang ada");
+            end if;
+         end;
       end if;
    end Restore_Language;
 
