@@ -1057,6 +1057,13 @@ package body Glide_Kernel.Scripts is
             Project := Get_Data (Instance);
             Set_Return_Value (Data, Project_Name (Project));
 
+         elsif Command = "file" then
+            Project := Get_Data (Instance);
+            Set_Return_Value
+              (Data,
+               Create_File
+                 (Get_Script (Data), Create (Project_Path (Project))));
+
          elsif Command = "ancestor_deps" then
             declare
                Iter : Imported_Project_Iterator;
@@ -1189,8 +1196,28 @@ package body Glide_Kernel.Scripts is
             Set_Return_Value
               (Data,
                Create_Project (Get_Script (Data), Project_Information (File)));
+         elsif Has_File_Information (File) then
+         --  Since the editor doesn't provide the project, we emulate it
+            --  here
+            Set_Return_Value
+              (Data,
+               Create_Project
+                 (Get_Script (Data),
+                  Get_Project_From_File
+                    (Project_Registry (Get_Registry (Kernel)),
+                     File_Information (File),
+                     Root_If_Not_Found => False)));
          else
             Set_Error_Msg (Data, -"No project stored in the context");
+         end if;
+
+      elsif Command = "directory" then
+         Instance := Nth_Arg (Data, 1, Get_File_Context_Class (Kernel));
+         File := File_Selection_Context_Access'(Get_Data (Instance));
+         if Has_Directory_Information (File) then
+            Set_Return_Value (Data, Directory_Information (File));
+         else
+            Set_Error_Msg (Data, -"No directory stored in the context");
          end if;
 
       elsif Command = "location" then
@@ -1634,6 +1661,13 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
+         Command      => "file",
+         Return_Value => "File",
+         Description  => -"Return a handle to the project file itself",
+         Class        => Get_Project_Class (Kernel),
+         Handler      => Create_Project_Command_Handler'Access);
+      Register_Command
+        (Kernel,
          Command      => "ancestor_deps",
          Return_Value => "list",
          Description  =>
@@ -1729,6 +1763,13 @@ package body Glide_Kernel.Scripts is
          Description  =>
            -("Return the project in the context, or the root project if none"
              & " was specified in the context"),
+         Class        => Get_File_Context_Class (Kernel),
+         Handler      => Context_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "directory",
+         Return_Value => "string",
+         Description  => -("Return the current directory in the context"),
          Class        => Get_File_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
 
