@@ -2390,6 +2390,7 @@ package body Src_Editor_Box is
 
       if After < 0 then
          Forward_To_Line_End (End_Iter, Success);
+         Forward_Char (End_Iter, Success);
       else
          Success := True;
 
@@ -2465,6 +2466,7 @@ package body Src_Editor_Box is
 
       if After < 0 then
          Forward_To_Line_End (End_Iter, Success);
+         Forward_Char (End_Iter, Success);
       else
          Success := True;
 
@@ -2582,5 +2584,20 @@ package body Src_Editor_Box is
       Get_End_Iter (Editor.Source_Buffer, Iter);
       return To_Box_Line (Get_Line (Iter));
    end Get_Last_Line;
+
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer
+     (Editor : access Source_Editor_Box_Record)
+     return String
+   is
+      Begin_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      Get_Bounds (Editor.Source_Buffer, Begin_Iter, End_Iter);
+      return Get_Text (Begin_Iter, End_Iter);
+   end Get_Buffer;
 
 end Src_Editor_Box;
