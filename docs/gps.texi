@@ -859,6 +859,10 @@ Contains all the key bindings defined in GPS. This file is
 automatically created if you have activated the dynamic key bindings feature
 (@xref{Changing Colors Fonts and Key Bindings}.)
 
+   @item $HOME/.gps/desktop
+Desktop file in XML format (using the menu @code{File->Save...->Desktop}),
+loaded automatically if found.
+
    @item $HOME/.gps/preferences
 Contains all the preferences in XML format, as specified in the
 preferences menu.
