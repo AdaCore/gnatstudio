@@ -42,26 +42,33 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
 
-   Default_Keyword_Color : constant String := "";
-   Default_Comment_Color : constant String := "blue";
-   Default_String_Color  : constant String := "brown";
-   --  ??? As soon as we have defined a uniform GLIDE handling of
-   --  ??? defaults/preferences, these constants should move there.
+   -----------------
+   -- Preferences --
+   -----------------
+   --  ??? Should go in the preferences.
 
-   Default_Keyword_Font_Attr  : constant Font_Attributes :=
+   Default_Keyword_Color   : constant String := "";
+   Default_Comment_Color   : constant String := "blue";
+   Default_String_Color    : constant String := "brown";
+   Default_Character_Color : constant String := "brown";
+
+   Default_Keyword_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes (Weight => Pango.Enums.Pango_Weight_Bold);
-   Default_Comment_Font_Attr  : constant Font_Attributes :=
+   Default_Comment_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes (Style => Pango.Enums.Pango_Style_Italic);
-   Default_String_Font_Attr   : constant Font_Attributes :=
+   Default_String_Font_Attr  : constant Font_Attributes := To_Font_Attributes;
+   Default_Character_Font_Attr : constant Font_Attributes :=
      To_Font_Attributes;
-   --  ??? Just as for the colors, these will eventually move away.
 
-   Default_HL_Line_Color : constant String := "green";
-   --  ??? As soon as a uniform GLIDE handling of defaults/preferences
-   --  ??? is put in place, move this constant there.
+   Default_HL_Line_Color   : constant String := "green";
 
    Default_HL_Region_Color : constant String := "cyan";
-   --  ??? Move to GLIDE defaults/preferences area.
+
+   Automatic_Indentation   : constant Boolean := True;
+
+   --------------------
+   -- Signal Support --
+   --------------------
 
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
@@ -157,7 +164,7 @@ package body Src_Editor_Buffer is
      (Buffer     : access Source_Buffer_Record'Class;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter);
-   --  Re-compute the highlighting for at the least the given region.
+   --  Re-compute the highlighting for at least the given region.
    --  If the text creates non-closed comments or string regions, then
    --  the re-highlighted area is automatically extended to the right.
    --  When the re-highlighted area is extended to the right, the extension
@@ -233,24 +240,27 @@ package body Src_Editor_Buffer is
    begin
       --  Set the Start_Iter to the begining of the inserted text,
       --  and set the End_Iter.
+
       Copy (Source => End_Insert_Iter, Dest => Start_Iter);
       Backward_Chars (Start_Iter, Text'Length, Ignored);
       Copy (Source => End_Insert_Iter, Dest => End_Iter);
 
       --  Search the initial minimum area to re-highlight...
+
       Entity_Kind := Normal_Text;
 
       Entity_Kind_Search_Loop :
       for Current_Entity in Standout_Language_Entity loop
-
          if Has_Tag (Start_Iter, Tags (Current_Entity)) then
             --  This means that we are in a highlighted region. The minimum
             --  region to re-highlight starts from the begining of the current
             --  region to the end of the following region.
+
             Entity_Kind := Current_Entity;
             Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
             Forward_To_Tag_Toggle (End_Iter, Tags (Entity_Kind), Ignored);
             Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+
             exit Entity_Kind_Search_Loop;
 
          elsif Begins_Tag (End_Iter, Tags (Current_Entity)) or else
@@ -271,12 +281,14 @@ package body Src_Editor_Buffer is
             Entity_Kind := Current_Entity;
             Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
             Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
+
             exit Entity_Kind_Search_Loop;
          end if;
       end loop Entity_Kind_Search_Loop;
 
       if Entity_Kind = Normal_Text then
          --  We are inside a normal text region. Just re-highlight this region.
+
          Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
          Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
       end if;
@@ -310,7 +322,7 @@ package body Src_Editor_Buffer is
    -- First_Insert_Text --
    -----------------------
 
-   Spaces : constant String (1 .. 256) := (others => ' ');
+   Spaces : constant String (1 .. 512) := (others => ' ');
 
    procedure First_Insert_Text
      (Buffer : access Source_Buffer_Record'Class;
@@ -320,7 +332,7 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      if Buffer.Lang /= null then
+      if Automatic_Indentation and then Buffer.Lang /= null then
          declare
             Pos         : Gtk_Text_Iter;
             Length      : constant Gint := Get_Int (Nth (Params, 3));
@@ -487,14 +499,14 @@ package body Src_Editor_Buffer is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter)
    is
-      Lang_Context        : constant Language_Context :=
+      Lang_Context : constant Language_Context :=
         Get_Language_Context (Buffer.Lang);
-      Entity              : Language_Entity;
-      Entity_Start        : Gtk_Text_Iter;
-      Entity_End          : Gtk_Text_Iter;
-      An_Iter             : Gtk_Text_Iter;
-      Ignored             : Boolean;
-      Tags                : Highlighting_Tags renames Buffer.Syntax_Tags;
+      Entity       : Language_Entity;
+      Entity_Start : Gtk_Text_Iter;
+      Entity_End   : Gtk_Text_Iter;
+      An_Iter      : Gtk_Text_Iter;
+      Ignored      : Boolean;
+      Tags         : Highlighting_Tags renames Buffer.Syntax_Tags;
 
       procedure Local_Highlight (From : Gtk_Text_Iter; To : Gtk_Text_Iter);
       --  Highlight the region exactly located between From and To.
@@ -514,6 +526,7 @@ package body Src_Editor_Buffer is
          Entity_Length       : Gint;
          Index               : Natural := Slice'First;
          Next_Char           : Positive;
+
       begin
          --  First, un-apply all the style tags...
          Kill_Highlighting (Buffer, From, To);
@@ -548,18 +561,16 @@ package body Src_Editor_Buffer is
 
       --  Check the last entity found during the highlighting loop
       case Entity is
-
-         when Normal_Text |
-              Keyword_Text =>
+         when Normal_Text | Identifier_Text | Keyword_Text =>
             --  Nothing to do in that case, the current highlighting is already
             --  perfect.
             null;
 
          when Comment_Text =>
-
             if Lang_Context.New_Line_Comment_Start_Length /= 0 then
                --  Apply the Comment_Text tag from the end of the current
                --  highlighted area to the end of the current line.
+
                Copy (Source => Entity_End, Dest => Entity_Start);
                Forward_To_Line_End (Entity_End);
                Kill_Highlighting (Buffer, Entity_Start, Entity_End);
@@ -579,49 +590,41 @@ package body Src_Editor_Buffer is
                Backward_Chars
                  (An_Iter, Gint (Lang_Context.Comment_End_Length), Ignored);
 
-               if Get_Slice (An_Iter, Entity_End) /=
-                    Lang_Context.Comment_End or else
-                  not (Lang_Context.Comment_Start =
-                         Lang_Context.Comment_End and then
-                       Has_Tag (An_Iter, Tags (Comment_Text)))
+               if Get_Slice (An_Iter, Entity_End) /= Lang_Context.Comment_End
+                 or else not
+                   (Lang_Context.Comment_Start = Lang_Context.Comment_End
+                    and then Has_Tag (An_Iter, Tags (Comment_Text)))
                then
                   Forward_To_End (Entity_End);
                   Local_Highlight (From => Entity_Start, To => Entity_End);
                end if;
-
             end if;
+
+         when Character_Text =>
+            Copy (Source => Entity_End, Dest => An_Iter);
+            Backward_Char (An_Iter, Ignored);
+
+            if Get_Char (An_Iter) = Lang_Context.Constant_Character then
+               --  In this case, the text following this area is not
+               --  affected, so there is no more text to re-highlight.
+               return;
+            end if;
+
+            Forward_To_Line_End (Entity_End);
+            Local_Highlight (From => Entity_Start, To => Entity_End);
 
          when String_Text =>
-            --  First, check that we don't have a constant character...
-            --  We have a constant Character region if the length of the
-            --  region is exactly 3 (2 delimiters + the character), and
-            --  the first and last characters are equal to
-            --  Lang_Context.Constant_Character.
-
-            if Get_Offset (Entity_Start) - Get_Offset (Entity_End) = 3
-               and then
-               Get_Char (Entity_Start) = Lang_Context.Constant_Character
-            then
-               Copy (Source => Entity_End, Dest => An_Iter);
-               Backward_Char (An_Iter, Ignored);
-               if Get_Char (An_Iter) = Lang_Context.Constant_Character then
-                  --  In this case, the text following this area is not
-                  --  affected, so there is no more text to re-highlight.
-                  return;
-               end if;
-            end if;
-
-            --  Now, verify that the string is closed by checking the last
-            --  character against the string delimiter. If we find it,
-            --  then make sure that we are indeed closing the string
-            --  (as opposed to opening it) by checking whether the String_Text
-            --  tag is applied at the position before the string delimiter.
+            --  Verify that the string is closed by checking the last
+            --  character against the string delimiter. If we find it, then
+            --  make sure that we are indeed closing the string (as opposed to
+            --  opening it) by checking whether the String_Text tag is applied
+            --  at the position before the string delimiter.
 
             Copy (Source => Entity_End, Dest => An_Iter);
             Backward_Char (An_Iter, Ignored);
 
             if Get_Char (An_Iter) /= Lang_Context.String_Delimiter or else
-               not Has_Tag (An_Iter, Tags (String_Text))
+              not Has_Tag (An_Iter, Tags (String_Text))
             then
                Forward_To_Line_End (Entity_End);
                Local_Highlight (From => Entity_Start, To => Entity_End);
@@ -722,12 +725,14 @@ package body Src_Editor_Buffer is
 
       Buffer.Syntax_Tags :=
         Create_Syntax_Tags
-          (Keyword_Color     => Default_Keyword_Color,
-           Keyword_Font_Attr => Default_Keyword_Font_Attr,
-           Comment_Color     => Default_Comment_Color,
-           Comment_Font_Attr => Default_Comment_Font_Attr,
-           String_Color      => Default_String_Color,
-           String_Font_Attr  => Default_String_Font_Attr);
+          (Keyword_Color       => Default_Keyword_Color,
+           Keyword_Font_Attr   => Default_Keyword_Font_Attr,
+           Comment_Color       => Default_Comment_Color,
+           Comment_Font_Attr   => Default_Comment_Font_Attr,
+           Character_Color     => Default_Character_Color,
+           Character_Font_Attr => Default_Character_Font_Attr,
+           String_Color        => Default_String_Color,
+           String_Font_Attr    => Default_String_Font_Attr);
       --  ??? Use preferences for the colors and font attributes...
 
       --  Save the newly created highlighting tags into the source buffer
@@ -1261,9 +1266,11 @@ package body Src_Editor_Buffer is
       Found      : Boolean := True;
    begin
       Get_Start_Iter (Buffer, Start_Iter);
+
       if not Begins_Tag (Start_Iter, Buffer.HL_Line_Tag) then
          Forward_To_Tag_Toggle (Start_Iter, Buffer.HL_Line_Tag, Found);
       end if;
+
       if Found then
          Copy (Source => Start_Iter, Dest => End_Iter);
          Forward_To_Line_End (End_Iter);
