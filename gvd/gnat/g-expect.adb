@@ -924,7 +924,7 @@ package body GNAT.Expect is
    is
       pragma Warnings (Off);
       function Fork return Process_Id;
-      pragma Import (C, Fork, "ada_g_expect_fork");
+      pragma Import (C, Fork, "__gnat_expect_fork");
       --  Starts a new process if possible.
       --  See the Unix command fork for more information. On systems that
       --  don't support this capability (Windows...), this command does

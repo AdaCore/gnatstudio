@@ -8,7 +8,8 @@
 --                                                                          --
 --                            $Revision$
 --                                                                          --
---           Copyright (C) 2000-2001 Ada Core Technologies, Inc.            --  --                                                                          --
+--           Copyright (C) 2000-2001 Ada Core Technologies, Inc.            --
+--                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
 -- ware  Foundation;  either version 2,  or (at your option) any later ver- --
@@ -362,7 +363,7 @@ package GNAT.Expect is
      (P : GNAT.Regpat.Pattern_Matcher) return Pattern_Matcher_Access;
    --  Allocate some memory for the pattern matcher.
    --  This is only a convenience function to help create the array of
-   --  copmiled regular expressoins.
+   --  compiled regular expressoins.
 
    procedure Expect
      (Descriptor  : in out Process_Descriptor;
@@ -553,6 +554,6 @@ private
       Last_Match_End   : Natural := 0;
    end record;
 
-   pragma Import (C, Portable_Execvp, "ada_g_expect_portable_execvp");
+   pragma Import (C, Portable_Execvp, "__gnat_expect_portable_execvp");
 
 end GNAT.Expect;
