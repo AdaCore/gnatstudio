@@ -130,14 +130,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Splash_Screen), -"General");
 
-      Start_Maximized := Param_Spec_Boolean (Gnew_Boolean
-        (Name    => "General-Start-Maximized",
-         Nick    => -"Start maximized",
-         Blurb   => -"True if GPS window should start in maximized state",
-         Default => True));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Start_Maximized), -"General");
-
       Display_Welcome := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Display-Welcome",
          Nick    => -"Display welcome window",
