@@ -35,8 +35,11 @@ with Projects;             use Projects;
 with Projects.Registry;    use Projects.Registry;
 with Projects.Editor;      use Projects.Editor;
 with Types;                use Types;
+with Traces;               use Traces;
 
 package body Glide_Kernel.Scripts is
+
+   Me : constant Debug_Handle := Create ("Glide_Kernel.Scripts");
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Class_Instance_Record'Class, Class_Instance);
@@ -166,7 +169,8 @@ package body Glide_Kernel.Scripts is
    procedure Register_Command
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command      : String;
-      Usage        : String;
+      Params       : String  := "";
+      Return_Value : String  := "";
       Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
@@ -176,9 +180,17 @@ package body Glide_Kernel.Scripts is
       Tmp : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
+      Assert (Me,
+              Command /= Constructor_Method or else Class /= No_Class,
+              "Constructors can only be specified for classes");
+      Assert (Me,
+              Params = "" or else Params (Params'First) = '(',
+              "Invalid usage string for "
+              & Command & ": must start with '('");
+
       while Tmp /= null loop
          Register_Command
-           (Tmp.Script, Command, Usage, Description,
+           (Tmp.Script, Command, Params, Return_Value, Description,
             Minimum_Args, Maximum_Args, Handler, Class);
          Tmp := Tmp.Next;
       end loop;
@@ -625,8 +637,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "insmod",
-         Usage        =>
-           Parameter_Names_To_Usage (Insmod_Cmd_Parameters, "None"),
+         Params       => Parameter_Names_To_Usage (Insmod_Cmd_Parameters),
          Description  => -"Dynamically register from shared-lib a new module.",
          Minimum_Args => 2,
          Maximum_Args => 2,
@@ -635,7 +646,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "lsmod",
-         Usage        => "() -> list of modules",
+         Return_Value => "list of modules",
          Description  => -"List modules currently loaded.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -644,8 +655,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "dialog",
-         Usage        =>
-           Parameter_Names_To_Usage (Dialog_Cmd_Parameters, "None"),
+         Params       => Parameter_Names_To_Usage (Dialog_Cmd_Parameters),
          Description  =>
            -("Display a modal dialog to report information to a user. This"
              & " blocks the interpreter until the dialog is closed."),
@@ -657,8 +667,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Usage        =>
-           Parameter_Names_To_Usage (File_Cmd_Parameters, "file"),
+         Params       => Parameter_Names_To_Usage (File_Cmd_Parameters),
+         Return_Value => "file",
          Description  => -"Create a new file, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -667,7 +677,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "name",
-         Usage        => "() -> string",
+         Return_Value => "string",
          Description  => -"Return the name of the file",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
@@ -675,8 +685,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Usage        =>
-           Parameter_Names_To_Usage (Entity_Cmd_Parameters, "entity"),
+         Params       => Parameter_Names_To_Usage (Entity_Cmd_Parameters),
+         Return_Value => "entity",
          Description  =>
            -"Create a new entity, from any of its references.",
          Minimum_Args => 2,
@@ -686,14 +696,14 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "name",
-         Usage        => "() -> string",
+         Return_Value => "string",
          Description  => -"Return the name of the entity",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Create_Entity_Command_Handler'Access);
       Register_Command
         (Kernel,
          Command      => "decl_file",
-         Usage        => "() -> GPS.File",
+         Return_Value => "GPS.File",
          Description  =>
            -("Return the file in which the entity is declared. This file's"
              & " name is empty for predefined entities"),
@@ -702,7 +712,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "decl_line",
-         Usage        => "() -> integer",
+         Return_Value => "integer",
          Description  => -("Return the line in decl_file() at which the"
                            & " entity is defined"),
          Class        => Get_Entity_Class (Kernel),
@@ -710,7 +720,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "decl_column",
-         Usage        => "() -> integer",
+         Return_Value => "integer",
          Description  => -("Return the column in decl_file() at which the"
                            & " entity is defined"),
          Class        => Get_Entity_Class (Kernel),
@@ -719,8 +729,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => Constructor_Method,
-         Usage        =>
-           Parameter_Names_To_Usage (Project_Cmd_Parameters,  "project"),
+         Params       => Parameter_Names_To_Usage (Project_Cmd_Parameters),
+         Return_Value => "project",
          Description  =>
            -("Create a project handle, from its name. The project must have"
              & " been loaded already."),
@@ -731,8 +741,8 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "load_project",
-         Usage        =>
-           Parameter_Names_To_Usage (Open_Cmd_Parameters, "project"),
+         Params       => Parameter_Names_To_Usage (Open_Cmd_Parameters),
+         Return_Value => "project",
          Description  =>
            -("Load a new project, which replaces the current project, and"
              & " return a handle to it. All imported projects are also"
@@ -744,14 +754,14 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel,
          Command      => "name",
-         Usage        => "() -> string",
+         Return_Value => "string",
          Description  => -"Return the name of the project",
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel,
          Command      => "ancestor_deps",
-         Usage        => "() -> list",
+         Return_Value => "list",
          Description  =>
            -("Return the list of projects that might contain sources that"
              & " depend on the project's sources. When doing extensive"
@@ -954,7 +964,6 @@ package body Glide_Kernel.Scripts is
 
    function Parameter_Names_To_Usage
      (Parameters            : Cst_Argument_List;
-      Return_Type           : String  := "None";
       Optional_Params_Count : Natural := 0) return String
    is
       Length : Natural := 0;
@@ -966,7 +975,7 @@ package body Glide_Kernel.Scripts is
       Length := Length + Optional_Params_Count * 2;
 
       declare
-         Usage : String (1 .. Length + 4 + Return_Type'Length);
+         Usage : String (1 .. Length);
          Index : Natural := Usage'First + 1;
       begin
          Usage (Usage'First) := '(';
@@ -991,7 +1000,7 @@ package body Glide_Kernel.Scripts is
             end if;
          end loop;
 
-         Usage (Index .. Usage'Last) := ") -> " & Return_Type;
+         Usage (Index .. Usage'Last) := ")";
          return Usage;
       end;
    end Parameter_Names_To_Usage;

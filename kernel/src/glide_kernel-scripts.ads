@@ -270,7 +270,8 @@ package Glide_Kernel.Scripts is
    procedure Register_Command
      (Script       : access Scripting_Language_Record;
       Command      : String;
-      Usage        : String;
+      Params       : String;
+      Return_Value : String;
       Description  : String;
       Minimum_Args : Natural := 0;
       Maximum_Args : Natural := 0;
@@ -292,6 +293,8 @@ package Glide_Kernel.Scripts is
    --  Execute a command in the script language.
    --  It isn't possible to retrieve the result of that command, this command
    --  is only used for its side effect.
+   --  Depending on the language, Command might be a list of commands to
+   --  execute, often semicolon or newline separated.
 
    function Execute_Command
      (Script  : access Scripting_Language_Record;
@@ -301,6 +304,8 @@ package Glide_Kernel.Scripts is
    --  Note: some languages might simply return an empty string if they cannot
    --  capture the output of their interpreter. This command is mostly useful
    --  for the GPS shell.
+   --  Command can never be a list of commands (no semicolon or newline
+   --  separated).
 
    procedure Execute_File
      (Script             : access Scripting_Language_Record;
@@ -341,7 +346,6 @@ package Glide_Kernel.Scripts is
 
    function Parameter_Names_To_Usage
      (Parameters            : Cst_Argument_List;
-      Return_Type           : String  := "None";
       Optional_Params_Count : Natural := 0) return String;
    --  From the list of parameters used for Name_Parameters, create a suitable
    --  Usage string for Register_Command.
@@ -351,7 +355,8 @@ package Glide_Kernel.Scripts is
    procedure Register_Command
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Command      : String;
-      Usage        : String;
+      Params       : String     := "";
+      Return_Value : String     := "";
       Description  : String;
       Minimum_Args : Natural    := 0;
       Maximum_Args : Natural    := 0;
@@ -376,13 +381,18 @@ package Glide_Kernel.Scripts is
    --  second, third,... are the parameters passed to the constructor.
    --  The constructor shouldn't return any value through Set_Return_Value.
    --
-   --  Usage should not include the command name, since the latter might be
-   --  marshalled differently depending on the script language.
-   --  Its recommended format is of the form:
-   --      "(file, [line=1]) -> List"
+   --  Params describes the parameters to the command. Its recommended format
+   --  is the following:
+   --      "(file, [line=1])"
    --  to indicate a function whose first parameter is a file, the second
-   --  parameter is optional and has a default value of 1. The function returns
-   --  a list (when supported by the language), or a string (when lists are not
+   --  parameter is optional and has a default value of 1.
+   --
+   --  The return value of the command is indicated by Return_Value. Its format
+   --  is the following:
+   --     "list"
+   --  The empty string means that the command doesn't return anything.
+   --  In the example above, "list" indicates that the function returns a list
+   --  (when supported by the language), or a string (when lists are not
    --  supported).
 
    procedure Register_Scripting_Language
