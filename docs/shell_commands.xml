@@ -1434,12 +1434,17 @@ format of the gps_index.xml files</description>
       <param name="file_index" default="-1">An integer</param>
       <param name="line_index" default="-1">An integer</param>
       <param name="column_index" default="-1">An integer</param>
-      <param name="msg_index" default="-1">An integer</param>
       <param name="style_index" default="-1">An integer</param>
       <param name="warning_index" default="-1">An integer</param>
+      <paran name="highlight_category" default="">A string</param>
+      <paran name="style_category" default="">A string</param>
+      <paran name="warning_category" default="">A string</param>
       <description>Parse the output of a tool, and suggests auto-fix possibilities whenever possible. This adds small icons in the location window, so that the user can click on it to fix compilation errors. You should call Locations.parse with the same output prior to calling this command.
 The regular expression specifies how locations are recognized. By default, it matches file:line:column. The various indexes indicate the index of the opening parenthesis that contains the relevant information in the regular expression. Set it to 0 if that information is not available.
+highlight_category, style_category and warning_category reference the colors to
+use in the editor to highlight the messages when the regexp has matched. If none of them is specified, no highlighting is done in the editor. Create these categories with GPS.Editor.register_highlighting().
 Access the various suggested fixes through the methods of the Codefix class</description>
+     <see_also name="GPS.Editor.register_highlighting()" />
   </shell_doc>
 
   <shell_doc name="GPS.Codefix.__init__">
