@@ -322,6 +322,11 @@ package body Glide_Result_View is
      (Widget : access Gtk_Widget_Record'Class);
    --  Callback for the activation of the sort contextual menu item.
 
+   function Get_Category_Name
+     (Model    : access Gtk_Tree_Store_Record'Class;
+      Category : Gtk_Tree_Iter) return String;
+   --  Return the name of the category associated with that iterator
+
    -----------
    -- Hooks --
    -----------
@@ -872,6 +877,17 @@ package body Glide_Result_View is
    end Next_Item;
 
    -----------------------
+   -- Get_Category_Name --
+   -----------------------
+
+   function Get_Category_Name
+     (Model    : access Gtk_Tree_Store_Record'Class;
+      Category : Gtk_Tree_Iter) return String is
+   begin
+      return Get_String (Model, Category, Base_Name_Column);
+   end Get_Category_Name;
+
+   -----------------------
    -- Get_Category_File --
    -----------------------
 
@@ -893,13 +909,9 @@ package body Glide_Result_View is
       Category_Iter := Get_Iter_First (Model);
       New_Category := False;
 
-      while Category_Iter /= Null_Iter loop
-         if Get_String
-           (Model, Category_Iter, Base_Name_Column) = Category_UTF8
-         then
-            exit;
-         end if;
-
+      while Category_Iter /= Null_Iter
+        and then Get_Category_Name (Model, Category_Iter) /= Category_UTF8
+      loop
          Next (Model, Category_Iter);
       end loop;
 
@@ -1787,9 +1799,57 @@ package body Glide_Result_View is
       User : Kernel_Handle) return MDI_Child
    is
       pragma Unreferenced (MDI);
+      Child : MDI_Child;
+      View : Result_View;
+      Category, File, Location : Node_Ptr;
    begin
       if Node.Tag.all = "Result_View_Record" then
-         return Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
+         Child := Get_Or_Create_Result_View_MDI (User, Allow_Creation => True);
+         View := Result_View (Get_Widget (Child));
+         Category := Node.Child;
+         while Category /= null loop
+            declare
+               Category_Name : constant String :=
+                 Get_Attribute (Category, "name");
+               File_Name     : Virtual_File;
+            begin
+               File := Category.Child;
+               while File /= null loop
+                  File_Name := Create
+                    (Full_Filename => Get_Attribute (File, "name"));
+
+                  Location := File.Child;
+                  while Location /= null loop
+                     Add_Location
+                       (View     => View,
+                        Model    => View.Tree.Model,
+                        Category => Category_Name,
+                        File     => File_Name,
+                        Line     => Integer'Value
+                          (Get_Attribute (Location, "line", "0")),
+                        Column   => Integer'Value
+                          (Get_Attribute (Location, "column", "0")),
+                        Length   => Integer'Value
+                          (Get_Attribute (Location, "length", "0")),
+                        Highlight => True or else Boolean'Value
+                          (Get_Attribute (Location, "highlight", "False")),
+                        Message  => Get_Attribute (Location, "message", ""),
+                        Highlight_Category =>
+                          Get_Attribute (Location, "category", ""),
+                        Quiet              => True,
+                        Remove_Duplicates  => False,
+                        Enable_Counter     => True);
+                     Location := Location.Next;
+                  end loop;
+
+                  File := File.Next;
+               end loop;
+            end;
+
+            Category := Category.Next;
+         end loop;
+
+         return Child;
       end if;
 
       return null;
@@ -1804,10 +1864,74 @@ package body Glide_Result_View is
      return Node_Ptr
    is
       N : Node_Ptr;
+      View : Result_View;
+      Category, File, Location : Node_Ptr;
+      Category_Iter : Gtk_Tree_Iter;
+      File_Iter     : Gtk_Tree_Iter;
+      Location_Iter : Gtk_Tree_Iter;
    begin
       if Widget.all in Result_View_Record'Class then
          N := new Node;
          N.Tag := new String'("Result_View_Record");
+
+         View := Result_View (Widget);
+         Category_Iter := Get_Iter_First (View.Tree.Model);
+         while Category_Iter /= Null_Iter loop
+            Category := new Node;
+            Category.Tag := new String'("Category");
+            Set_Attribute (Category, "name",
+                           Get_Category_Name
+                             (View.Tree.Model, Category_Iter));
+            Add_Child (N, Category, True);
+
+            File_Iter := Children (View.Tree.Model, Category_Iter);
+            while File_Iter /= Null_Iter loop
+               File := new Node;
+               File.Tag := new String'("File");
+               Add_Child (Category, File, True);
+               Set_Attribute (File, "name",
+                              Get_String (View.Tree.Model, File_Iter,
+                                          Absolute_Name_Column));
+
+               Location_Iter := Children (View.Tree.Model, File_Iter);
+               while Location_Iter /= Null_Iter loop
+                  Location := new Node;
+                  Location.Tag := new String'("Location");
+                  Add_Child (File, Location, True);
+                  Set_Attribute (Location, "line",
+                                 Gint'Image
+                                   (Get_Int (View.Tree.Model, Location_Iter,
+                                             Line_Column)));
+                  Set_Attribute (Location, "column",
+                                 Gint'Image
+                                   (Get_Int (View.Tree.Model, Location_Iter,
+                                             Column_Column)));
+                  Set_Attribute (Location, "length",
+                                 Gint'Image
+                                   (Get_Int (View.Tree.Model, Location_Iter,
+                                             Length_Column)));
+                  Set_Attribute (Location, "message",
+                                 Get_String (View.Tree.Model, Location_Iter,
+                                             Message_Column));
+                  Set_Attribute (Location, "category",
+                                 Get_String
+                                   (View.Tree.Model, Location_Iter,
+                                    Highlight_Category_Column));
+                  Set_Attribute (Location, "highlight",
+                                 Boolean'Image
+                                   (Get_Boolean
+                                      (View.Tree.Model, Location_Iter,
+                                       Highlight_Column)));
+
+                  Next (View.Tree.Model, Location_Iter);
+               end loop;
+
+               Next (View.Tree.Model, File_Iter);
+            end loop;
+
+            Next (View.Tree.Model, Category_Iter);
+         end loop;
+
          return N;
       end if;
 
