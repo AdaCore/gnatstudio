@@ -409,6 +409,8 @@ package body Src_Editor_Box is
          return;
       end if;
 
+      Ref (Entity);
+
       if To_Body then
          Find_Next_Body
            (Entity           => Entity,
@@ -444,6 +446,8 @@ package body Src_Editor_Box is
       end if;
 
       Go_To_Closest_Match (Kernel, Filename, L, C, Entity);
+
+      Unref (Entity);
       Pop_State (Kernel_Handle (Kernel));
 
    exception
