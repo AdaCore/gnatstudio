@@ -11,5 +11,4 @@ project VCS is
       for Default_Switches ("Ada") use ("-g", "-O2", "-gnaty", "-gnatwue");
    end Compiler;
 
-end VCS
-;
+end VCS;
