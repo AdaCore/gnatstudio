@@ -800,11 +800,14 @@ package body GNAT.Expect is
       Buffer_Size : Natural := 4096;
       Err_To_Out  : Boolean := False) return Process_Descriptor
    is
-      Descriptor : Process_Descriptor;
-      Pipe1      : aliased Pipe_Type;
-      Pipe2      : aliased Pipe_Type;
-      Pipe3      : aliased Pipe_Type;
-      Input, Output, Error : File_Descriptor;
+      Descriptor        : Process_Descriptor;
+      Pipe1             : aliased Pipe_Type;
+      Pipe2             : aliased Pipe_Type;
+      Pipe3             : aliased Pipe_Type;
+      Input,
+      Output,
+      Error             : File_Descriptor;
+      Command_With_Path : String_Access;
 
    begin
       --  Create the pipes
@@ -843,8 +846,10 @@ package body GNAT.Expect is
          Close (Pipe3.Output);
       end if;
 
+      Command_With_Path := Locate_Exec_On_Path (Command);
       Descriptor.Pid :=
-        To_Pid (GNAT.OS_Lib.Non_Blocking_Spawn (Command, Args));
+        To_Pid (GNAT.OS_Lib.Non_Blocking_Spawn (Command_With_Path.all, Args));
+      Free (Command_With_Path);
 
       Dup2 (Input,  GNAT.OS_Lib.Standin);
       Close (Input);
