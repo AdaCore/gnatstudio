@@ -35,10 +35,24 @@ with GVD.Types;
 --  side that can contain any widget. This layout is scrolled at the same
 --  time as the widget itself.
 
-package GVD.Text_Boxes is
+package GVD.Text_Box is
 
    type GVD_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with private;
    type GVD_Text_Box is access all GVD_Text_Box_Record'Class;
+
+   procedure Set_Line
+     (Box         : access GVD_Text_Box_Record;
+      Line        : Natural;
+      Set_Current : Boolean := True);
+   --  Set the current line (and draw the button on the side).
+   --  If Set_Current is True, then the line becomes the current line (ie the
+   --  one on which the debugger is stopped). Otherwise, Line is simply the
+   --  line that we want to display in the editor.
+
+   function Get_Line (Box : access GVD_Text_Box_Record) return Natural;
+   --  Return the current line.
+
+private
 
    procedure Gtk_New (Box : out GVD_Text_Box);
    --  Create a new box.
@@ -75,21 +89,9 @@ package GVD.Text_Boxes is
       Chars : in String := "");
    --  Insert some text in the child text.
 
-   procedure Set_Line
-     (Box         : access GVD_Text_Box_Record;
-      Line        : Natural;
-      Set_Current : Boolean := True);
-   --  Set the current line (and draw the button on the side).
-   --  If Set_Current is True, then the line becomes the current line (ie the
-   --  one on which the debugger is stopped). Otherwise, Line is simply the
-   --  line that we want to display in the editor.
-
-   function Get_Line (Box : access GVD_Text_Box_Record) return Natural;
-   --  Return the current line.
-
    function Get_Child
      (Box : access GVD_Text_Box_Record) return Gtk.Text.Gtk_Text;
-   --  Return the child
+   --  Return the child.
 
    function Get_Buttons
      (Box : access GVD_Text_Box_Record) return Gtk.Layout.Gtk_Layout;
@@ -203,11 +205,10 @@ package GVD.Text_Boxes is
    --  The text range is From .. To (related to the underlying buffer), and
    --  is inserted at Widget_From in the text widget.
 
-   function Current_Line_Button (Box : access GVD_Text_Box_Record)
-      return Gtk.Pixmap.Gtk_Pixmap;
+   function Current_Line_Button
+     (Box : access GVD_Text_Box_Record) return Gtk.Pixmap.Gtk_Pixmap;
    --  return the arrow used to indicate the current line
 
-private
    type GVD_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Child               : Gtk.Text.Gtk_Text;
       Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
@@ -231,4 +232,4 @@ private
    end record;
 
    pragma Inline (Current_Line_Button);
-end GVD.Text_Boxes;
+end GVD.Text_Box;

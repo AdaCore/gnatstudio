@@ -41,7 +41,7 @@ with GVD.Preferences;     use GVD.Preferences;
 with GVD.Strings;         use GVD.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-package body GVD.Text_Boxes is
+package body GVD.Text_Box is
 
    package Box_Cb is new Callback (GVD_Text_Box_Record);
    package Box_Event_Cb is new Return_Callback (GVD_Text_Box_Record, Boolean);
@@ -889,4 +889,4 @@ package body GVD.Text_Boxes is
       end if;
    end Set_Font;
 
-end GVD.Text_Boxes;
+end GVD.Text_Box;
