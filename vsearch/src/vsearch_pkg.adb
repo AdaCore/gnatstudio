@@ -91,7 +91,7 @@ begin
    Set_Use_Arrows_Always (Vsearch.Replace_Combo, False);
    --  String_List.Append (Replace_Combo_Items, -"");
    --  Combo.Set_Popdown_Strings (Vsearch.Replace_Combo, Replace_Combo_Items);
-   Free_String_List (Replace_Combo_Items);
+   --  Free_String_List (Replace_Combo_Items);
    Attach (Vsearch.Table, Vsearch.Replace_Combo, 1, 2, 1, 2,
      Expand or Fill, 0,
      2, 0);
@@ -111,7 +111,7 @@ begin
    Set_Use_Arrows_Always (Vsearch.Context_Combo, False);
    --  String_List.Append (Context_Combo_Items, -"");
    --  Combo.Set_Popdown_Strings (Vsearch.Context_Combo, Context_Combo_Items);
-   Free_String_List (Context_Combo_Items);
+   --  Free_String_List (Context_Combo_Items);
    Attach (Vsearch.Table, Vsearch.Context_Combo, 1, 2, 2, 3,
      Expand or Fill, 0,
      2, 0);
