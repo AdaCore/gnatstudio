@@ -243,8 +243,9 @@ package body Vdiff_Module is
    is
       Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
    begin
-      Vdiff_Module_ID := Register_Module
-        (Kernel       => Kernel,
+      Register_Module
+        (Module       => Vdiff_Module_ID,
+         Kernel       => Kernel,
          Module_Name  => Vdiff_Module_Name,
          Priority     => Default_Priority,
          Mime_Handler => Mime_Action'Access);
