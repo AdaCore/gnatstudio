@@ -2320,9 +2320,7 @@ package body Debugger.Gdb is
 
       --  Is there already a block indication ? If yes, do nothing
 
-      if Name_Last < Var'Last
-        and then Var (Name_Last + 1) = ':'
-      then
+      if Name_Last < Var'Last and then Var (Name_Last + 1) = ':' then
          return Var;
       end if;
 
