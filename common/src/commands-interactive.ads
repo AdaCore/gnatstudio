@@ -41,4 +41,12 @@ package Commands.Interactive is
       return Command_Return_Type;
    --  Execute the command non-interactively
 
+   procedure Launch_Synchronous_Interactive
+     (Command : access Interactive_Command'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Wait    : Duration := 0.0);
+   --  Execute the command synchronously.
+   --  This is similar to Commands.Lauch_Synchronous, except it also propagates
+   --  the Event parameter.
+
 end Commands.Interactive;

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Event; use Gdk.Event;
+with Gdk.Event;   use Gdk.Event;
 
 package body Commands.Interactive is
 
@@ -32,5 +32,30 @@ package body Commands.Interactive is
    begin
       return Execute (Interactive_Command_Access (Command), Event => null);
    end Execute;
+
+   ------------------------------------
+   -- Launch_Synchronous_Interactive --
+   ------------------------------------
+
+   procedure Launch_Synchronous_Interactive
+     (Command : access Interactive_Command'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Wait    : Duration := 0.0)
+   is
+      function Execute_Command
+        (Command : Command_Access) return Command_Return_Type;
+
+      function Execute_Command
+        (Command : Command_Access) return Command_Return_Type is
+      begin
+         return Execute
+           (Interactive_Command_Access (Command), Event);
+      end Execute_Command;
+
+      procedure Internal is new Launch_Synchronous_Generic
+        (Execute_Command);
+   begin
+      Internal (Command_Access (Command), Wait);
+   end Launch_Synchronous_Interactive;
 
 end Commands.Interactive;
