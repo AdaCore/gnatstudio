@@ -23,6 +23,8 @@ procedure Display_Help
   (Kernel    : access Kernel_Handle_Record'Class;
    Help_File : VFS.Virtual_File)
 is
+   File : constant String := Full_Name (Help_File, True).all;
+
    function Shell_Open (File : String) return Boolean;
    --  Open file with the associated command registered under Windows.
    --  Return True in case of success.
@@ -58,15 +60,11 @@ is
    end Shell_Open;
 
 begin
-   if Shell_Open (Full_Name (Help_File).all) then
+   if Shell_Open (File) then
       Insert
-        (Kernel,
-         -"Launching default browser to view " & Full_Name (Help_File).all,
-         Mode => Info);
+        (Kernel, -"Launching default browser to view " & File, Mode => Info);
    else
       Insert
-        (Kernel,
-         -"Could not display help file " & Full_Name (Help_File).all,
-         Mode => Error);
+        (Kernel, -"Could not display help file " & File, Mode => Error);
    end if;
 end Display_Help;

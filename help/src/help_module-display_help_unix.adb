@@ -64,12 +64,10 @@ is
          File := new String'(Full_Name (Help_File, True).all);
          Process := Non_Blocking_Spawn (Cmd.all, Args & (1 => File));
          Free (Cmd);
+         Insert
+           (Kernel, (-"Launching ") & Browser & (-" to view ") & File.all,
+            Mode => Info);
          Free (File);
-
-         Insert (Kernel,
-                 (-"Launching ") & Browser & (-" to view ")
-                 & Full_Name (Help_File).all,
-                 Mode => Info);
 
          return Process /= Invalid_Pid;
       end if;
