@@ -334,9 +334,18 @@ package body Glide_Kernel.Project is
          Console.Insert (Handle, S, Mode => Console.Error);
       end Report_Error;
 
+      N : constant String := Project_Name (Get_Project (Handle));
    begin
       Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
+
+      --  The project might have changed if it couldn't be processed in
+      --  Recompute_View. In this case, we must report that is has changed.
+
+      if Project_Name (Get_Project (Handle)) /= N then
+         Project_Changed (Handle);
+      end if;
+
       Project_View_Changed (Handle);
    end Recompute_View;
 
