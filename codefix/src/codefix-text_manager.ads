@@ -790,7 +790,7 @@ package Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : in out Extract'Class) is abstract;
    --  Execute a command, and create an extract to preview the changes.
-   --  If New_Extract is already conaining information, they should be merged
+   --  If New_Extract is already containing information, they should be merged
    --  with new ones.
 
    procedure Free (This : in out Text_Command) is abstract;
