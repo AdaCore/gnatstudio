@@ -1317,7 +1317,9 @@ package body Project_Viewers is
                Selection_Context_Access (Context));
          end if;
 
-         if Has_File_Information (File_Context) then
+         if Has_File_Information (File_Context)
+           and then Has_Project_Information (File_Context)
+         then
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
