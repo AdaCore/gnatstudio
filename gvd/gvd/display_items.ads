@@ -118,9 +118,11 @@ package Display_Items is
 
    procedure Update
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class;
-      Item   : access Display_Item_Record'Class);
+      Item   : access Display_Item_Record'Class;
+      Redisplay_Canvas : Boolean := False);
    --  Unconditionally update the value of Item after parsing the new value.
-   --  This does not redraw the canvas or the item on the canvas.
+   --  This does not redraw the canvas or the item on the canvas, unless
+   --  Redisplay_Canvas is True
 
    procedure Reset_Recursive (Item : access Display_Item_Record'Class);
    --  Calls Reset_Recursive for the entity represented by the item.

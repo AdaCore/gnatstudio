@@ -827,7 +827,8 @@ package body Display_Items is
 
    procedure Update
      (Canvas : access Odd_Canvas_Record'Class;
-      Item   : access Display_Item_Record'Class)
+      Item   : access Display_Item_Record'Class;
+      Redisplay_Canvas : Boolean := False)
    is
       Value_Found : Boolean;
       Was_Visible : Boolean := Get_Visibility (Item.Entity.all);
@@ -852,7 +853,7 @@ package body Display_Items is
 
       Update_Resize_Display
         (Item, Was_Visible, Hide_Big_Items,
-         Redisplay_Canvas => False);
+         Redisplay_Canvas => Redisplay_Canvas);
       Pop_Internal_Command_Status (Get_Process (Item.Debugger.Debugger));
 
       --  If we got an exception while parsing the value, we register the new
