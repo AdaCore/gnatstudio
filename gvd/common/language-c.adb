@@ -653,18 +653,31 @@ package body Language.C is
                elsif Buffer (Index + 1) = '*' then
                   --  Skip comment
 
-                  Index := Index + 3;
                   Start_Char := Char_In_Line;
-                  Char_In_Line := Char_In_Line + 3;
                   Line_Start := Line;
+
+                  Index := Index + 2;
+                  Char_In_Line := Char_In_Line + 2;
+
+                  if Buffer (Index) = ASCII.LF then
+                     Line := Line + 1;
+                     Char_In_Line := 0;
+                  end if;
+
+                  --  Skip the first character, so that the following test that
+                  --  test a '*' doesn't see the one after the opening of the
+                  --  comment
+
+                  Index := Index + 1;
+                  Char_In_Line := Char_In_Line + 1;
 
                   while Index < Buffer'Last
                     and then (Buffer (Index - 1) /= '*'
-                      or else Buffer (Index) /= '/')
+                              or else Buffer (Index) /= '/')
                   loop
                      if Buffer (Index) = ASCII.LF then
                         Line := Line + 1;
-                        Char_In_Line := 1;
+                        Char_In_Line := 0;
                      end if;
 
                      Index := Index + 1;
