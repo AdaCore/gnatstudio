@@ -3,6 +3,7 @@ CC = @CC@
 CFLAGS = -g -O2
 
 all: pixmaps.o
+static: all
 
 pixmaps.o: pixmaps.c \
   arrow_xpm box_xpm breakat_xpm cancel_xpm cont_xpm display_xpm \

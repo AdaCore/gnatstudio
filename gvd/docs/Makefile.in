@@ -8,6 +8,8 @@ IMAGES = "assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
 breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif"
 
 all: doc clean-temp-files
+static:
+
 doc: gvd.texi
 	echo x | tex gvd.texi
 	texindex gvd.cp

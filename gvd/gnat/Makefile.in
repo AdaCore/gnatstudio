@@ -3,6 +3,7 @@ CFLAGS = -g -O2
 ALL_CFLAGS=$(CFLAGS) @DEFS@ -DSYSTEM_INCLUDE=@opsysfile@
 
 all: g-expect.o gexpect.o g-regpat.o gexpect_tty.o g-exptty.o
+static: all
 
 g-expect.o: g-expect.adb g-expect.ads
 	$(CC) -c -gnatg $(CFLAGS) $<
