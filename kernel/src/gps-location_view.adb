@@ -62,6 +62,7 @@ with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with Pixmaps_IDE;              use Pixmaps_IDE;
 with GPS.Intl;               use GPS.Intl;
 with VFS;                      use VFS;
+with Commands.Interactive;     use Commands.Interactive;
 
 with Traces;                   use Traces;
 with Commands;                 use Commands;
@@ -251,7 +252,11 @@ package body GPS.Location_View is
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Location_View.
 
-   procedure Clear (Object   : access Gtk_Widget_Record'Class);
+   type Clear_Locations_View_Command is new Interactive_Command
+      with null record;
+   function Execute
+     (Command : access Clear_Locations_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
    --  Remove everything in the Location_View.
 
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
@@ -733,25 +738,6 @@ package body GPS.Location_View is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end Remove_Category;
-
-   -----------
-   -- Clear --
-   -----------
-
-   procedure Clear (Object   : access Gtk_Widget_Record'Class) is
-      View  : constant Location_View := Location_View (Object);
-      Iter  : Gtk_Tree_Iter;
-   begin
-      loop
-         Iter := Get_Iter_First (View.Tree.Model);
-         exit when Iter = Null_Iter;
-         Remove_Category_Or_File_Iter (View, Iter);
-      end loop;
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Clear;
 
    ---------------
    -- Fill_Iter --
@@ -1340,20 +1326,13 @@ package body GPS.Location_View is
          end;
       end if;
 
-      Gtk_New (Mitem, -"Clear Locations View");
-      Gtkada.Handlers.Widget_Callback.Object_Connect
-        (Mitem, "activate", Clear'Access, Explorer,
-         After => False);
-      Append (Menu, Mitem);
-
       if Location /= null then
          Gtk_New (Mitem);
          Append (Menu, Mitem);
       end if;
 
       Path_Free (Path);
-      return
-        Selection_Context_Access (Location);
+      return Selection_Context_Access (Location);
    end Context_Func;
 
    -----------------
@@ -2054,21 +2033,54 @@ package body GPS.Location_View is
       return null;
    end Save_Desktop;
 
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Clear_Locations_View_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Command);
+      View : constant Location_View := Location_View
+        (Get_Child
+           (Get_Focus_Child (Get_MDI (Get_Kernel (Context.Context)))));
+      Iter : Gtk_Tree_Iter;
+   begin
+      loop
+         Iter := Get_Iter_First (View.Tree.Model);
+         exit when Iter = Null_Iter;
+         Remove_Category_Or_File_Iter (View, Iter);
+      end loop;
+      return Commands.Success;
+   end Execute;
+
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+   is
+      Module_Name : constant String := "Location View";
+      Command : Interactive_Command_Access;
    begin
       Register_Module
         (Module      => Location_View_Module_Id,
          Kernel      => Kernel,
-         Module_Name => "Location View");
+         Module_Name => Module_Name);
 
       Add_Hook (Kernel, Location_Action_Hook, Location_Hook'Access);
       GPS.Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Command := new Clear_Locations_View_Command;
+      Register_Contextual_Menu
+        (Kernel,
+         Name        => "Clear Locations View",
+         Label       => -"Clear Locations View",
+         Filter      => Create (Module => Module_Name),
+         Action      => Command);
 
       Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
