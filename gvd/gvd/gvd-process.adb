@@ -76,7 +76,6 @@ with GVD.Types;                  use GVD.Types;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Preferences;            use GVD.Preferences;
 with GVD.Window_Settings;        use GVD.Window_Settings;
-with GVD.Status_Bar;             use GVD.Status_Bar;
 with GVD.Utils;                  use GVD.Utils;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
@@ -147,21 +146,6 @@ package body GVD.Process is
    Graph_Cmd_Format3 : constant Pattern_Matcher := Compile
      ("graph\s+undisplay\s+(.*)", Case_Insensitive);
    --  Third possible set of commands
-
-   --------------------
-   -- Post processes --
-   --------------------
-   --  Some commands cannot be done until the debugger command is terminated.
-   --  Therefore, we register a "post command", to be executed when the current
-   --  call to Wait or Wait_Prompt is finished.
-
-   function To_Process is new
-     Ada.Unchecked_Conversion (System.Address, Debugger_Process_Tab);
-
-   procedure Final_Post_Process (User_Data : System.Address);
-   --  Final post processing.
-   --  Call the appropriate filters and reset Current_Output.
-   --  User_Data is a debugger process tab.
 
    -----------------------
    -- Local Subprograms --
@@ -464,8 +448,8 @@ package body GVD.Process is
       --  time for the text widget to scroll smoothly otherwise (lots of
       --  events...)
       Set_Value (Get_Vadj (Process.Debugger_Text),
-                 Get_Upper (Get_Vadj (Process.Debugger_Text))
-                 - Get_Page_Size (Get_Vadj (Process.Debugger_Text)));
+                 Get_Upper (Get_Vadj (Process.Debugger_Text)) -
+                   Get_Page_Size (Get_Vadj (Process.Debugger_Text)));
 
       --  Note: we can not systematically modify Process.Edit_Pos in this
       --  function, since otherwise the history (up and down keys in the
@@ -483,8 +467,9 @@ package body GVD.Process is
    -- Final_Post_Process --
    ------------------------
 
-   procedure Final_Post_Process (User_Data : System.Address) is
-      Process     : constant Debugger_Process_Tab := To_Process (User_Data);
+   procedure Final_Post_Process
+     (Process : access Debugger_Process_Tab_Record'Class)
+   is
       File_First  : Natural := 0;
       File_Last   : Positive;
       Line        : Natural := 0;
@@ -493,7 +478,7 @@ package body GVD.Process is
       Addr_Last   : Natural;
 
    begin
-      if Process.Current_Output = null then
+      if Process.Post_Processing or else Process.Current_Output = null then
          return;
       end if;
 
@@ -538,7 +523,7 @@ package body GVD.Process is
             Process.Current_Output (Addr_First .. Addr_Last));
       end if;
 
-      if Visible_Is_Set (Process.Stack_List) then
+      if Get_Active (Process.Window.Call_Stack) then
          Found_Frame_Info
            (Process.Debugger, Process.Current_Output.all, First, Last);
 
@@ -556,7 +541,6 @@ package body GVD.Process is
       --  initialize the list).
 
       if File_First /= 0 then
-
          if Process.Breakpoints /= null
            and then Process.Breakpoints'Length > 0
          then
@@ -937,9 +921,8 @@ package body GVD.Process is
             new Gui_Process_Proxy,
             Window.all'Access, Remote_Host, Remote_Target,
             Remote_Protocol, Debugger_Name);
-         Print_Message
-           (Window.Statusbar1, Error,
-            (-" Could not find file: ") & Executable);
+         Output_Error
+           (Window.all'Access, (-" Could not find file: ") & Executable);
       end if;
 
       --  Initialize the code editor.
@@ -1331,8 +1314,7 @@ package body GVD.Process is
 
    exception
       when Constraint_Error =>
-         Print_Message
-           (Process.Window.Statusbar1, Error, (-" Invalid command: ") & Cmd);
+         Output_Error (Process.Window, (-" Invalid command: ") & Cmd);
    end Process_View_Cmd;
 
    --------------------
@@ -1424,22 +1406,19 @@ package body GVD.Process is
          Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
+         Set_Busy_Cursor (Debugger, False);
 
-      elsif Looking_At (Lowered_Command, First, "view ") then
+      elsif Looking_At (Lowered_Command, First, "view") then
          Pre_User_Command;
          Process_View_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
+         Set_Busy_Cursor (Debugger, False);
 
       elsif Lowered_Command = "quit" then
          Close_Debugger (Debugger);
       else
          --  Regular debugger command, send it.
-
-         Send
-           (Debugger.Debugger, Command,
-            Wait_For_Prompt =>
-              not Command_In_Process (Get_Process (Debugger.Debugger)),
-            Mode => Mode);
+         Send (Debugger.Debugger, Command, Mode => Mode);
       end if;
    end Process_User_Command;
 
@@ -1626,20 +1605,6 @@ package body GVD.Process is
       return Gint (Tab.Debugger_Num);
    end Get_Num;
 
-   ---------------
-   -- Send_Init --
-   ---------------
-
-   procedure Send_Init (Process : access Debugger_Process_Tab_Record'Class) is
-   begin
-      if not Process.Post_Processing then
-         Register_Post_Cmd
-           (Get_Process (Process.Debugger),
-            Final_Post_Process'Access,
-            Process.all'Address);
-      end if;
-   end Send_Init;
-
    -------------------------
    -- Preferences_Changed --
    -------------------------
@@ -1669,11 +1634,12 @@ package body GVD.Process is
          Delete_Text (Process.Debugger_Text);
          Handler_Unblock
            (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
-         Insert (Process.Debugger_Text,
-                 Process.Debugger_Text_Font,
-                 Black (Get_System),
-                 Null_Color,
-                 Str);
+         Insert
+           (Process.Debugger_Text,
+            Process.Debugger_Text_Font,
+            Black (Get_System),
+            Null_Color,
+            Str);
          Thaw (Process.Debugger_Text);
       end if;
 
@@ -1682,6 +1648,7 @@ package body GVD.Process is
            (Get_Parent (Get_Widget (Get_Source (Process.Editor_Text))));
          Detach (Get_Source (Process.Editor_Text));
          Process.Separate_Data := not Process.Separate_Data;
+
          if Process.Separate_Data then
             Ref (Process.Data_Paned);
             Dock_Remove (Process.Data_Editor_Paned, Process.Data_Paned);
@@ -1695,6 +1662,7 @@ package body GVD.Process is
             Add1 (Process.Data_Editor_Paned, Process.Data_Paned);
             Unref (Process.Data_Paned);
          end if;
+
          Attach (Get_Source (Process.Editor_Text), Parent);
       end if;
    end Preferences_Changed;
@@ -1704,20 +1672,19 @@ package body GVD.Process is
    -------------------------
 
    procedure Update_Editor_Frame
-     (Process : access Debugger_Process_Tab_Record)
-   is
-      --  Align : Gfloat;
+     (Process : access Debugger_Process_Tab_Record) is
    begin
       --  Set the label text.
-      Set_Text (Process.Editor_Label,
-                Base_File_Name (Get_Current_File (Process.Editor_Text)));
+      Set_Text
+        (Process.Editor_Label,
+         Base_File_Name (Get_Current_File (Process.Editor_Text)));
 
       --  Align the label on top of the source editor.
-      Set_USize (Gtk_Widget (Process.Explorer_Separator),
-                 Gint (Get_Allocation_Width (Process.Editor_Text))
-                 - Get_Window_Size (Process.Editor_Text),
-                 0);
-
+      Set_USize
+        (Gtk_Widget (Process.Explorer_Separator),
+         Gint (Get_Allocation_Width (Process.Editor_Text)) -
+           Get_Window_Size (Process.Editor_Text),
+         0);
    end Update_Editor_Frame;
 
 end GVD.Process;

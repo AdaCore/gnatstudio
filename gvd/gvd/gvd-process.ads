@@ -155,8 +155,7 @@ package GVD.Process is
 
       Input_Id                : Glib.Gint := 0;
 
-      Backtrace_Mask : Stack_List_Mask :=
-        Subprog_Name or Params;
+      Backtrace_Mask : Stack_List_Mask := Subprog_Name or Params;
       --  What columns to be displayed in the stack list window
 
       Current_Command         : String_Access;
@@ -274,10 +273,10 @@ package GVD.Process is
    --  Create (if necessary) and reset the contextual menu used in the
    --  debugger command window.
 
-   procedure Send_Init (Process : access Debugger_Process_Tab_Record'Class);
-   --  Call this procedure before each command sent to the debugger.
-   --  This will take care of setting up appropriate data to handle filters
-   --  properly.
+   procedure Final_Post_Process
+     (Process : access Debugger_Process_Tab_Record'Class);
+   --  Final post processing.
+   --  Call the appropriate filters and reset Current_Output.
 
    procedure Set_Busy_Cursor
      (Debugger : access Debugger_Process_Tab_Record'Class;
