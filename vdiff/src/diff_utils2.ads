@@ -98,6 +98,10 @@ package Diff_Utils2 is
       Item   : in out Diff_Head);
    --  Execute diff on Item
 
+   Null_Head : constant Diff_Head :=
+     (Diff_Chunk_List.Null_List, VFS.No_File, VFS.No_File,
+      VFS.No_File, Diff_Chunk_List.Null_Node, 2, VFS.No_File);
+
    procedure Free is
       new Ada.Unchecked_Deallocation (Diff_Head, Diff_Head_Access);
    --  Free the memory associated with the head of the list Link.
