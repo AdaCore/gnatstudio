@@ -57,6 +57,27 @@ package body Src_Info is
    --  Return a pointer to the file info whose File_Name matches
    --  Return null if such unit could not be found.
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Scope : in out Scope_List) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Scope_Node, Scope_List);
+      L : Scope_List;
+   begin
+      while Scope /= null loop
+         L     := Scope;
+         Scope := Scope.Sibling;
+
+         if L.Typ = Declaration then
+            Free (L.Contents);
+         end if;
+
+         Unchecked_Free (L);
+      end loop;
+   end Free;
+
    ----------------------------
    -- Get_Separate_File_Info --
    ----------------------------
@@ -441,6 +462,7 @@ package body Src_Info is
       Free (FI.Unit_Name);
       Free (FI.Source_Filename);
       Free (FI.Original_Filename);
+      Free (FI.Scope_Tree);
    end Destroy;
 
    procedure Destroy (FIP : in out File_Info_Ptr) is
