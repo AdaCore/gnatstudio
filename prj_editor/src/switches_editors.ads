@@ -1,14 +1,11 @@
-with Gtk.Frame;
-with GNAT.OS_Lib;  use GNAT.OS_Lib;
-with Switches_Editor_Pkg;
+with Gtk.Widget;
+with GNAT.OS_Lib;
+with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 
 package Switches_Editors is
 
-   type Switches_Editor_Record is new Gtk.Frame.Gtk_Frame_Record with private;
-   type Switches_Editor is access all Switches_Editor_Record'Class;
-
-   type Switches_Array is array (Positive range <>) of String_Access;
-   --  Array that contains the switches set in the editor.
+   type Switches_Edit_Record is new Switches_Editor_Record with private;
+   type Switches_Edit is access all Switches_Edit_Record'Class;
 
    type Page_Filter is mod 2 ** 4;
    Gnatmake_Page : constant Page_Filter := 2 ** 0;
@@ -18,39 +15,49 @@ package Switches_Editors is
    All_Pages     : constant Page_Filter :=
      Gnatmake_Page or Compiler_Page or Binder_Page or Linker_Page;
 
-   procedure Gtk_New
-     (Editor : out Switches_Editor;
-      Pages  : Page_Filter := All_Pages);
-   --  Creates a new switches editor.
+   type Tool_Names is (Gnatmake, Compiler, Binder, Linker);
 
-   procedure Initialize
-     (Editor : access Switches_Editor_Record'Class;
-      Pages  : Page_Filter := All_Pages);
-   --  Internal function used to create the editor
+   procedure Gtk_New (Editor : out Switches_Edit);
+   --  Create a new switches editor
 
-   function Get_Switches (Editor : access Switches_Editor_Record)
-      return Switches_Array;
-   --  Return the switches set in the editor.
-   --  If several pages were displayed in the explorer, the syntax used is
-   --  gnatmake's syntax, ie the groups are separated with -largs, ...
-   --  However, if a single page is displayed (for instance the compiler), then
-   --  the switches are returned as is.
-   --  Note: *Do not free the array or modify the strings* since the strings
-   --  point to internal copies.
+   procedure Destroy_Pages
+     (Editor : access Switches_Edit_Record; Pages : Page_Filter);
+   --  Destroy specific pages in the editor, and remove them from the display
+
+   function Get_Window
+     (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget;
+   --  Return the window to use to insert the editor in a parent container.
+   --  You should not use Editor itself, which is a top-level window.
+   --  Likewise, you shouldn't call Show_All on the editor itself, but rather
+   --  on the window.
+
+   function Get_Switches
+     (Editor : access Switches_Edit_Record; Tool : Tool_Names)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the switches set in the editor for one of the specific tools.
+   --  It is your responsability to free the strings.
+
+   procedure Free (Switches : in out GNAT.OS_Lib.Argument_List);
+   procedure Free (Switches : in out GNAT.OS_Lib.Argument_List_Access);
+   --  Free all the strings in Switches
 
    procedure Set_Switches
-     (Editor   : access Switches_Editor_Record;
-      Switches : Switches_Array);
-   --  Set the initial value for the switches.
-   --  If more than one page is displayed in the editor, you need to separate
-   --  each group with "-largs", ... appropriately.
+     (Editor   : access Switches_Edit_Record;
+      Tool     : Tool_Names;
+      Switches : GNAT.OS_Lib.Argument_List);
+   --  Set the initial value for the switches, for a specific tool
 
+   procedure Filter_Switches
+     (Editor   : access Switches_Edit_Record;
+      Tool     : Tool_Names;
+      Switches : in out GNAT.OS_Lib.Argument_List);
+   --  Remove from Switches all the switches that can be set directly from
+   --  the GUI. As a result, on exit Switches will only contain non-null
+   --  values for the switches that were set manually by the user
 
 private
-   type Switches_Editor_Record is new Gtk.Frame.Gtk_Frame_Record with record
-      Full  : Switches_Editor_Pkg.Switches_Editor_Access;
-      Pages : Page_Filter;
-      Num_Pages : Natural;
+   type Switches_Edit_Record is new Switches_Editor_Record with record
+      Pages : Page_Filter := All_Pages;
    end record;
 
 end Switches_Editors;
