@@ -61,6 +61,10 @@ package Task_Manager is
       Pop_Command  : Command_Access);
    --  Set the commands used to push/pop the busy state.
 
+   procedure Destroy
+     (Manager : Task_Manager_Access);
+   --  Free all memory associated to the task manager.
+
 private
    type Queue_Status is (Not_Started, Running, Paused, Completed, Interrupted);
 
@@ -122,7 +126,6 @@ private
 
       Push_Command, Pop_Command : Command_Access;
       --  Commands used to push/pop the "busy" state.
-      --  ??? Memory associated to these commands is never freed.
    end record;
 
 end Task_Manager;

@@ -462,4 +462,28 @@ package body Task_Manager is
       Manager.Pop_Command := Pop_Command;
    end Set_Busy_Commands;
 
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy
+     (Manager : Task_Manager_Access) is
+   begin
+      if Manager.Queues /= null then
+         for J in Manager.Queues'Range loop
+            Command_Queues.Free (Manager.Queues (J).Queue);
+         end loop;
+
+         Unchecked_Free (Manager.Queues);
+      end if;
+
+      if Manager.Push_Command /= null then
+         Destroy (Manager.Push_Command);
+      end if;
+
+      if Manager.Pop_Command /= null then
+         Destroy (Manager.Pop_Command);
+      end if;
+   end Destroy;
+
 end Task_Manager;
