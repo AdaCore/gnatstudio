@@ -388,6 +388,8 @@ package body Src_Editor_Module is
                Src_Editor_Module_Name,
                Infos);
          end if;
+
+         Unchecked_Free (Infos);
       end if;
    end On_Lines_Revealed;
 
