@@ -24,7 +24,6 @@ with GPS.Kernel.Project;        use GPS.Kernel.Project;
 with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Intl;                  use GPS.Intl;
 with Glib.Object;               use Glib.Object;
 with VFS;                       use VFS;
@@ -446,7 +445,7 @@ package body Docgen_Module is
                   Docgen.Backend.Get_Extension (B));
       Generate (Kernel, Source_File_List, B);
       VFS.Unchecked_Free (Sources);
-      Type_Source_File_Table.Reset (Source_File_List);
+      --  Type_Source_File_Table.Reset (Source_File_List);
 
       Trace (Me, "Done generating for project");
 
@@ -645,14 +644,6 @@ package body Docgen_Module is
          List,
          Kernel,
          Docgen_Module (Docgen_Module_Id).Options);
-      Type_Source_File_Table.Reset (List);
-
-      Open_Html
-        (Kernel,
-         Filename => Create
-           (Full_Filename =>
-              Get_Doc_Directory (Backend, Kernel)
-            & "index" & Get_Extension (Backend)));
 
       Pop_State (Kernel);
 
