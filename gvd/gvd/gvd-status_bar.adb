@@ -187,8 +187,10 @@ package body GVD.Status_Bar is
          Set_Editable (Text, False);
 
          Freeze (Text);
-         Insert (Text, Chars => -"Recent messages (most recent first):"
-                 & ASCII.LF & ASCII.LF);
+         Insert
+           (Text,
+            Chars =>
+              -"Recent messages (most recent first):" & ASCII.LF & ASCII.LF);
 
          --  Skip one message if it is a blank string
          if Status.Is_Blank then
@@ -213,8 +215,8 @@ package body GVD.Status_Bar is
          Show (Text);
 
          --  Reserve a minimal size
-         --  ??? The text widget should be able to automatically give a correct
-         --  width, but it doesn't.
+         --  ??? The text widget should be able to automatically give a
+         --  correct width, but it doesn't.
          Set_Default_Size
            (Status.History_Win,
             Gint'Min (Gint (Get_Allocation_Width (Status.Status)), 500),

@@ -457,11 +457,7 @@ begin
 
                if Buffer (Index + 1) = 'H' then
                   Send
-                    (Tab.Debugger,
-                     Buffer (Index + 3 .. Last),
-                     Wait_For_Prompt => True,
-                     Mode => Hidden);
-
+                    (Tab.Debugger, Buffer (Index + 3 .. Last), Mode => Hidden);
                else
                   Process_User_Command
                     (Tab, Buffer (Index + 3 .. Last),

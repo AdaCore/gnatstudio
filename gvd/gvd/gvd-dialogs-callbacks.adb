@@ -156,7 +156,7 @@ package body GVD.Dialogs.Callbacks is
    procedure On_Question_Close_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      Dialog      : constant Question_Dialog_Access :=
+      Dialog : constant Question_Dialog_Access :=
         Question_Dialog_Access (Get_Toplevel (Object));
    begin
       --  Send the interrupt signal to the debugger, so that it does not keep
@@ -213,6 +213,7 @@ package body GVD.Dialogs.Callbacks is
                Add (History_Dialog.List, Item);
             end;
          end if;
+
          Selected := Next (Selected);
       end loop;
 
