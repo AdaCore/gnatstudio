@@ -33,7 +33,6 @@ with Open_Session_Pkg.Callbacks; use Open_Session_Pkg.Callbacks;
 with Ada.Text_IO; use Ada.Text_IO;
 with Unchecked_Deallocation;
 with Debugger;            use Debugger;
-with Gtk.Notebook;        use Gtk.Notebook;
 with Odd.Process;         use Odd.Process;
 with Open_Program_Pkg; use Open_Program_Pkg;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
