@@ -1576,6 +1576,11 @@ for instance in the file selector), and then press the special
 activation key (by default @key{control-o}, controlled by a
 preference), this name is removed from the source editor, and replaced
 by the text you have associated with it.
+Alias names may be composed of any character, but must start with a
+letter. GPS will jump to the start of each word before the current
+cursor position, and if the characters between this word start and the
+cursor position is an alias name, this alias is expanded.
+
 
 The aliases editor has the following aspect:
 
@@ -1591,7 +1596,9 @@ The aliases editor has the following aspect:
 
 It is divided into three main parts: on the left side, the list of
 currently defined aliases is shown. Clicking on any of them will
-display the replacement text for this alias.
+display the replacement text for this alias. If you click again the
+selected alias, GPS displays a text entry which you can use to rename
+an existing alias. Alias names must start with a letter.
 
 The second part is the expansion text for the alias, at the bottom
 right corner. This replacement text can used multiple lines, and
@@ -1633,9 +1640,11 @@ This is the name you use in the expansion text of the alias in the
 This specifies whether the default value of the parameter comes from
 the list of environment variables set before GPS was started.
 
-@item Initial value
+@item default value
 Instead of getting the default value from the environment variable,
 you can also specify a fixed text.
+Clicking on the initial value of the currently selected variable opens
+a text entry which you can use to edit this default value.
 
 @end table
 
