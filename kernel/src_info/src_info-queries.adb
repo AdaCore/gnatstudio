@@ -1971,11 +1971,7 @@ package body Src_Info.Queries is
       D : constant E_Declaration_Info_List := Get_Declarations_From_File
         (Lib_Info, Get_Declaration_File_Of (Entity));
    begin
-      if D = null then
-         return null;
-      else
-         return Find_Declaration (D, Entity);
-      end if;
+      return Find_Declaration (D, Entity);
    end Find_Declaration_In_LI;
 
    --------------------------------------------
@@ -3062,6 +3058,7 @@ package body Src_Info.Queries is
 
          Decl := Decl.Next;
       end loop;
+
       return null;
    end Get_Declaration;
 
@@ -3640,9 +3637,6 @@ package body Src_Info.Queries is
 
          if Parent /= null then
             if Parent.Value = Predefined_Entity_Location then
-               Trace
-                 (Me, "Process_Parents: Found a predefined entity: "
-                  & Get_String (Parent.Predefined_Entity_Name));
                return Create
                  (File   => VFS.No_File,
                   Line   => 1,
@@ -3657,6 +3651,14 @@ package body Src_Info.Queries is
                return Find_Declaration_In_LI_Or_Dependencies
                  (Lib_Info, Parent.Value);
             end if;
+         else
+            Trace (Me, "Process_Parents: Type has no parent "
+                   & Get_Name (Entity) & ' '
+                   & Base_Name (Get_Declaration_File_Of (Entity))
+                   & Get_Declaration_Line_Of (Entity)'Img
+                   & Get_Declaration_Column_Of (Entity)'Img
+                   & ' ' & Full_Name (Get_LI_Filename (Lib_Info)).all);
+            return No_Entity_Information;
          end if;
       end if;
 
