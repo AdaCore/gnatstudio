@@ -51,7 +51,7 @@ package body Make_Test_Window_Pkg.Callbacks is
    begin
       Hide (Get_Toplevel (Object));
       Main_Quit;
-      return False;
+      return True;
    end On_Make_Test_Window_Delete_Event;
 
    ----------------------------

@@ -47,7 +47,7 @@ package body Explorer_Window_Pkg.Callbacks is
    is
    begin
       Hide (Get_Toplevel (Object));
-      return False;
+      return True;
    end On_Explorer_Window_Delete_Event;
 
    -------------------------

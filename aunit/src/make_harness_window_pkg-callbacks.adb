@@ -49,6 +49,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
    begin
+      Hide (Get_Toplevel (Object));
       Main_Quit;
       return True;
    end On_Make_Harness_Window_Delete_Event;
