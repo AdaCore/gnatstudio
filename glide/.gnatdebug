@@ -9,5 +9,6 @@ DEBUG.ENCLOSING_ENTITY=no
 --  List of all the handles defined in the application
 KERNEL.BROWSER=yes
 PRJ_API=yes
+PRJ_NORMALIZE=yes
 SRC_INFO=yes
 SRC_INFO.ALI=yes
