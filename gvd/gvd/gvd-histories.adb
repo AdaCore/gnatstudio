@@ -19,55 +19,34 @@
 -----------------------------------------------------------------------
 
 with System; use System;
-with Unchecked_Conversion;
 
 package body Odd.Histories is
 
    use Hlist;
 
-   -------------
-   -- Convert --
-   -------------
-
-   function Convert (Value : Data_Access) return System.Address is
-   begin
-      if Value = null then
-         return Null_Address;
-      else
-         return Value.all'Address;
-      end if;
-   end Convert;
-
-   -------------
-   -- Convert --
-   -------------
-
-   function Convert (Value : System.Address) return Data_Access is
-      function To_Pointer is new Unchecked_Conversion (Address, Data_Access);
-   begin
-      return To_Pointer (Value);
-   end Convert;
-
    ------------
    -- Append --
    ------------
 
-   procedure Append (History : in out History_List;
-                     Data    : Data_Type) is
+   procedure Append
+     (History : in out History_List;
+      Data    : Data_Type) is
    begin
       if History.List = Null_List then
-         Hlist.Append (History.List,
-                       new Data_Record' (Data => new Data_Type' (Data),
-                                         Num_Repeats => 1));
+         Hlist.Append
+           (History.List,
+            new Data_Record'
+              (Data => new Data_Type' (Data), Num_Repeats => 1));
 
       elsif Hlist.Get_Data (Hlist.Last (History.List)).Data.all = Data then
          Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats :=
            Hlist.Get_Data (Hlist.Last (History.List)).Num_Repeats + 1;
 
       else
-         Hlist.Append (History.List,
-                       new Data_Record' (Data => new Data_Type' (Data),
-                                         Num_Repeats => 1));
+         Hlist.Append
+           (History.List,
+            new Data_Record'
+              (Data => new Data_Type' (Data), Num_Repeats => 1));
       end if;
 
       History.Current := Hlist.Last (History.List);
@@ -113,10 +92,13 @@ package body Odd.Histories is
             if History.Position = Inside_History then
                History.Position := Before_Beginnning;
             end if;
+
             raise No_Such_Item;
+
          else
             History.Current := Hlist.Prev (History.Current);
          end if;
+
       else
          raise No_Such_Item;
       end if;
@@ -135,10 +117,12 @@ package body Odd.Histories is
             if History.Position = Inside_History then
                History.Position := After_End;
             end if;
+
             raise No_Such_Item;
          else
             History.Current := Next (History.Current);
          end if;
+
       else
          raise No_Such_Item;
       end if;
@@ -175,11 +159,9 @@ package body Odd.Histories is
    ----------
 
    procedure Free (History : in out History_List) is
-      --  procedure Free_Data_Pointer is new Unchecked_Deallocation
-      --  (Data_Type, Data_Pointer);
    begin
-         Hlist.Free (History.List);
-         --  ??? is this enough ?
+      Hlist.Free (History.List);
+      --  ??? is this enough ?
    end Free;
 
 end Odd.Histories;

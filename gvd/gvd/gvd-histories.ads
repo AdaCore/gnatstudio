@@ -35,6 +35,7 @@
 
 with Glib.Glist; use Glib.Glist;
 with System;
+with Unchecked_Conversion;
 
 generic
    type Data_Type (<>) is private;
@@ -97,8 +98,8 @@ private
 
    for Data_Access'Size use Standard'Address_Size;
 
-   function Convert (Value : Data_Access) return System.Address;
-   function Convert (Value : System.Address) return Data_Access;
+   function Convert is new Unchecked_Conversion (Data_Access, System.Address);
+   function Convert is new Unchecked_Conversion (System.Address, Data_Access);
 
    package Hlist is new Glib.Glist.Generic_List (Data_Access);
 
