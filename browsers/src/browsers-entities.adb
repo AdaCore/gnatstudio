@@ -25,7 +25,6 @@ with GNAT.Strings;         use GNAT.Strings;
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Browsers.Canvas;      use Browsers.Canvas;
 with Traces;               use Traces;
 with Glide_Intl;           use Glide_Intl;
@@ -175,13 +174,10 @@ package body Browsers.Entities is
    procedure On_Show_Source (Browser : access Gtk_Widget_Record'Class);
    --  Display a source editor to show the declaration of the entity
 
-   procedure Find_Parent_Types
-     (Event : Gdk_Event; Item  : access Browser_Item_Record'Class);
+   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class);
    --  Display the parent types for the item
 
-   procedure Find_Children_Types
-     (Event : Gdk_Event;
-      Item  : access Browser_Item_Record'Class);
+   procedure Find_Children_Types (Item  : access Arrow_Item_Record'Class);
    --  Display the children types for the item
 
    procedure Hide_Show_Inherited
@@ -388,10 +384,6 @@ package body Browsers.Entities is
       Initialize (Browser, Kernel, Create_Toolbar => False);
 
       --  ??? Should be freed when browser is destroyed.
-      Browser.Up_Arrow := Render_Icon
-        (Browser, Stock_Go_Up, Icon_Size_Menu);
-      Browser.Down_Arrow := Render_Icon
-        (Browser, Stock_Go_Down, Icon_Size_Menu);
       Browser.Primitive_Button := Render_Icon
         (Browser, Stock_Properties, Icon_Size_Menu);
 
@@ -478,8 +470,8 @@ package body Browsers.Entities is
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
       Entity  : Entity_Information) is
    begin
-      Initialize (Item, Browser);
-      Set_Title (Item, Get_Name (Entity));
+      Initialize (Item, Browser, Get_Name (Entity),
+                  Find_Parent_Types'Access, Find_Children_Types'Access);
       Item.Entity := Copy (Entity);
    end Initialize;
 
@@ -797,91 +789,85 @@ package body Browsers.Entities is
    -- Find_Parent_Types --
    -----------------------
 
-   procedure Find_Parent_Types
-     (Event : Gdk_Event;
-      Item  : access Browser_Item_Record'Class)
-   is
+   procedure Find_Parent_Types (Item  : access Arrow_Item_Record'Class) is
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       Iter : Parent_Iterator;
       Lib_Info : LI_File_Ptr;
       It : constant Type_Item := Type_Item (Item);
       Parent : Entity_Information;
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
-      then
-         Lib_Info := Locate_From_Source_And_Complete
-           (Kernel, Get_Declaration_File_Of (It.Entity));
-         Iter := Get_Parent_Types (Lib_Info, It.Entity);
+      Push_State (Kernel, Busy);
+      Lib_Info := Locate_From_Source_And_Complete
+        (Kernel, Get_Declaration_File_Of (It.Entity));
+      Iter := Get_Parent_Types (Lib_Info, It.Entity);
 
-         loop
-            Parent := Get (Iter);
-            exit when Parent = No_Entity_Information;
+      loop
+         Parent := Get (Iter);
+         exit when Parent = No_Entity_Information;
 
-            Add_Item_And_Link (It, Parent, "", Parent_Link => True);
+         Add_Item_And_Link (It, Parent, "", Parent_Link => True);
 
-            Destroy (Parent);
-            Next (Iter);
-         end loop;
+         Destroy (Parent);
+         Next (Iter);
+      end loop;
 
-         It.Parents_Computed := True;
-         Redraw_Title_Bar (Item);
-      end if;
+      Set_Parents_Shown (It, True);
+      Redraw_Title_Bar (Item);
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Find_Parent_Types: unexpected exception "
+                & Exception_Information (E));
    end Find_Parent_Types;
 
    -------------------------
    -- Find_Children_Types --
    -------------------------
 
-   procedure Find_Children_Types
-     (Event : Gdk_Event;
-      Item  : access Browser_Item_Record'Class)
-   is
+   procedure Find_Children_Types  (Item  : access Arrow_Item_Record'Class) is
       Iter   : Entity_Reference_Iterator;
       Child  : Child_Type_Iterator;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
       LI     : LI_File_Ptr;
       C      : Entity_Information;
    begin
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Button_Release
-      then
-         Push_State (Kernel, Busy);
-         Find_All_References
-           (Kernel       => Kernel,
-            Entity       => Type_Item (Item).Entity,
-            Iterator     => Iter,
-            LI_Once      => True);
+      Push_State (Kernel, Busy);
+      Find_All_References
+        (Kernel       => Kernel,
+         Entity       => Type_Item (Item).Entity,
+         Iterator     => Iter,
+         LI_Once      => True);
 
-         while Get (Iter) /= No_Reference loop
-            LI := Get_LI (Iter);
+      while Get (Iter) /= No_Reference loop
+         LI := Get_LI (Iter);
 
-            Child := Get_Children_Types (LI, Type_Item (Item).Entity);
+         Child := Get_Children_Types (LI, Type_Item (Item).Entity);
 
-            loop
-               C := Get (Child);
-               exit when C = No_Entity_Information;
+         loop
+            C := Get (Child);
+            exit when C = No_Entity_Information;
 
-               Add_Item_And_Link
-                 (Type_Item (Item), C, "", Parent_Link => True,
-                  Reverse_Link => True);
+            Add_Item_And_Link
+              (Type_Item (Item), C, "", Parent_Link => True,
+               Reverse_Link => True);
 
-               Destroy (C);
-               Next (Child);
-            end loop;
-
-            Destroy (Child);
-
-            Next (Kernel, Iter);
+            Destroy (C);
+            Next (Child);
          end loop;
 
-         Destroy (Iter);
+         Destroy (Child);
 
-         Type_Item (Item).Children_Computed := True;
-         Redraw_Title_Bar (Item);
+         Next (Kernel, Iter);
+      end loop;
 
-         Pop_State (Kernel);
-      end if;
+      Destroy (Iter);
+
+      Set_Children_Shown (Item, True);
+      Redraw_Title_Bar (Item);
+
+      Pop_State (Kernel);
 
    exception
       when E : others =>
@@ -917,7 +903,8 @@ package body Browsers.Entities is
      (Item                        : access Type_Item_Record;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint)
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                   : access Pango.Layout.Pango_Layout_Record'Class)
    is
       W, H, Layout_H, Layout_W1, Layout_W2,
         Meth_Layout_W1, Meth_Layout_W2, Meth_Layout_H : Gint;
@@ -926,10 +913,8 @@ package body Browsers.Entities is
       Parent : Entity_Information;
       Lib_Info : LI_File_Ptr;
       Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Layout : Pango_Layout;
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
-      Reset_Active_Areas (Item.all);
 
       Lib_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Declaration_File_Of (Item.Entity));
@@ -999,27 +984,22 @@ package body Browsers.Entities is
               | Function_Or_Operator
               | Procedure_Kind =>
                Add_Parameters (Attr_Lines, Item, Lib_Info);
-               Item.Children_Computed := True;
+               Set_Children_Shown (Item, True);
 
             when Package_Kind =>
                Add_Parent_Package (Attr_Lines, Item, Lib_Info);
          end case;
       end if;
 
-      if Item.Parents_Computed = False then
+      if not Parents_Shown (Item) then
          declare
             Parent : Entity_Information := Get
               (Get_Parent_Types (Lib_Info, Item.Entity));
          begin
-            Item.Parents_Computed := Parent = No_Entity_Information;
+            Set_Parents_Shown (Item, Parent = No_Entity_Information);
             Destroy (Parent);
          end;
       end if;
-
-      Layout := Create_Pango_Layout (Get_Browser (Item), "");
-      Set_Font_Description
-        (Layout,
-         Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
 
       Get_Pixel_Size
         (Get_Browser (Item), General_Lines, Layout_W1, Layout_W2, Layout_H,
@@ -1042,8 +1022,8 @@ package body Browsers.Entities is
       H := H + Layout_H + 2 * Margin + Meth_Layout_H;
 
       Resize_And_Draw
-        (Browser_Item_Record (Item.all)'Access, W, H,
-         Width_Offset, Height_Offset, Xoffset, Yoffset);
+        (Arrow_Item_Record (Item.all)'Access, W, H,
+         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
 
       Y := Margin + Yoffset;
 
@@ -1053,6 +1033,7 @@ package body Browsers.Entities is
                      Layout_W1, Layout);
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
+         Y := Y + 2;
          Draw_Line
            (Drawable => Pixmap (Item),
             GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
@@ -1060,6 +1041,7 @@ package body Browsers.Entities is
             Y1       => Y,
             X2       => Get_Coord (Item).Width,
             Y2       => Y);
+         Y := Y + 1;
       end if;
 
       Display_Lines (Item, Meth_Lines, Margin + Xoffset + Left_Margin, Y,
@@ -1075,7 +1057,7 @@ package body Browsers.Entities is
 
    procedure Redraw_Title_Bar (Item : access Type_Item_Record) is
    begin
-      Redraw_Title_Bar (Browser_Item_Record (Item.all)'Access);
+      Redraw_Title_Bar (Arrow_Item_Record (Item.all)'Access);
 
       if Get_Kind (Item.Entity).Is_Type then
          case Get_Kind (Item.Entity).Kind is
@@ -1096,22 +1078,6 @@ package body Browsers.Entities is
             when others =>
                null;
          end case;
-      end if;
-
-      if not Item.Parents_Computed then
-         Draw_Title_Bar_Button
-           (Item,
-            Num    => Get_Last_Button_Number (Item) - 1,
-            Pixbuf => Type_Browser (Get_Browser (Item)).Up_Arrow,
-            Cb     => Build (Find_Parent_Types'Access, Item));
-      end if;
-
-      if not Item.Children_Computed then
-         Draw_Title_Bar_Button
-           (Item,
-            Num    => Get_Last_Button_Number (Item) - 2,
-            Pixbuf => Type_Browser (Get_Browser (Item)).Down_Arrow,
-            Cb     => Build (Find_Children_Types'Access, Item));
       end if;
    end Redraw_Title_Bar;
 
@@ -1281,8 +1247,7 @@ package body Browsers.Entities is
    function Get_Last_Button_Number (Item : access Type_Item_Record)
       return Gint is
    begin
-      return Get_Last_Button_Number (Browser_Item_Record (Item.all)'Access)
-        + 3;
+      return Get_Last_Button_Number (Arrow_Item_Record (Item.all)'Access) + 1;
    end Get_Last_Button_Number;
 
    ------------------------
@@ -1345,26 +1310,6 @@ package body Browsers.Entities is
       end case;
    end Draw_Straight_Line;
 
-   -----------
-   -- Reset --
-   -----------
-
-   procedure Reset
-     (Browser : access General_Browser_Record'Class;
-      Item : access Type_Item_Record;
-      Parent_Removed, Child_Removed : Boolean)
-   is
-      pragma Unreferenced (Browser);
-   begin
-      if Parent_Removed then
-         Item.Parents_Computed := False;
-      end if;
-
-      if Child_Removed then
-         Item.Children_Computed := False;
-      end if;
-   end Reset;
-
    ---------------
    -- Highlight --
    ---------------
@@ -1383,34 +1328,5 @@ package body Browsers.Entities is
    begin
       return Get_Default_Item_Background_GC (Get_Browser (Item));
    end Get_Background_GC;
-
-   -----------------------------
-   -- Get_Title_Background_GC --
-   -----------------------------
-
-   function Get_Title_Background_GC
-     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC
-   is
-      B : constant General_Browser := Get_Browser (Item);
-      Selected : constant Canvas_Item := Selected_Item (B);
-   begin
-      if Canvas_Item (Item) = Selected then
-         return Get_Selected_Item_GC (B);
-
-      elsif Selected /= null
-        and then Has_Link (Get_Canvas (B), From => Item, To => Selected)
-      then
-         return Get_Parent_Linked_Item_GC (B);
-
-      elsif Selected /= null
-        and then Has_Link (Get_Canvas (B), From => Selected, To => Item)
-      then
-         return Get_Child_Linked_Item_GC (B);
-
-      else
-         --  ??? Should use different color
-         return Get_Selected_Item_GC (B);
-      end if;
-   end Get_Title_Background_GC;
 
 end Browsers.Entities;

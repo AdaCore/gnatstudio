@@ -28,6 +28,7 @@ with Gtkada.Canvas;
 with Glib;
 with Gdk.GC;
 with Gdk.Pixbuf;
+with Pango.Layout;
 
 package Browsers.Entities is
 
@@ -44,7 +45,7 @@ package Browsers.Entities is
    ---------------
 
    type Type_Item_Record is new
-     Browsers.Canvas.Browser_Item_Record with private;
+     Browsers.Canvas.Arrow_Item_Record with private;
    type Type_Item is access all Type_Item_Record'Class;
 
    procedure Gtk_New
@@ -75,7 +76,8 @@ private
      (Item                        : access Type_Item_Record;
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
-      Xoffset, Yoffset            : in out Glib.Gint);
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
    function Contextual_Factory
      (Item  : access Type_Item_Record;
       Browser : access Browsers.Canvas.General_Browser_Record'Class;
@@ -83,13 +85,7 @@ private
       Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    function Get_Last_Button_Number (Item : access Type_Item_Record)
       return Glib.Gint;
-   procedure Reset
-     (Browser : access Browsers.Canvas.General_Browser_Record'Class;
-      Item : access Type_Item_Record;
-      Parent_Removed, Child_Removed : Boolean);
    procedure Redraw_Title_Bar (Item : access Type_Item_Record);
-   function Get_Title_Background_GC
-     (Item : access Type_Item_Record) return Gdk.GC.Gdk_GC;
    procedure Highlight (Item : access Type_Item_Record);
    --  See doc for inherited subprograms
 
@@ -103,15 +99,14 @@ private
       X2, Y2 : Glib.Gint);
    --  See doc for inherited subprogram
 
-   type Type_Item_Record is new Browsers.Canvas.Browser_Item_Record with record
+   type Type_Item_Record is new Browsers.Canvas.Arrow_Item_Record with record
       Entity : Src_Info.Queries.Entity_Information;
-      Parents_Computed, Children_Computed : Boolean := False;
       Inherited_Primitives : Boolean := False;
    end record;
 
    type Type_Browser_Record is new Browsers.Canvas.General_Browser_Record
    with record
-      Up_Arrow, Down_Arrow, Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
+      Primitive_Button : Gdk.Pixbuf.Gdk_Pixbuf;
    end record;
 
 end Browsers.Entities;
