@@ -965,7 +965,7 @@ package body Commands.Custom is
               (Command.Kernel,
                Command       => Args (Args'First).all,
                Arguments     => Args (Args'First + 1 .. Args'Last),
-               Console       => null,
+               Console       => Console,
                Callback      => Store_Command_Output'Access,
                Exit_Cb       => Exit_Cb'Access,
                Success       => Success,
