@@ -48,47 +48,48 @@ with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
 
-with Display_Items;           use Display_Items;
-with Dock_Paned;              use Dock_Paned;
-with Items;                   use Items;
-with GVD.Code_Editors;        use GVD.Code_Editors;
-with GVD.Dialogs;             use GVD.Dialogs;
-with GVD.Main_Window;         use GVD.Main_Window;
-with GVD.Memory_View;         use GVD.Memory_View;
-with GVD.Menu;                use GVD.Menu;
-with GVD.Preferences;         use GVD.Preferences;
-with GVD.Text_Box.Asm_Editor; use GVD.Text_Box.Asm_Editor;
-with GVD.Types;               use GVD.Types;
-with GVD.Toolbar;             use GVD.Toolbar;
-with GVD.Process;             use GVD.Process;
-with Process_Proxies;         use Process_Proxies;
-with Debugger;                use Debugger;
-with Language;                use Language;
-with Language_Handlers;       use Language_Handlers;
-with Basic_Types;             use Basic_Types;
-with GUI_Utils;               use GUI_Utils;
-with Prj_API;                 use Prj_API;
-with Prj;                     use Prj;
+with Display_Items;             use Display_Items;
+with Dock_Paned;                use Dock_Paned;
+with Items;                     use Items;
+with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Dialogs;               use GVD.Dialogs;
+with GVD.Main_Window;           use GVD.Main_Window;
+with GVD.Memory_View;           use GVD.Memory_View;
+with GVD.Menu;                  use GVD.Menu;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box.Asm_Editor;
+with GVD.Types;                 use GVD.Types;
+with GVD.Toolbar;               use GVD.Toolbar;
+with GVD.Process;               use GVD.Process;
+with Process_Proxies;           use Process_Proxies;
+with Debugger;                  use Debugger;
+with Language;                  use Language;
+with Language_Handlers;         use Language_Handlers;
+with Basic_Types;               use Basic_Types;
+with GUI_Utils;                 use GUI_Utils;
+with Prj_API;                   use Prj_API;
+with Prj;                       use Prj;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;
 
-with Glide_Page;              use Glide_Page;
-with Glide_Main_Window;       use Glide_Main_Window;
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
-with Glide_Intl;              use Glide_Intl;
-with Pixmaps_IDE;             use Pixmaps_IDE;
-with Traces;                  use Traces;
-with GUI_Utils;               use GUI_Utils;
+with Glide_Page;                use Glide_Page;
+with Glide_Main_Window;         use Glide_Main_Window;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Intl;                use Glide_Intl;
+with Pixmaps_IDE;               use Pixmaps_IDE;
+with Traces;                    use Traces;
+with GUI_Utils;                 use GUI_Utils;
 
-with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 with Generic_List;
-with Debugger_Pixmaps;        use Debugger_Pixmaps;
-with Commands;                use Commands;
-with Commands.Debugger;       use Commands.Debugger;
+with Debugger_Pixmaps;          use Debugger_Pixmaps;
+with Commands;                  use Commands;
+with Commands.Debugger;         use Commands.Debugger;
 
 with GVD.Text_Box.Source_Editor.Glide;
 use  GVD.Text_Box.Source_Editor.Glide;
@@ -500,7 +501,10 @@ package body GVD_Module is
 
    begin
       declare
-         S : constant String := Select_File (Title => -"Select Module");
+         S : constant String :=
+           Select_File
+             (Title             => -"Select Module",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if S = "" then
             return;
@@ -698,7 +702,11 @@ package body GVD_Module is
       Free (Ptr);
 
       declare
-         S : constant String := Select_File (Title => -"Select File to Debug");
+         S : constant String :=
+           Select_File
+             (Title             => -"Select File to Debug",
+              Pattern           => "*" & Exec_Suffix,
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if S = "" then
             return;
@@ -749,7 +757,12 @@ package body GVD_Module is
 
    begin
       declare
-         S : constant String := Select_File (-"Select Core File");
+         S : constant String :=
+           Select_File
+             (Title             => -"Select Core File",
+              Pattern           => "core*"
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
+
       begin
          if S = "" then
             return;

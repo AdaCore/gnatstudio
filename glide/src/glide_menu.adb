@@ -21,7 +21,6 @@
 with Glib;                         use Glib;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
-with Gtkada.File_Selector.Filters; use Gtkada.File_Selector.Filters;
 with Gtkada.MDI;                   use Gtkada.MDI;
 
 with Glide_Intl;                   use Glide_Intl;
@@ -32,7 +31,6 @@ with Glide_Kernel.Project;         use Glide_Kernel.Project;
 with Glide_Main_Window;            use Glide_Main_Window;
 
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
-with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with Factory_Data;                 use Factory_Data;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Traces;                       use Traces;
@@ -92,19 +90,18 @@ package body Glide_Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      File_Selector : File_Selector_Window_Access;
+      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
    begin
-      Gtk_New
-        (File_Selector, (1 => Directory_Separator),
-         Get_Current_Dir, -"Open Project");
-      Register_Filter (File_Selector, Prj_File_Filter);
-
       declare
-         Filename : constant String := Select_File (File_Selector);
+         Filename : constant String :=
+           Select_File
+             (-"Open Project",
+              File_Pattern      => "*.gpr",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if Filename /= "" then
             Change_Dir (Dir_Name (Filename));
-            Load_Project (Glide_Window (Object).Kernel, Filename);
+            Load_Project (Kernel, Filename);
          end if;
       end;
 
@@ -122,12 +119,14 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      pragma Unreferenced (Object, Action, Widget);
+      pragma Unreferenced (Action, Widget);
 
-      Dir : constant String := Select_Directory (-"Select a directory");
+      Dir    : constant String := Select_Directory (-"Select a directory");
+      Kernel : constant Kernel_Handle := Glide_Window (Object).Kernel;
+
    begin
       if Dir /= "" then
-         Change_Dir (Dir);
+         Change_Project_Dir (Kernel, Dir);
       end if;
    end On_Change_Dir;
 
