@@ -830,11 +830,15 @@ private
 
       Kind                  : E_Kind;
       Attributes            : Entity_Attributes;
+
       Is_Valid              : Boolean := True;
       --  Whether the entity still exists in its source file. This is set to
       --  False when some other entity references this one, but we have
       --  reparsed the source file since then and the entity is no longer
-      --  valid.
+      --  valid. This field is needed (we cannot simply remove the entity
+      --  from the File's Entities list), since when we reparse a file we want
+      --  to keep using the same Entity_Information for entities that haven't
+      --  changed.
    end record;
 
    ---------------------
@@ -953,7 +957,10 @@ private
       Name        : VFS.Virtual_File;
 
       Entities    : Shared_Entities_Hash.HTable;
-      --  All the entities defined in the source file
+      --  All the entities defined in the source file. This list also contains
+      --  the entities that used to be defined in this file, but no longer are,
+      --  and that are kept because they are still referenced in some files.
+      --  In this case, there Is_Active field is set to False.
 
       Unit_Name   : GNAT.OS_Lib.String_Access;
       --  The name of the toplevel unit.
