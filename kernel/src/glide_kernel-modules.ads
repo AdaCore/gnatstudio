@@ -149,7 +149,10 @@ package Glide_Kernel.Modules is
    --  Compute_Tooltip below for more details.
 
    function Module_Name (ID : Module_ID) return String;
-   --  Return the name of the module registered as ID.
+   --  Return the name of t he module registered as ID.
+
+   procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
+   --  Free all the registered modules, and call Destroy for each of these.
 
    ----------------------
    -- Contextual menus --
@@ -484,9 +487,6 @@ package Glide_Kernel.Modules is
       Start_Line : out Integer;
       End_Line   : out Integer);
    --  Return the area information in Context.
-
-   procedure Destroy (Context : in out File_Area_Context);
-   --  Free the memory associated with the context
 
    ---------------------
    -- Entity Contexts --

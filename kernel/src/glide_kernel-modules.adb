@@ -459,16 +459,6 @@ package body Glide_Kernel.Modules is
       End_Line   := Context.End_Line;
    end Get_Area;
 
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (Context : in out File_Area_Context) is
-      pragma Unreferenced (Context);
-   begin
-      return;
-   end Destroy;
-
    ----------------------------
    -- Create_Contextual_Menu --
    ----------------------------
@@ -846,7 +836,6 @@ package body Glide_Kernel.Modules is
         (Item, "activate",
          Kernel_Callback.To_Marshaller (Callback),
          Kernel_Handle (Kernel));
-
       return Item;
    end Register_Menu;
 
@@ -1174,5 +1163,14 @@ package body Glide_Kernel.Modules is
       Destroy (Context.Entity);
       Free (Context.Entity_Name);
    end Destroy;
+
+   ------------------
+   -- Free_Modules --
+   ------------------
+
+   procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Module_List.Free (Kernel.Modules_List);
+   end Free_Modules;
 
 end Glide_Kernel.Modules;
