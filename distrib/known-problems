@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.0
 
+- C604-004 Switching windows with Ctrl+<key> doesn't allow typing characters
+  Problem:    On windows, using control-<key> to switch between windows
+              disables the possibility to select windows by typing their names
+  Workaround: Use the Window menu to switch between windows
+
 - C508-012 Main units from extended projects now displayed in Debug->Initialize
   Problem:    The main units defined in some extended projects are not
               shown in the Debug->Initialize, although they are displayed in
