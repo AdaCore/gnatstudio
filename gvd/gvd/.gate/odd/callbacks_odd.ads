@@ -1,4 +1,5 @@
 with Gtk.Handlers;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Clist; use Gtk.Clist;
@@ -9,6 +10,9 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Text; use Gtk.Text;
 
 package Callbacks_Odd is
+
+   package Check_Menu_Item_Callback is new
+     Gtk.Handlers.Callback (Gtk_Check_Menu_Item_Record);
 
    package Menu_Item_Callback is new
      Gtk.Handlers.Callback (Gtk_Menu_Item_Record);

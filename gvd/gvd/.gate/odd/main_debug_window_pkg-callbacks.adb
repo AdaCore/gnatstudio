@@ -421,6 +421,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Edit_Buttons1_Activate;
 
+   ----------------------------
+   -- On_Call_Stack_Activate --
+   ----------------------------
+
+   procedure On_Call_Stack_Activate
+     (Object : access Gtk_Check_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Call_Stack_Activate;
+
    --------------------------
    -- On_Threads1_Activate --
    --------------------------

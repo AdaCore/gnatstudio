@@ -5,6 +5,7 @@ with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Menu; use Gtk.Menu;
 with Gtk.Accel_Group; use Gtk.Accel_Group;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Toolbar; use Gtk.Toolbar;
 with Gtk.Pixmap; use Gtk.Pixmap;
 with Gtk.Widget; use Gtk.Widget;
@@ -76,6 +77,7 @@ package Main_Debug_Window_Pkg is
       Edit_Buttons1 : Gtk_Menu_Item;
       Data1 : Gtk_Menu_Item;
       Data1_Menu : Gtk_Menu;
+      Call_Stack : Gtk_Check_Menu_Item;
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
