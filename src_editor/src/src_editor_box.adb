@@ -48,10 +48,10 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with GUI_Utils;                  use GUI_Utils;
+with Glide_Intl;                 use Glide_Intl;
 
 with Language;                   use Language;
 with String_Utils;               use String_Utils;
-with Src_Editor;                 use Src_Editor;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
 with Src_Info.Queries;
@@ -158,8 +158,7 @@ package body Src_Editor_Box is
 
    function Get_Contextual_Menu
      (Editor : Source_Editor_Box;
-      Event  : Gdk_Event)
-      return Gtk_Menu;
+      Event  : Gdk_Event) return Gtk_Menu;
    --  Return the contextual menu to use for the source box.
 
    procedure On_Goto_Declaration_Or_Body
@@ -430,8 +429,7 @@ package body Src_Editor_Box is
 
    function Get_Contextual_Menu
      (Editor : Source_Editor_Box;
-      Event  : Gdk_Event)
-      return Gtk_Menu
+      Event  : Gdk_Event) return Gtk_Menu
    is
       V    : Source_View := Editor.Source_View;
       Item : Gtk_Menu_Item;
@@ -443,13 +441,13 @@ package body Src_Editor_Box is
          end if;
 
          Gtk_New (Editor.Left_Contextual_Menu);
-         Gtk_New (Item, "Go to line");
+         Gtk_New (Item, -"Go to line...");
          Add (Editor.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to previous reference");
+         Gtk_New (Item, -"Go to previous reference");
          Add (Editor.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to file spec/body");
+         Gtk_New (Item, -"Go to file spec/body");
          Add (Editor.Left_Contextual_Menu, Item);
-         Gtk_New (Item, "Go to parent unit");
+         Gtk_New (Item, -"Go to parent unit");
          Add (Editor.Left_Contextual_Menu, Item);
 
          return Editor.Left_Contextual_Menu;
@@ -461,10 +459,10 @@ package body Src_Editor_Box is
 
          Gtk_New (Editor.Contextual_Menu);
 
-         Gtk_New (Item, "Go to previous reference");
+         Gtk_New (Item, -"Go to previous reference");
          Add (Editor.Contextual_Menu, Item);
 
-         Gtk_New (Item, "Go to declaration/body");
+         Gtk_New (Item, -"Go to declaration/body");
          Add (Editor.Contextual_Menu, Item);
          Widget_Callback.Connect
            (Widget    => Item,
@@ -473,15 +471,15 @@ package body Src_Editor_Box is
             User_Data => Editor,
             After     => True);
 
-         Gtk_New (Item, "Go to body");
+         Gtk_New (Item, -"Go to body");
          Add (Editor.Contextual_Menu, Item);
-         Gtk_New (Item, "List references");
+         Gtk_New (Item, -"List references");
          Add (Editor.Contextual_Menu, Item);
          Gtk_New (Item);
          Add (Editor.Contextual_Menu, Item);
-         Gtk_New (Item, "Go to file spec/body");
+         Gtk_New (Item, -"Go to file spec/body");
          Add (Editor.Contextual_Menu, Item);
-         Gtk_New (Item, "Go to parent unit");
+         Gtk_New (Item, -"Go to parent unit");
          Add (Editor.Contextual_Menu, Item);
          return Editor.Contextual_Menu;
       end if;
