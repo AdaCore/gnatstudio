@@ -164,6 +164,11 @@ package body VCS_Module is
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Handle the dynamic global menu.
 
+   procedure VCS_Command_Handler_No_Param
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Handler for VCS commands that take no parameter
+
    -----------------------
    -- On_Open_Interface --
    -----------------------
@@ -311,6 +316,30 @@ package body VCS_Module is
          VCS_Selector (Selector).Selected := R;
       end if;
    end Toggled;
+
+   ----------------------------------
+   -- VCS_Command_Handler_No_Param --
+   ----------------------------------
+
+   procedure VCS_Command_Handler_No_Param
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String) is
+   begin
+      if Command = "supported_systems" then
+         declare
+            Systems : constant Argument_List := Get_VCS_List (VCS_Module_ID);
+         begin
+            Set_Return_Value_As_List (Data);
+            for S in Systems'Range loop
+               if Systems (S).all = "" then
+                  Set_Return_Value (Data, -Auto_Detect);
+               else
+                  Set_Return_Value (Data, Systems (S).all);
+               end if;
+            end loop;
+         end;
+      end if;
+   end VCS_Command_Handler_No_Param;
 
    --------------------
    -- Widget_Factory --
@@ -609,6 +638,15 @@ package body VCS_Module is
       Add_Hook (Kernel, File_Edited_Hook, File_Edited_Cb'Access);
 
       --  Register VCS commands.
+
+      Register_Command
+        (Kernel       => Kernel,
+         Command      => "supported_systems",
+         Description  => -"Show the list of supported VCS systems",
+         Return_Value => "list",
+         Class         => VCS_Class,
+         Static_Method => True,
+         Handler      => VCS_Command_Handler_No_Param'Access);
 
       Register_Command
         (Kernel       => Kernel,
