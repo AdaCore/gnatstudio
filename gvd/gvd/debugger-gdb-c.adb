@@ -56,10 +56,13 @@ package body Debugger.Gdb.C is
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
+      Is_Union  : Boolean;
       Result    : out Generic_Type_Access);
    --  Parse the type describing a record.
    --  Index should pointer after the initial "{".
    --  This function is also used to parse the variant part of a record.
+   --  If Is_Union is True, then a union type is created instead of a record
+   --  type.
 
    procedure Parse_Array_Value
      (Lang     : access Gdb_C_Language;
@@ -100,7 +103,9 @@ package body Debugger.Gdb.C is
       --  First: Skip the type itself, to check whether we have in fact an
       --  array or access type.
 
-      if Looking_At (Type_Str, Index, "struct ") then
+      if Looking_At (Type_Str, Index, "struct ")
+        or else Looking_At (Type_Str, Index, "union ")
+      then
          Skip_To_Char (Type_Str, Index, Record_End);
          Index := Index + 1;
       else
@@ -182,7 +187,27 @@ package body Debugger.Gdb.C is
                then
                   Index := Index + 1;
                   Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index, Result);
+                    (Lang, Type_Str, Entity, Index, False, Result);
+               else
+                  Result := Parse_Type
+                    (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+               end if;
+               return;
+            end if;
+            --  Else falls through
+
+         when 'u' =>
+            if Looking_At (Type_Str, Index, "union ") then
+               Tmp := Index;
+               Index := Index + 6;           --  skips "union "
+               Skip_Word (Type_Str, Index);  --  skips union name
+               Skip_Blanks (Type_Str, Index);
+               if Index <= Type_Str'Last
+                 and then Type_Str (Index) = Record_Start
+               then
+                  Index := Index + 1;
+                  Parse_Record_Type
+                    (Lang, Type_Str, Entity, Index, True, Result);
                else
                   Result := Parse_Type
                     (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
@@ -332,7 +357,9 @@ package body Debugger.Gdb.C is
       -- Record values --
       -------------------
 
-      elsif Result'Tag = Record_Type'Tag then
+      elsif Result'Tag = Record_Type'Tag
+        or else Result'Tag = Union_Type'Tag
+      then
          declare
             R : Record_Type_Access := Record_Type_Access (Result);
             Int : Natural;
@@ -492,6 +519,7 @@ package body Debugger.Gdb.C is
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
+      Is_Union  : Boolean;
       Result    : out Generic_Type_Access)
    is
       Num_Fields : Natural := 0;
@@ -515,7 +543,11 @@ package body Debugger.Gdb.C is
 
       --  Create the type
 
-      Result := New_Record_Type (Num_Fields);
+      if Is_Union then
+         Result := New_Union_Type (Num_Fields);
+      else
+         Result := New_Record_Type (Num_Fields);
+      end if;
       R := Record_Type_Access (Result);
 
       --  Parse the type
