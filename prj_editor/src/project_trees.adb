@@ -1066,17 +1066,16 @@ package body Project_Trees is
    begin
       --  No "with", "use", "#include"
       --  No constructs ("loop", "if", ...)
-      --  No tokens (comments, reserved words, ...)
 
       if Category in Dependency_Category
         or else Category in Construct_Category
-        or else Category in Token_Category
         or else Category = Cat_Representation_Clause
         or else Category = Cat_Local_Variable
       then
          return Cat_Unknown;
 
       --  All subprograms are grouped together
+
       elsif Category in Subprogram_Explorer_Category then
          return Cat_Procedure;
 
