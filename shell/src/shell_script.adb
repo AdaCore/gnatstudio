@@ -822,15 +822,22 @@ package body Shell_Script is
 
          else
             declare
-               Cmd  : constant String := Nth_Arg (Data, 1);
-               Info : constant Command_Information_Access := Get
-                 (Shell_Module_Id.Commands_List, Cmd);
+               Errors : aliased Boolean;
+               Usage  : constant String := Execute_GPS_Shell_Command
+                 (Kernel  => Kernel,
+                  Command =>
+                    "Help; Help.getdoc %1 GPS." & Nth_Arg (Data, 1),
+                  Errors  => Errors'Unchecked_Access);
+
+               --  Needs to be executed separately, or we wouldn't get output
+               --  in Usage
+               Ignored : constant String := Execute_GPS_Shell_Command
+                 (Kernel => Kernel,
+                  Command => "Help.reset %2",
+                  Errors => Errors'Unchecked_Access);
+               pragma Unreferenced (Ignored);
             begin
-               if Info /= null then
-                  Insert (-("Usage: ") & Info.Command.all
-                          & ' ' & Info.Usage.all);
-                  Insert (Info.Description.all);
-               end if;
+               Insert (-("Usage: ") & Nth_Arg (Data, 1) & ASCII.LF & Usage);
             end;
          end if;
 
