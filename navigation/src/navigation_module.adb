@@ -225,7 +225,7 @@ package body Navigation_Module is
       Append_Space (Toolbar);
 
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Back, -"Go To Previous Location");
+        (Toolbar, Stock_Go_Back, -"Goto Previous Location");
       Data.Back_Button := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
@@ -234,7 +234,7 @@ package body Navigation_Module is
          Kernel_Handle (Kernel));
 
       Button := Insert_Stock
-        (Toolbar, Stock_Go_Forward, -"Go To Next Location");
+        (Toolbar, Stock_Go_Forward, -"Goto Next Location");
       Data.Forward_Button := Gtk_Widget (Button);
 
       Kernel_Callback.Connect
