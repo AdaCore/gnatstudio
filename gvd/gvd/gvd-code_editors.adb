@@ -128,14 +128,14 @@ package body Odd.Code_Editors is
       Set_Line (Editor.Source, Line, Set_Current);
 
       if Set_Current then
-         Set_Current_Line (Editor.Explorer, Line);
-
          --  If the assembly code is displayed, highlight the code for the
          --  current line
 
          if Editor.Mode = Asm_Only or else Editor.Mode = Source_Asm then
             Highlight_Address_Range (Editor.Asm, Line);
          end if;
+
+         Set_Current_Line (Editor.Explorer, Line);
       end if;
    end Set_Line;
 
@@ -336,13 +336,13 @@ package body Odd.Code_Editors is
                Add2 (Data.Editor.Pane, Data.Editor.Asm);
                Show_All (Data.Editor.Pane);
 
-               Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
-                         Set_Current => True);
                if Data.Editor.Asm_Address /= null then
                   Set_Address (Data.Editor.Asm, Data.Editor.Asm_Address.all);
                end if;
                Highlight_Address_Range
                  (Data.Editor.Asm, Data.Editor.Source_Line);
+               Set_Line (Data.Editor.Source, Data.Editor.Source_Line,
+                         Set_Current => True);
          end case;
       end if;
    end Change_Mode;
