@@ -127,7 +127,9 @@ package body Src_Editor_Box is
       return Glide_Kernel.Selection_Context_Access;
    --  Same as the public Get_Contextual_Menu, Event_Widget is ignored.
 
-   function To_Box_Line (Line : Gint) return Natural;
+   function To_Box_Line
+     (B    : Source_Buffer;
+      Line : Gint) return Natural;
    pragma Inline (To_Box_Line);
    --  Convert a line number in the Source Buffer to a line number in the
    --  Source Box. This conversion is necessary because line numbers start
@@ -138,16 +140,6 @@ package body Src_Editor_Box is
    pragma Inline (To_Box_Column);
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
-
-   function To_Buffer_Line (Line : Natural) return Gint;
-   pragma Inline (To_Buffer_Line);
-   --  Convert a line number in the Source Box to a line number in the
-   --  Source Buffer. Same rationale as in To_Box_Line.
-
-   function To_Buffer_Column (Col : Natural) return Gint;
-   pragma Inline (To_Buffer_Column);
-   --  Convert to a column number in the Source Box to a column number
-   --  in the Source Buffer. Same rationale as in To_Box_Line.
 
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
@@ -331,11 +323,14 @@ package body Src_Editor_Box is
       Context : aliased Root_Search_Context;
       L, C : Integer := 1;
 
-      Buffer : constant String := Get_Slice (Source, 1, 1);
-      Index  : Integer := Buffer'First;
+      Buffer : GNAT.OS_Lib.String_Access;
+      Index  : Integer;
       Was_Partial : Boolean;
 
    begin
+      Buffer := Get_String (Source.Source_Buffer);
+      Index  := Buffer'First;
+
       Set_Context
         (Context'Access,
          Look_For => Entity,
@@ -347,7 +342,7 @@ package body Src_Editor_Box is
 
       Scan_Buffer_No_Scope
         (Context     => Context'Access,
-         Buffer      => Buffer,
+         Buffer      => Buffer.all,
          Start_Index => Buffer'First,
          End_Index   => Buffer'Last,
          Callback    => Callback'Unrestricted_Access,
@@ -358,6 +353,8 @@ package body Src_Editor_Box is
 
       Line   := Best_Line;
       Column := Best_Column;
+
+      GNAT.OS_Lib.Free (Buffer);
    end Find_Closest_Match;
 
    ------------------------------
@@ -529,12 +526,14 @@ package body Src_Editor_Box is
          --  Find the closest match of the entity, in case the LI file wasn't
          --  up-to-date.
 
-         File_Up_To_Date := Is_Valid_Location (Source, L, C)
-           and then Is_Valid_Location (Source, L, C + Length)
-           and then Get_Slice
+         File_Up_To_Date := Is_Valid_Position
+             (Source.Source_Buffer, Editable_Line_Type (L), C)
+           and then Is_Valid_Position
+             (Source.Source_Buffer, Editable_Line_Type (L), C + Length)
+           and then Get_Text
              (Source.Source_Buffer,
-              To_Buffer_Line (L), To_Buffer_Column (C),
-              To_Buffer_Line (L), To_Buffer_Column (C + Length)) =
+              Editable_Line_Type (L), C,
+              Editable_Line_Type (L), C + Length) =
                 Entity_Name_Information (Context);
 
          --  Search for the closest reference to the entity if
@@ -728,7 +727,7 @@ package body Src_Editor_Box is
          Set_File_Information
            (Context      => Context'Unchecked_Access,
             File         => Filename,
-            Line         => To_Box_Line (Line),
+            Line         => To_Box_Line (Data.Box.Source_Buffer, Line),
             Column       => To_Box_Column (Cursor_Col));
          Set_Entity_Information
            (Context       => Context'Unchecked_Access,
@@ -790,9 +789,11 @@ package body Src_Editor_Box is
    -- To_Box_Line --
    -----------------
 
-   function To_Box_Line (Line : Gint) return Natural is
+   function To_Box_Line
+     (B    : Source_Buffer;
+      Line : Gint) return Natural is
    begin
-      return Natural (Line + 1);
+      return Natural (Get_Editable_Line (B, Buffer_Line_Type (Line + 1)));
    end To_Box_Line;
 
    -------------------
@@ -803,24 +804,6 @@ package body Src_Editor_Box is
    begin
       return Natural (Col + 1);
    end To_Box_Column;
-
-   --------------------
-   -- To_Buffer_Line --
-   --------------------
-
-   function To_Buffer_Line (Line : Natural) return Gint is
-   begin
-      return Gint (Line) - 1;
-   end To_Buffer_Line;
-
-   ----------------------
-   -- To_Buffer_Column --
-   ----------------------
-
-   function To_Buffer_Column (Col : Natural) return Gint is
-   begin
-      return Gint (Col) - 1;
-   end To_Buffer_Column;
 
    --------------------------
    -- Show_Cursor_Position --
@@ -1454,7 +1437,7 @@ package body Src_Editor_Box is
             Set_File_Information
               (Context,
                File      => Filename,
-               Line      => Integer (To_Box_Line (Line)),
+               Line      => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
                Column    => Integer (To_Box_Column (Column)));
 
          else
@@ -1485,8 +1468,10 @@ package body Src_Editor_Box is
                     (Area,
                      File => Filename);
 
-                  Start_Line := To_Box_Line (Get_Line (Start_Iter));
-                  End_Line   := To_Box_Line (Get_Line (End_Iter));
+                  Start_Line := To_Box_Line
+                    (Editor.Source_Buffer, Get_Line (Start_Iter));
+                  End_Line   := To_Box_Line
+                    (Editor.Source_Buffer, Get_Line (End_Iter));
 
                   --  Do not consider the last line selected if only the first
                   --  character is selected.
@@ -1532,7 +1517,7 @@ package body Src_Editor_Box is
          Set_File_Information
            (Context,
             File      => Filename,
-            Line      => Integer (To_Box_Line (Line)),
+            Line      => Integer (To_Box_Line (Editor.Source_Buffer, Line)),
             Column    => Integer (To_Box_Column (Column)));
 
          if Menu /= null then
@@ -1656,7 +1641,7 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Set_Cursor_Location (Box, Positive'Value (Str));
+         Set_Cursor_Location (Box, Editable_Line_Type'Value (Str), 1);
 
       exception
          when Constraint_Error =>
@@ -1964,6 +1949,7 @@ package body Src_Editor_Box is
       New_Base_Name : GNAT.OS_Lib.String_Access;
       Part       : Projects.Unit_Part;
 
+      Buffer     : GNAT.OS_Lib.String_Access;
       use type Basic_Types.String_Access;
    begin
       --  Do not authorize saving a read-only file, unless we save it to
@@ -1988,8 +1974,10 @@ package body Src_Editor_Box is
             --  Figure out what the name of the file should be, based on the
             --  unit <-> file name mapping
 
-            Parse_Constructs
-              (Ada_Lang, Get_Slice (Editor.Source_Buffer, 0, 0), Constructs);
+            Buffer := Get_String (Editor.Source_Buffer);
+            Parse_Constructs (Ada_Lang, Buffer.all, Constructs);
+            GNAT.OS_Lib.Free (Buffer);
+
             Info := Constructs.Last;
 
             if Info = null
@@ -2118,60 +2106,17 @@ package body Src_Editor_Box is
       return Get_Language (Editor.Source_Buffer);
    end Get_Language;
 
-   -----------------------
-   -- Is_Valid_Location --
-   -----------------------
-
-   function Is_Valid_Location
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Positive;
-      Column : Positive := 1) return Boolean
-   is
-      Buffer_Line : constant Gint := To_Buffer_Line (Line);
-      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
-   begin
-      return Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-   end Is_Valid_Location;
-
-   -------------------------
-   -- Set_Screen_Location --
-   -------------------------
-
-   procedure Set_Screen_Location
-     (Editor      : access Source_Editor_Box_Record;
-      Line        : Positive;
-      Column      : Positive := 1;
-      Force_Focus : Boolean  := True)
-   is
-      Buffer_Line : constant Gint := To_Buffer_Line (Line);
-      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
-   begin
-      if Force_Focus then
-         Grab_Focus (Editor.Source_View);
-      end if;
-
-      if Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, 0) then
-         Set_Screen_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-         Scroll_To_Cursor_Location (Editor.Source_View, True);
-
-      else
-         Console.Insert
-           (Editor.Kernel, -"Invalid source location: " & Image (Line) &
-              ':' & Image (Column), Mode => Error);
-      end if;
-   end Set_Screen_Location;
-
    -------------------------
    -- Set_Cursor_Location --
    -------------------------
 
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
-      Line        : Positive;
+      Line        : Editable_Line_Type;
       Column      : Positive := 1;
       Force_Focus : Boolean  := True)
    is
-      Editable_Line : constant Editable_Line_Type := Editable_Line_Type (Line);
+      Editable_Line : Editable_Line_Type renames Line;
 
    begin
       if Is_Valid_Position (Editor.Source_Buffer, Editable_Line, Column) then
@@ -2185,11 +2130,11 @@ package body Src_Editor_Box is
       else
          if Column = 1 then
             Console.Insert
-              (Editor.Kernel, -"Invalid line number: " & Image (Line),
+              (Editor.Kernel, -"Invalid line number: " & Line'Img,
                Mode => Error);
          else
             Console.Insert
-              (Editor.Kernel, -"Invalid source location: " & Image (Line) &
+              (Editor.Kernel, -"Invalid source location: " & Line'Img &
                ':' & Image (Column), Mode => Error);
          end if;
       end if;
@@ -2208,7 +2153,7 @@ package body Src_Editor_Box is
       Buffer_Col  : Gint;
    begin
       Get_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-      Line   := To_Box_Line (Buffer_Line);
+      Line   := To_Box_Line (Editor.Source_Buffer, Buffer_Line);
       Column := To_Box_Column (Buffer_Col);
    end Get_Cursor_Location;
 
@@ -2221,48 +2166,6 @@ package body Src_Editor_Box is
    begin
       Scroll_To_Cursor_Location (Editor.Source_View);
    end Scroll_To_Cursor_Location;
-
-   --------------------------
-   -- Get_Selection_Bounds --
-   --------------------------
-
-   procedure Get_Selection_Bounds
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : out Positive;
-      Start_Column : out Positive;
-      End_Line     : out Positive;
-      End_Column   : out Positive;
-      Found        : out Boolean)
-   is
-      Start_L : Gint;
-      Start_C : Gint;
-      End_L   : Gint;
-      End_C   : Gint;
-   begin
-      Get_Selection_Bounds
-        (Editor.Source_Buffer, Start_L, Start_C, End_L, End_C, Found);
-      Start_Line   := To_Box_Line (Start_L);
-      Start_Column := To_Box_Column (Start_C);
-      End_Line     := To_Box_Line (End_L);
-      End_Column   := To_Box_Column (End_C);
-   end Get_Selection_Bounds;
-
-   ---------------
-   -- Get_Slice --
-   ---------------
-
-   function Get_Slice
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Natural := 0;
-      End_Column   : Natural := 0) return String is
-   begin
-      return Get_Slice
-        (Editor.Source_Buffer,
-         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
-         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
-   end Get_Slice;
 
    -------------------
    -- Replace_Slice --
@@ -2299,25 +2202,6 @@ package body Src_Editor_Box is
    begin
       Select_All (Editor.Source_Buffer);
    end Select_All;
-
-   -------------------
-   -- Select_Region --
-   -------------------
-
-   procedure Select_Region
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive;
-      Expand_Tabs  : Boolean := True) is
-   begin
-      Select_Region
-        (Editor.Source_Buffer,
-         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
-         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column),
-         Expand_Tabs);
-   end Select_Region;
 
    -------------------
    -- Cut_Clipboard --
@@ -2510,7 +2394,7 @@ package body Src_Editor_Box is
       Iter : Gtk_Text_Iter;
    begin
       Get_End_Iter (Editor.Source_Buffer, Iter);
-      return To_Box_Line (Get_Line (Iter));
+      return To_Box_Line (Editor.Source_Buffer, Get_Line (Iter));
    end Get_Last_Line;
 
    ---------------------
