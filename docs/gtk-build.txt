@@ -1,5 +1,5 @@
 Here are the complete procedures to build Gtk+ 2.0.9 from scratch
-(systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
+(Systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
  HP-UX 11.00, IRIX 6.5 and AiX 5.1).
 
 Note that these instructions are provided as is, and do not represent a
