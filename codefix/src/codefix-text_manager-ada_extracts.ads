@@ -22,6 +22,10 @@ with Generic_List;
 
 package Codefix.Text_Manager.Ada_Extracts is
 
+   ----------------------------------------------------------------------------
+   --  type Ada_Instruction
+   ----------------------------------------------------------------------------
+
    type Ada_Instruction is new Extract with private;
 
    procedure Free (This : in out Ada_Instruction);
@@ -46,6 +50,10 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    function Get_Stop (This : Ada_Instruction) return File_Cursor;
    --  Return the cursors stands at the end of the instruction.
+
+   ----------------------------------------------------------------------------
+   --  type Ada_List
+   ----------------------------------------------------------------------------
 
    type Ada_List is new Ada_Instruction with private;
 
@@ -94,8 +102,8 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Remove elements form form First to Last. If Last = 0 then only First
    --  will be removed.
 
-   function Get_Element (This : Ada_List; Num : Natural) return String;
-   --  Return one element from the list.
+   function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor;
+   --  Return one element from the list. Elements can be a name or a ','.
 
    function Get_Nth_Element (This : Ada_List; Name : String) return Natural;
    --  Return the number of the element Name in the list.
