@@ -254,7 +254,6 @@ package body Builder_Module is
       if Start <= Output'Last then
          Insert (Kernel, Output (Start .. Output'Last));
       end if;
-
    end Parse_Compiler_Output;
 
    -----------------------
@@ -483,6 +482,7 @@ package body Builder_Module is
       end case;
 
       Console.Insert (K, Cmd.all, Add_LF => False);
+      Console.Raise_Console (K);
 
       for J in Args'First .. Args'Last - 1 loop
          Console.Insert (K, " " & Args (J).all, Add_LF => False);
@@ -584,6 +584,8 @@ package body Builder_Module is
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
          Console.Insert (Kernel, Cmd);
+         Console.Raise_Console (Kernel);
+
          Top.Interrupted := False;
          Fd := new Process_Descriptor;
          Non_Blocking_Spawn
@@ -674,6 +676,8 @@ package body Builder_Module is
             Console.Insert (Kernel, Full_Cmd);
          end;
       end if;
+
+      Console.Raise_Console (Kernel);
 
       Top.Interrupted := False;
       Fd := new Process_Descriptor;
@@ -784,7 +788,10 @@ package body Builder_Module is
          Remove_Result_Category (Kernel, -"Builder Results");
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
+
          Console.Insert (Kernel, Cmd);
+         Console.Raise_Console (Kernel);
+
          Top.Interrupted := False;
          Fd := new Process_Descriptor;
          Non_Blocking_Spawn
