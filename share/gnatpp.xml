@@ -24,7 +24,6 @@
 
    <tool name="Pretty Printer" package="Pretty_Printer" index="Ada" >
       <language>Ada</language>
-      <initial-cmd-line>-i2</initial-cmd-line>
       <switches lines="5">
          <title line="1" >Spacing</title>
          <title line="2" >Casing</title>
