@@ -26,9 +26,11 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Gdk.Color;         use Gdk.Color;
 with Glib;              use Glib;
 with Glib.Properties;   use Glib.Properties;
 with Gint_Xml;          use Gint_Xml;
+with Gtk.Widget;        use Gtk.Widget;
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 
@@ -127,6 +129,32 @@ package body Glide_Kernel.Preferences is
       Pref   : Glib.Properties.Property_Boolean) return Boolean is
    begin
       return Boolean'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Glib.Properties.Property_String) return String is
+   begin
+      return Get_Node (Kernel, Property (Pref)).Value.all;
+   end Get_Pref;
+
+   --------------
+   -- Get_Pref --
+   --------------
+
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Property_Color) return Gdk.Color.Gdk_Color
+   is
+      Color : Gdk_Color;
+   begin
+      Color := Parse (Get_Node (Kernel, Property (Pref)).Value.all);
+      Alloc (Gtk.Widget.Get_Default_Colormap, Color);
+      return Color;
    end Get_Pref;
 
 end Glide_Kernel.Preferences;

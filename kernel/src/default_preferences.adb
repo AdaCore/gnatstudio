@@ -100,4 +100,26 @@ package body Default_Preferences is
       return Build (Name);
    end Register_Property;
 
+   -----------------------
+   -- Register_Property --
+   -----------------------
+
+   function Register_Property (Name : String; Default : String)
+      return Glib.Properties.Property_String is
+   begin
+      Create_Default_Pref (Name, Default);
+      return Build (Name);
+   end Register_Property;
+
+   -----------------------
+   -- Register_Property --
+   -----------------------
+
+   function Register_Property (Name : String; Default : String)
+      return Property_Color is
+   begin
+      Create_Default_Pref (Name, Default);
+      return Build (Name);
+   end Register_Property;
+
 end Default_Preferences;
