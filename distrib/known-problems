@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.1
 
+- D527-011 Some errors no longer auto-fixable
+  Problem:    If you compile multiple files with errors with the same command
+              (for instance with make -k or gnatmake -k), some errors that
+              are automatically fixable by clicking on the icon in the location
+              window when a single file is compiled are no longer fixable.
+  Workaround: Recompile each file with an error separately
+
 - D604-014 Defining the same action multiple times crashes GPS
   Problem:    If you create the same action multiple times in your XML files
               through the <action> tag, GPS will misbehave or even crash
