@@ -1,8 +1,5 @@
 # pangorc file for GPS.
-# Copyright 2002 by ACT Europe
-
-[Pango]
-ModuleFiles = @prefix@/etc/gps/pango.modules
+# Copyright 2002-2003 by ACT Europe
 
 [PangoX]
 AliasFiles = @prefix@/etc/gps/pangox.aliases
