@@ -619,16 +619,10 @@ package body Python_Module is
               and then File (1 .. Last) /= ".."
               and then Last > 4 and then File (Last - 3 .. Last) /= ".pyc"
             then
-               declare
-                  Cmd : constant String :=
-                    "import " & Base_Name (File (1 .. Last), ".py")
-                  & ASCII.LF;
-               begin
-                  Insert_Text (Python_Module_Id.Script.Interpreter, Cmd);
-                  Run_Command
-                    (Python_Module_Id.Script.Interpreter, Cmd,
-                     Hide_Output => False);
-               end;
+               Execute_Command
+                 (Python_Module_Id.Script,
+                  "import " & Base_Name (File (1 .. Last), ".py"),
+                  Display_In_Console => True);
             end if;
          end loop;
 
@@ -1140,6 +1134,10 @@ package body Python_Module is
       Command            : String;
       Display_In_Console : Boolean := True) is
    begin
+      if Display_In_Console then
+         Insert_Text (Script.Interpreter, Command & ASCII.LF);
+      end if;
+
       Run_Command
         (Script.Interpreter, Command, Hide_Output => not Display_In_Console);
    end Execute_Command;
@@ -1151,15 +1149,10 @@ package body Python_Module is
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
-      Display_In_Console : Boolean := True)
-   is
-      Cmd : constant String := "execfile (""" & Filename & """)";
+      Display_In_Console : Boolean := True) is
    begin
-      if Get_Console (Script.Interpreter) /= null then
-         Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
-      end if;
-
-      Execute_Command (Script, Cmd, Display_In_Console);
+      Execute_Command
+        (Script, "execfile (""" & Filename & """)", Display_In_Console);
    end Execute_File;
 
    --------------
