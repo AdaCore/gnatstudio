@@ -93,6 +93,11 @@ case "${host}" in
     TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
 
+  ## PowerPC
+  powerpc-*-linux-gnu )
+    machine=powerpc opsys=gnu-linux
+  ;;
+
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \

@@ -1923,6 +1923,11 @@ case "${host}" in
     TARGET_LFLAGS="-Wl,-bbigtoc"
   ;;
 
+  ## PowerPC
+  powerpc-*-linux-gnu )
+    machine=powerpc opsys=gnu-linux
+  ;;
+
   ## Suns
   *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
     | i[3456]86-*-solaris2* | i345686-*-sunos5* | powerpc*-*-solaris2* \
@@ -2017,7 +2022,7 @@ opsysfile="\\\"system/${opsys}.h\\\""
   # Extract the first word of "pkg-config", so it can be a program name with args.
 set dummy pkg-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:2021: checking for $ac_word" >&5
+echo "configure:2026: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2051,7 +2056,7 @@ else
 fi
 
   echo $ac_n "checking GTK prefix""... $ac_c" 1>&6
-echo "configure:2055: checking GTK prefix" >&5
+echo "configure:2060: checking GTK prefix" >&5
   GTK="gtk+-2.0"
   if test "$PKG_CONFIG" = "no" ; then
     GTK_PREFIX=unknown
@@ -2064,7 +2069,7 @@ echo "configure:2055: checking GTK prefix" >&5
   # Extract the first word of "gtkada-config", so it can be a program name with args.
 set dummy gtkada-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:2068: checking for $ac_word" >&5
+echo "configure:2073: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2099,7 +2104,7 @@ fi
 
   min_gtk_version=2.0.0
   echo $ac_n "checking for GtkAda - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:2103: checking for GtkAda - version >= $min_gtk_version" >&5
+echo "configure:2108: checking for GtkAda - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -2118,7 +2123,7 @@ echo "configure:2103: checking for GtkAda - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 2122 "configure"
+#line 2127 "configure"
 #include "confdefs.h"
 
 #include <stdio.h>
@@ -2162,7 +2167,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:2166: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:2171: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
