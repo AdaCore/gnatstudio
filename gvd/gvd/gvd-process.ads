@@ -87,16 +87,9 @@ package Odd.Process is
    --  debugger process. However, commands internal to odd are filtered and
    --  are not transmitted to the debugger.
 
-
-   --  procedure Send_Command
-   --    (Debugger : Debugger_Descriptor;
-   --     Command  : String;
-   --     Result   : out String;
-   --     Len      : out Natural;
-   --     Pool     : Boolean := True);
-   --  Send a given command to the debugger.
-   --  If Command is internal, execute it without actually sending it.
-   --  Return the answer from the debugger in Result.
-   --  If Pool, poll for UI events while waiting.
+   procedure Text_Output_Handler
+     (Process : Debugger_Process_Tab;
+      Str     : String);
+   --  Insert Str in the debugger window.
 
 end Odd.Process;

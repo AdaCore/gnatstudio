@@ -81,12 +81,6 @@ package body Odd.Process is
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
-   procedure Text_Output_Handler
-     (Descriptor : GNAT.Expect.Process_Descriptor;
-      Str        : String);
-   --  Standard handler to add gdb's input and output to the debugger
-   --  window.
-
    procedure Output_Available
      (Debugger  : My_Input.Data_Access;
       Source    : Gint;
@@ -94,6 +88,12 @@ package body Odd.Process is
    --  Called whenever some output becomes available from the debugger.
    --  All it does is read all the available data and call the filters
    --  that were set for the debugger.
+
+   procedure Text_Output_Handler
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String);
+   --  Standard handler to add gdb's input and output to the debugger
+   --  window.
 
    -------------
    -- Convert --
@@ -135,37 +135,36 @@ package body Odd.Process is
    -------------------------
 
    procedure Text_Output_Handler
-     (Descriptor : GNAT.Expect.Process_Descriptor;
-      Str        : String)
+     (Process : Debugger_Process_Tab;
+      Str     : String)
    is
-      Process    : Debugger_Process_Tab := Convert (Descriptor);
    begin
       --  Do not show the output if we have an internal command
 
+      Freeze (Process.Debugger_Text);
+      Insert (Process.Debugger_Text,
+              Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
+              Black (Get_System),
+              White (Get_System),
+              Str);
+      Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+      Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+      --         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
+      Thaw (Process.Debugger_Text);
+   end Text_Output_Handler;
+
+   -------------------------
+   -- Text_Output_Handler --
+   -------------------------
+
+   procedure Text_Output_Handler
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String)
+   is
+      Process : Debugger_Process_Tab := Convert (Descriptor);
+   begin
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
-         Freeze (Process.Debugger_Text);
-
-         --  ??? There seems to be a bug in Gtk_Text, where the newline
-         --  character is ignored if it follows a blank space.
-         --  The following line is a workaround.
-
---          if Str (Str'Last - 1 .. Str'Last) = " " & ASCII.LF then
---             Insert (Process.Debugger_Text,
---                     Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
---                     Black (Get_System),
---                     White (Get_System),
---                     Str & ASCII.LF);
---          else
-            Insert (Process.Debugger_Text,
-                    Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
-                    Black (Get_System),
-                    White (Get_System),
-                    Str);
---          end if;
-         Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-         Thaw (Process.Debugger_Text);
-         Set_Point (Process.Debugger_Text, Process.Edit_Pos - 1);
---         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos) - 1);
+         Text_Output_Handler (Process, Str);
       end if;
    end Text_Output_Handler;
 
