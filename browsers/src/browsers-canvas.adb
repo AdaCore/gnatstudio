@@ -19,17 +19,17 @@
 -----------------------------------------------------------------------
 
 with Glib;                use Glib;
+with Glib.Convert;        use Glib.Convert;
 with Glib.Error;          use Glib.Error;
 with Glib.Graphs;         use Glib.Graphs;
 with Glib.Object;         use Glib.Object;
 with Pango.Enums;         use Pango.Enums;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.GC;              use Gdk.GC;
-with Gtkada.Canvas;       use Gtkada.Canvas;
-with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gdk.Drawable;        use Gdk.Drawable;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Pixbuf;          use Gdk.Pixbuf;
+with Gdk.Pixmap;          use Gdk.Pixmap;
 with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
@@ -54,11 +54,15 @@ with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 with GNAT.Strings;        use GNAT.Strings;
 
+with Gtkada.Canvas;       use Gtkada.Canvas;
+with Gtkada.Handlers;     use Gtkada.Handlers;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with GVD.Preferences;
 with Glide_Intl;                use Glide_Intl;
 with Layouts;                   use Layouts;
+with VFS;                       use VFS;
 with Traces;                    use Traces;
 
 package body Browsers.Canvas is
@@ -105,6 +109,9 @@ package body Browsers.Canvas is
       return Boolean;
    --  Callback for the key press event
 
+   procedure On_Export (Browser : access Gtk_Widget_Record'Class);
+   --  Export the contents of the browser as an image.
+
    procedure On_Refresh (Browser : access Gtk_Widget_Record'Class);
    --  Recompute the layout of the canvas
 
@@ -140,13 +147,21 @@ package body Browsers.Canvas is
      (Event : Gdk_Event; Item : access Browser_Item_Record'Class);
    --  Callbacks for the title bar buttons of Arrow_item
 
-   type Image_Canvas_Record is new Interactive_Canvas_Record with record
-      Background : Gdk.Pixbuf.Gdk_Pixbuf;
+   type Image_Canvas_Record is new
+     Gtkada.Canvas.Interactive_Canvas_Record with
+   record
+      Background        : Gdk.Pixbuf.Gdk_Pixbuf;
       Scaled_Background : Gdk.Pixbuf.Gdk_Pixbuf;
-      Bg_GC      : Gdk.GC.Gdk_GC;
-      Draw_Grid  : Boolean;
+      Bg_GC             : Gdk.GC.Gdk_GC;
+      Draw_Grid         : Boolean;
+      Pixmap            : Gdk.Gdk_Pixmap;
    end record;
    type Image_Canvas is access all Image_Canvas_Record'Class;
+
+   function Get_Window
+     (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window;
+   --  Override Gtk.Widget.Get_Window, so that a different Window can be
+   --  returned if needed (e.g. when exporting the canvas).
 
    procedure Draw_Background
      (Canvas        : access Image_Canvas_Record;
@@ -154,6 +169,22 @@ package body Browsers.Canvas is
 
    procedure On_Zoom (Canvas : access Gtk_Widget_Record'Class);
    --  Called when the canvas has been zoomed
+
+   ----------------
+   -- Get_Window --
+   ----------------
+
+   function Get_Window
+     (Canvas : access Image_Canvas_Record) return Gdk.Window.Gdk_Window
+   is
+      use type Gdk.Gdk_Drawable;
+   begin
+      if Canvas.Pixmap = null then
+         return Get_Window (Gtk_Widget_Record (Canvas.all)'Access);
+      else
+         return Canvas.Pixmap;
+      end if;
+   end Get_Window;
 
    -------------
    -- On_Zoom --
@@ -191,7 +222,16 @@ package body Browsers.Canvas is
       X_Left : constant Gint := Left_World_Coordinates (Canvas);
       Y_Top  : constant Gint := Top_World_Coordinates (Canvas);
    begin
-      if Canvas.Background /= null then
+      if Canvas.Background = null then
+         Draw_Rectangle
+           (Get_Window (Canvas),
+            Canvas.Bg_GC,
+            Filled => True,
+            X      => Screen_Rect.X,
+            Y      => Screen_Rect.Y,
+            Width  => Gint (Screen_Rect.Width),
+            Height => Gint (Screen_Rect.Height));
+      else
          declare
             X, Y, W, H, Ys : Gint;
             Xs : Gint := Screen_Rect.X;
@@ -220,24 +260,17 @@ package body Browsers.Canvas is
                      Height       => H);
                   Ys := Ys + H;
                end loop;
+
                Xs := Xs + W;
             end loop;
          end;
-
-      else
-         Draw_Rectangle
-           (Get_Window (Canvas),
-            Canvas.Bg_GC,
-            Filled => True,
-            X      => Screen_Rect.X,
-            Y      => Screen_Rect.Y,
-            Width  => Gint (Screen_Rect.Width),
-            Height => Gint (Screen_Rect.Height));
       end if;
 
       if Canvas.Draw_Grid then
-         Draw_Grid (Interactive_Canvas (Canvas),
-                    Get_Black_GC (Get_Style (Canvas)), Screen_Rect);
+         Draw_Grid
+           (Interactive_Canvas (Canvas),
+            Get_Black_GC (Get_Style (Canvas)),
+            Screen_Rect);
       end if;
    end Draw_Background;
 
@@ -331,6 +364,7 @@ package body Browsers.Canvas is
       if Image_Canvas (B.Canvas).Background /= null then
          Unref (Image_Canvas (B.Canvas).Background);
       end if;
+
       Unref (Image_Canvas (B.Canvas).Bg_GC);
    end Destroyed;
 
@@ -610,10 +644,17 @@ package body Browsers.Canvas is
          else
             Gtk_New (Mitem, Label => -"Orthogonal links");
          end if;
+
          Append (Menu, Mitem);
          Widget_Callback.Object_Connect
            (Mitem, "activate",
             Widget_Callback.To_Marshaller (Toggle_Orthogonal'Access), B);
+
+         Gtk_New (Mitem, Label => -"Export...");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (On_Export'Access), B);
 
          Gtk_New (Mitem, Label => -"Zoom in");
          Append (Menu, Mitem);
@@ -709,6 +750,57 @@ package body Browsers.Canvas is
       It.Hide_Links := not It.Hide_Links;
       Refresh_Canvas (Get_Canvas (Data.Browser));
    end Toggle_Links;
+
+   ---------------
+   -- On_Export --
+   ---------------
+
+   procedure On_Export (Browser : access Gtk_Widget_Record'Class) is
+      State_Pushed : Boolean := False;
+      B            : constant General_Browser := General_Browser (Browser);
+      Kernel       : constant Kernel_Handle := Get_Kernel (B);
+
+   begin
+      declare
+         Name   : constant Virtual_File :=
+           Select_File
+             (Title             => -"Export Browser As PNG Image",
+              Parent            => Get_Main_Window (Kernel),
+              Default_Name      => "noname.png",
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Save_File,
+              History           => Get_History (Kernel));
+         Pixbuf : Gdk_Pixbuf;
+         Error  : GError;
+
+      begin
+         if Name /= VFS.No_File then
+            Push_State (Get_Kernel (B), Busy);
+            State_Pushed := True;
+            Pixbuf := Get_Pixbuf (B);
+
+            if Pixbuf /= null then
+               Save
+                 (Pixbuf,
+                  Locale_From_UTF8 (Full_Name (Name).all),
+                  PNG,
+                  Error);
+               Unref (Pixbuf);
+            end if;
+
+            State_Pushed := False;
+            Pop_State (Get_Kernel (B));
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         if State_Pushed then
+            Pop_State (Get_Kernel (B));
+         end if;
+
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Export;
 
    ----------------
    -- On_Refresh --
@@ -2012,5 +2104,49 @@ package body Browsers.Canvas is
             Cb     => Build (Compute_Children'Access, Item));
       end if;
    end Redraw_Title_Bar;
+
+   ----------------
+   -- Get_Pixbuf --
+   ----------------
+
+   function Get_Pixbuf
+     (Browser : access General_Browser_Record) return Gdk.Pixbuf.Gdk_Pixbuf
+   is
+      use type Gdk.Gdk_Drawable;
+
+      Canvas : constant Image_Canvas := Image_Canvas (Browser.Canvas);
+      X, Y, Width, Height : Gint;
+      Src    : Gdk_Window;
+      Pixbuf : Gdk_Pixbuf;
+
+   begin
+      Src := Get_Window (Canvas);
+
+      Get_World_Coordinates (Canvas, X, Y, Width, Height);
+      Gdk_New (Canvas.Pixmap, Src, Width, Height);
+
+      if Canvas.Pixmap = null then
+         return null;
+      end if;
+
+      --  Force a complete redraw on Canvas.Pixmap, so that we can
+      --  copy the whole contents of Canvas to a pixbuf.
+
+      Draw_Area (Canvas, (X, Y, Width, Height));
+      Pixbuf := Get_From_Drawable
+        (Dest   => null,
+         Src    => Canvas.Pixmap,
+         Cmap   => null,
+         Src_X  => X,
+         Src_Y  => Y,
+         Dest_X => 0,
+         Dest_Y => 0,
+         Width  => Width,
+         Height => Height);
+      Gdk.Pixmap.Unref (Canvas.Pixmap);
+      Canvas.Pixmap := null;
+
+      return Pixbuf;
+   end Get_Pixbuf;
 
 end Browsers.Canvas;
