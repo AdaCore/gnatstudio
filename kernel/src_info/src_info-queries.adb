@@ -156,15 +156,17 @@ package body Src_Info.Queries is
          when Entity_Not_Found | Fuzzy_Match =>
             return False;
             --  We should continue the search if we can.
+
          when Internal_Error =>
             return True;
             --  ??? We don't want to ignore internal errors at the moment,
-            --  ??? so we stop the query, and report and error to the end-user.
-            --  ??? we may want to change this at release time if we want
-            --  ??? to provide a better fault tolerant product (by changing
-            --  ??? the value returned to False, the net effect is to ignore
-            --  ??? the internal error while taking our chance by continuing
-            --  ??? the search).
+            --  so we stop the query, and report and error to the end-user.
+            --  We may want to change this at release time if we want
+            --  to provide a better fault tolerant product (by changing
+            --  the value returned to False, the net effect is to ignore
+            --  the internal error while taking our chance by continuing
+            --  the search).
+
          when No_Body_Entity_Found | Success | Overloaded_Entity_Found =>
             return True;
             --  Obviously, we have completed our query.
@@ -491,7 +493,6 @@ package body Src_Info.Queries is
          return;
       end if;
 
-
       if Status = Success or else Status = Fuzzy_Match then
 
          --  If we need to parse the LI File that contains the body
@@ -539,7 +540,7 @@ package body Src_Info.Queries is
             Location := Ref.Value.Location;
          else
             Location := Null_File_Location;
-            Status := No_Body_Entity_Found;
+            Status   := No_Body_Entity_Found;
          end if;
       else
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
@@ -550,9 +551,10 @@ package body Src_Info.Queries is
    exception
       when E : others =>
          --  Trap all exceptions for better robustness, and report an
-         --  internal error
+         --  internal error.
+
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Status := Internal_Error;
+         Status   := Internal_Error;
          Location := Null_File_Location;
    end Find_Next_Body;
 
@@ -1810,6 +1812,7 @@ package body Src_Info.Queries is
 
             --  For now, we do not have inter-language cross-references, so we
             --  do nothing if the file doesn't have the same language.
+
             if Handler = Iterator.Decl_LI.LI.Handler then
                LI := Locate_From_Source
                  (List, Iterator.Source_Files (Iterator.Current_File).all);
