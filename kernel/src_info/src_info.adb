@@ -907,4 +907,58 @@ package body Src_Info is
       return Write_Reference (Ref.Kind);
    end Is_Write_Reference;
 
+   -------------------
+   -- Get_Unit_Name --
+   -------------------
+
+   function Get_Unit_Name
+     (Lib_Info : LI_File_Ptr; File : String) return String
+   is
+      Info : File_Info_Ptr;
+      List : File_Info_Ptr_List;
+   begin
+      Info := Lib_Info.LI.Spec_Info;
+
+      if Info /= null
+        and then Info.Source_Filename.all = File
+      then
+         if Info.Unit_Name = null then
+            return "";
+         else
+            return Info.Unit_Name.all;
+         end if;
+      end if;
+
+      Info := Lib_Info.LI.Body_Info;
+
+      if Info /= null
+        and then Info.Source_Filename.all = File
+      then
+         if Info.Unit_Name = null then
+            return "";
+         else
+            return Info.Unit_Name.all;
+         end if;
+      end if;
+
+      List := Lib_Info.LI.Separate_Info;
+      while List /= null loop
+         Info := List.Value;
+
+         if Info /= null
+           and then Info.Source_Filename.all = File
+         then
+            if Info.Unit_Name = null then
+               return "";
+            else
+               return Info.Unit_Name.all;
+            end if;
+         end if;
+
+         List := List.Next;
+      end loop;
+
+      return "";
+   end Get_Unit_Name;
+
 end Src_Info;

@@ -121,6 +121,12 @@ package Src_Info is
    --  See also Prj_API.Get_Unit_Part_From_Filename if you are working with
    --  filenames that don't have a matching LI_File.
 
+   function Get_Unit_Name
+     (Lib_Info : LI_File_Ptr; File : String) return String;
+   --  Return the unit name, when applicable, for the file. If the language of
+   --  the file doesn't support the concept of units, the empty string is
+   --  returned.
+
    ----------------------------
    -- Dependency Information --
    ----------------------------
