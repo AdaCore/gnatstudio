@@ -1340,7 +1340,6 @@ package body Vsearch_Ext is
                        Module => Vsearch_Module_Id,
                        Desktop_Independent => True);
          Set_Title (Child, -"Search");
-         Set_Dock_Side (Child, Left);
 
          Widget_Callback.Connect (Child, "float_child", Float_Vsearch'Access);
 

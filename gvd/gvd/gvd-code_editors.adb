@@ -94,11 +94,10 @@ package body GVD.Code_Editors is
          Set_Policy
            (Editor.Explorer_Scroll, Policy_Automatic, Policy_Automatic);
          Set_USize (Editor.Explorer_Scroll, Explorer_Width, -1);
-         Child := Put (Top.Process_Mdi, Editor.Explorer_Scroll);
+         Child := Put (Top.Process_Mdi, Editor.Explorer_Scroll,
+                       Position => Position_Left);
          Set_Focus_Child (Child);
          Set_Title (Child, "Explorer");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
 
          Gtk_New (Editor.Explorer, Editor);
          Add (Editor.Explorer_Scroll, Editor.Explorer);

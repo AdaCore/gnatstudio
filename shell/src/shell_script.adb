@@ -678,11 +678,10 @@ package body Shell_Script is
             Default_Width       => 400,
             Default_Height      => 120,
             Focus_Widget        => Gtk_Widget (Get_View (Script.Console)),
+            Position            => Position_Bottom,
             Module              => Shell_Module_Id,
             Desktop_Independent => True);
          Set_Title (Child, -"Shell");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
 
          Kernel_Callback.Connect
            (Script.Console, "destroy", Console_Destroyed'Access,
@@ -756,8 +755,7 @@ package body Shell_Script is
         (Kernel, N,
          10, 10,
          400, 120,
-         "Shell", "Shell Console",
-         Docked, Bottom,
+         Normal, Position_Bottom,
          False, False);
 
       Register_Menu

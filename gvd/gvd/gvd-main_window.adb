@@ -144,7 +144,6 @@ package body GVD.Main_Window is
       Add_Accel_Group (Main_Window, Main_Window.Main_Accel_Group);
       Gtk_New (Main_Window.Process_Mdi, Main_Window.Main_Accel_Group);
       Add (Main_Window.Vbox, Main_Window.Process_Mdi);
-      Set_Priorities (Main_Window.Process_Mdi, (Top, Bottom, Right, Left));
       Gtk_New
         (Main_Window.Factory, Gtk.Menu_Bar.Get_Type,
          Key, Main_Window.Main_Accel_Group);

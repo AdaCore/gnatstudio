@@ -640,10 +640,9 @@ package body Outline_View is
            (Kernel, Outline,
             Default_Width  => 215,
             Default_Height => 600,
+            Position       => Position_Left,
             Module         => Outline_View_Module);
          Set_Title (Child, -"Outline View", -"Outline View");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
 
          Data := Context_Hooks_Args'
            (Kernel  => Kernel_Handle (Kernel),
@@ -727,8 +726,7 @@ package body Outline_View is
         (Kernel, N,
          10, 10,
          215, 600,
-         "Outline View", "Outline_View",
-         Docked, Left,
+         Normal, Position_Left,
          True, True);
 
       Outline_View_Font := Param_Spec_Font

@@ -340,13 +340,12 @@ package body Glide_Kernel.Console is
         (Kernel, Console,
          Default_Width  => 400,
          Default_Height => 120,
+         Position       => Position_Bottom,
          Focus_Widget   => Gtk_Widget (Get_View (Console)),
          Module         => Console_Module_Id,
          Desktop_Independent => True);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Messages");
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
       Raise_Child (Child);
 
       Console_Module_Id.Child   := Child;
@@ -399,6 +398,7 @@ package body Glide_Kernel.Console is
                Child := Glide_Kernel.Put
                  (Kernel,
                   Child               => Console,
+                  Position            => Position_Bottom,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)),
                   Module              => Module,
                   Desktop_Independent => True);
@@ -406,10 +406,9 @@ package body Glide_Kernel.Console is
                Child := Put
                  (Get_MDI (Kernel),
                   Child               => Console,
+                  Position            => Position_Bottom,
                   Focus_Widget        => Gtk_Widget (Get_View (Console)));
             end if;
-            Set_Dock_Side (Child, Bottom);
-            Dock_Child (Child);
             Raise_Child (Child);
             Set_Title (Child, Title, Title);
          elsif Child /= null then
@@ -495,8 +494,7 @@ package body Glide_Kernel.Console is
         (Kernel, N,
          10, 10,
          400, 120,
-         -"Messages", -"Messages",
-         Docked, Bottom,
+         Normal, Position_Bottom,
          Focus => True, Raised => True);
 
       Initialize_Console (Kernel);

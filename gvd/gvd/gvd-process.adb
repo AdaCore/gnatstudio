@@ -104,10 +104,6 @@ package body GVD.Process is
      Ada.Unchecked_Conversion (System.Address, GVD_Main_Window);
    pragma Warnings (On);
 
-   Default_Widget_Width  : constant := 200;
-   Default_Widget_Height : constant := 200;
-   --  Default size for the widgets. See Glide_Kernel.Preferences
-
    --  This pointer will keep a pointer to the C 'class record' for
    --  gtk. To avoid allocating memory for each widget, this may be done
    --  only once, and reused
@@ -949,8 +945,7 @@ package body GVD.Process is
       Child := Put
         (Process.Window.Process_Mdi,
          Process.Stack,
-         Default_Width  => Default_Widget_Width,
-         Default_Height => Default_Widget_Height);
+         Position       => Position_Right);
       Set_Focus_Child (Child);
 
       if Process.Debugger_Num = 1 then
@@ -959,9 +954,6 @@ package body GVD.Process is
          Set_Title (Child, (-"Call Stack") & " <" &
                     Image (Process.Debugger_Num) & ">");
       end if;
-
-      Set_Dock_Side (Child, Right);
-      Dock_Child (Child);
    end Create_Call_Stack;
 
    -----------------------
@@ -1010,8 +1002,7 @@ package body GVD.Process is
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Data_Scrolledwindow,
-         Default_Width  => Default_Widget_Width,
-         Default_Height => 100,
+         Position => Position_Top,
          Flags => All_Buttons);
       Set_Focus_Child (Child);
 
@@ -1021,9 +1012,6 @@ package body GVD.Process is
          Set_Title (Child, (-"Debugger Data") & " <" &
                     Image (Process.Debugger_Num) & ">");
       end if;
-
-      Set_Dock_Side (Child, Top);
-      Dock_Child (Child);
    end Setup_Data_Window;
 
    --------------------------
@@ -1082,9 +1070,8 @@ package body GVD.Process is
 
       Child := Put
         (Process.Window.Process_Mdi, Process.Debugger_Text,
-         Default_Width  => Default_Widget_Width,
-         Default_Height => Default_Widget_Height,
          Flags => All_Buttons,
+         Position => Position_Bottom,
          Focus_Widget => Gtk_Widget (Get_View (Process.Debugger_Text)));
       Set_Focus_Child (Child);
 
@@ -1094,9 +1081,6 @@ package body GVD.Process is
          Set_Title (Child, (-"Debugger Console") & " <" &
                     Image (Process.Debugger_Num) & ">");
       end if;
-
-      Set_Dock_Side (Child, Bottom);
-      Dock_Child (Child);
       Raise_Child (Child);
    end Setup_Command_Window;
 
@@ -1394,8 +1378,7 @@ package body GVD.Process is
          Child := Put
            (Window.Process_Mdi, Process.Debuggee_Console,
             Flags => All_Buttons,
-            Default_Width  => Default_Widget_Width,
-            Default_Height => Default_Widget_Height,
+            Position       => Position_Bottom,
             Focus_Widget => Gtk_Widget (Get_View (Process.Debuggee_Console)));
 
          if Process.Debugger_Num = 1 then
@@ -1404,9 +1387,6 @@ package body GVD.Process is
             Set_Title (Child, (-"Debugger Execution") & " <" &
                        Image (Process.Debugger_Num) & ">");
          end if;
-
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
       end if;
 
       Set_Busy (Process, False);

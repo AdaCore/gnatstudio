@@ -215,12 +215,11 @@ package body Glide_Kernel.Task_Manager is
 
          Child := Put
            (Kernel, Iface, Module => Task_Manager_Module_Id,
+            Position => Position_Bottom,
             Desktop_Independent => True);
          Set_Focus_Child (Child);
 
          Set_Title (Child, -"Task Manager");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
          return Child;
       else
          return Child;

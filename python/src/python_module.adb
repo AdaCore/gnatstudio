@@ -700,8 +700,7 @@ package body Python_Module is
         (Kernel, N,
          10, 10,
          400, 100,
-         "Python", "Python Console",
-         Docked, Bottom,
+         Normal, Position_Bottom,
          Focus => False, Raised => False);
 
       --  Create the GPS module, in which all functions and classes are

@@ -1167,12 +1167,11 @@ package body Project_Explorers_Files is
             Files,
             Default_Width  => 215,
             Default_Height => 600,
+            Position       => Position_Left,
             Module         => Explorer_Files_Module_Id);
          Set_Focus_Child (Child);
          Set_Title
            (Child, -"Project Explorer - File View",  -"File View");
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
          Raise_Child (Child);
       else
          Raise_Child (Child);

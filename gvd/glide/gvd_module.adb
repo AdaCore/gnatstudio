@@ -1041,10 +1041,9 @@ package body GVD_Module is
            Editor);
 
       Set_Mode (Editor, Source_Asm);
-      Child := Put (Kernel, Assembly, Module => GVD_Module_ID);
+      Child := Put (Kernel, Assembly, Module => GVD_Module_ID,
+                    Position => Position_Right);
       Set_Focus_Child (Child);
-      Set_Dock_Side (Child, Right);
-      Dock_Child (Child);
       Raise_Child (Child);
       Unref (Assembly);
       Set_Title (Child, -"Assembly View");

@@ -2006,13 +2006,12 @@ package body Project_Explorers is
            (Kernel, Explorer,
             Default_Width  => 215,
             Default_Height => 600,
+            Position       => Position_Left,
             Module         => Explorer_Module_ID);
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
 
          Set_Focus_Child (Child);
-         Set_Dock_Side (Child, Left);
-         Dock_Child (Child);
          Raise_Child (Child);
          return Explorer;
       else
@@ -2736,8 +2735,7 @@ package body Project_Explorers is
         (Kernel, N,
          10, 10,
          215, 600,
-         "Project View", "Project Explorer - Project View",
-         Docked, Left,
+         Normal, Position_Left,
          True, True);
 
       Register_Menu

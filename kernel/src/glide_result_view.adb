@@ -1751,11 +1751,10 @@ package body Glide_Result_View is
             Module              => Result_View_Module_Id,
             Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
+            Position            => Position_Bottom,
             Desktop_Independent => True);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Locations");
-         Set_Dock_Side (Child, Bottom);
-         Dock_Child (Child);
       end if;
 
       return Child;
