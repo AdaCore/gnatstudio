@@ -571,7 +571,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
     ###################################################################-->
 
   <shell_doc name="GPS.Project">
-      <description>Represents a project file</description>
+      <description>Represents a project file. See also the GPS documentation on how to create new project attributes</description>
       <see_also name="GPS.Project.__init__()" />
   </shell_doc>
 
