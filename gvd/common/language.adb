@@ -495,7 +495,7 @@ package body Language is
       Index  := Buffer'Last - 1;
       Indent := 0;
 
-      while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
+      while Index > Buffer'First and then Buffer (Index - 1) /= ASCII.LF loop
          Index := Index - 1;
       end loop;
 
