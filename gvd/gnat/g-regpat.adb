@@ -9,7 +9,7 @@
 --                            $Revision$
 --                                                                          --
 --               Copyright (C) 1986 by University of Toronto.               --
---           Copyright (C) 1996-2000 Ada Core Technologies, Inc.            --
+--           Copyright (C) 1996-2001 Ada Core Technologies, Inc.            --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -42,8 +42,8 @@
 --  precedence is structured in regular expressions. Serious changes in
 --  regular-expression syntax might require a total rethink.
 
-with System.IO;                use System.IO;
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
+with System.IO;               use System.IO;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Unchecked_Conversion;
 
 package body GNAT.Regpat is
@@ -76,6 +76,7 @@ package body GNAT.Regpat is
 
    --  You can see the exact byte-compiled version by using the Dump
    --  subprogram. However, here are a few examples:
+
    --  (a|b):  1 : MAGIC
    --          2 : BRANCH  (next at  10)
    --          5 :    EXACT  (next at  18)   operand=a
@@ -92,8 +93,6 @@ package body GNAT.Regpat is
    --         26 : NOTHING  (next at  29)
    --         29 : EOP  (next at 0)
 
-
-
    --  The opcodes are:
 
    type Opcode is
@@ -104,6 +103,7 @@ package body GNAT.Regpat is
       MINMOD,     -- no        Next operator is not greedy
 
       --  Classes of characters
+
       ANY,        -- no        Match any one character except newline
       SANY,       -- no        Match any character, including new line
       ANYOF,      -- class     Match any character in this class
@@ -131,6 +131,7 @@ package body GNAT.Regpat is
 
       CURLYX,     -- 2num node Match this complex thing {n,m} times
       --                       The nums are coded on two characters each.
+
       WHILEM,     -- no        Do curly processing and see if rest matches
 
       --  Matches after or before a word
@@ -199,7 +200,7 @@ package body GNAT.Regpat is
 
    type Bit_Conversion_Array is array (Class_Byte range 0 .. 7) of Class_Byte;
    Bit_Conversion : constant Bit_Conversion_Array :=
-     (1, 2, 4, 8, 16, 32, 64, 128);
+                      (1, 2, 4, 8, 16, 32, 64, 128);
 
    type Std_Class is (ANYOF_NONE,
                       ANYOF_ALNUM,   --  Alphanumeric class [a-zA-Z0-9]
@@ -230,13 +231,15 @@ package body GNAT.Regpat is
                       ANYOF_NXDIGIT
                       );
 
-   procedure Set_In_Class (Bitmap : in out Character_Class;
-                           C      : Character);
+   procedure Set_In_Class
+     (Bitmap : in out Character_Class;
+      C      : Character);
    --  Set the entry to True for C in the class Bitmap.
 
-   function Get_From_Class (Bitmap : Character_Class;
-                            C      : Character)
-                           return Boolean;
+   function Get_From_Class
+     (Bitmap : Character_Class;
+      C      : Character)
+      return   Boolean;
    --  Return True if the entry is set for C in the class Bitmap.
 
    procedure Reset_Class (Bitmap : in out Character_Class);
@@ -266,52 +269,55 @@ package body GNAT.Regpat is
    function Operand (P : Pointer) return Pointer;
    --  Return a pointer to the first operand of the node at P
 
-   function String_Length (Program : Program_Data;
-                           P : Pointer)
-                          return Program_Size;
+   function String_Length
+     (Program : Program_Data;
+      P       : Pointer)
+      return    Program_Size;
    --  Return the length of the string argument of the node at P
 
    function String_Operand (P : Pointer) return Pointer;
    --  Return a pointer to the string argument of the node at P
 
-   procedure Bitmap_Operand (Program : Program_Data;
-                             P       : Pointer;
-                             Op      : out Character_Class);
+   procedure Bitmap_Operand
+     (Program : Program_Data;
+      P       : Pointer;
+      Op      : out Character_Class);
    --  Return a pointer to the string argument of the node at P
 
    function Get_Next_Offset
      (Program : Program_Data;
-      IP      : Pointer) return Pointer;
+      IP      : Pointer)
+      return    Pointer;
    --  Get the offset field of a node. Used by Get_Next.
 
    function Get_Next
      (Program : Program_Data;
-      IP      : Pointer) return Pointer;
+      IP      : Pointer)
+      return    Pointer;
    --  Dig the next instruction pointer out of a node
 
-   procedure Optimize
-     (Self              : in out Pattern_Matcher);
+   procedure Optimize (Self : in out Pattern_Matcher);
    --  Optimize a Pattern_Matcher by noting certain special cases
 
-   function Read_Natural (Program : Program_Data;
-                          IP : Pointer)
-                         return Natural;
+   function Read_Natural
+     (Program : Program_Data;
+      IP      : Pointer)
+      return    Natural;
    --  Return the 2-byte natural coded at position IP.
-
 
    --  All of the subprograms above are tiny and should be inlined
 
-   pragma Inline_Always ("+");
-   pragma Inline_Always ("-");
-   pragma Inline_Always ("=");
-   pragma Inline_Always (Is_Alnum);
-   pragma Inline_Always (Is_Space);
-   pragma Inline_Always (Get_Next);
-   pragma Inline_Always (Get_Next_Offset);
-   pragma Inline_Always (Operand);
-   pragma Inline_Always (Read_Natural);
-   pragma Inline_Always (String_Length);
-   pragma Inline_Always (String_Operand);
+   pragma Inline ("+");
+   pragma Inline ("-");
+   pragma Inline ("=");
+   pragma Inline (Is_Alnum);
+   pragma Inline (Is_Space);
+   pragma Inline (Get_Next);
+   pragma Inline (Get_Next_Offset);
+   pragma Inline (Operand);
+   pragma Inline (Read_Natural);
+   pragma Inline (String_Length);
+   pragma Inline (String_Operand);
 
    type Expression_Flags is record
       Has_Width,            -- Known never to match null string
@@ -321,15 +327,6 @@ package body GNAT.Regpat is
 
    Worst_Expression : constant Expression_Flags := (others => False);
    --  Worst case
-
-   ---------
-   -- "=" --
-   ---------
-
-   function "=" (Left : Character; Right : Opcode) return Boolean is
-   begin
-      return Character'Pos (Left) = Opcode'Pos (Right);
-   end "=";
 
    ---------
    -- "+" --
@@ -349,161 +346,30 @@ package body GNAT.Regpat is
       return Opcode'Pos (Left) - Opcode'Pos (Right);
    end "-";
 
-   --------------
-   -- Is_Alnum --
-   --------------
+   ---------
+   -- "=" --
+   ---------
 
-   function Is_Alnum (C : Character) return Boolean is
+   function "=" (Left : Character; Right : Opcode) return Boolean is
    begin
-      return Is_Alphanumeric (C) or else C = '_';
-   end Is_Alnum;
-
-   ------------------
-   -- Is_Printable --
-   ------------------
-
-   function Is_Printable (C : Character) return Boolean is
-      Value : constant Natural := Character'Pos (C);
-   begin
-      return (Value > 32 and then Value < 127)
-        or else Is_Space (C);
-   end Is_Printable;
-
-   --------------
-   -- Is_Space --
-   --------------
-
-   function Is_Space (C : Character) return Boolean is
-   begin
-      return C = ' '
-        or else C = ASCII.HT
-        or else C = ASCII.CR
-        or else C = ASCII.LF
-        or else C = ASCII.VT
-        or else C = ASCII.FF;
-   end Is_Space;
-
-   -------------
-   -- Operand --
-   -------------
-
-   function Operand (P : Pointer) return Pointer is
-   begin
-      return P + 3;
-   end Operand;
-
-   --------------------
-   -- String_Operand --
-   --------------------
-
-   function String_Operand (P : Pointer) return Pointer is
-   begin
-      return P + 4;
-   end String_Operand;
+      return Character'Pos (Left) = Opcode'Pos (Right);
+   end "=";
 
    --------------------
    -- Bitmap_Operand --
    --------------------
 
-   procedure Bitmap_Operand (Program : Program_Data;
-                             P       : Pointer;
-                             Op      : out Character_Class)
+   procedure Bitmap_Operand
+     (Program : Program_Data;
+      P       : Pointer;
+      Op      : out Character_Class)
    is
       function Convert is new Unchecked_Conversion
         (Program_Data, Character_Class);
+
    begin
       Op (0 .. 31) := Convert (Program (P + 3 .. P + 34));
    end Bitmap_Operand;
-
-   -------------------
-   -- String_Length --
-   -------------------
-
-   function String_Length (Program : Program_Data;
-                           P : Pointer)
-                          return Program_Size
-   is
-   begin
-      pragma Assert (Program (P) = EXACT or else Program (P) = EXACTF);
-      return Character'Pos (Program (P + 3));
-   end String_Length;
-
-   ------------------
-   -- Read_Natural --
-   ------------------
-
-   function Read_Natural (Program : Program_Data;
-                          IP : Pointer)
-                         return Natural
-   is
-   begin
-      return Character'Pos (Program (IP))
-        + 256 * Character'Pos (Program (IP + 1));
-   end Read_Natural;
-
-   ---------------------
-   -- Get_Next_Offset --
-   ---------------------
-
-   function Get_Next_Offset
-     (Program : Program_Data;
-      IP      : Pointer)
-      return    Pointer
-   is
-   begin
-      return Pointer (Read_Natural (Program, IP + 1));
-   end Get_Next_Offset;
-
-   --------------
-   -- Get_Next --
-   --------------
-
-   function Get_Next (Program : Program_Data; IP : Pointer) return Pointer is
-      Offset : constant Pointer := Get_Next_Offset (Program, IP);
-
-   begin
-      if Offset = 0 then
-         return 0;
-      else
-         return IP + Offset;
-      end if;
-   end Get_Next;
-
-   ------------------
-   -- Set_In_Class --
-   ------------------
-
-   procedure Set_In_Class (Bitmap : in out Character_Class;
-                           C      : Character)
-   is
-      Value : constant Class_Byte := Character'Pos (C);
-   begin
-      Bitmap (Value / 8) := Bitmap (Value / 8)
-        or Bit_Conversion (Value mod 8);
-   end Set_In_Class;
-
-   --------------------
-   -- Get_From_Class --
-   --------------------
-
-   function Get_From_Class (Bitmap : Character_Class;
-                            C      : Character)
-                           return Boolean
-   is
-      Value : constant Class_Byte := Character'Pos (C);
-   begin
-      return (Bitmap (Value / 8)
-              and Bit_Conversion (Value mod 8)) /= 0;
-   end Get_From_Class;
-
-   -----------------
-   -- Reset_Class --
-   -----------------
-
-   procedure Reset_Class (Bitmap : in out Character_Class) is
-   begin
-      Bitmap := (others => 0);
-   end Reset_Class;
 
    -------------
    -- Compile --
@@ -588,19 +454,21 @@ package body GNAT.Regpat is
       --  each becoming a separate node; the code is simpler that way and
       --  it's not worth fixing.
 
-      procedure Insert_Operator (Op       : Opcode;
-                                 Operand  : Pointer;
-                                 Greedy   : Boolean := True);
+      procedure Insert_Operator
+        (Op       : Opcode;
+         Operand  : Pointer;
+         Greedy   : Boolean := True);
       --  Insert_Operator inserts an operator in front of an
       --  already-emitted operand and relocates the operand.
       --  This applies to PLUS and STAR.
       --  If Minmod is True, then the operator is non-greedy.
 
-      procedure Insert_CURLY_Operator (Op      : Opcode;
-                                       Min     : Natural;
-                                       Max     : Natural;
-                                       Operand : Pointer;
-                                       Greedy  : Boolean := True);
+      procedure Insert_Curly_Operator
+        (Op      : Opcode;
+         Min     : Natural;
+         Max     : Natural;
+         Operand : Pointer;
+         Greedy  : Boolean := True);
       --  Insert an operator for CURLY ({Min}, {Min,} or {Min,Max}).
       --  If Minmod is True, then the operator is non-greedy.
 
@@ -623,10 +491,11 @@ package body GNAT.Regpat is
       function Is_Mult (IP : Natural) return Boolean;
       --  Return True if C is a regexp multiplier: '+', '*' or '?'
 
-      procedure Get_Curly_Arguments (IP     : Natural;
-                                     Min    : out Natural;
-                                     Max    : out Natural;
-                                     Greedy : out Boolean);
+      procedure Get_Curly_Arguments
+        (IP     : Natural;
+         Min    : out Natural;
+         Max    : out Natural;
+         Greedy : out Boolean);
       --  Parse the argument list for a curly operator.
       --  It is assumed that IP is indeed pointing at a valid operator.
 
@@ -647,66 +516,101 @@ package body GNAT.Regpat is
       pragma Inline_Always (Emit_Natural);
       pragma Inline_Always (Parse_Character_Class); --  since used only once
 
-      -------------
-      -- Is_Mult --
-      -------------
+      ---------------
+      -- Case_Emit --
+      ---------------
 
-      function Is_Mult (IP : Natural) return Boolean is
-         C : constant Character := Expression (IP);
+      procedure Case_Emit (C : Character) is
       begin
-         return     C = '*'
-           or else  C = '+'
-           or else  C = '?'
-           or else (C = '{' and then Is_Curly_Operator (IP));
-      end Is_Mult;
+         if (Flags and Case_Insensitive) /= 0 then
+            Emit (To_Lower (C));
 
-      -----------------------
-      -- Is_Curly_Operator --
-      -----------------------
+         else
+            --  Dump current character
 
-      function Is_Curly_Operator (IP : Natural) return Boolean is
-         Scan : Natural := IP;
+            Emit (C);
+         end if;
+      end Case_Emit;
+
+      ----------
+      -- Emit --
+      ----------
+
+      procedure Emit (B : Character) is
       begin
-         if Expression (Scan) /= '{'
-           or else Scan + 2 > Expression'Last
-           or else not Is_Digit (Expression (Scan + 1))
-         then
-            return False;
+         if Emit_Code then
+            Program (Emit_Ptr) := B;
          end if;
 
-         Scan := Scan + 1;
+         Emit_Ptr := Emit_Ptr + 1;
+      end Emit;
 
-         --  The first digit
+      ----------------
+      -- Emit_Class --
+      ----------------
 
-         loop
-            Scan := Scan + 1;
-            if Scan > Expression'Last then
-               return False;
-            end if;
-            exit when not Is_Digit (Expression (Scan));
-         end loop;
+      procedure Emit_Class (Bitmap : Character_Class) is
+         subtype Program31 is Program_Data (0 .. 31);
 
-         if Expression (Scan) = ',' then
-            loop
-               Scan := Scan + 1;
-               if Scan > Expression'Last then
-                  return False;
-               end if;
-               exit when not Is_Digit (Expression (Scan));
-            end loop;
+         function Convert is new Unchecked_Conversion
+           (Character_Class, Program31);
+
+      begin
+         if Emit_Code then
+            Program (Emit_Ptr .. Emit_Ptr + 31) := Convert (Bitmap);
          end if;
 
-         return Expression (Scan) = '}';
-      end Is_Curly_Operator;
+         Emit_Ptr := Emit_Ptr + 32;
+      end Emit_Class;
+
+      ------------------
+      -- Emit_Natural --
+      ------------------
+
+      procedure Emit_Natural (IP : Pointer; N : Natural) is
+      begin
+         if Emit_Code then
+            Program (IP + 1) := Character'Val (N / 256);
+            Program (IP) := Character'Val (N mod 256);
+         end if;
+      end Emit_Natural;
+
+      ---------------
+      -- Emit_Node --
+      ---------------
+
+      function Emit_Node (Op : Opcode) return Pointer is
+         Result : constant Pointer := Emit_Ptr;
+
+      begin
+         if Emit_Code then
+            Program (Emit_Ptr) := Character'Val (Opcode'Pos (Op));
+            Program (Emit_Ptr + 1) := ASCII.NUL;
+            Program (Emit_Ptr + 2) := ASCII.NUL;
+         end if;
+
+         Emit_Ptr := Emit_Ptr + 3;
+         return Result;
+      end Emit_Node;
+
+      ----------
+      -- Fail --
+      ----------
+
+      procedure Fail (M : in String) is
+      begin
+         raise Expression_Error;
+      end Fail;
 
       -------------------------
       -- Get_Curly_Arguments --
       -------------------------
 
-      procedure Get_Curly_Arguments (IP     : Natural;
-                                     Min    : out Natural;
-                                     Max    : out Natural;
-                                     Greedy : out Boolean)
+      procedure Get_Curly_Arguments
+        (IP     : Natural;
+         Min    : out Natural;
+         Max    : out Natural;
+         Greedy : out Boolean)
       is
          Save_Pos : Natural := Parse_Pos + 1;
 
@@ -727,9 +631,11 @@ package body GNAT.Regpat is
             while Expression (Parse_Pos) /= '}' loop
                Parse_Pos := Parse_Pos + 1;
             end loop;
+
             if Save_Pos /= Parse_Pos then
                Max := Natural'Value (Expression (Save_Pos .. Parse_Pos - 1));
             end if;
+
          else
             Max := Min;
          end if;
@@ -739,31 +645,218 @@ package body GNAT.Regpat is
          then
             Greedy := False;
             Parse_Pos := Parse_Pos + 1;
+
          else
             Greedy := True;
          end if;
       end Get_Curly_Arguments;
 
-      ------------------
-      -- Emit_Natural --
-      ------------------
+      ---------------------------
+      -- Insert_Curly_Operator --
+      ---------------------------
 
-      procedure Emit_Natural (IP : Pointer; N : Natural) is
+      procedure Insert_Curly_Operator
+        (Op      : Opcode;
+         Min     : Natural;
+         Max     : Natural;
+         Operand : Pointer;
+         Greedy  : Boolean := True)
+      is
+         Dest   : constant Pointer := Emit_Ptr;
+         Old    : Pointer;
+         Size   : Pointer := 7;
+
       begin
-         if Emit_Code then
-            Program (IP + 1) := Character'Val (N / 256);
-            Program (IP) := Character'Val (N mod 256);
+         --  If the operand is not greedy, insert an extra operand before it
+
+         if not Greedy then
+            Size := Size + 3;
          end if;
-      end Emit_Natural;
 
-      ----------
-      -- Fail --
-      ----------
+         --  Move the operand in the byte-compilation, so that we can insert
+         --  the operator before it.
 
-      procedure Fail (M : in String) is
+         if Emit_Code then
+            Program (Operand + Size .. Emit_Ptr + Size) :=
+              Program (Operand .. Emit_Ptr);
+         end if;
+
+         --  Insert the operator at the position previously occupied by the
+         --  operand.
+
+         Emit_Ptr := Operand;
+
+         if not Greedy then
+            Old := Emit_Node (MINMOD);
+            Link_Tail (Old, Old + 3);
+         end if;
+
+         Old := Emit_Node (Op);
+         Emit_Natural (Old + 3, Min);
+         Emit_Natural (Old + 5, Max);
+
+         Emit_Ptr := Dest + Size;
+      end Insert_Curly_Operator;
+
+      ---------------------
+      -- Insert_Operator --
+      ---------------------
+
+      procedure Insert_Operator
+        (Op      : Opcode;
+         Operand : Pointer;
+         Greedy  : Boolean := True)
+      is
+         Dest   : constant Pointer := Emit_Ptr;
+         Old    : Pointer;
+         Size   : Pointer := 3;
+
       begin
-         raise Expression_Error;
-      end Fail;
+         --  If not greedy, we have to emit another opcode first
+
+         if not Greedy then
+            Size := Size + 3;
+         end if;
+
+         --  Move the operand in the byte-compilation, so that we can insert
+         --  the operator before it.
+
+         if Emit_Code then
+            Program (Operand + Size .. Emit_Ptr + Size)
+              := Program (Operand .. Emit_Ptr);
+         end if;
+
+         --  Insert the operator at the position previously occupied by the
+         --  operand.
+
+         Emit_Ptr := Operand;
+
+         if not Greedy then
+            Old := Emit_Node (MINMOD);
+            Link_Tail (Old, Old + 3);
+         end if;
+
+         Old := Emit_Node (Op);
+         Emit_Ptr := Dest + Size;
+      end Insert_Operator;
+
+      -----------------------
+      -- Is_Curly_Operator --
+      -----------------------
+
+      function Is_Curly_Operator (IP : Natural) return Boolean is
+         Scan : Natural := IP;
+
+      begin
+         if Expression (Scan) /= '{'
+           or else Scan + 2 > Expression'Last
+           or else not Is_Digit (Expression (Scan + 1))
+         then
+            return False;
+         end if;
+
+         Scan := Scan + 1;
+
+         --  The first digit
+
+         loop
+            Scan := Scan + 1;
+
+            if Scan > Expression'Last then
+               return False;
+            end if;
+
+            exit when not Is_Digit (Expression (Scan));
+         end loop;
+
+         if Expression (Scan) = ',' then
+            loop
+               Scan := Scan + 1;
+
+               if Scan > Expression'Last then
+                  return False;
+               end if;
+
+               exit when not Is_Digit (Expression (Scan));
+            end loop;
+         end if;
+
+         return Expression (Scan) = '}';
+      end Is_Curly_Operator;
+
+      -------------
+      -- Is_Mult --
+      -------------
+
+      function Is_Mult (IP : Natural) return Boolean is
+         C : constant Character := Expression (IP);
+
+      begin
+         return     C = '*'
+           or else  C = '+'
+           or else  C = '?'
+           or else (C = '{' and then Is_Curly_Operator (IP));
+      end Is_Mult;
+
+      -----------------------
+      -- Link_Operand_Tail --
+      -----------------------
+
+      procedure Link_Operand_Tail (P, Val : Pointer) is
+      begin
+         if Emit_Code and then Program (P) = BRANCH then
+            Link_Tail (Operand (P), Val);
+         end if;
+      end Link_Operand_Tail;
+
+      ---------------
+      -- Link_Tail --
+      ---------------
+
+      procedure Link_Tail (P, Val : Pointer) is
+         Scan   : Pointer;
+         Temp   : Pointer;
+         Offset : Pointer;
+
+      begin
+         if not Emit_Code then
+            return;
+         end if;
+
+         --  Find last node
+
+         Scan := P;
+         loop
+            Temp := Next_Instruction (Scan);
+            exit when Temp = 0;
+            Scan := Temp;
+         end loop;
+
+         Offset := Val - Scan;
+
+         Emit_Natural (Scan + 1, Natural (Offset));
+      end Link_Tail;
+
+      ----------------------
+      -- Next_Instruction --
+      ----------------------
+
+      function Next_Instruction (P : Pointer) return Pointer is
+         Offset : Pointer;
+
+      begin
+         if not Emit_Code then
+            return 0;
+         end if;
+
+         Offset := Get_Next_Offset (Program, P);
+
+         if Offset = 0 then
+            return 0;
+         end if;
+
+         return P + Offset;
+      end Next_Instruction;
 
       -----------
       -- Parse --
@@ -792,14 +885,15 @@ package body GNAT.Regpat is
          --  Make an OPEN node, if parenthesized
 
          if Parenthesized then
-            if Matcher.Num_Parenthesis > Max_Parenthesis then
+            if Matcher.Paren_Count > Max_Paren_Count then
                Fail ("too many ()");
             end if;
 
-            Par_No := Matcher.Num_Parenthesis + 1;
-            Matcher.Num_Parenthesis := Matcher.Num_Parenthesis + 1;
+            Par_No := Matcher.Paren_Count + 1;
+            Matcher.Paren_Count := Matcher.Paren_Count + 1;
             IP := Emit_Node (OPEN);
             Emit (Character'Val (Par_No));
+
          else
             IP := 0;
          end if;
@@ -893,6 +987,156 @@ package body GNAT.Regpat is
          end if;
       end Parse;
 
+      ----------------
+      -- Parse_Atom --
+      ----------------
+
+      procedure Parse_Atom
+        (Expr_Flags : in out Expression_Flags;
+         IP         : out Pointer)
+      is
+         C : Character;
+
+      begin
+         --  Tentatively set worst expression case
+
+         Expr_Flags := Worst_Expression;
+
+         C := Expression (Parse_Pos);
+         Parse_Pos := Parse_Pos + 1;
+
+         case (C) is
+            when '^' =>
+               if (Flags and Multiple_Lines) /= 0  then
+                  IP := Emit_Node (MBOL);
+               elsif (Flags and Single_Line) /= 0 then
+                  IP := Emit_Node (SBOL);
+               else
+                  IP := Emit_Node (BOL);
+               end if;
+
+            when '$' =>
+               if (Flags and Multiple_Lines) /= 0  then
+                  IP := Emit_Node (MEOL);
+               elsif (Flags and Single_Line) /= 0 then
+                  IP := Emit_Node (SEOL);
+               else
+                  IP := Emit_Node (EOL);
+               end if;
+
+            when '.' =>
+               if (Flags and Single_Line) /= 0 then
+                  IP := Emit_Node (SANY);
+               else
+                  IP := Emit_Node (ANY);
+               end if;
+               Expr_Flags.Has_Width := True;
+               Expr_Flags.Simple := True;
+
+            when '[' =>
+               Parse_Character_Class (IP);
+               Expr_Flags.Has_Width := True;
+               Expr_Flags.Simple := True;
+
+            when '(' =>
+               declare
+                  New_Flags : Expression_Flags;
+
+               begin
+                  Parse (True, New_Flags, IP);
+
+                  if IP = 0 then
+                     return;
+                  end if;
+
+                  Expr_Flags.Has_Width :=
+                    Expr_Flags.Has_Width or New_Flags.Has_Width;
+                  Expr_Flags.SP_Start :=
+                    Expr_Flags.SP_Start or New_Flags.SP_Start;
+               end;
+
+            when '|' | ASCII.LF | ')' =>
+               Fail ("internal urp");  --  Supposed to be caught earlier
+
+            when '?' | '+' | '*' | '{' =>
+               Fail ("?+*{ follows nothing");
+
+            when '\' =>
+               if Parse_Pos > Parse_End then
+                  Fail ("trailing \");
+               end if;
+
+               Parse_Pos := Parse_Pos + 1;
+
+               case Expression (Parse_Pos - 1) is
+                  when 'b'        =>
+                     IP := Emit_Node (BOUND);
+
+                  when 'B'        =>
+                     IP := Emit_Node (NBOUND);
+
+                  when 's'        =>
+                     IP := Emit_Node (SPACE);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'S'        =>
+                     IP := Emit_Node (NSPACE);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'd'        =>
+                     IP := Emit_Node (DIGIT);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'D'        =>
+                     IP := Emit_Node (NDIGIT);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'w'        =>
+                     IP := Emit_Node (ALNUM);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'W'        =>
+                     IP := Emit_Node (NALNUM);
+                     Expr_Flags.Simple := True;
+                     Expr_Flags.Has_Width := True;
+
+                  when 'A'        =>
+                     IP := Emit_Node (SBOL);
+
+                  when 'G'        =>
+                     IP := Emit_Node (SEOL);
+
+                  when '0' .. '9' =>
+                     IP := Emit_Node (REFF);
+
+                     declare
+                        Save : Natural := Parse_Pos - 1;
+
+                     begin
+                        while Parse_Pos <= Expression'Last
+                          and then Is_Digit (Expression (Parse_Pos))
+                        loop
+                           Parse_Pos := Parse_Pos + 1;
+                        end loop;
+
+                        Emit (Character'Val (Natural'Value
+                               (Expression (Save .. Parse_Pos - 1))));
+                     end;
+
+                  when others =>
+                     Parse_Pos := Parse_Pos - 1;
+                     Parse_Literal (Expr_Flags, IP);
+               end case;
+
+            when others => Parse_Literal (Expr_Flags, IP);
+         end case;
+      end Parse_Atom;
+
       ------------------
       -- Parse_Branch --
       ------------------
@@ -916,6 +1160,7 @@ package body GNAT.Regpat is
          else
             IP := Emit_Node (BRANCH);
          end if;
+
          Chain := 0;
 
          while Parse_Pos <= Parse_End
@@ -947,293 +1192,6 @@ package body GNAT.Regpat is
 
       end Parse_Branch;
 
-      -----------------
-      -- Parse_Piece --
-      -----------------
-
-      --  Note that the branching code sequences used for '?' and the
-      --  general cases of '*' and + are somewhat optimized: they use
-      --  the same NOTHING node as both the endmarker for their branch
-      --  list and the body of the last branch. It might seem that
-      --  this node could be dispensed with entirely, but the endmarker
-      --  role is not redundant.
-
-      procedure Parse_Piece
-        (Expr_Flags : in out Expression_Flags;
-         IP    : out Pointer)
-      is
-         Op        : Character;
-         New_Flags : Expression_Flags;
-         Greedy    : Boolean := True;
-
-      begin
-         Parse_Atom (New_Flags, IP);
-
-         if IP = 0 then
-            return;
-         end if;
-
-         if Parse_Pos > Parse_End
-           or else not Is_Mult (Parse_Pos)
-         then
-            Expr_Flags := New_Flags;
-            return;
-         end if;
-
-         Op := Expression (Parse_Pos);
-
-         if Op /= '+' then
-            Expr_Flags := (SP_Start => True, others => False);
-         else
-            Expr_Flags := (Has_Width => True, others => False);
-         end if;
-
-         --  Detect non greedy operators in the easy cases
-
-         if Op /= '{'
-           and then Parse_Pos + 1 <= Parse_End
-           and then Expression (Parse_Pos + 1) = '?'
-         then
-            Greedy := False;
-            Parse_Pos := Parse_Pos + 1;
-         end if;
-
-         --  Generate the byte code
-
-         case Op is
-            when '*' =>
-
-               if New_Flags.Simple then
-                  Insert_Operator (STAR, IP, Greedy);
-
-               else
-
-                  --  This is just like a CURLY operator with a minimal
-                  --  number of repetition of 0.
-
-                  Link_Tail (IP, Emit_Node (WHILEM));
-                  Insert_CURLY_Operator (CURLYX, 0, Max_Curly_Repeat, IP,
-                                         Greedy);
-                  Link_Tail (IP, Emit_Node (NOTHING));
-               end if;
-
-            when '+' =>
-
-               if New_Flags.Simple then
-                  Insert_Operator (PLUS, IP, Greedy);
-
-               else
-                  --  This is just like a CURLY operator with a minimal
-                  --  number of repetition of 1.
-
-                  Link_Tail (IP, Emit_Node (WHILEM));
-                  Insert_CURLY_Operator (CURLYX, 1, Max_Curly_Repeat, IP,
-                                         Greedy);
-                  Link_Tail (IP, Emit_Node (NOTHING));
-
-               end if;
-
-            when '?' =>
-
-               Link_Tail (IP, Emit_Node (WHILEM));
-               Insert_CURLY_Operator (CURLYX, 0, 1, IP, Greedy);
-               Link_Tail (IP, Emit_Node (NOTHING));
-
-            when '{' =>
-               declare
-                  Min, Max : Natural;
-               begin
-                  Get_Curly_Arguments (Parse_Pos, Min, Max, Greedy);
-
-                  if New_Flags.Simple then
-                     Insert_CURLY_Operator (CURLY, Min, Max, IP, Greedy);
-                  else
-                     Link_Tail (IP, Emit_Node (WHILEM));
-                     Insert_CURLY_Operator (CURLYX, Min, Max, IP, Greedy);
-                     Link_Tail (IP, Emit_Node (NOTHING));
-                  end if;
-               end;
-
-            when others =>
-               null;
-         end case;
-
-         Parse_Pos := Parse_Pos + 1;
-
-         if Parse_Pos <= Parse_End
-           and then Is_Mult (Parse_Pos)
-         then
-            Fail ("nested *+{");
-         end if;
-      end Parse_Piece;
-
-      ---------------------------------
-      -- Parse_Posix_Character_Class --
-      ---------------------------------
-
-      function Parse_Posix_Character_Class return Std_Class is
-         Invert : Boolean := False;
-         Class  : Std_Class := ANYOF_NONE;
-         E : String renames Expression;
-      begin
-         if Parse_Pos <= Parse_End
-           and then Expression (Parse_Pos) = ':'
-         then
-            Parse_Pos := Parse_Pos + 1;
-
-            --  Do we have something like:  [[:^alpha:]]
-
-            if Parse_Pos <= Parse_End
-              and then Expression (Parse_Pos) = '^'
-            then
-               Invert := True;
-               Parse_Pos := Parse_Pos + 1;
-            end if;
-
-            --  All classes have 6 characters at least
-            if Parse_Pos + 6 <= Parse_End then
-
-               case Expression (Parse_Pos) is
-                  when 'a' =>
-                     if E (Parse_Pos .. Parse_Pos + 4) = "alnum:]" then
-                        if Invert then
-                           Class := ANYOF_NALNUMC;
-                        else
-                           Class := ANYOF_ALNUMC;
-                        end if;
-
-                     elsif E (Parse_Pos .. Parse_Pos + 6) = "alpha:]" then
-                        if Invert then
-                           Class := ANYOF_NALPHA;
-                        else
-                           Class := ANYOF_ALPHA;
-                        end if;
-
-                     elsif E (Parse_Pos .. Parse_Pos + 6) = "ascii:]" then
-                        if Invert then
-                           Class := ANYOF_NASCII;
-                        else
-                           Class := ANYOF_ASCII;
-                        end if;
-
-                     end if;
-
-                  when 'c' =>
-                     if E (Parse_Pos .. Parse_Pos + 6) = "cntrl:]" then
-                        if Invert then
-                           Class := ANYOF_NCNTRL;
-                        else
-                           Class := ANYOF_CNTRL;
-                        end if;
-                     end if;
-
-                  when 'd' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "digit:]" then
-                        if Invert then
-                           Class := ANYOF_NDIGIT;
-                        else
-                           Class := ANYOF_DIGIT;
-                        end if;
-                     end if;
-
-                  when 'g' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "graph:]" then
-                        if Invert then
-                           Class := ANYOF_NGRAPH;
-                        else
-                           Class := ANYOF_GRAPH;
-                        end if;
-                     end if;
-
-                  when 'l' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "lower:]" then
-                        if Invert then
-                           Class := ANYOF_NLOWER;
-                        else
-                           Class := ANYOF_LOWER;
-                        end if;
-                     end if;
-
-                  when 'p' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "print:]" then
-                        if Invert then
-                           Class := ANYOF_NPRINT;
-                        else
-                           Class := ANYOF_PRINT;
-                        end if;
-
-                     elsif E (Parse_Pos .. Parse_Pos + 6) = "punct:]" then
-                        if Invert then
-                           Class := ANYOF_NPUNCT;
-                        else
-                           Class := ANYOF_PUNCT;
-                        end if;
-                     end if;
-
-                  when 's' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "space:]" then
-                        if Invert then
-                           Class := ANYOF_NSPACE;
-                        else
-                           Class := ANYOF_SPACE;
-                        end if;
-                     end if;
-
-                  when 'u' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 6) = "upper:]" then
-                        if Invert then
-                           Class := ANYOF_NUPPER;
-                        else
-                           Class := ANYOF_UPPER;
-                        end if;
-                     end if;
-
-                  when 'w' =>
-
-                     if E (Parse_Pos .. Parse_Pos + 5) = "word:]" then
-                        if Invert then
-                           Class := ANYOF_NALNUM;
-                        else
-                           Class := ANYOF_ALNUM;
-                        end if;
-                        Parse_Pos := Parse_Pos - 1;
-                     end if;
-
-                  when 'x' =>
-
-                     if Parse_Pos + 7 <= Parse_End
-                       and then E (Parse_Pos .. Parse_Pos + 7) = "xdigit:]"
-                     then
-                        if Invert then
-                           Class := ANYOF_NXDIGIT;
-                        else
-                           Class := ANYOF_XDIGIT;
-                        end if;
-                        Parse_Pos := Parse_Pos + 1;
-                     end if;
-
-                  when others =>
-                     Class := ANYOF_NONE;
-
-               end case;
-               if Class /= ANYOF_NONE then
-                  Parse_Pos := Parse_Pos + 7;
-               end if;
-            else
-               Fail ("Invalid character class");
-            end if;
-         else
-            return ANYOF_NONE;
-         end if;
-         return Class;
-      end Parse_Posix_Character_Class;
-
       ---------------------------
       -- Parse_Character_Class --
       ---------------------------
@@ -1262,7 +1220,7 @@ package body GNAT.Regpat is
 
          if Parse_Pos <= Parse_End
            and then (Expression (Parse_Pos) = ']'
-                     or else Expression (Parse_Pos) = '-')
+                      or else Expression (Parse_Pos) = '-')
          then
             Set_In_Class (Bitmap, Expression (Parse_Pos));
             Parse_Pos := Parse_Pos + 1;
@@ -1302,9 +1260,9 @@ package body GNAT.Regpat is
                   when 'e' => Value := ASCII.ESC;
                   when 'a' => Value := ASCII.BEL;
 
-                  --  when 'x'  => ?? hexadecimal value
-                  --  when 'c'  => ?? control character
-                  --  when '0'..'9' => ?? octal character
+                  --  when 'x'  => ??? hexadecimal value
+                  --  when 'c'  => ??? control character
+                  --  when '0'..'9' => ??? octal character
 
                   when others => null;
                end case;
@@ -1598,8 +1556,9 @@ package body GNAT.Regpat is
       --  this is used in Is_Mult handling, and in setting the SIMPLE
       --  flag at the end.
 
-      procedure Parse_Literal (Expr_Flags : in out Expression_Flags;
-                               IP : out Pointer)
+      procedure Parse_Literal
+        (Expr_Flags : in out Expression_Flags;
+         IP         : out Pointer)
       is
          Start_Pos  : Natural := 0;
          C          : Character;
@@ -1683,6 +1642,7 @@ package body GNAT.Regpat is
 
          --  Is the string followed by a '*+?{' operator ? If yes, and if there
          --  is an initial string to emit, do it now.
+
          if Start_Pos = Natural'Last
            and then Emit_Ptr >= Length_Ptr + 3
          then
@@ -1696,349 +1656,302 @@ package body GNAT.Regpat is
 
          Expr_Flags.Has_Width := True;
 
-         --  Slight optimization when there is a single character.
+         --  Slight optimization when there is a single character
+
          if Emit_Ptr = Length_Ptr + 2 then
             Expr_Flags.Simple := True;
          end if;
       end Parse_Literal;
 
-      ----------------
-      -- Parse_Atom --
-      ----------------
+      -----------------
+      -- Parse_Piece --
+      -----------------
 
-      procedure Parse_Atom
+      --  Note that the branching code sequences used for '?' and the
+      --  general cases of '*' and + are somewhat optimized: they use
+      --  the same NOTHING node as both the endmarker for their branch
+      --  list and the body of the last branch. It might seem that
+      --  this node could be dispensed with entirely, but the endmarker
+      --  role is not redundant.
+
+      procedure Parse_Piece
         (Expr_Flags : in out Expression_Flags;
-         IP         : out Pointer)
+         IP    : out Pointer)
       is
-         C : Character;
+         Op        : Character;
+         New_Flags : Expression_Flags;
+         Greedy    : Boolean := True;
 
       begin
-         --  Tentatively set worst expression case
+         Parse_Atom (New_Flags, IP);
 
-         Expr_Flags := Worst_Expression;
-
-         C := Expression (Parse_Pos);
-         Parse_Pos := Parse_Pos + 1;
-
-         case (C) is
-            when '^' =>
-               if (Flags and Multiple_Lines) /= 0  then
-                  IP := Emit_Node (MBOL);
-               elsif (Flags and Single_Line) /= 0 then
-                  IP := Emit_Node (SBOL);
-               else
-                  IP := Emit_Node (BOL);
-               end if;
-            when '$' =>
-               if (Flags and Multiple_Lines) /= 0  then
-                  IP := Emit_Node (MEOL);
-               elsif (Flags and Single_Line) /= 0 then
-                  IP := Emit_Node (SEOL);
-               else
-                  IP := Emit_Node (EOL);
-               end if;
-
-            when '.' =>
-               if (Flags and Single_Line) /= 0 then
-                  IP := Emit_Node (SANY);
-               else
-                  IP := Emit_Node (ANY);
-               end if;
-               Expr_Flags.Has_Width := True;
-               Expr_Flags.Simple := True;
-
-            when '[' =>
-               Parse_Character_Class (IP);
-               Expr_Flags.Has_Width := True;
-               Expr_Flags.Simple := True;
-
-            when '(' =>
-               declare
-                  New_Flags : Expression_Flags;
-               begin
-                  Parse (True, New_Flags, IP);
-
-                  if IP = 0 then
-                     return;
-                  end if;
-
-                  Expr_Flags.Has_Width :=
-                    Expr_Flags.Has_Width or New_Flags.Has_Width;
-                  Expr_Flags.SP_Start :=
-                    Expr_Flags.SP_Start or New_Flags.SP_Start;
-               end;
-
-            when '|' | ASCII.LF | ')' =>
-               Fail ("internal urp");  --  Supposed to be caught earlier
-
-            when '?' | '+' | '*' | '{' =>
-               Fail ("?+*{ follows nothing");
-
-            when '\' =>
-               if Parse_Pos > Parse_End then
-                  Fail ("trailing \");
-               end if;
-
-               Parse_Pos := Parse_Pos + 1;
-               case Expression (Parse_Pos - 1) is
-                  when 'b'        =>
-                     IP := Emit_Node (BOUND);
-                  when 'B'        =>
-                     IP := Emit_Node (NBOUND);
-                  when 's'        =>
-                     IP := Emit_Node (SPACE);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'S'        =>
-                     IP := Emit_Node (NSPACE);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'd'        =>
-                     IP := Emit_Node (DIGIT);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'D'        =>
-                     IP := Emit_Node (NDIGIT);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'w'        =>
-                     IP := Emit_Node (ALNUM);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'W'        =>
-                     IP := Emit_Node (NALNUM);
-                     Expr_Flags.Simple := True;
-                     Expr_Flags.Has_Width := True;
-                  when 'A'        =>
-                     IP := Emit_Node (SBOL);
-                  when 'G'        =>
-                     IP := Emit_Node (SEOL);
-                  when '0' .. '9' =>
-                     IP := Emit_Node (REFF);
-                     declare
-                        Save : Natural := Parse_Pos - 1;
-                     begin
-                        while Parse_Pos <= Expression'Last
-                          and then Is_Digit (Expression (Parse_Pos))
-                        loop
-                           Parse_Pos := Parse_Pos + 1;
-                        end loop;
-                        Emit (Character'Val (Natural'Value
-                               (Expression (Save .. Parse_Pos - 1))));
-                     end;
-                  when others =>
-                     Parse_Pos := Parse_Pos - 1;
-                     Parse_Literal (Expr_Flags, IP);
-               end case;
-
-            when others => Parse_Literal (Expr_Flags, IP);
-         end case;
-      end Parse_Atom;
-
-      ---------------
-      -- Emit_Node --
-      ---------------
-
-      function Emit_Node (Op : Opcode) return Pointer is
-         Result : constant Pointer := Emit_Ptr;
-
-      begin
-         if Emit_Code then
-            Program (Emit_Ptr) := Character'Val (Opcode'Pos (Op));
-            Program (Emit_Ptr + 1) := ASCII.NUL;
-            Program (Emit_Ptr + 2) := ASCII.NUL;
-         end if;
-
-         Emit_Ptr := Emit_Ptr + 3;
-         return Result;
-      end Emit_Node;
-
-      ----------
-      -- Emit --
-      ----------
-
-      procedure Emit (B : Character) is
-      begin
-         if Emit_Code then
-            Program (Emit_Ptr) := B;
-         end if;
-         Emit_Ptr := Emit_Ptr + 1;
-      end Emit;
-
-      ---------------
-      -- Case_Emit --
-      ---------------
-
-      procedure Case_Emit (C : Character) is
-      begin
-         if (Flags and Case_Insensitive) /= 0 then
-            Emit (To_Lower (C));
-         else
-            Emit (C);                  -- dump current character
-         end if;
-      end Case_Emit;
-
-      ----------------
-      -- Emit_Class --
-      ----------------
-
-      procedure Emit_Class (Bitmap : Character_Class) is
-         subtype Program31 is Program_Data (0 .. 31);
-         function Convert is new Unchecked_Conversion
-           (Character_Class, Program31);
-      begin
-         if Emit_Code then
-            Program (Emit_Ptr .. Emit_Ptr + 31) := Convert (Bitmap);
-         end if;
-         Emit_Ptr := Emit_Ptr + 32;
-      end Emit_Class;
-
-      ---------------------------
-      -- Insert_CURLY_Operator --
-      ---------------------------
-
-      procedure Insert_CURLY_Operator
-        (Op      : Opcode;
-         Min     : Natural;
-         Max     : Natural;
-         Operand : Pointer;
-         Greedy  : Boolean := True)
-      is
-         Dest   : constant Pointer := Emit_Ptr;
-         Old    : Pointer;
-         Size   : Pointer := 7;
-
-      begin
-         --  If the operand is not greedy, insert an extra operand before it
-
-         if not Greedy then
-            Size := Size + 3;
-         end if;
-
-         --  Move the operand in the byte-compilation, so that we can insert
-         --  the operator before it.
-
-         if Emit_Code then
-            Program (Operand + Size .. Emit_Ptr + Size)
-              := Program (Operand .. Emit_Ptr);
-         end if;
-
-         --  Insert the operator at the position previously occupied by the
-         --  operand.
-
-         Emit_Ptr := Operand;
-
-         if not Greedy then
-            Old := Emit_Node (MINMOD);
-            Link_Tail (Old, Old + 3);
-         end if;
-
-         Old := Emit_Node (Op);
-         Emit_Natural (Old + 3, Min);
-         Emit_Natural (Old + 5, Max);
-
-         Emit_Ptr := Dest + Size;
-      end Insert_CURLY_Operator;
-
-      ---------------------
-      -- Insert_Operator --
-      ---------------------
-
-      procedure Insert_Operator
-        (Op      : Opcode;
-         Operand : Pointer;
-         Greedy  : Boolean := True)
-      is
-         Dest   : constant Pointer := Emit_Ptr;
-         Old    : Pointer;
-         Size   : Pointer := 3;
-
-      begin
-         --  If not greedy, we have to emit another opcode first
-
-         if not Greedy then
-            Size := Size + 3;
-         end if;
-
-         --  Move the operand in the byte-compilation, so that we can insert
-         --  the operator before it.
-
-         if Emit_Code then
-            Program (Operand + Size .. Emit_Ptr + Size)
-              := Program (Operand .. Emit_Ptr);
-         end if;
-
-         --  Insert the operator at the position previously occupied by the
-         --  operand.
-
-         Emit_Ptr := Operand;
-         if not Greedy then
-            Old := Emit_Node (MINMOD);
-            Link_Tail (Old, Old + 3);
-         end if;
-         Old := Emit_Node (Op);
-         Emit_Ptr := Dest + Size;
-      end Insert_Operator;
-
-      ---------------
-      -- Link_Tail --
-      ---------------
-
-      procedure Link_Tail (P, Val : Pointer) is
-         Scan   : Pointer;
-         Temp   : Pointer;
-         Offset : Pointer;
-
-      begin
-         if not Emit_Code then
+         if IP = 0 then
             return;
          end if;
 
-         --  Find last node
+         if Parse_Pos > Parse_End
+           or else not Is_Mult (Parse_Pos)
+         then
+            Expr_Flags := New_Flags;
+            return;
+         end if;
 
-         Scan := P;
-         loop
-            Temp := Next_Instruction (Scan);
-            exit when Temp = 0;
-            Scan := Temp;
-         end loop;
+         Op := Expression (Parse_Pos);
 
-         Offset := Val - Scan;
+         if Op /= '+' then
+            Expr_Flags := (SP_Start => True, others => False);
+         else
+            Expr_Flags := (Has_Width => True, others => False);
+         end if;
 
-         Emit_Natural (Scan + 1, Natural (Offset));
-      end Link_Tail;
+         --  Detect non greedy operators in the easy cases
 
-      -----------------------
-      -- Link_Operand_Tail --
-      -----------------------
+         if Op /= '{'
+           and then Parse_Pos + 1 <= Parse_End
+           and then Expression (Parse_Pos + 1) = '?'
+         then
+            Greedy := False;
+            Parse_Pos := Parse_Pos + 1;
+         end if;
 
-      procedure Link_Operand_Tail (P, Val : Pointer) is
+         --  Generate the byte code
+
+         case Op is
+            when '*' =>
+
+               if New_Flags.Simple then
+                  Insert_Operator (STAR, IP, Greedy);
+               else
+                  Link_Tail (IP, Emit_Node (WHILEM));
+                  Insert_Curly_Operator
+                    (CURLYX, 0, Max_Curly_Repeat, IP, Greedy);
+                  Link_Tail (IP, Emit_Node (NOTHING));
+               end if;
+
+            when '+' =>
+
+               if New_Flags.Simple then
+                  Insert_Operator (PLUS, IP, Greedy);
+               else
+                  Link_Tail (IP, Emit_Node (WHILEM));
+                  Insert_Curly_Operator
+                    (CURLYX, 1, Max_Curly_Repeat, IP, Greedy);
+                  Link_Tail (IP, Emit_Node (NOTHING));
+               end if;
+
+            when '?' =>
+               if New_Flags.Simple then
+                  Insert_Curly_Operator (CURLY, 0, 1, IP, Greedy);
+               else
+                  Link_Tail (IP, Emit_Node (WHILEM));
+                  Insert_Curly_Operator (CURLYX, 0, 1, IP, Greedy);
+                  Link_Tail (IP, Emit_Node (NOTHING));
+               end if;
+
+            when '{' =>
+               declare
+                  Min, Max : Natural;
+
+               begin
+                  Get_Curly_Arguments (Parse_Pos, Min, Max, Greedy);
+
+                  if New_Flags.Simple then
+                     Insert_Curly_Operator (CURLY, Min, Max, IP, Greedy);
+                  else
+                     Link_Tail (IP, Emit_Node (WHILEM));
+                     Insert_Curly_Operator (CURLYX, Min, Max, IP, Greedy);
+                     Link_Tail (IP, Emit_Node (NOTHING));
+                  end if;
+               end;
+
+            when others =>
+               null;
+         end case;
+
+         Parse_Pos := Parse_Pos + 1;
+
+         if Parse_Pos <= Parse_End
+           and then Is_Mult (Parse_Pos)
+         then
+            Fail ("nested *+{");
+         end if;
+      end Parse_Piece;
+
+      ---------------------------------
+      -- Parse_Posix_Character_Class --
+      ---------------------------------
+
+      function Parse_Posix_Character_Class return Std_Class is
+         Invert : Boolean := False;
+         Class  : Std_Class := ANYOF_NONE;
+         E      : String renames Expression;
+
       begin
-         if Emit_Code and then Program (P) = BRANCH then
-            Link_Tail (Operand (P), Val);
+         if Parse_Pos <= Parse_End
+           and then Expression (Parse_Pos) = ':'
+         then
+            Parse_Pos := Parse_Pos + 1;
+
+            --  Do we have something like:  [[:^alpha:]]
+
+            if Parse_Pos <= Parse_End
+              and then Expression (Parse_Pos) = '^'
+            then
+               Invert := True;
+               Parse_Pos := Parse_Pos + 1;
+            end if;
+
+            --  All classes have 6 characters at least
+            --  ??? magid constant 6 should have a name!
+
+            if Parse_Pos + 6 <= Parse_End then
+
+               case Expression (Parse_Pos) is
+                  when 'a' =>
+                     if E (Parse_Pos .. Parse_Pos + 4) = "alnum:]" then
+                        if Invert then
+                           Class := ANYOF_NALNUMC;
+                        else
+                           Class := ANYOF_ALNUMC;
+                        end if;
+
+                     elsif E (Parse_Pos .. Parse_Pos + 6) = "alpha:]" then
+                        if Invert then
+                           Class := ANYOF_NALPHA;
+                        else
+                           Class := ANYOF_ALPHA;
+                        end if;
+
+                     elsif E (Parse_Pos .. Parse_Pos + 6) = "ascii:]" then
+                        if Invert then
+                           Class := ANYOF_NASCII;
+                        else
+                           Class := ANYOF_ASCII;
+                        end if;
+
+                     end if;
+
+                  when 'c' =>
+                     if E (Parse_Pos .. Parse_Pos + 6) = "cntrl:]" then
+                        if Invert then
+                           Class := ANYOF_NCNTRL;
+                        else
+                           Class := ANYOF_CNTRL;
+                        end if;
+                     end if;
+
+                  when 'd' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "digit:]" then
+                        if Invert then
+                           Class := ANYOF_NDIGIT;
+                        else
+                           Class := ANYOF_DIGIT;
+                        end if;
+                     end if;
+
+                  when 'g' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "graph:]" then
+                        if Invert then
+                           Class := ANYOF_NGRAPH;
+                        else
+                           Class := ANYOF_GRAPH;
+                        end if;
+                     end if;
+
+                  when 'l' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "lower:]" then
+                        if Invert then
+                           Class := ANYOF_NLOWER;
+                        else
+                           Class := ANYOF_LOWER;
+                        end if;
+                     end if;
+
+                  when 'p' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "print:]" then
+                        if Invert then
+                           Class := ANYOF_NPRINT;
+                        else
+                           Class := ANYOF_PRINT;
+                        end if;
+
+                     elsif E (Parse_Pos .. Parse_Pos + 6) = "punct:]" then
+                        if Invert then
+                           Class := ANYOF_NPUNCT;
+                        else
+                           Class := ANYOF_PUNCT;
+                        end if;
+                     end if;
+
+                  when 's' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "space:]" then
+                        if Invert then
+                           Class := ANYOF_NSPACE;
+                        else
+                           Class := ANYOF_SPACE;
+                        end if;
+                     end if;
+
+                  when 'u' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 6) = "upper:]" then
+                        if Invert then
+                           Class := ANYOF_NUPPER;
+                        else
+                           Class := ANYOF_UPPER;
+                        end if;
+                     end if;
+
+                  when 'w' =>
+
+                     if E (Parse_Pos .. Parse_Pos + 5) = "word:]" then
+                        if Invert then
+                           Class := ANYOF_NALNUM;
+                        else
+                           Class := ANYOF_ALNUM;
+                        end if;
+
+                        Parse_Pos := Parse_Pos - 1;
+                     end if;
+
+                  when 'x' =>
+
+                     if Parse_Pos + 7 <= Parse_End
+                       and then E (Parse_Pos .. Parse_Pos + 7) = "xdigit:]"
+                     then
+                        if Invert then
+                           Class := ANYOF_NXDIGIT;
+                        else
+                           Class := ANYOF_XDIGIT;
+                        end if;
+
+                        Parse_Pos := Parse_Pos + 1;
+                     end if;
+
+                  when others =>
+                     Class := ANYOF_NONE;
+
+               end case;
+
+               if Class /= ANYOF_NONE then
+                  Parse_Pos := Parse_Pos + 7;
+               end if;
+
+            else
+               Fail ("Invalid character class");
+            end if;
+
+         else
+            return ANYOF_NONE;
          end if;
-      end Link_Operand_Tail;
 
-      ----------------------
-      -- Next_Instruction --
-      ----------------------
-
-      function Next_Instruction (P : Pointer) return Pointer is
-         Offset : Pointer;
-
-      begin
-         if not Emit_Code then
-            return 0;
-         end if;
-
-         Offset := Get_Next_Offset (Program, P);
-
-         if Offset = 0 then
-            return 0;
-         end if;
-
-         return P + Offset;
-      end Next_Instruction;
+         return Class;
+      end Parse_Posix_Character_Class;
 
       Expr_Flags : Expression_Flags;
       Result     : Pointer;
@@ -2056,17 +1969,14 @@ package body GNAT.Regpat is
       Final_Code_Size := Emit_Ptr - 1;
 
       --  Do we want to actually compile the expression, or simply get the
-      --  code size ?
+      --  code size ???
+
       if Emit_Code then
          Optimize (PM);
       end if;
 
       PM.Flags := Flags;
    end Compile;
-
-   -------------
-   -- Compile --
-   -------------
 
    function Compile
      (Expression : String;
@@ -2075,6 +1985,7 @@ package body GNAT.Regpat is
    is
       Size  : Program_Size;
       Dummy : Pattern_Matcher (0);
+
    begin
       Compile (Dummy, Expression, Size, Flags);
 
@@ -2086,81 +1997,305 @@ package body GNAT.Regpat is
       end;
    end Compile;
 
-   -------------
-   -- Compile --
-   -------------
-
    procedure Compile
      (Matcher    : out Pattern_Matcher;
       Expression : String;
       Flags      : Regexp_Flags := No_Flags)
    is
       Size : Program_Size;
+
    begin
       Compile (Matcher, Expression, Size, Flags);
    end Compile;
 
-   --------------
-   -- Optimize --
-   --------------
+   ----------
+   -- Dump --
+   ----------
 
-   procedure Optimize (Self : in out Pattern_Matcher) is
-      Max_Length  : Program_Size;
-      This_Length : Program_Size;
-      Longest     : Pointer;
-      Scan        : Pointer;
-      Program     : Program_Data renames Self.Program;
+   procedure Dump (Self : Pattern_Matcher) is
 
-   begin
-      --  Start with safe defaults (no optimization):
-      --    *  No known first character of match
-      --    *  Does not necessarily start at beginning of line
-      --    *  No string known that has to appear in data
+      --  Index  : Pointer := Program_First + 1;
+      --  What is the above line for ???
 
-      Self.First := ASCII.NUL;
-      Self.Anchored := False;
-      Self.Must_Have := Program'Last + 1;
-      Self.Must_Have_Length := 0;
+      Op      : Opcode;
+      Program : Program_Data renames Self.Program;
 
-      Scan := Program_First + 1;  --  First instruction (can be anything)
+      procedure Dump_Until
+        (Start  : Pointer;
+         Till   : Pointer;
+         Indent : Natural := 0);
+      --  Dump the program until the node Till (not included) is met.
+      --  Every line is indented with Index spaces at the beginning
+      --  Dumps till the end if Till is 0.
 
-      if Program (Scan) = EXACT then
-         Self.First := Program (String_Operand (Scan));
+      ----------------
+      -- Dump_Until --
+      ----------------
 
-      elsif Program (Scan) = BOL
-        or else Program (Scan) = SBOL
-        or else Program (Scan) = MBOL
-      then
-         Self.Anchored := True;
-      end if;
+      procedure Dump_Until
+        (Start  : Pointer;
+         Till   : Pointer;
+         Indent : Natural := 0)
+      is
+         Next : Pointer;
+         Index : Pointer := Start;
+         Local_Indent : Natural := Indent;
+         Length : Pointer;
 
-      --  If there's something expensive in the regexp, find the
-      --  longest literal string that must appear and make it the
-      --  regmust. Resolve ties in favor of later strings, since
-      --  the regstart check works with the beginning of the regexp.
-      --  and avoiding duplication strengthens checking. Not a
-      --  strong reason, but sufficient in the absence of others.
+      begin
+         while Index < Till loop
 
-      if False then -- if Flags.SP_Start then ???
-         Longest := 0;
-         Max_Length := 0;
-         while Scan /= 0 loop
-            if Program (Scan) = EXACT or else Program (Scan) = EXACTF then
-               This_Length := String_Length (Program, Scan);
+            Op := Opcode'Val (Character'Pos ((Self.Program (Index))));
 
-               if This_Length >= Max_Length then
-                  Longest := String_Operand (Scan);
-                  Max_Length := This_Length;
-               end if;
+            if Op = CLOSE then
+               Local_Indent := Local_Indent - 3;
             end if;
 
-            Scan := Get_Next (Program, Scan);
-         end loop;
+            declare
+               Point : String := Pointer'Image (Index);
 
-         Self.Must_Have        := Longest;
-         Self.Must_Have_Length := Natural (Max_Length) + 1;
+            begin
+               for J in 1 .. 6 - Point'Length loop
+                  Put (' ');
+               end loop;
+
+               Put (Point
+                    & " : "
+                    & (1 .. Local_Indent => ' ')
+                    & Opcode'Image (Op));
+            end;
+
+            --  Print the parenthesis number
+
+            if Op = OPEN or else Op = CLOSE or else Op = REFF then
+               Put (Natural'Image (Character'Pos (Program (Index + 3))));
+            end if;
+
+            Next := Index + Get_Next_Offset (Program, Index);
+
+            if Next = Index then
+               Put ("  (next at 0)");
+            else
+               Put ("  (next at " & Pointer'Image (Next) & ")");
+            end if;
+
+            case Op is
+
+               --  Character class operand
+
+               when ANYOF =>  null;
+                  declare
+                     Bitmap  : Character_Class;
+                     Last    : Character := ASCII.Nul;
+                     Current : Natural := 0;
+
+                     Current_Char : Character;
+
+                  begin
+                     Bitmap_Operand (Program, Index, Bitmap);
+                     Put ("   operand=");
+
+                     while Current <= 255 loop
+                        Current_Char := Character'Val (Current);
+
+                        --  First item in a range
+
+                        if Get_From_Class (Bitmap, Current_Char) then
+                           Last := Current_Char;
+
+                           --  Search for the last item in the range
+
+                           loop
+                              Current := Current + 1;
+                              exit when Current > 255;
+                              Current_Char := Character'Val (Current);
+                              exit when
+                                not Get_From_Class (Bitmap, Current_Char);
+
+                           end loop;
+
+                           if Last <= ' ' then
+                              Put (Last'Img);
+                           else
+                              Put (Last);
+                           end if;
+
+                           if Character'Succ (Last) /= Current_Char then
+                              Put ("-" & Character'Pred (Current_Char));
+                           end if;
+
+                        else
+                           Current := Current + 1;
+                        end if;
+                     end loop;
+
+                     New_Line;
+                     Index := Index + 3 + Bitmap'Length;
+                  end;
+
+               --  string operand
+
+               when EXACT | EXACTF =>
+                  Length := String_Length (Program, Index);
+                  Put ("   operand (length:" & Program_Size'Image (Length + 1)
+                       & ") ="
+                       & String (Program (String_Operand (Index)
+                                          .. String_Operand (Index)
+                                          + Length)));
+                  Index := String_Operand (Index) + Length + 1;
+                  New_Line;
+
+               --  Node operand
+
+               when BRANCH =>
+                  New_Line;
+                  Dump_Until (Index + 3, Next, Local_Indent + 3);
+                  Index := Next;
+
+               when STAR | PLUS =>
+                  New_Line;
+
+                  --  Only one instruction
+
+                  Dump_Until (Index + 3, Index + 4, Local_Indent + 3);
+                  Index := Next;
+
+               when CURLY | CURLYX =>
+                  Put ("  {"
+                       & Natural'Image (Read_Natural (Program, Index + 3))
+                       & ","
+                       & Natural'Image (Read_Natural (Program, Index + 5))
+                       & "}");
+                  New_Line;
+                  Dump_Until (Index + 7, Next, Local_Indent + 3);
+                  Index := Next;
+
+               when OPEN =>
+                  New_Line;
+                  Index := Index + 4;
+                  Local_Indent := Local_Indent + 3;
+
+               when CLOSE | REFF =>
+                  New_Line;
+                  Index := Index + 4;
+
+               when EOP =>
+                  Index := Index + 3;
+                  New_Line;
+                  exit;
+
+               --  No operand
+
+               when others =>
+                  Index := Index + 3;
+                  New_Line;
+            end case;
+         end loop;
+      end Dump_Until;
+
+   --  Start of processing for Dump
+
+   begin
+      pragma Assert (Self.Program (Program_First) = MAGIC,
+                     "Corrupted Pattern_Matcher");
+
+      Put_Line ("Must start with (Self.First) = "
+                & Character'Image (Self.First));
+
+      if (Self.Flags and Case_Insensitive) /= 0 then
+         Put_Line ("  Case_Insensitive mode");
       end if;
-   end Optimize;
+
+      if (Self.Flags and Single_Line) /= 0 then
+         Put_Line ("  Single_Line mode");
+      end if;
+
+      if (Self.Flags and Multiple_Lines) /= 0 then
+         Put_Line ("  Multiple_Lines mode");
+      end if;
+
+      Put_Line ("     1 : MAGIC");
+      Dump_Until (Program_First + 1, Self.Program'Last + 1);
+   end Dump;
+
+   --------------------
+   -- Get_From_Class --
+   --------------------
+
+   function Get_From_Class
+     (Bitmap : Character_Class;
+      C      : Character)
+      return   Boolean
+   is
+      Value : constant Class_Byte := Character'Pos (C);
+
+   begin
+      return (Bitmap (Value / 8)
+               and Bit_Conversion (Value mod 8)) /= 0;
+   end Get_From_Class;
+
+   --------------
+   -- Get_Next --
+   --------------
+
+   function Get_Next (Program : Program_Data; IP : Pointer) return Pointer is
+      Offset : constant Pointer := Get_Next_Offset (Program, IP);
+
+   begin
+      if Offset = 0 then
+         return 0;
+      else
+         return IP + Offset;
+      end if;
+   end Get_Next;
+
+   ---------------------
+   -- Get_Next_Offset --
+   ---------------------
+
+   function Get_Next_Offset
+     (Program : Program_Data;
+      IP      : Pointer)
+      return    Pointer
+   is
+   begin
+      return Pointer (Read_Natural (Program, IP + 1));
+   end Get_Next_Offset;
+
+   --------------
+   -- Is_Alnum --
+   --------------
+
+   function Is_Alnum (C : Character) return Boolean is
+   begin
+      return Is_Alphanumeric (C) or else C = '_';
+   end Is_Alnum;
+
+   ------------------
+   -- Is_Printable --
+   ------------------
+
+   function Is_Printable (C : Character) return Boolean is
+      Value : constant Natural := Character'Pos (C);
+
+   begin
+      return (Value > 32 and then Value < 127)
+        or else Is_Space (C);
+   end Is_Printable;
+
+   --------------
+   -- Is_Space --
+   --------------
+
+   function Is_Space (C : Character) return Boolean is
+   begin
+      return C = ' '
+        or else C = ASCII.HT
+        or else C = ASCII.CR
+        or else C = ASCII.LF
+        or else C = ASCII.VT
+        or else C = ASCII.FF;
+   end Is_Space;
 
    -----------
    -- Match --
@@ -2179,13 +2314,14 @@ package body GNAT.Regpat is
       BOL_Pos   : Natural;          -- Beginning of input, for ^ check
       Matched   : Boolean := False;  -- Until proven True
 
-      Matches_Full : Match_Array (0 .. Natural'Max (Self.Num_Parenthesis,
+      Matches_Full : Match_Array (0 .. Natural'Max (Self.Paren_Count,
                                                     Matches'Last));
       --  Stores the value of all the parenthesis pairs.
       --  We do not use directly Matches, so that we can also use back
       --  references (REFF) even if Matches is too small.
 
-      Matches_Tmp : Match_Array (Matches_Full'Range);
+      type Natural_Array is array (Match_Count range <>) of Natural;
+      Matches_Tmp : Natural_Array (Matches_Full'Range);
       --  Save the opening position of parenthesis.
 
       Last_Paren  : Natural := 0;
@@ -2220,9 +2356,10 @@ package body GNAT.Regpat is
       function Index (Start : Positive; C : Character) return Natural;
       --  Find character C in Data starting at Start and return position
 
-      function Repeat (IP : Pointer;
-                       Max : Natural := Natural'Last)
-                      return Natural;
+      function Repeat
+        (IP   : Pointer;
+         Max  : Natural := Natural'Last)
+         return Natural;
       --  Repeatedly match something simple, report how many
       --  It only matches on things of length 1.
       --  Starting from Input_Pos, it matches at most Max CURLY.
@@ -2244,13 +2381,19 @@ package body GNAT.Regpat is
       function Match_Whilem (IP     : Pointer) return Boolean;
       --  Return True if a WHILEM matches
 
-      function Match_Simple_Operator (Op     : Opcode;
-                                      Scan   : Pointer;
-                                      Next   : Pointer;
-                                      Greedy : Boolean)
-                                     return Boolean;
-      --  Return True it the simple operator (possibly non-greedy) matches
+      function Recurse_Match (IP : Pointer; From : Natural) return Boolean;
+      pragma Inline (Recurse_Match);
+      --  Calls Match recursively. It saves and restores the parenthesis
+      --  status and location in the input stream correctly, so that
+      --  backtracking is possible
 
+      function Match_Simple_Operator
+        (Op     : Opcode;
+         Scan   : Pointer;
+         Next   : Pointer;
+         Greedy : Boolean)
+         return   Boolean;
+      --  Return True it the simple operator (possibly non-greedy) matches
 
       pragma Inline_Always (Index);
       pragma Inline_Always (Repeat);
@@ -2278,430 +2421,27 @@ package body GNAT.Regpat is
          return 0;
       end Index;
 
-      ------------
-      -- Repeat --
-      ------------
+      -------------------
+      -- Recurse_Match --
+      -------------------
 
-      function Repeat
-        (IP   : Pointer;
-         Max  : Natural := Natural'Last)
-         return Natural
-      is
-         Scan  : Natural := Input_Pos;
-         Last  : Natural;
-         Op    : constant Opcode := Opcode'Val (Character'Pos (Program (IP)));
-         Count : Natural;
-         C     : Character;
-         Is_First : Boolean := True;
-         Bitmap   : Character_Class;
-
+      function Recurse_Match (IP : Pointer; From : Natural) return Boolean is
+         L : constant Natural := Last_Paren;
+         Tmp_F : constant Match_Array :=
+           Matches_Full (From + 1 .. Matches_Full'Last);
+         Start : constant Natural_Array :=
+           Matches_Tmp (From + 1 .. Matches_Tmp'Last);
+         Input : constant Natural := Input_Pos;
       begin
-         if Max = Natural'Last or else Scan + Max - 1 > Data'Last then
-            Last := Data'Last;
-         else
-            Last := Scan + Max - 1;
-         end if;
-
-         case Op is
-            when ANY =>
-               while Scan <= Last
-                 and then Data (Scan) /= ASCII.LF
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when SANY =>
-               Scan := Last + 1;
-
-            when EXACT =>
-
-               --  The string has only one character if Repeat was called
-
-               C := Program (String_Operand (IP));
-               while Scan <= Last
-                 and then C = Data (Scan)
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when EXACTF =>
-
-               --  The string has only one character if Repeat was called
-
-               C := Program (String_Operand (IP));
-               while Scan <= Last
-                 and then To_Lower (C) = Data (Scan)
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when ANYOF =>
-               if Is_First then
-                  Bitmap_Operand (Program, IP, Bitmap);
-                  Is_First := False;
-               end if;
-               while Scan <= Last
-                 and then Get_From_Class (Bitmap, Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when ALNUM =>
-               while Scan <= Last
-                 and then Is_Alnum (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when NALNUM =>
-               while Scan <= Last
-                 and then not Is_Alnum (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when SPACE =>
-               while Scan <= Last
-                 and then Is_Space (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when NSPACE =>
-               while Scan <= Last
-                 and then not Is_Space (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when DIGIT  =>
-               while Scan <= Last
-                 and then Is_Digit (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when NDIGIT  =>
-               while Scan <= Last
-                 and then not Is_Digit (Data (Scan))
-               loop
-                  Scan := Scan + 1;
-               end loop;
-
-            when others =>
---                 Put_Line ("Invalid Repeat for OP=" & Op'Img
---                           & " At position " & IP'Img
---                           & " In string=" & Scan'Img);
-               --  Repeat was called inappropriately, internal error
-
-               raise Program_Error;
-         end case;
-
-         Count := Scan - Input_Pos;
-         Input_Pos := Scan;
-         return Count;
-      end Repeat;
-
-      ------------------
-      -- Match_Whilem --
-      ------------------
-      --  This is really hard to understand, because after we match what we're
-      --  trying to match, we must make sure the rest of the REx is going to
-      --  match for sure, and to do that we have to go back UP the parse tree
-      --  by recursing ever deeper.  And if it fails, we have to reset our
-      --  parent's current state that we can try again after backing off.
-
-      function Match_Whilem (IP : Pointer) return Boolean is
-         Cc : Current_Curly_Access := Current_Curly;
-         N  : Natural := Cc.Cur + 1;
-         Ln : Natural;
-
-         Lastloc : Natural := Cc.Lastloc;
-         --  Detection of 0-len.
-
-      begin
-
-         --  If degenerate scan matches "", assume scan done.
-
-         if Input_Pos = Cc.Lastloc
-           and then N >= Cc.Min
-         then
-            --  Temporarily restore the old context, and check that we
-            --  match was comes after CURLYX.
-
-            Current_Curly := Cc.Old_Cc;
-
-            if Current_Curly /= null then
-               Ln := Current_Curly.Cur;
-            end if;
-
-            if Match (Cc.Next) then
-               return True;
-            end if;
-
-            if Current_Curly /= null then
-               Current_Curly.Cur := Ln;
-            end if;
-
-            Current_Curly := Cc;
-            return False;
-         end if;
-
-         --  First, just match a string of min scans.
-
-         if N < Cc.Min then
-            Cc.Cur := N;
-            Cc.Lastloc := Input_Pos;
-
-            if Match (Cc.Scan) then
-               return True;
-            end if;
-
-            Cc.Cur := N - 1;
-            Cc.Lastloc := Lastloc;
-            return False;
-         end if;
-
-         --  Prefer next over scan for minimal matching.
-
-         if not Cc.Greedy then
-            Current_Curly := Cc.Old_Cc;
-
-            if Current_Curly /= null then
-               Ln := Current_Curly.Cur;
-            end if;
-
-            if Match (Cc.Next) then
-               return True;
-            end if;
-
-            if Current_Curly /= null then
-               Current_Curly.Cur := Ln;
-            end if;
-
-            Current_Curly := Cc;
-
-            --  Maximum greed exceeded ?
-
-            if N >= Cc.Max then
-               return False;
-            end if;
-
-            --  Try scanning more and see if it helps
-            Cc.Cur := N;
-            Cc.Lastloc := Input_Pos;
-
-            if Match (Cc.Scan) then
-               return True;
-            end if;
-
-            Cc.Cur := N - 1;
-            Cc.Lastloc := Lastloc;
-            return False;
-         end if;
-
-         --  Prefer scan over next for maximal matching
-
-         if N < Cc.Max then   --  more greed allowed ?
-            Cc.Cur := N;
-            Cc.Lastloc := Input_Pos;
-
-            if Match (Cc.Scan) then
-               return True;
-            end if;
-         end if;
-
-         --  Failed deeper matches of scan, so see if this one works
-
-         Current_Curly := Cc.Old_Cc;
-
-         if Current_Curly /= null then
-            Ln := Current_Curly.Cur;
-         end if;
-
-         if Match (Cc.Next) then
+         if Match (IP) then
             return True;
          end if;
-
-         if Current_Curly /= null then
-            Current_Curly.Cur := Ln;
-         end if;
-
-         Current_Curly := Cc;
-         Cc.Cur := N - 1;
-         Cc.Lastloc := Lastloc;
+         Last_Paren := L;
+         Matches_Full (Tmp_F'Range) := Tmp_F;
+         Matches_Tmp (Start'Range) := Start;
+         Input_Pos := Input;
          return False;
-
-      end Match_Whilem;
-
-      ---------------------------
-      -- Match_Simple_Operator --
-      ---------------------------
-
-      function Match_Simple_Operator
-        (Op     : Opcode;
-         Scan   : Pointer;
-         Next   : Pointer;
-         Greedy : Boolean)
-         return   Boolean
-      is
-         Next_Char : Character := ASCII.Nul;
-         Next_Char_Known : Boolean := False;
-         No        : Integer;  --  Can be negative
-         Min       : Natural;
-         Max       : Natural := Natural'Last;
-         Operand_Code : Pointer;
-         Old       : Natural;
-         Last_Pos  : Natural;
-         Save      : Natural := Input_Pos;
-
-      begin
-         --  Lookahead to avoid useless match attempts
-         --  when we know what character comes next.
-
-         if Program (Next) = EXACT then
-            Next_Char := Program (String_Operand (Next));
-            Next_Char_Known := True;
-         end if;
-
-         --  Find the minimal and maximal values for the operator
-
-         case Op is
-            when STAR =>
-               Min := 0;
-               Operand_Code := Operand (Scan);
-
-            when PLUS =>
-               Min := 1;
-               Operand_Code := Operand (Scan);
-
-            when others =>
-               Min := Read_Natural (Program, Scan + 3);
-               Max := Read_Natural (Program, Scan + 5);
-               Operand_Code := Scan + 7;
-         end case;
-
-         --  Non greedy operators
-
-         if not Greedy then
-
-            --  Test the minimal repetitions
-
-            if Min /= 0
-              and then Repeat (Operand_Code, Min) < Min
-            then
-               return False;
-            end if;
-
-            Old := Input_Pos;
-
-            --  Find the place where 'next' could work
-
-            if Next_Char_Known then
-
-               --  Last position to check
-
-               Last_Pos := Input_Pos + Max;
-
-               if Last_Pos > Data'Last
-                 or else Max = Natural'Last
-               then
-                  Last_Pos := Data'Last;
-               end if;
-
-               --  Look for the first possible opportunity
-               loop
-
-                  Input_Pos := Old;
-
-                  --  Find the next possible position
-
-                  while Input_Pos <= Last_Pos
-                    and then Data (Input_Pos) /= Next_Char
-                  loop
-                     Input_Pos := Input_Pos + 1;
-                  end loop;
-
-                  if Input_Pos > Last_Pos then
-                     return False;
-                  end if;
-
-                  --  Check that we still match if we stop
-                  --  at the position we just found.
-
-                  declare
-                     Num : constant Natural := Input_Pos - Old;
-
-                  begin
-                     Input_Pos := Old;
-
-                     if Repeat (Operand_Code, Num) < Num then
-                        return False;
-                     end if;
-                  end;
-
-                  --  Input_Pos now points to the new position
-
-                  if Match (Get_Next (Program, Scan)) then
-                     return True;
-                  end if;
-
-                  Old := Input_Pos;
-                  Input_Pos := Input_Pos + 1;
-               end loop;
-
-            --  We know what the next character is
-
-            else
-               while Max >= Min loop
-
-                  --  If the next character matches
-                  if Match (Next) then
-                     return True;
-                  end if;
-
-                  Input_Pos := Save + Min;
-
-                  --  Could not or did not match -- move forward
-                  if Repeat (Operand_Code, 1) /= 0 then
-                     Min := Min + 1;
-                  else
-                     return False;
-                  end if;
-               end loop;
-            end if;
-            return False;
-
-            --  Greedy operators
-         else
-            No := Repeat (Operand_Code, Max);
-
-            --  ???Perl has some special code here in case the
-            --  next instruction is of type EOL, since $ and \Z
-            --  can match before *and* after newline at the end.
-
-            --  ???Perl has some special code here in case (paren)
-            --  is True.
-
-            --  Else, if we don't have any parenthesis
-
-            while No >= Min loop
-               if not Next_Char_Known
-                 or else (Input_Pos <= Data'Last
-                          and then Data (Input_Pos) = Next_Char)
-               then
-                  if Match (Next) then
-                     return True;
-                  end if;
-               end if;
-
-               --  Could not or did not work, we back up
-               No := No - 1;
-               Input_Pos := Save + No;
-            end loop;
-            return False;
-         end if;
-      end Match_Simple_Operator;
+      end Recurse_Match;
 
       -----------
       -- Match --
@@ -2710,7 +2450,6 @@ package body GNAT.Regpat is
       function Match (IP   : Pointer) return Boolean is
          Scan   : Pointer := IP;
          Next   : Pointer;
-         Save   : Natural;
          Op     : Opcode;
 
       begin
@@ -2736,18 +2475,11 @@ package body GNAT.Regpat is
                      Next := Operand (Scan); -- No choice, avoid recursion
 
                   else
-                     if Input_Pos > Data'Last then
-                        return False;
-                     end if;
-
                      loop
-                        Save := Input_Pos;
-
-                        if Match (Operand (Scan)) then
+                        if Recurse_Match (Operand (Scan), 0) then
                            return True;
                         end if;
 
-                        Input_Pos := Save;
                         Scan := Get_Next (Program, Scan);
                         exit when Scan = 0 or Program (Scan) /= BRANCH;
                      end loop;
@@ -2900,6 +2632,7 @@ package body GNAT.Regpat is
                when ANYOF =>
                   declare
                      Bitmap : Character_Class;
+
                   begin
                      Bitmap_Operand (Program, Scan, Bitmap);
                      exit State_Machine when
@@ -2911,20 +2644,17 @@ package body GNAT.Regpat is
                when OPEN =>
                   declare
                      No : constant Natural :=
-                            Character'Pos (Program (Operand (Scan)));
-
+                       Character'Pos (Program (Operand (Scan)));
                   begin
-                     Matches_Tmp (No).First := Input_Pos;
+                     Matches_Tmp (No) := Input_Pos;
                   end;
 
                when CLOSE =>
                   declare
                      No : constant Natural :=
-                            Character'Pos (Program (Operand (Scan)));
-
+                       Character'Pos (Program (Operand (Scan)));
                   begin
-                     Matches_Full (No) := (First => Matches_Tmp (No).First,
-                                           Last  => Input_Pos - 1);
+                     Matches_Full (No) := (Matches_Tmp (No), Input_Pos - 1);
                      if Last_Paren < No then
                         Last_Paren := No;
                      end if;
@@ -3018,6 +2748,426 @@ package body GNAT.Regpat is
          return False;
       end Match;
 
+      ---------------------------
+      -- Match_Simple_Operator --
+      ---------------------------
+
+      function Match_Simple_Operator
+        (Op     : Opcode;
+         Scan   : Pointer;
+         Next   : Pointer;
+         Greedy : Boolean)
+         return   Boolean
+      is
+         Next_Char       : Character := ASCII.Nul;
+         Next_Char_Known : Boolean := False;
+         No              : Integer;  --  Can be negative
+         Min             : Natural;
+         Max             : Natural := Natural'Last;
+         Operand_Code    : Pointer;
+         Old             : Natural;
+         Last_Pos        : Natural;
+         Save            : Natural := Input_Pos;
+
+      begin
+         --  Lookahead to avoid useless match attempts
+         --  when we know what character comes next.
+
+         if Program (Next) = EXACT then
+            Next_Char := Program (String_Operand (Next));
+            Next_Char_Known := True;
+         end if;
+
+         --  Find the minimal and maximal values for the operator
+
+         case Op is
+            when STAR =>
+               Min := 0;
+               Operand_Code := Operand (Scan);
+
+            when PLUS =>
+               Min := 1;
+               Operand_Code := Operand (Scan);
+
+            when others =>
+               Min := Read_Natural (Program, Scan + 3);
+               Max := Read_Natural (Program, Scan + 5);
+               Operand_Code := Scan + 7;
+         end case;
+
+         --  Non greedy operators
+
+         if not Greedy then
+            --  Test the minimal repetitions
+
+            if Min /= 0
+              and then Repeat (Operand_Code, Min) < Min
+            then
+               return False;
+            end if;
+
+            Old := Input_Pos;
+
+            --  Find the place where 'next' could work
+
+            if Next_Char_Known then
+               --  Last position to check
+
+               Last_Pos := Input_Pos + Max;
+
+               if Last_Pos > Data'Last
+                 or else Max = Natural'Last
+               then
+                  Last_Pos := Data'Last;
+               end if;
+
+               --  Look for the first possible opportunity
+
+               loop
+                  --  Find the next possible position
+
+                  while Input_Pos <= Last_Pos
+                    and then Data (Input_Pos) /= Next_Char
+                  loop
+                     Input_Pos := Input_Pos + 1;
+                  end loop;
+
+                  if Input_Pos > Last_Pos then
+                     return False;
+                  end if;
+
+                  --  Check that we still match if we stop
+                  --  at the position we just found.
+
+                  declare
+                     Num : constant Natural := Input_Pos - Old;
+
+                  begin
+                     Input_Pos := Old;
+
+                     if Repeat (Operand_Code, Num) < Num then
+                        return False;
+                     end if;
+                  end;
+
+                  --  Input_Pos now points to the new position
+
+                  if Match (Get_Next (Program, Scan)) then
+                     return True;
+                  end if;
+
+                  Old := Input_Pos;
+                  Input_Pos := Input_Pos + 1;
+               end loop;
+
+            --  We know what the next character is
+
+            else
+               while Max >= Min loop
+
+                  --  If the next character matches
+
+                  if Match (Next) then
+                     return True;
+                  end if;
+
+                  Input_Pos := Save + Min;
+
+                  --  Could not or did not match -- move forward
+
+                  if Repeat (Operand_Code, 1) /= 0 then
+                     Min := Min + 1;
+                  else
+                     return False;
+                  end if;
+               end loop;
+            end if;
+
+            return False;
+
+         --  Greedy operators
+
+         else
+            No := Repeat (Operand_Code, Max);
+
+            --  ??? Perl has some special code here in case the
+            --  next instruction is of type EOL, since $ and \Z
+            --  can match before *and* after newline at the end.
+
+            --  ??? Perl has some special code here in case (paren)
+            --  is True.
+
+            --  Else, if we don't have any parenthesis
+
+            while No >= Min loop
+               if not Next_Char_Known
+                 or else (Input_Pos <= Data'Last
+                           and then Data (Input_Pos) = Next_Char)
+               then
+                  if Match (Next) then
+                     return True;
+                  end if;
+               end if;
+
+               --  Could not or did not work, we back up
+
+               No := No - 1;
+               Input_Pos := Save + No;
+            end loop;
+            return False;
+         end if;
+      end Match_Simple_Operator;
+
+      ------------------
+      -- Match_Whilem --
+      ------------------
+
+      --  This is really hard to understand, because after we match what we're
+      --  trying to match, we must make sure the rest of the REx is going to
+      --  match for sure, and to do that we have to go back UP the parse tree
+      --  by recursing ever deeper.  And if it fails, we have to reset our
+      --  parent's current state that we can try again after backing off.
+
+      function Match_Whilem (IP : Pointer) return Boolean is
+         Cc : Current_Curly_Access := Current_Curly;
+         N  : Natural := Cc.Cur + 1;
+         Ln : Natural;
+         Lastloc : Natural := Cc.Lastloc;
+         --  Detection of 0-len.
+
+      begin
+         --  If degenerate scan matches "", assume scan done.
+
+         if Input_Pos = Cc.Lastloc
+           and then N >= Cc.Min
+         then
+            --  Temporarily restore the old context, and check that we
+            --  match was comes after CURLYX.
+
+            Current_Curly := Cc.Old_Cc;
+
+            if Current_Curly /= null then
+               Ln := Current_Curly.Cur;
+            end if;
+
+            if Match (Cc.Next) then
+               return True;
+            end if;
+
+            if Current_Curly /= null then
+               Current_Curly.Cur := Ln;
+            end if;
+
+            Current_Curly := Cc;
+            return False;
+         end if;
+
+         --  First, just match a string of min scans.
+
+         if N < Cc.Min then
+            Cc.Cur := N;
+            Cc.Lastloc := Input_Pos;
+
+            if Match (Cc.Scan) then
+               return True;
+            end if;
+
+            Cc.Cur := N - 1;
+            Cc.Lastloc := Lastloc;
+            return False;
+         end if;
+
+         --  Prefer next over scan for minimal matching.
+
+         if not Cc.Greedy then
+            Current_Curly := Cc.Old_Cc;
+
+            if Current_Curly /= null then
+               Ln := Current_Curly.Cur;
+            end if;
+
+            if Recurse_Match (Cc.Next, Cc.Paren_Floor) then
+               return True;
+            end if;
+
+            if Current_Curly /= null then
+               Current_Curly.Cur := Ln;
+            end if;
+
+            Current_Curly := Cc;
+
+            --  Maximum greed exceeded ?
+
+            if N >= Cc.Max then
+               return False;
+            end if;
+
+            --  Try scanning more and see if it helps
+            Cc.Cur := N;
+            Cc.Lastloc := Input_Pos;
+
+            if Recurse_Match (Cc.Scan, Cc.Paren_Floor) then
+               return True;
+            end if;
+
+            Cc.Cur := N - 1;
+            Cc.Lastloc := Lastloc;
+            return False;
+         end if;
+
+         --  Prefer scan over next for maximal matching
+
+         if N < Cc.Max then   --  more greed allowed ?
+            Cc.Cur := N;
+            Cc.Lastloc := Input_Pos;
+
+            if Recurse_Match (Cc.Scan, Cc.Paren_Floor) then
+               return True;
+            end if;
+         end if;
+
+         --  Failed deeper matches of scan, so see if this one works
+
+         Current_Curly := Cc.Old_Cc;
+
+         if Current_Curly /= null then
+            Ln := Current_Curly.Cur;
+         end if;
+
+         if Match (Cc.Next) then
+            return True;
+         end if;
+
+         if Current_Curly /= null then
+            Current_Curly.Cur := Ln;
+         end if;
+
+         Current_Curly := Cc;
+         Cc.Cur := N - 1;
+         Cc.Lastloc := Lastloc;
+         return False;
+      end Match_Whilem;
+
+      ------------
+      -- Repeat --
+      ------------
+
+      function Repeat
+        (IP   : Pointer;
+         Max  : Natural := Natural'Last)
+         return Natural
+      is
+         Scan  : Natural := Input_Pos;
+         Last  : Natural;
+         Op    : constant Opcode := Opcode'Val (Character'Pos (Program (IP)));
+         Count : Natural;
+         C     : Character;
+         Is_First : Boolean := True;
+         Bitmap   : Character_Class;
+
+      begin
+         if Max = Natural'Last or else Scan + Max - 1 > Data'Last then
+            Last := Data'Last;
+         else
+            Last := Scan + Max - 1;
+         end if;
+
+         case Op is
+            when ANY =>
+               while Scan <= Last
+                 and then Data (Scan) /= ASCII.LF
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when SANY =>
+               Scan := Last + 1;
+
+            when EXACT =>
+
+               --  The string has only one character if Repeat was called
+
+               C := Program (String_Operand (IP));
+               while Scan <= Last
+                 and then C = Data (Scan)
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when EXACTF =>
+
+               --  The string has only one character if Repeat was called
+
+               C := Program (String_Operand (IP));
+               while Scan <= Last
+                 and then To_Lower (C) = Data (Scan)
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when ANYOF =>
+               if Is_First then
+                  Bitmap_Operand (Program, IP, Bitmap);
+                  Is_First := False;
+               end if;
+
+               while Scan <= Last
+                 and then Get_From_Class (Bitmap, Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when ALNUM =>
+               while Scan <= Last
+                 and then Is_Alnum (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when NALNUM =>
+               while Scan <= Last
+                 and then not Is_Alnum (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when SPACE =>
+               while Scan <= Last
+                 and then Is_Space (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when NSPACE =>
+               while Scan <= Last
+                 and then not Is_Space (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when DIGIT  =>
+               while Scan <= Last
+                 and then Is_Digit (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when NDIGIT  =>
+               while Scan <= Last
+                 and then not Is_Digit (Data (Scan))
+               loop
+                  Scan := Scan + 1;
+               end loop;
+
+            when others =>
+               raise Program_Error;
+         end case;
+
+         Count := Scan - Input_Pos;
+         Input_Pos := Scan;
+         return Count;
+      end Repeat;
+
       ---------
       -- Try --
       ---------
@@ -3058,7 +3208,7 @@ package body GNAT.Regpat is
          begin
             while Next_Try /= 0
               and then Data (Next_Try .. Next_Try + Self.Must_Have_Length - 1)
-                = String (Program (Must_First .. Must_Last))
+                          = String (Program (Must_First .. Must_Last))
             loop
                Next_Try := Index (Next_Try + 1, First);
             end loop;
@@ -3122,23 +3272,27 @@ package body GNAT.Regpat is
          end;
 
       else
-         --  Messy cases: try all locations
+         --  Messy cases: try all locations (including for the empty string)
 
-         for S in Data'Range loop
-            Matched := Try (S);
-            exit when Matched;
-         end loop;
+         Matched := Try (Data'First);
+
+         if not Matched then
+            for S in Data'First + 1 .. Data'Last loop
+               Matched := Try (S);
+               exit when Matched;
+            end loop;
+         end if;
       end if;
 
       --  Matched has its value
 
+      for J in Last_Paren + 1 .. Matches'Last loop
+         Matches_Full (J) := No_Match;
+      end loop;
+
       Matches := Matches_Full (Matches'Range);
       return;
    end Match;
-
-   -----------
-   -- Match --
-   -----------
 
    function  Match
      (Self : Pattern_Matcher;
@@ -3156,10 +3310,6 @@ package body GNAT.Regpat is
       end if;
    end Match;
 
-   -----------
-   -- Match --
-   -----------
-
    procedure Match
      (Expression : String;
       Data       : String;
@@ -3168,6 +3318,7 @@ package body GNAT.Regpat is
    is
       PM            : Pattern_Matcher (Size);
       Finalize_Size : Program_Size;
+
    begin
       if Size = 0 then
          Match (Compile (Expression), Data, Matches);
@@ -3176,10 +3327,6 @@ package body GNAT.Regpat is
          Match (PM, Data, Matches);
       end if;
    end Match;
-
-   -----------
-   -- Match --
-   -----------
 
    function  Match
      (Expression : String;
@@ -3198,10 +3345,6 @@ package body GNAT.Regpat is
          return Match (PM, Data);
       end if;
    end Match;
-
-   -----------
-   -- Match --
-   -----------
 
    function  Match
      (Expression : String;
@@ -3224,204 +3367,85 @@ package body GNAT.Regpat is
       return Matches (0).First >= Data'First;
    end Match;
 
-   ----------
-   -- Dump --
-   ----------
+   -------------
+   -- Operand --
+   -------------
 
-   procedure Dump (Self : Pattern_Matcher) is
+   function Operand (P : Pointer) return Pointer is
+   begin
+      return P + 3;
+   end Operand;
 
-      --  Index  : Pointer := Program_First + 1;
-      --  What is the above line for ???
+   --------------
+   -- Optimize --
+   --------------
 
-      Op      : Opcode;
-      Program : Program_Data renames Self.Program;
-
-      procedure Dump_Until
-        (Start  : Pointer;
-         Till   : Pointer;
-         Indent : Natural := 0);
-      --  Dump the program until the node Till (not included) is met.
-      --  Every line is indented with Index spaces at the beginning
-      --  Dumps till the end if Till is 0.
-
-      ----------------
-      -- Dump_Until --
-      ----------------
-
-      procedure Dump_Until
-        (Start  : Pointer;
-         Till   : Pointer;
-         Indent : Natural := 0)
-      is
-         Next : Pointer;
-         Index : Pointer := Start;
-         Local_Indent : Natural := Indent;
-         Length : Pointer;
-
-      begin
-         while Index < Till loop
-
-            Op := Opcode'Val (Character'Pos ((Self.Program (Index))));
-
-            if Op = CLOSE then
-               Local_Indent := Local_Indent - 3;
-            end if;
-
-            declare
-               Point : String := Pointer'Image (Index);
-
-            begin
-               for J in 1 .. 6 - Point'Length loop
-                  Put (' ');
-               end loop;
-
-               Put (Point
-                    & " : "
-                    & (1 .. Local_Indent => ' ')
-                    & Opcode'Image (Op));
-            end;
-
-            --  Print the parenthesis number
-
-            if Op = OPEN or else Op = CLOSE or else Op = REFF then
-               Put (Natural'Image (Character'Pos (Program (Index + 3))));
-            end if;
-
-            Next := Index + Get_Next_Offset (Program, Index);
-            if Next = Index then
-               Put ("  (next at 0)");
-            else
-               Put ("  (next at " & Pointer'Image (Next) & ")");
-            end if;
-
-            case Op is
-
-               --  Character class operand
-
-               when ANYOF =>  null;
-                  declare
-                     Bitmap  : Character_Class;
-                     Last    : Character := ASCII.Nul;
-                     Current : Natural := 0;
-
-                     Current_Char : Character;
-
-                  begin
-                     Bitmap_Operand (Program, Index, Bitmap);
-                     Put ("   operand=");
-                     while Current <= 255 loop
-                        Current_Char := Character'Val (Current);
-
-                        --  First item in a range
-
-                        if Get_From_Class (Bitmap, Current_Char) then
-                           Last := Current_Char;
-
-                           --  Search for the last item in the range
-
-                           loop
-                              Current := Current + 1;
-                              exit when Current > 255;
-                              Current_Char := Character'Val (Current);
-                              exit when
-                                not Get_From_Class (Bitmap, Current_Char);
-
-                           end loop;
-
-                           if Last <= ' ' then
-                              Put (Last'Img);
-                           else
-                              Put (Last);
-                           end if;
-                           if Character'Succ (Last) /= Current_Char then
-                              Put ("-" & Character'Pred (Current_Char));
-                           end if;
-                        else
-                           Current := Current + 1;
-                        end if;
-                     end loop;
-                     New_Line;
-                     Index := Index + 3 + Bitmap'Length;
-                  end;
-
-               --  string operand
-
-               when EXACT | EXACTF =>
-                  Length := String_Length (Program, Index);
-                  Put ("   operand (length:" & Program_Size'Image (Length + 1)
-                       & ") ="
-                       & String (Program (String_Operand (Index)
-                                          .. String_Operand (Index)
-                                          + Length)));
-                  Index := String_Operand (Index) + Length + 1;
-                  New_Line;
-
-               --  Node operand
-
-               when BRANCH =>
-                  New_Line;
-                  Dump_Until (Index + 3, Next, Local_Indent + 3);
-                  Index := Next;
-
-               when STAR | PLUS =>
-                  New_Line;
-                  --  Only one instruction
-                  Dump_Until (Index + 3, Index + 4, Local_Indent + 3);
-                  Index := Next;
-
-               when CURLY | CURLYX =>
-                  Put ("  {"
-                       & Natural'Image (Read_Natural (Program, Index + 3))
-                       & ","
-                       & Natural'Image (Read_Natural (Program, Index + 5))
-                       & "}");
-                  New_Line;
-                  Dump_Until (Index + 7, Next, Local_Indent + 3);
-                  Index := Next;
-
-               when OPEN =>
-                  New_Line;
-                  Index := Index + 4;
-                  Local_Indent := Local_Indent + 3;
-
-               when CLOSE | REFF =>
-                  New_Line;
-                  Index := Index + 4;
-
-               when EOP =>
-                  Index := Index + 3;
-                  New_Line;
-                  exit;
-
-                  --  no operand
-               when others =>
-                  Index := Index + 3;
-                  New_Line;
-            end case;
-         end loop;
-      end Dump_Until;
-
-   --  Start of processing for Dump
+   procedure Optimize (Self : in out Pattern_Matcher) is
+      Max_Length  : Program_Size;
+      This_Length : Program_Size;
+      Longest     : Pointer;
+      Scan        : Pointer;
+      Program     : Program_Data renames Self.Program;
 
    begin
-      pragma Assert (Self.Program (Program_First) = MAGIC,
-                     "Corrupted Pattern_Matcher");
+      --  Start with safe defaults (no optimization):
+      --    *  No known first character of match
+      --    *  Does not necessarily start at beginning of line
+      --    *  No string known that has to appear in data
 
-      Put_Line ("Must start with (Self.First) = "
-                & Character'Image (Self.First));
-      if (Self.Flags and Case_Insensitive) /= 0 then
-         Put_Line ("  Case_Insensitive mode");
-      end if;
-      if (Self.Flags and Single_Line) /= 0 then
-         Put_Line ("  Single_Line mode");
-      end if;
-      if (Self.Flags and Multiple_Lines) /= 0 then
-         Put_Line ("  Multiple_Lines mode");
+      Self.First := ASCII.NUL;
+      Self.Anchored := False;
+      Self.Must_Have := Program'Last + 1;
+      Self.Must_Have_Length := 0;
+
+      Scan := Program_First + 1;  --  First instruction (can be anything)
+
+      if Program (Scan) = EXACT then
+         Self.First := Program (String_Operand (Scan));
+
+      elsif Program (Scan) = BOL
+        or else Program (Scan) = SBOL
+        or else Program (Scan) = MBOL
+      then
+         Self.Anchored := True;
       end if;
 
-      Put_Line ("     1 : MAGIC");
-      Dump_Until (Program_First + 1, Self.Program'Last + 1);
-   end Dump;
+      --  If there's something expensive in the regexp, find the
+      --  longest literal string that must appear and make it the
+      --  regmust. Resolve ties in favor of later strings, since
+      --  the regstart check works with the beginning of the regexp.
+      --  and avoiding duplication strengthens checking. Not a
+      --  strong reason, but sufficient in the absence of others.
+
+      if False then -- if Flags.SP_Start then ???
+         Longest := 0;
+         Max_Length := 0;
+         while Scan /= 0 loop
+            if Program (Scan) = EXACT or else Program (Scan) = EXACTF then
+               This_Length := String_Length (Program, Scan);
+
+               if This_Length >= Max_Length then
+                  Longest := String_Operand (Scan);
+                  Max_Length := This_Length;
+               end if;
+            end if;
+
+            Scan := Get_Next (Program, Scan);
+         end loop;
+
+         Self.Must_Have        := Longest;
+         Self.Must_Have_Length := Natural (Max_Length) + 1;
+      end if;
+   end Optimize;
+
+   -----------------
+   -- Paren_Count --
+   -----------------
+
+   function Paren_Count (Regexp : Pattern_Matcher) return Match_Count is
+   begin
+      return Regexp.Paren_Count;
+   end Paren_Count;
 
    -----------
    -- Quote --
@@ -3450,13 +3474,65 @@ package body GNAT.Regpat is
       return S (1 .. Last);
    end Quote;
 
+   ------------------
+   -- Read_Natural --
+   ------------------
+
+   function Read_Natural
+     (Program : Program_Data;
+      IP      : Pointer)
+      return    Natural
+   is
+   begin
+      return Character'Pos (Program (IP)) +
+               256 * Character'Pos (Program (IP + 1));
+   end Read_Natural;
+
    -----------------
-   -- Paren_Count --
+   -- Reset_Class --
    -----------------
 
-   function Paren_Count (Regexp : Pattern_Matcher) return Match_Count is
+   procedure Reset_Class (Bitmap : in out Character_Class) is
    begin
-      return Regexp.Num_Parenthesis;
-   end Paren_Count;
+      Bitmap := (others => 0);
+   end Reset_Class;
+
+   ------------------
+   -- Set_In_Class --
+   ------------------
+
+   procedure Set_In_Class
+     (Bitmap : in out Character_Class;
+      C      : Character)
+   is
+      Value : constant Class_Byte := Character'Pos (C);
+
+   begin
+      Bitmap (Value / 8) := Bitmap (Value / 8)
+        or Bit_Conversion (Value mod 8);
+   end Set_In_Class;
+
+   -------------------
+   -- String_Length --
+   -------------------
+
+   function String_Length
+     (Program : Program_Data;
+      P       : Pointer)
+      return    Program_Size
+   is
+   begin
+      pragma Assert (Program (P) = EXACT or else Program (P) = EXACTF);
+      return Character'Pos (Program (P + 3));
+   end String_Length;
+
+   --------------------
+   -- String_Operand --
+   --------------------
+
+   function String_Operand (P : Pointer) return Pointer is
+   begin
+      return P + 4;
+   end String_Operand;
 
 end GNAT.Regpat;

@@ -9,7 +9,7 @@
 --                            $Revision$
 --                                                                          --
 --               Copyright (C) 1986 by University of Toronto.               --
---           Copyright (C) 1996-2000 Ada Core Technologies, Inc.            --
+--           Copyright (C) 1996-2001 Ada Core Technologies, Inc.            --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -35,10 +35,11 @@
 
 --  This package implements roughly the same set of regular expressions as
 --  are available in the Perl or Python programming languages.
+
 --  This is an extension of the original V7 style regular expression library
---  written in C by Henry Spencer. Apart from the
---  translation to Ada, the interface has been considerably changed to
---  use the Ada String type instead of C-style nul-terminated strings.
+--  written in C by Henry Spencer. Apart from the translation to Ada, the
+--  interface has been considerably changed to use the Ada String type
+--  instead of C-style nul-terminated strings.
 
 ------------------------------------------------------------
 -- Summary of Pattern Matching Packages in GNAT Hierarchy --
@@ -68,10 +69,10 @@
 --       extensions that provide full (type 0) computational capabilities.
 
 package GNAT.Regpat is
-   pragma Preelaborate (Regpat);
+pragma Preelaborate (Regpat);
 
    --  The grammar is the following:
-   --
+
    --     regexp ::= expr
    --            ::= ^ expr               -- anchor at the beginning of string
    --            ::= expr $               -- anchor at the end of string
@@ -118,7 +119,7 @@ package GNAT.Regpat is
    --            ::= upper                -- upper case characters
    --            ::= word                 -- alphanumeric characters
    --            ::= xdigit               -- hexadecimal chars (0..9, a..f)
-   --
+
    --     char   ::= any character, including special characters
    --                ASCII.NUL is not supported.
    --     nchr   ::= any character except \()[].*+?^ or \char to match char
@@ -129,7 +130,7 @@ package GNAT.Regpat is
    --                   word. A word is defined as a set of alphanumerical
    --                   characters (see \w below).
    --                \B matches the empty string only when *not* at the
-   --                   beginning or end of a a word.
+   --                   beginning or end of a word.
    --                \d matches any digit character ([0-9])
    --                \D matches any non digit character ([^0-9])
    --                \s matches any white space character. This is equivalent
@@ -146,18 +147,19 @@ package GNAT.Regpat is
    --                   string, whatever flags are used for Compile (the
    --                   behavior of $ can change, see Regexp_Flags below).
    --     ...    ::= is used to indication repetition (one or more terms)
-   --
+
    --  Embedded newlines are not matched by the ^ operator.
    --  It is possible to retrieve the substring matched a parenthesis
    --  expression. Although the depth of parenthesis is not limited in the
    --  regexp, only the first 9 substrings can be retrieved.
-   --
+
    --  The highest value possible for the arguments to the curly operator ({})
    --  are given by the constant Max_Curly_Repeat below.
-   --
+
    --  The operators '*', '+', '?' and '{}' always match the longest possible
    --  substring. They all have a non-greedy version (with an extra ? after the
    --  operator), which matches the shortest possible substring.
+
    --  For instance:
    --      regexp="<.*>"   string="<h1>title</h1>"   matches="<h1>title</h1>"
    --      regexp="<.*?>"  string="<h1>title</h1>"   matches="<h1>"
@@ -169,56 +171,58 @@ package GNAT.Regpat is
 
    --  Compiling Regular Expressions
    --  =============================
-   --
+
    --  To use this package, you first need to compile the regular expression
    --  (a string) into a byte-code program, in a Pattern_Matcher structure.
    --  This first step checks that the regexp is valid, and optimizes the
    --  matching algorithms of the second step.
-   --
+
    --  Two versions of the Compile subprogram are given: one in which this
    --  package will compute itself the best possible size to allocate for the
    --  byte code; the other where you must allocate enough memory yourself. An
    --  exception is raised if there is not enough memory.
-   --
+
    --     declare
-   --        Regexp   : String := "a|b";
-   --
-   --        Matcher  : Pattern_Matcher := Compile (Regexp);
+   --        Regexp : String := "a|b";
+
+   --        Matcher : Pattern_Matcher := Compile (Regexp);
    --        --  The size for matcher is automatically allocated
-   --
+
    --        Matcher2 : Pattern_Matcher (1000);
    --        --  Some space is allocated directly.
+
    --     begin
    --        Compile (Matcher2, Regexp);
    --        ...
    --     end;
-   --
+
    --  Note that the second version is significantly faster, since with the
    --  first version the regular expression has in fact to be compiled twice
    --  (first to compute the size, then to generate the byte code).
-   --
+
    --  Note also that you can not use the function version of Compile if you
    --  specify the size of the Pattern_Matcher, since the discriminants will
    --  most probably be different and you will get a Constraint_Error
 
    --  Matching Strings
    --  ================
-   --
+
    --  Once the regular expression has been compiled, you can use it as often
    --  as needed to match strings.
-   --
+
    --  Several versions of the Match subprogram are provided, with different
    --  parameters and return results.
-   --
+
    --  See the description under each of these subprograms.
-   --
+
    --  Here is a short example showing how to get the substring matched by
    --  the first parenthesis pair.
-   --
+
    --     declare
    --        Matches : Match_Array;
    --        Regexp  : String := "a(b|c)d";
    --        Str     : String := "gacdg";
+
    --     begin
    --        Match (Compile (Regexp), Str, Matches);
    --        return Str (Matches (1).First .. Matches (1).Last);
@@ -227,17 +231,18 @@ package GNAT.Regpat is
 
    --  String Substitution
    --  ===================
-   --
+
    --  No subprogram is currently provided for string substitution.
    --  However, this is easy to simulate with the parenthesis groups, as
    --  shown below.
-   --
+
    --  This example swaps the first two words of the string:
-   --
+
    --     declare
    --        Regexp  : String := "([a-z]+) +([a-z]+)";
    --        Str     : String := " first   second third ";
    --        Matches : Match_Array;
+
    --     begin
    --        Match (Compile (Regexp), Str, Matches);
    --        return Str (Str'First .. Matches (1).First - 1)
@@ -257,7 +262,7 @@ package GNAT.Regpat is
    --  regular expression. All subprograms taking an expression
    --  as parameter may raise Expression_Error.
 
-   Max_Parenthesis  : constant := 255;
+   Max_Paren_Count : constant := 255;
    --  Maximum number of parenthesis in a regular expression.
    --  This is limited by the size of a Character, as found in the
    --  byte-compiled version of regular expressions.
@@ -303,17 +308,18 @@ package GNAT.Regpat is
    -- Match_Array --
    -----------------
 
-   subtype Match_Count is Natural range 0 .. Max_Parenthesis;
+   subtype Match_Count is Natural range 0 .. Max_Paren_Count;
 
    type Match_Location is record
-      First   : Natural := 0;
-      Last    : Natural := 0;
+      First : Natural := 0;
+      Last  : Natural := 0;
    end record;
 
    type Match_Array is array (Match_Count range <>) of Match_Location;
    --  The substring matching a given pair of parenthesis.
    --  Index 0 is the whole substring that matched the full regular
    --  expression.
+   --
    --  For instance, if your regular expression is something like:
    --  "a(b*)(c+)", then Match_Array(1) will be the indexes of the
    --  substring that matched "b*" and Match_Array(2) will be the substring
@@ -334,10 +340,12 @@ package GNAT.Regpat is
    ------------------------------
 
    type Pattern_Matcher (Size : Program_Size) is private;
+   --  Type used to represent a regular expression compiled into byte code
 
-   function Compile (Expression : String;
-                     Flags      : Regexp_Flags := No_Flags)
-                    return       Pattern_Matcher;
+   function Compile
+     (Expression : String;
+      Flags      : Regexp_Flags := No_Flags)
+      return       Pattern_Matcher;
    --  Compile a regular expression into internal code.
    --  Raises Expression_Error if Expression is not a legal regular expression.
    --  The appropriate size is calculated automatically, but this means that
@@ -362,21 +370,27 @@ package GNAT.Regpat is
    --  Flags is the default value to use to set properties for Expression (case
    --  sensitivity,...).
 
-   procedure Compile (Matcher    : out Pattern_Matcher;
-                      Expression : String;
-                      Flags      : Regexp_Flags := No_Flags);
+   procedure Compile
+     (Matcher    : out Pattern_Matcher;
+      Expression : String;
+      Flags      : Regexp_Flags := No_Flags);
    --  Same procedure as above, expect it does not return the final
    --  program size.
 
    function Paren_Count (Regexp : Pattern_Matcher) return Match_Count;
+   pragma Inline (Paren_Count);
+
    --  Return the number of parenthesis pairs in Regexp.
+
    --  This is the maximum index that will be filled if a Match_Array is
    --  used as an argument to Match.
+   --
    --  Thus, if you want to be sure to get all the parenthesis, you should
    --  do something like:
+   --
    --     declare
    --        Regexp  : Pattern_Matcher := Compile ("a(b*)(c+)");
-   --        Matched : Match_Array (0 .. Num_Parenthesis (Regexp));
+   --        Matched : Match_Array (0 .. Paren_Count (Regexp));
    --     begin
    --        Match (Regexp, "a string", Matched);
    --     end;
@@ -434,6 +448,7 @@ package GNAT.Regpat is
    ------------------------------------------------
    -- Matching a pre-compiled regular expression --
    ------------------------------------------------
+
    --  The following functions are significantly faster if you need to reuse
    --  the same regular expression multiple times, since you only have to
    --  compile it once.
@@ -442,9 +457,9 @@ package GNAT.Regpat is
      (Self : Pattern_Matcher;
       Data : String)
       return Natural;
-   --  Return the position where Data matches, or (Data'First -1) if there is
-   --  no match.
-   --  Raises Expression_Error if Expression is not a legal regular expression.
+   --  Return the position where Data matches, or (Data'First - 1) if there is
+   --  no match. Raises Expression_Error if Expression is not a legal regular
+   --  expression.
 
    pragma Inline (Match);
    --  All except the last one below.
@@ -466,8 +481,11 @@ package GNAT.Regpat is
    procedure Dump (Self : Pattern_Matcher);
    --  Dump the compiled version of the regular expression matched by Self.
 
-private
+--------------------------
+-- Private Declarations --
+--------------------------
 
+private
 
    subtype Pointer is Program_Size;
    --  The Pointer type is used to point into Program_Data
@@ -506,14 +524,14 @@ private
    --  instruction code of the state machine.
 
    type Pattern_Matcher (Size : Pointer) is record
-      First            : Character    := ASCII.NUL;     --  internal use only
-      Anchored         : Boolean      := False;         --  internal use only
-      Must_Have        : Pointer      := 0;             --  internal use only
-      Must_Have_Length : Natural      := 0;             --  internal use only
-      Num_Parenthesis  : Natural      := 0;   --  Number of parenthesis group
+      First            : Character    := ASCII.NUL;  --  internal use only
+      Anchored         : Boolean      := False;      --  internal use only
+      Must_Have        : Pointer      := 0;          --  internal use only
+      Must_Have_Length : Natural      := 0;          --  internal use only
+      Paren_Count      : Natural      := 0;          --  # paren groups
       Flags            : Regexp_Flags := No_Flags;
-      Program          : Program_Data (Program_First .. Size)
-        := (others => ASCII.NUL);
+      Program          : Program_Data (Program_First .. Size) :=
+                           (others => ASCII.NUL);
    end record;
 
    No_Flags         : constant Regexp_Flags := 0;
