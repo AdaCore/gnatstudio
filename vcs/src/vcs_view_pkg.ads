@@ -77,19 +77,23 @@ package VCS_View_Pkg is
    end record;
 
    procedure Gtk_New (VCS_View : out VCS_View_Access;
-                      Kernel   : Kernel_Handle := null);
+                      Kernel   : Kernel_Handle := null;
+                      Ref      : VCS_Access);
+
    procedure Initialize (VCS_View : access VCS_View_Record'Class);
 
    procedure Show_Files (Explorer  : VCS_View_Access;
-                         Directory : String);
-
-   function Get_Ref_From_Directory (Dir : in String) return VCS_Access;
-   --  Return the VCS reference corresponding to Dir.
-   --  User must free it afterwards.
+                         Directory : String;
+                         Ref       : VCS_Access);
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
    --  Return the list of files that are selected.
+
+   procedure Get_Status
+     (Explorer : VCS_View_Access;
+      Files    : String_List.List);
+   --  Updates the status for Files.
 
    procedure Open_Files
      (Explorer : VCS_View_Access;

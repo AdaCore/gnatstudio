@@ -32,7 +32,6 @@ with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
-with Gtk.Main;                  use Gtk.Main;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
@@ -51,7 +50,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with VCS;
-with VCS.CVS;
 
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 
@@ -142,10 +140,6 @@ package body VCS_View_Pkg is
    -- Local subprograms --
    -----------------------
 
-   procedure Idle;
-   --  This procedure will be called whenever the process in the background is
-   --  waiting for something (command line output, network connection, etc)
-
    procedure Create_Model (VCS_View : access VCS_View_Record'Class);
    --  Creates the underlying tree model for VCS_View.
 
@@ -189,11 +183,6 @@ package body VCS_View_Pkg is
    --  Launch an editor for the given file.
    --  ??? Explorer is not useful.
 
-   procedure Handle_VCS_Error
-     (Message  : String;
-      Explorer : Gtk_Widget);
-   --  Handle the error message output by VCS operations.
-
    procedure Refresh_Files
      (Explorer : access VCS_View_Record'Class;
       Connect  : Boolean := False);
@@ -201,18 +190,14 @@ package body VCS_View_Pkg is
 
    procedure Set_Directory
      (Explorer  : access VCS_View_Record'Class;
-      Directory : String);
+      Directory : String;
+      Ref       : VCS_Access);
    --  Sets the current directory to Directory.
    --  Directory must be an absolute directory name ending
    --  with Directory_Separator. If Directory is invalid, then
    --  the explorer will be set to the current directory.
    --  This procedure will also look for an acceptable VCS system for this
    --  directory.
-
-   procedure Get_Status
-     (Explorer : VCS_View_Access;
-      Files    : String_List.List);
-   --  Updates the status for Files.
 
    procedure Foreach_Selected_File
      (Explorer : access VCS_View_Record'Class;
@@ -781,6 +766,8 @@ package body VCS_View_Pkg is
       Child      : MDI_Child;
 
    begin
+      pragma Assert (Ref /= null);
+
       Parameter_Object.Explorer := VCS_View_Access (Explorer);
       Parameter_Object.Kernel := Kernel;
       Parameter_Object.VCS_Ref := Ref;
@@ -960,6 +947,8 @@ package body VCS_View_Pkg is
       Success : Boolean;
 
    begin
+      pragma Assert (Ref /= null);
+
       while not String_List.Is_Empty (L_Temp) loop
          declare
             Current_File : constant String := String_List.Head (L_Temp);
@@ -1181,6 +1170,8 @@ package body VCS_View_Pkg is
       Files    : String_List.List;
       Ref      : VCS_Access) is
    begin
+      pragma Assert (Ref /= null);
+
       Push_Message (Explorer, Kernel, Verbose, -"Updating files:");
       Display_String_List (Explorer, Kernel, Files, Verbose);
       Update (Ref, Files);
@@ -1226,6 +1217,8 @@ package body VCS_View_Pkg is
       Files    : String_List.List;
       Ref      : VCS_Access) is
    begin
+      pragma Assert (Ref /= null);
+
       Open (Ref, Files);
 
       declare
@@ -1285,6 +1278,8 @@ package body VCS_View_Pkg is
       Iter       : Gtk_Tree_Iter;
 
    begin
+      pragma Assert (Ref /= null);
+
       if String_List.Is_Empty (Files) then
          return;
       end if;
@@ -1431,53 +1426,14 @@ package body VCS_View_Pkg is
       Set_Busy (Explorer.Kernel, False);
    end On_Remove_Button_Clicked;
 
-   ----------
-   -- Idle --
-   ----------
-
-   procedure Idle is
-      No_Main_Loop : Boolean;
-      Count        : Gint := 0;
-   begin
-      while Gtk.Main.Events_Pending
-        and then Count /= 30
-      loop
-         No_Main_Loop := Gtk.Main.Main_Iteration;
-         Count := Count + 1;
-      end loop;
-   end Idle;
-
-   ----------------------
-   -- Handle_VCS_Error --
-   ----------------------
-
-   procedure Handle_VCS_Error
-     (Message  : String;
-      Explorer : Gtk_Widget) is
-   begin
-      Push_Message (VCS_View_Access (Explorer), Error, Message);
-   end Handle_VCS_Error;
-
-   ----------------------------
-   -- Get_Ref_From_Directory --
-   ----------------------------
-
-   function Get_Ref_From_Directory (Dir : in String) return VCS_Access is
-   begin
-      --  ??? right now, we assume only CVS is implemented.
-      --  we need functions in VCS.XXX to validate that a
-      --  given entry is acceptable for a given directory.
-
-      return new VCS.CVS.CVS_Record;
-   end Get_Ref_From_Directory;
-
    -------------------
    -- Set_Directory --
    -------------------
 
    procedure Set_Directory
      (Explorer  : access VCS_View_Record'Class;
-      Directory : String) is
+      Directory : String;
+      Ref       : VCS_Access) is
    begin
       if Explorer.Current_Directory /= null then
          Free (Explorer.Current_Directory);
@@ -1492,13 +1448,7 @@ package body VCS_View_Pkg is
          Explorer.Current_Directory := new String'(Get_Current_Dir);
       end if;
 
-      --  Find an acceptable VCS for this directory.
-      Explorer.VCS_Ref := Get_Ref_From_Directory (Directory);
-
-      Register_Idle_Function (Explorer.VCS_Ref, Idle'Access, 200);
-
-      Register_Error_Function
-        (Explorer.VCS_Ref, Handle_VCS_Error'Access, Gtk_Widget (Explorer));
+      Explorer.VCS_Ref := Ref;
    end Set_Directory;
 
    ----------------
@@ -1507,7 +1457,8 @@ package body VCS_View_Pkg is
 
    procedure Show_Files
      (Explorer  : VCS_View_Access;
-      Directory : String) is
+      Directory : String;
+      Ref       : VCS_Access) is
    begin
       if Explorer.Current_Directory /= null
         and then Explorer.Current_Directory.all = Directory
@@ -1516,7 +1467,7 @@ package body VCS_View_Pkg is
       end if;
 
       Set_Busy (Explorer.Kernel);
-      Set_Directory (Explorer, Directory);
+      Set_Directory (Explorer, Directory, Ref);
       Refresh_Files (Explorer, False);
       Set_Busy (Explorer.Kernel, False);
    end Show_Files;
@@ -1624,16 +1575,18 @@ package body VCS_View_Pkg is
 
    procedure Gtk_New
      (VCS_View : out VCS_View_Access;
-      Kernel   : Kernel_Handle := null) is
+      Kernel   : Kernel_Handle := null;
+      Ref      : VCS_Access) is
    begin
       Init_Graphics;
 
       VCS_View := new VCS_View_Record;
+      VCS_View.VCS_Ref := Ref;
       VCS_View.Kernel := Kernel;
 
       VCS_View_Pkg.Initialize (VCS_View);
 
-      Show_Files (VCS_View, "");
+      Show_Files (VCS_View, "", Ref);
    end Gtk_New;
 
    ----------------
