@@ -144,6 +144,11 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access);
    --  List all the references to the entity
 
+   procedure Find_All_Local_References_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  List all the references to the entity in the local file (or ALI file).
+
    function Find_Next_Reference (D : Entity_Idle_Data)
       return Boolean;
    --  Find the next reference to the entity in D.
@@ -1102,6 +1107,59 @@ package body Browsers.Call_Graph is
          Pop_State (Get_Kernel (Entity));
    end Find_All_References_From_Contextual;
 
+   -----------------------------------------------
+   -- Find_All_Local_References_From_Contextual --
+   -----------------------------------------------
+
+   procedure Find_All_Local_References_From_Contextual
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+
+      Entity   : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Info     : Entity_Information;
+      Iter     : Entity_Reference_Iterator;
+      Location : File_Location;
+
+   begin
+      Push_State (Get_Kernel (Entity), Busy);
+      Info := Get_Entity (Entity);
+
+      if Info /= No_Entity_Information then
+         Print_Ref (Get_Kernel (Entity),
+                    Get_Declaration_File_Of (Info),
+                    Get_Declaration_Line_Of (Info),
+                    Get_Declaration_Column_Of (Info),
+                    Get_Name (Info));
+
+         Find_All_References
+           (Get_Kernel (Entity), Info, Iter,
+            In_File => File_Information (Entity));
+
+         while Get (Iter) /= No_Reference loop
+            Location := Get_Location (Get (Iter));
+            Print_Ref
+              (Get_Kernel (Entity), Get_File (Location),
+               Get_Line (Location), Get_Column (Location),
+               Get_Name (Info));
+
+            Next (Get_Kernel (Entity), Iter);
+         end loop;
+
+         Destroy (Iter);
+      end if;
+
+      Pop_State (Get_Kernel (Entity));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+         Destroy (Iter);
+         Pop_State (Get_Kernel (Entity));
+   end Find_All_Local_References_From_Contextual;
+
    ---------------------
    -- On_Button_Click --
    ---------------------
@@ -1192,6 +1250,15 @@ package body Browsers.Call_Graph is
               (Item, "activate",
                Context_Callback.To_Marshaller
                  (Find_All_References_From_Contextual'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => (-"Find all local references to ") &
+                     Entity_Name_Information (Entity_Context));
+            Append (Submenu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+                 (Find_All_Local_References_From_Contextual'Access),
                Selection_Context_Access (Context));
          end if;
       end if;
