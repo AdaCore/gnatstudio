@@ -655,4 +655,19 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Insert_Iter);
    end Get_Cursor_Position;
 
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Buffer : access Source_Buffer_Record)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      if Get_Char_Count (Buffer) > 0 then
+         Get_Bounds (Buffer, Start_Iter, End_Iter);
+         Delete (Buffer, Start_Iter, End_Iter);
+      end if;
+   end Clear;
+
 end Src_Editor_Buffer;

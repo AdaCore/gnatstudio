@@ -77,6 +77,9 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Return the current cursor position
 
+   procedure Clear (Buffer : access Source_Buffer_Record);
+   --  Delete all characters from the given buffer, leaving an empty buffer.
+
 private
 
    type Source_Buffer_Record is
