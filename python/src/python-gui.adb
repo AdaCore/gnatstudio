@@ -632,15 +632,16 @@ package body Python.GUI is
          return;
       end if;
 
-      if Default_Console /= null then
-         Ref (Default_Console);
-      end if;
 
       if Console /= null then
+         if Default_Console /= null then
+            Ref (Default_Console);
+         end if;
+
          Set_Console (Interpreter, Get_View (Console));
          Interpreter.Save_Output := True;
       else
-         Set_Console (Interpreter, null);
+--         Set_Console (Interpreter, null);
          Interpreter.Save_Output := False;
       end if;
 
@@ -740,17 +741,19 @@ package body Python.GUI is
          PyErr_Clear;
       end if;
 
-      if not Hide_Output and then Console /= null then
+      if not Hide_Output and then Console = null then
          Display_Prompt (Interpreter);
       end if;
 
       Interpreter.In_Process := False;
       Interpreter.Hide_Output := False;
 
-      Set_Console (Interpreter, Default_Console);
+      if Console /= null then
+         Set_Console (Interpreter, Default_Console);
 
-      if Default_Console /= null then
-         Unref (Default_Console);
+         if Default_Console /= null then
+            Unref (Default_Console);
+         end if;
       end if;
 
    exception
