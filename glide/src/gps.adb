@@ -587,7 +587,7 @@ begin
 
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
-   Set_Title (GPS, "GPS - the GNAT Programming System");
+   Reset_Title (GPS);
 
    GPS.Debug_Mode := True;
    GPS.Log_Level  := GVD.Types.Hidden;
