@@ -99,9 +99,6 @@ Limitations
 @c --------------------------------------------------------------------
 
 @noindent
-IMPORTANT Notice: this document is still very much a work in progress.
-Most sections are present, but many of them are still incomplete.
-
 GVD is a graphical front-end for text based debuggers such as GDB.
 A knowledge of the basics of the underlying debugger used by GVD will help
 understanding how GVD works and what kind of functionalities it provides.
@@ -241,7 +238,8 @@ will remain visible, but with a gray area instead of the notebook containing
 the Data, Explorer, Source and Debugger windows.
 To create a new debugger, see also the @ref{new debugger menu}.
 
-   @item Exit
+   @item Exit.
+Exit GVD.
 @end itemize
 
 @subsection Edit
@@ -451,20 +449,20 @@ Step the program until it reaches a different source line.
    @item Step Instruction.
 Step the program by one machine instruction exactly.
 
-   @item Next
+   @item Next.
 Step the program, proceeding through subroutine calls.
 
-   @item Next Instruction
+   @item Next Instruction.
 Step the program by one machine instruction but proceed through subroutine
 calls.
 
-   @item Finish
+   @item Finish.
 Continue until selected stack frame returns.
 
-   @item Continue
+   @item Continue.
 Continue the program being debugged.
 
-   @item Interrupt
+   @item Interrupt.
 Interrupt asynchronously the program being debugged. Note that depending on
 the state of the program, you may stop it in a low level system code that do
 not have debug information, or even in some cases, a coherent state. Use
@@ -475,7 +473,13 @@ of breakpoints is recommended instead to stop programs.
 @subsection Command
 @itemize @bullet
    @item Command History...
-   @item Clear Window
+Open a dialog with the list of commands executed in the current session.
+You can select any number of items in this list and replay the selection
+automatically.
+
+   @item Clear Window.
+Clear the debugger console window.
+
 @end itemize
 
 @subsection Data
@@ -503,18 +507,37 @@ of breakpoints is recommended instead to stop programs.
 @end iftex
 
    @item Edit Breakpoints...
-      Opens an advanced window to create any kind of breakpoint. For simple
+      Open an advanced window to create any kind of breakpoint. For simple
       breakpoint creation, see the description of the source window.
 
    @item Examine Memory...
-      Opens a memory viewer/editor.
+      Open a memory viewer/editor. See @ref{The Memory Window} for more
+      details.
 
-   @item Display Local Variables
-   @item Display Arguments
-   @item Display Registers
+   @item Display Local Variables.
+      Open an item in the Data Window containing all the local variables
+      for the current frame.
+
+   @item Display Arguments.
+      Open an item in the Data Window containing the arguments
+      for the current frame.
+
+   @item Display Registers.
+      Open an item in the Data Window containing the machine registers
+      for the current frame.
+
    @item Display Any Expression...
+      Open a small dialog letting you specify an arbitrary expression
+      in the Data Window. This expression can be a variable name, or a
+      more complex expression, following the syntax of the underlying debugger.
+      See the documentation of e.g gdb for more details on the syntax.
+      The check button @i{Expression is a subprogram call} should be enabled
+      if the expression is actually not an expression but rather a debugger
+      command (e.g @code{p/x var}) or a procedure call in the debuggee
+      (e.g @code{call my_proc}).
 
-   @item Refresh
+   @item Refresh.
+      Refresh all the items displayed in the Data Window.
 @end itemize
 
 @iftex
@@ -522,8 +545,11 @@ of breakpoints is recommended instead to stop programs.
 @end iftex
 
 @subsection Help
+Online help is currently not available within GVD.
+
 @itemize @bullet
    @item About...
+Open a simple information box about GVD.
 @end itemize
 
 @c --------------------------------------------------------------------
@@ -564,9 +590,13 @@ Continue until selected stack frame returns.
   @item Cont.
 Continue the program being debugged.
 
-  @item Up
-  @item Down
-  @item Interrupt
+  @item Up.
+Go up one frame in the call stack.
+
+  @item Down.
+Go down one frame in the call stack.
+
+  @item Interrupt.
 Interrupt asynchronously the program being debugged. Note that depending on
 the state of the program, you may stop it in a low level system code that do
 not have debug information, or even in some cases, a coherent state. Use
@@ -657,20 +687,40 @@ of breakpoints is recommended instead to stop programs.
    A contextual menu, taking into account the current component pointed
    by the mouse, gives access to the following capabilities:
    @itemize @bullet
-     @item Close @i{component}
+     @item Close @i{component}.
+Close the selected item.
 
-     @item Hide all @i{component}
-     @item Show all @i{component}
+     @item Hide all @i{component}.
+Hide all subcomponents of the selected item. To select a particular field
+or item in a record/array, move your mouse over the name of this
+component, not over the box containing the values for this item.
 
-     @item Clone @i{component}
-     @item Set value of @i{component}
-     @item Update Value
+     @item Show all @i{component}.
+Show all subcomponents of the selected item.
 
-     @item Show Value
-     @item Show Type
-     @item Show Value+Type
+     @item Clone @i{component}.
+Clone the selected component into a new, independant item.
 
-     @item Enable/Disable automatic refreshing of @i{component}
+     @item Set value of @i{component}.
+Set the value of a selected component. This will open an entry box
+where you can enter the new value of a variable/component.
+
+     @item Update Value.
+Refresh the value displayed in the selected item.
+
+     @item Show Value.
+Show only the value of the item.
+
+     @item Show Type.
+Show only the type of each field for the item.
+
+     @item Show Value+Type.
+Show both the value and the type of the item.
+
+     @item Auto refresh.
+Enable or disable the automatic refreshing of the item upon program execution
+(e.g step, next).
+
    @end itemize
 
    Colors convey special meaning in the canvas. The default color (can be
@@ -693,8 +743,26 @@ of breakpoints is recommended instead to stop programs.
    following entries:
    @itemize @bullet
      @item Display Expression...
-     @item Align On Grid
-     @item Detect Aliases
+      Open a small dialog letting you specify an arbitrary expression
+      in the Data Window. This expression can be a variable name, or a
+      more complex expression, following the syntax of the underlying debugger.
+      See the documentation of e.g gdb for more details on the syntax.
+      The check button @i{Expression is a subprogram call} should be enabled
+      if the expression is actually not an expression but rather a debugger
+      command (e.g @code{p/x var}) or a procedure call in the debuggee
+      (e.g @code{call my_proc}).
+
+     @item Align On Grid.
+Enable or disable alignment of items on the grid.
+
+     @item Detect Aliases.
+Enable or disable the automatic detection of shared data structures.
+Each time you display an item or dereference a pointer, GVD look at all
+the items already displayed on the canvas and compare their addresses with
+the address of the new item to display. If they match, GVD will not
+create a new item, but it will create a link (if you tried to dereference
+a pointer).
+
    @end itemize
 
 @c --------------------------------------------------------------------
@@ -703,6 +771,31 @@ of breakpoints is recommended instead to stop programs.
 @c --------------------------------------------------------------------
 
 @noindent
+The memory window allows you to dump contents of the memory given
+either an address, or a variable name.
+
+To dump the memory, enter the address with the C hexadecimal form: 0xabcd,
+or the name of a variable, e.g foo. In the latter case, GVD will compute its
+address automatically. then either press @i{Enter} or click on the @i{View}
+button. This will display the memory with the corresponding addresses in the
+bottom text area.
+
+You can also specify the unit size (@i{Byte}, @i{Halfword} or @i{Word}),
+the format (@i{Hexadecimal}, @i{Decimal}, @i{Octal} or @i{ASCII}), and you
+can display the corresponding ASCII value at the same time.
+
+The @i{up} and @i{down} arrows as well as the @i{Page Up} and @i{Page Down}
+keys in the memory text area allows you to walk through the memory.
+
+Finally, you can modify a memory area by simply clicking on the location
+you want to modify, and by entering the new values. Modified values will
+appear in a different color (red by default) and will only be taken into
+account (i.e written to the target) when you click on the @i{Submit changes}
+button. Clicking on the @i{Undo changes} or going up/down in the memory
+will undo your editing.
+
+Clicking on @i{Close} will close the memory window, cancelling your last non
+submitted changes, if any.
 
 @c --------------------------------------------------------------------
 @node The Explorer Window
@@ -734,10 +827,22 @@ commands in the debugger console.
 
    Contextual menu:
    @itemize @bullet
-     @item Hide System Files
-     @item Display Files in Shared Libraries
-     @item Delete Files Not Found
-     @item Show Current File
+     @item Hide System Files.
+Hide the files that are part of the system.
+This currently only affects Ada programs compiled with GNAT, and will hide the
+GNAT run time files used by the executable.
+
+     @item Reload Files.
+Recompute the list of files. this is particularly useful when the program
+uses shared libraries that are not known until the program references
+them.
+
+     @item Delete Files Not Found.
+Delete the files that cannot be found on the file system. Note that this
+operation can take a long time to complete.
+
+     @item Show Current File.
+Highlight the file containing the current execution point.
    @end itemize
 
 @c --------------------------------------------------------------------
@@ -759,7 +864,13 @@ command. This will usually (e.g in the case of gdb) result in setting a
 breakpoint in the closest location that matches the file and line that you
 specified.
      @item Current line executed.
+This is a green arrow showing the line where the program stopped.
+
      @item Lines with breakpoints.
+For lines where breakpoints have been set, a red mark is displayed on top
+of the blue dots showing the lines with code. You can add and delete
+breakpoints by clicking on this area (the first click with set a brekapoint,
+the second click will remove it).
    @end itemize
 
 @iftex
@@ -767,7 +878,9 @@ specified.
 @end iftex
 
    and a text window on the right that displays with syntax highlighting the
-   source files.
+   source files. If you leave the cursor over a variable, a tooltip will
+   appear showing the value of this variable. Automatic tooltips can be
+   disabled in the @i{Edit->Preferences...} menu.
 
    Contextual menu:
    @itemize @bullet
@@ -780,20 +893,45 @@ Display the selection (or by default the name pointed by the cursor) in the
 data window. The value will be automatically refreshed each time the process
 state changes (e.g after a step or a next command). To freeze the display
 in the canvas, you can either click on the corresponding icon in the data
-window, or use the contextual menu for the specific item (@ref{The Data Window}
-for more information).
+window, or use the contextual menu for the specific item (see
+@ref{The Data Window} for more information).
 
-     @item Set Breakpoint on Line @i{xx}
-     @item Continue Until Line @i{xx}
+     @item Set Breakpoint on Line @i{xx}.
+Set a breakpoint on the line pointed by the cursor, in the current file.
 
-     @item Show Current Location
+     @item Continue Until Line @i{xx}.
+Contine execution (the program must have been started previousely) until a
+specified line.
 
-     @item Display Line Numbers
-     @item Show Lines with Code
+     @item Show Current Location.
+Jump to the current line of execution. This is particularly useful after
+navigating through your source code.
 
-     @item Show Source Code
-     @item Show Asm Code
-     @item Show Asm and Source
+     @item Display Line Numbers.
+Enable/Disable the display of line numbers on the left of the source
+editor.
+
+     @item Show Lines with Code.
+Enable/Disable the display of lines with code, as described above.
+
+     @item Show Source Code.
+Show only the source code.
+
+     @item Show Asm Code.
+Show only the assembly code around the current execution point.
+You can specify in the @i{Edit->Preferences...} menu how many instructions
+are displayed by default. To go past the default number of instructions,
+you can either use the contextual menu of the assembly editor
+(@i{Show previous page}, @i{Show next page}), or click on the up and down
+arrows of the editor's scrollbar, or use the @i{Page Up} and @i{Page Down}
+keys.
+
+Note that the first scrolling to the previous page requires computing the
+assembly code for the complete function currently displayed, so this can
+take a significant time for big functions on slow machines.
+
+     @item Show Asm and Source.
+Show both the source code and the assembly window at the same time.
    @end itemize
 
 @c --------------------------------------------------------------------
@@ -1159,11 +1297,27 @@ Helpers section.
 @noindent
 
 @itemize @bullet
-   @item $HOME/.gvd       GVD state directory
+   @item $HOME/.gvd
+GVD state directory
    @item $HOME/.gvd/log
+Log file created automatically by GVD. This log file contains all the input
+and output exchanged between GVD and the underlying debugger. You can
+specify the level of logs (from no log to very verbose) by using the
+@code{--log-level} command line option. Using a high level of log can be
+useful to track communication problems between GVD and the underlying debugger,
+but will slow down GVD if $HOME is located on a network disk.
+
    @item $HOME/.gvd/preferences
+Contains all the preferences in XML format, as specified in the
+@i{Edit->Preferences...} menu.
+
    @item $HOME/.gvd/sessions
+Directory containing the GVD sessions.
+
    @item $HOME/.gvd/sessions/@i{session}
+Each file in the @code{sessions} directory represents a particular session
+saved by the user.
+
    @item $HOME/.gdbinit   GDB initialization file
 @end itemize
 
