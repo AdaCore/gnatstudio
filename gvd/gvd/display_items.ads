@@ -95,6 +95,9 @@ package Display_Items is
                         return Display_Item;
    --  Return the item for which Item is an alias, or null if there is none.
 
+   function Get_Name (Item : access Display_Item_Record) return String;
+   --  Return the name of Item, or "" if there is no such name.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record

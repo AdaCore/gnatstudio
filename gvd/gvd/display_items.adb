@@ -28,6 +28,7 @@ with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Window;       use Gdk.Window;
+with Gdk.Rectangle;    use Gdk.Rectangle;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Odd.Process;      use Odd.Process;
 with Process_Proxies;  use Process_Proxies;
@@ -605,21 +606,6 @@ package body Display_Items is
 
       end if;
 
-      --  Update the address as well, so that aliases are still correctly
-      --  detected.
-      --  ??? This is not done at this level, since it has been done before
-      --  when we were detecting aliases.
-
---        Free (Item.Id);
-
---        declare
---        Id : String := Get_Uniq_Id (Item.Debugger.Debugger, Item.Name.all);
---        begin
---           if Id /= "" then
---              Item.Id := new String'(Id);
---           end if;
---        end;
-
       --  Update graphically.
       --  Note that we should not change the visibility status of item
       --  and its children.
@@ -1047,27 +1033,24 @@ package body Display_Items is
             --  Keep only one of them:
             --   - if none are the result of a dereference, keep them both
             --   - if only one is the result of a dereference, keep the other
-            --   - otherwise keep the first one
+            --   - otherwise keep the one with the shortest name
 
-            if It2.Is_Dereference or else It.Is_Dereference then
+            if It2.Is_Dereference and then not It2.Is_Dereference then
+               It2.Is_Alias_Of := It;
+               return False;
 
-               if It.Is_Dereference then
+            elsif It.Is_Dereference and then not It2.Is_Dereference then
+               It.Is_Alias_Of := It2;
+               return False;
+
+            elsif It.Is_Dereference and then It2.Is_Dereference then
+               if It.Name /= null
+                 and then It2.Name /= null
+                 and then It2.Name'Length < It.Name'Length
+               then
                   It.Is_Alias_Of := It2;
-                  Set_Visibility (It, False);
-                  Gtkada.Canvas.Initialize
-                    (It, Get_Window (It.Debugger.Data_Canvas),
-                     Gint (Get_Coord (It2).Width),
-                     Gint (Get_Coord (It2).Height));
-                  Move_To (Canvas, It, Get_Coord (It2).X, Get_Coord (It2).Y);
-
                else
                   It2.Is_Alias_Of := It;
-                  Set_Visibility (It2, False);
-                  Gtkada.Canvas.Initialize
-                    (It2, Get_Window (It2.Debugger.Data_Canvas),
-                     Gint (Get_Coord (It).Width),
-                     Gint (Get_Coord (It).Height));
-                  Move_To (Canvas, It2, Get_Coord (It).X, Get_Coord (It).Y);
                end if;
                return False;
             end if;
@@ -1112,6 +1095,33 @@ package body Display_Items is
    is
       Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
 
+      function Recompute_Sizes
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Recomput the sizes and positions for all the items that are aliases
+      --  of other items.
+
+      ---------------------
+      -- Recompute_Sizes --
+      ---------------------
+
+      function Recompute_Sizes
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         It : Display_Item := Display_Item (Item);
+         Coord : Gdk_Rectangle;
+      begin
+         if It.Is_Alias_Of /= null then
+            Coord := Get_Coord (It.Is_Alias_Of);
+            Gtkada.Canvas.Initialize
+              (It, Get_Window (It.Debugger.Data_Canvas),
+               Gint (Coord.Width), Gint (Coord.Height));
+            Move_To (Canvas, It, Coord.X, Coord.Y);
+            Set_Visibility (It, False);
+         end if;
+         return True;
+      end Recompute_Sizes;
 
    begin
       --  First: Recompile all the addresses, and merge the aliases.
@@ -1119,6 +1129,10 @@ package body Display_Items is
 
       --  Then re-parse the value of each item and display them again.
       For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
+
+      --  Now that everything has been redimensionned, we can finish to
+      --  manipulate the aliases
+      For_Each_Item (Canvas, Recompute_Sizes'Unrestricted_Access);
    end On_Canvas_Process_Stopped;
 
    ---------------------
@@ -1140,5 +1154,17 @@ package body Display_Items is
    begin
       return Item.Is_Alias_Of;
    end Is_Alias_Of;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Item : access Display_Item_Record) return String is
+   begin
+      if Item.Name = null then
+         return "";
+      end if;
+      return Item.Name.all;
+   end Get_Name;
 
 end Display_Items;
