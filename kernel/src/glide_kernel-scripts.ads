@@ -300,7 +300,7 @@ package Glide_Kernel.Scripts is
       Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute the command in the GPS shell.
    --  This is only intended as a simpler form of
-   --     Execute_GPS_Shell_Command
+   --     Execute_Command
    --       (Lookup_Scripting_Language (Kernel, GPS_Shell_Name), Command, Args)
 
    -------------------
