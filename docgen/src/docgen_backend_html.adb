@@ -28,6 +28,7 @@ with File_Utils;
 
 package body Docgen_Backend_HTML is
 
+
    ----------------
    -- Initialize --
    ----------------
@@ -46,6 +47,7 @@ package body Docgen_Backend_HTML is
      (B             : access Backend_HTML;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info          : in out Docgen.Doc_Info;
       Doc_Directory : String;
       Doc_Suffix    : String) is
@@ -57,6 +59,7 @@ package body Docgen_Backend_HTML is
         (B,
          Kernel,
          File,
+         List_Ref_In_File,
          Info,
          Doc_Directory,
          Doc_Suffix);
@@ -180,6 +183,7 @@ package body Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                : access Backend_HTML;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -200,12 +204,13 @@ package body Docgen_Backend_HTML is
       pragma Unreferenced (End_Line);
    begin
       --  In html, each identifier may have a link,
-      --  Each link is made by the subporgram Format_Link (see just below).
+      --  Each link is made by the subprogram Format_Link (see just below).
       --  But before this step, we must search for declaration: this is done
       --  in Format_All_Link (whose body contains the call to Format_Link.
 
       Format_All_Link
         (B,
+         List_Ref_In_File,
          Start_Index,
          Start_Line,
          Start_Column,
