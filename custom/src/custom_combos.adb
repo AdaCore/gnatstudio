@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                      use Glib;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
 with Gtk.GEntry;                use Gtk.GEntry;
 with Gtk.List_Item;             use Gtk.List_Item;
@@ -37,8 +38,6 @@ with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;
 
 with Gtk.List;                  use Gtk.List;
-with System;                    use System;
-with Ada.Unchecked_Conversion;
 
 package body Custom_Combos is
 
@@ -47,6 +46,8 @@ package body Custom_Combos is
    Choice_Cst        : aliased constant String := "choice";
    On_Select         : aliased constant String := "on_selected";
    On_Changed        : aliased constant String := "on_changed";
+   Widget_Cst        : aliased constant String := "widget";
+   Tooltip_Cst       : aliased constant String := "tooltip";
    Add_Args : constant Cst_Argument_List :=
      (Choice_Cst'Access, On_Select'Access);
    Remove_Args : constant Cst_Argument_List :=
@@ -54,20 +55,18 @@ package body Custom_Combos is
    Set_Text_Args : constant Cst_Argument_List :=
      (1 => Choice_Cst'Access);
    Simple_Args : constant Cst_Argument_List := (1 => Id_Cst'Access);
-   Append_Args : constant Cst_Argument_List :=
+   Create_Combo_Args : constant Cst_Argument_List :=
      (Id_Cst'Access, Label_Cst'Access, On_Changed'Access);
+   Append_Args : constant Cst_Argument_List :=
+     (1 => Widget_Cst'Access, 2 => Tooltip_Cst'Access);
 
-   type Custom_Combo_Record is new Gtk_Combo_Record with record
+   type Custom_Combo_Record is new Gtk_Box_Record with record
+      Combo                : Gtk_Combo;
       Id                   : String_Access;
       Instance             : Class_Instance;
       On_Change_Subprogram : Glide_Kernel.Scripts.Subprogram_Type;
    end record;
    type Custom_Combo is access all Custom_Combo_Record'Class;
-
-   function Convert is new Ada.Unchecked_Conversion
-     (System.Address, Custom_Combo);
-   function Convert is new Ada.Unchecked_Conversion
-     (Custom_Combo, System.Address);
 
    -----------------------
    -- Local subprograms --
@@ -84,11 +83,11 @@ package body Custom_Combos is
       User_Type   => Item_Callback);
 
    function Create_Combo
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Id         : String;
-      Combo_Class : Class_Type;
-      On_Changed : Subprogram_Type;
-      Instance   : Class_Instance) return Custom_Combo;
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Id          : String;
+      Title       : String;
+      On_Changed  : Subprogram_Type;
+      Instance    : Class_Instance) return Custom_Combo;
    --  Create a new combo
 
    procedure Add_Combo_Entry
@@ -150,12 +149,12 @@ package body Custom_Combos is
       Label  : String)
    is
       use Gtk.Widget.Widget_List;
-      Entries : constant Glist := Get_Children (Get_List (Combo));
+      Entries : constant Glist := Get_Children (Get_List (Combo.Combo));
       Tmp     : Glist := Entries;
    begin
       while Tmp /= Null_List loop
          if Get_Text (Gtk_Label (Get_Data (Tmp))) = Label then
-            Remove (Get_List (Combo), Get_Data (Tmp));
+            Remove (Get_List (Combo.Combo), Get_Data (Tmp));
             exit;
          end if;
 
@@ -169,7 +168,7 @@ package body Custom_Combos is
 
    procedure Clear_Combo (Combo  : access Custom_Combo_Record'Class) is
    begin
-      Clear_Items (Get_List (Combo), 0, -1);
+      Clear_Items (Get_List (Combo.Combo), 0, -1);
    end Clear_Combo;
 
    -------------------------
@@ -238,7 +237,7 @@ package body Custom_Combos is
      (Combo_Box : access Gtk_Widget_Record'Class)
    is
       Combo       : constant Custom_Combo := Custom_Combo (Combo_Box);
-      Combo_Text  : constant String := Get_Text (Get_Entry (Combo));
+      Combo_Text  : constant String := Get_Text (Get_Entry (Combo.Combo));
    begin
       if Combo_Text /= "" and then Combo.On_Change_Subprogram /= null then
          declare
@@ -261,13 +260,15 @@ package body Custom_Combos is
    ------------------
 
    function Create_Combo
-     (Kernel     : access Kernel_Handle_Record'Class;
-      Id         : String;
-      Combo_Class : Class_Type;
-      On_Changed : Subprogram_Type;
-      Instance   : Class_Instance) return Custom_Combo
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Id          : String;
+      Title       : String;
+      On_Changed  : Subprogram_Type;
+      Instance    : Class_Instance) return Custom_Combo
    is
       Combo   : Custom_Combo := Lookup_Custom_Combo (Kernel, Id);
+      Label   : Gtk_Label;
+
    begin
       if Combo /= null then
          Insert
@@ -275,21 +276,29 @@ package body Custom_Combos is
             Mode => Error);
       else
          Combo := new Custom_Combo_Record;
-         Gtk.Combo.Initialize (Combo);
-         Set_Editable (Get_Entry (Combo), False);
+         Initialize_Hbox (Combo, Homogeneous => False);
+
+         if Title /= "" then
+            Gtk_New (Label, Title);
+            Pack_Start (Combo, Label, Expand => False);
+         end if;
+
+         Gtk_New (Combo.Combo);
+         Pack_Start (Combo, Combo.Combo, Expand => True, Fill => True);
+         Set_Editable (Get_Entry (Combo.Combo), False);
 
          Widget_Callback.Object_Connect
-           (Get_Entry (Combo), "changed",
+           (Get_Entry (Combo.Combo), "changed",
             Widget_Callback.To_Marshaller (Combo_Changed'Access),
             Slot_Object => Combo,
             After       => True);
 
-         Combo.Id := new String'(Id);
+         Combo.Id    := new String'(Id);
          Combo.On_Change_Subprogram := On_Changed;
          Combo.Instance := Instance;
          Ref (Instance);
 
-         Set_Data (Instance, Combo_Class, Convert (Combo));
+         Set_Data (Instance, Gtk_Widget (Combo));
       end if;
       return Combo;
    end Create_Combo;
@@ -303,7 +312,8 @@ package body Custom_Combos is
       Label       : String;
       On_Selected : Glide_Kernel.Scripts.Subprogram_Type)
    is
-      Item  : constant Gtk_List_Item := Add_Unique_Combo_Entry (Combo, Label);
+      Item  : constant Gtk_List_Item :=
+        Add_Unique_Combo_Entry (Combo.Combo, Label);
    begin
       if On_Selected /= null then
          Item_Handlers.Connect
@@ -322,7 +332,7 @@ package body Custom_Combos is
    function Get_Combo_Text
      (Combo  : access Custom_Combo_Record'Class) return String is
    begin
-      return Get_Text (Get_Entry (Combo));
+      return Get_Text (Get_Entry (Combo.Combo));
    end Get_Combo_Text;
 
    --------------------
@@ -333,7 +343,7 @@ package body Custom_Combos is
      (Combo  : access Custom_Combo_Record'Class;
       Text   : String) is
    begin
-      Set_Text (Get_Entry (Combo), Text);
+      Set_Text (Get_Entry (Combo.Combo), Text);
    end Set_Combo_Text;
 
    ----------------------------
@@ -344,14 +354,12 @@ package body Custom_Combos is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel    : constant Kernel_Handle := Custom_Module_ID.Kernel;
-      EntClass  : constant Class_Type := New_Class (Kernel, "ToolbarEntry");
-      EntInst   : Class_Instance;
       Combo     : Custom_Combo;
    begin
       if Command = Constructor_Method then
          null;
 
-      elsif Command = "entry" then
+      elsif Command = "get" then
          Name_Parameters (Data, Simple_Args);
          Combo := Lookup_Custom_Combo (Kernel, Nth_Arg (Data, 2));
          if Combo = null then
@@ -363,25 +371,13 @@ package body Custom_Combos is
       elsif Command = "append" then
          Name_Parameters (Data, Append_Args);
          declare
-            Title : constant String := Nth_Arg (Data, 3, "");
-            Label : Gtk_Label;
+            EntInst : constant Class_Instance :=
+              Nth_Arg (Data, 2, Get_GUI_Class (Kernel));
          begin
-            EntInst := New_Instance (Get_Script (Data), EntClass);
-            Combo := Create_Combo
-              (Kernel, Id => Nth_Arg (Data, 2),
-               Combo_Class => EntClass,
-               On_Changed => Nth_Arg (Data, 4, null),
-               Instance   => EntInst);
-
-            if Title /= "" then
-               Gtk_New (Label, Title & " ");
-               Append_Widget (Get_Toolbar (Kernel), Label, "", "");
-               Show_All (Label);
-            end if;
-
-            Append_Widget (Get_Toolbar (Kernel), Combo, Tooltip_Text => Title);
-            Set_Return_Value (Data, EntInst);
-            Show_All (Combo);
+            Append_Widget (Get_Toolbar (Kernel),
+                           Gtk_Widget'(Get_Data (EntInst)),
+                           Tooltip_Text => Nth_Arg (Data, 3, ""));
+            Free (EntInst);
          end;
       end if;
    end Custom_Toolbar_Handler;
@@ -394,39 +390,50 @@ package body Custom_Combos is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel : constant Kernel_Handle  := Custom_Module_ID.Kernel;
-      Class  : constant Class_Type     := New_Class (Kernel, "ToolbarEntry");
+      Class  : constant Class_Type     := New_Class (Kernel, "Combo");
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
+      Combo  : Custom_Combo;
    begin
       if Command = Constructor_Method then
-         Set_Error_Msg
-           (Data,
-            -"Cannot instantiate GPS.ToolbarEntry, use GPS.Toolbar.append()");
+         Name_Parameters (Data, Create_Combo_Args);
+         declare
+            Title : constant String := Nth_Arg (Data, 3, "");
+         begin
+            Combo := Create_Combo
+              (Kernel, Id  => Nth_Arg (Data, 2),
+               Title       => Title,
+               On_Changed  => Nth_Arg (Data, 4, null),
+               Instance    => Inst);
+            Show_All (Combo);
+         end;
 
       elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
          Add_Combo_Entry
-           (Combo       => Convert (Get_Data (Inst, Class)),
+           (Combo       => Custom_Combo (Gtk_Widget'(Get_Data (Inst))),
             Label       => Nth_Arg (Data, 2),
             On_Selected => Nth_Arg (Data, 3, null));
 
       elsif Command = "remove" then
          Name_Parameters (Data, Remove_Args);
          Remove_Combo_Item
-           (Combo => Convert (Get_Data (Inst, Class)),
+           (Combo => Custom_Combo (Gtk_Widget'(Get_Data (Inst))),
             Label => Nth_Arg (Data, 2));
 
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
-         Clear_Combo (Combo => Convert (Get_Data (Inst, Class)));
+         Clear_Combo (Combo => Custom_Combo (Gtk_Widget'(Get_Data (Inst))));
 
       elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);
          Set_Return_Value
-           (Data, Get_Combo_Text (Convert (Get_Data (Inst, Class))));
+           (Data,
+            Get_Combo_Text (Custom_Combo (Gtk_Widget'(Get_Data (Inst)))));
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Text_Args);
-         Set_Combo_Text (Convert (Get_Data (Inst, Class)), Nth_Arg (Data, 2));
+         Set_Combo_Text (Custom_Combo (Gtk_Widget'(Get_Data (Inst))),
+                         Nth_Arg (Data, 2));
       end if;
 
       Free (Inst);
@@ -440,11 +447,10 @@ package body Custom_Combos is
       Toolbar_Class : constant Class_Type :=
         New_Class (Kernel, "Toolbar", Base => Get_GUI_Class (Kernel));
       Toolbar_Entry_Class : constant Class_Type :=
-        New_Class (Kernel, "ToolbarEntry",
-                   Base => Get_GUI_Class (Kernel));
+        New_Class (Kernel, "Combo", Base => Get_GUI_Class (Kernel));
    begin
       Register_Command
-        (Kernel, "entry",
+        (Kernel, "get",
          Minimum_Args  => 1,
          Maximum_Args  => 1,
          Class         => Toolbar_Class,
@@ -455,13 +461,15 @@ package body Custom_Combos is
          Handler       => Custom_Toolbar_Handler'Access);
       Register_Command
         (Kernel, "append",
-         Minimum_Args  => 2,
-         Maximum_Args  => 3,
+         Minimum_Args  => 1,
+         Maximum_Args  => 2,
          Class         => Toolbar_Class,
          Handler       => Custom_Toolbar_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
+         Minimum_Args  => 1,
+         Maximum_Args  => 3,
          Class         => Toolbar_Entry_Class,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
