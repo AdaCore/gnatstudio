@@ -170,7 +170,7 @@ private
       Current_Position : List_Node;
       --  The current position when browsing the command history.
 
-      Idle_Id : Gtk.Main.Idle_Handler_Id;
+      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
       --  The handler for idle callbacks.
    end record;
 
