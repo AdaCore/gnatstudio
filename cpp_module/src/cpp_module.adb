@@ -91,13 +91,16 @@ package body Cpp_Module is
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
    --  Called when the preferences have changed
 
-   function Create_C_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   type C_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access C_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
-   function Create_Cpp_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+
+   type Cpp_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Cpp_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
 
    function C_Naming_Scheme_Editor
@@ -138,21 +141,21 @@ package body Cpp_Module is
       return Language_Naming_Editor (Naming);
    end Cpp_Naming_Scheme_Editor;
 
-   -----------------------
-   -- Create_C_Switches --
-   -----------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_C_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access C_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
-      pragma Unreferenced (Editor);
+      pragma Unreferenced (Creator);
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Page   : Switches_Editor_Page;
    begin
-      Gtk_New (Page, "C", Compiler_Package, C_String, 2, 2,
+      Gtk_New (Page, "C", Compiler_Package, C_String, C_String, 2, 2,
                Get_Tooltips (Kernel));
 
       Gtk_New (Frame, -"Code generation");
@@ -202,10 +205,11 @@ package body Cpp_Module is
            & " are not on the spanning tree have to be instrumented:"
            & " the compiler adds code to count the number of times"
            & " that these arcs are executed"));
-      Add_Dependency (Master_Page    => Page,
+      Add_Dependency (Page,
+                      Master_Page    => "C",
                       Master_Switch  => "-ftest-coverage",
                       Master_Status  => False,
-                      Slave_Page     => Page,
+                      Slave_Page     => "C",
                       Slave_Switch   => "-fprofile-arcs",
                       Slave_Activate => False);
 
@@ -233,23 +237,23 @@ package body Cpp_Module is
         (Page, Box, -"Strict ANSI", "-ansi",
          -("In C mode, support all ANSI standard C programs"));
       return Page;
-   end Create_C_Switches;
+   end Create;
 
-   -------------------------
-   -- Create_Cpp_Switches --
-   -------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Cpp_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Cpp_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
-      pragma Unreferenced (Editor);
+      pragma Unreferenced (Creator);
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Page   : Switches_Editor_Page;
    begin
-      Gtk_New (Page, "C++", Compiler_Package, Cpp_String, 2, 2,
+      Gtk_New (Page, "C++", Compiler_Package, Cpp_String, Cpp_String, 2, 2,
                Get_Tooltips (Kernel));
 
       Gtk_New (Frame, -"Code generation");
@@ -299,10 +303,11 @@ package body Cpp_Module is
            & " are not on the spanning tree have to be instrumented:"
            & " the compiler adds code to count the number of times"
            & " that these arcs are executed"));
-      Add_Dependency (Master_Page    => Page,
+      Add_Dependency (Page,
+                      Master_Page    => "C++",
                       Master_Switch  => "-ftest-coverage",
                       Master_Status  => False,
-                      Slave_Page     => Page,
+                      Slave_Page     => "C++",
                       Slave_Switch   => "-fprofile-arcs",
                       Slave_Activate => False);
       Create_Check
@@ -337,7 +342,7 @@ package body Cpp_Module is
       Create_Check
         (Page, Box, -"Overloaded virtual", "-Woverloaded-virtual");
       return Page;
-   end Create_Cpp_Switches;
+   end Create;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -410,6 +415,7 @@ package body Cpp_Module is
         (Get_Language_Handler (Kernel));
       LI      : CPP_LI_Handler := new Src_Info.CPP.CPP_LI_Handler_Record;
       Msg     : constant String := Set_Executables (LI);
+      Creator : Switches_Page_Creator;
 
    begin
       if Msg /= "" then
@@ -543,8 +549,11 @@ package body Cpp_Module is
 
       On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
-      Register_Switches_Page (Kernel, Create_C_Switches'Access);
-      Register_Switches_Page (Kernel, Create_Cpp_Switches'Access);
+      Creator := new C_Switches;
+      Register_Switches_Page (Kernel, Creator);
+
+      Creator := new Cpp_Switches;
+      Register_Switches_Page (Kernel, Creator);
 
       Register_Naming_Scheme_Editor
         (Kernel, C_String, C_Naming_Scheme_Editor'Access);

@@ -143,25 +143,34 @@ package body Ada_Module is
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
    --  Called when the preferences have changed
 
-   function Create_Make_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   type Make_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Make_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
-   function Create_Compiler_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+
+   type Compiler_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Compiler_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
-   function Create_Pretty_Printer_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+
+   type Pretty_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Pretty_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
-   function Create_Binder_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+
+   type Binder_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Binder_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
-   function Create_Linker_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+
+   type Linker_Switches is new Switches_Page_Creator_Record with null record;
+   function Create
+     (Creator : access Linker_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page;
    --  Create the various switches pages
 
@@ -185,21 +194,21 @@ package body Ada_Module is
       return Language_Naming_Editor (Naming);
    end Naming_Scheme_Editor;
 
-   --------------------------
-   -- Create_Make_Switches --
-   --------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Make_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Make_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
-      pragma Unreferenced (Editor);
+      pragma Unreferenced (Creator);
       Page   : Switches_Editor_Page;
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
    begin
-      Gtk_New (Page, "Make", Builder_Package, Ada_String, 1, 2,
+      Gtk_New (Page, "Make", Builder_Package, Ada_String, Ada_String, 1, 2,
                Get_Tooltips (Kernel));
       Gtk_New (Frame, -"Dependencies");
       Set_Border_Width (Frame, 5);
@@ -247,24 +256,25 @@ package body Ada_Module is
            & " names. This will generally improve the compilation"
            & " time"));
       return Page;
-   end Create_Make_Switches;
+   end Create;
 
-   ------------------------------
-   -- Create_Compiler_Switches --
-   ------------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Compiler_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Compiler_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
+      pragma Unreferenced (Creator);
       Page   : Switches_Editor_Page;
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Style_Box : Gtk_Box;
       Warn_Box  : Gtk_Box;
    begin
-      Gtk_New (Page, "Ada", Compiler_Package, Ada_String, 3, 2,
+      Gtk_New (Page, "Ada", Compiler_Package, Ada_String, Ada_String, 3, 2,
                Get_Tooltips (Kernel));
 
       Gtk_New (Frame, -"Code generation");
@@ -315,10 +325,11 @@ package body Ada_Module is
            & " are not on the spanning tree have to be instrumented:"
            & " the compiler adds code to count the number of times"
            & " that these arcs are executed"));
-      Add_Dependency (Master_Page    => Page,
+      Add_Dependency (Page,
+                      Master_Page    => "Ada",
                       Master_Switch  => "-ftest-coverage",
                       Master_Status  => False,
-                      Slave_Page     => Page,
+                      Slave_Page     => "Ada",
                       Slave_Switch   => "-fprofile-arcs",
                       Slave_Activate => False);
 
@@ -575,10 +586,11 @@ package body Ada_Module is
       Gtk_New_Vbox (Box, False, 0);
       Add (Frame, Box);
       Create_Check (Page, Box, -"Debug Information", "-g");
-      Add_Dependency (Master_Page    => Get_Page (Editor, "Make"),
+      Add_Dependency (Page,
+                      Master_Page    => "Make",
                       Master_Switch  => "-g",
                       Master_Status  => True,
-                      Slave_Page     => Page,
+                      Slave_Page     => "Ada",
                       Slave_Switch   => "-g",
                       Slave_Activate => True);
 
@@ -604,26 +616,26 @@ package body Ada_Module is
          -"Enforces Ada 83 restrictions");
 
       return Page;
-   end Create_Compiler_Switches;
+   end Create;
 
-   ------------------------------------
-   -- Create_Pretty_Printer_Switches --
-   ------------------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Pretty_Printer_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Pretty_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
-      pragma Unreferenced (Editor);
+      pragma Unreferenced (Creator);
       Page   : Switches_Editor_Page;
       Frame  : Gtk_Frame;
       Box    : Gtk_Box;
       Group  : Gtk_Size_Group;
       Table  : Gtk_Table;
    begin
-      Gtk_New (Page, "Pretty Printer", "pretty_Printer", Ada_String,
-               5, 1, Get_Tooltips (Kernel));
+      Gtk_New (Page, "Pretty Printer", "pretty_printer", Ada_String,
+               Ada_String, 5, 1, Get_Tooltips (Kernel));
 
       Gtk_New (Frame, -"Spacing");
       Set_Border_Width (Frame, 5);
@@ -751,22 +763,22 @@ package body Ada_Module is
       Create_Check (Page, Box, -"Set missing end/exit labels", "-e");
 
       return Page;
-   end Create_Pretty_Printer_Switches;
+   end Create;
 
-   ----------------------------
-   -- Create_Binder_Switches --
-   ----------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Binder_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Binder_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
-      pragma Unreferenced (Editor);
+      pragma Unreferenced (Creator);
       Page   : Switches_Editor_Page;
       Box    : Gtk_Box;
    begin
-      Gtk_New (Page, "Binder", Binder_Package, Ada_String, 1, 1,
+      Gtk_New (Page, "Binder", Binder_Package, Ada_String, Ada_String, 1, 1,
                Get_Tooltips (Kernel));
       Gtk_New_Vbox (Box, False, 0);
       Attach (Page, Box, 0, 1, 0, 1);
@@ -781,35 +793,37 @@ package body Ada_Module is
          (1 => (Cst_Static'Access, Cst_Static_S'Access, null),
           2 => (Cst_Shared'Access, Cst_Shared_S'Access, null)));
       return Page;
-   end Create_Binder_Switches;
+   end Create;
 
-   ----------------------------
-   -- Create_Linker_Switches --
-   ----------------------------
+   ------------
+   -- Create --
+   ------------
 
-   function Create_Linker_Switches
-     (Kernel : access Kernel_Handle_Record'Class;
-      Editor : access Switches_Edit_Record'Class)
+   function Create
+     (Creator : access Linker_Switches;
+      Kernel : access Kernel_Handle_Record'Class)
       return Switches_Editor_Page
    is
+      pragma Unreferenced (Creator);
       Page   : Switches_Editor_Page;
       Box    : Gtk_Box;
    begin
-      Gtk_New (Page, "Linker", Linker_Package, Ada_String, 1, 1,
+      Gtk_New (Page, "Linker", Linker_Package, Ada_String, Ada_String, 1, 1,
                Get_Tooltips (Kernel));
       Gtk_New_Vbox (Box, False, 0);
       Attach (Page, Box, 0, 1, 0, 1);
       Create_Check (Page, Box, -"Strip symbols", "-s");
       Create_Check (Page, Box, -"Debug information", "-g");
-      Add_Dependency (Master_Page    => Get_Page (Editor, "Make"),
+      Add_Dependency (Page,
+                      Master_Page    => "Make",
                       Master_Switch  => "-g",
                       Master_Status  => True,
-                      Slave_Page     => Page,
+                      Slave_Page     => "Linker",
                       Slave_Switch   => "-g",
                       Slave_Activate => True);
       --  Create_Check (Page, Box, -"Profiling", "-pg");
       return Page;
-   end Create_Linker_Switches;
+   end Create;
 
    ----------------------------
    -- On_Preferences_Changed --
@@ -850,6 +864,7 @@ package body Ada_Module is
    is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
+      Creator : Switches_Page_Creator;
    begin
       Register_LI_Handler
         (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
@@ -996,11 +1011,20 @@ package body Ada_Module is
 
       On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
 
-      Register_Switches_Page (Kernel, Create_Make_Switches'Access);
-      Register_Switches_Page (Kernel, Create_Pretty_Printer_Switches'Access);
-      Register_Switches_Page (Kernel, Create_Binder_Switches'Access);
-      Register_Switches_Page (Kernel, Create_Linker_Switches'Access);
-      Register_Switches_Page (Kernel, Create_Compiler_Switches'Access);
+      Creator := new Make_Switches;
+      Register_Switches_Page (Kernel, Creator);
+
+      Creator := new Pretty_Switches;
+      Register_Switches_Page (Kernel, Creator);
+
+      Creator := new Binder_Switches;
+      Register_Switches_Page (Kernel, Creator);
+
+      Creator := new Linker_Switches;
+      Register_Switches_Page (Kernel, Creator);
+
+      Creator := new Compiler_Switches;
+      Register_Switches_Page (Kernel, Creator);
 
       Register_Naming_Scheme_Editor
         (Kernel, "Ada", Naming_Scheme_Editor'Access);
