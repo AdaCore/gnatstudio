@@ -26,6 +26,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Window;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Main;                  use Gtk.Main;
+with Gtk.Stock;                 use Gtk.Stock;
 with Callbacks_Odd;             use Callbacks_Odd;
 with Odd_Intl;                  use Odd_Intl;
 with List_Select_Pkg.Callbacks; use List_Select_Pkg.Callbacks;
@@ -158,14 +159,14 @@ package body List_Select_Pkg is
       Set_Child_Ipadding (List_Select.Hbuttonbox, 7, 0);
       Pack_Start (List_Select.Vbox, List_Select.Hbuttonbox, False, True, 0);
 
-      Gtk_New (List_Select.Ok, -"OK");
+      Gtk_New_From_Stock (List_Select.Ok, Stock_OK);
       Set_Flags (List_Select.Ok, Can_Default);
       Button_Callback.Connect
         (List_Select.Ok, "clicked",
          Button_Callback.To_Marshaller (On_Ok_Clicked'Access));
       Add (List_Select.Hbuttonbox, List_Select.Ok);
 
-      Gtk_New (List_Select.Cancel, -"Cancel");
+      Gtk_New_From_Stock (List_Select.Cancel, Stock_Cancel);
       Set_Flags (List_Select.Cancel, Can_Default);
       Button_Callback.Connect
         (List_Select.Cancel, "clicked",
@@ -173,7 +174,7 @@ package body List_Select_Pkg is
       Add (List_Select.Hbuttonbox, List_Select.Cancel);
 
       if List_Select.Help_Text.all /= "" then
-         Gtk_New (List_Select.Help, -"Help");
+         Gtk_New_From_Stock (List_Select.Help, Stock_Help);
          Set_Flags (List_Select.Help, Can_Default);
          Button_Callback.Connect
            (List_Select.Help, "clicked",

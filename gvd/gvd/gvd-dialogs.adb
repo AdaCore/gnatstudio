@@ -45,6 +45,7 @@ with Gtk.Handlers;
 with Gtk.List_Item;         use Gtk.List_Item;
 with Gtk.Object;            use Gtk.Object;
 with Gtk.Check_Button;      use Gtk.Check_Button;
+with Gtk.Stock;             use Gtk.Stock;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Types;             use GVD.Types;
@@ -637,14 +638,14 @@ package body GVD.Dialogs is
             and then Questions (Questions'First).Choice.all = "y"))
       then
          Set_Default_Size (Question_Dialog, 100, 50);
-         Gtk_New (OK_Button, -"Yes");
+         Gtk_New_From_Stock (OK_Button, Stock_Yes);
          Add (Question_Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
             "clicked",
             On_Question_Yes_Clicked'Access);
 
-         Gtk_New (OK_Button, -"No");
+         Gtk_New_From_Stock (OK_Button, Stock_No);
          Add (Question_Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
@@ -653,6 +654,7 @@ package body GVD.Dialogs is
 
          Ref (Question_Dialog.Close_Button);
          Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
+
       else
          Gtk_New (Question_Dialog.Scrolledwindow1);
          Pack_Start
@@ -665,7 +667,7 @@ package body GVD.Dialogs is
          --  Make sure the Cancel button is on the right, for homogeneity
          Ref (Question_Dialog.Close_Button);
          Remove (Question_Dialog.Hbuttonbox1, Question_Dialog.Close_Button);
-         Gtk_New (OK_Button, -"OK");
+         Gtk_New_From_Stock (OK_Button, Stock_Ok);
          Add (Question_Dialog.Hbuttonbox1, OK_Button);
          Widget_Callback.Connect
            (OK_Button,
@@ -836,7 +838,7 @@ package body GVD.Dialogs is
             Pack_Start (Box, Extra_Box2, Padding => 10);
          end if;
 
-         Gtk_New (Button, -"OK");
+         Gtk_New_From_Stock (Button, Stock_Ok);
          Set_USize (Button, 80, -1);
          Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
          Set_Flags (Button, Can_Default);
@@ -845,7 +847,7 @@ package body GVD.Dialogs is
             Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
             Dialog);
 
-         Gtk_New (Button, -"Cancel");
+         Gtk_New_From_Stock (Button, Stock_Cancel);
          Set_USize (Button, 80, -1);
          Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
          Set_Flags (Button, Can_Default);
