@@ -61,6 +61,4 @@ package Vdiff_Pkg is
    procedure Gtk_New (Vdiff : out Vdiff_Access);
    procedure Initialize (Vdiff : access Vdiff_Record'Class);
 
-   Vdiff : Vdiff_Access;
-
 end Vdiff_Pkg;

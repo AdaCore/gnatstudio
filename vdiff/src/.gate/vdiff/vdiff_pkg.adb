@@ -21,7 +21,7 @@ procedure Initialize (Vdiff : access Vdiff_Record'Class) is
 
 begin
    Gtk.Window.Initialize (Vdiff, Window_Toplevel);
-   Set_Title (Vdiff, -"Visual Difference");
+   Set_Title (Vdiff, -"Visual Comparison");
    Set_Policy (Vdiff, False, True, False);
    Set_Position (Vdiff, Win_Pos_None);
    Set_Modal (Vdiff, False);
