@@ -60,7 +60,7 @@ begin
      0, 0);
 
    Gtk_New (Foreign_Naming_Scheme_Editor.Header_File_Extension);
-   Set_Case_Sensitive (Foreign_Naming_Scheme_Editor.Header_File_Extension, False);
+   Set_Case_Sensitive (Foreign_Naming_Scheme_Editor.Header_File_Extension, True);
    Set_Use_Arrows (Foreign_Naming_Scheme_Editor.Header_File_Extension, True);
    Set_Use_Arrows_Always (Foreign_Naming_Scheme_Editor.Header_File_Extension, False);
    String_List.Append (Header_File_Extension_Items, -".h");
@@ -80,7 +80,7 @@ begin
    Set_Visibility (Foreign_Naming_Scheme_Editor.Combo_Entry10, True);
 
    Gtk_New (Foreign_Naming_Scheme_Editor.Implementation_Extension);
-   Set_Case_Sensitive (Foreign_Naming_Scheme_Editor.Implementation_Extension, False);
+   Set_Case_Sensitive (Foreign_Naming_Scheme_Editor.Implementation_Extension, True);
    Set_Use_Arrows (Foreign_Naming_Scheme_Editor.Implementation_Extension, True);
    Set_Use_Arrows_Always (Foreign_Naming_Scheme_Editor.Implementation_Extension, False);
    String_List.Append (Implementation_Extension_Items, -".c");

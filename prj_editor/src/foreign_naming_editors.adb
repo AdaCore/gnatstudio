@@ -146,6 +146,7 @@ package body Foreign_Naming_Editors is
       --  We directly access the tables in Prj, instead of using
       --  Get_Attribute_Value, so that we also get access to the default
       --  extensions.
+
       Ext := Value_Of
         (Index => Editor.Language,
          In_Array => Projects.Table
@@ -161,6 +162,7 @@ package body Foreign_Naming_Editors is
         (Index => Editor.Language,
          In_Array => Projects.Table
            (Project_View).Naming.Implementation_Suffix);
+
       if Ext /= No_Name then
          Set_Text
            (Get_Entry (Editor.Implementation_Extension),
