@@ -22,6 +22,7 @@ with Glib.Object;          use Glib.Object;
 with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
 with Glide_Consoles;       use Glide_Consoles;
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 with Glide_Intl;           use Glide_Intl;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with GVD.Process;          use GVD.Process;
@@ -49,6 +50,15 @@ package body Glide_Kernel.Console is
    --  Return the console associated with the kernel.
 
    procedure Console_Destroyed
+     (Console : access Glib.Object.GObject_Record'Class;
+      Kernel  : Kernel_Handle);
+   --  Called when the console has been destroyed.
+
+   function Interactive_Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
+   --  Prevent the destrution of the console in the MDI
+
+   procedure Interactive_Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
    --  Called when the console has been destroyed.
@@ -119,6 +129,37 @@ package body Glide_Kernel.Console is
          Insert (Console, Text, Highlight_Sloc, Add_LF, Mode);
       end if;
    end Insert;
+
+   -----------------------------------
+   -- Interactive_Console_Destroyed --
+   -----------------------------------
+
+   procedure Interactive_Console_Destroyed
+     (Console : access Glib.Object.GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      pragma Unreferenced (Console);
+      Top : constant Glide_Window := Glide_Window (Kernel.Main_Window);
+   begin
+      if Top /= null
+        and then Get_Current_Process (Top) /= null
+      then
+         Glide_Page.Glide_Page
+           (Get_Current_Process (Top)).Interactive_Console := null;
+      end if;
+   end Interactive_Console_Destroyed;
+
+   --------------------------------------
+   -- Interactive_Console_Delete_Event --
+   --------------------------------------
+
+   function Interactive_Console_Delete_Event
+     (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean
+   is
+      pragma Unreferenced (Console);
+   begin
+      return True;
+   end Interactive_Console_Delete_Event;
 
    -----------------------
    -- Console_Destroyed --
@@ -242,7 +283,10 @@ package body Glide_Kernel.Console is
    is
       Top     : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
+
       Console : Glide_Console;
+      Interactive_Console : Glide_Interactive_Console;
+
       Child   : MDI_Child;
 
    begin
@@ -256,7 +300,15 @@ package body Glide_Kernel.Console is
          Dock_Child (Child);
          Raise_Child (Child);
 
+         Gtk_New (Interactive_Console, Kernel);
+         Child := Put (Get_MDI (Kernel), Interactive_Console);
+         Set_Title (Child, -"Console");
+         Set_Dock_Side (Child, Bottom);
+         Dock_Child (Child);
+
          Glide_Page.Glide_Page (Get_Current_Process (Top)).Console := Console;
+         Glide_Page.Glide_Page (Get_Current_Process (Top)).Interactive_Console
+            := Interactive_Console;
 
          Kernel_Callback.Connect
            (Console, "destroy",
@@ -265,6 +317,16 @@ package body Glide_Kernel.Console is
          Return_Callback.Connect
            (Console, "delete_event",
             Return_Callback.To_Marshaller (Console_Delete_Event'Access));
+
+         Kernel_Callback.Connect
+           (Interactive_Console, "destroy",
+            Kernel_Callback.To_Marshaller
+              (Interactive_Console_Destroyed'Access),
+            Kernel_Handle (Kernel));
+         Return_Callback.Connect
+           (Interactive_Console, "delete_event",
+            Return_Callback.To_Marshaller
+              (Interactive_Console_Delete_Event'Access));
       end if;
    end Initialize_Console;
 
