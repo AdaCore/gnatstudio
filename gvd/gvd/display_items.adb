@@ -395,7 +395,7 @@ package body Display_Items is
       Constraint_Size (Item.Entity.all);
 
       Update_Display (Item);
-      Item_Resized (Item.Debugger.Data_Canvas, Item);
+      Refresh_Canvas (Item.Debugger.Data_Canvas);
    end Initialize;
 
    ---------------
@@ -793,7 +793,7 @@ package body Display_Items is
       Update_Display (Item);
 
       if Redisplay_Canvas then
-         Item_Resized (Item.Debugger.Data_Canvas, Item);
+         Refresh_Canvas (Item.Debugger.Data_Canvas);
       end if;
    end Update_Resize_Display;
 
@@ -1130,7 +1130,7 @@ package body Display_Items is
       end if;
 
       --  Redraw the canvas
-      Item_Resized (Item.Debugger.Data_Canvas, Item);
+      Refresh_Canvas (Item.Debugger.Data_Canvas);
    end Change_Visibility;
 
    ----------------------
@@ -1194,7 +1194,7 @@ package body Display_Items is
 
          if Item.Auto_Refresh then
             Update (Item.Debugger.Data_Canvas, Item);
-            Item_Resized (Item.Debugger.Data_Canvas, Item);
+            Refresh_Canvas (Item.Debugger.Data_Canvas);
          else
             --  Redisplay the item, so that no field is displayed
             --  in red anymore.
