@@ -1,23 +1,214 @@
-AC_REVISION($Revision$)
+ADC_REVISION($Revision$)
 AC_INIT(common/src/sdefault.adb.in)
 
 AC_CANONICAL_SYSTEM
 
+GLIDE_VERSION=0.5.0
+GVD_VERSION=$GLIDE_VERSION
+STRIP_CR=False
+ASYNC_COMMANDS=True
+LINK_SIZE=7
+FONT_SIZE=10
+CAN_OUTPUT=True
+TARGET_CFLAGS=""
+TARGET_LFLAGS=""
+COLOR_SELECTION="#000000"
+EXEC_COMMAND="sh -c"
+DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
+HTML_BROWSER="netscape"
+
+ROOT=`pwd`
+TARGET=$host
+EXEC_PREFIX="$prefix"
+
+######## Command line options ###
+
+AC_ARG_WITH(ptys,
+[  --without-ptys          don't use ptys to communicate with the debuggers],
+[if test "$withval" = yes; then
+   USE_PTYS=True
+ else
+   USE_PTYS=False
+ fi],
+USE_PTYS=True)
+
+######## checking for local tools ###
 AC_PROG_CC
 AM_PATH_GNAT
-
-
-TARGET=$host
-AC_SUBST(TARGET)
-
-EXEC_PREFIX="$prefix"
-AC_SUBST(EXEC_PREFIX)
+AM_CHECK_PROG_CXX
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+AC_CHECK_PROGS(DVIPS, dvips)
+AC_CHECK_PROGS(MAKEINFO, makeinfo)
+AC_CHECK_PROGS(TEXI2HTML, texi2html)
+AC_CHECK_PROGS(TEX, tex)
 
 GCC_VERSION=`$CC -dumpversion`
+
+######## Support for ptys ###
+AC_CHECK_HEADERS(sys/stropts.h)
+AC_CHECK_FUNCS(getpt)
+AC_CHECK_FUNCS(grandpt)
+AC_CHECK_FUNCS(setpgid)
+AC_CHECK_FUNCS(setsid)
+
+opsys=''
+
+case "${host}" in
+
+  ## Alpha (DEC) machines.
+  alpha*-dec-osf* )
+    machine=alpha opsys=osf1
+  ;;
+
+  ## HP 9000 series 700 and 800, running HP/UX
+  hppa*-hp-hpux1[[0-9]]* )
+    machine=hp800 opsys=hpux10
+  ;;
+
+  mips-sgi-irix6.5* )
+    machine=iris4d opsys=irix6-5
+  ;;
+  mips-sgi-irix6* )
+    machine=iris4d opsys=irix6-0
+  ;;
+
+  ## IBM, AIX machines
+  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
+    machine=ibmrs6000 opsys=aix4-1
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* )
+    machine=ibmrs6000 opsys=aix4-2
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+  rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
+    machine=ibmrs6000 opsys=aix4
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+
+  ## Suns
+  *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
+    | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \
+    | rs6000-*-solaris2* | sparc*-linux*-gnu )
+    case "${host}" in
+      m68*-sunos1* )    machine=sun1 ;;
+      m68*-sunos2* )    machine=sun2 ;;
+      m68* )            machine=sun3 ;;
+      i[[3456]]86-sun-sunos[[34]]* )        machine=sun386 ;;
+      i[[3456]]86-*-* )     machine=intel386 ;;
+      powerpcle* )      machine=powerpcle ;;
+      powerpc* | rs6000* )  machine=ibmrs6000 ;;
+      sparc* )          machine=sparc ;;
+      * )               unported=yes ;;
+    esac
+    case "${host}" in
+      ## The Sun386 didn't get past 4.0.
+      i[[3456]]86-*-sunos4          ) opsys=sunos4-0 ;;
+      *-sunos4.0*         ) opsys=sunos4-0 ;;
+      *-sunos4.1.[[3-9]]*noshare )
+                opsys=sunos413
+                ;;
+      *-sunos4.1.[[3-9]]* | *-sunos4shr*)
+                opsys=sunos4shr
+                ;;
+      *-sunos4* | *-sunos )
+                opsys=sunos4-1
+                ;;
+      *-sunos5.3* | *-solaris2.3* )
+                opsys=sol2-3
+                ;;
+      *-sunos5.4* | *-solaris2.4* )
+                opsys=sol2-4
+                ;;
+      *-sunos5.5* | *-solaris2.5* )
+                opsys=sol2-5
+                ;;
+      *-sunos5* | *-solaris* )
+                opsys=sol2-5
+                ;;
+      *-linux-gnu* )
+  	        opsys=gnu-linux
+		;;
+      *) opsys=bsd4-2   ;;
+    esac;;
+
+  ## Intel 386 machines where we don't care about the manufacturer
+  i[[3456]]86-*-* )
+    machine=intel386
+    case "${host}" in
+      *-lynxos* )               opsys=lynxos ;;
+      *-isc1.* | *-isc2.[[01]]* ) opsys=386-ix ;;
+      *-isc2.2* )               opsys=isc2-2 ;;
+      *-isc4.0* )               opsys=isc4-0 ;;
+      *-isc4.* )                opsys=isc4-1 ;;
+      *-isc* )                  opsys=isc3-0 ;;
+      *-esix5* )                opsys=esix5r4 ;;
+      *-esix* )                 opsys=esix ;;
+      *-xenix* )                opsys=xenix ;;
+      *-linux-gnu* )            opsys=gnu-linux ;;
+      *-sco3.2v4* )             opsys=sco4  ;;
+      *-sco3.2v5* )             opsys=sco5 ;;
+      *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
+      *-386bsd* )               opsys=386bsd ;;
+      *-freebsd* )              opsys=freebsd ;;
+      *-nextstep* )             opsys=nextstep ;;
+      *win32* )
+	machine=intel386 opsys=windows
+	STRIP_CR=True
+	ASYNC_COMMANDS=False
+	CAN_OUTPUT=False
+	LINK_SIZE=11
+	FONT_SIZE=14
+	TARGET_LFLAGS="-luser32 -mwindows"
+	TARGET=pentium-mingw32msv
+	COLOR_SELECTION="#BEBEBE"
+	EXEC_COMMAND="cmd /c"
+	DEFAULT_PS="winps"
+	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
+	;;
+      ## Otherwise, we'll fall through to the generic opsys code at the bottom.
+    esac
+  ;;
+
+  *) echo "Unknown system: ${host}"
+     exit;;
+esac
+
+machfile="'\"machine/${machine}.h\"'"
+opsysfile="\\\"system/${opsys}.h\\\""
+
+# checking for gtk
+AM_PATH_GTK(2.0.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+
+# Set the version number of GLIDE/GVD
+AC_SUBST(GLIDE_VERSION)
+AC_SUBST(GVD_VERSION)
+
+AC_SUBST(opsysfile)
+
+AC_SUBST(ROOT)
+AC_SUBST(TARGET)
+AC_SUBST(EXEC_PREFIX)
 AC_SUBST(GCC_VERSION)
 
-AC_OUTPUT(common/src/sdefault.adb)
+AC_SUBST(STRIP_CR)
+AC_SUBST(USE_PTYS)
+AC_SUBST(ASYNC_COMMANDS)
+AC_SUBST(CAN_OUTPUT)
+AC_SUBST(LINK_SIZE)
+AC_SUBST(FONT_SIZE)
+AC_SUBST(COLOR_SELECTION)
+AC_SUBST(TARGET_CFLAGS)
+AC_SUBST(TARGET_LFLAGS)
+AC_SUBST(TARGET)
+AC_SUBST(EXEC_COMMAND)
+AC_SUBST(DEFAULT_PS)
+AC_SUBST(HTML_BROWSER)
+AC_SUBST(DVIPS)
+AC_SUBST(MAKEINFO)
+AC_SUBST(TEXI2HTML)
+AC_SUBST(TEX)
 
-
-
-
+AC_OUTPUT(common/src/sdefault.adb gvd/gvd/Makefile gvd/gvd/gvd.ads gvd/tests/Makefile gvd/tests/language/bin/Makefile gvd/gnat/Makefile gvd/pixmaps/Makefile gvd/po/Makefile gvd/docs/Makefile Makefile.common)
