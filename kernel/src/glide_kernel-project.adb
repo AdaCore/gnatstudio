@@ -30,6 +30,7 @@ with Namet;       use Namet;
 with Stringt;     use Stringt;
 with Types;       use Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Output;      use Output;
 
 with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
@@ -132,8 +133,21 @@ package body Glide_Kernel.Project is
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'class; Project : String)
    is
+      procedure Report_Error (S : String);
+      --  Output error messages from the project parser to the glide console.
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (S : String) is
+      begin
+         Insert (Kernel, S, Mode => Glide_Kernel.Console.Error);
+      end Report_Error;
+
       New_Project : Project_Node_Id;
    begin
+      Output.Set_Special_Output (Report_Error'Unrestricted_Access);
       Free (Kernel.Scenario_Variables);
       Kernel.Project_Is_Default := False;
       Prj.Part.Parse (New_Project, Project, True);
@@ -150,6 +164,7 @@ package body Glide_Kernel.Project is
       end if;
 
       Reset_Normalized_Flag (Kernel.Project);
+      Output.Set_Special_Output (null);
    end Load_Project;
 
    -----------------
@@ -186,9 +201,7 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
-         --  ??? Errors should be reported in the Glide console or better,
-         --  handled interactively.
-         null;
+         Insert (Handle, S, Mode => Glide_Kernel.Console.Error);
       end Report_Error;
 
       Scenario_Vars : constant Project_Node_Array :=
