@@ -427,6 +427,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
          for J in A'Range loop
             if A (J).Line = N.Line
               and then A (J).File = N.File
+              and then A (J).Num  = N.Num
             then
                Added := False;
                return;
@@ -484,6 +485,7 @@ package body GVD.Text_Box.Source_Editor.Glide is
                   Br (J).Line);
                A (L).Image := Line_Has_Breakpoint_Pixbuf;
                A (L).Associated_Command := Command_Access (Other_Command);
+
                Add_Line_Information
                  (Kernel,
                   Br (J).File,
