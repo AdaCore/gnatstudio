@@ -41,9 +41,7 @@ package body Src_Editor_Module.Line_Highlighting is
      (Data : in out Glide_Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Module_Id : constant Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
 
    begin
       if Command = "highlight" or else Command = "unhighlight" then
@@ -77,14 +75,9 @@ package body Src_Editor_Module.Line_Highlighting is
          declare
             Category : constant String := Nth_Arg (Data, 1);
             Color_Id : constant String := Nth_Arg (Data, 2);
-            GC       : Gdk_GC;
             Color    : Gdk_Color;
             Success  : Boolean;
          begin
-            --  Create a GC from the color.
-
-            Gdk_New (GC, Get_Window (Get_Main_Window (Module_Id.Kernel)));
-
             begin
                Color := Parse (Color_Id);
             exception
@@ -93,8 +86,7 @@ package body Src_Editor_Module.Line_Highlighting is
             end;
 
             Alloc_Color (Get_Default_Colormap, Color, False, True, Success);
-            Set_Foreground (GC, Color);
-            Add_Category (Category, GC, Color);
+            Add_Category (Category, Color);
          end;
 
       elsif Command = "highlight_range"
@@ -140,7 +132,6 @@ package body Src_Editor_Module.Line_Highlighting is
 
    procedure Add_Category
      (Id    : String;
-      GC    : Gdk_GC;
       Color : Gdk_Color)
    is
       Module_Id : constant Source_Editor_Module :=
@@ -154,7 +145,6 @@ package body Src_Editor_Module.Line_Highlighting is
 
       if N /= 0 then
          --  ??? Should the data be unref'ed befor it's replaced ?
-         Module_Id.Categories (N).GC := GC;
          Module_Id.Categories (N).Color := Color;
          return;
       end if;
@@ -166,7 +156,7 @@ package body Src_Editor_Module.Line_Highlighting is
          Module_Id.Categories (1) :=
            new Highlighting_Category_Record'(L  => Id'Length,
                                              Id => Id,
-                                             GC => GC,
+                                             GC => null,
                                              Color => Color);
 
       else
@@ -180,7 +170,7 @@ package body Src_Editor_Module.Line_Highlighting is
          A (A'Last) := new Highlighting_Category_Record'
            (L  => Id'Length,
             Id => Id,
-            GC => GC,
+            GC => null,
             Color => Color);
 
          Module_Id.Categories := A;
@@ -213,8 +203,23 @@ package body Src_Editor_Module.Line_Highlighting is
    function Get_GC (Index : Natural) return Gdk_GC is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
+
+      use type Gdk_GC;
    begin
       if Index > 0 and then Index <= Module_Id.Categories'Last then
+         --  If the GC is null, create it now.
+
+         if Module_Id.Categories (Index).GC = null
+           and then Realized_Is_Set (Get_Main_Window (Module_Id.Kernel))
+         then
+            Gdk_New
+              (Module_Id.Categories (Index).GC,
+               Get_Window (Get_Main_Window (Module_Id.Kernel)));
+            Set_Foreground
+              (Module_Id.Categories (Index).GC,
+               Module_Id.Categories (Index).Color);
+         end if;
+
          return Module_Id.Categories (Index).GC;
       else
          return null;
