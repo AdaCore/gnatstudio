@@ -156,6 +156,13 @@ begin
       Widget_Callback.To_Marshaller (On_Refresh_Clicked'Access), Codefix_Window);
    Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Refresh);
 
+   Gtk_New_From_Stock (Codefix_Window.Previous, Stock_Go_Back);
+   Set_Flags (Codefix_Window.Previous, Can_Default);
+   Widget_Callback.Object_Connect
+     (Codefix_Window.Previous, "clicked",
+      Widget_Callback.To_Marshaller (On_Previous_Clicked'Access), Codefix_Window);
+   Add (Codefix_Window.Vbuttonbox1, Codefix_Window.Previous);
+
    Gtk_New (Codefix_Window.Vbuttonbox2);
    Set_Spacing (Codefix_Window.Vbuttonbox2, 10);
    Set_Layout (Codefix_Window.Vbuttonbox2, Buttonbox_End);
