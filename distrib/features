@@ -23,11 +23,6 @@ New features in GPS 2.1.0
 
 - Improved indentation of C/C++ struct, class, union constructs
 
-- Default diff and patch utilities provided under Windows
-  These are gnu implementations and are called gnudiff and gnupatch.
-  It is still possible to change the default utilities by editing the
-  preferences.
-
 - New command refill to wrap text or comment according to the right margin as
   defined by the column highlight editor's preference.
 
@@ -58,6 +53,11 @@ New features in GPS 2.1.0
 - D930-017: New preference to chose whether the toolbar should be displayed
 
 - D930-007 Add support for substring case exceptions
+
+- D914-021 Default diff and patch utilities provided under Windows
+  These are gnu implementations and are called gnudiff and gnupatch.
+  It is still possible to change the default utilities by editing the
+  preferences.
 
 - D625-008 AUnit integration has been enhanced. It is now possible to select
   the directory in which the generated code is saved. The generated code is
