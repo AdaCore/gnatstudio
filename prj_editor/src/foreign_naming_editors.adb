@@ -39,7 +39,6 @@ with Prj.Tree;                         use Prj.Tree;
 with Prj_API;                          use Prj_API;
 with Snames;                           use Snames;
 with Types;                            use Types;
-with Prj_Normalize;                    use Prj_Normalize;
 
 package body Foreign_Naming_Editors is
 
@@ -84,6 +83,7 @@ package body Foreign_Naming_Editors is
      (Editor  : access Foreign_Naming_Editor_Record;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
       Ignore_Scenario : Boolean) return Boolean
    is
       Naming   : constant String := Get_Name_String (Name_Naming);
@@ -100,42 +100,87 @@ package body Foreign_Naming_Editors is
          Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
       end if;
 
-      if not Has_Been_Normalized (Project) then
-         Normalize (Project, Recurse => False);
-      end if;
-
-      Update_Attribute_Value_In_Scenario
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
-         Value          => Get_Text (Get_Entry (Editor.Header_File_Extension)),
-         Attribute_Index    => Lang);
-      Update_Attribute_Value_In_Scenario
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
-         Value       => Get_Text (Get_Entry (Editor.Implementation_Extension)),
-         Attribute_Index    => Lang);
-
       for J in 0 .. Num_Rows - 1 loop
          Bodies (Integer (J + 1)) := new String'
            (Get_Text (Editor.Exception_List, J, 0));
       end loop;
 
-      Update_Attribute_Value_In_Scenario
-        (Project           => Project,
-         Pkg_Name          => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name    => Get_Name_String (Name_Implementation_Exceptions),
-         Values            => Bodies,
-         Attribute_Index   => Lang);
+      if Project_View = No_Project then
+         Changed := True;
+      else
+         declare
+            Old_Exceptions : Argument_List := Get_Attribute_Value
+              (Project_View   => Project_View,
+               Attribute_Name =>
+                 Get_Name_String (Name_Implementation_Exceptions),
+               Package_Name   => Naming,
+               Index          => Lang);
+         begin
+            Changed := not Is_Equal (Bodies, Old_Exceptions);
+            Free (Old_Exceptions);
+         end;
+      end if;
 
-      --  ??? Should return True only if the naming scheme actually changed.
-      Changed := True;
+      if Changed then
+         if Num_Rows /= 0 then
+            Update_Attribute_Value_In_Scenario
+              (Project           => Project,
+               Pkg_Name          => Naming,
+               Scenario_Variables => Scenar.all,
+               Attribute_Name    =>
+                 Get_Name_String (Name_Implementation_Exceptions),
+               Values            => Bodies,
+               Attribute_Index   => Lang);
+         else
+            Delete_Attribute
+              (Project            => Project,
+               Pkg_Name           => Naming,
+               Scenario_Variables => Scenar.all,
+               Attribute_Name     =>
+                 Get_Name_String (Name_Implementation_Exceptions),
+               Attribute_Index    => Lang);
+         end if;
+         Changed := True;
+      end if;
+
+      if Project_View = No_Project
+        or else Get_Attribute_Value
+        (Project_View   => Project_View,
+         Attribute_Name => Get_Name_String (Name_Specification_Suffix),
+         Package_Name   => Naming,
+         Index          => Lang) /=
+        Get_Text (Get_Entry (Editor.Header_File_Extension))
+      then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Naming,
+            Scenario_Variables => Scenar.all,
+            Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
+            Value  => Get_Text (Get_Entry (Editor.Header_File_Extension)),
+            Attribute_Index    => Lang);
+         Changed := True;
+      end if;
+
+      if Project_View = No_Project
+        or else Get_Attribute_Value
+        (Project_View   => Project_View,
+         Attribute_Name => Get_Name_String (Name_Implementation_Suffix),
+         Package_Name   => Naming,
+         Index          => Lang) /=
+        Get_Text (Get_Entry (Editor.Implementation_Extension))
+      then
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Pkg_Name           => Naming,
+            Scenario_Variables => Scenar.all,
+            Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
+            Value    => Get_Text (Get_Entry (Editor.Implementation_Extension)),
+            Attribute_Index    => Lang);
+         Changed := True;
+      end if;
 
       Free (Scenar);
+      Free (Bodies);
 
       return Changed;
    end Create_Project_Entry;

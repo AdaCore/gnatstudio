@@ -47,9 +47,11 @@ package Foreign_Naming_Editors is
      (Editor  : access Foreign_Naming_Editor_Record;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
       Ignore_Scenario : Boolean) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
+   --  Project_View can be No_Project.
    --  Return if the project was changed.
 
    procedure Show_Project_Settings
