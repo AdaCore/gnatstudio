@@ -1682,16 +1682,16 @@ package body Glide_Kernel.Modules is
 
       Result : GNAT.OS_Lib.String_Access;
 
-      procedure I (S : String);
+      procedure Insert (S : String);
       --  Appends S & ASCII.LF to Result.
       --  Result must not be set to Null when calling this subprogram.
 
-      procedure I (S : String) is
+      procedure Insert (S : String) is
          R : constant String := Result.all & S & ASCII.LF;
       begin
          Free (Result);
          Result := new String'(R);
-      end I;
+      end Insert;
 
    begin
       if Command = "" then
@@ -1711,9 +1711,7 @@ package body Glide_Kernel.Modules is
          Command_Node := Command_List.First (Kernel.Commands_List);
 
          if Is_Empty (The_Args) then
-            I ("The following commands are defined :");
-            I ("  help");
-            I ("  echo");
+            Insert ("The following commands are defined :");
          else
             The_Command := new String'(Head (The_Args));
          end if;
@@ -1724,10 +1722,10 @@ package body Glide_Kernel.Modules is
                  Command_List.Data (Command_Node);
             begin
                if Is_Empty (The_Args) then
-                  I ("  " & Data.Command.all);
+                  Insert ("  " & Data.Command.all);
                else
                   if Data.Command.all = The_Command.all then
-                     I (Data.Help.all);
+                     Insert (Data.Help.all);
                   end if;
                end if;
             end;
@@ -1736,15 +1734,15 @@ package body Glide_Kernel.Modules is
          end loop;
 
          if Is_Empty (The_Args) then
-            I ("Type ""help <command>"" to" &
-               " get help about a specific command.");
+            Insert ("Type ""help <command>"" to" &
+                    " get help about a specific command.");
          end if;
 
       elsif The_Command.all = "echo" then
          Args_Node := First (The_Args);
 
          while Args_Node /= Null_Node loop
-            I (Data (Args_Node));
+            Insert (Data (Args_Node));
             Args_Node := Next (Args_Node);
          end loop;
 
@@ -1757,10 +1755,10 @@ package body Glide_Kernel.Modules is
                  Command_List.Data (Command_Node);
             begin
                if Data.Command.all = The_Command.all then
-                  I (Data.Command_Handler
-                       (Kernel,
-                        The_Command.all,
-                        The_Args));
+                  Insert (Data.Command_Handler
+                            (Kernel,
+                             The_Command.all,
+                             The_Args));
                   exit;
                end if;
             end;
