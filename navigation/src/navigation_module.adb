@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                        Copyright (C) 2002                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -310,8 +310,6 @@ package body Navigation_Module is
       Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
                      Stock_Convert, On_Other_File'Access);
       Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
-      Register_Menu (Kernel, Navigate, -"Goto Previous Location",
-                     Stock_Go_Back, null);
       Register_Menu (Kernel, Navigate, -"Find All References", "", null);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Navigate, Menu_Item);
