@@ -20,8 +20,9 @@
      <filter language="Python" />
   </filter_and>
 
-  <action name="reload python module" >
+  <action name="reload python module" show-command="true" output="" >
      <filter id="Python" />
+     <shell lang="python">import python_support</shell>
      <shell lang="python">python_support.reload_file ("""%f""")</shell>
   </action>
 
