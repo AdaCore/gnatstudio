@@ -80,7 +80,11 @@ package OS_Utils is
    --  Directory_Error is raised if the directory or one of its parents
    --  couldn't be created.
 
+   function Get_Process_Id return Integer;
+   --  Return the process ID of the current process.
+
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");
    pragma Import (C, Uninstall_Ctrl_C_Handler, "__gnat_uninstall_int_handler");
+   pragma Import (C, Get_Process_Id, "getpid");
 end OS_Utils;
