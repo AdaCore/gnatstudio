@@ -65,6 +65,7 @@ package body Language.C is
       Tok_If,
       Tok_Switch,
       Tok_Register,
+      Tok_Return,
       Tok_Static,
       Tok_Struct,
       Tok_Typedef,
@@ -147,8 +148,12 @@ package body Language.C is
             end if;
 
          when 'r' =>
-            if S (Second .. S'Last) = "egister" then
-               return Tok_Register;
+            if S (Second) = 'e' then
+               if S (Second + 1 .. S'Last) = "gister" then
+                  return Tok_Register;
+               elsif S (Second + 1 .. S'Last) = "turn" then
+                  return Tok_Return;
+               end if;
             end if;
 
          when 's' =>
