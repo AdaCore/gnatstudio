@@ -519,7 +519,8 @@ package Glide_Kernel.Modules is
    --  Open, or create, an html viewer for Filename (Mime_Html_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
-   --  Create Filename with Glide_Kernel.Create_Html.
+   --  Filename can contain only a base name, and will be fully resolved by
+   --  listeners.
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;
