@@ -266,10 +266,11 @@ private
 
       Current_Cursor : Gdk.Types.Gdk_Cursor_Type := Gdk.Types.Left_Ptr;
 
-      Initial_Width, Initial_Height : Glib.Gint;
-
       Focus_Child : MDI_Child := null;
       --  The widget that currently has the focus.
+
+      Initial_Width, Initial_Height : Glib.Gint;
+      --  Size of the item at the beginning of the drag operation.
 
       Current_W, Current_H, Current_X, Current_Y : Glib.Gint;
       --  Current size and location of the widget that is currently
@@ -290,6 +291,10 @@ private
       --  are floating. In both cases, the child of the item is already
       --  visible elsewhere, and we want to be sure that the MDI_Child is never
       --  shown on the canvas.
+
+      MDI_Width, MDI_Height : Glib.Guint := 0;
+      --  Size of the MDI. This is used to avoid infinite loops in
+      --  size_allocate
    end record;
 
    pragma Inline (Get_Window);

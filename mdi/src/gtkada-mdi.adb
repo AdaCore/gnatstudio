@@ -108,6 +108,9 @@ package body Gtkada.MDI is
    procedure Destroy_MDI (MDI : access Gtk_Widget_Record'Class);
    --  Called when the MDI is destroyed.
 
+   procedure Size_Allocate_MDI (MDI : access Gtk_Widget_Record'Class);
+   --  MDI was resized, we need to resize the docks as well
+
    procedure Iconify_Child (Child : access Gtk_Widget_Record'Class);
    --  Iconify a child
 
@@ -171,6 +174,9 @@ package body Gtkada.MDI is
       Widget_Callback.Connect
         (MDI, "destroy",
          Widget_Callback.To_Marshaller (Destroy_MDI'Access));
+      Widget_Callback.Connect
+        (MDI, "size_allocate",
+         Widget_Callback.To_Marshaller (Size_Allocate_MDI'Access));
    end Initialize;
 
    -------------------
@@ -211,9 +217,24 @@ package body Gtkada.MDI is
          Child.Uniconified_Height := Child_Req.Height;
          Tmp := Next (Tmp);
       end loop;
-      Move_Dock_Notebook (M);
       Free (List);
    end Realize_MDI;
+
+   -----------------------
+   -- Size_Allocate_MDI --
+   -----------------------
+
+   procedure Size_Allocate_MDI (MDI : access Gtk_Widget_Record'Class) is
+      M : MDI_Window := MDI_Window (MDI);
+   begin
+      if M.MDI_Width /= Get_Allocation_Width (M)
+        or else M.MDI_Height /= Get_Allocation_Height (M)
+      then
+         Move_Dock_Notebook (M);
+         M.MDI_Width := Get_Allocation_Width (M);
+         M.MDI_Height := Get_Allocation_Height (M);
+      end if;
+   end Size_Allocate_MDI;
 
    -----------------
    -- Destroy_MDI --
@@ -1111,7 +1132,6 @@ package body Gtkada.MDI is
    begin
       if Child.State /= Floating and then Float then
          Minimize_Child (Child, False);
-         Child.State := Floating;
          Dock_Child (Child, False);
          if Child.Initial.all in Gtk_Window_Record'Class then
             Reparent (Child.Initial_Child, Gtk_Window (Child.Initial));
@@ -1129,12 +1149,18 @@ package body Gtkada.MDI is
                Return_Callback.To_Marshaller (Delete_Child'Access), Child);
          end if;
 
+         --  If not already in the list
          Ref (Child);
-         Widget_List.Prepend (Child.MDI.Invisible_Items, Gtk_Widget (Child));
+         Widget_List.Prepend
+           (Child.MDI.Invisible_Items, Gtk_Widget (Child));
          Remove (Child.MDI, Child);
+
+         Child.State := Floating;
 
       elsif Child.State = Floating and then not Float then
          --  Remove the widget from the list of embedded children
+         Gtk.Layout.Put
+           (Gtk_Layout_Record (Child.MDI.all)'Access, Child, Child.X, Child.Y);
          Widget_List.Remove (Child.MDI.Invisible_Items, Gtk_Widget (Child));
          Unref (Child);
 
@@ -1283,14 +1309,14 @@ package body Gtkada.MDI is
 
          --  Embed the contents of the child into the notebook, and mark
          --  Child as embedded, so that we can't manipulate it afterwards.
-         Child.State := Embedded;
          Ref (Child.Initial_Child);
          Remove (Gtk_Box (Get_Child (Child)), Child.Initial_Child);
          Append_Page (Note, Child.Initial_Child, Label);
          Unref (Child.Initial_Child);
 
          --  Remove the child from the MDI, but keep it in a list so that we
-         --  can restore it in exactly the same state.
+         --  can restore it in exactly the same state. Don't this if Child is
+         --  already in the list
          Ref (Child);
          Widget_List.Prepend (MDI.Invisible_Items, Gtk_Widget (Child));
          Remove (MDI, Child);
@@ -1303,6 +1329,7 @@ package body Gtkada.MDI is
          Show_All (MDI.Docks (Child.Dock));
          Activate_Child (MDI, MDI.Docks (Child.Dock));
          Move_Dock_Notebook (MDI);
+         Child.State := Embedded;
 
       elsif Child.State = Docked and then not Dock then
          Note := Gtk_Notebook (MDI.Docks (Child.Dock).Initial);
