@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,8 +32,11 @@ with GUI_Utils;     use GUI_Utils;
 with Gtk.Handlers;  use Gtk.Handlers;
 with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Toggle_Button; use Gtk.Toggle_Button;
+with Traces;        use Traces;
 
 package body Histories is
+
+   Me : constant Debug_Handle := Create ("Histories");
 
    use History_Hash.String_Hash_Table;
 
@@ -109,57 +112,65 @@ package body Histories is
            or else Get_Attribute (Key, "type") = "strings"
          then
             Value := new History_Key_Record (Strings);
-         else
+
+         elsif Get_Attribute (Key, "type") = "booleans" then
             Value := new History_Key_Record (Booleans);
+
+         else
+            Value := null;
+            Trace (Me, "Invalid data type in " & File_Name
+                   & " : " & Get_Attribute (Key, "type"));
          end if;
 
-         N := Key.Child;
+         if Value /= null then
+            N := Key.Child;
 
-         case Value.Typ is
-            when Strings =>
-               Num := 0;
+            case Value.Typ is
+               when Strings =>
+                  Num := 0;
 
-               while N /= null loop
-                  if N.Tag.all /= "Length" then
-                     Num := Num + 1;
-                  end if;
-                  N := N.Next;
-               end loop;
+                  while N /= null loop
+                     if N.Tag.all /= "Length" then
+                        Num := Num + 1;
+                     end if;
+                     N := N.Next;
+                  end loop;
 
-               Value.Max_Length := -1;
-               if Num /= 0 then
-                  Value.List := new String_List (1 .. Num);
-               else
-                  Value.List := null;
-               end if;
-               N := Key.Child;
-               Num := 1;
-
-               while N /= null loop
-                  if N.Tag.all = "Length" then
-                     begin
-                        Value.Max_Length := Integer'Value (N.Value.all);
-                     exception
-                        when Constraint_Error => null;
-                     end;
+                  Value.Max_Length := -1;
+                  if Num /= 0 then
+                     Value.List := new String_List (1 .. Num);
                   else
-                     Value.List (Num) := new String'(N.Value.all);
-                     Num := Num + 1;
+                     Value.List := null;
                   end if;
-                  N := N.Next;
-               end loop;
+                  N := Key.Child;
+                  Num := 1;
 
-            when Booleans =>
-               if N /= null
-                 and then N.Tag.all = "value"
-               then
-                  Value.Value := Boolean'Value (N.Value.all);
-               else
-                  Value.Value := False;
-               end if;
-         end case;
+                  while N /= null loop
+                     if N.Tag.all = "Length" then
+                        begin
+                           Value.Max_Length := Integer'Value (N.Value.all);
+                        exception
+                           when Constraint_Error => null;
+                        end;
+                     else
+                        Value.List (Num) := new String'(N.Value.all);
+                        Num := Num + 1;
+                     end if;
+                     N := N.Next;
+                  end loop;
 
-         Set (Hist.Table, Key.Tag.all, Value);
+               when Booleans =>
+                  if N /= null
+                    and then N.Tag.all = "value"
+                  then
+                     Value.Value := Boolean'Value (N.Value.all);
+                  else
+                     Value.Value := False;
+                  end if;
+            end case;
+
+            Set (Hist.Table, Key.Tag.all, Value);
+         end if;
 
          Key := Key.Next;
       end loop;
