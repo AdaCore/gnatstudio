@@ -2304,7 +2304,7 @@ package body Debugger.Gdb is
       elsif Result'Tag = Array_Type'Tag
         and then Num_Dimensions (Array_Type (Result.all)) = 1
         and then Type_Str'Length /= 0
-        and then Type_Str (Index) = '"'
+        and then (Type_Str (Index) = '"' or else Type_Str (Index) = ''')
       then
          Dim := Get_Dimensions (Array_Type (Result.all), 1);
 
