@@ -705,7 +705,8 @@ package body GVD_Module is
          S : constant String :=
            Select_File
              (Title             => -"Select File to Debug",
-              Pattern           => "*" & Exec_Suffix,
+              File_Pattern      => "*" & Exec_Suffix,
+              Pattern_Name      => -"Executable files",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
       begin
          if S = "" then
@@ -760,7 +761,8 @@ package body GVD_Module is
          S : constant String :=
            Select_File
              (Title             => -"Select Core File",
-              Pattern           => "core*"
+              File_Pattern      => "core*",
+              Pattern_Name      => -"Core files",
               Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs));
 
       begin
