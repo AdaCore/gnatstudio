@@ -2260,29 +2260,27 @@ currently selected file.
 You can also use the menu @code{File->Save As...} if you want to save the
 file with another name, or in another directory.
 
-GPS has an auto-save feature which is controlled by a preference
-(@code{Autosave Delay}). This ensures that you won't lose your modification
-if GPS is killed.
-
 If you have multiple files to save, another possibility is to use the menu
 @code{File->Save->All}. This will open a dialog listing all the currently
 modified editors that need saving. You can then select individually which
-one should be saved, and click on @code{OK} to do the actual
-saving. This dialog is also used automatically by GPS when you start a
-compilation, to make sure that the compiler will compile the most up-to-date
-version of the file.
+one should be saved, and click on @code{OK} to do the actual saving.
+
+When calling external commands, such as compiling a file, if the
+@code{Auto save} preference is disabled, this same dialog is also used,
+to make sure that e.g. the compiler will take into account your local changes.
+If the preference is enabled, the saving is performed automatically.
 
 @c ??? Add screenshot of save all dialog
 
 You can conveniently select or unselect all the files at once by clicking on
-the title of the first column (which contains @code{Save}). This will toggle
+the title of the first column (which contains @i{Save}). This will toggle
 the selection status of the first line, and have the same status for all other
 editors.
 
 If you press @code{Cancel} instead of @code{OK}, no saving will take place,
 and the action that displayed this dialog is also cancelled. Such actions can
-be for instance starting a compilation command, a VCS operation, or even
-quitting GPS with unsaved files.
+be for instance starting a compilation command, a VCS operation, or quitting
+GPS with unsaved files.
 
 @c --------------------------------------------------------------------
 @node Source Navigation
