@@ -41,6 +41,7 @@ with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Menu;                 use Gtk.Menu;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
 with Gtk.Widget;               use Gtk.Widget;
@@ -591,5 +592,45 @@ package body GUI_Utils is
       Unref (Layout);
       Unref (GC);
    end Create_Pixmap_From_Text;
+
+   -------------------------
+   -- Full_Path_Menu_Item --
+   -------------------------
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Menu_Item : out Full_Path_Menu_Item;
+      Label     : String := "";
+      Path      : String := "") is
+   begin
+      Menu_Item := new Full_Path_Menu_Item_Record (Path'Length);
+      Initialize (Menu_Item, Label, Path);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
+      Label     : String;
+      Path      : String) is
+   begin
+      Initialize (Gtk_Menu_Item (Menu_Item), Label);
+      Menu_Item.Full_Path := Path;
+   end Initialize;
+
+   --------------
+   -- Get_Path --
+   --------------
+
+   function Get_Path
+     (Menu_Item : access Full_Path_Menu_Item_Record) return String is
+   begin
+      return Menu_Item.Full_Path;
+   end Get_Path;
 
 end GUI_Utils;
