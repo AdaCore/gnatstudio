@@ -229,7 +229,8 @@ package body Glide_Kernel.Modules is
    is
       Current : Module_List.List := Global_Modules_List;
       Context : Selection_Context_Access;
-      Menu : Gtk_Menu := null;
+      Menu    : Gtk_Menu := null;
+
    begin
       if User.Kernel.Last_Context_For_Contextual /= null then
          Free (User.Kernel.Last_Context_For_Contextual);
@@ -263,6 +264,7 @@ package body Glide_Kernel.Modules is
                   Context => Context,
                   Menu    => Menu);
             end if;
+
             Current := Module_List.Next (Current);
          end loop;
       end if;
@@ -326,8 +328,10 @@ package body Glide_Kernel.Modules is
       use type Widget_List.Glist;
       Children, Tmp : Widget_List.Glist;
       Label         : Gtk_Label;
+
    begin
       Menu_Item := null;
+
       if Name = "" then
          Index := -1;
          return;
@@ -380,6 +384,7 @@ package body Glide_Kernel.Modules is
       Menu_Item, Pred : Gtk_Menu_Item;
       Menu            : Gtk_Menu;
       Index           : Gint;
+
    begin
       pragma Assert (Parent_Path (Parent_Path'First) = '/');
 

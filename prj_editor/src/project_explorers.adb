@@ -527,6 +527,7 @@ package body Project_Explorers is
       Row, Column : Gint;
       Is_Valid    : Boolean;
       Node        : Gtk_Ctree_Node;
+
    begin
       Get_Selection_Info
         (T.Tree, Gint (Get_X (Event)), Gint (Get_Y (Event)),
