@@ -23,6 +23,7 @@
 
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with GNAT.Debug_Pools; use GNAT.Debug_Pools;
 
 package Codefix is
 
@@ -50,6 +51,8 @@ package Codefix is
    --  the value null before calling these functions.
 
    type Dynamic_String is access all String;
+   P : GNAT.Debug_Pools.Debug_Pool;
+   for Dynamic_String'Storage_Pool use P;
 
    procedure Assign (This : in out Dynamic_String; Value : String);
    --  Delete the precedent string, and create a new initialized with Value.
@@ -73,5 +76,7 @@ package Codefix is
    --  Put the string referenced on the file specified.
 
    procedure Free is new Ada.Unchecked_Deallocation (String, Dynamic_String);
+
+   function Clone (This : Dynamic_String) return Dynamic_String;
 
 end Codefix;
