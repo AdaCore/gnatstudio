@@ -580,7 +580,7 @@ package body Glide_Kernel.Preferences is
             Nick  => -"File pattern",
             Blurb =>
               -"Pattern used to detect file locations (e.g error messages)",
-            Default => "^([^:]+):(\d+):((\d+):)?( (warning)?(\(style)?.*)"));
+            Default => "^([^:]+):(\d+):((\d+):)? ((warning)?(\(style)?.*)"));
       Register_Property
         (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
 
