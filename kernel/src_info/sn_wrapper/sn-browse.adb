@@ -33,11 +33,11 @@ package body SN.Browse is
       Delete_Array (Args);
    end Delete;
 
-   procedure Browse (File_Name, DB_Directory, Browser_Name,
-                     DBUtils_Path : in String) is
+   procedure Browse (File_Name, DB_Directory, Browser_Name : in String) is
       Xref_File_Name      : String_Access;
       Success             : Boolean;
       Args                : Argument_List_Access;
+      DBUtil_Path         : String_Access;
    begin
       --  check DB_Directory exists
       declare
@@ -66,22 +66,35 @@ package body SN.Browse is
          end if;
       end if;
 
+      DBUtil_Path := Locate_Exec_On_Path ("dbimp");
+      if null = DBUtil_Path then
+         Free (Xref_File_Name);
+         raise Spawn_Failure;
+      end if;
       --  Execute browser
       Args := Argument_String_To_List (
           "-n " & DB_Directory & Directory_Separator & DB_File_Name
-          & " -p " & DBUtils_Path & Directory_Separator & "dbimp"
+          & " -p " & DBUtil_Path.all
           & " -x " & DB_Directory & Directory_Separator & Xref_File_Name.all
           & " " & File_Name);
-      Spawn (DBUtils_Path & Directory_Separator & Browser_Name,
-             Args.all, Success);
+
+      DBUtil_Path := Locate_Exec_On_Path (Browser_Name);
+      if null = DBUtil_Path then
+         Free (Xref_File_Name);
+         Delete (Args);
+         raise Spawn_Failure;
+      end if;
+
+      Spawn (DBUtil_Path.all, Args.all, Success);
       Delete (Args);
       Free (Xref_File_Name);
+      Free (DBUtil_Path);
       if not Success then
          raise Spawn_Failure;
       end if;
    end Browse;
 
-   procedure Generate_Xrefs (DB_Directory, DBUtils_Path : in String) is
+   procedure Generate_Xrefs (DB_Directory : in String) is
       BY_File_Name : String := DB_Directory & Directory_Separator
                       & DB_File_Name & ".by" & ASCII.Nul;
       TO_File_Name : String := DB_Directory & Directory_Separator
@@ -96,7 +109,9 @@ package body SN.Browse is
       Content      : String_Access;
       Temp_File    : File_Descriptor;
       Temp_Name    : Temp_File_Name;
+      DBUtil_Path  : String_Access;
    begin
+
       --  remove .to and .by tables
       if File_Exists (BY_File_Name) then
          Delete_File (BY_File_Name'Address, Success);
@@ -148,9 +163,16 @@ package body SN.Browse is
           DB_Directory & Directory_Separator & DB_File_Name
           & " -f " & Temp_Name
       );
-      Spawn (DBUtils_Path & Directory_Separator & "dbimp", Args.all,
-         Success);
+
+      DBUtil_Path := Locate_Exec_On_Path ("dbimp");
+      if null = DBUtil_Path then
+         Delete (Args);
+         raise Spawn_Failure;
+      end if;
+
+      Spawn (DBUtil_Path.all, Args.all, Success);
       Delete (Args);
+      Free (DBUtil_Path);
 
       Delete_File (Temp_Name'Address, Success);
       if not Success then

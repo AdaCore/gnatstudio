@@ -175,10 +175,9 @@ package body Src_Info.CPP is
       SN_Table    : SN_Table_Array;
       SN_Dir      : String := Prj_API.Object_Path
         (Project, Recursive => False) & Browse.DB_Dir_Name;
-      DBUtils_Dir : String := "../../sn/bin";
    begin
-      Browse.Browse (Source_Filename, SN_Dir, "cbrowser", DBUtils_Dir);
-      Browse.Generate_Xrefs (SN_Dir, DBUtils_Dir);
+      Browse.Browse (Source_Filename, SN_Dir, "cbrowser");
+      Browse.Generate_Xrefs (SN_Dir);
       Open_DB_Files
         (SN_Table,
          SN_Dir & Directory_Separator & Browse.DB_File_Name);
