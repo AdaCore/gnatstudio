@@ -28,7 +28,6 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
-with GVD.Preferences;
 with GVD.Types;
 with GVD.Explorer;
 with GVD.Text_Boxes;
@@ -177,9 +176,8 @@ private
    record
       Process : Gtk.Widget.Gtk_Widget;
 
-      Show_Line_Nums       : Boolean := GVD.Preferences.Editor_Show_Line_Nums;
-      Show_Lines_With_Code : Boolean :=
-        GVD.Preferences.Editor_Show_Line_With_Code;
+      Show_Line_Nums       : Boolean;
+      Show_Lines_With_Code : Boolean;
       --  Whether the lines where one can set a breakpoint have a small dot
       --  on the side.
 

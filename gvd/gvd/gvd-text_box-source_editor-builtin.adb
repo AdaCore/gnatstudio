@@ -185,6 +185,9 @@ package body GVD.Source_Editors is
       Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Source_Editor_Record;
+      Editor.Show_Line_Nums := Current_Preferences.Editor_Show_Line_Nums;
+      Editor.Show_Lines_With_Code :=
+        Current_Preferences.Editor_Show_Line_With_Code;
       Initialize (Editor, Process);
    end Gtk_New;
 
@@ -208,7 +211,8 @@ package body GVD.Source_Editors is
       Data.Box  := Source_Editor (Editor);
       Editor_Tooltips.New_Tooltip (Get_Child (Editor), Data, Editor.Tooltip);
 
-      Editor.Highlight_Color := Parse (Editor_Highlight_Color);
+      Editor.Highlight_Color :=
+        Parse (Current_Preferences.Editor_Highlight_Color.all);
       Alloc (Get_System, Editor.Highlight_Color);
 
       Editor_Cb.Object_Connect
@@ -464,7 +468,7 @@ package body GVD.Source_Editors is
          Check_Editor_Handler.To_Marshaller (Change_Line_Nums'Access),
          Source_Editor (Source));
 
-      Gtk_New (Check, Label => -"Show lines with code");
+      Gtk_New (Check, Label => -"Show Lines with Code");
       Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Lines_With_Code (Source));
       Append (Menu, Check);
@@ -495,20 +499,21 @@ package body GVD.Source_Editors is
       --  Line_Numbers_Width.
 
       function Line_Number_String (Line : Positive) return String is
-         S : String        := Positive'Image (Line);
-         N : Line_Number   := (others => ' ');
-         Length : Positive := Positive'Min (S'Length, Line_Numbers_Width);
+         S      : constant String   := Positive'Image (Line);
+         N      : Line_Number       := (others => ' ');
+         Length : constant Positive :=
+           Positive'Min (S'Length, Line_Numbers_Width);
+
       begin
          N (N'Last - Length + 1  .. N'Last - 1) := S (2 .. Length);
          return N;
       end Line_Number_String;
 
-      Index       : Positive := 1;
-      Line        : Positive := 1;
-      Line_Start  : Positive := 1;
-      Entity      : Language_Entity;
-      Next_Char   : Positive;
-
+      Index               : Positive := 1;
+      Line                : Positive := 1;
+      Line_Start          : Positive := 1;
+      Entity              : Language_Entity;
+      Next_Char, J        : Positive;
       Line_Start_Position : Guint := 0;
 
    begin
@@ -522,7 +527,7 @@ package body GVD.Source_Editors is
                Index := Index + 1;
 
             when ASCII.LF =>
-               if Do_Color_Highlighting then
+               if Current_Preferences.Do_Color_Highlighting then
                   Insert (Editor, Chars => Buffer (Index .. Index));
                else
                   Insert (Editor, Chars => Buffer (Line_Start .. Index));
@@ -538,18 +543,25 @@ package body GVD.Source_Editors is
                end if;
 
             when ASCII.HT =>
+               if not Current_Preferences.Do_Color_Highlighting then
+                  Insert
+                    (Editor,
+                     Chars => Buffer (Line_Start .. Index - 1));
+               end if;
+
                declare
                   Offset : constant Guint :=
                     (Line_Start_Position - Get_Length (Get_Child (Editor))
                      - 1 + Guint (Invisible_Column_Width (Editor)))
-                    mod Guint (Tab_Size);
+                    mod Guint (Current_Preferences.Tab_Size);
                begin
                   Insert (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
                   Index := Index + 1;
+                  Line_Start := Index;
                end;
 
             when others =>
-               if Do_Color_Highlighting then
+               if Current_Preferences.Do_Color_Highlighting then
                   if Editor.Lang /= null then
                      Looking_At
                        (Editor.Lang,
@@ -566,39 +578,56 @@ package body GVD.Source_Editors is
                   end if;
 
                   --  Print every line separately, so that we can add line
-                  --  numbers as well.
+                  --  numbers as well and handle TABs properly.
 
-                  declare
-                     J          : Positive := Index;
-                     Line_Start : Positive := Index;
+                  J := Index;
+                  Line_Start := Index;
 
-                  begin
-                     while J < Next_Char loop
-                        if Buffer (J) = ASCII.LF then
+                  while J < Next_Char loop
+                     if Buffer (J) = ASCII.LF then
+                        Insert
+                          (Editor,
+                           Editor.Colors (Entity),
+                           Chars => Buffer (Line_Start .. J));
+
+                        Line := Line + 1;
+                        Line_Start := J + 1;
+                        Line_Start_Position :=
+                          Get_Length (Get_Child (Editor));
+
+                        if Editor.Show_Line_Nums then
                            Insert
-                             (Editor,
-                              Editor.Colors (Entity),
-                              Chars => Buffer (Line_Start .. J));
-                           Line := Line + 1;
-
-                           if Editor.Show_Line_Nums then
-                              Insert
-                                (Editor, Chars => Line_Number_String (Line));
-                           end if;
-
-                           Line_Start := J + 1;
+                             (Editor, Chars => Line_Number_String (Line));
                         end if;
 
-                        J := J + 1;
-                     end loop;
+                     elsif Buffer (J) = ASCII.HT then
+                        Insert
+                          (Editor,
+                           Editor.Colors (Entity),
+                           Chars => Buffer (Line_Start .. J - 1));
 
-                     Insert
-                       (Editor,
-                        Editor.Colors (Entity),
-                        Null_Color,
-                        Buffer (Line_Start .. Next_Char - 1));
-                  end;
+                        declare
+                           Offset : constant Guint :=
+                             (Line_Start_Position -
+                                Get_Length (Get_Child (Editor)) - 1 +
+                                  Guint (Invisible_Column_Width (Editor)))
+                             mod Guint (Current_Preferences.Tab_Size);
+                        begin
+                           Insert
+                             (Editor,
+                              Chars => (1 .. Integer (Offset + 1) => ' '));
+                           Line_Start := J + 1;
+                        end;
+                     end if;
 
+                     J := J + 1;
+                  end loop;
+
+                  Insert
+                    (Editor,
+                     Editor.Colors (Entity),
+                     Null_Color,
+                     Buffer (Line_Start .. Next_Char - 1));
                   Index := Next_Char;
 
                else
@@ -631,12 +660,13 @@ package body GVD.Source_Editors is
      (Editor   : access Source_Editor_Record;
       Position : GVD.Explorer.Position_Type)
    is
-      Last   : Positive;
-      Text   : constant Gtk_Text := Get_Child (Editor);
-      Index  : Gint := Invisible_Column_Width (Editor);
-      Col    : Natural := 1;
-      Buffer : constant GVD.Types.String_Access := Get_Buffer (Editor);
-      Line   : Natural := 1;
+      Last     : Positive;
+      Text     : constant Gtk_Text := Get_Child (Editor);
+      Index    : Gint := Invisible_Column_Width (Editor);
+      Col      : Natural := 1;
+      Buffer   : constant GVD.Types.String_Access := Get_Buffer (Editor);
+      Line     : Natural := 1;
+      Tab_Size : Integer renames Current_Preferences.Tab_Size;
 
    begin
       --  Convert from raw file position to visual buffer position (i.e include
@@ -652,7 +682,8 @@ package body GVD.Source_Editors is
            and then Col mod Tab_Size /= 0
          then
             Index := Index +
-              Gint ((1 + Col / Tab_Size) * Tab_Size - Col + 1);
+              Gint ((1 + Col / Tab_Size) * Tab_Size -
+                    Col + 1);
             Col := (1 + Col / Tab_Size) * Tab_Size + 1;
 
          else
@@ -1227,7 +1258,7 @@ package body GVD.Source_Editors is
       Width := 0;
       Height := 0;
 
-      if Tooltips_In_Source = None
+      if Current_Preferences.Tooltips_In_Source = None
         or else not Is_Started (Debugger.Debugger)
         or else Command_In_Process (Get_Process (Debugger.Debugger))
       then
@@ -1250,7 +1281,7 @@ package body GVD.Source_Editors is
             return;
          end if;
 
-         if Tooltips_In_Source = Full then
+         if Current_Preferences.Tooltips_In_Source = Full then
             Entity := Parse_Type (Debugger.Debugger, Variable_Name.all);
 
             if Entity = null then
@@ -1324,7 +1355,7 @@ package body GVD.Source_Editors is
             Width  => Width - 1,
             Height => Height - 1);
 
-         if Tooltips_In_Source = Full then
+         if Current_Preferences.Tooltips_In_Source = Full then
             Items.Paint (Entity.all, Context, X => 2, Y => 2);
          else
             Index := Value'First;
@@ -1374,19 +1405,19 @@ package body GVD.Source_Editors is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access Source_Editor_Record) is
-      Buffer : constant GVD.Types.String_Access := Get_Buffer (Editor);
-      Index : Natural := 0;
+      Buffer       : constant GVD.Types.String_Access := Get_Buffer (Editor);
+      Index        : Natural := 0;
       Current_Line : Natural := 1;
-      Col : Natural := 1;
-      Text_Pos : Natural;
+      Col          : Natural := 1;
+      Text_Pos     : Natural;
       Text_Pos_End : Natural;
-      Line : constant Natural := Get_Line (Editor);
+      Line         : constant Natural := Get_Line (Editor);
+      Tab_Size     : Integer renames Current_Preferences.Tab_Size;
 
    begin
-      if Editor_Highlight_Current_Line
+      if Current_Preferences.Editor_Highlight_Current_Line
         and then Buffer /= null
       then
-
          Text_Pos := Buffer'First;
 
          --  Convert from line to visual buffer position (i.e include handling
@@ -1409,6 +1440,7 @@ package body GVD.Source_Editors is
                Col := Col + 1;
                Index := Index + 1;
             end if;
+
             Text_Pos := Text_Pos + 1;
          end loop;
 
