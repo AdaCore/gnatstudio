@@ -49,6 +49,7 @@ with System;
 with Ada.Unchecked_Conversion;
 with Default_Preferences;
 with Basic_Types;
+with Histories;
 
 package Glide_Kernel is
 
@@ -66,7 +67,8 @@ package Glide_Kernel is
    --  By default, it isn't associated with any project, nor any source editor.
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
-   procedure Destroy (Handle : access Kernel_Handle_Record);
+   procedure Destroy
+     (Handle : access Kernel_Handle_Record; Home_Dir : String);
    --  Free the memory occupied by the kernel.
 
    function Get_Default_Accelerators
@@ -105,6 +107,16 @@ package Glide_Kernel is
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
    --  Return the main toolbar associated with the kernel.
+
+   function Get_History
+     (Handle : access Kernel_Handle_Record) return Histories.History;
+   --  Return the history database
+
+   procedure Add_To_History
+     (Handle    : access Kernel_Handle_Record;
+      Key       : Histories.History_Key;
+      New_Entry : String);
+   --  Add a new entry in the history database
 
    type Kernel_State is
      (Idle,
@@ -800,6 +812,9 @@ private
 
       Open_Files : String_List_Utils.String_List.List;
       --  The list of currently open files.
+
+      History : Histories.History;
+      --  The various histories used throughout GPS
    end record;
 
 end Glide_Kernel;

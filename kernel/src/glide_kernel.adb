@@ -63,6 +63,7 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
 with Basic_Types;               use Basic_Types;
+with Histories;                 use Histories;
 
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
 with Prj_API;                   use Prj_API;
@@ -106,6 +107,9 @@ package body Glide_Kernel is
    --  The class structure for this object
 
    Me : constant Debug_Handle := Create ("glide_kernel");
+
+   History_Max_Length : constant Positive := 10;
+   --  <preferences> Maximum number of entries to store in each history
 
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
@@ -161,7 +165,7 @@ package body Glide_Kernel is
          3      | 5           => (1 => GType_Pointer),
          6 .. 8               => (1 => GType_String));
       Handler : Glide_Language_Handler;
-
+      Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
       Handle := new Kernel_Handle_Record;
       Glib.Object.Initialize (Handle);
@@ -199,9 +203,10 @@ package body Glide_Kernel is
       Handle.Preferences := new GPS_Preferences_Record;
       GVD.Preferences.GVD_Prefs := GVD_Preferences (Handle.Preferences);
       Register_Global_Preferences (Handle);
-      Load_Preferences
-        (Handle.Preferences,
-         String_Utils.Name_As_Directory (Home_Dir) & "preferences");
+      Load_Preferences (Handle.Preferences, Dir & "preferences");
+
+      Load (Handle.History, Dir & "history");
+      Set_Max_Length (Handle.History, History_Max_Length);
    end Gtk_New;
 
    ------------------------------
@@ -1468,8 +1473,17 @@ package body Glide_Kernel is
    -- Destroy --
    -------------
 
-   procedure Destroy (Handle : access Kernel_Handle_Record) is
+   procedure Destroy
+     (Handle : access Kernel_Handle_Record; Home_Dir : String)
+   is
+      Dir : constant String := String_Utils.Name_As_Directory (Home_Dir);
    begin
+      Trace (Me, "Saving preferences in " & Dir & "preferences");
+      Save_Preferences (Handle, Dir & "preferences");
+
+      Save (Handle.History, Dir & "history");
+      Free (Handle.History);
+
       Destroy (Handle.Preferences);
       Project_Hash.Project_Htable.Reset (Handle.Projects_Data);
       Free (Handle.Gnatls_Cache);
@@ -1501,6 +1515,28 @@ package body Glide_Kernel is
 
       Kernel_Desktop.Free_Registered_Desktop_Functions;
    end Destroy;
+
+   -----------------
+   -- Get_History --
+   -----------------
+
+   function Get_History
+     (Handle : access Kernel_Handle_Record) return Histories.History is
+   begin
+      return Handle.History;
+   end Get_History;
+
+   --------------------
+   -- Add_To_History --
+   --------------------
+
+   procedure Add_To_History
+     (Handle    : access Kernel_Handle_Record;
+      Key       : Histories.History_Key;
+      New_Entry : String) is
+   begin
+      Add_To_History (Handle.History, Key, New_Entry);
+   end Add_To_History;
 
    ---------------------
    -- Scope_To_String --
