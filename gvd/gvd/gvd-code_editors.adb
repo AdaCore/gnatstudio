@@ -1273,7 +1273,10 @@ package body Odd.Code_Editors is
       Name : constant String := Get_Current_File (Editor.Explorer);
    begin
       if Name /= "" then
-         Load_File (Editor, Name, Set_Current => False);
+         Load_File (Editor,
+                    Find_File
+                    (Debugger_Process_Tab (Editor.Process).Debugger, Name),
+                    Set_Current => False);
          Set_Line (Editor, Get_Current_Line (Editor.Explorer),
                    Set_Current => False);
       end if;
