@@ -31,30 +31,30 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
 with Gtk.Widget;                use Gtk.Widget;
 
-with GPS.Intl;                use GPS.Intl;
+with GPS.Intl;                  use GPS.Intl;
 
-with GVD.Preferences;           use GVD.Preferences;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
 
-with GPS.Kernel;              use GPS.Kernel;
-with GPS.Kernel.Console;      use GPS.Kernel.Console;
-with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
-with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
-with GPS.Kernel.MDI;          use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
-with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with GPS.Kernel.Timeout;      use GPS.Kernel.Timeout;
-with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Console;        use GPS.Kernel.Console;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.Timeout;        use GPS.Kernel.Timeout;
+with GPS.Kernel.Task_Manager;   use GPS.Kernel.Task_Manager;
 with GPS.Location_View;         use GPS.Location_View;
 with VFS;                       use VFS;
 with Projects;                  use Projects;
 
 with Language_Handlers;         use Language_Handlers;
-with Language_Handlers.GPS;   use Language_Handlers.GPS;
+with Language_Handlers.GPS;     use Language_Handlers.GPS;
 with Projects.Registry;         use Projects.Registry;
 with Entities;                  use Entities;
 with Histories;                 use Histories;
-with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
+with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
@@ -679,7 +679,7 @@ package body Builder_Module is
       Fd := new TTY_Process_Descriptor;
       Insert_And_Launch
         (Kernel,
-         Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
+         Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
          Remote_Host      =>
            Get_Attribute_Value (Prj, Remote_Host_Attribute),
          Command          => Cmd.all,
@@ -957,7 +957,7 @@ package body Builder_Module is
          begin
             Insert_And_Launch
               (Kernel,
-               Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
+               Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
                Remote_Host => Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command         => Cmd.all,
                Arguments       => Default_Builder_Switches &
@@ -978,7 +978,7 @@ package body Builder_Module is
 
          Insert_And_Launch
            (Kernel,
-            Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Protocol => Get_Pref (Kernel, Remote_Protocol),
             Remote_Host     =>
               Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command         => Cmd.all,
@@ -1164,7 +1164,7 @@ package body Builder_Module is
          Fd := new TTY_Process_Descriptor;
          Insert_And_Launch
            (Kernel,
-            Remote_Protocol  => Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Protocol  => Get_Pref (Kernel, Remote_Protocol),
             Remote_Host      =>
               Get_Attribute_Value
                 (Get_Project (Kernel), Remote_Host_Attribute),
@@ -1304,11 +1304,11 @@ package body Builder_Module is
          Arguments : GNAT.OS_Lib.Argument_List;
          Title     : String)
       is
-         Remote_Cmd : constant String :=
-           Get_Pref (GVD_Prefs, Remote_Protocol);
-         Remote_Host     : constant String :=
+         Remote_Cmd  : constant String := Get_Pref (K, Remote_Protocol);
+         Remote_Host : constant String :=
            Get_Attribute_Value (Data.Project, Remote_Host_Attribute);
-         Exec : String_Access;
+         Exec        : String_Access;
+
       begin
          if Remote_Host = ""
            or else Remote_Cmd = ""
@@ -1371,8 +1371,8 @@ package body Builder_Module is
             else
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, GVD.Preferences.Execute_Command)
-                     & ' ' & Command);
+                    (Get_Pref (K, GPS.Kernel.Preferences.Execute_Command) &
+                     ' ' & Command);
                else
                   Args := Argument_String_To_List (Command);
                end if;
@@ -1403,8 +1403,8 @@ package body Builder_Module is
             then
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, GVD.Preferences.Execute_Command) & ' ' &
-                     Full_Name (Data.File).all & ' ' & Arguments);
+                    (Get_Pref (K, GPS.Kernel.Preferences.Execute_Command) &
+                     ' ' & Full_Name (Data.File).all & ' ' & Arguments);
                   Launch
                     (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
                      -"Run: " & Base_Name (Data.File) & ' ' &
