@@ -131,9 +131,13 @@ package body Gtkada.Entry_Completion is
                     Model     => Model,
                     Iter      => Iter);
 
-      Set_Text (Get_Entry (Ent.Combo), Get_String (Model, Iter, 0));
-      Ent.Completion_Index := Integer'First;
-      Grab_Focus (Get_Entry (Ent.Combo));
+      --  Selection could be null if we are in the process of clearing up the
+      --  list
+      if Iter /= Null_Iter then
+         Set_Text (Get_Entry (Ent.Combo), Get_String (Model, Iter, 0));
+         Ent.Completion_Index := Integer'First;
+         Grab_Focus (Get_Entry (Ent.Combo));
+      end if;
    end Selection_Changed;
 
    ---------------
