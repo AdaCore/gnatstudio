@@ -29,6 +29,8 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings;               use Ada.Strings;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with String_Utils;              use String_Utils;
 with OS_Utils;                  use OS_Utils;
@@ -425,7 +427,7 @@ package body VCS.CVS is
                   end if;
 
                   Append (Current_Status.Working_Revision,
-                          Line (Index .. Next_Index));
+                          Trim (Line (Index .. Next_Index), Both));
                end if;
             elsif Length > 15
               and then Line (First .. First + 14) = "   Repository r"
@@ -445,7 +447,7 @@ package body VCS.CVS is
                   end if;
 
                   Append (Current_Status.Repository_Revision,
-                          Line (Index .. Next_Index));
+                          Trim (Line (Index .. Next_Index), Both));
                end if;
             end if;
 
@@ -600,7 +602,7 @@ package body VCS.CVS is
             end if;
 
             Append (Current_Status.Working_Revision,
-                    Buffer (Index + 1 .. Next_Index - 1));
+                    Trim (Buffer (Index + 1 .. Next_Index - 1), Both));
 
             if Index + 1 < Next_Index - 1 then
                File_Status_List.Append (Result, Current_Status);
