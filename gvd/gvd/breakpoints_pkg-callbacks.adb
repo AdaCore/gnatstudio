@@ -28,6 +28,7 @@ with Gtk.Enums;          use Gtk.Enums;
 with Gtk.Combo;          use Gtk.Combo;
 with GUI_Utils;          use GUI_Utils;
 with GVD.Code_Editors;   use GVD.Code_Editors;
+with GVD.Process;        use GVD.Process;
 with Gdk.Event;          use Gdk.Event;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Breakpoints_Editor; use Breakpoints_Editor;
@@ -230,7 +231,7 @@ package body Breakpoints_Pkg.Callbacks is
       Editor : constant Breakpoint_Editor_Access :=
         Breakpoint_Editor_Access (Object);
    begin
-      Set_Busy_Cursor (Get_Window (Editor), True);
+      Set_Busy (Editor.Process, True);
 
       declare
          Exception_Arr : Exception_Array :=
@@ -254,7 +255,7 @@ package body Breakpoints_Pkg.Callbacks is
          Free (Exception_Arr);
       end;
 
-      Set_Busy_Cursor (Get_Window (Editor), False);
+      Set_Busy (Editor.Process, False);
    end On_Load_Exception_List_Clicked;
 
    ------------------------------
