@@ -41,6 +41,7 @@ with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Label;           use Gtk.Label;
 with Gtk.Object;          use Gtk.Object;
 with Gtk.Paned;           use Gtk.Paned;
+with Gtk.Socket;          use Gtk.Socket;
 with Gtk.Window;          use Gtk.Window;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Container;       use Gtk.Container;
@@ -773,6 +774,9 @@ package body GVD.Process is
         (Process, "process_stopped",
          Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
       Widget_Callback.Connect
+        (Process, "process_stopped",
+         Widget_Callback.To_Marshaller (On_Thread_Process_Stopped'Access));
+      Widget_Callback.Connect
         (Process.Data_Canvas, "background_click",
          Widget_Callback.To_Marshaller (On_Background_Click'Access));
 
@@ -935,7 +939,9 @@ package body GVD.Process is
          dot_xpm, arrow_xpm, stop_xpm,
          Comments_Color => Get_Pref (Comments_Color),
          Strings_Color  => Get_Pref (Strings_Color),
-         Keywords_Color => Get_Pref (Keywords_Color));
+         Keywords_Color => Get_Pref (Keywords_Color),
+         TTY_Mode       => Window.TTY_Mode,
+         External_XID   => Window.External_XID);
 
       --  Initialize the call stack list
 
@@ -1581,11 +1587,14 @@ package body GVD.Process is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
+      Main    : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Process.Window);
       Str     : constant String := Get_Chars (Process.Debugger_Text);
       F       : constant Gdk_Font :=
         Get_Gdkfont (Get_Pref (Debugger_Font), Get_Pref (Debugger_Font_Size));
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
       Widget  : Gtk_Widget;
+      Win     : Gtk_Window;
 
    begin
       if F /= Process.Debugger_Text_Font
@@ -1614,13 +1623,17 @@ package body GVD.Process is
          Process.Separate_Data := not Process.Separate_Data;
 
          if Process.Separate_Data then
+            if Main.External_XID /= 0 then
+               Gtk_New (Win);
+               Show (Win);
+               Reparent (Get_External_Source (Process.Editor_Text), Win);
+            end if;
+
             --  Ref the widget so that it is not destroyed.
             Ref (Process.Data_Editor_Paned);
             Remove (Process.Process_Paned, Process.Data_Editor_Paned);
 
-            if Get_Active
-              (Main_Debug_Window_Access (Process.Window).Call_Stack)
-            then
+            if Get_Active (Main.Call_Stack) then
                Widget := Gtk_Widget (Process.Data_Paned);
             else
                Widget := Gtk_Widget (Process.Data_Scrolledwindow);
@@ -1629,12 +1642,23 @@ package body GVD.Process is
             Reparent (Widget, Process);
             Reparent (Process.Editor_Vbox, Process.Process_Paned);
             Show_All (Process);
+
+            if Main.External_XID /= 0 then
+               Reparent
+                 (Get_External_Source (Process.Editor_Text),
+                  Get_Editor_Container (Process.Editor_Text));
+               Destroy (Win);
+            end if;
          else
+            if Main.External_XID /= 0 then
+               Gtk_New (Win);
+               Show (Win);
+               Reparent (Get_External_Source (Process.Editor_Text), Win);
+            end if;
+
             Hide (Process);
 
-            if Get_Active
-              (Main_Debug_Window_Access (Process.Window).Call_Stack)
-            then
+            if Get_Active (Main.Call_Stack) then
                Widget := Gtk_Widget (Process.Data_Paned);
             else
                Widget := Gtk_Widget (Process.Data_Scrolledwindow);
@@ -1646,6 +1670,13 @@ package body GVD.Process is
             Add (Process.Process_Paned, Process.Data_Editor_Paned);
             Unref (Process.Data_Editor_Paned);
             Show_All (Process.Process_Paned);
+
+            if Main.External_XID /= 0 then
+               Reparent
+                 (Get_External_Source (Process.Editor_Text),
+                  Get_Editor_Container (Process.Editor_Text));
+               Destroy (Win);
+            end if;
          end if;
       end if;
    end Preferences_Changed;
