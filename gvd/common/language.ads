@@ -207,6 +207,9 @@ package Language is
       Output : String) return Thread_Information_Array is abstract;
    --  Parse the result of a thread list command.
 
+   procedure Free (Info : in out Thread_Information_Array);
+   --  Free the dyamic memory associated with each element of the array.
+
 private
    type Language_Root is abstract tagged null record;
 end Language;

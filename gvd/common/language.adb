@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with Gtkada.Types; use Gtkada.Types;
 
 package body Language is
 
@@ -95,5 +96,16 @@ package body Language is
    begin
       return E;
    end Explorer_Regexps;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Info : in out Thread_Information_Array) is
+   begin
+      for J in Info'Range loop
+         Free (Info (J).Information);
+      end loop;
+   end Free;
 
 end Language;
