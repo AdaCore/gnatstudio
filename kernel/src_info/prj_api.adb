@@ -4382,6 +4382,7 @@ package body Prj_API is
          if Name (N) not in 'a' .. 'z'
            and then Name (N) not in '0' .. '9'
            and then Name (N) /= '_'
+           and then Name (N) /= '.'
          then
             return False;
          end if;
