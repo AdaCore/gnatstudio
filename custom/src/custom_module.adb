@@ -1051,6 +1051,18 @@ package body Custom_Module is
          Class         => Toolbar_Class,
          Static_Method => True,
          Handler       => Custom_Entry_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "entry_set_text",
+         Params        => "(entry_label, text)",
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Return_Value  => "(null)",
+         Description   => -"Set the current selection in specified entry",
+         Class         => Toolbar_Class,
+         Static_Method => True,
+         Handler       => Custom_Entry_Handler'Access);
    end Register_Module;
 
    ----------
