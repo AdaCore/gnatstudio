@@ -48,8 +48,9 @@ package body Gtkada.File_Selector.Filters is
 
    function Prj_File_Filter return Project_File_Filter is
       Filter : Project_File_Filter := new Project_File_Filter_Record;
+
    begin
-      Filter.Label := new String'(-"Glide project files");
+      Filter.Label := new String' (Glide_Intl."-" ("Glide project files"));
       return Filter;
    end Prj_File_Filter;
 
