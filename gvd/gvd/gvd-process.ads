@@ -193,6 +193,12 @@ package GVD.Process is
 
       Separate_Data           : Boolean;
       --  Store current value of the Separate_Data preference.
+
+      Current_File            : String_Access;
+      --  The file containing the current location.
+
+      Current_Line            : Integer := 0;
+      --  The current line in Current_File.
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -406,6 +412,26 @@ package GVD.Process is
    procedure Update_Editor_Frame
      (Process : access Debugger_Process_Tab_Record);
    --  Update the editor frame with the name of the currently edited file.
+
+   ---------------------
+   -- Source location --
+   ---------------------
+
+   procedure Set_Current_Source_Location
+     (Process : access Debugger_Process_Tab_Record;
+      File    : String;
+      Line    : Integer);
+   --  Set the source location.
+
+   function Get_Current_Source_File
+     (Process : access Debugger_Process_Tab_Record)
+   return String;
+   --  Get the file containing the current location, or "" if there is none.
+
+   function Get_Current_Source_Line
+     (Process : access Debugger_Process_Tab_Record)
+     return Integer;
+   --  Get the current line, or 0 if there is none.
 
 private
 
