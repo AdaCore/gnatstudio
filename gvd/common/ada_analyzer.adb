@@ -700,17 +700,17 @@ package body Ada_Analyzer is
             --  Manual unrolling for efficiency
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
 
             Tmp := Next_Char (Tmp);
 
             exit when Tmp >= Buffer_Length
-              or else not Is_Word_Char (Buffer (Next_Char (Tmp)));
+              or else not Is_Entity_Letter (Buffer (Next_Char (Tmp)));
 
             Tmp := Next_Char (Tmp);
          end loop;
@@ -1640,7 +1640,7 @@ package body Ada_Analyzer is
 
                exit when not Skip_Comments
                  or else P = Buffer_Length
-                 or else Is_Word_Char (Buffer (P));
+                 or else Is_Entity_Letter (Buffer (P));
 
                P := Next_Char (P);
             end loop;
@@ -1649,7 +1649,7 @@ package body Ada_Analyzer is
                return;
             end if;
 
-            exit when P = Buffer_Length or else Is_Word_Char (Buffer (P));
+            exit when P = Buffer_Length or else Is_Entity_Letter (Buffer (P));
 
             Top_Token := Top (Tokens);
             Prev_Prev_Token := Prev_Token;
