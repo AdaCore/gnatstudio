@@ -827,6 +827,21 @@ package body Project_Explorers is
       pragma Unreferenced (Kernel, Event_Widget);
       use type Node_List.Glist;
 
+      function Entity_Base (Name : String) return String;
+      --  Return the "basename" for the entity, ie convert "parent.name" to
+      --  "name", in the case of Ada parent packages.
+      --  ??? Should this be done by the parser itself
+
+      function Entity_Base (Name : String) return String is
+      begin
+         for C in reverse Name'Range loop
+            if Name (C) = '.' then
+               return Name (C + 1 .. Name'Last);
+            end if;
+         end loop;
+         return Name;
+      end Entity_Base;
+
       Row, Column       : Gint;
       Is_Valid          : Boolean;
       Node, Parent      : Gtk_Ctree_Node;
@@ -876,7 +891,7 @@ package body Project_Explorers is
                File_Name    => Get_File_From_Node (T, Node));
             Set_Entity_Information
               (Context     => Entity_Selection_Context_Access (Context),
-               Entity_Name => Data.Entity_Name,
+               Entity_Name => Entity_Base (Data.Entity_Name),
                Category    => Node_Get_Row_Data
                  (T.Tree, Parent).Category,
                Line        => Data.Sloc_Entity.Line,
@@ -1640,6 +1655,8 @@ package body Project_Explorers is
       --  this will only happen when the project is changed, and the
       --  "project_view_changed" signal will already trigger a refresh
 
+      Freeze (E.Tree);
+
       if User.Node_Type = File_Node
         or else User.Node_Type = Category_Node
       then
@@ -1658,6 +1675,8 @@ package body Project_Explorers is
          User.Up_To_Date := False;
          Node_Set_Row_Data (E.Tree, Node, User);
       end if;
+
+      Thaw (E.Tree);
    end Collapse_Tree_Cb;
 
    ------------------------
