@@ -83,4 +83,16 @@ package Glide_Kernel.Editor is
      (Kernel : access Kernel_Handle_Record'Class) return String;
    --  Return the Title of the focus window.
 
+   ------------------
+   -- Xref support --
+   ------------------
+
+   procedure Goto_Declaration_Or_Body
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Find the location of the declaration for the entity below the
+   --  insert cursor (see Src_Info.Queries.Find_Declaration_Or_Body
+   --  for more details on the behavior of this query) and highlight
+   --  the entity found, opening a new editor if needed (this may depend
+   --  on the user preferences).
+
 end Glide_Kernel.Editor;
