@@ -72,6 +72,7 @@ with Src_Info;                   use Src_Info;
 with Src_Info.Prj_Utils;         use Src_Info.Prj_Utils;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
+with Projects.Registry;          use Projects.Registry;
 with GVD.Dialogs;                use GVD.Dialogs;
 --  ??? Used for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
@@ -460,10 +461,11 @@ package body Src_Editor_Box is
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
                 & Get_File (Location));
          Open_File_Editor
-           (Kernel,
-            Find_Source_File
-              (Kernel, Get_File (Location),
-               Use_Predefined_Source_Path => True),
+           (Kernel, Get_Full_Path_From_File
+            (Registry        => Get_Registry (Kernel),
+             Filename        => Get_File (Location),
+             Use_Source_Path => True,
+             Use_Object_Path => False),
             L, C, C + Length, False);
 
       else
@@ -474,10 +476,11 @@ package body Src_Editor_Box is
          C := Get_Declaration_Column_Of (Entity);
 
          Open_File_Editor
-           (Kernel,
-            Find_Source_File
-              (Kernel, Get_Declaration_File_Of (Entity),
-               Use_Predefined_Source_Path => True),
+           (Kernel, Get_Full_Path_From_File
+            (Registry        => Get_Registry (Kernel),
+             Filename        => Get_Declaration_File_Of (Entity),
+             Use_Source_Path => True,
+             Use_Object_Path => False),
             L, C, C + Length, False);
       end if;
 
@@ -521,17 +524,19 @@ package body Src_Editor_Box is
 
             if To_Body then
                Open_File_Editor
-                 (Kernel,
-                  Find_Source_File
-                  (Kernel, Get_File (Location),
-                   Use_Predefined_Source_Path => True),
+                 (Kernel, Get_Full_Path_From_File
+                  (Registry        => Get_Registry (Kernel),
+                   Filename        => Get_File (Location),
+                   Use_Source_Path => True,
+                   Use_Object_Path => False),
                   L, C, C + Length, False);
             else
                Open_File_Editor
-                 (Kernel,
-                  Find_Source_File
-                  (Kernel, Get_Declaration_File_Of (Entity),
-                   Use_Predefined_Source_Path => True),
+                 (Kernel, Get_Full_Path_From_File
+                  (Registry        => Get_Registry (Kernel),
+                   Filename        => Get_Declaration_File_Of (Entity),
+                   Use_Source_Path => True,
+                   Use_Object_Path => False),
                   L, C, C + Length, False);
             end if;
          end if;
