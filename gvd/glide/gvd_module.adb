@@ -1034,7 +1034,7 @@ package body GVD_Module is
       begin
          if Variable_Name = ""
            or else not Can_Tooltip_On_Entity
-           (Get_Language (Debugger.Debugger), Variable_Name)
+             (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Pop_State (Kernel);
             return;
