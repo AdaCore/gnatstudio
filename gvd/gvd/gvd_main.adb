@@ -62,6 +62,8 @@ begin
 
    --  ??? Need to add command line parsing to handle other debuggers by
    --  default.
+   --  ??? Should set the executable here, so that we can use Set_Executable
+   --  and get initialization for free.
    Process_Tab := Create_Debugger
      (Main_Debug_Window, Debugger.Gdb_Type, "", List (1 .. Index));
    Show_All (Main_Debug_Window);
