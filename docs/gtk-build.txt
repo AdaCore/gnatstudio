@@ -1,4 +1,4 @@
-Here is the complete procedures to build Gtk+ 2.0.2 from scratch
+Here is the complete procedures to build Gtk+ 2.0.5 from scratch
 (systems tested are Redhat 7.1, Solaris 2.8, Tru64 5.1a, HP-UX 11.00).
 
 Note that these instructions are provided as is, and do not represent a
@@ -126,8 +126,8 @@ make install
 ########
 # glib #
 ########
-tar xzvf glib-2.0.3.tar.gz
-cd glib-2.0.3
+tar xzvf glib-2.0.4.tar.gz
+cd glib-2.0.4
 
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
@@ -159,8 +159,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.0.2.tar.gz
-cd pango-1.0.2
+tar xzvf pango-1.0.3.tar.gz
+cd pango-1.0.3
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -183,8 +183,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.0.3.tar.gz
-cd gtk+-2.0.3
+tar xzvf gtk+-2.0.5.tar.gz
+cd gtk+-2.0.5
 
 # Under HP-UX, apply the patch libtool-hpux.diff:
 # patch -p0 < .../libtool-hpux.diff
