@@ -342,12 +342,13 @@ package body Display_Items is
       if Alias_Item = null then
          Gtk_New (Item,
                   Get_Window (Debugger.Data_Canvas),
-                  Variable_Name => Variable_Name,
-                  Debugger      => Debugger,
-                  Auto_Refresh  => Auto_Refresh);
-         Item.Is_Dereference := True;
+                  Variable_Name  => Variable_Name,
+                  Debugger       => Debugger,
+                  Auto_Refresh   => Auto_Refresh,
+                  Default_Entity => Default_Entity);
 
          if Item /= null then
+            Item.Is_Dereference := True;
             Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
 
             --  Do we have an existing item that matches this ? (same address
