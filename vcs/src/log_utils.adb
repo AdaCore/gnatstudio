@@ -169,7 +169,7 @@ package body Log_Utils is
 
    begin
       if CL = null then
-         --  Not ChangeLog content, add headers
+         --  No ChangeLog content, add headers
          Add_Header (1, True);
 
       else
