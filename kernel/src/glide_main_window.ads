@@ -86,7 +86,7 @@ package Glide_Main_Window is
      (Window : access Glide_Window_Record;
       Info   : String := "");
    --  Reset the title of the main window.
-   --  Info is This extra information to be displayed. By default, the name
+   --  Info is an extra information to be displayed. By default, the name
    --  of the root project is displayed.
 
 end Glide_Main_Window;
