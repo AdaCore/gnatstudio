@@ -1,0 +1,548 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glib;                     use Glib;
+with Glib.Object;              use Glib.Object;
+with Glib.Values;              use Glib.Values;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+--  with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Prj.Ext;                  use Prj.Ext;
+with Prj.Tree;                 use Prj.Tree;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with System;
+with Glide_Intl;               use Glide_Intl;
+with Namet;                    use Namet;
+with Stringt;                  use Stringt;
+with Prj_API;                  use Prj_API;
+
+package body Scenario_Selectors is
+
+   Selected_Column      : constant := 0;
+   Project_Name_Column  : constant := 1;
+   Project_Id_Column    : constant := 2;
+   Project_Column_Types : constant GType_Array :=
+     (Selected_Column     => GType_Boolean,
+      Project_Name_Column => GType_String,
+      Project_Id_Column   => GType_Int);
+
+   Var_Name_Column      : constant := 1;
+   Var_Column_Types      : constant GType_Array :=
+     (Selected_Column     => GType_Boolean,
+      Var_Name_Column     => GType_String);
+
+   procedure Project_Set
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Selected : Boolean;
+      Project  : Project_Node_Id);
+   --  Add a new project in the tree model
+
+   procedure Add_Project_Recursive
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Project  : Project_Node_Id);
+   --  Add project and all its importing projects to the selector.
+
+   procedure Project_Selected
+     (Selector  : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues);
+   --  Called when a project has been selected, to make sure we select all its
+   --  occurences.
+
+   procedure Var_Selected
+     (Selector  : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues);
+   --  Called when a new variable has been selected
+
+   procedure Reset_Selected_Status
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Project  : Project_Node_Id;
+      Selected : Boolean);
+   --  Changes the selected status for all the lines that reference Project,
+   --  Starting at line Iter.
+
+   procedure Select_All_Project (Selector : access Gtk_Widget_Record'Class);
+   --  Select all the projects in Selector
+
+   procedure Show_Variables (Selector : access Scenario_Selector_Record'Class);
+   --  Show all the scenario variables
+
+   procedure Select_All_Var (Selector : access Gtk_Widget_Record'Class);
+   --  Select all the variables in Selector
+
+   procedure Variable_Selection
+     (Selector : access Scenario_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Selected : Boolean);
+   --  Called when directly selecting a child node, to select or unselect
+   --  all the values.
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Selector : out Project_Selector;
+      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Ref_Project : Prj.Tree.Project_Node_Id) is
+   begin
+      Selector := new Project_Selector_Record;
+      Initialize (Selector, Kernel, Ref_Project);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Selector : access Project_Selector_Record'Class;
+      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Ref_Project : Prj.Tree.Project_Node_Id)
+   is
+      View          : Gtk_Tree_View;
+      Col           : Gtk_Tree_View_Column;
+      Toggle_Render : Gtk_Cell_Renderer_Toggle;
+      Text_Render   : Gtk_Cell_Renderer_Text;
+      Num           : Gint;
+   begin
+      Gtk.Scrolled_Window.Initialize (Selector);
+      Set_Policy (Selector, Policy_Never, Policy_Automatic);
+
+      Selector.Ref_Project := Ref_Project;
+      Selector.Kernel      := Kernel_Handle (Kernel);
+
+      Gtk_New (View);
+      Add (Selector, View);
+      --  Set_Mode (Get_Selection (View), Selection_None);
+
+      Gtk_New (Selector.Model, Project_Column_Types);
+      Set_Model (View, Gtk_Tree_Model (Selector.Model));
+
+      Gtk_New (Col);
+      Set_Clickable (Col, True);
+      Num := Append_Column (View, Col);
+      Widget_Callback.Object_Connect
+        (Col, "clicked",
+         Widget_Callback.To_Marshaller (Select_All_Project'Access),
+         Slot_Object => Selector);
+
+      Gtk_New (Toggle_Render);
+      Pack_Start (Col, Toggle_Render, False);
+      Add_Attribute (Col, Toggle_Render, "active", Selected_Column);
+      Widget_Callback.Object_Connect
+        (Toggle_Render, "toggled",
+         Project_Selected'Access,
+         Slot_Object => Selector);
+
+      Gtk_New (Col);
+      Set_Clickable (Col, True);
+      Set_Sort_Column_Id (Col, Project_Name_Column);
+      Num := Append_Column (View, Col);
+      Set_Title (Col, -"Project");
+
+      Gtk_New (Text_Render);
+      Pack_Start (Col, Text_Render, True);
+      Add_Attribute (Col, Text_Render, "text", Project_Name_Column);
+
+      Add_Project_Recursive (Selector, Null_Iter, Get_Project (Kernel));
+   end Initialize;
+
+   ------------------------
+   -- Select_All_Project --
+   ------------------------
+
+   procedure Select_All_Project (Selector : access Gtk_Widget_Record'Class) is
+      S : Project_Selector := Project_Selector (Selector);
+      Selected : constant Boolean := S.Select_All;
+
+      procedure Select_Recursive (Iter : Gtk_Tree_Iter);
+      --  Select or unselect Iter, its siblings and all its children
+
+      ----------------------
+      -- Select_Recursive --
+      ----------------------
+
+      procedure Select_Recursive (Iter : Gtk_Tree_Iter) is
+         It    : Gtk_Tree_Iter := Iter;
+      begin
+         while It /= Null_Iter loop
+            if Project_Node_Id
+              (Get_Int (S.Model, It, Project_Id_Column)) /=
+              S.Ref_Project
+            then
+               Set (S.Model, It, Selected_Column, Selected);
+            end if;
+
+            Select_Recursive (Children (S.Model, It));
+            Next (S.Model, It);
+         end loop;
+      end Select_Recursive;
+
+   begin
+      --  We must use a boolean variable for this, we cannot simply have a look
+      --  at the first line, since it might be the Ref_Project, whose status
+      --  never changes.
+      S.Select_All := not S.Select_All;
+      Select_Recursive (Get_Iter_First (S.Model));
+   end Select_All_Project;
+
+   ---------------------------
+   -- Reset_Selected_Status --
+   ---------------------------
+
+   procedure Reset_Selected_Status
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Project  : Project_Node_Id;
+      Selected : Boolean)
+   is
+      It : Gtk_Tree_Iter := Iter;
+   begin
+      while It /= Null_Iter loop
+         if Project_Node_Id
+           (Get_Int (Selector.Model, It, Project_Id_Column))
+           = Project
+         then
+            Set (Selector.Model, It, Selected_Column, Selected);
+         end if;
+
+         Reset_Selected_Status
+           (Selector, Children (Selector.Model, It), Project, Selected);
+         Next (Selector.Model, It);
+      end loop;
+   end Reset_Selected_Status;
+
+   ----------------------
+   -- Project_Selected --
+   ----------------------
+
+   procedure Project_Selected
+     (Selector  : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues)
+   is
+      S : Project_Selector := Project_Selector (Selector);
+      Iter   : Gtk_Tree_Iter;
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Project : Project_Node_Id;
+      Selected : Boolean;
+   begin
+      Iter := Get_Iter_From_String (S.Model, Path_String);
+
+      --  Can't unselect the reference project
+      if Iter /= Null_Iter then
+         Project := Project_Node_Id
+           (Get_Int (S.Model, Iter, Project_Id_Column));
+
+         if Project /= S.Ref_Project then
+            Selected := Get_Boolean (S.Model, Iter, Selected_Column);
+            Set (S.Model, Iter, Selected_Column, not Selected);
+
+            if Get_Pref (S.Kernel, Selector_Show_Project_Hierarchy) then
+               Reset_Selected_Status
+                 (S, Get_Iter_First (S.Model), Project, not Selected);
+            end if;
+         end if;
+      end if;
+   end Project_Selected;
+
+   ---------------------------
+   -- Add_Project_Recursive --
+   ---------------------------
+
+   procedure Add_Project_Recursive
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Project  : Project_Node_Id)
+   is
+      It : Gtk_Tree_Iter;
+      With_Clause : Project_Node_Id;
+   begin
+      if Get_Pref (Selector.Kernel, Selector_Show_Project_Hierarchy) then
+         With_Clause := First_With_Clause_Of (Project);
+         Append (Selector.Model, It, Iter);
+         Project_Set
+           (Selector, It, Project = Selector.Ref_Project, Project);
+
+         while With_Clause /= Empty_Node loop
+            Add_Project_Recursive
+              (Selector, It, Project_Node_Of (With_Clause));
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+
+      else
+         declare
+            Iterator : Imported_Project_Iterator := Start
+              (Project, Recursive => True);
+         begin
+            while Current (Iterator) /= Empty_Node loop
+               Append (Selector.Model, It, Iter);
+               Project_Set (Selector, It,
+                            Current (Iterator) = Selector.Ref_Project,
+                            Current (Iterator));
+               Next (Iterator);
+            end loop;
+         end;
+      end if;
+   end Add_Project_Recursive;
+
+   -----------------
+   -- Project_Set --
+   -----------------
+
+   procedure Project_Set
+     (Selector : access Project_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Selected : Boolean;
+      Project  : Project_Node_Id)
+   is
+      procedure Internal
+        (Tree, Iter : System.Address;
+         Col1 : Gint; Value1 : String;
+         Col2 : Gint; Value2 : Gint;
+         Col3 : Gint; Id     : Gint;
+         Final : Gint := -1);
+      pragma Import (C, Internal, "gtk_tree_store_set");
+   begin
+      Internal
+        (Get_Object (Selector.Model), Iter'Address,
+         Project_Name_Column, Get_Name_String (Name_Of (Project)) & ASCII.NUL,
+         Selected_Column,     Boolean'Pos (Selected),
+         Project_Id_Column,   Gint (Project));
+   end Project_Set;
+
+   --------------------------------------------------------------------------
+   --   The scenario selector                                              --
+   --------------------------------------------------------------------------
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Selector : out Scenario_Selector;
+      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   begin
+      Selector := new Scenario_Selector_Record;
+      Initialize (Selector, Kernel);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Selector : access Scenario_Selector_Record'Class;
+      Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      View          : Gtk_Tree_View;
+      Col           : Gtk_Tree_View_Column;
+      Toggle_Render : Gtk_Cell_Renderer_Toggle;
+      Text_Render   : Gtk_Cell_Renderer_Text;
+      Num           : Gint;
+   begin
+      Gtk.Scrolled_Window.Initialize (Selector);
+      Set_Policy (Selector, Policy_Never, Policy_Automatic);
+
+      Selector.Kernel := Kernel_Handle (Kernel);
+
+      Gtk_New (View);
+      Add (Selector, View);
+      --  Set_Mode (Get_Selection (View), Selection_None);
+
+      Gtk_New (Selector.Model, Var_Column_Types);
+      Set_Model (View, Gtk_Tree_Model (Selector.Model));
+
+      Gtk_New (Col);
+      Set_Clickable (Col, True);
+      Num := Append_Column (View, Col);
+      Widget_Callback.Object_Connect
+        (Col, "clicked",
+         Widget_Callback.To_Marshaller (Select_All_Var'Access),
+         Slot_Object => Selector);
+
+      Gtk_New (Toggle_Render);
+      Pack_Start (Col, Toggle_Render, False);
+      Add_Attribute (Col, Toggle_Render, "active", Selected_Column);
+      Widget_Callback.Object_Connect
+        (Toggle_Render, "toggled",
+         Var_Selected'Access,
+         Slot_Object => Selector);
+
+      Gtk_New (Col);
+      Num := Append_Column (View, Col);
+      Set_Title (Col, -"Scenario");
+
+      Gtk_New (Text_Render);
+      Pack_Start (Col, Text_Render, True);
+      Add_Attribute (Col, Text_Render, "text", Var_Name_Column);
+
+      Show_Variables (Selector);
+   end Initialize;
+
+   --------------------
+   -- Show_Variables --
+   --------------------
+
+   procedure Show_Variables
+     (Selector : access Scenario_Selector_Record'Class)
+   is
+      Vars : constant Project_Node_Array := Scenario_Variables
+        (Selector.Kernel);
+      Iter, Child : Gtk_Tree_Iter;
+      Value : String_List_Iterator;
+   begin
+      for V in Vars'Range loop
+         String_To_Name_Buffer (External_Reference_Of (Vars (V)));
+
+         Append (Selector.Model, Iter, Null_Iter);
+         Set (Selector.Model,
+              Iter,
+              Column => Selected_Column,
+              Value  => False);
+         Set (Selector.Model,
+              Iter,
+              Column => Var_Name_Column,
+              Value  => Name_Buffer (1 .. Name_Len));
+
+         declare
+            Current : constant String := Get_String
+              (Prj.Ext.Value_Of (Name_Find));
+         begin
+            Value := Type_Values (String_Type_Of (Vars (V)));
+            while not Done (Value) loop
+               Append (Selector.Model, Child, Iter);
+               Set (Selector.Model,
+                    Child,
+                    Column => Selected_Column,
+                    Value  => Get_String (Data (Value)) = Current);
+               Set (Selector.Model,
+                    Child,
+                    Column => Var_Name_Column,
+                    Value  => Get_String (Data (Value)));
+               Value := Next (Value);
+            end loop;
+         end;
+
+      end loop;
+   end Show_Variables;
+
+   --------------------
+   -- Select_All_Var --
+   --------------------
+
+   procedure Select_All_Var (Selector : access Gtk_Widget_Record'Class) is
+      S : constant Scenario_Selector := Scenario_Selector (Selector);
+      It : Gtk_Tree_Iter := Get_Iter_First (S.Model);
+   begin
+      while It /= Null_Iter loop
+         Variable_Selection (S, It, S.Select_All);
+         Next (S.Model, It);
+      end loop;
+
+      S.Select_All := not S.Select_All;
+   end Select_All_Var;
+
+   ------------------------
+   -- Variable_Selection --
+   ------------------------
+
+   procedure Variable_Selection
+     (Selector : access Scenario_Selector_Record'Class;
+      Iter     : Gtk_Tree_Iter;
+      Selected : Boolean)
+   is
+      Child : Gtk_Tree_Iter;
+   begin
+      Set (Selector.Model, Iter, Selected_Column, Selected);
+
+      Child := Children (Selector.Model, Iter);
+
+      --  If unselected everything, leave at least one selected
+      if not Selected then
+         Next (Selector.Model, Child);
+      end if;
+
+      while Child /= Null_Iter loop
+         Set (Selector.Model, Child, Selected_Column, Selected);
+         Next (Selector.Model, Child);
+      end loop;
+   end Variable_Selection;
+
+   ------------------
+   -- Var_Selected --
+   ------------------
+
+   procedure Var_Selected
+     (Selector  : access Gtk_Widget_Record'Class;
+      Params    : Glib.Values.GValues)
+   is
+      S                  : Scenario_Selector := Scenario_Selector (Selector);
+      It                 : Gtk_Tree_Iter;
+      Path_String        : constant String := Get_String (Nth (Params, 1));
+      Iter : constant Gtk_Tree_Iter :=
+        Get_Iter_From_String (S.Model, Path_String);
+      Selected           : constant Boolean :=
+        Get_Boolean (S.Model, Iter, Selected_Column);
+      Num_Selected_Child : Natural := 0;
+   begin
+      --  Are we selecting a variable ?
+      if Children (S.Model, Iter) /= Null_Iter then
+         Variable_Selection (S, Iter, not Selected);
+
+      --  Are we selecting a variable value ? Unselect the variable
+      else
+         if Selected then
+            It := Children (S.Model, Parent (S.Model, Iter));
+            while It /= Null_Iter loop
+               if Get_Boolean (S.Model, It, Selected_Column) then
+                  Num_Selected_Child := Num_Selected_Child + 1;
+               end if;
+               Next (S.Model, It);
+            end loop;
+         end if;
+
+         if Selected and then Num_Selected_Child = 1 then
+            Set (S.Model, Iter, Selected_Column, True);
+         else
+            Set (S.Model,
+                 Iter,
+                 Column => Selected_Column,
+                 Value  => not Selected);
+            Set (S.Model,
+                 Parent (S.Model, Iter),
+                 Column => Selected_Column,
+                 Value  => False);
+         end if;
+      end if;
+   end Var_Selected;
+
+end Scenario_Selectors;
