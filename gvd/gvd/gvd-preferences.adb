@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                    use Glib;
-with General_Preferences_Pkg; use General_Preferences_Pkg;
+with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
 with Gint_Xml;                use Gint_Xml;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.GEntry;              use Gtk.GEntry;
@@ -71,7 +71,7 @@ package body GVD.Preferences is
    --  of the existing one (only if Override is True)
 
    procedure Set_From_Dialog
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
    --  Set the preferences from the contents of Dialog.
    --  This modifies Current_PReferences, not Saved_Preferences.
 
@@ -399,7 +399,7 @@ package body GVD.Preferences is
    -- Fill_Dialog --
    -----------------
 
-   procedure Fill_Dialog (Dialog : General_Preferences_Access) is
+   procedure Fill_Dialog (Dialog : GVD_Preferences_Access) is
    begin
       --  Break on exception
       Set_Active (Dialog.Break_Exception_Check,
@@ -566,7 +566,7 @@ package body GVD.Preferences is
    ---------------------
 
    procedure Set_From_Dialog
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
    begin
       Set (Break_On_Exception,
            Get_Active (Dialog.Break_Exception_Check), True);
@@ -647,7 +647,7 @@ package body GVD.Preferences is
    -----------------------
 
    procedure Apply_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
    begin
       Set_From_Dialog (Dialog);
    end Apply_Preferences;
@@ -657,7 +657,7 @@ package body GVD.Preferences is
    ---------------------
 
    procedure Set_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
    begin
       Set_From_Dialog (Dialog);
       Free (Saved_Preferences);
@@ -668,7 +668,7 @@ package body GVD.Preferences is
    ------------------------
 
    procedure Cancel_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access) is
    begin
       Free (Current_Preferences);
       Current_Preferences := Saved_Preferences;

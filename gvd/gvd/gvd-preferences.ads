@@ -20,7 +20,7 @@
 
 with Glib; use Glib;
 with Gdk.Color;
-with General_Preferences_Pkg;
+with GVD.Preferences_Dialog;
 
 package GVD.Preferences is
 
@@ -33,21 +33,21 @@ package GVD.Preferences is
    --  efficiency is not really a crucial matter here.
 
    procedure Fill_Dialog
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
    --  Fill up the preference dialog given the current settings
 
    procedure Apply_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
    --  Apply temporarily the preferences set in Dialog. This change can still
    --  be cancelled by calling Cancel_Preferences.
 
    procedure Set_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
    --  Set the preferences set in Dialog. This doesn't save the preferences
    --  to a file.
 
    procedure Cancel_Preferences
-     (Dialog : General_Preferences_Pkg.General_Preferences_Access);
+     (Dialog : GVD.Preferences_Dialog.GVD_Preferences_Access);
    --  Cancel any previous temporary change in the preferences.
 
    procedure Load_Preferences (File_Name : String);
