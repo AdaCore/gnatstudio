@@ -20,11 +20,12 @@
 
 with Ada.Unchecked_Deallocation;
 
-with GNAT.Regpat;           use GNAT.Regpat;
+with GNAT.Regpat;            use GNAT.Regpat;
 with Generic_List;
 
-with Codefix.Text_Manager;  use Codefix.Text_Manager;
-with Codefix.Formal_Errors; use Codefix.Formal_Errors;
+with Codefix.Text_Manager;   use Codefix.Text_Manager;
+with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
+with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
 use Codefix.Formal_Errors.Extract_List;
 
@@ -55,7 +56,8 @@ package Codefix.Errors_Parser is
       Wrong_Case,
       Unit_Not_Referenced,
       Pragma_Should_Begin,
-      Var_Not_Modified);
+      Var_Not_Modified,
+      Ambiguous_Expression);
    --  Those subcatgeroies are the reals categories of errors that an user can
    --  choose to correct or not.
 
@@ -68,9 +70,11 @@ package Codefix.Errors_Parser is
    function Get_Error_State (Error : Error_Subcategorie) return Error_State;
    --  Return the current error state.
 
-   function Get_Solutions
+   procedure Get_Solutions
      (Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message) return Solution_List;
+      Errors_List  : in out Errors_Interface'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List);
    --  Here is the big function that analyses a message and return the
    --  possible solutions.
 
@@ -98,6 +102,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Error_Parser'Class;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -111,6 +116,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Error_Parser;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -148,6 +154,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Agregate_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -161,6 +168,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Ligth_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -174,6 +182,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Double_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -187,6 +196,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Goto_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -200,6 +210,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Should_Be_Sth;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -213,6 +224,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Should_Be_Semicolon;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -226,6 +238,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : And_Meant;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -238,6 +251,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Or_Meant;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -251,6 +265,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unqualified_Expression;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -264,6 +279,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Goes_Before;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -277,6 +293,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected_3;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -290,6 +307,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected_2;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -302,6 +320,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -314,6 +333,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_Kw;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -331,6 +351,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_Sep;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -348,6 +369,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_All;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -361,6 +383,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Statement_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -374,6 +397,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Space_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -396,6 +420,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Name_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -408,6 +433,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Double_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -420,6 +446,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Extra_Paren;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -433,6 +460,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Redundant_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -446,6 +474,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unexpected_Sep;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -459,6 +488,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unexpected_Word;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -472,6 +502,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Kw_Not_Allowed;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -485,6 +516,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sep_Not_Allowed;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -498,6 +530,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Should_Be_In;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -511,6 +544,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Column;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -524,6 +558,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Main_With_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -537,6 +572,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Standard;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -550,6 +586,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Declared;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -563,6 +600,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -576,6 +614,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Object_Not_Referenced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -589,6 +628,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Pkg_Not_Referenced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -602,6 +642,7 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Pragma_Missplaced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -615,10 +656,30 @@ package Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Constant_Expected;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix problem 'could be declared constant'.
+
+   type Possible_Interpretation is new Error_Parser (Ambiguous_Expression, 1)
+   with record
+      Source_Matcher : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("possible interpretation at ([^\.]+\.ad[b|s]):([\d]+)"));
+   end record;
+
+   procedure Initialize (This : in out Possible_Interpretation);
+
+   procedure Free (This : in out Possible_Interpretation);
+
+   procedure Fix
+     (This         : Possible_Interpretation;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'ambiguous expression (cannot resolve "Sth")'
 
 end Codefix.Errors_Parser;

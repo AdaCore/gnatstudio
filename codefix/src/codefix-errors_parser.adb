@@ -47,14 +47,14 @@ package body Codefix.Errors_Parser is
    -- Get_Solutions --
    -------------------
 
-   function Get_Solutions
+   procedure Get_Solutions
      (Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message) return Solution_List
+      Errors_List  : in out Errors_Interface'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List)
    is
       Current_Node : Parser_List.List_Node;
       Success      : Boolean := False;
-      Solutions    : Solution_List := Extract_List.Null_List;
-
    begin
       Current_Node := First (General_Parse_List);
 
@@ -62,6 +62,7 @@ package body Codefix.Errors_Parser is
          if Get_Error_State (Data (Current_Node).Subcategorie) = Enabled then
             Fix
               (Data (Current_Node).all,
+               Errors_List,
                Current_Text,
                Message,
                Solutions,
@@ -71,7 +72,6 @@ package body Codefix.Errors_Parser is
          exit when Success;
       end loop;
 
-      return Solutions;
    end Get_Solutions;
 
    ----------------
@@ -129,6 +129,7 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Error_Parser'Class;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
@@ -141,7 +142,13 @@ package body Codefix.Errors_Parser is
             Match (This.Matcher (J).all, Get_Message (Message), Matches);
             if Matches (0) /= No_Match then
                This.Current_It.all := J;
-               Fix (This, Current_Text, Message, Solutions, Matches);
+               Fix
+                 (This,
+                  Errors_List,
+                  Current_Text,
+                  Message,
+                  Solutions,
+                  Matches);
                Success := True;
                return;
             end if;
@@ -182,12 +189,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Agregate_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Matches);
+      pragma Unreferenced (This, Matches, Errors_List);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, "=>", "="));
    end Fix;
@@ -204,12 +212,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Ligth_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -231,12 +240,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Double_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -265,12 +275,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Goto_Misspelling;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append
@@ -289,12 +300,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Should_Be_Sth;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -318,12 +330,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Should_Be_Semicolon;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, ";", "\."));
@@ -341,12 +354,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : And_Meant;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, "and", "&"));
@@ -364,12 +378,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Or_Meant;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
@@ -387,12 +402,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unqualified_Expression;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Should_Be (Current_Text, Message, "'(", "\("));
@@ -417,12 +433,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Goes_Before;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -445,12 +462,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected_3;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Expected (Current_Text, Message, "function"));
@@ -470,12 +488,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected_2;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Expected (Current_Text, Message, "function"));
@@ -494,12 +513,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sth_Expected;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -521,12 +541,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_Kw;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
 
       Str_Red : Dynamic_String;
 
@@ -566,11 +587,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_Sep;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+      pragma Unreferenced (Errors_List);
       Wrong_Matches : Match_Array (0 .. 1);
    begin
       Match
@@ -610,11 +633,14 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Missing_All;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+      pragma Unreferenced (Errors_List);
+
       Col_Matches        : Match_Array (0 .. 1);
       New_Message        : Error_Message;
       Declaration_Line   : Positive;
@@ -657,12 +683,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Statement_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Expected (Current_Text, Message, "null;"));
@@ -679,12 +706,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Space_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Expected (Current_Text, Message, " ", False));
@@ -716,11 +744,14 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Name_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
+      pragma Unreferenced (Errors_List);
+
       Col_Matches : Match_Array (0 .. 1);
       New_Message : Error_Message := Message;
       Line_Cursor : File_Cursor := File_Cursor (Message);
@@ -752,12 +783,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Double_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -779,12 +811,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Extra_Paren;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Unexpected (Current_Text, Message, ")"));
@@ -802,12 +835,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Redundant_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
 
       Str_Red : Dynamic_String;
    begin
@@ -839,12 +873,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unexpected_Sep;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -866,12 +901,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Unexpected_Word;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
 
       Str_Red_1, Str_Red_2 : Dynamic_String;
    begin
@@ -911,12 +947,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Kw_Not_Allowed;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -946,12 +983,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Sep_Not_Allowed;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
 
       Word_Read           : Dynamic_String;
       Unallowed_Character : String (1 .. 1);
@@ -991,12 +1029,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Should_Be_In;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -1021,12 +1060,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Column;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Wrong_Column (Current_Text, Message));
@@ -1049,12 +1089,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Main_With_Missing;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -1079,12 +1120,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Standard;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, Bad_Casing (Current_Text, Message));
@@ -1102,12 +1144,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Declared;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append
         (Solutions,
@@ -1129,12 +1172,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Bad_Casing_Keyword;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append
@@ -1165,12 +1209,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Object_Not_Referenced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
 
       First_Word : constant String := Get_Message (Message)
         (Matches (1).First .. Matches (1).Last);
@@ -1215,12 +1260,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Pkg_Not_Referenced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Concat
         (Solutions,
@@ -1243,12 +1289,13 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Pragma_Missplaced;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
       Append (Solutions, First_Line_Pragma (Current_Text, Message));
@@ -1266,18 +1313,73 @@ package body Codefix.Errors_Parser is
 
    procedure Fix
      (This         : Constant_Expected;
+      Errors_List  : in out Errors_Interface'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This);
+      pragma Unreferenced (This, Errors_List);
    begin
       Append (Solutions, Not_Modified
                 (Current_Text,
                  Message,
                  Get_Message (Message)
                    (Matches (1).First .. Matches (1).Last)));
+   end Fix;
+
+   -----------------------------
+   -- Possible_Interpretation --
+   -----------------------------
+
+   procedure Initialize (This : in out Possible_Interpretation) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+         (Compile ("ambiguous expression \(cannot resolve ""([^""]+)""")));
+   end Initialize;
+
+   procedure Free (This : in out Possible_Interpretation) is
+   begin
+      Free (Error_Parser (This));
+      Free (This.Source_Matcher);
+   end Free;
+
+   procedure Fix
+     (This         : Possible_Interpretation;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      Matches_Prev    : Match_Array (0 .. 2);
+      Preview         : Error_Message;
+      Solution_Cursor : File_Cursor;
+   begin
+      Solution_Cursor.Col := 1;
+
+      loop
+         Get_Preview (Errors_List, Current_Text, Preview);
+         exit when Preview = Invalid_Error_Message;
+         Match (This.Source_Matcher.all, Get_Message (Preview), Matches_Prev);
+         exit when Matches_Prev (0) = No_Match;
+
+         Assign
+           (Solution_Cursor.File_Name, Get_Message (Preview)
+              (Matches_Prev (1).First .. Matches_Prev (1).Last));
+
+         Solution_Cursor.Line := Integer'Value
+           (Get_Message (Preview)
+              (Matches_Prev (2).First .. Matches_Prev (2).Last));
+
+         Append (Solutions, Resolve_Ambiguity
+                   (Current_Text,
+                    Message,
+                    Solution_Cursor,
+                    Get_Message (Message)
+                      (Matches (1).First .. Matches (1).Last)));
+         Get_Message (Errors_List, Current_Text, Preview);
+      end loop;
    end Fix;
 
 begin
@@ -1318,6 +1420,7 @@ begin
    Add_Parser (new Pkg_Not_Referenced);
    Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
+   Add_Parser (new Possible_Interpretation);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
