@@ -523,6 +523,7 @@ package body Display_Items is
                      Set_Auto_Refresh
                        (Item, Get_Window (Item.Debugger.Data_Canvas),
                         not Item.Auto_Refresh);
+                     Item_Updated (Item.Debugger.Data_Canvas, Item);
 
                   when 1 =>
                      Free (Item);
