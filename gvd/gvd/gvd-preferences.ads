@@ -85,7 +85,7 @@ package Odd.Preferences is
    Title_Color : constant String := "#BEBEBE";
    --  Color to use for the background of the title (grey).
 
-   Change_Color : constant String := "#FF0000"; 
+   Change_Color : constant String := "#FF0000";
    --  Color used to highlight fields that have changed since the last update
    --  (red).
 
@@ -95,7 +95,7 @@ package Odd.Preferences is
    Freeze_Bg_Color : constant String := "#AAAAAA";
    --  Color used for frozen items (light grey)
 
-   Look_3d : constant Boolean := True; 
+   Look_3d : constant Boolean := True;
    --  Should the items have a 3d look ?
 
    Title_Font_Name : constant String := "Helvetica-Bold";
