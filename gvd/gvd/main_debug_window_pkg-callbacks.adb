@@ -28,6 +28,10 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
+with Open_Program_Pkg;    use Open_Program_Pkg;
+with Print_Dialog_Pkg;    use Print_Dialog_Pkg;
+with Breakpoints_Pkg;    use Breakpoints_Pkg;
+with Generic_Values;
 
 with Ada.Text_IO;  use Ada.Text_IO;
 
@@ -76,10 +80,39 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Open_Program1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Program : Program_Descriptor;
+      List    : Argument_List (1 .. 0);
+      Process : Debugger_Process_Tab;
+      Top     : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab     : Debugger_Process_Tab;
+
    begin
-      null;
+      Open_Program (Program);
+
+      case Program.Launch is
+         when Current_Debugger =>
+            Tab := Process_User_Data.Get
+              (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+            Set_Executable (Tab.Debugger, Program.Program.all);
+
+         when New_Debugger =>
+            Process  :=
+              Create_Debugger
+                (Main_Debug_Window_Access (Object),
+                 Program.Debugger,
+                 Program.Program.all,
+                 List,
+                 Program.Remote_Host.all,
+                 Program.Remote_Target.all,
+                 Program.Protocol.all);
+
+         when None =>
+            null;
+      end case;
+
+      Free (Program);
    end On_Open_Program1_Activate;
 
    ---------------------------------
@@ -133,10 +166,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Attach_To_Process1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      List     : Argument_List (1 .. 0);
-      Process  : Debugger_Process_Tab;
    begin
-      Process := Create_Debugger (List, Process_Name => "");
+      null;
    end On_Attach_To_Process1_Activate;
 
    ---------------------------------
@@ -426,7 +457,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Put_Line ("RUN");
       Run (Tab.Debugger);
    end On_Run1_Activate;
 
@@ -472,10 +502,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Step1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Step_Into (Tab.Debugger);
    end On_Step1_Activate;
 
    -----------------------------------
@@ -483,7 +517,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------------------
 
    procedure On_Step_Instruction1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -494,10 +528,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Next1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Step_Over (Tab.Debugger);
    end On_Next1_Activate;
 
    -----------------------------------
@@ -505,7 +543,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------------------
 
    procedure On_Next_Instruction1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -516,7 +554,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------
 
    procedure On_Until1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -527,10 +565,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------
 
    procedure On_Finish1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Finish (Tab.Debugger);
    end On_Finish1_Activate;
 
    ---------------------------
@@ -538,10 +580,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ---------------------------
 
    procedure On_Continue1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Continue (Tab.Debugger);
    end On_Continue1_Activate;
 
    ------------------------------------------
@@ -571,7 +617,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Interrupt1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -791,10 +837,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ---------------------
 
    procedure On_Up1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Stack_Up (Tab.Debugger);
    end On_Up1_Activate;
 
    -----------------------
@@ -802,10 +852,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Down1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
    begin
-      null;
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Stack_Down (Tab.Debugger);
    end On_Down1_Activate;
 
    -----------------------------------
@@ -815,8 +869,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Menu_Item_Record'Class)
    is
+      Descriptor : Breakpoint_Descriptor;
    begin
-      null;
+      Breakpoint_Editor (Descriptor);
    end On_Edit_Breakpoints1_Activate;
 
    --------------------------
@@ -1188,5 +1243,33 @@ package body Main_Debug_Window_Pkg.Callbacks is
              "Click on the OK button to close this window."),
          Title => -"About...");
    end On_About_Odd1_Activate;
+
+   ------------------------
+   -- On_Print1_Activate --
+   ------------------------
+
+   procedure On_Print1_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Print_Dialog : Print_Dialog_Access;
+      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Tab : Debugger_Process_Tab;
+
+      use type Generic_Values.String_Access;
+
+   begin
+      Tab := Process_User_Data.Get
+        (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
+      Gtk_New (Print_Dialog);
+      Show_All (Print_Dialog);
+      Main;
+      Destroy (Print_Dialog);
+
+      if Print_Dialog.Variable /= null then
+         Process_User_Command
+           (Tab, "graph print " & Print_Dialog.Variable.all);
+      end if;
+   end On_Print1_Activate;
 
 end Main_Debug_Window_Pkg.Callbacks;
