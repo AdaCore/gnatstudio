@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.3.0
 
+- C611-001: protection domain entry not accessible in GPS
+  Problem:    The Protection Domains entry in the Debug -> Data menu
+              was not enabled for AE debuggers. 
+  Workaround: Use the gdb console to view and switch protection
+              domains: "info pds" and "pd <pd_id>" respectively.
+
 - C604-004 Switching windows with Ctrl+<key> doesn't allow typing characters
   Problem:    On windows, using control-<key> to switch between windows
               disables the possibility to select windows by typing their names
