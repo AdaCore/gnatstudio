@@ -577,6 +577,11 @@ package Glide_Kernel is
       File    : String);
    --  Emits the "file_closed" signal
 
+   procedure File_Changed_On_Disk
+     (Handle  : access Kernel_Handle_Record;
+      File    : String);
+   --  Emits the "file_changed_on_disk" signal
+
    procedure Compilation_Finished
      (Handle  : access Kernel_Handle_Record;
       File    : String);
@@ -642,7 +647,8 @@ package Glide_Kernel is
    --                       Start_Line : Natural;
    --                       End_Line   : Natural);
    --
-   --    ???
+   --    Indicates that lines between Start_Line and End_Line from File
+   --    have been displayed on screen.
    --
    --  - "file_edited"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
@@ -656,6 +662,15 @@ package Glide_Kernel is
    --                       File   : String);
    --
    --    Emitted when the last editor for File has been closed.
+   --
+   --  - "file_changed_on_disk"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
+   --                       File   : String);
+   --    Emitted when an external action has changed the contents of a
+   --    file on the disk, such as VCS operations for example.
+   --    File can be the absolute name of a file, or a directory, ending
+   --    with a directory_separator. In that case, the meaning of this signal
+   --    is that any file in that directory might have been modified.
    --
    --  - "search_regexps_changed"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
@@ -692,6 +707,7 @@ package Glide_Kernel is
    File_Edited_Signal            : constant String := "file_edited";
    File_Saved_Signal             : constant String := "file_saved";
    File_Closed_Signal            : constant String := "file_closed";
+   File_Changed_On_Disk_Signal   : constant String := "file_changed_on_disk";
    Compilation_Finished_Signal   : constant String := "compilation_finished";
    Preferences_Changed_Signal    : constant String := "preferences_changed";
    Search_Regexps_Changed_Signal : constant String := "search_regexps_changed";
