@@ -355,7 +355,7 @@ dereferenced by a double-click (double click on @code{T.val}); red for fields
 that have been modified since last step.
 
 In the contextual menu that pops up when you hold the mouse over @code{T}.
-select @code{View memory at &T}: a memory view is opened.
+select @code{View memory at address of T}: a memory view is opened.
 Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
@@ -526,11 +526,8 @@ GPS has a generic support for @i{VCS} which allows it to easily support
 new systems. Currently GPS supports CVS and ClearCase. Select @code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
-used to specify the project's sources. Open @file{tutorial}, click on @code{common},
-and add it by clicking on the left arrow.
-
-Select the @file{tutorial} directory in the bottom area, and remove it by
-clicking on the right arrow. As for common, add @code{struct} directory.
+used to specify the project's sources. Open @file{tutorial}, click on
+@code{struct}, and add it by clicking on the left arrow.
 
 Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
 selection, used to store object, ali files, ...
@@ -646,7 +643,7 @@ once as a dependency of @code{prj1}.
 
 GPS can also display the graph of dependencies between projects: on @i{sdc}
 project, use the contextual menu
-@code{Examine project hierarchy for sdc}: this will open a project hierarchy
+@code{Examine projects imported by sdc}: this will open a project hierarchy
 browser.
 
 In the browser, you can move the project items, and select them to highlight
