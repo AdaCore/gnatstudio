@@ -34,6 +34,7 @@ with Gdk.Event;
 
 with Gtk.Box;
 with Gtk.Container;
+with Gtk.Frame;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Handlers;
@@ -517,11 +518,11 @@ private
    --  the user. If he answers no the first time, we forbid editing until he
    --  has said yes.
 
-   type Label_Array is array (Natural range <>) of Gtk.Label.Gtk_Label;
-   type Label_Array_Access is access Label_Array;
+   type Frames_Array is array (Natural range <>) of Gtk.Frame.Gtk_Frame;
+   type Frames_Array_Access is access Frames_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Label_Array, Label_Array_Access);
+     (Frames_Array, Frames_Array_Access);
 
    type Source_Editor_Box_Record is new Glib.Object.GObject_Record with record
       Kernel               : Glide_Kernel.Kernel_Handle;
@@ -563,7 +564,7 @@ private
       --  Handler connected to the signal "buffer_information_changed" from the
       --  source buffer.
 
-      Buffer_Info_Labels   : Label_Array_Access := null;
+      Buffer_Info_Frames   : Frames_Array_Access := null;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
