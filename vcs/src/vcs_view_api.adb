@@ -49,6 +49,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Diff_Local
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -315,12 +319,20 @@ package body VCS_View_API is
                (On_Menu_Open'Access),
                Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => -"Diff");
+            Gtk_New (Item, Label => -"Diff against head revision");
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
                (On_Menu_Diff'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Diff against working revision");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Diff_Local'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => -"Edit changelog");
@@ -635,5 +647,33 @@ package body VCS_View_API is
    begin
       View_Diff (Widget, Get_Kernel (Context));
    end On_Menu_Diff;
+
+   ------------------------
+   -- On_Menu_Diff_Local --
+   ------------------------
+
+   procedure On_Menu_Diff_Local
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      use File_Status_List;
+      pragma Unreferenced (Widget);
+      Files  : String_List.List := Get_Selected_Files (Get_Kernel (Context));
+      Ref    : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
+      Status : File_Status_List.List := Local_Get_Status (Ref, Files);
+      Status_Temp : File_Status_List.List := Status;
+   begin
+      while not Is_Empty (Status_Temp) loop
+         if not String_List.Is_Empty (Head (Status_Temp).Working_Revision) then
+            Diff (Ref,
+                  String_List.Head (Head (Status_Temp).File_Name),
+                  String_List.Head (Head (Status_Temp).Working_Revision));
+         end if;
+
+         Status_Temp := Next (Status_Temp);
+      end loop;
+
+      String_List.Free (Files);
+   end On_Menu_Diff_Local;
 
 end VCS_View_API;
