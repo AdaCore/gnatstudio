@@ -23,6 +23,7 @@
 
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
+with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 with Generic_List;
 with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
@@ -66,6 +67,9 @@ package body Shell_Script is
    --  The shell console. This is mostly use to have a unique tag when saving
    --  the console.
 
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Kernel_Handle);
+
    -------------------
    -- Instance_Data --
    -------------------
@@ -96,25 +100,26 @@ package body Shell_Script is
    end record;
    type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
 
-   function Get_Class (Instance : access Shell_Class_Instance_Record)
-      return Class_Type;
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return Glib.Object.GObject;
    function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return String;
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return System.Address;
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return String;
    function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return Integer;
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return System.Address;
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return Integer;
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class);
+      Class    : Class_Type;
+      Value    : String);
    procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : String);
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : Integer);
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type;
+      Value    : Integer);
    procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
+      Class      : Class_Type;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null);
    function Get_Script (Instance : access Shell_Class_Instance_Record)
@@ -199,7 +204,7 @@ package body Shell_Script is
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Shell_Scripting_Record;
-      Class  : Class_Type;
+      Instance : access Class_Instance_Record'Class;
       Base   : Class_Type) return Boolean;
    function Get_Kernel
      (Script : access Shell_Scripting_Record)
@@ -344,13 +349,14 @@ package body Shell_Script is
 
    function Commands_As_List
      (Prefix : String;
-      Kernel : Glib.Object.GObject)
+      Kernel : System.Address)
       return String_List_Utils.String_List.List;
    --  Return the list of commands. The list must be freed by the caller.
 
    function Interpret_Command_Handler
-     (Input  : String;
-      Kernel : access GObject_Record'Class) return String;
+     (Console : access Interactive_Console_Record'Class;
+      Input   : String;
+      Kernel  : System.Address) return String;
    --  Launch the command interpreter for Input and return the output.
 
    function Name_From_Instance
@@ -412,7 +418,7 @@ package body Shell_Script is
    function Name_From_Instance
      (Instance : access Class_Instance_Record'Class) return String is
    begin
-      return '<' & Get_Name (Get_Class (Instance))
+      return '<' & Get_Name (Shell_Class_Instance (Instance).Class)
         & "_0x" & System.Address_Image (Instance.all'Address)
         & '>';
    end Name_From_Instance;
@@ -481,7 +487,7 @@ package body Shell_Script is
 
    function Commands_As_List
      (Prefix : String;
-      Kernel : Glib.Object.GObject)
+      Kernel : System.Address)
       return String_List_Utils.String_List.List
    is
       pragma Unreferenced (Kernel);
@@ -541,10 +547,10 @@ package body Shell_Script is
 
    function Is_Subclass
      (Script : access Shell_Scripting_Record;
-      Class  : Class_Type;
+      Instance : access Class_Instance_Record'Class;
       Base   : Class_Type) return Boolean
    is
-      pragma Unreferenced (Script, Class, Base);
+      pragma Unreferenced (Script, Instance, Base);
    begin
       --  ??? Not checked
       return True;
@@ -570,10 +576,12 @@ package body Shell_Script is
    -------------------------------
 
    function Interpret_Command_Handler
-     (Input  : String;
-      Kernel : access GObject_Record'Class) return String
+     (Console : access Interactive_Console_Record'Class;
+      Input  : String;
+      Kernel : System.Address) return String
    is
-      K : constant Kernel_Handle := Kernel_Handle (Kernel);
+      pragma Unreferenced (Console);
+      K : constant Kernel_Handle := Convert (Kernel);
    begin
       declare
          Errors : aliased Boolean;
@@ -646,7 +654,7 @@ package body Shell_Script is
            (Script.Console,
             "GPS> ",
             Interpret_Command_Handler'Access,
-            GObject (Kernel),
+            Kernel.all'Address,
             Get_Pref_Font (Kernel, Default_Style),
             History_List => Get_History (Kernel),
             Key          => "shell",
@@ -802,7 +810,7 @@ package body Shell_Script is
          if Number_Of_Arguments (Data) = 0 then
             Insert (-"The following commands are defined:");
 
-            L := Commands_As_List ("", GObject (Kernel));
+            L := Commands_As_List ("", System.Null_Address);
             String_List_Utils.Sort (L);
 
             L2 := First (L);
@@ -1585,7 +1593,7 @@ package body Shell_Script is
       end if;
 
       if Ins = null
-        or else not Is_Subclass (Data.Script, Get_Class (Ins), Class)
+        or else not Is_Subclass (Data.Script, Ins, Class)
       then
          Trace (Me, "Instance not found: " & Nth_Arg (Data, N));
          raise Invalid_Parameter;
@@ -1764,38 +1772,15 @@ package body Shell_Script is
       return Class_Instance (Instance);
    end New_Instance;
 
-   ---------------
-   -- Get_Class --
-   ---------------
-
-   function Get_Class (Instance : access Shell_Class_Instance_Record)
-      return Class_Type is
-   begin
-      return Instance.Class;
-   end Get_Class;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return Glib.Object.GObject is
-   begin
-      if Instance.Data.Data /= Object
-        or else Instance.Data.Obj = null
-      then
-         raise Invalid_Data;
-      else
-         return Instance.Data.Obj;
-      end if;
-   end Get_Data;
-
    --------------
    -- Get_Data --
    --------------
 
    function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return Integer is
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return Integer
+   is
+      pragma Unreferenced (Class);
    begin
       if Instance.Data.Data /= Integers then
          raise Invalid_Data;
@@ -1808,8 +1793,11 @@ package body Shell_Script is
    -- Get_Data --
    --------------
 
-   function Get_Data (Instance : access Shell_Class_Instance_Record)
-      return System.Address is
+   function Get_Data
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return System.Address
+   is
+      pragma Unreferenced (Class);
    begin
       if Instance.Data.Data = Addresses then
          return Instance.Data.Addr;
@@ -1822,7 +1810,10 @@ package body Shell_Script is
    --------------
 
    function Get_Data
-     (Instance : access Shell_Class_Instance_Record) return String is
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type) return String
+   is
+      pragma Unreferenced (Class);
    begin
       if Instance.Data.Data /= Strings
         or else Instance.Data.Str = null
@@ -1839,20 +1830,10 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance : access Shell_Class_Instance_Record;
-      Value    : access Glib.Object.GObject_Record'Class) is
-   begin
-      Internal_Free (Instance.all);
-      Instance.Data := (Data => Object, Obj => GObject (Value));
-      Ref (Value);
-   end Set_Data;
-
-   --------------
-   -- Set_Data --
-   --------------
-
-   procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record;
-      Value    : Integer) is
+      Class    : Class_Type;
+      Value    : Integer)
+   is
+      pragma Unreferenced (Class);
    begin
       Internal_Free (Instance.all);
       Instance.Data := (Data => Integers, Int => Value);
@@ -1864,8 +1845,11 @@ package body Shell_Script is
 
    procedure Set_Data
      (Instance   : access Shell_Class_Instance_Record;
+      Class      : Class_Type;
       Value      : System.Address;
-      On_Destroy : Destroy_Handler := null) is
+      On_Destroy : Destroy_Handler := null)
+   is
+      pragma Unreferenced (Class);
    begin
       Internal_Free (Instance.all);
       Instance.Data := (Data       => Addresses,
@@ -1878,7 +1862,11 @@ package body Shell_Script is
    --------------
 
    procedure Set_Data
-     (Instance : access Shell_Class_Instance_Record; Value : String) is
+     (Instance : access Shell_Class_Instance_Record;
+      Class    : Class_Type;
+      Value    : String)
+   is
+      pragma Unreferenced (Class);
    begin
       Internal_Free (Instance.all);
       Instance.Data := (Data => Strings, Str => new String'(Value));
