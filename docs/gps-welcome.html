@@ -10,29 +10,40 @@
 
 <TD>
 <H1>GPS Internal Beta</H1>
-<H2>Version 0.6.0</H2>
-<H2>2002/03/01</H2>
+<H2>Version 0.7.0</H2>
+<H2>2002/03/09</H2>
 <ADDRESS>ACT Europe</ADDRESS>
 </TD>
 </TABLE>
 <P>
 <P><HR><P>
 
-<H1>Welcome to the second GPS beta</H1>
-This is the second beta version of GPS
+<H1>Welcome to the third GPS beta</H1>
+This is the third beta version of GPS.
+<P>
+Here is an overview of the changes since version 0.6.0:
+<UL>
+<LI>GPS is now able to perform periodic saves of files. The timeout is
+    configurable.
+<LI>New menu File->Console->Clear to clear the contents of the console.
+<LI>Selected error message is now highlighted in the console.
+
+<LI>Regression fixed in handling of "Revert Switches" in the switch editor.
+<LI>Regression fixed in handling of compilation error messages.
+<LI>Fixed handling of recursive directories in the source selection.
+</UL>
+
 Here is an overview of the changes since version 0.5.0:
 
 <UL>
 <LI>When quitting, GPS now asks in a more user friendly fashion whether
     to save the files
 <LI>Better HTML version of the TODO file
-<LI>The Help widget can now be scrolled/navigated throught the keyboard
+<LI>The Help widget can now be scrolled/navigated through the keyboard
 <LI>A new menu Build->Custom... to launch any make command
 <LI>A new menu File->Save->Save All is provided
 <LI>Menu Navigate->Goto Line... implemented
 <LI>Search in current source file implemented
-<LI>GPS is now able to perform periodic saves of files. The timeout is
-    configurable.
 <LI>It is now possible to create a project by filling only the first page
     of the project wizard, and clicking Forward for the other pages
 <LI>Better handling of incomplete installations (e.g missing files)
@@ -79,7 +90,8 @@ Here are the functionalities that are implemented at this stage:
 <LI>Basic integration with Emacs and vi
 <LI>Source Navigation, including:
    <UL>
-   <LI>Goto Declaration or Body
+   <LI>Goto Declaration
+   <LI>Goto Body
    <LI>Goto Previous/Next Location (Unlimited)
    <LI>List all references to an entity in the project
    </UL>
