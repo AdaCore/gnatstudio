@@ -510,11 +510,12 @@ package body Source_Analyzer is
    ----------------
 
    procedure Format_Ada
-     (Buffer          : String;
-      Indent_Level    : Natural := 3;
-      Indent_Continue : Natural := 2;
-      Reserved_Casing : Casing_Type := Lower;
-      Ident_Casing    : Casing_Type := Mixed)
+     (Buffer           : String;
+      Indent_Level     : Natural     := 3;
+      Indent_Continue  : Natural     := 2;
+      Reserved_Casing  : Casing_Type := Lower;
+      Ident_Casing     : Casing_Type := Mixed;
+      Format_Operators : Boolean     := True)
    is
       New_Buffer          : Extended_Line_Buffer;
       Line_Count          : Integer           := 0;
@@ -931,7 +932,9 @@ package body Source_Analyzer is
                   Char := Buffer (Prev_Char (P));
 
                   if Indent_Done then
-                     if Char /= ' ' and then Char /= '(' then
+                     if Format_Operators
+                       and then Char /= ' ' and then Char /= '('
+                     then
                         Spaces (2) := Buffer (P);
                         Replace_Text (New_Buffer, P, P + 1, Spaces (1 .. 2));
                         Padding := New_Buffer.Current.Line'Length
@@ -1136,7 +1139,7 @@ package body Source_Analyzer is
                      end if;
                   end if;
 
-                  if Insert_Spaces and then
+                  if Format_Operators and then Insert_Spaces and then
                     (Buffer (Prev_Char (P)) /= ' '
                       or else Long /= Last - P + 1)
                   then
@@ -1154,7 +1157,9 @@ package body Source_Analyzer is
 
                   Char := Buffer (Next_Char (P));
 
-                  if Char /= ' ' and then P /= End_Of_Line then
+                  if Format_Operators
+                    and then Char /= ' ' and then P /= End_Of_Line
+                  then
                      Comma (1) := Buffer (P);
                      Replace_Text (New_Buffer, P, P + 1, Comma (1 .. 2));
                   end if;
@@ -1264,6 +1269,7 @@ package body Source_Analyzer is
             case Casing is
                when Unchanged =>
                   null;
+
                when Upper =>
                   for J in 1 .. Str_Len loop
                      Str (J) := To_Upper (Str (J));
