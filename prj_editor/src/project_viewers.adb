@@ -32,6 +32,7 @@ with Gtk.Check_Button;             use Gtk.Check_Button;
 with Gtk.Clist;                    use Gtk.Clist;
 with Gtk.Dialog;                   use Gtk.Dialog;
 with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Event_Box;                use Gtk.Event_Box;
 with Gtk.Frame;                    use Gtk.Frame;
 with Gtk.GEntry;                   use Gtk.GEntry;
 with Gtk.Label;                    use Gtk.Label;
@@ -41,6 +42,7 @@ with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Style;                    use Gtk.Style;
+with Gtk.Tooltips;                 use Gtk.Tooltips;
 with Gtk.Tree_Model;               use Gtk.Tree_Model;
 with Gtk.Tree_Selection;           use Gtk.Tree_Selection;
 with Gtk.Tree_View;                use Gtk.Tree_View;
@@ -278,6 +280,12 @@ package body Project_Viewers is
       Context : Selection_Context_Access);
    --  Edit the switches for all the files selected in Viewer.
 
+   procedure Set_Sensitive_Cb
+     (Check : access Glib.Object.GObject_Record'Class;
+      User  : GObject);
+   --  Change the sensitivity of User according to the state of the check
+   --  button Check.
+
    --------------------------
    -- Project editor pages --
    --------------------------
@@ -291,9 +299,11 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Main_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean;
 
    type Source_Editor_Record is new Project_Editor_Page_Record
@@ -306,10 +316,19 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Source_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean;
+
+   type Object_Editor_Widget_Record is new Gtk_Box_Record with record
+      Obj_Dir  : Gtk_Entry;
+      Exec_Dir : Gtk_Entry;
+      Same     : Gtk_Check_Button;
+   end record;
+   type Object_Editor_Widget is access all Object_Editor_Widget_Record'Class;
 
    type Object_Editor_Record is new Project_Editor_Page_Record
      with null record;
@@ -321,9 +340,11 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Object_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean;
 
    type Switches_Editor_Record is new Project_Editor_Page_Record
@@ -336,9 +357,11 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Switches_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean;
    procedure Refresh
      (Page         : access Switches_Editor_Record;
@@ -356,9 +379,11 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Naming_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean;
    procedure Refresh
      (Page         : access Naming_Editor_Record;
@@ -1042,6 +1067,7 @@ package body Project_Viewers is
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
+
    begin
       if Has_Project_Information (File) then
          Gtk_New (Wiz, Get_Kernel (Context));
@@ -1385,24 +1411,39 @@ package body Project_Viewers is
 
    procedure Add_Main_Unit (Editor : access Gtk_Widget_Record'Class) is
       Ed : Executables_Editor := Executables_Editor (Editor);
-      Dirs : constant String_Id_Array := Source_Dirs (Ed.Project_View);
    begin
-      if Dirs'Length = 0 then
+      if Ed.Project_View /= No_Project then
          declare
-            File : constant String := Select_File
-              (Title          => -"Select the main file to add",
-               Base_Directory => Dir_Name (Project_Path (Ed.Project_View)));
+            Dirs : constant String_Id_Array := Source_Dirs (Ed.Project_View);
          begin
-            if File /= "" then
-               Add_Main_File (Ed, Base_Name (File));
+            if Dirs'Length = 0 then
+               declare
+                  File : constant String := Select_File
+                    (Title          => -"Select the main file to add",
+                     Base_Directory => Dir_Name
+                       (Project_Path (Ed.Project_View)));
+               begin
+                  if File /= "" then
+                     Add_Main_File (Ed, Base_Name (File));
+                  end if;
+               end;
+            else
+               declare
+                  File : constant String := Select_File
+                    (Title          => -"Select the main file to add",
+                     Base_Directory => Get_String (Dirs (Dirs'First)));
+               begin
+                  if File /= "" then
+                     Add_Main_File (Ed, Base_Name (File));
+                  end if;
+               end;
             end if;
          end;
-
       else
          declare
             File : constant String := Select_File
               (Title          => -"Select the main file to add",
-               Base_Directory => Get_String (Dirs (Dirs'First)));
+               Base_Directory => Get_Current_Dir);
          begin
             if File /= "" then
                Add_Main_File (Ed, Base_Name (File));
@@ -1523,19 +1564,24 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Main_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class) return Boolean
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
+      return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Kernel);
       Editor       : Executables_Editor := Executables_Editor (Widget);
       Num_Children : constant Gint := N_Children (Editor.Executables);
       New_Mains    : Argument_List (1 .. Integer (Num_Children));
       Iter         : Gtk_Tree_Iter := Get_Iter_First (Editor.Executables);
       N            : Natural := New_Mains'First;
       Changed      : Boolean := False;
-
    begin
+      Assert (Me, Project = Ref_Project,
+              "Invalid project when modifying main files");
+
       --  First get the list of main files
       while Iter /= Null_Iter loop
          New_Mains (N) := new String'
@@ -1544,6 +1590,9 @@ package body Project_Viewers is
          Next (Editor.Executables, Iter);
       end loop;
 
+      --  ??? We only know how to get the value of an attribute in the current
+      --  scenario, so the project might be reported as modified too often when
+      --  changing multiple scenarios
       if Project_View /= No_Project then
          declare
             Old_Mains    : Argument_List := Get_Attribute_Value
@@ -1560,14 +1609,14 @@ package body Project_Viewers is
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Pkg_Name           => "",
-               Scenario_Variables => Scenario_Variables (Kernel),
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Main_Attribute,
                Values             => New_Mains);
          else
             Delete_Attribute
               (Project            => Project,
                Pkg_Name           => "",
-               Scenario_Variables => Scenario_Variables (Kernel),
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Main_Attribute);
          end if;
       end if;
@@ -1633,9 +1682,11 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Source_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean
    is
       pragma Unreferenced (Page);
@@ -1647,6 +1698,9 @@ package body Project_Viewers is
       Relative : constant Boolean :=
         Project_Uses_Relative_Paths (Kernel, Project);
    begin
+      Assert (Me, Project = Ref_Project,
+              "Invalid project when modifying main files");
+
       if Relative then
          for J in Dirs'Range loop
             Tmp := Dirs (J);
@@ -1692,7 +1746,7 @@ package body Project_Viewers is
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
                Pkg_Name           => "",
-               Scenario_Variables => Scenario_Variables (Kernel),
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Get_Name_String (Name_Source_Dirs),
                Values             => Dirs,
                Attribute_Index    => "",
@@ -1703,7 +1757,7 @@ package body Project_Viewers is
          Update_Attribute_Value_In_Scenario
            (Project            => Project,
             Pkg_Name           => "",
-            Scenario_Variables => (1 .. 0 => Empty_Node),
+            Scenario_Variables => Scenario_Variables,
             Attribute_Name     => Get_Name_String (Name_Source_Dirs),
             Values             => Dirs,
             Attribute_Index    => "",
@@ -1715,6 +1769,18 @@ package body Project_Viewers is
       return not Equal;
    end Project_Editor;
 
+   ----------------------
+   -- Set_Sensitive_Cb --
+   ----------------------
+
+   procedure Set_Sensitive_Cb
+     (Check : access Glib.Object.GObject_Record'Class;
+      User  : GObject) is
+   begin
+      Set_Sensitive
+        (Gtk_Widget (User), not Get_Active (Gtk_Check_Button (Check)));
+   end Set_Sensitive_Cb;
+
    --------------------
    -- Widget_Factory --
    --------------------
@@ -1725,27 +1791,103 @@ package body Project_Viewers is
      return Gtk_Widget
    is
       pragma Unreferenced (Page);
-      Obj_Dir_Selection : Directory_Tree.Directory_Selector;
+      Obj_Dir : Object_Editor_Widget;
+      Label : Gtk_Label;
+      Box : Gtk_Box;
+      Event : Gtk_Event_Box;
+      Button : Gtk_Button;
    begin
-      if Project_View /= No_Project then
-         Gtk_New
-           (Obj_Dir_Selection,
-            Initial_Directory => Name_As_Directory
-              (GNAT.OS_Lib.Normalize_Pathname (Get_Name_String
-                 (Prj.Projects.Table (Project_View).Object_Directory))),
-            Multiple_Directories => False,
-            Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
+      Obj_Dir := new Object_Editor_Widget_Record;
+      Initialize_Vbox (Obj_Dir, Homogeneous => False);
 
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Obj_Dir, Box, Expand => False, Padding => 10);
+
+      Gtk_New (Event);
+      Pack_Start (Box, Event);
+      Gtk_New (Label, -"Build directory:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Directory that will contain all the object files generated"
+                 & " by the compiler (.o files, .ali files for Ada, ...)"));
+
+      Gtk_New (Obj_Dir.Obj_Dir);
+      Set_Width_Chars (Obj_Dir.Obj_Dir, 30);
+      Pack_Start (Box, Obj_Dir.Obj_Dir, Expand => True);
+
+      if Project_View /= No_Project then
+         Set_Text (Obj_Dir.Obj_Dir,
+                   Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
+                    (Get_Name_String
+                     (Prj.Projects.Table (Project_View).Object_Directory))));
       else
-         Gtk_New
-           (Obj_Dir_Selection,
-            Initial_Directory => Get_Current_Dir,
-            Multiple_Directories => False,
-            Busy_Cursor_On => Get_Window (Get_Main_Window (Kernel)));
+         Set_Text (Obj_Dir.Obj_Dir, Get_Current_Dir);
       end if;
 
-      Show_All (Obj_Dir_Selection);
-      return Gtk_Widget (Obj_Dir_Selection);
+      Gtk_New (Button, -"Browse");
+      Pack_Start (Box, Button, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Browse_Location'Access),
+         Slot_Object => Obj_Dir.Obj_Dir);
+
+      Gtk_New (Obj_Dir.Same, -"Exec directory is the same as build directory");
+      Pack_Start (Obj_Dir, Obj_Dir.Same, Expand => False);
+
+      Gtk_New_Hbox (Box, Homogeneous => False);
+      Pack_Start (Obj_Dir, Box, Expand => False);
+
+      Gtk_New (Event);
+      Pack_Start (Box, Event);
+      Gtk_New (Label, -"Exec directory:");
+      Set_Alignment (Label, 0.0, 0.5);
+      Add (Event, Label);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Directory that will contain the executables resulting from"
+                 & " the compilation"));
+
+      Gtk_New (Obj_Dir.Exec_Dir);
+      Set_Width_Chars (Obj_Dir.Exec_Dir, 30);
+      Pack_Start (Box, Obj_Dir.Exec_Dir, Expand => True);
+
+      if Project_View /= No_Project then
+         Set_Text
+           (Obj_Dir.Exec_Dir,
+            Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
+             (Get_Attribute_Value
+              (Project_View => Project_View,
+               Attribute_Name => Exec_Dir_Attribute,
+               Default => Get_Current_Dir))));
+      else
+         Set_Text (Obj_Dir.Exec_Dir, Get_Current_Dir);
+      end if;
+
+      Gtk_New (Button, -"Browse");
+      Pack_Start (Box, Button, Expand => False);
+      Widget_Callback.Object_Connect
+        (Button, "clicked",
+         Widget_Callback.To_Marshaller (Browse_Location'Access),
+         Slot_Object => Obj_Dir.Exec_Dir);
+
+      Object_User_Callback.Connect
+        (Obj_Dir.Same, "toggled",
+         Object_User_Callback.To_Marshaller (Set_Sensitive_Cb'Access),
+         User_Data => GObject (Obj_Dir.Exec_Dir));
+      Object_User_Callback.Connect
+        (Obj_Dir.Same, "toggled",
+         Object_User_Callback.To_Marshaller (Set_Sensitive_Cb'Access),
+         User_Data => GObject (Button));
+
+      Set_Active (Obj_Dir.Same,
+                  Project_View = No_Project
+                  or else Get_Attribute_Value
+                  (Project_View => Project_View,
+                   Attribute_Name => Exec_Dir_Attribute,
+                   Default => "@@@@") = "@@@@");
+
+      Show_All (Obj_Dir);
+      return Gtk_Widget (Obj_Dir);
    end Widget_Factory;
 
    --------------------
@@ -1755,87 +1897,86 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Object_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean
    is
       pragma Unreferenced (Page);
-      New_Dir : constant String := Get_Single_Selection
-        (Directory_Selector (Widget));
-
+      Obj_Dir : Object_Editor_Widget := Object_Editor_Widget (Widget);
+      New_Dir, Exec_Dir : GNAT.OS_Lib.String_Access;
+      Changed : Boolean := False;
    begin
-      if Project_View /= No_Project then
-         if New_Dir /= Name_As_Directory
-           (Normalize_Pathname (Get_Name_String
-             (Prj.Projects.Table (Project_View).Object_Directory)))
-         then
-            if New_Dir = "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => "",
-                  Scenario_Variables => Scenario_Variables (Kernel),
-                  Attribute_Name     => Get_Name_String (Name_Object_Dir),
-                  Value              => ".",
-                  Attribute_Index    => "");
+      Assert (Me, Project = Ref_Project,
+              "Invalid project when modifying main files");
 
-            elsif Project_Uses_Relative_Paths (Kernel, Project) then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => "",
-                  Scenario_Variables => Scenario_Variables (Kernel),
-                  Attribute_Name     => Get_Name_String (Name_Object_Dir),
-                  Value              => Relative_Path_Name
-                  (New_Dir, Project_Path (Project)),
-                  Attribute_Index    => "");
-
-            else
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => "",
-                  Scenario_Variables => Scenario_Variables (Kernel),
-                  Attribute_Name     => Get_Name_String (Name_Object_Dir),
-                  Value              => New_Dir,
-                  Attribute_Index    => "");
-            end if;
-
-            return True;
-         end if;
-
+      if Project_Uses_Relative_Paths (Kernel, Project) then
+         New_Dir := new String' (Relative_Path_Name
+           (Get_Text (Obj_Dir.Obj_Dir), Project_Path (Project)));
       else
-         if New_Dir = "" then
-            Update_Attribute_Value_In_Scenario
-              (Project            => Project,
-               Pkg_Name           => "",
-               Scenario_Variables => (1 .. 0 => Empty_Node),
-               Attribute_Name     => Get_Name_String (Name_Object_Dir),
-               Value              => ".",
-               Attribute_Index    => "");
+         New_Dir := new String' (Name_As_Directory
+           (Normalize_Pathname (Get_Text (Obj_Dir.Obj_Dir))));
+      end if;
 
-         elsif Project_Uses_Relative_Paths (Kernel, Project) then
-            Update_Attribute_Value_In_Scenario
+      if Get_Active (Obj_Dir.Same) then
+         Exec_Dir := new String' (New_Dir.all);
+      elsif Project_Uses_Relative_Paths (Kernel, Project) then
+         Exec_Dir := new String' (Relative_Path_Name
+           (Get_Text (Obj_Dir.Exec_Dir), Project_Path (Project)));
+      else
+         Exec_Dir := new String' (Name_As_Directory
+           (Normalize_Pathname (Get_Text (Obj_Dir.Exec_Dir))));
+      end if;
+
+      if Project_View = No_Project
+        or else New_Dir.all /= Name_As_Directory
+        (Normalize_Pathname (Get_Name_String
+          (Prj.Projects.Table (Project_View).Object_Directory)))
+      then
+         if New_Dir.all = "" then
+            Delete_Attribute
               (Project            => Project,
-               Pkg_Name           => "",
-               Scenario_Variables => (1 .. 0 => Empty_Node),
-               Attribute_Name     => Get_Name_String (Name_Object_Dir),
-               Value              => Relative_Path_Name
-               (New_Dir, Project_Path (Project)),
-               Attribute_Index    => "");
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Get_Name_String (Name_Object_Dir));
 
          else
             Update_Attribute_Value_In_Scenario
               (Project            => Project,
-               Pkg_Name           => "",
-               Scenario_Variables => (1 .. 0 => Empty_Node),
+               Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Get_Name_String (Name_Object_Dir),
-               Value              => New_Dir,
-               Attribute_Index    => "");
+               Value              => New_Dir.all);
          end if;
 
-         return True;
+         Changed := True;
       end if;
 
-      return False;
+      if Project_View = No_Project
+        or else Exec_Dir.all /= Name_As_Directory
+        (Normalize_Pathname (Get_Name_String
+          (Prj.Projects.Table (Project_View).Exec_Directory)))
+      then
+         if Exec_Dir.all = "" then
+            Delete_Attribute
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Exec_Dir_Attribute);
+
+         else
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => Scenario_Variables,
+               Attribute_Name     => Exec_Dir_Attribute,
+               Value              => Exec_Dir.all);
+         end if;
+
+         Changed := True;
+      end if;
+
+      Free (New_Dir);
+      Free (Exec_Dir);
+      return Changed;
    end Project_Editor;
 
    --------------------
@@ -1867,11 +2008,14 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Switches_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class) return Boolean
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
+      return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Ref_Project, Scenario_Variables);
    begin
       return Generate_Project
         (Switches     => From_Window (Widget),
@@ -1927,16 +2071,20 @@ package body Project_Viewers is
    function Project_Editor
      (Page         : access Naming_Editor_Record;
       Project      : Project_Node_Id;
-      Project_View : Project_Id;
+      Project_View : Prj.Project_Id;
       Kernel       : access Kernel_Handle_Record'Class;
-      Widget       : access Gtk_Widget_Record'Class)
+      Widget       : access Gtk_Widget_Record'Class;
+      Scenario_Variables : Prj_API.Project_Node_Array;
+      Ref_Project  : Project_Node_Id)
       return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Kernel, Ref_Project);
    begin
       return Create_Project_Entry
-        (Naming_Editor (Widget), Kernel, Project, Project_View,
-         Ignore_Scenario => Project_View = No_Project);
+        (Naming_Editor (Widget),
+         Project            => Project,
+         Project_View       => Project_View,
+         Scenario_Variables => Scenario_Variables);
    end Project_Editor;
 
    -------------
@@ -1986,19 +2134,22 @@ package body Project_Viewers is
          Page  => new Source_Editor_Record,
          Label => -"Sources",
          Toc   => -"Selecting sources",
-         Title => -"Please select the source directories for this project");
+         Title => -"Please select the source directories for this project",
+         Flags => Multiple_Scenarios);
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Object_Editor_Record,
          Label => -"Objects",
          Toc   => -"Build directory",
-         Title => -"Please select the build directory for this project");
+         Title => -"Please select the build directory for this project",
+         Flags => Multiple_Scenarios);
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Main_Editor_Record,
          Label => -"Main files",
          Toc   => -"Selecting main units",
-         Title => -"Please select the main units for this project");
+         Title => -"Please select the main units for this project",
+         Flags => Multiple_Scenarios);
       Register_Project_Editor_Page
         (Kernel,
          Page  => new Switches_Editor_Record,
