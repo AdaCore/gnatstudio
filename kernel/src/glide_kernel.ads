@@ -436,24 +436,20 @@ package Glide_Kernel is
    --  Child is the widget that was put directly in the MDI. It is always of
    --  the type MDI_Child_Tag registered with Register_Module.
 
-   type Save_Return_Value is
-     (Saved, Not_Saved, Save_All, Cancel);
-   --  All possible return values from the module's save function.
-   --    - Saved: The child associated with the module was saved
-   --    - Not_Saved: the child associated with the mdoule was not saved.
-   --    - Save_All: The child was saved, as should all following children.
-   --    - Cancel: Abort the operation that requested the save.
+   type Save_Function_Mode is (Query, Action);
+   --  The two types of use for Module_Save_Function.
+   --  If Query, then the save_function should return whether the corresponding
+   --  child has been modified, and not saved yet, and thus whether we should
+   --  ask the user whether to save it.
+   --  If Action, the save_function *must* save the child. The return value
+   --  then indicates whether the save was successful (True), or failed (False)
 
    type Module_Save_Function is access function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Save_Return_Value;
+      Mode   : Save_Function_Mode) return Boolean;
    --  A function called when the kernel asks a MDI child to save itself.
-   --  If Force is True, this function should save the child state
-   --  automatically, and if Force is False, the widgets may decide to
-   --  ask the user first.
-   --  If the user has refused to save the widget, return False,
-   --  otherwise return True.
+   --  See the description of Mode for the description of the modes.
    --  Child is the widget that put directly in the MDI.
 
    type Module_Tooltip_Handler is access procedure
@@ -656,31 +652,16 @@ package Glide_Kernel is
    --  Return the first MDI child associated to an editor for File.
    --  Return null if no such editor was found.
 
-   function Save_Child
+   function Save_MDI_Children
      (Handle : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child;
-      Force  : Boolean := True) return Save_Return_Value;
-   --  Save the given Child.
-   --  If Force is False, then ask the user first.
-   --  Return False if the action has been canceled.
-
-   function Save_All_MDI_Children
-     (Handle : access Kernel_Handle_Record;
+      Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
       Force  : Boolean := False) return Boolean;
    --  Save all the MDI children, as well as the current project
    --  If Force is False, ask the user first.
-   --  If at any time the user answers "no", the function stops asking
-   --  the children and returns False.
-   --  Return True otherwise.
-
-   function Save_All_Editors
-     (Handle : access Kernel_Handle_Record;
-      Force  : Boolean) return Boolean;
-   --  Save all open file editors.
-   --  If Force is False, ask the user first.
-   --  If at any time the user answers "no", the function stops asking
-   --  the children and returns False.
-   --  Return True otherwise.
+   --  If Children is specified, only ask to save these specific children.
+   --  The return value is False if the user has cancelled the action, True if
+   --  the user has selected OK (whatever the number of children that were
+   --  saved).
 
    procedure Close_All_Children (Handle : access Kernel_Handle_Record);
    --  Close all the MDI children. No confirmation is asked, call

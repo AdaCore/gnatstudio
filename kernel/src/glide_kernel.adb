@@ -23,6 +23,7 @@ with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
+with Glib.Values;               use Glib.Values;
 with Gdk.Window;                use Gdk.Window;
 with Gdk.Event;                 use Gdk.Event;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -35,7 +36,9 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Label;                 use Gtk.Label;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Object;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
@@ -154,6 +157,15 @@ package body Glide_Kernel is
      (Event : Gdk_Event; Kernel : System.Address);
    --  Event handler called before even gtk can do its dispatching. This
    --  intercepts all events going through the application
+
+   procedure Select_All_Children (View : access Gtk_Widget_Record'Class);
+   --  Callback for the "save all windows" dialog
+
+   procedure Select_Child_When_Saving
+     (View   : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
+   --  Callback when a specific line is selected in the "save all windows"
+   --  dialog
 
    --------------------------
    -- Get_Language_Handler --
@@ -289,32 +301,6 @@ package body Glide_Kernel is
       Add_Watch (Id, Data);
    end Setup;
 
-   ----------------
-   -- Save_Child --
-   ----------------
-
-   function Save_Child
-     (Handle : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child;
-      Force  : Boolean := True) return Save_Return_Value
-   is
-      Module : Module_ID;
-   begin
-      Module := Get_Module_From_Child (Child);
-
-      if Module /= null
-        and then Module.Info.Save_Function /= null
-      then
-         return
-           Module.Info.Save_Function
-             (Handle,
-              Get_Widget (Child),
-              Force);
-      end if;
-
-      return Saved;
-   end Save_Child;
-
    ---------------------
    -- Get_File_Editor --
    ---------------------
@@ -349,49 +335,239 @@ package body Glide_Kernel is
       end if;
    end Get_Module_From_Child;
 
-   ---------------------------
-   -- Save_All_MDI_Children --
-   ---------------------------
+   -------------------------
+   -- Select_All_Children --
+   -------------------------
 
-   function Save_All_MDI_Children
+   procedure Select_All_Children (View : access Gtk_Widget_Record'Class) is
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Model);
+      Value : Boolean;
+   begin
+      if Iter /= Null_Iter then
+         Value := not Get_Boolean (Model, Iter, 0);
+
+         while Iter /= Null_Iter loop
+            Set (Model, Iter, 0, Value);
+            Next (Model, Iter);
+         end loop;
+      end if;
+   end Select_All_Children;
+
+   ------------------------------
+   -- Select_Child_When_Saving --
+   ------------------------------
+
+   procedure Select_Child_When_Saving
+     (View   : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      Model : constant Gtk_Tree_Store :=
+        Gtk_Tree_Store (Get_Model (Gtk_Tree_View (View)));
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Iter        : constant Gtk_Tree_Iter :=
+        Get_Iter_From_String (Model, Path_String);
+   begin
+      Set (Model, Iter, 0, not Get_Boolean (Model, Iter, 0));
+   end Select_Child_When_Saving;
+
+   -----------------------
+   -- Save_MDI_Children --
+   -----------------------
+
+   function Save_MDI_Children
      (Handle : access Kernel_Handle_Record;
+      Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
       Force  : Boolean := False) return Boolean
    is
+      Column_Types : constant GType_Array := (GType_Boolean, GType_String);
       MDI       : constant MDI_Window := Get_MDI (Handle);
+      Project_Description : constant String := -"Project";
       Iter      : Child_Iterator;
       Child     : MDI_Child;
-      Save_Type : Save_Return_Value;
-      F         : Boolean := Force;
+      Has_Unsaved : Boolean := False;
+      Model     : Gtk_Tree_Store;
+      Dialog    : Gtk_Dialog;
+      It        : Gtk_Tree_Iter := Null_Iter;
+      Renderer  : Gtk_Cell_Renderer_Text;
+      Toggle_Renderer : Gtk_Cell_Renderer_Toggle;
+      Scrolled  : Gtk_Scrolled_Window;
+      View      : Gtk_Tree_View;
+      Col       : Gtk_Tree_View_Column;
+      Col_Num   : Gint;
+      Label     : Gtk_Label;
+      Button    : Gtk_Widget;
+      Response  : Gtk_Response_Type;
 
+      procedure Add_Child_If_Needed (Child : MDI_Child);
+      --  Add the child to the model if we should ask for its saving
+
+      procedure Save_Child (Child : MDI_Child);
+      --  Save a specific child
+
+      procedure Add_Child_If_Needed (Child : MDI_Child) is
+         Module : constant Module_ID := Get_Module_From_Child (Child);
+      begin
+         if Module /= null
+           and then Module.Info.Save_Function /= null
+           and then Module.Info.Save_Function
+             (Handle, Get_Widget (Child), Mode => Query)
+         then
+            Append (Model, It, Null_Iter);
+            Set (Model, It, 0, True);
+            Set (Model, It, 1, Get_Title (Child));
+            Has_Unsaved := True;
+         end if;
+      end Add_Child_If_Needed;
+
+      procedure Save_Child (Child : MDI_Child) is
+         Module : constant Module_ID := Get_Module_From_Child (Child);
+         Tmp    : Boolean;
+         pragma Unreferenced (Tmp);
+      begin
+         if Module /= null
+           and then Module.Info.Save_Function /= null
+         then
+            Tmp := Module.Info.Save_Function
+              (Handle, Get_Widget (Child), Mode => Action);
+         end if;
+      end Save_Child;
+
+      pragma Unreferenced (Col_Num, Button);
    begin
-      Iter := First_Child (MDI);
-      Child := Get (Iter);
-
-      Save_Type := Save_Project_Conditional (Handle, F);
-
-      if Save_Type = Cancel then
-         return False;
-      elsif Save_Type = Save_All then
-         F := True;
+      if Force then
+         if Children /= No_Children then
+            for C in Children'Range loop
+               Save_Child (Children (C));
+            end loop;
+         else
+            Iter := First_Child (MDI);
+            loop
+               Child := Get (Iter);
+               exit when Child = null;
+               Save_Child (Child);
+               Next (Iter);
+            end loop;
+         end if;
+         return True;
       end if;
 
-      --  Browse through all MDI children.
+      Gtk_New (Model, Column_Types);
 
-      while Child /= null loop
-         Save_Type := Save_Child (Handle, Child, F);
+      if Project_Modified (Get_Project (Handle), Recursive => True) then
+         Has_Unsaved := True;
+         Append (Model, It, Null_Iter);
+         Set (Model, It, 0, True);
+         Set (Model, It, 1, Project_Description);
+      end if;
 
-         if Save_Type = Cancel then
+      if Children /= No_Children then
+         for C in Children'Range loop
+            Add_Child_If_Needed (Children (C));
+         end loop;
+      else
+         Iter := First_Child (MDI);
+         loop
+            Child := Get (Iter);
+            exit when Child = null;
+            Add_Child_If_Needed (Child);
+            Next (Iter);
+         end loop;
+      end if;
+
+      if Has_Unsaved then
+         Gtk_New (Dialog,
+                  Title  => -"Saving windows",
+                  Parent => Get_Main_Window (Handle),
+                  Flags  => Modal or Destroy_With_Parent);
+
+         Gtk_New (Label, -"Select the windows that should be saved.");
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Gtk_New (Label, -"Clicking on the title of the first column will");
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Gtk_New (Label, -"select or unselect all.");
+         Set_Alignment (Label, 0.0, 0.0);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+
+         Gtk_New (Scrolled);
+         Set_Size_Request (Scrolled, -1, 300);
+         Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+         Pack_Start (Get_Vbox (Dialog), Scrolled, Padding => 10);
+
+         Gtk_New (View, Gtk_Tree_Model (Model));
+         Set_Mode (Get_Selection (View), Selection_Single);
+         Add (Scrolled, View);
+
+         Gtk_New (Renderer);
+         Gtk_New (Toggle_Renderer);
+
+         Gtk_New (Col);
+         Set_Clickable (Col, True);
+         Col_Num := Append_Column (View, Col);
+         Set_Title (Col, -"Save");
+         Pack_Start (Col, Toggle_Renderer, False);
+         Add_Attribute (Col, Toggle_Renderer, "active", 0);
+         Widget_Callback.Object_Connect
+           (Col, "clicked",
+            Widget_Callback.To_Marshaller (Select_All_Children'Access),
+            Slot_Object => View);
+         Widget_Callback.Object_Connect
+           (Toggle_Renderer, "toggled",
+            Select_Child_When_Saving'Access,
+            Slot_Object => View);
+
+         Gtk_New (Col);
+         Col_Num := Append_Column (View, Col);
+         Set_Clickable (Col, True);
+         Set_Sort_Column_Id (Col, 1);
+         Set_Title (Col, -"Title");
+         Pack_Start (Col, Renderer, False);
+         Add_Attribute (Col, Renderer, "text", 1);
+
+         Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+         Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+         Show_All (Dialog);
+
+         Response := Run (Dialog);
+         if Response = Gtk_Response_OK then
+            It := Get_Iter_First (Model);
+            while It /= Null_Iter loop
+               if Get_Boolean (Model, It, 0) then
+                  declare
+                     Name : constant String := Get_String (Model, It, 1);
+                  begin
+                     if Name = Project_Description then
+                        Save_Project
+                          (Kernel    => Handle,
+                           Project   => Get_Project (Handle),
+                           Recursive => True);
+                     else
+                        Child := Find_MDI_Child_By_Name
+                          (Get_MDI (Handle), Name);
+                        Save_Child (Child);
+                     end if;
+                  end;
+               end if;
+
+               Next (Model, It);
+            end loop;
+
+         else
+            Destroy (Dialog);
             return False;
-         elsif Save_Type = Save_All then
-            F := True;
          end if;
 
-         Next (Iter);
-         Child := Get (Iter);
-      end loop;
+         Destroy (Dialog);
+      else
+         Unref (Model);
+      end if;
 
       return True;
-   end Save_All_MDI_Children;
+   end Save_MDI_Children;
 
    ------------------------
    -- Close_All_Children --
@@ -413,22 +589,6 @@ package body Glide_Kernel is
          end if;
       end loop;
    end Close_All_Children;
-
-   ----------------------
-   -- Save_All_Editors --
-   ----------------------
-
-   function Save_All_Editors
-     (Handle : access Kernel_Handle_Record;
-      Force  : Boolean) return Boolean
-   is
-      pragma Unreferenced (Force);
-      pragma Unreferenced (Handle);
-   begin
-      --  ??? not implemented yet.
-      raise Program_Error;
-      return False;
-   end Save_All_Editors;
 
    -------------------------------------
    -- Locate_From_Source_And_Complete --
