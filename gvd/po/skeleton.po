@@ -673,6 +673,9 @@ msgstr "Remote Shell"
 msgid  "Remove"
 msgstr "Remove"
 
+msgid  "Replace Current Debugger"
+msgstr "Replace Current Debugger"
+
 msgid  "Replay selection"
 msgstr "Replay selection"
 
@@ -708,6 +711,9 @@ msgstr "Session:"
 
 msgid  "Session List"
 msgstr "Session List"
+
+msgid  "Set Breakpoint on "
+msgstr "Set Breakpoint on "
 
 msgid  "Set Breakpoint on Line"
 msgstr "Set Breakpoint on Line"

@@ -673,6 +673,9 @@ msgstr "Shell distant"
 msgid  "Remove"
 msgstr "Supprimer"
 
+msgid  "Replace Current Debugger"
+msgstr "Remplacer le débogueur courant"
+
 msgid  "Replay selection"
 msgstr "Rejouer la sélection"
 
@@ -708,6 +711,9 @@ msgstr "Session :"
 
 msgid  "Session List"
 msgstr "Liste des sessions"
+
+msgid  "Set Breakpoint on "
+msgstr "Mettre un point d'arrêt sur "
 
 msgid  "Set Breakpoint on Line"
 msgstr "Mettre un point d'arrêt sur la ligne"
