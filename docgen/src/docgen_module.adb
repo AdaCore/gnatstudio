@@ -165,9 +165,9 @@ package body Docgen_Module is
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
    --  Contextual menu : Generate Doc (for a file)
 
-   --------------------
-   --  For the menu  --
-   --------------------
+   ------------------
+   -- For the menu --
+   ------------------
 
    procedure Choose_Menu_Current_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -203,18 +203,18 @@ package body Docgen_Module is
       File : Virtual_File);
    --  In order to generate the documentation of one file
 
-   --------------------------------------------
-   --  main procedure for the documentation  --
-   --------------------------------------------
+   ------------------------------------------
+   -- main procedure for the documentation --
+   ------------------------------------------
 
    procedure Generate
      (Kernel : Kernel_Handle;
       List : in out Type_Source_File_List.List);
    --  With the list of source files, it generates the documentation
 
-   -------------------
-   --  Get_Options  --
-   -------------------
+   -----------------
+   -- Get_Options --
+   -----------------
 
    procedure Get_Options (My_Options : in out All_Options) is
    begin
@@ -238,9 +238,9 @@ package body Docgen_Module is
         := Docgen_Module (Docgen_Module_ID).Options.Tagged_Types;
    end Get_Options;
 
-   -------------------
-   --  Set_Options  --
-   -------------------
+   -----------------
+   -- Set_Options --
+   -----------------
 
    procedure Set_Options
      (Type_Of_File_P       : Type_Api_Doc := HTML;
@@ -272,9 +272,9 @@ package body Docgen_Module is
         Tagged_Types_P;
    end Set_Options;
 
-   -----------------
-   --  Array2List --
-   -----------------
+   ----------------
+   -- Array2List --
+   ----------------
 
    procedure Array2List
      (Kernel : Kernel_Handle;
@@ -429,9 +429,9 @@ package body Docgen_Module is
       Generate_Project (Kernel_Handle (Kernel), False);
    end On_Generate_Project;
 
-   -------------------------------------
-   --  On_Generate_Project_Recursive  --
-   -------------------------------------
+   -----------------------------------
+   -- On_Generate_Project_Recursive --
+   -----------------------------------
 
    procedure On_Generate_Project_Recursive
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
@@ -442,9 +442,9 @@ package body Docgen_Module is
    end On_Generate_Project_Recursive;
 
 
-   ------------------------
-   --  On_Generate_File  --
-   ------------------------
+   ----------------------
+   -- On_Generate_File --
+   ----------------------
 
    procedure On_Generate_File
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
@@ -562,9 +562,9 @@ package body Docgen_Module is
       end if;
    end Choose_Menu_File;
 
-   --------------------
-   --  Generate_File --
-   --------------------
+   -------------------
+   -- Generate_File --
+   -------------------
 
    procedure Generate_File
      (Kernel : Kernel_Handle;
