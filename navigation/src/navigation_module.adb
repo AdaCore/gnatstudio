@@ -367,7 +367,7 @@ package body Navigation_Module is
    procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
       Free (Id.Back);
-      Free (Id.Current_Location);
+      Destroy (Id.Current_Location);
       Free (Id.Forward);
    end Destroy;
 
