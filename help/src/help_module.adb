@@ -38,6 +38,7 @@ with Gdk.Event;                    use Gdk.Event;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
 with Gtk.Adjustment;               use Gtk.Adjustment;
 with Gtk.Enums;                    use Gtk.Enums;
+with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;          use Gtk.Scrolled_Window;
 with Gtk.Widget;                   use Gtk.Widget;
 with Gtkada.Handlers;              use Gtkada.Handlers;
@@ -129,6 +130,14 @@ package body Help_Module is
 
    procedure On_Destroy (Html : access Gtk_Widget_Record'Class);
    --  Called when an html browser is destroyed.
+
+   procedure On_Zoom_In
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Help->Zoom in
+
+   procedure On_Zoom_Out
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for Help->Zoom in
 
    generic
       HTML_File : String;
@@ -395,7 +404,7 @@ package body Help_Module is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Object);
-      Url      : constant String := Get_String (Nth (Params, 1));
+      Url : constant String := Get_String (Nth (Params, 1));
 
    begin
       Open_Html (Kernel, Url);
@@ -435,7 +444,7 @@ package body Help_Module is
    ---------------
 
    function Key_Press
-     (Html : access Gtk_Widget_Record'Class;
+     (Html  : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
       H   : constant Help_Browser := Help_Browser (Html);
@@ -494,6 +503,71 @@ package body Help_Module is
    begin
       Free (Help_Browser (Html).Current_Help_File);
    end On_Destroy;
+
+   ----------------
+   -- On_Zoom_In --
+   ----------------
+
+   Font_Adjust : Integer;
+   pragma Import (C, Font_Adjust, "_gdk_font_adjust");
+
+   procedure On_Zoom_In
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      MDI   : constant MDI_Window := Get_MDI (Kernel);
+      Help  : Help_Browser;
+      Child : constant MDI_Child :=
+        Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
+
+   begin
+      Font_Adjust := Font_Adjust + 2;
+
+      if Child = null then
+         return;
+      end if;
+
+      Help := Help_Browser (Get_Widget (Child));
+
+      declare
+         File : constant String := Help.Current_Help_File.all;
+      begin
+         Destroy (Help);
+         Display_Help (Kernel, File);
+      end;
+   end On_Zoom_In;
+
+   -----------------
+   -- On_Zoom_Out --
+   -----------------
+
+   procedure On_Zoom_Out
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      MDI   : constant MDI_Window := Get_MDI (Kernel);
+      Help  : Help_Browser;
+      Child : constant MDI_Child :=
+        Find_MDI_Child_By_Tag (MDI, Help_Browser_Record'Tag);
+
+   begin
+      if Font_Adjust < -6 then
+         return;
+      end if;
+
+      Font_Adjust := Font_Adjust - 2;
+
+      if Child = null then
+         return;
+      end if;
+
+      Help := Help_Browser (Get_Widget (Child));
+
+      declare
+         File : constant String := Help.Current_Help_File.all;
+      begin
+         Destroy (Help);
+         Display_Help (Kernel, File);
+      end;
+   end On_Zoom_Out;
 
    ------------------------
    -- Create_Html_Editor --
@@ -796,8 +870,10 @@ package body Help_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Help : constant String := "/_" & (-"Help") & '/';
-      Name : constant String := -"Help";
+      Help  : constant String := "/_" & (-"Help") & '/';
+      Name  : constant String := -"Help";
+      Mitem : Gtk_Menu_Item;
+
    begin
       Register_Module
         (Module                  => Help_Module_ID,
@@ -823,9 +899,14 @@ package body Help_Module is
 
       --  Add help menus
 
+      Register_Menu (Kernel, Help, -"_Zoom in", "", On_Zoom_In'Access);
+      Register_Menu (Kernel, Help, -"Zoom _out", "", On_Zoom_Out'Access);
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Help, Mitem);
+
       Register_Menu
         (Kernel, Help, -"_Open HTML File...", "", On_Open_HTML'Access);
-
       On_Welcome.Register_Menu (Kernel, -"_Welcome");
       On_GPS_Tutorial.Register_Menu
         (Kernel, -"GNAT Programming System _Tutorial");
