@@ -297,38 +297,51 @@ package body GVD.Text_Box.Asm_Editor is
                High_Range := new String' (Last (1 .. Last_End));
             end if;
 
-            --  If the end address is not visible, disassemble a little
-            --  bit more...
+            --  If both are null, this means that gdb couldn't get the assembly
+            --  at all, and there's no point in trying again afterwards.
+            --  We just pretend things worked....
 
-            if High_Range /= null
-              and then End_Pc > High_Range.all
-            then
-               Get_Machine_Code
-                 (Process.Debugger,
-                  Range_Start     => Start,
-                  Range_End       => Last,
-                  Range_Start_Len => Start_End,
-                  Range_End_Len   => Last_End,
-                  Code            => S2,
-                  Start_Address   => High_Range.all,
-                  End_Address     => End_Pc & "+1");
-               S3 := new String' (S.all & S2.all);
-               Free (S);
-               Free (S2);
-               S := S3;
-               Free (High_Range);
+            if Start_End = 0 and then Last_End = 0 then
+               Editor.Cache := new Cache_Data'
+                 (Low  => new String' (Pc),
+                  High => new String' (Pc),
+                  Data => new String' (-"Couldn't get assembly code"),
+                  Next => Editor.Cache);
+            else
 
-               if Last_End /= 0 then
-                  High_Range := new String' (Last (1 .. Last_End));
+               --  If the end address is not visible, disassemble a little
+               --  bit more...
+
+               if High_Range /= null
+                 and then End_Pc > High_Range.all
+               then
+                  Get_Machine_Code
+                    (Process.Debugger,
+                     Range_Start     => Start,
+                     Range_End       => Last,
+                     Range_Start_Len => Start_End,
+                     Range_End_Len   => Last_End,
+                     Code            => S2,
+                     Start_Address   => High_Range.all,
+                     End_Address     => End_Pc & "+1");
+                  S3 := new String' (S.all & S2.all);
+                  Free (S);
+                  Free (S2);
+                  S := S3;
+                  Free (High_Range);
+
+                  if Last_End /= 0 then
+                     High_Range := new String' (Last (1 .. Last_End));
+                  end if;
                end if;
-            end if;
 
-            Editor.Cache := new Cache_Data'
-              (Low  => Low_Range,
-               High => High_Range,
-               Data => new String'
-                 (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size))),
-               Next => Editor.Cache);
+               Editor.Cache := new Cache_Data'
+                 (Low  => Low_Range,
+                  High => High_Range,
+                  Data => new String'
+                    (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size))),
+                  Next => Editor.Cache);
+            end if;
             Free (S);
             Editor.Current_Range := Editor.Cache;
          end if;
