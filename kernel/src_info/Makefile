@@ -1,6 +1,7 @@
 LARGS = -largs sn/lib/db_capi.o -Lsn/snsrc/db/PORT -ldb
 
 build:
+	cd standalone_obj; gcc -c ../common/a-file_utils.c
 	gnatmake -Pstandalone read_ali $(LARGS)
 	gnatmake -Pstandalone read_many_ali $(LARGS)
 	gnatmake -Pstandalone read_ali_twice $(LARGS)
@@ -13,6 +14,7 @@ distrib:
 	@-mkdir gvd gnat > /dev/null 2>&1
 	cp ../../common/src/sdefault.adb common
 	cp ../../common/src/file_utils.ad? common
+	cp ../../common/src/a-file_utils.c common
 	cp ../../gvd/common/htables.ad? common
 	cp ../../gvd/common/string_hash.ad? common
 	cp ../../common/src/traces.ad? common
