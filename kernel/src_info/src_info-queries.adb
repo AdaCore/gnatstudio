@@ -4005,9 +4005,6 @@ package body Src_Info.Queries is
          Ent := Get (Iter.Parent_Iter);
          exit when Ent = No_Entity_Information;
 
-         Trace (Me, "Next Special_Iterator: Moving to parent "
-                & Get_Name (Ent));
-
          Create_Or_Complete_LI
            (Iter.Lib_Info.LI.Handler,
             Lib_Info,
@@ -4022,8 +4019,6 @@ package body Src_Info.Queries is
 
          if Decl /= null then
             Iter.Current := Decl.Value.Declaration.Primitive_Subprograms;
-         else
-            Trace (Me, "Parent not found");
          end if;
       end loop;
    end Next;
