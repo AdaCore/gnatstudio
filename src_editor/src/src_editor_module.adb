@@ -284,10 +284,6 @@ package body Src_Editor_Module is
    --  The current editor is the focus child in the MDI. If the focus child
    --  is not an editor, nothing happens.
 
-   function Find_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
-   --  Return the top-most MDI child that is an internal editor
-
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues) return Boolean;
@@ -489,16 +485,6 @@ package body Src_Editor_Module is
    -------------------------
 
    function Find_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box is
-   begin
-      return Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
-   end Find_Current_Editor;
-
-   -------------------------
-   -- Find_Current_Editor --
-   -------------------------
-
-   function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return MDI_Child is
    begin
       return Find_MDI_Child_By_Tag (Get_MDI (Kernel), Source_Box_Record'Tag);
@@ -536,7 +522,8 @@ package body Src_Editor_Module is
      (Kernel : access Kernel_Handle_Record'Class)
    is
       MDI     : constant MDI_Window := Get_MDI (Kernel);
-      Current : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Current : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
       Title   : constant String := Get_Filename (Current);
       Editor  : Source_Editor_Box;
       Box     : Source_Box;
@@ -1033,7 +1020,8 @@ package body Src_Editor_Module is
       pragma Unreferenced (Widget);
 
       Success : Boolean;
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
    begin
       if Source /= null then
@@ -1099,7 +1087,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Cut_Clipboard (Source);
@@ -1118,7 +1107,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Copy_Clipboard (Source);
@@ -1137,7 +1127,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Paste_Clipboard (Source);
@@ -1156,7 +1147,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Source : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Source /= null then
          Select_All (Source);
@@ -1191,7 +1183,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
    begin
       if Editor = null then
@@ -1228,7 +1221,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Editor = null then
          return;
@@ -1254,7 +1248,8 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : constant Source_Editor_Box := Find_Current_Editor (Kernel);
+      Editor : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    begin
       if Editor = null then
          return;

@@ -360,7 +360,7 @@ package body Src_Editor_Box is
          Destroy (Entity);
       end if;
 
-      Source := Find_Current_Editor (Kernel);
+      Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
       --  Abort if we failed to go to the xref location. An error message
       --  has already been printed, so just bail-out.

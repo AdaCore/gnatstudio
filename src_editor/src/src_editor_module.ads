@@ -33,7 +33,7 @@ package Src_Editor_Module is
 
    function Find_Current_Editor
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Src_Editor_Box.Source_Editor_Box;
+      return Gtkada.MDI.MDI_Child;
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned.
