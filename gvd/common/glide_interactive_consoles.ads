@@ -108,7 +108,7 @@ package Glide_Interactive_Consoles is
 
    function Get_Chars
      (Console : access Glide_Interactive_Console_Record)
-     return String;
+      return String;
    --  Return the contents of the console window.
 
 private
