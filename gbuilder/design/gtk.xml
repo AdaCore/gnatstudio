@@ -1,0 +1,294 @@
+<?xml version="1.0"?>
+<library>
+
+   <!--  List of required libraries for this module -->
+   <requires>  <name>gtk+</name>  <version>1.2.8</version>  </requires>
+
+   <!--  Indicate how constructors work in each language -->
+   <constructors_format lang="Ada">out</constructors_format>
+   <constructors_format lang="C">return</constructors_format>
+
+   <!--  Default name conversion function -->
+   <name_convert src="C" dest="Ada">convert_name</name_convert>
+
+   <!--  Accel_Label -->
+
+   <widget_type id="gtk_accel_label"
+                page="additional"
+                parent="gtk_label"
+                icon="accellabel.xpm">
+      <new>
+          <extra_arg type="string" name="label"/>
+      </new>
+   </widget_type>
+
+   <!--  Alignment -->
+
+   <widget_type id="gtk_alignment"
+                page="container"
+                parent="gtk_bin"
+                icon="alignment.xpm">
+      <new>
+         <extra_arg type="float" name="xalign"/>
+         <extra_arg type="float" name="yalign"/>
+         <extra_arg type="float" name="xscale"/>
+         <extra_arg type="float" name="yscale"/>
+      </new>
+   </widget_type>
+
+   <!--  Arrow -->
+
+   <widget_type id="gtk_arrow"
+                page="additional"
+                parent="gtk_misc"
+                icon="arrow.xpm">
+      <new>
+         <extra_arg type="gtk_arrow_type" name="arrow_type"/>
+         <extra_arg type="gtk_shadow_type" name="shadow_type"/>
+      </new>
+   </widget_type>
+
+   <!--  Aspect_Frame -->
+
+   <widget_type id="gtk_aspect_frame"
+                page="container"
+                parent="gtk_frame"
+                icon="aspectframe.xpm">
+      <new>
+          <extra_arg type="string"  name="label"/>
+          <extra_arg type="float"  name="xalign"/>
+          <extra_arg type="float"  name="yalign"/>
+          <extra_arg type="float"  name="ratio"/>
+          <extra_arg type="boolean" name="obey_child"/>
+      </new>
+   </widget_type>
+
+   <!--  Bin -->
+
+   <widget_type id="gtk_bin"
+                min_children="0"
+                max_children="1"
+                parent="gtk_container"/>
+
+   <!--  Gtk_Box -->
+
+   <widget_type id="gtk_box"
+                parent="gtk_container">
+      <property name="homogeneous" type="boolean" default="false">
+         <documentation>
+            Whether the children should have the same size
+         </documentation>
+      </property>
+      <property name="spacing" type="integer" default="0">
+         <documentation>Space between each child</documentation>
+      </property>
+      <add_child>
+         <subprogram lang="C">gtk_box_pack_start</subprogram>
+         <extra_arg name="child" type="gtk_widget"/>
+         <extra_arg name="expand" type="boolean" default="true"/>
+         <extra_arg name="fill" type="boolean" default="true"/>
+         <extra_arg name="padding" type="integer" default="0"/>
+      </add_child>
+   </widget_type>
+
+   <!--  Gtk_Button -->
+
+   <widget_type id="gtk_button"
+                page="standard"
+                parent="gtk_bin"
+                icon="button.xpm">
+
+      <!--  Header files -->
+      <header lang="C">   gtkbutton.h </header>
+      <header lang="Ada"> Gtk.Button  </header>
+
+      <new>
+          <subprogram lang="C">   gtk_button_new </subprogram>
+          <subprogram lang="Ada"> Gtk_New        </subprogram>
+      </new>
+      <new default="yes">
+          <subprogram lang="C">   gtk_button_new_with_label  </subprogram>
+          <subprogram lang="Ada"> Gtk_New                    </subprogram>
+          <extra_arg type="string" name="label"/>
+
+          <!--  This constructor builds default children -->
+          <default-child name="child" read-only="true" type="gtk_label">
+             <get lang="C"> (*$1).child </get>
+             <get lang="Ada"> Get_Child </get>
+          </default-child>
+      </new>
+
+      <!--  List of new signals defined in this class -->
+      <signal name="clicked">
+         <documentation>Emitted when the button is clicked</documentation>
+      </signal>
+      <signal name="pressed">
+         <documentation>Emitted when the button is pressed</documentation>
+      </signal>
+      <signal name="released">
+         <documentation>Emitted when the button is released</documentation>
+      </signal>
+      <signal name="enter">
+         <documentation>Emitted when the mouse enters the button</documentation>
+      </signal>
+      <signal name="leave">
+         <documentation>Emitted when the mouse leaves the button</documentation>
+      </signal>
+
+      <!--  Public properties for that widget -->
+      <property name="in_button" read-only="true" type="boolean"
+                default="false">
+         <documentation>True if the cursor is inside the button</documentation>
+      </property>
+      <!-- ??? Needs much more work: the C macro is still unclear. It also
+           needs to remove the previous child, in case we go from text to
+           icon for instance... -->
+      <property name="label" type="string" default="">
+         <documentation>The text displayed in the button</documentation>
+         <set lang="C"> gtk_label_set_text ((*GTK_BIN ($1)).child, $2) </set>
+         <get lang="C"> gtk_label_get ((*GTK_BIN ($1)).child, &amp;$2) </get>
+      </property>
+
+      <property name="relief" type="gtk_relief_style">
+         <documentation>Relief style for the button</documentation>
+      </property>
+
+      <!--  Meaningful style fields -->
+      <style> foreground background </style>
+
+      <!--  Flags -->
+      <flag name="eventmask">0x0000000000</flag>
+   </widget_type>
+
+   <!--  Gtk_Button_Box -->
+
+   <widget_type id="gtk_button_box"
+                parent="gtk_box">
+      <property name="spacing" type="integer" default="0">
+         <documentation>Space between each child</documentation>
+      </property>
+      <property name="layout" type="gtk_button_box_style"
+                default="GTK_BUTTONBOX_DEFAULT_STYLE">
+         <documentation>Layout to use for the box</documentation>
+      </property>
+      <property name="min_width" type="integer" default="-1">
+         <documentation>Width to use for children of this box ???set_child_size</documentation>
+      </property>
+      <property name="min_height" type="integer" default="-1">
+         <documentation>Height to use for children of this box ???set_child_size</documentation>
+      </property>
+      <property name="ipad_x" type="integer" default="-1">
+         <documentation>Padding to use for children of this box ???set_child_ipadding</documentation>
+      </property>
+      <property name="ipad_y" type="integer" default="-1">
+         <documentation>Padding to use for children of this box ???set_child_ipadding</documentation>
+      </property>
+   </widget_type>
+
+   <!--  Gtk_Calendar -->
+
+   <widget_type id="gtk_calendar"
+                page="additional"
+                parent="gtk_widget"
+                icon="calendar.xpm">
+      <new/>
+   </widget_type>
+
+   <!--  Gtk_Check_Button -->
+
+   <widget_type id="gtk_check_button"
+                page="standard"
+                parent="gtk_toggle_button"
+                icon="toggle.xpm">
+      <new/>
+      <new default="yes">
+          <subprogram lang="C">   gtk_check_button_new_with_label</subprogram>
+          <subprogram lang="Ada"> Gtk_New                        </subprogram>
+          <extra_arg type="string" name="label"/>
+
+          <!--  This constructor builds default children -->
+          <default-child name="child" read-only="true" type="gtk_label"/>
+      </new>
+   </widget_type>
+
+   <!--  File selection widget. This one has default children -->
+
+   <widget_type id="gtk_file_selection"
+                page="dialogs"
+                parent="gtk_window"
+                icon="fileselection.xpm">
+
+        <!--  .... -->
+
+        <!--  Declare one of the default children, and override one of its
+              properties -->
+
+        <default-child name="ok_button" type="gtk_button">
+             <get lang="C"> (*$1).ok_button </get>
+             <get lang="Ada"> Get_Ok_Button </get>
+             <property-value name="label">OK</property-value>
+        </default-child>
+
+   </widget_type>
+
+   <!--  Columned Tree. This widget has a property that can only be changed
+         by recreating the widget -->
+
+   <widget_type id="gtk_ctree"
+                page="standard"
+                parent="gtk_clist"
+                icon="ctree.xpm">
+      <property name="columns" type="integer" default="3" recreate="true">
+         <documentation>Number of columns in the widget</documentation>
+      </property>
+   </widget_type>
+
+   <!--  Gtk_Hbox -->
+
+   <widget_type id="gtk_hbox"
+                page="container"
+                parent="gtk_box"
+                icon="hbox.xpm">
+      <new>
+          <subprogram lang="Ada">Gtk_New_Hbox</subprogram>
+          <extra_arg type="boolean" name="homogeneous"/>
+          <extra_arg type="integer" name="spacing"/>
+      </new>
+   </widget_type>
+
+   <!--  Gtk_Hbutton_Box -->
+
+   <widget_type id="gtk_hbutton_box"
+                page="container"
+                parent="gtk_hbutton_box"
+                icon="hbuttonbox.xpm">
+      <new>
+          <subprogram lang="Ada">Gtk_New_Hbutton_Box</subprogram>
+      </new>
+   </widget_type>
+
+   <!--  Gtk_Vbox -->
+
+   <widget_type id="gtk_vbox"
+                page="container"
+                parent="gtk_box"
+                icon="vbox.xpm">
+      <new>
+          <subprogram lang="Ada">Gtk_New_Vbox</subprogram>
+          <extra_arg type="boolean" name="homogeneous"/>
+          <extra_arg type="integer" name="spacing"/>
+      </new>
+   </widget_type>
+
+   <!--  Gtk_Vbutton_Box -->
+
+   <widget_type id="gtk_vbutton_box"
+                page="container"
+                parent="gtk_vbutton_box"
+                icon="vbuttonbox.xpm">
+      <new>
+          <subprogram lang="Ada">Gtk_New_Vbutton_Box</subprogram>
+      </new>
+   </widget_type>
+
+</library>
