@@ -47,7 +47,6 @@ MODULE.CPP                = yes
 --  Change behavior of GPS. These debug handle do not add extra logs
 
 EXPLORERS.TOOLTIPS                = no
-ON_THE_FLY_CASING                 = no
 ENTITIES.FORCE_UNIQUE_REF         = yes
 ENTITIES.QUERIES_FILE_GRANULARITY = yes
 ENTITIES.ASSERT                   = no
