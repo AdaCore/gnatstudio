@@ -499,20 +499,12 @@ package body Odd.Source_Editors is
 
             when ASCII.HT =>
                declare
-                  Offset : Guint;
+                  Offset : constant Guint :=
+                    (Line_Start_Position - Get_Length (Get_Child (Editor))
+                     - 1 + Guint (Invisible_Column_Width (Editor)))
+                    mod Guint (Tab_Size);
                begin
-                  if Editor.Show_Line_Nums then
-                     Offset :=
-                       (Line_Start_Position - Get_Length (Get_Child (Editor))
-                        + Guint (Line_Numbers_Width) - 1) mod Guint (Tab_Size);
-                  else
-                     Offset :=
-                       (Line_Start_Position - 1 -
-                        Get_Length (Get_Child (Editor))) mod Guint (Tab_Size);
-                  end if;
-                  for J in 0 .. Offset loop
-                     Insert (Editor, Chars => " ");
-                  end loop;
+                  Insert (Editor, Chars => (1 .. Integer (Offset + 1) => ' '));
                   Index := Index + 1;
                end;
 
