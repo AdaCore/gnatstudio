@@ -21,6 +21,7 @@
 with Gdk.Color;                    use Gdk.Color;
 with Gdk.Event;                    use Gdk.Event;
 with Glib;                         use Glib;
+with Glib.Convert;                 use Glib.Convert;
 with Glib.Object;                  use Glib.Object;
 with Glib.Values;                  use Glib.Values;
 with Gtk.Alignment;                use Gtk.Alignment;
@@ -493,7 +494,8 @@ package body Project_Viewers is
       end if;
 
       Internal (Get_Object (Viewer.Model), Iter'Address,
-                Compiler_Switches_Column, To_String (Value) & ASCII.NUL,
+                Compiler_Switches_Column,
+                   Locale_To_UTF8 (To_String (Value)) & ASCII.NUL,
                 Compiler_Color_Column,    Color);
    end Project_Viewers_Set;
 
@@ -518,7 +520,7 @@ package body Project_Viewers is
           (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
       then
          Append (Viewer.Model, Iter, Null_Iter);
-         Set (Viewer.Model, Iter, File_Name_Column, File_N);
+         Set (Viewer.Model, Iter, File_Name_Column, Locale_To_UTF8 (File_N));
          Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;

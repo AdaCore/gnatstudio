@@ -27,6 +27,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Exceptions;            use Ada.Exceptions;
 
 with Glib;                     use Glib;
+with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib.Xml_Int;             use Glib.Xml_Int;
@@ -787,9 +788,10 @@ package body Project_Explorers is
       if Extending_Project (Project) /= No_Project then
          --  ??? We could use a different icon instead
          Set (Explorer.Tree.Model, N, Base_Name_Column,
-              Node_Text & " (extended)");
+              Locale_To_UTF8 (Node_Text) & " (extended)");
       else
-         Set (Explorer.Tree.Model, N, Base_Name_Column, Node_Text);
+         Set (Explorer.Tree.Model, N, Base_Name_Column,
+              Locale_To_UTF8 (Node_Text));
       end if;
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
@@ -899,10 +901,11 @@ package body Project_Explorers is
          Append (Explorer.Tree.Model, N, Parent_Node);
       end if;
 
-      Set (Explorer.Tree.Model, N, Base_Name_Column, Text.all);
+      Set (Explorer.Tree.Model, N, Base_Name_Column,
+           Locale_To_UTF8 (Text.all));
 
       Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-           Name_As_Directory (Directory));
+           Locale_To_UTF8 (Name_As_Directory (Directory)));
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
       Set (Explorer.Tree.Model, N, Up_To_Date_Column, False);

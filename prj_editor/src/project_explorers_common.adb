@@ -21,6 +21,7 @@
 with Basic_Types;               use Basic_Types;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Pixmaps_Prj;               use Pixmaps_Prj;
+with Glib.Convert;              use Glib.Convert;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Language.Unknown;          use Language.Unknown;
@@ -113,9 +114,10 @@ package body Project_Explorers_Common is
    begin
       Append (Model, Iter, Base);
 
-      Set (Model, Iter, Absolute_Name_Column, File);
+      Set (Model, Iter, Absolute_Name_Column, Locale_To_UTF8 (File));
 
-      Set (Model, Iter, Base_Name_Column, Base_Name (File));
+      Set (Model, Iter, Base_Name_Column,
+           Locale_To_UTF8 (Base_Name (File)));
 
       Set (Model, Iter, Icon_Column,
            C_Proxy (Close_Pixbufs (File_Node)));
@@ -178,8 +180,8 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, File);
-      Set (Model, N, Base_Name_Column, Name);
+      Set (Model, N, Absolute_Name_Column, Locale_To_UTF8 (File));
+      Set (Model, N, Base_Name_Column, Locale_To_UTF8 (Name));
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Category_Node)));
       Set (Model, N, Node_Type_Column,
@@ -222,29 +224,30 @@ package body Project_Explorers_Common is
          end if;
       end if;
 
-      Set (Model, N, Absolute_Name_Column, File);
+      Set (Model, N, Absolute_Name_Column, Locale_To_UTF8 (File));
 
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
             Set (Model, N, Base_Name_Column,
-                 Construct.Name.all & " (spec) " &
-                 Reduce (Construct.Profile.all));
+                 Locale_To_UTF8 (Construct.Name.all & " (spec) " &
+                                 Reduce (Construct.Profile.all)));
          else
             Set (Model, N, Base_Name_Column,
-                 Construct.Name.all & " (spec)");
+                 Locale_To_UTF8 (Construct.Name.all & " (spec)"));
 
          end if;
 
       elsif Construct.Profile /= null then
          Set (Model, N, Base_Name_Column,
-              Construct.Name.all & " " & Reduce (Construct.Profile.all));
+              Locale_To_UTF8 (Construct.Name.all & " "
+                              & Reduce (Construct.Profile.all)));
       else
          Set (Model, N, Base_Name_Column,
-              Construct.Name.all);
+              Locale_To_UTF8 (Construct.Name.all));
       end if;
 
       Set (Model, N, Entity_Base_Column,
-           Construct.Name.all);
+           Locale_To_UTF8 (Construct.Name.all));
 
       Set (Model, N, Icon_Column,
            C_Proxy (Close_Pixbufs (Entity_Node)));

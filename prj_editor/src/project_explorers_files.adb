@@ -24,6 +24,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Glib;                      use Glib;
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
@@ -210,9 +211,9 @@ package body Project_Explorers_Files is
          Append (D.Explorer.File_Model, Iter, D.Base);
 
          Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-              D.Norm_Dir.all);
+              Locale_To_UTF8 (D.Norm_Dir.all));
          Set (D.Explorer.File_Model, Iter, Base_Name_Column,
-              D.Norm_Dir.all);
+              Locale_To_UTF8 (D.Norm_Dir.all));
          Set (D.Explorer.File_Model, Iter, Node_Type_Column,
               Gint (Node_Types'Pos (Directory_Node)));
 
@@ -281,8 +282,9 @@ package body Project_Explorers_Files is
          begin
             Append (D.Explorer.File_Model, Iter, D.Base);
             Set (D.Explorer.File_Model, Iter, Absolute_Name_Column,
-                 D.Norm_Dir.all & Dir & Directory_Separator);
-            Set (D.Explorer.File_Model, Iter, Base_Name_Column, Dir);
+                 Locale_To_UTF8 (D.Norm_Dir.all & Dir & Directory_Separator));
+            Set (D.Explorer.File_Model, Iter, Base_Name_Column,
+                 Locale_To_UTF8 (Dir));
             Set (D.Explorer.File_Model, Iter, Node_Type_Column,
                  Gint (Node_Types'Pos (Directory_Node)));
 
