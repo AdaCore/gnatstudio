@@ -354,7 +354,7 @@ package Src_Editor_Box is
       Start_Column : out Positive;
       End_Line     : out Positive;
       End_Column   : out Positive;
-      Status       : out Src_Info.Queries.Query_Status);
+      Status       : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
    --  Return the location of the declaration of the entity located at the
    --  given position. If either Line or Column is equal to 0, then the current
    --  insert cursor position is used instead. If the position is already
