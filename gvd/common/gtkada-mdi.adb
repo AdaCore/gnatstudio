@@ -288,8 +288,7 @@ package body Gtkada.MDI is
 
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle);
-   procedure Draw_Child
-     (Child : access Gtk_Widget_Record'Class; Params : Gtk_Args);
+   procedure Draw_Child (Child : access Gtk_Widget_Record'Class);
    function Draw_Child
      (Child : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Boolean;
@@ -347,7 +346,6 @@ package body Gtkada.MDI is
    procedure Set_Focus_Child_MDI
      (MDI : access Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
-      pragma Warnings (Off, MDI);
       Widget : Gtk_Widget := Gtk_Widget (To_Object (Args, 1));
    begin
       if Widget /= null then
@@ -1285,6 +1283,7 @@ package body Gtkada.MDI is
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle)
    is
       use Widget_List;
+      pragma Unreferenced (Area);
 
       F  : Gdk.Font.Gdk_Font :=
         Get_Gdkfont (Title_Font_Name, Title_Font_Height);
@@ -1330,8 +1329,7 @@ package body Gtkada.MDI is
    -- Draw_Child --
    ----------------
 
-   procedure Draw_Child
-     (Child : access Gtk_Widget_Record'Class; Params : Gtk_Args) is
+   procedure Draw_Child (Child : access Gtk_Widget_Record'Class) is
    begin
       Draw_Child (MDI_Child (Child), Full_Area);
       Gtk.Handlers.Emit_Stop_By_Name (Child, "draw");
@@ -1425,6 +1423,7 @@ package body Gtkada.MDI is
      (MDI   : access Gtk_Widget_Record'Class;
       Event : Gdk_Event) return Boolean
    is
+      pragma Unreferenced (Event);
       M : MDI_Window := MDI_Window (MDI);
    begin
       if M.Selected = None then
@@ -1928,7 +1927,8 @@ package body Gtkada.MDI is
       if Gtk.Major_Version = 1
         and then Gtk.Minor_Version <= 2
       then
-         Widget_Callback.Connect (Child, "draw", Draw_Child'Access);
+         Widget_Callback.Connect
+           (Child, "draw", Widget_Callback.To_Marshaller (Draw_Child'Access));
       end if;
       Widget_Callback.Connect
         (Child, "destroy",
@@ -3403,6 +3403,7 @@ package body Gtkada.MDI is
      (MDI : access MDI_Window_Record;
       Containing : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
+      pragma Unreferenced (MDI);
       Parent : Gtk_Widget := Gtk_Widget (Containing);
    begin
       while Parent /= null
