@@ -136,6 +136,10 @@ package Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Command  : String) return Boolean;
 
+   function Is_Load_Command
+     (Debugger : access Jdb_Debugger;
+      Command  : String) return Boolean;
+
    function Is_Break_Command
      (Debugger : access Jdb_Debugger;
       Command : String) return Boolean;

@@ -996,16 +996,9 @@ package body Debugger.Gdb is
         or else (Command'Length >= 4
           and then Command (Command'First .. Command'First + 3) = "task")
         or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "file")
-        or else (Command'Length >= 4
           and then Command (Command'First .. Command'First + 3) = "core")
         or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "attach")
-        or else (Command'Length >= 15
-          and then Command (Command'First .. Command'First + 14) =
-            "add-symbol-file")
-        or else (Command'Length >= 4
-          and then Command (Command'First .. Command'First + 3) = "load");
+          and then Command (Command'First .. Command'First + 5) = "attach");
    end Is_Context_Command;
 
    --------------------------
@@ -1030,6 +1023,24 @@ package body Debugger.Gdb is
         or else (Command'Length >= 5
           and then Command (Command'First .. Command'First + 4) = "begin");
    end Is_Execution_Command;
+
+   ---------------------
+   -- Is_Load_Command --
+   ---------------------
+
+   function Is_Load_Command
+     (Debugger : access Gdb_Debugger;
+      Command  : String) return Boolean is
+   begin
+      return
+        (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "file")
+        or else (Command'Length >= 15
+          and then Command (Command'First .. Command'First + 14) =
+            "add-symbol-file")
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "load");
+   end Is_Load_Command;
 
    ----------------------
    -- Is_Break_Command --

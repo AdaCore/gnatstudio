@@ -427,9 +427,8 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Command  : String) return Boolean is
    begin
-      return Is_Execution_Command (Debugger, Command)
-        or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "thread");
+      return Command'Length >= 6
+        and then Command (Command'First .. Command'First + 5) = "thread";
    end Is_Context_Command;
 
    --------------------------
@@ -438,13 +437,26 @@ package body Debugger.Jdb is
 
    function Is_Execution_Command
      (Debugger : access Jdb_Debugger;
-      Command : String) return Boolean is
+      Command  : String) return Boolean is
    begin
       return    Command = "step"
         or else Command = "step up"
         or else Command = "stepi"
-        or else Command = "next";
+        or else Command = "next"
+        or else Command = "run";
    end Is_Execution_Command;
+
+   ---------------------
+   -- Is_Load_Command --
+   ---------------------
+
+   function Is_Load_Command
+     (Debugger : access Jdb_Debugger;
+      Command  : String) return Boolean is
+   begin
+      return Command'Length >= 4
+        and then Command (Command'First .. Command'First + 3) = "load";
+   end Is_Load_Command;
 
    ----------------------
    -- Is_Break_Command --
@@ -452,22 +464,19 @@ package body Debugger.Jdb is
 
    function Is_Break_Command
      (Debugger : access Jdb_Debugger;
-      Command : String) return Boolean
-   is
+      Command  : String) return Boolean is
    begin
-      return Is_Execution_Command (Debugger, Command)
-        or else (Command'Length >= 8
-          and then Command (Command'First .. Command'First + 7) = "break at")
-        or else (Command'Length >= 8
-          and then Command (Command'First .. Command'First + 7) = "break in");
+      return Command'Length >= 6
+        and then Command (Command'First .. Command'First + 5) = "break ";
    end Is_Break_Command;
 
    ----------------
    -- Stack_Down --
    ----------------
 
-   procedure Stack_Down (Debugger : access Jdb_Debugger;
-                         Mode     : Command_Type := Hidden) is
+   procedure Stack_Down
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "down", Mode => Mode);
    end Stack_Down;
@@ -476,8 +485,9 @@ package body Debugger.Jdb is
    -- Stack_Up --
    --------------
 
-   procedure Stack_Up (Debugger : access Jdb_Debugger;
-                       Mode     : Command_Type := Hidden) is
+   procedure Stack_Up
+     (Debugger : access Jdb_Debugger;
+      Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "up", Mode => Mode);
    end Stack_Up;
