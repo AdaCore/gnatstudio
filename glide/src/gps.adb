@@ -48,6 +48,7 @@ with Aunit_Module;
 with Browsers.Module;
 with VCS_Module;
 with GVD_Module;
+with Metrics_Module;
 pragma Warnings (On);
 
 procedure Glide2 is
