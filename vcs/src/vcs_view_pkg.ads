@@ -24,8 +24,6 @@ with Gtk.Box;    use Gtk.Box;
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
 
-with GNAT.OS_Lib;     use GNAT.OS_Lib;
-
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 
@@ -38,11 +36,6 @@ package VCS_View_Pkg is
    type VCS_View_Access is access all VCS_View_Record'Class;
 
    type VCS_View_Record is new Gtk_Hbox_Record with record
-      Current_Directory : String_Access;
-      --  The directory that is currently being viewed.
-      --  It must be an absolute directory name ending
-      --  with Directory_Separator.
-
       Tree  : Gtk_Tree_View;
       Model : Gtk_Tree_Store;
 
@@ -68,10 +61,6 @@ package VCS_View_Pkg is
 
    procedure Initialize (VCS_View : access VCS_View_Record'Class);
 
-   procedure Show_Files (Explorer  : VCS_View_Access;
-                         Directory : String;
-                         Ref       : VCS_Access);
-
    procedure Display_File_Status
      (Kernel : Kernel_Handle;
       Status : File_Status_List.List);
@@ -82,16 +71,14 @@ package VCS_View_Pkg is
    --  Return the list of files that are selected.
 
    procedure Display_String_List
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
+     (Kernel   : Kernel_Handle;
       List     : String_List.List;
       M_Type   : Message_Type := Verbose);
    --  Convenience procedure to output a String_List.List.
    --  One of Explorer or Kernel can be Null.
 
    procedure Push_Message
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
+     (Kernel   : Kernel_Handle;
       M_Type   : Message_Type;
       Message  : String);
    --  Display a message.

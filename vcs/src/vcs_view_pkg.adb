@@ -105,13 +105,14 @@ package body VCS_View_Pkg is
    --  in Columns_Types.
 
    Name_Column               : constant := 0;
-   Local_Rev_Column          : constant := 1;
-   Rep_Rev_Column            : constant := 2;
-   Status_Description_Column : constant := 3;
-   Status_Pixbuf_Column      : constant := 4;
-   Log_Column                : constant := 5;
-   Log_Editor_Column         : constant := 6;
-   Log_Editable_Column       : constant := 7;
+   Base_Name_Column          : constant := 1;
+   Local_Rev_Column          : constant := 2;
+   Rep_Rev_Column            : constant := 3;
+   Status_Description_Column : constant := 4;
+   Status_Pixbuf_Column      : constant := 5;
+   Log_Column                : constant := 6;
+   Log_Editor_Column         : constant := 7;
+   Log_Editable_Column       : constant := 8;
 
    -------------------
    -- Columns_Types --
@@ -121,6 +122,7 @@ package body VCS_View_Pkg is
    begin
       return GType_Array'
         (Name_Column               => GType_String,
+         Base_Name_Column          => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
@@ -149,15 +151,6 @@ package body VCS_View_Pkg is
    --  Open a list of files.
    --  User must free Files afterwards.
 
-   procedure Commit
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Log      : String;
-      Ref      : VCS_Access);
-   --  Commit a list of files with a given log.
-   --  User must free Files afterwards.
-
    procedure Diff_Files
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
@@ -182,18 +175,6 @@ package body VCS_View_Pkg is
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
 
-   procedure Push_Message
-     (Explorer : access VCS_View_Record'Class;
-      M_Type   : Message_Type;
-      Message  : String);
-   --  Display a message.
-
-   procedure Display_String_List
-     (Explorer : VCS_View_Access;
-      List     : String_List.List;
-      M_Type   : Message_Type := Verbose);
-   --  Display a list of strings.
-
    procedure Launch_Viewer
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
@@ -209,21 +190,12 @@ package body VCS_View_Pkg is
    --  Launch an editor for the given file.
    --  ??? Explorer is not useful.
 
-   procedure Refresh_Files
-     (Explorer : access VCS_View_Record'Class;
-      Connect  : Boolean := False);
-   --  Display the relevant entries in the local directory.
-
-   procedure Set_Directory
-     (Explorer  : access VCS_View_Record'Class;
-      Directory : String;
-      Ref       : VCS_Access);
-   --  Sets the current directory to Directory.
-   --  Directory must be an absolute directory name ending
-   --  with Directory_Separator. If Directory is invalid, then
-   --  the explorer will be set to the current directory.
-   --  This procedure will also look for an acceptable VCS system for this
-   --  directory.
+   procedure Commit
+     (Kernel   : Kernel_Handle;
+      Files    : String_List.List;
+      Log      : String;
+      Ref      : VCS_Access);
+   --  ???
 
    procedure Foreach_Selected_File
      (Explorer : access VCS_View_Record'Class;
@@ -352,8 +324,7 @@ package body VCS_View_Pkg is
    -------------------------
 
    procedure Display_String_List
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
+     (Kernel   : Kernel_Handle;
       List     : String_List.List;
       M_Type   : Message_Type := Verbose)
    is
@@ -361,22 +332,9 @@ package body VCS_View_Pkg is
    begin
       while not String_List.Is_Empty (Temp_List) loop
          Push_Message
-           (Explorer, Kernel, M_Type, "   "  & String_List.Head (Temp_List));
+           (Kernel, M_Type, "   "  & String_List.Head (Temp_List));
          Temp_List := String_List.Next (Temp_List);
       end loop;
-   end Display_String_List;
-
-   -------------------------
-   -- Display_String_List --
-   -------------------------
-
-   procedure Display_String_List
-     (Explorer : VCS_View_Access;
-      List     : String_List.List;
-      M_Type   : Message_Type := Verbose) is
-   begin
-      pragma Assert (Explorer /= null);
-      Display_String_List (Explorer, Explorer.Kernel, List, M_Type);
    end Display_String_List;
 
    ---------------
@@ -400,6 +358,9 @@ package body VCS_View_Pkg is
       end if;
 
       Set (Explorer.Model, Iter, Name_Column,
+           String_List.Head (Status_Record.File_Name));
+
+      Set (Explorer.Model, Iter, Base_Name_Column,
            Base_Name (String_List.Head (Status_Record.File_Name)));
 
       if not String_List.Is_Empty (Status_Record.Working_Revision) then
@@ -523,8 +484,7 @@ package body VCS_View_Pkg is
          Data  : VCS_View_Access) is
       begin
          String_List.Append
-           (Result, Explorer.Current_Directory.all
-             & Get_String (Explorer.Model, Iter, Name_Column));
+           (Result, Get_String (Explorer.Model, Iter, Name_Column));
       end Add_Selected_Item;
 
    begin
@@ -539,87 +499,17 @@ package body VCS_View_Pkg is
       return Result;
    end Get_Selected_Files;
 
-   -------------------
-   -- Refresh_Files --
-   -------------------
-
-   procedure Refresh_Files
-     (Explorer : access VCS_View_Record'Class;
-      Connect  : Boolean := False)
-   is
-      Iter           : Gtk_Tree_Iter;
-      L              : File_Status_List.List;
-      Directory_List : String_List.List;
-      Success        : Boolean := True;
-
-      use File_Status_List;
-
-   begin
-      if Explorer.Current_Directory = null then
-         return;
-      end if;
-
-      Clear (Explorer.Model);
-      String_List.Append (Directory_List, Explorer.Current_Directory.all);
-
-      if Connect then
-         Get_Status (Explorer.VCS_Ref, Directory_List);
-      else
-         L := Local_Get_Status (Explorer.VCS_Ref, Directory_List);
-      end if;
-
-      String_List.Free (Directory_List);
-
-      while not Is_Empty (L) loop
-         Append (Explorer.Model, Iter, Null_Iter);
-         Fill_Info (Explorer, Iter, Head (L), False, Success);
-
-         if not Success then
-            Remove (Explorer.Model, Iter);
-         end if;
-
-         Tail (L);
-      end loop;
-
-      Columns_Autosize (Explorer.Tree);
-   end Refresh_Files;
-
    ------------------
    -- Push_Message --
    ------------------
 
    procedure Push_Message
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
+     (Kernel   : Kernel_Handle;
       M_Type   : Message_Type;
       Message  : String) is
    begin
-      pragma Assert (Explorer /= null and then Kernel /= null);
-
-      if Kernel = null then
-         if M_Type = Error then
-            Insert (Explorer.Message_Text, Chars => -"    Error : ");
-         end if;
-
-         Insert (Explorer.Message_Text, Chars => Message & ASCII.LF);
-
-      else
-         Console.Insert
-           (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
-      end if;
-   end Push_Message;
-
-   ------------------
-   -- Push_Message --
-   ------------------
-
-   procedure Push_Message
-     (Explorer : access VCS_View_Record'Class;
-      M_Type   : Message_Type;
-      Message  : String) is
-   begin
-      Push_Message
-        (VCS_View_Access (Explorer), Explorer.Kernel, M_Type, Message);
+      Console.Insert
+        (Kernel, Message, Highlight_Sloc => False, Mode => M_Type);
    end Push_Message;
 
    ---------------------------
@@ -656,8 +546,7 @@ package body VCS_View_Pkg is
      (Object    : access Gtk_Widget_Record'Class;
       Parameter : Log_Parameter) is
    begin
-      Commit (Parameter.Explorer,
-              Parameter.Kernel,
+      Commit (Parameter.Kernel,
               Parameter.Log_Editor.Files,
               Get_Text (Parameter.Log_Editor),
               Parameter.VCS_Ref);
@@ -813,7 +702,6 @@ package body VCS_View_Pkg is
       end if;
    end Edit_Log;
 
-
    ----------------
    -- Diff_Files --
    ----------------
@@ -861,8 +749,8 @@ package body VCS_View_Pkg is
    begin
       pragma Assert (Ref /= null);
 
-      Push_Message (Explorer, Kernel, Verbose, -"Updating files:");
-      Display_String_List (Explorer, Kernel, Files, Verbose);
+      Push_Message (Kernel, Verbose, -"Updating files:");
+      Display_String_List (Kernel, Files, Verbose);
       Update (Ref, Files);
 
       --  If the dialog exists, then update the status for the files.
@@ -901,8 +789,7 @@ package body VCS_View_Pkg is
    ------------
 
    procedure Commit
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
+     (Kernel   : Kernel_Handle;
       Files    : String_List.List;
       Log      : String;
       Ref      : VCS_Access)
@@ -910,7 +797,6 @@ package body VCS_View_Pkg is
       Temp_Files : String_List.List := Files;
       Files_List : String_List.List;
       Logs_List  : String_List.List;
-      Iter       : Gtk_Tree_Iter;
 
    begin
       pragma Assert (Ref /= null);
@@ -919,95 +805,20 @@ package body VCS_View_Pkg is
          return;
       end if;
 
-      Push_Message (Explorer, Kernel, Verbose, -"Committing files:");
-      Display_String_List (Explorer, Kernel, Files_List);
+      Push_Message (Kernel, Verbose, -"Committing files:");
+      Display_String_List (Kernel, Files_List);
 
-      if Explorer /= null
-        and then Explorer.Current_Directory /= null
-      then
-         while not String_List.Is_Empty (Temp_Files) loop
-            Iter := Get_Iter_From_Name
-              (Explorer, Base_Name (String_List.Head (Temp_Files)));
-
-            declare
-               F_Log : String := Get_String (Explorer.Model, Iter, Log_Column);
-            begin
-               if F_Log /= "" then
-                  String_List.Append
-                    (Files_List,
-                     Explorer.Current_Directory.all &
-                       String_List.Head (Temp_Files));
-                  String_List.Append (Logs_List, F_Log);
-               else
-                  Push_Message
-                    (Explorer, Verbose,
-                     -"You must provide a log before committing file " &
-                       String_List.Head (Temp_Files));
-               end if;
-            end;
-
-            Temp_Files := String_List.Next (Temp_Files);
-         end loop;
-      else
-         while not String_List.Is_Empty (Temp_Files) loop
-            String_List.Append (Files_List, String_List.Head (Temp_Files));
-            String_List.Append (Logs_List, Log);
-            Temp_Files := String_List.Next (Temp_Files);
-         end loop;
-      end if;
+      while not String_List.Is_Empty (Temp_Files) loop
+         String_List.Append (Files_List, String_List.Head (Temp_Files));
+         String_List.Append (Logs_List, Log);
+         Temp_Files := String_List.Next (Temp_Files);
+      end loop;
 
       Commit (Ref, Files_List, Logs_List);
-      Push_Message (Explorer, Kernel, Verbose, -"...done." & ASCII.LF);
 
       String_List.Free (Files_List);
       String_List.Free (Logs_List);
    end Commit;
-
-   -------------------
-   -- Set_Directory --
-   -------------------
-
-   procedure Set_Directory
-     (Explorer  : access VCS_View_Record'Class;
-      Directory : String;
-      Ref       : VCS_Access) is
-   begin
-      if Explorer.Current_Directory /= null then
-         Free (Explorer.Current_Directory);
-      end if;
-
-      if Is_Absolute_Path (Directory)
-        and then Is_Directory (Directory)
-        and then Directory (Directory'Last) = Directory_Separator
-      then
-         Explorer.Current_Directory := new String'(Directory);
-      else
-         Explorer.Current_Directory := new String'(Get_Current_Dir);
-      end if;
-
-      Explorer.VCS_Ref := Ref;
-   end Set_Directory;
-
-   ----------------
-   -- Show_Files --
-   ----------------
-
-   procedure Show_Files
-     (Explorer  : VCS_View_Access;
-      Directory : String;
-      Ref       : VCS_Access) is
-   begin
-      if Explorer.Current_Directory /= null
-        and then Explorer.Current_Directory.all = Directory
-      then
-         return;
-      end if;
-
-      Push_State (Explorer.Kernel, Processing);
-      Set_Directory (Explorer, Directory, Ref);
-      Refresh_Files (Explorer, False);
-      Pop_State (Explorer.Kernel);
-   end Show_Files;
 
    ---------------------
    -- Edited_Callback --
@@ -1067,7 +878,7 @@ package body VCS_View_Pkg is
       Pack_Start (Col, Pixbuf_Rend, False);
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
       Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Text_Rend, "text", Name_Column);
+      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
       Dummy := Append_Column (Explorer.Tree, Col);
 
       Gtk_New (Col);
@@ -1123,7 +934,7 @@ package body VCS_View_Pkg is
 
       VCS_View_Pkg.Initialize (VCS_View);
 
-      Show_Files (VCS_View, "", Ref);
+      --  Show_Files (VCS_View, "", Ref);
    end Gtk_New;
 
    ------------------
