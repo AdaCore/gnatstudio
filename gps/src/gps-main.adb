@@ -850,7 +850,7 @@ procedure GPS.Main is
                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
                   Errors   => Errors);
             else
-               Execute_Command
+               GPS.Kernel.Scripts.Execute_Command
                  (Script   => Script,
                   Command  => Batch (J + 1 .. Batch'Last),
                   Errors   => Errors);
