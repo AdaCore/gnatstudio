@@ -900,7 +900,7 @@ package body Src_Editor_Buffer is
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          Slot_Object => Buffer,
-         User_Data   => Kernel_Handle (Kernel));
+         User_Data   => Kernel);
    end Initialize;
 
    -------------------------
