@@ -123,7 +123,9 @@ package Docgen_Backend_HTML is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean);
+      Process_Body        : Boolean;
+      Level               : Natural;
+      Indent              : Natural);
    --  Generate an identifier in html format.
 
    procedure Format_Link
