@@ -4078,14 +4078,16 @@ Tree.
    Similarly the @code{Build} contextual menu accessible from a project
    entity contains the same entries.
 
-   @item Project
+   @item Compile all sources
    Compile all source files defined in the currently selected project, or
    by default the top level project.
 
-   @item All mains
+   @item All
    Build and link all main units defined in your project.
    If no main unit is specified in your project, build all files defined
    in your project and subprojects recursively.
+   For a library project file, compile sources and recreate the library
+   when needeed.
 
    @item <current file>
    Consider the currently selected file as a main file, and build it.
