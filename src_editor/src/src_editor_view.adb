@@ -155,48 +155,48 @@ package body Src_Editor_View is
    --  Insert Info at the correct line position in L.
 
    procedure Get_Column_For_Identifier
-     (View          : access Source_View_Record;
-      Identifier    : String;
-      Width         : Integer;
-      Column        : out Integer);
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer);
    --  Return the index of the column corresponding to the identifier.
    --  Create such a column if necessary.
 
    function Get_Side_Info
-     (View          : access Source_View_Record'Class;
-      Line          : Positive;
-      Column        : Positive) return Line_Info_Width;
+     (View   : access Source_View_Record'Class;
+      Line   : Positive;
+      Column : Positive) return Line_Info_Width;
    --  Return the side information corresponding to Line, Column in the
    --  Side window.
 
    function On_Delete
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean;
    --  Callback for the "delete_event" signal.
 
    procedure Remove_Line_Information_Column
-     (View    : access Source_View_Record'Class;
-      Column  : Integer);
+     (View   : access Source_View_Record'Class;
+      Column : Integer);
    --  Remove the column from the side window information in View.
 
    procedure Save_Cursor_Position
-     (View    : access Source_View_Record'Class);
+     (View : access Source_View_Record'Class);
    --  Save the cursor position.
 
    procedure Restore_Cursor_Position
-     (View    : access Source_View_Record'Class);
+     (View : access Source_View_Record'Class);
    --  Restore the stored cursor position.
 
    --------------------------
    -- Save_Cursor_Position --
    --------------------------
 
-   procedure Save_Cursor_Position
-     (View    : access Source_View_Record'Class) is
+   procedure Save_Cursor_Position (View : access Source_View_Record'Class) is
    begin
-      Get_Cursor_Position (Source_Buffer (Get_Buffer (View)),
-                           View.Saved_Cursor_Line,
-                           View.Saved_Cursor_Column);
+      Get_Cursor_Position
+        (Source_Buffer (Get_Buffer (View)),
+         View.Saved_Cursor_Line,
+         View.Saved_Cursor_Column);
    end Save_Cursor_Position;
 
    -----------------------------
@@ -204,11 +204,12 @@ package body Src_Editor_View is
    -----------------------------
 
    procedure Restore_Cursor_Position
-     (View    : access Source_View_Record'Class) is
+     (View : access Source_View_Record'Class) is
    begin
-      Set_Cursor_Position (Source_Buffer (Get_Buffer (View)),
-                           View.Saved_Cursor_Line,
-                           View.Saved_Cursor_Column);
+      Set_Cursor_Position
+        (Source_Buffer (Get_Buffer (View)),
+         View.Saved_Cursor_Line,
+         View.Saved_Cursor_Column);
    end Restore_Cursor_Position;
 
    ------------
@@ -231,8 +232,8 @@ package body Src_Editor_View is
    ---------------
 
    function On_Delete
-     (View     : access Gtk_Widget_Record'Class;
-      Event    : Gdk_Event) return Boolean
+     (View  : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
       The_View : constant Source_View := Source_View (View);
@@ -744,10 +745,10 @@ package body Src_Editor_View is
    ----------------------------
 
    procedure Event_To_Buffer_Coords
-     (View     : access Source_View_Record;
-      Event    : Gdk_Event;
-      Line     : out Gint;
-      Column   : out Gint;
+     (View          : access Source_View_Record;
+      Event         : Gdk_Event;
+      Line          : out Gint;
+      Column        : out Gint;
       Out_Of_Bounds : out Boolean) is
    begin
       Window_To_Buffer_Coords
@@ -1014,9 +1015,9 @@ package body Src_Editor_View is
    --------------------------
 
    procedure Add_File_Information
-     (View          : access Source_View_Record;
-      Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data)
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Info       : Glide_Kernel.Modules.Line_Information_Data)
    is
       Column : Integer;
       Buffer : Integer;
@@ -1072,10 +1073,10 @@ package body Src_Editor_View is
    ------------------------------------
 
    procedure Create_Line_Information_Column
-     (View           : access Source_View_Record;
-      Identifier     : String;
-      Stick_To_Data  : Boolean;
-      Every_Line     : Boolean)
+     (View          : access Source_View_Record;
+      Identifier    : String;
+      Stick_To_Data : Boolean;
+      Every_Line    : Boolean)
    is
       Col : Integer;
    begin
@@ -1090,8 +1091,8 @@ package body Src_Editor_View is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (View    : access Source_View_Record'Class;
-      Column  : Integer)
+     (View   : access Source_View_Record'Class;
+      Column : Integer)
    is
       Width : Integer;
 
@@ -1136,11 +1137,10 @@ package body Src_Editor_View is
    ------------------------------------
 
    procedure Remove_Line_Information_Column
-     (View           : access Source_View_Record;
-      Identifier     : String)
+     (View       : access Source_View_Record;
+      Identifier : String)
    is
-      Col   : Integer;
-
+      Col : Integer;
    begin
       Get_Column_For_Identifier (View, Identifier, -1, Col);
       Remove_Line_Information_Column (View, Col);
@@ -1153,10 +1153,10 @@ package body Src_Editor_View is
    -------------------------------
 
    procedure Get_Column_For_Identifier
-     (View          : access Source_View_Record;
-      Identifier    : String;
-      Width         : Integer;
-      Column        : out Integer) is
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer) is
    begin
 
       --  Browse through existing columns and try to match Identifier.
@@ -1178,8 +1178,9 @@ package body Src_Editor_View is
 
                View.Line_Info (J).Width := Width;
 
-               Set_Border_Window_Size (View, Enums.Text_Window_Left,
-                                       Gint (View.Total_Column_Width));
+               Set_Border_Window_Size
+                 (View, Enums.Text_Window_Left,
+                  Gint (View.Total_Column_Width));
             end if;
 
             return;
@@ -1210,8 +1211,9 @@ package body Src_Editor_View is
 
          View.Total_Column_Width := View.Total_Column_Width + Width + 2;
 
-         Set_Border_Window_Size (View, Enums.Text_Window_Left,
-                                 Gint (View.Total_Column_Width));
+         Set_Border_Window_Size
+           (View, Enums.Text_Window_Left,
+            Gint (View.Total_Column_Width));
       end;
    end Get_Column_For_Identifier;
 
