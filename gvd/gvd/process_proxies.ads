@@ -44,8 +44,7 @@ package Process_Proxies is
 
    function Get_Command_Mode (Proxy : access Process_Proxy)
       return Odd.Types.Command_Type;
-   --  Return True if the external process is currently process some commands
-   --  internally (ie whose output should be hidden).
+   --  Return the type of the command currently processed.
 
    procedure Set_Command_Mode
      (Proxy : access Process_Proxy;
