@@ -489,6 +489,9 @@ package body Vdiff2_Module.Utils is
                              Data (Item_Local.Current_Node));
             return;
          end if;
+         VDiff2_Module (Vdiff_Module_ID).Is_Active :=
+           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all /=
+              Diff_Head_List.Null_List);
       end if;
 
       Button := Message_Dialog
@@ -715,6 +718,7 @@ package body Vdiff2_Module.Utils is
          Show_Diff_Chunk (Kernel, Item, Curr_Chunk, Info);
          Curr_Node := Next (Curr_Node);
       end loop;
+
       Create
         (Cmd,
          Kernel_Handle (Kernel),

@@ -410,6 +410,10 @@ package body Vdiff2_Module.Callback is
       end if;
 
       Free (Diff);
+
+      VDiff2_Module (Vdiff_Module_ID).Is_Active :=
+        (VDiff2_Module (Vdiff_Module_ID).List_Diff.all /= Null_List);
+
       Trace (Me, "end Close Difference");
    exception
       when E : others =>
