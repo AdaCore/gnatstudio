@@ -840,7 +840,6 @@ package body Docgen.Html_Output is
                   --  No link for this child
                   Put_Line (File, "<TR><TD><PRE>"
                             & Space.all
-                            & "<B>Child object : </B>"
                             & Get_Name (List_Entity_Handle.Data
                                           (Child_Node).all)
                             & " at&nbsp;"
