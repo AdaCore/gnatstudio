@@ -485,6 +485,9 @@ package Glide_Kernel.Scripts is
    --  In the example above, "list" indicates that the function returns a list
    --  (when supported by the language), or a string (when lists are not
    --  supported).
+   --
+   --  If the command has some graphical output (dialog,...), it must run in
+   --  a separate main loop (Gtk.Main.Gtk_Main or modal dialogs).
 
    procedure Register_Scripting_Language
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
