@@ -46,12 +46,12 @@ package Language.C is
      (Lang : access C_Language) return Language_Context;
 
    C_Keywords_Regexp : constant String :=
-     "auto|c(ase|onst)|do|e(lse|xtern)|for|if|re(gister|turn)|" &
-     "s(t(atic|ruct)|witch)|union|volatile|while|typedef";
+     "auto|break|c(ase|on(st|tinue)|har)|d(efault|o|ouble)|e(lse|num|xtern)|" &
+     "f(loat|or)|goto|i(f|n(t|line))|long|re(gister|strict|turn)|" &
+     "s(hort|i(gned|zeof)|t(atic|ruct)|witch)|un(ion|signed)|vo(id|latile)|" &
+     "while|typedef";
    --  Regexp used to highlight keywords in C.
    --  Do not use this directly, use the function Keywords instead.
-   --  ("auto" "case" "const" "struct" "union" "extern" "for" "if" "do"
-   --   "else" "while" "register" "switch" "static" "typedef" "volatile")
 
    --------------
    -- Explorer --
