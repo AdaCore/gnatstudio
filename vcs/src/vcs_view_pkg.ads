@@ -22,6 +22,7 @@ with Gtk.Box;                  use Gtk.Box;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Tree_View;            use Gtk.Tree_View;
 with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
@@ -155,6 +156,9 @@ private
       Cached_Status   : List;
 
       Shown : Boolean := False;
+
+      File_Column : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
+      --  The column containing the file names.
    end record;
    type VCS_Page_Access is access all VCS_Page_Record;
 
