@@ -22,7 +22,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Attach_To_Process1_Activate
-     (Object : access Gtk_Widget_Record'Class);
+     (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Detach_Process1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
@@ -100,7 +100,7 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Run_Again1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Start1_Activate
      (Object : access Gtk_Widget_Record'Class);
@@ -130,16 +130,16 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Continue_Without_Signal1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Kill1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Interrupt1_Activate
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Abort1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Command_History1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
@@ -178,22 +178,19 @@ package Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Menu_Item_Record'Class);
 
    procedure On_Backtrace1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Registers1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Threads1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Tasks1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Processus1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Signals1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
+     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Up1_Activate
      (Object : access Gtk_Widget_Record'Class);

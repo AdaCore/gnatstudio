@@ -85,7 +85,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------
 
    procedure On_Attach_To_Process1_Activate
-     (Object : access Gtk_Widget_Record'Class)
+     (Object : access Gtk_Menu_Item_Record'Class)
    is
    begin
       null;
@@ -371,7 +371,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Run_Again1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -481,7 +481,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------------
 
    procedure On_Continue_Without_Signal1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -492,7 +492,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------
 
    procedure On_Kill1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -514,7 +514,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------
 
    procedure On_Abort1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -657,7 +657,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Backtrace1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -668,7 +668,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------
 
    procedure On_Registers1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -679,29 +679,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Threads1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
    end On_Threads1_Activate;
-
-   ------------------------
-   -- On_Tasks1_Activate --
-   ------------------------
-
-   procedure On_Tasks1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Tasks1_Activate;
 
    ----------------------------
    -- On_Processus1_Activate --
    ----------------------------
 
    procedure On_Processus1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -712,7 +701,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Signals1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
