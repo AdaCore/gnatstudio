@@ -48,8 +48,6 @@ package Docgen.Work_On_Source is
 
    procedure Process_Source
      (Doc_File           : File_Type;
-      First_File         : Boolean;
-      Last_File          : Boolean;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
       Source_File_List   : in out Type_Source_File_List.List;
@@ -60,7 +58,10 @@ package Docgen.Work_On_Source is
       Process_Body_File  : Boolean;
       Options            : All_Options);
    --  with the data from the lists, the soucre file and the config file,
-   --  create the Strings for the output
+   --  create the Strings for the output.
+   --  The order of the procedure calls can't be changed here
+   --  without changing the order in texi_output!
+   --  Change also: Doc_TEXI_Subtitle !!!
 
    procedure Process_Unit_Index
      (Source_File_List : Type_Source_File_List.List;
@@ -77,15 +78,6 @@ package Docgen.Work_On_Source is
       Options          : All_Options);
    --  creates the index file for the types
 
-   function Get_Doc_File_Name
-     (Source_Filename : String;
-      Source_Path     : String;
-      Doc_Suffix      : String) return String;
-   --  returns a string with the name for the new doc file:
-   --  first the doc path is added in front of the created name
-   --  then the "." in front of the suffix is replaced by "_",
-   --  so that a new output format suffix can be added
-
 private
 
    procedure Process_One_Body_File
@@ -101,6 +93,9 @@ private
    procedure Process_Open_File
      (Doc_File         : File_Type;
       Package_File     : String;
+      Next_Package     : GNAT.OS_Lib.String_Access;
+      Prev_Package     : GNAT.OS_Lib.String_Access;
+      Package_Name     : String;
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options);
    --  is always the first subprogram to be called, as it creates the
@@ -109,6 +104,7 @@ private
 
    procedure Process_Close_File
      (Doc_File      : File_Type;
+      File_Name     : String;
       Options       : All_Options);
    --  is always the last subprogram to be called, as it creates the
    --  very end of the documentation by calling the output subprogram
@@ -167,6 +163,18 @@ private
    --  called by Process_Source to work on the exceptions and
    --  pass each of them to the output subprogram
 
+   procedure Process_Entries
+     (Doc_File           : File_Type;
+      Entity_List        : in out Type_Entity_List.List;
+      Source_Filename    : String;
+      Process_Body_File  : Boolean;
+      Package_Name       : String;
+      Parsed_List        : Construct_List;
+      File_Text          : GNAT.OS_Lib.String_Access;
+      Options            : All_Options);
+   --  called by Process_Source to work on the entires and entry
+   --  families and pass each of them to the output subprogram
+
    procedure Process_Subprograms
      (Doc_File           : File_Type;
       Entity_List        : in out Type_Entity_List.List;
@@ -193,8 +201,6 @@ private
    procedure Process_Header
      (Doc_File           : File_Type;
       Package_Name       : String;
-      Next_Package       : GNAT.OS_Lib.String_Access;
-      Prev_Package       : GNAT.OS_Lib.String_Access;
       Def_In_Line        : Integer;
       Package_File       : String;
       Process_Body_File  : Boolean;
