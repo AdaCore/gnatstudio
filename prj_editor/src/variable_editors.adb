@@ -26,6 +26,8 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Glib;                use Glib;
+with Glib.Object;         use Glib.Object;
 with Gtk.Button;          use Gtk.Button;
 with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Label;           use Gtk.Label;
@@ -44,6 +46,7 @@ with Gtk.Text;            use Gtk.Text;
 pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with Prj.Tree;   use Prj.Tree;
 with Prj;        use Prj;
@@ -118,6 +121,11 @@ package body Variable_Editors is
      (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data);
    --  Called when editing a variable.
 
+   procedure Changed
+     (Editor : access Variable_Edit_Record'Class;
+      Var    : Project_Node_Id);
+   --  Emits the "changed" signal on the editor
+
    procedure Refresh_Row
      (Editor : access Variable_Edit_Record'Class;
       Row    : Guint;
@@ -131,16 +139,30 @@ package body Variable_Editors is
    --  Called when the entry giving the current value of a typed variable
    --  has changed.
 
+   Var_Edit_Class : GObject_Class := Uninitialized_Class;
+   --  The class structure for this widget
+
+   Signals : constant chars_ptr_array :=
+     (1 => New_String ("changed"));
+   --  The list of signals defined for this widget
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New (Editor  : out Variable_Edit;
                       Project : Prj.Tree.Project_Node_Id;
-                      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node) is
+                      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node)
+   is
+      Signal_Parameters : constant Signal_Parameter_Types :=
+        (1 => (1 => GType_Int, 2 => GType_None));
    begin
       Editor := new Variable_Edit_Record;
       Initialize (Editor);
+
+      Initialize_Class_Record
+        (Editor, Signals, Var_Edit_Class, "VarEditor", Signal_Parameters);
+
       Editor.Project := Project;
       Editor.Pkg := Pkg;
    end Gtk_New;
@@ -250,6 +272,17 @@ package body Variable_Editors is
          Set_Text (Gtk_Label (Get_Child (Editor.Add_Button)), "Add");
       end if;
    end Gtk_New;
+
+   -------------
+   -- Changed --
+   -------------
+
+   procedure Changed
+     (Editor : access Variable_Edit_Record'Class;
+      Var    : Project_Node_Id) is
+   begin
+      Widget_Callback.Emit_By_Name (Editor, "changed", Gint (Var));
+   end Changed;
 
    ------------------
    -- Display_Expr --
@@ -410,28 +443,24 @@ package body Variable_Editors is
      (GEntry : access Gtk_Widget_Record'Class;
       User   : Editor_Row_Data)
    is
+      use type Widget_List.Glist;
       Editor : Variable_Edit renames User.Editor;
-      Var : Project_Node_Id renames Editor.Data (User.Row).Var;
-      Expr : Project_Node_Id;
+      Var    : Project_Node_Id renames Editor.Data (User.Row).Var;
+      Str    : String_Id;
+      List   : Gtk_List := Get_List (Editor.Data (User.Row).Type_Combo);
+
    begin
-      --  ??? Should be implemented as a higher level in Prj_API
+      if Get_Selection (List) /= Widget_List.Null_List then
+         Str := External_Reference_Of (Var);
+         if Str /= No_String then
+            String_To_Name_Buffer (Str);
+            Prj.Ext.Add
+              (Name_Buffer (Name_Buffer'First .. Name_Len),
+               Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
+         end if;
 
-      --  Get the name of the external variable we are referencing. We need to
-      --  change its value (or pretent it has changed in the environment)
-
-      Expr := Expression_Of (Var);
-      Expr := First_Term (Expr);
-      Expr := Current_Term (Expr);
-
-      pragma Assert (Kind_Of (Expr) = N_External_Value);
-
-      Expr := External_Reference_Of (Expr);
-      pragma Assert (Kind_Of (Expr) = N_Literal_String);
-
-      String_To_Name_Buffer (String_Value_Of (Expr));
-      Prj.Ext.Add
-        (Name_Buffer (Name_Buffer'First .. Name_Len),
-         Get_Chars (Get_Entry (Editor.Data (User.Row).Type_Combo)));
+         Changed (Editor, Var);
+      end if;
    end Typed_Value_Changed;
 
    -----------------

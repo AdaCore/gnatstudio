@@ -78,6 +78,21 @@ package Variable_Editors is
    --  Called when the name of a variable is changed. This is used to visually
    --  report that fact (change the label of the name frame).
 
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "changed"
+   --    procedure Handler (View      : access Variable_Edit_Record'Class;
+   --                       Var_Decl  : Project_Node_Id);
+   --
+   --    Emitted every time one of the scenario variables' value has changed.
+   --    The modified variable's definition can be found at Var_Decl.
+   --  </signals>
+
 private
 
    type Row_Data is record

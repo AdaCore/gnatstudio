@@ -8,7 +8,6 @@
 --  with Gtk.Style; use Gtk.Style;
 with Gtk.Widget; use Gtk.Widget;
 with Variable_Editors; use Variable_Editors;
-with Gtk.Main;
 
 package body Variable_Editor_Pkg.Callbacks is
 
@@ -36,9 +35,7 @@ package body Variable_Editor_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      --  ??? Should reset the current values for the variables
-      null;
-      Gtk.Main.Main_Quit;
+      Destroy (Object);
    end On_Close_Clicked;
 
 end Variable_Editor_Pkg.Callbacks;
