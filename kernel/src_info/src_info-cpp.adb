@@ -381,31 +381,15 @@ package body Src_Info.CPP is
    --  in specified function/method body and create references from
    --  declaration corresponding to that local variable or argument.
 
-   Invalid_FU_Table    : constant FU_Table := (
-      Class          => Invalid_Segment,
-      Name           => Invalid_Segment,
-      File_Name      => Invalid_Segment,
-      Start_Position => Invalid_Point,
-      End_Position   => Invalid_Point,
-      Attributes     => 0,
-      Return_Type    => Invalid_Segment,
-      Arg_Types      => null,
-      Arg_Names      => null,
-      Comments       => Invalid_Segment,
-      Buffer         => null
-   );
-
    procedure Process_Template_Arguments
-     (Scope            : String;
-      Template_Args    : String;
-      File_Name        : String;
+     (Symbol           : Symbol_Type := CL;
+      FU_Tab           : FU_Table := Invalid_FU_Table;
+      CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
-      Module_Type_Defs : Module_Typedefs_List;
-      FU_Tab           : FU_Table := Invalid_FU_Table;
-      Symbol           : Symbol_Type := CL);
+      Module_Type_Defs : Module_Typedefs_List);
    --  Finds arguments for the template specified by (Scope, Template_Args,
    --  File_Name). Here Scope is the name of either class/struct/union or
    --  function/procedure. Tempalte_Args - image of all template arguments
@@ -1113,7 +1097,19 @@ package body Src_Info.CPP is
          Kind         => Overloaded_Entity,
          Negate_Kind  => True);
 
-      if Type_Decl_Info /= null then
+      --  Before we add the reference we have to make sure there is no
+      --  such already. This lookup is required to avoid duplicate refs
+      --  that appear during processing of local variables and template
+      --  arguments.
+      --  The problem is that the references to a type are generated
+      --  twice: once during declaration of the local variable and then
+      --  during general loop on TO table that has an entry corresponding
+      --  to the type usage in declaration. So far we can't determine that
+      --  an entry in TO table referes to the declaration and should be skipped
+      --  but it is a TODO: to add an attribute to the TO table
+      if Type_Decl_Info /= null
+         and then null
+            = Find_Reference (Type_Decl_Info, File, Reference_Point, Kind) then
          Insert_Reference
            (Declaration_Info     => Type_Decl_Info,
             File                 => File,
@@ -3205,11 +3201,9 @@ package body Src_Info.CPP is
 
       if Desc.Is_Template then
          Process_Template_Arguments
-           (Class_Def.Buffer (Class_Def.Name.First .. Class_Def.Name.Last),
-            Class_Def.Buffer (Class_Def.Template_Parameters.First ..
-              Class_Def.Template_Parameters.Last),
-            Class_Def.Buffer (Class_Def.File_Name.First ..
-              Class_Def.File_Name.Last),
+           (CL,
+            Invalid_FU_Table,
+            Class_Def,
             Handler,
             File,
             List,
@@ -3677,6 +3671,7 @@ package body Src_Info.CPP is
       End_Position   : Point;
       Ref            : TO_Table;
       Our_Ref        : Boolean;
+      Class_Def      : CL_Table := Invalid_CL_Table;
 
       Fu_Id          : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -3689,7 +3684,6 @@ package body Src_Info.CPP is
 
       if Sym.Symbol = MI then
          declare
-            Class_Def       : CL_Table;
             Class_Decl_Info : E_Declaration_Info_List;
          begin
             FU_Tab := Find (Handler.SN_Table (MI),
@@ -3725,7 +3719,6 @@ package body Src_Info.CPP is
                      --  name, so set the column to "anywhere"
                      Reference);
                end if;
-               Free (Class_Def);
             exception
                when DB_Error | Not_Found =>
                   null;
@@ -3827,16 +3820,18 @@ package body Src_Info.CPP is
         or else Target_Kind = Generic_Procedure
       then
          Process_Template_Arguments
-           (Fu_Id,
-            "",
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+           (Sym.Symbol,
+            FU_Tab,
+            Class_Def,
             Handler,
             File,
             List,
             Project_View,
-            Module_Type_Defs,
-            FU_Tab,
-            Sym.Symbol);
+            Module_Type_Defs);
+      end if;
+
+      if (Sym.Symbol = MI) and (Class_Def /= Invalid_CL_Table) then
+         Free (Class_Def);
       end if;
 
       --  Declaration inserted. Now we need to check the body for usage
@@ -4114,11 +4109,8 @@ package body Src_Info.CPP is
             Desc,
             Success,
             CL,
-            Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
-            Inst_Var.Buffer
-              (Inst_Var.File_Name.First .. Inst_Var.File_Name.Last),
-            Class_Def.Buffer (Class_Def.Template_Parameters.First ..
-                              Class_Def.Template_Parameters.Last));
+            Invalid_FU_Table,
+            Class_Def);
       else
          Free (Desc);
          Type_Name_To_Kind
@@ -4636,8 +4628,41 @@ package body Src_Info.CPP is
             declare
                Desc        : CType_Description;
                Success     : Boolean := False;
+               CL_Success  : Boolean := False;
                Scope       : E_Scope := Local_Scope;
+               Class_Def   : CL_Table;
             begin
+               if (Symbol = MI) or (Symbol = MD) then
+                  Find_Class
+                    (FU_Tab.Buffer (FU_Tab.Class.First .. FU_Tab.Class.Last),
+                     Handler.SN_Table,
+                     Desc,
+                     Class_Def,
+                     CL_Success);
+
+                  if not CL_Success then -- try unions
+                     Find_Union
+                       (FU_Tab.Buffer (FU_Tab.Class.First ..
+                           FU_Tab.Class.Last),
+                        Handler.SN_Table,
+                        Desc,
+                        Class_Def,
+                        CL_Success);
+                  end if;
+
+                  if not CL_Success then
+                     Fail ("Failed to locate class/union: "
+                        & FU_Tab.Buffer (FU_Tab.Class.First ..
+                           FU_Tab.Class.Last)
+                        & " for member function "
+                        & FU_Tab.Buffer (FU_Tab.Name.First ..
+                           FU_Tab.Name.Last));
+                     return;
+                  end if;
+
+                  Free (Desc);
+               end if;
+
                Type_Name_To_Kind
                  (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                   Handler.SN_Table,
@@ -4645,11 +4670,13 @@ package body Src_Info.CPP is
                   Desc,
                   Success,
                   Symbol,
-                  FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last),
-                  FU_Tab.Buffer (FU_Tab.File_Name.First ..
-                                 FU_Tab.File_Name.Last),
-                  "" -- template args
-                  );
+                  FU_Tab,
+                  Class_Def);
+
+               if CL_Success then
+                  Free (Class_Def);
+               end if;
+
                if not Success then -- type not found
                   --  Set kind to Unresolved_Entity for local variables
                   --  which have unknown type.
@@ -4701,6 +4728,11 @@ package body Src_Info.CPP is
                         File,
                         Var.Type_Start_Position);
                   end if;
+
+               end if;
+
+               if Success then
+                  Free (Desc);
                end if;
             end;
 
@@ -4813,16 +4845,14 @@ package body Src_Info.CPP is
    --------------------------------
 
    procedure Process_Template_Arguments
-     (Scope            : String;
-      Template_Args    : String;
-      File_Name        : String;
+     (Symbol           : Symbol_Type := CL;
+      FU_Tab           : FU_Table := Invalid_FU_Table;
+      CL_Tab           : CL_Table := Invalid_CL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
       Project_View     : Prj.Project_Id;
-      Module_Type_Defs : Module_Typedefs_List;
-      FU_Tab           : FU_Table := Invalid_FU_Table;
-      Symbol           : Symbol_Type := CL)
+      Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Project_View);
       Arg              : TA_Table;
@@ -4830,6 +4860,10 @@ package body Src_Info.CPP is
       Decl_Info        : E_Declaration_Info_List;
       Desc             : CType_Description;
       Success          : Boolean;
+      Buffer           : GNAT.OS_Lib.String_Access;
+      Scope            : Segment;
+      File_Name        : Segment;
+      Template_Args    : Segment;
    begin
       if not Is_Open (Handler.SN_Table (TA)) then
          Fail (".ta table does not exist but template argument processing"
@@ -4837,10 +4871,22 @@ package body Src_Info.CPP is
          return;
       end if;
 
+      if Symbol = CL then
+         Buffer        := CL_Tab.Buffer;
+         Scope         := CL_Tab.Name;
+         File_Name     := CL_Tab.File_Name;
+         Template_Args := CL_Tab.Template_Parameters;
+      else
+         Buffer        := FU_Tab.Buffer;
+         Scope         := FU_Tab.Name;
+         File_Name     := FU_Tab.File_Name;
+         Template_Args := (1, 0);
+      end if;
+
       Set_Cursor
         (Handler.SN_Table (TA),
          Position    => By_Key,
-         Key         => Scope & Field_Sep,
+         Key         => Buffer (Scope.First .. Scope.Last) & Field_Sep,
          Exact_Match => False);
 
       loop
@@ -4849,8 +4895,9 @@ package body Src_Info.CPP is
          Arg := Parse_Pair (P.all);
          Free (P);
 
-         if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
-            and Template_Args
+         if Buffer (File_Name.First .. File_Name.Last)
+            = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
+            and Buffer (Template_Args.First .. Template_Args.Last)
                = Arg.Buffer (Arg.Template_Parameters.First ..
                   Arg.Template_Parameters.Last)
          then
@@ -4876,26 +4923,44 @@ package body Src_Info.CPP is
                   Desc,
                   Success,
                   Symbol,
-                  Scope,
-                  File_Name,
-                  Template_Args);
+                  FU_Tab,
+                  CL_Tab);
 
                if not Success then -- type not found
                   Desc.Kind := Unresolved_Entity;
                end if;
 
-               Insert_Declaration
-                 (File             => File,
-                  List             => List,
-                  Symbol_Name      =>
-                     Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
-                  Location         => Arg.Start_Position,
-                  Kind             => Type_To_Object (Desc.Kind),
-                  Scope            => Local_Scope,
-                  Declaration_Info => Decl_Info);
+               if Desc.Parent_Point = Invalid_Point then
+                  Insert_Declaration
+                    (File             => File,
+                     List             => List,
+                     Symbol_Name      =>
+                        Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                     Location         => Arg.Start_Position,
+                     Kind             => Type_To_Object (Desc.Kind),
+                     Scope            => Local_Scope,
+                     Declaration_Info => Decl_Info);
+               else
+                  Insert_Declaration
+                    (File             => File,
+                     List             => List,
+                     Symbol_Name      =>
+                        Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
+                     Location         => Arg.Start_Position,
+                     Kind             => Type_To_Object (Desc.Kind),
+                     Scope            => Local_Scope,
+                     Parent_Location  => Desc.Parent_Point,
+                     Parent_Filename  => Desc.Parent_Filename.all,
+                     Declaration_Info => Decl_Info);
+               end if;
 
-               --  ??? should we add reference to the type
-               --  it's a scalar most often and hardly a class
+               if Arg.Attributes = SN_TA_VALUE then
+                  Refer_Type
+                    (Arg.Buffer (Arg.Value_Type.First .. Arg.Value_Type.Last),
+                     Desc.Parent_Point,
+                     File,
+                     Arg.Type_Position);
+               end if;
                Free (Desc);
             end if;
 

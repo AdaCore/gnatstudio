@@ -809,4 +809,27 @@ package body Src_Info.LI_Utils is
       return False;
    end Belongs_To_Class;
 
+   function Find_Reference
+     (Declaration_Info        : E_Declaration_Info_List;
+      File                    : LI_File_Ptr;
+      Location                : SN.Point;
+      Kind                    : Reference_Kind)
+      return E_Reference_List
+   is
+      Ref_Ptr : E_Reference_List := Declaration_Info.Value.References;
+   begin
+      while Ref_Ptr /= null loop
+         if Get_LI_Filename (Ref_Ptr.Value.Location.File.LI)
+            = Get_LI_Filename (File)
+            and Ref_Ptr.Value.Location.Line = Location.Line
+            and Ref_Ptr.Value.Location.Column = Location.Column
+            and Ref_Ptr.Value.Kind = Kind then
+            return Ref_Ptr;
+         end if;
+         Ref_Ptr := Ref_Ptr.Next;
+      end loop;
+
+      return null;
+   end Find_Reference;
+
 end Src_Info.LI_Utils;

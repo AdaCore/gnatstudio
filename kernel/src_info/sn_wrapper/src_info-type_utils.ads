@@ -105,6 +105,31 @@ package Src_Info.Type_Utils is
    --  Attempts to convert string into E_Kind assuming that the string
    --  is a builtin C type. If conversion fails returns False
 
+   Invalid_FU_Table    : constant FU_Table := (
+      Class          => Invalid_Segment,
+      Name           => Invalid_Segment,
+      File_Name      => Invalid_Segment,
+      Start_Position => Invalid_Point,
+      End_Position   => Invalid_Point,
+      Attributes     => 0,
+      Return_Type    => Invalid_Segment,
+      Arg_Types      => null,
+      Arg_Names      => null,
+      Comments       => Invalid_Segment,
+      Buffer         => null
+   );
+
+   Invalid_CL_Table    : constant CL_Table := (
+      Name                => Invalid_Segment,
+      File_Name           => Invalid_Segment,
+      Start_Position      => Invalid_Point,
+      End_Position        => Invalid_Point,
+      Attributes          => 0,
+      Template_Parameters => Invalid_Segment,
+      Comments            => Invalid_Segment,
+      Buffer              => null
+   );
+
    procedure Type_Name_To_Kind
      (Type_Name         : in String;
       SN_Table          : in SN_Table_Array;
@@ -112,9 +137,8 @@ package Src_Info.Type_Utils is
       Desc              : out CType_Description;
       Success           : out Boolean;
       Symbol            : Symbol_Type := Undef;
-      Scope             : String := "";
-      File_Name         : String := "";
-      Template_Args     : String := "");
+      FU_Tab            : FU_Table := Invalid_FU_Table;
+      CL_Tab            : CL_Table := Invalid_CL_Table);
    --  Attempts to convert type name into E_Kind.
    --  At the moment searches for
    --  the name in the class, typedef, enum tables

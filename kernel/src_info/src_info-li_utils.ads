@@ -175,4 +175,14 @@ private package Src_Info.LI_Utils is
    --  Compilation_Errors should be true if the xref information is potentially
    --  incomplete because the source file could not be compiled correctly.
 
+   function Find_Reference
+     (Declaration_Info        : E_Declaration_Info_List;
+      File                    : LI_File_Ptr;
+      Location                : SN.Point;
+      Kind                    : Reference_Kind)
+      return E_Reference_List;
+   --  Attempts to find reference of the given type and position
+   --  in the reference list of the declaration.
+   --  Returns null if no such reference found
+
 end Src_Info.LI_Utils;

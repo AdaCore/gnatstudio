@@ -144,9 +144,8 @@ package body Src_Info.Type_Utils is
       Desc              : out CType_Description;
       Success           : out Boolean;
       Symbol            : Symbol_Type := Undef;
-      Scope             : String := "";
-      File_Name         : String := "";
-      Template_Args     : String := "")
+      FU_Tab            : FU_Table := Invalid_FU_Table;
+      CL_Tab            : CL_Table := Invalid_CL_Table)
    is
       Matches      : Match_Array (0 .. 1);
       Volatile_Str : constant String := "volatile ";
@@ -279,20 +278,39 @@ package body Src_Info.Type_Utils is
       end if;
 
       --  try template arguments
-      if Symbol /= Undef and Is_Open (SN_Table (TA)) then
+      if (Symbol /= Undef) and (Symbol /= CL) and (Symbol /= UN) then
          Find_Template_Argument
            (Type_Name,
             SN_Table,
             Desc,
             Symbol,
-            Scope,
-            File_Name,
-            Template_Args,
+            FU_Tab.Buffer (FU_Tab.Name.First .. FU_Tab.Name.Last),
+            FU_Tab.Buffer (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last),
+            "", -- template arguments not available yet
             Success);
          if Success then
             return;
          end if;
       end if;
+
+      --  if this is a method or a class we should try class template arguments
+      --  as well
+      if (Symbol /= Undef) and (Symbol /= FD) and (Symbol /= FU) then
+         Find_Template_Argument
+           (Type_Name,
+            SN_Table,
+            Desc,
+            Symbol,
+            CL_Tab.Buffer (CL_Tab.Name.First .. CL_Tab.Name.Last),
+            CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+            CL_Tab.Buffer (CL_Tab.Template_Parameters.First ..
+                           CL_Tab.Template_Parameters.Last),
+            Success);
+         if Success then
+            return;
+         end if;
+      end if;
+
 
       --  when everything else failed
       Success := False;
