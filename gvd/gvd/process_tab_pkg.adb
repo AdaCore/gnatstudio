@@ -18,16 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
 with Gtk; use Gtk;
-with Gdk.Types;       use Gdk.Types;
-with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
-with Odd.Process;      use Odd.Process;
 
 package body Process_Tab_Pkg is
 
@@ -43,7 +39,7 @@ end Gtk_New;
 
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
 begin
-   --  Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
+   Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
    --  Set_Title (Process_Tab, -"window1");
    --  Set_Policy (Process_Tab, False, True, False);
    --  Set_Position (Process_Tab, Win_Pos_None);

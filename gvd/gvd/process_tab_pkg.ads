@@ -21,13 +21,10 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Paned; use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Frame; use Gtk.Frame;
-with Gtk.Box; use Gtk.Box;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Text; use Gtk.Text;
-with Gtk.Button; use Gtk.Button;
 with Gtk.Handlers;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
