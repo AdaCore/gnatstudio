@@ -4344,9 +4344,9 @@ package body Src_Editor_Buffer is
    end Do_Indentation;
 
    function Do_Indentation
-     (Buffer      : Source_Buffer;
-      From, To    : Gtk_Text_Iter;
-      Force       : Boolean := False) return Boolean
+     (Buffer   : Source_Buffer;
+      From, To : Gtk_Text_Iter;
+      Force    : Boolean := False) return Boolean
    is
       Lang          : constant Language_Access := Get_Language (Buffer);
       Tab_Width     : constant Integer := Integer (Buffer.Tab_Width);
@@ -4655,6 +4655,7 @@ package body Src_Editor_Buffer is
    ---------------
 
    function Do_Refill (Buffer : Source_Buffer) return Boolean is
+      Tab_Width : constant Integer := Integer (Buffer.Tab_Width);
       Max       : constant Positive :=
                     Positive (Get_Pref (Buffer.Kernel, Highlight_Column));
       --  Right margin, wrap line if longer than Max character
@@ -4706,7 +4707,7 @@ package body Src_Editor_Buffer is
 
          for K in Str'Range loop
             if Str (K) = ASCII.HT then
-               Line_Size := Line_Size + 8;
+               Line_Size := Line_Size + Tab_Width;
             else
                Line_Size := Line_Size + 1;
             end if;
@@ -4883,15 +4884,18 @@ package body Src_Editor_Buffer is
       is
          F, L : Natural;
 
-         procedure Parse_Comment_Sep (Line : Src_String; P : in out Natural);
-         --  Parse comment separator starting a position P in Line. Set
-         --  P to last character in separator.
+         procedure Detect_Start_Pattern
+           (Line : Src_String; P : in out Natural);
+         --  Detect possible patterns starting a line.
+         --  Currently, only detect Ada, C, C++ and Shell comments
+         --  Start at position P in Line. Set P to last character in pattern.
 
-         -----------------------
-         -- Parse_Comment_Sep --
-         -----------------------
+         --------------------------
+         -- Detect_Start_Pattern --
+         --------------------------
 
-         procedure Parse_Comment_Sep (Line : Src_String; P : in out Natural) is
+         procedure Detect_Start_Pattern
+           (Line : Src_String; P : in out Natural) is
          begin
             if P < Line.Length + 1
               and then
@@ -4908,7 +4912,7 @@ package body Src_Editor_Buffer is
                --  A single character comment separator
                P := P + 1;
             end if;
-         end Parse_Comment_Sep;
+         end Detect_Start_Pattern;
 
       begin
          declare
@@ -4940,7 +4944,7 @@ package body Src_Editor_Buffer is
             L := F;
             F := F + 1;
 
-            Parse_Comment_Sep (First_Line, L);
+            Detect_Start_Pattern (First_Line, L);
 
             if L >= F then
                Sep := new String'(First_Line.Contents (F .. L));
