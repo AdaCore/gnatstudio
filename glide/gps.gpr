@@ -27,6 +27,8 @@ project GPS is
 
    package Builder is
       for Default_Switches ("Ada") use ("-m", "-a", "-g");
+
+      for Global_Configuration_Pragmas use "../gnat.adc";
    end Builder;
 
    package Compiler is
