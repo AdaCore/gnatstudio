@@ -392,6 +392,8 @@ package body Display_Items is
          Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
       end if;
 
+      Constraint_Size (Item.Entity.all);
+
       Update_Display (Item);
       Item_Resized (Item.Debugger.Data_Canvas, Item);
    end Initialize;
@@ -786,6 +788,8 @@ package body Display_Items is
          Set_Visibility (Item.Entity, True);
          Size_Request (Item.Entity.all, Create_Drawing_Context (Item));
       end if;
+
+      Constraint_Size (Item.Entity.all);
 
       Update_Display (Item);
 
