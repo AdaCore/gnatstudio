@@ -196,6 +196,16 @@ procedure GPS is
          Home := Getenv ("HOME");
       end if;
 
+      if Home.all = "" then
+         Free (Home);
+
+         if Directory_Separator = '\' then
+            Home := new String'("c:\");
+         else
+            Home := new String'("/");
+         end if;
+      end if;
+
       Prefix := Getenv ("GPS_ROOT");
 
       if Prefix.all = "" then
@@ -211,13 +221,7 @@ procedure GPS is
       Bind_Text_Domain
         ("gps", Format_Pathname (Prefix.all & "/share/locale"));
 
-      if Home.all /= "" then
-         Dir := new String'
-           (String_Utils.Name_As_Directory (Home.all) & ".gps");
-      else
-         --  Default to /
-         Dir := new String'(Format_Pathname ("/.gps"));
-      end if;
+      Dir := new String'(String_Utils.Name_As_Directory (Home.all) & ".gps");
 
       begin
          User_Directory_Existed := Is_Directory (Dir.all);
