@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
@@ -31,6 +32,7 @@ with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;          use Gtk.Check_Button;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Dialog;                use Gtk.Dialog;
@@ -427,6 +429,18 @@ package body Project_Properties is
      (Project_View : Prj.Project_Id;
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
+      procedure Report_Error (Msg : String);
+      --  Report an error to the console
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (Msg : String) is
+      begin
+         Insert (Kernel, Msg);
+      end Report_Error;
+
       Editor  : Properties_Editor;
       Changed : Boolean := False;
       Project : Project_Node_Id;
@@ -436,12 +450,31 @@ package body Project_Properties is
         (Get_Language_Handler (Kernel));
       Ent : Gtk_GEntry;
       Check : Gtk_Check_Button;
+      Response : Gtk_Response_Type;
+      Response2 : Message_Dialog_Buttons;
 
    begin
       Gtk_New (Editor, Project_View, Kernel);
       Show_All (Editor);
 
-      if Run (Editor) = Gtk_Response_OK then
+      loop
+         Response := Run (Editor);
+         exit when Response /= Gtk_Response_OK;
+
+         if not Is_Directory (Name_As_Directory (Get_Text (Editor.Path))) then
+            Response2 := Message_Dialog
+              (Msg     => Name_As_Directory (Get_Text (Editor.Path))
+                 & (-" is not a valid directory"),
+               Buttons => Button_OK,
+               Title   => -"Error",
+               Parent  => Get_Main_Window (Kernel));
+         else
+            exit;
+         end if;
+
+      end loop;
+
+      if Response = Gtk_Response_OK then
          declare
             New_Name : constant String := Get_Text (Editor.Name);
             New_Path : constant String :=
@@ -459,10 +492,11 @@ package body Project_Properties is
                   Convert_Paths_To_Absolute (Project, False);
                end if;
                Rename_And_Move
-                 (Root_Project => Get_Project (Kernel),
-                  Project      => Project,
-                  New_Name     => New_Name,
-                  New_Path     => New_Path);
+                 (Root_Project  => Get_Project (Kernel),
+                  Project       => Project,
+                  New_Name      => New_Name,
+                  New_Path      => New_Path,
+                  Report_Errors => Report_Error'Unrestricted_Access);
 
                --  Since we actually changed the project hierarchy (all modules
                --  that stored the name of the projects are now obsolete), we
