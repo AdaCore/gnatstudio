@@ -1378,9 +1378,6 @@ package body GVD.Process is
    procedure Context_Changed
      (Debugger : access Visual_Debugger_Record'Class) is
    begin
-      --  If the context has changed, it means that the debugger has started
-      Set_Is_Started (Debugger.Debugger, True);
-
       --  Emit the signal
       Object_Callback.Emit_By_Name (GObject (Debugger), "context_changed");
    end Context_Changed;
