@@ -634,11 +634,22 @@ package body ALI_Parser is
       File_Num       : constant Sdep_Id :=
                          Xref_Section.Table (Xref_Sect).File_Num;
       Has_Completion : Boolean := False;
+      Kind : constant E_Kind :=
+         Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype);
 
       procedure Unchecked_Free (S : Basic_Types.Unchecked_String_Access);
       pragma Import (C, Unchecked_Free, "free");
 
    begin
+      --  Ignore labels for now. GNAT no longer outputs them anyway, and their
+      --  do not work in the callgraph browser
+      if Kind.Kind = Label_On_Block
+        or else Kind.Kind = Label_On_Statement
+        or else Kind.Kind = Label_On_Loop
+      then
+         return;
+      end if;
+
       Get_Name_String (Xref_Entity.Table (Xref_Ent).Entity);
 
       declare
@@ -665,8 +676,7 @@ package body ALI_Parser is
          Unchecked_Free (Buffer);
       end;
 
-      Set_Kind
-        (Entity, Char_To_E_Kind (Xref_Entity.Table (Xref_Ent).Etype));
+      Set_Kind (Entity, Kind);
       Set_Attributes
         (Entity,
          Attributes => (Global      => Xref_Entity.Table (Xref_Ent).Lib,
