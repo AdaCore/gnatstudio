@@ -1039,15 +1039,19 @@ editor.
      @item Show Lines with Code
 Enable/Disable the display of lines with code, as described above.
 
-     @item Show Source Code
+     @item Show...
+A submenu composed of the following options:
+     @table @b
+        @item Source Code
 Show only the source code.
 
-     @item Show Asm Code
+        @item Asm Code
 Show only the assembly code around the current execution point.
 See @ref{The Assembly Window} for more details.
 
-     @item Show Asm and Source
+        @item Asm and Source
 Show both the source code and the assembly window at the same time.
+     @end table
    @end table
 
 @c --------------------------------------------------------------------
