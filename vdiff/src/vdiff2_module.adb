@@ -318,7 +318,7 @@ package body Vdiff2_Module is
                   Context_Callback.To_Marshaller (On_Ref_Change'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Mitem, -"Recaculate Difference");
+               Gtk_New (Mitem, -"Recompute Difference");
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
