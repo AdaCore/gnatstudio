@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,17 +13,20 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gdk.Pixbuf;
 with Gtk.Container;        use Gtk.Container;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Main_Window;    use Glide_Main_Window;
+
+with Debugger_Pixmaps;     use Debugger_Pixmaps;
 
 package body GVD.Text_Box.Source_Editor.Glide is
 
@@ -150,10 +153,24 @@ package body GVD.Text_Box.Source_Editor.Glide is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
-      pragma Unreferenced (Set_Current);
       Kernel  : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
 
    begin
+      if Set_Current
+        and then Editor.Line /= 0
+      then
+         Add_Line_Information
+           (Kernel,
+            Editor.Current_File.all,
+            "Editor",
+            --  ??? maybe we should get that from elsewhere.
+            new Line_Information_Array'
+            (1 => Line_Information_Record' (Line => Editor.Line,
+                                            Text => null,
+                                            Image => Gdk.Pixbuf.Null_Pixbuf,
+                                            Associated_Command => null)));
+      end if;
+
       Editor.Line := Line;
 
       if Editor.Current_File = null then
@@ -161,6 +178,19 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end if;
 
       Open_File_Editor (Kernel, Editor.Current_File.all, Editor.Line, 1);
+
+      if Set_Current then
+         Add_Line_Information
+           (Kernel,
+            Editor.Current_File.all,
+            "Editor",
+            --  ??? maybe we should get that from elsewhere.
+            new Line_Information_Array'
+            (1 => Line_Information_Record' (Line => Editor.Line,
+                                            Text => null,
+                                            Image => Current_Line_Pixbuf,
+                                            Associated_Command => null)));
+      end if;
    end Set_Line;
 
    ------------------
