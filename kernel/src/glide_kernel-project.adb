@@ -39,6 +39,7 @@ with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 with Project_Hash;       use Project_Hash;
+with Src_Info.CPP;       use Src_Info.CPP;
 
 with Traces;  use Traces;
 with Glide_Intl; use Glide_Intl;
@@ -443,6 +444,12 @@ package body Glide_Kernel.Project is
 
       Set_Project_View
         (Glide_Language_Handler (Handle.Lang_Handler), Handle.Project_View);
+
+      --  ??? Should be done in a cpp module.
+      Reset
+        (CPP_LI_Handler (Get_LI_Handler_By_Name
+           (Glide_Language_Handler (Handle.Lang_Handler), "c/c++")),
+         Handle.Project_View);
 
       --  Report the change to every listener
       Project_View_Changed (Handle);
