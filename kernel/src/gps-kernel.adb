@@ -1557,6 +1557,28 @@ package body GPS.Kernel is
         (Name, Get_Registry (Kernel).all, Use_Source_Path, Use_Object_Path);
    end Create;
 
+   ----------------------
+   -- Create_From_Base --
+   ----------------------
+
+   function Create_From_Base
+     (Name   : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File
+   is
+      Full : constant String := Get_Full_Path_From_File
+        (Registry        => Get_Registry (Kernel).all,
+         Filename        => Base_Name (Name),
+         Use_Source_Path => True,
+         Use_Object_Path => True);
+
+   begin
+      if Full = "" then
+         return Create (Full_Filename => Name);
+      else
+         return Create (Full_Filename => Full);
+      end if;
+   end Create_From_Base;
+
    ----------
    -- Free --
    ----------
