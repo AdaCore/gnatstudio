@@ -42,7 +42,7 @@ package Codefix.Graphics is
    package Vdiff_Lists is new Generic_List (Vdiff_Access);
    use Vdiff_Lists;
 
-   type Has_Been_Fixed is access procedure (Error : Error_Id);
+   type Fix_Action is access procedure (Error : Error_Id);
 
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
       Current_Text      : Ptr_Text_Navigator;
@@ -54,7 +54,8 @@ package Codefix.Graphics is
       Vdiff_List        : Vdiff_Lists.List;
       Automatic_Skip    : State_List;
       Automatic_Fix     : State_List;
-      Fixed_Cb          : Has_Been_Fixed;
+      Fixed_Cb          : Fix_Action;
+      Unfixed_Cb        : Fix_Action;
       Start             : Boolean;
    end record;
 
@@ -65,14 +66,16 @@ package Codefix.Graphics is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
       Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Has_Been_Fixed := null);
+      Fixed_Cb        : Fix_Action := null;
+      Unfixed_Cb      : Fix_Action := null);
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
       Corrector       : Ptr_Correction_Manager;
-      Fixed_Cb        : Has_Been_Fixed := null);
+      Fixed_Cb        : Fix_Action := null;
+      Unfixed_Cb      : Fix_Action := null);
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Free the memory associated to a Graphic_Codefix.
@@ -104,5 +107,9 @@ package Codefix.Graphics is
    function Get_Nth_Solution
      (Graphic_Codefix : access Graphic_Codefix_Record'Class) return Gint;
    --  Return the number of the current solution in the solution list.
+
+   procedure Undo_Last_Error
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class);
+   --  Undo and reload the last error fixed in Graphic_Codefix.
 
 end Codefix.Graphics;
