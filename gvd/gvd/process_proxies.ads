@@ -107,7 +107,7 @@ package Process_Proxies is
    --  This functions waits at least Timeout ms, and is overriden
    --  in simple graphic mode so that Gtk+ events are handled by hand.
    --  The procedure can actually wait longer, depending on
-   --  what is processes between each iteration.
+   --  what is processed between each iteration.
    --  The function returns the same kind of result as an Expect call would.
    --  Default Timeout is one second.
 
