@@ -73,8 +73,7 @@ package Tries is
    procedure Next (Iter : in out Iterator);
    --  Move to the next entry
 
-   function Get     (Iter : Iterator) return Data_Type;
-   function Get_Key (Iter : Iterator) return String;
+   function Get (Iter : Iterator) return Data_Type;
    --  Return the current entry or null if there are no more entries
 
    procedure Free (Iter : in out Iterator);
@@ -129,8 +128,11 @@ private
      (Child => (Index_Length => 0, First_Char_Of_Key => 'a',
                 Data => No_Data, Children => null, Num_Children => 0));
 
+   type Data_Type_Array is array (Positive) of Data_Type;
+   type Data_Type_Array_Access is access Data_Type_Array;
+
    type Iterator is record
-      Cells : Cell_Child_Array_Access;
+      Cells : Data_Type_Array_Access;
       --  All the cells that must be returned
 
       Num_Cells : Natural := 0;

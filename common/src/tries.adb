@@ -31,9 +31,15 @@ package body Tries is
      (Cell_Child_Array_Access, System.Address);
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Cell_Child_Array_Access);
+   function Convert is new Ada.Unchecked_Conversion
+     (Data_Type_Array_Access, System.Address);
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Data_Type_Array_Access);
 
    Component_Size : constant size_t :=
      Cell_Child_Array'Component_Size / System.Storage_Unit;
+   Data_Component_Size : constant size_t :=
+     Data_Type_Array'Component_Size / System.Storage_Unit;
 
    procedure Free (Cell : in out Cell_Child);
    --  Free the memory used by Cell and its own children
@@ -413,6 +419,7 @@ package body Tries is
                --  data, we can simply remove it.
                elsif Cell_Parent.Num_Children = 2
                  and then Cell_Parent.Data = No_Data
+                 and then Cell_Parent /= Tree.Child'Unrestricted_Access
                then
                   declare
                      Tmp : Cell_Child := Cell_Parent.all;
@@ -514,18 +521,18 @@ package body Tries is
          if Cell.Data /= No_Data then
             if Iter.Cells = null then
                Iter.Num_Cells := 10;
-               Iter.Cells     := Convert (Alloc (10 * Component_Size));
+               Iter.Cells     := Convert (Alloc (10 * Data_Component_Size));
                Iter.Last      := 0;
 
             elsif Iter.Last = Iter.Num_Cells then
                Iter.Num_Cells := Iter.Num_Cells * 2;
                Iter.Cells     := Convert
                  (Realloc (Convert (Iter.Cells),
-                           size_t (Iter.Num_Cells) * Component_Size));
+                           size_t (Iter.Num_Cells) * Data_Component_Size));
             end if;
 
             Iter.Last              := Iter.Last + 1;
-            Iter.Cells (Iter.Last) := Cell;
+            Iter.Cells (Iter.Last) := Cell.Data;
          end if;
       end Process_Recursively;
 
@@ -579,7 +586,7 @@ package body Tries is
 
    function Length (Iter : Iterator) return Natural is
    begin
-      return Iter.Num_Cells - Iter.Current + 1;
+      return Iter.Last - Iter.Current + 1;
    end Length;
 
    ---------
@@ -589,30 +596,10 @@ package body Tries is
    function Get (Iter : Iterator) return Data_Type is
    begin
       if Iter.Cells /= null and then Iter.Current <= Iter.Last then
-         return Iter.Cells (Iter.Current).Data;
+         return Iter.Cells (Iter.Current);
       else
          return No_Data;
       end if;
    end Get;
-
-   -------------
-   -- Get_Key --
-   -------------
-
-   function Get_Key (Iter : Iterator) return String is
-      Ind : String_Access;
-   begin
-      if Iter.Cells /= null and then Iter.Current <= Iter.Last then
-         Ind := Get_Index (Iter.Cells (Iter.Current));
-         if Ind = null then
-            return "";
-         else
-            return Ind (Ind'First .. Ind'First
-                        + Iter.Cells (Iter.Current).Index_Length - 1);
-         end if;
-      else
-         return "";
-      end if;
-   end Get_Key;
 
 end Tries;
