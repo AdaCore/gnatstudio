@@ -858,6 +858,7 @@ package body Default_Preferences is
       E : constant Gtk_Entry := Gtk_Entry (Ent);
    begin
       Free (Data.Value);
+      --  ??? Why is the following code commented out
 --      Free (Data.Descr);
       Data.Descr := null;
 
