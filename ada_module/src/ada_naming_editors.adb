@@ -104,6 +104,7 @@ package body Ada_Naming_Editors is
       end loop;
 
       Set_Popdown_Strings (Editor.GUI.Casing, Casing_Items);
+      Set_Text (Get_Entry (Editor.GUI.Casing), -Prj.Image (All_Lower_Case));
       Free_String_List (Casing_Items);
 
       Select_Item (Get_List (Editor.GUI.Standard_Scheme), Gnat_Naming_Scheme);
