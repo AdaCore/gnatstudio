@@ -131,12 +131,15 @@ package Debugger is
    --  tree as explained in Generic_Values.
 
    procedure Parse_Value
-     (Debugger  : access Debugger_Root'Class;
-      Entity    : String;
-      Value     : in out Generic_Values.Generic_Type_Access);
+     (Debugger    : access Debugger_Root'Class;
+      Entity      : String;
+      Value       : in out Generic_Values.Generic_Type_Access;
+      Value_Found : out Boolean);
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is
    --  called, and it is completed to reflect the new value.
+   --  Value_Found is set to True only if a valid Value could be found for the
+   --  variable.
 
    function Get_Uniq_Id
      (Debugger : access Debugger_Root;
@@ -212,28 +215,46 @@ package Debugger is
    -- Execution Commands --
    ------------------------
 
-   procedure Run (Debugger : access Debugger_Root) is abstract;
+   --  Window parameter:
+   --  =================
+   --  In all the following subprograms, Window is the main debug window, in
+   --  which the debugger is displayed.  It is used to output the command in
+   --  the debugger command window. If null is passed for this parameter, the
+   --  command is not show in the command window.
+
+
+   procedure Run (Debugger : access Debugger_Root;
+                  Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Start the execution of the executable.
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.
+   --  See above for details on Window.
    --  GDB_COMMAND: "run"
 
-   procedure Start (Debugger : access Debugger_Root) is abstract;
+   procedure Start (Debugger : access Debugger_Root;
+                    Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  The arguments must have been set by a call to Set_Arguments.
+   --  See above for details on Window.
    --  GDB_COMMAND: "begin"
 
-   procedure Step_Into (Debugger : access Debugger_Root) is abstract;
+   procedure Step_Into (Debugger : access Debugger_Root;
+                        Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Step program until it reaches a different source line.
+   --  See above for details on Window.
    --  GDB_COMMAND: "step"
 
-   procedure Step_Over (Debugger : access Debugger_Root) is abstract;
+   procedure Step_Over (Debugger : access Debugger_Root;
+                        Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Step program, proceeding over subroutines.
+   --  See above for details on Window.
    --  GDB_COMMAND: "next"
 
-   procedure Continue (Debugger : access Debugger_Root) is abstract;
+   procedure Continue (Debugger : access Debugger_Root;
+                       Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Continue program after signal or breakpoint.
+   --  See above for details on Window.
    --  GDB_COMMAND: "next"
 
    procedure Interrupt (Debugger : access Debugger_Root) is abstract;
@@ -243,15 +264,18 @@ package Debugger is
    -- Stack Management --
    ----------------------
 
-   procedure Stack_Down (Debugger : access Debugger_Root) is abstract;
+   procedure Stack_Down (Debugger : access Debugger_Root;
+                         Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Select and print stack frame called by the current one.
    --  GDB_COMMAND: "down"
 
-   procedure Stack_Up (Debugger : access Debugger_Root) is abstract;
+   procedure Stack_Up (Debugger : access Debugger_Root;
+                       Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Select and print stack frame that called the current one.
    --  GDB_COMMAND: "up"
 
-   procedure Finish (Debugger : access Debugger_Root) is abstract;
+   procedure Finish (Debugger : access Debugger_Root;
+                     Window   : Gtk.Window.Gtk_Window := null) is abstract;
    --  Finish executing the current frame.
    --  GDB_COMMAND: "finish"
 

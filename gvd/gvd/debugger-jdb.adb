@@ -26,8 +26,12 @@ with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Jdb.Java; use Debugger.Jdb.Java;
 with Process_Proxies;   use Process_Proxies;
+with Gtk.Window;        use Gtk.Window;
+with Odd.Process;       use Odd.Process;
 
 package body Debugger.Jdb is
+
+   use String_History;
 
    ---------------
    -- Constants --
@@ -190,8 +194,13 @@ package body Debugger.Jdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : access Jdb_Debugger) is
+   procedure Run (Debugger : access Jdb_Debugger;
+                  Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "run" & ASCII.LF, True);
+      end if;
       Send (Get_Process (Debugger), "run");
    end Run;
 
@@ -199,7 +208,8 @@ package body Debugger.Jdb is
    -- Start --
    -----------
 
-   procedure Start (Debugger : access Jdb_Debugger) is
+   procedure Start (Debugger : access Jdb_Debugger;
+                    Window   : Gtk.Window.Gtk_Window := null) is
    begin
       --  Send (Get_Process (Debugger).all, "run");
       null;
@@ -209,8 +219,14 @@ package body Debugger.Jdb is
    -- Step_Into --
    ---------------
 
-   procedure Step_Into (Debugger : access Jdb_Debugger) is
+   procedure Step_Into (Debugger : access Jdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "step" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "step");
+      end if;
       Send (Get_Process (Debugger), "step");
       Wait_Prompt (Debugger);
    end Step_Into;
@@ -219,8 +235,14 @@ package body Debugger.Jdb is
    -- Step_Over --
    ---------------
 
-   procedure Step_Over (Debugger : access Jdb_Debugger) is
+   procedure Step_Over (Debugger : access Jdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "next" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "next");
+      end if;
       Send (Get_Process (Debugger), "next");
       Wait_Prompt (Debugger);
    end Step_Over;
@@ -229,8 +251,14 @@ package body Debugger.Jdb is
    -- Continue --
    --------------
 
-   procedure Continue (Debugger : access Jdb_Debugger) is
+   procedure Continue (Debugger : access Jdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "cont" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "cont");
+      end if;
       Send (Get_Process (Debugger), "cont");
       Wait_Prompt (Debugger);
    end Continue;
@@ -248,8 +276,14 @@ package body Debugger.Jdb is
    -- Stack_Down --
    ----------------
 
-   procedure Stack_Down (Debugger : access Jdb_Debugger) is
+   procedure Stack_Down (Debugger : access Jdb_Debugger;
+                         Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "down" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "down");
+      end if;
       Send (Get_Process (Debugger), "down");
       Wait_Prompt (Debugger);
    end Stack_Down;
@@ -258,8 +292,14 @@ package body Debugger.Jdb is
    -- Stack_Up --
    --------------
 
-   procedure Stack_Up (Debugger : access Jdb_Debugger) is
+   procedure Stack_Up (Debugger : access Jdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "up" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "up");
+      end if;
       Send (Get_Process (Debugger), "up");
       Wait_Prompt (Debugger);
    end Stack_Up;
@@ -350,8 +390,14 @@ package body Debugger.Jdb is
    -- Finish --
    ------------
 
-   procedure Finish (Debugger : access Jdb_Debugger) is
+   procedure Finish (Debugger : access Jdb_Debugger;
+                     Window   : Gtk.Window.Gtk_Window := null) is
    begin
+      if Window /= null then
+         Text_Output_Handler (Convert (Window, Debugger),
+                              "step up" & ASCII.LF, True);
+         Append (Convert (Window, Debugger).Command_History, "step up");
+      end if;
       Send (Get_Process (Debugger), "step up");
       Wait_Prompt (Debugger);
    end Finish;

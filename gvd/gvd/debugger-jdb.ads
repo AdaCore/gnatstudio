@@ -23,6 +23,7 @@
 
 with GNAT.OS_Lib;
 with Debugger;
+with Gtk.Window;
 with GNAT.Regpat;
 
 package Debugger.Jdb is
@@ -64,21 +65,28 @@ package Debugger.Jdb is
      (Debugger   : access Jdb_Debugger;
       Executable : String);
 
-   procedure Run (Debugger : access Jdb_Debugger);
+   procedure Run (Debugger : access Jdb_Debugger;
+                  Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Start (Debugger : access Jdb_Debugger);
+   procedure Start (Debugger : access Jdb_Debugger;
+                    Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Step_Into (Debugger : access Jdb_Debugger);
+   procedure Step_Into (Debugger : access Jdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Step_Over (Debugger : access Jdb_Debugger);
+   procedure Step_Over (Debugger : access Jdb_Debugger;
+                        Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Continue (Debugger : access Jdb_Debugger);
+   procedure Continue (Debugger : access Jdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Interrupt (Debugger : access Jdb_Debugger);
 
-   procedure Stack_Down (Debugger : access Jdb_Debugger);
+   procedure Stack_Down (Debugger : access Jdb_Debugger;
+                         Window   : Gtk.Window.Gtk_Window := null);
 
-   procedure Stack_Up (Debugger : access Jdb_Debugger);
+   procedure Stack_Up (Debugger : access Jdb_Debugger;
+                       Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Break_Subprogram
      (Debugger : access Jdb_Debugger;
@@ -94,7 +102,8 @@ package Debugger.Jdb is
       Name      : String  := "";
       Unhandled : Boolean := False);
 
-   procedure Finish (Debugger : access Jdb_Debugger);
+   procedure Finish (Debugger : access Jdb_Debugger;
+                     Window   : Gtk.Window.Gtk_Window := null);
 
    procedure Backtrace
      (Debugger : access Jdb_Debugger;

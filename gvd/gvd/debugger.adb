@@ -70,9 +70,10 @@ package body Debugger is
    -----------------
 
    procedure Parse_Value
-     (Debugger  : access Debugger_Root'Class;
-      Entity    : String;
-      Value     : in out Generic_Values.Generic_Type_Access)
+     (Debugger    : access Debugger_Root'Class;
+      Entity      : String;
+      Value       : in out Generic_Values.Generic_Type_Access;
+      Value_Found : out Boolean)
    is
       Type_Str   : String := Value_Of (Debugger, Entity);
       Index      : Natural := Type_Str'First;
@@ -81,9 +82,12 @@ package body Debugger is
    begin
       --  Clear the value previously parsed.
       Free (Value, Only_Value => True);
-      Parse_Value
-        (Language_Debugger_Access (Debugger.The_Language),
-         Type_Str, Index, Value, Repeat_Num);
+      Value_Found := Type_Str'Length /= 0;
+      if Value_Found then
+         Parse_Value
+           (Language_Debugger_Access (Debugger.The_Language),
+            Type_Str, Index, Value, Repeat_Num);
+      end if;
    end Parse_Value;
 
    ------------------
