@@ -53,7 +53,7 @@ msgid  "Assembly"
 msgstr "Assembleur"
 
 msgid  "Attach To Process..."
-msgstr "S'attacher a un processus..."
+msgstr "S'attacher à un processus..."
 
 msgid  "Auto-Align Displays on Nearest Grid Point"
 msgstr "Aligner automatiquement sur la grille"
@@ -107,7 +107,7 @@ msgid  "Cannot find sessions directory "
 msgstr "Impossible de trouver le répertoire de sessions "
 
 msgid  "Changed Data"
-msgstr "Donnee changée"
+msgstr "Donnée changée"
 
 msgid  "Change Directory..."
 msgstr "Changer de répertoire..."
@@ -506,13 +506,13 @@ msgid  "  machine: "
 msgstr "  machine : "
 
 msgid  "Memory"
-msgstr "Memoire"
+msgstr "Mémoire"
 
 msgid  "Memory View"
-msgstr "Affichage de la memoire"
+msgstr "Affichage de la mémoire"
 
 msgid  "Modified"
-msgstr "Modifie"
+msgstr "Modifié"
 
 msgid  "More Status Display..."
 msgstr "Autres affichages..."
@@ -653,7 +653,7 @@ msgid  "remote"
 msgstr "distant"
 
 msgid  "Remote Copy"
-msgstr "Copie a distance"
+msgstr "Copie à distance"
 
 msgid  "Remote Shell"
 msgstr "Shell distant"
