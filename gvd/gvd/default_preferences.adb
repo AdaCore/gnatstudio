@@ -40,6 +40,7 @@ with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Style;                use Gtk.Style;
 with Gtk.Table;                use Gtk.Table;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Widget;               use Gtk.Widget;
@@ -53,6 +54,7 @@ with Unchecked_Deallocation;
 with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Odd_Intl;                 use Odd_Intl;
+with Pango.Layout;             use Pango.Layout;
 
 package body Default_Preferences is
 
@@ -71,6 +73,8 @@ package body Default_Preferences is
    end record;
    package Param_Handlers is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Nodes);
+   package Return_Param_Handlers is new Gtk.Handlers.User_Return_Callback
+     (Glib.Object.GObject_Record, Boolean, Nodes);
 
    procedure Destroy_Cache (Data : in out XML_Cache);
    --  Free the memory occupied by Data
@@ -127,6 +131,11 @@ package body Default_Preferences is
       Data : Nodes);
    --  Called when the text in an entry field has changed.
 
+   function Font_Entry_Changed
+     (Ent  : access GObject_Record'Class;
+      Data : Nodes) return Boolean;
+   --  Called when the entry for a font selection has changed.
+
    procedure Color_Changed
      (Combo : access GObject_Record'Class;
       Data  : Nodes);
@@ -138,7 +147,8 @@ package body Default_Preferences is
    procedure Set_Pref (Top, Node : Node_Ptr; Name : String; Value : String);
    --  Set or create preference.
 
-   procedure Select_Font (Ent : access Gtk_Widget_Record'Class);
+   procedure Select_Font
+     (Ent : access GObject_Record'Class; Data : Nodes);
    --  Open a dialog to select a new font
 
    -------------------
@@ -657,6 +667,23 @@ package body Default_Preferences is
       Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
    end Entry_Changed;
 
+   ------------------------
+   -- Font_Entry_Changed --
+   ------------------------
+
+   function Font_Entry_Changed
+     (Ent  : access GObject_Record'Class;
+      Data : Nodes) return Boolean
+   is
+      E : Gtk_Entry := Gtk_Entry (Ent);
+      Desc : Pango_Font_Description;
+   begin
+      Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
+      Desc := From_String (Get_Text (E));
+      Set_Font_Description (Get_Layout (E), Desc);
+      return False;
+   end Font_Entry_Changed;
+
    -------------------
    -- Color_Changed --
    -------------------
@@ -674,12 +701,16 @@ package body Default_Preferences is
    -- Select_Font --
    -----------------
 
-   procedure Select_Font (Ent : access Gtk_Widget_Record'Class) is
+   procedure Select_Font
+     (Ent : access GObject_Record'Class;
+      Data : Nodes)
+   is
       E : Gtk_Entry := Gtk_Entry (Ent);
       F : Gtk_Font_Selection;
       Dialog : Gtk_Dialog;
       Tmp : Gtk_Widget;
       Result : Boolean;
+      Desc : Pango_Font_Description;
    begin
       Gtk_New (Dialog,
                Title  => -"Select font",
@@ -697,6 +728,10 @@ package body Default_Preferences is
 
       if Run (Dialog) = Gtk_Response_OK then
          Set_Text (E, Get_Font_Name (F));
+
+         Set_Pref (Data.Top, Data.Node, Pspec_Name (Data.Param), Get_Text (E));
+         Desc := From_String (Get_Text (E));
+         Set_Font_Description (Get_Layout (E), Desc);
       end if;
 
       Destroy (Dialog);
@@ -806,26 +841,26 @@ package body Default_Preferences is
          begin
             Gtk_New_Hbox (Box, Homogeneous => False);
             Gtk_New (Ent);
-            Set_Text (Ent, To_String (Get_Pref (Manager, Prop)));
+            Set_Style (Ent, Copy (Get_Style (Ent)));
             Pack_Start (Box, Ent, Expand => True, Fill => True);
 
             Gtk_New (Button, -"Browse");
             Pack_Start (Box, Button, Expand => False, Fill => False);
-            Widget_Callback.Object_Connect
+            Param_Handlers.Object_Connect
               (Button, "clicked",
-               Widget_Callback.To_Marshaller (Select_Font'Access),
-               Ent);
+               Param_Handlers.To_Marshaller (Select_Font'Access),
+               Slot_Object => Ent,
+               User_Data => N);
 
-            Param_Handlers.Connect
-              (Ent, "insert_text",
-               Param_Handlers.To_Marshaller (Entry_Changed'Access),
-               User_Data   => N,
-               After       => True);
-            Param_Handlers.Connect
-              (Ent, "delete_text",
-               Param_Handlers.To_Marshaller (Entry_Changed'Access),
-               User_Data   => N,
-               After       => True);
+            Return_Param_Handlers.Connect
+              (Ent, "focus_out_event",
+               Return_Param_Handlers.To_Marshaller (Font_Entry_Changed'Access),
+               User_Data   => N);
+
+            --  Done after the callbacks have been set, to show the font in the
+            --  style.
+            Set_Text (Ent, To_String (Get_Pref (Manager, Prop)));
+            Set_Font_Description (Get_Style (Ent), Get_Pref (Manager, Prop));
 
             return Gtk_Widget (Box);
          end;
@@ -975,7 +1010,7 @@ package body Default_Preferences is
             if Table = null then
                Gtk_New (Table, Rows => 1, Columns => 2,
                         Homogeneous => False);
-               Set_Row_Spacings (Table, 5);
+               Set_Row_Spacings (Table, 1);
                Set_Col_Spacings (Table, 5);
 
                if Last < Page_Name'Last then
