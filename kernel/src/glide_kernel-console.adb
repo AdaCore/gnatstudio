@@ -378,7 +378,7 @@ package body Glide_Kernel.Console is
       Raise_Child (Child);
 
       Gtk_New (Interactive_Console,
-               "[GPS in the Shell]$ ",
+               "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
                Get_Pref (Kernel, Keyword_Font));
