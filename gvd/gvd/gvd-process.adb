@@ -115,7 +115,7 @@ package body GVD.Process is
 
    --  Array of the signals created for this widget
    Signals : constant Chars_Ptr_Array :=
-     "process_stopped" + "context_changed";
+     "process_stopped" + "context_changed" + "debugger_closed";
 
    Graph_Cmd_Format : constant Pattern_Matcher := Compile
      ("graph\s+(print|display)\s+(`([^`]+)`|""([^""]+)"")?(.*)",
@@ -1385,6 +1385,12 @@ package body GVD.Process is
          Close (Process.Process_Mdi, Process.Debugger_Text);
          Close (Process.Process_Mdi, Process.Data_Paned);
          Success := False;
+
+      when Spawn_Error =>
+         --  Do not display a dialog here since the Spawn procedure displays
+         --  a dialog before raising Spawn_Error.
+
+         Success := False;
    end Configure;
 
    ---------------------
@@ -1701,6 +1707,13 @@ package body GVD.Process is
 
    begin
       if Debugger.Exiting then
+         return;
+      end if;
+
+      Widget_Callback.Emit_By_Name
+        (Gtk_Widget (Debugger), "debugger_closed");
+
+      if not Debugger.Window.Standalone then
          return;
       end if;
 
