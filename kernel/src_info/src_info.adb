@@ -18,25 +18,50 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Src_Info.ALI;       use Src_Info.ALI;
-with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
-with Types;              use Types;
+with Types;                     use Types;
+with Snames;                    use Snames;
+with Prj;                       use Prj;
+with Prj.Util;                  use Prj.Util;
+with Prj.Env;                   use Prj.Env;
+with Namet;                     use Namet;
+with Stringt;                   use Stringt;
 
-with Prj.Env;            use Prj.Env;
-
-with Traces;             use Traces;
---  The dependency on traces should be removed when we move this to the GNAT
+--  The following dependencies should be removed when we move this to the GNAT
 --  sources (or the GNAT tools)
+with Traces;                    use Traces;
+with String_Utils;              use String_Utils;
 
 package body Src_Info is
 
    Me : Debug_Handle := Create ("Src_Info");
 
-   function OS_Time_To_GNAT_Time (T : OS_Time) return Time_Stamp_Type;
-   --  This function should be imported from the body of Osint...
+   type LI_Handler_List_Record;
+   type LI_Handler_List is access LI_Handler_List_Record;
+   type LI_Handler_List_Record is record
+      Handler  : LI_Handler;
+      Language : Name_Id;
+      Next     : LI_Handler_List;
+   end record;
 
+   LI_Handlers : LI_Handler_List;
+   --  Global variable to store all the registered handlers. This has to be a
+   --  global variable, since we want to be able to eventually move this
+   --  package to the GNAT sources (thus we can't associated this with the
+   --  kernel).
+
+   Base_Year         : constant := 1990;
+   --  Year used as year 0 when computing timestamps. This avoids range
+   --  checking issues when converting timestamps to Src_Info.Time_Stamp;
+
+   Seconds_In_Minute : constant := 60;
+   Seconds_In_Hour   : constant := 60 * Seconds_In_Minute;
+   Seconds_In_Day    : constant := 24 * Seconds_In_Hour;
+   Seconds_In_Month  : constant := 31 * Seconds_In_Day;
+   Seconds_In_Year   : constant := 12 * Seconds_In_Month;
 
    procedure Free is new Unchecked_Deallocation (File_Info, File_Info_Ptr);
    procedure Free is new Unchecked_Deallocation
@@ -67,32 +92,12 @@ package body Src_Info is
       return Source_File;
    --  Create a new Source_File structure matching File.
 
-   --------------------------
-   -- OS_Time_To_GNAT_Time --
-   --------------------------
-
-   function OS_Time_To_GNAT_Time (T : OS_Time) return Time_Stamp_Type is
-      GNAT_Time : Time_Stamp_Type;
-      Y  : Year_Type;
-      Mo : Month_Type;
-      D  : Day_Type;
-      H  : Hour_Type;
-      Mn : Minute_Type;
-      S  : Second_Type;
-
-   begin
-      GM_Split (T, Y, Mo, D, H, Mn, S);
-      Make_Time_Stamp
-        (Year    => Nat (Y),
-         Month   => Nat (Mo),
-         Day     => Nat (D),
-         Hour    => Nat (H),
-         Minutes => Nat (Mn),
-         Seconds => Nat (S),
-         TS      => GNAT_Time);
-
-      return GNAT_Time;
-   end OS_Time_To_GNAT_Time;
+   function Check_Language_Of
+     (Project : Project_Id; Source_Filename : String; Language : Name_Id)
+      return Boolean;
+   --  Return True if Source_Filename belongs to Language, as defined in
+   --  Project.
+   --  ??? This should probably be moved to Prj.Nmsc.
 
    ----------------------------
    -- Get_Separate_File_Info --
@@ -573,25 +578,17 @@ package body Src_Info is
       Predefined_Object_Path : String;
       Unit_Name              : out String_Access)
    is
-      Success : Boolean;
-      Unit    : LI_File_Ptr;
-
+      Source_Filename : constant String := Get_Source_Filename (Source);
    begin
-      --  the ALI file might not have been parsed yet, so we take care of that
-      --  now.
-
-      if Is_Incomplete (Source.LI) then
-         Parse_ALI_File
-           (Find_File
-            (Source.LI.LI.LI_Filename.all,
-             Ada_Objects_Path (Project).all, Predefined_Object_Path),
-            Project, Predefined_Source_Path, Predefined_Object_Path,
-            Source_Info_List, Unit, Success);
-         if Success then
-            Source.LI := Unit;
-         end if;
-      end if;
-
+      Create_Or_Complete_LI
+        (Handler                =>
+           Handler_From_Filename (Project, Source_Filename),
+         File                   => Source.LI,
+         Source_Filename        => Source_Filename,
+         List                   => Source_Info_List,
+         Project                => Project,
+         Predefined_Source_Path => Predefined_Source_Path,
+         Predefined_Object_Path => Predefined_Object_Path);
       Unit_Name := Get_File_Info (Source).Unit_Name;
    end Get_Unit_Name;
 
@@ -600,11 +597,20 @@ package body Src_Info is
    ----------------------
 
    function Make_Source_File
-     (Source_Filename : String; LI_Filename : String) return Internal_File is
+     (Source_Filename        : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return Internal_File
+   is
+      ALI : constant String := LI_Filename_From_Source
+        (Handler                =>
+           Handler_From_Filename (Project, Source_Filename),
+         Source_Filename        => Source_Filename,
+         Project                => Project,
+         Predefined_Source_Path => Predefined_Source_Path);
    begin
       return (File_Name => new String' (Source_Filename),
               Unit_Name => null,
-              LI_Name   => new String' (LI_Filename));
+              LI_Name   => new String' (ALI));
    end Make_Source_File;
 
    -------------
@@ -783,7 +789,7 @@ package body Src_Info is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return String
    is
-      Ts : Time_Stamp_Type := Empty_Time_Stamp;
+      Ts : Timestamp := 0;
    begin
       --  If the timestamps mismatch, then we'll simply recompute the location
       --  of the file. Generally, it will be because the file has been edited
@@ -791,14 +797,14 @@ package body Src_Info is
       --  also be because the project has changed and we are pointing to some
       --  other files.
       if File.Directory_Name /= null then
-         Ts := OS_Time_To_GNAT_Time (File_Time_Stamp
+         Ts := To_Timestamp (File_Time_Stamp
             (File.Directory_Name.all & File.Source_Filename.all));
 
          if File.File_Timestamp /= Ts then
             Trace (Me, "Get_Directory_Name: timestamps mismatch for file "
                    & File.Source_Filename.all
-                   & " " & String (Ts)
-                   & " " & String (File.File_Timestamp));
+                   & Ts'Img
+                   & File.File_Timestamp'Img);
             Free (File.Directory_Name);
          end if;
       end if;
@@ -819,9 +825,9 @@ package body Src_Info is
       --  its LI file, we don't have any timestamp
       --  information. Memorizing it here will allow the cache for the
       --  directory name to work properly.
-      if File.File_Timestamp = Empty_Time_Stamp then
-         if Ts = Empty_Time_Stamp then
-            Ts := OS_Time_To_GNAT_Time (File_Time_Stamp
+      if File.File_Timestamp = 0 then
+         if Ts = 0 then
+            Ts := To_Timestamp (File_Time_Stamp
               (File.Directory_Name.all & File.Source_Filename.all));
          end if;
 
@@ -830,5 +836,149 @@ package body Src_Info is
 
       return File.Directory_Name.all;
    end Get_Directory_Name;
+
+   -----------------------
+   -- Check_Language_Of --
+   -----------------------
+
+   function Check_Language_Of
+     (Project : Project_Id; Source_Filename : String; Language : Name_Id)
+     return Boolean
+   is
+      function Check_Exception (List : Array_Element_Id) return Boolean;
+      --  Return True if SourcE_Filename is part of the exceptions List.
+
+      ---------------------
+      -- Check_Exception --
+      ---------------------
+
+      function Check_Exception (List : Array_Element_Id) return Boolean is
+         Elem : Array_Element_Id := List;
+      begin
+         while Elem /= No_Array_Element loop
+            String_To_Name_Buffer (Array_Elements.Table (Elem).Value.Value);
+
+            if Name_Buffer (1 .. Name_Len) = Source_Filename then
+               return True;
+            end if;
+
+            Elem := Array_Elements.Table (Elem).Next;
+         end loop;
+         return False;
+      end Check_Exception;
+
+      Naming : Naming_Data := Projects.Table (Project).Naming;
+      Spec, Bodies : Name_Id;
+   begin
+      Spec   := Value_Of (Language, Naming.Specification_Suffix);
+      Bodies := Value_Of (Language, Naming.Implementation_Suffix);
+
+      --  First, check the general extensions
+
+      if Spec /= No_Name
+        and then Suffix_Matches (Source_Filename, Get_Name_String (Spec))
+      then
+         return True;
+
+      elsif Bodies /= No_Name
+        and then Suffix_Matches (Source_Filename, Get_Name_String (Bodies))
+      then
+         return True;
+      end if;
+
+      --  otherwise, check the naming exceptions
+      --  Special case for Ada
+      if Language = Name_Ada then
+         if Naming.Separate_Suffix /= No_Name
+           and then Suffix_Matches (Source_Filename,
+                                    Get_Name_String (Naming.Separate_Suffix))
+         then
+            return True;
+         end if;
+
+         return Check_Exception (Naming.Specifications)
+           or else Check_Exception (Naming.Bodies);
+
+      else
+         return Check_Exception (Naming.Specification_Exceptions)
+           or else Check_Exception (Naming.Implementation_Exceptions);
+      end if;
+   end Check_Language_Of;
+
+   ---------------------------
+   -- Handler_From_Filename --
+   ---------------------------
+
+   function Handler_From_Filename
+     (Project : Project_Id; Source_Filename : String) return LI_Handler
+   is
+      Tmp : LI_Handler_List := LI_Handlers;
+   begin
+      while Tmp /= null loop
+         if Check_Language_Of
+           (Project, Base_Name (Source_Filename), Tmp.Language)
+         then
+            return Tmp.Handler;
+         end if;
+         Tmp := Tmp.Next;
+      end loop;
+
+      Trace (Me, "Unsupported language for " & Source_Filename);
+      Raise_Exception (Unsupported_Language'Identity,
+                       "Unsupported language for " & Source_Filename);
+      return null;
+   end Handler_From_Filename;
+
+   -------------------------
+   -- Register_LI_Handler --
+   -------------------------
+
+   procedure Register_LI_Handler (Handler : LI_Handler; Language : String) is
+   begin
+      Name_Len := Language'Length;
+      Name_Buffer (1 .. Name_Len) := Language;
+      LI_Handlers := new LI_Handler_List_Record'
+        (Handler => Handler, Language => Name_Find, Next => LI_Handlers);
+   end Register_LI_Handler;
+
+   ------------------
+   -- To_Timestamp --
+   ------------------
+
+   function To_Timestamp (Str : Types.Time_Stamp_Type) return Timestamp is
+      Year, Month, Day, Hour, Minutes, Seconds : Nat;
+   begin
+      Split_Time_Stamp (Str, Year, Month, Day, Hour, Minutes, Seconds);
+
+      --  Save some space on the year
+      return Timestamp (Year - Base_Year) * Seconds_In_Year
+        + Timestamp (Month) * Seconds_In_Month
+        * Timestamp (Day) * Seconds_In_Day
+        + Timestamp (Hour) * Seconds_In_Hour
+        * Timestamp (Minutes) * Seconds_In_Minute
+        * Timestamp (Seconds);
+   end To_Timestamp;
+
+   ------------------
+   -- To_Timestamp --
+   ------------------
+
+   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp is
+      Year    : Year_Type;
+      Month   : Month_Type;
+      Day     : Day_Type;
+      Hour    : Hour_Type;
+      Minutes : Minute_Type;
+      Second  : Second_Type;
+
+   begin
+      GM_Split (Time, Year, Month, Day, Hour, Minutes, Second);
+      return Timestamp (Year - Base_Year) * Seconds_In_Year
+        + Timestamp (Month) * Seconds_In_Month
+        * Timestamp (Day) * Seconds_In_Day
+        + Timestamp (Hour) * Seconds_In_Hour
+        * Timestamp (Minutes) * Seconds_In_Minute
+        * Timestamp (Second);
+   end To_Timestamp;
 
 end Src_Info;

@@ -88,9 +88,14 @@ package Src_Info is
    --  later on.  File might be destroyed, the copy will remain valid.
 
    function Make_Source_File
-     (Source_Filename : String; LI_Filename : String) return Internal_File;
+     (Source_Filename        : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
    --  The returned result will need to be destroyed.
+   --
+   --  Project should be the project to which Source_Filename belongs (so that
+   --  both the naming scheme and the search path are correct).
 
    function Get_Source_Filename (File : Internal_File) return String;
    function Get_Full_Source_Filename
@@ -120,6 +125,8 @@ package Src_Info is
    --  Note that, for implicit dependencies, the unit name is sometimes
    --  computed in a lazy manor, that is only when read for the first time. In
    --  cases where computing the unit_name fails, null is returned.
+   --
+   --  Project should be the project to which Source_Filename belongs (so that
 
    ----------------------------
    -- Dependency Information --
@@ -135,6 +142,56 @@ package Src_Info is
    function Get_Depends_From_Body (Dep : Dependency_Info) return Boolean;
    --  Return True if the given Dep is an explicit dependency from the
    --  implementation part.
+
+   ------------------
+   --  LI handlers --
+   ------------------
+
+   type LI_Handler_Record is abstract tagged null record;
+   type LI_Handler is access all LI_Handler_Record'Class;
+   --  General type to handle and generate Library Information data (for
+   --  cross-references, and the various queries for the browsers).
+   --  Derived types should be created for all the languages supported by
+   --  Glide2.
+
+   Unsupported_Language : exception;
+   --  Raised when a file name can not be associated with one of the handlers.
+
+   function Handler_From_Filename
+     (Project : Prj.Project_Id; Source_Filename : String) return LI_Handler;
+   --  Return the handle to use for the given filename.
+   --  Raise Unsupported_Language if not handler was found.
+   --  Project_View should be the project to which Source_Filename belongs.
+
+   procedure Register_LI_Handler
+     (Handler : LI_Handler; Language : String);
+   --  Add Handler to the list of known handlers.
+   --  Language should be a lower-case string that describes the language (in
+   --  the project file) that handler is associated with.
+
+   procedure Create_Or_Complete_LI
+     (Handler                : access LI_Handler_Record;
+      File                   : in out LI_File_Ptr;
+      Source_Filename        : String;
+      List                   : in out LI_File_List;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String;
+      Predefined_Object_Path : String) is abstract;
+   --  Create (if File is null) or complete (otherwise) the LI declaration if
+   --  File.
+   --  File is associated with the given Source_Filename.
+
+   function LI_Filename_From_Source
+     (Handler                : access LI_Handler_Record;
+      Source_Filename        : String;
+      Project                : Prj.Project_Id;
+      Predefined_Source_Path : String)
+      return String is abstract;
+   --  Return the name of the Library Information file associated with
+   --  Source_Filename. In Ada, there is one such file per source
+   --  file. However, in some other languages, all source files might be
+   --  associated with the same LI file.
+   --  This name is used as an index into the LI_File_List.
 
 private
 
@@ -350,11 +407,17 @@ private
    --  The information associated to a source file, and that remains valid even
    --  when the LI file is parsed again
 
+   type Timestamp is new Integer;
+
+   function To_Timestamp (Str : Types.Time_Stamp_Type) return Timestamp;
+   function To_Timestamp (Time : GNAT.OS_Lib.OS_Time) return Timestamp;
+   --  Convert the string to an internal timestamp.
+
    type File_Info is record
       Unit_Name         : String_Access;
       Source_Filename   : String_Access;
       Directory_Name    : String_Access;
-      File_Timestamp    : Types.Time_Stamp_Type;
+      File_Timestamp    : Timestamp;
       Original_Filename : String_Access;
       Original_Line     : Positive;
       Declarations      : E_Declaration_Info_List;
@@ -411,7 +474,7 @@ private
 
    type Dependency_File_Info is record
       File              : Source_File;
-      File_Timestamp    : Types.Time_Stamp_Type;
+      File_Timestamp    : Timestamp;
       Dep_Info          : Dependency_Info;
       Declarations      : E_Declaration_Info_List;
    end record;
