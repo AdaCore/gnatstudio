@@ -1300,6 +1300,16 @@ package body Codefix.Text_Manager is
       end if;
    end Free;
 
+   ---------------
+   -- Free_Data --
+   ---------------
+
+   procedure Free_Data (This : in out Extract_Line) is
+   begin
+      Free (This.Content);
+      Free (This.Cursor);
+   end Free_Data;
+
    -----------------
    -- Get_Context --
    -----------------
@@ -1602,6 +1612,7 @@ package body Codefix.Text_Manager is
 
    begin
       Str := new String'(Get_Line (This, Cursor));
+      Free_Data (Destination);
       Destination :=
         (Context         => Original_Unit,
          Cursor          => Clone (Cursor),
@@ -1609,6 +1620,8 @@ package body Codefix.Text_Manager is
          Content         => To_Mergable_String (Str.all),
          Next            => null,
          Coloration      => True);
+
+      Free (Str);
    end Get_Line;
 
    ------------------
@@ -2117,7 +2130,8 @@ package body Codefix.Text_Manager is
       Assign (Bottom, Bottom (Dest_Stop.Col + 1 .. Bottom'Last));
 
       while Cursor_Source.Line <= Source_Stop.Line loop
-         Assign (Source_Line, Get_Next_Source_Line);
+         Free (Source_Line);
+         Source_Line := Get_Next_Source_Line;
 
          if Destination_Line /= null then
             Replace_To_End
@@ -2152,6 +2166,10 @@ package body Codefix.Text_Manager is
             Destination_Line := Get_Line (Destination_Line, Cursor_Dest);
          end loop;
       end if;
+
+      Free (Source_Line);
+      Free (Head);
+      Free (Bottom);
 
    end Replace;
 
@@ -3052,7 +3070,6 @@ package body Codefix.Text_Manager is
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class)
    is
-      New_Str     : Dynamic_String;
       Line_Cursor : File_Cursor;
       Word        : Word_Cursor;
    begin
@@ -3062,8 +3079,6 @@ package body Codefix.Text_Manager is
 
       Line_Cursor.Col := 1;
       Get_Line (Current_Text, Line_Cursor, New_Extract);
-
-      New_Str := new String'(Get_String (New_Extract));
 
       case Word.Mode is
          when Text_Ascii =>
@@ -3080,7 +3095,6 @@ package body Codefix.Text_Manager is
       end case;
 
       Free (Word);
-
    end Execute;
 
    ---------------------
@@ -3156,7 +3170,6 @@ package body Codefix.Text_Manager is
 
       Free (New_Str);
       Free (Word);
-
    end Execute;
 
    -------------------
@@ -3252,6 +3265,8 @@ package body Codefix.Text_Manager is
          This.Str_Expected.all,
          Current_Word.String_Match.all,
          Current_Word.Mode);
+
+      Free (Current_Word);
    end Execute;
 
    ---------------------
@@ -3300,6 +3315,10 @@ package body Codefix.Text_Manager is
       Free (Extract1);
       Free (Extract2);
    end Execute;
+
+   --------------------
+   -- Merge_Extracts --
+   --------------------
 
    procedure Merge_Extracts
      (Result              : out Extract'Class;
