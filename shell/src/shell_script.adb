@@ -1963,11 +1963,11 @@ package body Shell_Script is
    begin
       Custom := Create_Proxy
         (A.Command,
-         (null,
-          null,
-          null,
-          D.Args,
-          null));
+         Context => (null,
+                     null,
+                     null,
+                     new Argument_List'(Clone (D.Args.all)),
+                     null));
 
       Launch_Background_Command
         (Get_Kernel (Args),
