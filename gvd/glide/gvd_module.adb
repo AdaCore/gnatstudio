@@ -291,6 +291,8 @@ package body GVD_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
+
       Entity   : Entity_Selection_Context_Access;
       Mitem    : Gtk_Menu_Item;
       Line     : Integer;
@@ -493,6 +495,8 @@ package body GVD_Module is
    procedure On_Debug_Init
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
+
       Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
@@ -519,6 +523,8 @@ package body GVD_Module is
    procedure On_Debugger_Terminate
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
+
       Top   : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page  : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
@@ -551,6 +557,8 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
@@ -577,6 +585,8 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
@@ -602,6 +612,8 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
+
       Entity    : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
@@ -676,6 +688,8 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget, Context);
+
    begin
       --  ???
       null;
@@ -693,6 +707,7 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget, Context);
    begin
       --  ???
       null;
@@ -847,7 +862,8 @@ package body GVD_Module is
            -"Step program until it reaches a different source line",
          Icon => Gtk_Widget (Create_Pixmap (step_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Top.Step_Button, "clicked", On_Step'Access, Window);
+        (Top.Step_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Step'Access), Window);
       Set_Sensitive (Top.Step_Button, False);
       Top.Next_Button := Append_Element
         (Toolbar => Toolbar,
@@ -855,7 +871,8 @@ package body GVD_Module is
          Tooltip_Text => -"Step program, proceeding through subroutine calls",
          Icon => Gtk_Widget (Create_Pixmap (next_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Top.Next_Button, "clicked", On_Next'Access, Window);
+        (Top.Next_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Next'Access), Window);
       Set_Sensitive (Top.Next_Button, False);
       Top.Finish_Button := Append_Element
         (Toolbar => Toolbar,
@@ -863,7 +880,8 @@ package body GVD_Module is
          Tooltip_Text => -"Execute until selected stack frame returns",
          Icon => Gtk_Widget (Create_Pixmap (finish_xpm, Window)));
       Widget_Callback.Object_Connect
-        (Top.Finish_Button, "clicked", On_Finish'Access, Window);
+        (Top.Finish_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Finish'Access), Window);
       Set_Sensitive (Top.Finish_Button, False);
    end Initialize_Module;
 
