@@ -54,7 +54,7 @@ package body Vdiff2_Module.Utils is
    Append_Style         : constant String       := "Append_diff";
    Remove_Style         : constant String       := "Remove_diff";
    Change_Style         : constant String       := "Change_diff";
-   Fine_Change_Style    : constant String       := "Default_diff";
+   Fine_Change_Style    : constant String       := "Fine_Change_diff";
    Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
 
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
@@ -841,6 +841,8 @@ package body Vdiff2_Module.Utils is
         To_String (Get_Pref (Kernel, Diff_Remove_Color));
       Change_Color  : constant String  :=
         To_String (Get_Pref (Kernel, Diff_Change_Color));
+      Change_Fine_Color  : constant String  :=
+        To_String (Get_Pref (Kernel, Diff_Fine_Change_Color));
       Args          : Argument_List :=
         (1 => new String'(Default_Style),
          2 => new String'(Default_Color));
@@ -864,6 +866,10 @@ package body Vdiff2_Module.Utils is
       Basic_Types.Free (Args);
       Args := (1 => new String'(Change_Style),
                2 => new String'(Change_Color));
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Basic_Types.Free (Args);
+      Args := (1 => new String'(Fine_Change_Style),
+               2 => new String'(Change_Fine_Color));
       Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Basic_Types.Free (Args);
    end Register_Highlighting;
