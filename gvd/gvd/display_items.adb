@@ -1331,15 +1331,15 @@ package body Display_Items is
          Item.Debugger.Selected_Item := null;
       end if;
 
-      Free (Item.Entity);
-      Free (Item.Name);
-      Free (Item.Id);
-
       --  Should recompute aliases (delete all the items that we aliased
       --  to this one, since the user was probably expecting them not to be
       --  visible any more).
 
       For_Each_Item (Canvas, Free_Alias'Unrestricted_Access);
+
+      Free (Item.Entity);
+      Free (Item.Name);
+      Free (Item.Id);
       Remove (Canvas, Item);
       --  Warning: the memory has been freed after Remove.
 
