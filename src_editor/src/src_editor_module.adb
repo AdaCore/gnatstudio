@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
@@ -73,6 +74,7 @@ with Histories;                 use Histories;
 with OS_Utils;                  use OS_Utils;
 
 with Generic_List;
+with GVD.Preferences; use GVD.Preferences;
 
 package body Src_Editor_Module is
 
@@ -246,6 +248,10 @@ package body Src_Editor_Module is
    procedure On_Save_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  File->Save All menu
+
+   procedure On_Print
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  File->Print menu
 
    procedure On_Cut
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -444,6 +450,8 @@ package body Src_Editor_Module is
       Line     : Natural := 1;
       Length   : Natural := 0;
       Column   : Natural := 1;
+      Force    : Boolean;
+      All_Save : Boolean;
 
       function Parse_Argument (Arg : String) return Natural;
       --  Parse a numerical argument, produce an error message corresponding
@@ -795,6 +803,7 @@ package body Src_Editor_Module is
                return "invalid position";
             end if;
          end;
+
       elsif Command = "get_line"
         or else Command = "get_column"
         or else Command = "get_file"
@@ -961,6 +970,43 @@ package body Src_Editor_Module is
             end;
          else
             return -"missing parameter file";
+         end if;
+
+      elsif Command = "save" then
+         Force := True;
+         All_Save := False;
+
+         Node := First (Args);
+
+         while Node /= Null_Node loop
+            if Data (Node) = "-i" then
+               Force := False;
+            elsif Data (Node) = "all" then
+               All_Save := True;
+            else
+               return -"save: invalid parameter";
+            end if;
+
+            Node := Next (Node);
+         end loop;
+
+         if All_Save then
+            if Save_All_MDI_Children (Kernel, Force) then
+               return "";
+            else
+               return -"cancelled";
+            end if;
+         else
+            declare
+               Child : constant MDI_Child := Find_Current_Editor (Kernel);
+            begin
+               if Child = null then
+                  return -"no file selected";
+               else
+                  return To_Lower (Save_Return_Value'Image
+                    (Save_Child (Kernel, Child, False)));
+               end if;
+            end;
          end if;
 
       else
@@ -1888,6 +1934,37 @@ package body Src_Editor_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_All;
 
+   --------------
+   -- On_Print --
+   --------------
+
+   procedure On_Print
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Success : Boolean;
+      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Source  : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+
+   begin
+      if Source /= null then
+         if Save_Child (Kernel, Child, False) /= Cancel then
+            declare
+               Cmd : Argument_List_Access := Argument_String_To_List
+                 (Get_Pref (Kernel, Print_Command) & " " &
+                  Get_Filename (Source));
+            begin
+               Launch_Process
+                 (Kernel, Cmd (Cmd'First).all, Cmd (Cmd'First + 1 .. Cmd'Last),
+                  Name => "", Success => Success);
+               Free (Cmd);
+            end;
+         end if;
+      end if;
+   end On_Print;
+
    -------------------------
    -- On_Save_All_Editors --
    -------------------------
@@ -2750,6 +2827,11 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Save, -"_All", "",
                      On_Save_All'Access, Ref_Item => -"Desktop");
 
+      Register_Menu (Kernel, File, -"_Print", Stock_Print, On_Print'Access,
+                     Ref_Item => -"Exit");
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, File, Mitem, Ref_Item => -"Exit");
+
       --  Note: callbacks for the Undo/Redo menu items will be added later
       --  by each source editor.
 
@@ -3016,6 +3098,15 @@ package body Src_Editor_Module is
          & (-"Close all file editors for file_name."),
          Handler => Edit_Command_Handler'Access);
 
+      Register_Command
+        (Kernel,
+         Command => "save",
+         Help    => -"Usage:" & ASCII.LF
+         & "  save [-i] [all]" & ASCII.LF
+         & (-"Save current or all files.") & ASCII.LF
+         & (-"  -i: prompt before each save"),
+         Handler => Edit_Command_Handler'Access);
+
       --  Register the search functions
 
       Gtk_New (Selector, Kernel);
@@ -3028,30 +3119,33 @@ package body Src_Editor_Module is
       begin
          Register_Search_Function
            (Kernel => Kernel,
-            Data   => (Length            => Name'Length,
-                       Label             => Name,
-                       Factory           => Current_File_Factory'Access,
-                       Extra_Information => Gtk_Widget (Selector),
-                       Id                => Src_Editor_Module_Id,
-                       Mask              => All_Options));
+            Data   =>
+              (Length            => Name'Length,
+               Label             => Name,
+               Factory           => Current_File_Factory'Access,
+               Extra_Information => Gtk_Widget (Selector),
+               Id                => Src_Editor_Module_Id,
+               Mask              => All_Options));
          Register_Search_Function
            (Kernel => Kernel,
-            Data   => (Length            => Name2'Length,
-                       Label             => Name2,
-                       Factory           => Files_From_Project_Factory'Access,
-                       Extra_Information => Gtk_Widget (Selector),
-                       Id                => null,
-                       Mask              => All_Options
-                         and not Search_Backward));
+            Data   =>
+              (Length            => Name2'Length,
+               Label             => Name2,
+               Factory           => Files_From_Project_Factory'Access,
+               Extra_Information => Gtk_Widget (Selector),
+               Id                => null,
+               Mask              => All_Options
+                 and not Search_Backward));
          Register_Search_Function
            (Kernel => Kernel,
-            Data   => (Length            => Name3'Length,
-                       Label             => Name3,
-                       Factory           => Files_Factory'Access,
-                       Extra_Information => Gtk_Widget (Extra),
-                       Id                => null,
-                       Mask              => All_Options
-                         and not Search_Backward));
+            Data   =>
+              (Length            => Name3'Length,
+               Label             => Name3,
+               Factory           => Files_Factory'Access,
+               Extra_Information => Gtk_Widget (Extra),
+               Id                => null,
+               Mask              => All_Options
+                 and not Search_Backward));
       end;
    end Register_Module;
 
