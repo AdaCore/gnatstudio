@@ -329,15 +329,18 @@ package body Glide_Kernel.Task_Manager is
      (Kernel          : access Kernel_Handle_Record'Class;
       Command         : access Root_Command'Class;
       Active          : Boolean;
+      Show_Bar        : Boolean;
       Queue_Id        : String := "";
       Destroy_On_Exit : Boolean := True)
    is
       Manager : constant Task_Manager_Access := Get_Task_Manager (Kernel);
    begin
       if Destroy_On_Exit then
-         Add_Command (Manager, Command_Access (Command), Active, Queue_Id);
+         Add_Command
+           (Manager, Command_Access (Command), Active, Show_Bar, Queue_Id);
       else
-         Add_Command (Manager, Create_Wrapper (Command), Active, Queue_Id);
+         Add_Command
+           (Manager, Create_Wrapper (Command), Active, Show_Bar, Queue_Id);
       end if;
    end Launch_Background_Command;
 
