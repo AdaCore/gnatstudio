@@ -7,13 +7,14 @@ GNAT_INC=${RUNTIME_INC} -aI../src -aO../obj -aI${GNAT_SRC}
 CFLAGS=-g
 GNATMAKE_FLAGS=-gnaty -gnatwu -m ${CFLAGS} ${GNAT_INC}
 
-all: test_api test_wizard
+all: test_api test_wizard test_directory
 
 test_api: force
 	gnatmake test_api.adb ${GNATMAKE_FLAGS}
 
-test_wizard: force
-	gnatmake test_wizard.adb ${GNATMAKE_FLAGS} `gtkada-config`
+test_wizard test_directory: force
+	gnatmake $@.adb ${GNATMAKE_FLAGS} `gtkada-config` \
+	  -largs ../obj/pixmaps.o
 
 clean: force
 	${RM} b~* *.o *.ali core test_api
