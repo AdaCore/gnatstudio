@@ -155,13 +155,11 @@ package body Project_Viewers is
 
    Project_Switches_Name : constant String := "Project Switches";
 
-   Full_Path_Cst : aliased constant String := "full_path";
    Recursive_Cst : aliased constant String := "recursive";
    Directory_Cst : aliased constant String := "directory";
    Imported_Cst  : aliased constant String := "imported";
    Sources_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List :=
-     (1 => Full_Path_Cst'Access,
-      2 => Recursive_Cst'Access);
+     (1 => Recursive_Cst'Access);
    Source_Dirs_Cmd_Parameters : constant Glide_Kernel.Scripts.Cst_Argument_List
      := (1 => Recursive_Cst'Access);
    Add_Source_Dir_Cmd_Parameters :
@@ -228,7 +226,7 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : Name_Id;
+      File_Name        : VFS.Virtual_File;
       Directory_Filter : String := "");
    --  Append a new line in the current page of Viewer, for File_Name.
    --  The exact contents inserted depends on the current view.
@@ -614,19 +612,17 @@ package body Project_Viewers is
 
    procedure Append_Line
      (Viewer           : access Project_Viewer_Record'Class;
-      File_Name        : Name_Id;
+      File_Name        : VFS.Virtual_File;
       Directory_Filter : String := "")
    is
-      File_N     : constant String := Get_String (File_Name);
       Iter       : Gtk_Tree_Iter;
 
    begin
       if Directory_Filter = ""
-        or else Is_Regular_File
-          (Name_As_Directory (Directory_Filter) & File_N)
+        or else Dir_Name (File_Name).all = Name_As_Directory (Directory_Filter)
       then
          Append (Viewer.Model, Iter, Null_Iter);
-         Set (Viewer.Model, Iter, File_Name_Column, Locale_To_UTF8 (File_N));
+         Set (Viewer.Model, Iter, File_Name_Column, Base_Name (File_Name));
          Project_Viewers_Set (Viewer, Iter);
       end if;
    end Append_Line;
@@ -901,7 +897,7 @@ package body Project_Viewers is
       Project_Filter   : Project_Type;
       Directory_Filter : String := "")
    is
-      Files : constant Name_Id_Array := Get_Source_Files
+      Files : File_Array_Access := Get_Source_Files
         (Project_Filter, Recursive => False);
    begin
       Viewer.Current_Project := Project_Filter;
@@ -909,6 +905,8 @@ package body Project_Viewers is
       for F in Files'Range loop
          Append_Line (Viewer, Files (F), Directory_Filter);
       end loop;
+
+      Unchecked_Free (Files);
    end Show_Project;
 
    --------------------
@@ -2583,12 +2581,10 @@ package body Project_Viewers is
       elsif Command = "sources" then
          Name_Parameters (Data, Sources_Cmd_Parameters);
          declare
-            Full_Path : constant Boolean := Nth_Arg (Data, 2, False);
-            Recursive : constant Boolean := Nth_Arg (Data, 3, False);
+            Recursive : constant Boolean := Nth_Arg (Data, 2, False);
             Sources   : File_Array_Access := Get_Source_Files
               (Project    => Project,
-               Recursive  => Recursive,
-               Full_Path  => Full_Path);
+               Recursive  => Recursive);
          begin
             Set_Return_Value_As_List (Data);
             for S in Sources'Range loop
@@ -3769,15 +3765,13 @@ package body Project_Viewers is
         (Kernel,
          Command      => "sources",
          Params       =>
-           Parameter_Names_To_Usage (Sources_Cmd_Parameters, 2),
+           Parameter_Names_To_Usage (Sources_Cmd_Parameters, 1),
          Return_Value => "list",
          Description  =>
            -("Return the list of source files for this project."
              & " If recursive is true, then all sources from imported projects"
              & " are also returned. Otherwise, only the direct sources are"
-             & " returned. If full_path is true, then the full path of the"
-             & " files is returned, otherwise only the base names are"
-             & " returned. The basenames of the returned files are alwayse"
+             & " returned. The basenames of the returned files are always"
              & " unique: not two files with the same basenames are returned,"
              & " and the one returned is the first one see while traversing"
              & " the project hierarchy."),
