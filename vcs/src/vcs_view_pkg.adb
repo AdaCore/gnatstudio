@@ -31,6 +31,9 @@ with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Check_Menu_Item;       use Gtk.Check_Menu_Item;
+
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
@@ -51,9 +54,17 @@ with VCS;
 
 with VCS_View_Pixmaps;          use VCS_View_Pixmaps;
 
+with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
+
+with Basic_Types;               use Basic_Types;
+
+with Prj;                       use Prj;
+with Prj_API;                   use Prj_API;
+with Prj.Tree;                  use Prj.Tree;
 
 package body VCS_View_Pkg is
 
@@ -88,6 +99,9 @@ package body VCS_View_Pkg is
    package Explorer_Selection_Foreach is
      new Selection_Foreach (VCS_View_Access);
    use Explorer_Selection_Foreach;
+
+   package Check_VCS_View_Handler is new Gtk.Handlers.User_Callback
+     (Gtk_Check_Menu_Item_Record, VCS_View_Access);
 
    ---------------------
    -- Local constants --
@@ -136,6 +150,30 @@ package body VCS_View_Pkg is
    -----------------------
    -- Local subprograms --
    -----------------------
+
+   procedure On_Menu_Open
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Diff
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List;
+   --  Convenience function to make a string_list out of a String_Id_Array.
 
    procedure Refresh (Explorer : VCS_View_Access);
    --  ???
@@ -231,6 +269,11 @@ package body VCS_View_Pkg is
       Params      : Glib.Values.GValues);
    --  ???
 
+   procedure Change_Hide_Up_To_Date
+     (Item     : access Gtk_Check_Menu_Item_Record'Class;
+      Explorer : VCS_View_Access);
+   --  Callback for toggling of "Hide up-to-date files".
+
    function Button_Press
      (Explorer : access Gtk_Widget_Record'Class;
        Event   : Gdk_Event)
@@ -289,9 +332,9 @@ package body VCS_View_Pkg is
       end if;
    end Clear;
 
-   --------------
-   --  Refresh --
-   --------------
+   -------------
+   -- Refresh --
+   -------------
 
    procedure Refresh (Explorer : VCS_View_Access) is
       use File_Status_List;
@@ -300,12 +343,10 @@ package body VCS_View_Pkg is
       Success  : Boolean;
    begin
       while not Is_Empty (L) loop
-         Append (Explorer.Model, Iter, Null_Iter);
-
-         if not Explorer.Show_All
-           and then (Head (L).Status /= Unknown
-                     or else Head (L).Status /= Up_To_Date)
+         if not Explorer.Hide_Up_To_Date
+           or else Head (L).Status /= Up_To_Date
          then
+            Append (Explorer.Model, Iter, Null_Iter);
             Fill_Info (Explorer, Iter, Head (L), False, Success);
 
             if not Success then
@@ -1018,6 +1059,196 @@ package body VCS_View_Pkg is
       VCS_View_Pkg.Initialize (VCS_View);
    end Gtk_New;
 
+   ----------------------------
+   -- Change_Hide_Up_To_Date --
+   ----------------------------
+
+   procedure Change_Hide_Up_To_Date
+     (Item     : access Gtk_Check_Menu_Item_Record'Class;
+      Explorer : VCS_View_Access) is
+   begin
+      Explorer.Hide_Up_To_Date := not Explorer.Hide_Up_To_Date;
+      Clear (Explorer.Model);
+      Refresh (Explorer);
+   end Change_Hide_Up_To_Date;
+
+   -------------
+   -- On_Open --
+   -------------
+
+   procedure On_Open
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Open (Ref, Files);
+
+      declare
+         L_Temp : String_List.List := Files;
+      begin
+         while not String_List.Is_Empty (L_Temp) loop
+            Open_File_Editor (Kernel, String_List.Head (L_Temp));
+            L_Temp := String_List.Next (L_Temp);
+         end loop;
+      end;
+   end On_Open;
+
+   ---------------
+   -- On_Update --
+   ---------------
+
+   procedure On_Update
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Update (Ref, Files);
+   end On_Update;
+
+   ---------------
+   -- On_Commit --
+   ---------------
+
+   procedure On_Commit
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle) is
+   begin
+      --  ??? Right now, commit opens a log editor for the file.
+      --  We should decide what the correct behavior should be.
+
+      On_Edit_Log (Widget, Kernel);
+   end On_Commit;
+
+   ------------------
+   -- On_View_Diff --
+   ------------------
+
+   procedure On_View_Diff
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      while not String_List.Is_Empty (Files) loop
+         Diff (Ref, String_List.Head (Files));
+         String_List.Tail (Files);
+      end loop;
+   end On_View_Diff;
+
+   ------------------
+   -- On_View_Log --
+   ------------------
+
+   procedure On_View_Log
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      while not String_List.Is_Empty (Files) loop
+         Log (Ref, String_List.Head (Files));
+         String_List.Tail (Files);
+      end loop;
+   end On_View_Log;
+
+   ----------------------
+   -- On_View_Annotate --
+   ----------------------
+
+   procedure On_View_Annotate
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      while not String_List.Is_Empty (Files) loop
+         Annotate (Ref, String_List.Head (Files));
+         String_List.Tail (Files);
+      end loop;
+   end On_View_Annotate;
+
+   -----------------
+   -- On_Edit_Log --
+   -----------------
+
+   procedure On_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Kernel  : Kernel_Handle)
+   is
+      Files : String_List.List := Get_Selected_Files (Kernel);
+      Ref   : VCS_Access := Get_Current_Ref (Kernel);
+   begin
+      Edit_Log (null, Kernel, Files, Ref);
+      String_List.Free (Files);
+   end On_Edit_Log;
+
+   -------------------------
+   -- VCS_Contextual_Menu --
+   -------------------------
+
+   procedure VCS_Contextual_Menu
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      Item : Gtk_Menu_Item;
+   begin
+      Gtk_New (Item, Label => -"VCS Update");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Update'Access),
+         Selection_Context_Access (Context));
+
+      Gtk_New (Item, Label => -"VCS Open");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Open'Access),
+         Selection_Context_Access (Context));
+
+      Gtk_New (Item, Label => -"VCS Diff");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Diff'Access),
+         Selection_Context_Access (Context));
+
+      Gtk_New (Item, Label => -"VCS Update");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Update'Access),
+         Selection_Context_Access (Context));
+
+      Gtk_New (Item, Label => -"VCS Edit log");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Edit_Log'Access),
+         Selection_Context_Access (Context));
+
+      Gtk_New (Item, Label => -"VCS Commit");
+      Append (Menu, Item);
+      Context_Callback.Connect
+        (Item, "activate",
+         Context_Callback.To_Marshaller
+         (On_Menu_Commit'Access),
+         Selection_Context_Access (Context));
+   end VCS_Contextual_Menu;
+
    ------------------
    -- Button_Press --
    ------------------
@@ -1027,10 +1258,33 @@ package body VCS_View_Pkg is
       Event    : Gdk_Event)
      return Boolean
    is
+      Menu    : Gtk_Menu;
+      Check   : Gtk_Check_Menu_Item;
+      Mitem   : Gtk_Menu_Item;
+      Context : Selection_Context_Access
+        := Get_Current_Explorer_Context (VCS_View_Access (Explorer).Kernel);
    begin
       if Get_Button (Event) = 1 then
          return False;
       end if;
+
+      Gtk_New (Menu);
+
+      VCS_Contextual_Menu (Explorer, Context, Menu);
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Check, Label => -"Hide up-to-date files");
+      Set_Active (Check, VCS_View_Access (Explorer).Hide_Up_To_Date);
+      Append (Menu, Check);
+
+      Check_VCS_View_Handler.Connect
+        (Check, "activate",
+         Check_VCS_View_Handler.To_Marshaller (Change_Hide_Up_To_Date'Access),
+         VCS_View_Access (Explorer));
+      Show_All (Menu);
+      Popup (Menu);
 
       return True;
    end Button_Press;
@@ -1072,5 +1326,224 @@ package body VCS_View_Pkg is
 
       Set_Column_Types (VCS_View);
    end Initialize;
+
+   ------------------
+   -- Get_Explorer --
+   ------------------
+
+   function Get_Explorer (Kernel : Kernel_Handle) return VCS_View_Access is
+      Child   : MDI_Child;
+   begin
+      Child := Find_MDI_Child_By_Tag (Get_MDI (Kernel), VCS_View_Record'Tag);
+
+      if Child = null then
+         return null;
+      else
+         return VCS_View_Access (Get_Widget (Child));
+      end if;
+   end Get_Explorer;
+
+   ---------------------
+   -- Get_Current_Ref --
+   ---------------------
+
+   function Get_Current_Ref
+     (Kernel : access Kernel_Handle_Record'Class)
+     return VCS_Access
+   is
+   begin
+      return Get_VCS_From_Id ("CVS");
+      --  ??? should get this information from the project !!
+   end Get_Current_Ref;
+
+   ------------------------
+   -- Get_Selected_Files --
+   ------------------------
+
+   function Get_Selected_Files
+     (Kernel : Kernel_Handle)
+     return String_List.List
+   is
+      Explorer : VCS_View_Access := Get_Explorer (Kernel);
+      Result   : String_List.List;
+   begin
+      if Explorer = null then
+         if Get_Current_File (Kernel) = "" then
+            return Result;
+         end if;
+
+         String_List.Append (Result, Get_Current_File (Kernel));
+      else
+         Result := Get_Selected_Files (Explorer);
+      end if;
+
+      return Result;
+   end Get_Selected_Files;
+
+   ---------------------
+   -- Get_Current_Dir --
+   ---------------------
+
+   function Get_Current_Dir
+     (Kernel : access Kernel_Handle_Record'Class)
+     return String
+   is
+      Context : Selection_Context_Access :=
+        Get_Current_Explorer_Context (Kernel);
+      File    : File_Selection_Context_Access := null;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_Directory_Information (File) then
+            return Directory_Information (File);
+         end if;
+      end if;
+
+      return Get_Current_Dir;
+   end Get_Current_Dir;
+
+   ----------------------
+   -- Get_Current_File --
+   ----------------------
+
+   function Get_Current_File (Kernel : Kernel_Handle) return String is
+      Context : Selection_Context_Access :=
+        Get_Current_Explorer_Context (Kernel);
+      File    : File_Selection_Context_Access := null;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+      then
+         File := File_Selection_Context_Access (Context);
+         if Has_File_Information (File) then
+            return Directory_Information (File) & File_Information (File);
+         end if;
+      end if;
+
+      return "";
+   end Get_Current_File;
+
+   -------------------------
+   -- Get_Dirs_In_Project --
+   -------------------------
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List
+   is
+      Result   : String_List.List;
+      Project  : Project_Node_Id;
+   begin
+      Project := Get_Project (Kernel);
+
+      declare
+         Iterator : Imported_Project_Iterator := Start (Project, True);
+      begin
+         while Current (Iterator) /= Empty_Node loop
+            String_List.Concat (Result,
+                                String_Array_To_String_List
+                                (Source_Dirs (Current (Iterator))));
+            Next (Iterator);
+         end loop;
+      end;
+
+      return Result;
+   end Get_Dirs_In_Project;
+
+   --------------------------
+   -- Get_Files_In_Project --
+   --------------------------
+
+   function Get_Files_In_Project
+     (Kernel : Kernel_Handle) return String_List.List
+   is
+      Result  : String_List.List;
+      Project : Project_Node_Id;
+      Files   : String_Array_Access;
+   begin
+      Project := Get_Project (Kernel);
+      Files   := Get_Source_Files (Project, True);
+
+      for J in reverse Files.all'Range loop
+         String_List.Prepend (Result, Files.all (J).all);
+      end loop;
+
+      Free (Files);
+
+      return Result;
+   end Get_Files_In_Project;
+
+   ---------------------------------
+   -- String_Array_To_String_List --
+   ---------------------------------
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List
+   is
+      Result : String_List.List;
+   begin
+      for J in reverse S'Range loop
+         String_List.Prepend (Result, Get_String (S (J)));
+      end loop;
+
+      return Result;
+   end String_Array_To_String_List;
+
+   ----------------------
+   -- On_Menu_Edit_Log --
+   ----------------------
+
+   procedure On_Menu_Edit_Log
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Edit_Log (Widget, Get_Kernel (Context));
+   end On_Menu_Edit_Log;
+
+   --------------------
+   -- On_Menu_Commit --
+   --------------------
+
+   procedure On_Menu_Commit
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Commit (Widget, Get_Kernel (Context));
+   end On_Menu_Commit;
+
+   ------------------
+   -- On_Menu_Open --
+   ------------------
+
+   procedure On_Menu_Open
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Open (Widget, Get_Kernel (Context));
+   end On_Menu_Open;
+
+   --------------------
+   -- On_Menu_Update --
+   --------------------
+
+   procedure On_Menu_Update
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_Update (Widget, Get_Kernel (Context));
+   end On_Menu_Update;
+
+   ------------------
+   -- On_Menu_Diff --
+   ------------------
+
+   procedure On_Menu_Diff
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access) is
+   begin
+      On_View_Diff (Widget, Get_Kernel (Context));
+   end On_Menu_Diff;
 
 end VCS_View_Pkg;
