@@ -5624,7 +5624,7 @@ Whether the desktop (size and positions of all windows) should be saved when
 exiting.
 
 @item Multi language build
-Whether GPS should build (using gprmake) more than just Ada 
+Whether GPS should build (using gprmake) more than just Ada
 sources for projects containing Ada and other (e.g. C) languages.
 
 By default, GPS will call gnatmake to build projects containing Ada sources,
@@ -10260,7 +10260,7 @@ be 0.
 After you have made modification to a python file, you might want to
 reload it in GPS. This requires careful use of python commands.
 
-Here is an example. Lets assume you have a python file (@file{"mymod.py"}) 
+Here is an example. Lets assume you have a python file (@file{"mymod.py"})
 which contains the following:
 
 @smallexample
@@ -10330,7 +10330,7 @@ pydoc.writedoc (GPS)
 @end smallexample
 
 In the last comamnd, @code{GPS} is the name of the module that you want
-to print the documentation for. 
+to print the documentation for.
 
 These commands generate a @file{.html} file in the current directory.
 
@@ -10870,33 +10870,59 @@ status ``Up-to-date'' or equivalent.
 @noindent
 There are cases in which GPS needs to parse the output of the VCS
 commands: when querying the status, or when ``annotating'' a
-file. Three parsers can be implemented in the @code{vcs} node: these
-correspond to the @code{status_parser} and
-@code{local_status_parser} nodes, which parse the output of the status
-command (see next section for more information), and the
-@code{annotations_parser} node, which parses annotations.
+file.
 
-Each node corresponding to a parser must contain a @code{regexp} node
-whose value is a standard system V regular expression used to
-parse the output.
+The following parsers can be implemented in the @code{vcs} node.
 
-In this regular expression, parenthesized subexpressions can be
-indicated, identifying the file name, the status, the local revision,
-and the repository revision. The indexes of these subexpressions are
-indicated, respectively, in the values of nodes @code{file_index},
-@code{status_index}, @code{local_revision_index}, and
-@code{repository_revision_index}.
+@table @b
+   @item @code{status_parser} and @code{local_status_parser}
+These parsers are used by the command VCS.status_parse, to parse a string for
+the status of files controlled by a VCS.
 
-The @code{status_parser} and @code{local_status_parser} node may also
-contain nodes containing a regular expression used to identify the
-status. These nodes have the @code{status_matcher} tag, and a
-compulsory @code{label} attribute, which contains the label
-identifying the status (see @ref{Defining status}).
+They accept the following child nodes:
 
-In the case of the @code{annotations_parser}, the @code{file_index}
-indicates the part of the file in the annotations line, and the
-@code{repository_revision_index} indicates the revision, if any,
-indicated by the annotations.
+@table @b
+  @item @code{<regexp>} (mandatory)
+Indicates the regular expression to match.
+  @item @code{<file_index>}
+An index of a parenthesized expression in @code{regexp} that contains the name
+of a file.
+  @item @code{<status_index>}
+An index of a parenthesized expression in @code{regexp} that contains the file
+status. This status is passed through the regular expressions defined in the
+@code{status_matcher} nodes, see below.
+  @item @code{<local_revision_index>}
+An index of a parenthesized expression in @code{regexp} that contains the name
+of the local revision (the version of the file that was checked out).
+  @item @code{<repository_revision_index>}
+An index of a parenthesized expression in @code{regexp} that contains the name
+of the repository revision (the latest version of the file in the VCS).
+
+  @item @code{<status_matcher>}
+A regular expression which, when matching an expressions, identifies the status
+passed in the node attribute @code{label}.
+@end table
+
+  @item @code{<annotations_parser>}
+This parser is used by the command VCS.annotations_parse, to parse a string for
+annotations in a file controlled by a VCS.
+
+It accepts the following child nodes:
+
+@table @b
+  @item @code{<regexp>} (mandatory)
+Indicates the regular expression to match.
+
+  @item @code{<repository_revision_index>}
+An index of a parenthesized expression in @code{regexp} that contains the
+repository revision of the line.
+
+  @item @code{<file_index>}
+An index of a parenthesized expression in @code{regexp} that indicates the
+part of the line that belongs to the file.
+
+@end table
+@end table
 
 @node Implementing VCS actions
 @subsection Implementing VCS actions
