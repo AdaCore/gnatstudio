@@ -50,8 +50,9 @@ package body ALI_Parser is
    type ALI_Handler is access all ALI_Handler_Record'Class;
 
    function Get_Source_Info
-     (Handler         : access ALI_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Source_File;
+     (Handler               : access ALI_Handler_Record;
+      Source_Filename       : VFS.Virtual_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File;
    function Case_Insensitive_Identifiers
      (Handler         : access ALI_Handler_Record) return Boolean;
    procedure Parse_All_LI_Information
@@ -606,7 +607,7 @@ package body ALI_Parser is
             Name   => Ent (Ent'First + 1 .. Ent'Last - 1),
             File   => Sfiles (Xref_Sect.File_Num).File,
             Line   => Integer (Xref_Ent.Line),
-            Column => Integer (Xref_Ent.Col) + 1);
+            Column => Integer (Xref_Ent.Col));
       else
          Entity := Get_Or_Create
            (Db     => Get_Database (LI),
@@ -662,9 +663,9 @@ package body ALI_Parser is
 
          if Is_End_Reference (Kind) then
             --  For operators, ignore the quotes
-            if Is_Operator then
-               Location.Column := Location.Column + 1;
-            end if;
+--              if Is_Operator then
+--                 Location.Column := Location.Column + 1;
+--              end if;
 
             --  The info for the body is always seen second, and will override
             --  the one for the spec
@@ -878,6 +879,7 @@ package body ALI_Parser is
          return No_ALI_Id;
 
       else
+         Trace (Me, "Parsing " & Full);
          --  Replace the last char by an EOF. Scan_ALI uses this character
          --  to detect the end of the buffer.
          Buffer (Buffer'Last) := EOF;
@@ -902,7 +904,7 @@ package body ALI_Parser is
    -- Update_ALI --
    ----------------
 
-   procedure Update_ALI (LI : LI_File) is
+   function Update_ALI (LI : LI_File) return Boolean is
       New_ALI_Id : ALI_Id := No_ALI_Id;
       New_Timestamp : Time;
    begin
@@ -916,17 +918,20 @@ package body ALI_Parser is
          New_ALI_Id := Load_And_Scan_ALI (Get_LI_Filename (LI));
          if New_ALI_Id = No_ALI_Id then
             Trace (Me, "Cannot parse " & Full_Name (Get_LI_Filename (LI)).all);
-            return;
+            return False;
          end if;
 
          Create_New_ALI (LI, ALIs.Table (New_ALI_Id));
       end if;
+
+      return True;
 
    exception
       when E : others =>
          Trace (Me, "Unexpected error while parsing "
                 & Full_Name (Get_LI_Filename (LI)).all & ": "
                 & Exception_Information (E));
+         return False;
    end Update_ALI;
 
    ----------------
@@ -1124,8 +1129,9 @@ package body ALI_Parser is
    ---------------------
 
    function Get_Source_Info
-     (Handler         : access ALI_Handler_Record;
-      Source_Filename : VFS.Virtual_File) return Source_File
+     (Handler               : access ALI_Handler_Record;
+      Source_Filename       : VFS.Virtual_File;
+      File_Has_No_LI_Report : File_Error_Reporter := null) return Source_File
    is
       LI      : LI_File;
       LI_Name : Virtual_File;
@@ -1140,7 +1146,13 @@ package body ALI_Parser is
          File         => Source_Filename,
          LI           => null);
       if Source /= null and then Get_LI (Source) /= null then
-         Update_ALI (Get_LI (Source));
+         if not Update_ALI (Get_LI (Source))
+           and then File_Has_No_LI_Report /= null
+         then
+            Entities.Error
+              (File_Has_No_LI_Report.all, Source_Filename);
+         end if;
+
          return Source;
       end if;
 
@@ -1152,6 +1164,11 @@ package body ALI_Parser is
 
       if LI_Name = VFS.No_File then
          Trace (Me, "No LI found for " & Full_Name (Source_Filename).all);
+
+         if File_Has_No_LI_Report /= null then
+            Entities.Error (File_Has_No_LI_Report.all, Source_Filename);
+         end if;
+
          return Source;
       else
          Trace (Assert_Me, "LI for " & Full_Name (Source_Filename).all
@@ -1166,7 +1183,13 @@ package body ALI_Parser is
          return Source;
       end if;
 
-      Update_ALI (LI);
+      if (not Update_ALI (LI)
+          or else not Check_LI_And_Source (LI, Source_Filename))
+        and then File_Has_No_LI_Report /= null
+      then
+         Entities.Error (File_Has_No_LI_Report.all, Source_Filename);
+         LI := null;
+      end if;
 
       --  Do another lookup, to update the LI file, since apparently we didn't
       --  know it before
