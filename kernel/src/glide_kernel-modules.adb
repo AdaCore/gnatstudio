@@ -221,7 +221,7 @@ package body Glide_Kernel.Modules is
            and then Has_Line_Information
              (File_Selection_Context_Access (Context))
          then
-            return Integer'Image
+            return Image
               (Line_Information (File_Selection_Context_Access (Context)));
 
          elsif Param = "c"
@@ -229,7 +229,7 @@ package body Glide_Kernel.Modules is
            and then Has_Column_Information
              (File_Selection_Context_Access (Context))
          then
-            return Integer'Image
+            return Image
               (Column_Information
                  (File_Selection_Context_Access (Context)));
 
