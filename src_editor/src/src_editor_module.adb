@@ -3563,12 +3563,6 @@ package body Src_Editor_Module is
                end;
             end loop;
 
-            --  Create a String containing the modified lines.
-
-            Trace (Me, "Block:" & ASCII.LF & To_String (Block) & "***");
-            Trace (Me, "Commented Block:" & ASCII.LF &
-                   Comment_Block (Lang, To_String (Block), Comment) & "***");
-
             declare
                Args : Argument_List :=
                  (1 => new String'(Full_Name (File).all),
