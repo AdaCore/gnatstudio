@@ -494,11 +494,11 @@ package body Shell is
    -----------------
 
    function Create_Mark
-     (Kernel            : access Kernel_Handle_Record'Class;
-      Filename          : String;
-      Line              : Natural := 1;
-      Column            : Natural := 1;
-      Length            : Natural := 0) return String is
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename : String;
+      Line     : Natural := 1;
+      Column   : Natural := 1;
+      Length   : Natural := 0) return String is
    begin
       return Interpret_Command
         (Kernel,
@@ -507,5 +507,33 @@ package body Shell is
          & " -L" & Length'Img
          & " " & Filename);
    end Create_Mark;
+
+   --------------------
+   -- Highlight_Line --
+   --------------------
+
+   procedure Highlight_Line
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename           : String;
+      Line               : Natural := 1;
+      Highlight_Category : String;
+      Highlight          : Boolean := True)
+   is
+      Args : Argument_List (1 .. 3);
+   begin
+      Args (1) := new String'(Filename);
+      Args (2) := new String'(Line'Img);
+      Args (3) := new String'(Highlight_Category);
+
+      if Highlight then
+         Interpret_Command (Kernel, "src.highlight", Args);
+      else
+         Interpret_Command (Kernel, "src.unhighlight", Args);
+      end if;
+
+      for J in Args'Range loop
+         Free (Args (J));
+      end loop;
+   end Highlight_Line;
 
 end Shell;

@@ -94,13 +94,22 @@ package Shell is
    --  ??? Would be better in the src_editor module
 
    function Create_Mark
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Filename          : String;
-      Line              : Natural := 1;
-      Column            : Natural := 1;
-      Length            : Natural := 0) return String;
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename : String;
+      Line     : Natural := 1;
+      Column   : Natural := 1;
+      Length   : Natural := 0) return String;
    --  Create a mark for Filename, at position given by Line, Column, with
    --  length Length.
    --  Return the identifier corresponding to the mark that has been created.
+
+   procedure Highlight_Line
+     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Filename           : String;
+      Line               : Natural := 1;
+      Highlight_Category : String;
+      Highlight          : Boolean := True);
+   --  Highlight the line with the corresponding category.
+   --  If Highlight is set to False, remove the highlighting.
 
 end Shell;
