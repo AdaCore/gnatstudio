@@ -131,6 +131,10 @@ package body Glide_Kernel is
    --  Callback when a specific line is selected in the "save all windows"
    --  dialog
 
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the preferences change
+
    --------------------------
    -- Get_Language_Handler --
    --------------------------
@@ -228,12 +232,28 @@ package body Glide_Kernel is
       Register_Global_Preferences (Handle);
       Load_Preferences (Handle);
 
+      On_Preferences_Changed (Handle);
+
       Handle.History := new History_Record;
       Load (Handle.History.all, Dir & "history");
       Set_Max_Length (Handle.History.all, History_Max_Length);
 
       Glide_Kernel.Scripts.Initialize (Handle);
+
+      Add_Hook
+        (Handle, Preferences_Changed_Hook, On_Preferences_Changed'Access);
    end Gtk_New;
+
+   ----------------------------
+   -- On_Preferences_Changed --
+   ----------------------------
+
+   procedure On_Preferences_Changed
+     (Kernel : access Kernel_Handle_Record'Class) is
+   begin
+      Set_Trusted_Mode
+        (Get_Registry (Kernel), Get_Pref (Kernel, Trusted_Mode));
+   end On_Preferences_Changed;
 
    ------------------
    -- Get_Database --
