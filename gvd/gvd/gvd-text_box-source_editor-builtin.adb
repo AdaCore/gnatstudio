@@ -479,8 +479,10 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
-      Gtk_New (Mitem, Label => -"Print " &
-        Dereference_Name (Get_Language (Data.Process.Debugger), Entity));
+      Gtk_New
+        (Mitem,
+         Label => -"Print " &
+           Dereference_Name (Get_Language (Data.Process.Debugger), Entity));
 
       Append (Source.Editor.Contextual_Menu, Mitem);
       Data.Auto_Refresh := False;
