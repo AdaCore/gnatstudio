@@ -1766,16 +1766,18 @@ package body Browsers.Canvas is
 
    procedure Free (List : in out Xref_List) is
    begin
-      Free (List.Lines);
-      Unchecked_Free (List.Lengths);
+      if List.Lines /= null then
+         for L in List.Lines'Range loop
+            Free (List.Lines (L).Text);
 
-      if List.Callbacks /= null then
-         for A in List.Callbacks'Range loop
-            --  Do not actually destroy, since these are still used in the
-            --  callbacks.
-            Unchecked_Free (List.Callbacks (A));
+            for C in List.Lines (L).Callbacks'Range loop
+               --  Do not actually destroy, since these are still used in the
+               --  callbacks.
+               Unchecked_Free (List.Lines (L).Callbacks (C));
+            end loop;
+
+            Unchecked_Free (List.Lines (L).Callbacks);
          end loop;
-         Unchecked_Free (List.Callbacks);
       end if;
    end Free;
 
@@ -1786,16 +1788,27 @@ package body Browsers.Canvas is
    procedure Get_Line
      (List     : Xref_List;
       Num      : Positive;
+      Num_In_Line : Positive := 1;
       Callback : out Active_Area_Cb;
       Text     : out GNAT.OS_Lib.String_Access)
    is
+      N : Natural;
    begin
-      if Num > List.Lines'Length then
+      if List.Lines = null
+        or else Num > List.Lines'Length
+      then
          Callback := null;
          Text     := null;
       else
-         Text     := List.Lines (List.Lines'First + Num - 1);
-         Callback := List.Callbacks (List.Lines'First + Num - 1);
+         N := List.Lines'First + Num - 1;
+         Text := List.Lines (N).Text;
+
+         if Num_In_Line > List.Lines (N).Callbacks'Length then
+            Callback := null;
+         else
+            Callback := List.Lines (N).Callbacks
+              (Num_In_Line - 1 + List.Lines (N).Callbacks'First);
+         end if;
       end if;
    end Get_Line;
 
@@ -1804,22 +1817,13 @@ package body Browsers.Canvas is
    -----------------
 
    procedure Remove_Line (List : in out Xref_List; Num : Positive) is
-      L : String_List_Access := List.Lines;
-      N : constant Natural := Num - 1 + L'First;
-      C : Active_Area_Cb_Array_Access := List.Callbacks;
-      E : Natural_Array_Access := List.Lengths;
+      L : Xref_Line_Array_Access := List.Lines;
    begin
-      List.Lines := new GNAT.Strings.String_List (L'First .. L'Last - 1);
-      List.Lines.all := L (L'First .. N - 1) & L (N + 1 .. L'Last);
-      Unchecked_Free (L);
-
-      List.Callbacks := new Active_Area_Cb_Array (C'First .. C'Last - 1);
-      List.Callbacks.all := C (C'First .. N - 1) & C (N + 1 .. C'Last);
-      Unchecked_Free (C);
-
-      List.Lengths := new Natural_Array (E'First .. E'Last - 1);
-      List.Lengths.all := E (E'First .. N - 1) & E (N + 1 .. E'Last);
-      Unchecked_Free (E);
+      if List.Lines /= null and then Num <= List.Lines'Length then
+         List.Lines := new Xref_Line_Array (L'First .. L'Last - 1);
+         List.Lines.all := L (L'First .. Num - 1) & L (Num + 1 .. L'Last);
+         Unchecked_Free (L);
+      end if;
    end Remove_Line;
 
    --------------
@@ -1829,35 +1833,50 @@ package body Browsers.Canvas is
    procedure Add_Line
      (List     : in out Xref_List;
       Str      : String;
-      Length1  : Natural        := Natural'Last;
-      Callback : Active_Area_Cb := null)
+      Length1  : Natural              := Natural'Last;
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array)
    is
-      Tmp : GNAT.Strings.String_List_Access := List.Lines;
-      Cbs : Active_Area_Cb_Array_Access := List.Callbacks;
-      Tmp2 : Natural_Array_Access := List.Lengths;
+      L : Xref_Line_Array_Access := List.Lines;
    begin
-      if Tmp /= null then
-         List.Lines :=
-           new GNAT.Strings.String_List'(Tmp.all & new String'(Str));
-         Unchecked_Free (Tmp);
+      if L /= null then
+         List.Lines := new Xref_Line_Array (L'First .. L'Last + 1);
+         List.Lines (L'Range) := L.all;
+         Unchecked_Free (L);
       else
-         List.Lines := new GNAT.Strings.String_List'(1 => new String'(Str));
+         List.Lines := new Xref_Line_Array (1 .. 1);
       end if;
 
-      if Cbs /= null then
-         List.Callbacks := new Active_Area_Cb_Array'(Cbs.all & Callback);
-         Unchecked_Free (Cbs);
-      else
-         List.Callbacks := new Active_Area_Cb_Array'(1 => Callback);
-      end if;
-
-      if Tmp2 /= null then
-         List.Lengths := new Natural_Array'(Tmp2.all & Length1);
-         Unchecked_Free (Tmp2);
-      else
-         List.Lengths := new Natural_Array'(1 => Length1);
-      end if;
+      List.Lines (List.Lines'Last) :=
+        (Text      => new String'(Str),
+         Callbacks => new Active_Area_Cb_Array'(Callback),
+         Length    => Length1);
    end Add_Line;
+
+   -----------------
+   -- Expand_Line --
+   -----------------
+
+   procedure Expand_Line
+     (List     : in out Xref_List;
+      Num      : Positive;
+      Str      : String;
+      Callback : Active_Area_Cb_Array := Empty_Cb_Array)
+   is
+      Tmp : Xref_Line;
+   begin
+      if List.Lines = null or else Num > List.Lines'Length then
+         Add_Line (List, Str, Callback => Callback);
+      else
+         Tmp := List.Lines (Num - 1 + List.Lines'First);
+         List.Lines (Num - 1 + List.Lines'First) :=
+           (Text      => new String'(Tmp.Text.all & Str),
+            Callbacks => new Active_Area_Cb_Array'
+              (Tmp.Callbacks.all & Callback),
+            Length    => Tmp.Length);
+         Free (Tmp.Text);
+         Unchecked_Free (Tmp.Callbacks);
+      end if;
+   end Expand_Line;
 
    --------------------
    -- Get_Pixel_Size --
@@ -1885,9 +1904,9 @@ package body Browsers.Canvas is
 
          for L in List.Lines'Range loop
             declare
-               Line : GNAT.Strings.String_Access renames List.Lines (L);
+               Line : GNAT.Strings.String_Access renames List.Lines (L).Text;
             begin
-               Last := Natural'Min (List.Lengths (L), Line'Length);
+               Last := Natural'Min (List.Lines (L).Length, Line'Length);
 
                --  First column
                declare
@@ -1954,6 +1973,8 @@ package body Browsers.Canvas is
       In_Xref : Boolean;
       GC     : Gdk_GC;
       W, H   : Gint;
+      Num_In_Line : Natural;
+      Text : String_Access;
 
       procedure Display (L : Natural);
       --  Display the slice First .. Last - 1
@@ -1961,7 +1982,7 @@ package body Browsers.Canvas is
       procedure Display (L : Natural) is
       begin
          if First <= Last - 1 then
-            Set_Text (Layout, List.Lines (L)(First .. Last - 1));
+            Set_Text (Layout, List.Lines (L).Text (First .. Last - 1));
 
             if In_Xref then
                GC := Browser.Text_GC;
@@ -1981,11 +2002,15 @@ package body Browsers.Canvas is
             if In_Xref then
                Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
 
-               if List.Callbacks (L) /= null then
+               if Num_In_Line <= List.Lines (L).Callbacks'Length
+                 and then List.Lines (L).Callbacks
+                 (Num_In_Line - 1 + List.Lines (L).Callbacks'First) /= null
+               then
                   Add_Active_Area
                     (Item,
                      Gdk_Rectangle'(X2, Y, W, H),
-                     List.Callbacks (L).all);
+                     List.Lines (L).Callbacks
+                       (Num_In_Line - 1 + List.Lines (L).Callbacks'First).all);
                end if;
             end if;
 
@@ -1999,22 +2024,27 @@ package body Browsers.Canvas is
       end if;
 
       for L in List.Lines'Range loop
-         First := List.Lines (L)'First;
+         Text  := List.Lines (L).Text;
+         First := Text'First;
          Last := First;
          X2   := X;
          In_Xref := False;
+         Num_In_Line := 0;
 
-         while Last <= List.Lines (L)'Last loop
-            if Last - List.Lines (L)'First = List.Lengths (L) then
+         while Last <= Text'Last loop
+            if Last - Text'First = List.Lines (L).Length then
                Display (L);
                First   := Last;
                X2      := X + Second_Column;
             end if;
 
-            if List.Lines (L)(Last) = '@' then
+            if Text (Last) = '@' then
                Display (L);
                First   := Last + 1;
                In_Xref := not In_Xref;
+               if In_Xref then
+                  Num_In_Line := Num_In_Line + 1;
+               end if;
             end if;
 
             Last := Last + 1;
