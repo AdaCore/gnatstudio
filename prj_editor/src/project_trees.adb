@@ -1090,7 +1090,7 @@ package body Project_Trees is
                   if Index > Sources'Last then
                      Remove_Node (Tree, N);
                   else
-                     Update_Directory_Node (Tree, N);
+                     Update_Node (Tree, N);
                   end if;
                end if;
             end;
