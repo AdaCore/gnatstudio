@@ -218,6 +218,9 @@ package Glide_Kernel.Preferences is
      Register_Property ("Prj_Editor:Invalid_Var_Ref_Bg", "#AA0000");
    --  Color to use for the foreground of invalid variable references.
 
+   File_View_Shows_Only_Project : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Prj_Editor:File_View_Shows_Only_Project", False);
+
    -------------
    -- Wizards --
    -------------
