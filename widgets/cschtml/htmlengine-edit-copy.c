@@ -64,11 +64,6 @@ copy (HTMLEngine *engine,
 	CopyForallData *forall_data;
 	guint size;
 
-	if (*buffer != NULL) {
-		html_engine_cut_buffer_destroy (*buffer);
-		*buffer = NULL;
-	}
-
 	forall_data = g_new (CopyForallData, 1);
 	forall_data->buffer = NULL;
 	forall_data->size = 0;
