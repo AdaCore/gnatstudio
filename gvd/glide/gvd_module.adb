@@ -267,7 +267,13 @@ package body GVD_Module is
    --  Widget is a Code_Editor.
 
    procedure Debug_Terminate (Kernel : Kernel_Handle);
-   --  Terminate the debugging session
+   --  Terminate the debugging session, and closes all debuggers.
+
+   procedure Debug_Terminate
+     (Kernel   : Kernel_Handle;
+      Debugger : access Visual_Debugger_Record'Class);
+   --  Close the given debugger and terminate the debugging session if this
+   --  is the last one.
 
    function Get_Variable_Name
      (Context     : Selection_Context_Access;
@@ -277,10 +283,13 @@ package body GVD_Module is
    --  Return "" if entity name could not be found in Context.
 
    procedure Load_Project_From_Executable
-     (Kernel      : access Kernel_Handle_Record'Class;
-      Debugger    : access Visual_Debugger_Record'Class);
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Debugger : access Visual_Debugger_Record'Class);
    --  Create and load a default project from the executable loaded in
    --  Debugger.
+
+   procedure On_Debug_Terminate_Single (Widget : access GObject_Record'Class);
+   --  Callback for the "debugger_closed" singla.
 
    ----------------------------------
    -- Load_Project_From_Executable --
@@ -294,6 +303,7 @@ package body GVD_Module is
       No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
         (others => No_Variable);
       Exec : Virtual_File;
+
    begin
       --  Do nothing unless the current project was already generated from an
       --  executable
@@ -406,7 +416,6 @@ package body GVD_Module is
             Attribute          => Languages_Attribute,
             Values             => Langs (Langs'First .. Lang_Index - 1));
          Free (Langs);
-
 
          if Exec /= VFS.No_File then
             Update_Attribute_Value_In_Scenario
@@ -619,6 +628,10 @@ package body GVD_Module is
    procedure On_Interrupt is new
      Generic_Debug_Command (GVD.Menu.On_Interrupt);
    --  Debug->Interrupt
+
+   procedure On_Debug_Terminate_Current
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Terminate Current
 
    procedure On_Debug_Terminate
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -1329,9 +1342,6 @@ package body GVD_Module is
 
    begin
       Set_Sensitive
-        (Find_Menu_Item (Kernel, Debug & (-"Initialize")), not Sensitive);
-
-      Set_Sensitive
         (Find_Menu_Item (Kernel, Debug & (-"Debug")), Available);
       Set_Sensitive
         (Find_Menu_Item (Kernel, Debug & (-"Data")), Available);
@@ -1349,6 +1359,8 @@ package body GVD_Module is
         (Kernel, Debug & (-"Continue")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Interrupt")), State = Debug_Busy);
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Debug & (-"Terminate Current")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Terminate")), Sensitive);
 
@@ -1387,12 +1399,10 @@ package body GVD_Module is
 
       First_Debugger := Top.Current_Debugger = null;
       Gtk_New (Page, Top);
-      Kernel_Callback.Connect
+      Object_Callback.Connect
         (Page,
          "debugger_closed",
-         --  ??? Should connect to On_Debug_Terminate_Single
-         Kernel_Callback.To_Marshaller (On_Debug_Terminate'Access),
-         K);
+         Object_Callback.To_Marshaller (On_Debug_Terminate_Single'Access));
 
       Program_Args := new String'("");
 
@@ -1487,7 +1497,6 @@ package body GVD_Module is
          --  are currently open.
 
          Create_Debugger_Columns (K, VFS.No_File);
-         Pop_State (K);
       end if;
 
       --  Force the creation of the project if needed
@@ -1502,6 +1511,8 @@ package body GVD_Module is
          Top);
 
       Id.Initialized := True;
+      Pop_State (K);
+
    exception
       when E : others =>
          Pop_State (K);
@@ -1512,61 +1523,102 @@ package body GVD_Module is
    -- Debug_Terminate --
    ---------------------
 
-   procedure Debug_Terminate (Kernel : Kernel_Handle) is
+   procedure Debug_Terminate
+     (Kernel   : Kernel_Handle;
+      Debugger : access Visual_Debugger_Record'Class)
+   is
       Top              : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Debugger_List    : Debugger_List_Link;
-      Next             : Debugger_List_Link;
-      Current_Debugger : GPS_Debugger;
+      Prev             : Debugger_List_Link;
       Id               : constant GVD_Module := GVD_Module (GVD_Module_ID);
       Editor           : Code_Editor;
 
-      use Debugger;
-
    begin
-      Id.Initialized := False;
-      File_Line_List.Free (Id.Unexplored_Lines);
-      Id.Total_Explored_Lines := 0;
-      Id.Total_Unexplored_Lines := 0;
-
       Debugger_List := Top.First_Debugger;
-      Push_State (Kernel, Busy);
 
       while Debugger_List /= null loop
-         Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
-         Current_Debugger.Exiting := True;
-         Editor := Current_Debugger.Editor_Text;
+         exit when Debugger_List.Debugger = GObject (Debugger);
+
+         Prev := Debugger_List;
+         Debugger_List := Debugger_List.Next;
+      end loop;
+
+      if Debugger_List = null then
+         --  Should never happen
+
+         Trace (Me, "debugger not found");
+         return;
+      end if;
+
+      Push_State (Kernel, Busy);
+      Debugger.Exiting := True;
+      Editor := Debugger.Editor_Text;
+
+      if Debugger.Debugger /= null
+        and then Get_Process (Debugger.Debugger) /= null
+      then
+         Close (Debugger.Debugger);
+      end if;
+
+      Debugger.Debugger := null;
+
+      --  This might have been closed by the user
+
+      if Debugger.Debugger_Text /= null then
+         Close (Top.Process_Mdi, Debugger.Debugger_Text);
+      end if;
+
+      if Debugger.Debuggee_Console /= null then
+         Close (Top.Process_Mdi, Debugger.Debuggee_Console);
+      end if;
+
+      if Debugger.Data_Scrolledwindow /= null then
+         Close (Top.Process_Mdi, Debugger.Data_Scrolledwindow);
+      end if;
+
+      if Debugger.Stack /= null then
+         Close (Top.Process_Mdi, Debugger.Stack);
+      end if;
+
+      if Debugger.Breakpoints /= null then
+         Free (Debugger.Breakpoints);
+      end if;
+
+      if Get_Mode (Editor) /= Source then
+         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
+      end if;
+
+      Free_Debug_Info (GEdit (Get_Source (Debugger.Editor_Text)));
+      Debugger.Exiting := False;
+      Unref (Debugger);
+
+      if Prev = null then
+         Top.First_Debugger := Debugger_List.Next;
+
+         if Top.First_Debugger = null then
+            Top.Current_Debugger := null;
+         else
+            Top.Current_Debugger := Top.First_Debugger.Debugger;
+         end if;
+      else
+         Prev.Next := Debugger_List.Next;
+         Top.Current_Debugger := Prev.Debugger;
+      end if;
+
+      Free (Debugger_List);
+
+      if Top.First_Debugger = null then
+         Id.Initialized := False;
+         File_Line_List.Free (Id.Unexplored_Lines);
+         Id.Total_Explored_Lines := 0;
+         Id.Total_Unexplored_Lines := 0;
 
          Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
          Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
 
-         Set_Pref (Kernel, Show_Call_Stack, Current_Debugger.Stack /= null);
-
-         if Current_Debugger.Debugger /= null
-           and then Get_Process (Current_Debugger.Debugger) /= null
-         then
-            Close (Current_Debugger.Debugger);
-         end if;
-
-         Current_Debugger.Debugger := null;
-
-         --  This might have been closed by the user
-
-         if Current_Debugger.Debugger_Text /= null then
-            Close (Top.Process_Mdi, Current_Debugger.Debugger_Text);
-         end if;
-
-         if Current_Debugger.Debuggee_Console /= null then
-            Close (Top.Process_Mdi, Current_Debugger.Debuggee_Console);
-         end if;
-
-         if Current_Debugger.Data_Scrolledwindow /= null then
-            Close (Top.Process_Mdi, Current_Debugger.Data_Scrolledwindow);
-         end if;
-
-         if Current_Debugger.Stack /= null then
-            Close (Top.Process_Mdi, Current_Debugger.Stack);
-         end if;
+         Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
+         Remove_Debugger_Columns (Kernel, VFS.No_File);
 
          if Top.History_Dialog /= null then
             Hide (Top.History_Dialog);
@@ -1588,27 +1640,28 @@ package body GVD_Module is
             Hide (Top.Breakpoints_Editor);
          end if;
 
-         if Current_Debugger.Breakpoints /= null then
-            Free (Current_Debugger.Breakpoints);
-         end if;
+         Set_Sensitive (Kernel, Debug_None);
+      end if;
 
-         if Get_Mode (Editor) /= Source then
-            Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
-         end if;
+      Pop_State (Kernel);
+   end Debug_Terminate;
 
-         Remove_Debugger_Columns (Kernel, VFS.No_File);
-         Free_Debug_Info (GEdit (Get_Source (Current_Debugger.Editor_Text)));
-         Current_Debugger.Exiting := False;
-         Unref (Current_Debugger);
-         Next := Debugger_List.Next;
-         Free (Debugger_List);
-         Debugger_List := Next;
-         Top.First_Debugger := Debugger_List;
+   procedure Debug_Terminate (Kernel : Kernel_Handle) is
+      Top              : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Debugger_List    : Debugger_List_Link;
+      Current_Debugger : GPS_Debugger;
+
+   begin
+      Push_State (Kernel, Busy);
+      Debugger_List := Top.First_Debugger;
+
+      while Debugger_List /= null loop
+         Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
+         Debugger_List := Debugger_List.Next;
+         Debug_Terminate (Kernel, Current_Debugger);
       end loop;
 
-      Top.First_Debugger := null;
-      Top.Current_Debugger := null;
-      Set_Sensitive (Kernel, Debug_None);
       Pop_State (Kernel);
    end Debug_Terminate;
 
@@ -1629,6 +1682,35 @@ package body GVD_Module is
          Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Terminate;
+
+   --------------------------------
+   -- On_Debug_Terminate_Current --
+   --------------------------------
+
+   procedure On_Debug_Terminate_Current
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Debug_Terminate (Kernel, Get_Current_Process (Get_Main_Window (Kernel)));
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Debug_Terminate_Current;
+
+   -------------------------------
+   -- On_Debug_Terminate_Single --
+   -------------------------------
+
+   procedure On_Debug_Terminate_Single
+     (Widget : access GObject_Record'Class) is
+   begin
+      Debug_Terminate
+        (GVD_Module (GVD_Module_ID).Kernel, Visual_Debugger (Widget));
+   end On_Debug_Terminate_Single;
 
    --------------------
    -- Set_Breakpoint --
@@ -2131,14 +2213,14 @@ package body GVD_Module is
 
    exception
       when E : GNAT.Expect.Process_Died =>
-         Debug_Terminate (Id.Kernel);
+         Debug_Terminate (Id.Kernel, Tab);
          Trace (Me, "Debugger died unexpectedly: "
                 & Exception_Information (E));
 
          Result := Success;
 
       when E : others =>
-         Debug_Terminate (Id.Kernel);
+         Debug_Terminate (Id.Kernel, Tab);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
 
          Result := Failure;
@@ -2152,15 +2234,17 @@ package body GVD_Module is
      (Widget  : access Gtk_Widget_Record'Class;
       Args    : GValues)
    is
-      Top  : constant Glide_Window := Glide_Window (Widget);
-      File : constant Virtual_File :=
+      Top     : constant Glide_Window := Glide_Window (Widget);
+      File    : constant Virtual_File :=
         Create (Full_Filename => Get_String (Nth (Args, 1)));
+      Process : constant Visual_Debugger := Get_Current_Process (Top);
+
    begin
       Create_Debugger_Columns (Top.Kernel, File);
 
    exception
       when E : others =>
-         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel, Process);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
@@ -2277,7 +2361,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
-         Debug_Terminate (Id.Kernel);
+         Debug_Terminate (Id.Kernel, Process);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Lines_Revealed_Cb;
 
@@ -2507,6 +2591,9 @@ package body GVD_Module is
                      GDK_backslash, Control_Mask, Sensitive => False);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
+
+      Register_Menu (Kernel, Debug, -"Termin_ate Current", "",
+                     On_Debug_Terminate_Current'Access, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Ter_minate", "",
                      On_Debug_Terminate'Access, Sensitive => False);
 
