@@ -652,11 +652,16 @@ package body Src_Contexts is
             Was_Partial);
 
          --  Start from the beginning if necessary
+         --  Do not display the continue dialog if starting search from the
+         --  beginning.
+
 
          if Result = null then
             if not Continue_Till_End
-              and then not Continue_Dialog
-                (-"No more matches, restart from the beginning ?")
+              and then
+                ((Current_Line = 1 and then Current_Column = 1)
+                 or else not Continue_Dialog
+                   (-"No more matches, restart from the beginning ?"))
             then
                return;
             end if;
