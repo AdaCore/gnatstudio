@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                    Copyright (C) 2003 - 2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -116,11 +116,13 @@ package body Src_Editor_Module.Line_Highlighting is
                Box := Source_Box (Get_Widget (Child));
                if Command = "highlight_range" then
                   Highlight_Range
-                    (Get_Buffer (Box.Editor), Category, Line,
+                    (Get_Buffer (Box.Editor), Category,
+                     Editable_Line_Type (Line),
                      Start_Col, End_Col);
                else
                   Highlight_Range
-                    (Get_Buffer (Box.Editor), Category, Line,
+                    (Get_Buffer (Box.Editor), Category,
+                     Editable_Line_Type (Line),
                      Start_Col, End_Col, Remove => True);
                end if;
             else
