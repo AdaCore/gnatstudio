@@ -236,4 +236,3 @@ package body Src_Editor_Buffer.Text_Handling is
    end Replace_Slice;
 
 end Src_Editor_Buffer.Text_Handling;
-   --  over blank lines.
