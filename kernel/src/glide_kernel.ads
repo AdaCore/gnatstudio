@@ -41,7 +41,6 @@ with Language_Handlers;
 with Src_Info;
 with Src_Info.Queries;
 with String_Hash;
-with String_List_Utils;
 with System;
 with Ada.Unchecked_Conversion;
 with Default_Preferences;
@@ -281,10 +280,8 @@ package Glide_Kernel is
    --  Whether Filename is currently opened in an editor.
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record)
-      return String_List_Utils.String_List.List;
+     (Kernel : access Kernel_Handle_Record) return VFS.File_Array;
    --  Return a list of currently open files.
-   --  User must free the result.
 
    ---------------
    -- Module ID --
@@ -1005,7 +1002,7 @@ private
       Default_Desktop : Glib.Xml_Int.Node_Ptr;
       --  The tree describing the default desktop.
 
-      Open_Files : String_List_Utils.String_List.List;
+      Open_Files : VFS.File_Array_Access;
       --  The list of currently open files.
 
       History : Histories.History;

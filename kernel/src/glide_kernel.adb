@@ -50,7 +50,6 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
 with File_Utils;                use File_Utils;
-with String_List_Utils;         use String_List_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Default_Preferences;       use Default_Preferences;
@@ -568,6 +567,8 @@ package body Glide_Kernel is
          File   : String);
       pragma Import (C, Internal, "g_signal_emit_by_name");
 
+      Files : File_Array_Access := Handle.Open_Files;
+
    begin
       Internal
         (Get_Object (Handle),
@@ -575,8 +576,16 @@ package body Glide_Kernel is
          Full_Name (File).all & ASCII.NUL);
 
       if not Is_Open (Handle, File) then
-         String_List_Utils.String_List.Append
-           (Handle.Open_Files, Full_Name (File).all);
+         if Files = null then
+            Handle.Open_Files := new File_Array (1 .. 1);
+         else
+            Handle.Open_Files :=
+              new File_Array (Files'First .. Files'Last + 1);
+            Handle.Open_Files (Files'Range) := Files.all;
+            Unchecked_Free (Files);
+         end if;
+
+         Handle.Open_Files (Handle.Open_Files'Last) := File;
       end if;
    end File_Edited;
 
@@ -615,7 +624,7 @@ package body Glide_Kernel is
          File   : String);
       pragma Import (C, Internal, "g_signal_emit_by_name");
 
-      use String_List_Utils.String_List;
+      Files : File_Array_Access := Handle.Open_Files;
 
    begin
       Internal
@@ -623,7 +632,20 @@ package body Glide_Kernel is
          File_Closed_Signal & ASCII.NUL,
          Full_Name (File).all & ASCII.NUL);
 
-      Remove_From_List (Handle.Open_Files, Full_Name (File).all);
+      if Files /= null then
+         for F in Files'Range loop
+            if Files (F) = File then
+               Handle.Open_Files :=
+                 new File_Array (Files'First .. Files'Last - 1);
+               Handle.Open_Files (Files'First .. F - 1) :=
+                 Files (Files'First .. F - 1);
+               Handle.Open_Files (F .. Handle.Open_Files'Last) :=
+                 Files (F + 1 .. Files'Last);
+               Unchecked_Free (Files);
+               exit;
+            end if;
+         end loop;
+      end if;
    end File_Closed;
 
    --------------------------
@@ -673,22 +695,15 @@ package body Glide_Kernel is
 
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
-      Filename : VFS.Virtual_File) return Boolean
-   is
-      use String_List_Utils.String_List;
-
-      Node : List_Node;
-      Full : constant String := Full_Name (Filename).all;
+      Filename : VFS.Virtual_File) return Boolean is
    begin
-      Node := First (Kernel.Open_Files);
-
-      while Node /= Null_Node loop
-         if Data (Node) = Full then
-            return True;
-         end if;
-
-         Node := Next (Node);
-      end loop;
+      if Kernel.Open_Files /= null then
+         for F in Kernel.Open_Files'Range loop
+            if Kernel.Open_Files (F) = Filename then
+               return True;
+            end if;
+         end loop;
+      end if;
 
       return False;
    end Is_Open;
@@ -698,10 +713,13 @@ package body Glide_Kernel is
    ----------------
 
    function Open_Files
-     (Kernel : access Kernel_Handle_Record)
-      return String_List_Utils.String_List.List is
+     (Kernel : access Kernel_Handle_Record) return VFS.File_Array is
    begin
-      return Copy_String_List (Kernel.Open_Files);
+      if Kernel.Open_Files /= null then
+         return Kernel.Open_Files.all;
+      else
+         return (1 .. 0 => VFS.No_File);
+      end if;
    end Open_Files;
 
    ---------------------
