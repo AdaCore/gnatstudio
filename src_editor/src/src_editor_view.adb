@@ -756,7 +756,7 @@ package body Src_Editor_View is
       --  of a text view, maybe this could be shared somewhere.
 
       --  Now that the Source_View is mapped, we can create the Graphic
-      --  Context used for writting line numbers.
+      --  Context used for writing line numbers.
       Gdk_New
         (View.Side_Column_GC,
          Get_Window (View, Text_Window_Left));
