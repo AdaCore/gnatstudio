@@ -221,6 +221,7 @@ package body Glide_Kernel.Modules is
    begin
       Free (Context.Directory);
       Free (Context.File_Name);
+      Glide_Kernel.Destroy (Selection_Context (Context));
    end Destroy;
 
    ----------------------------
@@ -262,8 +263,9 @@ package body Glide_Kernel.Modules is
               and then Module_List.Head (Current).Contextual_Menu /= null
             then
                Module_List.Head (Current).Contextual_Menu
-                 (Context   => Context,
-                  Menu      => Menu);
+                 (Object  => User.Object,
+                  Context => Context,
+                  Menu    => Menu);
             end if;
             Current := Module_List.Next (Current);
          end loop;
