@@ -18,17 +18,26 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib.Values;
 with Glib.Error;                use Glib.Error;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
 with Gtk.Image;                 use Gtk.Image;
+with Gtk.Main;                  use Gtk.Main;
 with Gtk.Window;                use Gtk.Window;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Handlers;           use Gtkada.Handlers;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Glide_Main_Window is
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean;
+   --  Callback for the delete event.
 
    -------------
    -- Anim_Cb --
@@ -59,6 +68,26 @@ package body Glide_Main_Window is
       Glide_Main_Window.Initialize
         (Main_Window, Key, Menu_Items, Home_Dir, Prefix_Directory);
    end Gtk_New;
+
+   ---------------------
+   -- Delete_Callback --
+   ---------------------
+
+   function Delete_Callback
+     (Widget : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues) return Boolean
+   is
+      pragma Unreferenced (Params);
+
+      Win : Glide_Window := Glide_Window (Widget);
+   begin
+      if Save_All_MDI_Children (Win.Kernel) then
+         Main_Quit;
+         return False;
+      else
+         return True;
+      end if;
+   end Delete_Callback;
 
    ----------------
    -- Initialize --
@@ -106,6 +135,12 @@ package body Glide_Main_Window is
             Add (Main_Window.Animation_Frame, Main_Window.Animation_Image);
          end if;
       end;
+
+      Return_Callback.Object_Connect
+        (Main_Window, "delete_event",
+         Delete_Callback'Access,
+         Gtk_Widget (Main_Window),
+         After => False);
    end Initialize;
 
 end Glide_Main_Window;
