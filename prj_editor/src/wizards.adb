@@ -465,4 +465,14 @@ package body Wizards is
       return Wiz.Finish;
    end Finish_Button;
 
+   -----------------------------------
+   -- Get_Activate_Finish_From_Page --
+   -----------------------------------
+
+   function Get_Activate_Finish_From_Page
+     (Wiz : access Wizard_Record) return Integer is
+   begin
+      return Wiz.Activate_Finish_From_Page;
+   end Get_Activate_Finish_From_Page;
+
 end Wizards;

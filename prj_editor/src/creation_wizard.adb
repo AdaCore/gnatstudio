@@ -119,7 +119,9 @@ package body Creation_Wizard is
          Set_Sensitive
            (Next_Button (W), Get_Text (W.Project_Name)'Length /= 0);
          Set_Sensitive
-           (Finish_Button (W), Get_Text (W.Project_Name)'Length /= 0);
+           (Finish_Button (W),
+            Get_Activate_Finish_From_Page (W) = 1
+            and then Get_Text (W.Project_Name)'Length /= 0);
       end if;
    end Switch_Page;
 

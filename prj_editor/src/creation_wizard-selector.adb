@@ -43,6 +43,7 @@ with Ada.Exceptions;           use Ada.Exceptions;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glide_Intl;               use Glide_Intl;
 with Creation_Wizard.Full;     use Creation_Wizard.Full;
+with Creation_Wizard.Adp;      use Creation_Wizard.Adp;
 with Creation_Wizard.Simple;   use Creation_Wizard.Simple;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
@@ -169,6 +170,7 @@ package body Creation_Wizard.Selector is
       Model  : Gtk_Tree_Store;
       From_Sources_Iter   : Gtk_Tree_Iter;
       From_Scratch_Iter   : Gtk_Tree_Iter;
+      From_Adp_Iter       : Gtk_Tree_Iter;
       Paned  : Gtk_Paned;
       Button : Gtk_Widget;
       Wizard : Creation_Wizard.Wizard_Base;
@@ -211,6 +213,15 @@ package body Creation_Wizard.Selector is
              & " properties, like the set of source directories, its object"
              & " directory, compiler switches,..."));
 
+      Append (Model, From_Adp_Iter, Null_Iter);
+      Set (Model, From_Adp_Iter, 0, -"From .adp file");
+      Set (Model, From_Adp_Iter, 1,
+           -(".adp files are the project files used in the AdaCore's Glide"
+             & " environment, based on Emacs. It is a very simple project."
+             & ASCII.LF
+             & "This wizard will allow you to easily convert such a file to"
+             & " GPS's own format"));
+
       Gtk_New (Dialog.Description);
       Add2 (Paned, Dialog.Description);
       Set_Cursor_Visible (Dialog.Description, False);
@@ -234,6 +245,16 @@ package body Creation_Wizard.Selector is
          then
             declare
                Wiz : Creation_Wizard.Simple.Simple_Wizard;
+            begin
+               Gtk_New (Wiz, Kernel);
+               Wizard := Wizard_Base (Wiz);
+            end;
+
+         elsif Iter_Is_Selected
+           (Get_Selection (Dialog.View), From_Adp_Iter)
+         then
+            declare
+               Wiz : Creation_Wizard.Adp.Adp_Wizard;
             begin
                Gtk_New (Wiz, Kernel);
                Wizard := Wizard_Base (Wiz);

@@ -136,6 +136,11 @@ package Wizards is
    function Get_Current_Page (Wiz : access Wizard_Record) return Positive;
    --  Return the index of the current page.
 
+   function Get_Activate_Finish_From_Page
+     (Wiz : access Wizard_Record) return Integer;
+   --  Return the value of the Activate_Finish_From_Page parameter of
+   --  Initialize
+
    function Cancel_Button
      (Wiz : access Wizard_Record) return Gtk.Button.Gtk_Button;
    --  Return the button used for "cancel".
