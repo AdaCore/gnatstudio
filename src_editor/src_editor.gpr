@@ -4,6 +4,7 @@ with "../kernel/kernel";
 with "../gvd/gvd_common";
 with "../vsearch/vsearch";
 with "../widgets/widgets";
+with "../aliases/aliases";
 with "../shared";
 
 project Src_Editor is
