@@ -20,6 +20,7 @@
 
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
+with Glib.Properties;             use Glib.Properties;
 with Glib.Values;                 use Glib.Values;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
@@ -44,6 +45,7 @@ with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Window;                  use Gtk.Window;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
@@ -1753,6 +1755,13 @@ package body Src_Editor_View is
       Result : Boolean;
 
    begin
+      if Realized_Is_Set (View)
+        and then not Get_Property
+          (Gtk_Window (Get_Toplevel (View)), Has_Toplevel_Focus_Property)
+      then
+         return True;
+      end if;
+
       if not Get_Editable (View) then
          return False;
       end if;
