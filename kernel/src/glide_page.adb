@@ -75,7 +75,7 @@ package body Glide_Page is
       else
          Gtk_New (Page.Console, Window.Kernel);
          Child := Put (Page.Process_Mdi, Page.Console);
-         Set_Title (Child, "Glide Console");
+         Set_Title (Child, "GPS Console");
          Set_Dock_Side (Child, Bottom);
          Dock_Child (Child);
          Raise_Child (Child);
