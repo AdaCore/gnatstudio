@@ -2359,7 +2359,7 @@ the selection status of the first line, and have the same status for all other
 editors.
 
 If you press @code{Cancel} instead of @code{Save}, no saving will take place,
-and the action that displayed this dialog is also cancelled. Such actions can
+and the action that displayed this dialog is also canceled. Such actions can
 be for instance starting a compilation command, a VCS operation, or quitting
 GPS with unsaved files.
 
@@ -2408,7 +2408,7 @@ The following protocols are supported:
 @item ssh
 This protocol is based on the ssh command line tool, which must therefore be
 available in the path. It provides encrypted and secure connections to the
-remote host. Files are transfered inline, that is the connection is established
+remote host. Files are transfered in-line, that is the connection is established
 the first time you access the remote host, and kept open for all further
 access.
 
@@ -2422,7 +2422,7 @@ In the sample shell command above, you would replace the word "protocol" with
 "ssh" to use this protocol.
 
 @item rsh
-This protocol behaves like ssh, except that the connections are not encpryted.
+This protocol behaves like ssh, except that the connections are not encrypted.
 However, this protocol is generally available on all Unix machines by default.
 
 It has the same requirements that the ssh protocol. To use it, substitute the
@@ -2437,7 +2437,7 @@ To use it, substitute the word "telnet" to "protocol" in the example above.
 @item scp
 This protocol is also based on one of the tools of the ssh suite. It provides
 encrypted connections, and uses a mixture of ssh and scp connections.
-Various commands like querying the timestamp of a file are executed through a
+Various commands like querying the time stamp of a file are executed through a
 permanent ssh connection, whereas files are downloaded and uploaded through
 a one-time scp command.
 
@@ -2451,7 +2451,7 @@ To use it, substitute the word "scp" to "protocol" in the example above.
 @item rsync
 Just like scp is based on ssh, this protocol is based on rsh. It depends on
 the external tool rsync, and uses a mixture of a rsh connection for commands
-like querying the timestamp of a file, and one-time connections with rsync
+like querying the time stamp of a file, and one-time connections with rsync
 to transfer the files.
 
 Rsync is specially optimized to transfer only the parts of a file that are
@@ -2459,7 +2459,7 @@ different from the one already on the remote host. Therefore, it will generally
 provide the best performance when writing the file back to the remote host.
 
 If you set up the environment variable RSYNC_RSH to ssh before starting gps,
-the connection will then be encrypted when transfering the files.
+the connection will then be encrypted when transferring the files.
 
 To use this protocol, substitute the word "rsync" to "protocol" in the
 example above.
@@ -3628,7 +3628,7 @@ it manually (through the @code{Project->Open...} or
 @image{project-properties}
 @end ifhtml
 
-The project propoerties editor is divided in three parts:
+The project properties editor is divided in three parts:
 
 @table @b
 @item The attributes editor
@@ -3863,7 +3863,7 @@ where you can specify the scope of your search, which can be a set of:
 may take a long time, search each file is parsed during the search.
 
 @item Open Files
-Search in all the files that are currenly open in the source editor. The
+Search in all the files that are currently open in the source editor. The
 @i{Scope} entry is described in the @code{Files...} section below.
 
 @item Files...
@@ -6397,7 +6397,7 @@ although it is recommended to avoid XML special characters.
 
 @item output  (optional)
 If specified, this attribute indicates where the output of the commands will
-be sent by default. This can be overriden by each command, using the same
+be sent by default. This can be overridden by each command, using the same
 attribute for @code{<shell>} and @code{<external>} tags,
 @xref{Redirecting the command output}.
 
@@ -6407,7 +6407,7 @@ should be displayed at the same location as its output. Neither will be
 displayed if the output is hidden. The default is to show the command along
 with its output.
 
-This attribute can be overriden for each command.
+This attribute can be overridden for each command.
 @end table
 
 The @code{<action>} can have one or
@@ -6593,7 +6593,7 @@ More information on chaining commands is provided in @xref{Chaining commands}.
 Some actions are also predefined in GPS itself. This include for instance
 aliases expansion, manipulating MDI windows,... All known actions (predefined
 and the ones you have defined in your own customization files) can be
-discovered by opening the keyshortcut editor (@code{Edit->Keyshortcuts} menu).
+discovered by opening the key shortcut editor (@code{Edit->Key shortcuts} menu).
 
 @c ---------------------------------------------------------------------
 @node Macro arguments
@@ -6611,7 +6611,7 @@ The following macro arguments are provided.
 
 @ifset python
 The equivalent python command is given for all tests. These commands are useful
-when you are writting a full python script, and want to test for yourself
+when you are writing a full python script, and want to test for yourself
 whether the context is properly defined.
 @end ifset
 
@@ -6745,7 +6745,7 @@ GPS.current_context().project().sources()
 
 @item f
 output the list into a file and substitute the parameter with the
-name of that file. This file is never deleted by GPS, it is your responsability
+name of that file. This file is never deleted by GPS, it is your responsibility
 to do so.
 @end table
 
@@ -6821,13 +6821,13 @@ Such filters can be defined in one of two places in the customization files:
 At the same level as other tags such as @code{<action>}, @code{<menu>} or
 @code{<button>} tags, you can define named filters. These are general filters,
 that can be referenced elsewhere without requiring code duplication. They
-also appear explicitely in the keyshortcuts editor if at least one action is
+also appear explicitly in the key shortcuts editor if at least one action is
 depending on them.
 
 @item As a child of the @code{<action>} tag
 Such filters are anonymous, although they provide exactly the same capabilities
 as the ones above. These are mostly meant for simple filters, or filters that
-you use only once, or don't want to appear in the keyshortcuts manager.
+you use only once, or don't want to appear in the key shortcuts manager.
 @end enumerate
 
 There are three different kinds of tags:
@@ -6862,7 +6862,7 @@ following set of common attributes:
 This attribute is used to create named filters, that can be reused elsewhere
 in actions or compound filters through the @code{id} attribute. The name can
 take any form. This is also the name that appears in the context of the
-keyshortcuts editor.
+key shortcuts editor.
 
 @item error      (optional)
 This is the error message printed in the GPS console if the filter doesn't
@@ -6889,7 +6889,7 @@ can make an action depend on a named filter:
   @end smallexample
 
   A number of predefined filters are predefined by GPS itself. The full list
-  appears in the keyshortcut editor, and is listed here:
+  appears in the key shortcut editor, and is listed here:
 
   @table @code
   @item Source editor
@@ -7130,7 +7130,7 @@ by a space. For instance, @code{control-x control-k} means that the user should
 press @key{control-x}, followed by a @key{control-k} to activate the
 corresponding action.
 
-Use an empty string to describe the keybinding if you wish to deactivate a
+Use an empty string to describe the key binding if you wish to deactivate a
 preexisting binding. The second example below deactivates the standard binding.
 
 
@@ -7146,7 +7146,7 @@ can be executed, then the first action with no filter will be executed.
 @c ----------------------------------------------------------------
 @node Setting preferences in custom files
 @subsection Setting preferences in custom files
-@cindex <prefe>
+@cindex <pref>
 @c ----------------------------------------------------------------
 
 @noindent
@@ -7167,10 +7167,10 @@ or by looking at one of the predefined GPS themes.
 
 It accepts no child tag, but the value of the @code{<pref>} tag defines the
 default value of the preference, which will be used unless the user has
-overriden it in his own preferences file.
+overridden it in his own preferences file.
 
 Any setting that you have defined in the customization files will be
-overriden by the user's preferences file itself, unless the user was still
+overridden by the user's preferences file itself, unless the user was still
 using the default value of that preference.
 
 This @code{<pref>} tag is mostly intended for use through the themes (@pxref{
@@ -7211,7 +7211,7 @@ doesn't exist yet.
 
 This tag accepts any other customization tag that can be put in the
 customization files. This includes setting preferences (@code{<pref>},
-defining key bindings (@code{<key}), definining menus (@code{<menu>}),@dots{}
+defining key bindings (@code{<key}), defining menus (@code{<menu>}),@dots{}
 
 If the same theme is defined in multiple locations (multiple times in the
 same customization file or in different files), their effects will be
@@ -7267,7 +7267,7 @@ case letters. Its default value is "false".
 
 This tag provides a constant string that should be searched.
 Only one of @code{<regexp>} and @code{<string>} should be provided. If
-both exists, the first @code{<regep>} child found is used. If there is
+both exists, the first @code{<regexp>} child found is used. If there is
 none, the first @code{<string>} child is used.
 
 The tag accepts the same optional attribute @code{case-sensitive} as
@@ -7356,7 +7356,7 @@ A short string describing the name of the language.
 @item Parent
 If set to the name of an existing language (e.g. @code{Ada}, @code{C++}) or
 another custom language, this language will inherit by default all its
-properties from this language. Any field explicitely defined for this language
+properties from this language. Any field explicitly defined for this language
 will override the inherited settings.
 
 @item Spec_Suffix
@@ -7738,7 +7738,7 @@ or create new ones, they are stored in this file, which is the only one that
 GPS will ever modify automatically.
 
 The system files are loaded first, and aliases defined in them can be
-overriden by the user-defined file.
+overridden by the user-defined file.
 
 These files are standard customization files, @xref{Customization files}.
 The specific XML tag to use is @i{<alias>}, one per new alias.
@@ -7833,7 +7833,7 @@ If this attribute is set to "ide", then the switches cannot be set for a
 specific file, only at the project level. Support for file-specific switches
 currently requires modification of the GPS sources themselves.
 
-@item attribute (Default vluae is default_switches)
+@item attribute (Default value is default_switches)
 This optional attribute specifies the name of the attribute in the project
 which is used to store the switches for that tool.
 
@@ -7896,7 +7896,7 @@ displayed if that language is supported by the project.
 
 @noindent
 It is possible to define the command line that should be used for a tool when
-the user is using the default project, or hasn't overriden this command line
+the user is using the default project, or hasn't overridden this command line
 in the project.
 
 This is done through the @code{<initial-cmd-line>} tag, as a child of the
@@ -8032,7 +8032,7 @@ to the command line. This tag doesn't have any value or child tags.
 
 @item <spin>
 @cindex <spin>
-This tag acceps the @code{line}, @code{column}, @code{label}, @code{switch},
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{tip}, @code{min}, @code{max} and @code{default} attributes.
 This switch will add the contents of the @code{switch} attribute followed by
 the current numeric value of the widget to the command line. This is typically
@@ -8442,7 +8442,7 @@ file:line:column: message
 Please refer to the online help for this command to get more information.
 
 Here is a small example on how to run a make command and send the errors to the
-location window afterwards.
+location window afterward.
 
 For languages that support it, it is also recommended that you quote the
 argument with triple quotes, so that any special character (newlines, quotes,
@@ -8568,11 +8568,11 @@ user interactively for the name of the file to search.
 @cindex resource file
 @cindex Unix
 @noindent
-In addition to the GPS specific mechnisms described previousely, GPS can be
+In addition to the GPS specific mechanisms described previously, GPS can be
 configured through the low level Gtk+ mechanism of @file{RC files}.
 
 As more customization capabilities are added in GPS, this mechanism will
-become less useful and built-in GPS capabilities should be prefered.
+become less useful and built-in GPS capabilities should be preferred.
 
 You can create a text file called
 @file{gtkrc} in the gps home directory (@file{~/.gps} on Unix systems), or as
@@ -9385,7 +9385,7 @@ with your command.
 
 The following example defines a python command that inserts a line full of
 dashes ('-') at the current cursor location. This command is associated with
-the keybinding @key{control-c n}, and can be distributed as a single XML
+the key binding @key{control-c n}, and can be distributed as a single XML
 file.
 
 @smallexample
@@ -9660,7 +9660,7 @@ The description is displayed when the user calls @b{describe_hook}.
 
 The type of the hook must be one of the following:
 
-@itemize
+@itemize @bullet
 @item "" (the empty string)
 
 This indicates that the hook doesn't take any argument. None should be given
@@ -10107,10 +10107,10 @@ copy of the code on your local machine).
 @item Put all duplicate files in the same project
 
 There is one specific case where a project is allowed to have duplicate source
-files: if the list of source directories is specified explicitely. All
+files: if the list of source directories is specified explicitly. All
 duplicate files must be in the same project. With these conditions, there is
 no ambiguity for GPS and the GNAT tools which file to use, and the first
-file found on the source path is the one hidding all the others. GPS only
+file found on the source path is the one hiding all the others. GPS only
 shows the first file.
 
 You can then have a scenario variable that changes the order of source
