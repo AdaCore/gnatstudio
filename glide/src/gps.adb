@@ -284,6 +284,7 @@ procedure GPS is
       File        : File_Type;
       Charset     : String_Access;
       Make_Root   : String_Access;
+      Python_Home : String_Access;
       Tmp         : String_Access;
       Ignored     : Log_Handler_Id;
       pragma Unreferenced (Ignored);
@@ -373,6 +374,13 @@ procedure GPS is
       if Make_Root.all = "" then
          Setenv ("MAKE_ROOT", Prefix.all);
          Free (Make_Root);
+      end if;
+
+      Python_Home := Getenv ("PYTHONHOME");
+
+      if Python_Home.all = "" then
+         Setenv ("PYTHONHOME", Prefix.all);
+         Free (Python_Home);
       end if;
 
       Bind_Text_Domain
