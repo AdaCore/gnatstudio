@@ -1686,7 +1686,7 @@ package body Glide_Kernel.Scripts is
          Handler      => Create_Project_Command_Handler'Access);
       Register_Command
         (Kernel, "get_attribute_as_string",
-         Minimum_Args => 2,
+         Minimum_Args => 1,
          Maximum_Args => 4,
          Class        => Get_Project_Class (Kernel),
          Handler      => Create_Project_Command_Handler'Access);
