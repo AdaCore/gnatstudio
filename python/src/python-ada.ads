@@ -190,14 +190,15 @@ package Python.Ada is
    --  Its first argument will always be the instance itself. Therefore the
    --  first character in the argument to PyArg_ParseTuple should be "O".
 
-   procedure Add_Static_Method (Class : PyClassObject; Func : PyMethodDef);
+   procedure Add_Static_Method
+     (Class : PyClassObject; Func : PyMethodDef; Self : PyObject := null);
    --  Return a static version of Method. This method doesn't receive an
    --  instance or the class as its first parameter. This is similar to C++ or
-   --  Java's static methods
+   --  Java's static methods.
 
    procedure Add_Class_Method (Class : PyClassObject; Func : PyMethodDef);
    --  Return a class version of Method.
-   --  This is a method that recieves the class as implicit first argument,
+   --  This is a method that receives the class as implicit first argument,
    --  just like an instance method receives the instance.
    --  It can be called either on the class or an instance. If a class method
    --  is called for a derived class, the derived class object is passed as the

@@ -143,7 +143,9 @@ package body Python.Ada is
    -- Add_Static_Method --
    -----------------------
 
-   procedure Add_Static_Method (Class : PyClassObject; Func : PyMethodDef) is
+   procedure Add_Static_Method
+     (Class : PyClassObject; Func : PyMethodDef; Self : PyObject := null)
+   is
       function PyStaticMethod_New (Method : PyObject) return PyObject;
       pragma Import (C, PyStaticMethod_New, "PyStaticMethod_New");
 
@@ -153,7 +155,7 @@ package body Python.Ada is
       pragma Unreferenced (Result);
    begin
       Def.Flags := Def.Flags or METH_CLASS;
-      C_Func := PyCFunction_New (Def, null);
+      C_Func := PyCFunction_New (Def, Self);
       if C_Func /= null then
          Result := PyObject_SetAttrString
            (Class, Func.Name, PyStaticMethod_New (C_Func));
