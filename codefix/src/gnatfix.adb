@@ -21,15 +21,11 @@
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Text_IO; use Ada.Text_IO;
 
-with GNAT.Regpat; use GNAT.Regpat;
-
 with Codefix; use Codefix;
-with Codefix.Text_Manager; use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Errors_Parser; use Codefix.Errors_Parser;
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 with Codefix.File_Io; use Codefix.File_Io;
-with Codefix.Text_Navigators;
 use Codefix.Formal_Errors.Extract_List;
 with Test_Lib; use Test_Lib;
 use Test_Lib.Navigator;
