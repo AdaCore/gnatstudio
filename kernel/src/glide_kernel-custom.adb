@@ -237,9 +237,11 @@ package body Glide_Kernel.Custom is
    -- Add_Customization_String --
    ------------------------------
 
-   procedure Add_Customization_String
+   function Add_Customization_String
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Customization : UTF8_String)
+      Customization : UTF8_String;
+      From_File     : String;
+      Start_Line    : Positive := 1) return String
    is
       --  Add a valid prefix and toplevel node, since the string won't
       --  contain any
@@ -256,13 +258,21 @@ package body Glide_Kernel.Custom is
         and then Customization (Customization'First .. Customization'First + 4)
           = "<?xml"
       then
-         XML_Parsers.Parse_Buffer (Customization, Node, Err);
+         XML_Parsers.Parse_Buffer
+           (Buffer     => Customization,
+            From_File  => From_File,
+            Start_Line => Start_Line,
+            Tree       => Node,
+            Error      => Err);
 
       else
          --  else enclose it
          XML_Parsers.Parse_Buffer
            ("<?xml version=""1.0""?><Root>" & Customization & "</Root>",
-            Node, Err);
+            From_File  => From_File,
+            Start_Line => Start_Line,
+            Tree       => Node,
+            Error      => Err);
       end if;
 
       --  If the custom files have already been loaded, this means that all
@@ -298,10 +308,16 @@ package body Glide_Kernel.Custom is
             Node.Child := null;
             Free (Node);
          end if;
+         return "";
 
       else
-         Insert (Kernel, Err.all, Mode => Error);
-         Free (Err);
+         --  Insert (Kernel, Err.all, Mode => Error);
+         declare
+            E : constant String := Err.all;
+         begin
+            Free (Err);
+            return E;
+         end;
       end if;
 
    exception
@@ -310,6 +326,7 @@ package body Glide_Kernel.Custom is
 
          Trace (Me, "Could not parse custom string " & Customization
                 & ' ' & Exception_Message (E));
+         return "Internal error";
    end Add_Customization_String;
 
 end Glide_Kernel.Custom;

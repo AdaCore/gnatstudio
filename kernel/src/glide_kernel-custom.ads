@@ -66,15 +66,21 @@ package Glide_Kernel.Custom is
    --  This updates the internal directory, and calls all the callback
    --  registered by the modules.
 
-   procedure Add_Customization_String
+   function Add_Customization_String
      (Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Customization : Glib.UTF8_String);
+      Customization : UTF8_String;
+      From_File     : String;
+      Start_Line    : Positive := 1) return String;
    --  Add a new customization string, as if it had been parsed from a custom
    --  file. Customization should contain one or more top-level XML tags, as in
    --      "<Alias ...></Alias>  <Language ..></Language>
    --  If the customization files have already been loaded through
    --  Load_All_Custom_Files, this function immediately calls all the
    --  callback which the modules have registered.
+   --  (From_File, Start_Line) indicate where the customization string was read
+   --  from, so that error messages are properly localized.
+   --  This function returns the error message, if any, from the XML parser if
+   --  the string couldn't be parsed
 
    procedure Execute_Customization_String
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
