@@ -469,48 +469,48 @@ package body Odd.Dialogs is
       Set_Position (History_Dialog, Win_Pos_None);
       Set_Modal (History_Dialog, False);
 
-      Gtk_New_Vbox (History_Dialog.Vbox19, False, 0);
-      Add (History_Dialog, History_Dialog.Vbox19);
+      Gtk_New_Vbox (History_Dialog.Vbox1, False, 0);
+      Add (History_Dialog, History_Dialog.Vbox1);
 
-      Gtk_New (History_Dialog.Scrolledwindow11);
+      Gtk_New (History_Dialog.Scrolledwindow1);
       Pack_Start
-        (History_Dialog.Vbox19,
-         History_Dialog.Scrolledwindow11, True, True, 0);
+        (History_Dialog.Vbox1,
+         History_Dialog.Scrolledwindow1, True, True, 0);
       Set_Policy
-        (History_Dialog.Scrolledwindow11, Policy_Automatic, Policy_Automatic);
+        (History_Dialog.Scrolledwindow1, Policy_Automatic, Policy_Automatic);
 
       Gtk_New (History_Dialog.List);
-      Add_With_Viewport (History_Dialog.Scrolledwindow11, History_Dialog.List);
+      Add_With_Viewport (History_Dialog.Scrolledwindow1, History_Dialog.List);
       Set_Selection_Mode (History_Dialog.List, Selection_Extended);
 
-      Gtk_New (History_Dialog.Hbuttonbox11);
+      Gtk_New (History_Dialog.Hbuttonbox1);
       Pack_Start
-        (History_Dialog.Vbox19, History_Dialog.Hbuttonbox11, False, False, 0);
-      Set_Spacing (History_Dialog.Hbuttonbox11, 30);
-      Set_Layout (History_Dialog.Hbuttonbox11, Buttonbox_Spread);
-      Set_Child_Size (History_Dialog.Hbuttonbox11, 85, 27);
-      Set_Child_Ipadding (History_Dialog.Hbuttonbox11, 7, 0);
+        (History_Dialog.Vbox1, History_Dialog.Hbuttonbox1, False, False, 0);
+      Set_Spacing (History_Dialog.Hbuttonbox1, 30);
+      Set_Layout (History_Dialog.Hbuttonbox1, Buttonbox_Spread);
+      Set_Child_Size (History_Dialog.Hbuttonbox1, 85, 27);
+      Set_Child_Ipadding (History_Dialog.Hbuttonbox1, 7, 0);
 
       Gtk_New (History_Dialog.Replay_Selection, -"Replay selection");
       Set_Flags (History_Dialog.Replay_Selection, Can_Default);
       Button_Callback.Connect
         (History_Dialog.Replay_Selection, "clicked",
          Button_Callback.To_Marshaller (On_Replay_Selection_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox11, History_Dialog.Replay_Selection);
+      Add (History_Dialog.Hbuttonbox1, History_Dialog.Replay_Selection);
 
       Gtk_New (History_Dialog.Cancel, -"Close");
       Set_Flags (History_Dialog.Cancel, Can_Default);
       Button_Callback.Connect
         (History_Dialog.Cancel, "clicked",
          Button_Callback.To_Marshaller (On_History_Cancel_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox11, History_Dialog.Cancel);
+      Add (History_Dialog.Hbuttonbox1, History_Dialog.Cancel);
 
       Gtk_New (History_Dialog.Help, -"Help");
       Set_Flags (History_Dialog.Help, Can_Default);
       Button_Callback.Connect
         (History_Dialog.Help, "clicked",
          Button_Callback.To_Marshaller (On_History_Help_Clicked'Access));
-      Add (History_Dialog.Hbuttonbox11, History_Dialog.Help);
+      Add (History_Dialog.Hbuttonbox1, History_Dialog.Help);
 
       Return_Callback.Connect
         (History_Dialog, "delete_event",

@@ -114,13 +114,19 @@ package Odd.Dialogs is
    procedure Gtk_New
      (History_Dialog : out History_Dialog_Access;
       Main_Window    : Gtk_Window);
+   --  Create a new history dialog.
+   --  Main_Window should be the main debug window. The information will be
+   --  blank, so you should call Update to add data.
 
    procedure Initialize
      (History_Dialog : access History_Dialog_Record'Class);
+   --  Internal inititialization function.
 
    procedure Update
      (History_Dialog : History_Dialog_Access;
       Debugger       : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Reads the commands history from the main debug window, and fills the
+   --  list with the User and Visible commands that were sent to Debugger.
 
    function Simple_Entry_Dialog
      (Parent    : access Gtk.Window.Gtk_Window_Record'Class;
@@ -177,14 +183,17 @@ private
    --  tabs in between.
 
    type History_Dialog_Record is new Gtk_Dialog_Record with record
-      Vbox19 : Gtk_Vbox;
-      Scrolledwindow11 : Gtk_Scrolled_Window;
+      Vbox1 : Gtk_Vbox;
+      Scrolledwindow1 : Gtk_Scrolled_Window;
       List : Gtk_List;
-      Hbuttonbox11 : Gtk_Hbutton_Box;
+      Hbuttonbox1 : Gtk_Hbutton_Box;
       Replay_Selection : Gtk_Button;
       Cancel : Gtk_Button;
       Help : Gtk_Button;
+
       Window : Gtk_Window;
+      --  This is in fact the main debug window.
+
    end record;
 
 end Odd.Dialogs;
