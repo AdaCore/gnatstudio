@@ -138,7 +138,7 @@ package body OS_Utils is
    -- Spawn --
    -----------
 
-   procedure Spawn 
+   procedure Spawn
      (Program_Name : String;
       Args         : Argument_List;
       Idle         : Idle_Callback;
