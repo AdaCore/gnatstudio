@@ -43,59 +43,59 @@ package body Src_Info.ALI is
 
    type E_Kind_To_Char_Map is array (Character range '+' .. 'z') of E_Kind;
    E_Kind_To_Char : constant E_Kind_To_Char_Map :=
-     ('a'    => (Array_Kind,             False, False),
-      'A'    => (Array_Kind,             False, True),
-      'b'    => (Boolean_Kind,           False, False),
-      'B'    => (Boolean_Kind,           False, True),
-      'c'    => (Class_Wide,             False, False),
-      'C'    => (Class_Wide,             False, True),
-      'd'    => (Decimal_Fixed_Point,    False, False),
-      'D'    => (Decimal_Fixed_Point,    False, True),
-      'e'    => (Enumeration_Kind,       False, False),
-      'E'    => (Enumeration_Kind,       False, True),
-      'f'    => (Floating_Point,         False, False),
-      'F'    => (Floating_Point,         False, True),
+     ('a'    => (Array_Kind,             False, False, False),
+      'A'    => (Array_Kind,             False, True,  False),
+      'b'    => (Boolean_Kind,           False, False, False),
+      'B'    => (Boolean_Kind,           False, True,  False),
+      'c'    => (Class_Wide,             False, False, False),
+      'C'    => (Class_Wide,             False, True,  False),
+      'd'    => (Decimal_Fixed_Point,    False, False, False),
+      'D'    => (Decimal_Fixed_Point,    False, True,  False),
+      'e'    => (Enumeration_Kind,       False, False, False),
+      'E'    => (Enumeration_Kind,       False, True,  False),
+      'f'    => (Floating_Point,         False, False, False),
+      'F'    => (Floating_Point,         False, True,  False),
       'g'    => Unresolved_Entity_Kind,
       'G'    => Unresolved_Entity_Kind,
       'h'    => Unresolved_Entity_Kind,
       'H'    => Unresolved_Entity_Kind,
-      'i'    => (Signed_Integer,         False, False),
-      'I'    => (Signed_Integer,         False, True),
+      'i'    => (Signed_Integer,         False, False, False),
+      'I'    => (Signed_Integer,         False, True,  False),
       'j'    => Unresolved_Entity_Kind,
       'J'    => Unresolved_Entity_Kind,
-      'k'    => (Package_Kind,           True,  False),
-      'K'    => (Package_Kind,           False, False),
-      'l'    => (Label_On_Loop,          False, False),
-      'L'    => (Label_On_Statement,     False, False),
-      'm'    => (Modular_Integer,        False, False),
-      'M'    => (Modular_Integer,        False, True),
-      'n'    => (Enumeration_Literal,    False, False),
-      'N'    => (Named_Number,           False, False),
-      'o'    => (Ordinary_Fixed_Point,   False, False),
-      'O'    => (Ordinary_Fixed_Point,   False, True),
-      'p'    => (Access_Kind,            False, False),
-      'P'    => (Access_Kind,            False, True),
-      'q'    => (Label_On_Block,         False, False),
+      'k'    => (Package_Kind,           True,  False, False),
+      'K'    => (Package_Kind,           False, False, False),
+      'l'    => (Label_On_Loop,          False, False, False),
+      'L'    => (Label_On_Statement,     False, False, False),
+      'm'    => (Modular_Integer,        False, False, False),
+      'M'    => (Modular_Integer,        False, True,  False),
+      'n'    => (Enumeration_Literal,    False, False, False),
+      'N'    => (Named_Number,           False, False, False),
+      'o'    => (Ordinary_Fixed_Point,   False, False, False),
+      'O'    => (Ordinary_Fixed_Point,   False, True,  False),
+      'p'    => (Access_Kind,            False, False, False),
+      'P'    => (Access_Kind,            False, True,  False),
+      'q'    => (Label_On_Block,         False, False, False),
       'Q'    => Unresolved_Entity_Kind,
-      'r'    => (Record_Kind,            False, False),
-      'R'    => (Record_Kind,            False, True),
-      's'    => (String_Kind,            False, False),
-      'S'    => (String_Kind,            False, True),
-      't'    => (Task_Kind,              False, False),
-      'T'    => (Task_Kind,              False, True),
-      'u'    => (Procedure_Kind,         True,  True),
-      'U'    => (Procedure_Kind,         False, True),
-      'v'    => (Function_Or_Operator,   True,  True),
-      'V'    => (Function_Or_Operator,   False, True),
-      'w'    => (Protected_Kind,         False, False),
-      'W'    => (Protected_Kind,         False, True),
-      'x'    => (Procedure_Kind,         False, True), --  Abstract
-      'X'    => (Exception_Entity,       False, False),
-      'y'    => (Function_Or_Operator,   False, True), --  Abstract
-      'Y'    => (Entry_Or_Entry_Family,  False, True),
+      'r'    => (Record_Kind,            False, False, False),
+      'R'    => (Record_Kind,            False, True,  False),
+      's'    => (String_Kind,            False, False, False),
+      'S'    => (String_Kind,            False, True,  False),
+      't'    => (Task_Kind,              False, False, False),
+      'T'    => (Task_Kind,              False, True,  False),
+      'u'    => (Procedure_Kind,         True,  True,  False),
+      'U'    => (Procedure_Kind,         False, True,  False),
+      'v'    => (Function_Or_Operator,   True,  True,  False),
+      'V'    => (Function_Or_Operator,   False, True,  False),
+      'w'    => (Protected_Kind,         False, False, False),
+      'W'    => (Protected_Kind,         False, True,  False),
+      'x'    => (Procedure_Kind,         False, True,  True),
+      'X'    => (Exception_Entity,       False, False, False),
+      'y'    => (Function_Or_Operator,   False, True,  True),
+      'Y'    => (Entry_Or_Entry_Family,  False, True,  True),
       'z'    => Unresolved_Entity_Kind, --  ??? Formal of current subprogram
       'Z'    => Unresolved_Entity_Kind,
-      '+'    => (Private_Type,           False, True),
+      '+'    => (Private_Type,           False, True,  False),
       others => Unresolved_Entity_Kind);
 
    type Char_To_Reference_Kind_Map is array
@@ -114,6 +114,7 @@ package body Src_Info.ALI is
       'l'    => Label,
       'm'    => Modification,
       'p'    => Primitive_Operation,
+      'P'    => Overriding_Primitive_Operation,
       'r'    => Reference,
       't'    => End_Of_Body,
       'w'    => With_Line,
@@ -1323,13 +1324,15 @@ package body Src_Info.ALI is
                   E_Ref.Location.Column := E_Ref.Location.Column + 1;
                end if;
 
-            elsif E_Ref.Kind = Primitive_Operation
+            elsif (E_Ref.Kind = Primitive_Operation
+                   or else E_Ref.Kind = Overriding_Primitive_Operation)
               and then Decl_Info.Declaration.Primitive_Subprograms = null
             then
                Decl_Info.Declaration.Primitive_Subprograms :=
                  new E_Reference_Node'(Value => E_Ref, Next => null);
 
-            elsif E_Ref.Kind /= Primitive_Operation
+            elsif (E_Ref.Kind /= Primitive_Operation
+                   and then E_Ref.Kind /= Overriding_Primitive_Operation)
               and then Decl_Info.References = null
             then
                Decl_Info.References := new E_Reference_Node'
@@ -1339,7 +1342,9 @@ package body Src_Info.ALI is
                --  "Find_All_References" is properly sorted.
                --  ??? Could optimize by keeping a pointer to the last element
 
-               if E_Ref.Kind = Primitive_Operation then
+               if (E_Ref.Kind = Primitive_Operation
+                   or else E_Ref.Kind = Overriding_Primitive_Operation)
+               then
                   List := Decl_Info.Declaration.Primitive_Subprograms;
                else
                   List := Decl_Info.References;

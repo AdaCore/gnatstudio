@@ -346,9 +346,10 @@ package Src_Info is
    --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
 
    type E_Kind is record
-      Kind       : E_Kinds;
-      Is_Generic : Boolean;
-      Is_Type    : Boolean;
+      Kind        : E_Kinds;
+      Is_Generic  : Boolean;
+      Is_Type     : Boolean;
+      Is_Abstract : Boolean;
    end record;
    --  Description for the type of an entity.
    --  Kind describes its general family.
@@ -537,6 +538,7 @@ private
       Type_Extension,
       Implicit,
       Primitive_Operation,
+      Overriding_Primitive_Operation,
       With_Line,
       Label,
       Subprogram_In_Parameter,
@@ -573,6 +575,11 @@ private
    --    - Primitive_Operation: used for primitive operations of tagged types
    --      (in Ada), or for methods (in C++). It possibly points to inherited
    --      methods in the parent type.
+   --    - Overriding_Primitive_Operation is used for primitive operations
+   --      that override one of the inherited operations from the parent (for
+   --      instance A derives from B and both define the operation foo() with
+   --      the same profile, foo() will be marked as an overriding primitive
+   --      operation for B.
    --    - Subprogram_*_Parameter: for a subprogram declaration, references all
    --      its parameters, along with their passing mode ("in", "in out", ...)
    --    - Formal_Generic_Parameter: for a generic, reference its format
@@ -592,6 +599,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
       Subprogram_In_Out_Parameter              => False,
@@ -614,6 +622,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
       Subprogram_In_Out_Parameter              => False,
@@ -636,6 +645,7 @@ private
       Implicit                                 => False,
       Label                                    => True,
       Primitive_Operation                      => False,
+      Overriding_Primitive_Operation           => False,
       With_Line                                => True,
       Subprogram_In_Parameter                  => False,
       Subprogram_In_Out_Parameter              => False,
@@ -659,6 +669,7 @@ private
       Implicit                                 => False,
       Label                                    => True,
       Primitive_Operation                      => False,
+      Overriding_Primitive_Operation           => False,
       With_Line                                => True,
       Subprogram_In_Parameter                  => False,
       Subprogram_In_Out_Parameter              => False,
@@ -680,6 +691,7 @@ private
       Implicit                                 => False,
       Label                                    => False,
       Primitive_Operation                      => False,
+      Overriding_Primitive_Operation           => False,
       With_Line                                => False,
       Subprogram_In_Parameter                  => False,
       Subprogram_In_Out_Parameter              => False,
@@ -692,9 +704,9 @@ private
    --  True if the reference is a write reference to the entity
 
    Unresolved_Entity_Kind : constant E_Kind :=
-     (Unresolved_Entity, False, False);
+     (Unresolved_Entity, False, False, False);
    Overloaded_Entity_Kind : constant E_Kind :=
-     (Overloaded_Entity, False, False);
+     (Overloaded_Entity, False, False, False);
 
    type LI_File_Constrained;
    type LI_File_Ptr is access LI_File_Constrained;
