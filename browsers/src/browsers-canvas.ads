@@ -24,11 +24,11 @@ with Gdk.Event;
 with Gdk.GC;
 with Gdk.Pixbuf;
 with Gdk.Rectangle;
-with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
 with Glib.Object;
 with Gtk.Box;
+with Gtk.Handlers;
 with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Widget;
@@ -82,18 +82,6 @@ package Browsers.Canvas is
       return General_Browser;
    --  Return the browser that contains Canvas.
 
-   function Selected_Item (Browser : access General_Browser_Record)
-      return Gtkada.Canvas.Canvas_Item;
-   --  Return the currently selected item, or null if there is none.
-
-   procedure Select_Item
-     (Browser : access General_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class);
-   --  Select Item. By default, no visual feedback is provided.
-
-   procedure Unselect_All (Browser : access General_Browser_Record);
-   --  Unselect all items
-
    procedure Layout
      (Browser : access General_Browser_Record;
       Force : Boolean := False);
@@ -137,6 +125,9 @@ package Browsers.Canvas is
    --  The type of items that are put in the canvas. They are associated with
    --  contextual menus, and also allows hiding the links to and from this
    --  item.
+
+   package Item_Cb is new Gtk.Handlers.User_Callback
+     (Gtk.Widget.Gtk_Widget_Record, Browser_Item);
 
    procedure Initialize
      (Item    : access Browser_Item_Record'Class;
@@ -414,7 +405,6 @@ package Browsers.Canvas is
    procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Browser_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint);
@@ -424,10 +414,6 @@ package Browsers.Canvas is
    ----------------------
    -- Graphic contexts --
    ----------------------
-
-   function Get_Text_GC
-     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
-   --  Return the graphic context to use to draw the text in the items.
 
    function Get_Default_Item_Background_GC
      (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
@@ -481,6 +467,7 @@ private
       Toolbar   : Gtk.Hbutton_Box.Gtk_Hbutton_Box;
 
       Selected_Link_Color   : Gdk.Color.Gdk_Color;
+      Unselected_Link_Color : Gdk.Color.Gdk_Color;
       Default_Item_GC       : Gdk.GC.Gdk_GC;
       Selected_Item_GC      : Gdk.GC.Gdk_GC;
       Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
@@ -511,6 +498,10 @@ private
    procedure On_Button_Click
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button);
+   procedure Selected
+     (Item        : access Browser_Item_Record;
+      Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Is_Selected : Boolean);
    --  See doc for inherited subprograms
 
    type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
@@ -523,6 +514,8 @@ private
       --  set. In this case, Title_Layout is null.
 
       Active_Areas : Active_Area_Tree;
+
+      Title_X, Title_Width, Title_Y : Glib.Gint;
    end record;
 
    type Arrow_Item_Record is new Browser_Item_Record with record
