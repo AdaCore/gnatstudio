@@ -24,17 +24,13 @@ with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
 
 with Traces;                    use Traces;
 
-with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_View_API;              use VCS_View_API;
 
-with VCS;                       use VCS;
 with Ada.Exceptions;            use Ada.Exceptions;
-with String_List_Utils;         use String_List_Utils;
 
 with Log_Utils;
 
@@ -43,27 +39,17 @@ package body VCS_Module is
    VCS_Module_Name : constant String := "VCS_Interface";
    Me : constant Debug_Handle := Create (VCS_Module_Name);
 
-   procedure On_Open_Interface
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Display the VCS explorer
-
-   procedure On_Update_All
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  Update all files in the project
-
-   procedure List_Open_Files
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle);
-   --  List all open files in the project
-
    procedure VCS_Contextual_Menu
      (Object  : access Glib.Object.GObject_Record'Class;
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Fill Menu with the contextual menu for the VCS module,
    --  if Context is appropriate.
+
+   procedure On_Open_Interface
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Display the VCS explorer
 
    -----------------------
    -- On_Open_Interface --
@@ -81,50 +67,6 @@ package body VCS_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Interface;
-
-   -------------------
-   -- On_Update_All --
-   -------------------
-
-   procedure On_Update_All
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Dirs : constant String_List.List := Get_Dirs_In_Project (Kernel);
-      Ref  : constant VCS_Access := Get_Current_Ref (Kernel);
-   begin
-      Update (Ref, Dirs);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Update_All;
-
-   ---------------------
-   -- List_Open_Files --
-   ---------------------
-
-   procedure List_Open_Files
-     (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Ref      : constant VCS_Access := Get_Current_Ref (Kernel);
-      Explorer : VCS_View_Access;
-   begin
-      Open_Explorer (Kernel);
-      Explorer := Get_Explorer (Kernel);
-
-      Clear (Explorer);
-      Get_Status (Ref, Get_Files_In_Project (Get_Project_View (Kernel)));
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end List_Open_Files;
 
    -------------------------
    -- VCS_Contextual_Menu --
@@ -173,10 +115,10 @@ package body VCS_Module is
          Add_Before => False);
 
       Register_Menu (Kernel, VCS, -"Explorer", "", On_Open_Interface'Access);
-      Register_Menu (Kernel, VCS, -"Update project", "", On_Update_All'Access);
+      Register_Menu (Kernel, VCS, -"Update project", "", Update_All'Access);
       Register_Menu
         (Kernel, VCS, -"Query status for project", "",
-         List_Open_Files'Access);
+         Query_Status_For_Project'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, VCS, Menu_Item);
       Register_Menu (Kernel, VCS, -"Update", "", Update'Access);

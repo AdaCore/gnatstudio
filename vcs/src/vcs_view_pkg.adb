@@ -54,14 +54,7 @@ with VCS_Module;                use VCS_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
-
-with Basic_Types;               use Basic_Types;
-
-with Prj;                       use Prj;
-with Prj_API;                   use Prj_API;
-with Prj.Tree;                  use Prj.Tree;
 
 with Traces; use Traces;
 
@@ -120,10 +113,6 @@ package body VCS_View_Pkg is
    -----------------------
    -- Local subprograms --
    -----------------------
-
-   function String_Array_To_String_List
-     (S : String_Id_Array) return String_List.List;
-   --  Convenience function to make a string_list out of a String_Id_Array.
 
    procedure Refresh (Explorer : VCS_View_Access);
    --  Redraw the files in the VCS Explorer.
@@ -813,20 +802,6 @@ package body VCS_View_Pkg is
       end if;
    end Get_Explorer;
 
-   ---------------------
-   -- Get_Current_Ref --
-   ---------------------
-
-   function Get_Current_Ref
-     (Kernel : access Kernel_Handle_Record'Class)
-     return VCS_Access
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      return Get_VCS_From_Id ("CVS");
-      --  ??? should get this information from the project !!
-   end Get_Current_Ref;
-
    ------------------------
    -- Get_Selected_Files --
    ------------------------
@@ -906,69 +881,5 @@ package body VCS_View_Pkg is
 
       return "";
    end Get_Current_File;
-
-   -------------------------
-   -- Get_Dirs_In_Project --
-   -------------------------
-
-   function Get_Dirs_In_Project
-     (Kernel : Kernel_Handle) return String_List.List
-   is
-      Result   : String_List.List;
-      Project  : Project_Node_Id;
-   begin
-      Project := Get_Project (Kernel);
-
-      declare
-         Iterator : Imported_Project_Iterator := Start (Project, True);
-      begin
-         while Current (Iterator) /= Empty_Node loop
-            String_List.Concat (Result,
-                                String_Array_To_String_List
-                                (Source_Dirs (Current (Iterator))));
-            Next (Iterator);
-         end loop;
-      end;
-
-      return Result;
-   end Get_Dirs_In_Project;
-
-   --------------------------
-   -- Get_Files_In_Project --
-   --------------------------
-
-   function Get_Files_In_Project
-     (Project_View : Project_Id;
-      Recursive    : Boolean := True) return String_List.List
-   is
-      Result  : String_List.List;
-      Files   : String_Array_Access;
-   begin
-      Files   := Get_Source_Files (Project_View, Recursive);
-
-      for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Files.all (J).all);
-      end loop;
-
-      Free (Files);
-
-      return Result;
-   end Get_Files_In_Project;
-
-   ---------------------------------
-   -- String_Array_To_String_List --
-   ---------------------------------
-
-   function String_Array_To_String_List
-     (S : String_Id_Array) return String_List.List
-   is
-      Result : String_List.List;
-   begin
-      for J in reverse S'Range loop
-         String_List.Prepend (Result, Get_String (S (J)));
-      end loop;
-
-      return Result;
-   end String_Array_To_String_List;
 
 end VCS_View_Pkg;
