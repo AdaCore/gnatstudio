@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -371,12 +371,14 @@ package body Codefix_Module is
          Priority                => Default_Priority,
          Contextual_Menu_Handler => Codefix_Contextual_Menu'Access);
 
+      --  ??? Disabled for now, as the UI is not quite ready yet.
+
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => "/" & (-"Tools"),
          Text        => -"_Code Fixing",
-         Callback    => Codefix_Handler'Access);
-
+         Callback    => Codefix_Handler'Access,
+         Sensitive   => False);
 
       Kernel_Callback.Connect
         (Kernel,
@@ -439,7 +441,7 @@ package body Codefix_Module is
       Menu          : Gtk_Menu;
       Solution_Node : Command_List.List_Node;
       Context       : Selection_Context_Access;
-      --  ??? Where this context is freed ?
+      --  ??? Where is this context freed ?
    begin
       Gtk_New (Menu);
       Context := new Selection_Context;
@@ -499,7 +501,7 @@ package body Codefix_Module is
       Trace (Me, "Exception got: " & Error_Message);
       Insert
         (Codefix_Module_ID.Kernel,
-         -"Fix of current error is no longer pertinent");
+         -"Fix of current error is no longer relevant");
    end Execute_Corrupted_Cb;
 
 end Codefix_Module;
