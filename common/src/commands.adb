@@ -49,6 +49,8 @@ package body Commands is
       pragma Unreferenced (X);
    begin
       --  ??? must correctly free memory.
+      --  In fact, actions are never freed, they are just moved from
+      --  one queue to the other.
       null;
    end Free;
 
@@ -67,8 +69,8 @@ package body Commands is
    ----------
 
    function Undo (Command : access Root_Command) return Boolean is
-      pragma Unreferenced (Command);
    begin
+      Command_Finished (Command, False);
       return False;
    end Undo;
 
@@ -132,7 +134,14 @@ package body Commands is
          Success : Boolean;
       begin
          Queue.Queue_Node := Next (Queue.Queue_Node);
-         Success := Execute (Action);
+
+         case Action.Mode is
+            when Normal | Undone =>
+               Success := Execute (Action);
+
+            when Done =>
+               Success := Undo (Action);
+         end case;
 
          --  ??? Where is Action freed ? at the end of execution ?
       end;
@@ -168,6 +177,23 @@ package body Commands is
          Free (Action.Next_Commands);
       end if;
 
+      case Action.Mode is
+         when Normal =>
+            Action.Mode := Done;
+            Prepend (Queue.Undo_Queue, Command_Access (Action));
+            --  When a normal command is finished, purge the redo
+            --  queue.
+            Free (Queue.Redo_Queue);
+
+         when Done =>
+            Action.Mode := Undone;
+            Prepend (Queue.Redo_Queue, Command_Access (Action));
+
+         when Undone =>
+            Action.Mode := Done;
+            Prepend (Queue.Undo_Queue, Command_Access (Action));
+      end case;
+
       Execute_Next_Action (Action.Queue);
    end Command_Finished;
 
@@ -191,5 +217,51 @@ package body Commands is
    begin
       Prepend (Item.Next_Commands, Action);
    end Add_Consequence_Action;
+
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (Queue : Command_Queue) is
+      Action : Command_Access;
+   begin
+      if not Is_Empty (Queue.Undo_Queue) then
+         Action := Head (Queue.Undo_Queue);
+         Enqueue (Queue, Action);
+         Next (Queue.Undo_Queue);
+      end if;
+   end Undo;
+
+   ----------
+   -- Redo --
+   ----------
+
+   procedure Redo (Queue : Command_Queue) is
+      Action : Command_Access;
+   begin
+      if not Is_Empty (Queue.Redo_Queue) then
+         Action := Head (Queue.Redo_Queue);
+         Enqueue (Queue, Action);
+         Next (Queue.Redo_Queue);
+      end if;
+   end Redo;
+
+   ----------------------
+   -- Undo_Queue_Empty --
+   ----------------------
+
+   function Undo_Queue_Empty (Queue : Command_Queue) return Boolean is
+   begin
+      return Is_Empty (Queue.Undo_Queue);
+   end Undo_Queue_Empty;
+
+   ----------------------
+   -- Redo_Queue_Empty --
+   ----------------------
+
+   function Redo_Queue_Empty (Queue : Command_Queue) return Boolean is
+   begin
+      return Is_Empty (Queue.Redo_Queue);
+   end Redo_Queue_Empty;
 
 end Commands;
