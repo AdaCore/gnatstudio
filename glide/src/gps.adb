@@ -593,15 +593,21 @@ begin
    GPS.Log_Level  := GVD.Types.Hidden;
 
    if Override_Gtk_Theme then
-      Gtk.Rc.Parse_String
-        ("gtk-font-name=""" &
-         To_String (Get_Pref (GPS.Kernel, Default_Font)) &
-         '"' & ASCII.LF &
-         "gtk-can-change-accels=" &
-         Integer'Image (Boolean'Pos
-           (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
-         "gtk-key-theme-name=""" &
-         Get_Pref (GPS.Kernel, Key_Theme_Name) & '"');
+      declare
+         Key_Theme : String := Key_Themes'Image
+           (Key_Themes'Val (Get_Pref (GPS.Kernel, Key_Theme_Name)));
+      begin
+         String_Utils.Mixed_Case (Key_Theme);
+         Gtk.Rc.Parse_String
+           ("gtk-font-name=""" &
+            To_String (Get_Pref (GPS.Kernel, Default_Font)) &
+            '"' & ASCII.LF &
+            "gtk-can-change-accels=" &
+            Integer'Image
+              (Boolean'Pos
+                 (Get_Pref (GPS.Kernel, Can_Change_Accels))) & ASCII.LF &
+            "gtk-key-theme-name=""" & Key_Theme & '"');
+      end;
    end if;
 
    if Get_Pref (GPS.Kernel, Start_Maximized) then
