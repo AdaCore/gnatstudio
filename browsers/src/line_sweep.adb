@@ -1,29 +1,21 @@
 -----------------------------------------------------------------------
+--                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001                            --
---                          ACT-Europe                               --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
 --                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 --  See paper "A Generic Plane-Sweep For Intersecting Line Segments"
@@ -85,7 +77,6 @@ package body Line_Sweep is
    --  The segments are kept ordered, according to the y coordinate of their
    --  intersection with the sweeping line.
 
-
    --  Outline of the algorithm:
    --    1: insert the vertices of the initial segments in the event queue
    --    2: line_status := empty
@@ -100,14 +91,14 @@ package body Line_Sweep is
    -- Intersections_Count --
    -------------------------
 
-   function Intersections_Count (X1, Y1, X2, Y2 : Integer_Array)
-      return Integer
+   function Intersections_Count
+     (X1, Y1, X2, Y2 : Integer_Array) return Integer
    is
       function Point_Before (P1, P2 : Event_Point) return Boolean;
       --  Return True if P1 will be encountered before P2 by the sweeping line.
       --  The two points belong to the two segments S1 and S2
 
-      function Segment_Below (S1, S2 : Edge_Index; X : Natural) return Boolean;
+      function Segment_Below (S1, S2 : Edge_Index; X : Integer) return Boolean;
       --  Return True if S1 is below S2 at coordinate X
 
       procedure Add (Queue : in out Event_Queue; Event : Event_Point);
@@ -141,10 +132,10 @@ package body Line_Sweep is
          Neighbor2 : out Edge_Index);
       --  Remove Edge from Line, and returns its two ex-neighbors in Line
 
-      function Y_At_Point (S : Edge_Index; X : Natural) return Integer;
+      function Y_At_Point (S : Edge_Index; X : Integer) return Integer;
       --  Return the Y coordinate of the edge at a specific X coordinate
 
-      function Is_Source (S : Edge_Index; X : Natural) return Boolean;
+      function Is_Source (S : Edge_Index; X : Integer) return Boolean;
       --  Return True if X is the source coordinate of S (ie the smallest X
       --  coordinate of the two vertices that S connects).
 
@@ -231,6 +222,7 @@ package body Line_Sweep is
             Queue.Head := Tmp;
          else
             T := Queue.Head;
+
             while T /= null loop
                if Event.Typ = Intersection_Point
                  and then T.Event.Typ = Intersection_Point
@@ -291,7 +283,9 @@ package body Line_Sweep is
       is
          procedure Internal is new Unchecked_Deallocation
            (Line_Status_Item, Line_Status_Item_Access);
+
          Current : Line_Status_Item_Access := Line.Head;
+
       begin
          while Current /= null loop
             if Current.Edge = Edge then
@@ -311,20 +305,26 @@ package body Line_Sweep is
                if Current.Next /= null then
                   Current.Next.Prev := Current.Prev;
                end if;
+
                if Current.Prev /= null then
                   Current.Prev.Next := Current.Next;
                end if;
+
                if Line.Head = Current then
                   Line.Head := Current.Next;
+
                   if Line.Head /= null then
                      Line.Head.Prev := null;
                   end if;
                end if;
+
                Internal (Current);
                return;
             end if;
+
             Current := Current.Next;
          end loop;
+
          Neighbor1 := No_Edge;
          Neighbor2 := No_Edge;
       end Delete;
@@ -339,7 +339,8 @@ package body Line_Sweep is
          Neighbor1, Neighbor2 : out Edge_Index)
       is
          Current : Line_Status_Item_Access := Line.Head;
-         S : Edge_Index;
+         S       : Edge_Index;
+
       begin
          while Current /= null loop
             if Current.Edge = S1 or else Current.Edge = S2 then
@@ -350,12 +351,14 @@ package body Line_Sweep is
                end if;
 
                S := Current.Edge;
+
                loop
                   pragma Assert (Current.Next /= null);
                   Current.Edge := Current.Next.Edge;
                   Current := Current.Next;
                   exit when Current.Edge = S1 or else Current.Edge = S2;
                end loop;
+
                Current.Edge := S;
 
                if Current.Next /= null then
@@ -363,10 +366,13 @@ package body Line_Sweep is
                else
                   Neighbor2 := No_Edge;
                end if;
+
                return;
             end if;
+
             Current := Current.Next;
          end loop;
+
          Neighbor1 := No_Edge;
          Neighbor2 := No_Edge;
       end Reverse_Segments;
@@ -376,14 +382,16 @@ package body Line_Sweep is
       ------------
 
       procedure Insert
-        (Line                 : in out Line_Status;
-         Q                    : in out Event_Queue;
-         Edge                 : Edge_Index;
-         X                    : Integer;
-         Neighbor1, Neighbor2 : out Edge_Index)
+        (Line      : in out Line_Status;
+         Q         : in out Event_Queue;
+         Edge      : Edge_Index;
+         X         : Integer;
+         Neighbor1 : out Edge_Index;
+         Neighbor2 : out Edge_Index)
       is
-         Tmp : Line_Status_Item_Access;
+         Tmp     : Line_Status_Item_Access;
          T, Prev : Line_Status_Item_Access;
+
       begin
          pragma Assert (Edge /= No_Edge);
 
@@ -396,6 +404,7 @@ package body Line_Sweep is
             Line.Head := Tmp;
          else
             T := Line.Head;
+
             while T /= null
               and then Segment_Below (T.Edge, Edge, X)
             loop
@@ -450,7 +459,7 @@ package body Line_Sweep is
       -- Y_At_Point --
       ----------------
 
-      function Y_At_Point (S : Edge_Index; X : Natural) return Integer is
+      function Y_At_Point (S : Edge_Index; X : Integer) return Integer is
       begin
          if X2 (S) /= X1 (S) then
             return Y1 (S) + (Y2 (S) - Y1 (S)) * (X - X1 (S))
@@ -464,7 +473,7 @@ package body Line_Sweep is
       -- Is_Source --
       ---------------
 
-      function Is_Source  (S : Edge_Index; X : Natural) return Boolean  is
+      function Is_Source  (S : Edge_Index; X : Integer) return Boolean  is
       begin
          if X1 (S) < X2 (S) then
             return X = X1 (S);
@@ -581,7 +590,7 @@ package body Line_Sweep is
       -------------------
 
       function Segment_Below
-        (S1, S2 : Edge_Index; X : Natural) return Boolean
+        (S1, S2 : Edge_Index; X : Integer) return Boolean
       is
          Y3 : constant Integer := Y_At_Point (S1, X);
          Y4 : constant Integer := Y_At_Point (S2, X);
@@ -660,12 +669,13 @@ package body Line_Sweep is
 
    begin
       --  The arrays must have the same ranges
-      pragma Assert (X1'Length = Y1'Length
-                     and then X2'Length = Y2'Length
-                     and then X1'Length = X2'Length
-                     and then X1'First = Y1'First
-                     and then X2'First = Y2'First
-                     and then X1'First = X2'First);
+      pragma Assert
+        (X1'Length = Y1'Length
+         and then X2'Length = Y2'Length
+         and then X1'Length = X2'Length
+         and then X1'First = Y1'First
+         and then X2'First = Y2'First
+         and then X1'First = X2'First);
 
       --  Initial the event_point queue will all the ends of the edges
 
