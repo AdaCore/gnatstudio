@@ -44,6 +44,7 @@ with Gtk.Table;               use Gtk.Table;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Window;              use Gtk.Window;
+with Gtkada.File_Selector;    use Gtkada.File_Selector;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
@@ -250,13 +251,17 @@ package body GVD_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Connect to Board
 
-   procedure On_Debug_Executable is new
-     Generic_Debug_Command (GVD.Menu.On_Open_Program);
+   procedure On_Debug_Executable
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Load File
 
-   procedure On_Add_Symbols is new
-     Generic_Debug_Command (GVD.Menu.On_Add_Symbols);
+   procedure On_Add_Symbols
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Debug->Debug->Add Symbols
+
+   procedure On_Load_Core
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Debug Core File
 
    procedure On_Attach is new
      Generic_Debug_Command (GVD.Menu.On_Attach_To_Process);
@@ -265,10 +270,6 @@ package body GVD_Module is
    procedure On_Detach is new
      Generic_Debug_Command (GVD.Menu.On_Detach_Process);
    --  Debug->Debug->Detach
-
-   procedure On_Load_Core is new
-     Generic_Debug_Command (GVD.Menu.On_Open_Core_Dump);
-   --  Debug->Debug->Debug Core File
 
    procedure On_Kill is new
      Generic_Debug_Command (GVD.Menu.On_Kill);
@@ -439,6 +440,54 @@ package body GVD_Module is
    --  ??? Should provide proper user data instead of using a global variable
    --  to access debugger info.
 
+   --------------------
+   -- On_Add_Symbols --
+   --------------------
+
+   procedure On_Add_Symbols
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Page.Debugger)) then
+         Console.Insert
+           (Kernel,
+            (-"Underlying debugger busy. ") &
+            (-"Interrupt the debugger or wait for its availability."));
+         return;
+      end if;
+
+      declare
+         S : constant String := Select_File (Title => -"Select Module");
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         if Page.Descriptor.Remote_Host /= null
+           or else GNAT.OS_Lib.Is_Regular_File (S)
+         then
+            Add_Symbols (Page.Debugger, S, Mode => GVD.Types.Visible);
+         else
+            Console.Insert (Kernel, (-"Could not find file: ") & S);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Add_Symbols;
+
    -----------------
    -- On_Assembly --
    -----------------
@@ -558,6 +607,107 @@ package body GVD_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Connect_To_Board;
+
+   -------------------------
+   -- On_Debug_Executable --
+   -------------------------
+
+   procedure On_Debug_Executable
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Page.Debugger)) then
+         Console.Insert
+           (Kernel,
+            (-"Underlying debugger busy. ") &
+            (-"Interrupt the debugger or wait for its availability."));
+         return;
+      end if;
+
+      declare
+         S : constant String := Select_File (Title => -"Select File to Debug");
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         if Page.Descriptor.Remote_Host'Length /= 0
+           or else GNAT.OS_Lib.Is_Regular_File (S)
+         then
+            Set_Executable (Page.Debugger, S, Mode => Hidden);
+            Change_Dir (Dir_Name (S));
+         else
+            Console.Insert (Kernel, (-"Could not find file: ") & S);
+         end if;
+
+      exception
+         when Executable_Not_Found =>
+            Console.Insert (Kernel, (-"Could not find file: ") & S);
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Debug_Executable;
+
+   ------------------
+   -- On_Load_Core --
+   ------------------
+
+   procedure On_Load_Core
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Page : constant Glide_Page.Glide_Page :=
+        Glide_Page.Glide_Page (Get_Current_Process (Top));
+      use Debugger;
+
+   begin
+      if Page.Debugger = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Page.Debugger)) then
+         Console.Insert
+           (Kernel,
+            (-"Underlying debugger busy. ") &
+            (-"Interrupt the debugger or wait for its availability."));
+         return;
+      end if;
+
+      declare
+         S : constant String := Select_File (-"Select Core File");
+      begin
+         if S = "" then
+            return;
+         end if;
+
+         if Page.Descriptor.Remote_Host /= null
+           or else GNAT.OS_Lib.Is_Regular_File (S)
+         then
+            Load_Core_File (Page.Debugger, S, Mode => GVD.Types.Visible);
+         else
+            Console.Insert (Kernel, (-"Could not find core file: ") & S);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Load_Core;
 
    --------------------
    -- GVD_Contextual --
@@ -881,6 +1031,8 @@ package body GVD_Module is
       Top     : constant Glide_Window := Glide_Window (Get_Main_Window (K));
       Page    : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
+      Project_View : constant Prj.Project_Id := Get_Project_View (K);
+      Module  : String_Access;
       Success : Boolean;
       use Debugger;
 
@@ -888,15 +1040,41 @@ package body GVD_Module is
       Push_State (K, Busy);
 
       --  Initialize the debugger if necessary
-      --  ??? Should use the Debugger property of the main project
-      if Page.Debugger = null then
-         Configure
-           (Page, Gdb_Type, "", (1 .. 0 => null), "", Success => Success);
 
-         if not Success then
-            Pop_State (K);
-            return;
+      if Page.Debugger = null then
+         if Data.File /= "" then
+            Module := new String'
+              (Executables_Directory (Data.Project) & Data.File);
+         else
+            Module := new String' ("");
          end if;
+
+         declare
+            Args : GNAT.OS_Lib.Argument_List_Access :=
+              GNAT.OS_Lib.Argument_String_To_List (Get_Attribute_Value
+                (Project_View, Debugger_Command_Attribute,
+                 Ide_Package, Default => "gdb"));
+
+         begin
+            Configure
+              (Process         => Page,
+               Kind            => Gdb_Type,
+               Executable      => Module.all,
+               Debugger_Args   => Args (2 .. Args'Last),
+               Executable_Args => "",
+               Remote_Host     =>
+                 Get_Attribute_Value
+                   (Project_View, Remote_Host_Attribute, Ide_Package),
+               Debugger_Name   => Args (1).all,
+               Success => Success);
+            GNAT.OS_Lib.Free (Args);
+            Free (Module);
+
+            if not Success then
+               Pop_State (K);
+               return;
+            end if;
+         end;
 
          Set_Sensitive (K, True);
          Page.Destroy_Id := Widget_Callback.Object_Connect
@@ -905,23 +1083,10 @@ package body GVD_Module is
             Page);
       end if;
 
-      --  Load a file if necessary
-      if Data.File /= "" then
-         declare
-            Full : constant String := Executables_Directory (Data.Project);
-         begin
-            Set_Executable (Page.Debugger, Full & Data.File, Mode => Hidden);
-         exception
-            when Executable_Not_Found =>
-               Insert (K, "File not found: " & Full & Data.File);
-         end;
-      end if;
-
       --  Add columns for debugging information to all the files that
       --  are currently open.
 
       Create_Debugger_Columns (K, "");
-
       Pop_State (K);
 
    exception
