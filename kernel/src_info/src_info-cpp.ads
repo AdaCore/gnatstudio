@@ -33,10 +33,14 @@ package Src_Info.CPP is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
+   --  Creates or completes Library Information for given source file name
+   --  and LI_File_Ptr. It seems to be the main routine for this package.
 
    function Case_Insensitive_Identifiers
          (Handler : access CPP_LI_Handler_Record) return Boolean;
    pragma Inline (Case_Insensitive_Identifiers);
+   --  Is identifiers in given language case insensitive? Always returns
+   --  False since identifiers are case sensitive in C and C++.
 
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
@@ -49,5 +53,7 @@ package Src_Info.CPP is
    --  empty string when the given Source_Filename can not be found in the
    --  project exception lists and when the extension does not follow the
    --  project naming scheme.
+   --  ??? In current implementation for C/C++ this function always
+   --  returns Source_Filename taken as input
 
 end Src_Info.CPP;
