@@ -590,21 +590,6 @@ package Glide_Kernel.Scripts is
       return Class_Instance;
    --  Create a new context
 
-   function Get_File_Location_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Class_Type;
-   --  Return a class for a File_Location_Selection_Context
-
-   function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.File_Location_Context_Access;
-   --  Retrieve some context information from instance
-
-   function Create_File_Location_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.File_Location_Context_Access)
-      return Class_Instance;
-   --  Create a new context
-
    function Get_Entity_Context_Class
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
       return Class_Type;

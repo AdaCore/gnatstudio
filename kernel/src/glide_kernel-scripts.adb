@@ -63,9 +63,8 @@ package body Glide_Kernel.Scripts is
       Entity_Class        : Class_Type := No_Class;
       File_Class          : Class_Type := No_Class;
       Project_Class       : Class_Type := No_Class;
-      File_Location_Class : Class_Type := No_Class;
       File_Context_Class  : Class_Type := No_Class;
-      File_Location_Context_Class : Class_Type := No_Class;
+      File_Location_Class : Class_Type := No_Class;
       Entity_Context_Class        : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
@@ -923,7 +922,6 @@ package body Glide_Kernel.Scripts is
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       Instance : Class_Instance;
       File     : File_Selection_Context_Access;
-      Loc      : File_Location_Context_Access;
       Context  : Selection_Context_Access;
       L, C     : Integer := -1;
    begin
@@ -953,23 +951,23 @@ package body Glide_Kernel.Scripts is
 
       elsif Command = "location" then
          Instance := Nth_Arg
-           (Data, 1, Get_File_Location_Context_Class (Kernel));
-         Loc := File_Location_Context_Access'(Get_Data (Instance));
+           (Data, 1, Get_File_Context_Class (Kernel));
+         File := File_Selection_Context_Access'(Get_Data (Instance));
 
-         if Has_Line_Information (Loc) then
-            L := Line_Information (Loc);
+         if Has_Line_Information (File) then
+            L := Line_Information (File);
          end if;
 
-         if Has_Column_Information (Loc) then
-            C := Column_Information (Loc);
+         if Has_Column_Information (File) then
+            C := Column_Information (File);
          end if;
 
-         if Has_File_Information (Loc) then
+         if Has_File_Information (File) then
             Set_Return_Value
               (Data,
                Create_File_Location
                  (Get_Script (Data),
-                  (Create_File (Get_Script (Data), File_Information (Loc))),
+                  (Create_File (Get_Script (Data), File_Information (File))),
                   L,
                   C));
          else
@@ -986,11 +984,6 @@ package body Glide_Kernel.Scripts is
             Set_Return_Value
              (Data, Create_Entity_Context
                (Get_Script (Data), Entity_Selection_Context_Access (Context)));
-
-         elsif Context.all in File_Location_Context'Class then
-            Set_Return_Value
-             (Data, Create_File_Location_Context
-               (Get_Script (Data), File_Location_Context_Access (Context)));
 
          elsif Context.all in File_Selection_Context'Class then
             Set_Return_Value
@@ -1279,21 +1272,6 @@ package body Glide_Kernel.Scripts is
            -("Return the project in the context, or the root project if none"
              & " was specified in the context"),
          Class        => Get_File_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
-
-      Register_Command
-        (Kernel,
-         Command      => Constructor_Method,
-         Return_Value => "FileLocationContext",
-         Description  => -"Prevents creation of FileLocationContext instances",
-         Class        => Get_File_Location_Context_Class (Kernel),
-         Handler      => Context_Command_Handler'Access);
-      Register_Command
-        (Kernel,
-         Command      => "location",
-         Return_Value => "FileLocation",
-         Description  => -"Return the file location stored in the context",
-         Class        => Get_File_Location_Context_Class (Kernel),
          Handler      => Context_Command_Handler'Access);
 
       Register_Command
@@ -1696,27 +1674,6 @@ package body Glide_Kernel.Scripts is
       return Scripting_Data (Kernel.Scripts).File_Context_Class;
    end Get_File_Context_Class;
 
-   -------------------------------------
-   -- Get_File_Location_Context_Class --
-   -------------------------------------
-
-   function Get_File_Location_Context_Class
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Class_Type is
-   begin
-      if Scripting_Data (Kernel.Scripts).File_Location_Context_Class =
-        No_Class
-      then
-         Scripting_Data (Kernel.Scripts).File_Location_Context_Class :=
-           New_Class
-             (Kernel,
-              "FileLocationContext",
-              "Represents an context that contains location information",
-              Base => Get_File_Context_Class (Kernel));
-      end if;
-      return Scripting_Data (Kernel.Scripts).File_Location_Context_Class;
-   end Get_File_Location_Context_Class;
-
    ------------------------------
    -- Get_Entity_Context_Class --
    ------------------------------
@@ -1796,27 +1753,6 @@ package body Glide_Kernel.Scripts is
    --------------
 
    function Get_Data (Instance : access Class_Instance_Record'Class)
-      return Glide_Kernel.Modules.File_Location_Context_Access
-   is
-      Script  : constant Scripting_Language := Get_Script (Instance);
-   begin
-      if not Is_Subclass
-        (Script,
-         Get_Class (Instance),
-         Get_File_Location_Context_Class (Get_Kernel (Script)))
-      then
-         raise Invalid_Data;
-      end if;
-
-      return File_Location_Context_Access
-        (Selection_Context_Access'(Convert (Get_Data (Instance))));
-   end Get_Data;
-
-   --------------
-   -- Get_Data --
-   --------------
-
-   function Get_Data (Instance : access Class_Instance_Record'Class)
       return Glide_Kernel.Modules.Entity_Selection_Context_Access
    is
       Script  : constant Scripting_Language := Get_Script (Instance);
@@ -1848,22 +1784,6 @@ package body Glide_Kernel.Scripts is
       Set_Data (Instance, Selection_Context_Access (Context));
       return Instance;
    end Create_File_Context;
-
-   ----------------------------------
-   -- Create_File_Location_Context --
-   ----------------------------------
-
-   function Create_File_Location_Context
-     (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Modules.File_Location_Context_Access)
-      return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script, Get_File_Location_Context_Class (Get_Kernel (Script)));
-   begin
-      Set_Data (Instance, Selection_Context_Access (Context));
-      return Instance;
-   end Create_File_Location_Context;
 
    ---------------------------
    -- Create_Entity_Context --
