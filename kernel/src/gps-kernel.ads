@@ -702,8 +702,11 @@ package GPS.Kernel is
    --  Hooks with Context_Hooks_Args argument
    Context_Changed_Hook          : constant String := "context_changed";
 
-   --  Hooks with Context_Hooks_Args argument ( a File_Area_Context_Access)
+   --  Hooks with Context_Hooks_Args argument (a File_Area_Context_Access)
    Source_Lines_Revealed_Hook    : constant String := "source_lines_revealed";
+
+   --  Hooks with Project_Hooks_Args argument
+   Project_Saved_Hook            : constant String := "project_saved";
 
 private
 
