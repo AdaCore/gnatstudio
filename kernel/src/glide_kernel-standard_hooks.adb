@@ -37,11 +37,13 @@ package body Glide_Kernel.Standard_Hooks is
 
    Me : constant Debug_Handle := Create ("Standard_Hooks");
 
-   Open_File_Hook_Type : constant String := "open_file";
-   File_Line_Hook_Type : constant String := "file_line";
-   Location_Hook_Type  : constant String := "location";
-   Html_Hook_Type      : constant String := "html";
-   Diff_Hook_Type      : constant String := "diff";
+   Open_File_Hook_Type     : constant String := "open_file_action_hooks";
+   File_Line_Hook_Type     : constant String := "location_action_hooks";
+   Location_Hook_Type      : constant String := "location_action_hooks";
+   Html_Hook_Type          : constant String := "html_action_hooks";
+   Diff_Hook_Type          : constant String := "diff_hooks";
+   File_Hook_Type          : constant String := "file_hooks";
+   Context_Hook_Type       : constant String := "context_hooks";
    --  The various names to describe the hook types defined in this package
 
    procedure General_Line_Information
@@ -65,6 +67,10 @@ package body Glide_Kernel.Standard_Hooks is
    procedure Html_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    procedure Diff_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure File_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   procedure Context_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles calls to run_hook from the shell for the various hooks
 
@@ -378,7 +384,7 @@ package body Glide_Kernel.Standard_Hooks is
       declare
          Data : constant Html_Hooks_Args :=
            (Hooks_Data with
-            Anchor_Length     => Full'Last - Anchor,
+            Anchor_Length     => Integer'Max (0, Full'Last - Anchor),
             File              => Create (Full (Full'First .. Anchor - 1)),
             Enable_Navigation => Enable_Navigation,
             Anchor            => Full (Anchor + 1 .. Full'Last));
@@ -529,6 +535,100 @@ package body Glide_Kernel.Standard_Hooks is
                  (Get_Data (Nth_Arg (Data, 4, Get_File_Class (Kernel)))));
       Set_Return_Value (Data, Run_Hook_Until_Success (Kernel, Name, Args));
    end Diff_Run_Hook_Handler;
+
+   ---------------------------
+   -- File_Run_Hook_Handler --
+   ---------------------------
+
+   procedure File_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : File_Hooks_Args :=
+        (Hooks_Data with
+         Get_File (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))));
+      pragma Unreferenced (Command);
+   begin
+      Run_Hook (Kernel, Name, Args);
+   end File_Run_Hook_Handler;
+
+   ------------------------------
+   -- Context_Run_Hook_Handler --
+   ------------------------------
+
+   procedure Context_Run_Hook_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Name   : constant String := Nth_Arg (Data, 1);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Args   : Context_Hooks_Args :=
+        (Hooks_Data with
+         Get_Data (Nth_Arg (Data, 2, Get_Context_Class (Kernel))));
+      pragma Unreferenced (Command);
+   begin
+      Run_Hook (Kernel, Name, Args);
+   end Context_Run_Hook_Handler;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : Context_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return Context_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Context_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 2);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Create_Context (Script, Data.Context));
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (Data : File_Hooks_Args) return String is
+      pragma Unreferenced (Data);
+   begin
+      return File_Hook_Type;
+   end Get_Name;
+
+   -------------------
+   -- Execute_Shell --
+   -------------------
+
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : File_Hooks_Args) return Boolean
+   is
+      D : Callback_Data'Class := Create (Script, 2);
+      Tmp : Boolean;
+   begin
+      Set_Nth_Arg (D, 1, Hook_Name);
+      Set_Nth_Arg (D, 2, Create_File (Script, Data.File));
+      Tmp := Execute_Command (Script, Command, D);
+      Free (D);
+      return Tmp;
+   end Execute_Shell;
 
    --------------
    -- Get_Name --
@@ -767,6 +867,19 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Diff_Action_Hook,
          -("Hook called to request the display of the comparison window"),
          Type_Name => Diff_Hook_Type);
+
+      Create_Hook_Type
+        (Kernel, File_Hook_Type,
+         -("Common type for all hooks that take a single file as parameter"
+           & ASCII.LF
+           & "Arguments are the following: (file)"),
+         Hook_With_Args, File_Run_Hook_Handler'Access);
+      Create_Hook_Type
+        (Kernel, Context_Hook_Type,
+         -("Common type for all hooks that take a context as parameter"
+           & ASCII.LF
+           & "Arguments are the following: (context)"),
+         Hook_With_Args, Context_Run_Hook_Handler'Access);
    end Register_Action_Hooks;
 
 end Glide_Kernel.Standard_Hooks;
