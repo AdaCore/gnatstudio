@@ -600,6 +600,27 @@ Double-clicking on a file, or simple clicking on any entity will open
 a source editor and display respectively the first line in this file
 or the line on which the entity is defined.
 
+Moving the mouse over the different components displayed on the
+project explorer view will open tooltips with some more information
+depending on the type of component:
+
+@table @b
+@item projects
+The tooltip contains the project full pathname.
+
+@item directories
+The tooltip contains the directory full pathname and the project name in
+which it is defined.
+
+@item files
+The tooltip contains the base filename and the project name in
+which it is defined.
+
+@item entities
+The tooltip contains the entity name and parameters for routines followed
+by the location in the form filename:line where it is declared.
+@end table
+
 @cindex search
 @cindex find
 If you open the search dialog through the @code{Navigate->Find...}
