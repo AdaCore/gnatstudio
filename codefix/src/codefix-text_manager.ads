@@ -10,6 +10,7 @@ package Codefix.Text_Manager is
    Text_Manager_Error : exception;
 
    type Step_Way is (Normal_Step, Reverse_Step);
+   type Relative_Position is (Before, After, Specified);
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -41,7 +42,9 @@ package Codefix.Text_Manager is
 
    type Text_Interface is abstract tagged private;
    type Ptr_Text is access all Text_Interface'Class;
+
    procedure Free (This : in out Ptr_Text);
+   --  Free the memory associated to Ptr_Text and the object referenced.
 
    procedure Initialize
      (This      : in out Text_Interface;
@@ -97,20 +100,23 @@ package Codefix.Text_Manager is
    --  Get the entire file in a Dynamic_String.
 
    function Get_File_Name (This : Text_Interface) return String;
-   --  Returns the name of the file.
+   --  Return the name of the file.
 
    procedure Update (This : Text_Interface) is abstract;
    --  Update the changes previously made in the real text.
 
    function Search_String
      (This         : Text_Interface'Class;
-      Cursor       : File_Cursor'Class;
+      Cursor       : Text_Cursor'Class;
       Searched     : String;
       Step         : Step_Way := Normal_Step;
       Jump_String  : Boolean := True)
    return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
+
+   function Line_Max (This : Text_Interface) return Natural is abstract;
+   --  Return the number of the last line in the text loaded.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -120,11 +126,11 @@ package Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Navigator_Abstr);
 
-   type Relative_Position is (Before, After, Specified);
-
    function Get_Unit
-     (Current_Text      : Text_Navigator_Abstr;
-      Cursor            : File_Cursor'Class)
+     (Current_Text           : Text_Navigator_Abstr;
+      Cursor                 : File_Cursor'Class;
+      Position               : Relative_Position := Specified;
+      Category_1, Category_2 : Language_Category := Cat_Unknown)
      return Construct_Information;
    --  Get the Construct_Information found at the specified position, or the
    --  nearest before or after the position (depends on the value of
@@ -237,7 +243,13 @@ package Codefix.Text_Manager is
       Jump_String  : Boolean := True)
    return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
-   --  noting is found, then the cursor is Null_Cursor.
+   --  noting is found, then the cursor is Null_Cursor. If Cursor.Col = 0, then
+   --  the scan in initialized from the end of the content.
+
+   procedure Get_Line
+     (This        : Text_Navigator_Abstr'Class;
+      Cursor      : File_Cursor'Class;
+      Destination : in out Extract_Line);
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -400,8 +412,10 @@ private
    end record;
 
    function Get_Unit
-     (Current_Text      : Text_Interface;
-      Cursor            : Text_Cursor'Class)
+     (Current_Text           : Text_Interface;
+      Cursor                 : Text_Cursor'Class;
+      Position               : Relative_Position := Specified;
+      Category_1, Category_2 : Language_Category := Cat_Unknown)
    return Construct_Information;
 
    function Search_Body
@@ -437,6 +451,11 @@ private
      (This        : Text_Interface'Class;
       Cursor      : File_Cursor'Class;
       Len         : Natural;
+      Destination : in out Extract_Line);
+
+   procedure Get_Line
+     (This        : Text_Interface'Class;
+      Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
 
    procedure Put_Line (This : Extract_Line; Detail : Boolean := True);
