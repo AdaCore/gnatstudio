@@ -593,7 +593,13 @@ package body Glide_Kernel.Scripts is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
    begin
-      if Command = "insmod" then
+      if Command = "get_system_dir" then
+         Set_Return_Value (Data, Get_System_Dir (Kernel));
+
+      elsif Command = "get_home_dir" then
+         Set_Return_Value (Data, Get_Home_Dir (Kernel));
+
+      elsif Command = "insmod" then
          Name_Parameters (Data, Insmod_Cmd_Parameters);
 
          declare
@@ -1262,6 +1268,21 @@ package body Glide_Kernel.Scripts is
    procedure Register_Default_Script_Commands
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
+      Register_Command
+        (Kernel,
+         Command      => "get_system_dir",
+         Description  => -("Return the installation directory for GPS. This"
+                           & " always ends up with a directory separator"),
+         Handler      => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "get_home_dir",
+         Description  => -("Return the user's home directory for GPS, for"
+                           & " instance $HOME/.gps/. This"
+                           & " always ends up with a directory separator"),
+         Handler      => Default_Command_Handler'Access);
+
       Register_Command
         (Kernel,
          Command      => "insmod",
