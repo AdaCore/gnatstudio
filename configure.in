@@ -14,7 +14,6 @@ EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
-OS_LIBS=
 
 ROOT=`pwd`
 TARGET=$host
@@ -173,7 +172,6 @@ case "${host}" in
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
-	OS_LIBS="-luser32"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
     esac
@@ -211,7 +209,6 @@ AC_SUBST(EXEC_COMMAND)
 AC_SUBST(DEFAULT_PS)
 AC_SUBST(DEFAULT_FONT)
 AC_SUBST(HTML_BROWSER)
-AC_SUBST(OS_LIBS)
 AC_SUBST(DVIPS)
 AC_SUBST(MAKEINFO)
 AC_SUBST(TEXI2HTML)
