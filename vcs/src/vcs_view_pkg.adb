@@ -593,9 +593,9 @@ package body VCS_View_Pkg is
       Refresh (Explorer);
    end Change_Hide_Up_To_Date;
 
-   ----------------------------
+   --------------------------------
    -- Change_Hide_Not_Registered --
-   ----------------------------
+   --------------------------------
 
    procedure Change_Hide_Not_Registered
      (Item     : access Gtk_Check_Menu_Item_Record'Class;
