@@ -13,6 +13,9 @@ AC_SUBST(TARGET)
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 
+GCC_VERSION=`$CC -dumpversion`
+AC_SUBST(GCC_VERSION)
+
 AC_OUTPUT(common/sdefault.adb)
 
 
