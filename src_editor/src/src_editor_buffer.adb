@@ -2402,8 +2402,11 @@ package body Src_Editor_Buffer is
       --  editor and choosing to "revert" the file), we need to emit a
       --  File_Edited signal at this point, to force a re-display of line
       --  information.
+      --  We also need to emit a File_Closed signal, so that modules can reset
+      --  properly the information relative to this file.
 
       if not File_Is_New then
+         File_Closed (Buffer.Kernel, Filename);
          File_Edited (Buffer.Kernel, Filename);
       end if;
    exception
