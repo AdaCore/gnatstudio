@@ -352,15 +352,15 @@ package body Glide_Result_View is
 
          while Loc_Iter /= Null_Iter loop
             declare
-               Mark : constant String :=
+               Mark : aliased String :=
                  Get_String (View.Tree.Model, Loc_Iter, Mark_Column);
-               Args : GNAT.OS_Lib.Argument_List := (1 => new String'(Mark));
+               Args : constant GNAT.OS_Lib.Argument_List :=
+                 (1 => Mark'Unchecked_Access);
+
             begin
                if Mark /= "" then
                   Execute_GPS_Shell_Command (View.Kernel, "delete_mark", Args);
                end if;
-
-               Free (Args);
             end;
 
             Next (View.Tree.Model, Loc_Iter);
