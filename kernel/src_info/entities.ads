@@ -376,16 +376,13 @@ package Entities is
 
    function Get_Or_Create
      (Db           : Entities_Database;
-      Name         : String := "";
+      Name         : String;
       File         : Source_File;
       Line         : Natural;
       Column       : Natural;
       Allow_Create : Boolean := True) return Entity_Information;
    --  Get an existing or create a new declaration for an entity. File, Line
    --  and column are the location of irs declaration.
-   --  If Name is left to the empty string, the entity is considered as
-   --  temporarily unresolved. When used, it will be replaced, if possible,
-   --  by the actual entity at that location.
    --  When creating an entity in the predefined file, always set Line and
    --  Column to Predefined_Line and Predefined_Column.
 
@@ -601,10 +598,6 @@ private
 
    type Entity_Information_Record is tagged record
       Name                  : GNAT.OS_Lib.String_Access;
-      --  If Name'Length = 0, this is a partially defined entity: its name
-      --  couldn't be resolved when the LI file was parsed, and will need to
-      --  be computed dynamically the first time the entity is used.
-
       Kind                  : E_Kind;
 
       Declaration           : File_Location;
@@ -649,17 +642,6 @@ private
       --  The reference count for this entity. When it reaches 0, the entity
       --  is released from memory.
    end record;
-
-   function Is_Partial_Entity (Entity : Entity_Information) return Boolean;
-   pragma Inline (Is_Partial_Entity);
-   --  Return True if Entity is a partial entity (ie its name couldn't be
-   --  resolved when the LI file was parsed, and needs to be computed the first
-   --  time the entity is used).
-
-   procedure Resolve_Partial_Entity (Entity : in out Entity_Information);
-   --  If Entity is a partial entity (ie its name could not be computed when
-   --  the LI file was parsed, and an empty string was passed to Get_Or_Create)
-   --  then it is replaced, if possible, by the actual entity it stands for
 
    --------------------
    -- Entities_Table --

@@ -24,7 +24,6 @@ with VFS;          use VFS;
 with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with Projects;     use Projects;
 with Traces;       use Traces;
-with Entities.Queries; use Entities.Queries;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -78,11 +77,6 @@ package body Entities is
    --  Free all entities declared in File, and remove them from internal
    --  tables. This ensures that the entities that are still referenced
    --  externally will still be usable.
-
-   procedure Free_If_Partial
-     (Entity : in out Entity_Information; Not_In_File : Source_File);
-   --  Free the memory occupied by Entity if it is a partial entity, and if
-   --  it isn't declared in Not_In_File.
 
    Is_Subprogram_Entity : constant array (E_Kinds) of Boolean :=
      (Procedure_Kind        => True,
@@ -558,22 +552,6 @@ package body Entities is
       end if;
    end Ref;
 
-   ---------------------
-   -- Free_If_Partial --
-   ---------------------
-
-   procedure Free_If_Partial
-     (Entity : in out Entity_Information; Not_In_File : Source_File) is
-   begin
-      if Entity /= null
-        and then Entity.Declaration.File /= Not_In_File
-        and then Is_Partial_Entity (Entity)
-      then
-         Unref (Entity);
-      end if;
-      Entity := null;
-   end Free_If_Partial;
-
    -----------
    -- Unref --
    -----------
@@ -582,23 +560,20 @@ package body Entities is
       procedure Unchecked_Free is new Ada.Unchecked_Deallocation
         (Entity_Information_Record'Class, Entity_Information);
       Tmp : String_Access;
-      F   : Source_File;
    begin
       if Entity /= null then
          Assert (Assert_Me, Entity.Ref_Count > 0, "too many calls to unref");
          Entity.Ref_Count := Entity.Ref_Count - 1;
          if Entity.Ref_Count = 0 then
-            F := Entity.Declaration.File;
-
             Free (Entity.Parent_Types);
             Free (Entity.Primitive_Subprograms);
             Free (Entity.Child_Types);
             Free (Entity.References);
 
-            Free_If_Partial (Entity.Pointed_Type, F);
-            Free_If_Partial (Entity.Returned_Type, F);
-            Free_If_Partial (Entity.Primitive_Op_Of, F);
-            Free_If_Partial (Entity.Rename, F);
+            Entity.Pointed_Type := null;
+            Entity.Returned_Type := null;
+            Entity.Primitive_Op_Of := null;
+            Entity.Rename := null;
 
             --  If we are debugging, we do not free the memory, to keep a
             --  debuggable structure.
@@ -1019,7 +994,7 @@ package body Entities is
 
    function Get_Or_Create
      (Db           : Entities_Database;
-      Name         : String := "";
+      Name         : String;
       File         : Source_File;
       Line         : Natural;
       Column       : Natural;
@@ -1031,22 +1006,19 @@ package body Entities is
       EL2 : Entity_Information_List_Access;
       E   : Entity_Information;
       Is_Null : Boolean;
-      Is_Partial_Entity : constant Boolean := Name'Length = 0;
    begin
-      if Is_Partial_Entity then
-         E := null;
-      else
-         EL := Get (File.Entities, Name);
-         Is_Null := EL = null;
+      Assert (Assert_Me, Name /= "", "No name specified for Get_Or_Create");
 
-         if Is_Null then
-            if Allow_Create then
-               EL := new Entity_Information_List'
-                 (Null_Entity_Information_List);
-            end if;
-         else
-            E := Find (EL.all, (File, Line, Column));
+      EL := Get (File.Entities, Name);
+      Is_Null := EL = null;
+
+      if Is_Null then
+         if Allow_Create then
+            EL := new Entity_Information_List'
+              (Null_Entity_Information_List);
          end if;
+      else
+         E := Find (EL.all, (File, Line, Column));
       end if;
 
       if E = null and then Allow_Create then
@@ -1065,27 +1037,25 @@ package body Entities is
             References            => Null_Entity_Reference_List,
             Ref_Count             => 1);
 
-         if not Is_Partial_Entity then
-            Append (EL.all, E);
+         Append (EL.all, E);
 
-            if Is_Null then
-               Insert (File.Entities, EL);
+         if Is_Null then
+            Insert (File.Entities, EL);
+         end if;
+
+         if Manage_Global_Entities_Table then
+            EL2     := Get (Db.Entities, Name);
+            Is_Null := (EL2 = null);
+
+            if EL2 = null then
+               EL2 := new Entity_Information_List'
+                 (Null_Entity_Information_List);
             end if;
 
-            if Manage_Global_Entities_Table then
-               EL2     := Get (Db.Entities, Name);
-               Is_Null := (EL2 = null);
+            Append (EL2.all, E);
 
-               if EL2 = null then
-                  EL2 := new Entity_Information_List'
-                    (Null_Entity_Information_List);
-               end if;
-
-               Append (EL2.all, E);
-
-               if Is_Null then
-                  Insert (Db.Entities, EL2);
-               end if;
+            if Is_Null then
+               Insert (Db.Entities, EL2);
             end if;
          end if;
       end if;
@@ -1280,48 +1250,6 @@ package body Entities is
 
       return False;
    end Check_LI_And_Source;
-
-   ----------------------------
-   -- Resolve_Partial_Entity --
-   ----------------------------
-
-   procedure Resolve_Partial_Entity (Entity : in out Entity_Information) is
-      Result : Entity_Information;
-      Status : Find_Decl_Or_Body_Query_Status;
-   begin
-      if Entity /= null and then Is_Partial_Entity (Entity) then
-         Update_Xref (Entity.Declaration.File);
-
-         --  We must search in declarations as well, since for a renaming of
-         --  body in Ada we might have the following (see rename/rename.adb):
-         --     32i4 X{integer} 33m24 50m4
-         --     33i4 Y=33:24{integer} 51r4
-
-         Find_Declaration
-           (Db              => Get_Database (Get_File (Entity.Declaration)),
-            File_Name       => Get_Filename (Get_File (Entity.Declaration)),
-            Entity_Name     => "",
-            Line            => Get_Line (Entity.Declaration),
-            Column          => Get_Column (Entity.Declaration),
-            Entity          => Result,
-            Status          => Status,
-            Check_Decl_Only => False);
-
-         if Status = Success then
-            Unref (Entity);
-            Entity := Result;
-         end if;
-      end if;
-   end Resolve_Partial_Entity;
-
-   -----------------------
-   -- Is_Partial_Entity --
-   -----------------------
-
-   function Is_Partial_Entity (Entity : Entity_Information) return Boolean is
-   begin
-      return Entity.Name'Length = 0;
-   end Is_Partial_Entity;
 
    ----------
    -- Free --
