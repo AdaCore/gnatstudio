@@ -698,6 +698,7 @@ package body Project_Viewers is
         (Project_Information (File_Context));
       Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
       Selector : Directory_Selector;
+      Prj : Project_Node_Id;
    begin
       for J in Initial_Dirs_Id'Range loop
          Initial_Dirs (J) := new String'
@@ -719,9 +720,10 @@ package body Project_Viewers is
          declare
             Dirs : Argument_List := Get_Multiple_Selection (Selector);
          begin
+            Prj := Get_Project_From_View
+              (Project_Information (File_Context));
             Update_Attribute_Value_In_Scenario
-              (Project            => Get_Project_From_View
-                 (Project_Information (File_Context)),
+              (Project            => Prj,
                Pkg_Name           => "",
                Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
                Attribute_Name     => Get_Name_String (Name_Source_Dirs),
@@ -729,6 +731,7 @@ package body Project_Viewers is
                Attribute_Index    => "",
                Prepend            => False);
             Free (Dirs);
+            Set_Project_Modified (Get_Kernel (Context), Prj, True);
             Recompute_View (Get_Kernel (Context));
          end;
       end if;
@@ -757,17 +760,21 @@ package body Project_Viewers is
         (Title => -"Select object directory",
          Base_Directory => GNAT.OS_Lib.Normalize_Pathname
            (Get_Name_String (Prj.Projects.Table (Project).Object_Directory))
-           & Directory_Separator);
+            & Directory_Separator);
+      Prj : Project_Node_Id;
    begin
       if Directory /= "" then
+         Prj := Get_Project_From_View (Project);
          Update_Attribute_Value_In_Scenario
-           (Project            => Get_Project_From_View (Project),
+           (Project            => Prj,
             Pkg_Name           => "",
             Scenario_Variables =>
               Scenario_Variables (Get_Kernel (Context)),
             Attribute_Name     => Get_Name_String (Name_Object_Dir),
             Value              => Directory,
             Attribute_Index    => "");
+
+         Set_Project_Modified (Get_Kernel (Context), Prj, True);
          Recompute_View (Get_Kernel (Context));
       end if;
 
@@ -980,6 +987,10 @@ package body Project_Viewers is
          Get_Kernel (Context),
          Project_Information (File))
       then
+         Set_Project_Modified
+           (Get_Kernel (Context),
+            Get_Project_From_View (Project_Information (File)),
+            True);
          Recompute_View (Get_Kernel (Context));
       end if;
 
@@ -997,6 +1008,7 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      Prj : Project_Node_Id;
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Wiz  : Creation_Wizard.Prj_Wizard;
@@ -1008,8 +1020,10 @@ package body Project_Viewers is
             Name : constant String := Run (Wiz);
          begin
             if Name /= "" then
-               Add_Imported_Project
-                 (Get_Project_From_View (Project_Information (File)), Name);
+               Prj := Get_Project_From_View (Project_Information (File));
+               Add_Imported_Project (Prj, Name);
+               Set_Project_Modified (Get_Kernel (Context), Prj, True);
+               Recompute_View (Get_Kernel (Context));
             end if;
          exception
             when E : Project_Warning | Project_Error =>
@@ -1017,7 +1031,6 @@ package body Project_Viewers is
          end;
 
          Destroy (Wiz);
-         Recompute_View (Get_Kernel (Context));
       end if;
 
    exception
@@ -1036,13 +1049,14 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
+      Prj : Project_Node_Id :=
+        Get_Project_From_View (Importing_Project_Information (File));
    begin
       Remove_Imported_Project
-        (Get_Project_From_View (Importing_Project_Information (File)),
-         Project_Name (Project_Information (File)));
+        (Prj, Project_Name (Project_Information (File)));
       Trace (Me, "Removing project dependency");
-      Trace_Pretty_Print
-        (Me, Get_Project_From_View (Importing_Project_Information (File)));
+      Trace_Pretty_Print (Me, Prj);
+      Set_Project_Modified (Get_Kernel (Context), Prj, True);
       Recompute_View (Get_Kernel (Context));
 
    exception
@@ -1077,9 +1091,10 @@ package body Project_Viewers is
       File : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
       Selector : File_Selector_Window_Access;
+      Prj : Project_Node_Id :=
+        Get_Project_From_View (Project_Information (File));
 
-      Dir : constant String := Get_Name_String
-        (Path_Name_Of (Get_Project_From_View (Project_Information (File))));
+      Dir : constant String := Get_Name_String (Path_Name_Of (Prj));
    begin
       if Has_Project_Information (File) then
          Gtk_New (Selector,
@@ -1093,11 +1108,11 @@ package body Project_Viewers is
          begin
             if Name /= "" then
                Add_Imported_Project
-                 (Get_Project_From_View (Project_Information (File)), Name,
-                  Report_Error'Unrestricted_Access);
+                 (Prj, Name, Report_Error'Unrestricted_Access);
+               Set_Project_Modified (Get_Kernel (Context), Prj, True);
+               Recompute_View (Get_Kernel (Context));
             end if;
          end;
-         Recompute_View (Get_Kernel (Context));
       end if;
 
    exception
@@ -1124,8 +1139,9 @@ package body Project_Viewers is
       File_Context : File_Selection_Context_Access;
 
    begin
-      --  We insert entries whatever the sender_id is, as long as the context
-      --  knows something about project or files
+      --  Very important: all callbacks that actually modify the project must
+      --  set the project modified property (see Project_Hash), so that the
+      --  user gets asked whether to save on exit.
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
