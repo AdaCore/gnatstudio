@@ -339,7 +339,13 @@ package body Odd.Process is
            (Process.Editor_Text,
             Str (File_First .. File_Last));
 
+         --  Since we have eaten the prompt above, we need to make sure there
+         --  is one on exit, so that the command that was being processed
+         --  can correctly end.
+         Display_Prompt (Process.Debugger, Wait_For_Prompt => False);
+
          Pop_Internal_Command_Status (Get_Process (Process.Debugger));
+
       end if;
 
       if Line /= 0 then
