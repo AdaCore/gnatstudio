@@ -70,6 +70,7 @@ with Gtkada.File_Selector;      use Gtkada.File_Selector;
 with Src_Editor_Box;            use Src_Editor_Box;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_View;           use Src_Editor_View;
+with Src_Editor_View.Commands;  use Src_Editor_View.Commands;
 with String_List_Utils;         use String_List_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
@@ -3055,6 +3056,42 @@ package body Src_Editor_Module is
         (Handler     => Get_Key_Handler (Kernel),
          Action      => "Jump to matching delimiter",
          Default_Key => "control-apostrophe");
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Word;
+      Move_Command (Command.all).Step := 1;
+      Register_Action
+        (Kernel, "Move to next word", Command,
+           -"Move to the next word in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Word;
+      Move_Command (Command.all).Step := -1;
+      Register_Action
+        (Kernel, "Move to previous word", Command,
+           -"Move to the previous word in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Paragraph;
+      Move_Command (Command.all).Step := -1;
+      Register_Action
+        (Kernel, "Move to previous sentence", Command,
+           -"Move to the previous sentence in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Paragraph;
+      Move_Command (Command.all).Step := 1;
+      Register_Action
+        (Kernel, "Move to next sentence", Command,
+           -"Move to the next sentence in the current source editor",
+         Src_Action_Context);
 
       Register_Module
         (Module                  => Src_Editor_Module_Id,
