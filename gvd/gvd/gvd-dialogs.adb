@@ -289,7 +289,7 @@ package body Odd.Dialogs is
          Data := Get_Current (History);
 
          if Data.Debugger_Num = Natural (Get_Num (Tab))
-           and then Data.Mode in Odd.Types.Visible .. User
+           and then Data.Mode /= Hidden
          then
             Gtk_New (Item, Label => Data.Command.all);
             Show (Item);
