@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 1.1.0
 
+- [8524-010] Refresh problem in the canvas on NT
+  Problem:    When big items are moved in the canvas on NT, there appears some
+              black areas which are incorrectly refreshed.
+
+  Workaround: Force a refresh of the canvas, by iconizing the GVD window and
+              de-iconizing it afterwards.
+
 - ASM view does not work properly
   Problem:    When switching the source editor to Asm only mode, GVD generates
               error messages on standard output and does not handle properly
