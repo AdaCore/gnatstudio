@@ -1,0 +1,9 @@
+project Shared is
+
+   for Source_Files use ();
+
+   package IDE is
+      for VCS_Kind use "cvs";
+   end IDE;
+
+end Shared;
