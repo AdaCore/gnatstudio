@@ -221,12 +221,14 @@ package body Commands.Custom is
             end if;
 
          elsif Param (Param'First) = 'p' or else Param (Param'First) = 'P' then
-            if Project_From_Param (Param, Context) = No_Project then
-               Context_Is_Valid := False;
-               Insert (Kernel,
-                       -"Command not executed: project required",
-                       Mode => Error);
-               raise Invalid_Substitution;
+            if Param /= "pps" and then Param /= "PPs" then
+               if Project_From_Param (Param, Context) = No_Project then
+                  Context_Is_Valid := False;
+                  Insert (Kernel,
+                            -"Command not executed: project required",
+                          Mode => Error);
+                  raise Invalid_Substitution;
+               end if;
             end if;
 
          else
@@ -364,7 +366,7 @@ package body Commands.Custom is
          Project := Get_Project_From_File
            (Project_Registry (Get_Registry (Get_Kernel (Context))),
             File_Information (File_Selection_Context_Access (Context)),
-            Root_If_Not_Found => True);
+            Root_If_Not_Found => False);
       end if;
 
       return Project;
@@ -435,6 +437,15 @@ package body Commands.Custom is
 
          elsif Param (Param'First) = 'P' or else Param (Param'First) = 'p' then
             Project := Project_From_Param (Param, Command.Context);
+
+            if Param = "pps" or else Param = "PPs" then
+               if Project = No_Project then
+                  return "";
+               else
+                  return "-P" & Project_Path (Project);
+               end if;
+            end if;
+
             if Project = No_Project then
                Success := False;
                raise Invalid_Substitution;
