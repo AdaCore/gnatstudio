@@ -138,13 +138,22 @@ package body Projects is
    --  (or No_Array_Element if there is no match)
 
    function Project_Imports
-     (Parent : Project_Type; Child : Project_Type) return Boolean;
+     (Parent           : Project_Type;
+      Child            : Project_Type;
+      Include_Extended : Boolean := False) return Boolean;
    --  Return True if Parent imports directly Child.
    --  if Parents or Child is No_Project, True is returned.
+   --  If Include_Extended is true, then True is also returned if Child is an
+   --  extended project of Parent
 
    function Substitute_Dot
      (Unit_Name : String; Dot_Replacement : String) return String;
    --  Replace the '.' in unit_name with Dot_Replacement
+
+   procedure Compute_Importing_Projects
+     (Root_Project : Project_Type; Project : Project_Type);
+   --  Compute the list of all projects that import, possibly indirectly,
+   --  Project.
 
    ----------------
    -- Do_Nothing --
@@ -1250,7 +1259,9 @@ package body Projects is
    ---------------------
 
    function Project_Imports
-     (Parent : Project_Type; Child : Project_Type) return Boolean
+     (Parent           : Project_Type;
+      Child            : Project_Type;
+      Include_Extended : Boolean := False) return Boolean
    is
       With_Clause : Project_Node_Id;
       Extended    : Project_Node_Id;
@@ -1272,13 +1283,161 @@ package body Projects is
 
       --  Handling for extending projects ?
 
-      Extended := Extended_Project_Of (Project_Declaration_Of (Parent.Node));
-      if Extended = Child.Node then
-         return True;
+      if Include_Extended then
+         Extended := Extended_Project_Of
+           (Project_Declaration_Of (Parent.Node));
+         if Extended = Child.Node then
+            return True;
+         end if;
       end if;
 
       return False;
    end Project_Imports;
+
+   --------------------------------
+   -- Compute_Importing_Projects --
+   --------------------------------
+
+   procedure Compute_Importing_Projects
+     (Root_Project : Project_Type;
+      Project      : Project_Type)
+   is
+      type Boolean_Array is array (Positive range <>) of Boolean;
+      Imported : Name_Id_Array_Access renames
+        Root_Project.Data.Imported_Projects;
+      Current  : Project_Type;
+      Start    : Project_Type;
+      Include  : Boolean_Array (Imported'Range) := (others => False);
+      Name     : Name_Id;
+      Index    : Integer;
+      Parent   : Project_Type;
+      Decl, N   : Project_Node_Id;
+      Importing : Name_Id_Array_Access;
+
+      procedure Merge_Project (P : Project_Type);
+      --  Merge the imported projects of P with the ones for Project
+
+      procedure Merge_Project (P : Project_Type) is
+         Index2 : Integer := Imported'First;
+      begin
+         for J in P.Data.Importing_Projects'Range loop
+            while Imported (Index2) /= P.Data.Importing_Projects (J) loop
+               Index2 := Index2 + 1;
+            end loop;
+
+            Include (Index2) := True;
+         end loop;
+      end Merge_Project;
+
+   begin
+      if Project.Data.Importing_Projects /= null then
+         return;
+      end if;
+
+      --  Process all extending and extended projects as a single one: they
+      --  will all have the same list of importing projects.
+
+      N := Project.Node;
+      loop
+         Decl := Project_Declaration_Of (N);
+         exit when Extending_Project_Of (Decl) = Empty_Node;
+         N := Extending_Project_Of (Decl);
+      end loop;
+
+      Current := Get_Project_From_Name
+        (Project.Data.Registry.all, Prj.Tree.Name_Of (N));
+      Start := Current;
+
+      loop
+         Index := Imported'Last;
+
+         --  We first start by the lowest possible project, then go up to the
+         --  root project. Note that no project that appears before Project can
+         --  import it, so we can save some time.
+
+         Name := Prj.Tree.Name_Of (Current.Node);
+         while Index >= Imported'First loop
+            exit when Name = Imported (Index);
+            Index := Index - 1;
+         end loop;
+
+         Include (Index) := True;
+         Index := Index - 1;
+
+         while Index >= Imported'First loop
+            Parent := Get_Project_From_Name
+              (Current.Data.Registry.all, Imported (Index));
+
+            --  Avoid processing a project twice
+            --  ??? We still process twice the projects that do not
+            --  import Project
+            if not Include (Index)
+              and then Project_Imports
+              (Parent, Child => Current, Include_Extended => False)
+            then
+               Compute_Importing_Projects (Root_Project, Parent);
+               Merge_Project (Parent);
+            end if;
+
+            Index := Index - 1;
+         end loop;
+
+         Decl := Project_Declaration_Of (Current.Node);
+         exit when Extended_Project_Of (Decl) = Empty_Node;
+
+         Current := Get_Project_From_Name
+           (Current.Data.Registry.all,
+            Prj.Tree.Name_Of (Extended_Project_Of (Decl)));
+      end loop;
+
+      --  Done processing everything
+
+      Index := 0;
+      for Inc in Include'Range loop
+         if Include (Inc) then
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      Importing := new Name_Id_Array (1 .. Index);
+
+      Index := Include'First;
+      for Imp in Importing'Range loop
+         while not Include (Index) loop
+            Index := Index + 1;
+         end loop;
+
+         Importing (Imp) := Imported (Index);
+         Index := Index + 1;
+      end loop;
+
+      loop
+         if Start = Project then
+            Start.Data.Importing_Projects := Importing;
+         else
+            Start.Data.Importing_Projects := new Name_Id_Array'(Importing.all);
+         end if;
+
+         Decl := Project_Declaration_Of (Start.Node);
+         exit when Extended_Project_Of (Decl) = Empty_Node;
+
+         Start := Get_Project_From_Name
+           (Current.Data.Registry.all,
+            Prj.Tree.Name_Of (Extended_Project_Of (Decl)));
+      end loop;
+
+      --  The code below is used for debugging sessions
+
+      --  Trace (Me, "Find_All_Projects_Importing: "
+      --         & Get_String (Name));
+      --  for J in Project.Data.Importing_Projects'Range loop
+      --     Trace (Me, Get_String (Project.Data.Importing_Projects (J)));
+      --  end loop;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end Compute_Importing_Projects;
 
    ---------------------------------
    -- Find_All_Projects_Importing --
@@ -1304,114 +1463,7 @@ package body Projects is
                    & Project_Name (Root_Project));
          end if;
 
-         Trace (Me, "Start: compute parent deps for "
-                & Project_Name (Project));
-
-         declare
-            type Boolean_Array is array (Positive range <>) of Boolean;
-
-            Imported : Name_Id_Array_Access renames
-              Root_Project.Data.Imported_Projects;
-            Include  : Boolean_Array (Imported'Range) := (others => False);
-            Name     : constant Name_Id := Prj.Tree.Name_Of (Project.Node);
-            Decl     : constant Project_Node_Id :=
-              Project_Declaration_Of (Project.Node);
-            Name2    : Name_Id := No_Name;
-            Index    : Integer := Imported'Last;
-            With_Clause : Project_Node_Id;
-         begin
-            if Extended_Project_Of (Decl) /= Empty_Node then
-               Name2 := Prj.Tree.Name_Of (Extended_Project_Of (Decl));
-            end if;
-
-            --  We first start by the lowest possible project, then go up to
-            --  the root project. Note that no project that appears before
-            --  Project can import it, so we can save some time.
-
-            while Index >= Imported'First loop
-               if Name = Imported (Index)
-                 or else Name2 = Imported (Index)
-               then
-                  Include (Index) := True;
-                  exit;
-               end if;
-               Index := Index - 1;
-            end loop;
-
-            while Index >= Imported'First loop
-               With_Clause := Prj.Tree.Tree_Private_Part.Projects_Htable.Get
-                 (Imported (Index)).Node;
-
-               --  Test the extended projects...
-               if Extended_Project_Of (Project_Declaration_Of (With_Clause))
-                 /= Empty_Node
-               then
-                  Name2 := Prj.Tree.Name_Of (Extended_Project_Of
-                     (Project_Declaration_Of (With_Clause)));
-
-                  for N in Index + 1 .. Include'Last loop
-                     if Imported (N) = Name2 then
-                        Include (N) := True;
-                     end if;
-                  end loop;
-               end if;
-
-               --  ??? Special handling needed for limited with: we need to
-               --  check in imported projects as well, in case they, even
-               --  indirectly, do a limited_with on Project.
-
-               With_Clause := First_With_Clause_Of (With_Clause);
-
-               Imported_Projects_Loop :
-               while With_Clause /= Empty_Node loop
-                  for N in Index + 1 .. Include'Last loop
-                     if Include (N)
-                       and then Imported (N) = Prj.Tree.Name_Of (With_Clause)
-                     then
-                        Include (Index) := True;
-                        exit Imported_Projects_Loop;
-                     end if;
-                  end loop;
-
-                  With_Clause := Next_With_Clause_Of (With_Clause);
-               end loop Imported_Projects_Loop;
-
-
-               Index := Index - 1;
-            end loop;
-
-            Index := 0;
-            for Inc in Include'Range loop
-               if Include (Inc) then
-                  Index := Index + 1;
-               end if;
-            end loop;
-
-            Project.Data.Importing_Projects :=
-              new Name_Id_Array (1 .. Index);
-
-            Index := Include'First;
-            for Imp in Project.Data.Importing_Projects'Range loop
-               while not Include (Index) loop
-                  Index := Index + 1;
-               end loop;
-
-               Project.Data.Importing_Projects (Imp) := Imported (Index);
-               Index := Index + 1;
-            end loop;
-
-            --  The code below is used for debugging sessions
-
-            --  Trace (Me, "Find_All_Projects_Importing: "
-            --         & Get_String (Name));
-            --  for J in Project.Data.Importing_Projects'Range loop
-            --    Trace (Me, Get_String (Project.Data.Importing_Projects (J)));
-            --  end loop;
-
-         exception
-            when E : others =>
-               Trace (Me, "Unexpected exception " & Exception_Information (E));
-         end;
+         Compute_Importing_Projects (Root_Project, Project);
       end if;
 
       Iter := Imported_Project_Iterator'
