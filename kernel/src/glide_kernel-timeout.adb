@@ -22,6 +22,7 @@ with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
 with Glib.Values;
 
+with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Main;             use Gtk.Main;
 
@@ -260,7 +261,8 @@ package body Glide_Kernel.Timeout is
          if Interactive then
             Gtk_New
               (Console, "", Data_Handler'Access,
-               GObject (Data), Get_Pref (Kernel, Default_Font));
+               GObject (Data), Get_Pref (Kernel, Source_Editor_Font),
+               Wrap_Char);
 
             Data.D := (Kernel, Fd, new String'(Name), Callback, Exit_Cb);
 
