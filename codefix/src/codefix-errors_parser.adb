@@ -53,12 +53,12 @@ package body Codefix.Errors_Parser is
                Success);
          end if;
 
-         Current_Node := Next (Current_Node);
-
          if Success then
             Assign (Category, Data (Current_Node).Category);
             exit;
          end if;
+
+         Current_Node := Next (Current_Node);
       end loop;
 
    end Get_Solutions;
@@ -1664,7 +1664,7 @@ begin
    Add_Parser (new Sep_Not_Allowed);
 --   Add_Parser (new Should_Be_In);
 --   Add_Parser (new Bad_Column);
---   Add_Parser (new Main_With_Missing);
+   Add_Parser (new Main_With_Missing);
    Add_Parser (new Bad_Casing_Standard);
    Add_Parser (new Bad_Casing_Declared);
    Add_Parser (new Bad_Casing_Keyword);
@@ -1672,9 +1672,9 @@ begin
    Add_Parser (new Pkg_Not_Referenced);
 --   Add_Parser (new Pragma_Missplaced);
    Add_Parser (new Constant_Expected);
---   Add_Parser (new Possible_Interpretation);
---   Add_Parser (new Hidden_Declaration);
---   Add_Parser (new Redundant_Conversion);
+   Add_Parser (new Possible_Interpretation);
+   Add_Parser (new Hidden_Declaration);
+   Add_Parser (new Redundant_Conversion);
 --   Add_Parser (new Missplaced_With);
 
    Initialize_Parsers;
