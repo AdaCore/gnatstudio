@@ -112,6 +112,9 @@ private
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
       --  Handler ID for the Connect_Expose idle callback.
+
+      Has_Focus           : Boolean := False;
+      --  Whether the view currently has the focus.
    end record;
 
 end Src_Editor_View;
