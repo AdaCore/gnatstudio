@@ -279,7 +279,7 @@ package body Debugger is
 
       --  Display the command in the output window if necessary
 
-      if Mode = User and then Debugger.Window /= null then
+      if Mode = Visible and then Debugger.Window /= null then
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger), Cmd & ASCII.LF, True);
       end if;
@@ -470,7 +470,7 @@ package body Debugger is
                       Var_Name, Value);
    begin
       if S /= "" then
-         Send (Debugger, S, Mode => User);
+         Send (Debugger, S, Mode => Visible);
       end if;
    end Set_Variable;
 

@@ -102,10 +102,14 @@ package body Process_Tab_Pkg.Callbacks is
 
                if S'Length = 0 then
                   begin
+                     Find_Match (Top.Window.Command_History,
+                                 Natural (Get_Num (Top)),
+                                 Backward);
                      Process_User_Command
                        (Top, Get_Current
                         (Top.Window.Command_History).Command.all,
-                        Output_Command => True);
+                        Output_Command => True,
+                        Mode => User);
                   exception
                      --  No previous command => do nothing
                      when No_Such_Item =>
@@ -117,7 +121,7 @@ package body Process_Tab_Pkg.Callbacks is
                   Text_Output_Handler (Top, "" & ASCII.LF);
 
                   --  Process the command.
-                  Process_User_Command (Top, S);
+                  Process_User_Command (Top, S, Mode => User);
                end if;
 
                --  Move the cursor after the output of the command.
@@ -219,7 +223,7 @@ package body Process_Tab_Pkg.Callbacks is
          end if;
 
          exit when Get_Current (H).Debugger_Num = Num
-           and then Get_Current (H).Mode = User;
+           and then Get_Current (H).Mode /= Hidden;
       end loop;
    end Find_Match;
 

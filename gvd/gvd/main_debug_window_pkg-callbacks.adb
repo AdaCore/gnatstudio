@@ -265,7 +265,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
             Set_Busy_Cursor (Tab, True);
-            Attach_Process (Tab.Debugger, Arguments, Mode => User);
+            Attach_Process
+              (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
             Set_Busy_Cursor (Tab, False);
          end if;
       end;
@@ -287,7 +288,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Detach_Process (Tab.Debugger, Mode => User);
+      Detach_Process (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Detach_Process1_Activate;
 
@@ -313,7 +314,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       begin
          if Dir /= "" then
             Set_Busy_Cursor (Tab, True);
-            Change_Directory (Tab.Debugger, Dir, Mode => User);
+            Change_Directory (Tab.Debugger, Dir, Mode => Odd.Types.Visible);
             Set_Busy_Cursor (Tab, False);
          end if;
       end;
@@ -477,9 +478,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
          then
             Set_Busy_Cursor (Tab, True);
             if Is_Start then
-               Start (Tab.Debugger, Arguments, Mode => User);
+               Start (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
             else
-               Run (Tab.Debugger, Arguments, Mode => User);
+               Run (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
             end if;
             Set_Busy_Cursor (Tab, False);
          end if;
@@ -502,7 +503,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Step_Into (Tab.Debugger, Mode => User);
+      Step_Into (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Step1_Activate;
 
@@ -522,7 +523,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Step_Into_Instruction (Tab.Debugger, Mode => User);
+      Step_Into_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Step_Instruction1_Activate;
 
@@ -542,7 +543,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Step_Over (Tab.Debugger, Mode => User);
+      Step_Over (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Next1_Activate;
 
@@ -562,7 +563,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Step_Over_Instruction (Tab.Debugger, Mode => User);
+      Step_Over_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Next_Instruction1_Activate;
 
@@ -582,7 +583,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Finish (Tab.Debugger, Mode => User);
+      Finish (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Finish1_Activate;
 
@@ -602,7 +603,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       end if;
 
       Set_Busy_Cursor (Tab, True);
-      Continue (Tab.Debugger, Mode => User);
+      Continue (Tab.Debugger, Mode => Odd.Types.Visible);
       Set_Busy_Cursor (Tab, False);
    end On_Continue1_Activate;
 
@@ -1062,7 +1063,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
          Set_Busy_Cursor (Tab, True);
-         Start (Tab.Debugger, Mode => User);
+         Start (Tab.Debugger, Mode => Odd.Types.Visible);
          Set_Busy_Cursor (Tab, False);
       end if;
    end On_Start1_Activate;
@@ -1081,7 +1082,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
          Set_Busy_Cursor (Tab, True);
-         Stack_Up (Tab.Debugger, Mode => User);
+         Stack_Up (Tab.Debugger, Mode => Odd.Types.Visible);
          Set_Busy_Cursor (Tab, False);
       end if;
    end On_Up1_Activate;
@@ -1100,7 +1101,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
          Set_Busy_Cursor (Tab, True);
-         Stack_Down (Tab.Debugger, Mode => User);
+         Stack_Down (Tab.Debugger, Mode => Odd.Types.Visible);
          Set_Busy_Cursor (Tab, False);
       end if;
    end On_Down1_Activate;

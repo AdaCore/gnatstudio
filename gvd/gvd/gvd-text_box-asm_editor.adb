@@ -222,10 +222,12 @@ package body Odd.Asm_Editors is
             Is_Breakpoint_Address (Editor, Addr, Result, Num);
 
             if Result then
-               Remove_Breakpoint (Process.Debugger, Num, Mode => User);
+               Remove_Breakpoint
+                 (Process.Debugger, Num, Mode => Odd.Types.Visible);
             else
                if Addr /= "" then
-                  Break_Address (Process.Debugger, Addr, Mode => User);
+                  Break_Address
+                    (Process.Debugger, Addr, Mode => Odd.Types.Visible);
                end if;
             end if;
          end;

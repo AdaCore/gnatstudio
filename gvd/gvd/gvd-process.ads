@@ -239,7 +239,8 @@ package Odd.Process is
    procedure Process_User_Command
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
-      Output_Command : Boolean := False);
+      Output_Command : Boolean := False;
+      Mode           : Odd.Types.Command_Type := Odd.Types.Visible);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to odd are filtered and

@@ -33,12 +33,24 @@ package Odd.Types is
    procedure Free (Ar : in out String_Array);
    --  Free all the strings in the array.
 
-   type Command_Type is (Internal, Hidden, User);
-   --  Internal commands are not stored into the command history.
+   type Command_Type is (Internal, Hidden, Visible, User);
+   --  Internal commands are not stored into the command history. No output
+   --  will be visible to the user.
+   --  This is used for all the commands needed internally by gvd to update
+   --  its windows, or for commands that are needed internally for higher
+   --  level commands. These will not be saved in the session file.
+   --
    --  Hidden commands are stored into the history but not shown in
-   --  the debugger window.
+   --  the debugger window. Their output is also not visible to the user.
+   --
    --  User commands are shown into the command history and displayed in
-   --  the debugger window.
+   --  the debugger window, as well as their output. This is typically the
+   --  mode to be used for menu items or toolbar buttons.
+   --
+   --  Entered is used for commands that have been typed manually by the user
+   --  in the command window. These commands are inserted into the history,
+   --  their output is visible in the command window, but the command itself
+   --  is not printed
 
    -----------------
    -- Breakpoints --

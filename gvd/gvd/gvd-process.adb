@@ -999,7 +999,8 @@ package body Odd.Process is
    procedure Process_User_Command
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
-      Output_Command : Boolean := False)
+      Output_Command : Boolean := False;
+      Mode           : Command_Type := Odd.Types.Visible)
    is
       Command2 : constant String := To_Lower (Command);
       First    : Natural := Command2'First;
@@ -1029,7 +1030,7 @@ package body Odd.Process is
 
       if Looking_At (Command2, First, "graph") then
 
-         Data.Mode := User;
+         Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
          Data.Command := new String'(Command);
@@ -1044,7 +1045,7 @@ package body Odd.Process is
          Send (Debugger.Debugger, Command,
                Wait_For_Prompt =>
                  not Command_In_Process (Get_Process (Debugger.Debugger)),
-               Mode => User);
+               Mode => Mode);
       end if;
 
       --  Put back the standard cursor
@@ -1165,7 +1166,7 @@ package body Odd.Process is
                Enable_Breakpoint
                  (Process.Debugger, Breakpoint_Num,
                   Process.Breakpoints (J).Enabled,
-                  Mode => User);
+                  Mode => Odd.Types.Visible);
                return Process.Breakpoints (J).Enabled;
             end if;
          end loop;

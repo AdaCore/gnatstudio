@@ -462,14 +462,13 @@ package body Open_Session_Pkg is
                   Set_Busy_Cursor (Tab, True);
 
                   if Mode = Hidden then
-
                      Send (Tab.Debugger,
                            Buffer (1 .. Last),
                            Wait_For_Prompt => True,
                            Mode => Hidden);
-
-                  elsif Mode = User then
-                     Process_User_Command (Tab, Buffer (1 .. Last));
+                  else
+                     Process_User_Command (Tab, Buffer (1 .. Last),
+                                           Mode => Odd.Types.Visible);
                   end if;
 
                   Set_Busy_Cursor (Tab, False);

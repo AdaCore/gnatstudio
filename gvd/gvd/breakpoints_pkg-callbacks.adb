@@ -174,7 +174,7 @@ package body Breakpoints_Pkg.Callbacks is
             File      => Get_Chars (Get_Entry (Editor.File_Combo)),
             Line      => Integer (Get_Value_As_Int (Editor.Line_Spin)),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
          Gtk_New (Label, Get_Chars (Get_Entry (Editor.File_Combo)));
          Show (Label);
          Add (Get_List (Editor.File_Combo), Label);
@@ -184,7 +184,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Name      => Get_Chars (Get_Entry (Editor.Subprogram_Combo)),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
          Gtk_New (Label, Get_Chars (Get_Entry (Editor.Subprogram_Combo)));
          Show (Label);
          Add (Get_List (Editor.Subprogram_Combo), Label);
@@ -194,7 +194,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Address   => Get_Chars (Get_Entry (Editor.Address_Combo)),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
          Gtk_New (Label, Get_Chars (Get_Entry (Editor.Address_Combo)));
          Show (Label);
          Add (Get_List (Editor.Address_Combo), Label);
@@ -204,7 +204,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Regexp    => Get_Chars (Get_Entry (Editor.Regexp_Combo)),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
          Gtk_New (Label, Get_Chars (Get_Entry (Editor.Regexp_Combo)));
          Show (Label);
          Add (Get_List (Editor.Regexp_Combo), Label);
@@ -271,14 +271,14 @@ package body Breakpoints_Pkg.Callbacks is
             Name      => "",
             Unhandled => Get_Active (Editor.Stop_Not_Handled_Exception),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
       else
          Break_Exception
            (Editor.Process.Debugger,
             Name      => Name,
             Unhandled => Get_Active (Editor.Stop_Not_Handled_Exception),
             Temporary => Temporary,
-            Mode      => User);
+            Mode      => Odd.Types.Visible);
       end if;
    end On_Add_Exception_Clicked;
 
@@ -312,7 +312,7 @@ package body Breakpoints_Pkg.Callbacks is
          Remove_Breakpoint
            (Editor.Process.Debugger,
             Integer'Value (Get_Text (Editor.Clist1, Selection, 0)),
-            Mode => User);
+            Mode => Odd.Types.Visible);
       end if;
    end On_Remove_Clicked;
 
