@@ -42,6 +42,9 @@ package body Ada_Analyzer is
      Token_Type range Tok_Entry .. Tok_Procedure;
    --  Keywords which start a declaration
 
+   subtype Token_Class_No_Cont is Token_Type range Tok_Function .. Tok_Colon;
+   --  Do not allow a following continuation line
+
    ----------------------
    -- Local procedures --
    ----------------------
@@ -405,6 +408,8 @@ package body Ada_Analyzer is
       Start_Of_Line       : Natural;
       Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
+      Continuation_Val    : Integer           := 0;
+      Indent_Padding      : Integer;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
       Index_Ident         : Natural;
@@ -490,47 +495,53 @@ package body Ada_Analyzer is
          Index       : Natural;
 
       begin
-         if not Indent_Done then
-            Start := Line_Start (Prec);
-            Index := Start;
-
-            loop
-               --  Manual unrolling for efficiency
-
-               exit when Buffer (Index) /= ' '
-                 and then Buffer (Index) /= ASCII.HT;
-
-               Index := Index + 1;
-
-               exit when Buffer (Index) /= ' '
-                 and then Buffer (Index) /= ASCII.HT;
-
-               Index := Index + 1;
-
-               exit when Buffer (Index) /= ' '
-                 and then Buffer (Index) /= ASCII.HT;
-
-               Index := Index + 1;
-            end loop;
-
-            if Top (Indents).all = None then
-               Indentation := Num_Spaces;
-            else
-               Indentation := Top (Indents).all;
-            end if;
-
-            if Continuation then
-               Indentation := Indentation + Indent_Continue;
-            end if;
-
-            if Indent then
-               Replace_Text
-                 (New_Buffer, Start, Index, Spaces (1 .. Indentation));
-            end if;
-
-            Indent_Done := True;
-            Prev_Spaces := Indentation;
+         if Indent_Done then
+            return;
          end if;
+
+         Start := Line_Start (Prec);
+         Index := Start;
+
+         loop
+            --  Manual unrolling for efficiency
+
+            exit when Buffer (Index) /= ' '
+              and then Buffer (Index) /= ASCII.HT;
+
+            Index := Index + 1;
+
+            exit when Buffer (Index) /= ' '
+              and then Buffer (Index) /= ASCII.HT;
+
+            Index := Index + 1;
+
+            exit when Buffer (Index) /= ' '
+              and then Buffer (Index) /= ASCII.HT;
+
+            Index := Index + 1;
+         end loop;
+
+         if Top (Indents).all = None then
+            Indentation := Num_Spaces;
+         else
+            Indentation := Top (Indents).all;
+         end if;
+
+         if Continuation then
+            Continuation_Val := Continuation_Val + Indent_Continue;
+            Indentation := Indentation + Continuation_Val;
+         else
+            Continuation_Val := 0;
+         end if;
+
+         if Indent then
+            Replace_Text
+              (New_Buffer, Start, Index, Spaces (1 .. Indentation));
+         end if;
+
+         Indent_Done    := True;
+         Prev_Spaces    := Indentation;
+         Indent_Padding := Indentation - (Index - Start);
       end Do_Indent;
 
       -----------------
@@ -1169,8 +1180,15 @@ package body Ada_Analyzer is
             --  if ...
             --    and then ...
 
-            Do_Indent
-              (Prec, Num_Spaces, Continuation => Top (Indents).all = None);
+            if Top (Indents).all = None then
+               if Continuation_Val > 0 then
+                  Continuation_Val := Continuation_Val - Indent_Continue;
+               end if;
+
+               Do_Indent (Prec, Num_Spaces, Continuation => True);
+            else
+               Do_Indent (Prec, Num_Spaces);
+            end if;
 
          elsif Reserved = Tok_Generic then
             --  Indent before a generic entity, e.g:
@@ -1386,15 +1404,11 @@ package body Ada_Analyzer is
                      end if;
 
                   else
-                     --  Indent with 2 extra spaces if the '(' is the first
+                     --  Indent with extra spaces if the '(' is the first
                      --  non blank character on the line
 
                      Do_Indent (P, Num_Spaces, Continuation => True);
-
-                     if Indent then
-                        Padding := New_Buffer.Current.Line'Length
-                          - New_Buffer.Current.Len;
-                     end if;
+                     Padding := Indent_Padding;
                   end if;
 
                   if Num_Parens = 0
@@ -1406,6 +1420,7 @@ package body Ada_Analyzer is
                   end if;
 
                   Push (Indents, P - Start_Of_Line + Padding + 1);
+                  Continuation_Val := 0;
                   Num_Parens := Num_Parens + 1;
 
                when ')' =>
@@ -1814,9 +1829,9 @@ package body Ada_Analyzer is
             Top_Token := Top (Tokens);
             Start_Of_Line := Line_Start (Prec);
 
-            if (Top_Token.Token in Token_Class_Declk
-                or else Top_Token.Token = Tok_With)
-              and then Top_Token.Ident_Len = 0
+            if Top_Token.Ident_Len = 0
+              and then (Top_Token.Token in Token_Class_Declk
+                        or else Top_Token.Token = Tok_With)
             then
                --  Store enclosing entity name
 
@@ -1828,11 +1843,12 @@ package body Ada_Analyzer is
             end if;
 
             if Top_Token.Declaration
+              and then not In_Generic
+              and then Num_Parens = 0
               and then (Prev_Token not in Reserved_Token_Type
                         or else Prev_Token = Tok_Declare
                         or else Prev_Token = Tok_Is
                         or else Prev_Token = Tok_Private)
-              and then Num_Parens = 0
             then
                --  This is a variable declaration
 
@@ -1910,8 +1926,10 @@ package body Ada_Analyzer is
          end case;
 
          if Started then
+            Top_Token := Top (Tokens);
+
             if Prev_Token = Tok_Comma then
-               if Top (Tokens).Token = Tok_Declare then
+               if Top_Token.Token = Tok_Declare then
                   --  Inside a declare block, indent broken lines specially
                   --  declare
                   --     A,
@@ -1919,14 +1937,14 @@ package body Ada_Analyzer is
 
                   Do_Indent (Prec, Num_Spaces + Indent_Decl);
 
-               elsif Top (Tokens).Token = Tok_With then
+               elsif Top_Token.Token = Tok_With then
                   --  Indent continuation lines in with clauses:
                   --  with Package1,
                   --     Package2;  --  from Indent_With
 
                   Do_Indent (Prec, Num_Spaces + Indent_With);
 
-               elsif Top (Tokens).Token = Tok_Use then
+               elsif Top_Token.Token = Tok_Use then
                   --  Ditto for use clauses:
                   --  use Package1,
                   --    Package2;  --  from Indent_Use
@@ -1940,11 +1958,11 @@ package body Ada_Analyzer is
                end if;
 
             elsif Token not in Reserved_Token_Type
-              and then Prev_Token /= Tok_Semicolon
-              and then Prev_Token /= Tok_Colon
-              and then Prev_Token /= Tok_Arrow
-              and then Prev_Token /= Tok_Left_Paren
-              and then Prev_Token not in Reserved_Token_Type
+              and then Prev_Token not in Token_Class_No_Cont
+              and then (Prev_Token /= Tok_Arrow
+                        or else (Top_Token.Token /= Tok_Case
+                                 and then Top_Token.Token /= Tok_Select
+                                 and then Top_Token.Token /= Tok_Exception))
             then
                --  This is a continuation line, add extra indentation
 
