@@ -226,11 +226,6 @@ package body Src_Editor_Buffer is
       To     : Gtk_Text_Iter);
    --  Remove all highlighting tags for the given region.
 
-   procedure Strip_Ending_Line_Terminator
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Delete the last characters of the buffer if they represent an
-   --  EOL sequence. Also store in Buffer the line termination style.
-
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class);
    --  Free memory associated to Buffer.
 
@@ -1424,54 +1419,6 @@ package body Src_Editor_Buffer is
       end loop;
    end Forward_To_Line_End;
 
-   ----------------------------------
-   -- Strip_Ending_Line_Terminator --
-   ----------------------------------
-
-   procedure Strip_Ending_Line_Terminator
-     (Buffer : access Source_Buffer_Record'Class)
-   is
-      Iter      : Gtk_Text_Iter;
-      End_Iter  : Gtk_Text_Iter;
-      Ignored   : Boolean;
-   begin
-      --  Does the buffer end with CR & LF?
-
-      if Get_Char_Count (Buffer) > 1 then
-         Get_End_Iter (Buffer, End_Iter);
-         Copy (Source => End_Iter, Dest => Iter);
-         Backward_Chars (Iter, Count => 2, Result => Ignored);
-
-         if Get_Slice (Iter, End_Iter) = ASCII.CR & ASCII.LF then
-            Delete (Buffer, Iter, End_Iter);
-            Buffer.Line_Terminator := CR_LF;
-            return;
-         end if;
-      end if;
-
-      --  Or does it end with a CR or LF?
-
-      if Get_Char_Count (Buffer) > 0 then
-         Get_End_Iter (Buffer, Iter);
-         Backward_Char (Iter, Ignored);
-
-         case Character'(Get_Char (Iter)) is
-            when ASCII.LF =>
-               Get_End_Iter (Buffer, End_Iter);
-               Delete (Buffer, Iter, End_Iter);
-               Buffer.Line_Terminator := LF;
-
-            when ASCII.CR =>
-               Get_End_Iter (Buffer, End_Iter);
-               Delete (Buffer, Iter, End_Iter);
-               Buffer.Line_Terminator := CR;
-
-            when others =>
-               null;
-         end case;
-      end if;
-   end Strip_Ending_Line_Terminator;
-
    -------------
    -- Gtk_New --
    -------------
@@ -1681,6 +1628,8 @@ package body Src_Editor_Buffer is
       UTF8     : Gtkada.Types.Chars_Ptr;
       Ignore   : aliased Natural;
       Length   : aliased Natural;
+      Last     : Natural;
+      CR_Found : Boolean := False;
 
    begin
       Success := True;
@@ -1700,15 +1649,20 @@ package body Src_Editor_Buffer is
             (Get_Language_Handler (Buffer.Kernel), Filename));
       end if;
 
+      --  ??? This is not compatible with files with "CR" as line terminator.
+
+      Strip_CR (Contents.all, Last, CR_Found);
+
       UTF8 := Glib.Convert.Convert
-        (Contents.all, "UTF-8", Get_Pref (Buffer.Kernel, Default_Charset),
+        (Contents.all (Contents'First .. Last), "UTF-8",
+         Get_Pref (Buffer.Kernel, Default_Charset),
          Ignore'Unchecked_Access, Length'Unchecked_Access);
 
       if UTF8 = Gtkada.Types.Null_Ptr then
          --  In case conversion failed, use a default encoding so that we can
          --  at least show something in the editor
          UTF8 := Glib.Convert.Convert
-           (Contents.all, "UTF-8", "ISO-8859-1",
+           (Contents.all (Contents'First .. Last), "UTF-8", "ISO-8859-1",
             Ignore'Unchecked_Access, Length'Unchecked_Access);
       end if;
 
@@ -1716,7 +1670,13 @@ package body Src_Editor_Buffer is
 
       g_free (UTF8);
       Free (Contents);
-      Strip_Ending_Line_Terminator (Buffer);
+
+      if CR_Found then
+         Buffer.Line_Terminator := CR_LF;
+      else
+         Buffer.Line_Terminator := LF;
+      end if;
+
       Set_Modified (Buffer, False);
 
       Buffer.Inserting := False;
