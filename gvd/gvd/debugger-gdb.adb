@@ -2049,4 +2049,30 @@ package body Debugger.Gdb is
             Mode => Internal);
    end Put_Memory_Byte;
 
+   --------------------------
+   -- Get_Variable_Address --
+   --------------------------
+
+   function Get_Variable_Address
+     (Debugger  : access Gdb_Debugger;
+      Variable  : in String) return String
+   is
+      S : constant String := Send
+        (Debugger, "print &(" & Variable & ")", Mode => Internal);
+      Index : Integer := S'Last;
+   begin
+      --  Find the last occurence of "0x" in the string.
+      loop
+         Skip_To_Char (S, Index, 'x', Step => -1);
+
+         --  No address found in the string ?
+         if Index <= S'First then
+            return "";
+         end if;
+
+         exit when S (Index - 1) = '0';
+      end loop;
+      return S (Index - 1 .. S'Last);
+   end Get_Variable_Address;
+
 end Debugger.Gdb;

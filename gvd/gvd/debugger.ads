@@ -683,6 +683,12 @@ package Debugger is
    --  Address is "0x" followed by an hexadecimal number.
    --  Byte is two hexadicimal digits.
 
+   function Get_Variable_Address
+     (Debugger  : access Debugger_Root;
+      Variable  : in String) return String is abstract;
+   --  Returns the starting address for a given variable.
+   --  The returned adress should be "0x" followed by an hexadecimal number.
+
 private
 
    type Debugger_Root is abstract tagged record

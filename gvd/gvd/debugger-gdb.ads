@@ -272,6 +272,10 @@ package Debugger.Gdb is
      (Debugger : access Gdb_Debugger;
       Address  : in String;
       Byte     : in String);
+
+   function Get_Variable_Address
+     (Debugger  : access Gdb_Debugger;
+      Variable  : in String) return String;
 private
 
    function Send

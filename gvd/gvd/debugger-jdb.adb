@@ -895,4 +895,17 @@ package body Debugger.Jdb is
       --  ??? Must implement this function !
    end Put_Memory_Byte;
 
+   --------------------------
+   -- Get_Variable_Address --
+   --------------------------
+
+   function Get_Variable_Address
+     (Debugger  : access Jdb_Debugger;
+      Variable  : in String) return String
+   is
+   begin
+      return "";
+      --  ??? Must implement this function !
+   end Get_Variable_Address;
+
 end Debugger.Jdb;

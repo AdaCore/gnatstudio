@@ -252,6 +252,10 @@ package Debugger.Jdb is
       Address  : in String;
       Byte     : in String);
 
+   function Get_Variable_Address
+     (Debugger  : access Jdb_Debugger;
+      Variable  : in String) return String;
+
 private
 
    function Send
