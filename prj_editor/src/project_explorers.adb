@@ -1954,6 +1954,11 @@ package body Project_Explorers is
       end if;
 
       return Project;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return No_Project;
    end Get_Project_From_Node;
 
    --------------------------------
