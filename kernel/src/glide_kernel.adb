@@ -42,6 +42,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with System;                    use System;
 
 with String_Utils;              use String_Utils;
+with String_List_Utils;         use String_List_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
@@ -637,33 +638,13 @@ package body Glide_Kernel is
 
       use String_List_Utils.String_List;
 
-      Node      : List_Node;
-      Prev_Node : List_Node := Null_Node;
    begin
       Internal
         (Get_Object (Handle),
          File_Closed_Signal & ASCII.NUL,
          File & ASCII.NUL);
-      Node := First (Handle.Open_Files);
 
-      while Node /= Null_Node loop
-         if Data (Node) = File then
-            Remove_Nodes (Handle.Open_Files, Prev_Node, Node);
-
-            if Prev_Node = Null_Node then
-               Node := First (Handle.Open_Files);
-            else
-               Node := Prev_Node;
-            end if;
-
-            if Node = Null_Node then
-               return;
-            end if;
-         end if;
-
-         Prev_Node := Node;
-         Node := Next (Node);
-      end loop;
+      Remove_From_List (Handle.Open_Files, File);
    end File_Closed;
 
    -------------
