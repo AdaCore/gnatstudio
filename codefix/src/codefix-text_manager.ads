@@ -611,31 +611,31 @@ package Codefix.Text_Manager is
 
    function Get_Line
      (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
-   --  Returns the line with the number specified in the original text.
+   --  Return the line with the number specified in the original text.
 
    function Get_Record
      (This : Extract; Number : Natural) return Ptr_Extract_Line;
-   --  Returns the line recorded at the position Number in the extract.
+   --  Return the line recorded at the position Number in the extract.
 
    function Get_Number_Lines (This : Extract) return Natural;
-   --  Returns the number of the lines in the extract.
+   --  Return the number of the lines in the extract.
 
    procedure Add_Line
      (This   : in out Extract;
       Cursor : File_Cursor'Class;
       Text   : String);
-   --  Add a line AFTER the line specified by the cursor. Make a cursor with
-   --  0 for the line number to add a line at the begenning of the file.
+   --  Add a line AFTER the line specified by the cursor.
+   --  Make a cursor with 0 for the line number to add a line at the beginning
+   --  of the file.
 
    procedure Add_Indented_Line
      (This         : in out Extract;
       Cursor       : File_Cursor'Class;
       Text         : String;
       Current_Text : Text_Navigator_Abstr'Class);
-   --  Add a line AFTER the line specified by the cursor. Make a cursor with
-   --  0 for the line number to add a line at the begenning of the file. This
-   --  procedure also auto-indent the line.
-
+   --  Add a line AFTER the line specified by the cursor.
+   --  Make a cursor with 0 for the line number to add a line at the beginning
+   --  of the file. This procedure also indents automatically the line.
 
    procedure Delete_Line
      (This   : in out Extract;
