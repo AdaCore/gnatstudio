@@ -50,7 +50,7 @@ package Docgen.Html_Output is
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
       Doc_Suffix       : String);
-   --  Called every time the HTML files are concerned.
+   --  Called every time the HTML files are involved.
    --  What happens with the given information (which of the procedures
    --  below will be called) depends on the contents and the kind of the
    --  Doc_Info type.
@@ -60,12 +60,12 @@ package Docgen.Html_Output is
    --  current file. Used when we want to make links.
 
    procedure Print_Ref_List_HTML
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File        : in Ada.Text_IO.File_Type;
       Name_Entity : Basic_Types.String_Access;
       Local_List  : Type_Reference_List.List;
       Called_Subp : Boolean);
-   --  For the current entity which is a subprogram, it prints the list
+   --  For the current entity which is a subprogram, print the list
    --  of called subprograms (if Called_Sub = True) or the list of
    --  subprograms which call it (if Called_Sub = False).
    --  Name_Entity has a value only if this entity belongs to an inner package
