@@ -4837,6 +4837,12 @@ course you can run these commands again to get a new reference.
 @c ['GPS', 'GPSStdout', '__builtins__', '__doc__', '__name__', 'e', 'sys']
 @c @end smallexample
 
+@c You can load and execute python scripts with the @code{execfile} command,
+@c as in the following example:
+
+@c @smallexample
+@c >>> execfile ("test.py")
+@c @end smallexample
 
 @c --------------------------------------------------------------------
 @node Customization
@@ -6958,88 +6964,6 @@ directory (see @ref{Files}) to start from a fresh set up.
 @c Here is the list:
 @c 
 @c @example
-@c Help on module GPS:
-@c 
-@c NAME
-@c     GPS - Interface with the GPS environment
-@c 
-@c FILE
-@c     (built-in)
-@c 
-@c CLASSES
-@c     Entity
-@c     
-@c     class Entity
-@c      |  Represents an entity from the source, based on the location of its declaration
-@c      |  
-@c      |  Methods defined here:
-@c      |  
-@c      |  called_by(...)
-@c      |      called_by () -> None
-@c      |      
-@c      |      Display the list of entities that call the entity.
-@c      |  
-@c      |  calls(...)
-@c      |      calls () -> None
-@c      |      
-@c      |      Display the list of entities called by the entity.
-@c      |  
-@c      |  find_all_refs(...)
-@c      |      find_all_refs () -> None
-@c      |      
-@c      |      Display in the location window all the references to the entity.
-@c      |  
-@c      |  ----------------------------------------------------------------------
-@c      |  Data and non-method functions defined here:
-@c      |  
-@c      |  __doc__ = 'Represents an entity from the source, based on the location...
-@c      |  
-@c      |  __module__ = 'GPS'
-@c 
-@c FUNCTIONS
-@c     cd(...)
-@c         cd (dir) -> None
-@c         
-@c         Change the current directory to dir.
-@c     
-@c     create_entity(...)
-@c         create_entity (entity_name, file_name, [line], [column]) -> Entity
-@c         
-@c         Create a new entity, from any of its references.
-@c     
-@c     delete(...)
-@c         delete (name) -> None
-@c         
-@c         Delete file/directory name from the file system.
-@c     
-@c     dir(...)
-@c         dir ([pattern]) -> None
-@c         
-@c         list files following pattern (all files by default).
-@c     
-@c     insmod(...)
-@c         insmod (shared-lib, module) -> None
-@c         
-@c         Dynamically register from shared-lib a new module.
-@c     
-@c     ls(...)
-@c         ls ([pattern]) -> None
-@c         
-@c         list files following pattern (all files by default).
-@c     
-@c     lsmod(...)
-@c         lsmod () -> None
-@c         
-@c         List modules currently loaded.
-@c     
-@c     pwd(...)
-@c         pwd () -> None
-@c         
-@c         Print name of current/working directory.
-@c 
-@c DATA
-@c     __name__ = 'GPS'
-@c 
 @c @end example
 @c 
 @c 
