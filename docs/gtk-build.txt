@@ -31,6 +31,12 @@ LD_LIBRARY_PATH=$prefix/lib:$LD_LIBRARY_PATH
 LDFLAGS=-L$prefix/lib
 export PATH LDFLAGS LD_LIBRARY_PATH
 
+# Needed so that gcc finds libiconv.h (and libpng.h, ...) when configuring
+# and building subsequent packages
+
+C_INCLUDE_PATH="$prefix/include"
+export C_INCLUDE_PATH
+
 ############
 # libiconv #
 ############
@@ -41,12 +47,6 @@ cd libiconv-1.7
 ./configure --prefix=$prefix
 make
 make install
-
-# Needed so that gcc finds libiconv.h (and libpng.h, ...) when configuring
-# and building subsequent packages
-
-C_INCLUDE_PATH="$prefix/include"
-export C_INCLUDE_PATH
 
 ########
 # zlib #
@@ -101,8 +101,8 @@ make install
 ########
 # glib #
 ########
-tar xzvf glib-2.0.1.tar.gz
-cd glib-2.0.1
+tar xzvf glib-2.0.3.tar.gz
+cd glib-2.0.3
 # on linux:
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
@@ -116,8 +116,8 @@ cd ..
 #######
 # atk #
 #######
-tar xzvf atk-1.0.1.tar.gz
-cd atk-1.0.1
+tar xzvf atk-1.0.2.tar.gz
+cd atk-1.0.2
 ./configure --prefix=$prefix
 make
 make install
@@ -126,8 +126,8 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.0.1.tar.gz
-cd pango-1.0.1
+tar xzvf pango-1.0.2.tar.gz
+cd pango-1.0.2
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
@@ -143,8 +143,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.0.2.tar.gz
-cd gtk+-2.0.2
+tar xzvf gtk+-2.0.3.tar.gz
+cd gtk+-2.0.3
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
