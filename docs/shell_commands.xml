@@ -284,6 +284,12 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <description>Return the name of the file associated with self. This is an absolute file name, including directories from the root of the filesystem</description>
   </shell_doc>
 
+  <shell_doc name="GPS.File.language">
+     <param name="self">The instance of GPS.File</param>
+     <return>A string</return>
+     <description>Return the name of the language this file is written in. This is based on the file extension and the naming scheme defined in the project files or the XML files. The empty string is returned when the language is unknown</description>
+  </shell_doc>
+
   <shell_doc name="GPS.File.other_file">
       <param name="self">The instance to which the operation applies</param>
       <return>An instance of GPS.File</return>
@@ -575,7 +581,19 @@ Optionally you can also pass the full contents of an XML file, starting from the
     ###################################################################-->
 
   <shell_doc name="GPS.Project">
-      <description>Represents a project file. See also the GPS documentation on how to create new project attributes</description>
+      <description>Represents a project file. See also the GPS documentation on how to create new project attributes.
+
+Related hooks:
+   "project_view_changed": Called whenever the project is recomputed, ie one
+      of its attributes was changed by the user, the environment variables are
+      changed,...
+      Then is a good time to test the list of languages
+      (GPS.Project.languages()) that the project supports, and do
+      language-specific customizations
+
+   "project_changed": A new project was loaded. The hook above will be called
+      after this one
+</description>
       <see_also name="GPS.Project.__init__()" />
   </shell_doc>
 
@@ -796,6 +814,16 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <param name="self">The instance of GPS.Project</param>
       <param name="imported">An instance of GPS.Project</param>
       <description>Remove a dependency between two projects</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.add_predefined_paths"
+             real_name="GPS.Project.add_predefined_paths">
+       <param name="sources" default="">A list of directories separated by the appropriate separator (':' or ';' depending on the system</param>
+       <param name="objects" default="">As above</param>
+       <description>Add some predefined directories to the source path or the objects path. These will be searched when GPS needs to open a file by its base name, in particular from the File->Open From Project dialog</description>
+       <example lang="python">
+           GPS.Project.add_predefined_paths (os.pathsep.join (sys.path))
+       </example>
   </shell_doc>
 
   <shell_doc name="GPS.Project.sources">
