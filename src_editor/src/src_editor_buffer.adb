@@ -172,6 +172,10 @@ package body Src_Editor_Buffer is
    --  warnings.
    --  ??? Remove this procedure when the problem is fixed.
 
+   procedure Strip_Last_Char_If_LF
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Delete the last character of the buffer if it is an ASCII.LF.
+
    ---------------------
    -- Changed_Handler --
    ---------------------
@@ -555,6 +559,27 @@ package body Src_Editor_Buffer is
       end loop;
    end Forward_To_Line_End;
 
+   ---------------------------
+   -- Strip_Last_Char_If_LF --
+   ---------------------------
+
+   procedure Strip_Last_Char_If_LF
+     (Buffer : access Source_Buffer_Record'Class)
+   is
+      Iter     : Gtk_Text_Iter;
+      End_Iter : Gtk_Text_Iter;
+      Ignored  : Boolean;
+   begin
+      if Get_Char_Count (Buffer) > 0 then
+         Get_End_Iter (Buffer, Iter);
+         Backward_Char (Iter, Ignored);
+         if Get_Char (Iter) = ASCII.LF then
+            Get_End_Iter (Buffer, End_Iter);
+            Delete (Buffer, Iter, End_Iter);
+         end if;
+      end if;
+   end Strip_Last_Char_If_LF;
+
    -------------
    -- Gtk_New --
    -------------
@@ -660,9 +685,59 @@ package body Src_Editor_Buffer is
       while Characters_Read = File_Buffer_Length loop
          Characters_Read := Read (FD, File_Buffer'Address, File_Buffer_Length);
          if Characters_Read > 0 then
-            Insert_At_Cursor (Buffer, File_Buffer (1 ..  Characters_Read));
+            Insert_At_Cursor (Buffer, File_Buffer (1 .. Characters_Read));
          end if;
       end loop;
+
+      Close (FD);
+
+      Strip_Last_Char_If_LF (Buffer);
+
+   exception
+      when others =>
+         --  To avoid consuming up all File Descriptors, we catch all
+         --  exceptions here, and close the current file descriptor before
+         --  reraising the exception.
+         if FD /= Invalid_FD then
+            Close (FD);
+         end if;
+         raise;
+   end Load_File;
+
+   ------------------
+   -- Save_To_File --
+   ------------------
+
+   procedure Save_To_File
+     (Buffer   : access Source_Buffer_Record;
+      Filename : String;
+      Success  : out Boolean)
+   is
+      FD         : File_Descriptor := Invalid_FD;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      Success := True;
+
+      FD := Create_File (Filename & ASCII.NUL, Fmode => Text);
+      if FD = Invalid_FD then
+         Success := False;
+         return;
+      end if;
+
+      Get_Bounds (Buffer, Start_Iter, End_Iter);
+      declare
+         File_Buffer : constant String :=
+           Get_Text (Buffer, Start_Iter, End_Iter);
+         Bytes_Written : Integer;
+      begin
+         Bytes_Written := Write (FD, File_Buffer'Address, File_Buffer'Length);
+         if Bytes_Written /= File_Buffer'Length then
+            --  Means that there is not enough space to save the file. Return
+            --  a failure.
+            Success := False;
+         end if;
+      end;
 
       Close (FD);
 
@@ -675,7 +750,7 @@ package body Src_Editor_Buffer is
             Close (FD);
          end if;
          raise;
-   end Load_File;
+   end Save_To_File;
 
    -----------
    -- Clear --
