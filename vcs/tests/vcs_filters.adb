@@ -1,4 +1,4 @@
-with VCS;     use VCS;
+with VCS;    use VCS;
 
 package body VCS_Filters is
 
