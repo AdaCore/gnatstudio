@@ -3799,17 +3799,26 @@ package body Src_Editor_Module is
    is
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
+      Full  : VFS.Virtual_File;
 
    begin
       if File = VFS.No_File then
          return null;
       end if;
 
+      if Is_Absolute_Path (File) then
+         Full := File;
+      else
+         Full := Create
+           (Get_Full_Path_From_File
+              (Get_Registry (Kernel), Full_Name (File).all, True, False));
+      end if;
+
       loop
          Child := Get (Iter);
 
          exit when Child = null
-           or else Get_Filename (Child) = File
+           or else Get_Filename (Child) = Full
 
             --  Handling of file identifiers
            or else Get_Title (Child) = Full_Name (File).all;
