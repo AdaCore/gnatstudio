@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -613,7 +613,7 @@ package body GVD.Memory_View is
         /= View.Values'Length
       then
          View.Number_Of_Bytes := View.Number_Of_Lines * View.Number_Of_Columns
-           * 2 / View.Unit_Size;
+           * View.Unit_Size / 2;
       end if;
 
       declare
