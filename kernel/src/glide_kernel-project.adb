@@ -429,7 +429,9 @@ package body Glide_Kernel.Project is
       if Langs'Length > 1
         or else Langs (Langs'First).all /= "ada"
       then
-         if Project_Modified (Project) then
+         if not Is_Regular_File (Project_Path (Project))
+           or else Project_Modified (Project)
+         then
             Save_Project (Project, Report_Error'Unrestricted_Access);
             Args (1) := new String'("-R");
 
@@ -467,7 +469,7 @@ package body Glide_Kernel.Project is
    is
       Button : Message_Dialog_Buttons;
    begin
-      if Force then
+      if Force and not Is_Default (Get_Project (Kernel)) then
          Save_Project (Kernel, Get_Project (Kernel), Recursive => True);
 
       elsif Project_Modified (Get_Project (Kernel), Recursive => True) then
