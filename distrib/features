@@ -1,5 +1,7 @@
 New features in GPS 1.0.2
 
+- Improved project view
+
 - New debugger buttons for navigating the call stack
 
 - Better handling of focus in the shell and debugger console
