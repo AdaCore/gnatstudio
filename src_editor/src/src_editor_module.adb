@@ -1574,7 +1574,7 @@ package body Src_Editor_Module is
 
                return True;
 
-            elsif not Is_Regular_File (File) then
+            else
                declare
                   Base : constant String := Base_Name (File);
                begin
@@ -1582,6 +1582,7 @@ package body Src_Editor_Module is
                      Child := Get (Iter);
 
                      exit when Child = null
+                       or else Get_Title (Child) = File
                        or else Get_Title (Child) = Base;
                      Next (Iter);
                   end loop;
@@ -1593,22 +1594,6 @@ package body Src_Editor_Module is
                      return True;
                   end if;
                end;
-
-            else
-               loop
-                  Child := Get (Iter);
-
-                  exit when Child = null
-                    or else Get_Title (Child) = File;
-                  Next (Iter);
-               end loop;
-
-               if Child /= null then
-                  --  The editor was found.
-                  Apply_Mime_On_Child (Child);
-
-                  return True;
-               end if;
             end if;
          end;
       end if;
