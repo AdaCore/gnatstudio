@@ -77,7 +77,7 @@ package body Browsers.Call_Graph is
    --  If True, then every time an item is added to the call graph we check,
    --  and if no to dependency exists, the right arrow is not displayed.
 
-   Locations_At_A_Time : constant := 300;
+   Locations_At_A_Time : constant := 20;
    --  Number of locations that will be inserted in the locations view in
    --  each idle processing.
 
