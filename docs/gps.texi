@@ -4844,6 +4844,18 @@ course you can run these commands again to get a new reference.
 @c >>> execfile ("test.py")
 @c @end smallexample
 
+@c Python supports named parameters. Most functions exported by GPS define
+@c names for their parameters, so that you can use this Python's feature, and
+@c make your scripts more readable. A notable exception to this rule are the
+@c functions that take a variable number of parameters,
+
+@c Using named parameters allows you to specify the parameters in any order
+@c you wish.
+
+@c #smallexample
+@c >>> e=GPS.Entity (name="foo", file="file.adb")
+@c end smallexample
+
 @c --------------------------------------------------------------------
 @node Customization
 @chapter Customization
