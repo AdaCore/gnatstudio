@@ -5,50 +5,192 @@ ADA Documentation Generator
 
 Summary
 
+
 General considerations
 Documentation procedure
 The output frame structure
-Possible extensions
+
+
+
+This text describes the basic possibilities, which should be guarantee by a Ada documentation generator. This simple solution uses some ideas of Javadoc and AdaBrowse, however, the configuration possibilities of these tools are sometimes different and sometimes more complex than described here. Which of these ideas can be of use is still to discuss. Is it for example desirable to be able to change the order of the information listed or even to change the global appearance of the documentation?
 
 
 General considerations
 
-The main function of a documentation generator is to automatically create a documentation, which is mostly done by creating cross-referenced and syntax-colored HTML pages. The program will look within the code files for subprograms headers, definitions and defined tags within the comments. The output is easy to read  and guaranties a easy navigation, often using HTML frames for a better overview.
+The main function of a documentation generator is to automatically create a documentation, which is mostly done by creating cross-referenced and syntax-colored HTML pages. The program will look within the code files for subprograms headers, definitions and defined tags within the comments. The output is easy to read  and guaranties a easy navigation, often using HTML frames for a better overview. Alternatively the output could be generated in MIF (Maker Interchange Format), which can be easily converted to other formats. By using the FrameMaker utilities the documentation can be then created in PDF or PostScript, and even Microsoft RTF, Microsoft Word or WordPerfect formats.
 
 Like most of the others documentation generators our tool should be command-line orientated, using options and configuration files for the control. Using the options you can influence the tool behavior, but it should for example also be possible to chose which configurations files shall be used (one for avoiding typing all the options at each start of the program, another for formatting the output and (re)defining the tags: see options!)
 
 Sometimes it could be helpful not only to extract the comments from the .ads files, but also to look at the .adb file, if for example any information is missing in the first one. (It is still to decide, if this is necessary and which information could be used.) To create most of the more complex documentation pages the tool will have to use the information created by the compiler and stored in the .ali file, either using the ASIS library or other interfaces.
 
-(LATER: a list of the options!)
+
+OPTIONS:
+
+The following set of options should be available. Most of them are taken from the AdaBrowse description, but there are also some new ones, like the option for the generation of MIF files. All the options used in Javadoc, telling the generator which information/tags (see Documentation Procedure below!) should be included or ignored, are not necessary. This can be done within the config file like described later.
+
+-h, 
+      Writes a comprehensive help text.
+
+-a,
+      Optional: Generate documentation not only for the unit given in the -f option, but also for all application units on which it depends semantically (transitive closure of "with"es and parent units).
+
+-c filename 
+      Optional: Defines a configuration file. Multiple -c options may be given; the files are processed in the given order and may overwrite earlier config settings.
+
+-f filename 
+      Required: Gives the filename (*.ads) of the spec to process (only?). This filename may contain a path! See below for more comments. Only one -f option may be given.
+
+-g
+      Optional: If set, the generator also generates cross-references to items from library units in the standard and run-time packages, except for items from the implicit package "Standard". 
+
+-o filename 
+      Optional: Define the output file name. If not set, the output goes to a file with the name of the input and suffix ".html". If filename specifies a directory (i.e., ends in a "\" on Windows or a "/" on Unix), all generated doc files will be put into that directory. If the filename is "-", output is written  to stdout. Only one -o option may be given.
+
+-q 
+      Optional: "Quiet" mode: do not issue warning messages.
+
+-r
+      Optional: If set, the documentation will NOT be created in HTML, but in MIF (Maker Interchange Format). As the comment documentation can contain HTML code, the program will also handle these format information. (It is still to decide, which HTML tags will be supported!)
+
+-s URL  
+      ( Really needed? If yes, perhaps for HTML docs only? The question is, is it possible to convert effectively the information given also to MIF?) 
+      Optional: Defines the URL to the style sheet the generated HTML file shall use. This URL should be relative to the final place where you will put the HTML files! Note that a -s option can be overwritten by a later -c option, if the configuration file defines the key "Style_Sheet".
+
+-x 
+      Optional: If set, the program never overwrites existing documentation files. (May be useful in conjunction with the -a option.)
+
+-I directory 
+      Optional: Define source pathes for ASIS. Same semantics as for GNAT. Multiple -I options may be given. (If no ASIS will be used, the pathes to the other interfaces needed!)
+
+-T directory 
+      Optional: Define pathes for ASIS to search for tree files (*.adt). Multiple -T options may be given. 
+
 
 
 Documentation procedure
 
 The information used in the documentation will have different sources. First the tool has to know of which components the file consists. The elements to find are the different types, exceptions, constants and subprogram headers. For that part all the files available can be used. After this is done, we will have information about all elements in the file, but for each of them, the tool has still to extract their descriptions from the comments in the code file(s). The comments containing information relevant for the documentation are called documentation comments.
 
-The documentation comments are normally included in the source code, ahead of declarations of types, exceptions, constants and subprogram. A parameter from the config file, which defines for each possible element his position, whether his description is placed over or under his header, like done in AdaBrowse, can be useful, but is not necessary. The Ada comment prefix "--" can be used directly to signify a documentation comment, however, sometimes the programmer wishes to define comments which will not be part of the documentation. For this reason the prefix "--!" could be used to introduce a doc comment, while simple "--" comments would remain ignored.
+The documentation comments are normally included in the source code, ahead of declarations of types, exceptions, constants and subprogram.  A parameter from the config file, which defines for each possible element his position, whether his description is placed over or under his header, like done in AdaBrowse, can be useful, but is not necessary. The Ada comment prefix "--" can be used directly to signify a documentation comment, however, sometimes the programmer wishes to define comments which will not be part of the documentation. For this reason the prefix "--!" could be used to introduce a doc comment, while simple "--" comments would remain ignored.
 
-In general users like having a predefined set of tags (like in Javadoc: @author or @since), which will allow the generator to treat the following comment in their particular ways. They will be formatted and placed in the right place. Later, the predefined set could be extended by the programmer with new user-defined tags, which should be defined in the config file. Here the programmer can define the formatting and also the position of the information in the documentation. Normally, it is possible to use the usual HTML tags in your doc comments, which the generator will let unchanged in his output. It could also be useful to allow the definition of variables, corresponding to often used expressions or simply complicated HTML code. Every variable will begin with the prefix "#" followed by its name.  Using variables the programmer can avoid the writing of long HTML code in his comments, as his variables will be replaced as defined in the config file. In this context Adabrowse distinguishes between several mechanisms (like user-defined tags, user-defined variables and user-definded mark-up) and offers also a waste possibilities for executing other formatting programs and pipelining.
+In general users like having a predefined set of tags (like in Javadoc: @author or @since), which will allow the generator to treat the following comment in their particular ways. They will be formatted and placed in the right place. Later, the predefined set could be extended by the programmer with new user-defined tags, which should be defined in the config file. Here the programmer can define the formatting and also the position of the information in the documentation. Normally, it is possible to use the usual HTML markups in your doc comments, which the generator will let unchanged in his output. It could also be useful to allow the definition of variables, corresponding to often used expressions or simply complicated HTML code. Every variable will begin with the prefix "$" followed by its name.  Using variables the programmer can avoid the writing of long HTML code in his comments, as his variables will be replaced as defined in the config file. In this context Adabrowse distinguishes between several mechanisms (like user-defined tags, user-defined variables and user-definded mark-up) and offers also a waste possibilities for executing other formatting programs and pipelining.
 
-For each element found the generator would search for the first line of the doc comment which can be found directly above the header or the definition of this element. The first part of the doc comment is a general description of the element, followed by a list of tags. Both the description and the tags can use variables. Non-documentation comment between the lines will be ignored. A typical comment could look like this:
-
-      --! This is a <b>doc</b> comment using a #variable 
-      --! It can take several lines.
-      --  This line is not a doc comment, it will be ignored!
-      --! @author Heinz Peter    		
-      --! @since 1.4
-      package XYZ is ...
+For each element found the generator will search for the first line of the doc comment which can be found directly above the header or the definition of this element. The first part of the doc comment is a general description of the element, followed by a list of tags. Both the description and the tags can use variables. Non-documentation comment between the lines will be ignored. A typical comment could look like this:
 
 
-(LATER: how to use the config file, define tags and variables!)
+***********************************
+--! This is a <b>doc</b> comment using a $variable 
+--! It can take several lines.
+--  This line is not a doc comment, it will be ignored!
+--! @author John Peter    		
+--! @since 1.4
+package XYZ is ...
+
+    declare
+       --! Thrown, when over 70 degree
+       Explosion_Danger: exception;
+
+       --! Type for the calendar function
+       type Week is (Mon,Tue,Wed,Thu,Fri);   
+***********************************
 
 
-This part describes the basic possibilities, which should be guarantee by a Ada doc generator. This simple solution uses some ideas of Javadoc and AdaBrowse, however, the configuration possibilities of these tools are much more complex than described above. Which of these ideas can be of use is still to discuss.
+SET OF PREDEFINED TAGS:
+
+This list of the predefined tags gathers the most often used Javadoc tags:
+
+@author name-of-author
+     Adds the name of the author.
+
+@copyright descriptions
+     Adds the copyright description.
+
+@link link-path link-label
+     Adds a simple link on the chosen position.
+
+@param parameter-name description
+     Adds the description of the parameter. (only for subprograms) 
+
+@return description
+     Adds the description of the possible return values. (only for subprograms)
+
+@see link-path link-label
+    Adds a link with a "See also: " in front of it.
+
+@since description
+     Adds a "Since: " followed by a date or a version number.
+
+@version description
+     Adds a "Version: " followed by the descriptions
+
+
+CONFIG FILE:
+
+By setting the -c option, a configuration file can be processed. The user can define more than one configuration file. The files are processed in the given order and may overwrite earlier config settings. Lines starting with the "#" character are comment lines and will be ignored. The files can contain 3 types of information:
+
+1. Options:
+
+The options from a config file will be handled like the command-line options. An option starts always with a "-" prefix, followed by the character or string and sometimes the supplementary information. Each option starts in a new line! (necessary? It is easier to parse and looks better.)
+
+
+2. Variables:
+
+In order to avoid repeating long strings in the documentation comments, variables can be used. A variable is signed with a "$" prefix, followed by an identifier: 
+
+Identifier = Letter { Letter | Digit | '_' }.
+    Letter     = 'A' .. 'Z' | 'a' ..'z'.
+    Digit      = '0' .. '9'. 
+
+The variable can be set with a string bounded with quotation marks. If quotation marks are needed in the string use double ""quotation"". The text can be several lines long:
+
+$var_identifier = "This is an example with a ""quotation"" in the middle."
+
+
+3. Tags
+
+Finally the config file can define and redefine tags for the doc comments. Only the last processed definition of a tag is valid. A tag is an identifier with a "@"  prefix. With a ".set" suffix it describes in HTML how the corresponding data will be formatted. Like in the case of variables the quotation marks are necessary. The HTML code can contain several meta-tags "@data", which will be filled with the parameters from the doc comment in the given order. For example the @link tag can be redefined:
+
+@link.set = "Your Link: <A HREF=""@data""> @data </A>"
+
+If the doc comment looks like this:
+
+--! @link http://www.gnat.com GNAT 
+
+then during the parsing of the tag definition in the config file the first @data will be replaced by the internet address and the second, which is the label of the link, with the text "GNAT". @data is the only meta-tag and can't be redefined. Each @date stands for one parameter consisting of one single word (= identifier). If different parameters could be useful, for example to allow not only the processing of single words but also of sentences, new meta-tags should be introduced (this is our decision, and cannot be done by the user!).
+
+To define an empty tag, for example to prevent the output of a predefined tag, the suffix ".stop" can be used. Each tag definition must start in a new line:
+
+@tag_identifier2.stop
+
+
+
+EXAMPLE OF A CONFIG FILE:
+
+
+***********************************
+# this is a comment
+# this part lists the rest of the command-line options:
+-all
+-f util.ads
+-f util-path.ads
+-q
+
+# this part defines the variables:
+$gnat = "http://www.gnat.com"
+$picture = "<img src="wwwlogo.gif" alt="WWW">"
+$buch = "R. Simonian: InnovAda: True Object-oriented Programming in Ada, 4 (1988)"
+
+# this part defines new tags:
+@year.set = "<h1><font color=""#0000FF""> Year: @data </font></h1>"
+
+# this part disables the copyright tag:
+@copyright.stop
+***********************************
 
 
 The output frame structure
 
-The created HTML pages should guarantee a good overview over the whole documentation structure and offer good navigation possibilities. For this purpose the created documentation will consist of a navigation page and the main page with the information wished. A 3rd frame, like in the documents created by Javadoc, is not really needed. The main page will show the package descriptions, normally one standard page per package  (in Adabrowse the author does create one page per "unit", he talks about "units", creating pages not only for packages but also for individual generic procedures, function instantiations... i still have not figured out, if this is really necessary!), but sometimes also show different information, like dependency trees and graphs. A comfortable navigation system using cross-references should be possible. The three types of pages are described here:
+The created documentation pages should guarantee a good overview over the whole documentation structure and offer good navigation possibilities. For this purpose the created documentation will consist of a navigation page and the main page with the information wished. A 3rd frame, like in the documents created by Javadoc, is not really needed. The main page will show the package descriptions, package dependencies and a summery of all types, subprograms, etc.  (in Adabrowse the author does create one page per "unit", he talks about "units", creating pages not only for packages but also for individual generic procedures, function instantiations... i still have not figured out, if this is really necessary!). A comfortable navigation system using cross-references should be possible. The two types of pages are described here:
 
 
 Navigation page:
@@ -84,7 +226,6 @@ The header starts with a very visible full name of the package. What follows is 
 
 
 ***********************************
-
 Package: Util.Pipes
 
 Author: Thomas Wolf
@@ -95,17 +236,18 @@ See also:
 	Util.Pipe_Stream
 Since:
 	1.4
-
 ***********************************
 
 
 Body:
 
-The Body starts with a small textual picture showing the Derivation Hierarchy, like known from the Gktada-doc pages. This one can be directly completed with a list of the Known Child Derivats:
-
+The Body starts with a complete header of the package, formatted as <code> and colored, followed directly by the Pragma defined and a small textual picture showing the Derivation Hierarchy, like known from the Gktada-doc pages. This one can be directly completed with a list of the Known Child Derivats:
 
 
 ***********************************
+package Util.Environment is
+    pragma Elaborate_Body;
+
 
 Gtk_Object                                     (see section Package Gtk.Object)
            \___ Gtk_Widget                 (see section Package Gtk.Widget)
@@ -117,27 +259,23 @@ Gtk_Object                                     (see section Package Gtk.Object)
 
 ***********************************
 
+Then the package dependencies are listed, not using the itemization of the "with" clauses in the given file, but with the complete list of information from ALI. If this is done by a formatted text or using a more complex picture is still to decide, but at any rate the names of the packages should be cross-referenced, giving the possibility of a direct access to the packages.
 
-What follows is the complete header of the package, formatted as <code> and colored, followed directly by the Pragma defined, and the list of the dependencies:
-
-
-***********************************
-
-package Util.Environment is
-        pragma Elaborate_Body;
-
-with Ada.Finalization;
-with Ada.IO_Exceptions;
-with Ada.Streams;
-with Interfaces.C.Strings;
 
 ***********************************
+this package depends on:		Packages depending on this package:
+
+Ada.Finalization                               Traces
+Ada.IO_Exceptions                          Ada.Characters.Handling
+Ada.Streams                                     Prj.Tree
+Interfaces.C.Strings
+***********************************
+
 
 What follows are the lists of the Exceptions, the Types/Subtypes and Constants, each with the description found in the source code file above its definition. A short summery of all the subprograms/operations of the package (? I have to think about this!), devided into the new, the inherited and the overridden operations, could be useful. They are all linked to their descriptions in  this page further below.
 
 
 ***********************************
-
 EXCEPTIONS:
 
   Device_Error renames Ada.IO_Exceptions.Device_Error
@@ -157,33 +295,37 @@ OPERATIONS:
 
 New Operations:             Close, End_Of_Stream, Get, Get, Get_Line, 
 Inherited Operations:       Get_Line, Is_Open, Open, Put, Put, Put_Line 
-Overridden Operations:   Read, Write, Date 
-
-
+Overridden Operations:      Read, Write, Date 
 ***********************************
 
 
-This is the part of the documentation, where the procedures and functions of the package are described. For each of them the colored and linked header is shown, followed by its description found in the doc comments in the source code file. If the subprogram overrides another subprogram, the corresponding link is created. Example:
+This is the part of the documentation, where the procedures and functions of the package are described. For each of them the colored and linked header is shown, followed by its description found in the doc comments in the source code file. If the subprogram overrides another subprogram, the corresponding link is created. In this part the program can once again use the possibilities of ALI and give a list of the subprograms used in the body but also, which is more interesting here, the list of all the subprograms where the given procedure or functions are called. Example:
 
 
 ***********************************
+function Read		    (overrides: Util.Read)
+     (List            : LI_File_List;
+      Source_Filename : String)
+      return LI_File_Ptr;
 
-Procedure Date			(Date overrides: Util.Date() )
-    (Base       : in     Calendar;
-     Julian_Day : in     Util.Times.Julian_Day_Number;
-     Year       :    out Year_Number;
-     Month      :    out Util.Calendars.Western.Month_Number;
-     Day        :    out Util.Calendars.Western.Day_Number);
+   Return a pointer to the LI_File which has a source file named
+   Source_Filename. Return No_LI_File if not found.
+   Note that the path to the file is ignored during the search, only
+   the basename is taken into account.
 
-  Raises Date_Error if the date is before 15-OCT-1582. 
+   Function uses: Util.Get_File, StdIO.Set_Date
+   Function is called by: Main.Start, Main.Next
 
 
-  function Day_In_Year
+function Day_In_Year
     (Base : in Calendar;
      Date : in Util.Times.Time)
     return Util.Calendars.Western.Day_Count;
 
-  This function does something...
+    Description of what this function does...
+
+   Function uses: -
+   Function is called by: Main.Start
 
 ***********************************
 
@@ -193,14 +335,7 @@ Footer:
 The footer contains the rest of the general information needed, like the copyright or the name and the version of the doc generation tool.
 
 
-Special information page:
 
-These pages will show different graphics and tress, using the information we can get either from ASIS or another  interface. (I still haven't found out, which are the possibilities offered here...) The important question will be, which pages should be created and how many of them (if for each individual package/subprogram or for groups of them). There is also a comfortable navigation system to be found for each of them.
-
-
-Possible Extensions
-
-...
 
 
 
