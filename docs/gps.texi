@@ -5411,6 +5411,9 @@ such key bindings, you need to press the @code{Grab} button as usual, and then
 type the shortcut. The recording of the key binding will stop a short while
 after the last key stroke.
 
+This facility for creating complex shortcuts is not available for menu
+shortcuts yet.
+
 @c -----------------------------------------------------------------
 @node Customizing the Menu and Tool Bar
 @section Customizing the Menu and Tool Bar
