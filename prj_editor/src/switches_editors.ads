@@ -173,6 +173,7 @@ private
       Kernel          : Glide_Kernel.Kernel_Handle;
       Project_View    : Prj.Project_Id;
       Pages           : Page_Filter := All_Pages;
+      Files           : GNAT.OS_Lib.Argument_List_Access;
 
       Block_Refresh   : Boolean := False;
       --  If this is True, then clicking on the toggle buttons in the

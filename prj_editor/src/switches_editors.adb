@@ -1200,12 +1200,15 @@ package body Switches_Editors is
    -----------------------
 
    procedure Revert_To_Default
-     (Switches : access Gtk_Widget_Record'Class) is
+     (Switches : access Gtk_Widget_Record'Class)
+   is
+      S : constant Switches_Edit := Switches_Edit (Switches);
    begin
-      Fill_Editor
-        (Switches_Edit (Switches),
-         Switches_Edit (Switches).Project_View,
-         (1 .. 0 => null));
+      if S.Files /= null then
+         Fill_Editor (S, S.Project_View, S.Files.all);
+      else
+         Fill_Editor (S, S.Project_View, (1 .. 0 => null));
+      end if;
    end Revert_To_Default;
 
    ----------------------
@@ -1618,7 +1621,8 @@ package body Switches_Editors is
         File_Selection_Context_Access (Context);
       File_Name : GNAT.OS_Lib.String_Access;
    begin
-      pragma Assert (Has_Project_Information (File));
+      Assert (Me, Has_Project_Information (File),
+              "Project unknown when editing switches");
 
       if not Force_Default and then Has_File_Information (File) then
          File_Name := new String'(File_Information (File));
@@ -1703,6 +1707,7 @@ package body Switches_Editors is
 
       Show_All (Dialog);
 
+      Switches.Files := Files'Unrestricted_Access;
       Fill_Editor (Switches, Project_View, Files);
 
       Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
