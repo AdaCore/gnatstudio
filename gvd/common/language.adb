@@ -300,7 +300,7 @@ package body Language is
    is
       Matches        : Match_Array (0 .. 10);
       Categories     : constant Explorer_Categories :=
-        Explorer_Regexps (Lang);
+        Explorer_Regexps (Language_Access (Lang));
       First          : Natural;
       Line           : Natural;
       Line_Pos       : Natural;
@@ -336,60 +336,58 @@ package body Language is
       --  For each category, parse the buffer
 
       for C in Categories'Range loop
-         if Categories (C).Make_Entry /= null then
-            First    := Buffer'First;
-            Line     := 1;
-            Line_Pos := 0;
+         First    := Buffer'First;
+         Line     := 1;
+         Line_Pos := 0;
 
-            loop
-               Match (Categories (C).Regexp.all,
-                      Buffer (First .. Buffer'Last),
-                      Matches);
+         loop
+            Match (Categories (C).Regexp.all,
+                   Buffer (First .. Buffer'Last),
+                   Matches);
 
-               exit when Matches (0) = No_Match;
+            exit when Matches (0) = No_Match;
 
-               Match_Index       := Categories (C).Position_Index;
-               Sloc_Start.Index  := Matches (0).First;
-               Sloc_Entity.Index := Matches (Match_Index).First;
-               Sloc_End.Index    := Matches (0).Last;
+            Match_Index       := Categories (C).Position_Index;
+            Sloc_Start.Index  := Matches (0).First;
+            Sloc_Entity.Index := Matches (Match_Index).First;
+            Sloc_End.Index    := Matches (0).Last;
 
-               Forward (First, Sloc_Start);
-               Forward (Sloc_Start.Index + 1, Sloc_Entity);
-               Forward (Sloc_Entity.Index + 1, Sloc_End);
+            Forward (First, Sloc_Start);
+            Forward (Sloc_Start.Index + 1, Sloc_Entity);
+            Forward (Sloc_Entity.Index + 1, Sloc_End);
 
-               Info           := Result.Current;
-               Result.Current := new Construct_Information;
+            Info           := Result.Current;
+            Result.Current := new Construct_Information;
 
-               if Result.First = null then
-                  Result.First := Result.Current;
-               else
-                  Result.Current.Prev := Info;
-                  Result.Current.Next := Info.Next;
-                  Info.Next           := Result.Current;
-               end if;
+            if Result.First = null then
+               Result.First := Result.Current;
+            else
+               Result.Current.Prev := Info;
+               Result.Current.Next := Info.Next;
+               Info.Next           := Result.Current;
+            end if;
 
-               Result.Last := Result.Current;
-               Result.Current.Category := Categories (C).Category;
+            Result.Last := Result.Current;
+            Result.Current.Category := Categories (C).Category;
 
-               if Categories (C).Make_Entry /= null then
-                  Result.Current.Name := new String'
-                    (Categories (C).Make_Entry (Buffer, Matches));
-               else
-                  Result.Current.Name := new String'
-                    (Buffer (Matches (Match_Index).First ..
-                             Matches (Match_Index).Last));
-               end if;
+            if Categories (C).Make_Entry /= null then
+               Result.Current.Name := new String'
+                 (Categories (C).Make_Entry (Buffer, Matches));
+            else
+               Result.Current.Name := new String'
+                 (Buffer (Matches (Match_Index).First ..
+                          Matches (Match_Index).Last));
+            end if;
 
-               --  Result.Current.Profile := ???
+            --  Result.Current.Profile := ???
 
-               Result.Current.Sloc_Entity    := Sloc_Entity;
-               Result.Current.Sloc_Start     := Sloc_Start;
-               Result.Current.Sloc_End       := Sloc_End;
-               Result.Current.Is_Declaration := False;
+            Result.Current.Sloc_Entity    := Sloc_Entity;
+            Result.Current.Sloc_Start     := Sloc_Start;
+            Result.Current.Sloc_End       := Sloc_End;
+            Result.Current.Is_Declaration := False;
 
-               First := Matches (0).Last + 1;
-            end loop;
-         end if;
+            First := Matches (0).Last + 1;
+         end loop;
       end loop;
    end Parse_Constructs;
 
