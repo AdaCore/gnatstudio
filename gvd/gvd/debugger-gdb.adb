@@ -455,9 +455,13 @@ package body Debugger.Gdb is
         and then Main_Debug_Window_Access (Window).Debug_Mode
       then
          Add_Output_Filter
-           (Get_Descriptor (Debugger.Process).all, Output_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all,
+            Output_Filter'Access,
+            Window.all'Address);
          Add_Input_Filter
-           (Get_Descriptor (Debugger.Process).all, Input_Filter'Access);
+           (Get_Descriptor (Debugger.Process).all,
+            Input_Filter'Access,
+            Window.all'Address);
 
       elsif Window /= null
         and then Main_Debug_Window_Access (Window).TTY_Mode
