@@ -383,7 +383,7 @@ package body Language.Ada is
    -- Get_Language_Context --
    --------------------------
 
-   Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("^--");
+   Comment_Start_Pattern : aliased Pattern_Matcher := Compile ("--");
 
    Ada_Context : aliased Language_Context :=
      (Comment_Start_Length   => 0,
