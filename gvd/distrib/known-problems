@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 2.0.0
 
+- Bad clean up when load another executable after source+asm view
+  Problem:    When using the source+asm view on multiple files, and then
+              loading another executable, a bug box is displayed.
+  Workaround: Load the file in another debugger.
+
 - [9022-014] Tab key does not work with long names
   Problem:    When using the tab key in the debugger console to complete
               a long identifier (longer than 100 characters), a bug box is
