@@ -193,6 +193,10 @@ package body Projects.Registry is
    --  all projects and subprojects, and memorize the sources in the
    --  hash-table.
 
+   procedure Add_Runtime_Files
+     (Registry : in out Project_Registry; Path : String);
+   --  Add all runtime files to the caches
+
    function Normalize_Project_Path (Path : String) return String;
    --  Normalize the full path to a project (and make sure the project file
    --  extension is set)
@@ -752,6 +756,62 @@ package body Projects.Registry is
          Next (Iter);
       end loop;
    end Parse_Source_Files;
+
+   -----------------------
+   -- Add_Runtime_Files --
+   -----------------------
+
+   procedure Add_Runtime_Files
+     (Registry : in out Project_Registry; Path : String)
+   is
+      Iter   : Path_Iterator := Start (Path);
+      Dir    : Dir_Type;
+      File   : String (1 .. 1024);
+      Last   : Natural;
+      Directory : Name_Id;
+   begin
+      while not At_End (Path, Iter) loop
+         declare
+            Curr : constant String :=
+                     Name_As_Directory (Current (Path, Iter));
+         begin
+            if Curr /= "" then
+               Open (Dir, Curr);
+
+               loop
+                  Read (Dir, File, Last);
+                  exit when Last = 0;
+
+                  if Last > 4
+                    and then (File (Last - 3 .. Last) = ".ads"
+                              or else File (Last - 3 .. Last) = ".adb")
+                  then
+                     Name_Len  := Curr'Length;
+                     Name_Buffer (1 .. Name_Len) := Curr;
+                     Name_Buffer (Name_Len + 1 .. Name_Len + Last) :=
+                       File (1 .. Last);
+                     Name_Len := Name_Len + Last;
+
+                     Directory := Name_Find;
+
+                     Set (Registry.Data.Sources,
+                          K => File (1 .. Last),
+                          E => (No_Project, Name_Ada, Directory));
+                  end if;
+               end loop;
+
+               Close (Dir);
+            end if;
+
+         exception
+            when E : Directory_Error =>
+               Trace (Me, "Unexpected exception while opening "
+                      & Curr & ' ' & Exception_Information (E));
+         end;
+
+         Iter := Next (Path, Iter);
+      end loop;
+   end Add_Runtime_Files;
 
    ----------------------------------------
    -- Canonicalize_File_Names_In_Project --
@@ -1541,6 +1601,8 @@ package body Projects.Registry is
       Registry.Data.Predefined_Source_Path := new String'(Path);
 
       Unchecked_Free (Registry.Data.Predefined_Source_Files);
+
+      Add_Runtime_Files (Registry, Path);
    end Set_Predefined_Source_Path;
 
    --------------------------------
@@ -1630,8 +1692,6 @@ package body Projects.Registry is
          end if;
 
          --  Otherwise we have a source file
-         --  ??? Seems Prj.Nmsc is already computing and storing the path
-         --  somewhere, unfortunately it requires a Unit_Name.
 
          Real_Project :=
            Get_Project_From_File (Registry, Base_Name => Filename);
@@ -1691,9 +1751,12 @@ package body Projects.Registry is
                --  since this wouldn't work with extended projects were sources
                --  can be duplicated.
 
-               if Project2 = Real_Project
-                 and then Info /= No_Source_File_Data
-               then
+               if Info = No_Source_File_Data then
+                  Set (Registry.Data.Sources,
+                       K => Filename,
+                       E => (Project2, Name_Ada, Name_Find));
+
+               else
                   Info.Directory := Name_Find;
                   Set (Registry.Data.Sources, Filename, Info);
                end if;
