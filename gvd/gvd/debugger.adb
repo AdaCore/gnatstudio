@@ -472,7 +472,7 @@ package body Debugger is
          Timeout_Remove (Process.Timeout_Id);
          Process.Timeout_Id := 0;
 
-         if Debugger /= null then
+         if Debugger /= null and then Get_Process (Debugger) /= null then
             Set_Command_In_Process (Get_Process (Debugger), False);
          end if;
 
