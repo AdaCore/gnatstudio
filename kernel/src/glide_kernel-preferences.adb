@@ -27,6 +27,7 @@ with Gdk.Color;                use Gdk.Color;
 with Pango.Font;               use Pango.Font;
 with Glide_Intl;               use Glide_Intl;
 with Language;                 use Language;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 
 package body Glide_Kernel.Preferences is
 
@@ -794,7 +795,7 @@ package body Glide_Kernel.Preferences is
       is
          pragma Unreferenced (Manager);
       begin
-         Preferences_Changed (Kernel);
+         Run_Hook (Kernel, Preferences_Changed_Hook);
       end On_Changed;
 
    begin
