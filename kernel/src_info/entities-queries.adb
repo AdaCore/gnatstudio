@@ -32,6 +32,13 @@ with GNAT.OS_Lib; use GNAT.OS_Lib;
 package body Entities.Queries is
    Me : constant Debug_Handle := Create ("Entities.Queries");
 
+   Find_Deps_File_Granularity : constant Debug_Handle :=
+     Create ("Entities.Queries_File_Granularity", On);
+   --  Whether the search for dependencies parses all the files from a project
+   --  at one time, or one file at a time.
+   --  The latter provides more accuracy for the progress bar, but takes
+   --  slightly more time.
+
    Num_Columns_Per_Line : constant := 250;
    --  The number of columns in each line, when computing the proximity of a
    --  match. This is an approximate number, for efficiency. Big values mean
@@ -682,7 +689,8 @@ package body Entities.Queries is
 
       --  The next time Next is called, Index will be incremented, so we have
       --  to make sure not to lose a reference here.
-      if Get (Iter.Deps) /= null
+      if not At_End (Iter.Deps)
+        and then Get (Iter.Deps) /= null
         and then Iter.Index <= Last (Iter.Entity.References)
       then
          Iter.Index := Iter.Index - 1;
@@ -787,6 +795,7 @@ package body Entities.Queries is
                   Total_Progress        => 1,
                   Current_Progress      => 0,
                   Dep_Index             => Dependency_Arrays.First,
+                  Source_File_Index     => 0,
                   File                  => File);
          Next (Iter);
       else
@@ -811,18 +820,26 @@ package body Entities.Queries is
                   Total_Progress        => 0,
                   Current_Progress      => 1,
                   Dep_Index             => Dependency_Arrays.First,
+                  Source_File_Index     => 0,
                   File                  => File);
 
          while Current (Importing) /= No_Project loop
-            Iter.Total_Progress := Iter.Total_Progress + 1;
+            if Active (Find_Deps_File_Granularity) then
+               Iter.Total_Progress := Iter.Total_Progress
+                 + Direct_Sources_Count (Current (Importing));
+            else
+               Iter.Total_Progress := Iter.Total_Progress + 1;
+            end if;
             Next (Importing);
          end loop;
 
          if Iter.Handler /= null then
-            Count := Parse_All_LI_Information
-              (Handler   => Iter.Handler,
-               Project   => Current (Iter.Importing),
-               Recursive => False);
+            if not Active (Find_Deps_File_Granularity) then
+               Count := Parse_All_LI_Information
+                 (Handler   => Iter.Handler,
+                  Project   => Current (Iter.Importing),
+                  Recursive => False);
+            end if;
          end if;
       end if;
    end Find_Ancestor_Dependencies;
@@ -852,7 +869,8 @@ package body Entities.Queries is
    function At_End (Iter : Dependency_Iterator) return Boolean is
    begin
       return Iter.Handler = null
-        and then Iter.Dep_Index > Last (Iter.File.Depended_On);
+        and then Iter.Dep_Index > Last (Iter.File.Depended_On)
+        and then Current (Iter.Importing) = No_Project;
    end At_End;
 
    ----------
@@ -862,20 +880,37 @@ package body Entities.Queries is
    procedure Next (Iter : in out Dependency_Iterator) is
       Source : Source_File;
       Count  : Natural;
+      VF     : VFS.Virtual_File := VFS.No_File;
       pragma Unreferenced (Source, Count);
    begin
       if Iter.Handler = null then
          Iter.Dep_Index := Iter.Dep_Index + 1;
       else
-         Next (Iter.Importing);
-         if Current (Iter.Importing) = No_Project then
-            Iter.Handler := null;
-         else
-            Iter.Current_Progress := Iter.Current_Progress + 1;
-            Count := Parse_All_LI_Information
-              (Handler   => Iter.Handler,
-               Project   => Current (Iter.Importing),
-               Recursive => False);
+         if Active (Find_Deps_File_Granularity) then
+            Iter.Source_File_Index := Iter.Source_File_Index + 1;
+            VF := Get_Source_Files
+              (Current (Iter.Importing), Iter.Source_File_Index);
+            if VF /= VFS.No_File then
+               Iter.Current_Progress := Iter.Current_Progress + 1;
+               Source := Get_Source_Info (Iter.Handler, VF);
+            end if;
+         end if;
+
+         if VF = VFS.No_File then
+            Next (Iter.Importing);
+            if Current (Iter.Importing) = No_Project then
+               Iter.Handler := null;
+            else
+               if not Active (Find_Deps_File_Granularity) then
+                  Iter.Current_Progress := Iter.Current_Progress + 1;
+                  Count := Parse_All_LI_Information
+                    (Handler   => Iter.Handler,
+                     Project   => Current (Iter.Importing),
+                     Recursive => False);
+               else
+                  Iter.Source_File_Index := 0;
+               end if;
+            end if;
          end if;
       end if;
    end Next;

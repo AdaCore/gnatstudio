@@ -457,6 +457,12 @@ private
       File_Has_No_LI_Report : File_Error_Reporter := null;
       Single_Source_File    : Boolean;
 
+      Source_File_Index     : Natural;
+      --  Index of current source in the current project. This is only used if
+      --  each step in the iterator corresponds to a file, as opposed to a
+      --  project.
+      --  (See constant Find_Deps_File_Granularity in the body)
+
       File                  : Source_File;
       Dep_Index             : Dependency_Arrays.Index_Type;
    end record;
