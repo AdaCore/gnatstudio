@@ -177,8 +177,9 @@ package body Glide_Kernel.Console is
    begin
       if Console = null then
          Put_Line (Text);
-      else
+      elsif Text /= "" then
          Insert (Console, Text, Add_LF, (Mode = Error));
+         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), Console));
       end if;
    end Insert;
 
@@ -213,6 +214,7 @@ package body Glide_Kernel.Console is
    begin
       if View /= null then
          Insert (View, Category, File, Line, Column, Text, Length);
+         Highlight_Child (Find_MDI_Child (Get_MDI (Kernel), View));
       end if;
    end Insert_Result;
 
