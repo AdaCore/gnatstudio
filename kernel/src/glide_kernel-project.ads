@@ -71,8 +71,12 @@ package Glide_Kernel.Project is
    --  ??? What do we do if the project couldn't be loaded.
 
    procedure Load_Default_Project
-     (Kernel : access Kernel_Handle_Record'Class; Directory : String);
-   --  Create and load a default project in Directory
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Directory            : String;
+      Load_Default_Desktop : Boolean := True);
+   --  Create and load a default project in Directory.
+   --  If Load_Desktop is true, then all current MDI children are removed, and
+   --  the default desktop is reloaded.
 
    procedure Save_Project
      (Kernel    : access Kernel_Handle_Record'Class;

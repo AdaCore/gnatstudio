@@ -283,7 +283,9 @@ package body Glide_Kernel.Project is
    --------------------------
 
    procedure Load_Default_Project
-     (Kernel : access Kernel_Handle_Record'Class; Directory : String)
+     (Kernel               : access Kernel_Handle_Record'Class;
+      Directory            : String;
+      Load_Default_Desktop : Boolean := True)
    is
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
@@ -305,8 +307,10 @@ package body Glide_Kernel.Project is
 
       --  Reload the default desktop
 
-      Close_All_Children (Kernel);
-      Had_Project_Desktop := Load_Desktop (Kernel);
+      if Load_Default_Desktop then
+         Close_All_Children (Kernel);
+         Had_Project_Desktop := Load_Desktop (Kernel);
+      end if;
    end Load_Default_Project;
 
    ------------------
