@@ -161,13 +161,6 @@ package body Codefix.Errors_Manager is
            (This.Valid_Corrections,
             Clone (Get_Extract (Get_Solutions (Error), Choice)));
       end if;
-
-      Remove_Nodes
-        (This.Potential_Corrections,
-         Prev
-           (This.Potential_Corrections,
-            Memorized_Corrections.List_Node (Error)),
-         Memorized_Corrections.List_Node (Error));
    end Validate;
 
    --------------
@@ -181,13 +174,6 @@ package body Codefix.Errors_Manager is
       Later_Update : Boolean := True) is
    begin
       Append (This.Valid_Corrections, Clone (Choice));
-
-      Remove_Nodes
-        (This.Potential_Corrections,
-         Prev
-           (This.Potential_Corrections,
-            Memorized_Corrections.List_Node (Error)),
-         Memorized_Corrections.List_Node (Error));
    end Validate;
 
    ------------
