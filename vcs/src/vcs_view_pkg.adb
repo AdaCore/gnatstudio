@@ -393,7 +393,7 @@ package body VCS_View_Pkg is
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
       Page     : VCS_Page_Access;
-
+      Sort_Col : Gint;
    begin
       Push_State (Explorer.Kernel, Busy);
       Page := VCS_Page_Access
@@ -403,6 +403,7 @@ package body VCS_View_Pkg is
       Scroll_To_Point (Page.Tree, 0, 0);
 
       Clear (Page.Model);
+      Sort_Col := Freeze_Sort (Page.Model);
 
       L := First (Page.Stored_Status);
 
@@ -424,6 +425,7 @@ package body VCS_View_Pkg is
          L := Next (L);
       end loop;
 
+      Thaw_Sort (Page.Model, Sort_Col);
       Columns_Autosize (Page.Tree);
       Pop_State (Explorer.Kernel);
    end Refresh;
