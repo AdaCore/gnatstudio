@@ -41,10 +41,11 @@ with Types;         use Types;
 with Csets;         use Csets;
 pragma Elaborate_All (Csets);
 with Stringt;       use Stringt;
-with Ada.Text_IO;   use Ada.Text_IO;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
 with String_Utils;  use String_Utils;
 with Ada.Exceptions; use Ada.Exceptions;
+
+with Glide_Intl;    use Glide_Intl;
 
 with Traces; use Traces;
 
@@ -54,6 +55,13 @@ package body Prj_API is
 
    Project_File_Extension : constant String := ".gpr";
    --  Extension used for the project file names
+
+   File_Specific_Switches_Attribute : constant String := "switches";
+   --  Name of the attribute used for file specific switches. Its index is the
+   --  unit name
+
+   Default_Switches_Attribute : constant String := "default_switches";
+   --  Name of the attribute used for default switches.
 
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id);
@@ -404,8 +412,7 @@ package body Prj_API is
             Store_String_Chars (Value);
             Set_Expression (Var, String_As_Expression (End_String));
 
-         when others => null;
-            Put_Line ("Set_Value: " & Kind_Of (Var)'Img);
+         when others =>
             raise Program_Error;
       end case;
    end Set_Value;
@@ -444,7 +451,6 @@ package body Prj_API is
    -- Set_Expression --
    --------------------
 
-   --  ??? Should be renamed to avoid confusion with the new Prj.Tree function
    procedure Set_Expression
      (Var_Or_Attribute : Project_Node_Id; Expr : Project_Node_Id) is
       E : Project_Node_Id;
@@ -461,8 +467,6 @@ package body Prj_API is
             when N_External_Value =>
                Set_External_Default_Of (E, Expr);
             when others =>
-               Put_Line ("Set_Expression: Invalid contents for variable: "
-                         & Kind_Of (E)'Img);
                raise Program_Error;
          end case;
       end if;
@@ -526,7 +530,6 @@ package body Prj_API is
             return (Current => Next_Expression_In_List (Iter.Current));
 
          when others =>
-            Put_Line ("Next: " & Kind_Of (Iter.Current)'Img);
             raise Program_Error;
       end case;
    end Next;
@@ -598,7 +601,6 @@ package body Prj_API is
             end case;
 
          when others =>
-            Put_Line ("Value_Of: " & Kind_Of (V)'Img);
             raise Program_Error;
       end case;
    end Value_Of;
@@ -713,8 +715,8 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := In_Pkg;
       Pkg_Name := Name_Find;
 
-      Name_Len := 8;
-      Name_Buffer (1 .. Name_Len) := "switches";
+      Name_Len := File_Specific_Switches_Attribute'Length;
+      Name_Buffer (1 .. Name_Len) := File_Specific_Switches_Attribute;
       Switches := Name_Find;
 
       Pkg  := Prj.Util.Value_Of
@@ -742,8 +744,8 @@ package body Prj_API is
       if Pkg /= No_Package
         and then Packages.Table (Pkg).Decl.Attributes /= No_Variable
       then
-         Name_Len := 16;
-         Name_Buffer (1 .. Name_Len) := "default_switches";
+         Name_Len := Default_Switches_Attribute'Length;
+         Name_Buffer (1 .. Name_Len) := Default_Switches_Attribute;
          Switches := Name_Find;
 
          --  Indexed by the language ?
@@ -760,13 +762,6 @@ package body Prj_API is
             Is_Default_Value := True;
             return;
          end if;
-
-         --  Not indexed. It seems this case is no longer allowed in the
-         --  projects, so this is commented out for now.
-
-         --  Var_Value := Prj.Util.Value_Of
-         --    (Variable_Name => Switches,
-         --     In_Variables  => Packages.Table (Pkg).Decl.Attributes);
       end if;
 
       Is_Default_Value := True;
@@ -1089,7 +1084,7 @@ package body Prj_API is
 
       if Prj.Tree.Name_Of (Project) = Prj.Tree.Name_Of (Imported_Project) then
          Raise_Exception
-           (Project_Warning'Identity, "Cannot add dependency to self");
+           (Project_Warning'Identity, -"Cannot add dependency to self");
          return;
       end if;
 
@@ -1101,7 +1096,7 @@ package body Prj_API is
            Prj.Tree.Name_Of (Imported_Project)
          then
             Raise_Exception
-              (Project_Warning'Identity, "This dependency already exists");
+              (Project_Warning'Identity, -"This dependency already exists");
             return;
          end if;
          With_Clause := Next_With_Clause_Of (With_Clause);
@@ -1138,16 +1133,11 @@ package body Prj_API is
       --  Cleanup the name
 
       declare
-         Clean_Name : String := Base_File_Name (Imported_Project);
-         Ext        : constant String := File_Extension (Clean_Name);
-         Last       : Natural := Clean_Name'Last;
+         Clean_Name : constant String := File_Name_Sans_Extension
+           (Base_File_Name (Imported_Project));
       begin
-         if Ext /= "" then
-            --  Also remove the final "."
-            Last := Last - Ext'Length - 1;
-         end if;
-         Name_Len := Last - Clean_Name'First + 1;
-         Name_Buffer (1 .. Name_Len) := Clean_Name (Clean_Name'First .. Last);
+         Name_Len := Clean_Name'Length;
+         Name_Buffer (1 .. Name_Len) := Clean_Name;
          Name := Name_Find;
       end;
 
@@ -2283,7 +2273,7 @@ package body Prj_API is
       if Old /= Empty_Node then
          Raise_Exception
            (Project_Error'Identity,
-            "There is already a project by this name in the project tree.");
+            -"There is already a project by this name in the project tree.");
       end if;
 
       declare
