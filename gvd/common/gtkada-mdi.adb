@@ -1886,7 +1886,6 @@ package body Gtkada.MDI is
       return MDI_Child
    is
       C : MDI_Child;
-      Alloc : Gtk_Allocation;
    begin
       if Child.all in MDI_Child_Record'Class then
          C := MDI_Child (Child);
@@ -1915,9 +1914,6 @@ package body Gtkada.MDI is
          Put_In_Notebook (MDI, None, C);
       else
          Put (MDI.Layout, C, 0, 0);
-         Alloc := (C.X, C.Y, 10, 10);
-         Size_Allocate (C, Alloc);
-
          if Realized_Is_Set (MDI) then
             Queue_Resize (MDI);
          end if;
