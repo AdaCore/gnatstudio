@@ -1204,7 +1204,7 @@ package body Ada_Analyzer is
             Spaces (3) := Second_Char;
          end Handle_Two_Chars;
 
-      begin
+      begin  --  Next_Word
          Start_Of_Line := Line_Start (P);
          End_Of_Line   := Line_End (Start_Of_Line);
 
@@ -1500,6 +1500,24 @@ package body Ada_Analyzer is
                               Handle_Two_Chars ('<');
 
                            when '>' =>
+                              if Prev_Token = Tok_Is
+                                and then Top_Token.Token /= Tok_Type
+                                and then Top_Token.Token /= Tok_Subtype
+                                and then In_Generic
+                              then
+                                 --  Unindent if we are inside a generic
+                                 --  definition, e.g:
+                                 --  generic
+                                 --     with procedure ... is <>;
+
+                                 Num_Spaces := Num_Spaces - Indent_Level;
+
+                                 if Num_Spaces < 0 then
+                                    Num_Spaces := 0;
+                                    Syntax_Error := True;
+                                 end if;
+                              end if;
+
                               Prev_Token    := Tok_Box;
                               Insert_Spaces := False;
                               Handle_Two_Chars ('>');
