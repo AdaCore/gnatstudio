@@ -142,6 +142,24 @@ check_common: force
 	@[ -f ${COMMON_SRC}/src/make_common.ads ] || \
 	   (echo "common sources not found in ${COMMON_SRC}, see README"; false)
 
+####################
+## Widgets module ##
+####################
+
+ifneq (,$(findstring widgets,$(MODULES)))
+
+# Location of widgets sources. See the README file at the top-level for
+# information on how to setup the required links
+WIDGETS_SRC=../../widgets
+
+MODULE_INCLUDE+=-aI${WIDGETS_SRC}/src -aO${WIDGETS_SRC}/obj
+endif
+
+.PHONY: check_widgets
+check_widgets: force
+	@[ -f ${WIDGETS_SRC}/src/make_widgets.ads ] || \
+	   (echo "widgets sources not found in ${WIDGETS_SRC}, see README"; false)
+
 ###################
 ## GTKADA module ##
 ###################
