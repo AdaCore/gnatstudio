@@ -608,8 +608,7 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Show_Entity_Command_Handler, unexpected exception "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Set_Error_Msg (Data, -"Internal error");
    end Show_Entity_Command_Handler;
 
@@ -740,8 +739,7 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
-         Trace (Me, "Unexpected exception in On_Type_Browser "
-                & Exception_Information (E));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Type_Browser;
 
    -------------
@@ -1293,9 +1291,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Kernel);
-         Trace (Me, "Find_Parent_Types: unexpected exception "
-                & Exception_Information (E));
    end Find_Parent_Types;
 
    ------------------------------
@@ -1388,9 +1385,8 @@ package body Browsers.Entities is
 
    exception
       when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Pop_State (Kernel);
-         Trace (Me, "Find_Children_Types: unexpected exception "
-                & Exception_Information (E));
    end Find_Children_Types;
 
    -------------------------
@@ -1424,19 +1420,30 @@ package body Browsers.Entities is
       Xoffset, Yoffset : in out Glib.Gint;
       Layout           : access Pango.Layout.Pango_Layout_Record'Class)
    is
-      W, H, Layout_H, Layout_W1, Layout_W2,
-        Meth_Layout_W1, Meth_Layout_W2, Meth_Layout_H : Gint;
-      Y : Gint;
-      General_Lines, Attr_Lines, Meth_Lines : Xref_List;
-      Parent : Entity_Information;
-      Lib_Info : LI_File_Ptr;
-      Kernel : constant Kernel_Handle := Get_Kernel (Get_Browser (Item));
-      Added : Boolean;
+      Kernel                         : constant Kernel_Handle :=
+        Get_Kernel (Get_Browser (Item));
+      W, H                           : Gint;
+      Layout_H, Layout_W1, Layout_W2 : Gint;
+      Meth_Layout_W1, Meth_Layout_W2 : Gint;
+      Meth_Layout_H                  : Gint;
+      Y                              : Gint;
+      General_Lines                  : Xref_List;
+      Attr_Lines                     : Xref_List;
+      Meth_Lines                     : Xref_List;
+      Parent                         : Entity_Information;
+      Lib_Info                       : LI_File_Ptr;
+      Added                          : Boolean;
+
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
 
       Lib_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Declaration_File_Of (Item.Entity));
+
+      if Lib_Info = No_LI_File then
+         Trace (Me, "Resize_And_Draw: no LI file found");
+         return;
+      end if;
 
       Add_Line (General_Lines, -Kind_To_String (Get_Kind (Item.Entity)));
 
@@ -1643,6 +1650,10 @@ package body Browsers.Entities is
       Item := Add_Or_Select_Item
         (Browser => Type_Browser (Get_Widget (Child)),
          Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Add_Or_Select_Item;
 
    ------------------
