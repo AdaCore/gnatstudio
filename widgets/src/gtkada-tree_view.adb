@@ -64,6 +64,10 @@ package body Gtkada.Tree_View is
       pragma Unreferenced (Dummy);
 
    begin
+      if Tree.Lock then
+         return;
+      end if;
+
       Get_Tree_Iter (Nth (Params, 1), Iter);
       Set (Tree.Model, Iter, Tree.Expanded_State_Column, True);
 
@@ -163,5 +167,20 @@ package body Gtkada.Tree_View is
          Widget,
          After => True);
    end Initialize;
+
+   ------------------
+   -- Get_Expanded --
+   ------------------
+
+   function Get_Expanded
+     (Widget : access Tree_View_Record;
+      Iter   : Gtk_Tree_Iter) return Boolean is
+   begin
+      if Iter = Null_Iter then
+         return True;
+      else
+         return Get_Boolean (Widget.Model, Iter, Widget.Expanded_State_Column);
+      end if;
+   end Get_Expanded;
 
 end Gtkada.Tree_View;
