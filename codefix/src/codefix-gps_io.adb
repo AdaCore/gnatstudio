@@ -22,7 +22,6 @@ with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with Glide_Kernel.Scripts;  use Glide_Kernel.Scripts;
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
-with String_List_Utils;
 with String_Utils;          use String_Utils;
 with Projects.Registry;     use Projects.Registry;
 with Basic_Types;           use Basic_Types;
@@ -31,8 +30,6 @@ with Traces;                use Traces;
 package body Codefix.GPS_Io is
 
    Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
-
-   package SL renames String_List_Utils.String_List;
 
    ------------
    -- Get_Id --
