@@ -23,19 +23,23 @@ with Types;    use Types;
 package Src_Info.Prj_Utils is
 
    function Get_Source_Filename
-     (Unit_Name : Unit_Name_Type;
-      Project   : Projects.Project_Type)
-      return String;
+     (Unit_Name       : Unit_Name_Type;
+      Project         : Projects.Project_Type;
+      File_Must_Exist : Boolean := True) return String;
    --  Return the source filename for the given Unit_Name.
    --  Project and all its imported projects are tested for possible naming
    --  schemes.
    --  Unit_Name must be encoded in the same format as the Unit_Name in the 'W'
    --  lines of the GNAT ALI files (the encoding is used to determine the unit
    --  part).
+   --  This only works for files that have been registered in the project, ie
+   --  that were there when the project was last computed, unless
+   --  File_Must_Exist is False
 
    function Get_Source_Filename
      (Unit_Name : String;
-      Project   : Projects.Project_Type) return String;
+      Project   : Projects.Project_Type;
+      File_Must_Exist : Boolean := True) return String;
    --  Same as function above, on a string.
 
    function Get_Unit_Name

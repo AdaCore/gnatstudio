@@ -30,13 +30,14 @@ package body Src_Info.Prj_Utils is
    -------------------------
 
    function Get_Source_Filename
-     (Unit_Name : Unit_Name_Type; Project : Project_Type)
-      return String
+     (Unit_Name : Unit_Name_Type;
+      Project : Project_Type;
+      File_Must_Exist : Boolean := True) return String
    is
       N : constant String := Get_String (Unit_Name);
       --  Need to do a copy, since Name_Buffer is modified afterward
    begin
-      return Get_Source_Filename (N, Project);
+      return Get_Source_Filename (N, Project, File_Must_Exist);
    end Get_Source_Filename;
 
    -------------------------
@@ -45,7 +46,8 @@ package body Src_Info.Prj_Utils is
 
    function Get_Source_Filename
      (Unit_Name : String;
-      Project   : Project_Type) return String
+      Project   : Project_Type;
+      File_Must_Exist : Boolean := True) return String
    is
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
       Part        : Unit_Part;
@@ -72,7 +74,8 @@ package body Src_Info.Prj_Utils is
             N : constant String := Get_Filename_From_Unit
               (Current (Iter),
                Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len),
-               Part);
+               Part,
+               File_Must_Exist);
          begin
             if N /= "" then
                return N;
@@ -86,7 +89,8 @@ package body Src_Info.Prj_Utils is
       --  Process_With anyway
 
       return Get_Filename_From_Unit
-        (No_Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part);
+        (No_Project, Unit_Name (1 .. Unit_Name'Last - Part_Marker_Len), Part,
+         File_Must_Exist);
    end Get_Source_Filename;
 
    -------------------
