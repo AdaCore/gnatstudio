@@ -20,6 +20,7 @@ with "../ada_module/ada_module";
 with "../cpp_module/cpp_module";
 with "../aliases/aliases";
 with "../shared";
+with "../python/python";
 
 project GPS is
 

@@ -51,6 +51,8 @@ BASE_DIR=$(GLIDE_BASE_DIR)/../cpp_module
 include $(BASE_DIR)/Makefile.cpp_module
 BASE_DIR=$(GLIDE_BASE_DIR)/../aliases
 include $(BASE_DIR)/Makefile.aliases
+BASE_DIR=$(GLIDE_BASE_DIR)/../python
+include $(BASE_DIR)/Makefile.python
 
 GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)
