@@ -68,10 +68,17 @@ package body Basic_Mapper is
 
    procedure Remove_Entry
      (Mapper : in out File_Mapper_Access;
-      Text   : String) is
+      Text   : String)
+   is
+      Other : constant String := Get_Other_Text (Mapper, Text);
    begin
       Remove (Mapper.Table_1, Text);
       Remove (Mapper.Table_2, Text);
+
+      if Other /= "" then
+         Remove (Mapper.Table_1, Other);
+         Remove (Mapper.Table_2, Other);
+      end if;
    end Remove_Entry;
 
    ---------------
@@ -115,9 +122,16 @@ package body Basic_Mapper is
       Get_First (Mapper.Table_2, Element);
 
       while Get_Element (Element) /= No_Element loop
-         Ada.Text_IO.Put_Line (File, Get_Element (Element).all);
-         Ada.Text_IO.Put_Line
-           (File, Get_Other_Text (Mapper, Get_Element (Element).all));
+         declare
+            Text  : constant String := Get_Element (Element).all;
+            Other : constant String := Get_Other_Text (Mapper, Text);
+         begin
+            if Text /= "" and then Other /= "" then
+               Ada.Text_IO.Put_Line (File, Text);
+               Ada.Text_IO.Put_Line (File, Other);
+            end if;
+         end;
+
          Get_Next (Mapper.Table_2, Element);
       end loop;
 
