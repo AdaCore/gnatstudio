@@ -27,6 +27,11 @@ package Log_Utils is
    --  This subprogram must be called before calling any subprogram
    --  from this package.
 
+   function Get_ChangeLog_From_File
+     (File_Name : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Returns the global ChangeLog file given a File_Name. A global ChangeLog
+   --  is named ChangeLog and is placed into the same directory as File_Name.
+
    function Get_Log_From_File
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File;
@@ -45,6 +50,13 @@ package Log_Utils is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : VFS.Virtual_File) return String;
    --   Return the log for the given file.
+
+   procedure Get_Log_From_ChangeLog
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File);
+   --  Read the global ChangeLog entry for File_Name and write it into the
+   --  log file corresponding to File_Name. If a current log file exists it
+   --  does nothing.
 
    procedure Remove_File_From_Mapping
      (Kernel    : access Kernel_Handle_Record'Class;
