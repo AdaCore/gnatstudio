@@ -10454,7 +10454,7 @@ c -------------------------------------------
 There exist various solutions to spawn external processes from a script:
 
 @itemize
-@item Use the functionalities provided by the @code{GPS.Console} class
+@item Use the functionalities provided by the @code{GPS.Process} class
 @item Execute a GPS action through @code{GPS.execute_action}.
 
 This action should have an @code{<external>} XML node indicating how to
