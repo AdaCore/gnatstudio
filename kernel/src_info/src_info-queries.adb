@@ -71,7 +71,7 @@ package body Src_Info.Queries is
       Record_Kind           => True,
       Signed_Integer        => False,
       String_Kind           => False,
-      Task_Kind             => False);
+      Task_Kind             => True);
    --  This table should contain true if the corresponding element should
    --  appear when computing the full scope name for an entity (see
    --  Get_Full_Name).
@@ -80,6 +80,8 @@ package body Src_Info.Queries is
      (Procedure_Kind        => True,
       Function_Or_Operator  => True,
       Entry_Or_Entry_Family => True,
+      Task_Kind             => True,
+      Package_Kind          => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a subprogram
