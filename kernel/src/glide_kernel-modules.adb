@@ -1501,23 +1501,14 @@ package body Glide_Kernel.Modules is
 
       if Enable_Navigation then
          declare
-            Length : Integer := Column_End - Column;
-            Args   : Argument_List (1 .. 8);
-         begin
-            if Length <= 0 then
-               Length := 0;
-            end if;
-
-            Args (1 .. 8) :=
+            Length : constant Integer := Integer'Max (0, Column_End - Column);
+            Args   : Argument_List :=
               (new String'("edit"),
-               new String'("-l"),
+               new String'(Real_File.all),
                new String'(Image (Line)),
-               new String'("-c"),
                new String'(Image (Column)),
-               new String'("-L"),
-               new String'(Image (Length)),
-               new String'(Real_File.all));
-
+               new String'(Image (Length)));
+         begin
             Execute_GPS_Shell_Command (Kernel, "add_location_command", Args);
             Free (Args);
          end;
