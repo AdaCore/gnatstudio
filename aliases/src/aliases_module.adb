@@ -185,8 +185,8 @@ package body Aliases_Module is
    type String_Menu_Item is access all String_Menu_Item_Record'Class;
 
    procedure Gtk_New
-     (Item : out String_Menu_Item;
-      View : access Gtk_Text_View_Record'Class;
+     (Item           : out String_Menu_Item;
+      View           : access Gtk_Text_View_Record'Class;
       Label, Special : String);
    --  Create a new String_Menu_Item.
 
@@ -195,7 +195,7 @@ package body Aliases_Module is
    --  defined aliases
 
    procedure Find_Current_Entity
-     (Text : String;
+     (Text        : String;
       Current_Pos : Integer;
       First, Last : out Integer);
    --  Set First .. Last to the beginning and end of the current alias name.
@@ -252,9 +252,9 @@ package body Aliases_Module is
    --  aliases).
 
    procedure Add_New_Alias
-     (Editor   : access Alias_Editor_Record'Class;
-      Name     : String;
-      Selected : Boolean := False;
+     (Editor    : access Alias_Editor_Record'Class;
+      Name      : String;
+      Selected  : Boolean := False;
       Read_Only : Boolean := False);
    --  Add a new entry in the aliases list of the editor
 
@@ -308,10 +308,10 @@ package body Aliases_Module is
    --  Parse the expansion of the alias, and update the list of parameters
 
    procedure Find_Next_Parameter
-     (Editor  : access Alias_Editor_Record'Class;
-      Start   : out Gtk_Text_Iter;
-      Current : in out Gtk_Text_Iter;
-      Last    : Gtk_Text_Iter;
+     (Editor       : access Alias_Editor_Record'Class;
+      Start        : out Gtk_Text_Iter;
+      Current      : in out Gtk_Text_Iter;
+      Last         : Gtk_Text_Iter;
       All_Specials : Boolean);
    --  Starting from Current, find the occurrence of the next parameter
    --  reference in Editor.Expansion. On exit, Start .. Current points to
@@ -500,9 +500,9 @@ package body Aliases_Module is
    procedure Save_Aliases (Kernel : access Kernel_Handle_Record'Class) is
       Filename : constant String := Get_Home_Dir (Kernel) & "aliases";
       File, Key, Child  : Node_Ptr;
-      Iter  : Iterator;
-      Value : Alias_Record;
-      P     : Param_Access;
+      Iter              : Iterator;
+      Value             : Alias_Record;
+      P                 : Param_Access;
    begin
       File := new Node;
       File.Tag := new String'("Aliases");
@@ -588,7 +588,7 @@ package body Aliases_Module is
    -------------------------
 
    procedure Find_Current_Entity
-     (Text : String;
+     (Text        : String;
       Current_Pos : Integer;
       First, Last : out Integer) is
    begin
@@ -641,7 +641,7 @@ package body Aliases_Module is
    function Substitute_Params
      (Text : String; Values : Param_Substitution_Access) return String
    is
-      P : Param_Substitution_Access := Values;
+      P     : Param_Substitution_Access := Values;
       Count : Natural := 0;
    begin
       while P /= null loop
@@ -1010,10 +1010,10 @@ package body Aliases_Module is
    ----------------------
 
    procedure Save_Current_Var (Editor : access Alias_Editor_Record'Class) is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Editor.Expansion);
+      Buffer      : constant Gtk_Text_Buffer := Get_Buffer (Editor.Expansion);
       Start, Last : Gtk_Text_Iter;
-      P      : Param_Access;
-      Iter   : Gtk_Tree_Iter;
+      P           : Param_Access;
+      Iter        : Gtk_Tree_Iter;
    begin
       if Editor.Current_Var /= null then
          Iter := Get_Iter_First (Editor.Variables_Model);
@@ -1053,11 +1053,11 @@ package body Aliases_Module is
    procedure Alias_Selection_Changed
      (Editor : access Gtk_Widget_Record'Class)
    is
-      Ed : constant Alias_Editor := Alias_Editor (Editor);
-      Model : Gtk_Tree_Model;
-      Iter : Gtk_Tree_Iter;
-      Alias : Alias_Record := No_Alias;
-      P : Param_Access;
+      Ed          : constant Alias_Editor := Alias_Editor (Editor);
+      Model       : Gtk_Tree_Model;
+      Iter        : Gtk_Tree_Iter;
+      Alias       : Alias_Record := No_Alias;
+      P           : Param_Access;
       Start, Last : Gtk_Text_Iter;
    begin
       Save_Current_Var (Ed);
@@ -1109,9 +1109,9 @@ package body Aliases_Module is
    -------------------
 
    procedure Alias_Renamed (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Alias_Editor := Alias_Editor (Editor);
-      Model : Gtk_Tree_Model;
-      Iter : Gtk_Tree_Iter;
+      Ed      : constant Alias_Editor := Alias_Editor (Editor);
+      Model   : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter;
       Message : Message_Dialog_Buttons;
       pragma Unreferenced (Message);
    begin
@@ -1167,10 +1167,10 @@ package body Aliases_Module is
    -------------------
 
    procedure Alias_Deleted (Editor : access Gtk_Widget_Record'Class) is
-      Ed : constant Alias_Editor := Alias_Editor (Editor);
+      Ed    : constant Alias_Editor := Alias_Editor (Editor);
       Value : Alias_Record;
       Model : Gtk_Tree_Model;
-      Iter : Gtk_Tree_Iter;
+      Iter  : Gtk_Tree_Iter;
    begin
       if Ed.Current_Var /= null then
          Value := Get_Value (Ed, Ed.Current_Var.all);
@@ -1210,9 +1210,9 @@ package body Aliases_Module is
      (Editor : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Ed : constant Alias_Editor := Alias_Editor (Editor);
+      Ed          : constant Alias_Editor := Alias_Editor (Editor);
       Path_String : constant String := Get_String (Nth (Params, 1));
-      Iter   : constant Gtk_Tree_Iter :=
+      Iter        : constant Gtk_Tree_Iter :=
         Get_Iter_From_String (Ed.Variables_Model, Path_String);
    begin
       --  Set the default value as no longer editable
@@ -1231,14 +1231,14 @@ package body Aliases_Module is
    -------------------------
 
    procedure Find_Next_Parameter
-     (Editor  : access Alias_Editor_Record'Class;
-      Start   : out Gtk_Text_Iter;
-      Current : in out Gtk_Text_Iter;
-      Last    : Gtk_Text_Iter;
+     (Editor       : access Alias_Editor_Record'Class;
+      Start        : out Gtk_Text_Iter;
+      Current      : in out Gtk_Text_Iter;
+      Last         : Gtk_Text_Iter;
       All_Specials : Boolean)
    is
       Last_Offset : constant Gint := Get_Offset (Last);
-      Result : Boolean;
+      Result      : Boolean;
    begin
       Copy (Source => Current, Dest => Start);
 
@@ -1297,7 +1297,7 @@ package body Aliases_Module is
    -----------------
 
    procedure Update_Vars (Editor : access Alias_Editor_Record'Class) is
-      Iter : Gtk_Tree_Iter := Get_Iter_First (Editor.Variables_Model);
+      Iter  : Gtk_Tree_Iter := Get_Iter_First (Editor.Variables_Model);
       Start, Current, Last : Gtk_Text_Iter;
       Found : Boolean;
    begin
@@ -1355,10 +1355,10 @@ package body Aliases_Module is
      (Editor : access Gtk_Widget_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Pos, Eol  : Gtk_Text_Iter;
+      Length   : constant Gint := Get_Int (Nth (Params, 3));
       --   Text : constant String := Get_String (Nth (Params, 2));
-      Length : constant Gint := Get_Int (Nth (Params, 3));
-      Result : Boolean;
+      Pos, Eol : Gtk_Text_Iter;
+      Result   : Boolean;
    begin
       Get_Text_Iter (Nth (Params, 1), Pos);
       Copy (Source => Pos, Dest => Eol);
@@ -1384,7 +1384,7 @@ package body Aliases_Module is
       Params : Glib.Values.GValues)
    is
       Start, Last : Gtk_Text_Iter;
-      Result : Boolean;
+      Result      : Boolean;
    begin
       Get_Text_Iter (Nth (Params, 1), Start);
       Get_Text_Iter (Nth (Params, 2), Last);
@@ -1430,8 +1430,8 @@ package body Aliases_Module is
    -------------
 
    procedure Gtk_New
-     (Item : out String_Menu_Item;
-      View : access Gtk_Text_View_Record'Class;
+     (Item           : out String_Menu_Item;
+      View           : access Gtk_Text_View_Record'Class;
       Label, Special : String) is
    begin
       Item := new String_Menu_Item_Record (Length => Special'Length);
@@ -1445,9 +1445,9 @@ package body Aliases_Module is
    --------------------
 
    procedure Insert_Special (Item : access Gtk_Widget_Record'Class) is
-      It : constant String_Menu_Item := String_Menu_Item (Item);
+      It     : constant String_Menu_Item := String_Menu_Item (Item);
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (It.View);
-      Iter : Gtk_Text_Iter;
+      Iter   : Gtk_Text_Iter;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
       Insert (Buffer, Iter, It.Special);
@@ -1538,20 +1538,20 @@ package body Aliases_Module is
    procedure Gtk_New
      (Editor : out Alias_Editor; Kernel : access Kernel_Handle_Record'Class)
    is
-      Box    : Gtk_Box;
-      Pane   : Gtk_Paned;
-      Render : Gtk_Cell_Renderer_Text;
-      Toggle_Render : Gtk_Cell_Renderer_Toggle;
-      Col    : Gtk_Tree_View_Column;
-      Number : Gint;
-      Event  : Gtk_Event_Box;
-      Frame  : Gtk_Frame;
-      Color  : Gdk_Color;
+      Box              : Gtk_Box;
+      Pane             : Gtk_Paned;
+      Render           : Gtk_Cell_Renderer_Text;
+      Toggle_Render    : Gtk_Cell_Renderer_Toggle;
+      Col              : Gtk_Tree_View_Column;
+      Number           : Gint;
+      Event            : Gtk_Event_Box;
+      Frame            : Gtk_Frame;
+      Color            : Gdk_Color;
       Expansion_Buffer : Gtk_Text_Buffer;
-      Scrolled : Gtk_Scrolled_Window;
-      Button : Gtk_Button;
-      Sep    : Gtk_Separator;
-      W      : Gtk_Widget;
+      Scrolled         : Gtk_Scrolled_Window;
+      Button           : Gtk_Button;
+      Sep              : Gtk_Separator;
+      W                : Gtk_Widget;
       pragma Unreferenced (Number, W);
    begin
       Editor := new Alias_Editor_Record;
@@ -1751,9 +1751,9 @@ package body Aliases_Module is
    -------------------
 
    procedure Add_New_Alias
-     (Editor   : access Alias_Editor_Record'Class;
-      Name     : String;
-      Selected : Boolean := False;
+     (Editor    : access Alias_Editor_Record'Class;
+      Name      : String;
+      Selected  : Boolean := False;
       Read_Only : Boolean := False)
    is
       procedure Set_Alias
@@ -1801,9 +1801,9 @@ package body Aliases_Module is
    ---------------------
 
    procedure Update_Contents (Editor : access Alias_Editor_Record'Class) is
-      Iter       : Iterator;
-      Value      : Alias_Record;
-      It         : Gtk_Tree_Iter;
+      Iter  : Iterator;
+      Value : Alias_Record;
+      It    : Gtk_Tree_Iter;
    begin
       Clear (Editor.Aliases_Model);
       Get_First (Aliases_Module_Id.Aliases, Iter);
@@ -1832,8 +1832,8 @@ package body Aliases_Module is
    --------------------
 
    procedure Update_Aliases (Editor : access Alias_Editor_Record'Class) is
-      Iter       : Iterator;
-      Value      : Alias_Record;
+      Iter  : Iterator;
+      Value : Alias_Record;
    begin
       Get_First (Editor.Local_Aliases, Iter);
 
@@ -1901,10 +1901,10 @@ package body Aliases_Module is
    -----------------------------------
 
    procedure Register_Special_Alias_Entity
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel      : access Glide_Kernel.Kernel_Handle_Record'Class;
       Description : String;
-      Entity  : Character;
-      Func    : Alias_Expansion_Function)
+      Entity      : Character;
+      Func        : Alias_Expansion_Function)
    is
       pragma Unreferenced (Kernel);
    begin
