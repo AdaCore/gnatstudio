@@ -1164,7 +1164,7 @@ package body Browsers.Call_Graph is
                 Subprogram_Category
             then
                Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
-                        & (-" calls..."));
+                        & (-" calls"));
                Append (Submenu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -1173,7 +1173,7 @@ package body Browsers.Call_Graph is
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
-                        & (-" is called by..."));
+                        & (-" is called by"));
                Append (Submenu, Item);
                Context_Callback.Connect
                  (Item, "activate",
