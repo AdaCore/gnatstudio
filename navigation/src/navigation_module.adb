@@ -45,6 +45,8 @@ package body Navigation_Module is
 
    Me : constant Debug_Handle := Create ("Navigation");
 
+   use Command_Queues;
+
    type Navigation_Module_Record is new Module_ID_Record with record
       --  Fields related to back/forward navigation.
 
@@ -52,8 +54,12 @@ package body Navigation_Module is
       --  This boolean indicates whether we are going backwards in the
       --  location history.
 
-      Locations_Queue : Commands.Command_Queue;
-      --  Queue containing the location-related commands.
+      Back    : List;
+      Forward : List;
+      --  The past and "future" locations.
+
+      Current_Location : Command_Access;
+      --  The currently visited location.
 
       Back_Button : Gtk.Widget.Gtk_Widget;
       Forward_Button : Gtk.Widget.Gtk_Widget;
@@ -125,7 +131,7 @@ package body Navigation_Module is
               Get_Boolean (Data (Data'First + 3));
             Navigate  : constant Boolean :=
               Get_Boolean (Data (Data'First + 4));
-
+            Success   : Boolean;
          begin
             if not Navigate then
                return False;
@@ -138,7 +144,14 @@ package body Navigation_Module is
                     Integer (Column),
                     Highlight);
 
-            Enqueue (N_Data.Locations_Queue, Location_Command);
+            if N_Data.Current_Location /= null then
+               Prepend (N_Data.Back, N_Data.Current_Location);
+            end if;
+
+            N_Data.Current_Location := Command_Access (Location_Command);
+            Success := Execute (N_Data.Current_Location);
+            Free (N_Data.Forward);
+
             Refresh_Location_Buttons (Kernel);
 
             return True;
@@ -156,21 +169,26 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Data : Navigation_Module :=
+      Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
+      Success : Boolean;
    begin
-      --  If we are not already navigating backwards, that means that
-      --  the first location on the undo pile is the one that we are
-      --  visiting right now, therefore we must move back one
-      --  additional step.
+      if not Is_Empty (Data.Back) then
 
-      if not Data.Moving_Back then
-         Undo (Data.Locations_Queue);
-         Data.Moving_Back := True;
+         if Data.Current_Location /= null then
+            Prepend (Data.Forward, Data.Current_Location);
+         end if;
+
+         Data.Current_Location := Head (Data.Back);
+         Success := Execute (Data.Current_Location);
+         Next (Data.Back, Free_Data => False);
       end if;
 
-      Undo (Data.Locations_Queue);
       Refresh_Location_Buttons (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Back;
 
    ----------------
@@ -181,16 +199,25 @@ package body Navigation_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Data : Navigation_Module :=
+      Data    : Navigation_Module :=
         Navigation_Module (Navigation_Module_ID);
+      Success : Boolean;
    begin
-      if Data.Moving_Back then
-         Redo (Data.Locations_Queue);
-         Data.Moving_Back := False;
+      if not Is_Empty (Data.Forward) then
+         if Data.Current_Location /= null then
+            Prepend (Data.Back, Data.Current_Location);
+         end if;
+
+         Data.Current_Location := Head (Data.Forward);
+         Success := Execute (Data.Current_Location);
+         Next (Data.Forward, Free_Data => False);
       end if;
 
-      Redo (Data.Locations_Queue);
       Refresh_Location_Buttons (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Forward;
 
    -------------------
@@ -313,8 +340,6 @@ package body Navigation_Module is
          Kernel_Callback.To_Marshaller (On_Forward'Access),
          Kernel_Handle (Kernel));
 
-      Navigation_Module (Navigation_Module_ID).Locations_Queue
-        := New_Queue;
       Refresh_Location_Buttons (Kernel);
    end Register_Module;
 
@@ -330,9 +355,9 @@ package body Navigation_Module is
         Navigation_Module (Navigation_Module_ID);
    begin
       Set_Sensitive (Data.Back_Button,
-                     not Undo_Queue_Empty (Data.Locations_Queue));
+                     not Is_Empty (Data.Back));
       Set_Sensitive (Data.Forward_Button,
-                     not Redo_Queue_Empty (Data.Locations_Queue));
+                     not Is_Empty (Data.Forward));
    end Refresh_Location_Buttons;
 
    -------------
@@ -341,7 +366,9 @@ package body Navigation_Module is
 
    procedure Destroy (Id : in out Navigation_Module_Record) is
    begin
-      Free_Queue (Id.Locations_Queue);
+      Free (Id.Back);
+      Free (Id.Current_Location);
+      Free (Id.Forward);
    end Destroy;
 
 end Navigation_Module;
