@@ -310,16 +310,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_Widget_Height), -"General");
 
-      Animated_Image := Param_Spec_String (Gnew_String
-        (Name    => "General-Animated-Image",
-         Nick    => -"Animated image",
-         Blurb   => -("Animated image used to inform the user about"
-                      & " a command in process"),
-         Default => "gps-animation.gif",
-         Flags   => Param_Readable));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Animated_Image), -"General");
-
       Use_Native_Dialogs := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "General-Use-Native-Dialogs",
          Nick    => -"Native dialogs",

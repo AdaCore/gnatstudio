@@ -165,7 +165,6 @@ package Glide_Kernel.Preferences is
    Default_Charset       : Param_Spec_String;
    Default_Widget_Width  : Param_Spec_Int;
    Default_Widget_Height : Param_Spec_Int;
-   Animated_Image        : Param_Spec_String;
    Splash_Screen         : Param_Spec_Boolean;
    Display_Welcome       : Param_Spec_Boolean;
    Toolbar_Show_Text     : Param_Spec_Boolean;
