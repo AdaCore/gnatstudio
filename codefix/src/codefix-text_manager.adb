@@ -1253,12 +1253,16 @@ package body Codefix.Text_Manager is
       Current_Info := Get_Structure (This).Last;
       Seeker (Current_Info.Sloc_Start);
 
-      declare
-         Result_Stack : constant String := Result_Name.all;
-      begin
-         Free (Result_Name);
-         return Result_Stack;
-      end;
+      if Result_Name /= null then
+         declare
+            Result_Stack : constant String := Result_Name.all;
+         begin
+            Free (Result_Name);
+            return Result_Stack;
+         end;
+      else
+         return "";
+      end if;
    end Get_Extended_Unit_Name;
 
    ---------------------
