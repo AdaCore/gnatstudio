@@ -82,6 +82,9 @@ package body KeyManager_Module is
 
    Me : constant Debug_Handle := Create ("Keymanager");
 
+   Use_Macro : constant Debug_Handle := Create ("Keymanager.Macro", Off);
+   --  ??? For now disable by default since this is a work in progress
+
    File_Cst                  : aliased constant String := "file";
    Speed_Cst                 : aliased constant String := "speed";
    Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
@@ -148,7 +151,8 @@ package body KeyManager_Module is
    type Keymap_Record is record
       Table : Key_Htable.HTable;
    end record;
-   for Keymap_Record'Alignment use Integer'Min (8, Standard'Maximum_Alignment);
+   for Keymap_Record'Alignment use
+     Integer'Min (16, Standard'Maximum_Alignment);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
@@ -2051,13 +2055,18 @@ package body KeyManager_Module is
         (General_Event_Handler'Access,
          Convert (Kernel_Handle (Kernel)));
 
+      --  Ideally we would want to put the menu item before Edit->Preferences,
+      --  but due to order or initialization constraints this is not yet
+      --  possible ???
+
       Register_Menu
-        (Kernel, Edit_Menu, -"_Key shortcuts",
-         Callback => On_Edit_Keys'Access);
+        (Kernel, Edit_Menu,
+         -"_Key shortcuts",
+         Callback   => On_Edit_Keys'Access,
+         Ref_Item   => -"Preferences",
+         Add_Before => False);
 
-      --  ??? For now disable these menus since this is a work in progress
-
-      if False then
+      if Active (Use_Macro) then
          Register_Menu
            (Kernel, Macro_Menu, -"_Start Recording",
             Callback => On_Start_Recording'Access);
@@ -2078,20 +2087,19 @@ package body KeyManager_Module is
            (Kernel, Macro_Menu, -"_Save As...",
             Callback  => On_Save_Macro'Access,
             Sensitive => False);
+         Register_Command
+           (Kernel, "macro_play",
+            Maximum_Args => 1,
+            Handler      => Macro_Command_Handler'Access);
+         Register_Command
+           (Kernel, "macro_record",
+            Handler      => Macro_Command_Handler'Access);
+         Register_Command
+           (Kernel, "macro_load",
+            Minimum_Args => 1,
+            Maximum_Args => 1,
+            Handler      => Macro_Command_Handler'Access);
       end if;
-
-      Register_Command
-        (Kernel, "macro_play",
-         Maximum_Args => 1,
-         Handler      => Macro_Command_Handler'Access);
-      Register_Command
-        (Kernel, "macro_record",
-         Handler      => Macro_Command_Handler'Access);
-      Register_Command
-        (Kernel, "macro_load",
-         Minimum_Args => 1,
-         Maximum_Args => 1,
-         Handler      => Macro_Command_Handler'Access);
    end Register_Module;
 
 end KeyManager_Module;
