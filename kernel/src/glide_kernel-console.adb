@@ -25,6 +25,7 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with GNAT.IO;              use GNAT.IO;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.MDI;           use Gtkada.MDI;
@@ -382,7 +383,7 @@ package body Glide_Kernel.Console is
    ------------------------
 
    procedure Initialize_Console
-     (Kernel         : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class)
    is
       Console             : Glide_Interactive_Console;
       Interactive_Console : Glide_Interactive_Console;
@@ -393,7 +394,8 @@ package body Glide_Kernel.Console is
                "",
                null,
                GObject (Kernel),
-               Get_Pref (Kernel, Default_Font));
+               Get_Pref (Kernel, Default_Font),
+               Wrap_Char);
       Enable_Prompt_Display (Console, False);
 
       Child := Put
@@ -407,7 +409,8 @@ package body Glide_Kernel.Console is
                "GPS> ",
                Interpret_Command_Handler'Access,
                GObject (Kernel),
-               Get_Pref (Kernel, Keyword_Font));
+               Get_Pref (Kernel, Default_Font),
+               Wrap_Char);
       Child := Put
         (Get_MDI (Kernel), Interactive_Console,
          Iconify_Button or Maximize_Button);
