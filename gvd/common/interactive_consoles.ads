@@ -142,6 +142,11 @@ package Interactive_Consoles is
       return GNAT.OS_Lib.String_List_Access;
    --  Return the command history.
 
+   function Get_View
+     (Console : access Interactive_Console_Record)
+      return Gtk.Text_View.Gtk_Text_View;
+   --  Return the text view.
+
 private
 
    type Interactive_Console_Record is new
