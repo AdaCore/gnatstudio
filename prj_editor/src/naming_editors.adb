@@ -32,14 +32,14 @@ with Namet;                   use Namet;
 with Prj;                     use Prj;
 with Prj_API;                 use Prj_API;
 with String_Utils;            use String_Utils;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body Naming_Editors is
 
    procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
    --  Called when the naming editor is destroyed.
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Naming_Array, Language_Naming_Array_Access);
 
    ----------------
@@ -116,6 +116,7 @@ package body Naming_Editors is
 
       begin
          --  Has the page already been created ?
+
          if Editor.Pages /= null then
             for P in Editor.Pages'Range loop
                if To_Lower (Editor.Pages (P).Language.all) =
@@ -125,6 +126,7 @@ package body Naming_Editors is
 
                   --  If the page has already been created, but is not visible,
                   --  then show it.
+
                   if not Editor.Pages (P).Is_Visible then
                      Editor.Pages (P).Is_Visible := True;
                      Gtk_New (Label, Editor.Pages (P).Language.all);
@@ -166,6 +168,7 @@ package body Naming_Editors is
          end if;
 
          --  Create the new page
+
          Last := Editor.Pages'Last;
          Editor.Pages (Last).Language := new String' (Name);
          Mixed_Case (Editor.Pages (Last).Language.all);
@@ -203,7 +206,7 @@ package body Naming_Editors is
          for P in Editor.Pages'Range loop
             if Editor.Pages (P).Is_Visible
               and then not Contains
-              (Languages, Editor.Pages (P).Language.all, False)
+                (Languages, Editor.Pages (P).Language.all, False)
             then
                Editor.Pages (P).Is_Visible := False;
 
