@@ -20,6 +20,7 @@
 
 pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
+with GNAT.Expect.TTY; use GNAT.Expect.TTY;
 pragma Warnings (On);
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GVD.Preferences; use GVD.Preferences;
@@ -62,7 +63,7 @@ package body GVD.Proc_Utils is
 
    type Process_Record is record
       Builtin    : Builtin_Handle;
-      Descriptor : Process_Descriptor;
+      Descriptor : Process_Descriptor_Access;
       Remote     : Boolean;
    end record;
 
@@ -72,13 +73,20 @@ package body GVD.Proc_Utils is
    procedure Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Process_Descriptor'Class, Process_Descriptor_Access);
+
    ---------------------
    -- Close_Processes --
    ---------------------
 
    procedure Close_Processes (Handle : in out Process_Handle) is
    begin
-      Close (Handle.Descriptor);
+      if not Is_Implemented or else Handle.Remote then
+         Close (Handle.Descriptor.all);
+         Free (Handle.Descriptor);
+      end if;
+
       Close_Processes (Handle.Builtin);
       Free (Handle);
    end Close_Processes;
@@ -100,12 +108,12 @@ package body GVD.Proc_Utils is
       end if;
 
       Success := False;
-      Expect (Handle.Descriptor, Match, "\n");
+      Expect (Handle.Descriptor.all, Match, "\n");
 
       if Match = 1 then
          declare
             S     : constant String :=
-              Strip_CR (Expect_Out (Handle.Descriptor));
+              Strip_CR (Expect_Out (Handle.Descriptor.all));
             Index : Integer := S'First;
          begin
             Skip_Blanks (S, Index);
@@ -115,8 +123,17 @@ package body GVD.Proc_Utils is
                Info_Len => S'Last - Index - 1,
                Id       => S (S'First .. Index),
                Info     => S (Index + 1 .. S'Last - 1));
-            Success := True;
+
+         exception
+            when Constraint_Error =>
+               Info :=
+                 (Id_Len   => 0,
+                  Info_Len => 0,
+                  Id       => "",
+                  Info     => "");
          end;
+
+         Success := True;
       end if;
 
    exception
@@ -141,6 +158,12 @@ package body GVD.Proc_Utils is
          return;
       end if;
 
+      if Use_Ptys then
+         Handle.Descriptor := new TTY_Process_Descriptor;
+      else
+         Handle.Descriptor := new Process_Descriptor;
+      end if;
+
       Skip_To_Char (Exec_Command, Command_Index, ' ');
       Args := Argument_String_To_List
         (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
@@ -150,11 +173,12 @@ package body GVD.Proc_Utils is
       begin
          New_Args (Args'First .. Args'Last) := Args.all;
          New_Args (New_Args'Last) := new String' (Get_Pref (List_Processes));
+
          Non_Blocking_Spawn
-           (Handle.Descriptor,
+           (Handle.Descriptor.all,
             Exec_Command (Exec_Command'First .. Command_Index - 1),
             New_Args);
-         Expect (Handle.Descriptor, Match, "\n");
+         Expect (Handle.Descriptor.all, Match, "\n");
 
          for J in New_Args'Range loop
             Free (New_Args (J));
@@ -162,6 +186,9 @@ package body GVD.Proc_Utils is
       end;
 
       Free (Args);
+
+   exception
+      when Process_Died => null;
    end Open_Processes;
 
    procedure Open_Processes (Handle : out Process_Handle; Host : String) is
@@ -171,13 +198,23 @@ package body GVD.Proc_Utils is
    begin
       Handle := new Process_Record;
       Handle.Remote := True;
+
+      if Use_Ptys then
+         Handle.Descriptor := new TTY_Process_Descriptor;
+      else
+         Handle.Descriptor := new Process_Descriptor;
+      end if;
+
       New_Args (2) := new String' (Get_Pref (List_Processes));
       New_Args (1) := new String' (Host);
       Non_Blocking_Spawn
-        (Handle.Descriptor, Get_Pref (Remote_Protocol), New_Args);
-      Expect (Handle.Descriptor, Match, "\n");
+        (Handle.Descriptor.all, Get_Pref (Remote_Protocol), New_Args);
+      Expect (Handle.Descriptor.all, Match, "\n");
       Free (New_Args (1));
       Free (New_Args (2));
+
+   exception
+      when Process_Died => null;
    end Open_Processes;
 
 end GVD.Proc_Utils;
