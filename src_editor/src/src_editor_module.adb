@@ -1114,10 +1114,12 @@ package body Src_Editor_Module is
 
       Undo_Redo.Undo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"Undo", Stock_Undo,
-                       null, GDK_Z, Control_Mask, Ref_Item => -"Preferences");
+                       null, GDK_Z, Control_Mask, Ref_Item => -"Preferences",
+                       Sensitive => False);
       Undo_Redo.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"Redo", Stock_Redo,
-                       null, GDK_R, Control_Mask, Ref_Item => -"Preferences");
+                       null, GDK_R, Control_Mask, Ref_Item => -"Preferences",
+                       Sensitive => False);
 
       Gtk_New (Mitem);
       Register_Menu
