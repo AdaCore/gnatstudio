@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,8 +20,12 @@
 
 --  This package defines the GLIDE module for communication with VCS.
 
+with Glide_Kernel;
+
 package VCS_Module is
-   procedure Register_Module;
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
 end VCS_Module;
