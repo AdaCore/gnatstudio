@@ -9,12 +9,6 @@ with Hyper_Grep_Window_Pkg.Callbacks; use Hyper_Grep_Window_Pkg.Callbacks;
 
 with Gtk.Main; use Gtk.Main;
 
---  with Language;      use Language;
---  With Language.Ada;  use Language.Ada;
---  With Language.C;    use Language.C;
---  With Language.Cpp;  use Language.Cpp;
---  With Language.Java; use Language.Java;
-
 package body Hyper_Grep_Window_Pkg is
 
    ----------------------
@@ -53,11 +47,6 @@ begin
 
    Files_Activation (Hyper_Grep_Window,
                      not Get_Active (Hyper_Grep_Window.Only_Project_Check));
-
---     Add_File_Extensions (Ada_Lang,  "*.ad[sb]");
---     Add_File_Extensions (C_Lang,    "*.[ch]");
---     Add_File_Extensions (Cpp_Lang,  "*.{cxx,cpp,h}");
---     Add_File_Extensions (Java_Lang, "*.java");
 end Gtk_New;
 
 procedure Initialize (Hyper_Grep_Window : access Hyper_Grep_Window_Record'Class) is
