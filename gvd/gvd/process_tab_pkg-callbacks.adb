@@ -67,6 +67,19 @@ package body Process_Tab_Pkg.Callbacks is
       return True;
    end On_Process_Tab_Delete_Event;
 
+   --------------------------------
+   -- On_Data_Paned_Delete_Event --
+   --------------------------------
+
+   function On_Data_Paned_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      --  Arg1 : Gdk_Event := To_Event (Params, 1);
+   begin
+      return True;
+   end On_Data_Paned_Delete_Event;
+
    ------------------------------
    -- On_Stack_List_Select_Row --
    ------------------------------
@@ -120,6 +133,32 @@ package body Process_Tab_Pkg.Callbacks is
       end if;
       return False;
    end On_Stack_List_Button_Press_Event;
+
+   ---------------------------------
+   -- On_Editor_Text_Delete_Event --
+   ---------------------------------
+
+   function On_Editor_Text_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      --  Arg1 : Gdk_Event := To_Event (Params, 1);
+   begin
+      return True;
+   end On_Editor_Text_Delete_Event;
+
+   --------------------------------------------
+   -- On_Command_Scrolledwindow_Delete_Event --
+   --------------------------------------------
+
+   function On_Command_Scrolledwindow_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      --  Arg1 : Gdk_Event := To_Event (Params, 1);
+   begin
+      return True;
+   end On_Command_Scrolledwindow_Delete_Event;
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --

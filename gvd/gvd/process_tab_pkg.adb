@@ -89,6 +89,9 @@ begin
    Child := Put (Process_Tab.Process_Mdi, Process_Tab.Data_Paned);
    Set_Title (Child, "Data");
    Dock_Child (Child, Side => Top);
+   --  Pack_Start (Process_Tab.Process_Mdi, Process_Tab.Data_Paned, True, True, 0);
+   Return_Callback.Object_Connect
+     (Process_Tab.Data_Paned, "delete_event", On_Data_Paned_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -162,12 +165,16 @@ begin
    Maximize_Children (Process_Tab.Process_Mdi);
    --  Dock_Child (Child, Side => Right);
    --  Dock_Child (Child, Side => Bottom);
+   Return_Callback.Object_Connect
+     (Process_Tab.Editor_Text, "delete_event", On_Editor_Text_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Command_Scrolledwindow);
    Set_Policy (Process_Tab.Command_Scrolledwindow, Policy_Never, Policy_Always);
    Child := Put (Process_Tab.Process_Mdi, Process_Tab.Command_Scrolledwindow);
    Set_Title (Child, "Console");
    Dock_Child (Child, Side => Bottom);
+   Return_Callback.Object_Connect
+     (Process_Tab.Command_Scrolledwindow, "delete_event", On_Command_Scrolledwindow_Delete_Event'Access, Process_Tab);
 
    Gtk_New (Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
