@@ -1003,8 +1003,10 @@ package body Src_Editor_Module is
                then
                   Select_Region
                     (Buffer,
-                     Gint (First_Line - 1), Gint (Start_Column - 1),
-                     Gint (Last_Line - 1), Gint (End_Column - 1));
+                     Editable_Line_Type (First_Line),
+                     Start_Column,
+                     Editable_Line_Type (Last_Line),
+                     End_Column);
                end if;
             end if;
          end;
@@ -1592,7 +1594,7 @@ package body Src_Editor_Module is
          declare
             Filename    : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Line        : constant Integer := Nth_Arg (Data, 2);
+            Line        : constant Integer := Nth_Arg (Data, 2, 0);
             Child       : MDI_Child;
             Box         : Source_Box;
          begin
@@ -1600,8 +1602,14 @@ package body Src_Editor_Module is
 
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
-               Src_Editor_Buffer.Line_Information.Fold_Block
-                 (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+
+               if Line = 0 then
+                  Src_Editor_Buffer.Line_Information.Fold_All
+                    (Get_Buffer (Box.Editor));
+               else
+                  Src_Editor_Buffer.Line_Information.Fold_Block
+                    (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+               end if;
             else
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
@@ -1611,7 +1619,7 @@ package body Src_Editor_Module is
          declare
             Filename    : constant Virtual_File :=
               Create (Nth_Arg (Data, 1), Kernel);
-            Line        : constant Integer := Nth_Arg (Data, 2);
+            Line        : constant Integer := Nth_Arg (Data, 2, 0);
             Child       : MDI_Child;
             Box         : Source_Box;
          begin
@@ -1619,8 +1627,14 @@ package body Src_Editor_Module is
 
             if Child /= null then
                Box := Source_Box (Get_Widget (Child));
-               Src_Editor_Buffer.Line_Information.Unfold_Line
-                 (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+
+               if Line = 0 then
+                  Src_Editor_Buffer.Line_Information.Fold_All
+                    (Get_Buffer (Box.Editor));
+               else
+                  Src_Editor_Buffer.Line_Information.Unfold_Line
+                    (Get_Buffer (Box.Editor), Editable_Line_Type (Line));
+               end if;
             else
                Set_Error_Msg (Data, -"file not found or not open");
             end if;
@@ -4024,14 +4038,14 @@ package body Src_Editor_Module is
          Handler       => Edit_Command_Handler'Access);
       Register_Command
         (Kernel, "block_fold",
-         Minimum_Args  => 2,
+         Minimum_Args  => 1,
          Maximum_Args  => 2,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
       Register_Command
         (Kernel, "block_unfold",
-         Minimum_Args  => 2,
+         Minimum_Args  => 1,
          Maximum_Args  => 2,
          Class         => Editor_Class,
          Static_Method => True,
