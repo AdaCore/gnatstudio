@@ -278,23 +278,28 @@ package Codefix.Text_Manager is
      (This        : Text_Navigator_Abstr'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
+   --  Get a line from the position specified by the cursor.
 
    function Get_Old_Text
      (This         : Extract_Line;
       Current_Text : Text_Navigator_Abstr'Class) return String;
+   --  Return the original content of the line.
 
    function Get_New_Text
      (This : Extract_Line;
       Detail : Boolean := True) return String;
+   --  Return the current content of the line.
 
    function Get_New_Text_Length
      (This      : Extract_Line;
       Recursive : Boolean := False) return Natural;
+   --  Return the length of the current text in the line.
 
    function Get_Old_Text_Length
      (This      : Extract_Line;
       Current_Text : Text_Navigator_Abstr'Class;
       Recursive : Boolean := False) return Natural;
+   --  Return the length of the current text before modifications.
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -308,6 +313,8 @@ package Codefix.Text_Manager is
    type String_Mode is (Text_Ascii, Regular_Expression);
 
    function Clone (This : Extract) return Extract;
+   --  Duplicate all informations associated to an extract, specially
+   --  information referenced in pools.
 
    procedure Get
      (This        : Text_Navigator_Abstr'Class;
@@ -412,14 +419,26 @@ package Codefix.Text_Manager is
    function Get_Old_Text
      (This         : Extract;
       Current_Text : Text_Navigator_Abstr'Class) return String;
+   --  Return the original text contained in the extract. EOL_Str is used to
+   --  make a new line.
 
    function Get_New_Text (This : Extract) return String;
+   --  Return the current form of the text contained in the extract. EOL_Str
+   --  is used to make a new line.
 
    function Get_New_Text_Length (This : Extract) return Natural;
+   --  Return the length of the current text in the extract.
 
    function Get_Old_Text_Length
      (This : Extract;
       Current_Text : Text_Navigator_Abstr'Class) return Natural;
+   --  Return the length of the current text before modifications.
+
+   procedure Set_Caption (This : in out Extract; Caption : String);
+   --  Set the caption associated to an extract.
+
+   function Get_Caption (This : Extract) return String;
+   --  Return the caption associated to an extract.
 
 private
 
@@ -508,7 +527,8 @@ private
    ----------------------------------------------------------------------------
 
    type Extract is record
-      First : Ptr_Extract_Line;
+      First   : Ptr_Extract_Line;
+      Caption : Dynamic_String;
    end record;
 
    procedure Add_Element (This : in out Extract; Element : Ptr_Extract_Line);
