@@ -282,6 +282,36 @@ package body Commands is
       Prepend (Item.Next_Commands, Action);
    end Add_Consequence_Action;
 
+   --------------------------
+   -- Get_Previous_Command --
+   --------------------------
+
+   function Get_Previous_Command (Queue : Command_Queue)
+     return Command_Access
+   is
+   begin
+      if not Is_Empty (Queue.Undo_Queue) then
+         return Head (Queue.Undo_Queue);
+      else
+         return null;
+      end if;
+   end Get_Previous_Command;
+
+   ----------------------
+   -- Get_Next_Command --
+   ----------------------
+
+   function Get_Next_Command (Queue : Command_Queue)
+     return Command_Access
+   is
+   begin
+      if not Is_Empty (Queue.Redo_Queue) then
+         return Head (Queue.Redo_Queue);
+      else
+         return null;
+      end if;
+   end Get_Next_Command;
+
    ----------
    -- Undo --
    ----------

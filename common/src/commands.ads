@@ -101,6 +101,14 @@ package Commands is
 
 private
 
+   function Get_Previous_Command (Queue : Command_Queue)
+     return Command_Access;
+   --  Return the previous command that was executed.
+
+   function Get_Next_Command (Queue : Command_Queue)
+     return Command_Access;
+   --  Return the next command to be executed.
+
    procedure Execute (Command : access Root_Command);
    --  Convenience subprogram: same as function Execute, but does not
    --  return any value.
