@@ -34,6 +34,7 @@
 
 with Gdk.GC;
 with Gdk.Font;
+with Gtk.Text_Mark;
 with Gtk.Text_View;
 with Pango.Font;
 with Src_Editor_Buffer;
@@ -89,10 +90,11 @@ private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
-      Pango_Font        : Pango.Font.Pango_Font_Description;
-      Font              : Gdk.Font.Gdk_Font;
-      Line_Numbers_GC   : Gdk.GC.Gdk_GC;
-      Show_Line_Numbers : Boolean;
+      Saved_Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Pango_Font          : Pango.Font.Pango_Font_Description;
+      Font                : Gdk.Font.Gdk_Font;
+      Line_Numbers_GC     : Gdk.GC.Gdk_GC;
+      Show_Line_Numbers   : Boolean;
       LNA_Width_In_Digits : Natural;
    end record;
 
