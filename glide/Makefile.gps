@@ -1,3 +1,5 @@
+LN = ln -fs
+
 ifeq ($(GLIDE_PROJECT),)
 GLIDE_PROJECT=True
 
@@ -58,10 +60,6 @@ endif
 
 ifeq ($(GLIDE_ROOT),True)
 
-   ifdef LN
-   else
-      LN = ln -fs
-   endif
    default: do_links all
 
    do_links: force
