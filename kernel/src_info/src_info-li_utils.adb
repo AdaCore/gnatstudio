@@ -2,6 +2,7 @@ with Text_IO; use Text_IO;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Traces; use Traces;
+with SN; use SN;
 
 package body Src_Info.LI_Utils is
 
@@ -33,22 +34,8 @@ package body Src_Info.LI_Utils is
       Location                : in Point := Invalid_Point)
       return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
-   --  specified E_Declaration_Info_List
-
-   procedure Create_LI_File
-     (File                    : out LI_File_Ptr;
-      List                    : in out LI_File_List;
-      Xref_Filename           : in String;
-      --  Full (!) path to the xref file
-      Handler                 : in LI_Handler;
-      Parsed                  : in Boolean);
-   --  Creates an empty LI_File structure
-
-   procedure Create_File_Info
-     (FI_Ptr        : in out File_Info_Ptr;
-      Full_Filename : String);
-   --  Creates an empty File_Info (without declarations)
-
+   --  specified E_Declaration_Info_List.
+   --  Return null if not found.
 
    function Belongs_To_Class
      (Declaration_Info_Ptr           : in E_Declaration_Info_List;
@@ -57,38 +44,38 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
-   -------------------------------------------------------------------------
+   procedure Convert_To_Parsed (File : in out LI_File_Ptr);
+   --  Set File as parsed, ie indicate that the actual database has been parsed
+   --  and this is no longer only a stub.
 
    --------------------------
    --  Insert_declaration  --
    --------------------------
 
    procedure Insert_Declaration
-     (Handler                 : in LI_Handler;
+     (Handler                 : LI_Handler;
       File                    : in out LI_File_Ptr;
-      Xref_Filename           : in String;
+      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
-      Symbol_Name             : in String;
-      Source_Filename         : in String;
-      Location                : in Point;
-      Parent_Filename         : in String := "";
-      Parent_Location         : in Point := Invalid_Point;
-      Kind                    : in E_Kind;
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List)
-   is
-      D_Ptr : E_Declaration_Info_List;
+      Symbol_Name             : String;
+      Source_Filename         : String;
+      Location                : Point;
+      Parent_Filename         : String := "";
+      Parent_Location         : Point := Invalid_Point;
+      Kind                    : E_Kind;
+      Scope                   : E_Scope;
+      End_Of_Scope_Location   : Point := Invalid_Point;
+      Rename_Filename         : String := "";
+      Rename_Location         : Point := Invalid_Point;
+      Declaration_Info        : out E_Declaration_Info_List) is
    begin
       if File = No_LI_File then
          Create_LI_File
-           (Handler           => Handler,
-            List              => List,
-            File              => File,
-            Xref_Filename     => Xref_Filename,
-            Parsed            => True);
+           (Handler          => Handler,
+            List             => List,
+            File             => File,
+            LI_Full_Filename => LI_Full_Filename,
+            Parsed           => True);
       else
          --  Check that we parsed the correct file.
          Assert (Me, LI_Handler (Handler) = File.LI.Handler,
@@ -103,242 +90,230 @@ package body Src_Info.LI_Utils is
 
       if File.LI.Body_Info.Declarations = null then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
-         File.LI.Body_Info.Declarations.Next := null;
-         D_Ptr := File.LI.Body_Info.Declarations;
+         Declaration_Info := File.LI.Body_Info.Declarations;
+
       else
-         D_Ptr := File.LI.Body_Info.Declarations;
+         Declaration_Info := File.LI.Body_Info.Declarations;
          loop
-            if D_Ptr.Value.Declaration.Location.Line = Location.Line
-              and then D_Ptr.Value.Declaration.Location.Column =
+            if Declaration_Info.Value.Declaration.Location.Line = Location.Line
+              and then Declaration_Info.Value.Declaration.Location.Column =
               Location.Column
             then
-               D_Ptr.Value.Declaration := No_Declaration;
+               Declaration_Info.Value.Declaration := No_Declaration;
                exit;
             end if;
-            if D_Ptr.Next = null then
-               D_Ptr.Next := new E_Declaration_Info_Node;
-               D_Ptr.Next.Next := null;
-               D_Ptr := D_Ptr.Next;
+
+            if Declaration_Info.Next = null then
+               Declaration_Info.Next := new E_Declaration_Info_Node;
+               Declaration_Info := Declaration_Info.Next;
                exit;
             end if;
-            D_Ptr := D_Ptr.Next;
+            Declaration_Info := Declaration_Info.Next;
          end loop;
       end if;
       Insert_Declaration_Internal
-        (D_Ptr, File, Xref_Filename, List, Symbol_Name,
+        (Declaration_Info, File, LI_Full_Filename, List, Symbol_Name,
          Source_Filename,
          Location, Parent_Filename, Parent_Location, Kind, Scope,
          End_Of_Scope_Location, Rename_Filename, Rename_Location);
-      Declaration_Info := D_Ptr;
    end Insert_Declaration;
+
+   -----------------------
+   -- Convert_To_Parsed --
+   -----------------------
+
+   procedure Convert_To_Parsed (File : in out LI_File_Ptr) is
+   begin
+      if not File.LI.Parsed then
+         File.LI := (Parsed                   => True,
+                     Handler                  => File.LI.Handler,
+                     LI_Filename              => File.LI.LI_Filename,
+                     Spec_Info                => File.LI.Spec_Info,
+                     Body_Info                => File.LI.Body_Info,
+                     Separate_Info            => File.LI.Separate_Info,
+                     LI_Timestamp             => File.LI.LI_Timestamp,
+                     Compilation_Errors_Found => False,
+                     Dependencies_Info        => null);
+      end if;
+   end Convert_To_Parsed;
 
    -------------------------
    --  Insert_Dependency  --
    -------------------------
 
    procedure Insert_Dependency
-     (Handler                 : in LI_Handler;
-      File                    : in out LI_File_Ptr;
-      Xref_Filename           : in String;
-      List                    : in out LI_File_List;
-      Referred_Filename       : in String;
-      Referred_Xref_Filename  : in String)
+     (Handler              : LI_Handler;
+      File                 : in out LI_File_Ptr;
+      LI_Full_Filename     : String;
+      List                 : in out LI_File_List;
+      Referred_Filename    : String;
+      Referred_LI_Filename : String)
    is
       Dep_Ptr : Dependency_File_Info_List;
-      Tmp_LI_File : LI_File;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
          Create_LI_File
-           (File            => File,
-            List            => List,
-            Xref_Filename   => Xref_Filename,
-            Handler         => Handler,
-            Parsed          => True);
+           (File             => File,
+            List             => List,
+            LI_Full_Filename => LI_Full_Filename,
+            Handler          => Handler,
+            Parsed           => True);
       else
          Assert (Me,
                  LI_Handler (Handler) = File.LI.Handler,
                  "Invalid Handler");
          if File.LI.Parsed = False then
-            Tmp_LI_File := File.LI;
-            File.LI := (Parsed        => True,
-                        Handler       => Tmp_LI_File.Handler,
-                        LI_Filename   => Tmp_LI_File.LI_Filename,
-                        Spec_Info     => Tmp_LI_File.Spec_Info,
-                        Body_Info     => Tmp_LI_File.Body_Info,
-                        Separate_Info => Tmp_LI_File.Separate_Info,
-                        LI_Timestamp  => To_Timestamp
-                          (File_Time_Stamp (Xref_Filename)),
-                        --  ??? if file is not found?
-                        Compilation_Errors_Found => False,
-                        Dependencies_Info        => null);
+            Convert_To_Parsed (File);
+            if Is_Regular_File (LI_Full_Filename) then
+               File.LI.LI_Timestamp := To_Timestamp
+                 (File_Time_Stamp (LI_Full_Filename));
+            end if;
          end if;
       end if;
 
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Referred_Xref_Filename));
+      Tmp_LI_File_Ptr := Locate (List, Base_Name (Referred_LI_Filename));
+
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
-           (File              => Tmp_LI_File_Ptr,
-            List              => List,
-            Xref_Filename     => Referred_Xref_Filename,
-            Handler           => Handler,
-            Parsed            => True);
+           (File             => Tmp_LI_File_Ptr,
+            List             => List,
+            LI_Full_Filename => Referred_LI_Filename,
+            Handler          => Handler,
+            Parsed           => True);
          Create_File_Info
            (FI_Ptr          => Tmp_LI_File_Ptr.LI.Body_Info,
             Full_Filename   => Referred_Filename);
-         --  Tmp_LI_File_Ptr := No_LI_File;
       end if;
 
       --  Is this a first dependencies info in this file?
       if File.LI.Dependencies_Info = null then
-         --  creating new Dependency_File_Info_Node object
-         File.LI.Dependencies_Info := new Dependency_File_Info_Node'
-           (Value => (File         => (LI              => Tmp_LI_File_Ptr,
-                                       Part            => Unit_Body,
-                                       Source_Filename => null),
-                      Dep_Info     => (Depends_From_Spec => False,
-                                       Depends_From_Body => True),
-                      Declarations => null),
-            Next  => null);
+         File.LI.Dependencies_Info := new Dependency_File_Info_Node;
          Dep_Ptr := File.LI.Dependencies_Info;
+
       else
+         --  Try to locate Dependency_File_Info with given Source_Filename
          Dep_Ptr := File.LI.Dependencies_Info;
-         --  trying to locate Dependency_File_Info with given Source_Filename
          loop
-            exit when
-               Get_Source_Filename (Dep_Ptr.Value.File) = Referred_Filename;
+            if Get_Source_Filename (Dep_Ptr.Value.File) =
+              Referred_Filename
+            then
+               return;
+            end if;
+
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
-               Dep_Ptr.Next := new Dependency_File_Info_Node'
-                 (Value => (File => (LI              => Tmp_LI_File_Ptr,
-                                     Part            => Unit_Body,
-                                     Source_Filename => null),
-                            Dep_Info => (Depends_From_Spec => False,
-                                         Depends_From_Body => True),
-                            Declarations => null),
-                  Next  => null);
+               Dep_Ptr.Next := new Dependency_File_Info_Node;
                exit;
             end if;
             Dep_Ptr := Dep_Ptr.Next;
          end loop;
       end if;
-      --  Dep_Ptr now points to the right Dependency_File_Info
-      --  Inserting null stub declaration
-      --  if Dep_Ptr.Value.Declarations = null then
-      --     Dep_Ptr.Value.Declarations := new E_Declaration_Info_Node'
-      --       (Value => (Declaration => No_Declaration,
-      --                  References => new E_Reference_Node'
-      --                    (Value => No_Reference,
-      --                     Next  => null)),
-      --        Next  => null);
-      --  end if;
-   end Insert_Dependency;
 
+      --  creating new Dependency_File_Info_Node object
+      Dep_Ptr.all :=
+        (Value => (File         => (LI              => Tmp_LI_File_Ptr,
+                                    Part            => Unit_Body,
+                                    Source_Filename => null),
+                   Dep_Info     => (Depends_From_Spec => False,
+                                    Depends_From_Body => True),
+                   Declarations => null),
+         Next  => null);
+   end Insert_Dependency;
 
    -------------------------------------
    --  Insert_Dependency_Declaration  --
    -------------------------------------
 
    procedure Insert_Dependency_Declaration
-     (Handler                 : in LI_Handler;
+     (Handler                 : LI_Handler;
       File                    : in out LI_File_Ptr;
-      Xref_Filename           : in String;
+      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
-      Symbol_Name             : in String;
-      Referred_Filename       : in String;
-      Referred_Xref_Filename  : in String;
-      Location                : in Point;
-      Parent_Filename         : in String := "";
-      Parent_Location         : in Point := Invalid_Point;
-      Kind                    : in E_Kind;
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point;
+      Symbol_Name             : String;
+      Referred_Filename       : String;
+      Referred_LI_Filename    : String;
+      Location                : Point;
+      Parent_Filename         : String := "";
+      Parent_Location         : Point := Invalid_Point;
+      Kind                    : E_Kind;
+      Scope                   : E_Scope;
+      End_Of_Scope_Location   : Point := Invalid_Point;
+      Rename_Filename         : String := "";
+      Rename_Location         : Point := Invalid_Point;
       Declaration_Info        : out E_Declaration_Info_List)
    is
       D_Ptr, Tmp_Ptr : E_Declaration_Info_List;
       Dep_Ptr : Dependency_File_Info_List;
-      Tmp_LI_File : LI_File;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
          Create_LI_File
-           (File => File,
-            List          => List,
-            Xref_Filename => Xref_Filename,
-            Handler => Handler,
-            Parsed => True);
+           (File             => File,
+            List             => List,
+            LI_Full_Filename => LI_Full_Filename,
+            Handler          => Handler,
+            Parsed           => True);
       else
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
-                     "Invalid Handler");
-         if File.LI.Parsed = False then
-            Tmp_LI_File := File.LI;
-            File.LI := (Parsed    => True,
-                       Handler   => Tmp_LI_File.Handler,
-                       LI_Filename  => Tmp_LI_File.LI_Filename,
-                       Spec_Info    => Tmp_LI_File.Spec_Info,
-                       Body_Info    => Tmp_LI_File.Body_Info,
-                       Separate_Info     => Tmp_LI_File.Separate_Info,
-                       LI_Timestamp      => To_Timestamp
-                         (File_Time_Stamp (Xref_Filename)),
-            --  ??? if file is not found?
-                       Compilation_Errors_Found => False,
-                       Dependencies_Info => null);
+                        "Invalid Handler");
+         Convert_To_Parsed (File);
+         if Is_Regular_File (LI_Full_Filename) then
+            File.LI.LI_Timestamp := To_Timestamp
+              (File_Time_Stamp (LI_Full_Filename));
          end if;
       end if;
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Referred_Xref_Filename));
+      Tmp_LI_File_Ptr := Locate (List, Base_Name (Referred_LI_Filename));
 
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
-           (Handler            => Handler,
-            File               => Tmp_LI_File_Ptr,
-            Xref_Filename      => Referred_Xref_Filename,
-            List               => List,
-            Symbol_Name        => Symbol_Name,
-            Source_Filename    => Referred_Filename,
-            Location           => Location,
-            Parent_Filename    => Parent_Filename,
-            Parent_Location    => Parent_Location,
-            Kind               => Kind,
-            Scope              => Scope,
+           (Handler               => Handler,
+            File                  => Tmp_LI_File_Ptr,
+            LI_Full_Filename      => Referred_LI_Filename,
+            List                  => List,
+            Symbol_Name           => Symbol_Name,
+            Source_Filename       => Referred_Filename,
+            Location              => Location,
+            Parent_Filename       => Parent_Filename,
+            Parent_Location       => Parent_Location,
+            Kind                  => Kind,
+            Scope                 => Scope,
             End_Of_Scope_Location => End_Of_Scope_Location,
-            Rename_Filename    => Rename_Filename,
-            Declaration_Info   => Tmp_Ptr);
+            Rename_Filename       => Rename_Filename,
+            Declaration_Info      => Tmp_Ptr);
       else
-         begin
-            D_Ptr := Find_Declaration
-                       (File              => Tmp_LI_File_Ptr,
-                        Symbol_Name       => Symbol_Name,
-                        Location          => Location);
-         exception
-            when Declaration_Not_Found =>
-               Insert_Declaration
-                 (Handler            => Handler,
-                  File               => Tmp_LI_File_Ptr,
-                  Xref_Filename      => Referred_Xref_Filename,
-                  List               => List,
-                  Symbol_Name        => Symbol_Name,
-                  Source_Filename    => Referred_Filename,
-                  Location           => Location,
-                  Parent_Filename    => Parent_Filename,
-                  Parent_Location    => Parent_Location,
-                  Kind               => Kind,
-                  Scope              => Scope,
-                  End_Of_Scope_Location => End_Of_Scope_Location,
-                  Rename_Filename    => Rename_Filename,
-                  Declaration_Info   => Tmp_Ptr);
-         end;
+         D_Ptr := Find_Declaration
+           (File              => Tmp_LI_File_Ptr,
+            Symbol_Name       => Symbol_Name,
+            Location          => Location);
+
+         if D_Ptr = null then
+            Insert_Declaration
+              (Handler            => Handler,
+               File               => Tmp_LI_File_Ptr,
+               LI_Full_Filename   => Referred_LI_Filename,
+               List               => List,
+               Symbol_Name        => Symbol_Name,
+               Source_Filename    => Referred_Filename,
+               Location           => Location,
+               Parent_Filename    => Parent_Filename,
+               Parent_Location    => Parent_Location,
+               Kind               => Kind,
+               Scope              => Scope,
+               End_Of_Scope_Location => End_Of_Scope_Location,
+               Rename_Filename    => Rename_Filename,
+               Declaration_Info   => Tmp_Ptr);
+         end if;
       end if;
 
       --  Is this is a first dependencies info in this file?
@@ -410,7 +385,7 @@ package body Src_Info.LI_Utils is
       Insert_Declaration_Internal
         (D_Ptr,
          Tmp_LI_File_Ptr,
-         Referred_Xref_Filename,
+         Referred_LI_Filename,
          List,
          Symbol_Name,
          Referred_Filename,
@@ -430,17 +405,15 @@ package body Src_Info.LI_Utils is
    ------------------
 
    procedure Add_Parent
-     (Declaration_Info        : in out E_Declaration_Info_List;
-      List                    : in LI_File_List;
-      Parent_Filename         : in String;
-      Parent_Location         : in Point)
+     (Declaration_Info : in out E_Declaration_Info_List;
+      List             : LI_File_List;
+      Parent_Filename  : String;
+      Parent_Location  : Point)
    is
       FL_Ptr : File_Location_List;
       Tmp_LI_File_Ptr : LI_File_Ptr;
    begin
-      if Declaration_Info = null then
-         raise Declaration_Not_Found;
-      end if;
+      Assert (Me, Declaration_Info /= null, "Invalid declaration");
       if Declaration_Info.Value.Declaration.Parent_Location = null then
          Declaration_Info.Value.Declaration.Parent_Location :=
            new File_Location_Node;
@@ -488,8 +461,8 @@ package body Src_Info.LI_Utils is
 
    procedure Set_End_Of_Scope
      (Declaration_Info        : in out E_Declaration_Info_List;
-      Location                : in Point;
-      Kind                    : in Reference_Kind := End_Of_Body) is
+      Location                : Point;
+      Kind                    : Reference_Kind := End_Of_Body) is
    begin
       Declaration_Info.Value.Declaration.End_Of_Scope.Location :=
         (Line   => Location.Line,
@@ -506,9 +479,9 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
-      File                    : in LI_File_Ptr;
-      Source_Filename         : in String;
-      Location                : in Point;
+      File                    : LI_File_Ptr;
+      Source_Filename         : String;
+      Location                : Point;
       Kind                    : Reference_Kind)
    is
       pragma Unreferenced (Source_Filename);
@@ -551,24 +524,26 @@ package body Src_Info.LI_Utils is
    ------------------------
 
    function Find_Declaration
-     (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
-   return E_Declaration_Info_List is
+     (File                    : LI_File_Ptr;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : Point := Invalid_Point)
+      return E_Declaration_Info_List is
    begin
-      if (File = No_LI_File)
-            or else (File.LI.Body_Info = null)
-            or else (File.LI.Body_Info.Declarations = null) then
-         raise Declaration_Not_Found;
+      if File = No_LI_File
+        or else File.LI.Body_Info = null
+        or else File.LI.Body_Info.Declarations = null
+      then
+         return null;
+      else
+         return Find_Declaration_Internal
+           (Declaration_Info_Ptr => File.LI.Body_Info.Declarations,
+            Symbol_Name          => Symbol_Name,
+            Class_Name           => Class_Name,
+            Kind                 => Kind,
+            Location             => Location);
       end if;
-      return Find_Declaration_Internal
-               (Declaration_Info_Ptr => File.LI.Body_Info.Declarations,
-                Symbol_Name          => Symbol_Name,
-                Class_Name           => Class_Name,
-                Kind                 => Kind,
-                Location             => Location);
    end Find_Declaration;
 
    -----------------------------------
@@ -576,23 +551,25 @@ package body Src_Info.LI_Utils is
    -----------------------------------
 
    function Find_Dependency_Declaration
-     (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Filename                : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
+     (File                    : LI_File_Ptr;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Filename                : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : Point := Invalid_Point)
    return E_Declaration_Info_List is
       Dep_Ptr : Dependency_File_Info_List;
    begin
-      if (File = No_LI_File)
-            or else (File.LI.Dependencies_Info = null) then
-         raise Declaration_Not_Found;
+      if File = No_LI_File
+        or else File.LI.Dependencies_Info = null
+      then
+         return null;
       end if;
+
       Dep_Ptr := File.LI.Dependencies_Info;
       loop
          if Dep_Ptr = null then
-            raise Declaration_Not_Found;
+            return null;
          end if;
 
          if Dep_Ptr.Value.File = No_Source_File then
@@ -603,22 +580,22 @@ package body Src_Info.LI_Utils is
          exit when Get_Source_Filename (Dep_Ptr.Value.File) = Filename;
          Dep_Ptr := Dep_Ptr.Next;
       end loop;
+
       if Dep_Ptr.Value.Declarations = null then
-         raise Declaration_Not_Found;
+         return null;
+      else
+         return Find_Declaration_Internal
+           (Declaration_Info_Ptr => Dep_Ptr.Value.Declarations,
+            Symbol_Name          => Symbol_Name,
+            Class_Name           => Class_Name,
+            --  ??? Should the dependency declaration of class
+            --  necessary be located together with method dependency
+            --  declaration?
+            Kind                 => Kind,
+            Location             => Location);
       end if;
-      return Find_Declaration_Internal
-               (Declaration_Info_Ptr => Dep_Ptr.Value.Declarations,
-                Symbol_Name          => Symbol_Name,
-                Class_Name           => Class_Name,
-      --  ??? Should the dependency declaration of class
-      --  necessary be located together with method dependency
-      --  declaration?
-                Kind                 => Kind,
-                Location             => Location);
    end Find_Dependency_Declaration;
    --  ??? Class_Name parameter should be used properly
-
-   -------------------------------------------------------------------------
 
    -----------------------------------
    --  Insert_Declaration_Internal  --
@@ -626,19 +603,19 @@ package body Src_Info.LI_Utils is
 
    procedure Insert_Declaration_Internal
      (D_Ptr                   : in out E_Declaration_Info_List;
-      File                    : in LI_File_Ptr;
-      Xref_Filename           : in String;
-      List                    : in LI_File_List;
-      Symbol_Name             : in String;
-      Source_Filename         : in String;
-      Location                : in Point;
-      Parent_Filename         : in String := "";
-      Parent_Location         : in Point := Invalid_Point;
-      Kind                    : in E_Kind;
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point)
+      File                    : LI_File_Ptr;
+      Xref_Filename           : String;
+      List                    : LI_File_List;
+      Symbol_Name             : String;
+      Source_Filename         : String;
+      Location                : Point;
+      Parent_Filename         : String := "";
+      Parent_Location         : Point := Invalid_Point;
+      Kind                    : E_Kind;
+      Scope                   : E_Scope;
+      End_Of_Scope_Location   : Point := Invalid_Point;
+      Rename_Filename         : String := "";
+      Rename_Location         : Point := Invalid_Point)
    is
       pragma Unreferenced (Rename_Filename);
       pragma Unreferenced (Source_Filename);
@@ -722,12 +699,13 @@ package body Src_Info.LI_Utils is
    -----------------------------------
 
    function Find_Declaration_Internal
-     (Declaration_Info_Ptr    : in E_Declaration_Info_List;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
-   return E_Declaration_Info_List is
+     (Declaration_Info_Ptr    : E_Declaration_Info_List;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : Point := Invalid_Point)
+      return E_Declaration_Info_List
+   is
       D_Ptr : E_Declaration_Info_List := Declaration_Info_Ptr;
    begin
       loop
@@ -759,7 +737,8 @@ package body Src_Info.LI_Utils is
          end if;
          D_Ptr := D_Ptr.Next;
       end loop;
-      raise Declaration_Not_Found;
+
+      return null;
    end Find_Declaration_Internal;
 
    ----------------------
@@ -767,41 +746,50 @@ package body Src_Info.LI_Utils is
    ----------------------
 
    procedure Create_LI_File
-     (File                    : out LI_File_Ptr;
-      List                    : in out LI_File_List;
-      Xref_Filename           : in String;
-      Handler                 : in LI_Handler;
-      Parsed                  : in Boolean)
+     (File               : out LI_File_Ptr;
+      List               : in out LI_File_List;
+      LI_Full_Filename   : String;
+      Handler            : LI_Handler;
+      Parsed             : Boolean;
+      Compilation_Errors : Boolean := False)
    is
       Success : Boolean;
+      Time    : Timestamp := 0;
+      Name    : constant GNAT.OS_Lib.String_Access :=
+        new String' (Base_Name (LI_Full_Filename));
    begin
       if Parsed then
+         if Is_Regular_File (LI_Full_Filename) then
+            Time := To_Timestamp (File_Time_Stamp (LI_Full_Filename));
+         end if;
+
          File := new LI_File_Constrained'
-           (LI => (Parsed => True,
-                   Handler => LI_Handler (Handler),
-                   LI_Filename => new String' (Base_Name (Xref_Filename)),
-                   Body_Info => null,
-                   Spec_Info => null,
-                   Dependencies_Info => null,
-                   Compilation_Errors_Found => False,
-                   Separate_Info => null,
-                   LI_Timestamp => To_Timestamp
-                     (File_Time_Stamp (Xref_Filename))));
+           (LI => (Parsed                   => True,
+                   Handler                  => LI_Handler (Handler),
+                   LI_Filename              => Name,
+                   Body_Info                => null,
+                   Spec_Info                => null,
+                   Dependencies_Info        => null,
+                   Compilation_Errors_Found => Compilation_Errors,
+                   Separate_Info            => null,
+                   LI_Timestamp             => Time));
       else
          File := new LI_File_Constrained'
-           (LI =>  (Parsed => False,
-                    Handler => LI_Handler (Handler),
-                    LI_Filename => new String' (Base_Name (Xref_Filename)),
-                    Body_Info => null,
-                    Spec_Info => null,
+           (LI =>  (Parsed        => False,
+                    Handler       => LI_Handler (Handler),
+                    LI_Filename   => Name,
+                    Body_Info     => null,
+                    Spec_Info     => null,
                     Separate_Info => null,
-                    LI_Timestamp => To_Timestamp
-                      (File_Time_Stamp (Xref_Filename))));
+                    LI_Timestamp  => 0));
       end if;
 
       Add (List.Table, File, Success);
-      pragma Assert
-        (Success, "unable to insert new LI_File into the common LI_File_List");
+      if not Success then
+         Trace (Me, "Unable to insert LI file in the list");
+         Destroy (File);
+         File := null;
+      end if;
    end Create_LI_File;
 
    ------------------------
@@ -809,12 +797,16 @@ package body Src_Info.LI_Utils is
    ------------------------
 
    procedure Create_File_Info
-     (FI_Ptr        : in out File_Info_Ptr;
-      Full_Filename : String)
+     (FI_Ptr         : out File_Info_Ptr;
+      Full_Filename  : String;
+      Set_Time_Stamp : Boolean := True;
+      Unit_Name      : String := "")
    is
       Directory_Name : constant String :=
         Normalize_Pathname (Dir_Name (Full_Filename));
       Dir : GNAT.OS_Lib.String_Access;
+      Unit : GNAT.OS_Lib.String_Access;
+      Time : Timestamp := 0;
    begin
       if Directory_Name /= ""
         and then Directory_Name /= "./"
@@ -822,27 +814,32 @@ package body Src_Info.LI_Utils is
          Dir := new String' (Directory_Name);
       end if;
 
+      if Unit_Name /= "" then
+         Unit := new String' (Unit_Name);
+      end if;
+
+      if Set_Time_Stamp then
+         Time := To_Timestamp (File_Time_Stamp (Full_Filename));
+      end if;
+
       FI_Ptr := new File_Info'
-        (Unit_Name         => null,
-         Source_Filename   => new String'
-           (Base_Name (Full_Filename)),
+        (Unit_Name         => Unit,
+         Source_Filename   => new String' (Base_Name (Full_Filename)),
          Directory_Name    => Dir,
-         File_Timestamp    => To_Timestamp
-           (File_Time_Stamp (Full_Filename)),
+         File_Timestamp    => Time,
          Original_Filename => null,
          Original_Line     => 1,
          Declarations      => null);
    end Create_File_Info;
-
 
    ------------------------
    --  Belongs_To_Class  --
    ------------------------
 
    function Belongs_To_Class
-     (Declaration_Info_Ptr : in E_Declaration_Info_List;
-      Class_Name           : in String;
-      Position             : in Point) return Boolean
+     (Declaration_Info_Ptr : E_Declaration_Info_List;
+      Class_Name           : String;
+      Position             : Point) return Boolean
    is
       D_Ptr : E_Declaration_Info_List := Declaration_Info_Ptr;
    begin

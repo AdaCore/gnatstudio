@@ -1,109 +1,112 @@
-with SN; use SN;
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with SN;
 
 private package Src_Info.LI_Utils is
 
-   procedure Insert_Declaration (
-      Handler                 : in LI_Handler;
-      --  Library Information handler
-      File                    : in out LI_File_Ptr;
-      --  root pointer to whole LI_File structure
-      Xref_Filename           : in String;
-      --  Full (!) path of the xref file.
-      --  The base name of this path will be assigned to the LI_File
-      List                    : in out LI_File_List;
-      --  common list of LI_Files
-      Symbol_Name             : in String;
-      --  Name of the declared symbol
-      Source_Filename         : in String;
-      --  Name of the file in which symbol is declared
-      Location                : in Point;
-      --  Line & Column pair where declaration is occured
-      Parent_Filename         : in String := "";
-      --  this filename is the Base Name of the Xref filename of the parent
-      --  entity
-      --  (if parent available - for classes, subtypes and etc)
-      Parent_Location         : in Point := Invalid_Point;
-      --  Location of parent declaration in file
-      Kind                    : in E_Kind;
-      --  Kind of symbol
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      --  End of scope pointer (for functions, methods, classes and other
-      --  entities that have a scope)
-      Rename_Filename         : in String := "";
-      --  for now skip that
-      Rename_Location         : in Point := Invalid_Point;
-      --  skip that
-      Declaration_Info        : out E_Declaration_Info_List
-      --  pointer to created E_Declaration_Info_Node is returned in this
-      --  parameter.
-   );
-   --  Inserts new declaration with specified parameters to given
-   --  LI structure tree. The tree is specified by pointer to it's root
-   --  element - File arg).
-   --  This procedure:
-   --    1. Inserts new declaration into the LI structrure tree
-   --    2. Returns pointer to created declaration (Declaration_Info param)
-   --  Throws Parent_Not_Available exception if LI_Structure for the file with
-   --  parent is not created yet.
+   procedure Insert_Declaration
+     (Handler               : LI_Handler;
+      File                  : in out LI_File_Ptr;
+      LI_Full_Filename      : String;
+      List                  : in out LI_File_List;
+      Symbol_Name           : String;
+      Source_Filename       : String;
+      Location              : SN.Point;
+      Parent_Filename       : String := "";
+      Parent_Location       : SN.Point := SN.Invalid_Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
+      Rename_Filename       : String := "";
+      Rename_Location       : SN.Point := SN.Invalid_Point;
+      Declaration_Info      : out E_Declaration_Info_List);
+   --  Insert a new entity declaration in File. File is created if needed, as
+   --  well as the entry for Source_Filename (Body_Part).
+   --  The newly created declaration is returned in Declaration_Info.
+   --  LI_Full_Filename should contain the full path to the LI filename (.ali
+   --  file in Ada or .xref file for source navigator). Its basename is used as
+   --  an index for File in List.
+   --  (Parent_Filename, Parent_Location) points to the declaration of the
+   --  parent entity, when available (classes, subtypes, ...), and should be
+   --  left to the default value if not available.
+   --
+   --  ??? Rename_Filename and Rename_Location are currently ignored.
+   --
+   --  This subprogram raises Parent_Not_Available if the LI_Structure for the
+   --  parent entity could not be found.
+   --  ??? Shouldn't we create a stub LI file for the parent instead.
 
    procedure Insert_Dependency
-     (Handler                 : in LI_Handler;
-      File                    : in out LI_File_Ptr;
-      Xref_Filename           : in String;
-      --  Full (!) path of the xref file.
-      --  The base name of this path will be assigned to the LI_File
-      List                    : in out LI_File_List;
-      Referred_Filename       : in String;
-      Referred_Xref_Filename  : in String);
-   --  Insert file-level dependency
+     (Handler              : LI_Handler;
+      File                 : in out LI_File_Ptr;
+      LI_Full_Filename     : String;
+      List                 : in out LI_File_List;
+      Referred_Filename    : String;
+      Referred_LI_Filename : String);
+   --  Create a new dependency, from the files described in File to the source
+   --  file Referred_Filename.
 
    procedure Insert_Dependency_Declaration
-     (Handler                 : in LI_Handler;
+     (Handler                 : LI_Handler;
       File                    : in out LI_File_Ptr;
-      Xref_Filename           : in String;
-      --  Full (!) path of the xref file.
-      --  The base name of this path will be assigned to the LI_File
+      LI_Full_Filename        : String;
       List                    : in out LI_File_List;
-      Symbol_Name             : in String;
-      Referred_Filename       : in String;
-      Referred_Xref_Filename  : in String;
-      Location                : in Point;
-      Parent_Filename         : in String := "";
-      --  this filename is the Base Name of the Xref filename of the parent
-      --  entity
-      Parent_Location         : in Point := Invalid_Point;
-      Kind                    : in E_Kind;
-      Scope                   : in E_Scope;
-      End_Of_Scope_Location   : in Point := Invalid_Point;
-      Rename_Filename         : in String := "";
-      Rename_Location         : in Point := Invalid_Point;
+      Symbol_Name             : String;
+      Referred_Filename       : String;
+      Referred_LI_Filename    : String;
+      Location                : SN.Point;
+      Parent_Filename         : String := "";
+      Parent_Location         : SN.Point := SN.Invalid_Point;
+      Kind                    : E_Kind;
+      Scope                   : E_Scope;
+      End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
+      Rename_Filename         : String := "";
+      Rename_Location         : SN.Point := SN.Invalid_Point;
       Declaration_Info        : out E_Declaration_Info_List);
    --  Inserts new dependency declaration with specified parameters
    --  to given LI structure tree.
    --  Throws Parent_Not_Available exception if LI_Structure for the
    --  file with parent is not created yet.
+   --  (Parent_Filename, Parent_Location) is the location of the declaration
+   --  for the parent entity, if available.
 
    procedure Add_Parent
      (Declaration_Info        : in out E_Declaration_Info_List;
-      List                    : in LI_File_List;
-      Parent_Filename         : in String;
-      Parent_Location         : in Point);
-      --  this filename is the Base Name of the Xref filename of the parent
-      --  entity
-   --  Adds a new parent to the list of parent locations for given declaration
+      List                    : LI_File_List;
+      Parent_Filename         : String;
+      Parent_Location         : SN.Point);
+   --  Add a new parent entity to the list of parents for
+   --  Declaration_Info. This is mostly used for multiple-inheritance.
 
    procedure Set_End_Of_Scope
      (Declaration_Info        : in out E_Declaration_Info_List;
-      Location                : in Point;
-      Kind                    : in Reference_Kind := End_Of_Body);
+      Location                : SN.Point;
+      Kind                    : Reference_Kind := End_Of_Body);
    --  Sets given value for End_Of_Scope attribute of specified declaration
 
    procedure Insert_Reference
      (Declaration_Info        : in out E_Declaration_Info_List;
-      File                    : in LI_File_Ptr;
-      Source_Filename         : in String;
-      Location                : in Point;
+      File                    : LI_File_Ptr;
+      Source_Filename         : String;
+      Location                : SN.Point;
       Kind                    : Reference_Kind);
    --  Inserts new reference to declaration. Declaration here is specified
    --  by pointer to appropriate E_Declaration_Info_Node object
@@ -111,34 +114,52 @@ private package Src_Info.LI_Utils is
    No_Kind : E_Kind := Task_Type;
    --  This constant is used to represent the absence of Kind.
    --  Task_Type is used here because it can never occur in C/CPP program.
+   --  ??? Could it be replaced with Unresolved_Entity ?
 
    function Find_Declaration
-     (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
-   return E_Declaration_Info_List;
+     (File                    : LI_File_Ptr;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : SN.Point := SN.Invalid_Point)
+      return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name, Location or (and) Kind
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
-   --  Throws Declaration_Not_Found exception if not found.
+   --  Return null if not found.
 
    function Find_Dependency_Declaration
-     (File                    : in LI_File_Ptr;
-      Symbol_Name             : in String := "";
-      Class_Name              : in String := "";
-      Filename                : in String := "";
-      Kind                    : in E_Kind := No_Kind;
-      Location                : in Point := Invalid_Point)
-   return E_Declaration_Info_List;
-   --  Finds declaration in LI tree by it's Name and Location.
+     (File                    : LI_File_Ptr;
+      Symbol_Name             : String := "";
+      Class_Name              : String := "";
+      Filename                : String := "";
+      Kind                    : E_Kind := No_Kind;
+      Location                : SN.Point := SN.Invalid_Point)
+      return E_Declaration_Info_List;
+   --  Finds declaration in File by it's Name and Location.
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
-   --  Throws Declaration_Not_Found exception if not found.
+   --  Return null if not found.
 
-   Declaration_Not_Found : exception;
-   --  Thrown by Find_Declaration functions if declaration is not found
+   procedure Create_File_Info
+     (FI_Ptr         : out File_Info_Ptr;
+      Full_Filename  : String;
+      Set_Time_Stamp : Boolean := True;
+      Unit_Name      : String := "");
+   --  Creates an empty File_Info (without declarations)
+   --  If Set_Time_Stamp is True, then the timestamp is computed by reading
+   --  Full_Filename.
+
+   procedure Create_LI_File
+     (File               : out LI_File_Ptr;
+      List               : in out LI_File_List;
+      LI_Full_Filename   : String;
+      Handler            : LI_Handler;
+      Parsed             : Boolean;
+      Compilation_Errors : Boolean := False);
+   --  Creates an empty LI_File structure.
+   --  File is set to null if it couldn't be added to the global list of LI
+   --  files.
 
    Parent_Not_Available : exception;
    --  Thrown if information on parent for current symbol is not available
