@@ -53,9 +53,9 @@ package Project_Explorers_Files is
    --  This is used to group subprograms (procedures and functions together),
    --  or remove unwanted categories (in which case Cat_Unknown is returned).
 
-   function Category_Name
-     (Category : Language.Language_Category) return String;
-   --  Return the name of the node for Category
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the module into the list
 
    -------------
    -- Signals --

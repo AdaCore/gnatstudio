@@ -26,6 +26,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
 with Gtk.Main;                  use Gtk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
@@ -40,6 +41,7 @@ with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Tree_Model;            use Gtk.Tree_Model;
 with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 
 with Unchecked_Deallocation;
@@ -77,6 +79,8 @@ package body Project_Explorers_Files is
 
    --  The following list must be synchronized with the array of types
    --  in Columns_Types.
+
+   Explorer_Files_Module_Id   : Glide_Kernel.Module_ID := null;
 
    Icon_Column          : constant := 0;
    Base_Name_Column     : constant := 1;
@@ -220,6 +224,20 @@ package body Project_Explorers_Files is
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
       Explorer : access Project_Explorer_Files_Record'Class);
    --  Refresh the contents of the explorer.
+
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+   --  Restore the status of the explorer from a saved XML tree.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Save the status of the project explorer to an XML tree
+
+   procedure On_Open_Explorer
+     (Widget       : access GObject_Record'Class;
+      Kernel       : Kernel_Handle);
+   --  Raise the existing explorer, or open a new one.
 
    -------------------
    -- Columns_Types --
@@ -1425,27 +1443,6 @@ package body Project_Explorers_Files is
    end Filter_Category;
 
    -------------------
-   -- Category_Name --
-   -------------------
-
-   function Category_Name (Category : Language_Category) return String is
-   begin
-      if Category = Cat_Procedure then
-         return -"subprogram";
-
-      else
-         declare
-            S : String := Language_Category'Image (Category);
-         begin
-            To_Lower (S);
-
-            --  Skip the "Cat_" part
-            return S (S'First + 4 .. S'Last);
-         end;
-      end if;
-   end Category_Name;
-
-   -------------------
    -- Free_Children --
    -------------------
 
@@ -1462,5 +1459,111 @@ package body Project_Explorers_Files is
          end loop;
       end if;
    end Free_Children;
+
+   ----------------------
+   -- On_Open_Explorer --
+   ----------------------
+
+   procedure On_Open_Explorer
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Files    : Project_Explorer_Files;
+      Child    : MDI_Child;
+   begin
+      --  Start with the files view, so that if both are needed, the project
+      --  view ends up on top of the files view
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Project_Explorer_Files_Record'Tag);
+
+      if Child = null then
+         Gtk_New (Files, Kernel);
+         Child := Put (Get_MDI (Kernel), Files);
+         Set_Title
+           (Child, -"Project Explorer - File View",  -"File View");
+         Set_Dock_Side (Child, Left);
+         Dock_Child (Child);
+      else
+         Raise_Child (Child);
+         Set_Focus_Child (Get_MDI (Kernel), Child);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Open_Explorer;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+   is
+      Files    : Project_Explorer_Files;
+   begin
+      if Node.Tag.all = "Project_Explorer_Files" then
+         Gtk_New (Files, User);
+         return Gtk_Widget (Files);
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Project_Explorer_Files_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Project_Explorer_Files");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
+   ---------------------
+   -- Register_Module --
+   ---------------------
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Project : constant String := '/' & (-"Project");
+      N       : Node_Ptr;
+   begin
+      Register_Module
+        (Module                  => Explorer_Files_Module_Id,
+         Kernel                  => Kernel,
+         Module_Name             => "Files_View",
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => null,
+         MDI_Child_Tag           => Project_Explorer_Files_Record'Tag);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
+      --  Add a files explorer to the default desktop
+      N := new Node;
+      N.Tag := new String'("Project_Explorer_Files");
+
+      Add_Default_Desktop_Item
+        (Kernel, N,
+         10, 10,
+         300, 600,
+         "File View", "Project Explorer - File View",
+         Docked, Left,
+         False);
+
+      Register_Menu
+        (Kernel, Project, -"Files View", "", On_Open_Explorer'Access);
+
+   end Register_Module;
 
 end Project_Explorers_Files;
