@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -67,8 +67,12 @@ package body VFS is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Contents_Record, Contents_Access);
+
+   pragma Warnings (Off);
+   --  This UC is safe aliasing-wise, so kill warning
    function To_Contents_Access is new Ada.Unchecked_Conversion
      (System.Address, Contents_Access);
+   pragma Warnings (On);
 
    ---------
    -- "=" --
