@@ -1094,7 +1094,8 @@ procedure GPS is
    begin
       if Started then
          --  Set the title of the main window.
-         Reset_Title (Glide_Window (Get_Main_Window (Kernel)), Get_Title (C));
+         Reset_Title (Glide_Window (Get_Main_Window (Kernel)),
+                      Get_Short_Title (C));
       end if;
    end Title_Changed;
 
