@@ -1510,9 +1510,11 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       for Line in First_Line .. Last_Line loop
-         Editable_Lines (Line).Buffer_Line :=
-           Editable_Lines (First_Line - 1).Buffer_Line
-           + Buffer_Line_Type (Line - First_Line) + 1;
+         if Editable_Lines (Line).Where = In_Buffer then
+            Editable_Lines (Line).Buffer_Line :=
+              Editable_Lines (First_Line - 1).Buffer_Line
+              + Buffer_Line_Type (Line - First_Line) + 1;
+         end if;
       end loop;
 
       for J in Last_Line + 1 .. Editable_Lines'Last loop
