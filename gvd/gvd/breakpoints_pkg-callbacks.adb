@@ -33,6 +33,8 @@ with Gdk.Event;          use Gdk.Event;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Breakpoints_Editor; use Breakpoints_Editor;
 
+with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
+
 package body Breakpoints_Pkg.Callbacks is
 
    use Gtk.Arguments;
@@ -67,6 +69,38 @@ package body Breakpoints_Pkg.Callbacks is
       end if;
       return False;
    end On_Breakpoints_Key_Press_Event;
+
+   -------------------------
+   -- On_Breakpoints_Show --
+   -------------------------
+
+   procedure On_Breakpoints_Show
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Editor    : constant Breakpoint_Editor_Access :=
+        Breakpoint_Editor_Access (Object);
+
+   begin
+      if Editor.Advanced_Breakpoints_Location /= null then
+         declare
+            Debugger     : Debugger_Access;
+            WTX_Version  : Natural;
+         begin
+            Debugger := Editor.Process.Debugger;
+            Info_WTX (Debugger, WTX_Version);
+
+            if WTX_Version /= 3 then
+               Hide (Editor.Advanced_Breakpoints_Location.Scope_Box);
+               Hide (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
+               Hide (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
+            else
+               Show (Editor.Advanced_Breakpoints_Location.Scope_Box);
+               Show (Editor.Advanced_Breakpoints_Watchpoints.Scope_Box);
+               Show (Editor.Advanced_Breakpoints_Exceptions.Scope_Box);
+            end if;
+         end;
+      end if;
+   end On_Breakpoints_Show;
 
    ----------------------------------
    -- On_Location_Selected_Toggled --
@@ -158,12 +192,45 @@ package body Breakpoints_Pkg.Callbacks is
       Selection : constant Integer := Get_Selection_Index (Editor);
       Num       : Breakpoint_Identifier;
 
+      WTX_Version : Natural;
+
    begin
       --  Only update the breakpoint if its type matches the current page.
       if Selection /= -1
         and then Editor.Process.Breakpoints (Selection).Except = null
       then
          Num := Set_Location_Breakpoint (Editor, Selection);
+
+         --  Update scope and action for the selected breakpoint
+         Info_WTX (Editor.Process.Debugger, WTX_Version);
+
+         if WTX_Version = 3 then
+            declare
+               Scope_Action : Advanced_Breakpoint_Access :=
+                 Editor.Advanced_Breakpoints_Location;
+               Scope_Value  : GVD.Types.Scope_Type;
+               Action_Value : GVD.Types.Action_Type;
+            begin
+               if Get_Active (Scope_Action.Scope_Task) then
+                  Scope_Value := Current_Task;
+               elsif Get_Active (Scope_Action.Scope_Pd) then
+                  Scope_Value := Tasks_In_PD;
+               elsif Get_Active (Scope_Action.Scope_Any) then
+                  Scope_Value := Any_Task;
+               end if;
+
+               if Get_Active (Scope_Action.Action_Task) then
+                  Action_Value := Current_Task;
+               elsif Get_Active (Scope_Action.Action_Pd) then
+                  Action_Value := Tasks_In_PD;
+               elsif Get_Active (Scope_Action.Action_All) then
+                  Action_Value := All_Tasks;
+               end if;
+
+               Set_Scope_Action (Editor.Process.Debugger, Scope_Value,
+                                 Action_Value, Num);
+            end;
+         end if;
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Num then
@@ -367,7 +434,50 @@ package body Breakpoints_Pkg.Callbacks is
    procedure On_Ok_Bp_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
+      Editor    : constant Breakpoint_Editor_Access :=
+        Breakpoint_Editor_Access (Object);
+
+      Scope_Action : Advanced_Breakpoint_Access :=
+        Editor.Advanced_Breakpoints_Location;
+
+      Debugger     : Debugger_Access;
+      WTX_Version  : Natural;
    begin
+      Debugger := Editor.Process.Debugger;
+      Info_WTX (Debugger, WTX_Version);
+
+      --  If we are using AE and the user has activated the "Set as
+      --  default" checkbox for the scope and action values, send the
+      --  appropriate commands to the debugger
+
+      if WTX_Version = 3
+        and then Editor.Advanced_Breakpoints_Location /= null
+        and then Get_Active (Scope_Action.Set_Default)
+      then
+         declare
+            Scope_Value  : Scope_Type;
+            Action_Value : Action_Type;
+         begin
+            if Get_Active (Scope_Action.Scope_Task) then
+               Scope_Value := Current_Task;
+            elsif Get_Active (Scope_Action.Scope_Pd) then
+               Scope_Value := Tasks_In_PD;
+            elsif Get_Active (Scope_Action.Scope_Any) then
+               Scope_Value := Any_Task;
+            end if;
+
+            if Get_Active (Scope_Action.Action_Task) then
+               Action_Value := Current_Task;
+            elsif Get_Active (Scope_Action.Action_Pd) then
+               Action_Value := Tasks_In_PD;
+            elsif Get_Active (Scope_Action.Action_All) then
+               Action_Value := All_Tasks;
+            end if;
+
+            Set_Scope_Action (Debugger, Scope_Value, Action_Value);
+         end;
+      end if;
+
       Hide (Object);
    end On_Ok_Bp_Clicked;
 
