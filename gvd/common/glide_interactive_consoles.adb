@@ -280,6 +280,7 @@ package body Glide_Interactive_Consoles is
       Key         : constant Gdk_Key_Type  := Get_Key_Val (Event);
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
+      Success     : Boolean;
 
    begin
       case Key is
@@ -479,24 +480,23 @@ package body Glide_Interactive_Consoles is
 
          when GDK_Return =>
             Get_End_Iter (Console.Buffer, Last_Iter);
+            Insert (Console.Buffer, Last_Iter, ASCII.LF & "");
+
+            Get_End_Iter (Console.Buffer, Last_Iter);
             Get_Iter_At_Mark
               (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
 
+            Backward_Char (Last_Iter, Success);
             declare
                Command : constant String :=
                  Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
+
                Output  : constant String :=
                  Console.Handler (Command, Console.User_Data);
             begin
                Get_End_Iter (Console.Buffer, Last_Iter);
 
-               if Output /= "" then
-                  Insert
-                    (Console.Buffer, Last_Iter, ASCII.LF & Output & ASCII.LF);
-               else
-                  Insert
-                    (Console.Buffer, Last_Iter, "" & ASCII.LF);
-               end if;
+               Insert (Console.Buffer, Last_Iter, Output);
 
                if Command /= "" then
                   Prepend (Console.History, Command);
