@@ -8,9 +8,9 @@ with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
 with Gtk.Window;               use Gtk.Window;
 with Gtkada.File_Selection;    use Gtkada.File_Selection;
 with Src_Cb;                   use Src_Cb;
-with Src_Editor;               use Src_Editor;
 with Src_Editor_Box;           use Src_Editor_Box;
 
+with String_Utils;             use String_Utils;
 with Ada.Text_IO;              use Ada.Text_IO;
 
 package body Src_Menu is

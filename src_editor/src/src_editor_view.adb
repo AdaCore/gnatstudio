@@ -44,9 +44,9 @@ with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Layout;             use Gtk.Text_Layout;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtk.Widget;                  use Gtk.Widget;
-with Src_Editor;                  use Src_Editor;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Defaults;         use Src_Editor_Defaults;
+with String_Utils;                use String_Utils;
 
 package body Src_Editor_View is
 
@@ -250,11 +250,12 @@ package body Src_Editor_View is
    function LNA_Width_In_Digits
      (View : access Source_View_Record'Class) return Natural
    is
-      Line_Count : constant Gint := Get_Line_Count (Get_Buffer (View));
+      Line_Count           : constant Natural :=
+        Natural (Get_Line_Count (Get_Buffer (View)));
       Max_Number_Of_Digits : constant Natural :=
         Natural'Max
-          (Number_Of_Digits_In (Natural (Line_Count)),
-           Minimal_Number_Of_Digits_In_LNA);
+          (Number_Of_Digits (Line_Count), Minimal_Number_Of_Digits_In_LNA);
+
    begin
       return Max_Number_Of_Digits;
    end LNA_Width_In_Digits;
@@ -302,24 +303,27 @@ package body Src_Editor_View is
       Left_Window : Gdk.Window.Gdk_Window;
       Area        : Gdk_Rectangle)
    is
-      Top : constant Gint := Area.Y;
-      Bottom : constant Gint := Top + Area.Height;
-      Number_Of_Lines : constant Gint := Get_Line_Count (Get_Buffer (View));
+      Top                      : constant Gint := Area.Y;
+      Bottom                   : constant Gint := Top + Area.Height;
+      Number_Of_Lines          : constant Natural :=
+        Natural (Get_Line_Count (Get_Buffer (View)));
       Line_Number_Image_Length : constant Natural :=
         Natural'Max
-          (Number_Of_Digits_In (Natural (Number_Of_Lines)),
+          (Number_Of_Digits (Number_Of_Lines),
            Minimal_Number_Of_Digits_In_LNA);
-      Top_In_Buffer : Gint;
-      Bottom_In_Buffer : Gint;
-      Iter : Gtk_Text_Iter;
-      Y_In_Buffer : Gint;
-      Y_In_Window : Gint;
-      Line_Height : Gint;
-      Line_Number : Gint;
-      Dummy_Gint : Gint;
-      Dummy_Boolean : Boolean;
+      Top_In_Buffer            : Gint;
+      Bottom_In_Buffer         : Gint;
+      Iter                     : Gtk_Text_Iter;
+      Y_In_Buffer              : Gint;
+      Y_In_Window              : Gint;
+      Line_Height              : Gint;
+      Line_Number              : Gint;
+      Dummy_Gint               : Gint;
+      Dummy_Boolean            : Boolean;
+
    begin
       --  First, convert the window coords into buffer coords
+
       Window_To_Buffer_Coords
         (View, Text_Window_Left,
          Window_X => 0, Window_Y => Top,

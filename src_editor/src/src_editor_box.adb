@@ -40,6 +40,7 @@ with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Layout;            use Gtk.Text_Layout;
 
 with Language;                   use Language;
+with String_Utils;               use String_Utils;
 with Src_Editor;                 use Src_Editor;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
@@ -156,9 +157,11 @@ package body Src_Editor_Box is
       Line   : Gint;
       Column : Gint)
    is
-      Nb_Lines : constant Gint := Get_Line_Count (Box.Source_Buffer);
+      Nb_Lines                  : constant Natural :=
+        Natural (Get_Line_Count (Box.Source_Buffer));
       Nb_Digits_For_Line_Number : constant Positive :=
-        Positive'Max (Image (Nb_Lines)'Length, Min_Line_Number_Width);
+        Positive'Max (Number_Of_Digits (Nb_Lines), Min_Line_Number_Width);
+
    begin
       --  In the source buffer, the Line and Column indexes start from
       --  0. It is more natural to start from one, so the Line and Column
