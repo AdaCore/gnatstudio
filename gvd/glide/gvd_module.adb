@@ -684,7 +684,8 @@ package body GVD_Module is
       Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
-      use Debugger;
+      Exec : GNAT.OS_Lib.String_Access;
+      use Debugger, GNAT.OS_Lib;
 
    begin
       declare
@@ -694,7 +695,14 @@ package body GVD_Module is
             return;
          end if;
 
-         if Page.Descriptor.Remote_Host'Length /= 0
+         Exec := Locate_Exec_On_Path (S);
+
+         if Exec /= null then
+            Set_Executable (Page.Debugger, Exec.all, Mode => Hidden);
+            Change_Dir (Dir_Name (Exec.all));
+            Free (Exec);
+
+         elsif Page.Descriptor.Remote_Host'Length /= 0
            or else GNAT.OS_Lib.Is_Regular_File (S)
          then
             Set_Executable (Page.Debugger, S, Mode => Hidden);
