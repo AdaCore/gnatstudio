@@ -63,7 +63,6 @@ package Codefix.Graphics is
       Automatic_Fix     : State_List;
       Fixed_Cb          : Fix_Action;
       Unfixed_Cb        : Fix_Action;
-      Start             : Boolean;
       Fixes_List        : Error_Id_Lists.List;
    end record;
 
@@ -104,7 +103,8 @@ package Codefix.Graphics is
    --  Display the previous choice of solution for the current error.
 
    procedure Load_Next_Error
-     (Graphic_Codefix : access Graphic_Codefix_Record'Class);
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class;
+      Warning_On_No_Error : Boolean := False);
    --  Load on the window the next error, and solutions associated to.
 
    procedure Load_Previous_Error

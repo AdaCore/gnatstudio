@@ -95,9 +95,7 @@ package body Codefix.Graphics is
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
 
-      Graphic_Codefix.Start := True;
-      Load_Next_Error (Graphic_Codefix);
-      Graphic_Codefix.Start := False;
+      Load_Next_Error (Graphic_Codefix, True);
    end Initialize;
 
    ----------
@@ -165,7 +163,8 @@ package body Codefix.Graphics is
    ---------------------
 
    procedure Load_Next_Error
-     (Graphic_Codefix : access Graphic_Codefix_Record'Class)
+     (Graphic_Codefix : access Graphic_Codefix_Record'Class;
+      Warning_On_No_Error : Boolean := False)
    is
       Success_Load : Boolean;
    begin
@@ -177,7 +176,7 @@ package body Codefix.Graphics is
       end if;
 
       if Graphic_Codefix.Current_Error = Null_Error_Id then
-         if Graphic_Codefix.Start then
+         if Warning_On_No_Error then
             declare
                Tmp : Message_Dialog_Buttons;
                pragma Unreferenced (Tmp);
