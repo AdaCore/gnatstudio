@@ -20,6 +20,7 @@
 
 with GNAT.Expect;     use GNAT.Expect;
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
+with Generic_Values;  use Generic_Values;
 with Process_Proxies; use Process_Proxies;
 
 package body Debugger is
@@ -27,6 +28,46 @@ package body Debugger is
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
+   ----------------
+   -- Parse_Type --
+   ----------------
+ 
+   function Parse_Type
+     (Debugger : Debugger_Root'Class;
+      Entity   : String) return Generic_Values.Generic_Type_Access
+   is
+      Result : Generic_Type_Access;
+      Type_Str : String := Type_Of (Debugger, Entity);
+      Index  : Natural := Type_Str'First;
+ 
+   begin
+      if Type_Str'Length /= 0 then
+         Language.Parse_Type
+           (Debugger.The_Language.all, Type_Str, Entity, Index, Result);
+      end if;
+ 
+      return Result;
+   end Parse_Type;
+ 
+   -----------------
+   -- Parse_Value --
+   -----------------
+ 
+   procedure Parse_Value
+     (Debugger  : Debugger_Root'Class;
+      Entity    : String;
+      Value     : in out Generic_Values.Generic_Type_Access)
+   is
+      Type_Str   : String := Value_Of (Debugger, Entity);
+      Index      : Natural := Type_Str'First;
+      Repeat_Num : Positive;
+ 
+   begin
+      --  Clear the value previously parsed.
+      Clear_Value (Value.all);
+      Language.Parse_Value
+        (Debugger.The_Language.all, Type_Str, Index, Value, Repeat_Num);
+   end Parse_Value;
 
    ------------------
    -- Set_Language --

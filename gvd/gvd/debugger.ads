@@ -79,17 +79,15 @@ package Debugger is
    --  Return the current language associated with a debugger.
 
    function Parse_Type
-     (Debugger : Debugger_Root;
-      Entity   : String) return Generic_Values.Generic_Type_Access
-      is abstract;
+     (Debugger : Debugger_Root'Class;
+      Entity   : String) return Generic_Values.Generic_Type_Access;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
    procedure Parse_Value
-     (Debugger  : Debugger_Root;
+     (Debugger  : Debugger_Root'Class;
       Entity    : String;
-      Value     : in out Generic_Values.Generic_Type_Access)
-      is abstract;
+      Value     : in out Generic_Values.Generic_Type_Access);
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is
    --  called, and it is completed to reflect the new value.
@@ -97,10 +95,9 @@ package Debugger is
    procedure Wait_Prompt (Debugger : Debugger_Root) is abstract;
    --  Wait for the prompt.
 
-   function Type_Of (Debugger : Debugger_Root;
-                     Entity   : String)
-                    return String
-      is abstract;
+   function Type_Of
+     (Debugger : Debugger_Root;
+      Entity   : String) return String is abstract;
    --  Return the type of the entity.
    --  An empty string is returned if the entity is not defined in the
    --  current context.
