@@ -16,6 +16,8 @@ GNAT_SOURCES= \
   einfo.adb \
   elists.ads \
   elists.adb \
+  errutil.ads \
+  errutil.adb \
   err_vars.ads \
   errout.ads \
   errout.adb \
@@ -91,6 +93,8 @@ GNAT_SOURCES= \
   sinfo-cn.adb \
   sinfo.ads \
   sinfo.adb \
+  sinput-c.ads \
+  sinput-c.adb \
   sinput-p.ads \
   sinput-p.adb \
   sinput.ads \
