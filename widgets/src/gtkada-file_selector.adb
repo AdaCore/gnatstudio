@@ -878,7 +878,8 @@ package body Gtkada.File_Selector is
          if Dir = -"Drives" then
             Win.Current_Directory := new String'("");
          else
-            Win.Current_Directory := new String'(Normalized);
+            Win.Current_Directory := new String'
+              (Normalized & Directory_Separator);
          end if;
 
          --  If we are currently moving through the history,
