@@ -331,7 +331,8 @@ package body Vsearch_Ext is
         and then Search
            (Data.Vsearch.Last_Search_Context,
             Data.Vsearch.Kernel,
-            Data.Search_Backward)
+           Data.Search_Backward,
+           False)
       then
          return True;
       else
@@ -409,8 +410,14 @@ package body Vsearch_Ext is
             Set_Active (Vsearch.Regexp_Check, Options.Regexp);
          end if;
 
-         Add_Unique_Combo_Entry
-           (Vsearch.Replace_Combo, Get_Text (Vsearch.Replace_Entry));
+         declare
+            Replace_Text : constant String
+              := Get_Text (Vsearch.Replace_Entry);
+         begin
+            Add_Unique_Combo_Entry (Vsearch.Replace_Combo, Replace_Text);
+            Set_Text (Vsearch.Replace_Entry, Replace_Text);
+         end;
+
          Add_To_History
            (Get_History (Vsearch.Kernel).all, Replace_Hist_Key,
             Get_Text (Vsearch.Replace_Entry));
@@ -435,7 +442,8 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => False);
+               Search_Backward => False,
+               Interactive => True);
             Pop_State (Vsearch.Kernel);
 
             if not Has_Next then
@@ -472,9 +480,25 @@ package body Vsearch_Ext is
    -----------------------
 
    procedure On_Search_Replace (Object : access Gtk_Widget_Record'Class) is
-      pragma Unreferenced (Object);
+      Vsearch     : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Has_Next    : Boolean;
+      Interactive : constant Boolean := not Get_Active
+        (Vsearch.Search_All_Check);
    begin
-      null;
+      if not Vsearch.Find_Next
+        or else Vsearch.Last_Search_Context = null
+      then
+         On_Search (Object);
+      else
+         Push_State (Vsearch.Kernel, Processing);
+         Has_Next := Replace
+           (Vsearch.Last_Search_Context,
+            Vsearch.Kernel,
+            Get_Text (Vsearch.Replace_Entry),
+            Search_Backward => False,
+            Interactive => Interactive);
+         Pop_State (Vsearch.Kernel);
+      end if;
 
    exception
       when E : others =>
@@ -509,7 +533,8 @@ package body Vsearch_Ext is
             Has_Next := Search
               (Vsearch.Last_Search_Context,
                Vsearch.Kernel,
-               Search_Backward => True);
+               Search_Backward => True,
+               Interactive => True);
             Pop_State (Vsearch.Kernel);
          end if;
       end if;
