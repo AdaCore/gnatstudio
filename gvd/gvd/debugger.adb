@@ -375,7 +375,7 @@ package body Debugger is
          --  Put back the standard cursor
 
          if Get_Command_Mode (Get_Process (Debugger)) >= Visible then
-            Set_Busy_Cursor (Process, False);
+            Set_Busy (Process, False);
          end if;
 
          Set_Command_In_Process (Get_Process (Debugger), False);
@@ -443,7 +443,7 @@ package body Debugger is
          Process.Input_Id := 0;
          Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Set_Busy_Cursor (Process, False);
+         Set_Busy (Process, False);
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
    end Output_Available;
@@ -471,7 +471,7 @@ package body Debugger is
          Process := Convert (Debugger.Window, Debugger);
 
          if Mode >= Visible then
-            Set_Busy_Cursor (Process);
+            Set_Busy (Process);
          end if;
 
          --  Display the command in the output window if necessary
@@ -546,7 +546,7 @@ package body Debugger is
          Set_Command_In_Process (Get_Process (Debugger), False);
 
          if Mode >= Visible then
-            Set_Busy_Cursor (Process, False);
+            Set_Busy (Process, False);
          end if;
 
          Unregister_Dialog (Process);
@@ -651,7 +651,7 @@ package body Debugger is
             Error, Button_OK);
          Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Set_Busy_Cursor (Process, False);
+         Set_Busy (Process, False);
          Unregister_Dialog (Process);
          Close_Debugger (Process);
    end Send;
@@ -702,7 +702,7 @@ package body Debugger is
          Process := Convert (Debugger.Window, Debugger);
          Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
-         Set_Busy_Cursor (Process, False);
+         Set_Busy (Process, False);
          Unregister_Dialog (Process);
          Close_Debugger (Process);
          return "";

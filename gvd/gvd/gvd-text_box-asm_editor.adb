@@ -211,7 +211,7 @@ package body GVD.Text_Box.Asm_Editor is
          return;
       end if;
 
-      Set_Busy_Cursor (Process, True);
+      Set_Busy (Process, True);
 
       --  Should we prepend to the current buffer ?
       if not Pc_In_Range and then Pc_End_In_Range then
@@ -350,7 +350,7 @@ package body GVD.Text_Box.Asm_Editor is
       Set_Buffer
         (Editor, Editor.Current_Range.Data, Clear_Previous => False);
       Update_Child (Editor);
-      Set_Busy_Cursor (Process, False);
+      Set_Busy (Process, False);
    end On_Frame_Changed;
 
    -----------------------
@@ -785,7 +785,7 @@ package body GVD.Text_Box.Asm_Editor is
       if Box.Current_Range /= null
         and then Get_Pref (Assembly_Range_Size) /= "0"
       then
-         Set_Busy_Cursor
+         Set_Busy
            (Debugger_Process_Tab (Box.Process), True, Force_Refresh => True);
 
          if Down then
@@ -822,7 +822,7 @@ package body GVD.Text_Box.Asm_Editor is
            (Box, Gint (0), Gint (0), Gint (0), Fore => Box.Highlight_Color);
          Highlight_Address_Range (Box, Src_Line);
 
-         Set_Busy_Cursor (Debugger_Process_Tab (Box.Process), False);
+         Set_Busy (Debugger_Process_Tab (Box.Process), False);
       end if;
    end Meta_Scroll;
 

@@ -592,7 +592,7 @@ begin
 
                      Process_Proxies.Set_Command_In_Process
                        (Debugger.Get_Process (Process.Debugger), False);
-                     Set_Busy_Cursor (Process, False);
+                     Set_Busy (Process, False);
                      Unregister_Dialog (Process);
                      Free (Process.Current_Command);
                   end if;

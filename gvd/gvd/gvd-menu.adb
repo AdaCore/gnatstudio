@@ -860,7 +860,7 @@ package body GVD.Menu is
          Display_Prompt (Tab.Debugger);
       end if;
 
-      Set_Busy_Cursor (Tab, False);
+      Set_Busy (Tab, False);
 
       --  We used to flush the output here, so that if the program was
       --  outputting a lot of things, we just stop there.

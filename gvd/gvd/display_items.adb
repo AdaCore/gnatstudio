@@ -258,7 +258,7 @@ package body Display_Items is
       --  this means that the variable is unknown, and we don't create an item
       --  in that case.
 
-      Set_Busy_Cursor (Debugger, True, Force_Refresh => True);
+      Set_Busy (Debugger, True, Force_Refresh => True);
 
       if Default_Entity = null then
          begin
@@ -268,7 +268,7 @@ package body Display_Items is
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse type for ") & Variable_Name);
-               Set_Busy_Cursor (Debugger, False);
+               Set_Busy (Debugger, False);
                return;
          end;
 
@@ -276,7 +276,7 @@ package body Display_Items is
             Output_Error
               (Debugger.Window,
                (-"Could not get the type of ") & Variable_Name);
-            Set_Busy_Cursor (Debugger, False);
+            Set_Busy (Debugger, False);
             return;
          end if;
       end if;
@@ -315,7 +315,7 @@ package body Display_Items is
                Refresh_Canvas (Debugger.Data_Canvas);
             end if;
 
-            Set_Busy_Cursor (Debugger, False);
+            Set_Busy (Debugger, False);
             return;
          end if;
       end if;
@@ -340,7 +340,7 @@ package body Display_Items is
                Output_Error
                  (Debugger.Window,
                   (-"Could not parse the value for ") & Variable_Name);
-               Set_Busy_Cursor (Debugger, False);
+               Set_Busy (Debugger, False);
                return;
          end;
 
@@ -366,11 +366,11 @@ package body Display_Items is
          Put (Debugger.Data_Canvas, Item);
       end if;
 
-      Set_Busy_Cursor (Debugger, False);
+      Set_Busy (Debugger, False);
 
    exception
       when others =>
-         Set_Busy_Cursor (Debugger, False);
+         Set_Busy (Debugger, False);
          raise;
    end Gtk_New;
 

@@ -129,7 +129,7 @@ package body GVD.Dialogs.Callbacks is
       --  Wait_For_Prompt is false
 
       Unregister_Dialog (Debugger);
-      Set_Busy_Cursor (Debugger, False);
+      Set_Busy (Debugger, False);
 
       Send (Dialog.Debugger,
             "y",
@@ -159,7 +159,7 @@ package body GVD.Dialogs.Callbacks is
       --  Wait_For_Prompt is false
 
       Unregister_Dialog (Debugger);
-      Set_Busy_Cursor (Debugger, False);
+      Set_Busy (Debugger, False);
 
       Send (Dialog.Debugger,
             "n",
@@ -207,7 +207,7 @@ package body GVD.Dialogs.Callbacks is
       --  Wait_For_Prompt is false
 
       Unregister_Dialog (Debugger);
-      Set_Busy_Cursor (Debugger, False);
+      Set_Busy (Debugger, False);
 
       Send (Dialog.Debugger,
             To_String (S),
