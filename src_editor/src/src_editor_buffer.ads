@@ -740,6 +740,11 @@ private
    --  Indicate that the text has been edited, and that a timeout should be
    --  registered to call the corresponding "after-timeout" hook.
 
+   procedure Emit_New_Cursor_Position
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Signal the new cursor position by emitting the "cursor_position_changed"
+   --  signal.
+
    -----------------------
    -- Line highlighting --
    -----------------------

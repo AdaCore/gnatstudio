@@ -231,11 +231,6 @@ package body Src_Editor_Buffer is
    --  case the Start and End iterators are equal, since the text between
    --  these iterators have already been deleted.
 
-   procedure Emit_New_Cursor_Position
-     (Buffer : access Source_Buffer_Record'Class);
-   --  Signal the new cursor position by emitting the "cursor_position_changed"
-   --  signal.
-
    procedure Kill_Highlighting
      (Buffer : access Source_Buffer_Record'Class;
       From   : Gtk_Text_Iter;
