@@ -32,7 +32,6 @@ with Casing;                   use Casing;
 with Prj.Tree;                 use Prj.Tree;
 with Prj.Util;                 use Prj.Util;
 with Prj_API;                  use Prj_API;
-with Prj_Normalize;            use Prj_Normalize;
 with Prj;                      use Prj;
 with Types;                    use Types;
 with Namet;                    use Namet;
@@ -43,6 +42,8 @@ with Glide_Intl;               use Glide_Intl;
 with Prj_API;                  use Prj_API;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Basic_Types;              use Basic_Types;
 
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
 
@@ -68,7 +69,7 @@ package body Ada_Naming_Editors is
    -------------
 
    procedure Gtk_New (Editor : out Ada_Naming_Editor) is
-      Casing_Items : String_List.Glist;
+      Casing_Items : Gtk.Enums.String_List.Glist;
       Size_Group : Gtk_Size_Group;
    begin
       Editor := new Ada_Naming_Editor_Record;
@@ -100,7 +101,7 @@ package body Ada_Naming_Editors is
 
       for Casing in Casing_Type loop
          if Casing /= Unknown then
-            String_List.Append (Casing_Items, -Image (Casing));
+            Gtk.Enums.String_List.Append (Casing_Items, -Image (Casing));
          end if;
       end loop;
 
@@ -191,11 +192,141 @@ package body Ada_Naming_Editors is
      (Editor  : access Ada_Naming_Editor_Record;
       Kernel  : access Kernel_Handle_Record'Class;
       Project : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
       Ignore_Scenario : Boolean) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
       Naming   : constant String := Get_Name_String (Name_Naming);
       Scenar   : Project_Node_Array_Access;
+      Changed  : Boolean := False;
+      Ada_Scheme : constant Boolean :=
+        Get_Index_In_List (Editor.Standard_Scheme) = 0;
+
+      procedure Update_If_Required
+        (Name : Name_Id; Value : String; Index : String);
+      --  Update the attribute if necessary
+
+      function List_Changed (List : Array_Element_Id; Column : Gint)
+         return Boolean;
+      --  True if the list of elements in List is different from the elements
+      --  in column Column of the exceptions list.
+
+      ------------------------
+      -- Update_If_Required --
+      ------------------------
+
+      procedure Update_If_Required
+        (Name : Name_Id; Value : String; Index : String)
+      is
+         Old : constant String := Get_Attribute_Value
+           (Project_View   => Project_View,
+            Attribute_Name => Get_Name_String (Name),
+            Package_Name   => Naming,
+            Index          => Index);
+      begin
+         if Project_View = No_Project
+           or else (Value /= Old
+                    and then (Old /= "" or else not Ada_Scheme))
+         then
+            Changed := True;
+            if Ada_Scheme then
+               Delete_Attribute
+                 (Project            => Project,
+                  Pkg_Name           => Naming,
+                  Scenario_Variables => Scenar.all,
+                  Attribute_Name     => Get_Name_String (Name),
+                  Attribute_Index    => Index);
+            else
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Naming,
+                  Scenario_Variables => Scenar.all,
+                  Attribute_Name     => Get_Name_String (Name),
+                  Value              => Value,
+                  Attribute_Index    => Index);
+            end if;
+         end if;
+      end Update_If_Required;
+
+      ------------------
+      -- List_Changed --
+      ------------------
+
+      function List_Changed (List : Array_Element_Id; Column : Gint)
+         return Boolean
+      is
+         Length : Natural := 0;
+         Elem   : Array_Element_Id := List;
+      begin
+         --  Count the number of elements in the array
+         while Elem /= No_Array_Element loop
+            Length := Length + 1;
+            Elem := Prj.Array_Elements.Table (Elem).Next;
+         end loop;
+
+         declare
+            Old_Names  : Argument_List (1 .. Length);
+            Old_Values : Argument_List (1 .. Length);
+            Current : Natural := 1;
+         begin
+            Elem := List;
+            while Elem /= No_Array_Element loop
+               Old_Names (Current) := new String'
+                 (Get_Name_String (Prj.Array_Elements.Table (Elem).Index));
+               Old_Values (Current) := new String'
+                 (Get_String (Prj.Array_Elements.Table (Elem).Value.Value));
+               Current := Current + 1;
+               Elem := Prj.Array_Elements.Table (Elem).Next;
+            end loop;
+
+            for J in 0 .. Num_Rows - 1 loop
+               declare
+                  U : constant String :=
+                    Get_Text (Editor.Exception_List, J, 0);
+                  Value : constant String :=
+                    Get_Text (Editor.Exception_List, J, Column);
+                  Found : Boolean := False;
+               begin
+                  if Value /= "" then
+                     for Index in Old_Names'Range loop
+                        if Old_Names (Index) /= null
+                          and then Old_Names (Index).all = U
+                        then
+                           if Old_Values (Index).all /= Value then
+                              Free (Old_Names);
+                              Free (Old_Values);
+                              return True;
+                           end if;
+
+                           Free (Old_Names (Index));
+                           Free (Old_Values (Index));
+                           Found := True;
+                        end if;
+                     end loop;
+
+                     if not Found then
+                        Free (Old_Names);
+                        Free (Old_Values);
+                        return True;
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+            --  If there remains at least one value in the old values, then the
+            --  lists are different
+            for Index in Old_Names'Range loop
+               if Old_Names (Index) /= null then
+                  Free (Old_Names);
+                  Free (Old_Values);
+                  return True;
+               end if;
+            end loop;
+         end;
+
+         return False;
+      end List_Changed;
+
    begin
       if Ignore_Scenario then
          Scenar := new Project_Node_Array (1 .. 0);
@@ -203,38 +334,21 @@ package body Ada_Naming_Editors is
          Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
       end if;
 
-      if not Has_Been_Normalized (Project) then
-         Normalize (Project, Recurse => False);
-      end if;
+      Update_If_Required
+        (Name_Specification_Suffix,
+         Get_Text (Get_Entry (Editor.Spec_Extension)), Ada_String);
+      Update_If_Required
+        (Name_Implementation_Suffix,
+         Get_Text (Get_Entry (Editor.Body_Extension)), Ada_String);
+      Update_If_Required
+        (Name_Separate_Suffix,
+         Get_Text (Get_Entry (Editor.Separate_Extension)), "");
+      Update_If_Required
+        (Name_Casing,
+         Image (Casing_Type'Val (Get_Index_In_List (Editor.Casing))), "");
+      Update_If_Required
+        (Name_Dot_Replacement, Get_Text (Editor.Dot_Replacement), "");
 
-      --  Eliminate all the Ada-related attributes.
-      Delete_Attribute
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
-         Attribute_Index    => Ada_String);
-      Delete_Attribute
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
-         Attribute_Index    => Ada_String);
-      Delete_Attribute
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Separate_Suffix));
-      Delete_Attribute
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Casing));
-      Delete_Attribute
-        (Project            => Project,
-         Pkg_Name           => Naming,
-         Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Dot_Replacement));
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
@@ -248,78 +362,47 @@ package body Ada_Naming_Editors is
          Attribute_Name     => Get_Name_String (Name_Implementation),
          Attribute_Index    => Any_Attribute);
 
+      Changed := Changed
+        or else Project_View = No_Project
+        or else List_Changed
+          (Prj.Projects.Table (Project_View).Naming.Specifications, 1)
+        or else List_Changed
+          (Prj.Projects.Table (Project_View).Naming.Bodies, 2);
 
-      --  Do nothing for the standard GNAT naming scheme
-
-      if Get_Index_In_List (Editor.Standard_Scheme) /= 0 then
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
-            Attribute_Name     => Get_Name_String (Name_Specification_Suffix),
-            Value              => Get_Text (Get_Entry (Editor.Spec_Extension)),
-            Attribute_Index    => Ada_String);
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
-            Attribute_Name     => Get_Name_String (Name_Implementation_Suffix),
-            Value              => Get_Text (Get_Entry (Editor.Body_Extension)),
-            Attribute_Index    => Ada_String);
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
-            Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
-            Value         => Get_Text (Get_Entry (Editor.Separate_Extension)));
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
-            Attribute_Name     => Get_Name_String (Name_Casing),
-            Value              => Image
-              (Casing_Type'Val (Get_Index_In_List (Editor.Casing))));
-         Update_Attribute_Value_In_Scenario
-           (Project            => Project,
-            Pkg_Name           => Naming,
-            Scenario_Variables => Scenar.all,
-            Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
-            Value              => Get_Text (Editor.Dot_Replacement));
+      if Changed then
+         for J in 0 .. Num_Rows - 1 loop
+            declare
+               U : constant String := Get_Text (Editor.Exception_List, J, 0);
+               Spec : constant String :=
+                 Get_Text (Editor.Exception_List, J, 1);
+               Bod : constant String :=
+                 Get_Text (Editor.Exception_List, J, 2);
+            begin
+               if Spec /= "" then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Pkg_Name           => Naming,
+                     Scenario_Variables => Scenar.all,
+                     Attribute_Name    => Get_Name_String (Name_Specification),
+                     Value              => Spec,
+                     Attribute_Index    => U);
+               end if;
+               if Bod /= "" then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Pkg_Name           => Naming,
+                     Scenario_Variables => Scenar.all,
+                     Attribute_Name   => Get_Name_String (Name_Implementation),
+                     Value              => Bod,
+                     Attribute_Index    => U);
+               end if;
+            end;
+         end loop;
       end if;
-
-      for J in 0 .. Num_Rows - 1 loop
-         declare
-            U : constant String := Get_Text (Editor.Exception_List, J, 0);
-            Spec : constant String :=
-              Get_Text (Editor.Exception_List, J, 1);
-            Bod : constant String :=
-              Get_Text (Editor.Exception_List, J, 2);
-         begin
-            if Spec /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar.all,
-                  Attribute_Name     => Get_Name_String (Name_Specification),
-                  Value              => Spec,
-                  Attribute_Index    => U);
-            end if;
-            if Bod /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Naming,
-                  Scenario_Variables => Scenar.all,
-                  Attribute_Name     => Get_Name_String (Name_Implementation),
-                  Value              => Bod,
-                  Attribute_Index    => U);
-            end if;
-         end;
-      end loop;
 
       Free (Scenar);
 
-      --  Should return True only of the naming scheme actually changed.
-      return True;
+      return Changed;
    end Create_Project_Entry;
 
    ---------------------------
