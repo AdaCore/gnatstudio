@@ -316,18 +316,10 @@ package body Src_Info.LI_Utils is
       Set_Time_Stamp : Boolean := True;
       Unit_Name      : String := "")
    is
-      Directory_Name : constant String := Dir_Name (Full_Filename).all;
-      Dir : GNAT.OS_Lib.String_Access;
       Unit : GNAT.OS_Lib.String_Access;
       Time : Timestamp := 0;
 
    begin
-      if Directory_Name /= ""
-        and then Directory_Name /= "./"
-      then
-         Dir := new String'(Directory_Name);
-      end if;
-
       if Unit_Name /= "" then
          Unit := new String'(Unit_Name);
       end if;
@@ -339,7 +331,7 @@ package body Src_Info.LI_Utils is
       FI_Ptr := new File_Info'
         (Unit_Name         => Unit,
          Source_Filename   => new String'(Base_Name (Full_Filename)),
-         Directory_Name    => Dir,
+         Cached_File       => VFS.No_File,
          File_Timestamp    => Time,
          Original_Filename => null,
          Original_Line     => 1,
