@@ -49,10 +49,14 @@ with Src_Editor_Module;         use Src_Editor_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Traces;                    use Traces;
 
 package body Src_Editor_Buffer is
 
    use type System.Address;
+
+   Me : Debug_Handle := Create ("Source_Editor_Buffer");
 
    -----------------
    -- Preferences --
@@ -220,6 +224,10 @@ package body Src_Editor_Buffer is
    begin
       Get_Cursor_Position (Buffer, Line => Line, Column => Col);
       Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Changed_Handler;
 
    ----------------------
@@ -243,6 +251,10 @@ package body Src_Editor_Buffer is
          Get_Cursor_Position (Buffer, Line, Col);
          Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Mark_Set_Handler;
 
    --------------------
@@ -317,6 +329,10 @@ package body Src_Editor_Buffer is
       end if;
 
       Highlight_Slice (Buffer, Start_Iter, End_Iter);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Cb;
 
    -------------------------
@@ -339,6 +355,10 @@ package body Src_Editor_Buffer is
             Insert_Text_Cb (Buffer, Pos, Text);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Insert_Text_Handler;
 
    -----------------------
@@ -370,9 +390,10 @@ package body Src_Editor_Buffer is
             Indent       : Natural;
             Next_Indent  : Natural;
             Line, Col    : Gint;
-            Offset       : Natural;
+            Offset       : Integer;
             --  Offset between cursor and end of line
 
+            Blanks       : Natural;
             C_Str        : Gtkada.Types.Chars_Ptr;
             Iter         : Gtk_Text_Iter;
             Line_Ends    : Boolean;
@@ -381,7 +402,6 @@ package body Src_Editor_Buffer is
             Slice        : Unchecked_String_Access;
             pragma Suppress (Access_Check, Slice);
             Index        : Integer;
-            Start        : Integer;
             Command      : Editor_Replace_Slice;
 
          begin
@@ -407,12 +427,21 @@ package body Src_Editor_Buffer is
                Slice := To_Unchecked_String (C_Str);
                Slice_Length := Natural (Strlen (C_Str));
 
+               Index  := Slice_Length;
+               Blanks := Slice_Length - Offset + 1;
+
                if Line_Ends then
                   Slice_Length := Slice_Length + 1;
                   Slice (Slice_Length) := ASCII.LF;
                end if;
 
-               Index := Slice_Length - 1;
+               while Blanks <= Slice_Length
+                 and then (Slice (Blanks) = ' '
+                           or else Slice (Blanks) = ASCII.HT)
+               loop
+                  Blanks := Blanks + 1;
+               end loop;
+
                Next_Indentation
                  (Buffer.Lang, Slice (1 .. Slice_Length),
                   Indent, Next_Indent);
@@ -426,22 +455,16 @@ package body Src_Editor_Buffer is
 
                if Index < Slice'First then
                   Index := Slice'First;
+               else
+                  Index := Index + 1;
                end if;
-
-               Start := Index;
 
                while Index <= Slice_Length
                  and then (Slice (Index) = ' '
-                           or else Slice (Index) = ASCII.HT
-                           or else Slice (Index) = ASCII.LF
-                           or else Slice (Index) = ASCII.CR)
+                           or else Slice (Index) = ASCII.HT)
                loop
                   Index := Index + 1;
                end loop;
-
-               if Index > Slice_Length then
-                  Index := Slice_Length;
-               end if;
 
                --  Prevent recursion
                Buffer.Inserting := True;
@@ -462,8 +485,7 @@ package body Src_Editor_Buffer is
                   (1 .. Indent => ' ') &
                   Slice (Index .. Slice_Length - Offset) & ASCII.LF &
                   (1 .. Next_Indent => ' ') &
-                  Slice (Slice_Length - Offset + 1 .. Slice_Length));
-
+                  Slice (Blanks .. Slice_Length));
                Enqueue (Buffer.Queue, Command);
                Indented := True;
 
@@ -474,7 +496,7 @@ package body Src_Editor_Buffer is
                Forward_Chars
                  (Pos,
                   Gint (Indent + Next_Indent +
-                        Slice_Length - Offset - Index + 2),
+                        2 * Slice_Length - Offset - Index - Blanks + 3),
                   Result);
                Place_Cursor (Buffer, Pos);
 
@@ -487,7 +509,7 @@ package body Src_Editor_Buffer is
                --  Stop propagation of exception, since doing nothing
                --  in this callback is harmless.
 
-               null;
+               g_free (C_Str);
          end;
       end if;
 
@@ -545,6 +567,10 @@ package body Src_Editor_Buffer is
             Buffer.Current_Command := Command_Access (Command);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end First_Insert_Text;
 
    ---------------------
@@ -596,6 +622,10 @@ package body Src_Editor_Buffer is
             Delete_Range_Cb (Buffer, Start_Iter);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Handler;
 
    ---------------------------------
@@ -606,14 +636,12 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues)
    is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-
-      Command : Editor_Command
-        := Editor_Command (Buffer.Current_Command);
-
+      Start_Iter   : Gtk_Text_Iter;
+      End_Iter     : Gtk_Text_Iter;
+      Command      : Editor_Command := Editor_Command (Buffer.Current_Command);
       Direction    : Direction_Type;
       Line, Column : Gint;
+
    begin
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
@@ -645,6 +673,9 @@ package body Src_Editor_Buffer is
                     Natural (Get_Line_Offset (Start_Iter)),
                     Direction);
             Enqueue (Buffer.Queue, Command);
+
+         else
+            Direction := Get_Direction (Command);
          end if;
 
          Add_Text (Command,
@@ -657,6 +688,10 @@ package body Src_Editor_Buffer is
             End_Action (Buffer);
          end if;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Before_Handler;
 
    ------------------------------
@@ -1007,6 +1042,10 @@ package body Src_Editor_Buffer is
       Buffer.Inserting := False;
 
       Buffer.Timestamp := To_Timestamp (File_Time_Stamp (Filename));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Load_File;
 
    ------------------
@@ -1043,7 +1082,7 @@ package body Src_Editor_Buffer is
          Blanks         : Natural := 0;
 
       begin
-         if Get_Pref (Buffer.Kernel, Strip_Blanks) then
+         if not Get_Pref (Buffer.Kernel, Strip_Blanks) then
             Current := File_Buffer'Last + 1;
          else
             while Current <= File_Buffer'Last loop
@@ -1099,16 +1138,15 @@ package body Src_Editor_Buffer is
         (File_Time_Stamp (Get_Filename (Buffer)));
 
    exception
-      when others =>
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
          --  To avoid consuming up all File Descriptors, we catch all
-         --  exceptions here, and close the current file descriptor before
-         --  reraising the exception.
+         --  exceptions here, and close the current file descriptor.
 
          if FD /= Invalid_FD then
             Close (FD);
          end if;
-
-         raise;
    end Save_To_File;
 
    -----------
