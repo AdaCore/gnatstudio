@@ -798,6 +798,11 @@ package body Debugger.Gdb is
       end loop;
 
       Send (Debugger, "frame", Mode => Internal);
+
+   exception
+      when Constraint_Error =>
+         --  Most likely the underlying process died.
+         null;
    end Attach_Process;
 
    --------------------
