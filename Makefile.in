@@ -18,10 +18,10 @@ clean:
 
 install-common:
 	$(MKDIR) $(bindir)
-	$(MKDIR) $(sharedir) $(sharedir)/make
+	$(MKDIR) $(sharedir) $(sharedir)/gnat
 	$(MKDIR) $(sharedir)/gps
-	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/make
-	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/make
+	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/gnat
+	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/gnat
 	(cd share; tar cf - customize/) | (cd $(sharedir)/gps; tar xf -)
 	(cd share; tar cf - python/)    | (cd $(sharedir)/gps; tar xf -)
 	$(MAKE) -C docs install
