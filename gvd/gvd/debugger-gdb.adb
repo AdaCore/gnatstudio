@@ -196,9 +196,11 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden);
    --  Set the debuggee arguments to Arguments.
 
-   function Get_Last_Breakpoint_Id (Debugger : access Gdb_Debugger'Class)
-      return Breakpoint_Identifier;
+   function Get_Last_Breakpoint_Id
+     (Debugger : access Gdb_Debugger'Class) return Breakpoint_Identifier;
    --  Get the Id of the last breakpoint created by Debugger.
+   --  Call this function only when no command is being processed by the
+   --  debugger (in particular user commands sent asynchronousely).
 
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
@@ -1454,13 +1456,37 @@ package body Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      Cmd         : Basic_Types.String_Access;
+      Actual_Mode : Command_Type := Mode;
+
    begin
       if Temporary then
-         Send (Debugger, "tbreak " & Name, Mode => Mode);
+         Cmd := new String' ("tbreak ");
       else
-         Send (Debugger, "break " & Name, Mode => Mode);
+         Cmd := new String' ("break ");
       end if;
+
+      if Mode in Visible_Command then
+         Actual_Mode := Hidden;
+      end if;
+
+      declare
+         Full_Cmd : constant String := Cmd.all & Name;
+         S        : constant String :=
+           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
+      begin
+         if Mode in Visible_Command then
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Full_Cmd & ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
+            Display_Prompt (Debugger);
+         end if;
+      end;
+
+      Free (Cmd);
       return Get_Last_Breakpoint_Id (Debugger);
    end Break_Subprogram;
 
@@ -1475,19 +1501,37 @@ package body Debugger.Gdb is
       Temporary : Boolean := False;
       Mode      : Command_Type := Hidden) return Breakpoint_Identifier
    is
-      Str : constant String := Positive'Image (Line);
+      Cmd         : Basic_Types.String_Access;
+      Actual_Mode : Command_Type := Mode;
+
    begin
       if Temporary then
-         Send (Debugger,
-               "tbreak " & Base_File_Name (File)
-               & ":" & Str (Str'First + 1 .. Str'Last),
-               Mode => Mode);
+         Cmd := new String' ("tbreak ");
       else
-         Send (Debugger,
-               "break " & Base_File_Name (File)
-               & ':' & Str (Str'First + 1 .. Str'Last),
-               Mode => Mode);
+         Cmd := new String' ("break ");
       end if;
+
+      if Mode in Visible_Command then
+         Actual_Mode := Hidden;
+      end if;
+
+      declare
+         Full_Cmd : constant String :=
+           Cmd.all & Base_File_Name (File) & ":" & Image (Line);
+         S        : constant String :=
+           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
+
+      begin
+         if Mode in Visible_Command then
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Full_Cmd & ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
+            Display_Prompt (Debugger);
+         end if;
+      end;
+
+      Free (Cmd);
       return Get_Last_Breakpoint_Id (Debugger);
    end Break_Source;
 
@@ -1500,13 +1544,32 @@ package body Debugger.Gdb is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      Actual_Mode : Command_Type := Mode;
    begin
-      Send
-        (Debugger,
-         Break_Exception (Language_Debugger_Access (Get_Language (Debugger)),
-                          Name, Temporary, Unhandled),
-         Mode => Mode);
+      if Mode in Visible_Command then
+         Actual_Mode := Hidden;
+      end if;
+
+      declare
+         Full_Cmd : constant String :=
+           Break_Exception
+             (Language_Debugger_Access (Get_Language (Debugger)),
+              Name, Temporary, Unhandled);
+         S        : constant String :=
+           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
+
+      begin
+         if Mode in Visible_Command then
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Full_Cmd & ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
+            Display_Prompt (Debugger);
+         end if;
+      end;
+
       return Get_Last_Breakpoint_Id (Debugger);
    end Break_Exception;
 
@@ -1515,16 +1578,40 @@ package body Debugger.Gdb is
    -------------------
 
    function Break_Address
-     (Debugger   : access Gdb_Debugger;
-      Address    : String;
-      Temporary  : Boolean := False;
-      Mode : Command_Type := Hidden) return Breakpoint_Identifier is
+     (Debugger  : access Gdb_Debugger;
+      Address   : String;
+      Temporary : Boolean := False;
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      Cmd         : Basic_Types.String_Access;
+      Actual_Mode : Command_Type := Mode;
+
    begin
       if Temporary then
-         Send (Debugger, "tbreak *" & Address, Mode => Mode);
+         Cmd := new String' ("tbreak *");
       else
-         Send (Debugger, "break *" & Address, Mode => Mode);
+         Cmd := new String' ("break *");
       end if;
+
+      if Mode in Visible_Command then
+         Actual_Mode := Hidden;
+      end if;
+
+      declare
+         Full_Cmd : constant String := Cmd.all & Address;
+         S        : constant String :=
+           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
+      begin
+         if Mode in Visible_Command then
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Full_Cmd & ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
+            Display_Prompt (Debugger);
+         end if;
+      end;
+
+      Free (Cmd);
       return Get_Last_Breakpoint_Id (Debugger);
    end Break_Address;
 
@@ -1536,14 +1623,33 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier
+   is
+      Actual_Mode : Command_Type := Mode;
    begin
       if Temporary then
          raise Unknown_Command;
          --  Error ("Temporary regexp breakpoints not supported");
-      else
-         Send (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
+
+      if Mode in Visible_Command then
+         Actual_Mode := Hidden;
+      end if;
+
+      declare
+         Full_Cmd : constant String := "rbreak " & Regexp;
+         S        : constant String :=
+           Send (Debugger, Full_Cmd, Mode => Actual_Mode);
+      begin
+         if Mode in Visible_Command then
+            Output_Text
+              (Convert (Debugger.Window, Debugger),
+               Full_Cmd & ASCII.LF & S & ASCII.LF,
+               Set_Position => True);
+            Display_Prompt (Debugger);
+         end if;
+      end;
+
       return Get_Last_Breakpoint_Id (Debugger);
    end Break_Regexp;
 
