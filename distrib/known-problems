@@ -12,7 +12,7 @@ Known Problems fixed in GPS 1.2.0
               way.
   Workaround: Save the file as Unix or Windows format.
 
-- Last line of file not saved properly
+- C227-001 Last line of file not saved properly
   Problem:    In some cases when saving a file, the last character is
               truncated.
   Workaround: Add an extra blank line at the end of the file before saving it.
