@@ -20,11 +20,10 @@
 
 --  This package is the root of the GPS' kernel API.
 
-with Ada.Tags;
 with Basic_Mapper;
 with GNAT.OS_Lib;
 with Generic_List;
-with Glib.Object;
+with Glib.Object;  use Glib;
 with Glib.Values;
 with Glib.Xml_Int;
 with Gdk;
@@ -89,10 +88,6 @@ package Glide_Kernel is
    --  Calls "Show_All" on Handle.Main_Window before loading the desktop.
    --  Return False if no desktop could be loaded (in which case the default
    --  desktop was loaded).
-
-   function Get_MDI
-     (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
-   --  Return the MDI associated with Handle
 
    function Get_Main_Window
      (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
@@ -476,9 +471,29 @@ package Glide_Kernel is
    -- Saving --
    ------------
 
+   function Get_MDI
+     (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
+   --  Return the MDI associated with Handle.
+   --  Use the Put function below instead of the one in GtkAda.MDI to
+   --  associated a widget with a GPS module
+
+   function Put
+     (Handle       : access Kernel_Handle_Record;
+      Child        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Flags        : Gtkada.MDI.Child_Flags := Gtkada.MDI.All_Buttons;
+      Focus_Widget : Gtk.Widget.Gtk_Widget := null;
+      Default_Width, Default_Height : Glib.Gint := -1;
+      Module       : access Module_ID_Record'Class;
+      Desktop_Independent : Boolean := False) return Gtkada.MDI.MDI_Child;
+   --  Recommended version of Put to use, instead of the one in
+   --  GtkAda.MDI. This version has several new parameters:
+   --    - Module : used to associate a module with a widget. This is used to
+   --               get the current context for instance
+   --    - Desktop_Independent: if this is true, then the window will not be
+   --               closed  when a new desktop is loaded.
+
    function Get_Module_From_Child
-     (Handle : access Kernel_Handle_Record;
-      Child  : Gtkada.MDI.MDI_Child) return Module_ID;
+     (Child  : Gtkada.MDI.MDI_Child) return Module_ID;
    --  Return the module that created Child, or null if no module was found.
 
    function Get_File_Editor
@@ -737,7 +752,6 @@ private
       Mime_Handler    : Module_Mime_Handler;
       Default_Factory : Module_Default_Context_Factory;
       Save_Function   : Module_Save_Function;
-      Child_Tag       : Ada.Tags.Tag;
       Tooltip_Handler : Module_Tooltip_Handler;
    end record;
 
