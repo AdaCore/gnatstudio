@@ -38,6 +38,7 @@ with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
 
 with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
 with VCS_Module;                  use VCS_Module;
+with VCS_View_Pkg;                use VCS_View_Pkg;
 with Traces;                      use Traces;
 with VFS;                         use VFS;
 
@@ -131,10 +132,12 @@ package body VCS.Generic_VCS is
       Action : String_Access) return Action_Record;
    --  Wrapper for Lookup_Action.
 
-   function Generic_Parse_Status
-     (Rep    : access Generic_VCS_Record;
-      Parser : Status_Parser_Record;
-      Text   : String) return File_Status_List.List;
+   procedure Generic_Parse_Status
+     (Rep            : access Generic_VCS_Record;
+      Parser         : Status_Parser_Record;
+      Text           : String;
+      Override_Cache : Boolean;
+      Clear_Logs     : Boolean);
    --  Parse the status for Text using Parser.
 
    function Describe_Action
@@ -541,7 +544,6 @@ package body VCS.Generic_VCS is
       end if;
 
       Sort (Sorted);
-
 
       if Local then
          if Rep.Local_Status_Parser.File_Index = 0 then
@@ -1086,129 +1088,174 @@ package body VCS.Generic_VCS is
       end loop;
    end Customize;
 
+   -- Parser command --
+
+   type Parser_Command_Type is new Root_Command with record
+      Override_Cache : Boolean;
+      Clear_Logs     : Boolean;
+      Text           : String_Access;
+      Start          : Integer;
+      Prev_Start     : Integer;
+      Parser         : Status_Parser_Record;
+      Status         : File_Status_List.List;
+      Rep            : Generic_VCS_Access;
+   end record;
+
+   --  ??? Need to implement destroy
+
+   function Execute
+     (Command : access Parser_Command_Type) return Command_Return_Type;
+
+   type Parser_Command_Access is access all Parser_Command_Type;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Parser_Command_Type) return Command_Return_Type
+   is
+      S       : String renames Command.Text.all;
+      St      : File_Status_Record;
+      Matches : Match_Array (0 .. Command.Parser.Matches_Num);
+   begin
+      Command.Prev_Start := Command.Start;
+
+      Match (Command.Parser.Regexp.all, S, Matches, Command.Start, S'Last);
+
+      if Matches (0) = No_Match then
+         Display_File_Status
+           (Command.Rep.Kernel,
+            Command.Status,
+            VCS_Access (Command.Rep),
+            Override_Cache => Command.Override_Cache,
+            Force_Display  => True,
+            Clear_Logs     => Command.Clear_Logs,
+            Display        => True);
+
+         return Success;
+      end if;
+
+      if Command.Parser.File_Index /= 0 then
+         St.File := Glide_Kernel.Create
+           (S (Matches (Command.Parser.File_Index).First
+               .. Matches (Command.Parser.File_Index).Last),
+            Command.Rep.Kernel,
+            True, False);
+
+      elsif not Is_Empty (Command.Rep.Current_Query_Files) then
+         St.File := Glide_Kernel.Create
+           (String_List.Head (Command.Rep.Current_Query_Files),
+            Command.Rep.Kernel,
+            True, False);
+
+         String_List.Next (Command.Rep.Current_Query_Files);
+      else
+         --  ??? There should be an error message here
+         return Failure;
+      end if;
+
+      if Command.Parser.Local_Rev_Index /= 0 then
+         String_List_Utils.String_List.Append
+           (St.Working_Revision,
+            S (Matches (Command.Parser.Local_Rev_Index).First
+               .. Matches (Command.Parser.Local_Rev_Index).Last));
+      end if;
+
+      if Command.Parser.Repository_Rev_Index /= 0 then
+         String_List_Utils.String_List.Append
+           (St.Repository_Revision,
+            S (Matches (Command.Parser.Repository_Rev_Index).First
+               .. Matches (Command.Parser.Repository_Rev_Index).Last));
+      end if;
+
+      if Command.Parser.Status_Index /= 0 then
+         declare
+            Status_String : constant String :=
+              S (Matches (Command.Parser.Status_Index).First
+                 .. Matches (Command.Parser.Status_Index).Last);
+            Matches : Match_Array (0 .. 1);
+
+            use Status_Parser;
+
+            Node : Status_Parser.List_Node :=
+                     First (Command.Parser.Status_Identifiers);
+         begin
+            while Node /= Status_Parser.Null_Node loop
+               Match (Data (Node).Regexp.all, Status_String, Matches);
+
+               if Matches (0) /= No_Match then
+                  St.Status := Command.Rep.Status (Data (Node).Index);
+                  exit;
+               end if;
+
+               Node := Next (Node);
+            end loop;
+         end;
+      end if;
+
+      File_Status_List.Append (Command.Status, St);
+
+      Command.Start := Matches (0).Last + 1;
+
+      --  Prevent infinite loop that could occur if users allow matches
+      --  on empty strings.
+
+      if Command.Prev_Start = Command.Start then
+         return Success;
+      end if;
+
+      return Execute_Again;
+   end Execute;
+
    --------------------------
    -- Generic_Parse_Status --
    --------------------------
 
-   function Generic_Parse_Status
-     (Rep    : access Generic_VCS_Record;
-      Parser : Status_Parser_Record;
-      Text   : String) return File_Status_List.List
+   procedure Generic_Parse_Status
+     (Rep            : access Generic_VCS_Record;
+      Parser         : Status_Parser_Record;
+      Text           : String;
+      Override_Cache : Boolean;
+      Clear_Logs     : Boolean)
    is
-      Status  : File_Status_List.List;
-      S       : String renames Text;
-      Matches : Match_Array (0 .. Parser.Matches_Num);
-      Start   : Integer := S'First;
-      Prev_Start : Integer := S'First - 1;
-
+      Command : Parser_Command_Access;
    begin
       if Parser.Regexp = null then
          Insert (Rep.Kernel,
                  -"Error: no status parser defined for " & Rep.Id.all);
-         return Status;
+         return;
       end if;
 
-      loop
-         Prev_Start := Start;
+      Command := new Parser_Command_Type;
+      Command.Parser := Parser;
+      Command.Text   := new String'(Text);
+      Command.Start  := Text'First;
+      Command.Prev_Start := Text'First - 1;
+      Command.Override_Cache := Override_Cache;
+      Command.Clear_Logs := Clear_Logs;
+      Command.Rep        := Generic_VCS_Access (Rep);
 
-         Match (Parser.Regexp.all, S, Matches, Start, S'Last);
-
-         exit when Matches (0) = No_Match;
-
-         declare
-            St : File_Status_Record;
-         begin
-            if Parser.File_Index /= 0 then
-               St.File := Glide_Kernel.Create
-                 (S (Matches (Parser.File_Index).First
-                     .. Matches (Parser.File_Index).Last),
-                  Rep.Kernel,
-                  True, False);
-
-               Start := Integer'Max
-                 (Matches (Parser.File_Index).Last + 1, Start);
-
-            elsif not Is_Empty (Rep.Current_Query_Files) then
-               St.File := Glide_Kernel.Create
-                 (String_List.Head (Rep.Current_Query_Files),
-                  Rep.Kernel,
-                  True, False);
-
-               String_List.Next (Rep.Current_Query_Files);
-            else
-               --  ??? There should be an error message here
-               return Status;
-            end if;
-
-            if Parser.Local_Rev_Index /= 0 then
-               String_List_Utils.String_List.Append
-                 (St.Working_Revision,
-                  S (Matches (Parser.Local_Rev_Index).First
-                     .. Matches (Parser.Local_Rev_Index).Last));
-
-               Start := Integer'Max
-                 (Matches (Parser.Local_Rev_Index).Last + 1, Start);
-            end if;
-
-            if Parser.Repository_Rev_Index /= 0 then
-               String_List_Utils.String_List.Append
-                 (St.Repository_Revision,
-                  S (Matches (Parser.Repository_Rev_Index).First
-                     .. Matches (Parser.Repository_Rev_Index).Last));
-
-               Start := Integer'Max
-                 (Matches (Parser.Repository_Rev_Index).Last + 1, Start);
-            end if;
-
-            if Parser.Status_Index /= 0 then
-               declare
-                  Status_String : constant String :=
-                    S (Matches (Parser.Status_Index).First
-                       .. Matches (Parser.Status_Index).Last);
-                  Matches : Match_Array (0 .. 1);
-
-                  use Status_Parser;
-
-                  Node : Status_Parser.List_Node :=
-                           First (Parser.Status_Identifiers);
-               begin
-                  while Node /= Status_Parser.Null_Node loop
-                     Match (Data (Node).Regexp.all, Status_String, Matches);
-
-                     if Matches (0) /= No_Match then
-                        St.Status := Rep.Status (Data (Node).Index);
-                        exit;
-                     end if;
-
-                     Node := Next (Node);
-                  end loop;
-               end;
-            end if;
-
-            File_Status_List.Append (Status, St);
-         end;
-
-         --  Prevent infinite loop that could occur if users allow matches
-         --  on empty strings.
-         exit when Prev_Start = Start;
-      end loop;
-
-      return Status;
+      Launch_Background_Command
+        (Rep.Kernel, Command_Access (Command), True, False, "");
    end Generic_Parse_Status;
 
    ------------------
    -- Parse_Status --
    ------------------
 
-   function Parse_Status
-     (Rep   : access Generic_VCS_Record;
-      Text  : String;
-      Local : Boolean) return File_Status_List.List is
+   procedure Parse_Status
+     (Rep        : access Generic_VCS_Record;
+      Text       : String;
+      Local      : Boolean;
+      Clear_Logs : Boolean) is
    begin
       if Local then
-         return Generic_Parse_Status (Rep, Rep.Local_Status_Parser, Text);
+         Generic_Parse_Status
+           (Rep, Rep.Local_Status_Parser, Text, False, Clear_Logs);
       else
-         return Generic_Parse_Status (Rep, Rep.Status_Parser, Text);
+         Generic_Parse_Status
+           (Rep, Rep.Status_Parser, Text, True, Clear_Logs);
       end if;
    end Parse_Status;
 
