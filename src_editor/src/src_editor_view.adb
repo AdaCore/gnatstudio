@@ -118,6 +118,12 @@ package body Src_Editor_View is
       User   : Source_View);
    --  Callback for the "delete_range" signal.
 
+   procedure Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "changed" signal.
+
    procedure Redraw_Columns (View : access Source_View_Record'Class);
    --  Redraw the left and right areas around View.
 
@@ -171,6 +177,38 @@ package body Src_Editor_View is
      (View    : access Source_View_Record'Class;
       Column  : Integer);
    --  Remove the column from the side window information in View.
+
+   procedure Save_Cursor_Position
+     (View    : access Source_View_Record'Class);
+   --  Save the cursor position.
+
+   procedure Restore_Cursor_Position
+     (View    : access Source_View_Record'Class);
+   --  Restore the stored cursor position.
+
+   --------------------------
+   -- Save_Cursor_Position --
+   --------------------------
+
+   procedure Save_Cursor_Position
+     (View    : access Source_View_Record'Class) is
+   begin
+      Get_Cursor_Position (Source_Buffer (Get_Buffer (View)),
+                           View.Saved_Cursor_Line,
+                           View.Saved_Cursor_Column);
+   end Save_Cursor_Position;
+
+   -----------------------------
+   -- Restore_Cursor_Position --
+   -----------------------------
+
+   procedure Restore_Cursor_Position
+     (View    : access Source_View_Record'Class) is
+   begin
+      Set_Cursor_Position (Source_Buffer (Get_Buffer (View)),
+                           View.Saved_Cursor_Line,
+                           View.Saved_Cursor_Column);
+   end Restore_Cursor_Position;
 
    ------------
    -- Delete --
@@ -247,6 +285,24 @@ package body Src_Editor_View is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Delete_Range_Handler;
+
+   --------------------
+   -- Change_Handler --
+   --------------------
+
+   procedure Change_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Params, Buffer);
+   begin
+      Save_Cursor_Position (User);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Change_Handler;
 
    -------------------------
    -- Insert_Text_Handler --
@@ -431,13 +487,8 @@ package body Src_Editor_View is
    is
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Insert_Iter : Gtk_Text_Iter;
    begin
-      --  Save the current insert cursor position by moving the
-      --  Saved_Insert_Mark to the location where the "insert" mark
-      --  currently is.
-      Get_Iter_At_Mark (Buffer, Insert_Iter, Get_Insert (Buffer));
-      View.Saved_Insert_Mark := Create_Mark (Buffer, Where => Insert_Iter);
+      Save_Cursor_Position (View);
       End_Action (Buffer);
       return False;
 
@@ -455,19 +506,11 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       View   : constant Source_View := Source_View (Widget);
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
-      Saved_Insert_Iter : Gtk_Text_Iter;
    begin
-      --  Restore the old cursor position before we left the Source_View
-      --  by moving the Insert Mark to the location where the Saved_Insert_Mark
-      --  currently is.
-
-      if View.Saved_Insert_Mark /= null then
-         Get_Iter_At_Mark (Buffer, Saved_Insert_Iter, View.Saved_Insert_Mark);
-         Place_Cursor (Buffer, Saved_Insert_Iter);
-         Delete_Mark (Buffer, View.Saved_Insert_Mark);
-         View.Saved_Insert_Mark := null;
+      if not Selection_Exists (Get_Buffer (View)) then
+         Restore_Cursor_Position (View);
       end if;
+
       return False;
 
    exception
@@ -559,7 +602,7 @@ package body Src_Editor_View is
          After => False);
       Return_Callback.Connect
         (View, "button_press_event",
-         Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
+      Marsh => Return_Callback.To_Marshaller (Button_Press_Event_Cb'Access),
          After => False);
       Return_Callback.Connect
         (View, "key_press_event",
@@ -577,6 +620,12 @@ package body Src_Editor_View is
          Cb        => Delete_Range_Handler'Access,
          User_Data => Source_View (View),
          After     => False);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "cursor_position_changed",
+         Cb        => Change_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
 
       Gtkada.Handlers.Return_Callback.Object_Connect
         (View,
