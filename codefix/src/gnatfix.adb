@@ -52,7 +52,6 @@ procedure Gnatfix is
    Current_Text       : Text_Navigator;
    Errors_List        : Correction_Manager;
    Errors_Found       : Errors_File;
-   Successful_Update : Boolean;
 
    ------------------
    -- Free_Objects --
@@ -90,7 +89,7 @@ begin
       Errors_Found,
       Corrections_Proposed'Access);
 
-   Commit (Errors_List, Successful_Update, Current_Text, Ambiguity'Access);
+   Commit (Errors_List, Current_Text);
 
    if Visible then
       if Successful_Update then
