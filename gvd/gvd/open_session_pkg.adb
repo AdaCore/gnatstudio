@@ -434,7 +434,7 @@ begin
                  (Main_Debug_Window_Access (Window),
                   Program.Debugger,
                   Program.Program.all,
-                  List,
+                  List, "",
                   Program.Remote_Host.all,
                   Program.Remote_Target.all,
                   Program.Protocol.all);
