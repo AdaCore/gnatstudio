@@ -71,6 +71,13 @@ package body Src_Editor_Buffer.Line_Information is
       Column        : Integer);
    --  Remove the column from the side window information in Buffer.
 
+   procedure Remove_Blank_Lines
+     (Buffer                : access Source_Buffer_Record'Class;
+      Buffer_Line_At_Blanks : Buffer_Line_Type;
+      Number                : Natural);
+   --  Remove Number blank lines at Buffer_Line_At_Blanks. If Number = 0,
+   --  remove all continuous blank lines at Buffer_Lines_At_Blanks.
+
    procedure Get_Column_For_Identifier
      (Buffer        : access Source_Buffer_Record'Class;
       Identifier    : String;
@@ -333,7 +340,6 @@ package body Src_Editor_Buffer.Line_Information is
       Identifier : String)
    is
       Columns_Config : Columns_Config_Access;
-      Stick_To_Data  : Boolean := True;
       Column         : Integer := -1;
    begin
       --  Browse through existing columns and try to match Identifier
@@ -343,35 +349,19 @@ package body Src_Editor_Buffer.Line_Information is
       if Columns_Config /= null and then Columns_Config.all /= null then
          for J in Columns_Config.all'Range loop
             if Columns_Config.all (J).Identifier.all = Identifier then
-               Stick_To_Data := False;
                Column := J;
                exit;
             end if;
          end loop;
       end if;
 
-      if Stick_To_Data then
-         Columns_Config := Buffer.Editable_Line_Info_Columns;
-
-         if Columns_Config /= null and then Columns_Config.all /= null then
-            for J in Columns_Config.all'Range loop
-               if Columns_Config.all (J).Identifier.all = Identifier then
-                  Stick_To_Data := True;
-                  Column := J;
-
-                  if Column < Buffer.Block_Highlighting_Column then
-                     Buffer.Block_Highlighting_Column :=
-                       Buffer.Block_Highlighting_Column - 1;
-                  end if;
-
-                  exit;
-               end if;
-            end loop;
-         end if;
-      end if;
-
       if Column = -1 then
          return;
+      end if;
+
+      if Column < Buffer.Block_Highlighting_Column then
+         Buffer.Block_Highlighting_Column :=
+           Buffer.Block_Highlighting_Column - 1;
       end if;
 
       Remove_Line_Information_Column (Buffer, Column);
@@ -780,7 +770,6 @@ package body Src_Editor_Buffer.Line_Information is
       Number : Positive) return Gtk.Text_Mark.Gtk_Text_Mark
    is
       pragma Unreferenced (Text);
-      Command     : Remove_Blank_Lines_Command;
       LFs         : String (1 .. Natural (Number));
       Buffer_Line : Buffer_Line_Type;
       Iter        : Gtk_Text_Iter;
@@ -832,17 +821,6 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       Get_Iter_At_Line_Offset (Buffer, Iter, Gint (Buffer_Line - 1), 0);
-
-      --  Create a command to remove the line information at the desired
-      --  column.
-
-      Command := new Remove_Blank_Lines_Command_Type;
-      Command.Buffer := Source_Buffer (Buffer);
-      Command.Mark   := Create_Mark (Buffer, "", Iter);
-      Command.Number := Natural (Number);
-
-      Add_Block_Command (Buffer, Line, Command_Access (Command),
-                         Remove_Blank_Lines_Pixbuf);
 
       Side_Column_Changed (Buffer);
 
@@ -1181,15 +1159,14 @@ package body Src_Editor_Buffer.Line_Information is
    ------------------------
 
    procedure Remove_Blank_Lines
-     (Buffer : access Source_Buffer_Record'Class;
-      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-      Number : Natural)
+     (Buffer                : access Source_Buffer_Record'Class;
+      Buffer_Line_At_Blanks : Buffer_Line_Type;
+      Number                : Natural)
    is
       Iter     : Gtk_Text_Iter;
       End_Iter : Gtk_Text_Iter;
-      Buffer_Line_At_Blanks  : Buffer_Line_Type;
-      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
 
+      Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
 
@@ -1204,12 +1181,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Modifying_Real_Lines := True;
 
-      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Get_Iter_At_Line (Buffer, Iter, Gint (Buffer_Line_At_Blanks) - 1);
+      Copy (Iter, End_Iter);
 
       --  Compute the real number of blank lines.
-
-      Get_Iter_At_Line (Buffer, End_Iter, Get_Line (Iter));
-      Buffer_Line_At_Blanks := Buffer_Line_Type (Get_Line (Iter)) + 1;
 
       Buffer_Line := Buffer_Line_At_Blanks;
 
@@ -1267,6 +1242,18 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer.Modifying_Real_Lines := False;
    end Remove_Blank_Lines;
 
+   procedure Remove_Blank_Lines
+     (Buffer : access Source_Buffer_Record'Class;
+      Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Number : Natural)
+   is
+      Iter     : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Remove_Blank_Lines
+        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1), Number);
+   end Remove_Blank_Lines;
+
    ----------------
    -- Hide_Lines --
    ----------------
@@ -1307,29 +1294,7 @@ package body Src_Editor_Buffer.Line_Information is
       --  Remove all blank lines in the block that is to be folded.
 
       if Buffer.Blank_Lines /= 0 then
-         declare
-            Returned : Command_Return_Type;
-            pragma Unreferenced (Returned);
-            Command  : Command_Access;
-         begin
-            for EL in Line_Start .. Line_End loop
-               if Editable_Lines (EL).Side_Info_Data /= null
-                 and then Editable_Lines (EL).Side_Info_Data
-                 (Buffer.Block_Highlighting_Column).Info /= null
-               then
-                  Command :=
-                    Editable_Lines (EL).Side_Info_Data
-                    (Buffer.Block_Highlighting_Column).Info.Associated_Command;
-
-                  if Command /= null
-                    and then Command.all in
-                      Remove_Blank_Lines_Command_Type'Class
-                  then
-                     Returned := Execute (Command);
-                  end if;
-               end if;
-            end loop;
-         end;
+         Result := Flatten_Area (Buffer, Line_Start, Line_End);
       end if;
 
       --  Remove line by line in order to avoid problems when removing lines
@@ -1933,7 +1898,7 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
---        Command        : Command_Access;
+      Buffer_Line    : Buffer_Line_Type;
       Returned       : Command_Return_Type;
       Result         : Boolean := False;
       pragma Unreferenced (Returned);
@@ -1955,29 +1920,17 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Remove all blank lines.
 
-      --  ??? Need to rewrite this
+      if Buffer.Blank_Lines /= 0 then
+         Buffer_Line := Get_Buffer_Line (Buffer, Start_Line);
 
---        for Line in Start_Line).Buffer_Line ..
---          Buffer.Editable_Lines (End_Line).Buffer_Line
---        loop
---           if Buffer_Lines (Line).Side_Info_Data /= null
---             and then Buffer_Lines
---               (Line).Side_Info_Data
---               (Buffer.Block_Highlighting_Column).Info /= null
---           then
---              Command :=
---                Buffer_Lines (Line).Side_Info_Data
---                (Buffer.Block_Highlighting_Column).Info.Associated_Command;
---
---              if Command /= null
---                and then Command.all in
---                  Remove_Blank_Lines_Command_Type'Class
---              then
---                 Result := True;
---                 Returned := Execute (Command);
---              end if;
---           end if;
---        end loop;
+         while Buffer_Line < Get_Buffer_Line (Buffer, End_Line) loop
+            if Get_Editable_Line (Buffer, Buffer_Line) = 0 then
+               Remove_Blank_Lines (Buffer, Buffer_Line, 0);
+            end if;
+
+            Buffer_Line := Buffer_Line + 1;
+         end loop;
+      end if;
 
       return Result;
    end Flatten_Area;
