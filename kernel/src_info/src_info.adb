@@ -373,9 +373,6 @@ package body Src_Info is
 
    procedure Destroy (SF : in out Source_File) is
    begin
-      --  Do not deallocate SF.LI, we are just pointing to it, we did
-      --  not allocate it for this object.
-
       Free (SF.Source_Filename);
    end Destroy;
 
@@ -419,6 +416,7 @@ package body Src_Info is
       Destroy (ED.Location);
       Destroy (ED.Parent_Location);
       Destroy (ED.End_Of_Scope);
+      Destroy (ED.Primitive_Subprograms);
    end Destroy;
 
    procedure Destroy (EDI : in out E_Declaration_Info) is
@@ -441,10 +439,10 @@ package body Src_Info is
 
    procedure Destroy (FI : in out File_Info) is
    begin
+      Destroy (FI.Declarations);
       Free (FI.Unit_Name);
       Free (FI.Source_Filename);
       Free (FI.Original_Filename);
-      Destroy (FI.Declarations);
    end Destroy;
 
    procedure Destroy (FIP : in out File_Info_Ptr) is
