@@ -50,8 +50,6 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
-   function Convert_Filename_To_LI (Filename : String) return String;
-
    -------------------------------------------------------------------------
 
    --------------------------
@@ -124,8 +122,6 @@ package body Src_Info.LI_Utils is
             end if;
             D_Ptr := D_Ptr.Next;
          end loop;
-         --  ??? Shouldn't we try to locate existent declaration for
-         --  that Symbol_Name?
       end if;
       Insert_Declaration_Internal (D_Ptr, File, List, Symbol_Name,
             Source_Filename,
@@ -178,7 +174,9 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table,
+--                              Referred_Filename);
+                              Convert_Filename_To_LI (Referred_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
@@ -302,7 +300,9 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Referred_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table,
+      --                        Referred_Filename,
+                              Convert_Filename_To_LI (Referred_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
@@ -451,7 +451,9 @@ package body Src_Info.LI_Utils is
             FL_Ptr := FL_Ptr.Next;
          end loop;
       end if;
-      Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table,
+      --                        Parent_Filename,
+                              Convert_Filename_To_LI (Parent_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          if Parent_Filename = Declaration_Info.Value.Declaration
                                  .Location.File.Source_Filename.all
@@ -658,7 +660,9 @@ package body Src_Info.LI_Utils is
          if Source_Filename = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
-            Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
+            Tmp_LI_File_Ptr := Get (List.Table,
+--                                    Parent_Filename);
+                                    Convert_Filename_To_LI (Parent_Filename));
             if (Tmp_LI_File_Ptr = No_LI_File) then
                --  ??? What should we do if LI_File for parent does not exist?
                raise Parent_Not_Available;
@@ -852,7 +856,7 @@ package body Src_Info.LI_Utils is
    begin
       for i in Filename'First .. Filename'Last loop
          if Filename (i) = '/' or Filename (i) = '\' then
-            buf (i) := '_';
+            buf (i) := '#';
          else
             buf (i) := Filename (i);
          end if;
@@ -863,4 +867,3 @@ package body Src_Info.LI_Utils is
    -------------------------------------------------------------------------
 
 end Src_Info.LI_Utils;
-
