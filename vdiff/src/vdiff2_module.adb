@@ -50,12 +50,13 @@ with Gdk.Bitmap;                use Gdk.Bitmap;
 with Gtk.Image;                 use Gtk.Image;
 with Gdk.Color;                 use Gdk.Color;
 with Commands;                  use Commands;
-with Gtk.Handlers; use Gtk.Handlers;
-
+with Gtk.Handlers;              use Gtk.Handlers;
 
 package body Vdiff2_Module is
    use Diff_Occurrence_List;
+
    Me : constant Debug_Handle := Create (Vdiff_Module_Name);
+
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
@@ -84,20 +85,22 @@ package body Vdiff2_Module is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_closed" signal.
+
    No_Handler : constant Handler_Id := (Null_Signal_Id, null);
+
    type VDiff2_Module_Record is new Module_ID_Record with record
-      Kernel        : Kernel_Handle;
-      Is_Active     : Boolean := False;
-      Number_active : Natural := 0;
-      List_Diff     : Diff_Occurrence_List_Access;
-      Command_Prev  : Diff_Command_Access;
-      Command_Next  : Diff_Command_Access;
-      Command_First : Diff_Command_Access;
-      Command_Last  : Diff_Command_Access;
-      Command_Close : Diff_Command_Access;
+      Kernel              : Kernel_Handle;
+      Is_Active           : Boolean := False;
+      Number_active       : Natural := 0;
+      List_Diff           : Diff_Occurrence_List_Access;
+      Command_Prev        : Diff_Command_Access;
+      Command_Next        : Diff_Command_Access;
+      Command_First       : Diff_Command_Access;
+      Command_Last        : Diff_Command_Access;
+      Command_Close       : Diff_Command_Access;
       Command_Reload      : Diff_Command_Access;
       Command_Unhighlight : Diff_Command_Access;
-      File_Closed_Id           : Handler_Id := No_Handler;
+      File_Closed_Id      : Handler_Id := No_Handler;
    end record;
    type VDiff2_Module is access all VDiff2_Module_Record'Class;
 
@@ -415,8 +418,8 @@ package body Vdiff2_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
-      Id     : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
-      Item   : Diff_List_Head;
+      Id      : constant VDiff2_Module := VDiff2_Module (Vdiff_Module_ID);
+      Item    : Diff_List_Head;
       Result  : Diff_Occurrence_Link;
       Success : Boolean;
       Button  : Message_Dialog_Buttons;
@@ -528,6 +531,7 @@ package body Vdiff2_Module is
       Image   : Gtk_Image;
       Mask    : Gdk_Bitmap;
       PixMap  : Gdk_Pixmap;
+
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
@@ -598,10 +602,10 @@ package body Vdiff2_Module is
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, up_xpm);
       Gtk_New (Image, PixMap, Mask);
-      Register_Button (Kernel, -"Go to prev mark",
-                       Command_Access
-                         (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-                       Image);
+      Register_Button
+        (Kernel, -"Go to prev mark",
+         Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
+         Image);
 
       Create_From_Xpm_D
         (PixMap, Get_Window (Window), Mask, Null_Color, down_xpm);
@@ -663,7 +667,6 @@ package body Vdiff2_Module is
       Free (Root_Command (Id.Command_Next.all));
       Free (Root_Command (Id.Command_First.all));
       Free (Root_Command (Id.Command_Last.all));
-
    end Destroy;
 
    --------------------
@@ -673,33 +676,36 @@ package body Vdiff2_Module is
    procedure File_Closed_Cb
      (Widget  : access Glib.Object.GObject_Record'Class;
       Args    : GValues;
-      Kernel  : Kernel_Handle) is
-      Diff : Diff_Head_Access := new Diff_List_Head;
-      File  : constant String := Get_String (Nth (Args, 1));
+      Kernel  : Kernel_Handle)
+   is
+      Diff     : Diff_Head_Access := new Diff_List_Head;
+      File     : constant String := Get_String (Nth (Args, 1));
       CurrNode : Diff_Occurrence_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
       pragma Unreferenced (Widget);
-   begin
 
-      while CurrNode /= Null_Node
-      loop
+   begin
+      while CurrNode /= Null_Node loop
          Diff.all := Data (CurrNode);
-         exit when (Diff.File1.all = File
-                    or else
-                    Diff.File2.all = File
-                    or else
-                    Diff.File3.all = File);
+
+         exit when Diff.File1.all = File
+           or else Diff.File2.all = File
+           or else Diff.File3.all = File;
+
          CurrNode := Next (CurrNode);
       end loop;
 
       if CurrNode /= Null_Node then
-         Hide_Differences (Kernel, Diff.List, Diff.File1,
-                           Diff.File2, Diff.File3);
-         Remove_Nodes (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                        Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
-                             CurrNode),
-                       CurrNode);
+         Hide_Differences
+           (Kernel, Diff.List, Diff.File1,
+            Diff.File2, Diff.File3);
+         Remove_Nodes
+           (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+            Prev (VDiff2_Module (Vdiff_Module_ID).List_Diff.all,
+                  CurrNode),
+            CurrNode);
          Free (Diff);
       end if;
    end File_Closed_Cb;
+
 end Vdiff2_Module;
