@@ -4213,10 +4213,10 @@ package body Src_Editor_Module is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Pref_Display_Line_Numbers    : constant Boolean :=
+      Pref_Display_Line_Numbers     : constant Boolean :=
         Get_Pref (Kernel, Display_Line_Numbers);
-      Pref_Display_Subprogram_Name : constant Boolean :=
-        Get_Pref (Kernel, Display_Subprogram_Name);
+      Pref_Display_Subprogram_Names : constant Boolean :=
+        Get_Pref (Kernel, Display_Subprogram_Names);
 
       Id : Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -4238,7 +4238,7 @@ package body Src_Editor_Module is
 
       Line_Highlighting.Add_Category (Search_Result_Highlighting, GC, Color);
 
-      if not Pref_Display_Subprogram_Name then
+      if not Pref_Display_Subprogram_Names then
          --  clear the subprogram name labels for all files opened
 
          declare
