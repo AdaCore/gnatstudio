@@ -1225,8 +1225,10 @@ package body Src_Editor_Box is
 
       if Editor.Writable then
          Set_Text (Editor.Read_Only_Label, -"Writable");
+         Add_Controls (Editor.Source_Buffer);
       else
          Set_Text (Editor.Read_Only_Label, -"Read Only");
+         Remove_Controls (Editor.Source_Buffer);
       end if;
 
       return False;
@@ -1321,8 +1323,9 @@ package body Src_Editor_Box is
       Id := Object_Idle.Add (Check_Timestamp_Idle'Access, GObject (Box));
 
       --  Connect the Undo/Redo buttons to the buffer.
-
-      Add_Controls (B.Source_Buffer);
+      if B.Writable then
+         Add_Controls (B.Source_Buffer);
+      end if;
 
       return False;
    end Focus_In;
@@ -2503,7 +2506,9 @@ package body Src_Editor_Box is
 
    procedure Undo (Editor : access Source_Editor_Box_Record) is
    begin
-      Undo (Editor.Source_Buffer);
+      if Editor.Writable then
+         Undo (Editor.Source_Buffer);
+      end if;
    end Undo;
 
    ----------
@@ -2512,7 +2517,9 @@ package body Src_Editor_Box is
 
    procedure Redo (Editor : access Source_Editor_Box_Record) is
    begin
-      Redo (Editor.Source_Buffer);
+      if Editor.Writable then
+         Redo (Editor.Source_Buffer);
+      end if;
    end Redo;
 
    --------------
@@ -2534,5 +2541,15 @@ package body Src_Editor_Box is
    begin
       return Editor.Source_Buffer;
    end Get_Buffer;
+
+   ------------------
+   -- Get_Writable --
+   ------------------
+
+   function Get_Writable
+     (Editor : access Source_Editor_Box_Record) return Boolean is
+   begin
+      return Editor.Writable;
+   end Get_Writable;
 
 end Src_Editor_Box;
