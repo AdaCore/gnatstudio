@@ -34,7 +34,7 @@ with Debugger;
 with Process_Proxies;
 with GVD.Process;           use GVD.Process;
 with GVD.Trace;             use GVD.Trace;
-with GVD.Types;
+with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
 
@@ -51,6 +51,9 @@ with Ada.Exceptions;    use Ada.Exceptions;
 with GNAT.IO;           use GNAT.IO;
 
 procedure GVD_Main is
+
+   subtype String_Access is GNAT.OS_Lib.String_Access;
+
    Process           : Debugger_Process_Tab;
    Debugger_List     : Argument_List (1 .. Argument_Count);
    Program_Args      : String_Access := new String' ("");
@@ -58,7 +61,7 @@ procedure GVD_Main is
    Main_Debug_Window : Main_Debug_Window_Access;
    Id                : Glib.Gint;
    Level             : Integer;
-   Debug_Type        : GVD.Types.Debugger_Type := GVD.Types.Gdb_Type;
+   Debug_Type        : Debugger_Type := Gdb_Type;
    Button            : Message_Dialog_Buttons;
    Editor            : String_Access;
    Prefix            : String_Access;
@@ -305,7 +308,7 @@ begin
                   --  compatibility with Emacs' gdb mode
 
                -- --jdb --
-               when 'j' => Debug_Type := GVD.Types.Jdb_Type;
+               when 'j' => Debug_Type := Jdb_Type;
 
                -- --log-level --
                when 'l' =>
@@ -326,14 +329,13 @@ begin
 
                   if Level = 0 then
                      Main_Debug_Window.Debug_Mode := False;
-
-                  elsif Level in 1 .. GVD.Types.Command_Type'Pos
-                                        (GVD.Types.Command_Type'Last) + 1 then
+                  elsif
+                    Level in 1 .. Command_Type'Pos (Command_Type'Last) + 1
+                  then
                      Main_Debug_Window.Debug_Mode := True;
                      Main_Debug_Window.Log_Level :=
-                       GVD.Types.Command_Type'Val
-                         (GVD.Types.Command_Type'Pos
-                           (GVD.Types.Command_Type'Last) + 1 - Level);
+                       Command_Type'Val
+                         (Command_Type'Pos (Command_Type'Last) + 1 - Level);
 
                   else
                      if GVD.Can_Output then
