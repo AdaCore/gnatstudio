@@ -216,12 +216,26 @@ package body Language.Ada is
          Category.all := 2;  --  specs
       end if;
 
-      if Matched (4) = No_Match then
-         return Str (Matched (2).First .. Matched (2).Last);
+      if Matched (3) = No_Match then
+         if Matched (4) = No_Match then
+            return Str (Matched (2).First .. Matched (2).Last);
+         else
+            return Str (Matched (2).First .. Matched (2).Last)
+              & " "
+              & Reduce (Str (Matched (4).First .. Matched (4).Last));
+         end if;
+
+      elsif Matched (4) = No_Match then
+         return
+           Str (Matched (2).First .. Matched (2).Last) & ' ' &
+           Reduce (Str (Matched (3).First .. Matched (3).Last));
+
       else
          return
            Str (Matched (2).First .. Matched (2).Last) & ' ' &
-                Reduce (Str (Matched (3).First .. Matched (3).Last));
+           Reduce (Str (Matched (3).First .. Matched (3).Last)
+                   & " "
+                   & Str (Matched (4).First .. Matched (4).Last));
       end if;
    end Make_Entry_Subprogram;
 
