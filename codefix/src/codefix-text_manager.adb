@@ -1558,11 +1558,10 @@ package body Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Integer)
    is
-
       Cursor : File_Cursor := This.Cursor;
 
       procedure Commit_Modified_Line;
-      --  Commit separately each part of a modified line, in order to conserv
+      --  Commit separately each part of a modified line, in order to keep
       --  marks.
 
       --------------------------
