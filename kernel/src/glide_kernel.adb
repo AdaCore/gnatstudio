@@ -533,14 +533,14 @@ package body Glide_Kernel is
          if Num_Unsaved = 1 then
             Gtk_New (Dialog,
                      Title  => -"Confirmation",
-                     Parent => Get_Main_Window (Handle),
+                     Parent => Get_Current_Window (Handle),
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Label, -"Do you want to save the following file ?");
 
          else
             Gtk_New (Dialog,
                      Title  => -"Saving files",
-                     Parent => Get_Main_Window (Handle),
+                     Parent => Get_Current_Window (Handle),
                      Flags  => Modal or Destroy_With_Parent);
             Gtk_New (Label, -"Do you want to save the following files ?");
          end if;
@@ -1284,6 +1284,27 @@ package body Glide_Kernel is
    begin
       return Handle.Main_Window;
    end Get_Main_Window;
+
+   ------------------------
+   -- Get_Current_Window --
+   ------------------------
+
+   function Get_Current_Window
+     (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window
+   is
+      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Handle));
+      Widget : Gtk_Widget;
+   begin
+      if Child /= null then
+         Widget := Get_Widget (Child);
+
+         if Realized_Is_Set (Widget) then
+            return Gtk_Window (Get_Toplevel (Widget));
+         end if;
+      end if;
+
+      return Get_Main_Window (Handle);
+   end Get_Current_Window;
 
    ------------------
    -- Get_Tooltips --
