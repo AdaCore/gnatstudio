@@ -270,11 +270,11 @@ package body Casing_Exceptions is
 
    procedure Casing_Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Kernel);
-      pragma Unreferenced (Level);
+      pragma Unreferenced (Kernel, Level, File);
       N : Node_Ptr := Node;
    begin
       while N /= null loop
