@@ -14,7 +14,7 @@ begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
-   -- Be careful with .h files: both C and C++ !
+   --  Be careful with .h files: both C and C++ !
    Add_File_Extensions (Ada_Lang,  ".ads;.adb");
    Add_File_Extensions (C_Lang,    ".c;.h");
    Add_File_Extensions (Cpp_Lang,  ".cxx;.cpp;.h");
