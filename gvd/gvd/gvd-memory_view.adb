@@ -720,10 +720,8 @@ package body GVD.Memory_View is
 
             end if;
 
-            --  ??? Handling of ASCII.CR instead of ASCII.LF is suspicious
-
-            if Get_Chars
-              (View.View, Position + 2, Position + 3) (1) = ASCII.CR
+            if Get_Chars (View.View, Position + 2, Position + 3) (1)
+              = End_Of_Line (End_Of_Line'First)
             then
                Move := 21;
             end if;
