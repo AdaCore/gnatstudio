@@ -202,21 +202,27 @@ package body Commands is
 
       if Success then
          Node := First (Action.Next_Commands);
-
-         while Node /= Null_Node loop
-            Prepend (Queue.The_Queue, Queue.Queue_Node, Data (Node));
-            Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
-            Data (Node).Queue := Queue;
-            Node := Next (Node);
-         end loop;
-
-         --  ??? There is a memory leak here.
-         --  Pointers allocated to Action.Next_Commands are dangling.
-         Action.Next_Commands := Null_List;
-
       else
+         Node := First (Action.Alternate_Commands);
+      end if;
+
+      while Node /= Null_Node loop
+         Prepend (Queue.The_Queue, Queue.Queue_Node, Data (Node));
+         Queue.Queue_Node := Prev (Queue.The_Queue, Queue.Queue_Node);
+         Data (Node).Queue := Queue;
+         Node := Next (Node);
+      end loop;
+
+      if Success then
+         Free (Action.Next_Commands, Free_Data => False);
+         Free (Action.Alternate_Commands);
+      else
+         Free (Action.Alternate_Commands, Free_Data => False);
          Free (Action.Next_Commands);
       end if;
+
+      Action.Next_Commands := Null_List;
+      Action.Alternate_Commands := Null_List;
 
       case Action.Mode is
          when Normal =>
@@ -287,6 +293,17 @@ package body Commands is
    begin
       Prepend (Item.Next_Commands, Command_Access (Action));
    end Add_Consequence_Action;
+
+   --------------------------
+   -- Add_Alternate_Action --
+   --------------------------
+
+   procedure Add_Alternate_Action
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class)is
+   begin
+      Prepend (Item.Alternate_Commands, Command_Access (Action));
+   end Add_Alternate_Action;
 
    --------------------------
    -- Get_Previous_Command --

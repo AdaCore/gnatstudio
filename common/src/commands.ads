@@ -98,6 +98,22 @@ package Commands is
      (Item   : access Root_Command'Class;
       Action : access Root_Command'Class);
    --  Add an action that will be enqueued if Item executes successfully.
+   --  See comments for Add_Alternate_Action.
+
+   procedure Add_Alternate_Action
+     (Item   : access Root_Command'Class;
+      Action : access Root_Command'Class);
+   --  Add an action that will be enqueued if execution of Item is
+   --  unsuccessfull.
+   --
+   --  Commands associated to a command using Add_Consequence_Action
+   --  and Add_Alternate_Action are dealt with in the followin way:
+   --   - if they are actually executed, then they are enqueued to the
+   --  queue as normal commands, and are executed immediately after
+   --  Item finishes. They are accessible through Undo/Redo, and memory
+   --  associated to them is freed when the queue is freed.
+   --   - if they are not executed, then the memory associated to them
+   --  is freed when Item finishes.
 
 private
 
@@ -174,9 +190,10 @@ private
    --  it will go to the Undo_Queue and become Done again, and so on.
 
    type Root_Command is abstract tagged limited record
-      Queue         : Command_Queue;
-      Next_Commands : Command_Queues.List;
-      Mode          : Command_Mode := Normal;
+      Queue              : Command_Queue;
+      Next_Commands      : Command_Queues.List;
+      Alternate_Commands : Command_Queues.List;
+      Mode               : Command_Mode := Normal;
    end record;
 
    pragma Inline (Undo_Queue_Empty);
