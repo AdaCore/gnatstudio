@@ -942,6 +942,8 @@ package body Project_Viewers is
                     & " valid."));
                Set_Active (Load_Project, False);
                exit;
+            elsif Name (J) = '/' or else Name (J) = Directory_Separator then
+               exit;
             end if;
          end loop;
 
