@@ -108,7 +108,7 @@ package body Codefix_Module is
          Result);
 
       Validate_And_Commit
-        (Codefix_Module_ID.Corrector,
+        (Codefix_Module_ID.Corrector.all,
          Codefix_Module_ID.Current_Text.all,
          Mitem.Error,
          Mitem.Fix_Command.all);
@@ -130,14 +130,14 @@ package body Codefix_Module is
       pragma Unreferenced (Widget, Args);
    begin
       Free (Codefix_Module_ID.Errors_Found.all);
-      Free (Codefix_Module_ID.Corrector);
+      Free (Codefix_Module_ID.Corrector.all);
 
       Get_Last_Output
         (Compilation_Output
            (Codefix_Module_ID.Errors_Found.all), Kernel);
 
       Analyze
-        (Codefix_Module_ID.Corrector,
+        (Codefix_Module_ID.Corrector.all,
          Codefix_Module_ID.Current_Text.all,
          Codefix_Module_ID.Errors_Found.all,
          null);
@@ -163,7 +163,8 @@ package body Codefix_Module is
       Gtk_New
         (Graphic_Codefix,
          Kernel,
-         Codefix_Module_ID.Current_Text);
+         Codefix_Module_ID.Current_Text,
+         Codefix_Module_ID.Corrector);
 
       Window := Get_MDI (Kernel);
       Child := Put (Window, Graphic_Codefix);
@@ -210,7 +211,7 @@ package body Codefix_Module is
          Gtk_New (Submenu);
 
          Error := Search_Error
-           (Codefix_Module_ID.Corrector, Error_Caption.all);
+           (Codefix_Module_ID.Corrector.all, Error_Caption.all);
          if Error /= Null_Error_Id then
             Solution_Node := First (Get_Solutions (Error));
 
@@ -254,6 +255,7 @@ package body Codefix_Module is
 
       Codefix_Module_ID.Current_Text := new GPS_Navigator;
       Codefix_Module_ID.Errors_Found := new Compilation_Output;
+      Codefix_Module_ID.Corrector := new Correction_Manager;
       GPS_Navigator (Codefix_Module_ID.Current_Text.all).Kernel :=
         Kernel_Handle (Kernel);
 

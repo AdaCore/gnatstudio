@@ -33,7 +33,7 @@ package Codefix_Module is
    type Codefix_Module_ID_Record is new Glide_Kernel.Module_ID_Record with
    record
       Current_Text : Ptr_Text_Navigator;
-      Corrector    : Correction_Manager;
+      Corrector    : Ptr_Correction_Manager;
       Errors_Found : Ptr_Errors_Interface;
    end record;
 
