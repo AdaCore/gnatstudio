@@ -2198,26 +2198,6 @@
 	  <fill>True</fill>
 	</child>
       </widget>
-
-      <widget>
-	<class>GtkEventBox</class>
-	<name>eventbox1</name>
-	<tooltip>Debugger status</tooltip>
-	<child>
-	  <padding>0</padding>
-	  <expand>False</expand>
-	  <fill>False</fill>
-	</child>
-
-	<widget>
-	  <class>GtkCheckButton</class>
-	  <name>checkbutton1</name>
-	  <sensitive>False</sensitive>
-	  <label></label>
-	  <active>True</active>
-	  <draw_indicator>True</draw_indicator>
-	</widget>
-      </widget>
     </widget>
   </widget>
 </widget>

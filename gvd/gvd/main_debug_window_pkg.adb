@@ -1266,14 +1266,6 @@ begin
    Gtk_New (Main_Debug_Window.Statusbar1);
    Pack_Start (Main_Debug_Window.Hbox1, Main_Debug_Window.Statusbar1, True, True, 0);
 
-   Gtk_New (Main_Debug_Window.Eventbox1);
-   Pack_Start (Main_Debug_Window.Hbox1, Main_Debug_Window.Eventbox1, False, False, 0);
-
-   Gtk_New (Main_Debug_Window.Checkbutton1);
-   Set_Sensitive (Main_Debug_Window.Checkbutton1, False);
-   Add (Main_Debug_Window.Eventbox1, Main_Debug_Window.Checkbutton1);
-   Set_Active (Main_Debug_Window.Checkbutton1, True);
-
 end Initialize;
 
 end Main_Debug_Window_Pkg;
