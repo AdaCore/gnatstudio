@@ -84,6 +84,10 @@ package Codefix.Errors_Manager is
    function Get_Category (This : Error_Id) return String;
    --  Return the category of the error.
 
+   function Is_Fixed (This : Error_Id) return Boolean;
+   --  Return True if the Error_Id has already been fixed, that means that a
+   --  validate function has already be used with it.
+
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
@@ -186,10 +190,14 @@ private
       Preview : Error_Message := Invalid_Error_Message;
    end record;
 
+   type Ptr_Boolean is access all Boolean;
+   procedure Free is new Ada.Unchecked_Deallocation (Boolean, Ptr_Boolean);
+
    type Error_Id_Record is record
       Message   : Error_Message := Invalid_Error_Message;
       Solutions : Solution_List := Command_List.Null_List;
       Category  : Dynamic_String;
+      Fixed     : Ptr_Boolean := new Boolean'(False);
    end record;
 
    procedure Free (This : in out Error_Id_Record);
@@ -214,10 +222,6 @@ private
       Solutions : Solution_List;
       Category  : String;
       New_Error : out Error_Id);
-
-   procedure Remove_Error
-     (This : in out Correction_Manager;
-      Id   : Error_Id);
 
    type State_Node is record
       Error : Dynamic_String;
