@@ -245,7 +245,7 @@ package body Odd.Menus is
       S : String :=
         "graph display `" & Info_Locals (Var.Process.Debugger) & '`';
    begin
-      Text_Output_Handler (Var.Process, S, Is_Command => True);
+      Text_Output_Handler (Var.Process, S & ASCII.LF, Is_Command => True);
       Process_User_Command (Var.Process, S);
    end Print_Locals;
 
