@@ -3589,7 +3589,6 @@ package body Src_Editor_Module is
                Execute_GPS_Shell_Command
                     (Kernel, "Editor.replace_text", Args);
                Free (Args);
-               Free (Block);
             end;
          end;
       end if;
