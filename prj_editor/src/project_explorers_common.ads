@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,6 +55,7 @@ package Project_Explorers_Common is
    Category_Column      : constant := 8;
    Up_To_Date_Column    : constant := 9;
    Entity_Base_Column   : constant := 10;
+   Timestamp_Column     : constant := 11;
 
    ----------------------
    -- Node definitions --
