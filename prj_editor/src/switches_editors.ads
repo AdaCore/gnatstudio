@@ -85,6 +85,7 @@ package Switches_Editors is
    --  If Default is selected, then no switch is needed on the command line.
 
    type Cst_String_Access is access constant String;
+   type Cst_Argument_List is array (Positive range <>) of Cst_String_Access;
 
    type Radio_Switch is record
       Label  : Cst_String_Access;
@@ -130,6 +131,13 @@ package Switches_Editors is
    --  if Label_Size_Group is not null, then the label is added to that
    --  group. This can be used to provide a nicer layout of the widgets.
 
+   function Create_Popup
+     (Label  : String;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Gtk.Widget.Gtk_Widget;
+   --  Create a new button. This will open a popup window, which displays
+   --  additional switches.
+
    procedure Add_Dependency
      (Master_Page    : access Switches_Editor_Page_Record'Class;
       Master_Switch  : String;
@@ -145,6 +153,19 @@ package Switches_Editors is
    --  is "-g" for the compiler, with Master_Status=True and
    --  Slave_Activate=True, then everytime the user selects "-g" for the
    --  builder, "-g" will also be forced for the compiler.
+
+   procedure Add_Coalesce_Switch
+     (Page    : access Switches_Editor_Page_Record'Class; Switch : String);
+   --  Defines Switch as a common switch (ie all other switches that start with
+   --  Switch will be collapse into one (for instance: if Switch is "-gnaty",
+   --  then "-gnatya" and "-gnatyl" are collapsed into "-gnatyal").
+
+   procedure Add_Custom_Expansion
+     (Page : access Switches_Editor_Page_Record'Class;
+      Switch  : String;
+      Default : Cst_Argument_List);
+   --  Default are the switches used when Switch is found on the command line
+   --  by itself
 
    ---------------------
    -- Switches editor --
@@ -239,12 +260,24 @@ private
    type Widget_Array is array (Natural range <>) of Switch_Basic_Widget;
    type Widget_Array_Access is access Widget_Array;
 
+   type String_List_Array is array (Natural range <>) of
+     GNAT.OS_Lib.Argument_List_Access;
+   type String_List_Array_Access is access all String_List_Array;
+
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
       Lang     : GNAT.OS_Lib.String_Access;
       Title    : GNAT.OS_Lib.String_Access;
       Pkg      : GNAT.OS_Lib.String_Access;
       Switches : Widget_Array_Access;
       Cmd_Line : Gtk.GEntry.Gtk_Entry;
+
+      Coalesce_Switches : GNAT.OS_Lib.String_List_Access;
+      --  List of coalesce switches (see Add_Coalesce_Switch). This is never
+      --  null once the widget has been created.
+
+      Expansion_Switches : String_List_Array_Access;
+      --  List of custom expansions. The first string in each element is the
+      --  command line switch we are replacing
 
       Block_Refresh : Boolean := False;
       --  Used to avoid infinite recursion in the handling of signals

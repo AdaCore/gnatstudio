@@ -39,6 +39,7 @@ with Gtk.Size_Group;       use Gtk.Size_Group;
 with Gtk.Spin_Button;      use Gtk.Spin_Button;
 with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
+with Gtk.Window;           use Gtk.Window;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
@@ -117,6 +118,33 @@ package body Switches_Editors is
    Cst_One      : aliased constant String := "1";
    Cst_Two      : aliased constant String := "2";
    Cst_Three    : aliased constant String := "3";
+   Cst_Gnat_Y3  : aliased constant String := "-gnaty3";
+   Cst_Gnat_Ya  : aliased constant String := "-gnatya";
+   Cst_Gnat_Yb  : aliased constant String := "-gnatyb";
+   Cst_Gnat_Yc  : aliased constant String := "-gnatyc";
+   Cst_Gnat_Ye  : aliased constant String := "-gnatye";
+   Cst_Gnat_Yf  : aliased constant String := "-gnatyf";
+   Cst_Gnat_Yh  : aliased constant String := "-gnatyh";
+   Cst_Gnat_Yi  : aliased constant String := "-gnatyi";
+   Cst_Gnat_Yk  : aliased constant String := "-gnatyk";
+   Cst_Gnat_Yl  : aliased constant String := "-gnatyl";
+   Cst_Gnat_Ym  : aliased constant String := "-gnatym";
+   Cst_Gnat_Yn  : aliased constant String := "-gnatyn";
+   Cst_Gnat_Yp  : aliased constant String := "-gnatyp";
+   Cst_Gnat_Yr  : aliased constant String := "-gnatyr";
+   Cst_Gnat_Ys  : aliased constant String := "-gnatys";
+   Cst_Gnat_Yt  : aliased constant String := "-gnatyt";
+   Cst_Gnat_Wc  : aliased constant String := "-gnatwc";
+   Cst_Gnat_Wf  : aliased constant String := "-gnatwf";
+   Cst_Gnat_Wi  : aliased constant String := "-gnatwi";
+   Cst_Gnat_Wk  : aliased constant String := "-gnatwk";
+   Cst_Gnat_Wm  : aliased constant String := "-gnatwm";
+   Cst_Gnat_Wo  : aliased constant String := "-gnatwo";
+   Cst_Gnat_Wp  : aliased constant String := "-gnatwp";
+   Cst_Gnat_We  : aliased constant String := "-gnatwe";
+   Cst_Gnat_Wu  : aliased constant String := "-gnatwu";
+   Cst_Gnat_Wv  : aliased constant String := "-gnatwv";
+   Cst_Gnat_Wz  : aliased constant String := "-gnatwz";
 
    -------------------
    -- Check buttons --
@@ -149,6 +177,18 @@ package body Switches_Editors is
      (Switch : Switch_Spin_Widget; List : in out Argument_List);
    procedure Set_And_Filter_Switch
      (Switch : Switch_Spin_Widget; List : in out Argument_List);
+
+   -------------------
+   -- Popup buttons --
+   -------------------
+
+   type Switch_Popup_Widget (Label_Length : Natural) is new Gtk_Button_Record
+   with record
+      Popup  : Gtk_Dialog;
+      Widget : Gtk_Widget;
+      Label  : String (1 .. Label_Length);
+   end record;
+   type Switch_Popup_Widget_Access is access all Switch_Popup_Widget'Class;
 
    -------------------
    -- Combo buttons --
@@ -208,6 +248,10 @@ package body Switches_Editors is
      (Widget_Array, Widget_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Pages_Array, Page_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.OS_Lib.String_List, String_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (String_List_Array, String_List_Array_Access);
 
    function Get_Switch_Widget
      (Page   : access Switches_Editor_Page_Record'Class;
@@ -255,9 +299,12 @@ package body Switches_Editors is
    procedure On_Cmd_Line_Changed (Page : access Gtk_Widget_Record'Class);
    --  Reset the GUI content of the page, based on the current command line
 
-   function Get_Switches (Page : access Switches_Editor_Page_Record'Class)
-      return Argument_List;
-   --  Return the list of parameters set on the command line
+   function Get_Switches
+     (Page : access Switches_Editor_Page_Record'Class;
+      Normalize : Boolean) return Argument_List;
+   --  Return the list of parameters set on the command line.
+   --  If normalize is True, then GNAT's switches will be split when possible
+   --  ("gnatwue" => "gnatwu", "gnatwe")
 
    procedure Set_Visible_Pages
      (Editor    : access Switches_Edit_Record'Class;
@@ -276,6 +323,12 @@ package body Switches_Editors is
 
    procedure Editor_Destroyed (Editor : access Gtk_Widget_Record'Class);
    --  Callback when the editor is destroyed.
+
+   procedure Popup_New_Page (Button : access Gtk_Widget_Record'Class);
+   --  Popup the window registered in Switch_Popup_Widget.
+
+   procedure Destroy_Popup (Button : access Gtk_Widget_Record'Class);
+   --  Callback when the Switch_Popup_Widget is destroyed.
 
    -----------------------
    -- Get_Switch_Widget --
@@ -503,16 +556,18 @@ package body Switches_Editors is
                Value := Grange_Float'Value
                  (List (L) (List (L)'First + Switch.Switch'Length
                             .. List (L)'Last));
+               Free (List (L));
+               Set_Value (Switch.Spin, Value);
             exception
                when Constraint_Error =>
-                  Value := 0.0;
+                  --  Do not free that element in the list, it might be used
+                  --  for other coalesce switches (for instance, -gnaty3
+                  --  indicates an indentation level, whereas -gnatya checks
+                  --  casing).
+                  null;
             end;
-
-            Free (List (L));
          end if;
       end loop;
-
-      Set_Value (Switch.Spin, Value);
    end Set_And_Filter_Switch;
 
    ------------------
@@ -531,7 +586,10 @@ package body Switches_Editors is
       end if;
 
       declare
-         Current : Argument_List := Get_Switches (P);
+         Current : Argument_List := Get_Switches (P, Normalize => True);
+         Coalesce_Switches : Argument_List (P.Coalesce_Switches'Range) :=
+           (others => new String'(""));
+         Tmp : GNAT.OS_Lib.String_Access;
       begin
          P.Block_Refresh := True;
          Set_Text (P.Cmd_Line, "");
@@ -542,14 +600,60 @@ package body Switches_Editors is
          for S in P.Switches'Range loop
             declare
                Text : constant String := Get_Switch (P.Switches (S).all);
+               Found : Boolean := False;
             begin
                if Text /= "" then
-                  Append_Text (P.Cmd_Line, Text & " ");
-               end if;
-            end;
+                  --  For "coalesce switches", we cannot add them immediately,
+                  --  since we have to coalesce them first.
+                  for C in P.Coalesce_Switches'Range loop
+                     if Text'Length >= P.Coalesce_Switches (C)'Length
+                       and then P.Coalesce_Switches (C).all =
+                       Text (Text'First .. P.Coalesce_Switches (C)'Length - 1
+                             + Text'First)
+                     then
+                        Tmp := Coalesce_Switches (C);
+                        Coalesce_Switches (C) := new String'
+                          (Coalesce_Switches (C).all
+                           & Text (P.Coalesce_Switches (C)'Length
+                                   + Text'First .. Text'Last));
+                        Free (Tmp);
+                        Found := True;
+                        exit;
+                     end if;
+                  end loop;
 
-            Filter_Switch (P.Switches (S).all, Current);
+                  if not Found then
+                     Append_Text (P.Cmd_Line, Text & ' ');
+                  end if;
+               end if;
+
+               Filter_Switch (P.Switches (S).all, Current);
+            end;
          end loop;
+
+         --  Remove the old instances of common switch from the command line,
+         --  and add the new ones
+
+         for C in Coalesce_Switches'Range loop
+            if Coalesce_Switches (C).all /= "" then
+               Append_Text (P.Cmd_Line,
+                            P.Coalesce_Switches (C).all
+                            & Coalesce_Switches (C).all & ' ');
+            end if;
+
+            for Cur in Current'Range loop
+               if Current (Cur) /= null
+                 and then Current (Cur)'Length >=
+                   P.Coalesce_Switches (C)'Length
+                 and then P.Coalesce_Switches (C).all = Current (Cur)
+                 (Current (Cur)'First ..
+                  Current (Cur)'First + P.Coalesce_Switches (C)'Length - 1)
+               then
+                  Free (Current (Cur));
+               end if;
+            end loop;
+         end loop;
+
 
          for K in Current'Range loop
             if Current (K) /= null then
@@ -567,8 +671,9 @@ package body Switches_Editors is
    -- Get_Switches --
    ------------------
 
-   function Get_Switches (Page : access Switches_Editor_Page_Record'Class)
-      return Argument_List
+   function Get_Switches
+     (Page : access Switches_Editor_Page_Record'Class;
+      Normalize : Boolean) return Argument_List
    is
       Str : constant String := Get_Text (Page.Cmd_Line);
       Null_Argument_List : Argument_List (1 .. 0);
@@ -577,13 +682,22 @@ package body Switches_Editors is
       if Str /= "" then
          List := Argument_String_To_List (Str);
 
-         declare
-            Ret : constant Argument_List :=
-              Normalize_Compiler_Switches (Page, List.all);
-         begin
-            Unchecked_Free (List);
-            return Ret;
-         end;
+         if Normalize then
+            declare
+               Ret : constant Argument_List :=
+                 Normalize_Compiler_Switches (Page, List.all);
+            begin
+               Unchecked_Free (List);
+               return Ret;
+            end;
+         else
+            declare
+               Ret : constant Argument_List := List.all;
+            begin
+               Unchecked_Free (List);
+               return Ret;
+            end;
+         end if;
       end if;
       return Null_Argument_List;
    end Get_Switches;
@@ -596,57 +710,65 @@ package body Switches_Editors is
      (Page     : access Switches_Editor_Page_Record'Class;
       Switches : Argument_List) return Argument_List
    is
-      Output, Tmp : Argument_List_Access;
-      Out_Index : Natural;
+      Output : Argument_List_Access;
+      Found  : Boolean;
+      S      : GNAT.OS_Lib.String_Access;
+      Exp    : Argument_List_Access;
+
    begin
-      --  For Ada switches, use the functions provided by GNAT that
-      --  provide the splitting of composite switches like "-gnatwue"
-      --  into "-gnatwu -gnatwe"
+      for Index in Switches'Range loop
+         Found := False;
 
-      if Page.Lang.all = Ada_String then
-         Output := new Argument_List (Switches'Range);
-         Out_Index := Switches'First;
+         --  For Ada switches, use the functions provided by GNAT that provide
+         --  the splitting of composite switches like "-gnatwue" into
+         --  "-gnatwu -gnatwe"
 
-         for Index in Switches'Range loop
+         if Page.Lang.all = Ada_String then
             declare
                Arr : constant Argument_List :=
                  Normalize_Compiler_Switches (Switches (Index).all);
+               --  Do not free Arr, this refers to internal strings in GNAT!
             begin
-               Output (Out_Index) := Switches (Index);
-
                --  If the switch was already as simple as possible, or wasn't
                --  recognized at all.
-               if Arr'Length <= 1 then
-                  Out_Index := Out_Index + 1;
-
-               else
-                  Free (Output (Out_Index));
-
-                  Tmp := new Argument_List
-                    (Output'First .. Output'Last + Arr'Length - 1);
-
-                  Tmp (Tmp'First .. Out_Index - 1) :=
-                    Output (Output'First .. Out_Index - 1);
-                  for A in Arr'Range loop
-                     Tmp (Out_Index) := new String'(Arr (A).all);
-                     Out_Index := Out_Index + 1;
-                  end loop;
-
-                  Unchecked_Free (Output);
-                  Output := Tmp;
+               if Arr'Length > 1 then
+                  Append (Output, Clone (Arr));
+                  S := Switches (Index);
+                  Free (S);
+                  Found := True;
                end if;
             end;
-         end loop;
+         end if;
 
+         --  Check expansion switches with no parameter, if any
+         if not Found then
+            for C in Page.Expansion_Switches'Range loop
+               Exp := Page.Expansion_Switches (C);
+               if Switches (Index).all = Exp (Exp'First).all then
+                  Append (Output, Clone (Exp (Exp'First + 1 .. Exp'Last)));
+                  Found := True;
+                  S := Switches (Index);
+                  Free (S);
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         if not Found then
+            Append (Output, (1 => Switches (Index)));
+         end if;
+      end loop;
+
+      if Output = null then
+         return (1 .. 0 => null);
+
+      else
          declare
             O : constant Argument_List := Output.all;
          begin
             Unchecked_Free (Output);
             return O;
          end;
-
-      else
-         return Switches;
       end if;
    end Normalize_Compiler_Switches;
 
@@ -662,7 +784,7 @@ package body Switches_Editors is
       end if;
 
       declare
-         Arg : Argument_List := Get_Switches (P);
+         Arg : Argument_List := Get_Switches (P, Normalize => True);
       begin
          P.Block_Refresh := True;
 
@@ -844,6 +966,76 @@ package body Switches_Editors is
          return Gtk_Widget (Hbox);
    end Create_Combo;
 
+   --------------------
+   -- Popup_New_Page --
+   --------------------
+
+   procedure Popup_New_Page (Button : access Gtk_Widget_Record'Class) is
+      B : constant Switch_Popup_Widget_Access :=
+        Switch_Popup_Widget_Access (Button);
+      Tmp : Gtk_Widget;
+      Response : Gtk_Response_Type;
+      pragma Unreferenced (Tmp, Response);
+   begin
+      Gtk_New (Dialog => B.Popup,
+               Title  => B.Label,
+               Parent => Gtk_Window (Get_Toplevel (B)),
+               Flags  => Modal);
+      Tmp := Add_Button (B.Popup, Stock_Ok, Gtk_Response_OK);
+      Pack_Start (Get_Vbox (B.Popup), B.Widget);
+      Show_All (B.Popup);
+
+      Response := Run (B.Popup);
+
+      Remove (Get_Vbox (B.Popup), B.Widget);
+      Destroy (B.Popup);
+      B.Popup := null;
+   end Popup_New_Page;
+
+   -------------------
+   -- Destroy_Popup --
+   -------------------
+
+   procedure Destroy_Popup (Button : access Gtk_Widget_Record'Class) is
+      B : constant Switch_Popup_Widget_Access :=
+        Switch_Popup_Widget_Access (Button);
+   begin
+      Unref (B.Widget);
+   end Destroy_Popup;
+
+   ------------------
+   -- Create_Popup --
+   ------------------
+
+   function Create_Popup
+     (Label  : String;
+      Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Gtk.Widget.Gtk_Widget
+   is
+      Hbox : Gtk_Box;
+      L    : Gtk_Label;
+      B    : Switch_Popup_Widget_Access;
+   begin
+      Gtk_New_Hbox (Hbox, Homogeneous => False);
+      Gtk_New (L, Label & ": ");
+      Set_Alignment (L, 0.0, 0.5);
+      Pack_Start (Hbox, L, Expand => True, Fill => True);
+
+      B        := new Switch_Popup_Widget (Label'Length);
+      Gtk.Button.Initialize (B, "...");
+      B.Widget := Gtk_Widget (Widget);
+      Ref (Widget);
+      B.Label := Label;
+      Pack_Start (Hbox, B, Expand => False);
+
+      Widget_Callback.Connect
+        (B, "clicked", Widget_Callback.To_Marshaller (Popup_New_Page'Access));
+      Widget_Callback.Connect
+        (B, "destroy", Widget_Callback.To_Marshaller (Destroy_Popup'Access));
+
+      return Gtk_Widget (Hbox);
+   end Create_Popup;
+
    ----------------------
    -- Check_Dependency --
    ----------------------
@@ -893,6 +1085,43 @@ package body Switches_Editors is
          (Master_Status, Switch_Check_Widget_Access (S2), Slave_Activate));
    end Add_Dependency;
 
+   -------------------------
+   -- Add_Coalesce_Switch --
+   -------------------------
+
+   procedure Add_Coalesce_Switch
+     (Page    : access Switches_Editor_Page_Record'Class;
+      Switch  : String) is
+   begin
+      Append (Page.Coalesce_Switches, (1 => new String'(Switch)));
+   end Add_Coalesce_Switch;
+
+   --------------------------
+   -- Add_Custom_Expansion --
+   --------------------------
+
+   procedure Add_Custom_Expansion
+     (Page : access Switches_Editor_Page_Record'Class;
+      Switch  : String;
+      Default : Cst_Argument_List)
+   is
+      Tmp : String_List_Array_Access := Page.Expansion_Switches;
+   begin
+      Page.Expansion_Switches :=  new String_List_Array (1 .. Tmp'Length + 1);
+      Page.Expansion_Switches (Tmp'Range) := Tmp.all;
+      Unchecked_Free (Tmp);
+      Page.Expansion_Switches (Page.Expansion_Switches'Last) :=
+        new GNAT.OS_Lib.String_List (Default'First .. Default'Last + 1);
+
+      --  Duplicate the strings, which are freed in Page_Destroyed.
+      Page.Expansion_Switches (Page.Expansion_Switches'Last)(Default'First) :=
+        new String'(Switch);
+      for D in Default'Range loop
+         Page.Expansion_Switches (Page.Expansion_Switches'Last)(D + 1) :=
+           new String'(Default (D).all);
+      end loop;
+   end Add_Custom_Expansion;
+
    -------------
    -- Gtk_New --
    -------------
@@ -913,6 +1142,8 @@ package body Switches_Editors is
       To_Lower (Page.Lang.all);
       Page.Title := new String'(Title);
       Page.Pkg   := new String'(Project_Package);
+      Page.Coalesce_Switches  := new GNAT.OS_Lib.String_List (1 .. 0);
+      Page.Expansion_Switches := new String_List_Array (1 .. 0);
 
       Gtk_New (Page.Cmd_Line);
       Set_Editable (Page.Cmd_Line, True);
@@ -934,6 +1165,8 @@ package body Switches_Editors is
       Page   : Switches_Editor_Page;
       Group  : Gtk_Size_Group;
       Table  : Gtk_Table;
+      Style_Box : Gtk_Box;
+      Warn_Box  : Gtk_Box;
 
    begin
       Editor := new Switches_Edit_Record;
@@ -1022,10 +1255,151 @@ package body Switches_Editors is
                Gtk_New_Vbox (Box, False, 0);
                Add (Frame, Box);
                Create_Check (Page, Box, -"Full errors", "-gnatf");
-               Create_Check (Page, Box, -"Warning=Error", "-gnatwe");
-               Create_Check (Page, Box, -"Elab warning", "-gnatwl");
-               Create_Check (Page, Box, -"Unused vars warning", "-gnatwu");
-               Create_Check (Page, Box, -"Style checks", "-gnaty");
+
+               --  Warnings
+
+               Gtk_New_Vbox (Warn_Box, False, 0);
+               Create_Check (Page, Warn_Box, -"Biased rounding", "-gnatwb");
+               Create_Check
+                 (Page, Warn_Box, -"Constant conditional", "-gnatwc");
+               Create_Check
+                 (Page, Warn_Box, -"Implicit dereference", "-gnatwd");
+               Create_Check
+                 (Page, Warn_Box, -"Warnings=Errors", "-gnatwe");
+               Create_Check
+                 (Page, Warn_Box, -"Unreferenced formal", "-gnatwf");
+               Create_Check (Page, Warn_Box, -"Hiding variable", "-gnatwh");
+               Create_Check
+                 (Page, Warn_Box, -"Implementation unit", "-gnatwi");
+               Create_Check
+                 (Page, Warn_Box, -"Obsolescent feature", "-gnatwj");
+               Create_Check (Page, Warn_Box, -"Constant variable", "-gnatwk");
+               Create_Check
+                 (Page, Warn_Box, -"Missing elaboration pragma", "-gnatwl");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Variable assigned but not read", "-gnatwm");
+               Create_Check
+                 (Page, Warn_Box, -"Address clause overlay", "-gnatwo");
+               Create_Check
+                 (Page, Warn_Box, -"Ineffective pragma inline", "-gnatwp");
+               Create_Check
+                 (Page, Warn_Box, -"Redundant construct", "-gnatwr");
+               Create_Check (Page, Warn_Box, -"Unused entity", "-gnatwu");
+               Create_Check
+                 (Page, Warn_Box, -"Unassigned variable", "-gnatwv");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Size/align warnings for unchecked conversion", "-gnatwz");
+               Pack_Start (Box,
+                           Create_Popup (-"Warnings", Warn_Box),
+                           False, False);
+               Add_Coalesce_Switch (Page, "-gnatw");
+               Add_Custom_Expansion
+                 (Page, "-gnatwa",
+                  (Cst_Gnat_Wc'Access,
+                   Cst_Gnat_Wf'Access,
+                   Cst_Gnat_Wi'Access,
+                   Cst_Gnat_Wk'Access,
+                   Cst_Gnat_Wm'Access,
+                   Cst_Gnat_Wo'Access,
+                   Cst_Gnat_Wp'Access,
+                   Cst_Gnat_We'Access,
+                   Cst_Gnat_Wu'Access,
+                   Cst_Gnat_Wv'Access,
+                   Cst_Gnat_Wz'Access));
+
+               --  Validity checking
+               Gtk_New_Vbox (Warn_Box, False, 0);
+               Create_Check
+                 (Page, Warn_Box, -"Checking for copies", "-gnatVc");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Default Reference Manual checking", "-gnatVd");
+               Create_Check
+                 (Page, Warn_Box, -"Checking for floating-point", "-gnatVf");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Checking for ""in"" parameters", "-gnatVi");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Checking for ""in out"" parameters", "-gnatVm");
+               Create_Check
+                 (Page, Warn_Box,
+                  -"Checking for operators and attributes", "-gnatVo");
+               Create_Check
+                 (Page, Warn_Box, -"Checking for returns", "-gnatVr");
+               Create_Check
+                 (Page, Warn_Box, -"Checking for subscripts", "-gnatVs");
+               Create_Check (Page, Warn_Box, -"Checking for tests", "-gnatVt");
+               Pack_Start (Box,
+                           Create_Popup (-"Validity checking mode", Warn_Box),
+                           False, False);
+               Add_Coalesce_Switch (Page, "-gnatV");
+
+               --  Styles
+               Gtk_New_Vbox (Style_Box, False, 0);
+               Create_Spin
+                 (Page, Style_Box, -"indentation", "-gnaty", 1, 9, 3);
+               Create_Check (Page, Style_Box, -"Check casing", "-gnatya");
+               Create_Check
+                 (Page, Style_Box, -"Check end of line blanks", "-gnatyb");
+               Create_Check
+                 (Page, Style_Box, -"Check comment format", "-gnatyc");
+               Create_Check
+                 (Page, Style_Box, -"Check end/exit labels", "-gnatye");
+               Create_Check
+                 (Page, Style_Box, -"Check no form feeds", "-gnatyf");
+               Create_Check
+                 (Page, Style_Box, -"Check no horizontal tabs", "-gnatyh");
+               Create_Check
+                 (Page, Style_Box, -"Check if-then layout", "-gnatyi");
+               Create_Check
+                 (Page, Style_Box, -"Check casing rules", "-gnatyk");
+               Create_Check
+                 (Page, Style_Box,
+                  -"Check reference manual layout", "-gnatyl");
+               Create_Check
+                 (Page, Style_Box,
+                  -"Check line length <= 79 characters", "-gnatym");
+               Create_Check
+                 (Page, Style_Box,
+                  -"Check casing of Standard identifiers", "-gnatyn");
+               Create_Check
+                 (Page, Style_Box,
+                  -"Check subprogram bodies in alphabetical order", "-gnatyo");
+               Create_Check
+                 (Page, Style_Box, -"Check pragma casing", "-gnatyp");
+               Create_Check
+                 (Page, Style_Box, -"Check RM column layout", "-gnatyr");
+               Create_Check
+                 (Page, Style_Box, -"Check separate specs present", "-gnatys");
+               Create_Check
+                 (Page, Style_Box, -"Check token separation rules", "-gnatyt");
+               Create_Spin
+                 (Page, Style_Box, -"Line length", "-gnatyM", 0, 255, 79);
+
+               Pack_Start (Box,
+                           Create_Popup (-"Style checks", Style_Box),
+                           False, False);
+               Add_Coalesce_Switch (Page, "-gnaty");
+               Add_Custom_Expansion (Page, "-gnaty",
+                                     (Cst_Gnat_Y3'Access,
+                                      Cst_Gnat_Ya'Access,
+                                      Cst_Gnat_Yb'Access,
+                                      Cst_Gnat_Yc'Access,
+                                      Cst_Gnat_Ye'Access,
+                                      Cst_Gnat_Yf'Access,
+                                      Cst_Gnat_Yh'Access,
+                                      Cst_Gnat_Yi'Access,
+                                      Cst_Gnat_Yk'Access,
+                                      Cst_Gnat_Yl'Access,
+                                      Cst_Gnat_Ym'Access,
+                                      Cst_Gnat_Yn'Access,
+                                      Cst_Gnat_Yp'Access,
+                                      Cst_Gnat_Yr'Access,
+                                      Cst_Gnat_Ys'Access,
+                                      Cst_Gnat_Yt'Access));
 
                Gtk_New (Frame, -"Debugging");
                Set_Border_Width (Frame, 5);
@@ -1356,6 +1730,13 @@ package body Switches_Editors is
       Free (P.Lang);
       Free (P.Title);
       Free (P.Pkg);
+      Free (P.Coalesce_Switches);
+
+      for C in P.Expansion_Switches'Range loop
+         Free (P.Expansion_Switches (C));
+      end loop;
+
+      Unchecked_Free (P.Expansion_Switches);
       Unchecked_Free (P.Switches);
    end Page_Destroyed;
 
@@ -1469,7 +1850,7 @@ package body Switches_Editors is
          File_Name : String)
       is
          Language : constant Name_Id := Get_String (Page.Lang.all);
-         Args     : Argument_List := Get_Switches (Page);
+         Args     : Argument_List := Get_Switches (Page, Normalize => False);
          Value    : Variable_Value;
          Is_Default_Value : Boolean;
          Rename_Prj : Project_Node_Id;
