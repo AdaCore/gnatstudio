@@ -20,6 +20,8 @@
 
 with Glide_Kernel;           use Glide_Kernel;
 
+with Generic_List;
+
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
@@ -31,16 +33,20 @@ package Codefix.GPS_Io is
    type GPS_Mark is new Mark_Abstr with private;
 
    function Get_Id (This : GPS_Mark) return String;
+   --  Returns the identificator of a mark.
 
    function Get_New_Mark
      (Current_Text : Console_Interface;
       Cursor       : Text_Cursor'Class) return Mark_Abstr'Class;
+   --  Create a new mark at the position specified by the cursor.
 
    function Get_Current_Cursor
      (Current_Text : Console_Interface;
       Mark         : Mark_Abstr'Class) return File_Cursor'Class;
+   --  Return the current position of the mark.
 
    procedure Free (This : in out GPS_Mark);
+   --  Free the memory associated to a GPS_Mark
 
    procedure Free (This : in out Console_Interface);
    --  Free the memory associated with the Console_Interface
@@ -57,6 +63,12 @@ package Codefix.GPS_Io is
       Cursor : Text_Cursor'Class) return String;
    --  Get all character from the column and the line specified by the cursor
    --  to the end of the line.
+
+   function Get_Recorded_Line
+     (This   : Console_Interface;
+      Number : Positive) return String;
+   --  Return a line that has been previously recorded into the
+   --  Console_Interface.
 
    procedure Replace
      (This      : in out Console_Interface;
@@ -94,6 +106,7 @@ package Codefix.GPS_Io is
 
    procedure Set_Kernel
      (This : in out Console_Interface; Kernel : Kernel_Handle);
+   --  Set the value of the kernel linked to the Console_Interface.
 
    type Compilation_Output is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the
@@ -112,12 +125,27 @@ package Codefix.GPS_Io is
 
    procedure Get_Last_Output
      (This : in out Compilation_Output; Kernel : Kernel_Handle);
+   --  Returns the last compilation output
 
 private
 
+   package String_List is new Generic_List (Dynamic_String);
+   use String_List;
+
+   type Ptr_Boolean is access all Boolean;
+   type Ptr_String_List is access all String_List.List;
+   type Ptr_Natural is access all Natural;
+
    type Console_Interface is new Text_Interface with record
-      Kernel : Kernel_Handle;
+      Lines         : Ptr_String_List := new String_List.List;
+      Lines_Number  : Ptr_Natural := new Natural'(0);
+      File_Modified : Ptr_Boolean := new Boolean'(True);
+      Kernel        : Kernel_Handle;
    end record;
+
+   procedure Update (This : Console_Interface);
+   --  Update the values of lines contained into the console_interface if
+   --  changes appened.
 
    type GPS_Mark is new Mark_Abstr with record
       Id : Dynamic_String;
