@@ -28,6 +28,7 @@ with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Alignment; use Gtk.Alignment;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Object; use Gtk.Object;
+with Gtk.Tooltips; use Gtk.Tooltips;
 package Codefix_Window_Pkg is
 
    type Codefix_Window_Record is new Gtk_Hbox_Record with record
@@ -49,7 +50,6 @@ package Codefix_Window_Pkg is
       Refresh : Gtk_Button;
       Vbuttonbox2 : Gtk_Vbutton_Box;
       Cancel_Changes : Gtk_Button;
-      Apply_Changes : Gtk_Button;
    end record;
    type Codefix_Window_Access is access all Codefix_Window_Record'Class;
 
