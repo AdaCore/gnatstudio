@@ -63,9 +63,9 @@ package body Vdiff2_Module.Utils is
       Pos    : Natural;
       Style  : String := "";
       Number : Natural := 1) return String;
-   --  Add a line constaining Line in editor,at line Pos,
-   --  using Style for color
-   --  And return corresponding Mark
+   --  Add a blank line at line Pos of a given file editor,
+   --  using Style for color.
+   --  Return corresponding Mark.
 
    procedure Append
      (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
