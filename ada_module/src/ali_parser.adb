@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Entities;          use Entities;
+with Entities.Queries;  use Entities.Queries;
 with VFS;               use VFS;
 with Traces;            use Traces;
 with Projects;          use Projects;
@@ -163,7 +164,10 @@ package body ALI_Parser is
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_Dependency;
    type Unit_To_Sfile_Table is array (Unit_Id range <>) of Source_File;
 
-   procedure Create_New_ALI (LI : LI_File; New_ALI : ALIs_Record);
+   procedure Create_New_ALI
+     (Handler : access ALI_Handler_Record'Class;
+      LI      : LI_File;
+      New_ALI : ALIs_Record);
    --  Parse an ALI file and adds its information into the structure
 
    procedure Process_Units
@@ -218,22 +222,31 @@ package body ALI_Parser is
    --  returned by Imported_Projects_Count.
 
    procedure Process_Xref_Entity
-     (LI          : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
       Xref_Sect   : Xref_Section_Record;
       Xref_Ent    : Xref_Entity_Record;
       Sfiles      : Sdep_To_Sfile_Table);
    --  Save the Xref Entity information in the New_LI_File structure.
 
    procedure Process_Xref_Section
-     (LI          : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
       Xref_Sect   : Xref_Section_Record;
       Sfiles      : Sdep_To_Sfile_Table);
    --  Save the Xref information associated to the given With_Record.
 
    procedure Process_Xrefs
-     (LI          : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
       Sfiles      : Sdep_To_Sfile_Table);
    --  Save the Xref information in the New_LI_File structure.
+
+   function Update_ALI
+     (Handler : access ALI_Handler_Record'Class;
+      LI      : Entities.LI_File) return Boolean;
+   --  Re-parse the contents of the ALI file, and return True in case of
+   --  success.
 
    function Char_To_E_Kind (C : Character) return E_Kind;
    pragma Inline (Char_To_E_Kind);
@@ -246,14 +259,16 @@ package body ALI_Parser is
    --  Raise ALI_Internal_Error if C does not represent any Reference_Kind.
 
    procedure Process_Type_Ref
-     (LI       : LI_File;
+     (Handler  : access ALI_Handler_Record'Class;
+      LI       : LI_File;
       Entity   : Entity_Information;
       Xref_Ent : Xref_Entity_Record;
       Sfiles   :  Sdep_To_Sfile_Table);
    --  Process the parent type of an entity declared in Xref_Ent.
 
    function Find_Entity_In_ALI
-     (LI       : LI_File;
+     (Handler  : access ALI_Handler_Record'Class;
+      LI       : LI_File;
       Sfiles   : Sdep_To_Sfile_Table;
       File_Num : Sdep_Id;
       Line     : Nat;
@@ -263,7 +278,8 @@ package body ALI_Parser is
    --  no specific information has been set
 
    procedure Process_Renaming_Ref
-     (LI        : LI_File;
+     (Handler   : access ALI_Handler_Record'Class;
+      LI        : LI_File;
       Entity    : Entity_Information;
       Xref_Sect : Xref_Section_Record;
       Xref_Ent  : Xref_Entity_Record;
@@ -271,7 +287,8 @@ package body ALI_Parser is
    --  Process the renaming information in the file
 
    procedure Process_Entity_Ref
-     (LI            : LI_File;
+     (Handler       : access ALI_Handler_Record'Class;
+      LI            : LI_File;
       Entity        : Entity_Information;
       Sfiles        : Sdep_To_Sfile_Table;
       Current_Ref   : Xref_Record;
@@ -594,7 +611,8 @@ package body ALI_Parser is
    -------------------------
 
    procedure Process_Xref_Entity
-     (LI          : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
       Xref_Sect   : Xref_Section_Record;
       Xref_Ent    : Xref_Entity_Record;
       Sfiles      : Sdep_To_Sfile_Table)
@@ -625,17 +643,18 @@ package body ALI_Parser is
       Set_Kind (Entity, Char_To_E_Kind (Xref_Ent.Etype));
 
       if Xref_Ent.Tref /= Tref_None then
-         Process_Type_Ref (LI, Entity, Xref_Ent, Sfiles);
+         Process_Type_Ref (Handler, LI, Entity, Xref_Ent, Sfiles);
       end if;
 
       if Xref_Ent.Rref_Line /= 0 then
-         Process_Renaming_Ref (LI, Entity, Xref_Sect, Xref_Ent, Sfiles);
+         Process_Renaming_Ref
+           (Handler, LI, Entity, Xref_Sect, Xref_Ent, Sfiles);
       end if;
 
       Current_Sfile := Xref_Sect.File_Num;
       for Xref_Id in Xref_Ent.First_Xref .. Xref_Ent.Last_Xref loop
          Process_Entity_Ref
-           (LI, Entity, Sfiles, Xref.Table (Xref_Id), Current_Sfile);
+           (Handler, LI, Entity, Sfiles, Xref.Table (Xref_Id), Current_Sfile);
       end loop;
    end Process_Xref_Entity;
 
@@ -644,7 +663,8 @@ package body ALI_Parser is
    ------------------------
 
    procedure Process_Entity_Ref
-     (LI            : LI_File;
+     (Handler       : access ALI_Handler_Record'Class;
+      LI            : LI_File;
       Entity        : Entity_Information;
       Sfiles        : Sdep_To_Sfile_Table;
       Current_Ref   : Xref_Record;
@@ -683,7 +703,8 @@ package body ALI_Parser is
            or else Kind = Overriding_Primitive_Operation
          then
             Primitive := Find_Entity_In_ALI
-              (LI, Sfiles, Current_Sfile, Current_Ref.Line, Current_Ref.Col);
+              (Handler,
+               LI, Sfiles, Current_Sfile, Current_Ref.Line, Current_Ref.Col);
 
             if Primitive = null then
                Trace (Assert_Me, "Couldn't find primitive in ALI file: "
@@ -705,20 +726,22 @@ package body ALI_Parser is
    ------------------------
 
    function Find_Entity_In_ALI
-     (LI       : LI_File;
+     (Handler  : access ALI_Handler_Record'Class;
+      LI       : LI_File;
       Sfiles   : Sdep_To_Sfile_Table;
       File_Num : Sdep_Id;
       Line     : Nat;
-      Column   : Nat) return Entity_Information is
+      Column   : Nat) return Entity_Information
+   is
+      S      : Source_File;
+      Entity : Entity_Information;
+      Status : Find_Decl_Or_Body_Query_Status;
    begin
       --  ??? Must search in references also. For instance, we have in
       --  rename/rename.adb:
       --     32i4 X{integer} 33m24 50m4
       --     33i4 Y=33:24{integer} 51r4
 
-      Trace (Me, "Find_Entity_In_ALI : "
-             & Base_Name (Get_Filename (Sfiles (File_Num).File))
-             & Line'Img & Column'Img);
       for Sect in Xref_Section.First .. Xref_Section.Last loop
          if Xref_Section.Table (Sect).File_Num = File_Num then
             for Entity in Xref_Section.Table (Sect).First_Entity ..
@@ -739,12 +762,29 @@ package body ALI_Parser is
          end if;
       end loop;
 
-      return Get_Or_Create
-        (Db   => Get_Database (LI),
-         Name => "",   --  Partial entity
-         File => Sfiles (File_Num).File,
-         Line => Integer (Line),
-         Column => Integer (Column));
+      Trace (Me, "Need to resolve closure: parsing "
+             & Base_Name (Get_Filename (Sfiles (File_Num).File))
+               & " at " & Line'Img & Column'Img);
+
+      S := Get_Source_Info
+        (Handler               => Handler,
+         Source_Filename       => Get_Filename (Sfiles (File_Num).File),
+         File_Has_No_LI_Report => null);
+      Find_Declaration
+        (Db              => Get_Database (LI),
+         File_Name       => Get_Filename (S),
+         Entity_Name     => "",  --  Unknown, we are looking for it
+         Line            => Integer (Line),
+         Column          => Integer (Column),
+         Entity          => Entity,
+         Status          => Status,
+         Check_Decl_Only => False);
+
+      if Status = Success or else Status = Fuzzy_Match then
+         return Entity;
+      else
+         return null;
+      end if;
    end Find_Entity_In_ALI;
 
    --------------------------
@@ -752,14 +792,16 @@ package body ALI_Parser is
    --------------------------
 
    procedure Process_Renaming_Ref
-     (LI        : LI_File;
+     (Handler   : access ALI_Handler_Record'Class;
+      LI        : LI_File;
       Entity    : Entity_Information;
       Xref_Sect : Xref_Section_Record;
       Xref_Ent  : Xref_Entity_Record;
       Sfiles    : Sdep_To_Sfile_Table)
    is
       Renaming : constant Entity_Information := Find_Entity_In_ALI
-        (LI, Sfiles, Xref_Sect.File_Num,
+        (Handler,
+         LI, Sfiles, Xref_Sect.File_Num,
          Xref_Ent.Rref_Line, Xref_Ent.Rref_Col);
    begin
       if Renaming /= null then
@@ -777,7 +819,8 @@ package body ALI_Parser is
    ----------------------
 
    procedure Process_Type_Ref
-     (LI       : LI_File;
+     (Handler  : access ALI_Handler_Record'Class;
+      LI       : LI_File;
       Entity   : Entity_Information;
       Xref_Ent : Xref_Entity_Record;
       Sfiles   : Sdep_To_Sfile_Table)
@@ -794,7 +837,8 @@ package body ALI_Parser is
             Column => Predefined_Column);
       else
          Parent := Find_Entity_In_ALI
-           (LI       => LI,
+           (Handler  => Handler,
+            LI       => LI,
             Sfiles   => Sfiles,
             File_Num => Xref_Ent.Tref_File_Num,
             Line     => Xref_Ent.Tref_Line,
@@ -835,12 +879,14 @@ package body ALI_Parser is
    --------------------------
 
    procedure Process_Xref_Section
-     (LI          : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI          : LI_File;
       Xref_Sect   : Xref_Section_Record;
       Sfiles      : Sdep_To_Sfile_Table) is
    begin
       for E in Xref_Sect.First_Entity .. Xref_Sect.Last_Entity loop
-         Process_Xref_Entity (LI, Xref_Sect, Xref_Entity.Table (E), Sfiles);
+         Process_Xref_Entity
+           (Handler, LI, Xref_Sect, Xref_Entity.Table (E), Sfiles);
       end loop;
    end Process_Xref_Section;
 
@@ -849,12 +895,14 @@ package body ALI_Parser is
    -------------------
 
    procedure Process_Xrefs
-     (LI      : LI_File;
+     (Handler     : access ALI_Handler_Record'Class;
+      LI      : LI_File;
       Sfiles  : Sdep_To_Sfile_Table) is
    begin
       for Xref_Sect in Xref_Section.First .. Xref_Section.Last loop
          if Xref_Section.Table (Xref_Sect).File_Num in Sfiles'Range then
-            Process_Xref_Section (LI,
+            Process_Xref_Section (Handler,
+                                  LI,
                                   Xref_Section.Table (Xref_Sect),
                                   Sfiles);
          end if;
@@ -865,7 +913,11 @@ package body ALI_Parser is
    -- Create_New_ALI --
    --------------------
 
-   procedure Create_New_ALI (LI : LI_File; New_ALI : ALIs_Record) is
+   procedure Create_New_ALI
+     (Handler : access ALI_Handler_Record'Class;
+      LI      : LI_File;
+      New_ALI : ALIs_Record)
+   is
       Sunits : Unit_To_Sfile_Table (New_ALI.First_Unit .. New_ALI.Last_Unit);
       Sfiles : Sdep_To_Sfile_Table (New_ALI.First_Sdep .. New_ALI.Last_Sdep);
       Imported_Projects : Project_Type_Array
@@ -876,7 +928,7 @@ package body ALI_Parser is
       Process_Units (LI, New_ALI, Sunits);
       Process_Sdeps (LI, New_ALI, Sunits, Sfiles);
       Process_Withs (Sunits, Sfiles, Imported_Projects);
-      Process_Xrefs (LI, Sfiles);
+      Process_Xrefs (Handler, LI, Sfiles);
    end Create_New_ALI;
 
    -----------------------
@@ -920,7 +972,9 @@ package body ALI_Parser is
    -- Update_ALI --
    ----------------
 
-   function Update_ALI (LI : LI_File) return Boolean is
+   function Update_ALI
+     (Handler : access ALI_Handler_Record'Class; LI : LI_File) return Boolean
+   is
       New_ALI_Id : ALI_Id := No_ALI_Id;
       New_Timestamp : Time;
    begin
@@ -937,7 +991,7 @@ package body ALI_Parser is
             return False;
          end if;
 
-         Create_New_ALI (LI, ALIs.Table (New_ALI_Id));
+         Create_New_ALI (Handler, LI, ALIs.Table (New_ALI_Id));
       end if;
 
       return True;
@@ -1162,7 +1216,7 @@ package body ALI_Parser is
          File         => Source_Filename,
          LI           => null);
       if Source /= null and then Get_LI (Source) /= null then
-         if not Update_ALI (Get_LI (Source))
+         if not Update_ALI (Handler, Get_LI (Source))
            and then File_Has_No_LI_Report /= null
          then
             Entities.Error
@@ -1199,7 +1253,7 @@ package body ALI_Parser is
          return Source;
       end if;
 
-      if (not Update_ALI (LI)
+      if (not Update_ALI (Handler, LI)
           or else not Check_LI_And_Source (LI, Source_Filename))
         and then File_Has_No_LI_Report /= null
       then
