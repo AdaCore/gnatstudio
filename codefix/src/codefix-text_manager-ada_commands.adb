@@ -48,7 +48,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is
+      New_Extract  : out Extract'Class) is
 
       function To_Correct_Case (Str : String) return String;
       --  Return the string after having re-cased it (with Word_Case).
@@ -125,13 +125,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Recase_Word_Cmd) is
-   begin
-      This.Cursor := null;
-      This.Correct_Word := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    ----------------------------
    -- Remove_Instruction_Cmd --
    ----------------------------
@@ -148,7 +141,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Instruction_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Start_Instruction : File_Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Begin_Mark.all));
@@ -165,12 +158,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Begin_Mark);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Remove_Instruction_Cmd) is
-   begin
-      This.Begin_Mark := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -190,13 +177,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Remove_Extracts : Ada_Lists.List;
       Current_Cursor  : Word_Cursor;
       Current_Word    : Mark_List.List_Node;
       Current_Extract : Ada_Lists.List_Node;
-      Extract_Temp    : Ada_List;
       Already_Loaded  : Boolean;
       Merge_Success   : Boolean;
    begin
@@ -208,26 +194,33 @@ package body Codefix.Text_Manager.Ada_Commands is
          Already_Loaded := False;
 
          while Current_Extract /= Ada_Lists.Null_Node loop
-            if File_Cursor (Current_Cursor) >=
-                Get_Start (Data (Current_Extract))
-              and then File_Cursor (Current_Cursor) <=
-                Get_Stop (Data (Current_Extract)) then
-               Extract_Temp := Clone (Data (Current_Extract));
-               Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
-               Set_Data (Current_Extract, Extract_Temp);
-               Unchecked_Free (Extract_Temp);
-               Already_Loaded := True;
-               exit;
-            end if;
+            declare
+               Extract_Temp : Ada_List;
+            begin
+               if File_Cursor (Current_Cursor) >=
+                 Get_Start (Data (Current_Extract))
+                 and then File_Cursor (Current_Cursor) <=
+                 File_Cursor (Get_Stop (Data (Current_Extract))) then
+                  Extract_Temp := Clone (Data (Current_Extract));
+                  Remove_Elements
+                    (Extract_Temp, Current_Cursor.String_Match.all);
+                  Set_Data (Current_Extract, Extract_Temp);
+                  Already_Loaded := True;
+                  exit;
+               end if;
 
-            Current_Extract := Next (Current_Extract);
+               Current_Extract := Next (Current_Extract);
+            end;
          end loop;
 
          if not Already_Loaded then
-            Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
-            Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
-            Append (Remove_Extracts, Extract_Temp);
-            Unchecked_Free (Extract_Temp);
+            declare
+               Extract_Temp : Ada_List;
+            begin
+               Get_Unit (Current_Text, Current_Cursor, Extract_Temp);
+               Remove_Elements (Extract_Temp, Current_Cursor.String_Match.all);
+               Append (Remove_Extracts, Extract_Temp);
+            end;
          end if;
 
          Already_Loaded := False;
@@ -239,21 +232,21 @@ package body Codefix.Text_Manager.Ada_Commands is
 
       while Current_Extract /= Ada_Lists.Null_Node loop
 
-         Unchecked_Assign (Extract_Temp, New_Extract);
-         Unchecked_Free (New_Extract);
-
-         Merge_Extracts
-           (New_Extract,
-            Extract_Temp,
-            Data (Current_Extract),
-            Merge_Success,
-            False);
+         declare
+            Extract_Temp : Extract := Extract (New_Extract);
+         begin
+            Merge_Extracts
+              (New_Extract,
+               Extract_Temp,
+               Data (Current_Extract),
+               Merge_Success,
+               False);
+         end;
 
          if not Merge_Success then
-            raise Text_Manager_Error;
+            raise Codefix_Panic;
          end if;
 
-         Free (Extract_Temp);
          Current_Extract := Next (Current_Extract);
       end loop;
 
@@ -264,12 +257,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Remove_List);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Remove_Elements_Cmd) is
-   begin
-      This.Remove_List := Mark_List.Null_List;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
 
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
@@ -329,13 +316,30 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is
+      New_Extract  : out Extract'Class)
+   is
+      Instr_Extract, Clauses_Extract : Extract;
+      Success                        : Boolean;
    begin
       if This.Is_Instantiation then
-         Execute (This.Instantiation_Pkg, Current_Text, New_Extract);
-      end if;
+         Execute (This.Instantiation_Pkg, Current_Text, Instr_Extract);
+         Execute (This.Clauses_Pkg, Current_Text, Clauses_Extract);
+         Merge_Extracts
+           (New_Extract,
+            Instr_Extract,
+            Clauses_Extract,
+            Success,
+            False);
 
-      Execute (This.Clauses_Pkg, Current_Text, New_Extract);
+         if not Success then
+            raise Codefix_Panic;
+         end if;
+
+         Free (Instr_Extract);
+         Free (Clauses_Extract);
+      else
+         Execute (This.Clauses_Pkg, Current_Text, New_Extract);
+      end if;
    end Execute;
 
 
@@ -345,13 +349,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Clauses_Pkg);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Remove_Pkg_Clauses_Cmd) is
-   begin
-      Unchecked_Free (This.Instantiation_Pkg);
-      Unchecked_Free (This.Clauses_Pkg);
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
 
    -----------------------
    -- Remove_Entity_Cmd --
@@ -388,7 +385,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Spec_Begin, Spec_End       : File_Cursor;
       Body_Begin, Body_End       : File_Cursor;
@@ -456,15 +453,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Remove_Entity_Cmd) is
-   begin
-      This.Spec_Begin := null;
-      This.Spec_End := null;
-      This.Body_Begin := null;
-      This.Body_End := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    --------------------
    -- Add_Pragma_Cmd --
    --------------------
@@ -484,7 +472,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Add_Pragma_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Position : File_Cursor;
    begin
@@ -494,10 +482,11 @@ package body Codefix.Text_Manager.Ada_Commands is
       --  ??? Later, this function could detect the presence of another pragma
       --  and not add one a second time
 
-      Add_Line
+      Add_Indented_Line
         (New_Extract,
          Position,
-         "pragma " & This.Name.all & "(" & This.Argument.all & ")");
+         "pragma " & This.Name.all & " (" & This.Argument.all & ")",
+         Current_Text);
    end Execute;
 
    procedure Free (This : in out Add_Pragma_Cmd) is
@@ -507,14 +496,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Argument);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Add_Pragma_Cmd) is
-   begin
-      This.Position := null;
-      This.Name := null;
-      This.Argument := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
 
    -----------------------
    -- Make_Constant_Cmd --
@@ -535,14 +516,12 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Cursor        : File_Cursor;
       Work_Extract  : Ada_List;
-      Tmp_Extract   : Extract;
       New_Instr     : Dynamic_String;
       Col_Decl      : Natural;
-      Success_Merge : Boolean;
    begin
       Cursor := File_Cursor
         (Get_Current_Cursor (Current_Text, This.Position.all));
@@ -569,22 +548,9 @@ package body Codefix.Text_Manager.Ada_Commands is
          Free (New_Instr);
       end if;
 
-      Unchecked_Assign (Tmp_Extract, New_Extract);
-      Unchecked_Free (New_Extract);
-
-      Merge_Extracts
-        (New_Extract,
-         Tmp_Extract,
-         Work_Extract,
-         Success_Merge,
-         False);
-
-      if not Success_Merge then
-         raise Codefix_Panic;
-      end if;
+      Assign (New_Extract, Work_Extract);
 
       Free (Work_Extract);
-
    end Execute;
 
    procedure Free (This : in out Make_Constant_Cmd) is
@@ -593,14 +559,6 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Name);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Make_Constant_Cmd) is
-   begin
-      This.Position := null;
-      This.Name := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
 
    ----------------------------
    -- Remove_Parenthesis_Cmd --
@@ -618,7 +576,7 @@ package body Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       procedure Right_Paren (Current_Index : in out Integer);
       --  Put Current_Index extactly on the right paren correponding the last
@@ -677,10 +635,9 @@ package body Codefix.Text_Manager.Ada_Commands is
          Cursor,
          Cursor);
 
-      Unchecked_Assign (New_Extract, Extract (Work_Extract));
-      Unchecked_Free (Extract (Work_Extract));
-      Free (Work_Extract);
+      Assign (New_Extract, Work_Extract);
 
+      Free (Work_Extract);
    end Execute;
 
    procedure Free (This : in out Remove_Parenthesis_Cmd) is
@@ -688,11 +645,5 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Cursor);
       Free (Text_Command (This));
    end Free;
-
-   procedure Unchecked_Free (This : in out Remove_Parenthesis_Cmd) is
-   begin
-      This.Cursor := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
 
 end Codefix.Text_Manager.Ada_Commands;

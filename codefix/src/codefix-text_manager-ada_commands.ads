@@ -39,15 +39,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Recase_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the word recased.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the word recased.
 
    procedure Free (This : in out Recase_Word_Cmd);
    --  Free the memory associated to a Recase_Word_Cmd.
-
-   procedure Unchecked_Free (This : in out Recase_Word_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    ----------------------------
    -- Remove_Instruction_Cmd --
@@ -64,15 +60,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Instruction_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the remove of the instruction.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the remove of the instruction.
 
    procedure Free (This : in out Remove_Instruction_Cmd);
    --  Free the memory associated to a Remove_Instruction_Cmd.
-
-   procedure Unchecked_Free (This : in out Remove_Instruction_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -89,15 +81,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Elements_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with all the elements removed.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with all the elements removed.
 
    procedure Free (This : in out Remove_Elements_Cmd);
    --  Free the memory associated to a Remove_Elements_Cmd.
-
-   procedure Unchecked_Free (This : in out Remove_Elements_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
@@ -117,15 +105,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the remove of the package clauses.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the remove of the package clauses.
 
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
    --  Free the memory associated to a Remove_Pkg_Cmd.
-
-   procedure Unchecked_Free (This : in out Remove_Pkg_Clauses_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    -----------------------
    -- Remove_Entity_Cmd --
@@ -142,15 +126,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Entity_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the remove of the entity.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the remove of the entity.
 
    procedure Free (This : in out Remove_Entity_Cmd);
    --  Free the memory associated to a Remove_Entity_Cmd.
-
-   procedure Unchecked_Free (This : in out Remove_Entity_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    --------------------
    -- Add_Pragma_Cmd --
@@ -168,15 +148,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Add_Pragma_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the addition of the pragma.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the addition of the pragma.
 
    procedure Free (This : in out Add_Pragma_Cmd);
    --  Free the memory associated to an Add_Pragma_Cmd.
-
-   procedure Unchecked_Free (This : in out Add_Pragma_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    -----------------------
    -- Make_Constant_Cmd --
@@ -194,15 +170,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Make_Constant_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the making of the constant.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the making of the constant.
 
    procedure Free (This : in out Make_Constant_Cmd);
    --  Free the memory associated to a Make_Constant_Cmd.
-
-   procedure Unchecked_Free (This : in out Make_Constant_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    ----------------------------
    -- Remove_Parenthesis_Cmd --
@@ -219,15 +191,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Execute
      (This         : Remove_Parenthesis_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Updade an Extract with the remove of the conversion.
+      New_Extract  : out Extract'Class);
+   --  Set an Extract with the remove of the conversion.
 
    procedure Free (This : in out Remove_Parenthesis_Cmd);
    --  Free the memory associated to a Remove_Parenthesis_Cmd.
-
-   procedure Unchecked_Free (This : in out Remove_Parenthesis_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
 private
 

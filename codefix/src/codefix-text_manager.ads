@@ -86,10 +86,6 @@ package Codefix.Text_Manager is
    procedure Free (This : in out File_Cursor);
    --  Frees the memory used by fields of File_Cursor.
 
-   procedure Unchecked_Free (This : in out File_Cursor);
-   --  Disconnect all fiels of File_Cursor, but without freeing anything in
-   --  the Pool
-
    function Clone (This : File_Cursor) return File_Cursor;
    --  Duplicate all informations of a File_Cursor, specially informations
    --  memorized in dynamic memory.
@@ -513,10 +509,6 @@ package Codefix.Text_Manager is
    procedure Unchecked_Assign (This, Value : in out Extract'Class);
    --  Assign Value to This without any clone of any object in the pool.
 
-   procedure Unchecked_Free (This : in out Extract);
-   --  Disconnect all elements connected to the Extract without freeing anyting
-   --  in the pool.
-
    procedure Remove
      (This, Prev : Ptr_Extract_Line; Container : in out Extract);
    --  Remove the line This from the Container
@@ -631,6 +623,16 @@ package Codefix.Text_Manager is
       Text   : String);
    --  Add a line AFTER the line specified by the cursor. Make a cursor with
    --  0 for the line number to add a line at the begenning of the file.
+
+   procedure Add_Indented_Line
+     (This         : in out Extract;
+      Cursor       : File_Cursor'Class;
+      Text         : String;
+      Current_Text : Text_Navigator_Abstr'Class);
+   --  Add a line AFTER the line specified by the cursor. Make a cursor with
+   --  0 for the line number to add a line at the begenning of the file. This
+   --  procedure also auto-indent the line.
+
 
    procedure Delete_Line
      (This   : in out Extract;
@@ -759,10 +761,6 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Word_Mark);
    --  Free the memory associated to a Word_Mark.
 
-   procedure Unchecked_Free (This : in out Word_Mark);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Free (This : in out Word_Cursor);
    --  Free the memory associated to a Word_Cursor.
 
@@ -793,17 +791,11 @@ package Codefix.Text_Manager is
    procedure Execute
      (This         : Text_Command;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is abstract;
+      New_Extract  : out Extract'Class) is abstract;
    --  Execute a command, and create an extract to preview the changes.
-   --  If New_Extract is already containing information, they should be merged
-   --  with new ones.
 
    procedure Free (This : in out Text_Command);
    --  Free the memory associated to a Text_Command.
-
-   procedure Unchecked_Free (This : in out Text_Command);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
 
    procedure Free_Data (This : in out Text_Command'Class);
    --  Free the memory associated to a Text_Command.
@@ -831,15 +823,11 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Remove_Word_Cmd);
    --  Free the memory associated to a Remove_Word_Cmd.
 
-   procedure Unchecked_Free (This : in out Remove_Word_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the word removed.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the word removed.
 
    ---------------------
    -- Insert_Word_Cmd --
@@ -858,15 +846,11 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Insert_Word_Cmd);
    --  Fre the memory associated to an Insert_Word_Cmd.
 
-   procedure Unchecked_Free (This : in out Insert_Word_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extact with the word inserted.
+      New_Extract  : out Extract'Class);
+   --  Set an extact with the word inserted.
 
    --------------------
    -- Move_Word_Cmd  --
@@ -884,15 +868,11 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Move_Word_Cmd);
    --  Free the memory associated to a Move_Word_Cmd.
 
-   procedure Unchecked_Free (This : in out Move_Word_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the word moved.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the word moved.
 
    ----------------------
    -- Replace_Word_Cmd --
@@ -910,15 +890,11 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Replace_Word_Cmd);
    --  Free the memory associated to a Replace_Word_Cmd.
 
-   procedure Unchecked_Free (This : in out Replace_Word_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the word replaced.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the word replaced.
 
    ----------------------
    -- Invert_Words_Cmd --
@@ -935,15 +911,11 @@ package Codefix.Text_Manager is
    procedure Free (This : in out Invert_Words_Cmd);
    --  Free the memory associated to an Invert_Word_Cmd.
 
-   procedure Unchecked_Free (This : in out Invert_Words_Cmd);
-   --  Initialize all fields of This to default values, but do not free any
-   --  memory.
-
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class);
-   --  Update an extract with the invertion of the two word.
+      New_Extract  : out Extract'Class);
+   --  Set an extract with the invertion of the two word.
 
 private
 

@@ -26,6 +26,8 @@ with GNAT.Case_Util;        use GNAT.Case_Util;
 
 with Basic_Types;           use Basic_Types;
 with String_Utils;          use String_Utils;
+with Language;              use Language;
+with Language.Unknown;      use Language.Unknown;
 
 with Codefix.Merge_Utils; use Codefix.Merge_Utils;
 
@@ -1240,15 +1242,6 @@ package body Codefix.Text_Manager is
       return New_Cursor;
    end Clone;
 
-   --------------------
-   -- Unchecked_Free --
-   --------------------
-
-   procedure Unchecked_Free (This : in out File_Cursor) is
-   begin
-      This.File_Name := null;
-   end Unchecked_Free;
-
    ----------------------------------------------------------------------------
    --  type Extract_Line
    ----------------------------------------------------------------------------
@@ -1933,15 +1926,6 @@ package body Codefix.Text_Manager is
       This.First := Value.First;
    end Unchecked_Assign;
 
-   --------------------
-   -- Unchecked_Free --
-   --------------------
-
-   procedure Unchecked_Free (This : in out Extract) is
-   begin
-      This.First := null;
-   end Unchecked_Free;
-
    -----------
    -- Clone --
    -----------
@@ -2370,6 +2354,42 @@ package body Codefix.Text_Manager is
             Coloration      => True));
    end Add_Line;
 
+   -----------------------
+   -- Add_Indented_Line --
+   -----------------------
+
+   procedure Add_Indented_Line
+     (This         : in out Extract;
+      Cursor       : File_Cursor'Class;
+      Text         : String;
+      Current_Text : Text_Navigator_Abstr'Class)
+   is
+      Line_Cursor         : File_Cursor := File_Cursor (Clone (Cursor));
+      Previous_Line       : Dynamic_String;
+      Lang                : aliased Unknown_Language;
+      Indent, Next_Indent : Natural;
+   begin
+      Line_Cursor.Col := 1;
+      Previous_Line := new String'(Get_Line (Current_Text, Line_Cursor));
+
+      Next_Indentation (Lang'Access, Previous_Line.all, Indent, Next_Indent);
+
+      declare
+         Indent_Str : constant String (1 .. Next_Indent) := (others => ' ');
+      begin
+         Add_Element
+           (This, new Extract_Line'
+              (Context         => Unit_Created,
+               Cursor          => Line_Cursor,
+               Original_Length => 0,
+               Content         => To_Mergable_String (Indent_Str & Text),
+               Next            => null,
+               Coloration      => True));
+      end;
+
+      Free (Previous_Line);
+   end Add_Indented_Line;
+
    -----------------
    -- Delete_Line --
    -----------------
@@ -2791,11 +2811,6 @@ package body Codefix.Text_Manager is
       Free (This.Caption);
    end Free;
 
-   procedure Unchecked_Free (This : in out Text_Command) is
-   begin
-      This.Caption := null;
-   end Unchecked_Free;
-
    procedure Free_Data (This : in out Text_Command'Class) is
    begin
       Free (This);
@@ -2859,12 +2874,6 @@ package body Codefix.Text_Manager is
       Free (This.Mark_Id);
    end Free;
 
-   procedure Unchecked_Free (This : in out Word_Mark) is
-   begin
-      This.String_Match := null;
-      This.Mark_Id := null;
-   end Unchecked_Free;
-
    ---------------------
    -- Remove_Word_Cmd --
    ---------------------
@@ -2883,16 +2892,10 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Remove_Word_Cmd) is
-   begin
-      Unchecked_Free (This.Word);
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    procedure Execute
      (This         : Remove_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       New_Str     : Dynamic_String;
       Line_Cursor : File_Cursor;
@@ -2947,16 +2950,10 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Insert_Word_Cmd) is
-   begin
-      Unchecked_Free (This.Word);
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    procedure Execute
      (This         : Insert_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       New_Str      : Dynamic_String;
       Line_Cursor  : File_Cursor;
@@ -3034,20 +3031,29 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Move_Word_Cmd) is
-   begin
-      Unchecked_Free (This.Step_Remove);
-      Unchecked_Free (This.Step_Insert);
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    procedure Execute
      (This         : Move_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is
+      New_Extract  : out Extract'Class)
+   is
+      Extract_Remove, Extract_Insert : Extract;
+      Success                        : Boolean;
    begin
-      Execute (This.Step_Remove, Current_Text, New_Extract);
-      Execute (This.Step_Insert, Current_Text, New_Extract);
+      Execute (This.Step_Remove, Current_Text, Extract_Remove);
+      Execute (This.Step_Insert, Current_Text, Extract_Insert);
+      Merge_Extracts
+        (New_Extract,
+         Extract_Remove,
+         Extract_Insert,
+         Success,
+         False);
+
+      if not Success then
+         raise Codefix_Panic;
+      end if;
+
+      Free (Extract_Remove);
+      Free (Extract_Insert);
    end Execute;
 
    ----------------------
@@ -3071,17 +3077,10 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Replace_Word_Cmd) is
-   begin
-      Unchecked_Free (This.Mark);
-      This.Str_Expected := null;
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    procedure Execute
      (This         : Replace_Word_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class)
+      New_Extract  : out Extract'Class)
    is
       Current_Word : Word_Cursor;
       Line_Cursor  : File_Cursor;
@@ -3122,20 +3121,29 @@ package body Codefix.Text_Manager is
       Free (Text_Command (This));
    end Free;
 
-   procedure Unchecked_Free (This : in out Invert_Words_Cmd) is
-   begin
-      Unchecked_Free (This.Step_Word1);
-      Unchecked_Free (This.Step_Word2);
-      Unchecked_Free (Text_Command (This));
-   end Unchecked_Free;
-
    procedure Execute
      (This         : Invert_Words_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      New_Extract  : in out Extract'Class) is
+      New_Extract  : out Extract'Class)
+   is
+      Extract1, Extract2 : Extract;
+      Success            : Boolean;
    begin
-      Execute (This.Step_Word1, Current_Text, New_Extract);
-      Execute (This.Step_Word2, Current_Text, New_Extract);
+      Execute (This.Step_Word1, Current_Text, Extract1);
+      Execute (This.Step_Word2, Current_Text, Extract2);
+      Merge_Extracts
+        (New_Extract,
+         Extract1,
+         Extract2,
+         Success,
+         False);
+
+      if not Success then
+         raise Codefix_Panic;
+      end if;
+
+      Free (Extract1);
+      Free (Extract2);
    end Execute;
 
    procedure Merge_Extracts
@@ -3161,6 +3169,5 @@ package body Codefix.Text_Manager is
          Success,
          Chronologic_Changes);
    end Merge_Extracts;
-
 
 end Codefix.Text_Manager;
