@@ -87,6 +87,10 @@ with Gtk.Widget;
 with Prj;
 with Src_Info;
 with Language;
+with Basic_Types; use Basic_Types;
+with Commands; use Commands;
+
+with Unchecked_Conversion;
 
 package Glide_Kernel.Modules is
 
@@ -275,6 +279,11 @@ package Glide_Kernel.Modules is
    --              with Back/Forward.
    --  See also the function Open_File_Editor.
 
+   Mime_File_Line_Info : constant String := "glide/file_info";
+   --  There are multiple data associated with this type:
+   --     first  : full name of the source file to open (use Get_String)
+   --     second : source_line_info data (use Get_Address)
+
    Mime_Html_File : constant String := "glide/html";
    --  Request to display a html file
    --  There are multiple data associated with this type:
@@ -326,6 +335,36 @@ package Glide_Kernel.Modules is
    --  Either Orig_File or New_File can be null (but not both), in which
    --  case, the contents of the file is computed from the other file and the
    --  diff file.
+
+   type Line_Information_Record is record
+      Line               : Integer;
+      Text               : String_Access := null;
+      --  ??? we need to add the possibility of displaying a pixbuf.
+      --  Associated_Queue   : Command_Queue := Null_Command_Queue;
+      Associated_Command : Command_Access := null;
+   end record;
+
+   procedure Free (X : in out Line_Information_Record);
+   --  Free memory associated with X.
+
+   type Line_Information_Array is array (Natural range <>)
+     of Line_Information_Record;
+
+   type Line_Information_Data is access Line_Information_Array;
+   for Line_Information_Data'Size use Standard'Address_Size;
+
+   function To_Line_Information is new Unchecked_Conversion
+     (System.Address, Line_Information_Data);
+   function To_Address is new Unchecked_Conversion
+     (Line_Information_Data, System.Address);
+
+   procedure Add_Line_Information
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Width          : Integer;
+      Info           : Line_Information_Data;
+      Stick_To_Data  : Boolean := True);
 
    ------------------------
    -- File_Name contexts --
@@ -387,6 +426,28 @@ package Glide_Kernel.Modules is
    --  of the project, this will be left empty.
 
    procedure Destroy (Context : in out File_Selection_Context);
+   --  Free the memory associated with the context
+
+   ------------------------
+   -- File_Area contexts --
+   ------------------------
+
+   type File_Area_Context is new File_Selection_Context with private;
+   type File_Area_Context_Access is access all File_Area_Context'Class;
+
+   procedure Set_Area_Information
+     (Context    : access File_Area_Context;
+      Start_Line : Integer := 0;
+      End_Line   : Integer := 0);
+   --  Set the area information in Context.
+
+   procedure Get_Area
+     (Context    : access File_Area_Context;
+      Start_Line : out Integer;
+      End_Line   : out Integer);
+   --  Return the area information in Context.
+
+   procedure Destroy (Context : in out File_Area_Context);
    --  Free the memory associated with the context
 
    ---------------------
@@ -456,6 +517,11 @@ private
       Creator_Provided_Project : Boolean := False;
       --  Set to True if the project_view was given by the creator, instead of
       --  being computed automatically
+   end record;
+
+   type File_Area_Context is new File_Selection_Context with record
+      Start_Line : Integer;
+      End_Line   : Integer;
    end record;
 
    type Entity_Selection_Context is new File_Selection_Context with record
