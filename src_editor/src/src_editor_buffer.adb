@@ -1553,7 +1553,10 @@ package body Src_Editor_Buffer is
       Entity_Start        : Gtk_Text_Iter;
       Entity_End          : Gtk_Text_Iter;
       Tags                : Highlighting_Tags renames Buffer.Syntax_Tags;
-      Slice_Offset_Line   : Natural;
+      Slice_Offset_Line   : Buffer_Line_Type;
+      --  Offset between the beginning of the Source_Buffer and the beginning
+      --  of the string slice passed to Parse_Entities.
+
       Slice_Offset_Column : Gint;
       Result              : Boolean;
 
@@ -1605,10 +1608,7 @@ package body Src_Editor_Buffer is
             Col := Gint (Sloc_Start.Column) - 1;
          end if;
 
-         Buffer_Line :=
-           Get_Buffer_Line
-             (Buffer,
-              Editable_Line_Type (Sloc_Start.Line + Slice_Offset_Line));
+         Buffer_Line := Buffer_Line_Type (Sloc_Start.Line) + Slice_Offset_Line;
 
          if Buffer_Line = 0 then
             return False;
@@ -1626,9 +1626,7 @@ package body Src_Editor_Buffer is
          --  If the column is 0, the entity really ended on the end of the
          --  previous line.
 
-         Buffer_Line :=
-           Get_Buffer_Line
-             (Buffer, Editable_Line_Type (Sloc_End.Line + Slice_Offset_Line));
+         Buffer_Line := Buffer_Line_Type (Sloc_End.Line) + Slice_Offset_Line;
 
          if Buffer_Line = 0 then
             return False;
@@ -1684,8 +1682,8 @@ package body Src_Editor_Buffer is
          Length : constant Integer := Integer (Strlen (UTF8));
 
       begin
-         Highlight_Complete := True;
-         Slice_Offset_Line   := Natural (Get_Line (Entity_Start));
+         Highlight_Complete  := True;
+         Slice_Offset_Line   := Buffer_Line_Type (Get_Line (Entity_Start));
          Slice_Offset_Column := Get_Line_Index (Entity_Start);
 
          --  First, un-apply all the style tags...
