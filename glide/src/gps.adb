@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Error;                use Glib.Error;
+with Pango.Font;                use Pango.Font;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk;                       use Gtk;
 with Gtk.Accel_Map;             use Gtk.Accel_Map;
@@ -79,6 +80,10 @@ with Custom_Module;
 
 procedure GPS is
    use Glide_Main_Window;
+
+   Override_Gtk_Theme : constant Boolean := True;
+   --  Set to False for a True integration with a pre installed Gtk+ 2.0
+   --  environment.
 
    Me : constant Debug_Handle := Create ("GPS");
 
@@ -463,6 +468,15 @@ begin
    Gtk_New
      (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
    Set_Title (GPS, "GPS - the GNAT Programming System");
+
+   if Override_Gtk_Theme then
+      Gtk.Rc.Parse_String
+        ("gtk-font-name=""" &
+         To_String (Get_Pref (GPS.Kernel, Default_Font)) &
+         '"' & ASCII.LF &
+         "gtk-key-theme-name=""" &
+         Get_Pref (GPS.Kernel, Key_Theme_Name) & '"');
+   end if;
 
    if Get_Pref (GPS.Kernel, Start_Maximized) then
       Maximize (GPS);
