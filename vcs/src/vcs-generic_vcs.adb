@@ -168,6 +168,7 @@ package body VCS.Generic_VCS is
 
    function Execute
      (Command : access Parser_Command_Type) return Command_Return_Type;
+   function Name (Command : access Parser_Command_Type) return String;
 
    type Parser_Command_Access is access all Parser_Command_Type;
 
@@ -1245,6 +1246,16 @@ package body VCS.Generic_VCS is
 
       return Execute_Again;
    end Execute;
+
+   ----------
+   -- Name --
+   ----------
+
+   function Name (Command : access Parser_Command_Type) return String is
+      pragma Unreferenced (Command);
+   begin
+      return -"Parsing status";
+   end Name;
 
    --------------------------
    -- Generic_Parse_Status --
