@@ -497,7 +497,8 @@ package body Src_Info.Type_Utils is
 
    function Cmp_Arg_Types
      (Buffer_A, Buffer_B     : String_Access;
-      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access)
+      Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
+      Strict                 : Boolean := False)
       return Boolean
    is
       use DB_Structures.Segment_Vector;
@@ -514,8 +515,10 @@ package body Src_Info.Type_Utils is
       end if;
 
       while Ptr_A /= null and then Ptr_B /= null loop
-         if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "..."
-            or else Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "..." then
+         if not Strict and then
+           (Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last) = "..."
+            or else Buffer_B (Ptr_B.Data.First .. Ptr_B.Data.Last) = "...")
+         then
             return True;
          end if;
          if Buffer_A (Ptr_A.Data.First .. Ptr_A.Data.Last)
@@ -536,11 +539,12 @@ package body Src_Info.Type_Utils is
    function Cmp_Prototypes
      (Buffer_A, Buffer_B     : String_Access;
       Args_A, Args_B         : DB_Structures.Segment_Vector.Node_Access;
-      Ret_Type_A, Ret_Type_B : Segment)
+      Ret_Type_A, Ret_Type_B : Segment;
+      Strict                 : Boolean := False)
       return Boolean
    is
    begin
-      return Cmp_Arg_Types (Buffer_A, Buffer_B, Args_A, Args_B)
+      return Cmp_Arg_Types (Buffer_A, Buffer_B, Args_A, Args_B, Strict)
          and then Buffer_A (Ret_Type_A.First .. Ret_Type_A.Last)
             = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
    end Cmp_Prototypes;
