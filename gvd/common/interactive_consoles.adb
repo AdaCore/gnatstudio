@@ -689,12 +689,13 @@ package body Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
+      Highlight    : Gdk_Color := Null_Color;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False) is
    begin
       Console := new Interactive_Console_Record;
       Initialize (Console, Prompt, Handler, User_Data, Font,
-                  History_List, Key, Wrap_Mode,
+                  History_List, Key, Highlight, Wrap_Mode,
                   Empty_Equals_Repeat);
    end Gtk_New;
 
@@ -710,6 +711,7 @@ package body Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
+      Highlight    : Gdk_Color := Null_Color;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False)
    is
@@ -722,6 +724,7 @@ package body Interactive_Consoles is
       Console.User_Data := User_Data;
       Console.Key := new String'(String (Key));
       Console.History := History_List;
+      Console.Highlight := Highlight;
 
       Gtk.Scrolled_Window.Initialize (Console);
       Set_Policy
@@ -751,6 +754,13 @@ package body Interactive_Consoles is
       Add (Get_Tag_Table (Console.Buffer), Console.External_Messages_Tag);
 
       Gtk_New (Console.Highlight_Tag);
+
+      if Console.Highlight /= Null_Color then
+         Set_Property
+           (Console.Highlight_Tag, Foreground_Gdk_Property,
+            Console.Highlight);
+      end if;
+
       Add (Get_Tag_Table (Console.Buffer), Console.Highlight_Tag);
 
       Gtk_New (Console.Prompt_Tag);

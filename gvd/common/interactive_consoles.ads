@@ -70,6 +70,7 @@ package Interactive_Consoles is
       Font         : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
+      Highlight    : Gdk_Color := Null_Color;
       Wrap_Mode    : Gtk.Enums.Gtk_Wrap_Mode := Gtk.Enums.Wrap_None;
       Empty_Equals_Repeat : Boolean := False);
    --  Create a new console for glide.
@@ -87,6 +88,7 @@ package Interactive_Consoles is
       Font      : Pango.Font.Pango_Font_Description;
       History_List : Histories.History;
       Key          : Histories.History_Key;
+      Highlight    : Gdk_Color := Null_Color;
       Wrap_Mode : Gtk.Enums.Gtk_Wrap_Mode;
       Empty_Equals_Repeat : Boolean := False);
    --  Internal initialization function.
@@ -210,6 +212,9 @@ private
       Empty_Equals_Repeat : Boolean := True;
       --  Whether an empty command should be equivalent to repeating the
       --  last command.
+
+      Highlight    : Gdk_Color := Null_Color;
+      --  The color used for highlighting.
    end record;
 
 end Interactive_Consoles;
