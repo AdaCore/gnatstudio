@@ -32,21 +32,17 @@ package body Docgen is
    function Compare_Elements (X, Y : Source_File_Information) return Boolean
    is
    begin
-      if File_Extension (X.File_Name.all) = ".ads" then
-         if File_Extension (Y.File_Name.all) = ".adb" then
-            return True;
+      if X.File_Name.all (X.File_Name'First .. X.File_Name'Last - 3) =
+        Y.File_Name.all  (Y.File_Name'First .. Y.File_Name'Last - 3) then
+         if File_Extension (X.File_Name.all) = ".adb" then
+            return False;
          else
-            return X.File_Name.all < Y.File_Name.all;
+            return True;
          end if;
       else
-         if File_Extension (Y.File_Name.all) = ".adb" then
-            return X.File_Name.all < Y.File_Name.all;
-         else
-            return False;
-         end if;
+         return X.File_Name.all < Y.File_Name.all;
       end if;
    end Compare_Elements;
-
 
    function Compare_Elements_Name
      (X, Y : Entity_List_Information) return Boolean is
@@ -90,17 +86,29 @@ package body Docgen is
 
    procedure Free (X : in out Source_File_Information) is
    begin
-      Free (X.File_Name);
-      Free (X.Prj_File_Name);
-      Free (X.Package_Name);
+      if X.File_Name /= null then
+         Free (X.File_Name);
+      end if;
+      if X.Prj_File_Name /= null then
+         Free (X.Prj_File_Name);
+      end if;
+      if X.Package_Name /= null then
+         Free (X.Package_Name);
+      end if;
    end Free;
 
 
    procedure Free (X : in out Entity_List_Information) is
    begin
-      Free (X.Name);
-      Free (X.Short_Name);
-      Free (X.File_Name);
+      if X.Name /= null then
+         Free (X.Name);
+      end if;
+      if X.Short_Name /= null then
+         Free (X.Short_Name);
+      end if;
+      if X.File_Name /= null then
+         Free (X.File_Name);
+      end if;
       if not Type_Reference_List.Is_Empty (X.Calls_List) then
          Type_Reference_List.Free (X.Calls_List);
       end if;
@@ -111,8 +119,12 @@ package body Docgen is
 
    procedure Free (X : in out Reference_List_Information) is
    begin
-      Free (X.File_Name);
-      Free (X.Subprogram_Name);
+      if X.File_Name /= null then
+         Free (X.File_Name);
+      end if;
+      if X.Subprogram_Name /= null then
+         Free (X.Subprogram_Name);
+      end if;
    end Free;
 
    -----------------
