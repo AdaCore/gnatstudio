@@ -1136,6 +1136,7 @@ package body Python_Module is
    begin
       PyTuple_SetItem (Data.Args, N - 1,
                        Python_Subprogram_Record (Value.all).Subprogram);
+      Py_INCREF (Python_Subprogram_Record (Value.all).Subprogram);
    end Set_Nth_Arg;
 
    -----------------
@@ -1177,6 +1178,7 @@ package body Python_Module is
      (Data : Python_Callback_Data; N : Positive; Value : Class_Instance) is
    begin
       PyTuple_SetItem (Data.Args, N - 1, Python_Class_Instance (Value).Data);
+      Py_INCREF (Python_Class_Instance (Value).Data);
    end Set_Nth_Arg;
 
    -----------------
