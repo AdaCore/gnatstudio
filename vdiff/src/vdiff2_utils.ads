@@ -65,6 +65,4 @@ package Vdiff2_Utils is
    --  Free the memory associated to a Text_Iterator_Access, and all next
    --  objects linked to this one.
 
-
-
 end Vdiff2_Utils;

@@ -50,29 +50,32 @@ package body Vdiff2_Module is
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
 
-
    procedure On_Compare_Tree_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Compare Two Files...
+
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Compare Tree Files...
+
    procedure On_Merge_Tree_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Merge Two Files...
+
    procedure On_Merge_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->VDiff->Merge Tree Files...
-   procedure Free (Ar : in out String_List);
 
+   procedure Free (Ar : in out String_List);
+   --  ???
 
    ---------------------------
    -- On_Compare_Tree_Files --
    ---------------------------
+
    procedure On_Compare_Tree_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-
       Result : Diff_Occurrence_Link;
       File1  : constant String :=
         Select_File
@@ -83,13 +86,14 @@ package body Vdiff2_Module is
            History           => Get_History (Kernel));
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
+
    begin
       if File1 = "" then
          return;
       end if;
 
       declare
-         File2           : constant String :=
+         File2 : constant String :=
            Select_File
              (Title             => -"Select First Changes",
               Parent            => Get_Main_Window (Kernel),
@@ -103,17 +107,19 @@ package body Vdiff2_Module is
          end if;
 
          declare
-            File3           : constant String :=
+            File3 : constant String :=
               Select_File
                 (Title             => -"Select Second Changes",
                  Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
+
          begin
             if File3 = "" then
                return;
             end if;
+
             Result := Diff (Kernel, File1, File2, File3);
 
             if Result = null then
@@ -123,6 +129,7 @@ package body Vdiff2_Module is
                   Parent      => Get_Main_Window (Kernel));
                return;
             end if;
+
             Show_Differences (Kernel, Result, File1, File2, File3);
             Free (Result);
          end;
@@ -144,140 +151,6 @@ package body Vdiff2_Module is
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
-   begin
-      if File1 = "" then
-         return;
-      end if;
-
-      declare
-         File2           : constant String :=
-           Select_File
-             (Title             => -"Select Second File",
-              Parent            => Get_Main_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-              Kind              => Unspecified,
-              History           => Get_History (Kernel));
-
-      begin
-         if File2 = "" then
-            return;
-         end if;
-
-         Result := Diff (Kernel, File1, File2);
-
-         if Result = null then
-            Button := Message_Dialog
-              (Msg         => -"No differences found.",
-               Buttons     => Button_OK,
-               Parent      => Get_Main_Window (Kernel));
-            return;
-         end if;
-         Show_Differences (Kernel, Result, File1, File2);
-         Free (Result);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Compare_Two_Files;
-
-   -------------------------
-   -- On_Merge_Tree_Files --
-   -------------------------
-
-   procedure On_Merge_Tree_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Result : Diff_Occurrence_Link;
-      File1  : constant String :=
-        Select_File
-          (Title             => -"Select Common Ancestor",
-           Parent            => Get_Main_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-           Kind              => Unspecified,
-           History           => Get_History (Kernel));
-      Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Button);
-   begin
-      if File1 = "" then
-         return;
-      end if;
-
-      declare
-         File2           : constant String :=
-           Select_File
-             (Title             => -"Select First Changes",
-              Parent            => Get_Main_Window (Kernel),
-              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-              Kind              => Unspecified,
-              History           => Get_History (Kernel));
-
-      begin
-         if File2 = "" then
-            return;
-         end if;
-
-         declare
-            File3           : constant String :=
-              Select_File
-                (Title             => -"Select Second Changes",
-                 Parent            => Get_Main_Window (Kernel),
-                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-                 Kind              => Unspecified,
-                 History           => Get_History (Kernel));
-         begin
-            if File3 = "" then
-               return;
-            end if;
-            Result := Diff (Kernel, File1, File2, File3);
-
-            if Result = null then
-               Button := Message_Dialog
-                 (Msg         => -"No differences found.",
-                  Buttons     => Button_OK,
-                  Parent      => Get_Main_Window (Kernel));
-               return;
-            end if;
-            Show_Differences (Kernel, Result, File1, File2, File3);
-            declare
-               Merge : constant String :=
-                 Select_File
-                   (Title             => -"Select Merge File",
-                    Parent            => Get_Main_Window (Kernel),
-                    Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-                    Kind              => Unspecified,
-                    History           => Get_History (Kernel));
-               Args_edit       : Argument_List := (1 => new String'(Merge));
-            begin
-               if Merge /= "" then
-                  Show_Merge (Kernel, Result, Merge, File1, File2, File3);
-               end if;
-               Free (Args_edit);
-            end;
-
-            Free (Result);
-         end;
-      end;
-   end On_Merge_Tree_Files;
-
-   ------------------------
-   -- On_Merge_Two_Files --
-   ------------------------
-
-   procedure On_Merge_Two_Files
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      Result : Diff_Occurrence_Link;
-      File1  : constant String :=
-        Select_File
-          (Title             => -"Select First File",
-           Parent            => Get_Main_Window (Kernel),
-           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
-           Kind              => Unspecified,
-           History           => Get_History (Kernel));
-
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Widget, Button);
 
@@ -309,24 +182,171 @@ package body Vdiff2_Module is
                Parent      => Get_Main_Window (Kernel));
             return;
          end if;
+
          Show_Differences (Kernel, Result, File1, File2);
+         Free (Result);
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Compare_Two_Files;
+
+   -------------------------
+   -- On_Merge_Tree_Files --
+   -------------------------
+
+   procedure On_Merge_Tree_Files
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Result : Diff_Occurrence_Link;
+      File1  : constant String :=
+        Select_File
+          (Title             => -"Select Common Ancestor",
+           Parent            => Get_Main_Window (Kernel),
+           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Kind              => Unspecified,
+           History           => Get_History (Kernel));
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Widget, Button);
+
+   begin
+      if File1 = "" then
+         return;
+      end if;
+
+      declare
+         File2 : constant String :=
+           Select_File
+             (Title             => -"Select First Changes",
+              Parent            => Get_Main_Window (Kernel),
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Unspecified,
+              History           => Get_History (Kernel));
+
+      begin
+         if File2 = "" then
+            return;
+         end if;
+
          declare
-            Merge : constant String :=
+            File3 : constant String :=
+              Select_File
+                (Title             => -"Select Second Changes",
+                 Parent            => Get_Main_Window (Kernel),
+                 Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                 Kind              => Unspecified,
+                 History           => Get_History (Kernel));
+         begin
+            if File3 = "" then
+               return;
+            end if;
+
+            Result := Diff (Kernel, File1, File2, File3);
+
+            if Result = null then
+               Button := Message_Dialog
+                 (Msg         => -"No differences found.",
+                  Buttons     => Button_OK,
+                  Parent      => Get_Main_Window (Kernel));
+               return;
+            end if;
+
+            Show_Differences (Kernel, Result, File1, File2, File3);
+
+            declare
+               Merge     : constant String :=
+                 Select_File
+                   (Title             => -"Select Merge File",
+                    Parent            => Get_Main_Window (Kernel),
+                    Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+                    Kind              => Unspecified,
+                    History           => Get_History (Kernel));
+               Args_edit : Argument_List := (1 => new String'(Merge));
+
+            begin
+               if Merge /= "" then
+                  Show_Merge (Kernel, Result, Merge, File1, File2, File3);
+               end if;
+
+               Free (Args_edit);
+            end;
+
+            Free (Result);
+         end;
+      end;
+   end On_Merge_Tree_Files;
+
+   ------------------------
+   -- On_Merge_Two_Files --
+   ------------------------
+
+   procedure On_Merge_Two_Files
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Result : Diff_Occurrence_Link;
+      File1  : constant String :=
+        Select_File
+          (Title             => -"Select First File",
+           Parent            => Get_Main_Window (Kernel),
+           Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+           Kind              => Unspecified,
+           History           => Get_History (Kernel));
+      Button : Message_Dialog_Buttons;
+      pragma Unreferenced (Widget, Button);
+
+   begin
+      if File1 = "" then
+         return;
+      end if;
+
+      declare
+         File2 : constant String :=
+           Select_File
+             (Title             => -"Select Second File",
+              Parent            => Get_Main_Window (Kernel),
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Unspecified,
+              History           => Get_History (Kernel));
+
+      begin
+         if File2 = "" then
+            return;
+         end if;
+
+         Result := Diff (Kernel, File1, File2);
+
+         if Result = null then
+            Button := Message_Dialog
+              (Msg         => -"No differences found.",
+               Buttons     => Button_OK,
+               Parent      => Get_Main_Window (Kernel));
+            return;
+         end if;
+
+         Show_Differences (Kernel, Result, File1, File2);
+
+         declare
+            Merge     : constant String :=
               Select_File
                 (Title             => -"Select Merge File",
                  Parent            => Get_Main_Window (Kernel),
                  Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
                  Kind              => Unspecified,
                  History           => Get_History (Kernel));
-            Args_edit       : Argument_List := (1 => new String'(Merge));
+            Args_edit : Argument_List := (1 => new String'(Merge));
+
          begin
             if Merge /= "" then
                Show_Merge (Kernel, Result, Merge, File1, File2);
             end if;
+
             Free (Args_edit);
          end;
+
          Free (Result);
       end;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -345,6 +365,7 @@ package body Vdiff2_Module is
       Success : Boolean;
       Button  : Message_Dialog_Buttons;
       pragma Unreferenced (Mode, Button);
+
    begin
       if Mime_Type = Mime_Diff_File then
          declare
@@ -426,6 +447,7 @@ package body Vdiff2_Module is
                   New_File);
                Free (Result);
             end if;
+
             return True;
          end;
       end if;
@@ -472,4 +494,5 @@ package body Vdiff2_Module is
          Free (Ar (A));
       end loop;
    end Free;
+
 end Vdiff2_Module;

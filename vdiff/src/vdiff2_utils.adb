@@ -61,7 +61,7 @@ package body Vdiff2_Utils is
       File2  : String;
       File3  : String := "")
    is
-   pragma Unreferenced (File3);
+      pragma Unreferenced (File3);
       Button : Message_Dialog_Buttons;
       Args_edit       : Argument_List := (1 => new String'(Merge));
       pragma Unreferenced (File1, File2, Diff);
@@ -90,7 +90,7 @@ package body Vdiff2_Utils is
       File2  : String;
       File3  : String := "")
    is
-   pragma Unreferenced (File3);
+      pragma Unreferenced (File3);
       Link            : Diff_Occurrence_Link := Diff;
       Line1           : Natural := 1;
       Line2           : Natural := 1;
