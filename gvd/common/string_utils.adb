@@ -871,20 +871,23 @@ package body String_Utils is
    -----------------------------
 
    function Argument_List_To_String
-     (List : GNAT.OS_Lib.Argument_List) return String
+     (List : GNAT.OS_Lib.Argument_List;
+      Protect_Quotes : Boolean := True) return String
    is
       Length : Natural := 0;
    begin
       for L in List'Range loop
          Length := Length + List (L)'Length + 1;
 
-         for S in List (L)'Range loop
-            if List (L)(S) = '"'
-              or else List (L)(S) = ' '
-            then
-               Length := Length + 1;
-            end if;
-         end loop;
+         if Protect_Quotes then
+            for S in List (L)'Range loop
+               if List (L)(S) = '"'
+                 or else List (L)(S) = ' '
+               then
+                  Length := Length + 1;
+               end if;
+            end loop;
+         end if;
       end loop;
 
       declare
@@ -893,9 +896,11 @@ package body String_Utils is
       begin
          for L in List'Range loop
             for J in List (L)'Range loop
-               if List (L)(J) = '"' or else List (L)(J) = ' ' then
-                  S (Index) := '\';
-                  Index := Index + 1;
+               if Protect_Quotes then
+                  if List (L)(J) = '"' or else List (L)(J) = ' ' then
+                     S (Index) := '\';
+                     Index := Index + 1;
+                  end if;
                end if;
                S (Index) := List (L)(J);
                Index := Index + 1;

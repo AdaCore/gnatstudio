@@ -201,10 +201,13 @@ package String_Utils is
    --  Return True if S1 = S2 without taking into account case sensitivity.
 
    function Argument_List_To_String
-     (List : GNAT.OS_Lib.Argument_List) return String;
+     (List : GNAT.OS_Lib.Argument_List;
+      Protect_Quotes : Boolean := True) return String;
    --  Concatenate all the elements in List into a single string.
    --    Argument_String_To_List (Argument_List_To_String (X)) = X
    --  The returned string ends with a space.
+   --  If Protect_Quotes is True, then all quotes (single and double) are
+   --  preceded by a backslash.
 
    function Clone (List : GNAT.OS_Lib.Argument_List)
       return GNAT.OS_Lib.Argument_List;
