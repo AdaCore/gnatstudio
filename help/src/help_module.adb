@@ -68,6 +68,11 @@ package body Help_Module is
    Font_Adjust : Integer;
    pragma Import (C, Font_Adjust, "_gdk_font_adjust");
 
+   Url_Cst    : aliased constant String := "URL";
+   Anchor_Cst : aliased constant String := "anchor";
+   Help_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Url_Cst'Access, 2 => Anchor_Cst'Access);
+
    type Help_File_Record is record
       File  : GNAT.OS_Lib.String_Access;
       Descr : GNAT.OS_Lib.String_Access;
@@ -243,14 +248,15 @@ package body Help_Module is
    ---------------------
 
    procedure Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String) is
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
    begin
-      if Command = "html.browse" then
-         Open_HTML_File
-           (Get_Kernel (Data),
-            File   => Nth_Arg (Data, 1),
-            Anchor => Nth_Arg (Data, 2, Default => ""));
-      end if;
+      Name_Parameters (Data, Help_Cmd_Parameters);
+      Open_HTML_File
+        (Get_Kernel (Data),
+         File   => Nth_Arg (Data, 1),
+         Anchor => Nth_Arg (Data, 2, Default => ""));
    end Command_Handler;
 
    --------------
@@ -1268,7 +1274,8 @@ package body Help_Module is
       Register_Command
         (Kernel,
          Command      => "html_browse",
-         Usage        => "(URL, [anchor]) -> None",
+         Usage        =>
+           Parameter_Names_To_Usage (Help_Cmd_Parameters, "None", 1),
          Description  => -"Launch a HTML viewer for URL at specified anchor.",
          Minimum_Args => 1,
          Maximum_Args => 2,
