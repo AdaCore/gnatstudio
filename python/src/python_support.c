@@ -28,3 +28,6 @@ int ada_python_api_version () {
   return PYTHON_API_VERSION;
 }
 
+PyObject* ada_py_none () {
+  return Py_None;
+}
