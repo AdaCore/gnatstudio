@@ -3,6 +3,10 @@ project Standalone is
      ("common", "gtkada", "gvd", "sn_wrapper", "gnat", ".", "tests");
    for Object_Dir use "standalone_obj/";
 
+   package Builder is
+      for Default_Switches ("Ada') use ("-m");
+   end Builder;
+
    package Compiler is
       for Switches ("sdefault.adb") use ("-g");
       for Default_Switches ("ada") use ("-gnatwue", "-gnata", "-gnatg", "-g");
@@ -14,7 +18,7 @@ project Standalone is
 
    package Linker is
       for Default_Switches ("Ada") use 
-        ("-lgccprefix", Project'Object_Dir & "a-file_utils.o");
+        ("-lgccprefix", Project'Object_Dir & "file-utils.o");
    end Linker;
 
 end Standalone;
