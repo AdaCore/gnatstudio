@@ -528,11 +528,11 @@ package body Docgen_Module is
       --  ??? Shouldn't always generate in /tmp/
       --  ??? Should give a choice of the format
       Process_Files
-           (List,
-            Kernel,
-            Options,
-            Doc_Suffix    => ".htm",
-            Converter     => Doc_HTML_Create'Access);
+        (List,
+         Kernel,
+         Options,
+         Doc_Suffix    => ".htm",
+         Converter     => Doc_HTML_Create'Access);
       Free (List);
 
          --  ??? Should open the appropriate file, this one is only valid
@@ -540,12 +540,13 @@ package body Docgen_Module is
          --  ??? <frameset> not support by internal html viewer,
       declare
          Doc_Directory_Root : constant String := File_Utils.Name_As_Directory
-              (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
-                            False)) & "index.htm";
+           (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
+                         False)) & "index.htm";
       begin
          Open_Html (Kernel, Filename =>
                       Create (Full_Filename => Doc_Directory_Root));
       end;
+
       Pop_State (Kernel);
 
    exception
