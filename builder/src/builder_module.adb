@@ -130,7 +130,8 @@ package body Builder_Module is
 
    procedure On_Build
      (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Build->Make menu
+   --  Build->Make menu.
+   --  If Data contains a null file name, then the current file is compiled.
 
    procedure On_Custom
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -211,15 +212,47 @@ package body Builder_Module is
       Args    : Argument_List_Access;
       Cmd     : String_Access;
       Id      : Timeout_Handler_Id;
+      Context : Selection_Context_Access;
+      Prj     : Project_Id;
 
    begin
-      --  Are we using the default internal project ?
-      if Get_Project_File_Name (K) = "" then
-         Cmd := new String' (Data.File);
+      --  If no file was specified in data, simply compile the current file.
+
+      if Data.Length = 0 then
+         Context := Get_Current_Context (K);
+         if Context /= null
+           and then Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+           (File_Selection_Context_Access (Context))
+         then
+            Prj := Get_Project_From_File
+              (Get_Project_View (K),
+               File_Information (File_Selection_Context_Access (Context)));
+            if Prj = No_Project then
+               Cmd := new String'
+                 (File_Information
+                  (File_Selection_Context_Access (Context)));
+            else
+               Cmd := new String'
+                 ("-P" & Project_Path (Prj) & " "
+                  & Scenario_Variables_Cmd_Line (K) & " " & File_Information
+                  (File_Selection_Context_Access (Context)));
+            end if;
+
+         --  There is no current file, so we can't compile anything
+         else
+            return;
+         end if;
+
       else
-         Cmd := new String'
-           ("-P" & Project_Path (Data.Project) & " " &
-              Scenario_Variables_Cmd_Line (K) & " " & Data.File);
+         --  Are we using the default internal project ?
+         if Get_Project_File_Name (K) = "" then
+            Cmd := new String' (Data.File);
+         else
+            Cmd := new String'
+              ("-P" & Project_Path (Data.Project) & " " &
+               Scenario_Variables_Cmd_Line (K) & " " & Data.File);
+         end if;
       end if;
 
       --  Ask for saving sources/projects before building
@@ -801,9 +834,16 @@ package body Builder_Module is
 
       --  No main program ?
       if not Has_Child then
-         Gtk_New (Mitem, -"<none>");
+         Gtk_New (Mitem, -"<current file>");
          Append (Menu1, Mitem);
-         Set_Sensitive (Mitem, False);
+         File_Project_Cb.Object_Connect
+           (Mitem, "activate",
+            File_Project_Cb.To_Marshaller (On_Build'Access),
+            Slot_Object => Kernel,
+            User_Data => File_Project_Record'
+            (Length  => 0,
+             Project => No_Project,
+             File    => ""));
       end if;
 
       --  Should be able to run any program
