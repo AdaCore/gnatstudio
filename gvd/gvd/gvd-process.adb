@@ -1694,6 +1694,11 @@ package body GVD.Process is
             Widget := Gtk_Widget (Process.Data_Paned);
          else
             Widget := Gtk_Widget (Process.Data_Scrolledwindow);
+
+            --  We need to unrealize the window here, otherwise the
+            --  scrollbars are being destroyed when the widget is reparented
+            --  and we get gtk+ warnings
+            Unrealize (Widget);
          end if;
 
          if Process.Separate_Data then
