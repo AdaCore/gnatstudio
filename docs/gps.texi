@@ -8418,7 +8418,8 @@ This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
 @code{separator} and @code{tip} attributes. This tag describes a text edition
 field, which can
 contain any text the user types. This text will be prefixed by the value of
-the @code{switch} attribute, and a space. If no text is entered in the field
+the @code{switch} attribute, and the separator (by default nothing). If no text
+is entered in the field
 by the user, nothing is put on the command line.
 
 This tag accepts two extra attributes:
