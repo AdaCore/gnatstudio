@@ -755,13 +755,17 @@ package body Help_Module is
    procedure On_About
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      use ASCII;
+
       Button : Message_Dialog_Buttons;
-      pragma Unreferenced (Widget, Kernel, Button);
+      pragma Unreferenced (Widget, Button);
+
    begin
       Button := Message_Dialog
         ("GPS " & GVD.Version & " (" & GVD.Source_Date &
-         (-") hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
-         (-"the GNAT Programming System") & ASCII.LF & ASCII.LF &
+           (-") hosted on ") & GVD.Target & LF &
+         (-"GNAT ") & GNAT_Version (Kernel) & LF & LF &
+         (-"the GNAT Programming System") & LF & LF &
          "(c) 2001-2002 ACT-Europe",
          Buttons => Button_OK,
          Title   => -"About...");
