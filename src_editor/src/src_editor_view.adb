@@ -1143,12 +1143,6 @@ package body Src_Editor_View is
          After       => False,
          Slot_Object => View);
 
-      Widget_Callback.Object_Connect
-        (Get_Vadjustment (View.Scroll),
-         "value_changed",
-         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
-         After       => True,
-         Slot_Object => View);
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
       Set_Left_Margin (View, Margin);
 
@@ -1278,6 +1272,13 @@ package body Src_Editor_View is
         (View, "expose_event",
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
+
+      Widget_Callback.Object_Connect
+        (Get_Vadjustment (View.Scroll),
+         "value_changed",
+         Marsh       => Widget_Callback.To_Marshaller (On_Scroll'Access),
+         After       => True,
+         Slot_Object => View);
 
       if Win /= null then
          Get_Geometry (Win, X, Y, W, H, D);
