@@ -41,6 +41,7 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Glide_Intl;                use Glide_Intl;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 
 package body Glide_Main_Window is
@@ -165,7 +166,10 @@ package body Glide_Main_Window is
    is
       pragma Unreferenced (Params);
    begin
-      Confirm_And_Quit (Glide_Window (Widget));
+      if Save_All_MDI_Children (Glide_Window (Widget).Kernel) then
+         Main_Quit;
+      end if;
+
       return True;
    end Delete_Callback;
 
@@ -177,17 +181,21 @@ package body Glide_Main_Window is
      (Main_Window : access GObject_Record'Class;
       Kernel      : Kernel_Handle)
    is
-      Main : constant Glide_Window := Glide_Window (Main_Window);
+      Main      : constant Glide_Window := Glide_Window (Main_Window);
+      Key_Theme : String := Key_Themes'Image
+        (Key_Themes'Val (Get_Pref (Kernel, Key_Theme_Name)));
+
    begin
+      Mixed_Case (Key_Theme);
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
          To_String (Get_Pref (Kernel, Default_Font)) &
          '"' & ASCII.LF &
          "gtk-can-change-accels=" &
-         Integer'Image (Boolean'Pos
-           (Get_Pref (Kernel, Can_Change_Accels))) & ASCII.LF &
-         "gtk-key-theme-name=""" &
-         Get_Pref (Kernel, Key_Theme_Name) & '"');
+         Integer'Image
+           (Boolean'Pos
+              (Get_Pref (Kernel, Can_Change_Accels))) & ASCII.LF &
+         "gtk-key-theme-name=""" & Key_Theme & '"');
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
          Set_Style (Main.Toolbar, Toolbar_Both);
