@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -982,7 +982,7 @@ package body Project_Viewers is
             end if;
          exception
             when E : Project_Warning | Project_Error =>
-               Insert (Get_Kernel (Context), Exception_Message (E));
+               Console.Insert (Get_Kernel (Context), Exception_Message (E));
          end;
          Destroy (Wiz);
          Recompute_View (Get_Kernel (Context));
@@ -1044,7 +1044,7 @@ package body Project_Viewers is
 
    exception
       when E : Project_Warning | Project_Error =>
-         Insert (Get_Kernel (Context), Exception_Message (E));
+         Console.Insert (Get_Kernel (Context), Exception_Message (E));
    end On_Add_Dependency_From_Existing;
 
    -------------------------------
