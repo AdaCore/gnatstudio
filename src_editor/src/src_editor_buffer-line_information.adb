@@ -1980,11 +1980,11 @@ package body Src_Editor_Buffer.Line_Information is
               (Buffer.Block_Highlighting_Column).Info.Associated_Command;
 
             if Command /= null then
-               if (Command.all in Hide_Editable_Lines_Type'Class
-                         or else
-                           (Remove_Unfold_Commands
-                            and then Command.all in
-                              Unhide_Editable_Lines_Type'Class))
+               if Command.all in Hide_Editable_Lines_Type'Class
+                 or else
+                   (Remove_Unfold_Commands
+                    and then Command.all in
+                      Unhide_Editable_Lines_Type'Class)
                then
                   Add_Block_Command (Buffer, Line, null, null);
                else

@@ -439,8 +439,8 @@ package body Project_Explorers_Common is
                   return False;
 
                when File_Node =>
-                  if (Get_Event_Type (Event) = Gdk_2button_Press
-                      or else Get_Event_Type (Event) = Gdk_3button_Press)
+                  if Get_Event_Type (Event) = Gdk_2button_Press
+                    or else Get_Event_Type (Event) = Gdk_3button_Press
                   then
                      Open_File_Editor
                        (Kernel,

@@ -1247,8 +1247,8 @@ package body Project_Properties is
 
                         --  If the project is either the one the user clicked
                         --  on or the page might apply to multiple projects
-                        if ((Get_Flags (Ed) and Multiple_Projects) /= 0
-                            or else Current (Prj_Iter) = Project)
+                        if (Get_Flags (Ed) and Multiple_Projects) /= 0
+                          or else Current (Prj_Iter) = Project
                         then
                            if Project_Editor
                              (Ed, Current (Prj_Iter),

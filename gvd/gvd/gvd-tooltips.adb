@@ -245,7 +245,7 @@ package body GVD.Tooltips is
    procedure Remove_Tooltip (Tooltip : Tooltips) is
       use type Gdk_Window;
    begin
-      if Tooltip.Active = True then
+      if Tooltip.Active then
          Timeout_Remove (Tooltip.Handler_Id);
 
          if Tooltip.Display_Window /= null then

@@ -361,7 +361,7 @@ package body Src_Info.Type_Utils is
         (Module_Typedefs.all,
          Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
 
-      if Desc.Is_Typedef = True
+      if Desc.Is_Typedef
          and then Desc.Ancestor_Point = Invalid_Point
       then -- was not set yet
          Desc.Ancestor_Point    := Typedef.Start_Position;
