@@ -644,6 +644,7 @@ package body GVD.Dialogs is
            (OK_Button,
             "clicked",
             On_Question_Yes_Clicked'Access);
+         Grab_Focus (OK_Button);
 
          Gtk_New_From_Stock (OK_Button, Stock_No);
          Add (Question_Dialog.Hbuttonbox1, OK_Button);
@@ -806,15 +807,14 @@ package body GVD.Dialogs is
               (Delete_Simple_Entry'Access));
 
          Gtk_New_Vbox (Vbox);
-         Pack_Start (Get_Vbox (Dialog), Vbox);
+         Pack_Start (Get_Vbox (Dialog), Vbox, False);
 
          Gtk_New_Hbox (Box);
-         Pack_Start (Vbox, Box, Padding => 10);
+         Pack_Start (Vbox, Box, False, Padding => 10);
 
          Gtk_New (Dialog.Label, Message);
-         Set_Justify (Dialog.Label, Justify_Center);
-         Pack_Start
-           (Box, Dialog.Label, Fill => True, Expand => True, Padding => 10);
+         Set_Alignment (Dialog.Label, 0.0, 0.5);
+         Pack_Start (Box, Dialog.Label, False, Padding => 10);
 
          Gtk_New (Dialog.Entry_Field);
          Set_Case_Sensitive (Dialog.Entry_Field);
@@ -838,18 +838,16 @@ package body GVD.Dialogs is
          end if;
 
          Gtk_New_From_Stock (Button, Stock_Ok);
-         Set_USize (Button, 80, -1);
          Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
-         Set_Flags (Button, Can_Default);
          Widget_Callback.Object_Connect
            (Button, "clicked",
             Widget_Callback.To_Marshaller (Ok_Simple_Entry'Access),
             Dialog);
+         Set_Flags (Button, Can_Default);
+         Grab_Default (Button);
 
          Gtk_New_From_Stock (Button, Stock_Cancel);
-         Set_USize (Button, 80, -1);
          Pack_Start (Get_Action_Area (Dialog), Button, False, False, 14);
-         Set_Flags (Button, Can_Default);
          Widget_Callback.Object_Connect
            (Button, "clicked",
             Widget_Callback.To_Marshaller (Cancel_Simple_Entry'Access),
