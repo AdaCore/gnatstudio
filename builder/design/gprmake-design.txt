@@ -549,11 +549,16 @@ Input needed from gprmake:
 
   -cargs:<lang> opts
 
-  where <lang> is an arbitrary value. The switches are appended to all the
-  compiler switches for <lang>. In particular, Compiler'Default_Switches
-  (<language>), as well as file specific options.
+  where <lang> is an arbitrary, case-insensitive, value. The switches are
+  appended to all the compiler switches for <lang>. In particular,
+  Compiler'Default_Switches (<language>), as well as file specific options.
 
-  For example, to specify -O2 -g for Ada: -cargs:ada -O2 -g
+  For compatibility with gnatmake, -cargs is equivalent to -cargs:Ada
+
+  For example, to specify -O2 -g for Ada, one of these will do:
+     -cargs:Ada -O2 -g
+     -cargs:ada -O2 -g
+     -cargs -O2 -g
 
   In addition and for consistency, we give access to the Builder and Binder
   options:
@@ -564,7 +569,7 @@ Input needed from gprmake:
 
   Typical usage from GPS: gprmake -P project -margs:ada -d
 
-  -bargs:<lang> opts
+  -bargs:<lang> opts (with -bargs equivalent to -bargs:Ada)
 
   same as -cargs, for Binder'Driver (<lang>), if any.
 
