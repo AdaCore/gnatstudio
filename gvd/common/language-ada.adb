@@ -209,8 +209,8 @@ package body Language.Debugger.Ada is
    ---------------------------
 
    function Make_Entry_Subprogram
-     (Str     : String;
-      Matched : Match_Array;
+     (Str      : String;
+      Matched  : Match_Array;
       Category : access Category_Index) return String is
    begin
       if Str (Matched (6).First) = ';' then

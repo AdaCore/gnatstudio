@@ -49,9 +49,7 @@ package Language.Debugger.Ada is
      (Lang : access Ada_Language) return Explorer_Categories;
 
    function Is_System_File
-     (Lang : access Ada_Language;
-      File_Name : String)
-     return Boolean;
+     (Lang : access Ada_Language; File_Name : String) return Boolean;
 
    ------------------------
    -- Naming conventions --
