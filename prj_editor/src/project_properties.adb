@@ -615,30 +615,6 @@ package body Project_Properties is
       Editor.Pages        := new Widget_Array
         (1 .. Project_Editor_Pages_Count (Kernel));
 
-      --  We used to create the pages dynamically, in Switch_Page. However,
-      --  this means that the pages that haven't been visited by the user will
-      --  not generate a project on exit, which is a problem when copying a
-      --  scenario to another one for instance
-      for E in Editor.Pages'Range loop
-         Page := Get_Nth_Project_Editor_Page (Kernel, E);
-
-         Gtk_New (Label, Get_Label (Page));
-         Editor.Pages (E) := Widget_Factory
-           (Page, Project_View, Editor.Kernel);
-         Append_Page (Main_Note, Editor.Pages (E), Label);
-      end loop;
-
-      --  Connect this only once we have created the pages
-      Gtk.Handlers.Add_Watch
-        (Object_User_Callback.Connect
-         (Main_Note, "switch_page",
-          Object_User_Callback.To_Marshaller (Switch_Page'Access),
-          User_Data => GObject (Editor),
-          After => True),
-         Editor);
-
-      Set_Current_Page (Main_Note, 0);
-
       Gtk_New_Vbox (Box, Homogeneous => False);
       Pack_Start (Main_Box, Box, Expand => True, Fill => True);
 
@@ -653,6 +629,29 @@ package body Project_Properties is
       Gtk_New (Editor.Selector, Kernel);
       Pack_Start (Box, Editor.Selector, Expand => True, Fill => True);
 
+      --  We used to create the pages dynamically, in Switch_Page. However,
+      --  this means that the pages that haven't been visited by the user will
+      --  not generate a project on exit, which is a problem when copying a
+      --  scenario to another one for instance
+      for E in Editor.Pages'Range loop
+         Page := Get_Nth_Project_Editor_Page (Kernel, E);
+
+         Gtk_New (Label, Get_Label (Page));
+         Editor.Pages (E) := Widget_Factory
+           (Page, Project_View, Editor.Kernel);
+         Append_Page (Main_Note, Editor.Pages (E), Label);
+      end loop;
+
+      Set_Current_Page (Main_Note, 0);
+
+      --  Connect this only once we have created the pages
+      Gtk.Handlers.Add_Watch
+        (Object_User_Callback.Connect
+         (Main_Note, "switch_page",
+          Object_User_Callback.To_Marshaller (Switch_Page'Access),
+          User_Data => GObject (Editor),
+          After => True),
+         Editor);
       Button := Add_Button (Editor, Stock_Ok, Gtk_Response_OK);
       Button := Add_Button (Editor, Stock_Cancel, Gtk_Response_Cancel);
    end Initialize;
