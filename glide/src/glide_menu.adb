@@ -19,23 +19,29 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
+with Glib.Object;                  use Glib.Object;
 with Gdk.Types;                    use Gdk.Types;
 with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
+with Gtk.Menu_Item;                use Gtk.Menu_Item;
 
 with Glide_Intl;                   use Glide_Intl;
 
 with Glide_Kernel;                 use Glide_Kernel;
 with Glide_Kernel.Actions;         use Glide_Kernel.Actions;
 with Glide_Kernel.Modules;         use Glide_Kernel.Modules;
+with Glide_Kernel.Hooks;           use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;     use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;         use Glide_Kernel.Project;
 with Glide_Main_Window;            use Glide_Main_Window;
+with Histories;                    use Histories;
+with Projects;                     use Projects;
 
 with GNAT.Directory_Operations;    use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                  use GNAT.OS_Lib;
 with Factory_Data;                 use Factory_Data;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Traces;                       use Traces;
@@ -43,6 +49,12 @@ with Commands.Interactive;         use Commands.Interactive;
 with VFS;                          use VFS;
 
 package body Glide_Menu is
+
+   Project_History_Key : constant Histories.History_Key := "project_files";
+   --  Key to use in the kernel histories to store the most recently opened
+   --  files.
+   --  Synchronize with welcome.adb
+
 
    type Close_Command is new Interactive_Command with record
       Kernel    : Kernel_Handle;
@@ -53,6 +65,48 @@ package body Glide_Menu is
       Context : Interactive_Command_Context)
       return Standard.Commands.Command_Return_Type;
    --  Close the current window (or all windows if Close_All is True.
+
+
+   type On_Reopen is new Menu_Callback_Record with record
+      Kernel : Kernel_Handle;
+   end record;
+   procedure Activate (Callback : access On_Reopen; Item : String);
+
+   procedure On_Project_Changed
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Called when the project has just changed
+
+   --------------
+   -- Activate --
+   --------------
+
+   procedure Activate (Callback : access On_Reopen; Item : String) is
+   begin
+      Load_Project (Callback.Kernel, Item);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Activate;
+
+   ------------------------
+   -- On_Project_Changed --
+   ------------------------
+
+   procedure On_Project_Changed (Kernel : access Kernel_Handle_Record'Class) is
+      Filename : constant String := Normalize_Pathname
+        (Project_Path (Get_Project (Kernel)), Resolve_Links => False);
+   begin
+      if Filename /= "" then
+         Add_To_History (Kernel, Project_History_Key, Filename);
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception " & Exception_Information (E));
+   end On_Project_Changed;
 
    --------------------
    -- Menu Callbacks --
@@ -93,6 +147,24 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Project->Open menu
+
+   procedure On_Project_Recompute
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Callback for the Project->Recompute Project menu
+
+   --------------------------
+   -- On_Project_Recompute --
+   --------------------------
+
+   procedure On_Project_Recompute
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Recompute_View (Kernel);
+   end On_Project_Recompute;
 
    ---------------------
    -- On_Open_Project --
@@ -262,7 +334,9 @@ package body Glide_Menu is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       File        : constant String := "/_" & (-"File")     & '/';
+      Project     : constant String := "/_" & (-"Project")  & '/';
       Command     : Interactive_Command_Access;
+      Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
    begin
       Command := new Close_Command;
       Close_Command (Command.all).Kernel := Kernel_Handle (Kernel);
@@ -289,6 +363,21 @@ package body Glide_Menu is
       Register_Action
         (Kernel, "Close all windows", Command,
            -"Close all open windows, asking for confirmation when relevant");
+
+      Reopen_Menu := Register_Menu
+        (Kernel, Project, -"_Recent", "",
+         null, Ref_Item => -"Open...", Add_Before => False);
+      Associate (Get_History (Kernel).all,
+                 Project_History_Key,
+                 Reopen_Menu,
+                 new On_Reopen'(Menu_Callback_Record with
+                                Kernel => Kernel_Handle (Kernel)));
+      Add_Hook (Kernel, Project_Changed_Hook, On_Project_Changed'Access);
+
+      Register_Menu
+        (Kernel, Project, -"R_ecompute Project", "",
+         On_Project_Recompute'Access, Ref_Item => -"Recent",
+         Add_Before => False);
 
       Register_Menu
         (Kernel,
@@ -330,6 +419,7 @@ package body Glide_Menu is
          Gtk_New (Project & (-"_Open..."), "", "",
                   On_Open_Project'Access),
          Gtk_New (Project & "sep1", Item_Type => Separator),
+
 
          Gtk_New (Debug & Data_Sub & (-"_Protection Domains"), "", null),
 

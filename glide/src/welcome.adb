@@ -43,7 +43,6 @@ with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Intl;                use Glide_Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
-with Project_Viewers;           use Project_Viewers;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;
 with VFS;                       use VFS;
 
@@ -197,8 +196,9 @@ package body Welcome is
 
       Gtk_New (Screen.Open_Project);
       Get_History (Get_History (Kernel).all,
-                   Project_Viewers.Project_History_Key, Screen.Open_Project);
+                   "project_files", Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
+      --  Synchronize the name of the key with glide_menu.adb
 
       if Project_Name /= "" then
          Set_Text (Get_Entry (Screen.Open_Project),
@@ -249,7 +249,7 @@ package body Welcome is
       end if;
 
       Show_All (Screen);
-      Display_Error (Screen, "");
+      Display_Message (Screen, "");
 
       --  While the user hasn't selected a valid project...
 
