@@ -163,6 +163,7 @@ package Src_Info.CPP is
       Pool          : out Xref_Pool);
    --  Returns unique xref file name associated with specified source file
    --  name. Also returns xref pool, where this name resides.
+   --  Do not free the returned Xref_Filename.
 
    function Get_Prj_HTable
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
