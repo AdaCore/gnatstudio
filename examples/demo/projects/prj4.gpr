@@ -1,0 +1,5 @@
+project Prj4 is
+
+   for Source_Dirs use ("prj4");
+
+end Prj4;
