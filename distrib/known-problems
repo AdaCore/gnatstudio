@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.0.1
 
+- D527-012 Cannot load newly created project
+  Problem:    When creating a project from GPS, using Project->New..., GPS
+              will generate an error message when loading this project as
+              part of the project creation.
+  Workaround: The project file has been properly create on disk, so it can
+              be loaded using Project->Open...
+
 - D526-029 GPS slow due to excessive X-Window traffic under Solaris
   Problem:    Under some versions of Solaris and some remote X servers,
               the amount of network requests exchanged between GPS and the
