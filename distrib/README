@@ -20,5 +20,5 @@ functionalities.
 
 You can optionally install the GNAT documentation in HTML format
 (user's guide, reference manual, gvd, gdb, gcc, Ada reference manual) in the
-directory <prefix>/doc/gps/html. This will be automatically detected by GPS.
+directory $base/doc/gps/html. This will be automatically detected by GPS.
 
