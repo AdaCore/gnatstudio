@@ -48,9 +48,11 @@ typedef struct DB_File_struct {
 */
 typedef struct CSF_struct {
   int num_of_fields;
-  char *fields[CSF_MAX_FIELDS + 1];	/* num_of_fields pointers to char;
-					 * +1 to store pointer after the last '\0'
-  * to unify field length calculation */
+  int fields [CSF_MAX_FIELDS + 1];
+  /* An index for the beginning of each of the field in the key or data string
+     of a DB_Pair_struct.
+     For easier manipulation, the last entry in this table points to the
+     trailing \0 */
 } CSF;
 
 typedef struct DB_Pair_struct {
@@ -59,29 +61,34 @@ typedef struct DB_Pair_struct {
   int dbi;
 } DB_Pair;
 
+/*************************************************************************
+ ** csf_init
+ *************************************************************************/
 
-/* Constructs CSF from given string, makes a copy of given string */
 void csf_init (char* v, CSF* csf) {
   char *p;
   int cf;
 
-  if (v == 0)
-    return;
+  if (v != 0) {
+    cf = 0;
+    csf->fields[cf++] = 0;
 
-  cf = 0;
-  csf->fields[cf++] = v;
-  for (p = v; *p; p++)
-    if (*p == DB_FLDSEP_CHR) {
-      if (cf < CSF_MAX_FIELDS)
-	csf->fields[cf++] = p + 1;
-    }
-  csf->fields[cf] = p + 1; /* note: this last pointer is not legal:
-  * it is used only for field length calculation */
+    for (p = v; *p; p++)
+      if (*p == DB_FLDSEP_CHR) {
+	if (cf < CSF_MAX_FIELDS)
+	  csf->fields[cf++] = p + 1 - v;
+      }
 
-  csf->num_of_fields = cf; /* see note above */
+    csf->fields[cf] = p + 1 - v;
+    csf->num_of_fields = cf;
+  }
 }
 
-/* Returns number of fields. */
+/*************************************************************************
+ ** csf_get_field_count
+ ** Returns number of fields.
+ *************************************************************************/
+
 int csf_get_field_count(CSF * csf)
 {
   if (csf == 0)
@@ -89,8 +96,13 @@ int csf_get_field_count(CSF * csf)
   return csf->num_of_fields;
 }
 
-/* Return string at index, index is 1 .. get_field_count.
-* Returns NULL if index is out of range */
+/*************************************************************************
+ ** csf_get_field
+ ** Return string at index, index is 1 .. get_field_count.
+ ** Returns NULL if index is out of range
+ *************************************************************************/
+
+/*
 char *csf_get_field(CSF * csf, int index)
 {
   if (csf == 0)
@@ -99,7 +111,13 @@ char *csf_get_field(CSF * csf, int index)
     return 0;
   return (csf->fields[index - 1]);
 }
+*/
 
+/*************************************************************************
+ ** csf_get_field_length
+ *************************************************************************/
+
+/*
 int csf_get_field_length(CSF * csf, int index)
 {
   if (csf == 0)
@@ -108,6 +126,11 @@ int csf_get_field_length(CSF * csf, int index)
     return 0;
   return csf->fields[index] - csf->fields[index - 1] - 1;
 }
+*/
+
+/*************************************************************************
+ ** ada_db_open
+ *************************************************************************/
 
 DB_File *ada_db_open(const int num_of_files, const char **file_names)
 {
@@ -144,6 +167,10 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
   return file;
 }
 
+/*************************************************************************
+ ** ada_db_dup
+ *************************************************************************/
+
 DB_File *ada_db_dup(const DB_File * file)
 {
   DB_File *new_file;
@@ -151,15 +178,27 @@ DB_File *ada_db_dup(const DB_File * file)
   return new_file;
 }
 
+/*************************************************************************
+ ** ada_get_last_errno
+ *************************************************************************/
+
 int ada_get_last_errno(const DB_File * file)
 {
   return file->last_errno;
 }
 
+/*************************************************************************
+ ** ada_get_errstr
+ *************************************************************************/
+
 char *ada_get_errstr(const DB_File * file)
 {
   return strerror(file->last_errno);
 }
+
+/*************************************************************************
+ ** ada_db_close
+ *************************************************************************/
 
 void ada_db_close(DB_File * file)
 {
@@ -184,6 +223,10 @@ void ada_db_close(DB_File * file)
   free (file->db);
 }
 
+/*************************************************************************
+ ** ada_db_set_cursor
+ *************************************************************************/
+
 void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
 		       int exact_match)
 {
@@ -207,6 +250,10 @@ void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
   file->dbi = 0;
 }
 
+/*************************************************************************
+ ** ada_db_free_cursor
+ *************************************************************************/
+
 void ada_db_free_cursor(DB_File * file)
 {
   if (file->key_p) {
@@ -215,6 +262,10 @@ void ada_db_free_cursor(DB_File * file)
   }
   file->dbi = -1;
 }
+
+/*************************************************************************
+ ** ada_db_get_pair
+ *************************************************************************/
 
 void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
   DBT key, data;
