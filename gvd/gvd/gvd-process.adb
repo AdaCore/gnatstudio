@@ -1352,9 +1352,10 @@ package body GVD.Process is
 
    procedure Set_Busy_Cursor
      (Debugger : access Debugger_Process_Tab_Record'Class;
-      Busy     : Boolean := True) is
+      Busy     : Boolean := True;
+      Force_Refresh : Boolean := False) is
    begin
-      Set_Busy_Cursor (Get_Window (Debugger.Window), Busy);
+      Set_Busy_Cursor (Get_Window (Debugger.Window), Busy, Force_Refresh);
    end Set_Busy_Cursor;
 
    -------------

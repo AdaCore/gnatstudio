@@ -40,8 +40,11 @@ package GVD.Utils is
    --  If the Text is already in the combo box, nothing is done.
 
    procedure Set_Busy_Cursor
-     (Window   : Gdk.Window.Gdk_Window;
-      Busy     : Boolean := True);
+     (Window        : Gdk.Window.Gdk_Window;
+      Busy          : Boolean := True;
+      Force_Refresh : Boolean := False);
    --  Enable or disable the "busy" cursor for a specific top-level window.
+   --  If Force_Refresh is True, then all X11 events are processed so that the
+   --  new cursor is immediately visible for the user.
 
 end GVD.Utils;

@@ -26,6 +26,8 @@ with Gtk.Label;     use Gtk.Label;
 with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
 with Gtk.Widget;    use Gtk.Widget;
+with Gtk.Main;      use Gtk.Main;
+with Gdk.Event;     use Gdk.Event;
 
 package body GVD.Utils is
 
@@ -78,10 +80,15 @@ package body GVD.Utils is
    ---------------------
 
    procedure Set_Busy_Cursor
-     (Window   : Gdk.Window.Gdk_Window;
-      Busy     : Boolean := True)
+     (Window        : Gdk.Window.Gdk_Window;
+      Busy          : Boolean := True;
+      Force_Refresh : Boolean := False)
    is
-      Cursor   : Gdk_Cursor;
+     Max_Events : constant := 30;
+     Cursor     : Gdk_Cursor;
+     Num_Events : Positive;
+     Event      : Gdk_Event;
+
    begin
       if Busy then
          Gdk_New (Cursor, Gdk.Types.Watch);
@@ -91,6 +98,19 @@ package body GVD.Utils is
 
       Set_Cursor (Window, Cursor);
       Destroy (Cursor);
+
+      if Force_Refresh then
+         Num_Events := 1;
+         while Gtk.Main.Events_Pending
+           and then Num_Events <= Max_Events
+         loop
+            Get (Event);
+            if Event /= null then
+               Do_Event (Event);
+            end if;
+            Num_Events := Num_Events + 1;
+         end loop;
+      end if;
    end Set_Busy_Cursor;
 
 end GVD.Utils;

@@ -273,8 +273,11 @@ package GVD.Process is
 
    procedure Set_Busy_Cursor
      (Debugger : access Debugger_Process_Tab_Record'Class;
-      Busy     : Boolean := True);
+      Busy     : Boolean := True;
+      Force_Refresh : Boolean := False);
    --  Enable or disable the "busy" cursor.
+   --  If Force_Refresh is True, then the pending X11 events are immediately
+   --  processed so that the user becomes visible right away
 
    function Get_Current_Process
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
