@@ -787,6 +787,16 @@ package Debugger is
      (Debugger : access Debugger_Root) return Endian_Type is abstract;
    --  Get the endianness of the target.
 
+   ------------------------------
+   -- Miscellaneous operations --
+   ------------------------------
+
+   function Complete
+     (Debugger   : access Debugger_Root;
+      Beginning  : in String) return GVD.Types.String_Array is abstract;
+   --  Return a list of commands recognized by the debugger that begin with
+   --  Beginning.
+
 private
 
    type Command_Record;

@@ -2605,6 +2605,59 @@ package body Debugger.Gdb is
       end if;
    end Get_Endian_Type;
 
+   --------------
+   -- Complete --
+   --------------
+
+   function Complete
+     (Debugger  : access Gdb_Debugger;
+      Beginning : in String) return GVD.Types.String_Array
+   is
+      S           : String := Send (Debugger,
+                                    "complete " & Beginning,
+                                    Mode => Internal);
+      First_Index : Integer := S'First;
+      Last_Index  : Integer := S'First;
+      Num         : Integer := 0;
+      Common_Pref : Integer := Beginning'Last;
+   begin
+      Skip_To_Char (Beginning, Common_Pref, ' ', -1);
+      Common_Pref := Common_Pref - Beginning'First + 1;
+
+      --  Find the number of words in the list.
+      for Index in S'Range loop
+         if S (Index) = ASCII.LF then
+            Num := Num + 1;
+         end if;
+      end loop;
+
+      if S'Length /= 0 then
+         Num := Num + 1;
+      end if;
+
+      --  Fill the string array with the proper values.
+      declare
+         Result : GVD.Types.String_Array (1 .. Num);
+      begin
+         for Index in 1 .. Num loop
+            while S (Last_Index) /= ASCII.LF
+              and then Last_Index < S'Last
+            loop
+               Last_Index := Last_Index + 1;
+            end loop;
+            if Last_Index = S'Last then
+               Last_Index := Last_Index + 1;
+            end if;
+
+            Result (Index) := new String'
+              (S (First_Index + Common_Pref .. Last_Index - 1));
+            Last_Index  := Last_Index + 1;
+            First_Index := Last_Index;
+         end loop;
+         return Result;
+      end;
+   end Complete;
+
    ---------------------
    -- Switch_Language --
    ---------------------

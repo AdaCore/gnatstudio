@@ -311,6 +311,10 @@ package Debugger.Jdb is
    function Get_Endian_Type
      (Debugger : access Jdb_Debugger) return Endian_Type;
 
+   function Complete
+     (Debugger  : access Jdb_Debugger;
+      Beginning : in String) return GVD.Types.String_Array;
+
 private
 
    function Send

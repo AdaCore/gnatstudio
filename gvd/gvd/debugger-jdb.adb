@@ -1038,4 +1038,17 @@ package body Debugger.Jdb is
       --  ??? Must implement this function !
    end Get_Endian_Type;
 
+   --------------
+   -- Complete --
+   --------------
+
+   function Complete
+     (Debugger  : access Jdb_Debugger;
+      Beginning : in String) return GVD.Types.String_Array
+   is
+      Result : GVD.Types.String_Array (1 .. 1);
+   begin
+      return Result;
+   end Complete;
+
 end Debugger.Jdb;

@@ -340,6 +340,10 @@ package Debugger.Gdb is
    function Get_Endian_Type
      (Debugger : access Gdb_Debugger) return Endian_Type;
 
+   function Complete
+     (Debugger  : access Gdb_Debugger;
+      Beginning : in String) return GVD.Types.String_Array;
+
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
       Language : in String);
