@@ -3808,7 +3808,7 @@ elements. For instance, it is possible to search in the currently
 edited source file, or in all the source files belonging to the
 project, even those that are not currently open. It is also possible
 to search in the project explorer (on the left side of the main GPS
-window), or the help modules,@dots{}
+window),@dots{}
 @cindex project explorer
 
 @cindex menu
@@ -3817,6 +3817,12 @@ window), or the help modules,@dots{}
 All these search contexts are grouped into a single graphical window,
 that you can open either through the menu @code{Navigate->Find/Replace...}, or
 the shortcut @key{Ctrl-F}.
+
+By default, the search window is floating, ie appears as a dialog on top of
+GPS. You can choose to put it inside the multiple document interface
+permanently for easier access. This can be done by selecting the menu
+@code{Window->Floating}, and then drag-and-dropping the search window in a
+new location if you wish (for instance above the Project View).
 
 Selecting either of these two options will pop up a dialog on the
 screen, similar to the following:
@@ -3964,6 +3970,19 @@ Python regular expressions grammar, and is documented in the GNAT run time file
 @file{g-regpat.ads}. To open it from GPS, you can use the open from project
 dialog (@code{File->Open From Project...}) and type g-regpat.ads. See
 @ref{Open From Project} for more information on this dialog.
+
+@item @code{Select Window on Match}
+@cindex select window on match
+When this button is selected, the focus is given to the editor that contains
+the match, so that you can start editing the text immediatly. If the button is
+not selected, the focus is left on the search window, so that you can press
+Enter to search for the next occurrence.
+
+@item @code{Close Dialog on Search}
+@cindex close dialog on search
+This button only appears if the search window is floating. If this button is
+then activated, the search window will be automatically closed when an
+occurrence of the search string is found.
 
 @end table
 
