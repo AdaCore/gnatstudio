@@ -48,7 +48,7 @@ with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;
 with Find_Utils;                   use Find_Utils;
-with String_Utils;                 use String_Utils;
+with File_Utils;                   use File_Utils;
 with Gtk.Clipboard;                use Gtk.Clipboard;
 with Generic_List;
 with Ada.Unchecked_Deallocation;
