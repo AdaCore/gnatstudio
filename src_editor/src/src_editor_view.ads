@@ -49,11 +49,11 @@ package Src_Editor_View is
       Buffer            : Src_Editor_Buffer.Source_Buffer := null;
       Font              : Pango.Font.Pango_Font_Description := null;
       Show_Line_Numbers : Boolean := False);
-   --  Create a new Source_View from the given parameters. If no Buffer is
-   --  given, then a new one will be created. For tasks such as source code
-   --  editiion, it is recommended to specify a fixed-width font, as the
-   --  default font used when not specified is proportional (which means that
-   --  'i's will be smaller than 'm's for instance).
+   --  Create a new Source_View from the given parameters.
+   --  If no Buffer is given, then a new one will be created. For tasks such
+   --  as source code edition, it is recommended to specify a fixed-width font,
+   --  as the default font used when not specified is proportional (which means
+   --  that 'i's will be smaller than 'm's for instance).
    --
    --  If requested, the line numbers are displayed in a small area on
    --  the left of the text view.
@@ -85,9 +85,9 @@ private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
    record
-      Pango_Font : Pango.Font.Pango_Font_Description;
-      Font : Gdk.Font.Gdk_Font;
-      Line_Numbers_GC : Gdk.GC.Gdk_GC;
+      Pango_Font        : Pango.Font.Pango_Font_Description;
+      Font              : Gdk.Font.Gdk_Font;
+      Line_Numbers_GC   : Gdk.GC.Gdk_GC;
       Show_Line_Numbers : Boolean;
    end record;
 

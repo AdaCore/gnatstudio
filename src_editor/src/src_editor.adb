@@ -54,10 +54,10 @@ package body Src_Editor is
    -- Image --
    -----------
 
-   function Image (N : Gint; Length : Positive) return String
-   is
-      Pad : constant Character := ' ';
+   function Image (N : Gint; Length : Positive) return String is
+      Pad         : constant Character := ' ';
       Small_Image : constant String := Image (N);
+
    begin
       if Small_Image'Length >= Length then
          return Small_Image;
@@ -68,9 +68,11 @@ package body Src_Editor is
             for Index in 1 .. Length - Small_Image'Length loop
                Padded_Image (Index) := Pad;
             end loop;
+
             Padded_Image
               (Length - Small_Image'Length + 1 ..  Length) :=
               Small_Image;
+
             return Padded_Image;
          end;
       end if;
@@ -79,6 +81,7 @@ package body Src_Editor is
    -------------------------
    -- Number_Of_Digits_In --
    -------------------------
+
    function Number_Of_Digits_In (N : Natural) return Natural is
    begin
       case N is

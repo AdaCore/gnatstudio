@@ -82,9 +82,9 @@ private
    type Source_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
-      Lang : Language.Language_Access;
+      Lang           : Language.Language_Access;
       Highlight_Tags : Src_Highlighting.Highlighting_Tags;
-      Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Insert_Mark    : Gtk.Text_Mark.Gtk_Text_Mark;
    end record;
 
 end Src_Editor_Buffer;

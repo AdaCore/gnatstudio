@@ -100,8 +100,7 @@ package Src_Editor_Box is
 
 private
 
-   type Source_Editor_Box_Record is
-   record
+   type Source_Editor_Box_Record is record
       Root_Container      : Gtk.Box.Gtk_Box;
       Never_Attached      : Boolean := True;
       Source_View         : Src_Editor_View.Source_View;
