@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.1.1
 
+- Display the manual with no open debugger
+  Problem:    It isn't possible to display the GVD manual (from the menu
+              Help->Manual) when no debugger is currently open.
+  Workaround: Open a new debugger with the menu Files->Open Debugger
+
 - Parsing C++ classes with virtual methods
   Problem:    When a class defines virtual methods, it has an extra invisible
               fields that breaks the display in the canvas.
