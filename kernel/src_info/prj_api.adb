@@ -976,6 +976,25 @@ package body Prj_API is
       end if;
    end External_Reference_Of;
 
+   ----------------------
+   -- External_Default --
+   ----------------------
+
+   function External_Default (Var : Project_Node_Id)
+      return Project_Node_Id
+   is
+      Expr : Project_Node_Id := Expression_Of (Var);
+   begin
+      Expr := First_Term   (Expr);
+      Expr := Current_Term (Expr);
+
+      if Kind_Of (Expr) = N_External_Value then
+         return External_Default_Of (Expr);
+      else
+         return Empty_Node;
+      end if;
+   end External_Default;
+
    --------------------------------
    -- Get_Project_View_From_Name --
    --------------------------------

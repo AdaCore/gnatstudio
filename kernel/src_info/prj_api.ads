@@ -265,6 +265,12 @@ package Prj_API is
    --  Returns the name of the external variable referenced by Var.
    --  No_String is returned if Var doesn't reference an external variable.
 
+   function External_Default (Var : Project_Node_Id)
+      return Project_Node_Id;
+   --  Return a pointer to the expression that defines the default of an
+   --  external reference. Var must be a variable declaration.
+   --  Empty_Node is returned if there is no default value
+
    function External_Variable_Name
      (Current_Project : Project_Node_Id; Ref : Project_Node_Id)
       return Types.String_Id;
