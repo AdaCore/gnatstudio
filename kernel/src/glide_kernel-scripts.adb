@@ -1357,7 +1357,7 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       Kernel        : constant Kernel_Handle := Get_Kernel (Data);
-      Console_Class : constant Class_Type := New_Class (Kernel, "Console2");
+      Console_Class : constant Class_Type := New_Class (Kernel, "Console");
       Inst      : constant Class_Instance := Nth_Arg (Data, 1, Console_Class);
       Console   : Interactive_Console;
    begin
@@ -1444,7 +1444,7 @@ package body Glide_Kernel.Scripts is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Console_Class : constant Class_Type :=
-        New_Class (Kernel, "Console2", Base => Get_GUI_Class (Kernel));
+        New_Class (Kernel, "Console", Base => Get_GUI_Class (Kernel));
    begin
       Register_Command
         (Kernel, Constructor_Method,
