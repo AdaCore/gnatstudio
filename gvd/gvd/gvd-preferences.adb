@@ -469,6 +469,14 @@ package body GVD.Preferences is
          Default  => Default_HTML_Browser));
       Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
 
+      Print_Command := Param_Spec_String (Gnew_String
+         (Name    => XML_Prefix & "Print-Command",
+          Nick    => -"Print command",
+          Blurb   => -"Program used to print files",
+          Flags   => External_Flags,
+          Default => "a2ps"));
+      Register_Property (Prefs, Param_Spec (Print_Command), Helpers);
+
       Selected_Item_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Browsers-Selected-Item-Color",
          Default => "#888888",
