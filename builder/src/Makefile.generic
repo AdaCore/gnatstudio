@@ -375,7 +375,6 @@ internal-clean:
 	@$(RM) $(OBJ_DIR)/b~*
 	@$(RM) $(OBJ_DIR)/b_*
 	@$(RM) $(OBJ_DIR)/*$(AR_EXT)
-	@$(RM) $(OBJ_DIR)/*$(SO_EXT)
 	@$(RM) $(OBJ_DIR)/*.d
 ifneq ($(EXEC),)
 	@$(RM) $(EXEC_DIR)/$(EXEC)
