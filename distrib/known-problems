@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- OK button not selected in the "Open From Project" dialog the second time
+  Problem:    When the dialog File->Open From Project is displayed, pressing
+              enter will automatically open the file. However, this no longer
+              worked the second time.
+  Workaround: Press Alt+O instead
+
 - C218-012 Drive letters not supported under Windows
   Problem:    The drive letters are not properly supported in the directory
               selector.
