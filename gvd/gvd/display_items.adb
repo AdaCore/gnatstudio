@@ -840,7 +840,6 @@ package body Display_Items is
       X    : Gint;
       Y    : Gint)
    is
-      use String_History;
       Name : constant String := Get_Component_Name
         (Item.Entity,
          Get_Language (Item.Debugger.Debugger),
@@ -855,26 +854,9 @@ package body Display_Items is
         (Get_Language (Item.Debugger.Debugger), Name);
       Cmd : String := "graph display " & New_Name & " dependent on "
         & Integer'Image (Item.Num) & " link_name " & Link_Name;
---        New_Item : Display_Item;
    begin
       Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF, Is_Command => True);
       Process_User_Command (Item.Debugger, Cmd);
-
---        --  Do not call Process_User_Command, so as to be sure we use the
---        --  correct item.
---        Append (Item.Debugger.Command_History, Cmd);
-
---        Gtk_New_And_Put
---          (New_Item, Get_Window (Item.Debugger.Data_Canvas),
---           Variable_Name => New_Name,
---           Debugger      => Item.Debugger,
---           Auto_Refresh  => True,
---           Link_From     => Display_Item (Item),
---           Link_Name     => Link_Name);
---        if New_Item /= null then
---           New_Item.Is_Dereference := True;
---        end if;
---        Display_Prompt (Item.Debugger.Debugger);
    end Dereference_Item;
 
    -----------------
