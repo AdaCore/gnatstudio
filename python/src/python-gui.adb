@@ -1,3 +1,4 @@
+with Ada.Text_IO; use Ada.Text_IO;
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
@@ -20,11 +21,6 @@
 
 with Ada.Calendar;      use Ada.Calendar;
 with Ada.Exceptions;    use Ada.Exceptions;
-with Gtk.Box;           use Gtk.Box;
-with Gtk.Dialog;        use Gtk.Dialog;
-with Gtk.GEntry;        use Gtk.GEntry;
-with Gtk.Label;         use Gtk.Label;
-with Gtk.Stock;         use Gtk.Stock;
 with Gtk.Text_Buffer;   use Gtk.Text_Buffer;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Gtk.Text_Mark;     use Gtk.Text_Mark;
@@ -33,8 +29,8 @@ with Gtk.Text_Tag_Table; use Gtk.Text_Tag_Table;
 with Gtk.Text_View;     use Gtk.Text_View;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Handlers;      use Gtk.Handlers;
+with Gtk.Object;        use Gtk.Object;
 with Gtk.Widget;        use Gtk.Widget;
-with Gtk.Window;        use Gtk.Window;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
@@ -65,6 +61,8 @@ package body Python.GUI is
 
    package Interpreter_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Python_Interpreter);
+   package Interpreter_Callback2 is new Gtk.Handlers.User_Callback
+     (Gtk_Widget_Record, Python_Interpreter);
 
    procedure Display_Prompt
      (Interpreter : access Python_Interpreter_Record'Class);
@@ -104,6 +102,15 @@ package body Python.GUI is
       Force       : Boolean := False);
    --  Process all pending gtk+ events
 
+   procedure Console_Destroyed
+     (Console : access Gtk_Widget_Record'Class;
+      Interpreter : Python_Interpreter);
+   --  Called when the console of the interpreter is destroyed.
+
+   procedure Update_Prompt_End_Mark
+     (Interpreter : access Python_Interpreter_Record'Class);
+   --  Move the prompt_end mark to the end of the console.
+
    ------------------------
    -- Process_Gtk_Events --
    ------------------------
@@ -140,19 +147,25 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       Text        : String)
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
+      Buffer : Gtk_Text_Buffer;
       Iter   : Gtk_Text_Iter;
    begin
-      Get_End_Iter (Buffer, Iter);
-      Insert (Buffer, Iter, Text);
+      if Interpreter.Console /= null
+        and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+      then
+         Buffer := Get_Buffer (Interpreter.Console);
 
-      if Interpreter.Scroll_Mark = null then
-         Interpreter.Scroll_Mark := Create_Mark (Buffer, Where => Iter);
-      else
-         Move_Mark (Buffer, Interpreter.Scroll_Mark, Iter);
+         Get_End_Iter (Buffer, Iter);
+         Insert (Buffer, Iter, Text);
+
+         if Interpreter.Scroll_Mark = null then
+            Interpreter.Scroll_Mark := Create_Mark (Buffer, Where => Iter);
+         else
+            Move_Mark (Buffer, Interpreter.Scroll_Mark, Iter);
+         end if;
+
+         Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
       end if;
-
-      Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
    end Insert_Text;
 
    -----------
@@ -212,14 +225,9 @@ package body Python.GUI is
       pragma Unreferenced (Self);
       File   : aliased PyObject;
       Size   : aliased Integer := 0;
-      Dialog : Gtk_Dialog;
       Data   : PyObject;
       Interpreter : Python_Interpreter;
-      Button : Gtk_Widget;
-      Ent    : Gtk_Entry;
-      Label  : Gtk_Label;
-      Hbox   : Gtk_Box;
-      Iter, Iter2 : Gtk_Text_Iter;
+      Iter, Iter2   : Gtk_Text_Iter;
       Buffer : Gtk_Text_Buffer;
    begin
       if not PyArg_ParseTuple (Args, "O|i", File'Address, Size'Address) then
@@ -229,52 +237,29 @@ package body Python.GUI is
       Data := PyObject_GetAttrString (File, "gpsdata");
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
 
-      Process_Gtk_Events (Interpreter, Force => True);
+      if Interpreter.Console = null
+        or else Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+      then
+         --  Report EOF on stdin
+         return PyString_FromString ("");
+      end if;
 
-      Gtk_New (Dialog,
-               Title  => -"Python input",
-               Parent => Gtk_Window (Get_Toplevel (Interpreter.Console)),
-               Flags  => Destroy_With_Parent or Modal);
-
-      Gtk_New (Label, -"Some input if needed by the script");
-      Pack_Start (Get_Vbox (Dialog), Label);
-
-      Gtk_New_Hbox (Hbox, Homogeneous => False);
-      Pack_Start (Get_Vbox (Dialog), Hbox);
-
-      --  Grab the prompt for the input line
       Buffer := Get_Buffer (Interpreter.Console);
+      Update_Prompt_End_Mark (Interpreter);
+
+      Interpreter.Waiting_For_Input := True;
+      Gtk.Main.Main;
+      Interpreter.Waiting_For_Input := False;
+
+      Get_Iter_At_Mark (Buffer, Iter2, Interpreter.Prompt_End_Mark);
       Get_End_Iter (Buffer, Iter);
-      Copy (Source => Iter, Dest => Iter2);
-      Set_Line_Offset (Iter2, 0);
-      Gtk_New (Label, Get_Slice (Buffer, Iter2, Iter));
-      Pack_Start (Hbox, Label, Expand => False);
 
-      Gtk_New (Ent);
-      Set_Activates_Default (Ent, True);
-      Pack_Start (Hbox, Ent, Expand => True, Fill => True);
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Grab_Default (Button);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-
-      case Run (Dialog) is
-         when Gtk_Response_OK =>
-            declare
-               Text : constant String := Get_Text (Ent);
-            begin
-               Insert_Text (Interpreter, Text & ASCII.LF);
-               Destroy (Dialog);
-               return PyString_FromString (Text);
-            end;
-
-         when others =>
-            Destroy (Dialog);
-            PyErr_SetInterrupt;
-            return PyString_FromString ("");
-      end case;
+      declare
+         Response : constant String := Get_Slice (Buffer, Iter2, Iter);
+      begin
+         Insert_Text (Interpreter, "" & ASCII.LF);
+         return PyString_FromString (Response);
+      end;
    end Read_Line;
 
    ----------------
@@ -378,32 +363,69 @@ package body Python.GUI is
 
    procedure Set_Console
      (Interpreter : access Python_Interpreter_Record'Class;
-      Console     : access Gtk.Text_View.Gtk_Text_View_Record'Class) is
+      Console     : Gtk.Text_View.Gtk_Text_View;
+      Grab_Widget : Gtk.Widget.Gtk_Widget := null) is
    begin
-      Interpreter.Console := Gtk_Text_View (Console);
+      if Console = Interpreter.Console then
+         return;
+      end if;
+
+      --  If we still have a previous console, disconnect it
+      if Interpreter.Console /= null
+        and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+      then
+         Insert_Text (Interpreter, -"<disconnected>");
+         Gtk.Handlers.Disconnect
+           (Interpreter.Console, Interpreter.Key_Press_Id);
+         Gtk.Handlers.Disconnect (Interpreter.Console, Interpreter.Destroy_Id);
+      end if;
+
+      Interpreter.Console := Console;
+      Interpreter.Grab_Widget := Grab_Widget;
+
+      Put_Line ("Set_Console");
 
       if Interpreter.Uneditable /= null then
          Unref (Interpreter.Uneditable);
       end if;
 
-      if Interpreter.Console /= null then
+      if Interpreter.Console /= null
+        and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+      then
          --  Disconnect previous key_press_event signal
          Disconnect (Interpreter.Console, Interpreter.Key_Press_Id);
+
+         Gtk_New (Interpreter.Uneditable);
+         Set_Property
+           (Interpreter.Uneditable, Gtk.Text_Tag.Editable_Property, False);
+         Add (Get_Tag_Table (Get_Buffer (Console)), Interpreter.Uneditable);
+         --  ??? Never unref-ed
+
+         Interpreter.Key_Press_Id := Interpreter_Callback.Connect
+           (Console, "key_press_event",
+            Interpreter_Callback.To_Marshaller (Key_Press_Handler'Access),
+            Python_Interpreter (Interpreter));
+         Interpreter.Destroy_Id := Interpreter_Callback2.Connect
+           (Console, "destroy",
+            Interpreter_Callback2.To_Marshaller (Console_Destroyed'Access),
+            Python_Interpreter (Interpreter));
+
+         Display_Prompt (Interpreter);
       end if;
-
-      Gtk_New (Interpreter.Uneditable);
-      Set_Property
-        (Interpreter.Uneditable, Gtk.Text_Tag.Editable_Property, False);
-      Add (Get_Tag_Table (Get_Buffer (Console)), Interpreter.Uneditable);
-      --  ??? Never unref-ed
-
-      Interpreter.Key_Press_Id := Interpreter_Callback.Connect
-        (Console, "key_press_event",
-         Interpreter_Callback.To_Marshaller (Key_Press_Handler'Access),
-         Python_Interpreter (Interpreter));
-
-      Display_Prompt (Interpreter);
    end Set_Console;
+
+   -----------------------
+   -- Console_Destroyed --
+   -----------------------
+
+   procedure Console_Destroyed
+     (Console     : access Gtk_Widget_Record'Class;
+      Interpreter : Python_Interpreter)
+   is
+      pragma Unreferenced (Console);
+   begin
+      Set_Console (Interpreter, null);
+   end Console_Destroyed;
 
    -----------
    -- Trace --
@@ -439,6 +461,7 @@ package body Python.GUI is
         and then (Command (Command'First) = ASCII.HT
                   or else Command (Command'First) = ' ');
       Cmd : constant String := Interpreter.Buffer.all & Command & ASCII.LF;
+      Grab_Widget : Gtk_Widget;
       use type Gdk_Window;
    begin
       if Cmd = "" & ASCII.LF then
@@ -456,17 +479,32 @@ package body Python.GUI is
       if Code /= null and then not Indented_Input then
          --  Grab the mouse, keyboard,... so as to avoid recursive loops in
          --  GPS (user selecting a menu while python is running)
-         if Get_Window (Interpreter.Console) /= null then
-            Gtk.Main.Grab_Add (Interpreter.Console);
+         Grab_Widget := Interpreter.Grab_Widget;
+         if Grab_Widget = null then
+            Grab_Widget := Gtk_Widget (Interpreter.Console);
+         end if;
+
+         if Grab_Widget /= null then
+            Ref (Grab_Widget);
+
+            if Get_Window (Grab_Widget) /= null then
+               Gtk.Main.Grab_Add (Grab_Widget);
+            end if;
          end if;
 
          Obj := PyEval_EvalCode
            (Code, Interpreter.Globals, Interpreter.Globals);
          Py_DECREF (PyObject (Code));
 
-         if Get_Window (Interpreter.Console) /= null then
-            Gtk.Main.Grab_Remove (Interpreter.Console);
+         --  Note: the widget might have been destroyed by the python command,
+         --  we need to check that it still exists.
+
+         if Grab_Widget /= null then
+            Gtk.Main.Grab_Remove (Grab_Widget);
+            Unref (Grab_Widget);
          end if;
+
+         Put_Line ("Done");
 
          if Obj = null then
             PyErr_Print;
@@ -545,18 +583,44 @@ package body Python.GUI is
    procedure Display_Prompt
      (Interpreter : access Python_Interpreter_Record'Class)
    is
-      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
+      Buffer : Gtk_Text_Buffer;
       Iter, First_Iter : Gtk_Text_Iter;
       Ps     : PyObject;
    begin
-      if Interpreter.Use_Secondary_Prompt then
-         Ps := PySys_GetObject ("ps2");
-      else
-         Ps := PySys_GetObject ("ps1");
+      if Interpreter.Console /= null
+        and then not Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
+      then
+         Buffer := Get_Buffer (Interpreter.Console);
+
+         if Interpreter.Use_Secondary_Prompt then
+            Ps := PySys_GetObject ("ps2");
+         else
+            Ps := PySys_GetObject ("ps1");
+         end if;
+
+         Insert_Text (Interpreter, PyString_AsString (Ps));
+
+         Update_Prompt_End_Mark (Interpreter);
+
+         Get_End_Iter (Buffer, Iter);
+         Get_Start_Iter (Buffer, First_Iter);
+         Apply_Tag (Buffer, Interpreter.Uneditable, First_Iter, Iter);
+
+         Place_Cursor (Buffer, Iter);
+         Scroll_Mark_Onscreen (Interpreter.Console, Get_Insert (Buffer));
       end if;
+   end Display_Prompt;
 
-      Insert_Text (Interpreter, PyString_AsString (Ps));
+   ----------------------------
+   -- Update_Prompt_End_Mark --
+   ----------------------------
 
+   procedure Update_Prompt_End_Mark
+     (Interpreter : access Python_Interpreter_Record'Class)
+   is
+      Buffer : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
+      Iter   : Gtk_Text_Iter;
+   begin
       Get_End_Iter (Buffer, Iter);
 
       if Interpreter.Prompt_End_Mark = null then
@@ -564,13 +628,7 @@ package body Python.GUI is
       else
          Move_Mark (Buffer, Interpreter.Prompt_End_Mark, Iter);
       end if;
-
-      Get_Start_Iter (Buffer, First_Iter);
-      Apply_Tag (Buffer, Interpreter.Uneditable, First_Iter, Iter);
-
-      Place_Cursor (Buffer, Iter);
-      Scroll_Mark_Onscreen (Interpreter.Console, Get_Insert (Buffer));
-   end Display_Prompt;
+   end Update_Prompt_End_Mark;
 
    -----------------------
    -- Key_Press_Handler --
@@ -589,61 +647,70 @@ package body Python.GUI is
    begin
       case Key is
          when GDK_Up | GDK_Down =>
-            declare
-               Hist : constant String_List_Access := Get_History
-                 (Interpreter.History.all, Python_Key);
-            begin
-               if Hist /= null then
-                  if Key = GDK_Up
+            if not Interpreter.Waiting_For_Input then
+               declare
+                  Hist : constant String_List_Access := Get_History
+                    (Interpreter.History.all, Python_Key);
+               begin
+                  if Hist /= null then
+                     if Key = GDK_Up
                     and then
-                    Interpreter.History_Position + Hist'First < Hist'Last
-                  then
-                     Interpreter.History_Position :=
-                       Interpreter.History_Position + 1;
+                       Interpreter.History_Position + Hist'First < Hist'Last
+                     then
+                        Interpreter.History_Position :=
+                          Interpreter.History_Position + 1;
 
-                  elsif Key = GDK_Down
-                    and then Interpreter.History_Position /= -1
-                  then
-                     Interpreter.History_Position :=
-                       Interpreter.History_Position - 1;
+                     elsif Key = GDK_Down
+                       and then Interpreter.History_Position /= -1
+                     then
+                        Interpreter.History_Position :=
+                          Interpreter.History_Position - 1;
+                     end if;
                   end if;
-               end if;
 
-               Get_Iter_At_Mark
-                 (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
-               Get_End_Iter (Buffer, Iter);
-               Delete (Buffer, Prompt_End, Iter);
-               if Interpreter.History_Position /= -1 then
-                  Insert
-                    (Buffer, Prompt_End,
-                     Hist (Hist'First + Interpreter.History_Position).all);
-               end if;
+                  Get_Iter_At_Mark
+                    (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
+                  Get_End_Iter (Buffer, Iter);
+                  Delete (Buffer, Prompt_End, Iter);
+                  if Interpreter.History_Position /= -1 then
+                     Insert
+                       (Buffer, Prompt_End,
+                        Hist (Hist'First + Interpreter.History_Position).all);
+                  end if;
 
-               Get_End_Iter (Buffer, Iter);
-               Place_Cursor (Buffer, Iter);
-            end;
+                  Get_End_Iter (Buffer, Iter);
+                  Place_Cursor (Buffer, Iter);
+               end;
+            end if;
 
             return True;
 
          when GDK_Left =>
             --  Refuse if before prompt
-            Get_Iter_At_Mark
-              (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
-            Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
-            return Compare (Prompt_End, Iter) > -1;
+            if not Interpreter.Waiting_For_Input then
+               Get_Iter_At_Mark
+                 (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
+               Get_Iter_At_Mark (Buffer, Iter, Get_Insert (Buffer));
+               return Compare (Prompt_End, Iter) > -1;
+            end if;
 
          when GDK_Return | GDK_KP_Enter =>
-            Get_End_Iter (Buffer, Iter);
-            Insert (Buffer, Iter, ASCII.LF & "");
-            Backward_Char (Iter, Success);
+            if Interpreter.Waiting_For_Input then
+               Gtk.Main.Main_Quit;
+            else
+               Get_End_Iter (Buffer, Iter);
+               Insert (Buffer, Iter, ASCII.LF & "");
+               Backward_Char (Iter, Success);
 
-            Get_Iter_At_Mark (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
-            Add_To_History
-              (Interpreter.History.all, Python_Key,
-               Get_Slice (Buffer, Prompt_End, Iter));
-            Interpreter.History_Position := -1;
+               Get_Iter_At_Mark
+                 (Buffer, Prompt_End, Interpreter.Prompt_End_Mark);
+               Add_To_History
+                 (Interpreter.History.all, Python_Key,
+                  Get_Slice (Buffer, Prompt_End, Iter));
+               Interpreter.History_Position := -1;
 
-            Run_Command (Interpreter, Get_Slice (Buffer, Prompt_End, Iter));
+               Run_Command (Interpreter, Get_Slice (Buffer, Prompt_End, Iter));
+            end if;
             return True;
 
          when GDK_LC_c =>
@@ -657,5 +724,16 @@ package body Python.GUI is
       end case;
       return False;
    end Key_Press_Handler;
+
+   -----------------
+   -- Get_Console --
+   -----------------
+
+   function Get_Console
+     (Interpreter : access Python_Interpreter_Record'Class)
+      return Gtk.Text_View.Gtk_Text_View is
+   begin
+      return Interpreter.Console;
+   end Get_Console;
 
 end Python.GUI;

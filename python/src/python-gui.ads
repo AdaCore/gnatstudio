@@ -25,6 +25,7 @@ with Gtk.Text_View;
 with Gtk.Text_Mark;
 with Gtk.Text_Tag;
 with Gtk.Handlers;
+with Gtk.Widget;
 with GNAT.OS_Lib;
 with Histories;
 with Ada.Calendar;
@@ -43,9 +44,21 @@ package Python.GUI is
 
    procedure Set_Console
      (Interpreter : access Python_Interpreter_Record'Class;
-      Console     : access Gtk.Text_View.Gtk_Text_View_Record'Class);
+      Console     : Gtk.Text_View.Gtk_Text_View;
+      Grab_Widget : Gtk.Widget.Gtk_Widget := null);
    --  Bind the interpreter to Console, so that all input comes from Console
    --  and all output goes to it.
+   --  If Console is null, no console is visible, although the interpreter can
+   --  still be used.
+   --  Grab_Widget is the widget which grabs the keyboard while commands are
+   --  executing in the interpreter. This is necessary to prevent the user from
+   --  using a menu that would in turn launch a command.
+
+   function Get_Console
+     (Interpreter : access Python_Interpreter_Record'Class)
+      return Gtk.Text_View.Gtk_Text_View;
+   --  Return the current console of the interpreter, or null if the
+   --  interpreter is not associated with a console
 
    procedure Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
@@ -81,13 +94,22 @@ private
       History_Position : Integer := -1;
 
       Key_Press_Id : Gtk.Handlers.Handler_Id;
+      Destroy_Id   : Gtk.Handlers.Handler_Id;
 
       Uneditable : Gtk.Text_Tag.Gtk_Text_Tag;
       Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       Console : Gtk.Text_View.Gtk_Text_View;
 
+      Grab_Widget : Gtk.Widget.Gtk_Widget;
+      --  The widget which should grab the keyboard focus while commands are
+      --  executing in the python interpreter.
+
       Scroll_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       --  Mark to which the view should be scrolled
+
+      Waiting_For_Input : Boolean := False;
+      --  Set to true if the python interpreter is waiting for user input while
+      --  executing a command. While this is true, the rest of GPS is frozen.
 
       Refresh_Timeout : Ada.Calendar.Time;
       --  Time since we last checked the list of gtk+ events. This avoids
