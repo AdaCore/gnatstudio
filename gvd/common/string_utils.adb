@@ -689,11 +689,15 @@ package body String_Utils is
          return "";
       end if;
 
-      while S (S_First) = ' ' or else S (S_First) = '"' loop
+      while S_First <= S'Last
+        and then (S (S_First) = ' ' or else S (S_First) = '"')
+      loop
          S_First := S_First + 1;
       end loop;
 
-      while S (S_Last) = ' ' or else S (S_Last) = '"' loop
+      while S_Last >= S'First
+        and then (S (S_Last) = ' ' or else S (S_Last) = '"')
+      loop
          S_Last := S_Last - 1;
       end loop;
 
