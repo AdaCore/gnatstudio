@@ -21,7 +21,6 @@
 with Glib;            use Glib;
 with Glib.Object;     use Glib.Object;
 with Gtk.Button;      use Gtk.Button;
-with Gtk.Combo;       use Gtk.Combo;
 with Gtk.Dialog;      use Gtk.Dialog;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.GEntry;      use Gtk.GEntry;
@@ -35,6 +34,7 @@ with Gtk.Table;       use Gtk.Table;
 with Gtk.Tooltips;    use Gtk.Tooltips;
 with Gtk.Handlers;    use Gtk.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
+with Gtkada.Combo;    use Gtkada.Combo;
 with Gtkada.Dialogs;  use Gtkada.Dialogs;
 
 with Prj_API;          use Prj_API;
@@ -68,8 +68,8 @@ package body Scenario_Views is
    end record;
 
    procedure Variable_Value_Changed
-     (GEntry : access Gtk_Widget_Record'Class;
-      User   : Variable_User_Data);
+     (Combo : access Gtk_Widget_Record'Class;
+      User  : Variable_User_Data);
    --  Called when the value of one of the variables has changed.
    --  This recomputes the scenario view, so that changes are reflected in
    --  other parts of Glide.
@@ -144,10 +144,10 @@ package body Scenario_Views is
    ----------------------------
 
    procedure Variable_Value_Changed
-     (GEntry : access Gtk_Widget_Record'Class;
-      User   : Variable_User_Data)
+     (Combo : access Gtk_Widget_Record'Class;
+      User  : Variable_User_Data)
    is
-      Value : constant String := Get_Text (Gtk_Entry (GEntry));
+      Value : constant String := Get_Text (Get_Entry (Gtkada_Combo (Combo)));
    begin
       if Value /= "" then
          String_To_Name_Buffer (External_Reference_Of (User.Var));
@@ -270,7 +270,7 @@ package body Scenario_Views is
       pragma Unreferenced (View);
       V      : constant Scenario_View := Scenario_View (Data);
       Label  : Gtk_Label;
-      Combo  : Gtk_Combo;
+      Combo  : Gtkada_Combo;
       Row    : Guint;
       Str    : String_Id;
       Button : Gtk_Button;
@@ -377,7 +377,7 @@ package body Scenario_Views is
                   Name_Buffer (Name_Buffer'First .. Name_Len));
 
                View_Callback.Connect
-                 (Get_Entry (Combo),
+                 (Combo,
                   "changed",
                   View_Callback.To_Marshaller (Variable_Value_Changed'Access),
                   (View => V, Var => Scenar_Var (J)));
