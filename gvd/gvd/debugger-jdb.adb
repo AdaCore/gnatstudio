@@ -548,25 +548,26 @@ package body Debugger.Jdb is
    -- Break_Subprogram --
    ----------------------
 
-   procedure Break_Subprogram
+   function Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       Send (Debugger, "stop in " & Name, Mode => Mode);
+      return 0;   --   ??? How do we get the breakpoint identifier
    end Break_Subprogram;
 
    ------------------
    -- Break_Source --
    ------------------
 
-   procedure Break_Source
+   function Break_Source
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden)
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
    is
       Str : constant String := Positive'Image (Line);
       Pos : Positive;
@@ -591,55 +592,96 @@ package body Debugger.Jdb is
             "stop at " & File (File'First .. Pos) & ':' &
             Str (Str'First + 1 .. Str'Last),
             Mode => Mode);
+      return 0;
    end Break_Source;
 
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception
+   function Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       if Unhandled then
          raise Unknown_Command;
       else
          Send (Debugger, "catch " & Name, Mode => Mode);
       end if;
+      return 0;
    end Break_Exception;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   procedure Break_Address
+   function Break_Address
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden)
-   is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       raise Unknown_Command;
       --  Error ("Break on address not supported in jdb");
+      return 0;
    end Break_Address;
 
    ------------------
    -- Break_Regexp --
    ------------------
 
-   procedure Break_Regexp
+   function Break_Regexp
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden)
-   is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       raise Unknown_Command;
       --  Error ("Break on regular expression not support in jdb");
+      return 0;
    end Break_Regexp;
+
+   ------------------------------
+   -- Set_Breakpoint_Condition --
+   ------------------------------
+
+   procedure Set_Breakpoint_Condition
+     (Debugger  : access Jdb_Debugger;
+      Num       : GVD.Types.Breakpoint_Identifier;
+      Condition : String;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      null;
+   end Set_Breakpoint_Condition;
+
+   ----------------------------
+   -- Set_Breakpoint_Command --
+   ----------------------------
+
+   procedure Set_Breakpoint_Command
+     (Debugger : access Jdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Commands : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      null;
+   end Set_Breakpoint_Command;
+
+   ---------------------------------
+   -- Set_Breakpoint_Ignore_Count --
+   ---------------------------------
+
+   procedure Set_Breakpoint_Ignore_Count
+     (Debugger : access Jdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Count    : Integer;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      null;
+   end Set_Breakpoint_Ignore_Count;
 
    ------------
    -- Finish --
@@ -847,7 +889,7 @@ package body Debugger.Jdb is
 
    procedure Enable_Breakpoint
      (Debugger : access Jdb_Debugger;
-      Num      : Integer;
+      Num      : Breakpoint_Identifier;
       Enable   : Boolean := True;
       Mode     : Command_Type := Hidden) is
    begin
@@ -861,7 +903,7 @@ package body Debugger.Jdb is
 
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
-      Num      : Integer;
+      Num      : Breakpoint_Identifier;
       Mode     : Command_Type := Hidden) is
    begin
       null;

@@ -189,47 +189,70 @@ package Debugger.Gdb is
       Frame    : Positive;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
-   procedure Break_Subprogram
+   function Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   procedure Break_Source
+   function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   procedure Break_Exception
+   function Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   procedure Break_Address
+   function Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
-   procedure Break_Regexp
+   function Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier;
 
    procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;
-      Num      : Integer;
+      Num      : GVD.Types.Breakpoint_Identifier;
       Enable   : Boolean := True;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
-      Num      : Integer;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Set_Breakpoint_Condition
+     (Debugger  : access Gdb_Debugger;
+      Num       : GVD.Types.Breakpoint_Identifier;
+      Condition : String;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Set_Breakpoint_Command
+     (Debugger : access Gdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Commands : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
+   procedure Set_Breakpoint_Ignore_Count
+     (Debugger : access Gdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Count    : Integer;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Finish

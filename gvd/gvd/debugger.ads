@@ -521,33 +521,38 @@ package Debugger is
    -- Breakpoint Handling --
    -------------------------
 
-   procedure Break_Subprogram
+   function Break_Subprogram
      (Debugger  : access Debugger_Root;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
+   --  It returns the identifier associated with the newly created breakpoint.
    --  GDB_COMMAND: "break name" or "tbreak name"
 
-   procedure Break_Source
+   function Break_Source
      (Debugger  : access Debugger_Root;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
+   --  It returns the identifier associated with the newly created breakpoint.
    --  GDB_COMMAND: "break file:line" or "tbreak file:line"
 
-   procedure Break_Exception
+   function Break_Exception
      (Debugger  : access Debugger_Root;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -558,25 +563,27 @@ package Debugger is
    --  not break on a specific exception only when it is unhandled).
    --  GDB_COMMAND: "break exception"
 
-   procedure Break_Address
+   function Break_Address
      (Debugger   : access Debugger_Root;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is abstract;
    --  Set a breakpoint at a specific address.
 
-   procedure Break_Regexp
+   function Break_Regexp
      (Debugger   : access Debugger_Root;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden)
+      return GVD.Types.Breakpoint_Identifier is abstract;
    --  Set a breakpoint on all subprograms matching Regexp.
    --  This function is emulated when the debugger does not support it
    --  directly.
 
    procedure Enable_Breakpoint
      (Debugger : access Debugger_Root;
-      Num      : Integer;
+      Num      : GVD.Types.Breakpoint_Identifier;
       Enable   : Boolean := True;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Enable or disable the breakpoint number Num.
@@ -585,7 +592,7 @@ package Debugger is
 
    procedure Remove_Breakpoint
      (Debugger : access Debugger_Root;
-      Num      : Integer;
+      Num      : GVD.Types.Breakpoint_Identifier;
       Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Delete a breakpoint.
    --  Num is always the number returned in the Num field of the
@@ -595,6 +602,29 @@ package Debugger is
      (Debugger  : access Debugger_Root)
       return GVD.Types.Breakpoint_Array is abstract;
    --  Return the list of breakpoints set in the current session.
+
+   procedure Set_Breakpoint_Condition
+     (Debugger  : access Debugger_Root;
+      Num       : GVD.Types.Breakpoint_Identifier;
+      Condition : String;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Set the condition on which a breakpoint should be activated.
+
+   procedure Set_Breakpoint_Command
+     (Debugger : access Debugger_Root;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Commands : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Set the commands to execute upon stopping at the breakpoint.
+   --  One command per line in commands.
+
+   procedure Set_Breakpoint_Ignore_Count
+     (Debugger : access Debugger_Root;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Count    : Integer;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
+   --  Set the number of times the breakpoint should be ignored before being
+   --  activated.
 
    ----------------
    -- Exceptions --

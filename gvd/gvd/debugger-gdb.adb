@@ -108,19 +108,27 @@ package body Debugger.Gdb is
    --  Pattern to match a single line in "info breakpoint"
 
    File_Name_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("at (.+):(\d+)$", Multiple_Lines);
+     ("\s+at (.+):(\d+)$", Multiple_Lines);
    --  How to find file names in the info given by "info breakpoint".
    --  Note that we have to allow for special characters in the directory
    --  or file name, since the user might be using some strange names. The only
    --  restriction is that the name can not contain newline characters.
 
    Exception_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("on ([-\w_:]+)");
+     ("\s+on ([-\w_:]+)");
    --  How to detect exception names in the info given by "info breakpoint"
 
    Subprogram_In_Breakpoint : constant Pattern_Matcher := Compile
-     ("in (\S+)");
+     ("\s+in (\S+)");
    --  How to detect subprogram names in the info given by "info breakpoint"
+
+   Condition_In_Breakpoint : constant Pattern_Matcher := Compile
+     ("^\tstop only if (.*)");
+   --  How to detect breakpoint conditions in "info breakpoint"
+
+   Ignore_In_Breakpoint : constant Pattern_Matcher := Compile
+     ("^\tignore next (\d+) hits");
+   --  How to detect the ignore count in "info breakpoint"
 
    Question_Filter_Pattern1 : constant Pattern_Matcher :=
      Compile ("^\[0\] .*> ", Multiple_Lines + Single_Line);
@@ -166,6 +174,10 @@ package body Debugger.Gdb is
       Arguments : String;
       Mode      : Command_Type := Hidden);
    --  Set the debuggee arguments to Arguments.
+
+   function Get_Last_Breakpoint_Id (Debugger : access Gdb_Debugger'Class)
+      return Breakpoint_Identifier;
+   --  Get the Id of the last breakpoint created by Debugger.
 
    function To_Main_Debug_Window is new Standard.Ada.Unchecked_Conversion
      (System.Address, Main_Debug_Window_Access);
@@ -315,9 +327,9 @@ package body Debugger.Gdb is
    ----------
 
    function Send
-     (Debugger        : access Gdb_Debugger;
-      Cmd             : String;
-      Mode            : Invisible_Command := Hidden) return String
+     (Debugger : access Gdb_Debugger;
+      Cmd      : String;
+      Mode     : Invisible_Command := Hidden) return String
    is
       S   : constant String := Send_Full (Debugger, Cmd, Mode);
       Pos : Integer := S'Last - Prompt_Length;
@@ -991,7 +1003,11 @@ package body Debugger.Gdb is
         or else Looking_At (Command, Command'First, "delete")
         or else Looking_At (Command, Command'First, "del ")
         or else Looking_At (Command, Command'First, "disable")
-        or else Looking_At (Command, Command'First, "enable");
+        or else Looking_At (Command, Command'First, "enable")
+        or else Looking_At (Command, Command'First, "begin")
+        or else Looking_At (Command, Command'First, "ignore")
+        or else Looking_At (Command, Command'First, "command")
+        or else Looking_At (Command, Command'First, "condition");
    end Is_Break_Command;
 
    ----------------
@@ -1087,33 +1103,53 @@ package body Debugger.Gdb is
         (Send (Debugger, "where", Mode => Internal), Value, Len);
    end Backtrace;
 
+   ----------------------------
+   -- Get_Last_Breakpoint_Id --
+   ----------------------------
+
+   function Get_Last_Breakpoint_Id (Debugger : access Gdb_Debugger'Class)
+      return Breakpoint_Identifier
+   is
+   begin
+      Wait_User_Command (Debugger);  --  ??? Should not be needed
+      declare
+         S : constant String :=
+           Send (Debugger, "print $bpnum", Mode => Internal);
+         Index : Integer := S'First;
+      begin
+         Skip_To_Char (S, Index, '=');
+         return Breakpoint_Identifier'Value (S (Index + 1 .. S'Last));
+      end;
+   end Get_Last_Breakpoint_Id;
+
    ----------------------
    -- Break_Subprogram --
    ----------------------
 
-   procedure Break_Subprogram
+   function Break_Subprogram
      (Debugger  : access Gdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       if Temporary then
          Send (Debugger, "tbreak " & Name, Mode => Mode);
       else
          Send (Debugger, "break " & Name, Mode => Mode);
       end if;
+      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Subprogram;
 
    ------------------
    -- Break_Source --
    ------------------
 
-   procedure Break_Source
+   function Break_Source
      (Debugger  : access Gdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Command_Type := Hidden)
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier
    is
       Str : constant String := Positive'Image (Line);
    begin
@@ -1128,52 +1164,55 @@ package body Debugger.Gdb is
                & ':' & Str (Str'First + 1 .. Str'Last),
                Mode => Mode);
       end if;
+      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Source;
 
    ---------------------
    -- Break_Exception --
    ---------------------
 
-   procedure Break_Exception
+   function Break_Exception
      (Debugger  : access Gdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Command_Type := Hidden) is
+      Mode      : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       Send
         (Debugger,
          Break_Exception (Language_Debugger_Access (Get_Language (Debugger)),
                           Name, Temporary, Unhandled),
          Mode => Mode);
+      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Exception;
 
    -------------------
    -- Break_Address --
    -------------------
 
-   procedure Break_Address
+   function Break_Address
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode : Command_Type := Hidden) is
+      Mode : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       if Temporary then
          Send (Debugger, "tbreak *" & Address, Mode => Mode);
       else
          Send (Debugger, "break *" & Address, Mode => Mode);
       end if;
+      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Address;
 
    ------------------
    -- Break_Regexp --
    ------------------
 
-   procedure Break_Regexp
+   function Break_Regexp
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Command_Type := Hidden) is
+      Mode       : Command_Type := Hidden) return Breakpoint_Identifier is
    begin
       if Temporary then
          raise Unknown_Command;
@@ -1181,7 +1220,55 @@ package body Debugger.Gdb is
       else
          Send (Debugger, "rbreak " & Regexp, Mode => Mode);
       end if;
+      return Get_Last_Breakpoint_Id (Debugger);
    end Break_Regexp;
+
+   ------------------------------
+   -- Set_Breakpoint_Condition --
+   ------------------------------
+
+   procedure Set_Breakpoint_Condition
+     (Debugger  : access Gdb_Debugger;
+      Num       : GVD.Types.Breakpoint_Identifier;
+      Condition : String;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "condition " & Breakpoint_Identifier'Image (Num)
+            & " " & Condition, Mode => Mode);
+   end Set_Breakpoint_Condition;
+
+   ----------------------------
+   -- Set_Breakpoint_Command --
+   ----------------------------
+
+   procedure Set_Breakpoint_Command
+     (Debugger : access Gdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Commands : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      if Commands (Commands'Last) = ASCII.LF then
+         Send (Debugger, "command " & Breakpoint_Identifier'Image (Num)
+               & ASCII.LF & Commands & "end", Mode => Mode);
+      else
+         Send (Debugger, "command " & Breakpoint_Identifier'Image (Num)
+               & ASCII.LF & Commands & ASCII.LF & "end", Mode => Mode);
+      end if;
+   end Set_Breakpoint_Command;
+
+   ---------------------------------
+   -- Set_Breakpoint_Ignore_Count --
+   ---------------------------------
+
+   procedure Set_Breakpoint_Ignore_Count
+     (Debugger : access Gdb_Debugger;
+      Num      : GVD.Types.Breakpoint_Identifier;
+      Count    : Integer;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is
+   begin
+      Send (Debugger, "ignore " & Breakpoint_Identifier'Image (Num)
+            & " " & Integer'Image (Count), Mode => Mode);
+   end Set_Breakpoint_Ignore_Count;
 
    ------------
    -- Finish --
@@ -1669,9 +1756,12 @@ package body Debugger.Gdb is
                Simple := Simple_Type_Access (New_Simple_Type);
             end if;
             Set_Value (Simple.all, S);
+
+            --  The index should always be 0, since we add Dim.First before
+            --  displaying it.
             Set_Value (Item       => Array_Type (Result.all),
                        Elem_Value => Simple,
-                       Elem_Index => Dim.First);
+                       Elem_Index => 0);
             Shrink_Values (Array_Type (Result.all));
          end;
 
@@ -1868,11 +1958,19 @@ package body Debugger.Gdb is
       --  Num Type           Disp Enb Address    What
       --  1   breakpoint     keep y   0x08052c1f on unhandled exception
       --                                         at a-except.adb:1460
+      --          stop only if 0 <= 2
+      --          ignore next 200 hits
+      --          echo "toto"
+      --          print A
+      --          cont
+      --  First line if the condition, second line is ignore count, the rest
+      --  are the commands to execute upon stopping
 
       declare
          Br      : Breakpoint_Array (1 .. Num_Breakpoints);
          Num     : Natural := 1;
          Matched : Match_Array (0 .. 10);
+         M       : Boolean;
       begin
          Index := S'First;
          Skip_To_Char (S, Index, ASCII.LF);
@@ -1882,8 +1980,8 @@ package body Debugger.Gdb is
             Match (Breakpoint_Pattern, S (Index .. S'Last), Matched);
 
             if Matched (0) /= No_Match then
-               Br (Num).Num :=
-                 Integer'Value (S (Matched (1).First .. Matched (1).Last));
+               Br (Num).Num := Breakpoint_Identifier'Value
+                 (S (Matched (1).First .. Matched (1).Last));
 
                if S (Matched (2).First) = 'b' then
                   Br (Num).The_Type := Breakpoint;
@@ -1909,7 +2007,7 @@ package body Debugger.Gdb is
                end if;
 
                --  Go to beginning of next line.
-               --  If we don't have a new breackpoint, add the line to the
+               --  If we don't have a new breakpoint, add the line to the
                --  information.
 
                Tmp := Matched (8).First;
@@ -1922,41 +2020,81 @@ package body Debugger.Gdb is
             while Index <= S'Last
               and then not (S (Index) in '0' .. '9')
             loop
+               Tmp := Index;
                Skip_To_Char (S, Index, ASCII.LF);
                Index := Index + 1;
-            end loop;
+               M := False;
 
-            if Matched (0) /= No_Match then
-               Br (Num).Info := new String'(S (Tmp .. Index - 2));
-               Match (File_Name_In_Breakpoint, Br (Num).Info.all, Matched);
+               --  File name, exception name and subprogram name can be
+               --  found on the same line.
 
+               Match (File_Name_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
                   Br (Num).File := new String'
-                    (Base_File_Name (Br (Num).Info
-                                     (Matched (1).First .. Matched (1).Last)));
+                    (Base_File_Name
+                     (S (Matched (1).First .. Matched (1).Last)));
                   Br (Num).Line := Integer'Value
-                    (Br (Num).Info (Matched (2).First .. Matched (2).Last));
+                    (S (Matched (2).First .. Matched (2).Last));
+                  M := True;
                end if;
 
-               Match (Exception_In_Breakpoint, Br (Num).Info.all, Matched);
-
+               Match (Exception_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
                   Br (Num).Except := new String'
-                    (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                    (S (Matched (1).First .. Matched (1).Last));
+                  M := True;
                end if;
 
-               Match (Subprogram_In_Breakpoint, Br (Num).Info.all, Matched);
-
+               Match (Subprogram_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
-                  --  When is this memory freed ???
                   Br (Num).Subprogram := new String'
-                    (Br (Num).Info (Matched (1).First .. Matched (1).Last));
+                    (S (Matched (1).First .. Matched (1).Last));
+                  M := True;
                end if;
 
-               Num := Num + 1;
-            end if;
-         end loop;
+               if not M then
+                  Match
+                    (Condition_In_Breakpoint, S (Tmp .. Index - 2), Matched);
+                  if Matched (0) /= No_Match then
+                     Br (Num).Condition := new String'
+                       (S (Matched (1).First .. Matched (1).Last));
+                     M := True;
+                  end if;
+               end if;
 
+               if not M then
+                  Match (Ignore_In_Breakpoint, S (Tmp .. Index - 2), Matched);
+                  if Matched (0) /= No_Match then
+                     Br (Num).Ignore := Natural'Value
+                       (S (Matched (1).First .. Matched (1).Last));
+                     M := True;
+                  end if;
+               end if;
+
+               if not M then
+                  --  List of commands:
+                  if Tmp +7 <= S'Last
+                    and then S (Tmp .. Tmp + 7) = "        "
+                  then
+                     while Index + 7 <= S'Last
+                       and then S (Index .. Index + 7) = "        "
+                     loop
+                        Skip_To_Char (S, Index, ASCII.LF);
+                        Index := Index + 1;
+                     end loop;
+
+                     if Index /= Tmp then
+                        Br (Num).Commands :=
+                          new String' (S (Tmp .. Index - 2));
+                     end if;
+                  end if;
+               end if;
+
+--               Br (Num).Info := new String'(S (Tmp .. Index - 2));
+            end loop;
+
+            Num := Num + 1;
+         end loop;
          return Br;
       end;
    end List_Breakpoints;
@@ -1967,14 +2105,16 @@ package body Debugger.Gdb is
 
    procedure Enable_Breakpoint
      (Debugger : access Gdb_Debugger;
-      Num      : Integer;
+      Num      : Breakpoint_Identifier;
       Enable   : Boolean := True;
       Mode     : Command_Type := Hidden) is
    begin
       if Enable then
-         Send (Debugger, "enable" & Integer'Image (Num), Mode => Mode);
+         Send (Debugger, "enable" & Breakpoint_Identifier'Image (Num),
+               Mode => Mode);
       else
-         Send (Debugger, "disable" & Integer'Image (Num), Mode => Mode);
+         Send (Debugger, "disable" & Breakpoint_Identifier'Image (Num),
+               Mode => Mode);
       end if;
    end Enable_Breakpoint;
 
@@ -1984,10 +2124,11 @@ package body Debugger.Gdb is
 
    procedure Remove_Breakpoint
      (Debugger : access Gdb_Debugger;
-      Num      : Integer;
+      Num      : Breakpoint_Identifier;
       Mode     : Command_Type := Hidden) is
    begin
-      Send (Debugger, "delete" & Integer'Image (Num), Mode => Mode);
+      Send (Debugger, "delete" & Breakpoint_Identifier'Image (Num),
+            Mode => Mode);
    end Remove_Breakpoint;
 
    ------------------------------
