@@ -744,18 +744,20 @@ package body Switches_Editors is
          return;
       end if;
 
-      declare
-         Arg : Argument_List := Get_Switches (P, Normalize => True);
-      begin
-         P.Block_Refresh := True;
+      if P.Switches /= null then
+         declare
+            Arg : Argument_List := Get_Switches (P, Normalize => True);
+         begin
+            P.Block_Refresh := True;
 
-         for S in P.Switches'Range loop
-            Set_And_Filter_Switch (P.Switches (S).all, Arg);
-         end loop;
+            for S in P.Switches'Range loop
+               Set_And_Filter_Switch (P.Switches (S).all, Arg);
+            end loop;
 
-         Free (Arg);
-         P.Block_Refresh := False;
-      end;
+            Free (Arg);
+            P.Block_Refresh := False;
+         end;
+      end if;
    end On_Cmd_Line_Changed;
 
    -------------------
