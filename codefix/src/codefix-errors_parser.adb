@@ -186,7 +186,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Matches, Errors_List);
    begin
-      Concat (Solutions, Should_Be (Current_Text, Message, "=>", "="));
+      Solutions := Should_Be (Current_Text, Message, "=>", "=");
    end Fix;
 
    -----------------------
@@ -209,12 +209,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ------------------------
@@ -237,12 +235,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
       Concat
         (Solutions,
@@ -273,10 +269,8 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression));
+      Solutions := Should_Be
+        (Current_Text, Message, "goto", "(go[\s]+to)", Regular_Expression);
    end Fix;
 
    -------------------------
@@ -313,15 +307,13 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text,
-            Message,
-            Get_Message (Preview)
-              (Fix_Matches (1).First .. Fix_Matches (1).Last),
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Text_Ascii));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Preview)
+           (Fix_Matches (1).First .. Fix_Matches (1).Last),
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Text_Ascii);
 
       Get_Message (Errors_List, Current_Text, Preview);
 
@@ -350,14 +342,12 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (2).First .. Matches (2).Last),
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Text_Ascii));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (2).First .. Matches (2).Last),
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Text_Ascii);
    end Fix;
 
    -------------------------
@@ -380,8 +370,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat
-        (Solutions, Should_Be (Current_Text, Message, ";", ".", Text_Ascii));
+      Solutions := Should_Be (Current_Text, Message, ";", ".", Text_Ascii);
    end Fix;
 
    ---------------
@@ -402,10 +391,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Should_Be (Current_Text, Message, "and", "&"));
+      Solutions := Should_Be (Current_Text, Message, "and", "&");
    end Fix;
 
    --------------
@@ -428,7 +416,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Should_Be (Current_Text, Message, "or", "\|"));
+      Solutions := Should_Be (Current_Text, Message, "or", "\|");
    end Fix;
 
 
@@ -452,14 +440,12 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Should_Be
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            "([^;]+;)",
-            Regular_Expression));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         "([^;]+;)",
+         Regular_Expression);
    end Fix;
 
    ----------------------------
@@ -482,14 +468,13 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat
-        (Solutions,
-         Should_Be (Current_Text,
-                    Message,
-                    "'(",
-                    "(",
-                    Text_Ascii,
-                    "Replace conversion by qualification"));
+      Solutions := Should_Be
+        (Current_Text,
+         Message,
+         "'(",
+         "(",
+         Text_Ascii,
+         "Replace conversion by qualification");
    end Fix;
 
    -----------------
@@ -519,13 +504,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Wrong_Order
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
+      Solutions := Wrong_Order
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         Get_Message (Message) (Matches (2).First .. Matches (2).Last));
    end Fix;
 
    --------------------
@@ -549,7 +532,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Concat (Solutions, Expected (Current_Text, Message, "function"));
+      Solutions := Expected (Current_Text, Message, "function");
       Concat (Solutions, Expected (Current_Text, Message, "procedure"));
       Concat (Solutions, Expected (Current_Text, Message, "package"));
    end Fix;
@@ -575,7 +558,7 @@ package body Codefix.Errors_Parser is
       pragma Unreferenced (This, Errors_List);
       pragma Unreferenced (Matches);
    begin
-      Concat (Solutions, Expected (Current_Text, Message, "function"));
+      Solutions := Expected (Current_Text, Message, "function");
       Concat (Solutions, Expected (Current_Text, Message, "procedure"));
    end Fix;
 
@@ -599,12 +582,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Expected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Expected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ----------------
@@ -640,13 +621,10 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-
-      Concat
-        (Solutions,
-         Expected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Expected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    -----------------
@@ -685,13 +663,11 @@ package body Codefix.Errors_Parser is
          raise Uncorrectable_Message;
       end if;
 
-      Concat
-        (Solutions,
-         Expected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last),
-            False));
+      Solutions := Expected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last),
+         False);
    end Fix;
 
    -----------------
@@ -757,7 +733,7 @@ package body Codefix.Errors_Parser is
 
       Declaration_Cursor.Col := Col_Matches (1).Last + 1;
 
-      Concat (Solutions, Expected (Current_Text, Declaration_Cursor, "all"));
+      Solutions := Expected (Current_Text, Declaration_Cursor, "all");
 
       Free (Declaration_Cursor);
       Free (Line_Red);
@@ -783,10 +759,8 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat
-        (Solutions,
-         Expected
-           (Current_Text, Message, "null;", Position => Before));
+      Solutions := Expected
+        (Current_Text, Message, "null;", Position => Before);
    end Fix;
 
    -------------------
@@ -806,10 +780,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Expected (Current_Text, Message, " ", False));
+      Solutions := Expected (Current_Text, Message, " ", False);
    end Fix;
 
 
@@ -857,12 +830,10 @@ package body Codefix.Errors_Parser is
              Col_Matches);
       New_Message.Col := Col_Matches (1).Last + 1;
 
-      Concat
-        (Solutions,
-         Expected
-           (Current_Text,
-            New_Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Expected
+        (Current_Text,
+         New_Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    --------------------
@@ -885,12 +856,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Unexpected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Unexpected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    -----------------
@@ -911,10 +880,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Unexpected (Current_Text, Message, ")"));
+      Solutions := Unexpected (Current_Text, Message, ")");
    end Fix;
 
    -----------------------
@@ -943,9 +911,9 @@ package body Codefix.Errors_Parser is
                    (Matches (1).First .. Matches (1).Last));
 
       if Str_Red.all = "colon" then
-         Concat (Solutions, Unexpected (Current_Text, Message, ":"));
+         Solutions := Unexpected (Current_Text, Message, ":");
       elsif Str_Red.all = """then""" then
-         Concat (Solutions, Unexpected (Current_Text, Message, "then"));
+         Solutions := Unexpected (Current_Text, Message, "then");
       else
          Free (Str_Red);
          raise Uncorrectable_Message;
@@ -975,12 +943,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Unexpected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Unexpected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ---------------------
@@ -1012,9 +978,9 @@ package body Codefix.Errors_Parser is
                                  (Matches (2).First .. Matches (2).Last));
 
       if Str_Red_1.all = "semicolon" and then Str_Red_2.all = "ignored" then
-         Concat (Solutions, Unexpected (Current_Text, Message, ";"));
+         Solutions := Unexpected (Current_Text, Message, ";");
       elsif Str_Red_1.all = "right" and then Str_Red_2.all = "parenthesis" then
-         Concat (Solutions, Unexpected (Current_Text, Message, ")"));
+         Solutions := Unexpected (Current_Text, Message, ")");
       else
          Free (Str_Red_1);
          Free (Str_Red_2);
@@ -1049,12 +1015,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Unexpected
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Unexpected
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ---------------------
@@ -1107,13 +1071,11 @@ package body Codefix.Errors_Parser is
          Format_Str := Text_Ascii;
       end if;
 
-      Concat
-        (Solutions,
-         Unexpected
-           (Current_Text,
-            Message,
-            Unallowed_Characters.all,
-            Format_Str));
+      Solutions := Unexpected
+        (Current_Text,
+         Message,
+         Unallowed_Characters.all,
+         Format_Str);
 
       Free (Unallowed_Characters);
       Free (Word_Read);
@@ -1139,13 +1101,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Wrong_Column
-           (Current_Text,
-            Message,
-            Integer'Value (Get_Message (Message)
-                             (Matches (1).First .. Matches (1).Last))));
+      Solutions := Wrong_Column
+        (Current_Text,
+         Message,
+         Integer'Value (Get_Message (Message)
+                          (Matches (1).First .. Matches (1).Last)));
    end Fix;
 
    ----------------
@@ -1168,10 +1128,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Wrong_Column (Current_Text, Message));
+      Solutions := Wrong_Column (Current_Text, Message);
    end Fix;
 
    -----------------------
@@ -1199,12 +1158,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         With_Clause_Missing
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := With_Clause_Missing
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    -------------------------
@@ -1228,10 +1185,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Bad_Casing (Current_Text, Message));
+      Solutions := Bad_Casing (Current_Text, Message);
    end Fix;
 
    -------------------------
@@ -1254,12 +1210,10 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Bad_Casing
-           (Current_Text,
-            Message,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Bad_Casing
+        (Current_Text,
+         Message,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ------------------------
@@ -1280,12 +1234,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat
-        (Solutions,
-         Bad_Casing (Current_Text, Message, "", Lower));
+      Solutions := Bad_Casing (Current_Text, Message, "", Lower);
    end Fix;
 
    ---------------------------
@@ -1338,13 +1289,11 @@ package body Codefix.Errors_Parser is
          Category := Cat_Type;
       end if;
 
-      Concat
-        (Solutions,
-         Not_Referenced
-           (Current_Text,
-            Message,
-            Category,
-            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
+      Solutions := Not_Referenced
+         (Current_Text,
+          Message,
+          Category,
+          Get_Message (Message) (Matches (2).First .. Matches (2).Last));
    end Fix;
 
    ------------------------
@@ -1357,7 +1306,9 @@ package body Codefix.Errors_Parser is
         (new Pattern_Matcher'
            (Compile ("unit ""([^""]+)"" is not referenced")),
          new Pattern_Matcher'
-           (Compile ("no entities of ""([^""]+)"" are referenced")));
+           (Compile ("no entities of ""([^""]+)"" are referenced")),
+         new Pattern_Matcher'
+           (Compile ("unit ""([^""]+)"" is never instantiated")));
    end Initialize;
 
    procedure Fix
@@ -1370,13 +1321,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat
-        (Solutions,
-         Not_Referenced
-           (Current_Text,
-            Message,
-            Cat_With,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+      Solutions := Not_Referenced
+        (Current_Text,
+         Message,
+         Cat_With,
+         Get_Message (Message) (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    -----------------------
@@ -1397,10 +1346,9 @@ package body Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array)
    is
-      pragma Unreferenced (This, Errors_List);
-      pragma Unreferenced (Matches);
+      pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, First_Line_Pragma (Current_Text, Message));
+      Solutions := First_Line_Pragma (Current_Text, Message);
    end Fix;
 
    -----------------------
@@ -1423,11 +1371,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat (Solutions, Not_Modified
-                (Current_Text,
-                 Message,
-                 Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last)));
+      Solutions := Not_Modified
+        (Current_Text,
+         Message,
+         Get_Message (Message)
+           (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    -----------------------------
@@ -1504,12 +1452,12 @@ package body Codefix.Errors_Parser is
       end loop;
 
 
-      Concat (Solutions, Resolve_Ambiguity
-                (Current_Text,
-                 Message,
-                 Cursor_List,
-                 Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last)));
+      Solutions := Resolve_Ambiguity
+        (Current_Text,
+         Message,
+         Cursor_List,
+         Get_Message (Message)
+           (Matches (1).First .. Matches (1).Last));
 
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
@@ -1607,12 +1555,12 @@ package body Codefix.Errors_Parser is
          end;
       end loop;
 
-      Concat (Solutions, Resolve_Ambiguity
-                (Current_Text,
-                 Message,
-                 Cursor_List,
-                 Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last)));
+      Solutions := Resolve_Ambiguity
+        (Current_Text,
+         Message,
+         Cursor_List,
+         Get_Message (Message)
+           (Matches (1).First .. Matches (1).Last));
 
       if Length (Solutions) = 0 then
          raise Uncorrectable_Message;
@@ -1640,11 +1588,11 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List);
    begin
-      Concat (Solutions, Remove_Conversion
-                (Current_Text,
-                 Message,
-                 Get_Message (Message)
-                   (Matches (1).First .. Matches (1).Last)));
+      Solutions := Remove_Conversion
+        (Current_Text,
+         Message,
+         Get_Message (Message)
+           (Matches (1).First .. Matches (1).Last));
    end Fix;
 
    ---------------------
@@ -1670,7 +1618,7 @@ package body Codefix.Errors_Parser is
    is
       pragma Unreferenced (This, Errors_List, Matches);
    begin
-      Concat (Solutions, Move_With_To_Body (Current_Text, Message));
+      Solutions := Move_With_To_Body (Current_Text, Message);
    end Fix;
 
    --------------------------
@@ -1685,6 +1633,12 @@ package body Codefix.Errors_Parser is
                      "([^\:]+):([\d]+)")),
          new Pattern_Matcher'
            (Compile ("not fully conformant with declaration at " &
+                     "(line) ([\d]+)")),
+         new Pattern_Matcher'
+           (Compile ("not type conformant with declaration at " &
+                     "([^\:]+):([\d]+)")),
+         new Pattern_Matcher'
+           (Compile ("not type conformant with declaration at " &
                      "(line) ([\d]+)")));
    end Initialize;
 
@@ -1717,10 +1671,35 @@ package body Codefix.Errors_Parser is
               (Matches (1).First .. Matches (1).Last));
       end if;
 
-      Concat (Solutions, Make_Conformant (Current_Text, Message, Spec_Cursor));
+      Solutions := Make_Conformant (Current_Text, Message, Spec_Cursor);
 
       Free (Spec_Cursor);
    end Fix;
+
+   ---------------------------
+   -- Generic_Use_Unallowed --
+   ---------------------------
+
+   procedure Initialize (This : in out Generic_Use_Unallowed) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+        (Compile ("a generic package is not allowed in a use clause")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Generic_Use_Unallowed;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List, Matches);
+   begin
+      Solutions := Remove_Use_Clause (Current_Text, Message);
+   end Fix;
+
+
 begin
    Add_Parser (new Agregate_Misspelling);
    Add_Parser (new Double_Misspelling);
@@ -1765,6 +1744,7 @@ begin
    Add_Parser (new Redundant_Conversion);
    Add_Parser (new Missplaced_With);
    Add_Parser (new Not_Fully_Conformant);
+   Add_Parser (new Generic_Use_Unallowed);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
