@@ -10238,20 +10238,25 @@ were specified when the hook is run. The first parameter is always the name
 of the hook being executed.
 
 This @b{Hook.add} applies to an instance of the hook class, and takes one
-parameter, the command to be executed.
+parameter, the command to be executed. This is a subprogram parameter (@pxref{Subprogram parameters}).
 
-@ifclear python
-The command can be any shell command. The arguments for the hook will be
-appended to this command. In the following example, the message "Just executed
-the hook: project_changed" will be printed in the Shell console.
+@itemize @bullet
+@item GPS shell
+
+The command can be any GPS action (@pxref{Defining Actions}). The arguments for the hook will be passed to the action, and are available as $1, $2,@dots{}. In the following example, the message "Just executed
+the hook: project_changed" will be printed in the Shell console. Note that we
+are defining the action to be executed inline, but this could in fact be
+defined in a separate XML customization file for convenience.
 
 @smallexample
+GPS> parse_xml """<action name="my_action"><shell>echo "Just executed the hook"</shell></action_name>"""
 GPS> Hook project_changed
-GPS> Hook.add %1 "echo Just executed the hook: "
+GPS> Hook.add %1 "my_action"
 @end smallexample
-@end ifclear
 
 @ifset python
+@item Python
+
 The command must be the name of a subprogram to execute. The arguments for the
 hook will be passed to this subprogram. In the following example, the
 message "The hook project_changed was executed by GPS" will be displayed in the
@@ -10260,24 +10265,30 @@ Python console whenever the project changes.
 @smallexample
 def my_callback (name):
     print "The hook " + name + " was executed by GPS"
-GPS.Hook ("project_changed").add ("my_callback")
+GPS.Hook ("project_changed").add (my_callback)
 @end smallexample
 @end ifset
+
+@end itemize
 
 The example above shows the simplest type of hook, which doesn't take any
 argument. However, most hooks receive several parameters. For instance, the
 hook "file_edited" receives the file name as a parameter.
 
-@ifclear python
+@itemize @bullet
+@item GPS shell
+
 The following code will print the name of the hook ("file_edited") and the
 name of the file in the shell console every time a file is open by GPS.
 @smallexample
+GPS> parse_xml """<action name="my_action"><shell>echo name=$1 file=$2</shell></action>"""
 GPS> Hook "file_edited"
-GPS> Hook.add %1 "echo name+file="
+GPS> Hook.add %1 "my_action"
 @end smallexample
-@end ifclear
 
 @ifset python
+@item Python
+
 The following code prints the name of the file being edited by GPS in the
 python console whenever a new editor is opened. The second argument is of type
 GPS.File.
@@ -10285,14 +10296,11 @@ GPS.File.
 @smallexample
 def my_file_callback (name, file):
     print "Editing " + file.name()
-GPS.Hook ("file_edited").add ("my_file_callback")
+GPS.Hook ("file_edited").add (my_file_callback)
 @end smallexample
 
-Very often, the name of the function in the second argument to add_hook will
-need to be qualified with name of the python module in which the function is
-declared.
-
 @end ifset
+@end itemize
 
 @ifset python
 @c ----------------------------------
@@ -10344,7 +10352,7 @@ def my_foo_handler (name, file, line, column, \
         return 1   ## Prevent further execution of the hook
     return 0  ## Let other subprograms in the hook do their job
 
-GPS.Hook ("open_file_action_hook").add ("my_foo_handler")
+GPS.Hook ("open_file_action_hook").add (my_foo_handler)
 @end smallexample
 
 @end ifset
@@ -10475,9 +10483,9 @@ def trace2 (name, arg1, arg2=100):
    print "hook=" + str (arg1) + str (arg2)
 
 Hook.register ("my_custom_hook", "some description", "general")
-Hook ("my_custom_hook").add ("trace2")
-Hook ("my_custom_hook").add (1, 2) ## Prints 1 2
-Hook ("my_custom_hook").add (1)    ## Prints 1 100
+Hook ("my_custom_hook").add (trace2)
+Hook ("my_custom_hook").run (1, 2) ## Prints 1 2
+Hook ("my_custom_hook").run (1)    ## Prints 1 100
 @end smallexample
 
 @end ifset
@@ -10485,8 +10493,8 @@ Hook ("my_custom_hook").add (1)    ## Prints 1 100
 @ifclear python
 GPS> Hook.register"my_custom_hook" "some description" "general"
 GPS> Hook "my_custom_hook"
-GPS> run %1 1 2
-GPS> run %2 "arg1" "arg2" "arg3"
+GPS> Hook.run %1 1 2
+GPS> Hook.run %2 "arg1" "arg2" "arg3"
 @end ifclear
 
 
