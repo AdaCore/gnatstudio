@@ -178,12 +178,6 @@ package body Src_Editor_Buffer is
       To     : Gtk_Text_Iter);
    --  Remove all highlighting tags for the given region.
 
-   procedure Forward_To_Line_End (Iter : in out Gtk_Text_Iter);
-   --  This is a temporary implementation of Gtk.Text_Iter.Forward_To_Line_End
-   --  because the gtk+ one is broken at the moment, and causes Critical
-   --  warnings.
-   --  ??? Remove this procedure when the problem is fixed.
-
    procedure Strip_Ending_Line_Terminator
      (Buffer : access Source_Buffer_Record'Class);
    --  Delete the last character of the buffer if it is an ASCII.LF.
@@ -662,7 +656,7 @@ package body Src_Editor_Buffer is
    -- Forward_To_Line_End --
    -------------------------
 
-   procedure Forward_To_Line_End (Iter : in out Gtk_Text_Iter) is
+   procedure Forward_To_Line_End (Iter : in out Gtk.Text_Iter.Gtk_Text_Iter) is
       Result_Ignored : Boolean;
    begin
       while not Is_End (Iter) and then not Ends_Line (Iter) loop
