@@ -249,9 +249,9 @@ package body Find_Utils is
               ((Pos = Start_Index
                 or else Is_Word_Delimiter (Buffer (Pos - 1)))
                and then
-               (Pos + Context.Look_For'Length - 1 = End_Index
-                or else Is_Word_Delimiter
-                (Buffer (Pos + Context.Look_For'Length))))
+                 (Pos + Context.Look_For'Length - 1 = End_Index
+                  or else Is_Word_Delimiter
+                    (Buffer (Pos + Context.Look_For'Length))))
             then
                To_Line_Column (Pos);
 
@@ -294,6 +294,20 @@ package body Find_Utils is
       when Invalid_Context =>
          null;
    end Scan_Buffer_No_Scope;
+
+   ----------------------
+   -- Context_Look_For --
+   ----------------------
+
+   function Context_Look_For
+     (Context : access Root_Search_Context) return String is
+   begin
+      if Context.Look_For = null then
+         return "";
+      else
+         return Context.Look_For.all;
+      end if;
+   end Context_Look_For;
 
    -----------------------
    -- Context_As_String --
