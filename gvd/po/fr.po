@@ -262,6 +262,9 @@ msgstr "Détacher le processus"
 msgid  "Detect Aliases"
 msgstr "Détecter les alias"
 
+msgid  "Directory Selection"
+msgstr "Selection d'un répertoire"
+
 msgid  "Detect Aliases (shared data structures)"
 msgstr "Détecter les alias (structures de données partagées)"
 
@@ -699,6 +702,9 @@ msgstr "Sélectionner la procédure appelée"
 
 msgid  "Select and print stack frame that called this one"
 msgstr "Sélectionner la procédure appelante"
+
+msgid  "Select Core File"
+msgstr "Sélectionner un fichier core"
 
 msgid  "Selection"
 msgstr "Sélection"

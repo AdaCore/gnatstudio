@@ -265,6 +265,9 @@ msgstr "Detect Aliases"
 msgid  "Detect Aliases (shared data structures)"
 msgstr "Detect Aliases (shared data structures)"
 
+msgid  "Directory Selection"
+msgstr "Directory Selection"
+
 msgid  "disable"
 msgstr "disable"
 
@@ -699,6 +702,9 @@ msgstr "Select and print stack frame called by this one"
 
 msgid  "Select and print stack frame that called this one"
 msgstr "Select and print stack frame that called this one"
+
+msgid  "Select Core File"
+msgstr "Select Core File"
 
 msgid  "Selection"
 msgstr "Selection"
