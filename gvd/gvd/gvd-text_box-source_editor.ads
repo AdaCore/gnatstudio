@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -100,11 +100,14 @@ package GVD.Text_Box.Source_Editor is
    procedure Set_Line
      (Editor      : access Source_Editor_Record;
       Line        : Natural;
-      Set_Current : Boolean := True) is abstract;
+      Set_Current : Boolean := True;
+      Process     : Gtk.Widget.Gtk_Widget) is abstract;
    --  Set the current line (and draw the button on the side).
    --  If Set_Current is True, then the line becomes the current line (ie the
    --  one on which the debugger is stopped). Otherwise, Line is simply the
    --  line that we want to display in the editor.
+   --  Process is the Debugger_Process_Tab which corresponds to the debugger
+   --  that is stopped.
 
    function Get_Line
      (Editor : access Source_Editor_Record) return Natural is abstract;

@@ -206,9 +206,10 @@ package body GVD.Text_Box.Source_Editor.Socket is
    procedure Set_Line
      (Editor      : access Socket_Record;
       Line        : Natural;
-      Set_Current : Boolean := True)
+      Set_Current : Boolean := True;
+      Process     : Gtk_Widget)
    is
-      pragma Unreferenced (Set_Current);
+      pragma Unreferenced (Set_Current, Process);
    begin
       Editor.Line := Line;
 

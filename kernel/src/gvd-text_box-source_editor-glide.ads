@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -22,6 +22,7 @@ with Gtk.Container;
 with Basic_Types;
 with GVD.Types;
 with GVD.Main_Window;
+with Gtk.Widget;
 
 --  This package provides an implementation of Source_Editor based on
 --  the Glide Editor.
@@ -83,7 +84,8 @@ package GVD.Text_Box.Source_Editor.Glide is
    procedure Set_Line
      (Editor      : access GEdit_Record;
       Line        : Natural;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Process     : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    function Get_Line (Editor : access GEdit_Record) return Natural;

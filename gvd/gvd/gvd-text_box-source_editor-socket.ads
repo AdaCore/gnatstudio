@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -87,7 +87,8 @@ package GVD.Text_Box.Source_Editor.Socket is
    procedure Set_Line
      (Editor      : access Socket_Record;
       Line        : Natural;
-      Set_Current : Boolean := True);
+      Set_Current : Boolean := True;
+      Process     : Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    function Get_Line (Editor : access Socket_Record) return Natural;

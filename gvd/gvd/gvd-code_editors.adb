@@ -133,7 +133,8 @@ package body GVD.Code_Editors is
    procedure Set_Line
      (Editor      : access Code_Editor_Record;
       Line        : Natural;
-      Set_Current : Boolean := True)
+      Set_Current : Boolean := True;
+      Process     : Gtk_Widget)
    is
       Top : constant GVD_Main_Window :=
         GVD_Main_Window (Debugger_Process_Tab (Editor.Process).Window);
@@ -141,7 +142,7 @@ package body GVD.Code_Editors is
    begin
       Editor.Source_Line := Line;
 
-      Set_Line (Editor.Source, Line, Set_Current);
+      Set_Line (Editor.Source, Line, Set_Current, Process);
 
       if Set_Current then
          --  If the assembly code is displayed, highlight the code for the
@@ -442,7 +443,8 @@ package body GVD.Code_Editors is
       case Editor.Mode is
          when Source =>
             Attach (Editor.Source, Editor);
-            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
+            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
+                      Process => Gtk_Widget (Process));
 
             if Process.Breakpoints /= null then
                Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
@@ -473,7 +475,8 @@ package body GVD.Code_Editors is
             end if;
 
             Highlight_Address_Range (Editor.Asm, Editor.Source_Line);
-            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True);
+            Set_Line (Editor.Source, Editor.Source_Line, Set_Current => True,
+                      Process => Gtk_Widget (Process));
 
             if Process.Breakpoints /= null then
                Update_Breakpoints (Editor.Source, Process.Breakpoints.all);
