@@ -403,7 +403,7 @@ package body Wizards is
 
       Wiz.Current_Page := Num;
       Add (Wiz.Page_Frame, Wiz.Pages (Wiz.Current_Page));
-      Show_All (Wiz.Page_Frame);
+      Show (Wiz.Page_Frame);
 
       --  If the new page is valid, highlight it
 
