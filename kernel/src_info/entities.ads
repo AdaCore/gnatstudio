@@ -111,6 +111,7 @@ package Entities is
       Ordinary_Fixed_Point,
       Private_Type,
       Protected_Kind,
+      Reference,    --  C++'s & operator
       Record_Kind,
       Signed_Integer,
       String_Kind,
