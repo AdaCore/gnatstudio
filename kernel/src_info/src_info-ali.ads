@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -53,13 +53,13 @@ package Src_Info.ALI is
    --  Limitations:
    --  This function does *not* support separates. This limitation would be
    --  hard to lift with the current parameter profile, because we would need
-   --  to do compute the associated unit name in order to deduce the name of
+   --  to compute the associated unit name in order to deduce the name of
    --  non-separate source file. Unfortunately, the function
    --              Source_Filename = f (Unit_Filename)
    --  is not bijective...
    --  ??? Add a function that computes the "Significant source filename"
-   --  ??? from a given unit name that would be a separate. The result of
-   --  ??? this function could then be used to call ALI_Filename_From_Source
-   --  ??? to get the associated ALI filename.
+   --  from a given unit name that would be a separate. The result of
+   --  this function could then be used to call ALI_Filename_From_Source
+   --  to get the associated ALI filename.
 
 end Src_Info.ALI;

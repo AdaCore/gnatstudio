@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -38,9 +38,9 @@ package body Src_Info.ALI is
 
    Maximum_Filename_Length : constant := 8;
    --  ??? The maximum number of characters in a krunched filename (not
-   --  ??? including the .ads/adb extension). Should probably be more dynamic,
-   --  ??? but this is not terribly important since most of the time, only the
-   --  ??? Run-time file are krunched, and we know that their max_len is 8.
+   --  including the .ads/adb extension). Should probably be more dynamic,
+   --  but this is not terribly important since most of the time, only the
+   --  Run-time file are krunched, and we know that their max_len is 8.
 
    type Sdep_To_Sfile_Table is array (Sdep_Id range <>) of Source_File;
    --  An array used to store the Source_File data for each Sdep ID in
@@ -419,7 +419,7 @@ package body Src_Info.ALI is
 
       Sext : constant String := ".ads";
       Bext : constant String := ".adb";
-      --  ??? These constants must be defined somewhere in a common place???
+      --  These constants must be defined somewhere in a common place???
 
    begin
       if Fext = Sext then
