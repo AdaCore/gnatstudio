@@ -37,6 +37,7 @@ with GVD.Types;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GVD.Preferences;       use GVD.Preferences;
+with GVD.Window_Settings;   use GVD.Window_Settings;
 
 pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
@@ -312,6 +313,14 @@ begin
    Init;
    Gtk_New (Main_Debug_Window);
 
+   --  Load the window_settings, if any.
+
+   if Is_Regular_File (Dir.all & Directory_Separator & "window_settings") then
+      Load_Window_Settings
+        (Dir.all & Directory_Separator & "window_settings",
+         Gtk_Widget (Main_Debug_Window));
+   end if;
+
    Main_Debug_Window.Gvd_Home_Dir := new String' (Dir.all);
 
    --  ??? Should have a cleaner way of initializing Log_File
@@ -549,6 +558,9 @@ begin
             Bug_Dialog (E);
       end;
    end loop;
+
+   Save_Window_Settings (Dir.all & Directory_Separator & "window_settings",
+                         Gtk_Widget (Main_Debug_Window));
 
    Destroy (Main_Debug_Window);
 
