@@ -20,6 +20,7 @@
 
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Glide_Intl;              use Glide_Intl;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Contexts;   use Glide_Kernel.Contexts;
@@ -151,15 +152,18 @@ package body  Casing_Exceptions is
       File   : constant Virtual_File := Contexts.File_Information (Context);
       Line   : constant Integer      := Contexts.Line_Information (Context);
       Column : constant Integer      := Entity_Column_Information (Context);
+      Args   : Argument_List_Access :=
+        new Argument_List'
+          (new String'(Full_Name (File).all),
+           new String'(Integer'Image (Line)),
+           new String'(Integer'Image (Column)),
+           new String'(New_Name),
+           new String'("0"),
+           new String'(Integer'Image (New_Name'Length)));
    begin
       Execute_GPS_Shell_Command
-        (Kernel  => Get_Kernel (Context),
-         Command => "Editor.replace_text " &
-           Full_Name (File).all &
-           Integer'Image (Line) &
-           Integer'Image (Column) &
-           ' ' & New_Name &
-           " 0 " & Integer'Image (New_Name'Length));
+        (Get_Kernel (Context), "Editor.replace_text", Args.all);
+      Free (Args);
    end Set_Casing;
 
    ------------------
