@@ -51,7 +51,7 @@ with OS_Utils;                 use OS_Utils;
 
 package body Shell_Script is
 
-   Me : constant Debug_Handle := Create ("Shell_Script");
+   Me : constant Debug_Handle := Create ("Shell_Script", Off);
 
    Num_Previous_Returns : constant := 9;
    --  Number of parameters %1, %2,... which are used to memorize the result of
