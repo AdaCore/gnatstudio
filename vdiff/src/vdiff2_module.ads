@@ -43,6 +43,10 @@ package Vdiff2_Module is
    Diff_Change_Color      : Param_Spec_Color;
    Diff_Fine_Change_Color : Param_Spec_Color;
 
+   procedure VDiff_Toolbar
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register all vdiff button in gps toolbar
+
    procedure Init_Prev_Diff_Cmd (Diff : Diff_Head);
    --  Initialize for each command the last selected diff
 

@@ -66,14 +66,9 @@ package body Vdiff2_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar      : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Window       : constant Gtk_Window  := Get_Main_Window (Kernel);
+
       Tools        : constant String := '/' & (-"Tools") & '/'
         & (-"Visual Diff") & '/';
-      Image   : Gtk_Image;
-      Mask    : Gdk_Bitmap;
-      PixMap  : Gdk_Pixmap;
-
    begin
       Vdiff_Module_ID := new VDiff2_Module_Record;
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
@@ -195,42 +190,8 @@ package body Vdiff2_Module is
       Register_Menu
         (Kernel, Tools, -"Merge Three Files...", "",
          On_Merge_Three_Files'Access);
-      Append_Space (Toolbar);
 
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Next difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
-         Image, -"Go to the next difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Previous difference",
-         Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
-         Image, -"Go to the previous difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"Last difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
-         Image, -"Go to the last difference");
-
-      Create_From_Xpm_D
-        (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
-      Gtk_New (Image, PixMap, Mask);
-      Register_Button
-        (Kernel, -"First difference",
-         Command_Access
-           (VDiff2_Module (Vdiff_Module_ID).Command_First),
-         Image, -"Go to the first difference");
+      VDiff_Toolbar (Kernel);
 
       Register_Action
         (Kernel,
@@ -378,5 +339,58 @@ package body Vdiff2_Module is
          end if;
       end if;
    end VDiff_Contextual;
+
+   -------------------
+   -- VDiff_Toolbar --
+   -------------------
+
+   procedure VDiff_Toolbar
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Window  : constant Gtk_Window  := Get_Main_Window (Kernel);
+      Image   : Gtk_Image;
+      Mask    : Gdk_Bitmap;
+      PixMap  : Gdk_Pixmap;
+
+   begin
+      Append_Space (Toolbar);
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, down_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button
+        (Kernel, -"Next difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Next),
+         Image, -"Go to the next difference");
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, up_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button
+        (Kernel, -"Previous difference",
+         Command_Access (VDiff2_Module (Vdiff_Module_ID).Command_Prev),
+         Image, -"Go to the previous difference");
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, last_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button
+        (Kernel, -"Last difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_Last),
+         Image, -"Go to the last difference");
+
+      Create_From_Xpm_D
+        (PixMap, Get_Window (Window), Mask, Null_Color, first_diff_xpm);
+      Gtk_New (Image, PixMap, Mask);
+      Register_Button
+        (Kernel, -"First difference",
+         Command_Access
+           (VDiff2_Module (Vdiff_Module_ID).Command_First),
+         Image, -"Go to the first difference");
+
+   end VDiff_Toolbar;
 
 end Vdiff2_Module;
