@@ -948,6 +948,11 @@ package body GVD.Process is
          Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
       end if;
 
+      Child := Put (Process.Process_Mdi, Process.Data_Paned);
+      Set_Title (Child, "Data");
+      Set_Dock_Side (Child, Top);
+      Dock_Child (Child);
+
       --  Set the graphical parameters.
 
       if Is_Regular_File (Window.Gvd_Home_Dir.all
@@ -981,12 +986,6 @@ package body GVD.Process is
       end if;
 
       --  Initialize the pixmaps and colors for the canvas
-
-      Child := Put (Process.Process_Mdi, Process.Data_Paned);
-      Set_Title (Child, "Data");
-      Set_Dock_Side (Child, Top);
-      Dock_Child (Child);
-
       Realize (Process.Data_Canvas);
       Init_Graphics (GVD_Canvas (Process.Data_Canvas));
 
