@@ -80,12 +80,14 @@ with Generic_List;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Gtkada.Intl;         use Gtkada.Intl;
+
 with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
 
    function Select_File
-     (Title          : String := "Select a file";
+     (Title          : String := -"Select a file";
       Base_Directory : String := "") return String;
    --  Create a file selection dialog, display it, and return the absolute file
    --  name that was selected, if any, or return an empty string.
@@ -94,7 +96,7 @@ package Gtkada.File_Selector is
    --  directory.
 
    function Select_Directory
-     (Title          : String := "Select a file";
+     (Title          : String := -"Select a directory";
       Base_Directory : String := "") return String;
    --  Create a directory selection dialog, display it, and return the absolute
    --  name of the selected directory, if any, or return an empty string.
