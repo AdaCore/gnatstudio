@@ -867,7 +867,7 @@ package body KeyManager_Module is
             Launch_Background_Command
               (Kernel, Custom,
                Destroy_On_Exit => False,
-               Active          => False,
+               Active          => True,
                Show_Bar        => False,
                Queue_Id        => "");
             return True;
