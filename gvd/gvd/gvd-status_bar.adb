@@ -152,7 +152,7 @@ package body GVD.Status_Bar is
 
    procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class) is
       Status  : GVD_Status_Bar := GVD_Status_Bar (Widget);
-      X, Y    : Gint;
+      X, Y, W : Gint;
       Success : Boolean;
       Text    : Gtk_Text;
       List    : Messages_List.GSlist := Get_Messages (Status.Status);
@@ -229,15 +229,18 @@ package body GVD.Status_Bar is
          --  ??? The text widget should be able to automatically give a
          --  correct width, but it doesn't.
          Size_Request (Status.History_Win, Requisition);
-         Set_Default_Size
-           (Status.History_Win,
-            Gint'Min (Gint (Get_Allocation_Width (Status.Status)), 500),
-            -1);
-         if Y + Gint (Requisition.Height) > Screen_Height then
-            Y := Gint'Max (0, Screen_Height - Gint (Requisition.Height));
+         W := Gint'Min (Gint (Get_Allocation_Width (Status.Status)), 500);
+         Set_Default_Size (Status.History_Win, W, -1);
+
+         Y := Y - Gint (Requisition.Height);
+         if Y < 0 then
+            Y := 0;
          end if;
 
          X := X + Gint (Get_Allocation_Width (Status.Arrow_Button));
+         if X + W > Screen_Width then
+            X := Gint'Max (0, Screen_Width - W);
+         end if;
 
          Set_UPosition (Status.History_Win, X, Y);
 
