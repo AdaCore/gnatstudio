@@ -594,23 +594,29 @@ package body Codefix.Formal_Errors is
       -----------------
 
       function Delete_With return Extract is
-         New_Extract         : Ada_List;
-         --  With_Info, Use_Info : Construct_Information;
+         New_Extract               : Extract;
+         Extract_Use, Extract_With : Ada_List;
+         Use_Info                  : Construct_Information;
+         Cursor_Use                : File_Cursor := File_Cursor (Cursor);
+         Success                   : Boolean;
 
       begin
-         --  With_Info := Get_Unit (Current_Text, Cursor, Before);
-         --  Use_Info := Search_Unit
-         --    (Current_Text, Cursor.File_Name.all, Cat_Use, Name);
+         Use_Info := Search_Unit
+             (Current_Text, Cursor.File_Name.all, Cat_Use, Name);
 
-         --  Delete (With_Info, "with");
-         --  if Use_Info.Category /= Cat_Unknown then
-         --   Delete (Use_Info, "use");
-         --  end if;
+         Get_Unit (Current_Text, Cursor, Extract_With);
+         Remove_Elements (Extract_With, Name);
 
-         Get_Unit (Current_Text, Cursor, New_Extract);
-         Remove_Elements (New_Extract, Name);
+         if Use_Info.Category /= Cat_Unknown then
+            Cursor_Use.Col := Use_Info.Sloc_Start.Column;
+            Cursor_Use.Line := Use_Info.Sloc_Start.Line;
+            Get_Unit (Current_Text, Cursor_Use, Extract_Use);
+            Remove_Elements (Extract_Use, Name);
+         end if;
 
-         return Extract (New_Extract);
+         Merge (New_Extract, Extract_With, Extract_Use, Current_Text, Success);
+
+         return New_Extract;
 
       end Delete_With;
 
