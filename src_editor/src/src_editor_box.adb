@@ -387,10 +387,18 @@ package body Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String;
+      Filename : String := "";
       Success  : out Boolean) is
    begin
-      Save_To_File (Editor.Source_Buffer, Filename, Success);
+      if Filename = "" then
+         if Editor.Filename = null then
+            Success := False;
+         else
+            Save_To_File (Editor.Source_Buffer, Editor.Filename.all, Success);
+         end if;
+      else
+         Save_To_File (Editor.Source_Buffer, Filename, Success);
+      end if;
    end Save_To_File;
 
    ------------------

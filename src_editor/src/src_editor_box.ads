@@ -103,10 +103,11 @@ package Src_Editor_Box is
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;
-      Filename : String;
+      Filename : String := "";
       Success  : out Boolean);
-   --  Save the buffer to the given file. Success is set to false if the
-   --  buffer could not be saved.
+   --  Save the buffer to the given file.
+   --  Success is set to false if the buffer could not be saved.
+   --  If filename is null, use the filename associated with Editor.
 
    procedure Set_Language
      (Editor : access Source_Editor_Box_Record;
