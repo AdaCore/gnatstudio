@@ -4,3 +4,4 @@
 #include "project_xpm"
 #include "project_modified_xpm"
 #include "mini-folder_object_xpm"
+#include "mini_page_xpm"
