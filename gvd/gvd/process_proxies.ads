@@ -42,6 +42,12 @@ package Process_Proxies is
    --  the external debugger can process a single command at a time, the
    --  callback should not do anything.
 
+   procedure Set_Command_In_Process
+     (Proxy      : access Process_Proxy;
+      In_Process : Boolean := True);
+   --  Set the corresponding Flag in Proxy.
+   --  See Command_In_Process for more details.
+
    function Get_Command_Mode (Proxy : access Process_Proxy)
       return Odd.Types.Command_Type;
    --  Return the type of the command currently processed.
@@ -211,7 +217,7 @@ private
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
 
-      Command_In_Process : Boolean_Access := new Boolean'(False);
+      Command_In_Process : Boolean_Access := new Boolean' (False);
       --  This is implemented as an access type so that Process_Proxy does
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.

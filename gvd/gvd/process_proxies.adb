@@ -86,6 +86,17 @@ package body Process_Proxies is
       return Proxy.Command_In_Process.all;
    end Command_In_Process;
 
+   ----------------------------
+   -- Set_Command_In_Process --
+   ----------------------------
+
+   procedure Set_Command_In_Process
+     (Proxy      : access Process_Proxy;
+      In_Process : Boolean := True) is
+   begin
+      Proxy.Command_In_Process.all := In_Process;
+   end Set_Command_In_Process;
+
    ------------------
    -- Empty_Buffer --
    ------------------
@@ -387,7 +398,7 @@ package body Process_Proxies is
       Tmp     : Post_Process_Access := Proxy.Post_Processes;
 
    begin
-      --  We must reinitialize the list list of post_processes for the proxy
+      --  We must reinitialize the list of post_processes for the proxy
       --  before calling each of the command, otherwise if the command calls
       --  Wait as well, then the same list of post_cmds will be processed
       --  over and over again.
