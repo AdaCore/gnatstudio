@@ -136,7 +136,8 @@ package body Docgen.Work_On_File is
       --  If next package doesn't exist, "" is returned.
 
       function Find_Prev_Package
-        (Package_Nr : Natural) return String;
+        (Package_Nr : Natural;
+         Data       : TSFL.Data_Access) return String;
       --  Returns the name of the previous package in the list
       --  (body files with the same package name are ignored)
       --  If next package doesn't exist, "" is returned.
@@ -149,15 +150,16 @@ package body Docgen.Work_On_File is
         (Package_Nr : Natural) return String
       is
          Local_Node : Type_Source_File_List.List_Node;
-         use TSFL;
+         Local_Data : TSFL.Data_Access;
       begin
          if Package_Nr = Type_Source_File_List.Length (Source_File_List) then
             return "";
          else
             Local_Node := Source_File_Node;
             Local_Node := Next (Source_File_Node);
+            Local_Data := TSFL.Data_Ref (Local_Node);
 
-            if not Is_Spec_File (Kernel, Data (Local_Node).File_Name) then
+            if not Is_Spec_File (Kernel, Local_Data.File_Name) then
                Local_Node := Next (Local_Node);
             end if;
 
@@ -166,7 +168,7 @@ package body Docgen.Work_On_File is
                --  in Write_Not_Regular_Beginning!
                return "";
             else
-               return Data (Local_Node).Package_Name.all;
+               return Local_Data.Package_Name.all;
             end if;
          end if;
       end Find_Next_Package;
@@ -175,20 +177,23 @@ package body Docgen.Work_On_File is
       -- Find_Prev_Package --
       -----------------------
 
-      function Find_Prev_Package (Package_Nr : Natural) return String is
+      function Find_Prev_Package
+        (Package_Nr : Natural;
+         Data       : TSFL.Data_Access) return String
+      is
          Local_Node : Type_Source_File_List.List_Node;
-         use TSFL;
+         Local_Data : TSFL.Data_Access;
       begin
          if Package_Nr = 1
            or else (Package_Nr = 2
-                    and then not Is_Spec_File
-                      (Kernel, TSFL.Data (Source_File_Node).File_Name))
+                    and then not Is_Spec_File (Kernel, Data.File_Name))
          then
             return "";
          else
             Local_Node := Prev (Source_File_List, Source_File_Node);
+            Local_Data := TSFL.Data_Ref (Local_Node);
 
-            if Is_Spec_File (Kernel, Data (Local_Node).File_Name)
+            if Is_Spec_File (Kernel, Local_Data.File_Name)
               and then Options.Process_Body_Files
             then
                Local_Node := Prev (Source_File_List, Local_Node);
@@ -200,7 +205,7 @@ package body Docgen.Work_On_File is
                return "";
 
             else
-               return Data (Local_Node).Package_Name.all;
+               return Local_Data.Package_Name.all;
             end if;
          end if;
       end Find_Prev_Package;
@@ -214,29 +219,31 @@ package body Docgen.Work_On_File is
       J := 1;
       while Source_File_Node /= TSFL.Null_Node loop
          declare
+            Data      : constant TSFL.Data_Access :=
+              TSFL.Data_Ref (Source_File_Node);
             File_Name : constant String := Get_Doc_File_Name
-              (TSFL.Data (Source_File_Node).File_Name,
-               Doc_Directory_Root, Doc_Suffix);
+              (Data.File_Name, Doc_Directory_Root, Doc_Suffix);
+
          begin
             Doc_File := Create_File (File_Name, Binary);
 
             --  Find the next and the previous package name (used for TexInfo)
 
             Next_Package := new String'(Find_Next_Package (J));
-            Prev_Package := new String'(Find_Prev_Package (J));
+            Prev_Package := new String'(Find_Prev_Package (J, Data));
 
             Process_One_File
               (B,
                Doc_File,
                Kernel,
-               TSFL.Data (Source_File_Node).File_Name,
-               TSFL.Data (Source_File_Node).Package_Name.all,
+               Data.File_Name,
+               Data.Package_Name.all,
                Next_Package,
                Prev_Package,
                Source_File_List,
                Options,
                Options.Process_Body_Files and then
-               TSFL.Data (Source_File_Node).Other_File_Found,
+               Data.Other_File_Found,
                Subprogram_Index_List,
                Type_Index_List,
                Tagged_Types_List,
@@ -534,7 +541,8 @@ package body Docgen.Work_On_File is
                   Ref_Node_2 := Next (Ref_Node_1);
 
                   if Is_Equal
-                    (Data (Ref_Node_1).Entity, Data (Ref_Node_2).Entity)
+                    (Data_Ref (Ref_Node_1).Entity,
+                     Data_Ref (Ref_Node_2).Entity)
                   then
                      Remove_Nodes (List, Ref_Node_1, Ref_Node_2);
                   else
@@ -970,8 +978,7 @@ package body Docgen.Work_On_File is
 
                         if Source_File_In_List
                           (Source_File_List,
-                           Get_Declaration_File_Of
-                             (Son_Info.all))
+                           Get_Declaration_File_Of (Son_Info.all))
                         then
                            --  This tagged type is declared,
                            --  we indicate that we must print
@@ -1487,14 +1494,13 @@ package body Docgen.Work_On_File is
                      if Options.Show_Private
                        and then not Entity_Node.Is_Private
                      then
-                        --  For record/enum, we must search if they
-                        --  have private fields. In this case, we
-                        --  must create a new entity in order have
-                        --  documentation about it. In fact, the
-                        --  record itself is public and if this work
+                        --  For record/enum, we must search if they have
+                        --  private fields. In this case, we must create a new
+                        --  entity in order to generate its documentation. In
+                        --  fact, the record itself is public and if this work
                         --  isn't done, only the documentation
                         --  "type X is record with private" is given.
-                        --  The private fiels are forgotten.
+                        --  The private fields are forgotten.
 
                         Get_Scope_Tree (Kernel, Info, Node_Field);
 
@@ -1551,8 +1557,8 @@ package body Docgen.Work_On_File is
                              (Entity_List, Entity_Complete.all);
 
                            if Is_Spec_File (Kernel, Source_Filename)
-                             and then Source_Filename =
-                               Get_Declaration_File_Of (Entity_Complete.Entity)
+                             and then Is_Declaration_File_Of
+                               (Entity_Complete.Entity, Source_Filename)
                            then
                               --  Currently, we add the name of the
                               --  record/enum type. So, this name is
@@ -1561,6 +1567,7 @@ package body Docgen.Work_On_File is
                               --  index list. For the future, it
                               --  would be better to add the fields
                               --  in the private part.
+
                               Type_Entity_List.Append
                                 (Private_Type_Index_List,
                                  Clone (Entity_Complete.all, False));
@@ -1617,9 +1624,7 @@ package body Docgen.Work_On_File is
       end Is_Operator;
 
    begin  -- Process_One_File
-      if Full_Name (Source_Filename) /= null then
-         Trace (Me, "File name: " & Full_Name (Source_Filename).all);
-      end if;
+      Trace (Me, "Generating doc for " & Full_Name (Source_Filename).all);
 
       LI_Unit := Locate_From_Source_And_Complete
         (Kernel, Source_Filename, Check_Timestamp => False);

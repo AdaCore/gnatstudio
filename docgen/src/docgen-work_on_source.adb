@@ -105,7 +105,6 @@ package body Docgen.Work_On_Source is
      (B                : Docgen_Backend.Backend_Handle;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
-      Package_File     : Virtual_File;
       Next_Package     : GNAT.OS_Lib.String_Access;
       Prev_Package     : GNAT.OS_Lib.String_Access;
       Package_Name     : String;
@@ -116,11 +115,10 @@ package body Docgen.Work_On_Source is
    --  subprogram
 
    procedure Process_Close_File
-     (B                : Docgen_Backend.Backend_Handle;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      File_Name        : Virtual_File;
-      Options          : All_Options);
+     (B        : Docgen_Backend.Backend_Handle;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Doc_File : File_Descriptor;
+      Options  : All_Options);
    --  Is always the last subprogram to be called, as it creates the
    --  very end of the documentation by calling the output subprogram
 
@@ -439,7 +437,6 @@ package body Docgen.Work_On_Source is
      (B                : Docgen_Backend.Backend_Handle;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
-      Package_File     : Virtual_File;
       Options          : All_Options);
    --  Will call the output subprogram to create the footer of
    --  the package. This is NOT the same as Process_Close_File,
@@ -498,7 +495,7 @@ package body Docgen.Work_On_Source is
    function Package_Contain_Entity
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List;
-      LI_Unit        : LI_File_Ptr)return Boolean;
+      LI_Unit        : LI_File_Ptr) return Boolean;
    --  Determines if there's entities defined in a the package
 
    function Line_Is_Comment
@@ -567,6 +564,8 @@ package body Docgen.Work_On_Source is
       Entity_Node        : Type_Entity_List.List_Node;
       Found_Main_Package : Boolean;
       Parsed_List        : Construct_List;
+      Entity             : TEL.Data_Access;
+
    begin
       File_Text := Read_File (Source_Filename);
       --  All the file is stored in a string
@@ -580,7 +579,6 @@ package body Docgen.Work_On_Source is
         (B,
          Kernel,
          Doc_File,
-         Source_Filename,
          Next_Package,
          Prev_Package,
          Package_Name,
@@ -597,37 +595,33 @@ package body Docgen.Work_On_Source is
          Process_Body_File,
          Options);
 
-      --  Different ways of process for spec and body files
+      --  Different processing for spec and body files
+
       if Is_Spec_File (Kernel, Source_Filename) then
          if not TEL.Is_Empty (Entity_List) then
-            --  Build of the scope tree.
-            --  True means that only declarations are inserted into the tree
-            --  (references don't needed).
-            --  Tree_Package := Create_Tree (LI_Unit, True);
-
             --  Parse the source file and create the Parsed_List
+
             Parse_Constructs
               (Get_Language_From_File
-                 (Get_Language_Handler (Kernel),
-                  Source_Filename),
+                 (Get_Language_Handler (Kernel), Source_Filename),
                File_Text.all,
                Parsed_List);
 
             --  Research of the entity of the main package
+
             Found_Main_Package := False;
             Entity_Node := TEL.First (Entity_List);
+
             while Entity_Node /= TEL.Null_Node loop
-               if
-               --  Check if the entity is a package
-                 TEL.Data (Entity_Node).Kind = Package_Entity
-                 and then
-               --  the main package itself
-                 To_Lower (TEL.Data (Entity_Node).Name.all) =
-                 To_Lower (Package_Name)
+               Entity := TEL.Data_Ref (Entity_Node);
+
+               if Entity.Kind = Package_Entity
+                 and then To_Lower (Entity.Name.all) = To_Lower (Package_Name)
                then
                   Found_Main_Package := True;
                   exit;
                end if;
+
                Entity_Node := TEL.Next (Entity_Node);
             end loop;
 
@@ -651,6 +645,7 @@ package body Docgen.Work_On_Source is
 
                --  Process types, variables, subprograms, entries, exceptions,
                --  packages (recursive calls for inner packages)
+
                Process_Source_Spec
                  (B,
                   Kernel,
@@ -658,7 +653,7 @@ package body Docgen.Work_On_Source is
                   Source_File_List,
                   Source_Filename,
                   Package_Name,
-                  TEL.Data (Entity_Node).Entity,
+                  Entity.Entity,
                   Entity_List,
                   List_Ref_In_File,
                   Tagged_Types_List,
@@ -672,8 +667,8 @@ package body Docgen.Work_On_Source is
                   File_Text,
                   Parsed_List);
             end if;
+
             Free (Parsed_List);
-            --  Free (Tree_Package);
          end if;
       else
          Process_One_Body_File
@@ -688,17 +683,8 @@ package body Docgen.Work_On_Source is
             Options, Level);
       end if;
 
-      Process_Footer
-        (B, Kernel,
-         Doc_File,
-         Source_Filename,
-         Options);
-      Process_Close_File
-        (B,
-         Kernel,
-         Doc_File,
-         Source_Filename,
-         Options);
+      Process_Footer (B, Kernel, Doc_File, Options);
+      Process_Close_File (B, Kernel, Doc_File, Options);
       Free (File_Text);
 
    exception
@@ -958,7 +944,6 @@ package body Docgen.Work_On_Source is
      (B                : Docgen_Backend.Backend_Handle;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
-      Package_File     : Virtual_File;
       Next_Package     : GNAT.OS_Lib.String_Access;
       Prev_Package     : GNAT.OS_Lib.String_Access;
       Package_Name     : String;
@@ -970,7 +955,6 @@ package body Docgen.Work_On_Source is
          Doc_LI_Unit       => No_LI_File,
          Doc_File_List     => Source_File_List,
          Open_Title        => new String'(Package_Name),
-         Open_File         => Package_File,
          Open_Package_Next => Next_Package,
          Open_Package_Prev => Prev_Package);
    begin
@@ -987,17 +971,15 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Close_File
-     (B                : Docgen_Backend.Backend_Handle;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Doc_File         : File_Descriptor;
-      File_Name        : Virtual_File;
-      Options          : All_Options)
+     (B         : Docgen_Backend.Backend_Handle;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Doc_File  : File_Descriptor;
+      Options   : All_Options)
    is
-      Data_Close : Doc_Info_Close :=
+      Data_Close : Doc_Info_Base :=
         (Doc_Info_Options  => Options,
          Doc_LI_Unit       => No_LI_File,
-         Doc_File_List     => TSFL.Null_List,
-         Close_File_Name   => File_Name);
+         Doc_File_List     => TSFL.Null_List);
 
    begin
       Doc_Close (B, Kernel, Doc_File, Data_Close);
@@ -1043,7 +1025,6 @@ package body Docgen.Work_On_Source is
       Doc_Suffix       : String;
       Level            : in out Natural)
    is
-      use TSFL;
       Source_Filename  : Virtual_File;
       Package_Name     : String_Access;
       Source_File_Node : Type_Source_File_List.List_Node;
@@ -1051,8 +1032,9 @@ package body Docgen.Work_On_Source is
       Data_Package     : Doc_Info_Unit_Index;
       Data_Item        : Doc_Info_Index_Item;
       Data_End         : Doc_Info_End_Of_Index;
+      Data             : TSFL.Data_Access;
 
-      package TSFL renames Type_Source_File_List;
+      use type TSFL.List_Node;
 
       One_Ready        : Integer;
       --  How many files already examined *before* the loop
@@ -1066,7 +1048,8 @@ package body Docgen.Work_On_Source is
       if not TSFL.Is_Empty (Source_File_List) then
          One_Ready := 0;
          Source_File_Node := TSFL.First (Source_File_List);
-         Source_Filename  := TSFL.Data (Source_File_Node).File_Name;
+         Data             := TSFL.Data_Ref (Source_File_Node);
+         Source_Filename  := Data.File_Name;
 
          --  if first body file, take the next one, which must be spec file
          if not Is_Spec_File (Kernel, Source_Filename) then
@@ -1091,11 +1074,11 @@ package body Docgen.Work_On_Source is
          for J in 1 .. Type_Source_File_List.Length (Source_File_List) -
            One_Ready
          loop
-            Source_Filename := TSFL.Data (Source_File_Node).File_Name;
+            Source_Filename := Data.File_Name;
 
             --  Add unit, but only if from a spec file
             if Is_Spec_File (Kernel, Source_Filename) then
-               Package_Name := TSFL.Data (Source_File_Node).Package_Name;
+               Package_Name := Data.Package_Name;
                Data_Item :=
                  (Doc_Info_Options => Options,
                   Doc_LI_Unit      => No_LI_File,
@@ -1112,6 +1095,10 @@ package body Docgen.Work_On_Source is
             end if;
 
             Source_File_Node := TSFL.Next (Source_File_Node);
+
+            if Source_File_Node /= TSFL.Null_Node then
+               Data := TSFL.Data_Ref (Source_File_Node);
+            end if;
          end loop;
       end if;
 
@@ -1148,6 +1135,7 @@ package body Docgen.Work_On_Source is
       Data_Item             : Doc_Info_Index_Item;
       Data_End              : Doc_Info_End_Of_Index;
       Doc_File_Name         : constant String := "index_sub";
+      Entity                : TEL.Data_Access;
 
    begin
       Index_File :=
@@ -1162,7 +1150,6 @@ package body Docgen.Work_On_Source is
       Free (Data_Subprogram.Subprogram_Index_File_Name);
 
       if not TEL.Is_Empty (Subprogram_Index_List) then
-
          if Options.Show_Private then
             --  Title "Public" is set
             Data_Public :=
@@ -1176,18 +1163,17 @@ package body Docgen.Work_On_Source is
 
          --  Public subprograms are printed
          Subprogram_Index_Node := TEL.First (Subprogram_Index_List);
+
          while Subprogram_Index_Node /= TEL.Null_Node loop
-            Source_Filename := Get_Declaration_File_Of
-              (TEL.Data (Subprogram_Index_Node).Entity);
+            Entity := TEL.Data_Ref (Subprogram_Index_Node);
+            Source_Filename := Get_Declaration_File_Of (Entity.Entity);
             Data_Item :=
               (Doc_Info_Options => Options,
                Doc_LI_Unit      => No_LI_File,
                Doc_File_List    => TSFL.Null_List,
-               Item_Name        => new String'
-                 (Get_Name (TEL.Data (Subprogram_Index_Node).Entity)),
+               Item_Name        => new String'(Get_Name (Entity.Entity)),
                Item_File        => Source_Filename,
-               Item_Line        => Get_Declaration_Line_Of
-                 (TEL.Data (Subprogram_Index_Node).Entity),
+               Item_Line        => Get_Declaration_Line_Of (Entity.Entity),
                Item_Doc_File    => new String'
                  (Base_Name
                     (Get_Doc_File_Name
@@ -1201,9 +1187,10 @@ package body Docgen.Work_On_Source is
       end if;
 
       if Options.Show_Private
-        and then
-          not TEL.Is_Empty (Private_Subprogram_Index_List) then
+        and then not TEL.Is_Empty (Private_Subprogram_Index_List)
+      then
          --  Title "Private" is set.
+
          Data_Private :=
            (Doc_Info_Options    => Options,
             Doc_LI_Unit         => No_LI_File,
@@ -1213,19 +1200,19 @@ package body Docgen.Work_On_Source is
          Free (Data_Private.Private_Index_Title);
 
          --  Private subprograms are printed.
+
          Subprogram_Index_Node := TEL.First (Private_Subprogram_Index_List);
+
          while Subprogram_Index_Node /= TEL.Null_Node loop
-            Source_Filename := Get_Declaration_File_Of
-              (TEL.Data (Subprogram_Index_Node).Entity);
+            Entity := TEL.Data_Ref (Subprogram_Index_Node);
+            Source_Filename := Get_Declaration_File_Of (Entity.Entity);
             Data_Item :=
               (Doc_Info_Options => Options,
                Doc_LI_Unit      => No_LI_File,
                Doc_File_List    => TSFL.Null_List,
-               Item_Name        => new String'
-                 (Get_Name (TEL.Data (Subprogram_Index_Node).Entity)),
+               Item_Name        => new String'(Get_Name (Entity.Entity)),
                Item_File        => Source_Filename,
-               Item_Line        => Get_Declaration_Line_Of
-                 (TEL.Data (Subprogram_Index_Node).Entity),
+               Item_Line        => Get_Declaration_Line_Of (Entity.Entity),
                Item_Doc_File    => new String'
                  (Base_Name
                     (Get_Doc_File_Name
@@ -1270,6 +1257,9 @@ package body Docgen.Work_On_Source is
       Data_Item       : Doc_Info_Index_Item;
       Data_End        : Doc_Info_End_Of_Index;
       Doc_File_Name   : constant String := "index_type";
+      Entity          : TEL.Data_Access;
+      File            : VFS.Virtual_File;
+
    begin
       Index_File :=
         Create_File (Doc_Directory & Doc_File_Name & Doc_Suffix, Binary);
@@ -1295,24 +1285,20 @@ package body Docgen.Work_On_Source is
 
          --  Public types are printed
          Type_Index_Node := TEL.First (Type_Index_List);
+
          while Type_Index_Node /= TEL.Null_Node loop
+            Entity := TEL.Data_Ref (Type_Index_Node);
+            File := Get_Declaration_File_Of (Entity.Entity);
             Data_Item :=
               (Doc_Info_Options => Options,
                Doc_LI_Unit      => No_LI_File,
                Doc_File_List    => TSFL.Null_List,
-               Item_Name        => new String'
-                 (Get_Name (TEL.Data (Type_Index_Node).Entity)),
-               Item_File        =>
-                 Get_Declaration_File_Of (TEL.Data (Type_Index_Node).Entity),
-               Item_Line        => Get_Declaration_Line_Of
-                 (TEL.Data (Type_Index_Node).Entity),
+               Item_Name        => new String'(Get_Name (Entity.Entity)),
+               Item_File        => File,
+               Item_Line        => Get_Declaration_Line_Of (Entity.Entity),
                Item_Doc_File    => new String'
                  (Base_Name
-                    (Get_Doc_File_Name
-                       (Get_Declaration_File_Of
-                          (TEL.Data (Type_Index_Node).Entity),
-                        Doc_Directory,
-                        Doc_Suffix))));
+                    (Get_Doc_File_Name (File, Doc_Directory, Doc_Suffix))));
             Doc_Index_Item (B, Kernel, Index_File, Data_Item);
             Free (Data_Item.Item_Doc_File);
             Free (Data_Item.Item_Name);
@@ -1322,9 +1308,10 @@ package body Docgen.Work_On_Source is
       end if;
 
       if Options.Show_Private
-        and then
-          not TEL.Is_Empty (Private_Type_Index_List) then
+        and then not TEL.Is_Empty (Private_Type_Index_List)
+      then
          --  Title "Private" is set.
+
          Data_Private :=
            (Doc_Info_Options    => Options,
             Doc_LI_Unit         => No_LI_File,
@@ -1334,25 +1321,22 @@ package body Docgen.Work_On_Source is
          Free (Data_Private.Private_Index_Title);
 
          --  Private types are printed
+
          Type_Index_Node := TEL.First (Private_Type_Index_List);
+
          while Type_Index_Node /= TEL.Null_Node loop
+            Entity := TEL.Data_Ref (Type_Index_Node);
+            File := Get_Declaration_File_Of (Entity.Entity);
             Data_Item :=
               (Doc_Info_Options => Options,
                Doc_LI_Unit      => No_LI_File,
                Doc_File_List    => TSFL.Null_List,
-               Item_Name        => new String'
-                 (Get_Name (TEL.Data (Type_Index_Node).Entity)),
-               Item_File        =>
-                 Get_Declaration_File_Of (TEL.Data (Type_Index_Node).Entity),
-               Item_Line        => Get_Declaration_Line_Of
-                 (TEL.Data (Type_Index_Node).Entity),
+               Item_Name        => new String'(Get_Name (Entity.Entity)),
+               Item_File        => File,
+               Item_Line        => Get_Declaration_Line_Of (Entity.Entity),
                Item_Doc_File    => new String'
                  (Base_Name
-                    (Get_Doc_File_Name
-                       (Get_Declaration_File_Of
-                          (TEL.Data (Type_Index_Node).Entity),
-                        Doc_Directory,
-                        Doc_Suffix))));
+                    (Get_Doc_File_Name (File, Doc_Directory, Doc_Suffix))));
             Doc_Index_Item (B, Kernel, Index_File, Data_Item);
             Free (Data_Item.Item_Doc_File);
             Free (Data_Item.Item_Name);
@@ -1397,7 +1381,8 @@ package body Docgen.Work_On_Source is
       Doc_File_Name          : constant String := "index_tagged_type";
       Parent_Node            : List_Entity_Handle.List_Node;
       Child_Node             : List_Entity_Handle.List_Node;
-      Tag_Elem               : Tagged_Element;
+      Tag_Elem               : Type_List_Tagged_Element.Data_Access;
+      Entity                 : Entity_Handle;
 
    begin
       Index_File := Create_File
@@ -1428,7 +1413,8 @@ package body Docgen.Work_On_Source is
 
          while Tagged_Type_Index_Node /= Type_List_Tagged_Element.Null_Node
          loop
-            Tag_Elem := Type_List_Tagged_Element.Data (Tagged_Type_Index_Node);
+            Tag_Elem := Type_List_Tagged_Element.Data_Ref
+              (Tagged_Type_Index_Node);
 
             if Tag_Elem.Me /= null and then Tag_Elem.Print_Me then
                --  Print the tagged type itself (only if the field Print_Me
@@ -1454,19 +1440,19 @@ package body Docgen.Work_On_Source is
                     (Tag_Elem.My_Parents);
 
                   while Parent_Node /= List_Entity_Handle.Null_Node loop
-                     if List_Entity_Handle.Data (Parent_Node) /= null then
+                     Entity := List_Entity_Handle.Data (Parent_Node);
+
+                     if Entity /= null then
                         if Source_File_In_List
                           (Source_File_List,
-                           Get_Declaration_File_Of
-                             (List_Entity_Handle.Data (Parent_Node).all))
+                           Get_Declaration_File_Of (Entity.all))
                         then
                            --  Linkage is possible
                            Data_Item :=
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Parent_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Parent_With_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1477,8 +1463,7 @@ package body Docgen.Work_On_Source is
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Parent_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Parent_Without_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1490,8 +1475,7 @@ package body Docgen.Work_On_Source is
                         Free (Data_Item.Suffix);
                      end if;
 
-                     Parent_Node
-                       := List_Entity_Handle.Next (Parent_Node);
+                     Parent_Node := List_Entity_Handle.Next (Parent_Node);
                   end loop;
 
                else
@@ -1516,19 +1500,19 @@ package body Docgen.Work_On_Source is
                     (Tag_Elem.My_Children);
 
                   while Child_Node /= List_Entity_Handle.Null_Node loop
-                     if List_Entity_Handle.Data (Child_Node) /= null then
+                     Entity := List_Entity_Handle.Data (Child_Node);
+
+                     if Entity /= null then
                         if Source_File_In_List
-                          (Source_File_List, Get_Declaration_File_Of
-                             (List_Entity_Handle.Data (Child_Node).all))
+                          (Source_File_List,
+                           Get_Declaration_File_Of (Entity.all))
                         then
                            --  Linkage is possible
                            Data_Item :=
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data
-                                  (Child_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Child_With_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1538,9 +1522,7 @@ package body Docgen.Work_On_Source is
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data
-                                  (Child_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Child_Without_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1580,8 +1562,8 @@ package body Docgen.Work_On_Source is
       if Options.Show_Private
         and then
           not Type_List_Tagged_Element.Is_Empty
-            (Private_Tagged_Types_List) then
-
+            (Private_Tagged_Types_List)
+      then
          Data_Private :=
            (Doc_Info_Options    => Options,
             Doc_LI_Unit         => No_LI_File,
@@ -1595,7 +1577,8 @@ package body Docgen.Work_On_Source is
 
          while Tagged_Type_Index_Node /= Type_List_Tagged_Element.Null_Node
          loop
-            Tag_Elem := Type_List_Tagged_Element.Data (Tagged_Type_Index_Node);
+            Tag_Elem := Type_List_Tagged_Element.Data_Ref
+              (Tagged_Type_Index_Node);
 
             if Tag_Elem.Me /= null and then Tag_Elem.Print_Me then
                --  Print the tagged type itself (only if the field Print_Me
@@ -1620,19 +1603,19 @@ package body Docgen.Work_On_Source is
                     (Tag_Elem.My_Parents);
 
                   while Parent_Node /= List_Entity_Handle.Null_Node loop
-                     if List_Entity_Handle.Data (Parent_Node) /= null then
+                     Entity := List_Entity_Handle.Data (Parent_Node);
+
+                     if Entity /= null then
                         if Source_File_In_List
                           (Source_File_List,
-                           Get_Declaration_File_Of
-                             (List_Entity_Handle.Data (Parent_Node).all))
+                           Get_Declaration_File_Of (Entity.all))
                         then
                            --  Linkage is possible
                            Data_Item :=
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Parent_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Parent_With_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1642,8 +1625,7 @@ package body Docgen.Work_On_Source is
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Parent_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Parent_Without_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1655,8 +1637,7 @@ package body Docgen.Work_On_Source is
                         Free (Data_Item.Suffix);
                      end if;
 
-                     Parent_Node
-                       := List_Entity_Handle.Next (Parent_Node);
+                     Parent_Node := List_Entity_Handle.Next (Parent_Node);
                   end loop;
 
                else
@@ -1681,18 +1662,19 @@ package body Docgen.Work_On_Source is
                     (Tag_Elem.My_Children);
 
                   while Child_Node /= List_Entity_Handle.Null_Node loop
-                     if List_Entity_Handle.Data (Child_Node) /= null then
+                     Entity := List_Entity_Handle.Data (Child_Node);
+
+                     if Entity /= null then
                         if Source_File_In_List
-                          (Source_File_List, Get_Declaration_File_Of
-                             (List_Entity_Handle.Data (Child_Node).all))
+                          (Source_File_List,
+                           Get_Declaration_File_Of (Entity.all))
                         then
                            --  Linkage is possible
                            Data_Item :=
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Child_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Child_With_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1702,8 +1684,7 @@ package body Docgen.Work_On_Source is
                              (Doc_Info_Options => Options,
                               Doc_LI_Unit      => No_LI_File,
                               Doc_File_List    => TSFL.Null_List,
-                              Doc_Tagged_Type  =>
-                                List_Entity_Handle.Data (Child_Node).all,
+                              Doc_Tagged_Type  => Entity.all,
                               Doc_Family       => Child_Without_Link,
                               Directory        => new String'(Doc_Directory),
                               Suffix           => new String'(Doc_Suffix));
@@ -1715,8 +1696,7 @@ package body Docgen.Work_On_Source is
                         Free (Data_Item.Suffix);
                      end if;
 
-                     Child_Node
-                       := List_Entity_Handle.Next (Child_Node);
+                     Child_Node := List_Entity_Handle.Next (Child_Node);
                   end loop;
 
                else
@@ -1769,6 +1749,7 @@ package body Docgen.Work_On_Source is
       Find_Header : Boolean := False;
       Declar_Line : Natural := First_File_Line;
       Entity_Node : Type_Entity_List.List_Node;
+      Entity      : TEL.Data_Access;
       Data_Header : Doc_Info_Header :=
         (Doc_Info_Options => Options,
          Doc_LI_Unit      => No_LI_File,
@@ -1790,24 +1771,19 @@ package body Docgen.Work_On_Source is
          Entity_Node := TEL.First (Entity_List);
 
          while Entity_Node /= TEL.Null_Node loop
-            if TEL.Data (Entity_Node).Kind = Package_Entity
-              and then
-                TEL.Data (Entity_Node).Name /= null
-                and then
-                To_Lower (TEL.Data (Entity_Node).Name.all) =
-              To_Lower (Package_Name)
+            Entity := TEL.Data_Ref (Entity_Node);
+
+            if Entity.Kind = Package_Entity
+              and then Entity.Name /= null
+              and then To_Lower (Entity.Name.all) = To_Lower (Package_Name)
             then
                --  It's a library level package declaration
-               if Get_Declaration_File_Of (TEL.Data (Entity_Node).Entity)
-                 = Source_Filename
-               then
+               if Is_Declaration_File_Of (Entity.Entity, Source_Filename) then
                   --  Clauses with may be above the declaration
                   --  of the main package
-                  Declar_Line := Get_Declaration_Line_Of
-                    (TEL.Data (Entity_Node).Entity);
+                  Declar_Line := Get_Declaration_Line_Of (Entity.Entity);
                else
-                  Declar_Line := Get_Line
-                    (TEL.Data (Entity_Node).Line_In_Body);
+                  Declar_Line := Get_Line (Entity.Line_In_Body);
                end if;
 
                Find_Header := True;
@@ -1852,15 +1828,13 @@ package body Docgen.Work_On_Source is
      (B                : Docgen_Backend.Backend_Handle;
       Kernel           : access Kernel_Handle_Record'Class;
       Doc_File         : File_Descriptor;
-      Package_File     : Virtual_File;
       Options          : All_Options)
    is
       Data_Footer : Doc_Info_Footer :=
         (Doc_Info_Options => Options,
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
-         Footer_Title     => new String'("Docgen"),
-         Footer_File      => Package_File);
+         Footer_Title     => new String'("Docgen"));
    begin
       Doc_Footer (B, Kernel, Doc_File, Data_Footer);
       Free (Data_Footer.Footer_Title);
@@ -2139,6 +2113,7 @@ package body Docgen.Work_On_Source is
       Entity_Info             : Entity_List_Information_Handle;
       Data_Package            : Doc_Info_Package;
       Data_Package_Open_Close : Doc_Info_Package_Open_Close;
+      Entity                  : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2147,82 +2122,60 @@ package body Docgen.Work_On_Source is
          Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is a package
-              TEL.Data (Entity_Node).Kind = Package_Entity
-            --  but NOT the package itself
-              and then
-                To_Lower (TEL.Data (Entity_Node).Name.all)
-              /= To_Lower (Package_Name)
-            --  check if defined in this file, the others used only for bodys!
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is defined in the current package
-              Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                         Package_Information,
-                                         LI_Unit)
+            Entity := TEL.Data_Ref (Entity_Node);
+
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Package_Entity
+              and then To_Lower (Entity.Name.all) /= To_Lower (Package_Name)
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package
+                (Entity.Entity, Package_Information, LI_Unit)
             then
-               if Package_Contain_Entity (TEL.Data (Entity_Node).Entity,
-                                          Entity_List,
-                                          LI_Unit) then
+               if Package_Contain_Entity
+                 (Entity.Entity, Entity_List, LI_Unit)
+               then
                   --  Entities are declared in the current package
                   Header_Temp := Get_Whole_Header
                     (File_Text.all,
                      Parsed_List,
-                     Get_Name (TEL.Data (Entity_Node).Entity),
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                     Get_Name (Entity.Entity),
+                     Get_Declaration_Line_Of (Entity.Entity));
 
                   if Header_Temp /= null then
-                     --  Indent spaces are deleted
-                     Header := Remove_Indent (Header_Temp,
-                                              Level * Get_Indent (B.all));
+                     Header :=
+                       Remove_Indent (Header_Temp, Level * Get_Indent (B.all));
                      Free (Header_Temp);
 
-                     if TEL.Data (Entity_Node).Is_Private and then
-                       not Display_Private
-                     then
+                     if Entity.Is_Private and then not Display_Private then
                         --  Print title "private" required and not done
                         Process_Header_Private
-                          (B,
-                           Kernel,
-                           Doc_File,
-                           Options,
-                           Level);
+                          (B, Kernel, Doc_File, Options, Level);
                         Display_Private := True;
                      end if;
 
                      --  Check if the subtitle "Packages" has already been
                      --  set.
+
                      if not First_Already_Set then
                         Process_Header_Packages
-                          (B,
-                           Kernel,
-                           Doc_File,
-                           Options,
-                           Package_Name,
-                           Level);
+                          (B, Kernel, Doc_File, Options, Package_Name, Level);
                         First_Already_Set := True;
                      end if;
 
                      Description := Extract_Comment
                        (File_Text.all,
-                        Get_Declaration_Line_Of
-                          (TEL.Data (Entity_Node).Entity),
+                        Get_Declaration_Line_Of (Entity.Entity),
                         Count_Lines (Header.all),
                         False,
                         Options);
 
                      --  We save in an Entity_Information the current package
                      --  because it must be removed from Entity_List
+
                      Entity_Info := new Entity_List_Information'
-                       (Clone (TEL.Data (Entity_Node), True));
-                     Name := new String'("package "
-                                         & Get_Name (Entity_Info.all.Entity)
-                                         & " is");
+                       (Clone (Entity.all, True));
+                     Name := new String'
+                       ("package " & Get_Name (Entity_Info.Entity) & " is");
 
                      Data_Package_Open_Close :=
                        (Doc_Info_Options          => Options,
@@ -2231,7 +2184,7 @@ package body Docgen.Work_On_Source is
                         Package_Open_Close_Entity => Entity_Info.all,
                         Package_Open_Close_Header => Name,
                         Package_Open_Close_Header_Line
-                          => Get_Declaration_Line_Of (Entity_Info.all.Entity));
+                          => Get_Declaration_Line_Of (Entity_Info.Entity));
                      Type_Entity_List.Remove_Nodes
                        (Entity_List,
                         Entity_Node_Prec,
@@ -2251,8 +2204,8 @@ package body Docgen.Work_On_Source is
                         Doc_File,
                         Source_File_List,
                         Source_Filename,
-                        Entity_Info.all.Name.all,
-                        Entity_Info.all.Entity,
+                        Entity_Info.Name.all,
+                        Entity_Info.Entity,
                         Entity_List,
                         List_Ref_In_File,
                         Tagged_Types_List,
@@ -2267,8 +2220,8 @@ package body Docgen.Work_On_Source is
                         Parsed_List);
                      Level := Level - 1;
 
-                     Name := new String'("end "
-                                         & Get_Name (Entity_Info.all.Entity));
+                     Name := new String'
+                       ("end " & Get_Name (Entity_Info.Entity));
 
                      Data_Package_Open_Close :=
                        (Doc_Info_Options          => Options,
@@ -2277,7 +2230,7 @@ package body Docgen.Work_On_Source is
                         Package_Open_Close_Entity => Entity_Info.all,
                         Package_Open_Close_Header => Name,
                         Package_Open_Close_Header_Line
-                          => Get_Declaration_Line_Of (Entity_Info.all.Entity));
+                          => Get_Declaration_Line_Of (Entity_Info.Entity));
                      Process_Package_Close
                        (B,
                         Kernel,
@@ -2310,27 +2263,23 @@ package body Docgen.Work_On_Source is
                      Entity_Node_Prec := Entity_Node;
                      Entity_Node := TEL.Next (Entity_Node);
                   end if;
+
                else
                   --  The current package doesn't contain any declarations of
                   --  entities.
+
                   Header_Temp := Get_Whole_Header
                     (File_Text.all,
                      Parsed_List,
-                     Get_Name (TEL.Data (Entity_Node).Entity),
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                     Get_Name (Entity.Entity),
+                     Get_Declaration_Line_Of (Entity.Entity));
 
                   if Header_Temp /= null then
-                     --  Indent spaces are deleted
-                     Header := Remove_Indent (Header_Temp,
-                                              Level * Get_Indent (B.all));
+                     Header := Remove_Indent
+                       (Header_Temp, Level * Get_Indent (B.all));
                      Free (Header_Temp);
 
-                     if TEL.Data (Entity_Node).Is_Private and then
-                       not Display_Private
-                     then
-                        --  It's the first time we met a private entity
-                        --  and we work on the private part, so we put the
-                        --  title "Private"
+                     if Entity.Is_Private and then not Display_Private then
                         Process_Header_Private
                           (B,
                            Kernel,
@@ -2340,8 +2289,6 @@ package body Docgen.Work_On_Source is
                         Display_Private := True;
                      end if;
 
-                     --  Check if the subtitle "Packages" has already been
-                     --  set.
                      if not First_Already_Set then
                         Process_Header_Packages
                           (B,
@@ -2355,8 +2302,7 @@ package body Docgen.Work_On_Source is
 
                      Description := Extract_Comment
                        (File_Text.all,
-                        Get_Declaration_Line_Of
-                          (TEL.Data (Entity_Node).Entity),
+                        Get_Declaration_Line_Of (Entity.Entity),
                         Count_Lines (Header.all),
                         False,
                         Options);
@@ -2365,10 +2311,10 @@ package body Docgen.Work_On_Source is
                        (Doc_Info_Options    => Options,
                         Doc_LI_Unit         => LI_Unit,
                         Doc_File_List       => Source_File_List,
-                        Package_Entity      => TEL.Data (Entity_Node),
+                        Package_Entity      => Entity.all,
                         Package_Header      => Header,
                         Package_Header_Line => Get_Declaration_Line_Of
-                          (TEL.Data (Entity_Node).Entity));
+                          (Entity.Entity));
                      Doc_Package
                        (B, Kernel, Doc_File,
                         List_Ref_In_File, Data_Package, Level);
@@ -2467,6 +2413,7 @@ package body Docgen.Work_On_Source is
       Data_Var          : Doc_Info_Var;
       First_Already_Set : Boolean;
       Delete_Node       : Boolean;
+      Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2475,66 +2422,50 @@ package body Docgen.Work_On_Source is
          Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
+            Entity := TEL.Data_Ref (Entity_Node);
+            Delete_Node := False;
 
-            Delete_Node       := False;
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is a variable
-              TEL.Data (Entity_Node).Kind = Var_Entity
-            --  Check if defined in this file, the others used only for bodys!
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is defined in the current package
-              Entity_Defined_In_Package
-                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Var_Entity
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package
+                (Entity.Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                  Get_Name (Entity.Entity),
+                  Get_Declaration_Line_Of (Entity.Entity));
 
                --  Check if it was an entity with its own header
+
                if Header_Temp /= null then
-                  --  Indent spaces are deleted
                   Header := Remove_Indent
                     (Header_Temp, Level * Get_Indent (B.all));
                   Free (Header_Temp);
 
-                  if TEL.Data (Entity_Node).Is_Private and then
-                    not Display_Private
-                  then
+                  if Entity.Is_Private and then not Display_Private then
                      --  It's the first time we met a private entity
                      --  and we work on the private part, so we put the
                      --  title "Private"
+
                      Process_Header_Private
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Constand and Named Numbers:"
                   --  has been set already.
+
                   if not First_Already_Set then
                      Process_Header_Vars
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Package_Name,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Package_Name, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := Extract_Comment
                     (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (Entity.Entity),
                      Count_Lines (Header.all),
                      False,
                      Options);
@@ -2543,10 +2474,10 @@ package body Docgen.Work_On_Source is
                     (Doc_Info_Options => Options,
                      Doc_LI_Unit      => LI_Unit,
                      Doc_File_List    => Source_File_List,
-                     Var_Entity       => TEL.Data (Entity_Node),
+                     Var_Entity       => Entity.all,
                      Var_Header       => Header,
                      Var_Header_Line  => Get_Declaration_Line_Of
-                       (TEL.Data (Entity_Node).Entity));
+                       (Entity.Entity));
                   Doc_Var
                     (B, Kernel, Doc_File, List_Ref_In_File, Data_Var, Level);
 
@@ -2641,6 +2572,7 @@ package body Docgen.Work_On_Source is
       Data_Exception    : Doc_Info_Exception;
       First_Already_Set : Boolean;
       Delete_Node       : Boolean;
+      Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2650,65 +2582,44 @@ package body Docgen.Work_On_Source is
 
          while Entity_Node /= TEL.Null_Node loop
             Delete_Node := False;
+            Entity := TEL.Data_Ref (Entity_Node);
 
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is an exception
-              TEL.Data (Entity_Node).Kind = Exception_Entity
-            --  Check if defined in this file, the others used only for bodys!
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is defined in the current package
-              Entity_Defined_In_Package
-                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Exception_Entity
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package
+                (Entity.Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                  Get_Name (Entity.Entity),
+                  Get_Declaration_Line_Of (Entity.Entity));
 
                --  Check if it was a entity with its own header
 
                if Header_Temp /= null then
-                  --  Indent spaces are deleted
-                  Header := Remove_Indent (Header_Temp,
-                                           Level * Get_Indent (B.all));
+                  Header := Remove_Indent
+                    (Header_Temp, Level * Get_Indent (B.all));
                   Free (Header_Temp);
 
-                  if TEL.Data (Entity_Node).Is_Private and then
-                    not Display_Private
-                  then
-                     --  It's the first time we met a private entity
-                     --  and we work on the private part, so we put the
-                     --  title "Private"
+                  if Entity.Is_Private and then not Display_Private then
                      Process_Header_Private
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Exceptions:" has been set already.
+
                   if not First_Already_Set then
                      Process_Header_Exceptions
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Package_Name,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Package_Name, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := Extract_Comment
                     (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (Entity.Entity),
                      Count_Lines (Header.all),
                      False,
                      Options);
@@ -2717,10 +2628,10 @@ package body Docgen.Work_On_Source is
                     (Doc_Info_Options      => Options,
                      Doc_LI_Unit           => LI_Unit,
                      Doc_File_List         => Source_File_List,
-                     Exception_Entity      => TEL.Data (Entity_Node),
+                     Exception_Entity      => Entity.all,
                      Exception_Header      => Header,
                      Exception_Header_Line => Get_Declaration_Line_Of
-                       (TEL.Data (Entity_Node).Entity));
+                       (Entity.Entity));
                   Doc_Exception
                     (B, Kernel, Doc_File,
                      List_Ref_In_File, Data_Exception, Level);
@@ -2881,7 +2792,9 @@ package body Docgen.Work_On_Source is
       Data_Type          : Doc_Info_Type;
       First_Already_Set  : Boolean;
       Delete_Node        : Boolean;
-      In_Current_Package : Boolean := False;
+      Entity             : TEL.Data_Access;
+      Kind               : E_Kinds;
+      Info               : Entity_Information;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -2891,15 +2804,13 @@ package body Docgen.Work_On_Source is
 
          while Entity_Node /= TEL.Null_Node loop
             Delete_Node := False;
+            Entity := TEL.Data_Ref (Entity_Node);
 
             --  We search if the type is declared in the current package
-            if TEL.Data (Entity_Node).Public_Declaration
-              = No_Entity_Information
-            then
-               In_Current_Package := Entity_Defined_In_Package
-                 (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit);
+            if Entity.Public_Declaration = No_Entity_Information then
+               Info := Entity.Entity;
             else
-               --  Public entity wich contains private fields.
+               --  Public entity which contains private fields.
                --  In this case, the name of the entity appears in two
                --  elements of Entity_List. One element refers to the
                --  public declaration and the second element refers the
@@ -2908,68 +2819,49 @@ package body Docgen.Work_On_Source is
                --  Public_Declaration leads us to the public declaration.
                --  We need this public declaration because only this one
                --  appears in the scope tree.
-               In_Current_Package := Entity_Defined_In_Package
-                 (TEL.Data (Entity_Node).Public_Declaration,
-                  Package_Info, LI_Unit);
+
+               Info := Entity.Public_Declaration;
             end if;
 
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is a type
-              TEL.Data (Entity_Node).Kind = Type_Entity
-            --  Check if defined in this file (the rest of entities
-            --  only for the body documentation)
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is declared in the current package
-              In_Current_Package
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Type_Entity
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package (Info, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                  Get_Name (Entity.Entity),
+                  Get_Declaration_Line_Of (Entity.Entity));
 
                --  Check if it was a entity with its own header
+
                if Header_Temp /= null then
-                  --  Indent spaces are deleted
-                  Header := Remove_Indent (Header_Temp,
-                                           Level * Get_Indent (B.all));
+                  Header := Remove_Indent
+                    (Header_Temp, Level * Get_Indent (B.all));
                   Free (Header_Temp);
 
-                  if TEL.Data (Entity_Node).Is_Private and then
-                    not Display_Private
-                  then
+                  if Entity.Is_Private and then not Display_Private then
                      --  It's the first time we met a private entity
                      --  and we work on the private part, so we put the
                      --  title "Private"
+
                      Process_Header_Private
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Types:" has to be set.
+
                   if not First_Already_Set then
                      Process_Header_Types
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Package_Name,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Package_Name, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := Extract_Comment
                     (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (Entity.Entity),
                      Count_Lines (Header.all),
                      False,
                      Options);
@@ -2978,10 +2870,10 @@ package body Docgen.Work_On_Source is
                     (Doc_Info_Options => Options,
                      Doc_LI_Unit      => LI_Unit,
                      Doc_File_List    => Source_File_List,
-                     Type_Entity      => TEL.Data (Entity_Node),
+                     Type_Entity      => Entity.all,
                      Type_Header      => Header,
                      Type_Header_Line => Get_Declaration_Line_Of
-                       (TEL.Data (Entity_Node).Entity));
+                       (Entity.Entity));
                   Doc_Type
                     (B, Kernel, Doc_File, List_Ref_In_File, Data_Type, Level);
 
@@ -2995,41 +2887,42 @@ package body Docgen.Work_On_Source is
                         Description.all);
                   end if;
 
+                  Kind := Get_Kind (Entity.Entity).Kind;
+
                   if Options.Tagged_Types
-                    and then
-                      (Get_Kind (TEL.Data (Entity_Node).Entity).Kind
-                         = Record_Kind
-                        --  ??? In Ada, tagged type are classified as Record
-                        --  It must be improved (see also comments in
-                        --  docgen-work_on_file.adb)
-                       or else Get_Kind (TEL.Data (Entity_Node).Entity).Kind
-                         = Class
-                       or else Get_Kind (TEL.Data (Entity_Node).Entity).Kind
-                         = Class_Wide)
-                  --  it's a tagged type
+                     --  ??? In Ada, tagged type are classified as Record
+                     --  It must be improved (see also comments in
+                     --  docgen-work_on_file.adb)
+                    and then (Kind = Record_Kind
+                              or else Kind = Class
+                              or else Kind = Class_Wide)
                   then
+                     --  it's a tagged type
+
                      if Private_Entity then
                         --  List of private tagged types
+
                         Process_One_Family
                           (B,
                            Kernel,
                            Doc_File,
                            Private_Tagged_Types_List,
                            Source_File_List,
-                           TEL.Data (Entity_Node).Entity,
+                           Entity.Entity,
                            Level,
                            Options,
                            Doc_Directory,
                            Doc_Suffix);
                      else
                         --  List of public tagged types
+
                         Process_One_Family
                           (B,
                            Kernel,
                            Doc_File,
                            Tagged_Types_List,
                            Source_File_List,
-                           TEL.Data (Entity_Node).Entity,
+                           Entity.Entity,
                            Level,
                            Options,
                            Doc_Directory,
@@ -3120,6 +3013,7 @@ package body Docgen.Work_On_Source is
       Data_Entry        : Doc_Info_Entry;
       First_Already_Set : Boolean;
       Delete_Node       : Boolean;
+      Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -3128,43 +3022,29 @@ package body Docgen.Work_On_Source is
          Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
+            Entity := TEL.Data_Ref (Entity_Node);
             Delete_Node := False;
 
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is a entry or entry family
-              TEL.Data (Entity_Node).Kind = Entry_Entity
-            --  Check if defined in this file (the rest of
-            --  entities only for the body documentation)
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is defined in the current package
-              Entity_Defined_In_Package
-                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Entry_Entity
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package
+                (Entity.Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                  Get_Name (Entity.Entity),
+                  Get_Declaration_Line_Of (Entity.Entity));
 
                --  Check if it was a entity with its own header
 
                if Header_Temp /= null then
-                  --  Indent spaces are deleted
-                  Header := Remove_Indent (Header_Temp,
-                                           Level * Get_Indent (B.all));
+                  Header := Remove_Indent
+                    (Header_Temp, Level * Get_Indent (B.all));
                   Free (Header_Temp);
 
-                  if TEL.Data (Entity_Node).Is_Private and then
-                    not Display_Private
-                  then
-                     --  It's the first time we met a private entity
-                     --  and we work on the private part, so we put the
-                     --  title "Private"
+                  if Entity.Is_Private and then not Display_Private then
                      Process_Header_Private
                        (B,
                         Kernel,
@@ -3175,6 +3055,7 @@ package body Docgen.Work_On_Source is
                   end if;
 
                   --  Check if the subtitle has to be set.
+
                   if not First_Already_Set then
                      Process_Header_Entries
                        (B,
@@ -3188,7 +3069,7 @@ package body Docgen.Work_On_Source is
 
                   Description := Extract_Comment
                     (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (Entity.Entity),
                      Count_Lines (Header.all),
                      False,
                      Options);
@@ -3197,11 +3078,11 @@ package body Docgen.Work_On_Source is
                     (Doc_Info_Options  => Options,
                      Doc_LI_Unit       => LI_Unit,
                      Doc_File_List     => Source_File_List,
-                     Entry_Entity      => TEL.Data (Entity_Node),
+                     Entry_Entity      => Entity.all,
                      Entry_Link        => Process_Body_File,
                      Entry_Header      => Header,
                      Entry_Header_Line => Get_Declaration_Line_Of
-                       (TEL.Data (Entity_Node).Entity));
+                       (Entity.Entity));
                   Doc_Entry
                     (B, Kernel, Doc_File, List_Ref_In_File, Data_Entry, Level);
 
@@ -3214,6 +3095,7 @@ package body Docgen.Work_On_Source is
                         Level,
                         Description.all);
                   end if;
+
                   Delete_Node := True;
                   Free (Header);
                   Free (Description);
@@ -3290,6 +3172,8 @@ package body Docgen.Work_On_Source is
          References_Directory        => new String'(Doc_Directory),
          References_Suffix           => new String'(Doc_Suffix));
       Doc_References (B, Kernel, Doc_File, Data, Level);
+      Free (Data.References_Directory);
+      Free (Data.References_Suffix);
    end Process_References;
 
    -------------------------
@@ -3326,6 +3210,7 @@ package body Docgen.Work_On_Source is
       Data_Subprogram   : Doc_Info_Subprogram;
       First_Already_Set : Boolean;
       Delete_Node       : Boolean;
+      Entity            : TEL.Data_Access;
 
    begin
       if not TEL.Is_Empty (Entity_List) then
@@ -3334,67 +3219,45 @@ package body Docgen.Work_On_Source is
          Entity_Node_Prec := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            Delete_Node       := False;
+            Entity := TEL.Data_Ref (Entity_Node);
+            Delete_Node := False;
 
-            if
-            --  Private and public entities are processed separately
-              TEL.Data (Entity_Node).Is_Private = Private_Entity
-              and then
-            --  Check if the entity is a procedure or a function
-              TEL.Data (Entity_Node).Kind = Subprogram_Entity
-            --  Check if defined in this file (the rest of
-            --  entities only for the body documentation)
-              and then Get_Declaration_File_Of
-                (TEL.Data (Entity_Node).Entity) = Source_Filename
-              and then
-            --  The entity is defined in the current package
-              Entity_Defined_In_Package
-                (TEL.Data (Entity_Node).Entity, Package_Info, LI_Unit)
+            if Entity.Is_Private = Private_Entity
+              and then Entity.Kind = Subprogram_Entity
+              and then Is_Declaration_File_Of (Entity.Entity, Source_Filename)
+              and then Entity_Defined_In_Package
+                (Entity.Entity, Package_Info, LI_Unit)
             then
                Header_Temp := Get_Whole_Header
                  (File_Text.all,
                   Parsed_List,
-                  Get_Name (TEL.Data (Entity_Node).Entity),
-                  Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity));
+                  Get_Name (Entity.Entity),
+                  Get_Declaration_Line_Of (Entity.Entity));
 
-               --  Check if it was a entity with its own header
+               --  Check if it was an entity with its own header
+
                if Header_Temp /= null then
-                  --  Indent spaces are deleted
-                  Header := Remove_Indent (Header_Temp,
-                                           Level * Get_Indent (B.all));
+                  Header := Remove_Indent
+                    (Header_Temp, Level * Get_Indent (B.all));
                   Free (Header_Temp);
 
-                  if TEL.Data (Entity_Node).Is_Private and then
-                    not Display_Private
-                  then
-                     --  It's the first time we met a private entity
-                     --  and we work on the private part, so we put the
-                     --  title "Private"
-
+                  if Entity.Is_Private and then not Display_Private then
                      Process_Header_Private
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Level);
                      Display_Private := True;
                   end if;
 
                   --  Check if the subtitle "Subprograms:" has to be set.
+
                   if not First_Already_Set then
                      Process_Header_Subprograms
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Package_Name,
-                        Level);
+                       (B, Kernel, Doc_File, Options, Package_Name, Level);
                      First_Already_Set := True;
                   end if;
 
                   Description := Extract_Comment
                     (File_Text.all,
-                     Get_Declaration_Line_Of (TEL.Data (Entity_Node).Entity),
+                     Get_Declaration_Line_Of (Entity.Entity),
                      Count_Lines (Header.all),
                      False,
                      Options);
@@ -3403,13 +3266,12 @@ package body Docgen.Work_On_Source is
                     (Doc_Info_Options       => Options,
                      Doc_LI_Unit            => LI_Unit,
                      Doc_File_List          => Source_File_List,
-                     Subprogram_Entity      => TEL.Data (Entity_Node),
+                     Subprogram_Entity      => Entity.all,
                      Subprogram_Link        => Process_Body_File,
                      Subprogram_List        => Entity_List,
                      Subprogram_Header      => Header,
                      Subprogram_Header_Line =>
-                       Get_Declaration_Line_Of
-                         (TEL.Data (Entity_Node).Entity));
+                       Get_Declaration_Line_Of (Entity.Entity));
 
                   Doc_Subprogram
                     (B, Kernel, Doc_File,
@@ -3417,16 +3279,12 @@ package body Docgen.Work_On_Source is
 
                   if Description.all /= "" then
                      Process_Description
-                       (B,
-                        Kernel,
-                        Doc_File,
-                        Options,
-                        Level,
-                        Description.all);
+                       (B, Kernel, Doc_File, Options, Level, Description.all);
                   end if;
 
                   if Options.References then
                      --  Callgraph is processed
+
                      Process_References
                        (B,
                         Kernel,
@@ -3436,7 +3294,7 @@ package body Docgen.Work_On_Source is
                         Doc_Directory,
                         Doc_Suffix,
                         Level,
-                        TEL.Data (Entity_Node));
+                        Entity.all);
                   end if;
 
                   Delete_Node := True;
@@ -3446,7 +3304,6 @@ package body Docgen.Work_On_Source is
             end if;
 
             if Delete_Node then
-
                Type_Entity_List.Remove_Nodes
                  (Entity_List,
                   Entity_Node_Prec,
@@ -3480,22 +3337,29 @@ package body Docgen.Work_On_Source is
    begin
       Temp := Find_Entity_Scope (LI_Unit, Entity_Info);
 
-      --  Research of Entity_Info in the scope tree
+      --  Search of Entity_Info in the scope tree
+
       if Temp /= Null_Scope_Tree_Node then
-         --  We get the entity in wich Entity_Info is declared
+         --  We get the entity in which Entity_Info is declared
+
          Temp_Node := Get_Parent (Temp);
+
          if Temp_Node /= Null_Scope_Tree_Node then
             Temp_Entity := Get_Entity (Temp_Node);
+
             if Temp_Entity /= No_Entity_Information then
                if Is_Equal (Temp_Entity, Package_Container) then
                   --  Entity_Info is declared in the given package
+
                   Free (Temp_Entity);
                   return True;
                end if;
+
                Free (Temp_Entity);
             end if;
          end if;
       end if;
+
       return False;
    end Entity_Defined_In_Package;
 
@@ -3506,25 +3370,28 @@ package body Docgen.Work_On_Source is
    function Package_Contain_Entity
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List;
-      LI_Unit        : LI_File_Ptr)return Boolean
+      LI_Unit        : LI_File_Ptr) return Boolean
    is
       use TEL;
       Entity_Node : Type_Entity_List.List_Node;
    begin
       if not TEL.Is_Empty (Entity_List) then
          Entity_Node := TEL.First (Entity_List);
+
          while Entity_Node /= TEL.Null_Node loop
-            if Entity_Defined_In_Package (TEL.Data (Entity_Node).Entity,
-                                          Package_Entity,
-                                          LI_Unit)
+            if Entity_Defined_In_Package
+              (TEL.Data_Ref (Entity_Node).Entity, Package_Entity, LI_Unit)
             then
                --  The given package contains at least one declaration of an
                --  element of Entity_List
+
                return True;
             end if;
+
             Entity_Node := TEL.Next (Entity_Node);
          end loop;
       end if;
+
       return False;
    end Package_Contain_Entity;
 
