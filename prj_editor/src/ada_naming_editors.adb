@@ -190,8 +190,8 @@ package body Ada_Naming_Editors is
       Project : Prj.Tree.Project_Node_Id) return Boolean
    is
       Num_Rows : constant Gint := Get_Rows (Editor.Exception_List);
-      Naming : constant String := Get_Name_String (Name_Naming);
-      Scenar : Project_Node_Array := Scenario_Variables (Kernel);
+      Naming   : constant String := Get_Name_String (Name_Naming);
+      Scenar   : constant Project_Node_Array := Scenario_Variables (Kernel);
    begin
       --  Eliminate all the Ada-related attributes.
       Delete_Attribute
@@ -318,7 +318,7 @@ package body Ada_Naming_Editors is
       Project_View       : Prj.Project_Id;
       Display_Exceptions : Boolean := True)
    is
-      Data  : Naming_Data := Prj.Projects.Table (Project_View).Naming;
+      Data  : constant Naming_Data := Prj.Projects.Table (Project_View).Naming;
       Value : Variable_Value;
       Elem  : Array_Element_Id;
       Row   : Gint;
@@ -491,4 +491,3 @@ package body Ada_Naming_Editors is
    end Clear_Body_Name;
 
 end Ada_Naming_Editors;
-

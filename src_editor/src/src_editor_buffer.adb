@@ -56,7 +56,7 @@ package body Src_Editor_Buffer is
 
    use type System.Address;
 
-   Me : Debug_Handle := Create ("Source_Editor_Buffer");
+   Me : constant Debug_Handle := Create ("Source_Editor_Buffer");
 
    -----------------
    -- Preferences --
@@ -783,8 +783,9 @@ package body Src_Editor_Buffer is
       procedure Local_Highlight is
          C_Str : constant Interfaces.C.Strings.chars_ptr :=
            Get_Slice (Entity_Start, Entity_End);
-         Len   : Natural := Natural (Strlen (C_Str));
-         Slice : Unchecked_String_Access := To_Unchecked_String (C_Str);
+         Len   : constant Natural := Natural (Strlen (C_Str));
+         Slice : constant Unchecked_String_Access :=
+           To_Unchecked_String (C_Str);
          pragma Suppress (Access_Check, Slice);
 
       begin
@@ -1422,7 +1423,7 @@ package body Src_Editor_Buffer is
       End_Line     : Gint := -1;
       End_Column   : Gint := -1) return String
    is
-      Str : Gtkada.Types.Chars_Ptr :=
+      Str : constant Gtkada.Types.Chars_Ptr :=
         Get_Slice (Buffer, Start_Line, Start_Column, End_Line, End_Column);
       S   : constant String := Value (Str);
 
@@ -1442,8 +1443,8 @@ package body Src_Editor_Buffer is
       Text        : String;
       Enable_Undo : Boolean := True)
    is
-      Iter : Gtk_Text_Iter;
-      Previous_Inserting_Value : Boolean := Buffer.Inserting;
+      Iter                     : Gtk_Text_Iter;
+      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
@@ -1472,10 +1473,10 @@ package body Src_Editor_Buffer is
       Length      : Gint;
       Enable_Undo : Boolean := True)
    is
-      Iter     : Gtk_Text_Iter;
-      End_Iter : Gtk_Text_Iter;
-      Result   : Boolean;
-      Previous_Inserting_Value : Boolean := Buffer.Inserting;
+      Iter                     : Gtk_Text_Iter;
+      End_Iter                 : Gtk_Text_Iter;
+      Result                   : Boolean;
+      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
    begin
       pragma Assert (Is_Valid_Position (Buffer, Line, Column));
 
@@ -1508,9 +1509,10 @@ package body Src_Editor_Buffer is
       Text         : String;
       Enable_Undo  : Boolean := True)
    is
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Previous_Inserting_Value : Boolean := Buffer.Inserting;
+      Start_Iter               : Gtk_Text_Iter;
+      End_Iter                 : Gtk_Text_Iter;
+      Previous_Inserting_Value : constant Boolean := Buffer.Inserting;
+
    begin
       pragma Assert (Is_Valid_Position (Buffer, Start_Line, Start_Column));
       pragma Assert (Is_Valid_Position (Buffer, End_Line, End_Column));

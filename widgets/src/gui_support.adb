@@ -64,9 +64,9 @@ package body Gui_Support is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint)
    is
-      M           : Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
       Iter, Tmp   : Gtk_Tree_Iter;
-      Path_String : String := Get_String (Nth (Params, 1));
+      Path_String : constant String := Get_String (Nth (Params, 1));
 
    begin
       Iter := Get_Iter_From_String (M, Path_String);
@@ -111,10 +111,11 @@ package body Gui_Support is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint)
    is
-      M             : Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      M             : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
       Iter          : Gtk_Tree_Iter;
       Path_String   : constant String := Get_String (Nth (Params, 1));
-      Text_Value    : GValue := Nth (Params, 2);
+      Text_Value    : constant GValue := Nth (Params, 2);
+
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);

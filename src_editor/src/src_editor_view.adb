@@ -51,7 +51,7 @@ with Unchecked_Deallocation;
 
 package body Src_Editor_View is
 
-   Me : Debug_Handle := Create ("Source_View");
+   Me : constant Debug_Handle := Create ("Source_View");
 
    use type Pango.Font.Pango_Font_Description;
    package Source_Buffer_Callback is new Gtk.Handlers.User_Callback
@@ -196,7 +196,7 @@ package body Src_Editor_View is
       Event    : Gdk_Event) return Boolean
    is
       pragma Unreferenced (Event);
-      The_View : Source_View := Source_View (View);
+      The_View : constant Source_View := Source_View (View);
    begin
       Delete (The_View);
       return False;
@@ -346,7 +346,7 @@ package body Src_Editor_View is
 
             if View.Real_Lines'Last < Bottom_Line then
                declare
-                  A : Natural_Array := View.Real_Lines.all;
+                  A : constant Natural_Array := View.Real_Lines.all;
                begin
                   View.Real_Lines := new Natural_Array
                     (1 .. Bottom_Line * 2);
@@ -822,7 +822,7 @@ package body Src_Editor_View is
    begin
       if Line not in View.Real_Lines'Range then
          declare
-            A : Natural_Array := View.Real_Lines.all;
+            A : constant Natural_Array := View.Real_Lines.all;
          begin
             View.Real_Lines := new Natural_Array
               (1 .. Line * 2);
@@ -1183,7 +1183,7 @@ package body Src_Editor_View is
 
          if View.Original_Lines_Number > View.Real_Lines'Last then
             declare
-               A : Natural_Array := View.Real_Lines.all;
+               A : constant Natural_Array := View.Real_Lines.all;
             begin
                View.Real_Lines := new Natural_Array
                  (1 .. Number * 2);
