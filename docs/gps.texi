@@ -4,6 +4,7 @@
 @c %**start of header
 @setfilename gps.info
 @settitle Using the GNAT Programming System
+@setchapternewpage odd
 @syncodeindex fn cp
 
 @set GPS
