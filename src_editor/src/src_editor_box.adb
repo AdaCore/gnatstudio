@@ -1850,10 +1850,11 @@ package body Src_Editor_Box is
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
       Lang_Autodetect : Boolean := True;
+      Force_Focus     : Boolean := True;
       Success         : out Boolean) is
    begin
       Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
-      Set_Cursor_Location (Editor, 1, 1);
+      Set_Cursor_Location (Editor, 1, 1, Force_Focus);
 
       if Success then
          Set_Filename (Editor.Source_Buffer, Filename);

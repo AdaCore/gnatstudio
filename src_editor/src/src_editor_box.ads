@@ -120,6 +120,7 @@ package Src_Editor_Box is
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
       Lang_Autodetect : Boolean := True;
+      Force_Focus     : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then
    --  the editor tries to automatically set the language based on the
