@@ -79,12 +79,6 @@ package Glide_Kernel.Scripts is
    --  the user. This is used when analysing the contents of a hook for
    --  instance
 
---     function Subprogram_From_Action
---       (Action : Glide_Kernel.Actions.Action_Record_Access)
---        return Subprogram_Type;
-   --  Not implemented, but left here for documentation purposes:
-   --  A GPS action is the same thing as a subprogram_type for the GPS shell
-
    -----------------
    -- Class types --
    -----------------
