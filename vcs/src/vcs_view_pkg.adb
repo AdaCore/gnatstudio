@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -434,7 +434,7 @@ package body VCS_View_Pkg is
      (Explorer : access VCS_View_Record'Class;
       Name     : String) return Gtk_Tree_Iter
    is
-      Iter : Gtk_Tree_Iter := Get_Iter_Root (Explorer.Model);
+      Iter : Gtk_Tree_Iter := Get_Iter_First (Explorer.Model);
    begin
       while Iter /= Null_Iter loop
          if Get_String (Explorer.Model, Iter, Name_Column) = Name then
