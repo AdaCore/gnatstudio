@@ -466,28 +466,6 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Dep_Browser_Show_Implicit_Dep),
          -"Browsers:File Dependencies");
 
-      -- VCS --
-
-      VCS_Commit_File_Check := Param_Spec_String (Gnew_String
-        (Name    => "VCS-Commit-File-Check",
-         Default => "",
-         Blurb   => -("Script called with one source file as argument,"
-                      & " before a VCS commit operation"),
-         Nick    => -"Commit file check"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (VCS_Commit_File_Check),
-         -"VCS:General");
-
-      VCS_Commit_Log_Check := Param_Spec_String (Gnew_String
-        (Name    => "VCS-Commit-Log-Check",
-         Default => "",
-         Blurb   => -("Script that will be called with one log file as"
-                      & " argument before a VCS Commit operations"),
-         Nick    => -"Commit log check"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (VCS_Commit_Log_Check),
-         -"VCS:General");
-
       -- CVS --
 
       CVS_Command := Param_Spec_String (Gnew_String

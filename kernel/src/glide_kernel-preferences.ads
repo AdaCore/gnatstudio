@@ -141,8 +141,6 @@ package Glide_Kernel.Preferences is
    Dep_Browser_Show_Implicit_Dep : Param_Spec_Boolean;
 
    -- VCS --
-   VCS_Commit_File_Check : Param_Spec_String;
-   VCS_Commit_Log_Check  : Param_Spec_String;
    CVS_Command           : Param_Spec_String;
 
    --  Debugger preferences are registered in GVD.Preferences
