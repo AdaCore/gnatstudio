@@ -10,6 +10,22 @@ package body Src_Info.Queries is
    --  Line, Column, and Filename. The filename comparison is done after
    --  comparing the position for better performance.
 
+   procedure Find_Next_Body_Ref
+     (Decl            : E_Declaration_Info;
+      Ref             : E_Reference_List := null;
+      File_Name_Found : out String_Access;
+      Start_Line      : out Positive;
+      Start_Column    : out Positive;
+      End_Line        : out Positive;
+      End_Column      : out Positive);
+   --  Search for the body reference to the given declaration immediately
+   --  following the given reference. If there is none then return the
+   --  location of the declaration.
+   --
+   --  As a special case, if Ref is null, we search for the first body
+   --  reference. If none, then return an xref failure (null File_Name_Found,
+   --  etc).
+
    procedure Find_Spec_Or_Body
      (Decl            : E_Declaration_Info_List;
       File_Name       : String;
@@ -39,6 +55,63 @@ package body Src_Info.Queries is
         and then Get_Source_Filename (Location.File) = File_Name;
    end Location_Matches;
 
+   ------------------------
+   -- Find_Next_Body_Ref --
+   ------------------------
+
+   procedure Find_Next_Body_Ref
+     (Decl            : E_Declaration_Info;
+      Ref             : E_Reference_List := null;
+      File_Name_Found : out String_Access;
+      Start_Line      : out Positive;
+      Start_Column    : out Positive;
+      End_Line        : out Positive;
+      End_Column      : out Positive)
+   is
+      Last_Body_Ref : E_Reference_List;
+      Current_Ref   : E_Reference_List;
+      Entity_Name   : String renames Decl.Declaration.Name.all;
+   begin
+      --  Search the body reference immediately placed after the given
+      --  Ref. Note that the references are stored in _reverse_ order...
+      Current_Ref := Decl.References;
+      while Current_Ref /= Ref and then Current_Ref /= null loop
+         --  The test against null is just a guard against programing errors,
+         --  just in case we are given a ref which is not part of the reference
+         --  list of Decl...
+         if Current_Ref.Value.Kind = Body_Entity then
+            Last_Body_Ref := Current_Ref;
+         end if;
+         Current_Ref := Current_Ref.Next;
+      end loop;
+
+      if Last_Body_Ref = null and then Ref /= null then
+         --  Case where we are on one of the body entities references and did
+         --  not find a next body entity reference, so return the location
+         --  of the declaration...
+         File_Name_Found := new String'
+           (Get_Source_Filename (Decl.Declaration.Location.File));
+         Start_Line := Decl.Declaration.Location.Line;
+         Start_Column := Decl.Declaration.Location.Column;
+         End_Line := Start_Line;
+         End_Column := Start_Column + Entity_Name'Length;
+
+      elsif Last_Body_Ref /= null then
+         --  Case where we found a body entity reference. Return its location.
+         File_Name_Found := new String'
+           (Get_Source_Filename (Last_Body_Ref.Value.Location.File));
+         Start_Line   := Last_Body_Ref.Value.Location.Line;
+         Start_Column := Last_Body_Ref.Value.Location.Column;
+         End_Line     := Start_Line;
+         End_Column   := Start_Column + Entity_Name'Length;
+
+      else
+         --  Case where we are located at the declaration itself, and could
+         --  not find any body reference. Return no location.
+         File_Name_Found := null;
+      end if;
+   end Find_Next_Body_Ref;
+
    -----------------------
    -- Find_Spec_Or_Body --
    -----------------------
@@ -65,8 +138,19 @@ package body Src_Info.Queries is
          --  Xref lists
          if Current_Decl.Value.Declaration.Name.all = Entity_Name then
 
-            --  ??? For the moment, just implement the search declaration
-            --  ??? of the job. The rest should be added fairly easily...
+            --  Check if the location corresponds to the declaration,
+            --  in which case we need to jump to the first body.
+            if Location_Matches
+              (Current_Decl.Value.Declaration.Location,
+               File_Name, Line, Column)
+            then
+               Find_Next_Body_Ref
+                 (Current_Decl.Value, null, File_Name_Found,
+                  Start_Line, Start_Column, End_Line, End_Column);
+               exit Decl_Loop;
+            end if;
+
+            --  Search in the list of references.
             Current_Ref := Current_Decl.Value.References;
             Ref_Loop :
             while Current_Ref /= null loop
@@ -74,14 +158,25 @@ package body Src_Info.Queries is
                if Location_Matches
                     (Current_Ref.Value.Location, File_Name, Line, Column)
                then
-                  File_Name_Found := new String'
-                    (Get_Source_Filename
-                      (Current_Decl.Value.Declaration.Location.File));
-                  Start_Line := Current_Decl.Value.Declaration.Location.Line;
-                  Start_Column :=
-                    Current_Decl.Value.Declaration.Location.Column;
-                  End_Line := Start_Line;
-                  End_Column := Start_Column + Entity_Name'Length;
+                  --  If this is a body reference, then we try to navigate
+                  --  to the next body reference.
+                  if Current_Ref.Value.Kind = Body_Entity then
+                     Find_Next_Body_Ref
+                       (Current_Decl.Value, Current_Ref, File_Name_Found,
+                        Start_Line, Start_Column, End_Line, End_Column);
+                  else
+                     --  This is a non-body entity reference, so jump to the
+                     --  declaration
+                     File_Name_Found := new String'
+                       (Get_Source_Filename
+                         (Current_Decl.Value.Declaration.Location.File));
+                     Start_Line :=
+                       Current_Decl.Value.Declaration.Location.Line;
+                     Start_Column :=
+                       Current_Decl.Value.Declaration.Location.Column;
+                     End_Line := Start_Line;
+                     End_Column := Start_Column + Entity_Name'Length;
+                  end if;
                   exit Decl_Loop;
                end if;
 
