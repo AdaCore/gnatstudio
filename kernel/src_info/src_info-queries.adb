@@ -579,7 +579,7 @@ package body Src_Info.Queries is
          Entity := No_Entity_Information;
          Trace (Me, "Couldn't find a valid xref for " & Entity_Name
                 & " line=" & Line'Img & " Column=" & Column'Img
-                & " file=" & Base_Name (File_Name)
+                & " file=" & Full_Name (File_Name).all
                 & " Status=" & Status'Img);
       end if;
 
@@ -2510,7 +2510,7 @@ package body Src_Info.Queries is
          Iterator.Source_Files := Get_Source_Files
            (Current (Iterator.Importing),
             Recursive => False,
-            Full_Path => False);
+            Full_Path => True);
          Iterator.Current_File := Iterator.Source_Files'First - 1;
       end loop;
 
@@ -2596,7 +2596,7 @@ package body Src_Info.Queries is
          Iterator.Source_Files := Get_Source_Files
            (Current (Iterator.Importing),
             Recursive => False,
-            Full_Path => False);
+            Full_Path => True);
       end if;
 
       Iterator.Current_File := Iterator.Source_Files'First - 1;
