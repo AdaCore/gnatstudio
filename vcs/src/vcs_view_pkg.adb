@@ -1049,6 +1049,7 @@ package body VCS_View_Pkg is
                From_Path => False);
          end if;
 
+         Unref (Selection_Context_Access (Context));
          return True;
       end if;
 
