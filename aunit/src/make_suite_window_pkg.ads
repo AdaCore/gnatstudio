@@ -34,13 +34,15 @@ with Gtk.Clist; use Gtk.Clist;
 with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Explorer_Pkg; use Explorer_Pkg;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+
+with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 package Make_Suite_Window_Pkg is
 
+
    type Make_Suite_Window_Record is new Gtk_Window_Record with record
-      Explorer : Explorer_Access;
+      Explorer : File_Selector_Window_Access;
       Name     : String_Access;
 
       Vbox1 : Gtk_Vbox;
@@ -52,11 +54,19 @@ package Make_Suite_Window_Pkg is
       Vbox4 : Gtk_Vbox;
       Label2 : Gtk_Label;
       Hbox2 : Gtk_Hbox;
-      Scrolledwindow2 : Gtk_Scrolled_Window;
+      Vbox11 : Gtk_Vbox;
+      Hbox5 : Gtk_Hbox;
+      Vbox12 : Gtk_Vbox;
+      Label7 : Gtk_Label;
+      Vbox13 : Gtk_Vbox;
+      Entry1 : Gtk_Entry;
+      Hbox8 : Gtk_Hbox;
+      Vbox14 : Gtk_Vbox;
+      Label8 : Gtk_Label;
+      Hbox6 : Gtk_Hbox;
       Test_List : Gtk_Clist;
       Label5 : Gtk_Label;
       Label6 : Gtk_Label;
-      Label7 : Gtk_Label;
       Vbuttonbox1 : Gtk_Vbutton_Box;
       Add : Gtk_Button;
       Remove : Gtk_Button;
@@ -64,6 +74,7 @@ package Make_Suite_Window_Pkg is
       Ok : Gtk_Button;
       Cancel : Gtk_Button;
       Help : Gtk_Button;
+      Scrolledwindow2 : Gtk_Scrolled_Window;
    end record;
    type Make_Suite_Window_Access is access all Make_Suite_Window_Record'Class;
 

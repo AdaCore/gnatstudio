@@ -52,6 +52,8 @@ begin
    Set_Policy (Make_Suite_Window, False, True, False);
    Set_Position (Make_Suite_Window, Win_Pos_None);
    Set_Modal (Make_Suite_Window, False);
+   Set_Default_Size (Make_Suite_Window, 500, 300);
+
    Return_Callback.Connect
      (Make_Suite_Window, "delete_event", On_Make_Suite_Window_Delete_Event'Access);
 
@@ -81,8 +83,11 @@ begin
    Set_Visibility (Make_Suite_Window.Name_Entry, True);
    Pack_Start (Make_Suite_Window.Vbox3, Make_Suite_Window.Name_Entry, False, False, 1);
 
+   Gtk_New_Hbox (Make_Suite_Window.Hbox8, False, 0);
+   Pack_Start (Make_Suite_Window.Vbox1, Make_Suite_Window.Hbox8, True, True, 3);
+
    Gtk_New_Vbox (Make_Suite_Window.Vbox4, False, 0);
-   Pack_Start (Make_Suite_Window.Vbox1, Make_Suite_Window.Vbox4, True, True, 0);
+   Pack_Start (Make_Suite_Window.Hbox8, Make_Suite_Window.Vbox4, True, True, 3);
 
    Gtk_New (Make_Suite_Window.Label2, -("The following tests will be added to the new suite :"));
    Set_Alignment (Make_Suite_Window.Label2, 0.0, 0.5);
@@ -96,15 +101,16 @@ begin
 
    Gtk_New (Make_Suite_Window.Scrolledwindow2);
    Set_Policy (Make_Suite_Window.Scrolledwindow2, Policy_Automatic, Policy_Automatic);
-   Pack_Start (Make_Suite_Window.Hbox2, Make_Suite_Window.Scrolledwindow2, True, True, 0);
+   Pack_Start (Make_Suite_Window.Hbox2, Make_Suite_Window.Scrolledwindow2, True, True, 3);
 
-   Gtk_New (Make_Suite_Window.Test_List, 3);
+   Gtk_New (Make_Suite_Window.Test_List, 2);
    Set_Selection_Mode (Make_Suite_Window.Test_List, Selection_Single);
    Set_Shadow_Type (Make_Suite_Window.Test_List, Shadow_In);
    Set_Show_Titles (Make_Suite_Window.Test_List, False);
    Set_Column_Width (Make_Suite_Window.Test_List, 0, 80);
    Set_Column_Width (Make_Suite_Window.Test_List, 1, 80);
-   Set_Column_Width (Make_Suite_Window.Test_List, 2, 80);
+   Set_Row_Height (Make_Suite_Window.Test_List, 15);
+   Set_Column_Auto_Resize (Make_Suite_Window.Test_List, 0, True);
    Add (Make_Suite_Window.Scrolledwindow2, Make_Suite_Window.Test_List);
 
    Gtk_New (Make_Suite_Window.Label5, -("label5"));
@@ -133,9 +139,10 @@ begin
    Set_Layout (Make_Suite_Window.Vbuttonbox1, Buttonbox_Spread);
    Set_Child_Size (Make_Suite_Window.Vbuttonbox1, 85, 27);
    Set_Child_Ipadding (Make_Suite_Window.Vbuttonbox1, 7, 0);
-   Pack_Start (Make_Suite_Window.Hbox2, Make_Suite_Window.Vbuttonbox1, False, True, 0);
+   Pack_Start (Make_Suite_Window.Hbox2, Make_Suite_Window.Vbuttonbox1, False, True, 3);
 
    Gtk_New (Make_Suite_Window.Add, -"Add");
+   Set_Relief (Make_Suite_Window.Add, Relief_Normal);
    Set_Flags (Make_Suite_Window.Add, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Add, "clicked",
@@ -143,6 +150,7 @@ begin
    Add (Make_Suite_Window.Vbuttonbox1, Make_Suite_Window.Add);
 
    Gtk_New (Make_Suite_Window.Remove, -"Remove");
+   Set_Relief (Make_Suite_Window.Remove, Relief_Normal);
    Set_Flags (Make_Suite_Window.Remove, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Remove, "clicked",
@@ -154,9 +162,10 @@ begin
    Set_Layout (Make_Suite_Window.Hbuttonbox1, Buttonbox_Spread);
    Set_Child_Size (Make_Suite_Window.Hbuttonbox1, 85, 27);
    Set_Child_Ipadding (Make_Suite_Window.Hbuttonbox1, 7, 0);
-   Pack_Start (Make_Suite_Window.Vbox1, Make_Suite_Window.Hbuttonbox1, False, False, 0);
+   Pack_Start (Make_Suite_Window.Vbox1, Make_Suite_Window.Hbuttonbox1, False, False, 3);
 
    Gtk_New (Make_Suite_Window.Ok, -"OK");
+   Set_Relief (Make_Suite_Window.Ok, Relief_Normal);
    Set_Flags (Make_Suite_Window.Ok, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Ok, "clicked",
@@ -164,6 +173,7 @@ begin
    Add (Make_Suite_Window.Hbuttonbox1, Make_Suite_Window.Ok);
 
    Gtk_New (Make_Suite_Window.Cancel, -"Cancel");
+   Set_Relief (Make_Suite_Window.Cancel, Relief_Normal);
    Set_Flags (Make_Suite_Window.Cancel, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Cancel, "clicked",
@@ -171,6 +181,7 @@ begin
    Add (Make_Suite_Window.Hbuttonbox1, Make_Suite_Window.Cancel);
 
    Gtk_New (Make_Suite_Window.Help, -"Help");
+   Set_Relief (Make_Suite_Window.Help, Relief_Normal);
    Set_Flags (Make_Suite_Window.Help, Can_Default);
    Button_Callback.Connect
      (Make_Suite_Window.Help, "clicked",

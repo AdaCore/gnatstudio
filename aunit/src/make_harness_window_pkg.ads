@@ -34,14 +34,14 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Status_Bar; use Gtk.Status_Bar;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Explorer_Window_Pkg; use Explorer_Window_Pkg;
+with GtkAda.File_Selector; use GtkAda.File_Selector;
 
 package Make_Harness_Window_Pkg is
 
    type Make_Harness_Window_Record is new Gtk_Window_Record with record
       Suite_Name     : String_Access;
       Procedure_Name : String_Access;
-      Explorer       : Explorer_Window_Access;
+      Explorer       : File_Selector_Window_Access;
 
       Vbox3 : Gtk_Vbox;
       Hbox2 : Gtk_Hbox;

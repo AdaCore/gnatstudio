@@ -128,6 +128,7 @@ begin
    Pack_Start (Make_Test_Window.Vbox0, Make_Test_Window.Hbuttonbox1, True, True, 0);
 
    Gtk_New (Make_Test_Window.Ok, -"OK");
+   Set_Relief (Make_Test_Window.Ok, Relief_Normal);
    Set_Flags (Make_Test_Window.Ok, Can_Default);
    Button_Callback.Connect
      (Make_Test_Window.Ok, "clicked",
@@ -135,6 +136,7 @@ begin
    Add (Make_Test_Window.Hbuttonbox1, Make_Test_Window.Ok);
 
    Gtk_New (Make_Test_Window.Cancel, -"Cancel");
+   Set_Relief (Make_Test_Window.Cancel, Relief_Normal);
    Set_Flags (Make_Test_Window.Cancel, Can_Default);
    Button_Callback.Connect
      (Make_Test_Window.Cancel, "clicked",
@@ -142,6 +144,7 @@ begin
    Add (Make_Test_Window.Hbuttonbox1, Make_Test_Window.Cancel);
 
    Gtk_New (Make_Test_Window.Help, -"Help");
+   Set_Relief (Make_Test_Window.Help, Relief_Normal);
    Set_Flags (Make_Test_Window.Help, Can_Default);
    Button_Callback.Connect
      (Make_Test_Window.Help, "clicked",
