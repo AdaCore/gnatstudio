@@ -100,6 +100,11 @@ package GVD.Canvas is
      (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context;
    --  Return the drawing context associated with the items on the canvas.
 
+   function Get_Tooltip_Context
+     (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context;
+   --  Return the drawing context associated with the tooltips. Fonts are
+   --  not scaled depending on the zoom level.
+
    function Get_Box_Context
      (Canvas : access GVD_Canvas_Record'Class) return Box_Drawing_Context;
    --  Return the drawing context associated with the box around each
@@ -129,8 +134,9 @@ private
       --  The process tab that contains the canvas
 
       --  The graphic contexts used to draw the canvas and its items
-      Item_Context  : Items.Drawing_Context;
-      Box_Context   : Box_Drawing_Context;
+      Item_Context    : Items.Drawing_Context;
+      Box_Context     : Box_Drawing_Context;
+      Tooltip_Context : Items.Drawing_Context;
 
       Contextual_Background_Menu : Gtk.Menu.Gtk_Menu;
       Item_Contextual_Menu : Gtk.Menu.Gtk_Menu;

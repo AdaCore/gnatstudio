@@ -54,10 +54,6 @@ with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 
 package body GVD.Canvas is
 
-   Experimental_Zoom_Support : constant Boolean := False;
-   --  Activate this to enable zoom support. This is still buggy with regards
-   --  to items positionning on the canvas. ???
-
    -----------------
    -- Local Types --
    -----------------
@@ -256,10 +252,8 @@ package body GVD.Canvas is
       Canvas.Detect_Aliases := Get_Pref (Default_Detect_Aliases);
       Initialize (Canvas);
 
-      if Experimental_Zoom_Support then
-         Widget_Callback.Connect
-           (Canvas, "zoomed", Widget_Callback.To_Marshaller (Zoomed'Access));
-      end if;
+      Widget_Callback.Connect
+        (Canvas, "zoomed", Widget_Callback.To_Marshaller (Zoomed'Access));
 
       --  Create the  background contextual menu now, so that the key shortcuts
       --  are activated
@@ -349,11 +343,15 @@ package body GVD.Canvas is
       Font_Limit : constant := 3;
       Size : Gint;
    begin
+      ------------------
+      -- Item_Context --
+      ------------------
+
       if Canvas.Item_Context.Font /= null then
          Unref (Canvas.Item_Context.Font);
       end if;
 
-      Size := Get_Pref (Value_Font_Size) * Gint (Get_Zoom (Canvas)) / 100;
+      Size := To_Canvas (Canvas, Get_Pref (Value_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Font := null;
       else
@@ -364,7 +362,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Type_Font);
       end if;
 
-      Size := Get_Pref (Type_Font_Size) * Gint (Get_Zoom (Canvas)) / 100;
+      Size := To_Canvas (Canvas, Get_Pref (Type_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Type_Font := null;
       else
@@ -376,7 +374,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Command_Font);
       end if;
 
-      Size := Get_Pref (Value_Font_Size) * Gint (Get_Zoom (Canvas)) / 100;
+      Size := To_Canvas (Canvas, Get_Pref (Value_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Command_Font := null;
       else
@@ -384,11 +382,37 @@ package body GVD.Canvas is
            (Get_Pref (Command_Font), Size);
       end if;
 
+      ---------------------
+      -- Tooltip_Context --
+      ---------------------
+
+      if Canvas.Tooltip_Context.Font /= null then
+         Unref (Canvas.Tooltip_Context.Font);
+      end if;
+      Canvas.Tooltip_Context.Font :=
+        Get_Gdkfont (Get_Pref (Value_Font), Get_Pref (Value_Font_Size));
+
+      if Canvas.Tooltip_Context.Type_Font /= null then
+         Unref (Canvas.Tooltip_Context.Type_Font);
+      end if;
+      Canvas.Tooltip_Context.Type_Font :=
+        Get_Gdkfont (Get_Pref (Type_Font), Get_Pref (Type_Font_Size));
+
+      if Canvas.Tooltip_Context.Command_Font /= null then
+         Unref (Canvas.Tooltip_Context.Command_Font);
+      end if;
+      Canvas.Tooltip_Context.Command_Font := Get_Gdkfont
+        (Get_Pref (Command_Font), Get_Pref (Value_Font_Size));
+
+      -----------------
+      -- Box_Context --
+      -----------------
+
       if Canvas.Box_Context.Title_Font /= null then
          Unref (Canvas.Box_Context.Title_Font);
       end if;
 
-      Size := Get_Pref (Title_Font_Size) * Gint (Get_Zoom (Canvas)) / 100;
+      Size := To_Canvas (Canvas, Get_Pref (Title_Font_Size));
       if Size <= Font_Limit then
          Canvas.Box_Context.Title_Font := null;
       else
@@ -430,6 +454,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.GC, Win);
       Set_Foreground (C.Item_Context.GC, Black (Get_Default_Colormap));
+      C.Tooltip_Context.GC := C.Item_Context.GC;
 
       if C.Item_Context.Xref_GC /= null then
          Destroy (C.Item_Context.Xref_GC);
@@ -437,6 +462,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.Xref_GC, Win);
       Set_Foreground (C.Item_Context.Xref_GC, Get_Pref (Xref_Color));
+      C.Tooltip_Context.Xref_GC := C.Item_Context.Xref_Gc;
 
       if C.Item_Context.Modified_GC /= null then
          Destroy (C.Item_Context.Modified_GC);
@@ -444,6 +470,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.Modified_GC, Win);
       Set_Foreground (C.Item_Context.Modified_GC, Get_Pref (Change_Color));
+      C.Tooltip_Context.Modified_GC := C.Item_Context.Modified_GC;
 
       if C.Item_Context.Selection_GC /= null then
          Destroy (C.Item_Context.Selection_GC);
@@ -451,6 +478,7 @@ package body GVD.Canvas is
 
       Gdk_New (C.Item_Context.Selection_GC, Win);
       Set_Foreground (C.Item_Context.Selection_GC, Get_Pref (Selection_Color));
+      C.Tooltip_Context.Selection_GC := C.Item_Context.Selection_GC;
 
       --  The drawing context for the boxes
 
@@ -588,49 +616,47 @@ package body GVD.Canvas is
          Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
          GVD_Canvas (Canvas));
 
-      if Experimental_Zoom_Support then
-         Gtk_New (Mitem);
-         Append (Canvas.Contextual_Background_Menu, Mitem);
+      Gtk_New (Mitem);
+      Append (Canvas.Contextual_Background_Menu, Mitem);
 
-         Gtk_New (Mitem, Label => -"Zoom in");
-         Append (Canvas.Contextual_Background_Menu, Mitem);
-         Widget_Callback.Object_Connect
+      Gtk_New (Mitem, Label => -"Zoom in");
+      Append (Canvas.Contextual_Background_Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, "activate",
+         Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
+      Add_Accelerator
+        (Mitem, "activate",
+         Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+
+      Gtk_New (Mitem, Label => -"Zoom out");
+      Append (Canvas.Contextual_Background_Menu, Mitem);
+      Widget_Callback.Object_Connect
+        (Mitem, "activate",
+         Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
+      Add_Accelerator
+        (Mitem, "activate",
+         Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+
+      Gtk_New (Zooms_Menu);
+
+      for J in Zoom_Levels'Range loop
+         Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
+         Append (Zooms_Menu, Mitem);
+         Item_Handler.Connect
            (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Zoom_In'Access), Canvas);
-         Add_Accelerator
-           (Mitem, "activate",
-            Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+            Item_Handler.To_Marshaller (Zoom_Level'Access),
+            (Name_Length    => 0,
+             Canvas         => GVD_Canvas (Canvas),
+             Item           => null,
+             Component      => null,
+             Component_Name => "",
+             Mode           => Value,
+             Zoom           => Zoom_Levels (J)));
+      end loop;
 
-         Gtk_New (Mitem, Label => -"Zoom out");
-         Append (Canvas.Contextual_Background_Menu, Mitem);
-         Widget_Callback.Object_Connect
-           (Mitem, "activate",
-            Widget_Callback.To_Marshaller (Zoom_Out'Access), Canvas);
-         Add_Accelerator
-           (Mitem, "activate",
-            Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
-
-         Gtk_New (Zooms_Menu);
-
-         for J in Zoom_Levels'Range loop
-            Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
-            Append (Zooms_Menu, Mitem);
-            Item_Handler.Connect
-              (Mitem, "activate",
-               Item_Handler.To_Marshaller (Zoom_Level'Access),
-               (Name_Length    => 0,
-                Canvas         => GVD_Canvas (Canvas),
-                Item           => null,
-                Component      => null,
-                Component_Name => "",
-                Mode           => Value,
-                Zoom           => Zoom_Levels (J)));
-         end loop;
-
-         Gtk_New (Mitem, Label => -"Zoom");
-         Append (Canvas.Contextual_Background_Menu, Mitem);
-         Set_Submenu (Mitem, Zooms_Menu);
-      end if;
+      Gtk_New (Mitem, Label => -"Zoom");
+      Append (Canvas.Contextual_Background_Menu, Mitem);
+      Set_Submenu (Mitem, Zooms_Menu);
 
       Show_All (Canvas.Contextual_Background_Menu);
 
@@ -647,6 +673,16 @@ package body GVD.Canvas is
    begin
       return Canvas.Item_Context;
    end Get_Item_Context;
+
+   -------------------------
+   -- Get_Tooltip_Context --
+   -------------------------
+
+   function Get_Tooltip_Context
+     (Canvas : access GVD_Canvas_Record'Class) return Items.Drawing_Context is
+   begin
+      return Canvas.Tooltip_Context;
+   end Get_Tooltip_Context;
 
    ---------------------
    -- Get_Box_Context --
