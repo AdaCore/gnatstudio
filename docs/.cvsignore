@@ -19,3 +19,14 @@ tooltips.gif
 bp-advanced.gif
 *.eps
 stamp-eps
+*.aux
+*.cp
+*.cps
+*.dvi
+*.fn
+*.ky
+*.log
+*.pg
+*.toc
+*.tp
+*.vr
