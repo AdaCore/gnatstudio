@@ -806,7 +806,7 @@ package body Help_Module is
                     Id                => Help_Module_ID,
                     Mask              => All_Options and not Supports_Replace
                       and not Search_Backward
-                      and not Whole_Word and not All_Occurences));
+                      and not Whole_Word and not All_Occurrences));
 
       --  Add help menus
 

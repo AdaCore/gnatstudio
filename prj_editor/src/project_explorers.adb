@@ -2466,7 +2466,7 @@ package body Project_Explorers is
                      Extra_Information => Widget,
                      Id                => Explorer_Module_ID,
                      Mask              => All_Options and not Supports_Replace
-                       and not Search_Backward and not All_Occurences));
+                     and not Search_Backward and not All_Occurrences));
       end;
    end Register_Module;
 
