@@ -20,6 +20,10 @@ project Glide is
    type Build_Type is ("Debug", "Production");
    Build : Build_Type := External ("Build", "Debug");
 
+   package Builder is
+      for Default_Switches ("Ada") use ("-m");
+   end Builder;
+
    package Compiler is
       case Build is
          when "Debug" => 
