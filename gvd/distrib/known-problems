@@ -1,5 +1,11 @@
 Known Problems fixed in GVD 2.0.0
 
+- Aliasing detection with first field of a structure
+  Problem:    In the data window, a structure (or Ada record) and its first
+              field are always considered as aliases
+  Workaround: Deactivate alias detections through the contextual menu in the
+              data window or in the preferences.
+
 - [9131-004] Constraint_Error when displaying the assembly code
   Problem:    In some cases, notably vxworks, gdb isn't able to display in what
               scope the assembly lines are, and the resulting assembly lines
