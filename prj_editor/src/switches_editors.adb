@@ -441,7 +441,8 @@ package body Switches_Editors is
          declare
             T : GNAT.OS_Lib.String_Access := new String'(Text);
             Result : constant String := Switch.Switch & Switch.Separator
-               & Argument_List_To_Quoted_String ((1 => T));
+              & Argument_List_To_Quoted_String
+              ((1 => T), Quote_Backslash => False);
          begin
             Free (T);
             return Result;
