@@ -134,11 +134,13 @@ package body GUI_Utils is
    procedure Add_Unique_Combo_Entry
      (Combo : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text  : String;
-      Item_String : String := "")
+      Item_String : String := "";
+      Use_Item_String : Boolean := False)
    is
       Item : Gtk_List_Item;
    begin
-      Item := Add_Unique_Combo_Entry (Combo, Text, Item_String);
+      Item := Add_Unique_Combo_Entry
+        (Combo, Text, Item_String, Use_Item_String);
    end Add_Unique_Combo_Entry;
 
    ----------------------------
@@ -148,13 +150,14 @@ package body GUI_Utils is
    function Add_Unique_Combo_Entry
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
-      Item_String : String := "") return Gtk.List_Item.Gtk_List_Item
+      Item_String : String := "";
+      Use_Item_String : Boolean := False) return Gtk.List_Item.Gtk_List_Item
    is
       Item : Gtk_List_Item;
    begin
       Item := Add_Unique_List_Entry (Get_List (Combo), Text);
 
-      if Item_String /= "" then
+      if Use_Item_String then
          Set_Item_String (Combo, Gtk_Item (Item), Item_String);
       end if;
       return Item;

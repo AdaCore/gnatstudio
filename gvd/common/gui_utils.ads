@@ -49,16 +49,18 @@ package GUI_Utils is
    procedure Add_Unique_Combo_Entry
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
-      Item_String : String := "");
+      Item_String : String := "";
+      Use_Item_String : Boolean := False);
    --  Add Text to the popdown list of Combo, if it is not already there.
    --  If the Text is already in the combo box, nothing is done.
-   --  If Item_String is not the empty_string, then it will be inserted in the
+   --  If Use_Item_String is True, then Item_String will be inserted in the
    --  combo box instead of text.
 
    function Add_Unique_Combo_Entry
      (Combo       : access Gtk.Combo.Gtk_Combo_Record'Class;
       Text        : String;
-      Item_String : String := "") return Gtk.List_Item.Gtk_List_Item;
+      Item_String : String := "";
+      Use_Item_String : Boolean := False) return Gtk.List_Item.Gtk_List_Item;
    --  Same as above, but return the inserted item (or the previously existing
    --  one).
 
