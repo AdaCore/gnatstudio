@@ -259,11 +259,15 @@ package body Debugger.Gdb.Cpp is
          --  If the class uses virtual methods, there is an extra field
          --  called '_vptr.' that should simply be skipped for now ???
          --     ", _vptr. = 0x8049b60 <X::B virtual table>"
+         --
+         --  We can also have the following format:
+         --     ", _vptr. = 0x9049b60}, "    (ie no <..>)
 
          if Looking_At (Type_Str, Index, ", _vptr. = ") then
             Index := Index + 11;
-            Skip_To_Char (Type_Str, Index, '>');
-            Index := Index + 1;
+            while Type_Str (Index) /= '}' loop
+               Index := Index + 1;
+            end loop;
          end if;
 
          Repeat_Num := 1;
