@@ -202,7 +202,8 @@ package Commands.Interactive is
    function Create_Proxy
      (Command : access Interactive_Command'Class;
       Context : Interactive_Command_Context) return Command_Access;
-   --  Create a new proxy
+   --  Create a new proxy. Context.Args will be freed automatically by the
+   --  proxy
 
    function Execute (Command : access Interactive_Command_Proxy)
       return Command_Return_Type;

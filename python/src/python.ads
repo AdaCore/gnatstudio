@@ -187,7 +187,8 @@ package Python is
 
    procedure PyTuple_SetItem
      (Tuple : PyTuple; Index : Integer; Value : PyObject);
-   --  Set an item in the tuple.
+   --  Set an item in the tuple. The reference counting of Value is not
+   --  increased
 
    function PyTuple_Size (Tuple : PyTuple) return Integer;
    --  Return the size of the tuple.
