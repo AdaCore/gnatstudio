@@ -552,6 +552,7 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : in String := "";
       Class_Name              : in String := "";
       Filename                : in String := "";
+      Kind                    : in E_Kind := No_Kind;
       Location                : in Point := Invalid_Point)
    return E_Declaration_Info_List is
       Dep_Ptr : Dependency_File_Info_List;
@@ -578,6 +579,7 @@ package body Src_Info.LI_Utils is
       --  ??? Is the dependency declaration of class should
       --  necessary be located together with method dependency
       --  declaration?
+                Kind                 => Kind,
                 Location             => Location);
    end Find_Dependency_Declaration;
    --  ??? Class_Name parameter should be used properly
