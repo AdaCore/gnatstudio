@@ -768,14 +768,15 @@ package body VCS_View_Pkg is
       Set_Clickable (Col, False);
       Dummy := Append_Column (Explorer.Tree, Col);
 
-      Gtk_New (Col);
-      Set_Title (Col, -"File name");
-      Pack_Start (Col, Text_Rend, True);
-      Add_Attribute (Col, Text_Rend, "text", Base_Name_Column);
-      Set_Clickable (Col, True);
-      Set_Sort_Column_Id (Col, Base_Name_Column);
-      Set_Resizable (Col, True);
-      Dummy := Append_Column (Explorer.Tree, Col);
+      Gtk_New (Explorer.File_Column);
+      Set_Title (Explorer.File_Column, -"File name");
+      Pack_Start (Explorer.File_Column, Text_Rend, True);
+      Add_Attribute
+        (Explorer.File_Column, Text_Rend, "text", Base_Name_Column);
+      Set_Clickable (Explorer.File_Column, True);
+      Set_Sort_Column_Id (Explorer.File_Column, Base_Name_Column);
+      Set_Resizable (Explorer.File_Column, True);
+      Dummy := Append_Column (Explorer.Tree, Explorer.File_Column);
 
       Gtk_New (Col);
       Set_Title (Col, -"Working rev.");
@@ -1059,9 +1060,8 @@ package body VCS_View_Pkg is
      (VCS_View : access VCS_View_Record'Class;
       Kernel   : Kernel_Handle)
    is
-      Vbox1      : Gtk_Vbox;
-      Dummy_Page : VCS_Page_Access;
-      pragma Unreferenced (Dummy_Page);
+      Vbox1 : Gtk_Vbox;
+      Page  : VCS_Page_Access;
 
    begin
       Init_Graphics;
@@ -1089,8 +1089,13 @@ package body VCS_View_Pkg is
            Get_VCS_List (VCS_Module_ID);
       begin
          for J in VCS_List'Range loop
-            Dummy_Page := Get_Page_For_Identifier
+            Page := Get_Page_For_Identifier
               (VCS_View, Get_VCS_From_Id (VCS_List (J).all));
+
+            --  Emit a "clicked" signal on the file column to sort it.
+            Object_Callback.Emit_By_Name
+              (Page.File_Column,
+               "clicked");
          end loop;
       end;
 
