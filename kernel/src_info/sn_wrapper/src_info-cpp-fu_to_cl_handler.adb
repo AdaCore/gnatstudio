@@ -24,7 +24,7 @@ begin
       Success        => Success);
 
    if not Success then
-      Warn ("Failed to find " & Ref_Id & " class");
+      Fail ("unable to find class " & Ref_Id);
       return;
    end if;
 

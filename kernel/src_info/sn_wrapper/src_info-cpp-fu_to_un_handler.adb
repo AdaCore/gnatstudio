@@ -14,7 +14,7 @@ is
    Decl_Info  : E_Declaration_Info_List;
 begin
 
-   Info ("Fu_To_Un_Handler: '" & Ref_Id & "'");
+   Info ("Fu_To_Un_Handler: " & Ref_Id);
 
    Find_Union
      (Type_Name      => Ref_Id,
@@ -23,7 +23,7 @@ begin
       Success        => Success);
 
    if not Success then
-      Warn ("Union type " & Ref_Id & " is not found in SN DB");
+      Fail ("unable to find union " & Ref_Id);
       return;
    end if;
 

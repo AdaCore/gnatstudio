@@ -15,7 +15,7 @@ procedure Fu_To_Gv_Handler (Ref : TO_Table) is
    Ref_Id       : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 begin
-   Info ("Fu_To_GV_Handler: '" & Ref_Id & "'");
+   Info ("Fu_To_GV_Handler: " & Ref_Id);
 
    --  we need declaration's location
    Var := Find (SN_Table (GV), Ref_Id);
@@ -30,7 +30,7 @@ begin
             Location                => Var.Start_Position);
       exception
          when Declaration_Not_Found =>
-            Fail ("Failed to lookup declaration for global variable "
+            Fail ("unable to find declaration for global variable "
                   & Ref_Id);
             Free (Var);
             return;
@@ -116,6 +116,6 @@ begin
       Kind                    => Ref_Kind);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Global variable " & Ref_Id & " not found");
+      Fail ("unable to find global variable " & Ref_Id);
 end Fu_To_Gv_Handler;
 

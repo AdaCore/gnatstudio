@@ -31,7 +31,7 @@ begin
 
       exception
          when Declaration_Not_Found =>
-            Warn ("Failed to lookup declaration for macro " & Ref_Id);
+            Fail ("unable to find declaration for macro " & Ref_Id);
       end;
    else
       --  look for dependency declaration
@@ -72,7 +72,7 @@ begin
 
 exception
    when DB_Error | Not_Found =>
-      Warn ("Referred macro " & Ref_Id & " not found");
+      Fail ("unable to find macro " & Ref_Id);
 
 end Fu_To_Ma_Handler;
 

@@ -50,7 +50,7 @@ begin
          Scope             => Global_Scope,
          Declaration_Info  => Decl_Info);
    else
-      Warn ("Could not find enum for '" & Ec_Id & "'");
+      Fail ("could not find enum for '" & Ec_Id & "'");
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
          File              => Global_LI_File,

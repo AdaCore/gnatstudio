@@ -13,9 +13,9 @@ is
    Attributes        : SN_Attributes;
    Scope             : E_Scope := Global_Scope;
 begin
-   Info ("Sym_GV_Handler: '"
+   Info ("Sym_GV_Handler: """
          & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
-         & "'");
+         & """");
 
    if not Is_Open (SN_Table (GV)) then
       --  GV table does not exist, nothing to do ...

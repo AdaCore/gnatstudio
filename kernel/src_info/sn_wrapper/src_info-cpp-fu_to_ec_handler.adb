@@ -11,7 +11,7 @@ procedure Fu_To_Ec_Handler (Ref : TO_Table) is
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
 begin
 
-   Info ("Fu_To_EC_Handler: '" & Ref_Id & "'");
+   Info ("Fu_To_EC_Handler: " & Ref_Id);
 
    Enum_Const := Find (SN_Table (EC), Ref_Id);
 
@@ -26,7 +26,7 @@ begin
             Location                => Enum_Const.Start_Position);
       exception
          when Declaration_Not_Found =>
-            Warn ("Could not lookup declaration or enumeration constant "
+            Fail ("unable to find declaration for enumeration constant "
                   & Ref_Id);
             Free (Enum_Const);
             return;
@@ -71,7 +71,7 @@ begin
 exception
 
    when DB_Error | Not_Found =>
-      Warn ("Could not look up enumeration constant " & Ref_Id);
+      Fail ("unable to find enumeration constant " & Ref_Id);
 
 end Fu_To_Ec_Handler;
 

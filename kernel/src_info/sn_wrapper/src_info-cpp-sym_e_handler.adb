@@ -11,7 +11,7 @@ is
      (Sym.Identifier.First .. Sym.Identifier.Last);
 begin
 
-   Info ("Sym_E_Hanlder: '" & E_Id & "'");
+   Info ("Sym_E_Hanlder: """ & E_Id & """");
 
    Insert_Declaration
      (Handler           => LI_Handler (Global_CPP_Handler),

@@ -80,7 +80,7 @@ begin
    else
 
       --  could not get E_Kind for the original type
-      Warn ("Typedef " & Identifier & ": could not be handled");
+      Fail ("unable to find type for typedef " & Identifier);
 
    end if;
 

@@ -33,7 +33,7 @@ begin
 
       exception
          when Declaration_Not_Found =>
-            Warn ("Failed to lookup typedef " & Ref_Id);
+            Fail ("unable to find declaration for typedef " & Ref_Id);
       end;
    else
       --  look for dependency declaration
@@ -46,13 +46,11 @@ begin
             Location             => Typedef.Start_Position);
       exception
          when Declaration_Not_Found => -- dep decl does not yet exist
-            Info ("*** Dep_Decl not found: creating new");
 
             Original_Type (Ref_Id, Desc, Success);
 
             if not Success then
-               Warn ("Typedef " & Ref_Id &
-                     " referenced, but could not be found");
+               Fail ("unable to find type for typedef " & Ref_Id);
                Free (Desc);
                Free (Typedef);
                return;
@@ -123,7 +121,7 @@ begin
 
 exception
    when DB_Error | Not_Found  =>
-      Warn ("Referred typedef " & Ref_Id & " not found");
+      Fail ("unable to find typedef " & Ref_Id);
 
 end Fu_To_T_Handler;
 

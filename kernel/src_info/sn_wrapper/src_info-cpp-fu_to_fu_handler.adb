@@ -44,7 +44,7 @@ procedure Fu_To_Fu_Handler (Ref : TO_Table) is
 
 begin
 
-   Info ("Fu_To_Fu_Handler: '" & Ref_Id & "'");
+   Info ("Fu_To_Fu_Handler: " & Ref_Id);
 
    Set_Cursor
      (SN_Table (FU),
@@ -65,7 +65,7 @@ begin
    end loop;
 
    if Init then -- referred function not found
-      Warn ("Referred function " & Ref_Id & " not found");
+      Fail ("unable to find function " & Ref_Id);
       return;
    end if;
 
@@ -161,7 +161,7 @@ begin
       Reference);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Function " & Ref_Id & " not found");
+      Fail ("unable to find function" & Ref_Id);
    return;
 end Fu_To_Fu_Handler;
 

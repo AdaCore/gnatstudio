@@ -23,10 +23,10 @@ is
      (Sym.Identifier.First .. Sym.Identifier.Last);
 
 begin
-   Info ("Sym_FU_Hanlder: '"
+   Info ("Sym_FU_Hanlder: """
          & Sym.Buffer (Sym.Class.First .. Sym.Class.Last) & "."
          & Fu_Id
-         & "'");
+         & """");
 
    if Sym.Symbol = MI then
       declare

@@ -54,7 +54,7 @@ procedure Fu_To_Mi_Handler (Ref : TO_Table) is
 
 begin
 
-   Info ("Fu_To_Mi_Handler: '" & Ref_Id & "'");
+   Info ("Fu_To_Mi_Handler: " & Ref_Id);
 
    Set_Cursor
      (SN_Table (MD),
@@ -88,7 +88,7 @@ begin
 
    if Init then -- declaration for the referred method not found
       --  ??? We should handle this situation in a special way:
-      Warn ("Referred method " & Ref_Class & "::" & Ref_Id & " not found");
+      Fail ("unable to find method " & Ref_Class & "::" & Ref_Id);
       return;
    end if;
 
@@ -121,7 +121,7 @@ begin
          --  this must be a pure virtual method
          Attributes := SN_Attributes (MDecl.Attributes);
          if (Attributes and SN_PUREVIRTUAL) /= SN_PUREVIRTUAL then
-            Fail ("Failed to locate method implementation, but it is not"
+            Fail ("failed to locate method implementation, but it is not"
                & " an abstract one: " & Ref_Class & "::" & Ref_Id);
             Free (MDecl);
             return;
@@ -251,10 +251,7 @@ begin
       Reference);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Method "
-         & Ref.Buffer (Ref.Referred_Class.First ..
-                       Ref.Referred_Symbol_Name.Last)
-         & "::" & Ref_Id & " not found");
+      Fail ("unable to find method " & Ref_Class & "::" & Ref_Id);
       return;
 end Fu_To_Mi_Handler;
 

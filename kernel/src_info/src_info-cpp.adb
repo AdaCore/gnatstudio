@@ -634,7 +634,6 @@ package body Src_Info.CPP is
                      Type_Name'First + Volatile_Str'Length - 1)
                      = Volatile_Str
       then -- volatile modifier
-         --  Info ("volatile ");
          Type_Name_To_Kind (Type_Name
             (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
             Desc, Success);
@@ -647,7 +646,6 @@ package body Src_Info.CPP is
                      Type_Name'First + Const_Str'Length - 1)
                      = Const_Str
       then -- const modifier
-         --  Info ("const ");
          Type_Name_To_Kind (Type_Name
             (Type_Name'First + Const_Str'Length .. Type_Name'Last),
             Desc, Success);
@@ -658,7 +656,6 @@ package body Src_Info.CPP is
       --  first try builtin type
       Builtin_Type_To_Kind (Type_Name, Desc, Success);
       if Success then
-         --  Info ("builtin type");
          if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
             Desc.Ancestor_Point := Predefined_Point;
          end if;
@@ -679,7 +676,6 @@ package body Src_Info.CPP is
             Success := False;
             return;
          end if;
-         --  Info ("functional ");
          Type_Name_To_Kind (
             Type_Name (Matches (1).First ..  Matches (1).Last),
             Desc, Success);
@@ -690,7 +686,6 @@ package body Src_Info.CPP is
          --  array
          Success      := True;
          Desc.Kind    := Array_Type;
-         --  Info ("pointer");
          return;
       end if;
 

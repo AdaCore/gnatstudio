@@ -34,7 +34,7 @@ begin
             Location                => Var.Start_Position);
       exception
          when Declaration_Not_Found =>
-            Fail ("Failed to lookup declaration for constant "
+            Fail ("unable to find declaration for constant "
                & Ref.Buffer (Ref.Referred_Symbol_Name.First ..
                              Ref.Referred_Symbol_Name.Last));
             Free (Var);
@@ -123,9 +123,8 @@ begin
       Kind                    => Ref_Kind);
 exception
    when Not_Found  | DB_Error => -- ignore
-      Fail ("Constant  " &
+      Fail ("unable to find constant " &
             Ref.Buffer (Ref.Referred_Symbol_Name.First ..
-                        Ref.Referred_Symbol_Name.Last) &
-            " not found");
+                        Ref.Referred_Symbol_Name.Last));
 end Fu_To_Con_Handler;
 
