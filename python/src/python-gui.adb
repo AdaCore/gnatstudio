@@ -91,6 +91,12 @@ package body Python.GUI is
 
    function Write (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Write);
+   function Write_No_Capture
+     (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Write_No_Capture);
+   --  The second is the same as Write, except the output is never saved and
+   --  return to the code that executed a python command.
+
    function Flush (Self : PyObject; Args : PyObject) return PyObject;
    pragma Convention (C, Flush);
    function Read_Line (Self : PyObject; Args : PyObject) return PyObject;
@@ -220,6 +226,36 @@ package body Python.GUI is
       return Py_None;
    end Write;
 
+   ----------------------
+   -- Write_No_Capture --
+   ----------------------
+
+   function Write_No_Capture
+     (Self : PyObject; Args : PyObject) return PyObject
+   is
+      pragma Unreferenced (Self);
+      S : aliased chars_ptr;
+      N : aliased Integer;
+      Stdout : aliased PyObject;
+      Interpreter : Python_Interpreter;
+      Data : PyObject;
+   begin
+      if not PyArg_ParseTuple
+        (Args, "Os#", Stdout'Address, S'Address, N'Address)
+      then
+         return null;
+      end if;
+
+      Data := PyObject_GetAttrString (Stdout, "gpsdata");
+      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+
+      Insert_Text (Interpreter, Value (S));
+      Process_Gtk_Events (Interpreter);
+
+      Py_INCREF (Py_None);
+      return Py_None;
+   end Write_No_Capture;
+
    --------------
    -- Is_A_TTY --
    --------------
@@ -299,7 +335,7 @@ package body Python.GUI is
       Sigint      : constant Integer := 2;
       Old_Handler : System.Address;
       Prompt      : PyObject;
-      Stdout      : PyClassObject;
+      Stdout, Stderr : PyClassObject;
       Meths       : PyObject;
       Ignored     : Integer;
       pragma Unreferenced (Ignored);
@@ -350,11 +386,31 @@ package body Python.GUI is
       Add_Method (Stdout, Create_Method_Def ("readline", Read_Line'Access));
       Add_Method (Stdout, Create_Method_Def ("isatty",   Is_A_TTY'Access));
 
+      Meths := PyDict_New;
+      PyDict_SetItemString (Meths, "__module__", PyString_FromString ("gps"));
+      PyDict_SetItemString
+        (Meths, "gpsdata", PyCObject_FromVoidPtr (Interpreter.all'Address));
+
+      Stderr := PyClass_New
+        (Bases => null,
+         Dict  => Meths,
+         Name  => PyString_FromString ("GPSStderr"));
+      Ignored := PyModule_AddObject (Main_Module, "GPSStderr", Stderr);
+
+      Add_Method
+        (Stderr, Create_Method_Def ("write",  Write_No_Capture'Access));
+      Add_Method (Stderr, Create_Method_Def ("flush",    Flush'Access));
+      Add_Method (Stderr, Create_Method_Def ("read",     Read_Line'Access));
+      Add_Method (Stderr, Create_Method_Def ("readline", Read_Line'Access));
+      Add_Method (Stderr, Create_Method_Def ("isatty",   Is_A_TTY'Access));
+
       --  Note: we also set __stdout__,..., so that the user can restore them
       --  after temporarily modifying sys.stdout in their own programs
       if not PyRun_SimpleString
-        ("sys.stdout=sys.stdin=sys.stderr=GPSStdout ()" & ASCII.LF
-         & "sys.__stdout__=sys.__stdin__=sys.__stderr__=sys.stdout" & ASCII.LF)
+        ("sys.stdout=sys.stdin=GPSStdout ()" & ASCII.LF
+         & "sys.stderr=GPSStderr()" & ASCII.LF
+         & "sys.__stdout__=sys.__stdin__=sys.stdout" & ASCII.LF
+         & "sys.__stderr__=sys.stderr" & ASCII.LF)
       then
          raise Interpreter_Error;
       end if;
