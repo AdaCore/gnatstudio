@@ -89,22 +89,22 @@ package VCS is
    type File_Status_Record is record
       --  Contains all the repository information concerning one file.
 
-      File_Name : String_List.List;
+      File_Name : String_List.List := String_List.Null_List;
       --  The absolute local name of the file.
 
       Status : File_Status := Unknown;
       --  The status of the file.
 
-      Working_Revision : String_List.List;
+      Working_Revision : String_List.List := String_List.Null_List;
       --  The current local version of the file.
 
-      Repository_Revision : String_List.List;
+      Repository_Revision : String_List.List := String_List.Null_List;
       --  The latest version of the file in the repository.
 
-      Tags    : String_List.List;
+      Tags    : String_List.List := String_List.Null_List;
       --  Other versions of this file that exist in the repository.
 
-      Users : String_List.List;
+      Users : String_List.List := String_List.Null_List;
       --  A list of users currently working on the file.
 
       --  ???  We need to put additional info here : date, etc.
