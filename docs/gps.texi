@@ -373,6 +373,12 @@ left, the @code{Project View}, and on the right the @code{File View}.
 @image{explorer-views}
 @end ifhtml
 
+@cindex interactive search
+Each view provides an interactive search capability allowing you to quickly
+search in the information currently displayed. The default key
+to start an interactive search is @key{Ctrl-i}. See @ref{Interactive Search}
+for more details.
+
 The various components that are displayed in these explorers are the
 following:
 
@@ -3784,6 +3790,11 @@ last line in the range. To add or remove single columns from the
 selection, hold down the @key{Control} key and left-click on the
 columns that you want to select/unselect.
 
+@cindex interactive search
+The explorer also provides an interactive search capability allowing you to
+quickly look for a given file name. The default key to start an interactive
+search is @key{Ctrl-i}. See @ref{Interactive Search} for more details.
+
 The VCS contextual menu can be brought up from the VCS explorer by
 left-clicking on a selection or on a single line. @xref{The Version
 Control Contextual Menu}.
@@ -5318,6 +5329,8 @@ the widget name:
    @item select-cursor-parent ()
       Select the parent row of the current selection.
    @item start-interactive-search ()
+   @cindex interactive search
+   @anchor{Interactive Search}
       Start interactive search on the tree view. This will open a small window
       at the bottom of the tree view where you can interactively type names.
       The first matching name in the tree will be selected while you type it.
