@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                          G P S                                    --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -486,83 +486,107 @@ package body Line_Sweep is
          Inter     : out Event_Point;
          At_Origin : out Boolean)
       is
-         Slope1 : constant Float :=
-           Float (Y2 (S1) - Y1 (S1)) / Float (X2 (S1) - X1 (S1));
-         Slope2 : constant Float :=
-           Float (Y2 (S2) - Y1 (S2)) / Float (X2 (S2) - X1 (S2));
-         Yabs, Yabs2 : Float;
-         Cx, Cy : Float;
+         --  Algorithm taken from Graphic Gems II,
+         --  see   http://www1.acm.org/pubs/tog/GraphicsGems/gemsii/xlines.c
+
+         A1, A2, B1, B2, C1, C2 : Integer;
+         --  Coefficients of line eqns.
+
+         R1, R2, R3, R4 : Integer;
+         --  'Sign' values
+
+         Denom, Offset, Num : Integer;
+         --  Intermediate values
+
+         X, Y : Integer;
 
       begin
-         if (X1 (S1) = X1 (S2) and then Y1 (S1) = Y1 (S2))
-           or else (X1 (1) = X2 (S2) and then Y1 (S1) = Y2 (S2))
+         At_Origin := False; --  ??? Should be removed if it is always false
+
+         --  Compute A1, B1, C1, where line joining points 1 and 2 is
+         --   "a1 * x + b1 * y + c1 = 0"
+
+         A1 := Y2 (S1) - Y1 (S1);
+         B1 := X1 (S1) - X2 (S1);
+         C1 := X2 (S1) * Y1 (S1) - X1 (S1) * Y2 (S1);
+
+         --  Compute R3 and R4
+
+         R3 := A1 * X1 (S2) + B1 * Y1 (S2) + C1;
+         R4 := A1 * X2 (S2) + B1 * Y2 (S2) + C1;
+
+         --  Check signs of R3 and R4. If both points 3 and 4 lie on same side
+         --  of line 1, the line segments do not intersect
+
+         if R3 /= 0
+           and then R4 /= 0
+           and then ((R3 > 0 and then R4 > 0)
+                     or else (R3 < 0 and then R4 < 0))
          then
-            At_Origin := True;
-            Inter := (Intersection_Point, X1 (S1), Y1 (S1), S1, S2);
-            return;
-         end if;
-
-         if (X2 (S1) = X1 (S2) and then Y2 (S1) = Y1 (S2))
-           or else (X2 (S1) = X2 (S2) and then Y2 (S1) = Y2 (S2))
-         then
-            At_Origin := True;
-            Inter := (Intersection_Point, X2 (S1), Y2 (S1), S1, S2);
-            return;
-         end if;
-
-         At_Origin := False;
-
-         if Slope1 = Slope2 then
             Inter := Null_Point;
             return;
          end if;
 
-         Yabs  := Float (Y1 (S1)) - Slope1 * Float (X1 (S1));
-         Yabs2 := Float (Y1 (S2)) - Slope2 * Float (X1 (S2));
+         --  Compute A2, B2, C2
 
-         if X1 (S1) = X2 (S1) then
-            Cx := Float (X1 (S1));
-         elsif X1 (S2) = X2 (S2) then
-            Cx := Float (X1 (S2));
+         A2 := Y2 (S2) - Y1 (S2);
+         B2 := X1 (S2) - X2 (S2);
+         C2 := X2 (S2) * Y1 (S2) - X1 (S2) * Y2 (S2);
+
+         --  Compute R1 and R2
+
+         R1 := A2 * X1 (S1) + B2 * Y1 (S1) + C2;
+         R2 := A2 * X2 (S1) + B2 * Y2 (S1) + C2;
+
+         --  Check signs of r1 and r2. If both points lie on same side of
+         --  second line segment, the line segments do not intersect
+
+         if R1 /= 0
+           and then R2 /= 0
+           and then ((R1 > 0 and then R2 > 0)
+                     or else (R1 < 0 and then R2 < 0))
+         then
+            Inter := Null_Point;
+            return;
+         end if;
+
+         --  Line segments intersect, compute intersection point
+
+         Denom := A1 * B2 - A2 * B1;
+
+         if Denom = 0 then
+            --  colinears
+            Inter := Null_Point;
+            return;
+         end if;
+
+         --  The denom/2 is to get rounding instead of truncating. It is added
+         --  or substracted to the numerator, depending on the sign of the
+         --  numerator.
+
+         if Denom < 0 then
+            Offset := -Denom / 2;
          else
-            Cx := (Yabs2 - Yabs) / (Slope1 - Slope2);
+            Offset := Denom / 2;
          end if;
 
-         --  Test whether Cx lies in the X range of both segments
-         if (Float (X1 (S1)) < Cx and then Float (X2 (S1)) < Cx)
-           or else (Float (X1 (S1)) > Cx and then Float (X2 (S1)) > Cx)
-           or else (Float (X1 (S2)) < Cx and then Float (X2 (S2)) < Cx)
-           or else (Float (X1 (S2)) > Cx and then Float (X2 (S2)) > Cx)
-         then
-            Inter := Null_Point;
-            return;
-         end if;
+         Num := B1 * C2 - B2 * C1;
 
-         if X1 (S1) = X2 (S1) then
-            Cy := Slope2 * Cx + Yabs2;
+         if Num < 0 then
+            X := (Num - Offset) / Denom;
          else
-            Cy := Slope1 * Cx + Yabs;
+            X := (Num + Offset) / Denom;
          end if;
 
-         --  Test vertical ranges
-         if X1 (S1) = X2 (S2)
-           and then ((Float (Y1 (S1)) < Cy and then Float (Y2 (S1)) < Cy)
-                  or else (Float (Y1 (S1)) > Cy and then Float (Y2 (S1)) > Cy))
-         then
-            Inter := Null_Point;
-            return;
+         Num := A2 * C1 - A1 * C2;
+
+         if Num < 0 then
+            Y := (Num - Offset) / Denom;
+         else
+            Y := (Num + Offset) / Denom;
          end if;
 
-         if X1 (S2) = X2 (S2)
-           and then
-           ((Float (Y1 (S2)) < Cy and then Float (Y2 (S2)) < Cy)
-            or else (Float (Y1 (S2)) > Cy and then Float (Y2 (S2)) > Cy))
-         then
-            Inter := Null_Point;
-            return;
-         end if;
-
-         Inter := (Intersection_Point, Integer (Cx), Integer (Cy), S1, S2);
+         Inter := (Intersection_Point, X, Y, S1, S2);
       end Intersection;
 
       -------------------
@@ -711,6 +735,7 @@ package body Line_Sweep is
                then
                   --  ??? Should test colinearity
                   Intersection (Neighbor1, Neighbor2, E2, At_Origin);
+
                   if E2 /= Null_Point and then Point_Before (E1, E2) then
                      if not At_Origin then
                         Count := Count + 1;
