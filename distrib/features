@@ -1,5 +1,10 @@
 New features in GPS 1.2.0
 
+- More flexible handling of custom files
+
+- Windows specific: support for DDE to allow opening source files in the
+  same instance of GPS
+
 - Ability to start a debug session from the command line
 
 - Better handling of long contextual menus
@@ -23,7 +28,4 @@ New features in GPS 1.2.0
 - Ability to create text aliases (Edit->Aliases)
 
 - New documentation can now be added through simple XML index files
-  A new menu Help->Contents provides a list of all registered documentation.
 
-- (Windows specific) Support for DDE to allow opening source files in the
-  same instance of GPS
