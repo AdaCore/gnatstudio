@@ -37,6 +37,7 @@ with Gdk.Event;                use Gdk.Event;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Arguments;            use Gtk.Arguments;
 with Gtk.Check_Button;         use Gtk.Check_Button;
+with Gtk.Check_Menu_Item;      use Gtk.Check_Menu_Item;
 with Gtk.Frame;                use Gtk.Frame;
 with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Tree_View;            use Gtk.Tree_View;
@@ -74,6 +75,7 @@ with Find_Utils;               use Find_Utils;
 with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
 with String_List_Utils;
+with Histories;                use Histories;
 
 with Src_Info;
 with String_Hash;
@@ -84,9 +86,8 @@ package body Project_Explorers is
 
    Me : constant Debug_Handle := Create ("Project_Explorers");
 
-   Show_Relative_Paths : constant Boolean := True;
-   --  <preference> If True, only relative paths are show in the project view,
-   --  otherwise the full path is displayed.
+   Show_Absolute_Paths : constant History_Key :=
+     "explorer-show-absolute-paths";
 
    Normalized_Directories : constant Boolean := True;
    --  <preference> True if directories should be fully normalized, eg links
@@ -271,6 +272,12 @@ package body Project_Explorers is
    --  expanded status
    --  Data must be the user data associated with Node
 
+   procedure Update_Directory_Node_Text
+     (Explorer : access Project_Explorer_Record'Class;
+      Project  : Project_Type;
+      Node     : Gtk_Tree_Iter);
+   --  Set the text to display for this directory node
+
    ----------------------------
    -- Retrieving information --
    ----------------------------
@@ -304,7 +311,7 @@ package body Project_Explorers is
    --  Return True if Directory contains any file among Files.
 
    procedure Refresh
-     (Kernel : access GObject_Record'Class; Explorer : GObject);
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Refresh the contents of the tree after the project view has changed.
    --  This procedure tries to keep as many things as possible in the current
    --  state (expanded nodes,...)
@@ -540,10 +547,10 @@ package body Project_Explorers is
          Tree_Select_Row_Cb'Access, Explorer, After => True);
 
       --  Automatic update of the tree when the project changes
-      Object_User_Callback.Connect
+      Widget_Callback.Object_Connect
         (Kernel, "project_view_changed",
-         Object_User_Callback.To_Marshaller (Refresh'Access),
-         GObject (Explorer));
+         Widget_Callback.To_Marshaller (Refresh'Access),
+         Explorer);
       Object_User_Callback.Connect
         (Kernel, "project_changed",
          Object_User_Callback.To_Marshaller (Project_Changed'Access),
@@ -599,7 +606,7 @@ package body Project_Explorers is
    begin
       if Node.Tag.all = "Project_Explorer_Project" then
          Gtk_New (Explorer, User);
-         Refresh (User, GObject (Explorer));
+         Refresh (Explorer);
          return Put
            (MDI, Explorer,
             Default_Width  => Get_Pref (User, Default_Widget_Width),
@@ -666,6 +673,7 @@ package body Project_Explorers is
       Context : Selection_Context_Access;
       T       : constant Project_Explorer := Project_Explorer (Object);
       Item    : Gtk_Menu_Item;
+      Check   : Gtk_Check_Menu_Item;
 
       Iter    : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (T.Tree, T.Tree.Model, Event);
@@ -680,6 +688,17 @@ package body Project_Explorers is
 
       Context := Project_Explorers_Common.Context_Factory
         (Kernel_Handle (Kernel), T.Tree, T.Tree.Model, Event, Menu);
+
+      if Menu /= null then
+         Gtk_New (Check, Label => -"Show absolute paths");
+         Associate
+           (Get_History (Kernel).all, Show_Absolute_Paths, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled",
+            Widget_Callback.To_Marshaller (Refresh'Access),
+            Slot_Object => T);
+      end if;
 
       if Node_Type = Obj_Directory_Node
         and then Menu /= null
@@ -743,8 +762,7 @@ package body Project_Explorers is
       Ref       : Gtk_Tree_Iter := Null_Iter;
       Is_Leaf   : constant Boolean :=
         not Has_Imported_Projects (Project)
-        and then (not Get_Pref (Explorer.Kernel, Show_Directories)
-                  or else Direct_Sources_Count (Project) = 0);
+        and then Direct_Sources_Count (Project) = 0;
       Node_Type : Node_Types := Project_Node;
       Node_Text : constant String := Project_Name (Project);
 
@@ -831,6 +849,29 @@ package body Project_Explorers is
       return False;
    end Has_Entries;
 
+   --------------------------------
+   -- Update_Directory_Node_Text --
+   --------------------------------
+
+   procedure Update_Directory_Node_Text
+     (Explorer : access Project_Explorer_Record'Class;
+      Project  : Project_Type;
+      Node     : Gtk_Tree_Iter)
+   is
+      Node_Text : constant String :=
+        Get_String (Explorer.Tree.Model, Node, Absolute_Name_Column);
+   begin
+      if Get_History
+        (Get_History (Explorer.Kernel).all, Show_Absolute_Paths)
+      then
+         Set (Explorer.Tree.Model, Node, Base_Name_Column, Node_Text);
+      else
+         Set (Explorer.Tree.Model, Node, Base_Name_Column,
+              Relative_Path_Name
+                (Node_Text, Dir_Name (Project_Path (Project))));
+      end if;
+   end Update_Directory_Node_Text;
+
    ------------------------
    -- Add_Directory_Node --
    ------------------------
@@ -846,27 +887,9 @@ package body Project_Explorers is
       N         : Gtk_Tree_Iter;
       Is_Leaf   : Boolean;
       Node_Type : Node_Types := Directory_Node;
-      Text      : Basic_Types.String_Access;
-      Node_Text : Basic_Types.String_Access;
    begin
       if Object_Directory then
          Node_Type := Obj_Directory_Node;
-      end if;
-
-      --  Compute the absolute directory
-
-      if Normalized_Directories then
-         Node_Text := new String'
-           (Name_As_Directory (Normalize_Pathname (Directory)));
-      else
-         Node_Text := new String'(Name_As_Directory (Directory));
-      end if;
-
-      if Show_Relative_Paths then
-         Text := new String'(Relative_Path_Name
-            (Node_Text.all, Dir_Name (Project_Path (Project))));
-      else
-         Text := new String'(Node_Text.all);
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
@@ -899,17 +922,19 @@ package body Project_Explorers is
          Append (Explorer.Tree.Model, N, Parent_Node);
       end if;
 
-      Set (Explorer.Tree.Model, N, Base_Name_Column,
-           Locale_To_UTF8 (Text.all));
+      if Normalized_Directories then
+         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+              Locale_To_UTF8 (Name_As_Directory
+                              (Normalize_Pathname (Directory))));
+      else
+         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+              Locale_To_UTF8 (Name_As_Directory (Directory)));
+      end if;
 
-      Set (Explorer.Tree.Model, N, Absolute_Name_Column,
-           Locale_To_UTF8 (Name_As_Directory (Directory)));
+      Update_Directory_Node_Text (Explorer, Project, N);
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
       Set (Explorer.Tree.Model, N, Up_To_Date_Column, False);
-
-      Free (Node_Text);
-      Free (Text);
 
       if not Is_Leaf then
          Append_Dummy_Iter (Explorer.Tree.Model, N);
@@ -1006,20 +1031,29 @@ package body Project_Explorers is
          N    : Gtk_Tree_Iter;
          pragma Unreferenced (N);
          Obj : constant String := Object_Path (Project, False);
+         Exec : constant String := Get_Attribute_Value
+           (Project, Exec_Dir_Attribute);
       begin
-         if Get_Pref (Explorer.Kernel, Show_Directories) then
-            Add_Source_Directories;
+         Add_Source_Directories;
 
-            --  Object directory
-            if Obj /= "" then
-               N := Add_Directory_Node
-                 (Explorer         => Explorer,
-                  Directory        => Obj,
-                  Project          => Project,
-                  Parent_Node      => Node,
-                  Files_In_Project => null,
-                  Object_Directory => True);
-            end if;
+         if Obj /= "" then
+            N := Add_Directory_Node
+              (Explorer         => Explorer,
+               Directory        => Obj,
+               Project          => Project,
+               Parent_Node      => Node,
+               Files_In_Project => null,
+               Object_Directory => True);
+         end if;
+
+         if Exec /= "" and then Exec /= Obj then
+            N := Add_Directory_Node
+              (Explorer         => Explorer,
+               Directory        => Exec,
+               Project          => Project,
+               Parent_Node      => Node,
+               Files_In_Project => null,
+               Object_Directory => True);
          end if;
 
       end Add_Directories;
@@ -1465,6 +1499,7 @@ package body Project_Explorers is
                   Dir  : constant String :=
                     Get_Directory_From_Node (Explorer.Tree.Model, N);
                begin
+                  Update_Directory_Node_Text (Explorer, Project, N);
                   Index := Sources'First;
 
                   while Index <= Sources'Last loop
@@ -1657,9 +1692,7 @@ package body Project_Explorers is
                 and then Has_Entries (Prj, Str, Files))
               or else
                 (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
-              or else
-                (Get_Pref (Explorer.Kernel, Show_Directories)
-                 and then Direct_Sources_Count (Prj) /= 0)
+              or else Direct_Sources_Count (Prj) /= 0
             then
                Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
                Set (Explorer.Tree.Model, Node, Project_Column,
@@ -1725,14 +1758,12 @@ package body Project_Explorers is
    -- Refresh --
    -------------
 
-   procedure Refresh
-     (Kernel : access GObject_Record'Class; Explorer : GObject)
-   is
+   procedure Refresh (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class) is
       T : constant Project_Explorer := Project_Explorer (Explorer);
       Iter         : Gtk_Tree_Iter;
       Dummy        : Boolean;
       Path         : Gtk_Tree_Path;
-      pragma Unreferenced (Kernel, Dummy);
+      pragma Unreferenced (Dummy);
 
    begin
       --  No project view => Clean up the tree
@@ -1834,7 +1865,7 @@ package body Project_Explorers is
 
       if Child = null then
          Gtk_New (Explorer, Kernel);
-         Refresh (Kernel, GObject (Explorer));
+         Refresh (Explorer);
          Child := Put
            (Get_MDI (Kernel), Explorer,
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
