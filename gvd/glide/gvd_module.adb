@@ -141,7 +141,9 @@ package body GVD_Module is
 
       Initialize_Menu  : Gtk_Menu;
 
-      Delete_Id        : Handler_Id := (Null_Signal_Id, null);
+      Delete_Id         : Handler_Id := (Null_Signal_Id, null);
+      File_Edited_Id    : Handler_Id := (Null_Signal_Id, null);
+      Lines_Revealed_Id : Handler_Id := (Null_Signal_Id, null);
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -548,7 +550,6 @@ package body GVD_Module is
       Remove (Gtk_Container (Get_Parent (Asm)), Asm);
       Set_Mode (Editor, Source);
       Disconnect (Asm, Id.Delete_Id);
-      Id.Delete_Id := (Null_Signal_Id, null);
 
       return False;
    end Delete_Asm;
@@ -1054,6 +1055,7 @@ package body GVD_Module is
       Module  : String_Access;
       Proxy   : Process_Proxy_Access;
       Success : Boolean;
+      Id      : constant GVD_Module  := GVD_Module (GVD_Module_ID);
 
       use Debugger;
 
@@ -1121,9 +1123,9 @@ package body GVD_Module is
 
       --  Add columns information for not currently opened files.
 
-      Widget_Callback.Object_Connect
+      Id.Lines_Revealed_Id := Widget_Callback.Object_Connect
         (K, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
-      Widget_Callback.Object_Connect
+      Id.File_Edited_Id := Widget_Callback.Object_Connect
         (K, File_Edited_Signal, File_Edited_Cb'Access, Top);
 
       --  Add columns for debugging information to all the files that
@@ -1147,6 +1149,7 @@ package body GVD_Module is
       Page  : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
 
+      Id    : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       use Debugger;
 
    begin
@@ -1158,6 +1161,8 @@ package body GVD_Module is
       Page.Exiting := True;
 
       Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
+      Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
+      Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
 
       if Page.Debugger /= null
         and then Get_Process (Page.Debugger) /= null
