@@ -1765,8 +1765,11 @@ package body Display_Items is
       Mode : Items.Display_Mode) is
    begin
       Item.Mode := Mode;
+
+      --  Hide_Big is set to False, since we don't want to change the
+      --  visibility state of the item.
       Update_Resize_Display
-        (Item, Get_Visibility (Item.Entity.all), Hide_Big_Items);
+        (Item, Get_Visibility (Item.Entity.all), Hide_Big => False);
    end Set_Display_Mode;
 
    ----------------------
