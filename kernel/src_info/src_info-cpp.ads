@@ -102,6 +102,10 @@ package Src_Info.CPP is
       Finished : out Boolean);
    --  See comment in src_info.ads
 
+   procedure Destroy (Iterator : in out CPP_LI_Handler_Iterator);
+   --  Free the memory used by the list of source files and save xref
+   --  pool.
+
    procedure Add
      (HT      : in out LI_File_List;
       LIFP    : LI_File_Ptr;

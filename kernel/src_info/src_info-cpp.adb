@@ -567,15 +567,23 @@ package body Src_Info.CPP is
 
       if Iterator.State = Done then
          Trace (Info_Stream, "dbimp process is finished");
-
-         Finished := True;
-         Save (Iterator.Handler.Xrefs,
-               Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
          Delete_File (Iterator.Tmp_Filename, Success);
          Delete_File (Iterator.List_Filename.all, Success);
          Free (Iterator.List_Filename);
+         Finished := True;
       end if;
    end Continue;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out CPP_LI_Handler_Iterator) is
+   begin
+      Destroy (LI_Handler_Iterator (Iterator));
+      Save (Iterator.Handler.Xrefs,
+            Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
+   end Destroy;
 
    ----------------
    -- Get_SN_Dir --
