@@ -686,6 +686,7 @@ package body Src_Info.CPP is
 
          Free (P);
       end loop;
+
       Free (Module_Typedefs);
    exception
       when others   => -- unexpected exception
@@ -776,7 +777,6 @@ package body Src_Info.CPP is
          Predefined_Path => "");
 
    begin
-      Trace (Info_Stream, "Create_Or_Complete_LI " & Source_Filename);
       if Full_Filename = "" then
          Warn ("File not found: " & Source_Filename);
          return;
@@ -789,6 +789,19 @@ package body Src_Info.CPP is
           File.LI.LI_Timestamp
       then
          return;
+      end if;
+
+      Trace (Info_Stream, "Create_Or_Complete_LI " & Full_Filename);
+
+      if File = No_LI_File then
+         Create_Stub_For_File
+           (LI            => File,
+            Handler       => Handler,
+            List          => List,
+            Full_Filename => Full_Filename,
+            Parsed        => True);
+      else
+         Convert_To_Parsed (File, Update_Timestamp => True);
       end if;
 
       Process_File (Full_Filename, Handler, File, Project, List);
@@ -906,6 +919,7 @@ package body Src_Info.CPP is
       Reference_Point    : Point;
       Kind               : Reference_Kind := Reference)
    is
+      pragma Unreferenced (Reference_Filename);
       Type_Decl_Info     : E_Declaration_Info_List;
    begin
       Type_Decl_Info := Find_Declaration
@@ -917,7 +931,6 @@ package body Src_Info.CPP is
          Insert_Reference
            (Declaration_Info     => Type_Decl_Info,
             File                 => File,
-            Source_Filename      => Reference_Filename,
             Location             => Reference_Point,
             Kind                 => Kind);
       end if;
@@ -979,11 +992,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all &
-                 Xref_Filename_For
-                 (Source_Filename,
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => CL_Tab.Buffer
                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
@@ -1146,11 +1154,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all
-                  & Xref_Filename_For
-                    (Filename,
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
                Referred_Filename  => MD_Tab.Buffer
@@ -1288,11 +1291,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all
-                  & Xref_Filename_For
-                    (Filename,
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Buffer (Name.First .. Name.Last),
                Referred_Filename  => FD_Tab.Buffer
@@ -1372,11 +1370,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all &
-                 Xref_Filename_For
-                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Class_Def.Buffer
                  (Class_Def.Name.First .. Class_Def.Name.Last),
@@ -1415,8 +1408,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (File              => File,
          Declaration_Info  => Decl_Info,
-         Source_Filename   => Ref.Buffer
-           (Ref.File_Name.First .. Ref.File_Name.Last),
          Location          => Ref.Position,
          Kind              => Reference);
       Free (Class_Def);
@@ -1523,11 +1514,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For (Var.Buffer
-                        (Var.File_Name.First .. Var.File_Name.Last),
-                         Handler.DB_Dir.all,
-                         Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       =>
                     Var.Buffer (Var.Name.First .. Var.Name.Last),
@@ -1541,12 +1527,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer
-                       (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       =>
                     Var.Buffer (Var.Name.First .. Var.Name.Last),
@@ -1573,8 +1553,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Declaration_Info        => Decl_Info,
          File                    => File,
-         Source_Filename         =>
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Location                => Ref.Position,
          Kind                    => Ref_Kind);
    exception
@@ -1636,11 +1614,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all &
-                 Xref_Filename_For (Ref.Buffer
-                   (Ref.File_Name.First .. Ref.File_Name.Last),
-                                    Handler.DB_Dir.all,
-                                    Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
@@ -1679,8 +1652,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (File              => File,
          Declaration_Info  => Decl_Info,
-         Source_Filename   => Ref.Buffer
-           (Ref.File_Name.First .. Ref.File_Name.Last),
          Location          => Ref.Position,
          Kind              => Reference);
       Free (Enum_Def);
@@ -1748,10 +1719,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Handler.DB_Dir.all &
-                 Xref_Filename_For
-                 (Ref.Buffer (Ref.File_Name.First ..  Ref.File_Name.Last),
-                  Handler.DB_Dir.all, Handler.Xrefs).all,
                List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
@@ -1767,8 +1734,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Declaration_Info        => Decl_Info,
          File                    => File,
-         Source_Filename         =>
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Location                => Ref.Position,
          Kind                    => Reference);
 
@@ -1940,8 +1905,11 @@ package body Src_Info.CPP is
                Declaration_Info   => Decl_Info);
          end if;
 
-      else -- overloaded entity
-         --  have we already declared it?
+      else  --  overloaded entity
+            --  have we already declared it?
+         Assert (Warn_Stream, File /= null,
+                 "Fu_To_Fu_Handler, File not created yet");
+
          Decl_Info := Find_Declaration
            (File        => File,
             Symbol_Name => Ref_Id,
@@ -1969,7 +1937,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Decl_Info,
          File,
-         Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Ref.Position,
          Reference);
    exception
@@ -2072,11 +2039,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       =>
                     Var.Buffer (Var.Name.First .. Var.Name.Last),
@@ -2090,11 +2052,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       =>
                     Var.Buffer (Var.Name.First .. Var.Name.Last),
@@ -2122,8 +2079,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Declaration_Info        => Decl_Info,
          File                    => File,
-         Source_Filename         =>
-            Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Location                => Ref.Position,
          Kind                    => Ref_Kind);
    exception
@@ -2196,12 +2151,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler           => Handler,
                File              => File,
-               LI_Full_Filename  => Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Ref.Buffer
-                    (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List              => List,
                Symbol_Name       => Ref_Id,
                Location          => Macro.Start_Position,
@@ -2216,8 +2165,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Declaration_Info     => Decl_Info,
          File                 => File,
-         Source_Filename      =>
-           Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Location             => Ref.Position,
          Kind                 => Reference);
 
@@ -2412,7 +2359,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Decl_Info,
          File,
-         Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Ref.Position,
          Reference);
    exception
@@ -2550,12 +2496,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer
-                       (Ref.File_Name.First ..  Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
@@ -2569,11 +2509,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
@@ -2588,11 +2523,6 @@ package body Src_Info.CPP is
                Insert_Dependency_Declaration
                  (Handler           => Handler,
                   File              => File,
-                  LI_Full_Filename  => Handler.DB_Dir.all
-                    & Xref_Filename_For
-                    (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                     Handler.DB_Dir.all,
-                     Handler.Xrefs).all,
                   List              => List,
                   Symbol_Name       => Ref_Id,
                   Location          => Typedef.Start_Position,
@@ -2610,8 +2540,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (Declaration_Info     => Decl_Info,
          File                 => File,
-         Source_Filename      =>
-           Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
          Location             => Ref.Position,
          Kind                 => Reference);
 
@@ -2674,11 +2602,6 @@ package body Src_Info.CPP is
             Insert_Dependency_Declaration
               (Handler            => Handler,
                File               => File,
-               LI_Full_Filename   => Handler.DB_Dir.all
-                 & Xref_Filename_For
-                 (Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Handler.DB_Dir.all,
-                  Handler.Xrefs).all,
                List               => List,
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
@@ -2717,8 +2640,6 @@ package body Src_Info.CPP is
       Insert_Reference
         (File              => File,
          Declaration_Info  => Decl_Info,
-         Source_Filename   => Ref.Buffer
-           (Ref.File_Name.First .. Ref.File_Name.Last),
          Location          => Ref.Position,
          Kind              => Reference);
       Free (Union_Def);
@@ -3176,7 +3097,6 @@ package body Src_Info.CPP is
          Insert_Reference
            (Decl_Info,
             File,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Sym.Start_Position,
             Reference);
       end if;
@@ -3267,8 +3187,6 @@ package body Src_Info.CPP is
                      Insert_Reference
                        (Class_Decl_Info,
                         File,
-                        Sym.Buffer (Sym.File_Name.First ..
-                                     Sym.File_Name.Last),
                         (Sym.Start_Position.Line, 0),
                         --  we don't know the precise position of the class
                         --  name, so set the column to "anywhere"
@@ -3384,7 +3302,6 @@ package body Src_Info.CPP is
          Insert_Reference
            (Decl_Info,
             File,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Body_Position,
             Body_Entity);
       end if;
@@ -3577,8 +3494,11 @@ package body Src_Info.CPP is
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
+
+      --  ??? We shouldn't use Base_Name below, but should allow find file to
+      --  recognize directories in the name.
       Full_Included : constant String := Find_File
-        (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+        (Base_Name (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)),
          Include_Path (Project_View, Recursive => True),
          Predefined_Path => "");
 
@@ -3594,8 +3514,6 @@ package body Src_Info.CPP is
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Source_Filename   => Sym.Buffer
-              (Sym.File_Name.First .. Sym.File_Name.Last),
             Referred_Filename => Sym.Buffer
               (Sym.Identifier.First .. Sym.Identifier.Last));
       else
@@ -3603,8 +3521,6 @@ package body Src_Info.CPP is
            (Handler           => Handler,
             File              => File,
             List              => List,
-            Source_Filename   => Sym.Buffer
-              (Sym.File_Name.First .. Sym.File_Name.Last),
             Referred_Filename => Full_Included);
       end if;
    end Sym_IU_Handler;
@@ -3834,7 +3750,6 @@ package body Src_Info.CPP is
             Insert_Reference
               (Class_Decl_Info,
                File,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                (Sym.Start_Position.Line, 0),
                --  we don't know the precise position of the class
                --  name, so set the column to "anywhere"
@@ -3879,11 +3794,10 @@ package body Src_Info.CPP is
       --  for all subsequent declarations, add reference to the first decl
       if Sym.Start_Position /= First_MD_Pos then
          Insert_Reference
-           (Decl_Info,
-            File,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Sym.Start_Position,
-            Reference);
+           (Declaration_Info => Decl_Info,
+            File             => File,
+            Location         => Sym.Start_Position,
+            Kind             => Reference);
       end if;
    exception
       when DB_Error | Not_Found =>
@@ -4036,8 +3950,6 @@ package body Src_Info.CPP is
          Insert_Reference
            (Declaration_Info      => Decl_Info,
             File                  => File,
-            Source_Filename       =>
-              Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Location              => Union_Def.End_Position,
             Kind                  => End_Of_Spec);
 
