@@ -111,9 +111,14 @@ package body Src_Editor_Buffer.Text_Handling is
             if Ends_Line (Iter) then
                Line_End := Line_End + 1;
                Unfold_Line (Buffer, Line_End);
+
+               --  After unfolding the line, Iter might be invalid, therefore
+               --  we re-generate it here.
+               Get_Iter (Buffer, Iter, Line_End, 0);
+            else
+               Forward_Char (Iter, Result);
             end if;
 
-            Forward_Char (Iter, Result);
             exit when not Result;
          end loop;
 
