@@ -935,7 +935,7 @@ package body Src_Editor_Buffer is
            (Command,
             Get_Slice (Buffer, Start_Iter, End_Iter),
             Get_Editable_Line (Buffer, Buffer_Line_Type (Line_Start + 1)),
-            Integer (Column_Start));
+            Natural (Column_Start + 1));
       else
          if Direction = Forward then
             Add_Text
