@@ -18,657 +18,851 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  NOTES:
---  * Delimit_A_Word must be synced with word definition in g-regpat.ad?.
-
+with Unchecked_Deallocation;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Gtk.GEntry;              use Gtk.GEntry;
+with Gtk.Check_Button;        use Gtk.Check_Button;
+with Gtk.Widget;              use Gtk.Widget;
+with Files_Extra_Info_Pkg;    use Files_Extra_Info_Pkg;
+with Osint;                   use Osint;
+with Prj_API;                 use Prj_API;
+with Basic_Types;             use Basic_Types;
+with Boyer_Moore;             use Boyer_Moore;
+with Glide_Kernel.Project;    use Glide_Kernel.Project;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with String_Utils;            use String_Utils;
+with Traces;                  use Traces;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.Regexp;             use GNAT.Regexp;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
-with Language; use Language;
-with OS_Utils; use OS_Utils;
-
-with Ada.Characters.Handling;
-with Ada.Unchecked_Deallocation;
+with Language;                use Language;
+with OS_Utils;                use OS_Utils;
 
 package body Find_Utils is
 
-   procedure Common_Init
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Match_Case : Boolean;
-      Whole_Word : Boolean;
-      Regexp     : Boolean;
-      Scope      : Search_Scope);
-   --  Initialize file-independent fields.
+   Me : Debug_Handle := Create ("Find_Utils");
+
+   procedure Free_Pattern_Matcher is new Unchecked_Deallocation
+     (Pattern_Matcher, Pattern_Matcher_Access);
+
+   procedure Free_Match_Array is new Unchecked_Deallocation
+     (Match_Array, Match_Array_Access);
+
+   type Recognized_Lexical_States is
+     (Statements, Strings, Mono_Comments, Multi_Comments);
+   --  Current lexical state of the currently parsed file.
    --
-   --  Raise Search_Error if:
-   --  * Look_For is empty, or can't compile
+   --  Statements      all but comments and strings
+   --  Strings         string literals
+   --  Mono_Comments   end of line terminated comments
+   --  Multi_Comments  (possibly) multi-line comments
 
-   procedure Init_RE_Pattern
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Match_Case : Boolean;
-      Whole_Word : Boolean);
-   --  Initialize RE_Pat and Sub_Matches.
-   --
-   --  Raise Search_Error if:
-   --  * Look_For can't compile
+   type Location is record
+      Index, Line, Column : Natural;
+   end record;
 
-   function Add_Dir_Sep (Dir : String) return String;
-   --  Add Directory_Separator when needed.
+   No_Location : constant Location := (0, 0, 0);
 
-   -----------------
-   -- Add_Dir_Sep --
-   -----------------
+   type Scan_Callback is access procedure (Loc : Location; Line : String);
+   --  Callback for a match in a file
 
-   function Add_Dir_Sep (Dir : String) return String is
+   procedure Scan_Buffer
+     (Buffer         : String;
+      Context        : access Search_Context'Class;
+      Callback       : Scan_Callback;
+      Ref_Index,
+      Ref_Line,
+      Ref_Column     : in out Integer);
+   --  Scan Buffer for possible matches. Buffer is assumes to be a single valid
+   --  scope, and thus no scope handling is performed.
+   --  Ref_Index is assumed to correspond to position Ref_Line and
+   --  Ref_Column in the original file. They are automatically updated when new
+   --  positions are computed, so that they can be used during the next call to
+   --  Scan_Buffer.
+
+   procedure Scan_File
+     (Context  : access Search_Context'Class;
+      Name     : String;
+      Callback : Scan_Callback);
+   --  Search Context in the file Name, searching only in the appropriate
+   --  scope.
+
+   function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
+   pragma Inline (End_Of_Line);
+   --  Return the index for the end of the line containing Pos
+
+   function Is_Word_Delimiter (C : Character) return Boolean;
+   pragma Inline (Is_Word_Delimiter);
+   --  Return True if C is a character which can't be in a word.
+
+   -----------------------
+   -- Is_Word_Delimiter --
+   -----------------------
+
+   function Is_Word_Delimiter (C : Character) return Boolean is
    begin
-      if Dir = "" or else Dir (Dir'Last) = Directory_Separator then
-         return Dir;
-      else
-         return Dir & Directory_Separator;
-      end if;
-   end Add_Dir_Sep;
+      return not (Is_Alphanumeric (C) or else C = '_');
+   end Is_Word_Delimiter;
 
    -----------------
-   -- Common_Init --
+   -- End_Of_Line --
    -----------------
 
-   procedure Common_Init
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Match_Case : Boolean;
-      Whole_Word : Boolean;
-      Regexp     : Boolean;
-      Scope      : Search_Scope)
-   is
+   function End_Of_Line (Buffer : String; Pos : Natural) return Integer is
+      J : Integer := Pos;
    begin
-      if Look_For = "" then
-         raise Search_Error;
-      end if;
+      while J < Buffer'Last loop
+         if Buffer (J) = ASCII.LF then
+            return J - 1;
+         end if;
+         J := J + 1;
+      end loop;
+      return Buffer'Last;
+   end End_Of_Line;
 
-      if Regexp then
-         Init_RE_Pattern (Search, Look_For, Match_Case, Whole_Word);
+   -----------------
+   -- Scan_Buffer --
+   -----------------
 
-      elsif Look_For'Length <= Boyer_Moore.Max_Pattern_Length then
-         Search.Use_BM := True;
-         Compile (Search.BM_Pat, Look_For, Match_Case);
-         Search.Sub_Matches := new Match_Array'(0 => No_Match);
-
-      else
-         Init_RE_Pattern (Search, Quote (Look_For), Match_Case, Whole_Word);
-      end if;
-
-      Search.Look_For   := new String' (Look_For);
-      Search.Match_Case := Match_Case;
-      Search.Whole_Word := Whole_Word;
-      Search.Regexp     := Regexp;
-      Search.Scope      := Scope;
-   end Common_Init;
-
-   ---------------
-   -- Do_Search --
-   ---------------
-
-   procedure Do_Search
-     (Search   : in out Code_Search;
-      Callback : Poll_Search_Handler)
+   procedure Scan_Buffer
+     (Buffer         : String;
+      Context        : access Search_Context'Class;
+      Callback       : Scan_Callback;
+      Ref_Index,
+      Ref_Line,
+      Ref_Column     : in out Integer)
    is
-      use Basic_Types;
+      Last_Line_Start   : Natural := Buffer'First;
 
-      function Explore_Directory (Directory : String) return Boolean;
-      --  Explore the directory to scan files.
-      --  Sub-directories are recursively explored iff Search.Recurse.
-      --  Scanned files are selected with Search.Files_Pattern.
-      --  Return False when the search was aborted.
-      --
-      --  Directory: Location of beginning of the search.
+      procedure To_Line_Column (Pos : Natural);
+      --  Set Line and Column to the appropriate for the Pos-th character in
+      --  Buffer.
 
-      function Scan_File (Name : String) return Boolean;
-      --  Determine the language context of the file, and then scan it.
-      --  Return False when the search was aborted.
-      --
-      --  Name: The file to scan
+      procedure Re_Search;
+      --  Handle the search for a regular expression
 
-      function Scan_File_Without_Context (Name : String) return Boolean;
-      --  Scan the file in order to find matches, with no context.
-      --  Callback is called whenever a match is found, and at the end of the
-      --  file.
-      --  Return False when the search was aborted.
-      --
-      --  Name: The file to scan
-
-      function Scan_File_With_Context
-        (Name    : String;
-         Context : Language_Context) return Boolean;
-      --  Scan the file in order to find matches, using the given context.
-      --  Callback is called whenever a match is found, and at the end of the
-      --  file.
-      --  Return False when the search was aborted.
-      --
-      --  Name     The file to scan
-      --  Context  The language syntactic context used within the file
-
-      function Scan_Line_With_Context
-        (Name    : String;
-         Line    : String;
-         Line_Nr : Positive;
-         Context : Language_Context) return Boolean;
-      --  Scan a line given the current lexical state and the language context.
-      --  Callback isn't called iff no match occurs in the line within allowed
-      --  lexical states (ie called once when multiple matches).
-      --  Return False when the search was aborted.
-      --
-      --  Name     File currently scanned
-      --  Line     Line to check for matches
-      --  Line_Nr  Line number
-      --  Context  The language syntactic context used within the file
-
-      function Contain_Match (Text : String) return Boolean;
-      --  Return False iff no match occurs within the given text (i.e. True if
-      --  a match or more).
-      --
-      --  Text: Text to check for matches
-
-      function Delimit_A_Word (C : Character) return Boolean;
-      --  Return True if C is a character which can't be in a word.
-      --
-      --  NOTE: See NOTES at the beginning of the file.
+      procedure BM_Search;
+      --  Handle the search for a constant string
 
       --------------------
-      -- Delimit_A_Word --
+      -- To_Line_Column --
       --------------------
 
-      function Delimit_A_Word (C : Character) return Boolean is
-         use Ada.Characters.Handling;
+      procedure To_Line_Column (Pos : Natural) is
       begin
-         return not (Is_Alphanumeric (C) or else C = '_');
-      end Delimit_A_Word;
-
-      -------------------
-      -- Contain_Match --
-      -------------------
-
-      function Contain_Match (Text : String) return Boolean is
-         Pos : Integer;
-      begin
-         if not Search.Use_BM then
-            Match (Search.RE_Pat.all, Text, Search.Sub_Matches.all);
-            return Search.Sub_Matches (0) /= No_Match;
-         end if;
-
-         Pos := Boyer_Moore.Search (Search.BM_Pat, Text);
-
-         if Pos = -1 then
-            return False;
-         elsif not Search.Whole_Word then
-            return True;
-         end if;
-
-         return (Pos = Text'First or else Delimit_A_Word (Text (Pos - 1)))
-           and then (Pos + Search.Look_For'Length - 1 = Text'Last
-                     or else Delimit_A_Word
-                               (Text (Pos + Search.Look_For'Length)));
-      end Contain_Match;
-
-      -----------------------
-      -- Explore_Directory --
-      -----------------------
-
-      function Explore_Directory (Directory : String) return Boolean is
-         Continue  : Boolean := True;
-         Dir_Name  : constant Dir_Name_Str := Add_Dir_Sep (Directory);
-         Dir       : Dir_Type;
-         File_Name : String (1 .. Max_Path_Len);
-         Last      : Natural;
-
-      begin
-         if Dir_Name = "" then
-            Open (Dir, Get_Current_Dir);
-         else
-            Open (Dir, Dir_Name);
-         end if;
-
-         loop
-            Read (Dir, File_Name, Last);
-
-            exit when Last = 0;
-
-            declare
-               Full_Name : constant String := Dir_Name & File_Name (1 .. Last);
-            begin
-               if Is_Directory (Full_Name) then
-                  if Search.Recurse
-                     --  ??? Remove link duplicates by using Normalize_Pathname
-                     --  and a hash table.
-
-                    and then File_Name (1 .. Last) /= "."
-                    and then File_Name (1 .. Last) /= ".."
-                  then
-                     Continue := Explore_Directory (Full_Name);
-                  end if;
-
-               elsif Match (File_Name (1 .. Last), Search.Files_Pattern) then
-                  Continue := Scan_File (Full_Name);
-               end if;
-            end;
-
-            exit when not Continue;
+         for J in Ref_Index .. Pos - 1 loop
+            if Buffer (J) = ASCII.LF then
+               Ref_Line := Ref_Line + 1;
+               Ref_Column := 1;
+               Last_Line_Start := J + 1;
+            else
+               Ref_Column := Ref_Column + 1;
+            end if;
          end loop;
-
-         Close (Dir);
-         return Continue;
-
-      exception
-         when Directory_Error =>
-            --  Ignore opening error
-
-            return True;
-      end Explore_Directory;
+         Ref_Index := Pos;
+      end To_Line_Column;
 
       ---------------
-      -- Scan_File --
+      -- Re_Search --
       ---------------
 
-      function Scan_File (Name : String) return Boolean is
-         Language : Language_Access;
+      procedure Re_Search is
+         RE : constant Pattern_Matcher := Context_As_Regexp (Context);
+         Pos : Natural := Buffer'First;
       begin
-         if Search.Scope = Whole then
-            return Scan_File_Without_Context (Name);
-         end if;
+         loop
+            Match
+              (RE, Buffer (Pos .. Buffer'Last), Context.Sub_Matches.all);
+            exit when Context.Sub_Matches (0) = No_Match;
 
-         Language := Get_Language_From_File (Name);
+            Pos := Context.Sub_Matches (0).First;
 
-         if Language = null then
-            return Scan_File_Without_Context (Name);
-         else
-            return Scan_File_With_Context
-              (Name, Get_Language_Context (Language));
-         end if;
-      end Scan_File;
+            To_Line_Column (Pos);
+            Callback
+              ((Pos, Ref_Line, Ref_Column),
+               Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)));
 
-      ----------------------------
-      -- Scan_File_With_Context --
-      ----------------------------
+            Pos := Pos + 1;
+         end loop;
+      end Re_Search;
 
-      function Scan_File_With_Context
-        (Name    : String;
-         Context : Language_Context) return Boolean
+      ---------------
+      -- BM_Search --
+      ---------------
+
+      procedure BM_Search is
+         BM : Boyer_Moore.Pattern;
+         Pos : Integer := Buffer'First;
+      begin
+         Context_As_Boyer_Moore (Context, BM);
+
+         --  The loop is optimized so that the search is as efficient as
+         --  possible (we scan the whole buffer, instead of line-by-line
+         --  search). We then pay a small price to actually compute the
+         --  buffer coordinates, but this algorithm is much faster for files
+         --  that don't match.
+         loop
+            Pos := Search (BM, Buffer (Pos .. Buffer'Last));
+            exit when Pos = -1;
+
+            if not Context.Options.Whole_Word
+              or else
+              ((Pos = Buffer'First
+                or else Is_Word_Delimiter (Buffer (Pos - 1)))
+               and then
+               (Pos + Context.Look_For'Length - 1 = Buffer'Last
+                or else Is_Word_Delimiter
+                (Buffer (Pos + Context.Look_For'Length))))
+            then
+               To_Line_Column (Pos);
+               Callback
+                 ((Pos, Ref_Line, Ref_Column),
+                  Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)));
+            end if;
+
+            Pos := Pos + 1;
+         end loop;
+      end BM_Search;
+
+   begin
+      --  ??? Would be nice to handle backward search, which is extremely hard
+      --  ??? with regular expressions
+
+      if Context.Options.Regexp then
+         Re_Search;
+      else
+         BM_Search;
+      end if;
+
+   exception
+      when Invalid_Context =>
+         null;
+   end Scan_Buffer;
+
+   ---------------
+   -- Scan_File --
+   ---------------
+
+   procedure Scan_File
+     (Context  : access Search_Context'Class;
+      Name     : String;
+      Callback : Scan_Callback)
+   is
+      Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
+        := (Statements     => Context.Options.Scope = All_But_Comments,
+            Strings        => Context.Options.Scope in
+              Comments_And_Strings .. All_But_Comments,
+            Mono_Comments  => Context.Options.Scope in
+              Comments_Only .. Comments_And_Strings,
+            Multi_Comments => Context.Options.Scope in
+              Comments_Only .. Comments_And_Strings);
+      --  Indicates what lexical states are valid, depending on the current
+      --  scope.
+
+      procedure Next_Scope_Transition
+        (Buffer : String;
+         Pos    : in out Positive;
+         State  : in out Recognized_Lexical_States;
+         Section_End : out Integer;
+         Lang   : Language_Context);
+      --  Move Pos to the first character in buffer that isn't in the same
+      --  lexical state as State (ie if State is one we want to search in, then
+      --  Pos will be left on the first character we do not want to search).
+      --
+      --  Pos is purely internal, and represents the first character into the
+      --  next section (ie after passing the section start string, like -- for
+      --  comments). Section_End on the last point in the current section.
+
+      ---------------------------
+      -- Next_Scope_Transition --
+      ---------------------------
+
+      procedure Next_Scope_Transition
+        (Buffer : String;
+         Pos    : in out Positive;
+         State  : in out Recognized_Lexical_States;
+         Section_End : out Integer;
+         Lang   : Language_Context)
       is
-         FD       : constant File_Descriptor := Open_Read (Name, Text);
-         Continue : Boolean := True;
+         Str_Delim     : Character renames Lang.String_Delimiter;
+         Quote_Char    : Character renames Lang.Quote_Character;
+         NL_Comm_Start : String    renames Lang.New_Line_Comment_Start;
+         M_Comm_Start  : String    renames Lang.Comment_Start;
+         M_Comm_End    : String    renames Lang.Comment_End;
+         Char_Delim    : Character renames Lang.Constant_Character;
+
+         Looking_For : constant Boolean := not Scanning_Allowed (State);
+         --  Whether the final range should or should not be scanned.
 
       begin
-         if FD = Invalid_FD then
-            return Callback (False, Name);
-         end if;
+         while Pos <= Buffer'Last
+           and then Scanning_Allowed (State) /= Looking_For
+         loop
+            case State is
 
-         declare
-            Len        : Natural := Natural (File_Length (FD));
-            Buffer     : aliased String (1 .. Len);
-            Pos        : Positive := 1;
-            Line_Start : Positive;
-            Line_Nr    : Positive := 1;
+               --  Statements end on any other state
 
-         begin
-            Len := Read (FD, Buffer'Address, Len);
-
-            Search.Lexical_State := Statements;
-
-            --  NOTE: Empty files are skipped
-
-            while Pos <= Len loop
-               Line_Start := Pos;
-
-               while Pos <= Len and then Buffer (Pos) /= ASCII.LF loop
-                  Pos := Pos + 1;
-               end loop;
-
-               Continue :=
-                 Scan_Line_With_Context
-                   (Name, Buffer (Line_Start .. Pos - 1), Line_Nr, Context);
-
-               exit when not Continue;
-
-               --  Skip ASCII.LF
-
-               Pos := Pos + 1;
-               Line_Nr := Line_Nr + 1;
-            end loop;
-         end;
-
-         Close (FD);
-         return Continue and then Callback (False, Name);
-      end Scan_File_With_Context;
-
-      -------------------------------
-      -- Scan_File_Without_Context --
-      -------------------------------
-
-      function Scan_File_Without_Context (Name : String) return Boolean is
-         FD       : constant File_Descriptor := Open_Read (Name, Text);
-         Continue : Boolean := True;
-
-      begin
-         if FD = Invalid_FD then
-            return Callback (False, Name);
-         end if;
-
-         declare
-            Len        : Natural := Natural (File_Length (FD));
-            Buffer     : aliased String (1 .. Len);
-            Pos        : Positive := 1;
-            Line_Start : Positive;
-            Line_Nr    : Positive := 1;
-
-         begin
-            Len := Read (FD, Buffer'Address, Len);
-
-            --  NOTE: Empty files are skipped
-
-            while Pos <= Len loop
-               Line_Start := Pos;
-
-               while Pos <= Len and then Buffer (Pos) /= ASCII.LF loop
-                  Pos := Pos + 1;
-               end loop;
-
-               if Contain_Match (Buffer (Line_Start .. Pos - 1)) then
-                  Continue := Callback
-                                (True, Name, Line_Nr,
-                                 Buffer (Line_Start .. Pos - 1),
-                                 Search.Sub_Matches.all);
-
-                  exit when not Continue;
-               end if;
-
-               --  Skip ASCII.LF
-
-               Pos := Pos + 1;
-               Line_Nr := Line_Nr + 1;
-            end loop;
-         end;
-
-         Close (FD);
-         return Continue and then Callback (False, Name);
-      end Scan_File_Without_Context;
-
-      ----------------------------
-      -- Scan_Line_With_Context --
-      ----------------------------
-
-      function Scan_Line_With_Context
-        (Name    : String;
-         Line    : String;
-         Line_Nr : Positive;
-         Context : Language_Context) return Boolean
-      is
-         Scanning_Allowed :
-           constant array (Recognized_Lexical_States) of Boolean :=
-             (Statements     => Search.Scope = All_But_Comm,
-              Strings        => Search.Scope in Comm_Str .. All_But_Comm,
-              Mono_Comments  => Search.Scope in Comm_Only .. Comm_Str,
-              Multi_Comments => Search.Scope in Comm_Only .. Comm_Str);
-
-         EOL : constant Natural := Line'Last;  -- End Of Line
-
-         Reached : Positive;
-         Pos     : Positive;
-         --  Search.Lexical_State applies on Line (Reached .. Pos - 1)
-
-         Next               : Positive;
-         Next_Lexical_State : Recognized_Lexical_States;
-         --  Next_Lexical_State applies from Line (Next)
-
-         Str_Delim     : Character renames Context.String_Delimiter;
-         Quote_Char    : Character renames Context.Quote_Character;
-         NL_Comm_Start : String    renames Context.New_Line_Comment_Start;
-         M_Comm_Start  : String    renames Context.Comment_Start;
-         M_Comm_End    : String    renames Context.Comment_End;
-         Char_Delim    : Character renames Context.Constant_Character;
-
-         Called   : Boolean := False; --  Was callback called on this line ?
-         Continue : Boolean := True;
-
-      begin
-         Reached := Line'First;
-
-         Whole_Line_Loop : loop
-            Pos := Reached;
-
-            --  Default values when the line contains no other lexical state
-
-            Next := EOL + 1;
-            Next_Lexical_State := Search.Lexical_State;
-
-            case Search.Lexical_State is
                when Statements =>
-                  while Pos <= EOL loop
+                  while Pos <= Buffer'Last loop
                      if M_Comm_Start'Length /= 0
-                       and then Pos + M_Comm_Start'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_Start'Length - 1)
-                                = M_Comm_Start
+                       and then Pos + M_Comm_Start'Length - 1 <= Buffer'Last
+                       and then Buffer (Pos .. Pos + M_Comm_Start'Length - 1) =
+                       M_Comm_Start
                      then
-                        Next_Lexical_State := Multi_Comments;
-                        Next := Pos + M_Comm_Start'Length;
+                        State := Multi_Comments;
+                        Section_End := Pos - 1;
+                        Pos := Pos + M_Comm_Start'Length;
                         exit;
 
                      elsif NL_Comm_Start'Length /= 0
-                       and then Pos + NL_Comm_Start'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + NL_Comm_Start'Length - 1)
-                                = NL_Comm_Start
+                       and then Pos + NL_Comm_Start'Length - 1 <= Buffer'Last
+                       and then Buffer (Pos .. Pos + NL_Comm_Start'Length - 1)
+                       = NL_Comm_Start
                      then
-                        Next_Lexical_State := Mono_Comments;
-                        Next := Pos + NL_Comm_Start'Length;
+                        State := Mono_Comments;
+                        Section_End := Pos - 1;
+                        Pos := Pos + NL_Comm_Start'Length;
                         exit;
 
-                     elsif Line (Pos) = Str_Delim
-                       and then (Pos = Line'First
-                                 or else Pos = EOL
-                                 or else Line (Pos - 1) /= Char_Delim
-                                 or else Line (Pos + 1) /= Char_Delim)
+                     elsif Buffer (Pos) = Str_Delim
+                       and then (Pos = Buffer'First
+                                 or else Pos = Buffer'Last
+                                 or else Buffer (Pos - 1) /= Char_Delim
+                                 or else Buffer (Pos + 1) /= Char_Delim)
                      then
-                        Next_Lexical_State := Strings;
-                        Next := Pos + 1;
+                        State := Strings;
+                        Section_End := Pos - 1;
+                        Pos := Pos + 1;
                         exit;
                      end if;
 
                      Pos := Pos + 1;
                   end loop;
+
+               --  Strings end on string delimiters
 
                when Strings =>
-                  while Pos <= EOL loop
-                     if Line (Pos) = Str_Delim
+                  while Pos <= Buffer'Last loop
+                     if Buffer (Pos) = Str_Delim
                        and then (Quote_Char = ASCII.NUL or else
-                                 (Pos > Line'First and then
-                                  Line (Pos - 1) /= Quote_Char))
+                                 (Pos > Buffer'First and then
+                                  Buffer (Pos - 1) /= Quote_Char))
                      then
-                        Next_Lexical_State := Statements;
-                        Next := Pos + 1;
+                        State := Statements;
+                        Section_End := Pos - 1;
+                        Pos := Pos + 1;
                         exit;
                      end if;
 
                      Pos := Pos + 1;
                   end loop;
 
+               --  Single line comments end on ASCII.LF characters
                when Mono_Comments =>
-                  Pos := EOL + 1;
-                  Next_Lexical_State := Statements;
+                  while Pos <= Buffer'Last
+                    and then Buffer (Pos) /= ASCII.LF
+                  loop
+                     Pos := Pos + 1;
+                  end loop;
+                  Section_End := Pos - 1;
+                  Pos := Pos + 1;
+                  State := Statements;
+
+               --  Multi-line comments end with specific sequences
 
                when Multi_Comments =>
-                  while Pos <= EOL loop
+                  while Pos <= Buffer'Last loop
                      if M_Comm_End'Length /= 0
-                       and then Pos + M_Comm_End'Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_End'Length - 1)
-                                = M_Comm_End
+                       and then Pos + M_Comm_End'Length - 1 <= Buffer'Last
+                       and then Buffer (Pos .. Pos + M_Comm_End'Length - 1) =
+                       M_Comm_End
                      then
-                        Next_Lexical_State := Statements;
-                        Next := Pos + M_Comm_End'Length;
+                        State := Statements;
+                        Section_End := Pos - 1;
+                        Pos := Pos + M_Comm_End'Length;
                         exit;
                      end if;
 
                      Pos := Pos + 1;
                   end loop;
             end case;
+         end loop;
+      end Next_Scope_Transition;
 
-            if not Called
-              and then Scanning_Allowed (Search.Lexical_State)
-              and then Contain_Match (Line (Reached .. Pos - 1))
-            then
-               Continue := Callback
-                             (True, Name, Line_Nr, Line,
-                              Search.Sub_Matches.all);
-
-               exit Whole_Line_Loop when not Continue;
-
-               Called := True;
-            end if;
-
-            --  Skip the processed text
-
-            Reached := Next;
-            Search.Lexical_State := Next_Lexical_State;
-
-            exit Whole_Line_Loop when Reached > EOL;
-         end loop Whole_Line_Loop;
-
-         --  Handle empty mono-comments
-
-         if Search.Lexical_State = Mono_Comments then
-            Search.Lexical_State := Statements;
-         end if;
-
-         return Continue;
-      end Scan_Line_With_Context;
-
-   --  Start of processing for Do_Search
-
-      Continue : Boolean;
+      FD            : constant File_Descriptor := Open_Read (Name, Text);
+      Pos           : Positive := 1;
+      Line_Start    : Positive;
+      Line          : Natural := 1;
+      Column        : Natural := 0;
+      Last_Index    : Positive := 1;
+      Section_End   : Integer;
+      Lexical_State : Recognized_Lexical_States := Statements;
+      Old_State     : Recognized_Lexical_States;
+      Lang          : Language_Access;
+      Len           : Natural;
 
    begin
-      pragma Assert (Callback /= null);
+      --  ??? Would be nice to handle backward search, which is extremely hard
+      --  ??? with regular expressions
 
-      if Search.Files = null then
-         Continue := Explore_Directory (Search.Directory.all);
-      else
-         for F in Search.Files'Range loop
-            if Search.Files (F) /= null
-              and then Search.Files (F).all /= ""
-            then
-               Continue := Scan_File (Search.Files (F).all);
+      --  ??? We should use the naming scheme to find the actual language
+      Lang := Get_Language_From_File (Name);
 
-               exit when not Continue;
-            end if;
-         end loop;
+      if FD = Invalid_FD then
+         return;
       end if;
-   end Do_Search;
+
+      Len := Natural (File_Length (FD));
+
+      --  ??? Temporary, until we are sure that we only manipulate text
+      --  files. We could also allocate buffer on the heap rather than on the
+      --  stack, but the search takes very long for binary files anyway.
+      if Len > 5_000_000 then
+         Close (FD);
+         return;
+      end if;
+
+      declare
+         Buffer : aliased String (1 .. Len);
+      begin
+         Len := Read (FD, Buffer'Address, Len);
+         Close (FD);
+
+         --  If the language couldn't be found, we simply use the more
+         --  efficient algorithm
+         if Context.Options.Whole_Word or else Lang = null then
+            Scan_Buffer
+              (Buffer,
+               Context,
+               Callback,
+               Pos, Line, Column);
+            return;
+         end if;
+
+         declare
+            Language : Language_Context := Get_Language_Context (Lang);
+         begin
+            --  ALways find the long possible range, so that we can benefit as
+            --  much as possible from the efficient string searching
+            --  algorithms.
+
+            while Pos <= Buffer'Last loop
+               Line_Start := Pos;
+               Old_State  := Lexical_State;
+
+               Next_Scope_Transition
+                 (Buffer, Pos, Lexical_State, Section_End, Language);
+
+               if Scanning_Allowed (Old_State) then
+                  Scan_Buffer
+                    (Buffer (Line_Start .. Section_End), Context,
+                     Callback, Last_Index, Line, Column);
+               end if;
+
+               for J in Last_Index .. Pos - 1 loop
+                  if Buffer (J) = ASCII.LF then
+                     Line := Line + 1;
+                     Column := 0;
+                  else
+                     Column := Column + 1;
+                  end if;
+               end loop;
+
+               Last_Index := Pos;
+
+            end loop;
+         end;
+      end;
+
+   exception
+      when Invalid_Context =>
+         Close (FD);
+   end Scan_File;
+
+   -----------------------
+   -- Context_As_String --
+   -----------------------
+
+   function Context_As_String (Context : access Search_Context)
+      return String is
+   begin
+      if Context.Look_For = null or else Context.Options.Regexp then
+         raise Invalid_Context;
+      end if;
+
+      return Context.Look_For.all;
+   end Context_As_String;
+
+   -----------------------
+   -- Context_As_Regexp --
+   -----------------------
+
+   function Context_As_Regexp (Context : access Search_Context)
+      return GNAT.Regpat.Pattern_Matcher
+   is
+      Flags : Regexp_Flags := No_Flags;
+      WD    : constant String := "\b";  -- Word_Delimiter
+   begin
+      if Context.RE_Matcher = null then
+         if not Context.Options.Regexp or else Context.Look_For = null then
+            raise Invalid_Context;
+         end if;
+
+         if not Context.Options.Case_Sensitive then
+            Flags := Case_Insensitive;
+         end if;
+
+         if Context.Options.Whole_Word then
+            Context.RE_Matcher := new Pattern_Matcher'
+              (Compile (WD & Context.Look_For.all & WD, Flags));
+         else
+            Context.RE_Matcher := new Pattern_Matcher'
+              (Compile (Context.Look_For.all, Flags));
+         end if;
+
+         Context.Sub_Matches :=
+           new Match_Array (0 .. Paren_Count (Context.RE_Matcher.all));
+      end if;
+
+      return Context.RE_Matcher.all;
+
+   exception
+      when Expression_Error =>
+         raise Invalid_Context;
+   end Context_As_Regexp;
+
+   ----------------------------
+   -- Context_As_Boyer_Moore --
+   ----------------------------
+
+   procedure Context_As_Boyer_Moore
+     (Context : access Search_Context;
+      Matcher : out Boyer_Moore.Pattern) is
+   begin
+      if not Context.BM_Initialized then
+         if Context.Options.Regexp or else Context.Look_For = null then
+            raise Invalid_Context;
+         end if;
+
+         Context.BM_Initialized := True;
+         Compile (Context.BM_Matcher, Context.Look_For.all,
+                  Context.Options.Case_Sensitive);
+         Context.Sub_Matches := new Match_Array'(0 => No_Match);
+      end if;
+
+      Matcher := Context.BM_Matcher;
+   end Context_As_Boyer_Moore;
+
+   -----------------
+   -- Set_Context --
+   -----------------
+
+   procedure Set_Context
+     (Context : access Search_Context;
+      Look_For : String;
+      Options  : Search_Options) is
+   begin
+      Free (Context.all);
+      Context.Look_For := new String' (Look_For);
+      Context.Options  := Options;
+      Context.BM_Initialized := False;
+   end Set_Context;
 
    ----------
    -- Free --
    ----------
 
-   procedure Free (S : in out Code_Search) is
-      procedure Free_String is new
-        Standard.Ada.Unchecked_Deallocation (String, String_Access);
-
-      procedure Free_RE_Pattern is new
-        Standard.Ada.Unchecked_Deallocation (RE_Pattern, RE_Pattern_Access);
-
-      procedure Free_Match_Array is new
-        Standard.Ada.Unchecked_Deallocation (Match_Array, Match_Array_Access);
-
+   procedure Free (Context : in out Search_Context) is
    begin
-      Free_String (S.Look_For);
-      Free_String (S.Directory);
-      Free_RE_Pattern (S.RE_Pat);
-      Free (S.BM_Pat);
-      Free_Match_Array (S.Sub_Matches);
+      Free (Context.Look_For);
+      Free_Pattern_Matcher (Context.RE_Matcher);
+      Free (Context.BM_Matcher);
+      Free_Match_Array (Context.Sub_Matches);
    end Free;
 
-   ---------------------
-   -- Init_RE_Pattern --
-   ---------------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Init_RE_Pattern
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Match_Case : Boolean;
-      Whole_Word : Boolean)
+   procedure Free (Context : in out Files_Context) is
+   begin
+      Directory_List.Free (Context.Dirs);
+      Free (Context.Directory);
+      Free (Search_Context (Context));
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Search_Context_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Search_Context'Class, Search_Context_Access);
+   begin
+      Free (Context.all);
+      Unchecked_Free (Context);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Context : in out Files_Project_Context) is
+   begin
+      Free (Context.Files);
+      Free (Search_Context (Context));
+   end Free;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
+      Files   : Basic_Types.String_Array_Access) is
+   begin
+      Free (Context.Files);
+      Context.Files := Files;
+      Context.Current_File := Context.Files'First;
+   end Set_File_List;
+
+   -------------------
+   -- Set_File_List --
+   -------------------
+
+   procedure Set_File_List
+     (Context       : access Files_Context;
+      Files_Pattern : GNAT.Regexp.Regexp;
+      Directory     : String  := "";
+      Recurse       : Boolean := False) is
+   begin
+      Free (Context.Directory);
+      Context.Files_Pattern := Files_Pattern;
+      Context.Recurse := Recurse;
+
+      if Directory = "" then
+         Context.Directory := new String' (Get_Current_Dir);
+      else
+         Context.Directory := new String' (Name_As_Directory (Directory));
+      end if;
+   end Set_File_List;
+
+   --------------------------
+   -- Current_File_Factory --
+   --------------------------
+
+   function Current_File_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
    is
-      Flags : Regexp_Flags := No_Flags;
-      WD    : constant String := "\b";  -- Word_Delimiter
+   begin
+      return null;
+   end Current_File_Factory;
+
+   --------------------------------
+   -- Files_From_Project_Factory --
+   --------------------------------
+
+   function Files_From_Project_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      Context : Files_Project_Context_Access;
+   begin
+      Context := new Files_Project_Context;
+      Set_File_List
+        (Context,
+         Get_Source_Files (Get_Project (Kernel), True));
+      return Search_Context_Access (Context);
+   end Files_From_Project_Factory;
+
+   -------------------
+   -- Files_Factory --
+   -------------------
+
+   function Files_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access
+   is
+      Context : Files_Context_Access;
+      Extra : Files_Extra_Info_Access := Files_Extra_Info_Access
+        (Extra_Information);
+      Re : GNAT.Regexp.Regexp;
+   begin
+      if Get_Text (Extra.Files_Entry) /= "" then
+         Context := new Files_Context;
+         Re := Compile
+           (Get_Text (Extra.Files_Entry),
+            Glob => True,
+            Case_Sensitive => Integer (Get_File_Names_Case_Sensitive) /= 0);
+         Set_File_List
+           (Context,
+            Files_Pattern => Re,
+            Directory     => Get_Text (Extra.Directory_Entry),
+            Recurse       => Get_Active (Extra.Subdirs_Check));
+         return Search_Context_Access (Context);
+      end if;
+
+      return null;
+   exception
+      when Error_In_Regexp =>
+         return null;
+   end Files_Factory;
+
+   -------------------------
+   -- Search_Current_File --
+   -------------------------
+
+   function Search_Current_File
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+   begin
+      return False;
+   end Search_Current_File;
+
+   -------------------------------
+   -- Search_Files_From_Project --
+   -------------------------------
+
+   function Search_Files_From_Project
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      C : Files_Project_Context_Access := Files_Project_Context_Access
+        (Context);
+      Count : Natural := 0;
+
+      procedure Callback (Loc : Location; Line : String);
+      --  Print the result of the search on standard output
+
+      procedure Callback (Loc : Location; Line : String) is
+      begin
+         Count := Count + 1;
+         Insert (Kernel,
+                 C.Files (C.Current_File).all
+                 & ":" & Image (Loc.Line)
+                 & ":" & Image (Loc.Column)
+                 & " " & Line);
+      end Callback;
 
    begin
-      if not Match_Case then
-         Flags := Case_Insensitive;
+      if C.Files = null then
+         return False;
       end if;
 
-      if Whole_Word then
-         Search.RE_Pat := new RE_Pattern'(Compile (WD & Look_For & WD, Flags));
-      else
-         Search.RE_Pat := new RE_Pattern'(Compile (Look_For, Flags));
+      --  Loop until at least one match
+      while Count = 0  loop
+         if C.Current_File > C.Files'Last then
+            return False;
+         end if;
+
+         Scan_File
+           (C, C.Files (C.Current_File).all, Callback'Unrestricted_Access);
+         C.Current_File := C.Current_File + 1;
+      end loop;
+
+      return True;
+   end Search_Files_From_Project;
+
+   ------------------
+   -- Search_Files --
+   ------------------
+
+   function Search_Files
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      use Directory_List;
+
+      C : Files_Context_Access := Files_Context_Access (Context);
+      File_Name : String (1 .. Max_Path_Len);
+      Last      : Natural;
+      Count     : Natural := 0;
+
+      procedure Callback (Loc : Location; Line : String);
+      --  Print the result of the search on standard output
+
+      procedure Callback (Loc : Location; Line : String) is
+      begin
+         Count := Count + 1;
+         Insert (Kernel,
+                 Head (C.Dirs).Name.all & File_Name (1 .. Last)
+                 & ":" & Image (Loc.Line)
+                 & ":" & Image (Loc.Column)
+                 & " " & Line);
+      end Callback;
+
+   begin
+      if C.Directory = null then
+         return False;
       end if;
 
-      Search.Sub_Matches :=
-        new Match_Array (0 .. Paren_Count (Search.RE_Pat.all));
+      if C.Dirs = Null_List then
+         Prepend (C.Dirs, new Dir_Data);
+         Head (C.Dirs).Name := new String' (C.Directory.all);
+         Open (Head (C.Dirs).Dir, C.Directory.all);
+      end if;
+
+      while Count = 0 loop
+         Read (Head (C.Dirs).Dir, File_Name, Last);
+
+         if Last = 0 then
+            Tail (C.Dirs);
+            if C.Dirs = Null_List then
+               return False;
+            end if;
+
+         else
+            declare
+               Full_Name : constant String :=
+                 Head (C.Dirs).Name.all & File_Name (1 .. Last);
+            begin
+               Trace (Me, Full_Name);
+               if Is_Directory (Full_Name) then
+                  if C.Recurse
+                    and then File_Name (1 .. Last) /= "."
+                    and then File_Name (1 .. Last) /= ".."
+                  then
+                     Prepend (C.Dirs, new Dir_Data);
+                     Head (C.Dirs).Name := new String'
+                       (Name_As_Directory (Full_Name));
+                     Open (Head (C.Dirs).Dir, Full_Name);
+                  end if;
+
+               --  ??? Should check that we have a text file
+               elsif Match (File_Name (1 .. Last), C.Files_Pattern) then
+                  Scan_File (C, Full_Name, Callback'Unrestricted_Access);
+               end if;
+            end;
+         end if;
+      end loop;
+
+      return True;
 
    exception
-      when Expression_Error =>
-         raise Search_Error;
-   end Init_RE_Pattern;
+      when Directory_Error =>
+         return False;
+   end Search_Files;
 
-   -----------------
-   -- Init_Search --
-   -----------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Init_Search
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Files      : Basic_Types.String_Array_Access;
-      Match_Case : Boolean := False;
-      Whole_Word : Boolean := False;
-      Regexp     : Boolean := False;
-      Scope      : Search_Scope := Whole)
-   is
-      use type Basic_Types.String_Array_Access;
+   procedure Free (D : in out Dir_Data_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Dir_Data, Dir_Data_Access);
    begin
-      if Files = null then
-         raise Search_Error;
-      end if;
-
-      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
-      Search.Files := Files;
-   end Init_Search;
-
-   -----------------
-   -- Init_Search --
-   -----------------
-
-   procedure Init_Search
-     (Search        : out Code_Search;
-      Look_For      : String;
-      Files_Pattern : Regexp;
-      Directory     : String  := "";
-      Recurse       : Boolean := False;
-      Match_Case    : Boolean := False;
-      Whole_Word    : Boolean := False;
-      Regexp        : Boolean := False;
-      Scope         : Search_Scope := Whole)
-   is
-      Result : Boolean;
-   begin
-      --  Ensure Files_Pattern is initialized
-
-      begin
-         Result := Match ("", Files_Pattern);
-      exception
-         when Constraint_Error =>
-            raise Search_Error;
-      end;
-
-      Common_Init (Search, Look_For, Match_Case, Whole_Word, Regexp, Scope);
-      Search.Files_Pattern := Files_Pattern;
-      Search.Recurse := Recurse;
-      Search.Directory := new String' (Directory);
-   end Init_Search;
+      Close (D.Dir);
+      Free (D.Name);
+      Unchecked_Free (D);
+   end Free;
 
 end Find_Utils;

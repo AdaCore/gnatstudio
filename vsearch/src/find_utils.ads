@@ -47,152 +47,252 @@
 --    undefined behavior.
 --  * Allowed chars in a word are found in g-regpat.ads.
 
-with GNAT.Regpat; use GNAT.Regpat;
-with GNAT.Regexp; use GNAT.Regexp;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Boyer_Moore; use Boyer_Moore;
 with Basic_Types;
+with Boyer_Moore;
+with Generic_List;
+with GNAT.Directory_Operations;
+with GNAT.OS_Lib;
+with GNAT.Regexp;
+with GNAT.Regpat;
+with Glide_Kernel;
+with Gtk.Widget;
 
 package Find_Utils is
 
-   type Code_Search is private;
-   --  Type representing a search in source code files
+   -------------
+   -- Options --
+   -------------
 
-   type Search_Scope is (Whole, Comm_Only, Comm_Str, Str_Only, All_But_Comm);
-   --  Scope wanted for the search. Comm is comments, str is strings.
+   type Search_Scope is (Whole,
+                         Comments_Only,
+                         Comments_And_Strings,
+                         Strings_Only,
+                         All_But_Comments);
+   --  Scope wanted for the search.
    --  Whole scope means never use any context (i.e. files are whole scanned).
+   --  This scope mostly applies to code editors.
 
-   Search_Error : exception;
-   --  This exception is raised when trying to initialize a search with bad
-   --  arguments.
+   type Search_Options is record
+      Scope          : Search_Scope := Whole;
+      Case_Sensitive : Boolean := False;
+      Whole_Word     : Boolean := False;
+      Regexp         : Boolean := False;
+   end record;
+   --  Defines the context for a search.
+   --  All_Occurences is set to True if the search should find all occurences
+   --    of the match, instead of just the first one. This might be used for
+   --    instance to decide on which algorithm to use
+   --  Case_Sensitive is set to True if the search is case sensitive
+   --  Whole_Word is set to True if only full words should match. For instance,
+   --    it would not match "end" in "friend" if True. This also applies to
+   --    regular expressions.
+   --  Regexp is set to True if the search string should be interpreted as a
+   --    regular expression.
 
-   procedure Init_Search
-     (Search     : out Code_Search;
-      Look_For   : String;
-      Files      : Basic_Types.String_Array_Access;
-      Match_Case : Boolean := False;
-      Whole_Word : Boolean := False;
-      Regexp     : Boolean := False;
-      Scope      : Search_Scope := Whole);
-   --  Prepare searching for a word or a pattern in given file list.
-   --
-   --  Look_For         Searched word or single line pattern (see g-regpat.ads)
-   --  Files            Files to be searched
-   --                   NOTE: It's your responsability to free Files
-   --  Match_Case       UPPER & lowercase letters are respected
-   --  Whole_Word       Match only full words (eg 'end' not found in 'friend')
-   --  Regexp           Look for a pattern instead of a word
-   --  Scope            Scope of the search
-   --
-   --  Raise Search_Error if:
-   --  * Look_For is empty, or can't compile
-   --  * Files is null
+   type Search_Options_Mask is mod 256;
+   Scope_Mask      : constant Search_Options_Mask := 2 ** 0;
+   Case_Sensitive  : constant Search_Options_Mask := 2 ** 1;
+   Whole_Word      : constant Search_Options_Mask := 2 ** 2;
+   Regexp          : constant Search_Options_Mask := 2 ** 3;
+   All_Occurences  : constant Search_Options_Mask := 2 ** 4;
+   Search_Backward : constant Search_Options_Mask := 2 ** 5;
+   All_Options     : constant Search_Options_Mask := 255;
 
-   procedure Init_Search
-     (Search        : out Code_Search;
-      Look_For      : String;
-      Files_Pattern : Regexp;
+   --------------
+   -- Contexts --
+   --------------
+
+   type Search_Context is tagged limited private;
+   type Search_Context_Access is access all Search_Context'Class;
+   --  Defines what the user is looking for.
+   --  Although the user always specifies a string, it should sometimes be
+   --  interpreted differently based on whether it is a regular expression,...
+   --  The subprograms below will compute the fields as needed.
+
+   procedure Set_Context
+     (Context  : access Search_Context;
+      Look_For : String;
+      Options  : Search_Options);
+   --  Create a new search context
+
+   function Context_As_String (Context : access Search_Context) return String;
+   --  Return the search string.
+   --  Invalid_Context is raised if the user is in fact looking for a regular
+   --  expression.
+
+   function Context_As_Regexp
+     (Context : access Search_Context) return GNAT.Regpat.Pattern_Matcher;
+   --  Return the regular expression to match. The "whole word" and "case
+   --  insensitive" options are automatically taken into account when computing
+   --  the regular expression.
+   --  Note that the regexp is cached for efficiency.
+   --  Invalid_Context is raised if the user is not looking for a regular
+   --  expression, or the regular expression is invalid.
+
+   procedure Context_As_Boyer_Moore
+     (Context : access Search_Context;
+      Matcher : out Boyer_Moore.Pattern);
+   --  Return the search string as a Boyer-Moore pattern.
+   --  Matcher is computed on demand, and cached for efficiency. It
+   --  automatically includes the "case insensitive" options.
+   --  Invalid_Context is raised if the user is in fact looking for a regular
+   --  expression.
+
+   procedure Free (Context : in out Search_Context);
+   --  Free the memory allocated for Context.all. It doesn't free Context
+   --  itself.
+
+   procedure Free (Context : in out Search_Context_Access);
+   --  Free the memory both for the pointer and for the internal fields. It
+   --  dispatches to calls to Free for Files_Context
+
+   Invalid_Context : exception;
+   --  Raised when trying to access the components in Search_Context
+
+   -------------------
+   -- Files context --
+   -------------------
+
+   type Files_Context is new Search_Context with private;
+   type Files_Context_Access is access all Files_Context'Class;
+   --  A special context for searching in a specific list of files
+
+   procedure Set_File_List
+     (Context       : access Files_Context;
+      Files_Pattern : GNAT.Regexp.Regexp;
       Directory     : String  := "";
-      Recurse       : Boolean := False;
-      Match_Case    : Boolean := False;
-      Whole_Word    : Boolean := False;
-      Regexp        : Boolean := False;
-      Scope         : Search_Scope := Whole);
-   --  Prepare searching for a word or a pattern in files selected by
-   --  Files_Pattern, Directory and Recurse.
-   --
-   --  Files_Pattern  Pattern selecting files to be scanned (eg globbing *.ad?)
-   --  Directory      Where files are selected, "" means current dir; absolute
-   --                 or relative to current dir
-   --                 NOTE: used current dir is the current one when calling
-   --                       Do_Search.
-   --  Recurse        Whether files may also be selected in sub-directories
-   --  ...            See first Init_Search procedure
-   --
-   --  Raise Search_Error if:
-   --  * Look_For is empty, or can't compile
-   --  * Files_Pattern is uninitialized
+      Recurse       : Boolean := False);
+   --  Set the list of files to search
 
-   type Poll_Search_Handler is access function
-     (Match_Found : Boolean;
-      File        : String;
-      Line_Nr     : Positive    := 1;
-      Line_Text   : String      := "";
-      Sub_Matches : Match_Array := (0 => No_Match))
-      return Boolean;
-   --  Function called after a match is found or after a whole file is scanned.
-   --  An unopenable file is immediately considered as scanned.
-   --  The search may be aborted at any call by returning False.
-   --
-   --  Match_Found  True: a match is found...  False: the whole scanned file...
-   --  File               ... in this file...         ... is this one
-   --  Line_Nr            ... at this line...          !! IRRELEVANT !!
-   --  Line_Text          ... within this text:        !! IRRELEVANT !!
-   --  Sub_Matches        it matched there.            !! IRRELEVANT !!
-   --
-   --  Sub-matches indicate where sub-expressions matched in the regexp (see
-   --  g-regpat.ads).
-   --
-   --  Match calls are intended for, e.g. updating a list of matches.
-   --  Other calls are intended for, e.g. updating a list of scanned files.
-   --  But you can perform your own processing during the call (user events,
-   --  update a scroll bar, ...).
-   --
-   --  NOTES:
-   --  * The handler mustn't raise any exception
-   --  * Sub_Matches parameter is only filled when searching for a regexp.
+   procedure Free (Context : in out Files_Context);
+   --  Free the memory allocated for the context
 
-   procedure Do_Search
-     (Search   : in out Code_Search;
-      Callback : Poll_Search_Handler);
-   --  Execute the search.
-   --  The callback is called whenever a match is found and at the end of each
-   --  file until all files are scanned or the callback ask for aborting.
-   --  An unopenable file is immediately considered as whole scanned.
-   --
-   --  NOTE: The callback mustn't be null.
+   ---------------------------------
+   --  Files From Project context --
+   ---------------------------------
 
-   procedure Free (S : in out Code_Search);
-   --  Free the memory occupied by S.
-   --
-   --  NOTE: see Init_Search.
+   type Files_Project_Context is new Search_Context with private;
+   type Files_Project_Context_Access is access all Files_Project_Context'Class;
+
+   procedure Set_File_List
+     (Context : access Files_Project_Context;
+      Files   : Basic_Types.String_Array_Access);
+   --  Set the list of files to search.
+   --  No copy of Files is made, the memory will be freed automatically.
+
+   procedure Free (Context : in out Files_Project_Context);
+   --  Free the memory allocated for the context
+
+   ---------------
+   -- Searching --
+   ---------------
+
+   type Module_Search_Context_Factory is access function
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Function called to create the search context.
+   --  It should return null if it couldn't create the context, and thus if the
+   --  search/replace won't be performed.
+   --  The memory will be freed automatically by Glide2
+
+   type Module_Search_Function is access function
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  This subprogram should search for the next occurence of Context.
+   --  It should return False if there is no other search to be performed, True
+   --  if a call to this function might lead to another occurence of the search
+   --  string.
+
+   type Module_Replace_Function is access function
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Replace_String  : String;
+      Is_First_Search : Boolean;
+      Search_Backward : Boolean) return Boolean;
+   --  This subprogram should search for the next occurence of Context. If
+   --  Is_First_Search, the search should start from the beginning
+   --  It should set Context to null when there is nothing more to replace.
+   --  It should return False if there is no other search to be performed, True
+   --  if a call to this function might lead to another occurence of the search
+   --  string.
+
+   ------------------------------
+   --  Standard search support --
+   ------------------------------
+
+   function Current_File_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Current File"
+
+   function Files_From_Project_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Files From Project"
+
+   function Files_Factory
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
+      return Search_Context_Access;
+   --  Factory for "Files..."
+
+   function Search_Current_File
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Current File"
+
+   function Search_Files_From_Project
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Files From Project"
+
+   function Search_Files
+     (Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Context         : access Search_Context'Class;
+      Search_Backward : Boolean) return Boolean;
+   --  Search function for "Files..."
 
 private
 
-   subtype RE_Pattern is Pattern_Matcher;
-   subtype BM_Pattern is Boyer_Moore.Pattern;
+   type Pattern_Matcher_Access is access GNAT.Regpat.Pattern_Matcher;
 
-   type RE_Pattern_Access is access RE_Pattern;
+   type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
-   type Match_Array_Access is access Match_Array;
+   type Search_Context is tagged limited record
+      Options        : Search_Options;
+      Look_For       : GNAT.OS_Lib.String_Access := null;
 
-   type Recognized_Lexical_States is
-     (Statements, Strings, Mono_Comments, Multi_Comments);
-   --  Current lexical state of the currently parsed file.
-   --
-   --  Statements      all but comments and strings
-   --  Strings         string literals
-   --  Mono_Comments   end of line terminated comments
-   --  Multi_Comments  (possibly) multi-line comments
+      RE_Matcher     : Pattern_Matcher_Access := null;
+      Sub_Matches    : Match_Array_Access := null;
 
-   type Code_Search is record
-      Look_For      : String_Access := null;
-      RE_Pat        : RE_Pattern_Access := null;
-      BM_Pat        : BM_Pattern;
-      Use_BM        : Boolean := False;
+      BM_Matcher     : Boyer_Moore.Pattern;
+      BM_Initialized : Boolean := False;
+   end record;
 
-      Files         : Basic_Types.String_Array_Access := null;
-      Files_Pattern : Regexp;
-      Directory     : String_Access := null;
+   type Dir_Data is record
+      Name : GNAT.OS_Lib.String_Access;
+      Dir  : GNAT.Directory_Operations.Dir_Type;
+   end record;
+   type Dir_Data_Access is access Dir_Data;
+   procedure Free (D : in out Dir_Data_Access);
+   package Directory_List is new Generic_List (Dir_Data_Access);
+
+   type Files_Context is new Search_Context with record
+      Files_Pattern : GNAT.Regexp.Regexp;
+      Directory     : GNAT.OS_Lib.String_Access := null;
       Recurse       : Boolean := False;
+      Dirs          : Directory_List.List;
+   end record;
 
-      Match_Case    : Boolean := False;
-      Whole_Word    : Boolean := False;
-      Regexp        : Boolean := False;
-
-      Scope         : Search_Scope;
-      Lexical_State : Recognized_Lexical_States;
-      Sub_Matches   : Match_Array_Access := null;
+   type Files_Project_Context is new Search_Context with record
+      Files         : Basic_Types.String_Array_Access := null;
+      Current_File  : Natural;
    end record;
 
 end Find_Utils;
