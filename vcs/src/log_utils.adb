@@ -50,10 +50,18 @@ package body Log_Utils is
          Make_Dir (Logs_Dir);
       end if;
 
-      if Is_Regular_File (Format_Pathname (Logs_Dir & "/mapping")) then
-         Load_Mapper (Mapper, Format_Pathname (Logs_Dir & "/mapping"));
-         Set_Logs_Mapper (Kernel, Mapper);
+      if not Is_Regular_File (Format_Pathname (Logs_Dir & "/mapping")) then
+         declare
+            File : File_Descriptor;
+         begin
+            File :=
+              Create_New_File (Format_Pathname (Logs_Dir & "/mapping"), Text);
+            Close (File);
+         end;
       end if;
+
+      Load_Mapper (Mapper, Format_Pathname (Logs_Dir & "/mapping"));
+      Set_Logs_Mapper (Kernel, Mapper);
    end Initialize;
 
    -----------------------
