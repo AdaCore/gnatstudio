@@ -857,19 +857,16 @@ package body Vsearch_Ext is
       Vsearch.Find_Next := Find_Next;
 
       if Find_Next then
+         Set_Use_Stock (Vsearch.Search_Next_Button, False);
          Remove (Vsearch.Search_Next_Button,
                  Get_Child (Vsearch.Search_Next_Button));
 
          Gtk_New_Hbox (Box, Homogeneous => False, Spacing => 2);
-
          Gtk_New (Image, Stock_Id => Stock_Find, Size => Icon_Size_Button);
          Pack_Start (Box, Image, Expand => False, Fill => False);
-
          Gtk_New_With_Mnemonic (Label, -"_Next");
          Pack_End (Box, Label, Expand => False, Fill => False);
-
          Gtk_New (Align, 0.5, 0.5, 0.0, 0.0);
-
          Add (Vsearch.Search_Next_Button, Align);
          Add (Align, Box);
          Show_All (Align);
@@ -878,6 +875,7 @@ package body Vsearch_Ext is
          Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, True);
 
       else
+         Set_Use_Stock (Vsearch.Search_Next_Button, True);
          Set_Label (Vsearch.Search_Next_Button, Stock_Find);
          Set_Sensitive (Vsearch_Module_Id.Next_Menu_Item, False);
          Set_Sensitive (Vsearch_Module_Id.Prev_Menu_Item, False);
