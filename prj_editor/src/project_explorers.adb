@@ -818,8 +818,6 @@ package body Project_Explorers is
                      Set (Explorer.File_Model, Iter, Icon_Column,
                           C_Proxy (Explorer.Open_Pixbufs (Directory_Node)));
 
-                     Scroll_To_Cell (Explorer.File_Tree,
-                                     Path, null, True, 0.9, 0.9);
                      Path_Free (Path);
                   end;
                end if;
