@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                                AdaCore                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -73,12 +73,13 @@ package String_Utils is
    --  character or underscore.
 
    function Blank_Slice
-     (Count     : Natural;
+     (Count     : Integer;
       Use_Tabs  : Boolean := False;
       Tab_Width : Natural := 8) return String;
    --  Return a string representing count blanks.
    --  If Use_Tabs is True, use ASCII.HT characters as much as possible,
    --  otherwise use only spaces.
+   --  Return a null string is Count is negative.
 
    function Is_Blank (C : Character) return Boolean;
    --  Return True if C is a blank character: CR, LF, HT or ' '

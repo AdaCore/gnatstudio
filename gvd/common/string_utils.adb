@@ -2,7 +2,7 @@
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                                AdaCore                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -32,11 +32,13 @@ package body String_Utils is
    -----------------
 
    function Blank_Slice
-     (Count     : Natural;
+     (Count     : Integer;
       Use_Tabs  : Boolean := False;
       Tab_Width : Natural := 8) return String is
    begin
-      if Use_Tabs then
+      if Count <= 0 then
+         return "";
+      elsif Use_Tabs then
          return (1 .. Count / Tab_Width => ASCII.HT) &
            (1 .. Count mod Tab_Width => ' ');
       else
