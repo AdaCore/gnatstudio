@@ -253,6 +253,15 @@ package Glide_Kernel is
    --  overloaded entity, this subprogram automatically asks the user to chose
    --  among the possible completions.
 
+   procedure Find_Next_Body
+     (Kernel      : access Kernel_Handle_Record;
+      Lib_Info    : Src_Info.LI_File_Ptr;
+      Entity      : Src_Info.Queries.Entity_Information;
+      Location    : out Src_Info.File_Location;
+      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status);
+   --  Same as above, but with a slightly simpler parameter list.
+   --  This only gives access to the first body.
+
    procedure Parse_All_LI_Information
      (Kernel       : access Kernel_Handle_Record;
       In_Directory : String);

@@ -1335,6 +1335,28 @@ package body Glide_Kernel is
 
    procedure Find_Next_Body
      (Kernel      : access Kernel_Handle_Record;
+      Lib_Info    : Src_Info.LI_File_Ptr;
+      Entity      : Src_Info.Queries.Entity_Information;
+      Location    : out Src_Info.File_Location;
+      Status      : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status) is
+   begin
+      Find_Next_Body
+        (Kernel,
+         Lib_Info,
+         Get_Declaration_File_Of (Entity),
+         Get_Name (Entity),
+         Get_Declaration_Line_Of (Entity),
+         Get_Declaration_Column_Of (Entity),
+         Location,
+         Status);
+   end Find_Next_Body;
+
+   --------------------
+   -- Find_Next_Body --
+   --------------------
+
+   procedure Find_Next_Body
+     (Kernel      : access Kernel_Handle_Record;
       Lib_Info    : LI_File_Ptr;
       File_Name   : VFS.Virtual_File;
       Entity_Name : String;
