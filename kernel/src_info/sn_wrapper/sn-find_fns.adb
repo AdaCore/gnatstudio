@@ -178,7 +178,7 @@ package body SN.Find_Fns is
          if Sym_Type = Undef then
             Fall := True;
          else
-            To_String (Sym_Type, Key, Pos);
+            To_String (Sym_Type, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -198,7 +198,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -280,7 +280,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -362,7 +362,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -444,7 +444,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -545,7 +545,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -627,7 +627,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -709,7 +709,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -837,7 +837,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -936,7 +936,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -967,7 +967,7 @@ package body SN.Find_Fns is
          if Sym_Type = Undef then
             Fall := True;
          else
-            To_String (Sym_Type, Key, Pos);
+            To_String (Sym_Type, Key.all, Pos);
          end if;
       end if;
       Set_Cursor (DB, By_Key, Key.all, False);
@@ -1038,7 +1038,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1120,7 +1120,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1202,7 +1202,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1303,7 +1303,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1385,7 +1385,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1486,7 +1486,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1587,7 +1587,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1669,7 +1669,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1770,7 +1770,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1871,7 +1871,7 @@ package body SN.Find_Fns is
          if Start_position = Invalid_Point then
             Fall := True;
          else
-            To_String (Start_position, Key, Pos);
+            To_String (Start_position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -1961,7 +1961,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2054,7 +2054,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2136,7 +2136,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2278,7 +2278,7 @@ package body SN.Find_Fns is
          if Sym_Type = Undef then
             Fall := True;
          else
-            To_String (Sym_Type, Key, Pos);
+            To_String (Sym_Type, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2331,7 +2331,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2413,7 +2413,7 @@ package body SN.Find_Fns is
          if Position = Invalid_Point then
             Fall := True;
          else
-            To_String (Position, Key, Pos);
+            To_String (Position, Key.all, Pos);
             Key (Pos) := Field_Sep;
             Pos := Pos + 1;
          end if;
@@ -2442,10 +2442,11 @@ package body SN.Find_Fns is
    -- To_String --
    ---------------
 
-   procedure To_String (P : in Point; Str : in String_Access;
-                                      Where : in out Integer) is
-      Line_Img : String := Integer'Image (P.Line);
-      Col_Img  : String := Integer'Image (P.Column);
+   procedure To_String
+     (P : Point; Str : in out String; Where : in out Integer)
+   is
+      Line_Img : constant String := Integer'Image (P.Line);
+      Col_Img  : constant String := Integer'Image (P.Column);
    begin
       Str (Where .. Where + 9) := "000000.000";
       Str (Where + 5 - Line_Img'Length + 2 .. Where + 5)
@@ -2460,50 +2461,43 @@ package body SN.Find_Fns is
    -- To_String --
    ---------------
 
-   procedure To_String (Sym_Type : in Symbol_Type; Str : in String_Access;
-                                                   Where : in out Integer) is
+   function To_String (Sym_Type : Symbol_Type) return String is
    begin
       case Sym_Type is
-         when CL    => Str (Where .. Where + 1) := "cl";
-            Where := Where + 2;
-         when COM   => Str (Where .. Where + 2) := "com";
-            Where := Where + 3;
-         when COV   => Str (Where .. Where + 2) := "cov";
-            Where := Where + 3;
-         when CON   => Str (Where .. Where + 2) := "con";
-            Where := Where + 3;
-         when E     => Str (Where .. Where) := "e";
-            Where := Where + 1;
-         when EC    => Str (Where .. Where + 1) := "ec";
-            Where := Where + 2;
-         when FD    => Str (Where .. Where + 1) := "fd";
-            Where := Where + 2;
-         when FR    => Str (Where .. Where + 1) := "fr";
-            Where := Where + 2;
-         when FU    => Str (Where .. Where + 1) := "fu";
-            Where := Where + 2;
-         when GV    => Str (Where .. Where + 1) := "gv";
-            Where := Where + 1;
-         when IV    => Str (Where .. Where + 1) := "iv";
-            Where := Where + 2;
-         when LV    => Str (Where .. Where + 1) := "lv";
-            Where := Where + 2;
-         when MA    => Str (Where .. Where + 1) := "ma";
-            Where := Where + 2;
-         when MD    => Str (Where .. Where + 1) := "md";
-            Where := Where + 2;
-         when MI    => Str (Where .. Where + 1) := "mi";
-            Where := Where + 2;
-         when SU    => Str (Where .. Where + 1) := "su";
-            Where := Where + 2;
-         when T     => Str (Where .. Where) := "t";
-            Where := Where + 1;
-         when UN    => Str (Where .. Where + 1) := "un";
-            Where := Where + 2;
-         when IU    => Str (Where .. Where + 1) := "iu";
-            Where := Where + 2;
+         when CL     => return "cl";
+         when COM    => return "com";
+         when COV    => return "cov";
+         when CON    => return "con";
+         when E      => return "e";
+         when EC     => return "ec";
+         when FD     => return "fd";
+         when FR     => return "fr";
+         when FU     => return "fu";
+         when GV     => return "gv";
+         when IV     => return "iv";
+         when LV     => return "lv";
+         when MA     => return "ma";
+         when MD     => return "md";
+         when MI     => return "mi";
+         when SU     => return "su";
+         when T      => return "t";
+         when UN     => return "un";
+         when IU     => return "iu";
          when others => raise Invalid_Symbol_Type;
       end case;
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   procedure To_String
+     (Sym_Type : Symbol_Type; Str : in out String;  Where : in out Integer)
+   is
+      S : constant String := To_String (Sym_Type);
+   begin
+      Str (Where .. Where + S'Length - 1) := S;
+      Where := Where + S'Length;
    end To_String;
 end SN.Find_Fns;
 

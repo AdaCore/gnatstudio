@@ -1,5 +1,24 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2002                            --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with SN.DB_Structures, DB_API;
-with GNAT.OS_Lib;
 use  SN.DB_Structures, DB_API;
 
 package SN.Find_Fns is
@@ -10,17 +29,24 @@ package SN.Find_Fns is
       Invalid_Symbol_Type : exception;
       --  raised when a bad symbol passed to To_String function
 
-      procedure To_String
-        (Sym_Type : Symbol_Type;
-         Str      : GNAT.OS_Lib.String_Access;
-         Where    : in out Integer);
+      function To_String (Sym_Type : Symbol_Type) return String;
       --  converts symbol type into string
 
       procedure To_String
+        (Sym_Type : Symbol_Type;
+         Str      : in out String;
+         Where    : in out Integer);
+      --  Store, in Str, at position Where, are textual representation of
+      --  Sym_Type. Where is left to the first character following this
+      --  representation.
+
+      procedure To_String
         (P     : Point;
-         Str   : GNAT.OS_Lib.String_Access;
+         Str   : in out String;
          Where : in out Integer);
-      --  converts Point to 000000.000 string
+      --  Store, in Str, at position Where, a 000000.000 representation of
+      --  Point. Where is left to the first character following this
+      --  representation.
 
       --  Find functions for Referred by table
       function Find (DB : DB_File;
