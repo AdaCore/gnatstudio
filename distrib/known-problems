@@ -1,3 +1,5 @@
+Known Problems fixed in GPS 2.0.0
+
 Known Problems fixed in GPS 1.4.0
 
 - CA08-005 Searching file names in explorer fails for extended projects
@@ -9,7 +11,7 @@ Known Problems fixed in GPS 1.4.0
 - CA02-013 Unexpected crashes under Windows.
   Problem:    GPS sometimes crashes unexpectedly under windows. This is most
               likely to happen after compiling files several times.
-  Workaround: None knowm
+  Workaround: None known
 
 - Cross-reference fail with Ada units overriden in extending projects (C825-005)
   Problem:    If you have a unit overriden in an extending project with a
@@ -35,7 +37,7 @@ Known Problems fixed in GPS 1.4.0
 - C916-010 Internal error when generating new testsuite
   Problem:    When you use the Edit->Unit Testing menu and attempt to add
               a new testsuite, GPS crashes
-  Workaround: None known
+  Workaround: Add the test suite by hand
 
 - C912-003 Removing dependency for a project other than the root project fails
   Problem:    If you remove a dependency between two projects when none of them
