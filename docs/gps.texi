@@ -446,6 +446,16 @@ projects.
 A given project might appear multiple times in the @code{Project
 View}, if it is imported by several other projects.
 
+There exists a second display for this project view, which displays a
+list of all projects, with no hierarchy visible. All projects appear
+only once in the explorer, all at the toplevel. This display might be
+useful for deep project hierarchies, to make it easier to find
+projects in the explorer.
+
+@cindex Show flat view
+This display is activated through the contextual menu entry @cod{Show
+flat view}, which acts as a switch between the two displays.
+
 A special icon with an exclamation mark is displayed if the project
 was modified, but not saved yet. You can choose to save it at any time
 by right-clicking on it. GPS will remind you to save it before any
