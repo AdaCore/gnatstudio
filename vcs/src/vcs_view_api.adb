@@ -54,7 +54,6 @@ with Commands.External;         use Commands.External;
 
 with Traces;                    use Traces;
 with Ada.Exceptions;            use Ada.Exceptions;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body VCS_View_API is
 
@@ -2339,6 +2338,36 @@ package body VCS_View_API is
          return null;
    end Context_Factory;
 
+   ---------------------
+   -- Get_Status_Name --
+   ---------------------
+
+   function Get_Status_Name (Status : File_Status) return String is
+   begin
+      case Status is
+         when Unknown =>
+            return -"unknown";
+
+         when Not_Registered =>
+            return -"not registered";
+
+         when Up_To_Date =>
+            return -"up to date";
+
+         when Modified =>
+            return -"locally modified";
+
+         when Removed =>
+            return -"removed from repository";
+
+         when Needs_Merge =>
+            return -"needs merge";
+
+         when Needs_Update =>
+            return -"needs update";
+      end case;
+   end Get_Status_Name;
+
    ---------------------------
    -- Display_Editor_Status --
    ---------------------------
@@ -2357,11 +2386,11 @@ package body VCS_View_API is
          return;
       end if;
 
-      if Status.Status /= Unknown then
-         Status_Label := new String'
-           (" (" & (-To_Lower (File_Status'Image (Status.Status))) & ")");
-      else
+      if Status.Status = Unknown then
          Status_Label := new String'("");
+      else
+         Status_Label := new String'
+           (" (" & Get_Status_Name (Status.Status) & ")");
       end if;
 
       if not Is_Empty (Status.Working_Revision) then
