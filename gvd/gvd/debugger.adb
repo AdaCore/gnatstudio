@@ -602,15 +602,15 @@ package body Debugger is
                when Visible_Command =>
                   if Wait_For_Prompt then
                      if not Async_Commands then
-                        -- Synchronous handling of commands, simple case
+                        --  Synchronous handling of commands, simple case
 
                         Wait_Prompt (Debugger);
                         Send_Internal_Post
                           (Debugger, Cmd (First .. Last - 1), Mode);
 
                      else
-                        -- Asynchronous handling of commands, install a
-                        -- callback on the debugger's output file descriptor.
+                        --  Asynchronous handling of commands, install a
+                        --  callback on the debugger's output file descriptor.
 
                         Process := Convert (Debugger.Window, Debugger);
                         Process.Current_Command :=
