@@ -332,7 +332,7 @@ package body Glide_Kernel.Preferences is
 
       Automatic_Syntax_Check := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Automatic-Syntax-Check",
-         Default => True,
+         Default => False,
          Blurb   =>
            -"Enable/Disable automatic syntax check",
          Nick    => -"Automatic syntax check"));
