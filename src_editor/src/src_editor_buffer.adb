@@ -66,6 +66,7 @@ with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Casing_Exceptions;         use Casing_Exceptions;
+with Case_Handling;             use Case_Handling;
 
 with Pango.Font;                use Pango.Font;
 
@@ -1145,6 +1146,10 @@ package body Src_Editor_Buffer is
 
       procedure Free (X : in out Line_Info_Width_Array);
       --  Free memory associated to X.
+
+      ----------
+      -- Free --
+      ----------
 
       procedure Free (X : in out Line_Info_Width_Array) is
       begin
@@ -4617,6 +4622,16 @@ package body Src_Editor_Buffer is
          else
             return False;
          end if;
+      end if;
+
+      --  Set proper casing policy, we want to disable the auto-casing here if
+      --  we are using the on-the-fly casing policy and we are not in Force
+      --  mode.
+
+      if Indent_Params.Casing_Policy = On_The_Fly
+        and then not Force
+      then
+         Indent_Params.Casing_Policy := Disabled;
       end if;
 
       Buffer.Do_Not_Move_Cursor := True;
