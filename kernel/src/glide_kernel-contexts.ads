@@ -27,6 +27,11 @@ with Projects;
 
 package Glide_Kernel.Contexts is
 
+   procedure Register_Default_Filters
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Register a set of default filters that can be used in user-defined
+   --  actions and for contextual menus
+
    ------------------------
    -- File_Name contexts --
    ------------------------

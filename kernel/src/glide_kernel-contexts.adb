@@ -28,6 +28,110 @@ with Entities.Queries;     use Entities.Queries;
 
 package body Glide_Kernel.Contexts is
 
+   type Filter_File is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_File;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  See inherited documentation
+
+   type Filter_Entity is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Entity;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  See inherited documentation
+
+   type Filter_Project_Only is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Project_Only;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  See inherited documentation
+
+   type Filter_Project_File is new Action_Filter_Record with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Project_File;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean;
+   --  See inherited documentation
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Project_Only;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+   begin
+      return Ctxt.all in File_Selection_Context'Class
+        and then Has_Project_Information (File_Selection_Context_Access (Ctxt))
+        and then not Has_Directory_Information
+          (File_Selection_Context_Access (Ctxt))
+        and then not Has_File_Information
+          (File_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Project_File;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+   begin
+      return Ctxt.all in File_Selection_Context'Class
+        and then Has_Project_Information
+          (File_Selection_Context_Access (Ctxt))
+        and then Has_File_Information
+          (File_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_Entity;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+   begin
+      return Ctxt.all in Entity_Selection_Context'Class
+        and then Has_Entity_Name_Information
+          (Entity_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access Filter_File;
+      Ctxt    : Glide_Kernel.Selection_Context_Access;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Boolean
+   is
+      pragma Unreferenced (Filter, Kernel);
+   begin
+      return Ctxt.all in File_Selection_Context'Class
+        and then Has_File_Information (File_Selection_Context_Access (Ctxt));
+   end Filter_Matches_Primitive;
+
    --------------------------
    -- Set_File_Information --
    --------------------------
@@ -372,5 +476,23 @@ package body Glide_Kernel.Contexts is
       Destroy (File_Selection_Context (Context));
       Free (Context.Entity_Name);
    end Destroy;
+
+   ------------------------------
+   -- Register_Default_Filters --
+   ------------------------------
+
+   procedure Register_Default_Filters
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      File_Filter         : constant Action_Filter := new Filter_File;
+      Entity_Filter       : constant Action_Filter := new Filter_Entity;
+      Project_File_Filter : constant Action_Filter := new Filter_Project_File;
+      Project_Only_Filter : constant Action_Filter := new Filter_Project_Only;
+   begin
+      Register_Filter (Kernel, File_Filter, "File");
+      Register_Filter (Kernel, Entity_Filter, "Entity");
+      Register_Filter (Kernel, Project_Only_Filter, "Project only");
+      Register_Filter (Kernel, Project_File_Filter, "Project and file");
+   end Register_Default_Filters;
 
 end Glide_Kernel.Contexts;
