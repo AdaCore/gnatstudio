@@ -7,7 +7,8 @@
 @tex
 %% Cygnus revisions to texinfo.tex, TeX macros to handle texinfo files
 %   Copyright (C) 1991 Free Software Foundation, Inc.
-
+%% Maintained at Cygnus Support as: 
+  
 %This texiplus.tex file is free software; you can redistribute it and/or
 %modify it under the terms of the GNU General Public License as
 %published by the Free Software Foundation; either version 1, or (at
@@ -29,7 +30,7 @@
 % However, since \title is local to \titlepage, we have to redefine
 % *that* whole damned thing.  
 %%%%%%%%%%This is sensitive to conflict w/FSF changes!****************
-\envdef\titlepage{\begingroup \parindent=0pt \textfonts
+\def\titlepage{\begingroup \parindent=0pt \textfonts
    \let\subtitlerm=\tenrm
 % I deinstalled the following change because \cmr12 is undefined.
 % This change was not in the ChangeLog anyway.  --rms.
@@ -229,6 +230,51 @@
 \let\emph=\smartitalic
 \let\cite=\smartitalic
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% @altref, if called explicitly (inside @iftex), switches the @ref
+% printed output so it lacks the square brackets used by default.
+% While we're at it, we use double quotes instead of square brackets 
+% (or no decorator at all, depending on state of @altref toggle).
+% Unfortunately this requires reproducing the entire damn xrefX
+% definition. WARNING: may need to track texinfo.tex changes to xrefX...
+\newif\ifbra\bratrue
+\def\altref{\ifbra\brafalse\else\bratrue\fi}% Toggle.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%Begin duplicate xrefX:
+\def\xrefX[#1,#2,#3,#4,#5,#6]{\begingroup%
+\def\printedmanual{\ignorespaces #5}%
+\def\printednodename{\ignorespaces #3}%
+%
+\setbox1=\hbox{\printedmanual}%
+\setbox0=\hbox{\printednodename}%
+\ifdim \wd0=0pt%
+\def\printednodename{\ignorespaces #1}%
+%%% Uncommment the following line to make the actual chapter or section title
+%%% appear inside the square brackets.
+%\def\printednodename{#1-title}%
+\fi%
+%
+%
+% If we use \unhbox0 and \unhbox1 to print the node names, TeX does
+% not insert empty discretionaries after hyphens, which means that it
+% will not find a line break at a hyphen in a node names.  Since some
+% manuals are best written with fairly long node names, containing
+% hyphens, this is a loss.  Therefore, we simply give the text of
+% the node name again, so it is as if TeX is seeing it for the first
+% time.
+\ifdim \wd1>0pt
+section ``\printednodename'' in \cite{\printedmanual}%
+\else%
+\turnoffactive%
+%%%%%%%%%%%%%%%Here's the change for @altref:
+\ifbra
+\refx{#1-snt}{} ``\printednodename,'' page\tie\refx{#1-pg}{}%
+\else
+\refx{#1-snt}{} \printednodename, page\tie\refx{#1-pg}{}%
+\fi
+%%%%%%%%%%%%%%%end change for @altref
+\fi
+\endgroup}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%:End duplicate xrefX
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % \widen: let examples (or whatever) fall into margins.  Symmetric.  Cancel
 % ``@widen{N}'' with ``@widen{-N}''.
@@ -264,7 +310,30 @@
 \global\pagewidth=\hsize
 \global\pageheight=\vsize
 
+\global\let\smalllisp=\smalllispx
+\global\let\smallexample=\smalllispx
+\global\def\Esmallexample{\Esmalllisp}
 }\textfonts
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% The following permits starting a TOC on a specific positive pageno
+% it is not suitable for general info use, so we don't bother with 
+% a fancy @ command--just dip into tex mode and set \contentspageno.
+\newcount\contentspageno \contentspageno=-1
+\def\startcontents#1{%
+   \pagealignmacro
+   \immediate\closeout \tocfile
+   \ifnum \pageno>0
+      \pageno = \contentspageno		% Request roman numbered pages.
+   \fi
+   % Don't need to put `Contents' or `Short Contents' in the headline.
+   % It is abundantly clear what they are.
+   \unnumbchapmacro{#1}\def\thischapter{}%
+   \begingroup   		% Set up to handle contents files properly.
+      \catcode`\\=0  \catcode`\{=1  \catcode`\}=2  \catcode`\@=11
+      \raggedbottom             % Worry more about breakpoints than the bottom.
+      \advance\hsize by -\contentsrightmargin % Don't use the full line length.
+}
 
 \globaldefs=0 % this is NOT redundant; the \endgroup done by@end tex
 	      % would restore the value, but before doing that would
