@@ -320,7 +320,7 @@ package body Src_Editor_Buffer is
    --  Special purpose string type to avoid extra copies and string allocation
    --  as much as possible.
    --  The actual contents of a Src_String is represented by
-   --  Contents (1 .. Length).
+   --  Contents (1 .. Length) (as utf8-encoded string)
    --  Never use Free (Contents) directly, use the Free procedure below.
 
    procedure Free (S : in out Src_String);
@@ -385,19 +385,12 @@ package body Src_Editor_Buffer is
                return Result;
             end if;
 
-            declare
-               Ignore   : Natural;
-               UTF8     : constant Gtkada.Types.Chars_Ptr :=
-                 Get_Text (Buffer, Start_Iter, End_Iter, True);
-               Length   : constant Natural := Integer (Strlen (UTF8));
-            begin
-               Result.Contents := new String (1 .. Length);
-               Glib.Convert.Convert
-                 (UTF8, Length,
-                  Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-                  Ignore, Result.Length, Result => Result.Contents.all);
-               g_free (UTF8);
-            end;
+            --  ??? Could this be more efficient (avoid function returning
+            --  unconstrained array)
+
+            Result.Contents := new String'
+              (Get_Text (Buffer, Start_Iter, End_Iter, True));
+            Result.Length := Result.Contents'Length;
 
          when In_Mark =>
             if Buffer.Editable_Lines (Line).Text /= null then
@@ -411,34 +404,14 @@ package body Src_Editor_Buffer is
    end Get_String;
 
    function Get_String
-     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access is
+     (Buffer : Source_Buffer) return GNAT.OS_Lib.String_Access
+   is
+      Start, The_End : Gtk_Text_Iter;
    begin
       if Lines_Are_Real (Buffer) then
-         declare
-            Ignore         : Natural;
-            Start, The_End : Gtk_Text_Iter;
-            UTF8           : Gtkada.Types.Chars_Ptr;
-            Length         : Natural;
-         begin
-            Get_Bounds (Buffer, Start, The_End);
-            UTF8 := Get_Text (Buffer, Start, The_End, True);
-            Length := Integer (Strlen (UTF8));
-
-            declare
-               Output : String (1 .. Length);
-            begin
-               Glib.Convert.Convert
-                 (UTF8, Length,
-                  Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-                  Ignore, Length, Result => Output);
-               g_free (UTF8);
-
-               --  ??? Need to find a way to avoid this extra copy, which
-               --  is too costly.
-
-               return new String'(Output (1 .. Length));
-            end;
-         end;
+         Get_Bounds (Buffer, Start, The_End);
+         return new String'
+           (Value (Get_Text (Buffer, Start, The_End, True)));
       else
          return Get_First_Lines (Buffer, Buffer.Last_Editable_Line);
       end if;
@@ -2078,24 +2051,30 @@ package body Src_Editor_Buffer is
          loop
             declare
                Str : Src_String := Get_String (Buffer, Line);
+               Contents : constant String :=
+                 Locale_From_UTF8 (Str.Contents.all);
+               C : Gunichar;
             begin
                if Str.Length > 0 then
                   if Strip_Blank then
-                     Index := Str.Length;
+                     Index := Contents'Length;
 
-                     while Index >= 1
-                       and then (Str.Contents (Index) = ' '
-                                 or else Str.Contents (Index) = ASCII.HT)
-                     loop
-                        Index := Index - 1;
+                     while Index >= Contents'First loop
+                        C := Utf8_Get_Char
+                          (Contents (Index .. Contents'First));
+                        exit when C /= Character'Pos (' ')
+                          and then C /= Character'Pos (ASCII.HT);
+
+                        Index := Utf8_Find_Prev_Char (Contents, Index);
                      end loop;
 
-                     Bytes_Written :=
-                       Write (FD, Str.Contents (1)'Address, Index);
+                     Bytes_Written := Write
+                       (FD, Contents (Contents'First)'Address, Index);
 
                   else
-                     Bytes_Written :=
-                       Write (FD, Str.Contents (1)'Address, Str.Length);
+                     Bytes_Written := Write
+                       (FD, Contents (Contents'First)'Address,
+                        Contents'Length);
                   end if;
                end if;
 
