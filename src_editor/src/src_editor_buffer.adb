@@ -465,6 +465,13 @@ package body Src_Editor_Buffer is
 
                   Buffer.Inserting := False;
                   g_free (C_Str);
+
+               exception
+                  when others =>
+                     --  Stop propagation of exception, since doing nothing
+                     --  in this callback is harmless.
+
+                     null;
                end;
             end if;
          end;
