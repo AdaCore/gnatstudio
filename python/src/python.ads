@@ -226,6 +226,9 @@ package Python is
    --  the interpreter.
    --  You need to Py_INCREF them before returning them from your functions.
 
+   function PyBool_Check (Obj : PyObject) return Boolean;
+   --  Return True if Obj is a boolean
+
    -------------
    -- Modules --
    -------------

@@ -28,6 +28,10 @@ int ada_pycobject_check (PyObject* obj) {
   return PyCObject_Check (obj);
 }
 
+int ada_pybool_check (PyObject* obj) {
+  return PyBool_Check (obj);
+}
+
 int ada_pytuple_check (PyObject* obj) {
   return PyTuple_Check (obj);
 }

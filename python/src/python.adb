@@ -195,6 +195,17 @@ package body Python is
       return Internal (Obj) = 1;
    end PyTuple_Check;
 
+   ------------------
+   -- PyBool_Check --
+   ------------------
+
+   function PyBool_Check (Obj : PyObject) return Boolean is
+      function Internal (Obj : PyObject) return Integer;
+      pragma Import (C, Internal, "ada_pybool_check");
+   begin
+      return Internal (Obj) = 1;
+   end PyBool_Check;
+
    -----------------------
    -- PyString_AsString --
    -----------------------
