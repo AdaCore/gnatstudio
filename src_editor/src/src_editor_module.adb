@@ -1144,7 +1144,8 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Edit, -"Generate Body", "",
                      On_Generate_Body'Access, Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit, -"Pretty Print", "",
-                     On_Pretty_Print'Access, Ref_Item => -"Preferences");
+                     On_Pretty_Print'Access, Ref_Item => -"Preferences",
+                     Sensitive => False);
 
       Register_Menu (Kernel, Gotom, -"Goto Declaration", Stock_Home,
                      On_Goto_Declaration'Access,
