@@ -199,13 +199,10 @@ package body Src_Editor_Box is
    is
       Source        : Source_Editor_Box := Find_Current_Editor (Kernel);
       Source_Info   : LI_File_Ptr;
-      Filename      : String_Access;
       Entity_Start, Entity_End : Gtk_Text_Iter;
-      Start_Line    : Positive;
-      Start_Column  : Positive;
-      End_Line      : Positive;
-      End_Column    : Positive;
       Status        : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Decl          : E_Declaration_Info;
+      Location      : File_Location;
 
    begin
       if Source = null or else Get_Filename (Source) = "" then
@@ -232,81 +229,67 @@ package body Src_Editor_Box is
          return;
       end if;
 
-      Src_Info.Queries.Find_Declaration_Or_Body
-        (Lib_Info        => Source_Info,
-         File_Name       => Base_Name (Source.Filename.all),
-         Entity_Name     => Get_Text (Entity_Start, Entity_End),
-         Line            => To_Box_Line (Get_Line (Entity_Start)),
-         Column          => To_Box_Column (Get_Line_Offset (Entity_Start)),
-         File_Name_Found => Filename,
-         Start_Line      => Start_Line,
-         Start_Column    => Start_Column,
-         End_Line        => End_Line,
-         End_Column      => End_Column,
-         Status          => Status);
+      declare
+         Entity_Name : constant String := Get_Text (Entity_Start, Entity_End);
+      begin
+         Src_Info.Queries.Find_Declaration_Or_Body
+           (Lib_Info           => Source_Info,
+            File_Name          => Base_Name (Source.Filename.all),
+            Entity_Name        => Entity_Name,
+            Line               => To_Box_Line (Get_Line (Entity_Start)),
+            Column           => To_Box_Column (Get_Line_Offset (Entity_Start)),
+            Entity_Declaration => Decl,
+            Location           => Location,
+            Status             => Status);
 
-      case Status is
-         when Entity_Not_Found =>
-            Console.Insert
-              (Kernel, "Cross-reference failed.", Highlight_Sloc => False);
-            Free (Filename);
-            return;
-         when Internal_Error =>
-            Console.Insert
-              (Kernel, "Cross-reference internal error detected.",
-               Highlight_Sloc => False);
-            Free (Filename);
-            return;
-         when No_Body_Entity_Found =>
-            Console.Insert
-              (Kernel,
-               "This entity does not have an associated declaration or body.",
-               Highlight_Sloc => False);
-            Free (Filename);
-            return;
-         when Success =>
-            null; --  No error message to print
-      end case;
+         case Status is
+            when Entity_Not_Found =>
+               Console.Insert
+                 (Kernel, "Cross-reference failed.", Highlight_Sloc => False);
+               return;
+            when Internal_Error =>
+               Console.Insert
+                 (Kernel, "Cross-reference internal error detected.",
+                  Highlight_Sloc => False);
+               return;
+            when No_Body_Entity_Found =>
+               Console.Insert
+                 (Kernel,
+                  "This entity does not have an associated "
+                  & "declaration or body.",
+                  Highlight_Sloc => False);
+               return;
+            when Success =>
+               null; --  No error message to print
+         end case;
 
-      --  Extra safety check, verify that Filename is not null before starting
-      --  dereferencing it. That would be a programing error
+         --  Open the file, and reset Source to the new editor in order to
+         --  highlight the region returned by the Xref query.
 
-      if Filename = null then
-         Console.Insert
-           (Kernel, "Internal error detected.", Highlight_Sloc => False);
+         Open_File_Editor
+           (Kernel,
+            Find_Source_File
+            (Kernel, Get_File (Location),
+             Use_Predefined_Source_Path => True),
+            Get_Line (Location), Get_Column (Location), False);
 
-         --  Note that the error message is different from the internal error
-         --  message above. This will help us pin-pointing the location of
-         --  the error message without any doubt, thus helping us debug the
-         --  situation, should this happen. (but it won't, of course :-)
+         Source := Find_Current_Editor (Kernel);
 
-         Free (Filename);
-         return;
-      end if;
+         --  Abort if we failed to go to the xref location. An error message
+         --  has already been printed, so just bail-out.
 
-      --  Open the file, and reset Source to the new editor in order to
-      --  highlight the region returned by the Xref query.
+         if Source /= null then
+            --  Get the source box that was just opened/raised, and highlight
+            --  the target entity.
 
-      Open_File_Editor
-        (Kernel,
-         Find_Source_File
-           (Kernel, Filename.all, Use_Predefined_Source_Path => True),
-         Start_Line, Start_Column, False);
-      Source := Find_Current_Editor (Kernel);
-
-      --  Abort if we failed to go to the xref location. An error message
-      --  has already been printed, so just bail-out.
-
-      if Source /= null then
-         --  Get the source box that was just opened/raised, and highlight
-         --  the target entity.
-
-         Unhighlight_All (Source);
-         Highlight_Region
-           (Source, Start_Line, Start_Column, End_Line, End_Column);
-      end if;
-
-      Free (Filename);
+            Unhighlight_All (Source);
+            Highlight_Region
+              (Source,
+               Get_Line (Location), Get_Column (Location),
+               Get_Line (Location),
+               Get_Column (Location) + Entity_Name'Length);
+         end if;
+      end;
 
    exception
       when E : Unsupported_Language =>
