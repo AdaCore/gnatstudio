@@ -301,7 +301,7 @@ package body Glide_Menu is
       Button := Message_Dialog
         ("GPS " & GVD.Version &
          (-" hosted on ") & GVD.Target & ASCII.LF & ASCII.LF &
-         (-"A complete application development system") & ASCII.LF & ASCII.LF &
+         (-"The GNAT Programming System") & ASCII.LF & ASCII.LF &
          "(c) 2001-2002 ACT-Europe",
          Buttons => Button_OK,
          Title   => -"About...");
