@@ -729,7 +729,7 @@ package body Projects.Registry is
                        Current_Source
                      then
                         Directory :=
-                          Units.Table (Unit.Unit).File_Names (S).Path;
+                          Units.Table (Unit.Unit).File_Names (S).Display_Path;
                         exit;
                      end if;
                   end loop;
