@@ -91,10 +91,10 @@ package body Log_Utils is
             S : constant String := Logs_Dir
               & Directory_Separator
               & Base_Name (Real_Name)
-              & "_log";
+              & "$log";
          begin
             if not Is_Regular_File
-              (Logs_Dir & Directory_Separator & Base_Name (Real_Name) & "_log")
+              (Logs_Dir & Directory_Separator & Base_Name (Real_Name) & "$log")
             then
                File := Create_New_File (S, Text);
                Close (File);
@@ -109,7 +109,7 @@ package body Log_Utils is
                      S : constant String := Logs_Dir
                        & Directory_Separator
                        & Base_Name (Real_Name)
-                       & "_" & Image (J) & "_log";
+                       & "$" & Image (J) & "$log";
                   begin
                      if not Is_Regular_File (S) then
                         File := Create_New_File (S, Text);

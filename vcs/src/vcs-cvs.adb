@@ -888,7 +888,7 @@ package body VCS.CVS is
       Base         : constant String := Base_Name (Current_File);
       Patch_File   : constant String :=
         String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
-        Base & "_difs";
+        Base & "$difs";
       File         : File_Type;
 
    begin
@@ -1089,15 +1089,16 @@ package body VCS.CVS is
    begin
       Append (Args, "log");
       Append (Args, Base_Name (File));
-      Append (Command_Head, Base_Name (File) & "_changelog");
+      Append (Command_Head, Base_Name (File) & "$changelog");
 
-      Create (C,
-              Rep.Kernel,
-              Get_Pref (Rep.Kernel, CVS_Command),
-              Dir_Name (File),
-              Args,
-              Command_Head,
-              Text_Output_Handler'Access);
+      Create
+        (C,
+         Rep.Kernel,
+         Get_Pref (Rep.Kernel, CVS_Command),
+         Dir_Name (File),
+         Args,
+         Command_Head,
+         Text_Output_Handler'Access);
 
       Enqueue (Rep.Queue, C);
 

@@ -130,7 +130,7 @@ package body VCS.ClearCase is
       Base         : constant String := Base_Name (Current_File);
       Patch_File   : constant String :=
         String_Utils.Name_As_Directory (Get_Pref (Kernel, Tmp_Dir)) &
-        Base & "_difs";
+        Base & "$difs";
       File         : File_Type;
 
    begin

@@ -459,7 +459,7 @@ package body VCS_View_API is
               & File_Information (File_Name);
          begin
             if File_S'Length > 4
-              and then File_S (File_S'Last - 3 .. File_S'Last) = "_log"
+              and then File_S (File_S'Last - 3 .. File_S'Last) = "$log"
             then
                declare
                   Original : constant String :=
