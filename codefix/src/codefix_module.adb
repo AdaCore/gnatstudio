@@ -402,6 +402,10 @@ package body Codefix_Module is
 
       Current_Error := Get_First_Error (Session.Corrector.all);
       while Current_Error /= Null_Error_Id loop
+         Trace (Me, "Activate_Codefix: Error found at "
+                & Full_Name (Get_File (Get_Error_Message (Current_Error))).all
+                & Get_Line (Get_Error_Message (Current_Error))'Img
+                & Get_Column (Get_Error_Message (Current_Error))'Img);
          Create_Pixmap_And_Category (Kernel, Session, Current_Error);
          Current_Error := Next (Current_Error);
       end loop;
@@ -711,6 +715,18 @@ package body Codefix_Module is
 
       Register_Command
         (Kernel,
+         Command       => "sessions",
+         Return_Value  => "list",
+         Description   =>
+           -("List all the existing Codefix sessions. The returned values"
+             & " can all be used to create a new instance of Codefix through"
+             & " its constructor."),
+         Class         => Codefix_Module_ID.Codefix_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
          Command     => "possible_fixes",
          Description => -"List the possible fixes for the specific error",
          Return_Value => "list",
@@ -805,8 +821,10 @@ package body Codefix_Module is
                Choice := Choice - 1;
             end loop;
 
-            On_Fix (Get_Kernel (Data), Error.Session,
-                    Error.Error, Command_List.Data (Solution_Node));
+            if Solution_Node /= Command_List.Null_Node then
+               On_Fix (Get_Kernel (Data), Error.Session,
+                       Error.Error, Command_List.Data (Solution_Node));
+            end if;
          end;
       end if;
    end Error_Command_Handler;
@@ -825,8 +843,8 @@ package body Codefix_Module is
          Name_Parameters (Data, Parse_Cmd_Parameters);
          Activate_Codefix
            (Get_Kernel (Data),
-            Output               => Nth_Arg (Data, 1),
-            Category             => Nth_Arg (Data, 2),
+            Output               => Nth_Arg (Data, 2),
+            Category             => Nth_Arg (Data, 1),
             File_Location_Regexp => Nth_Arg (Data, 3, ""),
             File_Index           => Nth_Arg (Data, 4, -1),
             Line_Index           => Nth_Arg (Data, 5, -1),
@@ -842,6 +860,16 @@ package body Codefix_Module is
             Set_Error_Msg (Data, -"No codefix session for that category");
          else
             Set_Data (Instance, Session);
+         end if;
+
+      elsif Command = "sessions" then
+         Set_Return_Value_As_List (Data);
+
+         if Codefix_Module_ID.Sessions /= null then
+            for S in Codefix_Module_ID.Sessions'Range loop
+               Set_Return_Value
+                 (Data, Codefix_Module_ID.Sessions (S).Category.all);
+            end loop;
          end if;
 
       elsif Command = "errors" then
