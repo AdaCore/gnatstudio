@@ -624,6 +624,7 @@ package body GVD.Dialogs is
            (Box, Dialog.Label, Fill => True, Expand => True, Padding => 10);
 
          Gtk_New (Dialog.Entry_Field);
+         Set_Case_Sensitive (Dialog.Entry_Field);
          Pack_Start (Box, Dialog.Entry_Field, Padding => 10);
          Disable_Activate (Dialog.Entry_Field);
          Widget_Callback.Object_Connect
