@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -659,14 +659,14 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
@@ -681,49 +681,49 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_EC_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_T_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
@@ -738,14 +738,14 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
@@ -760,21 +760,21 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : LI_File_List;
-      Project     : Project_Type;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    ---------------------
@@ -803,89 +803,89 @@ package body Src_Info.CPP is
    ----------------
 
    type To_Handler is access procedure
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Fu_To_Gv_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Fu_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Con_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_E_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ec_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Iv_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ma_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Mi_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Cl_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_T_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Un_Handler
-     (Ref     : TO_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : LI_File_List;
-      Project     : Project_Type;
+     (Ref              : TO_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    -----------------
@@ -1187,17 +1187,80 @@ package body Src_Info.CPP is
       Full_Filename : String) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Root_Project);
-      pragma Unreferenced (Handler);
-      pragma Unreferenced (Full_Filename);
 
-      HI     : CPP_LI_Handler_Iterator;
-      DB_Dir : constant String := Get_DB_Dir (File_Project);
+      HI             : CPP_LI_Handler_Iterator;
+      Tmp_File       : File_Type;
+      Success        : Boolean;
+      Process_Alive  : Boolean := False;
+      Xref_File_Name : String_Access;
+      DB_Dir         : constant String := Get_DB_Dir (File_Project);
+      Pool           : Xref_Pool;
 
    begin
+      if DB_Dir = "" then
+         HI.State := Done;
+         return HI;
+      end if;
+
+      HI.Handler := CPP_LI_Handler (Handler);
+
+      --  Name of the temporary file to use
+
+      HI.List_Filename := new String'(DB_Dir & "gps_list");
+
       --  Make sure the database directory exists.
 
       Create_DB_Directory (DB_Dir);
-      HI.State := Done;
+      Pool := Get_Xref_Pool (Handler.Prj_HTable, DB_Dir);
+      Xref_File_Name := Xref_Filename_For (Full_Filename, DB_Dir, Pool);
+
+      --  Recompute Xref is the Xref file is invalid or if the source file
+      --  is newer than its Xref
+
+      if not Is_Xref_Valid (Full_Filename, Pool)
+        or else To_Timestamp (File_Time_Stamp (Full_Filename)) >
+                To_Timestamp (File_Time_Stamp (Xref_File_Name.all))
+      then
+         Set_Valid (Full_Filename, True, Pool);
+
+         --  Remove the current xref file if it exists, since
+         --  cbrowser opens it in append mode.
+
+         if Is_Regular_File (Xref_File_Name.all) then
+            Delete_File (Xref_File_Name.all, Success);
+         end if;
+
+         --  Create the list of files that need to be analyzed.
+
+         Create (Tmp_File, Out_File, Name => HI.List_Filename.all);
+         Put_Line (Tmp_File, "@" & Xref_File_Name.all);
+         Put_Line (Tmp_File, Full_Filename);
+         Close (Tmp_File);
+
+         Close_DB_Files (Handler.SN_Table);
+         SN.Browse.Browse
+           (File_Name     => HI.List_Filename.all,
+            DB_Directory  => DB_Dir,
+            DBIMP_Path    => Handler.DBIMP_Path.all,
+            Cbrowser_Path => Handler.CBrowser_Path.all,
+            PD            => HI.PD);
+
+         --  Wait for the underlying process to finish
+
+         loop
+            Browse.Is_Alive (HI.PD, Process_Alive);
+
+            exit when not Process_Alive;
+
+            delay 0.05;
+         end loop;
+
+         Delete_File (HI.List_Filename.all, Success);
+         Free (HI.List_Filename);
+
+         Save (Pool, DB_Dir & Browse.Xref_Pool_Filename);
+      end if;
+
       return HI;
    end Generate_LI_For_Source;
 
