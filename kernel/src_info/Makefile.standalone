@@ -23,6 +23,8 @@ STANDALONE_SRCS := \
 STANDALONE_OBJ_DIR = $(STANDALONE_BASE_DIR)/standalone_obj
 OBJ_DIR = $(STANDALONE_OBJ_DIR)
 
+LIBS := $(LIBS) $(STANDALONE_BASE_DIR)/../common/obj/libcommon.a
+
 CFLAGS = -g -O2
 ADA_SOURCES = test_parse.adb
 
