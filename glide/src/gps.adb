@@ -750,13 +750,11 @@ procedure GPS is
                  (Script             => Script,
                   Filename           => Normalize_Pathname
                     (Batch (J + 1 .. Batch'Last), Startup_Dir.all),
-                  Display_In_Console => True,
                   Errors             => Errors);
             else
                Execute_Command
                  (Script             => Script,
                   Command            => Batch (J + 1 .. Batch'Last),
-                  Display_In_Console => True,
                   Errors             => Errors);
             end if;
 
