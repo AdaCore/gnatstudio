@@ -1547,7 +1547,18 @@ package body Src_Editor_Buffer is
          Success : Boolean;
          Col     : Gint;
       begin
-         if Gint (Sloc_Start.Line) = 0 then
+         --  Some parsers currently leave line numbers to 0. Don't highlight in
+         --  this case, since we cannot use from the byte index due to
+         --  limitations in gtk+
+
+         if Sloc_Start.Line = 0 then
+            return False;
+         end if;
+
+         --  Don't need to take into account the offset column, unless we are
+         --  still on the same line that we started at.
+
+         if Gint (Sloc_Start.Line) = 1 then
             Col := Gint (Sloc_Start.Column) + Slice_Offset_Column - 1;
          else
             Col := Gint (Sloc_Start.Column) - 1;
@@ -1558,28 +1569,27 @@ package body Src_Editor_Buffer is
             Gint (Sloc_Start.Line) + Slice_Offset_Line - 1,
             Col);
 
-         if Sloc_End.Column = 0 then
-            if Gint (Sloc_End.Line) = 1 then
-               Col := Gint (Sloc_End.Column) + Slice_Offset_Column;
-            else
-               Col := Gint (Sloc_End.Column);
-            end if;
+         --  If the column is 0, the entity really ended on the end of the
+         --  previous line.
 
+         if Sloc_End.Column = 0 then
             Get_Iter_At_Line_Index
               (Buffer, Entity_End,
                Gint (Sloc_End.Line) + Slice_Offset_Line,
-               Col);
+               0);
+            Backward_Char (Entity_End, Success);
+
          else
-            if Gint (Sloc_End.Line) - 1 = 0 then
-               Col := Gint (Sloc_End.Column) + Slice_Offset_Column;
+            if Gint (Sloc_End.Line) = 1 then
+               Col := Gint (Sloc_End.Column) + Slice_Offset_Column - 1;
             else
-               Col := Gint (Sloc_End.Column);
+               Col := Gint (Sloc_End.Column) - 1;
             end if;
 
             Get_Iter_At_Line_Index
               (Buffer, Entity_End,
                Gint (Sloc_End.Line) + Slice_Offset_Line - 1,
-               Col - 1);
+               Col);
             Forward_Char (Entity_End, Success);
          end if;
 
@@ -1603,6 +1613,9 @@ package body Src_Editor_Buffer is
            Get_Slice (Entity_Start, Entity_End);
          Slice : constant Unchecked_String_Access :=
            To_Unchecked_String (UTF8);
+
+         --  ??? Could it be more efficient to just substract
+         --     Get_Offset (Entity_End) - Get_Offset (Entity_Start)
          Length : constant Integer := Integer (Strlen (UTF8));
          pragma Suppress (Access_Check, Slice);
 
