@@ -246,6 +246,9 @@ package Entities is
    --    - Discriminant: points to the declaration of the discriminants for
    --      this type.
 
+   function Kind_To_String (Kind : Reference_Kind) return String;
+   --  Convert a reference kind into a displayable string
+
    type Reference_Kind_Filter is array (Reference_Kind) of Boolean;
    Real_References_Filter : constant Reference_Kind_Filter;
 

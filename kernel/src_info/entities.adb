@@ -30,6 +30,7 @@ with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
 with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Glide_Intl;              use Glide_Intl;
 
 package body Entities is
    Assert_Me : constant Debug_Handle := Create ("Entities.Assert", Off);
@@ -1943,6 +1944,39 @@ package body Entities is
             --  -"task type"   -"task"
          when Union =>
             return "union";   --  -"union"
+      end case;
+   end Kind_To_String;
+
+   --------------------
+   -- Kind_To_String --
+   --------------------
+
+   function Kind_To_String (Kind : Reference_Kind) return String is
+   begin
+      case Kind is
+         when Reference               => return -"read reference";
+         when Modification            => return -"write reference";
+         when Instantiation_Reference => return -"instantiation";
+         when Body_Entity             => return -"body";
+         when Completion_Of_Private_Or_Incomplete_Type =>
+            return -"full declaration";
+         when Discriminant            => return -"discriminant";
+         when Declaration             => return -"declaration";
+         when Type_Extension          => return -"type extension";
+         when Implicit                => return -"implicit reference";
+         when Primitive_Operation     => return -"primitive operation";
+         when Overriding_Primitive_Operation =>
+            return -"overriding primitive operation";
+         when With_Line               => return -"with line";
+         when Label                   => return -"label";
+         when Subprogram_In_Parameter => return -"in parameter";
+         when Subprogram_Out_Parameter => return -"out parameter";
+         when Subprogram_In_Out_Parameter => return -"in out parameter";
+         when Subprogram_Access_Parameter => return -"access parameter";
+         when Formal_Generic_Parameter   => return -"formal generic parameter";
+         when Parent_Package             => return -"parent package";
+         when End_Of_Spec                => return -"end of spec";
+         when End_Of_Body                => return -"end of body";
       end case;
    end Kind_To_String;
 
