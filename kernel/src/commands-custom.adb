@@ -1328,26 +1328,30 @@ package body Commands.Custom is
                Change_Dir (Context.Dir.all);
             end if;
 
-            if Command.Execution.Save_Output (Command.Execution.Cmd_Index) then
-               if Console /= null and then Component.Show_Command then
-                  Insert (Console, Subst_Cmd_Line, Add_LF => True);
-               end if;
+            if Component.Script /= null then
+               if Command.Execution.Save_Output
+                 (Command.Execution.Cmd_Index)
+               then
+                  if Console /= null and then Component.Show_Command then
+                     Insert (Console, Subst_Cmd_Line, Add_LF => True);
+                  end if;
 
-               Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
-                 new String'
-                   (Execute_Command
-                        (Component.Script, Subst_Cmd_Line,
-                         Hide_Output  => Output_Location.all = No_Output,
-                         Show_Command => Component.Show_Command,
-                         Console      => Console,
-                         Errors       => Errors'Unchecked_Access));
-            else
-               Execute_Command
-                 (Component.Script, Subst_Cmd_Line,
-                  Hide_Output  => Output_Location.all = No_Output,
-                  Show_Command => Component.Show_Command,
-                  Console      => Console,
-                  Errors => Errors);
+                  Command.Execution.Outputs (Command.Execution.Cmd_Index) :=
+                    new String'
+                      (Execute_Command
+                           (Component.Script, Subst_Cmd_Line,
+                            Hide_Output  => Output_Location.all = No_Output,
+                            Show_Command => Component.Show_Command,
+                            Console      => Console,
+                            Errors       => Errors'Unchecked_Access));
+               else
+                  Execute_Command
+                    (Component.Script, Subst_Cmd_Line,
+                     Hide_Output  => Output_Location.all = No_Output,
+                     Show_Command => Component.Show_Command,
+                     Console      => Console,
+                     Errors => Errors);
+               end if;
             end if;
 
             if Context.Dir /= null then
