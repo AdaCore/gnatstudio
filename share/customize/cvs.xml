@@ -93,7 +93,7 @@
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
       <shell>MDI.split_vertically TRUE</shell>
-      <shell>delete "%2"</shell>
+      <shell>delete "%3"</shell>
    </action>
 
    <action name="generic_cvs_history_rev" show-command="true" output="none">
@@ -102,7 +102,7 @@
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
       <shell>MDI.split_vertically TRUE</shell>
-      <shell>delete "%2"</shell>
+      <shell>delete "%3"</shell>
    </action>
 
    <!---------------->
