@@ -14,11 +14,11 @@ begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
 
-   -- ??? remove final ';' when Add_Files_Extensions is no more buggy...
-   Add_File_Extensions (Ada_Lang,  ".ads;.adb;");
-   Add_File_Extensions (C_Lang,    ".c;.h;");
-   Add_File_Extensions (Cpp_Lang,  ".cxx;.cpp;.h;");
-   Add_File_Extensions (Java_Lang, ".java;");
+   -- Be careful with .h files: both C and C++ !
+   Add_File_Extensions (Ada_Lang,  ".ads;.adb");
+   Add_File_Extensions (C_Lang,    ".c;.h");
+   Add_File_Extensions (Cpp_Lang,  ".cxx;.cpp;.h");
+   Add_File_Extensions (Java_Lang, ".java");
 
    Gtk_New (Hyper_Grep_Window);
    Show_All (Hyper_Grep_Window);
