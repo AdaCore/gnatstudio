@@ -675,12 +675,15 @@ package body Entities is
    procedure Remove  (D : in out Entities_Tries.Trie_Tree;
                       E : Entity_Information)
    is
-      EL : constant Entity_Information_List_Access :=
-        Get (D, E.Name.all);
+      Pointer : Cell_Pointer;
+      EL      : Entity_Information_List_Access;
    begin
+      Find_Cell_Child (D, E.Name.all, Pointer);
+      EL := Get (Pointer);
+
       if EL /= null then
          if Length (EL.all) = 1 then
-            Remove (D, E.Name.all);
+            Remove (D, Pointer);
          else
             Remove (EL.all, E);
          end if;
@@ -929,7 +932,10 @@ package body Entities is
       Loc    : File_Location) return Entity_Information is
    begin
       for L in Entity_Information_Arrays.First .. Last (List) loop
-         if List.Table (L).Declaration = Loc then
+         if List.Table (L).Declaration.File = Loc.File
+           and then List.Table (L).Declaration.Line = Loc.Line
+           and then List.Table (L).Declaration.Column = Loc.Column
+         then
             return List.Table (L);
          end if;
       end loop;
