@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -675,22 +675,7 @@ package body Diff_Utils2 is
    ---------------
 
    procedure Free_List (Link : in out Diff_List) is
-      Curr_Node  : Diff_List_Node;
-      Curr_Chunk : Diff_Chunk_Access;
    begin
-      Curr_Node := First (Link);
-
-      while Curr_Node /= Diff_Chunk_List.Null_Node loop
-         Curr_Chunk := Data (Curr_Node);
-         Free (Curr_Chunk.Range1.Mark);
-         Free (Curr_Chunk.Range2.Mark);
-         Free (Curr_Chunk.Range3.Mark);
-         Free (Curr_Chunk.Range1.Blank_Lines);
-         Free (Curr_Chunk.Range2.Blank_Lines);
-         Free (Curr_Chunk.Range3.Blank_Lines);
-         Curr_Node := Next (Curr_Node);
-      end loop;
-
       Free (Link, True);
    end Free_List;
 
@@ -702,7 +687,7 @@ package body Diff_Utils2 is
       pragma Unreferenced (Link);
    begin
       null;
-      --  In the list of Diff_Head the memory is free manualy
+      --  In the list of Diff_Head the memory is freed manualy
    end Free;
    --  This procedure must be never used
 
