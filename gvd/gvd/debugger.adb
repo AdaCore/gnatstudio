@@ -30,6 +30,19 @@ package body Debugger is
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Bt : in out Backtrace_Array) is
+   begin
+      for J in Bt'Range loop
+         Free (Bt (J).Program_Counter);
+         Free (Bt (J).Subprogram);
+         Free (Bt (J).Source_Location);
+      end loop;
+   end Free;
+
    ----------------
    -- Parse_Type --
    ----------------

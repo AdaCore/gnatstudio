@@ -268,7 +268,10 @@ package body Debugger.Jdb is
    -- Backtrace --
    ---------------
 
-   function Backtrace (Debugger : access Jdb_Debugger) return String is
+   procedure Backtrace
+     (Debugger : access Jdb_Debugger;
+      Value    : out Backtrace_Array;
+      Len      : out Natural) is
    begin
       Empty_Buffer (Get_Process (Debugger));
       Send (Get_Process (Debugger), "where");
@@ -276,7 +279,7 @@ package body Debugger.Jdb is
       declare
          S : String := Expect_Out (Get_Process (Debugger));
       begin
-         return S (S'First .. S'Last - Prompt_Length);
+         Len := 0;
       end;
    end Backtrace;
 

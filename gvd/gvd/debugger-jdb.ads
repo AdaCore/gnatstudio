@@ -96,7 +96,10 @@ package Debugger.Jdb is
 
    procedure Finish (Debugger : access Jdb_Debugger);
 
-   function Backtrace (Debugger : access Jdb_Debugger) return String;
+   procedure Backtrace
+     (Debugger : access Jdb_Debugger;
+      Value    : out Backtrace_Array;
+      Len      : out Natural);
 
    function Info_Threads
      (Debugger : access Jdb_Debugger)

@@ -57,12 +57,15 @@ package body Debugger.Gdb is
 
    File_Name_Pattern : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
-              & "([^:]+):(\d+):\d+:beg:0x[0-9a-f]+", Multiple_Lines);
+              & "(.+):(\d+):\d+:beg:0x[0-9a-f]+", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
+
+   Frame_Pattern : constant Pattern_Matcher := Compile
+     ("^#(\d+) +((0x[0-9a-f]+) in )?(.+) at (.+)$", Multiple_Lines);
 
    procedure Language_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor;
@@ -442,15 +445,48 @@ package body Debugger.Gdb is
    -- Backtrace --
    ---------------
 
-   function Backtrace (Debugger : access Gdb_Debugger) return String is
+   procedure Backtrace
+     (Debugger : access Gdb_Debugger;
+      Value    : out Backtrace_Array;
+      Len      : out Natural)
+   is
    begin
       Empty_Buffer (Get_Process (Debugger));
-      Send (Get_Process (Debugger), "bt");
+      Send (Get_Process (Debugger), "where");
       Wait_Prompt (Debugger);
+
       declare
-         S : String := Expect_Out (Get_Process (Debugger));
+         S       : String := Expect_Out (Get_Process (Debugger));
+         Matched : Match_Array (0 .. 5);
+         First   : Positive := S'First;
       begin
-         return S (S'First .. S'Last - Prompt_Length);
+         Len := 0;
+
+         loop
+            exit when Len = Value'Length;
+
+            Match
+              (Frame_Pattern, S (First .. S'Last - Prompt_Length), Matched);
+
+            exit when Matched (0) = No_Match;
+
+            Len := Len + 1;
+            Value (Len).Frame_Id :=
+              Natural'Value (S (Matched (1).First .. Matched (1).Last));
+
+            if Matched (2) = No_Match then
+               Value (Len).Program_Counter := new String' ("");
+            else
+               Value (Len).Program_Counter := 
+                 new String' (S (Matched (3).First .. Matched (3).Last));
+            end if;
+
+            Value (Len).Subprogram :=
+              new String' (S (Matched (4).First .. Matched (4).Last));
+            Value (Len).Source_Location :=
+              new String' (S (Matched (5).First .. Matched (5).Last));
+            First := Matched (0).Last;
+         end loop;
       end;
    end Backtrace;
 

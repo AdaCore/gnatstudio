@@ -109,7 +109,10 @@ package Debugger.Gdb is
 
    procedure Finish (Debugger : access Gdb_Debugger);
 
-   function Backtrace (Debugger : access Gdb_Debugger) return String;
+   procedure Backtrace
+     (Debugger : access Gdb_Debugger;
+      Value    : out Backtrace_Array;
+      Len      : out Natural);
 
    function Info_Threads
      (Debugger : access Gdb_Debugger)

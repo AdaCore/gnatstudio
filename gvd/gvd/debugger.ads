@@ -255,8 +255,22 @@ package Debugger is
    --  Finish executing the current frame.
    --  GDB_COMMAND: "finish"
 
-   function Backtrace (Debugger : access Debugger_Root) return String
-      is abstract;
+   type Backtrace_Record is record
+      Frame_Id        : Natural;
+      Program_Counter : Generic_Values.String_Access;
+      Subprogram      : Generic_Values.String_Access;
+      Source_Location : Generic_Values.String_Access;
+   end record;
+
+   type Backtrace_Array is array (Positive range <>) of Backtrace_Record;
+
+   procedure Free (Bt : in out Backtrace_Array);
+   --  Free all the dynamic memory associated with each backtrace record.
+
+   procedure Backtrace
+     (Debugger : access Debugger_Root;
+      Value    : out Backtrace_Array;
+      Len      : out Natural) is abstract;
    --  Return the current backtrace.
    --  GDB_COMMAND: "bt"
 
