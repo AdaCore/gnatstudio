@@ -1220,11 +1220,7 @@ package body Glide_Kernel.Modules is
       if File /= VFS.No_File then
          Init (Value (1),  Glib.GType_String);
 
-         if Normalize then
-            Set_String (Value (1), Full_Name (File, Normalize => True).all);
-         else
-            Set_String (Value (1), Full_Name (File).all);
-         end if;
+         Set_String (Value (1), Full_Name (File, Normalize).all);
 
          if not Mime_Action
            (Kernel, Mime_File_Line_Info, Value, Set_Busy => False)
