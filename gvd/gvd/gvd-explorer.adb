@@ -574,7 +574,7 @@ package body GVD.Explorer is
    -------------------
 
    procedure Add_File_Node
-     (Tree      : access Explorer_Record'Class;
+     (Tree      : access Explorer_Record;
       File_Name : String)
    is
       use type Row_List.Glist;
@@ -678,7 +678,7 @@ package body GVD.Explorer is
    -----------------------
 
    procedure Add_List_Of_Files
-     (Tree : access Explorer_Record'Class;
+     (Tree : access Explorer_Record;
       List : GVD.Types.String_Array) is
    begin
       Freeze (Tree);

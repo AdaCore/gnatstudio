@@ -50,12 +50,12 @@ package GVD.Explorer is
    --  Create a new explorer
 
    procedure Add_File_Node
-     (Tree      : access Explorer_Record'Class;
+     (Tree      : access Explorer_Record;
       File_Name : String);
    --  Insert a node for a new file.
 
    procedure Add_List_Of_Files
-     (Tree : access Explorer_Record'Class;
+     (Tree : access Explorer_Record;
       List : GVD.Types.String_Array);
    --  Add several files in the explorer.
 
