@@ -2,6 +2,10 @@ with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
 package Breakpoints_Pkg.Callbacks is
+   procedure On_Notebook1_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args);
+
    procedure On_Location_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class);
 

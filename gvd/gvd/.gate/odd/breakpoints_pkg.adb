@@ -40,6 +40,8 @@ begin
 
    Gtk_New (Breakpoints.Notebook1);
    Pack_Start (Breakpoints.Vbox1, Breakpoints.Notebook1, False, True, 0);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Notebook1, "switch_page", On_Notebook1_Switch_Page'Access, Breakpoints);
    Set_Scrollable (Breakpoints.Notebook1, False);
    Set_Show_Border (Breakpoints.Notebook1, True);
    Set_Show_Tabs (Breakpoints.Notebook1, True);

@@ -12,6 +12,20 @@ package body Breakpoints_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   ------------------------------
+   -- On_Notebook1_Switch_Page --
+   ------------------------------
+
+   procedure On_Notebook1_Switch_Page
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Arg1 : Address := To_Address (Params, 1);
+      Arg2 : Guint := To_Guint (Params, 2);
+   begin
+      null;
+   end On_Notebook1_Switch_Page;
+
    ----------------------------------
    -- On_Location_Selected_Toggled --
    ----------------------------------

@@ -5513,6 +5513,12 @@
       <class>GtkNotebook</class>
       <name>notebook1</name>
       <can_focus>True</can_focus>
+      <signal>
+	<name>switch_page</name>
+	<handler>on_notebook1_switch_page</handler>
+	<object>Breakpoints</object>
+	<last_modification_time>Tue, 04 Jul 2000 20:06:48 GMT</last_modification_time>
+      </signal>
       <show_tabs>True</show_tabs>
       <show_border>True</show_border>
       <tab_pos>GTK_POS_TOP</tab_pos>
