@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -61,6 +61,7 @@ with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with VFS;               use VFS;
 with File_Utils;        use File_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
@@ -87,11 +88,12 @@ package body Glide_Kernel.Modules is
 
    type Contextual_Menu_Record;
    type Contextual_Menu_Access is access all Contextual_Menu_Record;
-   type Contextual_Menu_Record (Uses_Action : Boolean) is record
+   type Contextual_Menu_Record (Uses_Action : Boolean := True) is record
       Name   : GNAT.OS_Lib.String_Access;
       Label  : Contextual_Menu_Label_Creator;
       Pix    : GNAT.OS_Lib.String_Access;
       Next   : Contextual_Menu_Access;
+      Visible : Boolean := True;
 
       case Uses_Action is
          when True  =>
@@ -102,6 +104,13 @@ package body Glide_Kernel.Modules is
       end case;
    end record;
    --  A contextual menu entry declared by a user or GPS itself internally
+   --  We use a default value for the discriminant because the menu itself
+   --  might be created well before we know whether it uses an action or not,
+   --  for instance if the user has made it invisible or if it was used as a
+   --  reference item.
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Contextual_Menu_Record, Contextual_Menu_Access);
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Contextual_Menu_Access);
@@ -170,6 +179,11 @@ package body Glide_Kernel.Modules is
       Ref_Item      : String := "";
       Add_Before    : Boolean := True);
    --  Add a new contextual menu in the list
+
+   function Find_Contextual_Menu_By_Name
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) return Contextual_Menu_Access;
+   --  Find a contextual menu by name
 
    ---------------
    -- Get_Label --
@@ -549,75 +563,77 @@ package body Glide_Kernel.Modules is
 
          C := Convert (User.Kernel.Contextual);
          while C /= null loop
-            if C.Uses_Action then
-               Matches := Filter_Matches (C.Action.Filter, Context);
-            else
-               Matches := Filter_Matches (C.Filter, Context);
-            end if;
-
-            if Matches then
-
-               if C.Label = null then
-                  Full_Name := new String'(C.Name.all);
+            if C.Visible then
+               if C.Uses_Action then
+                  Matches := Filter_Matches (C.Action.Filter, Context);
                else
-                  Full_Name := new String'(Get_Label (C.Label, Context));
+                  Matches := Filter_Matches (C.Filter, Context);
                end if;
 
-               --  A separator ?
+               if Matches then
 
-               if (C.Uses_Action and then C.Action = null)
-                 or else (not C.Uses_Action and then C.Command = null)
-               then
-                  Gtk_New (Item, "");
-               else
-                  --  Implicit filters for %p, ...
-                  if Full_Name.all /= "" then
-                     if C.Pix = null then
-                        Gtk_New (Item, Base_Name (Full_Name.all));
+                  if C.Label = null then
+                     Full_Name := new String'(C.Name.all);
+                  else
+                     Full_Name := new String'(Get_Label (C.Label, Context));
+                  end if;
+
+                  --  A separator ?
+
+                  if (C.Uses_Action and then C.Action = null)
+                    or else (not C.Uses_Action and then C.Command = null)
+                  then
+                     Gtk_New (Item, "");
+                  else
+                     --  Implicit filters for %p, ...
+                     if Full_Name.all /= "" then
+                        if C.Pix = null then
+                           Gtk_New (Item, Base_Name (Full_Name.all));
+                        else
+                           Gtk_New (Image, Base_Name (Full_Name.all));
+                           Gtk_New (Pix,
+                                    Stock_Id => C.Pix.all,
+                                    Size     => Icon_Size_Menu);
+                           Set_Image (Image, Pix);
+                           Item := Gtk_Menu_Item (Image);
+                        end if;
+
+                        Action_Callback.Object_Connect
+                          (Item, "activate",
+                           Contextual_Action'Access,
+                           User_Data   => C,
+                           Slot_Object => User.Kernel);
                      else
-                        Gtk_New (Image, Base_Name (Full_Name.all));
-                        Gtk_New (Pix,
-                                 Stock_Id => C.Pix.all,
-                                 Size     => Icon_Size_Menu);
-                        Set_Image (Image, Pix);
-                        Item := Gtk_Menu_Item (Image);
+                        Item := null;
+                        Trace (Me, "Implicit filter doesn't match");
                      end if;
-
-                     Action_Callback.Object_Connect
-                       (Item, "activate",
-                        Contextual_Action'Access,
-                        User_Data   => C,
-                        Slot_Object => User.Kernel);
-                  else
-                     Item := null;
-                     Trace (Me, "Implicit filter doesn't match");
-                  end if;
-               end if;
-
-               --  Find the parent menu
-
-               if Item /= null then
-                  Parent_Item := Find_Or_Create_Menu_Tree
-                    (Menu_Bar      => null,
-                     Menu          => Menu,
-                     Path          => Dir_Name ('/' & Full_Name.all),
-                     Accelerators  => Get_Default_Accelerators (User.Kernel),
-                     Allow_Create  => True,
-                     Use_Mnemonics => False);
-                  if Parent_Item /= null then
-                     Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
-                     if Parent_Menu = null then
-                        Gtk_New (Parent_Menu);
-                        Set_Submenu (Parent_Item, Parent_Menu);
-                     end if;
-                  else
-                     Parent_Menu := Menu;
                   end if;
 
-                  Add_Menu (Parent => Parent_Menu, Item => Item);
-               end if;
+                  --  Find the parent menu
 
-               GNAT.OS_Lib.Free (Full_Name);
+                  if Item /= null then
+                     Parent_Item := Find_Or_Create_Menu_Tree
+                       (Menu_Bar      => null,
+                        Menu          => Menu,
+                        Path          => Dir_Name ('/' & Full_Name.all),
+                        Accelerators => Get_Default_Accelerators (User.Kernel),
+                        Allow_Create  => True,
+                        Use_Mnemonics => False);
+                     if Parent_Item /= null then
+                        Parent_Menu := Gtk_Menu (Get_Submenu (Parent_Item));
+                        if Parent_Menu = null then
+                           Gtk_New (Parent_Menu);
+                           Set_Submenu (Parent_Item, Parent_Menu);
+                        end if;
+                     else
+                        Parent_Menu := Menu;
+                     end if;
+
+                     Add_Menu (Parent => Parent_Menu, Item => Item);
+                  end if;
+
+                  GNAT.OS_Lib.Free (Full_Name);
+               end if;
             end if;
 
             C := C.Next;
@@ -1194,31 +1210,66 @@ package body Glide_Kernel.Modules is
    is
       C, Previous : Contextual_Menu_Access;
    begin
-      if Kernel.Contextual /= System.Null_Address then
-         C := Convert (Kernel.Contextual);
-         while C.Next /= null
-           and then C.Name.all /= Ref_Item
-         loop
-            Previous := C;
-            C := C.Next;
-         end loop;
+      C := Find_Contextual_Menu_By_Name (Kernel, Menu.Name.all);
 
-         if Add_Before and then Ref_Item /= "" then
-            if Previous = null then
-               Menu.Next := Convert (Kernel.Contextual);
-               Kernel.Contextual := Convert (Menu);
+      if C /= null then
+         GNAT.OS_Lib.Free (C.Name);
+         --  ??? Can't free label for now.
+         --  Unchecked_Free (C.Label);
+         GNAT.OS_Lib.Free (C.Pix);
+         Menu.Next := C.Next;
+         C.all := Menu.all;
+         Previous := Menu;
+         Unchecked_Free (Previous);
+      else
+         if Kernel.Contextual /= System.Null_Address then
+            C := Convert (Kernel.Contextual);
+            while C.Next /= null
+              and then C.Name.all /= Ref_Item
+            loop
+               Previous := C;
+               C := C.Next;
+            end loop;
+
+            if Add_Before and then Ref_Item /= "" then
+               if Previous = null then
+                  Menu.Next := Convert (Kernel.Contextual);
+                  Kernel.Contextual := Convert (Menu);
+               else
+                  Menu.Next := Previous.Next;
+                  Previous.Next := Menu;
+               end if;
             else
-               Menu.Next := Previous.Next;
-               Previous.Next := Menu;
+               Menu.Next    := C.Next;
+               C.Next := Menu;
             end if;
          else
-            Menu.Next    := C.Next;
-            C.Next := Menu;
+            Kernel.Contextual := Convert (Menu);
          end if;
-      else
-         Kernel.Contextual := Convert (Menu);
       end if;
    end Add_Contextual_Menu;
+
+   ----------------------------------
+   -- Find_Contextual_Menu_By_Name --
+   ----------------------------------
+
+   function Find_Contextual_Menu_By_Name
+     (Kernel : access Kernel_Handle_Record'Class;
+      Name   : String) return Contextual_Menu_Access
+   is
+      C : Contextual_Menu_Access;
+   begin
+      if Kernel.Contextual /= System.Null_Address then
+         C := Convert (Kernel.Contextual);
+         while C /= null loop
+            if C.Name.all = Name then
+               return C;
+            end if;
+            C := C.Next;
+         end loop;
+      end if;
+      return null;
+   end Find_Contextual_Menu_By_Name;
 
    ------------------------------
    -- Register_Contextual_Menu --
@@ -1255,6 +1306,7 @@ package body Glide_Kernel.Modules is
             Action      => Action,
             Pix         => Pix,
             Next        => null,
+            Visible     => True,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
@@ -1287,6 +1339,7 @@ package body Glide_Kernel.Modules is
             Action      => Action,
             Pix         => Pix,
             Next        => null,
+            Visible     => True,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
          Add_Before);
@@ -1321,6 +1374,7 @@ package body Glide_Kernel.Modules is
             Filter      => Filter,
             Pix         => Pix,
             Next        => null,
+            Visible     => True,
             Label       => Contextual_Menu_Label_Creator (Label)),
          Ref_Item,
          Add_Before);
@@ -1363,9 +1417,66 @@ package body Glide_Kernel.Modules is
             Filter      => Filter,
             Pix         => Pix,
             Next        => null,
+            Visible     => True,
             Label       => Contextual_Menu_Label_Creator (T)),
          Ref_Item,
          Add_Before);
    end Register_Contextual_Menu;
+
+   ---------------------------------
+   -- Set_Contextual_Menu_Visible --
+   ---------------------------------
+
+   procedure Set_Contextual_Menu_Visible
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Name    : String;
+      Visible : Boolean)
+   is
+      C : Contextual_Menu_Access := Find_Contextual_Menu_By_Name
+        (Kernel, Name);
+   begin
+      if C = null then
+         Register_Contextual_Menu
+           (Kernel        => Kernel,
+            Name          => Name,
+            Action        => null,
+            Filter        => null,
+            Label         => "");
+         C := Find_Contextual_Menu_By_Name (Kernel, Name);
+      end if;
+      C.Visible := Visible;
+   end Set_Contextual_Menu_Visible;
+
+   -------------------------------------
+   -- Get_Registered_Contextual_Menus --
+   -------------------------------------
+
+   function Get_Registered_Contextual_Menus
+     (Kernel  : access Kernel_Handle_Record'Class)
+      return GNAT.OS_Lib.String_List_Access
+   is
+      Count : Natural := 0;
+      C : Contextual_Menu_Access;
+      Result : GNAT.OS_Lib.String_List_Access;
+   begin
+      if Kernel.Contextual /= System.Null_Address then
+         C := Convert (Kernel.Contextual);
+         while C /= null loop
+            Count := Count + 1;
+            C := C.Next;
+         end loop;
+
+         Result := new GNAT.OS_Lib.String_List (1 .. Count);
+         Count := Result'First;
+         C := Convert (Kernel.Contextual);
+         while C /= null loop
+            Result (Count) := new String'(C.Name.all);
+            Count := Count + 1;
+            C := C.Next;
+         end loop;
+      end if;
+
+      return Result;
+   end Get_Registered_Contextual_Menus;
 
 end Glide_Kernel.Modules;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -372,6 +372,19 @@ package Glide_Kernel.Modules is
    --  Same as above, but the menu title is a string where %p, %f,... are
    --  substituted.
    --  A separator is inserted if Action is null and the Filter matches
+
+   procedure Set_Contextual_Menu_Visible
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Name    : String;
+      Visible : Boolean);
+   --  This procedure can be used to toggle the visibility of contextual menus.
+   --  When a contextual menu was set as invisible, it will no longer appear
+
+   function Get_Registered_Contextual_Menus
+     (Kernel  : access Kernel_Handle_Record'Class)
+      return GNAT.OS_Lib.String_List_Access;
+   --  Return the list of registered contextual menus. The returned array must
+   --  be freed by the caller
 
    --------------
    -- Tooltips --
