@@ -1958,7 +1958,9 @@ package body GVD.Process is
          --  prompt, since the prompt won't be displayed before the user
          --  answers the question...
 
-         if Debugger.Registered_Dialog /= null then
+         if Debugger.Continuation_Line
+           or else Debugger.Registered_Dialog /= null
+         then
             Send
               (Debugger.Debugger, Command,
                Wait_For_Prompt => False, Mode => Mode);
