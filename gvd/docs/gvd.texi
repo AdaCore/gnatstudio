@@ -1032,7 +1032,14 @@ the second click will remove it).
    appear showing the value of this variable. Automatic tooltips can be
    disabled in the @ref{preferences menu}.
 
-   The contextual menu of the source window contains the following entries:
+   The contextual menu of the source window contains the following entries.
+Note that these entries are dynamic, that is they will apply to the entity
+found under the cursor when the menu is displayed (depending on the current
+language). However, if a selection has been made in the source window, the
+text of the selection will be used instead. This allows you to display
+more complex expressions easily (perhaps by adding some comments to your code
+with the complex expressions you want to be able to display in the debugger).
+   
    @table @b
      @item Print @i{selection}
 Print the selection (or by default the name under the cursor) in the
