@@ -283,7 +283,9 @@ package body Odd.Dialogs is
       Item    : Gtk_List_Item;
 
    begin
-      if not Visible_Is_Set (History_Dialog) then
+      if not Visible_Is_Set (History_Dialog)
+        or else History_Dialog.Freeze_Count /= 0
+      then
          return;
       end if;
 
@@ -797,5 +799,25 @@ package body Odd.Dialogs is
       Hide (Dialog);
       return True;
    end Delete_Dialog;
+
+   ------------
+   -- Freeze --
+   ------------
+
+   procedure Freeze (Dialog : History_Dialog_Access)
+   is
+   begin
+      Dialog.Freeze_Count := Dialog.Freeze_Count + 1;
+   end Freeze;
+
+   ----------
+   -- Thaw --
+   ----------
+
+   procedure Thaw (Dialog : History_Dialog_Access)
+   is
+   begin
+      Dialog.Freeze_Count := Dialog.Freeze_Count - 1;
+   end Thaw;
 
 end Odd.Dialogs;
