@@ -40,8 +40,10 @@ FileSelectionHook
                       lpPos->y,
                       0, 0, SWP_NOSIZE);
         return 0;
+	break;
 
       default:
+	break;
     }
 
   return 0;
@@ -66,7 +68,7 @@ NativeWin32FileSelection
   static POINT        position;
   RECT                aw_rect;
   unsigned int        style_flag;
-  HWND                active_window;
+  HWND                active_window = GetActiveWindow ();
 
   switch (style)
     {
@@ -79,8 +81,6 @@ NativeWin32FileSelection
 
       case 1:
         /* position center of the active window */
-
-        active_window = GetActiveWindow ();
 
         if (active_window)
           {
@@ -121,7 +121,7 @@ NativeWin32FileSelection
     l_Result [0] = '\0';
 
   ofn.lStructSize       = sizeof (OPENFILENAME);
-  ofn.hwndOwner         = NULL;
+  ofn.hwndOwner         = active_window;
   ofn.hInstance         = NULL;
   ofn.lpstrFilter       = l_Filter;
   ofn.lpstrCustomFilter = NULL;
@@ -135,15 +135,17 @@ NativeWin32FileSelection
   ofn.lpstrTitle        = title;
 
   if (kind == 1)
-    ofn.Flags           = OFN_EXPLORER | style_flag;
+    ofn.Flags =
+      OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_EXPLORER | style_flag;
   else
-    ofn.Flags           = OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
+    /* ??? Would be nice to take advantage of HIDEREADONLY box */
+    ofn.Flags = OFN_HIDEREADONLY | OFN_CREATEPROMPT | OFN_EXPLORER | style_flag;
 
   ofn.nFileOffset       = 0;
   ofn.nFileExtension    = 0;
   ofn.lpstrDefExt       = "ads";
-  ofn.lCustData         = &position;
-  ofn.lpfnHook          = FileSelectionHook;
+  ofn.lCustData         = (LPARAM) &position;
+  ofn.lpfnHook          = (LPOFNHOOKPROC) FileSelectionHook;
   ofn.lpTemplateName    = NULL;
 
   if (kind == 1)
