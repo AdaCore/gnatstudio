@@ -23,7 +23,7 @@
 
 package GVD.Proc_Utils is
 
-   type Process_Handle is limited private;
+   type Process_Handle is private;
    --  Handle of a process list.
 
    subtype Info_Len_Range is Natural range 0 .. 255;
