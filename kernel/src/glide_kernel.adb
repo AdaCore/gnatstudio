@@ -1802,24 +1802,37 @@ package body Glide_Kernel is
       Toplevel : Gtk_Window;
       List, List2 : Widget_List.Glist;
    begin
-      List := List_Toplevels;
-      List2 := First (List);
+      --  First check if a window currently has a grab
 
-      while List2 /= Widget_List.Null_List loop
-         Toplevel := Gtk_Window (Get_Data (List2));
+      W := Grab_Get_Current;
+      if W /= null then
+         Toplevel := Gtk_Window (Get_Toplevel (W));
+         W := Get_Focus (Toplevel);
+      end if;
 
-         if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
-            W := Get_Focus (Toplevel);
-            if W /= null and then Has_Focus_Is_Set (W) then
-               exit;
+      --  Then check all toplevel windows and stop at the one that has
+      --  the focus
+
+      if W = null then
+         List := List_Toplevels;
+         List2 := First (List);
+
+         while List2 /= Widget_List.Null_List loop
+            Toplevel := Gtk_Window (Get_Data (List2));
+
+            if Get_Property (Toplevel, Has_Toplevel_Focus_Property) then
+               W := Get_Focus (Toplevel);
+               if W /= null and then Has_Focus_Is_Set (W) then
+                  exit;
+               end if;
+               W := null;
             end if;
-            W := null;
-         end if;
 
-         List2 := Next (List2);
-      end loop;
+            List2 := Next (List2);
+         end loop;
 
-      Free (List);
+         Free (List);
+      end if;
 
       if W /= null then
          W2 := W;
