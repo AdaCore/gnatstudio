@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -48,14 +48,19 @@ with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
 with Basic_Types;          use Basic_Types;
 
-with Namet;               use Namet;
-with Types;               use Types;
-with Prj;                 use Prj;
-with Prj.Tree;            use Prj.Tree;
-with Snames;              use Snames;
-with Switch.M;            use Switch.M;
+with Namet;                use Namet;
+with Types;                use Types;
+with Prj;                  use Prj;
+with Prj.Tree;             use Prj.Tree;
+with Snames;               use Snames;
+with Switch.M;             use Switch.M;
+
+with Ada.Exceptions;       use Ada.Exceptions;
+with Traces;               use Traces;
 
 package body Switches_Editors is
+
+   Me : Debug_Handle := Create ("Switches_Editors");
 
    procedure Filter_Switches
      (Editor   : access Switches_Edit_Record'Class;
@@ -125,32 +130,44 @@ package body Switches_Editors is
    begin
       Editor.Pages := Editor.Pages and not Pages;
 
-      if (Pages and Gnatmake_Page) /= 0 then
+      if Editor.Make_Switches /= null
+        and then (Pages and Gnatmake_Page) /= 0
+      then
          Destroy (Editor.Make_Switches);
          Editor.Make_Switches := null;
       end if;
 
-      if (Pages and Ada_Page) /= 0 then
+      if Editor.Ada_Switches /= null
+        and then (Pages and Ada_Page) /= 0
+      then
          Destroy (Editor.Ada_Switches);
          Editor.Ada_Switches := null;
       end if;
 
-      if (Pages and C_Page) /= 0 then
+      if Editor.C_Switches /= null
+        and then (Pages and C_Page) /= 0
+      then
          Destroy (Editor.C_Switches);
          Editor.C_Switches := null;
       end if;
 
-      if (Pages and Cpp_Page) /= 0 then
+      if Editor.Cpp_Switches /= null
+        and then (Pages and Cpp_Page) /= 0
+      then
          Destroy (Editor.Cpp_Switches);
          Editor.Cpp_Switches := null;
       end if;
 
-      if (Pages and Binder_Page) /= 0 then
+      if Editor.Binder_Switches /= null
+        and then (Pages and Binder_Page) /= 0
+      then
          Destroy (Editor.Binder_Switches);
          Editor.Binder_Switches := null;
       end if;
 
-      if (Pages and Linker_Page) /= 0 then
+      if Editor.Linker_Switches /= null
+        and then (Pages and Linker_Page) /= 0
+      then
          Destroy (Editor.Linker_Switches);
          Editor.Linker_Switches := null;
       end if;
@@ -1139,6 +1156,10 @@ package body Switches_Editors is
             Pages : Page_Filter := Ada_Page or C_Page or Cpp_Page;
 
          begin
+            if Langs'Length = 0 then
+               Pages := Pages and not Ada_Page;
+            end if;
+
             for J in Langs'Range loop
                declare
                   Lang : String := Langs (J).all;
@@ -1249,6 +1270,10 @@ package body Switches_Editors is
             Free (List);
          end;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Fill_Editor;
 
    -------------------------------
