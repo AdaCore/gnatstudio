@@ -133,6 +133,11 @@ package Src_Editor_Buffer.Line_Information is
       Line   : Editable_Line_Type);
    --  Unfold the block(s) containing Line.
 
+   procedure Fold_Block
+     (Buffer : access Source_Buffer_Record'Class;
+      Line   : Editable_Line_Type);
+   --  Fold the block containing Line.
+
    function Lines_Are_Real
      (Buffer : access Source_Buffer_Record'Class) return Boolean;
    pragma Inline (Lines_Are_Real);
