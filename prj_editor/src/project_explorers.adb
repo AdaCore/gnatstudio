@@ -1899,7 +1899,9 @@ package body Project_Explorers is
    -----------------------
 
    procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Project : constant String := '/' & (-"Project");
    begin
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
@@ -1907,8 +1909,8 @@ package body Project_Explorers is
          On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
       end if;
 
-      Register_Menu (Kernel, '/' & (-"Tools"),
-                    -"Explorer", "", On_Open_Explorer'Access);
+      Register_Menu
+        (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
    end Initialize_Module;
 
    ---------------------
