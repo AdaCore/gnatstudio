@@ -438,10 +438,11 @@ package body Debugger.Gdb.C is
       Result    : out Generic_Type_Access)
    is
       Num_Dim   : Integer := 0;
-      Initial   : constant Natural := Index;
+      Initial   : Natural := Index;
       Tmp_Index : Natural;
       R         : Array_Type_Access;
       Last      : Long_Integer;
+      Item_Type : Generic_Type_Access;
    begin
 
       --  Find the number of dimensions
@@ -474,16 +475,12 @@ package body Debugger.Gdb.C is
 
       --  Finally parse the type of items
 
-      if Is_Simple_Type (Lang, Type_Str (Initial .. Type_Str'Last)) then
-         Set_Item_Type (R.all, New_Simple_Type);
-
-      else
-         --  ??? Probably don't need to do another ptype here, since most of
-         --  the time we already have the information.
-         Set_Item_Type (R.all,
-            Parse_Type (Get_Debugger (Lang),
-                Array_Item_Name (Lang, Entity, "0")));
-      end if;
+      Parse_Type (Lang,
+                  Type_Str (Initial .. Start_Of_Dim - 1),
+                  Array_Item_Name (Lang, Entity, "0"),
+                  Initial,
+                  Item_Type);
+      Set_Item_Type (R.all, Item_Type);
    end Parse_Array_Type;
 
    -----------------------
@@ -541,11 +538,6 @@ package body Debugger.Gdb.C is
             Tmp,
             Field_Value);
          Set_Value (R.all, Field_Value, Field);
---           Set_Value (R.all,
---                      Parse_Type (Get_Debugger (Lang),
---                                  Entity & "."
---                                  & Type_Str (Index + 1 .. Save - 1)),
---                      Field => Field);
          Index := Save + 1;
          Field := Field + 1;
       end loop;
