@@ -65,6 +65,7 @@ package GVD.Preferences is
    --  preferences should be used for.
 
    -- General Preferences --
+   Fixed_Font                    : Param_Spec_Font;
    Break_On_Exception            : Param_Spec_Boolean;
    Hide_Delay                    : Param_Spec_Int;
    Ada_Extensions                : Param_Spec_String;
@@ -76,7 +77,6 @@ package GVD.Preferences is
    File_Name_Bg_Color            : Param_Spec_Color;
 
    -- Source Window --
-   Editor_Font                   : Param_Spec_Font;
    Editor_Show_Line_Nums         : Param_Spec_Boolean;
    Editor_Show_Line_With_Code    : Param_Spec_Boolean;
    Do_Color_Highlighting         : Param_Spec_Boolean;
@@ -112,10 +112,8 @@ package GVD.Preferences is
    -- Command Window --
 
    Debugger_Highlight_Color      : Param_Spec_Color;
-   Debugger_Font                 : Param_Spec_Font;
 
    -- Memory Window --
-   Memory_View_Font              : Param_Spec_Font;
    Memory_View_Color             : Param_Spec_Color;
    Memory_Highlighted_Color      : Param_Spec_Color;
    Memory_Selected_Color         : Param_Spec_Color;
@@ -127,6 +125,7 @@ package GVD.Preferences is
    Remote_Protocol               : Param_Spec_String;
    Remote_Copy                   : Param_Spec_String;
    Html_Browser                  : Param_Spec_String;
+   Execute_Command               : Param_Spec_String;
 
 private
    Default_Tab_Size : constant Gint := 8;

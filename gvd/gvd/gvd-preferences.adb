@@ -58,29 +58,48 @@ package body GVD.Preferences is
    ----------------------------------
 
    procedure Register_Default_Preferences
-     (Prefs : access Preferences_Manager_Record'Class;
+     (Prefs       : access Preferences_Manager_Record'Class;
       Page_Prefix : String := "";
       XML_Prefix  : String := "")
    is
-      General   : constant String := Page_Prefix & (-"General");
-      Source    : constant String := Page_Prefix & (-"Source");
-      Assembly  : constant String := Page_Prefix & (-"Assembly");
-      Data      : constant String := Page_Prefix & (-"Data");
-      Command   : constant String := Page_Prefix & (-"Command");
-      Memory    : constant String := Page_Prefix & (-"Memory");
-      Helpers   : constant String := Page_Prefix & (-"Helpers");
-      Source_Flags : Param_Flags := Param_Readable;
+      General        : constant String := Page_Prefix & (-"General");
+      Source         : constant String := Page_Prefix & (-"Source");
+      Assembly       : constant String := Page_Prefix & (-"Assembly");
+      Data           : constant String := Page_Prefix & (-"Data");
+      Memory         : constant String := Page_Prefix & (-"Memory");
+      Helpers        : constant String := -"Helpers";
+      Source_Flags   : Param_Flags := Param_Readable;
+      External_Flags : Param_Flags := Param_Readable;
+
    begin
       --  In standalone mode, the source editor prefs are also editable
+
       if Page_Prefix = "" then
          Source_Flags := Source_Flags or Param_Writable;
+      else
+         External_Flags := External_Flags or Param_Writable;
       end if;
+
+      Fixed_Font := Param_Spec_Font (Gnew_Font
+        (Name      => XML_Prefix & "Fixed-Font",
+         Nick      => -"Fixed font",
+         Blurb     => -"Fixed font used to display e.g. debugger commands",
+         Default   => "Courier 12"));
+      Register_Property (Prefs, Param_Spec (Fixed_Font), General);
+
+      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
+        (Name     => XML_Prefix & "Debugger-Highlight-Color",
+         Nick     => -"Color highlighting",
+         Blurb    => -"Color used for highlighting in the debugger console",
+         Default  => "#0000FF"));
+      Register_Property
+        (Prefs, Param_Spec (Debugger_Highlight_Color), General);
 
       Break_On_Exception := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Break-On-Exception",
          Nick      => -"Break On Exceptions",
-         Blurb     => -("True if Gvd should automatically stop when"
-                        & " an exception is raised"),
+         Blurb     =>
+           -"True if process should be stopped when an exception is raised",
          Default   => False));
       Register_Property (Prefs, Param_Spec (Break_On_Exception), General);
 
@@ -91,7 +110,8 @@ package body GVD.Preferences is
                         & " disappear"),
          Minimum   => 0,
          Maximum   => 3600000,
-         Default   => 5000));
+         Default   => 5000,
+         Flags     => Source_Flags));
       Register_Property (Prefs, Param_Spec (Hide_Delay), General);
 
       Ada_Extensions := Param_Spec_String (Gnew_String
@@ -137,14 +157,6 @@ package body GVD.Preferences is
          Flags     => Source_Flags,
          Default   => "#BEBEBE"));
       Register_Property (Prefs, Param_Spec (File_Name_Bg_Color), Source);
-
-      Editor_Font := Param_Spec_Font (Gnew_Font
-        (Name      => XML_Prefix & "Editor-Font",
-         Nick      => -"Editor font",
-         Blurb     => -"Font used in the source editor",
-         Flags     => Source_Flags,
-         Default   => "Courier 12"));
-      Register_Property (Prefs, Param_Spec (Editor_Font), Source);
 
       Editor_Show_Line_Nums := Param_Spec_Boolean (Gnew_Boolean
         (Name      => XML_Prefix & "Editor-Show-Line-Nums",
@@ -362,7 +374,7 @@ package body GVD.Preferences is
       Big_Item_Height := Param_Spec_Int (Gnew_Int
         (Name     => XML_Prefix & "Big-Item-Height",
          Nick     => -"Big item height",
-         Blurb    => -"See Hide Big Items",
+         Blurb    => -"See Fold big items",
          Minimum  => 0,
          Maximum  => 100000,
          Default  => 150));
@@ -370,34 +382,11 @@ package body GVD.Preferences is
 
       Default_Detect_Aliases := Param_Spec_Boolean (Gnew_Boolean
         (Name     => XML_Prefix & "Default-Detect-Aliases",
-         Nick     => -"Detect aliases (shared data structures)",
-         Blurb    => -("True if GVD shouldn't create new items when an item at"
-                       & " the same address already exists."),
+         Nick     => -"Detect aliases",
+         Blurb    => -("True if we shouldn't create new items when an item at"
+                       & " the same address already exists"),
          Default  => True));
       Register_Property (Prefs, Param_Spec (Default_Detect_Aliases), Data);
-
-      Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
-        (Name     => XML_Prefix & "Debugger-Highlight-Color",
-         Nick     => -"Color highlighting",
-         Blurb    => -"Color used for highlighting in the debugger window",
-         Default  => "#0000FF"));
-      Register_Property
-        (Prefs, Param_Spec (Debugger_Highlight_Color), Command);
-
-      Debugger_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Debugger-Font",
-         Nick     => -"Font",
-         Blurb    => -"Font used in the debugger window",
-         Default  => "Courier 12"));
-      Register_Property
-        (Prefs, Param_Spec (Debugger_Font), Command);
-
-      Memory_View_Font := Param_Spec_Font (Gnew_Font
-        (Name     => XML_Prefix & "Memory-View-Font",
-         Nick     => -"Font",
-         Blurb    => -"Font used in the memory view window",
-         Default  => "Courier 12"));
-      Register_Property (Prefs, Param_Spec (Memory_View_Font), Memory);
 
       Memory_View_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-View-Color",
@@ -409,7 +398,7 @@ package body GVD.Preferences is
       Memory_Highlighted_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-Highlighted-Color",
          Nick     => -"Color highlighting",
-         Blurb    => -"Color used for highlighted items in the memory view",
+         Blurb    => -"Color used for highlighted items",
          Default  => "#DDDDDD"));
       Register_Property
         (Prefs, Param_Spec (Memory_Highlighted_Color), Memory);
@@ -417,7 +406,7 @@ package body GVD.Preferences is
       Memory_Selected_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-Selected-Color",
          Nick     => -"Selection",
-         Blurb    => -"Color used for selected items in the memory view",
+         Blurb    => -"Color used for selected items",
          Default  => "#FF0000"));
       Register_Property
         (Prefs, Param_Spec (Memory_Selected_Color), Memory);
@@ -425,7 +414,7 @@ package body GVD.Preferences is
       Memory_Modified_Color := Param_Spec_Color (Gnew_Color
         (Name     => XML_Prefix & "Memory-Modified-Color",
          Nick     => -"Modified",
-         Blurb    => -"Color used for modified items in the memory view",
+         Blurb    => -"Color used for modified items",
          Default  => "#FF0000"));
       Register_Property
         (Prefs, Param_Spec (Memory_Modified_Color), Memory);
@@ -435,8 +424,7 @@ package body GVD.Preferences is
          Nick     => -"List processes",
          Blurb    => -"Command used to list processes running on the machine",
          Default  => Default_Ps));
-      Register_Property
-        (Prefs, Param_Spec (List_Processes), Helpers);
+      Register_Property (Prefs, Param_Spec (List_Processes), Helpers);
 
       Default_External_Editor := Param_Spec_String (Gnew_String
          (Name    => XML_Prefix & "Default-External-Editor",
@@ -451,33 +439,37 @@ package body GVD.Preferences is
                        & " xterm -e /bin/vi %f +%l"),
           Flags    => Source_Flags,
           Default => "glide %f -emacs +%l"));
-      Register_Property
-        (Prefs, Param_Spec (Default_External_Editor), Helpers);
+      Register_Property (Prefs, Param_Spec (Default_External_Editor), Helpers);
 
       Remote_Protocol := Param_Spec_String (Gnew_String
          (Name    => XML_Prefix & "Remote-Protocol",
           Nick    => -"Remote shell",
-          Blurb   => -"How to run a process on a remote machine ?",
+          Blurb   => -"Program used to run a process on a remote machine",
           Default => "rsh"));
-      Register_Property
-        (Prefs, Param_Spec (Remote_Protocol), Helpers);
+      Register_Property (Prefs, Param_Spec (Remote_Protocol), Helpers);
 
       Remote_Copy := Param_Spec_String (Gnew_String
          (Name    => XML_Prefix & "Remote-Copy",
           Nick    => -"Remote copy",
-          Blurb   => -"Program used to copy a file from a remote host",
+          Blurb   => -"Program used to copy a file from a remote machine",
           Default => "rcp"));
-      Register_Property
-        (Prefs, Param_Spec (Remote_Copy), Helpers);
+      Register_Property (Prefs, Param_Spec (Remote_Copy), Helpers);
+
+      Execute_Command := Param_Spec_String (Gnew_String
+         (Name    => XML_Prefix & "Execute-Command",
+          Nick    => -"Execute command",
+          Blurb   => -"Program used to execute commands externally",
+          Flags   => External_Flags,
+          Default => "xterm -e"));
+      Register_Property (Prefs, Param_Spec (Execute_Command), Helpers);
 
       Html_Browser := Param_Spec_String (Gnew_String
         (Name     => XML_Prefix & "HTML-Browser",
          Nick     => -"HTML browser",
-         Blurb    => -"Program used to browser HTML pages",
+         Blurb    => -"Program used to browse HTML pages",
          Flags    => Source_Flags,
          Default  => Default_HTML_Browser));
-      Register_Property
-        (Prefs, Param_Spec (Html_Browser), Helpers);
+      Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
    end Register_Default_Preferences;
 
 end GVD.Preferences;
