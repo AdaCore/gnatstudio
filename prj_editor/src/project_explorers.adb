@@ -2420,7 +2420,7 @@ package body Project_Explorers is
         (Kernel, N,
          10, 10,
          300, 600,
-         "Files View", "Project Explorer - Files View",
+         "File View", "Project Explorer - File View",
          Docked, Left,
          False);
 
