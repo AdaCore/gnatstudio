@@ -1,6 +1,6 @@
 \input texiplus   @c -*-texinfo-*-
 @c %**start of header
-@setfilename gvd.info
+@setfilename gps.info
 @settitle Using the GNAT Programming System
 @syncodeindex fn cp
 
