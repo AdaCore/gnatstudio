@@ -1,6 +1,6 @@
 Known Problems fixed in GPS 2.0.0
 
-- Block folding not compatible with extended character sets.
+- Block folding not compatible with extended character sets
   Problem:    When a block contains extended characters, folding this block
               causes loss of text.
   Workaround: Do not use block folding on source files which contain
@@ -17,7 +17,7 @@ Known Problems fixed in GPS 2.0.0
               switch into account
   Workaround: Edit the project properties to change the debugger command
 
-- The title of windows is not remembered from one session to another.
+- The title of windows is not remembered from one session to another
   Problem:    When the Entities Browser, the Project Browser or the Dependency
               Browser is open, exiting GPS and restarting will create those
               browsers with no titles.
