@@ -71,7 +71,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head);
+      Item   : in out Diff_Head);
    --  Show a result of diff Item
 
    procedure Show_Diff_Chunk
@@ -195,7 +195,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Process_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
+      Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access)
    is
       Button : Message_Dialog_Buttons;
@@ -229,17 +229,15 @@ package body Vdiff2_Module.Utils is
 
    procedure Modify_Differences
      (Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item      : Diff_Head;
+      Item      : in out Diff_Head;
       Diff_List : Diff_Head_List_Access)
    is
       Curr_Node : Diff_Head_List.List_Node;
    begin
       Curr_Node := Is_In_Diff_List (Item.File1, Diff_List.all);
       if  Curr_Node /= Diff_Head_List.Null_Node then
-         Remove_Nodes (Diff_List.all,
-                       Prev (Diff_List.all, Curr_Node),
-                       Curr_Node);
-         Process_Differences (Kernel, Item, Diff_List);
+         Show_Differences3 (Kernel, Item);
+         Goto_Difference (Kernel_Handle (Kernel), Data (Item.Current_Node));
       end if;
    end Modify_Differences;
 
@@ -278,7 +276,7 @@ package body Vdiff2_Module.Utils is
    ----------------------
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head)
+      Item   : in out Diff_Head)
    is
       List      : constant Diff_List := Item.List;
       Curr_Node  : Diff_List_Node := First (List);
@@ -378,7 +376,7 @@ package body Vdiff2_Module.Utils is
 
    procedure Show_Differences3
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head)
+      Item   : in out Diff_Head)
    is
       Args_edit           : Argument_List
         := (1 => new String'(Full_Name (Item.File1)));
@@ -1081,6 +1079,4 @@ package body Vdiff2_Module.Utils is
    end Goto_Difference;
 
 end Vdiff2_Module.Utils;
-
-
 
