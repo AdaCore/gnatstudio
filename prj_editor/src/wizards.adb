@@ -128,7 +128,7 @@ package body Wizards is
       Style := Copy (Get_Style (Wiz));
       Set_Background (Style, State_Normal, Color);
 
-      Desc := From_String (Get_Pref (Kernel, Wizard_Title_Font));
+      Desc := Get_Pref (Kernel, Wizard_Title_Font);
       Font := From_Description (Desc);
 
       Gtk_New_Hbox (Wiz.Page_Box, False, 0);
