@@ -54,13 +54,30 @@ package body Codefix.Text_Manager.Ada_Extracts is
    --  type Ada_Instruction
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ada_Instruction) is
+   begin
+      Free (Extract (This));
+      Free (This.Start);
+      Free (This.Stop);
+   end Free;
+
    -----------
    -- Clone --
    -----------
 
    function Clone (This : Ada_Instruction) return Ada_Instruction is
+      New_Extract : Ada_Instruction;
    begin
-      return This;
+      New_Extract :=
+        (Clone (Extract (This)) with
+         Start => Clone (This.Start),
+         Stop  => Clone (This.Stop));
+
+      return New_Extract;
    end Clone;
 
    ----------------
@@ -236,6 +253,38 @@ package body Codefix.Text_Manager.Ada_Extracts is
    --  type Ada_List
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ada_List) is
+   begin
+      Free (Ada_Instruction (This));
+      Free (This.Elements_List);
+      Free (This.Back);
+   end Free;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (This : Ada_List) return Ada_List is
+      New_Extract : Ada_List;
+      Token_It    : Tokens_List.List_Node;
+   begin
+      New_Extract :=
+        (Clone (Ada_Instruction (This)) with
+         Elements_List => Tokens_List.Null_List,
+         Back          => Clone (This.Back));
+
+      while Token_It /= Tokens_List.Null_Node loop
+         Append (New_Extract.Elements_List, Clone (Data (Token_It)));
+         Token_It := Next (Token_It);
+      end loop;
+
+      return New_Extract;
+   end Clone;
+
    ---------------
    -- Get_Token --
    ---------------
@@ -250,6 +299,9 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Start, Stop : Integer := Col;
 
    begin
+
+      Token.Content := null; --  ??? Why, without this line, get I a SEGV ?
+
       while Start <= Buffer'Last and then Buffer (Start) = ' ' loop
          Start := Start + 1;
       end loop;
@@ -290,15 +342,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
    end Get_Token;
 
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (This : Ada_List) return Ada_List is
-   begin
-      return This;
-   end Clone;
-
    ----------
    -- Free --
    ----------
@@ -307,6 +350,20 @@ package body Codefix.Text_Manager.Ada_Extracts is
    begin
       Free (This.Content);
    end Free;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (This : Token_Record) return Token_Record is
+   begin
+      return
+        (Content      => Clone (This.Content),
+         First_Col    => This.First_Col,
+         Last_Col     => This.Last_Col,
+         Line         => This.Line,
+         Is_Separator => This.Is_Separator);
+   end Clone;
 
    -----------------
    -- Get_Element --
@@ -351,6 +408,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
       loop
          while Current_Col = 1 loop
+            Free (Current_Token);
             Current_Line := Next (Current_Line.all);
             Get_Token
               (Current_Line, Current_Col, Current_Token);
@@ -359,11 +417,13 @@ package body Codefix.Text_Manager.Ada_Extracts is
          exit when Current_Token.Content.all = ":"
            or else Current_Token.Content.all = ";";
 
-            --  ??? Make the same tests without case problems
+         --  ??? Make the same tests without case problems
          if Current_Token.Content.all /= "with"
            and then Current_Token.Content.all /= "use"
          then
             Append (Destination.Elements_List, Current_Token);
+         else
+            Free (Current_Token);
          end if;
 
          Get_Token
@@ -397,6 +457,8 @@ package body Codefix.Text_Manager.Ada_Extracts is
            (Destination.Back'First ..
               Destination.Back'Last - Minus));
 
+      Free (Current_Token);
+
    end Get_Unit;
 
    ----------------------
@@ -419,7 +481,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
         (Current_Element : Tokens_List.List_Node;
          Number_Left     : Natural) return String is
       begin
-
 
          if Number_Left = 0 then
             return This.Back.all;
@@ -538,6 +599,7 @@ package body Codefix.Text_Manager.Ada_Extracts is
 
          Garbage_Node := Current_Element;
          Current_Element := Next (Current_Element);
+
          Remove_Nodes
            (This.Elements_List,
             Prev (This.Elements_List, Garbage_Node),

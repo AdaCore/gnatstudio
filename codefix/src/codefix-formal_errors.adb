@@ -24,8 +24,6 @@ with String_Utils; use String_Utils;
 
 with GNAT.Regpat; use GNAT.Regpat;
 
-with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
-
 package body Codefix.Formal_Errors is
 
    ----------------
@@ -112,7 +110,7 @@ package body Codefix.Formal_Errors is
 
    function Get_Extract
      (This     : Solution_List;
-      Position : Positive) return Extract
+      Position : Positive) return Extract'Class
    is
       Current_Node : Extract_List.List_Node;
    begin
@@ -722,7 +720,7 @@ package body Codefix.Formal_Errors is
    function Not_Modified
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
-      Name         : String) return Extract is
+      Name         : String) return Ada_List is
 
       New_Extract : Ada_List;
       New_Instr   : Dynamic_String;
@@ -749,13 +747,14 @@ package body Codefix.Formal_Errors is
               New_Instr (Col_Decl + 1 .. New_Instr'Last));
 
          Add_Line (New_Extract, Get_Stop (New_Extract), New_Instr.all);
+         Free (New_Instr);
       end if;
 
       Set_Caption
         (New_Extract,
          "Add ""constant"" to the declaration of """ & Name & """");
 
-      return Extract (New_Extract);
+      return New_Extract;
    end Not_Modified;
 
 end Codefix.Formal_Errors;
