@@ -914,9 +914,13 @@ package body Project_Explorers is
          end loop;
       end Process_Node;
 
+      Iter : Gtk_Tree_Iter := Get_Iter_First (Exp.Tree.Model);
    begin
-      Process_Node
-        (Get_Iter_First (Exp.Tree.Model), Get_Project (Exp.Kernel));
+      --  There can be multiple toplevel nodes in the case of the flat view
+      while Iter /= Null_Iter loop
+         Process_Node (Iter, Get_Project (Exp.Kernel));
+         Next (Exp.Tree.Model, Iter);
+      end loop;
    end Update_Absolute_Paths;
 
    ----------------------
@@ -1930,19 +1934,16 @@ package body Project_Explorers is
       while Parent_Iter /= Null_Iter loop
          Node_Type := Get_Node_Type (Explorer.Tree.Model, Parent_Iter);
 
-         if Node_Type = Project_Node
+         exit when Node_Type = Project_Node
            or else Node_Type = Extends_Project_Node
-           or else Node_Type = Modified_Project_Node
-         then
-            exit;
-         end if;
+           or else Node_Type = Modified_Project_Node;
 
          Parent_Iter := Parent (Explorer.Tree.Model, Parent_Iter);
       end loop;
 
       if Parent_Iter /= Null_Iter then
          N := Name_Id
-           (Get_Int (Gtk_Tree_Model (Explorer.Tree.Model),
+           (Get_Int (Explorer.Tree.Model,
                      Parent_Iter, Project_Column));
          Assert (Me, N /= No_Name,
                  "Get_Project_From_Node: no project found");
