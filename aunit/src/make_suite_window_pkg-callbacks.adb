@@ -154,7 +154,8 @@ package body Make_Suite_Window_Pkg.Callbacks is
          Filter_B.Label := new String'(-"Ada files");
          Filter_C.Label := new String'(-"Suite and test files");
 
-         Gtk_New (Suite_Window.Explorer, "/", "", "Select test suite");
+         Gtk_New (Suite_Window.Explorer, "/", "", "Select test suite",
+                  History => null);
          Create_From_Xpm_D
            (Filter_C.Suite_Pixmap,
             Window => null,
