@@ -610,7 +610,7 @@ package body Builder_Module is
                   Change_Dir (Directory_Information (File_Context));
                end if;
 
-               Prj := Get_Project_From_File (Get_Registry (Kernel), F);
+               Prj := Get_Project_From_File (Get_Registry (Kernel).all, F);
 
                if Prj = No_Project
                  or else Status (Get_Project (Kernel)) /= From_File
@@ -806,7 +806,7 @@ package body Builder_Module is
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Prj          : constant Project_Type :=
-        Get_Project_From_File (Get_Registry (Kernel), File);
+        Get_Project_From_File (Get_Registry (Kernel).all, File);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
       Local_File   : String_Access;
@@ -1070,7 +1070,8 @@ package body Builder_Module is
          declare
             Main    : constant Virtual_File := Get_File (Info);
             Project : constant Project_Type := Get_Project_From_File
-              (Registry => Project_Registry (Get_Registry (Get_Kernel (Data))),
+              (Registry => Project_Registry
+                 (Get_Registry (Get_Kernel (Data)).all),
                Source_Filename   => Main,
                Root_If_Not_Found => True);
          begin

@@ -271,7 +271,7 @@ package body Codefix_Module is
       return Create
         (Name           => Other_File_Base_Name
            (Get_Project_From_File
-              (Project_Registry (Get_Registry (Kernel)), File_Name),
+              (Project_Registry (Get_Registry (Kernel).all), File_Name),
             File_Name),
          Kernel         => Kernel,
          Use_Object_Path => False);

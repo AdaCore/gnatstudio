@@ -546,7 +546,7 @@ package body Docgen_Module is
          Project := Project_Information
            (File_Selection_Context_Access (Context));
       else
-         Project := Get_Root_Project (Get_Registry (Kernel));
+         Project := Get_Root_Project (Get_Registry (Kernel).all);
       end if;
 
       --  To save time, parse everything that we'll need in advance
@@ -636,7 +636,7 @@ package body Docgen_Module is
          Body_File := Create
            (Other_File_Base_Name
               (Get_Project_From_File
-                 (Project_Registry (Get_Registry (Kernel)),
+                 (Project_Registry (Get_Registry (Kernel).all),
                   File.all),
                File.all),
             Kernel,

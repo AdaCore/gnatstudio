@@ -1257,7 +1257,7 @@ package body Docgen.Work_On_Source is
                   Header_Link    => Options.Process_Body_Files
                      and then Other_File_Base_Name
                        (Get_Project_From_File
-                         (Project_Registry (Get_Registry (Kernel)),
+                         (Project_Registry (Get_Registry (Kernel).all),
                           Source_Filename),
                         Source_Filename) /= Full_Name (Source_Filename).all);
    end Process_Header;

@@ -44,7 +44,7 @@ package body Custom_Naming_Editors is
       Language : String)
    is
       Extensions : Argument_List := Get_Registered_Extensions
-        (Get_Registry (Kernel), Language);
+        (Get_Registry (Kernel).all, Language);
       Label      : Gtk_Label;
       Box        : Gtk_Box;
       Vbox       : Gtk_Box;

@@ -156,7 +156,7 @@ package body Cpp_Module is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : LI_Handler := Create_CPP_Handler
-        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel)));
+        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
       Msg     : constant String := Set_Executables (LI);
 
    begin
@@ -179,7 +179,7 @@ package body Cpp_Module is
         (Handler, "c",
          LI                  => LI);
       Register_Default_Language_Extension
-        (Get_Registry (Kernel),
+        (Get_Registry (Kernel).all,
          Language_Name       => "c",
          Default_Spec_Suffix => ".h",
          Default_Body_Suffix => ".c");
@@ -189,7 +189,7 @@ package body Cpp_Module is
         (Handler, "c++",
          LI                  => LI);
       Register_Default_Language_Extension
-        (Get_Registry (Kernel),
+        (Get_Registry (Kernel).all,
          Language_Name       => "c++",
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");

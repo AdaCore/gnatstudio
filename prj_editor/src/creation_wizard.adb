@@ -383,11 +383,11 @@ package body Creation_Wizard is
         and then Name (Name'Last - 3 .. Name'Last) = ".gpr"
       then
          Project := Create_Project
-           (Get_Registry (Wiz.Kernel),
+           (Get_Registry (Wiz.Kernel).all,
             Name => Name (Name'First .. Name'Last - 4), Path => Dir);
       else
          Project := Create_Project
-           (Get_Registry (Wiz.Kernel), Name => Name, Path => Dir);
+           (Get_Registry (Wiz.Kernel).all, Name => Name, Path => Dir);
       end if;
 
       if Relative_Paths then

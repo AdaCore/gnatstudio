@@ -282,7 +282,7 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Set_Trusted_Mode
-        (Get_Registry (Kernel), Get_Pref (Kernel, Trusted_Mode));
+        (Get_Registry (Kernel).all, Get_Pref (Kernel, Trusted_Mode));
    end On_Preferences_Changed;
 
    ------------------
@@ -1987,7 +1987,7 @@ package body Glide_Kernel is
       Use_Object_Path : Boolean := True) return VFS.Virtual_File is
    begin
       return Projects.Registry.Create
-        (Name, Get_Registry (Kernel), Use_Source_Path, Use_Object_Path);
+        (Name, Get_Registry (Kernel).all, Use_Source_Path, Use_Object_Path);
    end Create;
 
    ----------

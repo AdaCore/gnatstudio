@@ -275,7 +275,7 @@ package body Project_Explorers_Files is
                then
                   if Is_Directory (D.Norm_Dir.all & Name) then
                      if Directory_Belongs_To_Project
-                       (Get_Registry (D.Explorer.Kernel),
+                       (Get_Registry (D.Explorer.Kernel).all,
                         D.Norm_Dir.all & Name,
                         Direct_Only => False)
                      then
@@ -287,10 +287,10 @@ package body Project_Explorers_Files is
                   --  the project, not a homonym in some other directory
                   else
                      P := Get_Project_From_File
-                       (Get_Registry (D.Explorer.Kernel),
+                       (Get_Registry (D.Explorer.Kernel).all,
                         Name, Root_If_Not_Found => False);
                      Get_Full_Path_From_File
-                       (Registry => Get_Registry (D.Explorer.Kernel),
+                       (Registry => Get_Registry (D.Explorer.Kernel).all,
                         Filename => Name,
                         Use_Source_Path => True,
                         Use_Object_Path => True,

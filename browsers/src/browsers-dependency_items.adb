@@ -1193,7 +1193,7 @@ package body Browsers.Dependency_Items is
       P : Project_Type;
    begin
       P := Get_Project_From_File
-        (Get_Registry (Get_Kernel (Get_Browser (Item))), File_Name);
+        (Get_Registry (Get_Kernel (Get_Browser (Item))).all, File_Name);
 
       if P = No_Project then
          Trace (Me, "Project_Of return No_Project for "

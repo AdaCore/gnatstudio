@@ -69,7 +69,8 @@ package body Glide_Kernel.Contexts is
         and then Has_File_Information (Context)
       then
          Context.Project := Get_Project_From_File
-           (Get_Registry (Get_Kernel (Context)), File_Information (Context));
+           (Get_Registry (Get_Kernel (Context)).all,
+            File_Information (Context));
       end if;
       return Context.Project;
    end Project_Information;

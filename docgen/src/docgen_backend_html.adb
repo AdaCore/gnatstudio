@@ -752,7 +752,7 @@ package body Docgen_Backend_HTML is
               (Kernel,
                Other_File_Base_Name
                  (Get_Project_From_File
-                    (Project_Registry (Get_Registry (Kernel)),
+                    (Project_Registry (Get_Registry (Kernel).all),
                      Header_File),
                   Header_File))
             & """> ");
@@ -1564,7 +1564,7 @@ package body Docgen_Backend_HTML is
                 (Kernel,
                  Other_File_Base_Name
                    (Get_Project_From_File
-                      (Project_Registry (Get_Registry (Kernel)), Decl_File),
+                     (Project_Registry (Get_Registry (Kernel).all), Decl_File),
                     Decl_File))
               & '#' & Image (Line_In_Body)
               & """>" & Text (Loc_Start .. Loc_End) & "</A>");
@@ -1706,7 +1706,7 @@ package body Docgen_Backend_HTML is
       pragma Unreferenced (B);
    begin
       return File_Utils.Name_As_Directory
-        (Object_Path (Get_Root_Project (Get_Registry (Kernel)),
+        (Object_Path (Get_Root_Project (Get_Registry (Kernel).all),
                       False)) & "html/";
    end Get_Doc_Directory;
 

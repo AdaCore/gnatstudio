@@ -722,7 +722,7 @@ package body VCS_Module is
       Status : File_Status_Record;
    begin
       Ref    := Get_Current_Ref
-        (Get_Project_From_File (Get_Registry (Kernel), D.File, True));
+        (Get_Project_From_File (Get_Registry (Kernel).all, D.File, True));
 
       if Ref = null then
          return;

@@ -731,7 +731,7 @@ package body Docgen is
       File   : VFS.Virtual_File) return Boolean is
    begin
       return Get_Unit_Part_From_Filename
-        (Get_Project_From_File (Get_Registry (Kernel), File), File) =
+        (Get_Project_From_File (Get_Registry (Kernel).all, File), File) =
         Unit_Spec;
    end Is_Spec_File;
 

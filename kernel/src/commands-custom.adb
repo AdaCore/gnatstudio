@@ -915,7 +915,7 @@ package body Commands.Custom is
          --  Since the editor doesn't provide the project, we emulate it
          --  here
          Project := Get_Project_From_File
-           (Project_Registry (Get_Registry (Get_Kernel (Context))),
+           (Project_Registry (Get_Registry (Get_Kernel (Context)).all),
             File_Information (File_Selection_Context_Access (Context)),
             Root_If_Not_Found => False);
       end if;

@@ -652,7 +652,7 @@ package body Project_Explorers_Common is
          N := Name_Id (Get_Int (Model, Parent_Iter, Project_Column));
          Assert (Me, N /= No_Name,
                  "Get_Project_From_Node: no project found");
-         Project := Get_Project_From_Name (Get_Registry (Kernel), N);
+         Project := Get_Project_From_Name (Get_Registry (Kernel).all, N);
 
       else
          --  Should we fall back on Get_Project_From_File ?

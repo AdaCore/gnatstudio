@@ -126,7 +126,7 @@ package body Ada_Module is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
       LI      : constant Entities.LI_Handler := Create_ALI_Handler
-        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel)));
+        (Get_Database (Kernel), Project_Registry (Get_Registry (Kernel).all));
    begin
       Register_LI_Handler (Handler, "Ada", LI);
 
@@ -135,7 +135,7 @@ package body Ada_Module is
         (Handler, "Ada",
          LI                  => Get_LI_Handler_By_Name (Handler, "Ada"));
       Register_Default_Language_Extension
-        (Get_Registry (Kernel),
+        (Get_Registry (Kernel).all,
          Language_Name       => "Ada",
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");

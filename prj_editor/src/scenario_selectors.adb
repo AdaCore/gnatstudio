@@ -303,7 +303,7 @@ package body Scenario_Selectors is
             Name_Buffer (1 .. Name_Len) := N;
 
             Project := Get_Project_From_Name
-              (Get_Registry (S.Kernel), Name_Find);
+              (Get_Registry (S.Kernel).all, Name_Find);
          end;
 
          if Project /= S.Ref_Project then
@@ -648,7 +648,7 @@ package body Scenario_Selectors is
                   Name_Len := N'Length;
                   Name_Buffer (1 .. Name_Len) := N;
                   Prj := Get_Project_From_Name
-                    (Get_Registry (Selector.Kernel), Name_Find);
+                    (Get_Registry (Selector.Kernel).all, Name_Find);
                end;
 
                for P in Tmp'Range loop

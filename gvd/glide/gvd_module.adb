@@ -332,16 +332,16 @@ package body GVD_Module is
              (Project, Protocol_Attribute, Default => ""));
 
       begin
-         Unload_Project (Project_Registry (Get_Registry (Kernel)));
+         Unload_Project (Project_Registry (Get_Registry (Kernel).all));
 
          if Exec /= VFS.No_File then
             Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel)),
+              (Project_Registry (Get_Registry (Kernel).all),
                "debugger_" & Base_Name (Exec),
                GNAT.Directory_Operations.Get_Current_Dir);
          else
             Project := Create_Project
-              (Project_Registry (Get_Registry (Kernel)),
+              (Project_Registry (Get_Registry (Kernel).all),
                "debugger_no_file",
                GNAT.Directory_Operations.Get_Current_Dir);
          end if;
@@ -477,7 +477,8 @@ package body GVD_Module is
       --  Is the information for this executable already cached ? If yes,
       --  we simply reuse it to avoid the need to interact with the debugger.
 
-      Load_Custom_Project (Project_Registry (Get_Registry (Kernel)), Project);
+      Load_Custom_Project
+        (Project_Registry (Get_Registry (Kernel).all), Project);
       Set_Status (Get_Project (Kernel), From_Executable);
       Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);

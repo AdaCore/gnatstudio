@@ -201,7 +201,7 @@ package body Browsers.Projects is
       return Project_Type is
    begin
       return Get_Project_From_Name
-        (Get_Registry (Get_Kernel (Get_Browser (Item))), Item.Name);
+        (Get_Registry (Get_Kernel (Get_Browser (Item))).all, Item.Name);
    end Project_Of;
 
    ------------------

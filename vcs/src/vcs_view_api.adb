@@ -477,7 +477,8 @@ package body VCS_View_API is
                   Set_File_Information
                     (File_Name,
                      Original,
-                     Get_Project_From_File (Get_Registry (Kernel), Original));
+                     Get_Project_From_File (Get_Registry (Kernel).all,
+                                            Original));
 
                   Gtk_New (Item, Label => Actions (Log_Action).all & " ("
                            & Krunch (Base_Name (Original)) & ")");
@@ -1228,7 +1229,7 @@ package body VCS_View_API is
 
       while Files_Temp /= Null_Node loop
          File := Create (Full_Filename => Data (Files_Temp));
-         Project := Get_Project_From_File (Get_Registry (Kernel), File);
+         Project := Get_Project_From_File (Get_Registry (Kernel).all, File);
 
          if Project /= No_Project then
             declare
@@ -2918,7 +2919,7 @@ package body VCS_View_API is
 
       --  At this point Full must not be null.
 
-      Prj := Get_Project_From_File (Get_Registry (Kernel), Full, True);
+      Prj := Get_Project_From_File (Get_Registry (Kernel).all, Full, True);
 
       if Prj = No_Project then
          Insert
