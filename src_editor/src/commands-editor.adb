@@ -123,7 +123,9 @@ package body Commands.Editor is
       User_Executed : Boolean;
       Line          : Integer;
       Column        : Integer;
-      Direction     : Direction_Type := Forward) is
+      Direction     : Direction_Type := Forward;
+      Cursor_Line   : Integer := 0;
+      Cursor_Column : Integer := 0) is
    begin
       Item := new Editor_Command_Type;
       Item.Buffer := Buffer;
@@ -133,6 +135,8 @@ package body Commands.Editor is
       Item.Line := Line;
       Item.Column := Column;
       Item.Direction := Direction;
+      Item.Cursor_Line := Cursor_Line;
+      Item.Cursor_Column := Cursor_Column;
    end Create;
 
    --------------
@@ -202,14 +206,23 @@ package body Commands.Editor is
               .. First + Item.Current_Text_Size + Text_Length - 1) := UTF8;
 
       else
-         if Item.Current_Text_Size > 0 then
-            for J in reverse 0 ..  Item.Current_Text_Size - 1 loop
-               Item.Current_Text (First + Text_Length + J)
-                 := Item.Current_Text (First + J);
-            end loop;
-         end if;
+         case Item.Direction is
+            when Forward | Extended =>
+               if Item.Current_Text_Size > 0 then
+                  for J in reverse 0 ..  Item.Current_Text_Size - 1 loop
+                     Item.Current_Text (First + Text_Length + J)
+                       := Item.Current_Text (First + J);
+                  end loop;
+               end if;
 
-         Item.Current_Text (First .. First + Text_Length - 1) := UTF8;
+               Item.Current_Text (First .. First + Text_Length - 1) := UTF8;
+
+            when Backward =>
+               Item.Current_Text
+                 (First + Item.Current_Text_Size
+                    .. First + Item.Current_Text_Size
+                      + Text_Length - 1) := UTF8;
+         end case;
       end if;
 
       Item.Current_Text_Size := Item.Current_Text_Size + Text_Length;
@@ -265,7 +278,14 @@ package body Commands.Editor is
                     (First .. First + Command.Current_Text_Size - 1),
                   False);
 
-               if Command.Direction = Backward then
+               if Command.Direction = Extended then
+                  Set_Cursor_Position
+                    (Command.Buffer,
+                     Gint (Command.Cursor_Line),
+                     Gint (Command.Cursor_Column));
+                  Scroll_To_Cursor_Location (Editor);
+
+               elsif Command.Direction = Backward then
                   Set_Cursor_Position
                     (Command.Buffer,
                      Gint (Command.Line),
