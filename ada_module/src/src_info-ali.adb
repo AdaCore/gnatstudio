@@ -1375,20 +1375,42 @@ package body Src_Info.ALI is
                   Line   => Positive (Current_Xref.Line),
                   Column => Natural (Current_Xref.Col));
 
+               --  ??? Should call Insert_Reference instead, but we need to
+               --  add support for operators.
+
+
                --  Insert the new Xref in the list of references (except if it
-               --  is an end reference, in which case it is stored in a special
-               --  location)
+               --  is a body end reference, in which case it is stored in a
+               --  special location)
+               --  The handling of end_of_scope is the following: if the entity
+               --  has only one of these, it is stored in its declaration. If
+               --  the entity has two of these (spec+body of a package for
+               --  instance, only the one for the body is stored). However, in
+               --  the latter case we need to save the end-of-scope for the
+               --  spec in the standard list of references so that scope_trees
+               --  can be generated.
 
                if Is_End_Reference (E_Ref.Kind) then
-                  Decl.End_Of_Scope := E_Ref;
+                  if Decl.End_Of_Scope = No_Reference
+                    or else E_Ref.Location.File.Part = Unit_Body
+                  then
+                     Decl.End_Of_Scope := E_Ref;
 
-                  --  For an operator, ignore the quotes
-                  if Is_Operator then
-                     E_Ref.Location.Column := E_Ref.Location.Column + 1;
+                     --  For an operator, ignore the quotes
+                     if Is_Operator then
+                        E_Ref.Location.Column := E_Ref.Location.Column + 1;
+                     end if;
                   end if;
+               end if;
 
-               elsif (E_Ref.Kind = Primitive_Operation
-                      or else E_Ref.Kind = Overriding_Primitive_Operation)
+               if Is_End_Reference (E_Ref.Kind)
+                 and then E_Ref.Location.File.Part = Unit_Body
+               then
+                  --  No need to save the reference again, to save space.
+                  null;
+
+               elsif E_Ref.Kind = Primitive_Operation
+                 or else E_Ref.Kind = Overriding_Primitive_Operation
                then
                   --  Insert at the end, so that the result of
                   --  "Find_All_References" is properly sorted.
