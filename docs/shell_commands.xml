@@ -95,7 +95,7 @@ this action.
 </description>
      <example lang="python">
         GPS.execute_action (action="Split vertically")
-        will split the current window vertically 
+        will split the current window vertically
      </example>
   </shell_doc>
 
@@ -106,7 +106,7 @@ this action.
 Optionally you can also pass the full contents of an XML file, starting from the &lt;?xml?&gt; header.</description>
      <example lang="python">
         GPS.parse_xml \
-          ("""&lt;action name="A"&gt;&lt;shell&gt;my_action&lt;/shell&gt;&lt;/action&gt; \ 
+          ("""&lt;action name="A"&gt;&lt;shell&gt;my_action&lt;/shell&gt;&lt;/action&gt; \
               &lt;menu action="A"&gt;&lt;title&gt;/Edit/A&lt;/title&gt;&lt;/menu&gt;""")
         Adds a new menu in GPS, which executes the command my_action
      </example>
@@ -127,7 +127,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
      <description>Returns the current context in GPS. This is the currently selected file, line, column, project,... depending on what window is currently active</description>
      <see_also name="GPS.Editor.get_line()"/>
      <see_also name="GPS.Editor.*: Most of these functions apply to the current editor" />
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.compute_xref">
       <description>Update the cross-reference information stored in GPS. This needs to be called after major changes to the sources only, since GPS itself is able to work with partially up-to-date information</description>
@@ -171,29 +171,29 @@ Optionally you can also pass the full contents of an XML file, starting from the
      <return>A string</return>
      <description>Print name of current/working directory</description>
   </shell_doc>
-    
+
   <shell_doc name="GPS.cd">
      <param name="dir">A string</param>
      <description>Change the current directory to dir</description>
   </shell_doc>
-    
+
   <shell_doc name="GPS.delete">
      <param name="name">A string</param>
      <description>Delete file/directory name from the file system</description>
   </shell_doc>
-    
+
   <shell_doc name="GPS.dir">
      <param name="pattern" default="">A string</param>
      <return>A list of strings</return>
      <description>list files following pattern (all files by default)</description>
   </shell_doc>
-    
+
   <shell_doc name="GPS.ls">
      <param name="pattern" default="">A string</param>
      <return>A list of strings</return>
      <description>list files following pattern (all files by default)</description>
   </shell_doc>
-    
+
   <shell_doc name="GPS.dump">
      <param name="string">A string<param>
      <param name="add_lf" default="False">A boolean</param>
@@ -237,26 +237,26 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="self">The instance of GPS.File</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.File.__repr__">
       <param name="self">The instance of GPS.File</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.File.__hash__">
       <param name="self">The instance of GPS.File</param>
       <return>An integer</return>
       <description>Return a hash value suitable for storing self in a dictionary</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.File.__cmp__">
       <param name="self">The instance of GPS.File</param>
       <param name="file">An instance of GPS.File</param>
       <return>An integer</return>
       <description>Compare two instances of GPS.File, and return -1, 0 or 1 depending on their relative sort order</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.File.__init__">
       <param name="self">The instance being constructed</param>
@@ -343,7 +343,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="regexp" default="False">A boolean</param>
       <param name="scope" default="whole">One of ("whole", "comments", "strings", "code")</param>
       <return>List of GPS.FileLocation instances</return>
-      <description>Return the list of matches for pattern in the file. Default values are False for case_sensitive and regexp. Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description> 
+      <description>Return the list of matches for pattern in the file. Default values are False for case_sensitive and regexp. Scope is a string, and should be any of 'whole', 'comments', 'strings', 'code'. The latter will match only for text outside of comments</description>
   </shell_doc>
 
   <shell_doc name="GPS.File.search_next">
@@ -367,26 +367,26 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="self">The instance of GPS.Entity</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Entity.__repr__">
       <param name="self">The instance of GPS.Entity</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Entity.__hash__">
       <param name="self">The instance of GPS.Entity</param>
       <return>An integer</return>
       <description>Return a hash value suitable for storing self in a dictionary</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Entity.__cmp__">
       <param name="self">The instance of GPS.Entity</param>
       <param name="file">An instance of GPS.Entity</param>
       <return>An integer</return>
       <description>Compare two instances of GPS.Entity, and return -1, 0 or 1 depending on their relative sort order</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Entity.__init__">
       <param name="self">The instance of GPS.Entity we are building</param>
@@ -460,7 +460,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <return>List of GPS.FileLocation</return>
       <description>List all references to the entity in the project sources</description>
       <example lang="python">
-         for r in GPS.Entity ("GPS", GPS.File("gps.adb")).references(): 
+         for r in GPS.Entity ("GPS", GPS.File("gps.adb")).references():
              print "One reference in " + r.file().name()
       </example>
       <see_also name="GPS.Entity.find_all_refs()"/>
@@ -478,7 +478,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <return>A dictionary, see below</return>
       <description>Display the list of entities that call the entity. The returned value is a dictionary whose keys are instances of Entity called by this entity, and whose value is a list of FileLocation instances where the entity is referenced. This command might take a while to execute, since GPS needs to get the cross-reference information for lots of source files.</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.Entity.show">
       <param name="self">The instance of GPS.Entity</param>
       <description>Display in the type browser the informations known about the entity: list of fields for records, list of primitive subprograms or methods, list of parameters, ...</description>
@@ -521,26 +521,26 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="self">The instance of GPS.FileLocation</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.FileLocation.__repr__">
       <param name="self">The instance of GPS.FileLocation</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.FileLocation.__hash__">
       <param name="self">The instance of GPS.FileLocation</param>
       <return>An integer</return>
       <description>Return a hash value suitable for storing self in a dictionary</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.FileLocation.__cmp__">
       <param name="self">The instance of GPS.FileLocation</param>
       <param name="file">An instance of GPS.FileLocation</param>
       <return>An integer</return>
       <description>Compare two instances of GPS.FileLocation, and return -1, 0 or 1 depending on their relative sort order</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.FileLocation.__init__">
       <param name="self">The instance we are building</param>
@@ -551,7 +551,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <example lang="python">
           location = GPS.FileLocation (GPS.File ("a.adb"), 1, 2)
       </example>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.FileLocation.line">
       <param name="self">The instance of GPS.FileLocation</param>
@@ -589,26 +589,26 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="self">The instance of GPS.Project</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Project.__repr__">
       <param name="self">The instance of GPS.Project</param>
       <return>A string</return>
       <description>Return a string suitable for the display of self on screen. This is called implicitly by GPS and Python</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Project.__hash__">
       <param name="self">The instance of GPS.Project</param>
       <return>An integer</return>
       <description>Return a hash value suitable for storing self in a dictionary</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Project.__cmp__">
       <param name="self">The instance of GPS.Project</param>
       <param name="file">An instance of GPS.Project</param>
       <return>An integer</return>
       <description>Compare two instances of GPS.Project, and return -1, 0 or 1 depending on their relative sort order</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.Project.__init__">
       <param name="self">The instance of GPS.Project that we are building</param>
@@ -686,11 +686,11 @@ If the attribute value is stored as a list, the result string is a concatenation
 
             Then the following commands;
                 a = GPS.Project ("default").get_attribute_as_string ("exec_dir")
-                b = GPS.Project ("default").get_attribute_as_string ("switches", package="compiler", index="file.adb")  
+                b = GPS.Project ("default").get_attribute_as_string ("switches", package="compiler", index="file.adb")
 
             will set the variables to
                 a = "exec/"
-                b = "-c -g" 
+                b = "-c -g"
        </example>
        <see_also name="GPS.Project.scenario_variables()"/>
        <see_also name="GPS.Project.get_attribute_as_list()"/>
@@ -718,7 +718,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
 
             Then the following commands;
                 a = GPS.Project ("default").get_attribute_as_list ("exec_dir")
-                b = GPS.Project ("default").get_attribute_as_list ("switches", package="compiler", index="file.adb")  
+                b = GPS.Project ("default").get_attribute_as_list ("switches", package="compiler", index="file.adb")
 
             will set the variables to
                 a = ("exec/")
@@ -810,7 +810,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <return>A list of instances of GPS.File</return>
       <description>Return the list of source files for this project. If recursive is true, then all sources from imported projects are also returned. Otherwise, only the direct sources are returned. The basenames of the returned files are always unique: not two files with the same basenames are returned, and the one returned is the first one see while traversing the project hierarchy</description>
   </shell_doc>
- 
+
   <shell_doc name="GPS.Project.source_dirs">
       <param name="self">The instance of GPS.Project</param>
       <param name="recursive" default="false">A boolean</param>
@@ -905,14 +905,14 @@ If the attribute value is stored as a simple string, a list with a single elemen
 
   <shell_doc name="GPS.block_fold" real_name="GPS.Editor.block_fold">
       <param name="file">A string</param>
-      <param name="line">An integer</param>
-      <description>Fold the block around line</description>
+      <param name="line" default="">An integer</param>
+      <description>Fold the block around line. If line is not specified, fold all blocks in the file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.block_unfold" real_name="GPS.Editor.block_unfold">
       <param name="file">A string</param>
-      <param name="line">An integer</param>
-      <description>Unfold the block around line</description>
+      <param name="line" default="">An integer</param>
+      <description>Unfold the block around line. If line is not specified, unfold all blocks in the file.</description>
   </shell_doc>
 
   <shell_doc name="GPS.unhighlight" real_name="GPS.Editor.unhighlight">
@@ -962,7 +962,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <description>Jump to the location of the mark corresponding to identifier</description>
       <see_also name="GPS.Editor.create_mark"/>
   </shell_doc>
- 
+
   <shell_doc name="GPS.delete_mark" real_name="GPS.Editor.delete_mark">
       <param name="identifier">A string</param>
       <description>Delete the mark corresponding to identifier</description>
@@ -1052,21 +1052,21 @@ If the line and column are not specified, then the current selection is returned
       <description>Returns the name of the subprogram enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cursor_get_line" 
+  <shell_doc name="GPS.cursor_get_line"
              real_name="GPS.Editor.cursor_get_line">
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor line number</description>
   </shell_doc>
-      
-  <shell_doc name="GPS.cursor_get_column" 
+
+  <shell_doc name="GPS.cursor_get_column"
              real_name="GPS.Editor.cursor_get_column">
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor column number</description>
   </shell_doc>
-      
-  <shell_doc name="GPS.cursor_set_position" 
+
+  <shell_doc name="GPS.cursor_set_position"
              real_name="GPS.Editor.cursor_set_position">
       <param name="file">A string</param>
       <param name="line">An integer</param>
@@ -1078,13 +1078,13 @@ If the line and column are not specified, then the current selection is returned
              real_name="GPS.Editor.cursor_center">
       <param name="file">A string</param>
       <description>Scroll the view to center cursor</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.get_buffer"
              real_name="GPS.Editor.get_buffer">
       <param name="file">A string</param>
       <description>Returns the text contained in the current buffer for file</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.save_buffer"
              real_name="GPS.Editor.save_buffer">
@@ -1092,7 +1092,7 @@ If the line and column are not specified, then the current selection is returned
       <param name="to_file" default="">A string</param>
       <description>Saves the text contained in the current buffer for file. If to_file is specified, the file will be saved as to_file, and the buffer status will not be modified</description>
   </shell_doc>
-  
+
   <shell_doc name="GPS.replace_text"
              real_name="GPS.Editor.replace_text">
       <param name="file">A string</param>
@@ -1159,7 +1159,7 @@ If the line and column are not specified, then the current selection is returned
 
   <shell_doc name="GPS.close" real_name="GPS.Editor.close">
       <param name="file">A string</param>
-      <description>Close all file editors for file_name</description> 
+      <description>Close all file editors for file_name</description>
   </shell_doc>
 
   <shell_doc name="GPS.save" real_name="GPS.Editor.save">
@@ -1173,7 +1173,7 @@ If the line and column are not specified, then the current selection is returned
        <param name="file1">A string</param>
        <param name="file2">A string</param>
        <param name="file3" default="">A string</param>
-       <description>Synchronize the scrolling between multiple editors</description> 
+       <description>Synchronize the scrolling between multiple editors</description>
   </shell_doc>
 
   <shell_doc name="GPS.add_case_exception"
@@ -1320,7 +1320,7 @@ If the line and column are not specified, then the current selection is returned
   <shell_doc name="GPS.AreaContext.__init__">
       <param name="self">The instance we are building</param>
       <description>Dummy function, whose goal is to prevent user-creation of a GPS.AreaContext instance. Such instances can only be created internally by GPS</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.AreaContext.start_line">
       <param name="self">The instance of GPS.AreaContext</param>
@@ -1345,7 +1345,7 @@ If the line and column are not specified, then the current selection is returned
   <shell_doc name="GPS.EntityContext.__init__">
       <param name="self">The instance we are building</param>
       <description>Dummy function, whose goal is to prevent user-creation of a GPS.EntityContext instance. Such instances can only be created internally by GPS</description>
-  </shell_doc> 
+  </shell_doc>
 
   <shell_doc name="GPS.EntityContext.entity">
       <param name="self">The instance of GPS.EntityContext</param>
@@ -1394,7 +1394,7 @@ You almost never need to use this class yourself, since it is used implicitly by
      <param name="self">The instance of Help</param>
      <description>Free the memory occupied by this instance. This frees the XML tree that is kept in memory. As a result, you can no longer call GPS.Help.getdoc() afterward.</description>
   </shell_doc>
-     
+
   <!--#################################################################
     ####   HTML class
     ###################################################################-->
@@ -1520,7 +1520,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <return>An instance of GPS.FileLocation</return>
       <description>Return the location of the error</description>
   </shell_doc>
-      
+
   <!--#################################################################
     ####   Toolbar class
     ###################################################################-->
@@ -1550,7 +1550,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
   <shell_doc name="GPS.entry_get_text" real_name="GPS.Toolbar.entry_get_text">
      <param name="entry_label">A string</param>
      <return>A string</return>
-     <description>Return the current selection in specified entry</description> 
+     <description>Return the current selection in specified entry</description>
   </shell_doc>
 
   <shell_doc name="GPS.entry_set_text" real_name="GPS.Toolbar.entry_set_text">
