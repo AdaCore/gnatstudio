@@ -79,14 +79,14 @@ package body Src_Editor_Box is
    -- Forward declarations --
    --------------------------
 
-   function To_Box_Line (Line : Gint) return Positive;
+   function To_Box_Line (Line : Gint) return Natural;
    pragma Inline (To_Box_Line);
    --  Convert a line number in the Source Buffer to a line number in the
    --  Source Box. This conversion is necessary because line numbers start
    --  from 1 in the Source Box (this is the natural numbering for humans),
    --  whereas it starts from 0 in the Source Box.
 
-   function To_Box_Column (Col : Gint) return Positive;
+   function To_Box_Column (Col : Gint) return Natural;
    pragma Inline (To_Box_Column);
    --  Convert a column number in the Source Buffer to a column number
    --  in the Source Box. Same rationale as in To_Box_Line.
@@ -171,18 +171,18 @@ package body Src_Editor_Box is
    -- To_Box_Line --
    -----------------
 
-   function To_Box_Line (Line : Gint) return Positive is
+   function To_Box_Line (Line : Gint) return Natural is
    begin
-      return Positive (Line + 1);
+      return Natural (Line + 1);
    end To_Box_Line;
 
    -------------------
    -- To_Box_Column --
    -------------------
 
-   function To_Box_Column (Col : Gint) return Positive is
+   function To_Box_Column (Col : Gint) return Natural is
    begin
-      return Positive (Col + 1);
+      return Natural (Col + 1);
    end To_Box_Column;
 
    --------------------
@@ -431,9 +431,12 @@ package body Src_Editor_Box is
      (Editor : Source_Editor_Box;
       Event  : Gdk_Event) return Gtk_Menu
    is
-      V    : Source_View := Editor.Source_View;
-      Item : Gtk_Menu_Item;
-
+      V          : Source_View := Editor.Source_View;
+      Line       : Gint;
+      Column     : Gint;
+      Item       : Gtk_Menu_Item;
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
    begin
       if Get_Window (Event) = Get_Window (V, Text_Window_Left) then
          if Editor.Left_Contextual_Menu /= null then
@@ -459,11 +462,36 @@ package body Src_Editor_Box is
 
          Gtk_New (Editor.Contextual_Menu);
 
+         Event_To_Buffer_Coords (Editor.Source_View, Event, Line, Column);
+         Editor.Menu_Line_Pos := To_Box_Line (Line);
+         Editor.Menu_Col_Pos  := To_Box_Column (Column);
+
+         if Editor.Menu_Line_Pos = 0 or else Editor.Menu_Col_Pos = 0 then
+            --  Means that the user did not click on some text. Set Start_Iter
+            --  and End_Iter to the same location, so that the slice between
+            --  these 2 iterators is the empty string.
+            Get_Start_Iter (Editor.Source_Buffer, Start_Iter);
+            Get_Start_Iter (Editor.Source_Buffer, End_Iter);
+         else
+            Get_Iter_At_Line_Offset
+              (Editor.Source_buffer, Start_Iter,
+               To_Buffer_Line (Editor.Menu_Line_Pos),
+               To_Buffer_Column (Editor.Menu_Col_Pos));
+            Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
+         end if;
+
          Gtk_New (Item, -"Go to previous reference");
          Add (Editor.Contextual_Menu, Item);
 
-         Gtk_New (Item, -"Go to declaration/body");
-         Add (Editor.Contextual_Menu, Item);
+         declare
+            Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
+         begin
+            Gtk_New (Item, -"Go to declaration/body of " & Entity_Name);
+            Add (Editor.Contextual_Menu, Item);
+            if Entity_Name'Length = 0 then
+               Set_State (Item, State_Insensitive);
+            end if;
+         end;
          Widget_Callback.Connect
            (Widget    => Item,
             Name      => "activate",
@@ -494,7 +522,8 @@ package body Src_Editor_Box is
       Params : Glib.Values.GValues;
       Editor : Source_Editor_Box) is
    begin
-      Glide_Kernel.Editor.Goto_Declaration_Or_Body (Editor.Kernel);
+      Glide_Kernel.Editor.Goto_Declaration_Or_Body
+        (Editor.Kernel, Editor.Menu_Line_Pos, Editor.Menu_Col_Pos);
    end On_Goto_Declaration_Or_Body;
 
    -------------
