@@ -465,6 +465,10 @@ package body Task_Manager is
       Manager.Progress_Area := Area;
    end Set_Progress_Area;
 
+   -----------------------
+   -- Set_Busy_Commands --
+   -----------------------
+
    procedure Set_Busy_Commands
      (Manager      : Task_Manager_Access;
       Push_Command : Command_Access;
