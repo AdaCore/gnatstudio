@@ -54,6 +54,18 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Add
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Remove
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Annotate
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Diff
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -444,6 +456,14 @@ package body VCS_View_API is
                   (On_Menu_Diff_Local'Access),
                   Selection_Context_Access (Context));
 
+               Gtk_New (Item, Label => -"Annotate");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_Annotate'Access),
+                  Selection_Context_Access (Context));
+
                Gtk_New (Item, Label => -"Edit changelog");
                Append (Menu, Item);
                Context_Callback.Connect
@@ -458,6 +478,25 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                   (On_Menu_Edit_Log'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item);
+               Append (Menu, Item);
+
+               Gtk_New (Item, Label => -"Add to repository");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_Add'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label => -"Remove from repository");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (On_Menu_Remove'Access),
                   Selection_Context_Access (Context));
             end if;
          end;
@@ -844,6 +883,89 @@ package body VCS_View_API is
          String_List.Free (List);
       end if;
    end On_Menu_Open;
+
+   -----------------
+   -- On_Menu_Add --
+   -----------------
+
+   procedure On_Menu_Add
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File     : File_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Files    : String_List.List;
+   begin
+      if Get_Creator (Context) = VCS_Module_ID then
+         Add (Widget, Kernel);
+
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            String_List.Append (Files,
+                                Directory_Information (File)
+                                & File_Information (File));
+
+            Add (Get_Current_Ref (Kernel), Files);
+            String_List.Free (Files);
+         end if;
+      end if;
+   end On_Menu_Add;
+
+   --------------------
+   -- On_Menu_Remove --
+   --------------------
+
+   procedure On_Menu_Remove
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File     : File_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+      Files    : String_List.List;
+   begin
+      if Get_Creator (Context) = VCS_Module_ID then
+         Remove (Widget, Kernel);
+
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            String_List.Append (Files,
+                                Directory_Information (File)
+                                & File_Information (File));
+
+            Remove (Get_Current_Ref (Kernel), Files);
+            String_List.Free (Files);
+         end if;
+      end if;
+   end On_Menu_Remove;
+
+   ----------------------
+   -- On_Menu_Annotate --
+   ----------------------
+
+   procedure On_Menu_Annotate
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      File     : File_Selection_Context_Access;
+      Kernel   : Kernel_Handle := Get_Kernel (Context);
+   begin
+      if Get_Creator (Context) = VCS_Module_ID then
+         View_Annotate (Widget, Kernel);
+
+      elsif Context.all in File_Selection_Context'Class then
+         File := File_Selection_Context_Access (Context);
+
+         if Has_File_Information (File) then
+            Annotate (Get_Current_Ref (Kernel),
+                      Directory_Information (File)
+                      & File_Information (File));
+         end if;
+      end if;
+   end On_Menu_Annotate;
 
    --------------------
    -- On_Menu_Update --
