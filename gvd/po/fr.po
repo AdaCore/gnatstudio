@@ -601,8 +601,8 @@ msgstr "PC"
 msgid  "Perl"
 msgstr "Perl"
 
-msgid  "Please report with the contents of the file "
-msgstr "Veuillez reporter avec le contenu du fichier "
+msgid  "Please report [see GVD Manual under Reporting Bugs]"
+msgstr "Veuillez reporter [voir manuel de GVD, section Reporting Bugs]"
 
 msgid  "Preferences..."
 msgstr "Préférences..."
@@ -924,6 +924,9 @@ msgstr "vxworks"
 
 msgid  "watch"
 msgstr "watch"
+
+msgid  "with the contents of the file "
+msgstr "avec le contenu du fichier "
 
 msgid  "Word"
 msgstr "Mot"
