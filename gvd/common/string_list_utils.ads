@@ -24,11 +24,12 @@ package String_List_Utils is
 
    procedure String_Free (S : in out String);
    --  Free memory associated with S.
-   
+
    package String_List is new Generic_List (String, Free => String_Free);
-   
+
    function Copy_String_List
      (S : in String_List.List) return String_List.List;
    --  Return a deep copy of S.
 
 end String_List_Utils;
+
