@@ -989,7 +989,9 @@ procedure GPS is
       VCS.ClearCase.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
       VFS_Module.Register_Module (GPS.Kernel);
-      Codefix_Module.Register_Module (GPS.Kernel);
+      if 1 = 2 then
+         Codefix_Module.Register_Module (GPS.Kernel);
+      end if;
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
