@@ -1,10 +1,10 @@
 Known Problems fixed in GPS 2.0.1
 
 - D603-013 %pp in custom files incorrect expanded on Windows
-  Problem:    If you use %pp in custome files on Windows, the backslashes
+  Problem:    If you use %pp in custom files on Windows, the backslashes
               are incorrectly quoted, and will be removed when the command is
               executed, resulting in an invalid file name
-  Workaround: use  """%pp """ instead to be safe
+  Workaround: Use  "%pp" instead
 
 - Initial selection in File View is not always the current directory
   Problem:    The directory initialy selected in the File View is not the
@@ -21,7 +21,7 @@ Known Problems fixed in GPS 2.0.1
   Problem:    When you enter interactively a command in the python console,
               nested blocks (a if inside a while for instance), the command
               is never executed properly and results in an error
-  Workaround: write the command in a file, and execute that file instead
+  Workaround: Write the command in a file, and execute that file instead
 
 - D602-016 Duplicate Build menu entries with extending projects
   Problem:    If you are using extending projects, the Build->Make menu
