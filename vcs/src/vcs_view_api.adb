@@ -148,10 +148,12 @@ package body VCS_View_API is
       Get_Status : Boolean);
    --  Perform VCS operations on directories contained in Context.
 
-   procedure Save_Files
+   function Save_Files
      (Kernel : Kernel_Handle;
-      Files  : String_List.List);
+      Files  : String_List.List;
+      Save_Logs : Boolean := False) return Boolean;
    --  Ask the user whether he wants to save the file editors for Files.
+   --  Return False if the user has cancelled the action.
 
    -------------------------------
    -- Contextual menu callbacks --
@@ -1116,27 +1118,34 @@ package body VCS_View_API is
    -- Save_Files --
    ----------------
 
-   procedure Save_Files
+   function Save_Files
      (Kernel : Kernel_Handle;
-      Files  : String_List.List)
+      Files  : String_List.List;
+      Save_Logs : Boolean := False) return Boolean
    is
       use String_List;
-      Child      : MDI_Child;
-      Success    : Boolean;
-      pragma Unreferenced (Success);
+      Children   : MDI_Child_Array (1 .. Length (Files));
+      Logs       : MDI_Child_Array (Children'Range);
       Files_Temp : List_Node := First (Files);
+      File       : Virtual_File;
    begin
-      while Files_Temp /= Null_Node loop
-         Child := Get_File_Editor
-           (Kernel, Create (Full_Filename => Head (Files)));
+      for C in Children'Range loop
+         File := Create (Full_Filename => Head (Files));
+         Children (C) := Get_File_Editor (Kernel, File);
 
-         if Child /= null then
-            Success := Save_Child
-              (Kernel, Child, Force => Get_Pref (Kernel, Auto_Save)) /= Cancel;
+         if Save_Logs then
+            Logs (C) := Get_File_Editor
+              (Kernel, Get_Log_From_File (Kernel, File, False));
          end if;
 
          Files_Temp := Next (Files_Temp);
       end loop;
+
+      if Save_Logs then
+         return Save_MDI_Children (Kernel, Children & Logs, Force => False);
+      else
+         return Save_MDI_Children (Kernel, Children, Force => False);
+      end if;
    end Save_Files;
 
    ------------------
@@ -1158,7 +1167,6 @@ package body VCS_View_API is
 
       Project            : Project_Type;
 
-      Child              : MDI_Child;
       Success            : Boolean;
       pragma Unreferenced (Success);
 
@@ -1171,20 +1179,14 @@ package body VCS_View_API is
       First_Check, Last_Check : Command_Access := null;
 
    begin
-      Save_Files (Kernel, Files);
+      if not Save_Files (Kernel, Files, Save_Logs => True) then
+         return;
+      end if;
 
       while Files_Temp /= Null_Node loop
          --  Save any open log editors, and then get the corresponding logs.
 
          File := Create (Full_Filename => Data (Files_Temp));
-         Child := Get_File_Editor
-           (Kernel, Get_Log_From_File (Kernel, File, False));
-
-         if Child /= null then
-            Success := Save_Child
-              (Kernel, Child, Force => Get_Pref (Kernel, Auto_Save)) /= Cancel;
-         end if;
-
          Append (Logs, Get_Log (Kernel, File));
          Files_Temp := Next (Files_Temp);
       end loop;
@@ -2247,7 +2249,9 @@ package body VCS_View_API is
          return;
       end if;
 
-      Save_Files (Get_Kernel (Context), Files);
+      if not Save_Files (Get_Kernel (Context), Files) then
+         return;
+      end if;
 
       while not String_List.Is_Empty (Files) loop
          Diff (Get_Current_Ref (Context),
@@ -2318,7 +2322,10 @@ package body VCS_View_API is
          return;
       end if;
 
-      Save_Files (Get_Kernel (Context), Files);
+      if not Save_Files (Get_Kernel (Context), Files) then
+         return;
+      end if;
+
       Status := Local_Get_Status (Ref, Files);
       Status_Temp := First (Status);
 
@@ -2367,7 +2374,10 @@ package body VCS_View_API is
          return;
       end if;
 
-      Save_Files (Get_Kernel (Context), Files);
+      if not Save_Files (Get_Kernel (Context), Files) then
+         return;
+      end if;
+
       Status := Local_Get_Status (Ref, Files);
       Status_Temp := First (Status);
 
@@ -2749,14 +2759,18 @@ package body VCS_View_API is
          Commit_Files (Kernel, Ref, Files);
 
       elsif Command = "vcs.diff_head" then
-         Save_Files (Kernel, Files);
-         Diff (Ref, Full);
+         if Save_Files (Kernel, Files) then
+            Diff (Ref, Full);
+         end if;
 
       elsif Command = "vcs.diff_working" then
          declare
             Status : File_Status_List.List;
          begin
-            Save_Files (Kernel, Files);
+            if not Save_Files (Kernel, Files) then
+               return;
+            end if;
+
             Status := Local_Get_Status (Ref, Files);
 
             Diff
