@@ -931,6 +931,7 @@ package body Projects.Registry is
             Display_Value => Get_String (File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
+            Index         => 0,
             Next          => Prj.Projects.Table (Get_View (Project)).Sources);
          Prj.Projects.Table (Get_View (Project)).Sources :=
            String_Elements.Last;
