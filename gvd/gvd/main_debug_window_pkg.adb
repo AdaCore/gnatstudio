@@ -822,9 +822,9 @@ begin
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
 
    Gtk_New (Main_Debug_Window.Edit_Breakpoints1, -"Edit Breakpoints...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Edit_Breakpoints1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Edit_Breakpoints1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Edit_Breakpoints1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Edit_Breakpoints1);
    Set_Right_Justify (Main_Debug_Window.Edit_Breakpoints1, False);
 
