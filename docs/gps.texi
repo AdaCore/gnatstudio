@@ -7519,6 +7519,9 @@ preexisting binding. The second example below deactivates the standard binding.
 <keys>
   <key action="expand alias">control-o</key>
   <key action="Jump to matching delimiter" />
+
+  <!--  Bind a key to a menu -->
+  <key action="/Window/Close">control-x control-w</key>
 </key>
 @end smallexample
 
