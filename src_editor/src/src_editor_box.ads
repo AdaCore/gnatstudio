@@ -166,6 +166,27 @@ package Src_Editor_Box is
    --  sequence because it does not work with (line, column) locations but
    --  directly with buffer iterators.
 
+   procedure Search
+     (Editor             : access Source_Editor_Box_Record;
+      Pattern            : String;
+      Case_Sensitive     : Boolean := True;
+      Whole_Word         : Boolean := False;
+      Search_Forward     : Boolean := True;
+      From_Line          : Positive := 1;
+      From_Column        : Positive := 1;
+      Found              : out Boolean;
+      Match_Start_Line   : out Positive;
+      Match_Start_Column : out Positive;
+      Match_End_Line     : out Positive;
+      Match_End_Column   : out Positive);
+   --  Search function. Regular expressions for Pattern are not supported.
+   --  If the pattern is found, then Found is set to True and the positions
+   --  of the begining and of the end of the matching portion are returned.
+   --
+   --  The validity of the start position must be verified before invoking
+   --  this function. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
    function Get_Slice
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;

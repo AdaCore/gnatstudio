@@ -506,6 +506,41 @@ package body Src_Editor_Box is
       return Get_Selection (Editor.Source_Buffer);
    end Get_Selection;
 
+   ------------
+   -- Search --
+   ------------
+
+   procedure Search
+     (Editor             : access Source_Editor_Box_Record;
+      Pattern            : String;
+      Case_Sensitive     : Boolean := True;
+      Whole_Word         : Boolean := False;
+      Search_Forward     : Boolean := True;
+      From_Line          : Positive := 1;
+      From_Column        : Positive := 1;
+      Found              : out Boolean;
+      Match_Start_Line   : out Positive;
+      Match_Start_Column : out Positive;
+      Match_End_Line     : out Positive;
+      Match_End_Column   : out Positive)
+   is
+      Match_Start_L : Gint;
+      Match_Start_C : Gint;
+      Match_End_L   : Gint;
+      Match_End_C   : Gint;
+   begin
+      Search (Editor.Source_Buffer,
+              Pattern,
+              Case_Sensitive, Whole_Word, Search_Forward,
+              To_Buffer_Line (From_Line), To_Buffer_Column (From_Column),
+              Found,
+              Match_Start_L, Match_Start_C, Match_End_L, Match_End_C);
+      Match_Start_Line   := To_Box_Line (Match_Start_L);
+      Match_Start_Column := To_Box_Column (Match_Start_C);
+      Match_End_Line     := To_Box_Line (Match_End_L);
+      Match_End_Column   := To_Box_Column (Match_End_C);
+   end Search;
+
    ---------------
    -- Get_Slice --
    ---------------
