@@ -1838,16 +1838,7 @@ package body Glide_Kernel.Modules is
 
       Result : GNAT.OS_Lib.String_Access;
 
-      procedure Insert (S : String);
-      --  Appends S & ASCII.LF to Result.
-      --  Result must not be set to Null when calling this subprogram.
-
-      procedure Insert (S : String) is
-         R : constant String := Result.all & S & ASCII.LF;
-      begin
-         Free (Result);
-         Result := new String'(R);
-      end Insert;
+      Command_Found : Boolean := False;
 
    begin
       if Command = "" then
@@ -1871,10 +1862,14 @@ package body Glide_Kernel.Modules is
               Command_List.Data (Command_Node);
          begin
             if Data.Command.all = The_Command.all then
-               Insert (Data.Command_Handler
-                         (Kernel,
-                          The_Command.all,
-                          The_Args));
+               Free (Result);
+               Result := new String'
+                 (Data.Command_Handler
+                    (Kernel,
+                     The_Command.all,
+                     The_Args));
+               Command_Found := True;
+
                exit;
             end if;
          end;
@@ -1891,7 +1886,7 @@ package body Glide_Kernel.Modules is
       begin
          Free (Result);
 
-         if R = "" then
+         if not Command_Found then
             return -"Command not recognized";
          else
             return R;
