@@ -191,13 +191,7 @@ package Docgen is
    procedure Sort_List_Name is
      new List_Utils.Sort (List_Entity_Information, "<" => Entities."<");
 
-   type Type_Api_Doc is (HTML, TEXI);
-   --  Type of documentation that can be generated.
-   for Type_Api_Doc'Size use Integer'Size;
-
    type All_Options is record
-      Type_Of_File  : Type_Api_Doc := HTML;
-      --  Type of the documentation
       Process_Body_Files : Boolean := False;
       --  Create also the body documentation
       Ignorable_Comments : Boolean := False;
