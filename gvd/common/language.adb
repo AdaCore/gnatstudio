@@ -256,8 +256,8 @@ package body Language is
         Get_Language_Context (Language_Access (Lang));
       Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
       Comm1, Comm2 : Character;
-   begin
 
+   begin
       --  Do we have a comment ?
 
       if Context.Comment_Start_Length /= 0
@@ -268,6 +268,7 @@ package body Language is
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + Context.Comment_Start_Length;
+
          while Next_Char + Context.Comment_End_Length - 1 <= Buffer'Last
            and then Buffer
            (Next_Char .. Next_Char + Context.Comment_End_Length - 1)
@@ -275,6 +276,7 @@ package body Language is
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          Next_Char := Next_Char + Context.Comment_End_Length;
          return;
       end if;
@@ -332,7 +334,7 @@ package body Language is
         and then Buffer (Buffer'First + 1) = Context.Quote_Character
         and then Buffer (Buffer'First + 3) = Context.Constant_Character
       then
-         Entity := String_Text;
+         Entity := Character_Text;
          Next_Char := Buffer'First + 4;
          return;
       end if;
@@ -343,7 +345,7 @@ package body Language is
         and then Buffer (Buffer'First) = Context.Constant_Character
         and then Buffer (Buffer'First + 2) = Context.Constant_Character
       then
-         Entity := String_Text;
+         Entity := Character_Text;
          Next_Char := Buffer'First + 3;
          return;
       end if;
@@ -359,9 +361,11 @@ package body Language is
 
          Comm1 := ASCII.LF;
          Comm2 := ASCII.LF;
+
          if Context.Comment_Start_Length /= 0 then
             Comm1 := Context.Comment_Start (Context.Comment_Start'First);
          end if;
+
          if Context.New_Line_Comment_Start_Length /= 0 then
             Comm2 :=
               Context.New_Line_Comment_Start (Context.Comment_Start'First);
@@ -392,7 +396,7 @@ package body Language is
          return;
       end if;
 
-      --  If no, skip to the next meaningful character. we know we are
+      --  If not, skip to the next meaningful character. we know we are
       --  starting with a letter
 
       Next_Char := Buffer'First + 1;
