@@ -858,9 +858,10 @@ package body Browsers.Dependency_Items is
       Child : MDI_Child;
       pragma Unreferenced (Widget, Child);
 
-      Context : constant Selection_Context_Access :=
+      Context : Selection_Context_Access :=
         Get_Current_Context (Kernel);
    begin
+      Ref (Context);
       Child := Open_Dependency_Browser (Kernel);
 
       if Context /= null
@@ -871,10 +872,13 @@ package body Browsers.Dependency_Items is
             File_Information (File_Selection_Context_Access (Context)));
       end if;
 
+      Unref (Context);
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception in On_Dependency_Browser "
                 & Exception_Information (E));
+         Unref (Context);
    end On_Dependency_Browser;
 
    ---------------------------------------
