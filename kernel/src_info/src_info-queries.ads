@@ -32,8 +32,7 @@
 with Traces;
 with Unchecked_Deallocation;
 with Language_Handlers;
-with Prj.Tree;
-with Prj_API;
+with Projects;
 with Basic_Types;
 with String_Hash;
 
@@ -188,7 +187,7 @@ package Src_Info.Queries is
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
       Source_Info_List       : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String;
       Location               : out File_Location;
@@ -226,7 +225,7 @@ package Src_Info.Queries is
    --  Only the short path name is returned.
    --
    --  This method is based on LI files.
-   --  See also Prj_API.Other_File_Name for a method based on naming schemes
+   --  See also Projects..Other_File_Name for a method based on naming schemes
 
    ------------------
    -- Declarations --
@@ -273,12 +272,12 @@ package Src_Info.Queries is
    type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
 
    procedure Find_All_References
-     (Root_Project           : Prj.Tree.Project_Node_Id;
+     (Root_Project           : Projects.Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
       List                   : in out LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
-      Project                : Prj.Project_Id := Prj.No_Project;
+      Project                : Projects.Project_Type := Projects.No_Project;
       LI_Once                : Boolean := False;
       In_File                : String := "";
       Predefined_Source_Path : String := "";
@@ -316,7 +315,8 @@ package Src_Info.Queries is
    function Get_LI (Iterator : Entity_Reference_Iterator) return LI_File_Ptr;
    --  Return the current LI file
 
-   function Get (Iterator : Entity_Reference_Iterator) return Prj.Project_Id;
+   function Get (Iterator : Entity_Reference_Iterator)
+      return Projects.Project_Type;
    --  Return the current project the iterator is looking at.
 
    procedure Destroy (Iterator : in out Entity_Reference_Iterator);
@@ -495,12 +495,12 @@ package Src_Info.Queries is
    type Dependency_Iterator_Access is access Dependency_Iterator;
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project    : Prj.Tree.Project_Node_Id;
+     (Root_Project    : Projects.Project_Type;
       Lang_Handler    : Language_Handlers.Language_Handler;
       Source_Filename : String;
       List            : in out LI_File_List;
       Iterator        : out Dependency_Iterator;
-      Project         : Prj.Project_Id := Prj.No_Project;
+      Project         : Projects.Project_Type := Projects.No_Project;
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "";
@@ -553,7 +553,7 @@ package Src_Info.Queries is
    --  Consider setting LI_Once to True when calling Find_Ancestor_Dependencies
    --  if you are calling this function.
 
-   function Get (Iterator : Dependency_Iterator) return Prj.Project_Id;
+   function Get (Iterator : Dependency_Iterator) return Projects.Project_Type;
    --  Return the current project the iterator is looking at.
 
    procedure Destroy (Iterator : in out Dependency_Iterator);
@@ -824,11 +824,8 @@ private
       Source_Filename : String_Access;
       --  Name of the source file that we are examining.
 
-      Importing : Prj_API.Project_Id_Array_Access;
+      Importing : Projects.Imported_Project_Iterator;
       --  List of projects to check
-
-      Current_Project : Natural;
-      --  The current project in the list above
 
       Examined     : Name_Htable.String_Hash_Table.HTable;
       --  List of source files in the current project that have already been
@@ -853,7 +850,7 @@ private
       --  separates). If null, the last returned value was the spec, otherwise
       --  it was Current_Separate
 
-      Current_Part : Unit_Part;
+      Current_Part : Projects.Unit_Part;
       --  The part of LI that was returned
 
       LI_Once : Boolean;
@@ -912,7 +909,7 @@ private
 
    type Child_Type_Iterator is record
       Lib_Info    : LI_File_Ptr;
-      Part        : Unit_Part;
+      Part        : Projects.Unit_Part;
       File        : File_Info_Ptr_List;
       Entity      : Entity_Information;
       Current     : E_Declaration_Info_List;

@@ -24,14 +24,13 @@ with Ada.Characters.Handling; use Ada.Characters.Handling;
 with System.Assertions;       use System.Assertions;
 with Traces;                  use Traces;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Prj;                     use Prj;
-with Prj.Tree;                use Prj.Tree;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
-with Prj_API;                 use Prj_API;
+with Projects;                use Projects;
+with Projects.Registry;       use Projects.Registry;
 with Basic_Types;             use Basic_Types;
 
 package body Src_Info.Queries is
@@ -599,7 +598,7 @@ package body Src_Info.Queries is
       Column                 : Positive;
       Handler                : access LI_Handler_Record'Class;
       Source_Info_List       : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String;
       Location               : out File_Location;
@@ -744,8 +743,6 @@ package body Src_Info.Queries is
 
       Part := Get_Unit_Part (Lib_Info, Source_Filename);
 
-      Trace (Me, "Getting dependencies for "
-             & Get_LI_Filename (Lib_Info));
       Current_Dep  := Lib_Info.LI.Dependencies_Info;
       Dependencies := null;
 
@@ -1931,8 +1928,18 @@ package body Src_Info.Queries is
      (List   : E_Declaration_Info_List;
       Entity : Entity_Information) return E_Declaration_Info_List is
    begin
-      return Get_Declaration
-        (List, Entity.Decl_Line, Entity.Decl_Column, Get_Name (Entity));
+      --  Check the declaration in the list. All the declarations have the same
+      --  source file, so we can simply check the first one to save some time.
+      if List = null
+        or else Get_Source_Filename (List.Value.Declaration.Location.File) /=
+        Get_Declaration_File_Of (Entity)
+      then
+         return null;
+
+      else
+         return Get_Declaration
+           (List, Entity.Decl_Line, Entity.Decl_Column, Get_Name (Entity));
+      end if;
    end Find_Declaration;
 
    ----------------------------
@@ -2121,6 +2128,7 @@ package body Src_Info.Queries is
                Iterator.Current_Separate := Iterator.Current_Separate.Next;
 
                if Ref /= null then
+                  Trace (Me, "Found in current_separate");
                   return Ref;
                end if;
             end loop;
@@ -2135,11 +2143,13 @@ package body Src_Info.Queries is
                Iterator.Current_Dependency := Iterator.Current_Dependency.Next;
 
                if Ref /= null then
+                  Trace (Me, "Found in current_dependency");
                   return Ref;
                end if;
             end loop;
          end if;
 
+         Trace (Me, "Returning null");
          return null;
       end Check_Decl_File;
 
@@ -2150,8 +2160,8 @@ package body Src_Info.Queries is
       --  If necessary, force skipping to the next LI file
       if Iterator.LI_Once then
          Iterator.References := null;
-         Iterator.Part := Unit_Separate;
-         Iterator.Current_Separate := null;
+         Iterator.Part := Unit_Dependency;
+         Iterator.Current_Dependency := null;
       end if;
 
       --  If there are still some references
@@ -2162,6 +2172,7 @@ package body Src_Info.Queries is
       if Iterator.References = null then
          --  Were we processing the LI file for the source file that contains
          --  the initial declaration ?
+
          if Get (Iterator.Decl_Iter) /= null
            and then Get (Iterator.Decl_Iter) = Iterator.Decl_Iter.Decl_LI
          then
@@ -2170,6 +2181,7 @@ package body Src_Info.Queries is
             if Iterator.References /= null then
                return;
             end if;
+            Trace (Me, "Not found in current");
          end if;
 
          if not First_Next then
@@ -2198,12 +2210,12 @@ package body Src_Info.Queries is
    --  We also only look in the files that are in the same language.
 
    procedure Find_All_References
-     (Root_Project           : Prj.Tree.Project_Node_Id;
+     (Root_Project           : Project_Type;
       Lang_Handler           : Language_Handlers.Language_Handler;
       Entity                 : Entity_Information;
       List                   : in out LI_File_List;
       Iterator               : out Entity_Reference_Iterator;
-      Project                : Prj.Project_Id := Prj.No_Project;
+      Project                : Project_Type := No_Project;
       LI_Once                : Boolean := False;
       In_File                : String := "";
       Predefined_Source_Path : String := "";
@@ -2214,7 +2226,8 @@ package body Src_Info.Queries is
 
       if In_File = "" then
          Find_Ancestor_Dependencies
-           (Root_Project, Lang_Handler, Get_Declaration_File_Of (Entity), List,
+           (Root_Project, Lang_Handler,
+            Get_Declaration_File_Of (Entity), List,
             Iterator.Decl_Iter,
             Project                => Project,
             Include_Self           => True,
@@ -2270,8 +2283,7 @@ package body Src_Info.Queries is
          then
             Handler := Get_LI_Handler_From_File
               (Glide_Language_Handler (Lang_Handler),
-               Iterator.Source_Files (Iterator.Current_File).all,
-               Iterator.Importing (Iterator.Current_Project));
+               Iterator.Source_Files (Iterator.Current_File).all);
 
             --  For now, we do not have inter-language cross-references, so we
             --  do nothing if the file doesn't have the same language.
@@ -2290,10 +2302,10 @@ package body Src_Info.Queries is
                      Source_Filename        =>
                        Iterator.Source_Files (Iterator.Current_File).all,
                      List                   => List,
-                     Project                =>
-                       Iterator.Importing (Iterator.Current_Project),
+                     Project                => Current (Iterator.Importing),
                      Predefined_Source_Path => "",
                      Predefined_Object_Path => "");
+
                   Assert (Me, LI = null or else LI.LI.Parsed,
                           "Unparsed LI returned for file "
                           & Iterator.Source_Files (Iterator.Current_File).all);
@@ -2431,9 +2443,6 @@ package body Src_Info.Queries is
             else
                Iterator.Current_Part := Unit_Body;
             end if;
-
-            Trace (Me, "Check_LI: found dependency "
-                   & Dep.Value.File.LI.LI.LI_Filename.all);
          end if;
 
          return Dep;
@@ -2483,17 +2492,16 @@ package body Src_Info.Queries is
 
          Free (Iterator.Source_Files);
          Reset (Iterator.Examined);
-         Iterator.Current_Project := Iterator.Current_Project + 1;
 
-         if Iterator.Current_Project > Iterator.Importing'Last then
+         Next (Iterator.Importing);
+         if Current (Iterator.Importing) = No_Project then
             Iterator.Current_Decl := null;
             Iterator.LI := No_LI_File;
-            Free (Iterator.Importing);
             return;
          end if;
 
          Iterator.Source_Files := Get_Source_Files
-           (Iterator.Importing (Iterator.Current_Project),
+           (Current (Iterator.Importing),
             Recursive => False,
             Full_Path => False);
          Iterator.Current_File := Iterator.Source_Files'First - 1;
@@ -2509,20 +2517,20 @@ package body Src_Info.Queries is
    --------------------------------
 
    procedure Find_Ancestor_Dependencies
-     (Root_Project    : Prj.Tree.Project_Node_Id;
+     (Root_Project    : Project_Type;
       Lang_Handler : Language_Handlers.Language_Handler;
       Source_Filename : String;
       List            : in out LI_File_List;
       Iterator        : out Dependency_Iterator;
-      Project         : Prj.Project_Id := Prj.No_Project;
+      Project         : Project_Type := No_Project;
       Include_Self    : Boolean := False;
       Predefined_Source_Path : String := "";
       Predefined_Object_Path : String := "";
       LI_Once         : Boolean := False;
       Single_Source_File : Boolean := False)
    is
-      Decl_Project : Project_Id := Project;
-      Iterator_Decl_Project : Project_Id := Project;
+      Decl_Project : Project_Type := Project;
+      Iterator_Decl_Project : Project_Type := Project;
    begin
       Trace (Me, "Find_Ancestor_Dependencies: "
              & Source_Filename
@@ -2531,11 +2539,12 @@ package body Src_Info.Queries is
 
       if Decl_Project = No_Project then
          Decl_Project := Get_Project_From_File
-           (Get_Project_View_From_Project (Root_Project), Source_Filename);
+           (Project_Registry'Class (Get_Registry (Root_Project)),
+            Source_Filename);
          Iterator_Decl_Project := Decl_Project;
 
          if Decl_Project = No_Project then
-            Decl_Project := Get_Project_View_From_Project (Root_Project);
+            Decl_Project := Root_Project;
          end if;
       end if;
 
@@ -2549,8 +2558,7 @@ package body Src_Info.Queries is
 
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
-           (Glide_Language_Handler (Lang_Handler),
-            Source_Filename, Decl_Project),
+           (Glide_Language_Handler (Lang_Handler), Source_Filename),
          File                   => Iterator.Decl_LI,
          Source_Filename        => Source_Filename,
          List                   => List,
@@ -2563,18 +2571,18 @@ package body Src_Info.Queries is
               "LI file not found for " & Source_Filename);
 
       if Single_Source_File then
-         Iterator.Importing := new Project_Id_Array'(1 => Decl_Project);
+         Iterator.Importing := Start (Decl_Project, Recursive => False);
          Iterator.Source_Files := new String_Array'
            (1 => new String'(Source_Filename));
       else
-         Iterator.Importing := new Project_Id_Array'
-           (Find_All_Projects_Importing (Root_Project, Iterator_Decl_Project));
+         Iterator.Importing := Find_All_Projects_Importing
+           (Root_Project, Iterator_Decl_Project,
+            Include_Self => True);
          Iterator.Source_Files := Get_Source_Files
-           (Iterator.Importing (Iterator.Importing'First),
+           (Current (Iterator.Importing),
             Recursive => False,
             Full_Path => False);
       end if;
-      Iterator.Current_Project := Iterator.Importing'First;
       Iterator.Current_File := Iterator.Source_Files'First - 1;
 
       Next (Lang_Handler, Iterator, List);
@@ -2646,16 +2654,16 @@ package body Src_Info.Queries is
    -- Get --
    ---------
 
-   function Get (Iterator : Dependency_Iterator) return Prj.Project_Id is
+   function Get (Iterator : Dependency_Iterator) return Project_Type is
    begin
-      return Iterator.Importing (Iterator.Current_Project);
+      return Current (Iterator.Importing);
    end Get;
 
    ---------
    -- Get --
    ---------
 
-   function Get (Iterator : Entity_Reference_Iterator) return Prj.Project_Id is
+   function Get (Iterator : Entity_Reference_Iterator) return Project_Type is
    begin
       return Get (Iterator.Decl_Iter);
    end Get;
@@ -2667,7 +2675,6 @@ package body Src_Info.Queries is
    procedure Destroy (Iterator : in out Dependency_Iterator) is
    begin
       Free (Iterator.Source_Filename);
-      Free (Iterator.Importing);
       Free (Iterator.Source_Files);
       Reset (Iterator.Examined);
    end Destroy;
@@ -2737,7 +2744,6 @@ package body Src_Info.Queries is
       Decl : E_Declaration_Info_List := List;
    begin
       while Decl /= null loop
-
          if Decl.Value.Declaration.Location.Line = Decl_Line
            and then Decl.Value.Declaration.Location.Column = Decl_Column
            and then (Entity_Name = ""
@@ -3322,16 +3328,6 @@ package body Src_Info.Queries is
       Parent : File_Location_List;
    begin
       if Decl /= null then
-         Trace (Me, "Process_Parents decl="
-                & Get_LI_Filename (Lib_Info) & ' '
-                & Decl.Value.Declaration.Name.all & ' '
-                & Get_Source_Filename (Decl.Value.Declaration.Location.File)
-                & Decl.Value.Declaration.Location.Line'Img
-                & Decl.Value.Declaration.Location.Column'Img
-               );
-      end if;
-
-      if Decl /= null then
          Parent := Decl.Value.Declaration.Parent_Location;
          while Parent /= null
            and then Parent.Kind /= Kind
@@ -3354,11 +3350,6 @@ package body Src_Info.Queries is
                   Scope  => Global_Scope,
                   Kind   => Unresolved_Entity_Kind);
             else
-               Trace (Me, "Process_Parents: location line="
-                      & Get_Source_Filename
-                      (Parent.Value.File)
-                      & Parent.Value.Line'Img
-                      & Parent.Value.Column'Img);
                --  The type of the variable might be either directly in the
                --  source files of Lib_Info or in one of the imported source
                --  files.
