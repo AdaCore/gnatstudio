@@ -759,63 +759,27 @@ package body Prj_API is
       File             : String;
       Language         : Types.Name_Id;
       Value            : out Variable_Value;
-      Is_Default_Value : out Boolean)
-   is
-      Pkg : Package_Id := Projects.Table (Project).Decl.Packages;
-      Pkg_Name : Name_Id;
-      Var_Value : Variable_Value := Nil_Variable_Value;
-      The_Array : Array_Element_Id;
-
+      Is_Default_Value : out Boolean) is
    begin
-      Name_Len := In_Pkg'Length;
-      Name_Buffer (1 .. Name_Len) := In_Pkg;
-      Pkg_Name := Name_Find;
-
-      Pkg  := Prj.Util.Value_Of
-        (Name        => Pkg_Name,
-         In_Packages => Projects.Table (Project).Decl.Packages);
-
       --  Do we have some file-specific switches ?
-      if Pkg /= No_Package and then File /= "" then
-         The_Array := Value_Of
-           (Name      => Name_Switches,
-            In_Arrays => Packages.Table (Pkg).Decl.Arrays);
-         Name_Len := File'Length;
-         Name_Buffer (1 .. Name_Len) := File;
-         Var_Value := Value_Of
-           (Index    => Name_Find,
-            In_Array => The_Array);
+      Value := Get_Attribute_Value
+        (Project_View   => Project,
+         Attribute_Name => Get_Name_String (Name_Switches),
+         Package_Name   => In_Pkg,
+         Index          => File);
 
-         if Var_Value /= Nil_Variable_Value then
-            Value := Var_Value;
-            Is_Default_Value := False;
-            return;
-         end if;
+      if Value /= Nil_Variable_Value then
+         Is_Default_Value := False;
+         return;
       end if;
 
-      --  Else use the default switches
-
-      if Pkg /= No_Package
-        and then Packages.Table (Pkg).Decl.Attributes /= No_Variable
-      then
-         --  Indexed by the language ?
-
-         The_Array := Value_Of
-           (Name      => Name_Default_Switches,
-            In_Arrays => Packages.Table (Pkg).Decl.Arrays);
-         Var_Value := Value_Of
-           (Index    => Language,
-            In_Array => The_Array);
-
-         if Var_Value /= Nil_Variable_Value then
-            Value := Var_Value;
-            Is_Default_Value := True;
-            return;
-         end if;
-      end if;
+      Value := Get_Attribute_Value
+        (Project_View   => Project,
+         Attribute_Name => Get_Name_String (Name_Default_Switches),
+         Package_Name   => In_Pkg,
+         Index          => Get_Name_String (Language));
 
       Is_Default_Value := True;
-      Value := Nil_Variable_Value;
    end Get_Switches;
 
    ------------
