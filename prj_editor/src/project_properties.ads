@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                          G P S                                    --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -26,6 +26,7 @@
 
 with Glib.Object;
 with Glide_Kernel;
+with Gtk.Box;
 with Projects;
 
 package Project_Properties is
@@ -41,5 +42,26 @@ package Project_Properties is
    --  Edit the properties of the project in Context. This is meant to be used
    --  as a callback for a contextual menu.
    --  Context.all must be of type File_Selection_Context
+
+   procedure Register_Module
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Register the project properties module
+
+private
+   type Root_Attribute_Editor_Record is abstract new Gtk.Box.Gtk_Box_Record
+      with null record;
+   --  An editor used to edit one specific attribute
+
+   procedure Generate_Project
+     (Editor             : access Root_Attribute_Editor_Record;
+      Project            : Projects.Project_Type;
+      Scenario_Variables : Projects.Scenario_Variable_Array) is abstract;
+   --  Generate the project entry for the attribute edited by the attribute
+
+   function Get_Value_As_String
+     (Editor             : access Root_Attribute_Editor_Record)
+      return String is abstract;
+   --  Return the value selected in the editor, as a string. If the editor
+   --  is associated with a list, the empty string should be returned.
 
 end Project_Properties;
