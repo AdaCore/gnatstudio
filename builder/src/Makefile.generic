@@ -2,7 +2,7 @@
 # Copyright (C) 2001-2002 ACT-Europe
 
 # This Makefile provides a very generic framework of the following
-# functionnalities:
+# functionalities:
 #
 # Multi-language support (currently any combination of Ada/C/C++ supported)
 # Automatic handling of source dependencies
@@ -41,7 +41,7 @@
 #               the current list of recognized languages is: ada, c, c++
 # CC            name of the C compiler (optional)
 # CXX           name of the C++ compiler (optional)
-# AR_CMD        command to create an archive (optional, default to "ar rc") 
+# AR_CMD        command to create an archive (optional, default to "ar rc")
 # AR_EXT        file extension of an archive (optional, default to ".a")
 # GNATMAKE      name of the GNAT builder (optional, default to "gnatmake")
 # ADAFLAGS      additional Ada compilation switches, e.g "-gnatf" (optional)
@@ -268,7 +268,7 @@ else
 # C/C++ main
 # The trick here is to force gnatmake to bind/link, even if there is no
 # Ada main program. To achieve this effect, we use the -z switch, which is
-# close enough to our needs, and the usual -n gnatbind switch and --LINK= 
+# close enough to our needs, and the usual -n gnatbind switch and --LINK=
 # gnatlink switch.
 
 link: $(LINKER) force
@@ -369,22 +369,16 @@ internal-c++ : $(CXX_OBJECTS)
 .PHONY: force internal-clean internal-build internal-compile internal-ada internal-c internal-c++ build compile clean ada c c++
 
 internal-clean:
-	@echo $(RM) $(OBJ_DIR)/*$(OBJ_EXT)
+	@echo cleaning $(PROJECT_BASE)
 	@$(RM) $(OBJ_DIR)/*$(OBJ_EXT)
-	@echo $(RM) $(OBJ_DIR)/*.ali
 	@$(RM) $(OBJ_DIR)/*.ali
-	@echo $(RM) $(OBJ_DIR)/b~*
 	@$(RM) $(OBJ_DIR)/b~*
-	@echo $(RM) $(OBJ_DIR)/b_*
 	@$(RM) $(OBJ_DIR)/b_*
-	@echo $(RM) $(OBJ_DIR)/*$(AR_EXT)
 	@$(RM) $(OBJ_DIR)/*$(AR_EXT)
-	@echo $(RM) $(OBJ_DIR)/*.d
+	@$(RM) $(OBJ_DIR)/*$(SO_EXT)
 	@$(RM) $(OBJ_DIR)/*.d
 ifneq ($(EXEC),)
-	@echo $(RM) $(EXEC_DIR)/$(EXEC)
 	@$(RM) $(EXEC_DIR)/$(EXEC)
 endif
 
 force:
-
