@@ -25,9 +25,10 @@ procedure Display_Help
   (Kernel    : access Kernel_Handle_Record'Class;
    Help_File : VFS.Virtual_File)
 is
+   URL : constant String := "file://" & Full_Name (Help_File, True).all;
+
    HTML_Browser : constant String :=
      Get_Pref (Kernel, GPS.Kernel.Preferences.Html_Browser);
-   Args         : Argument_List_Access;
 
    type Cst_String_Access is access constant String;
    type Browser_List is array (Natural range <>) of Cst_String_Access;
@@ -41,6 +42,68 @@ is
       new String'("nautilus"),
       new String'("konqueror"));
 
+
+   function Get_Command (Browser : String) return Argument_List_Access;
+   --  return the command to execute to open the specific browser. Parameter
+   --  substitution takes place, and the URL is appended if necessary.
+   --  It is the responsability of the caller to free the result value
+
+   -----------------
+   -- Get_Command --
+   -----------------
+
+   function Get_Command (Browser : String) return Argument_List_Access is
+      Found_URL : Boolean := False;
+
+      function Substitute_Parameters
+        (Param : String; Quoted : Boolean) return String;
+      --  Substitute %u... in the command, and check whether the name of the
+      --  file appeared at least once
+
+      ---------------------------
+      -- Substitute_Parameters --
+      ---------------------------
+
+      function Substitute_Parameters
+        (Param : String; Quoted : Boolean) return String
+      is
+         pragma Unreferenced (Quoted);
+      begin
+         if Param = "u" then
+            Found_URL := True;
+            return URL;
+         end if;
+         raise Invalid_Substitution;
+      end Substitute_Parameters;
+
+      Result : constant String :=
+        Substitute (Browser, '%', Substitute_Parameters'Unrestricted_Access);
+      Args : Argument_List_Access;
+   begin
+      if Found_URL then
+         Args := Argument_String_To_List (Result);
+      else
+         Args := Argument_String_To_List (Browser & URL);
+      end if;
+
+      --  Unprotect all arguments, since that is why the shell would normally
+      --  do and browser might not be expecting the initial quotes
+
+      for A in Args'Range loop
+         declare
+            Arg : constant String := Unprotect (Args (A).all);
+         begin
+            Free (Args (A));
+            Args (A) := new String'(Arg);
+         end;
+      end loop;
+      return Args;
+   end Get_Command;
+
+   --------------------
+   -- Launch_Browser --
+   --------------------
+
    function Launch_Browser
      (Browser : String;
       Args    : Argument_List := (1 .. 0 => null)) return Boolean;
@@ -52,26 +115,30 @@ is
       Args    : Argument_List := (1 .. 0 => null)) return Boolean
    is
       Cmd     : GNAT.OS_Lib.String_Access;
-      File    : GNAT.OS_Lib.String_Access;
       Process : Process_Id;
-
    begin
       Cmd := Locate_Exec_On_Path (Browser);
 
       if Cmd = null then
          return False;
       else
-         File := new String'(Full_Name (Help_File, True).all);
-         Process := Non_Blocking_Spawn (Cmd.all, Args & (1 => File));
+         Process := Non_Blocking_Spawn (Cmd.all, Args);
          Free (Cmd);
+
          Insert
-           (Kernel, (-"Launching ") & Browser & (-" to view ") & File.all,
+           (Kernel, (-"Launching ") & Browser & (-" to view ") & URL,
             Mode => Info);
-         Free (File);
+
+         Trace (Me, "Launching external browser with " & Browser & "--");
+         for A in Args'Range loop
+            Trace (Me, "Args (" & A'Img & ")=" & Args (A).all & "--");
+         end loop;
 
          return Process /= Invalid_Pid;
       end if;
    end Launch_Browser;
+
+   Args         : Argument_List_Access;
 
 begin
    if not Is_Regular_File (Help_File) then
@@ -81,17 +148,20 @@ begin
    end if;
 
    if HTML_Browser = "" then
+      Args := new Argument_List'(1 => new String'(URL));
       for J in Browsers'Range loop
-         if Launch_Browser (Browsers (J).all) then
+         if Launch_Browser (Browsers (J).all, Args.all) then
+            Free (Args);
             return;
          end if;
       end loop;
 
+      Free (Args);
       Insert (Kernel, -"No HTML browser specified", Mode => Error);
       return;
    end if;
 
-   Args := Argument_String_To_List (HTML_Browser);
+   Args := Get_Command (HTML_Browser);
 
    if not Launch_Browser
      (Unprotect (Protect (Args (Args'First).all, False)),
