@@ -310,9 +310,9 @@ package body GVD.Preferences is
       Dialog   : access Gtk_Font_Combo_Record'Class;
       Override : Boolean := False) is
    begin
-      Set (String (Var), Get_Chars (Get_Entry (Get_Name_Combo (Dialog))),
+      Set (String (Var), Get_Text (Get_Entry (Get_Name_Combo (Dialog))),
            Override);
-      Set (Size, Gint'Value (Get_Chars (Get_Entry (Get_Size_Combo (Dialog)))),
+      Set (Size, Gint'Value (Get_Text (Get_Entry (Get_Size_Combo (Dialog)))),
            Override);
    end Set;
 
@@ -507,7 +507,8 @@ package body GVD.Preferences is
 
       --  Big items
       Set_Active (Dialog.Hide_Big_Items_Check, Get_Pref (Hide_Big_Items));
-      Set_Value (Dialog.Big_Item_Spin, Gfloat (Get_Pref (Big_Item_Height)));
+      Set_Value
+        (Dialog.Big_Item_Spin, Gfloat (Get_Pref (Big_Item_Height)));
       Set_Sensitive (Dialog.Big_Item_Spin, Get_Pref (Hide_Big_Items));
 
       --  Detect aliases
@@ -573,10 +574,10 @@ package body GVD.Preferences is
       Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
            True);
       Set (String (Ada_Extensions),
-           Get_Chars (Dialog.Ada_Extensions_Entry), True);
-      Set (String (C_Extensions), Get_Chars (Dialog.C_Extensions_Entry), True);
+           Get_Text (Dialog.Ada_Extensions_Entry), True);
+      Set (String (C_Extensions), Get_Text (Dialog.C_Extensions_Entry), True);
       Set (String (Cpp_Extensions),
-           Get_Chars (Dialog.Cpp_Extensions_Entry), True);
+           Get_Text (Dialog.Cpp_Extensions_Entry), True);
 
       Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
       Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
@@ -633,13 +634,13 @@ package body GVD.Preferences is
            True);
 
       Set (String (Default_External_Editor),
-           Get_Chars (Dialog.Edit_Source_Entry), True);
-      Set (String (List_Processes), Get_Chars (Dialog.List_Processes_Entry),
+           Get_Text (Dialog.Edit_Source_Entry), True);
+      Set (String (List_Processes), Get_Text (Dialog.List_Processes_Entry),
            True);
-      Set (String (Remote_Protocol), Get_Chars (Dialog.Remote_Shell_Entry),
+      Set (String (Remote_Protocol), Get_Text (Dialog.Remote_Shell_Entry),
            True);
-      Set (String (Remote_Copy), Get_Chars (Dialog.Remote_Copy_Entry), True);
-      Set (String (HTML_Browser), Get_Chars (Dialog.Html_Entry), True);
+      Set (String (Remote_Copy), Get_Text (Dialog.Remote_Copy_Entry), True);
+      Set (String (HTML_Browser), Get_Text (Dialog.Html_Entry), True);
    end Set_From_Dialog;
 
    -----------------------
