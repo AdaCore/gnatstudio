@@ -36,6 +36,7 @@ with Histories;            use Histories;
 with Interactive_Consoles; use Interactive_Consoles;
 with Entities.Queries;     use Entities, Entities.Queries;
 with String_Hash;
+with Commands.Interactive; use Commands, Commands.Interactive;
 with System;               use System;
 with String_Utils;         use String_Utils;
 with Basic_Types;
@@ -710,20 +711,33 @@ package body Glide_Kernel.Scripts is
               (Kernel, Nth_Arg (Data, 1));
             Context : constant Selection_Context_Access :=
               Get_Current_Context (Kernel);
+            Custom : Command_Access;
+            Args   : String_List_Access;
          begin
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
-
             elsif not Filter_Matches (Action.Filter, Context, Kernel) then
                Set_Error_Msg (Data, -"Invalid context for the action");
-
             else
+               Args := new String_List (1 .. Number_Of_Arguments (Data) - 1);
+               for Index in 2 .. Number_Of_Arguments (Data) loop
+                  Args (Index - 1) := new String'(Nth_Arg (Data, Index));
+               end loop;
+
+               Custom := Create_Proxy
+                 (Command => Action.Command,
+                  Context => (Event   => null,
+                              Context => null,
+                              Dir     => null,
+                              Args    => Args,
+                              Label   => new String'(Nth_Arg (Data, 1))));
+
                --  Have a small delay, since custom actions would launch
                --  external commands in background
                Launch_Background_Command
-                 (Kernel, Action.Command, Destroy_On_Exit => False,
+                 (Kernel, Custom, Destroy_On_Exit => True,
                   Active   => False,
-                  Show_Bar => False,
+                  Show_Bar => True,
                   Queue_Id => "");
             end if;
          end;
@@ -1499,7 +1513,7 @@ package body Glide_Kernel.Scripts is
       Register_Command
         (Kernel, "execute_action",
          Minimum_Args => 1,
-         Maximum_Args => 1,
+         Maximum_Args => Integer'Last,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel, "parse_xml",
