@@ -7,7 +7,6 @@ STRIP           = strip
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
-BUILTIN_PS      = @BUILTIN_PS@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
 
@@ -42,7 +41,7 @@ pkg_files: ${PKG_FILES}
 ${PKG_FILES}: force
 	$(CC) -c $(ALL_CFLAGS) $@
 
-$(EXEC): gvd-proc_utils-builtin.adb force
+$(EXEC): force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) $(GNATMAKE_FLAGS) \
 	  -bargs -static -E -largs $(LINK_FLAGS)
 
@@ -53,10 +52,6 @@ elim: $(EXEC)
 	make GNATMAKE_FLAGS="-f -c -gnatc -gnatt $(GNATMAKE_FLAGS)" \
 	     GNAT_FLAGS="-gnata" $(EXEC)
 	gnatelim $(MAIN) > gnat.adc
-
-gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
-	$(CP) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
-	      gvd-proc_utils-builtin.adb
 
 libgvd:
 	rm -f $(EXEC)
@@ -86,6 +81,7 @@ clean:
 	-$(RM) *~
 	-$(RM) b~*
 	-$(RM) $(EXEC)
+	-$(RM) *.exe
 	-$(RM) libgvd.a
 	-$(RM) gvd_test
 
@@ -93,7 +89,6 @@ mostlyclean: clean
 
 distclean: mostlyclean
 	-$(RM) Makefile
-	-$(RM) gvd-proc_utils-builtin.adb
 
 maintainer-clean: distclean
 
