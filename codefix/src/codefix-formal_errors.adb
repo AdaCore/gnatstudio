@@ -19,10 +19,12 @@
 -----------------------------------------------------------------------
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Ada.Exceptions; use Ada.Exceptions;
-with String_Utils; use String_Utils;
+with Ada.Exceptions;          use Ada.Exceptions;
+with String_Utils;            use String_Utils;
 
-with GNAT.Regpat; use GNAT.Regpat;
+with GNAT.Regpat;             use GNAT.Regpat;
+
+with Language;                use Language;
 
 package body Codefix.Formal_Errors is
 
@@ -220,7 +222,6 @@ package body Codefix.Formal_Errors is
       return New_Extract;
 
    end Delete_With;
-
 
    ---------------
    -- Should_Be --
@@ -847,33 +848,54 @@ package body Codefix.Formal_Errors is
    -----------------------
 
    function Resolve_Ambiguity
-     (Current_Text    : Text_Navigator_Abstr'Class;
-      Error_Cursor    : File_Cursor'Class;
-      Solution_Cursor : File_Cursor'Class;
-      Name            : String) return Extract
+     (Current_Text     : Text_Navigator_Abstr'Class;
+      Error_Cursor     : File_Cursor'Class;
+      Solution_Cursors : Cursor_Lists.List;
+      Name             : String) return Extract_List.List
    is
-      New_Extract : Extract;
-      Error_Line  : File_Cursor := File_Cursor (Error_Cursor);
-      New_Word    : Dynamic_String;
+      Str_Array     : array (1 .. Length (Solution_Cursors)) of Dynamic_String;
+      New_Extract   : Extract;
+      List_Extracts : Extract_List.List;
+      Error_Line    : File_Cursor := File_Cursor (Error_Cursor);
+      Cursor_Node   : Cursor_Lists.List_Node;
+      Index_Str     : Positive := 1;
    begin
-      Assign
-        (New_Word, Get_Extended_Unit_Name (Current_Text, Solution_Cursor));
 
-      Error_Line.Col := 1;
-      Get_Line (Current_Text, Error_Line, New_Extract);
+      Cursor_Node := First (Solution_Cursors);
 
-      Add_Word
-        (New_Extract,
-         Error_Cursor,
-         New_Word.all & ".");
+      while Cursor_Node /= Cursor_Lists.Null_Node loop
+         Assign
+           (Str_Array (Index_Str),
+            Get_Extended_Unit_Name (Current_Text, Data (Cursor_Node)));
 
-      Set_Caption
-        (New_Extract,
-         "Prefix """ & Name & """ by """ & New_Word.all & """");
+         for J in 1 ..  Index_Str - 1 loop
+            if Str_Array (J).all = Str_Array (Index_Str).all then
+               --  ???  Free
+               return Extract_List.Null_List;
+            end if;
+         end loop;
 
-      Free (New_Word);
+         Error_Line.Col := 1;
+         Get_Line (Current_Text, Error_Line, New_Extract);
 
-      return New_Extract;
+         Add_Word
+           (New_Extract,
+            Error_Cursor,
+            Str_Array (Index_Str).all & ".");
+
+         Set_Caption
+           (New_Extract,
+            "Prefix """ & Name & """ by """ &
+              Str_Array (Index_Str).all & """");
+
+         Append (List_Extracts, New_Extract);
+         Unchecked_Free (New_Extract);
+
+         Index_Str := Index_Str + 1;
+         Cursor_Node := Next (Cursor_Node);
+      end loop;
+
+      return List_Extracts;
    end Resolve_Ambiguity;
 
    -----------------------
