@@ -1576,18 +1576,20 @@ package body Project_Trees is
      (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
    is
       use type Node_List.Glist;
+
       File : constant String_Id := Get_File_From_Node (Tree, Node);
-      N : Gtk_Ctree_Node := Node;
+      N    : Gtk_Ctree_Node := Node;
       User : constant User_Data := Node_Get_Row_Data (Tree, N);
+
    begin
       case User.Node_Type is
-
          when Entity_Node =>
             String_To_Name_Buffer (File);
+
             declare
                File_S : constant String := Name_Buffer (1 .. Name_Len);
-               Dir_S  : constant String :=
-                 Get_Directory_From_Node (Tree, N);
+               Dir_S  : constant String := Get_Directory_From_Node (Tree, N);
+
             begin
                Go_To (Tree.Kernel,
                       Dir_S & File_S,
@@ -1618,30 +1620,49 @@ package body Project_Trees is
      (Tree : access Gtk_Widget_Record'Class; Args : Gtk_Args) return Boolean
    is
       use Row_List;
-      T : Project_Tree := Project_Tree (Tree);
-      Event : Gdk_Event := To_Event (Args, 1);
-      Row, Column : Gint;
+
+      T        : constant Project_Tree := Project_Tree (Tree);
+      Event    : constant Gdk_Event := To_Event (Args, 1);
+      Row      : Gint;
+      Column   : Gint;
       Is_Valid : Boolean;
-      Node : Gtk_Ctree_Node;
+      Node     : Gtk_Ctree_Node;
+
    begin
-      Get_Selection_Info (T, Gint (Get_X (Event)), Gint (Get_Y (Event)),
-                          Row, Column, Is_Valid);
+      Get_Selection_Info
+        (T, Gint (Get_X (Event)), Gint (Get_Y (Event)), Row, Column, Is_Valid);
+
       if not Is_Valid then
          return False;
       end if;
 
-      if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
-      then
+      if Get_Button (Event) = 1 then
          Node := Node_Nth (T, Guint (Row));
-         Node_Selected (T, Node);
+
+         declare
+            use type Node_List.Glist;
+            User : constant User_Data := Node_Get_Row_Data (T, Node);
+         begin
+            --  Select the node only on double click if this is a file, on
+            --  simple click otherwise.
+
+            case User.Node_Type is
+               when File_Node =>
+                  if Get_Event_Type (Event) = Gdk_2button_Press then
+                     Node_Selected (T, Node);
+                  end if;
+
+               when others =>
+                  Node_Selected (T, Node);
+            end case;
+         end;
       end if;
 
       return False;
    end Button_Press;
 
 begin
-   --  ??? Temporaru, this will be done in Glide itself.
+   --  ??? Temporary, this will be done in Glide itself.
    Add_File_Extensions (Ada_Lang, ".ads;.adb;.ada;.a;.dg");
    Add_File_Extensions (C_Lang,   ".c;.h");
    Add_File_Extensions (Cpp_Lang, ".cc;.cpp;.C;.hh;.H");
