@@ -56,6 +56,7 @@ project GPS is
       case Shared.OS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
+         when "unix" =>
       end case;
       --  for Default_Switches ("Ada") use ("-lgmem");
       --  for Default_Switches ("Ada") use ("-pg");
