@@ -1783,6 +1783,14 @@ Once you have made your choice, click on the @code{OK} button to validate.
 Clicking on @code{Cancel} or hitting the @key{Esc} key will cancel the
 operation and close the dialog.
 
+This dialog will only show each file once. If you have extended
+projects in your hierarchy, some files may be redefined in some
+extending project. In this case, only the files from the extending
+project are shown, and you cannot have access through this dialog to
+the overriden files of the extended project. Of course, you can still
+use the project explorer or the standard @code{File->Open} menu to
+open these files.
+
 @item Recent
 @cindex recent
 Open a sub menu containing a list of the ten most recent files opened in GPS,
