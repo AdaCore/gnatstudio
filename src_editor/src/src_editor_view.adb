@@ -67,11 +67,9 @@ with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;
 with Language;                    use Language;
+with Case_Handling;               use Case_Handling;
 
 package body Src_Editor_View is
-
-   On_The_Fly_Casing : constant Debug_Handle :=
-                         Create ("on_the_fly_casing", Off);
 
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
@@ -1858,7 +1856,7 @@ package body Src_Editor_View is
          when GDK_Return =>
             External_End_Action (Buffer);
 
-            --  If there is a selection, delete it.
+            --  If there is a selection, delete it
 
             if Selection_Exists (Buffer) then
                Result := Delete_Selection (Buffer, True, True);
