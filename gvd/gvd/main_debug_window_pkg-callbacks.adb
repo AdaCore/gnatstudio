@@ -743,6 +743,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
    begin
       Show_All (Top.History_Dialog);
+      Gdk_Raise (Get_Window (Top.History_Dialog));
       Update (Top.History_Dialog, Tab);
    end On_Command_History1_Activate;
 
