@@ -7,7 +7,7 @@ a prerequisite.
 You need to use a recent version of the GNAT compiler (version >= GNAT 3.15, or
 GCC >= 3.4).
 
-You then need to install the Gtk+ 2.x suite (e.g 2.2.4).
+You then need to install the Gtk+ 2.x suite (e.g 2.4.14).
 To download and build Gtk+, follow the instructions given at www.gtk.org
 
 Once Gtk+ has been installed, you need to install the latest GtkAda 2.4.x
@@ -20,9 +20,6 @@ Once GtkAda has been installed, extract the GPS sources:
 
   $ gzip -dc gps-*-src.tgz | tar xvf -
   $ cd gps*
-
-Under Windows only, you need to apply the gps-win32.diff patch file:
-  $ patch -p0 < docs/gps-win32.diff
 
 Then execute the following commands:
 
