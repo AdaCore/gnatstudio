@@ -2475,10 +2475,24 @@ Note that this feature is not activated for entities (keywords or
 identifiers) for which the casing is set to @code{Unchanged}. See 
 @pxref{The Preferences Dialog}.
 
-A contextual menu named @b{Casing} is accessible for case
-insensitive languages:
+A contextual menu named @b{Casing} has the following entries:
 
 @table @b
+@item Lower ...
+Set the selected entity in lower case.
+
+@item Upper ...
+Set the selected entity in upper case.
+
+@item Mixed ...
+Set the selected entity in mixed case (set the first letter and
+letters before an underscore in upper case, all other letters are set
+to lower case).
+
+@item Smart Mixed ...
+Set the selected entity in smart mixed case. Idem as above except that
+upper case letters are kept unchanged.
+
 @item Add exception for ...
 Add the current entity into the case exception dictionary.
 
