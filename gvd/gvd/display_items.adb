@@ -44,8 +44,6 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Items;            use Items;
 with Items.Simples;    use Items.Simples;
 
-with Ada.Text_IO;      use Ada.Text_IO;
-
 package body Display_Items is
 
    --  The items are drawn with the following spacings:
