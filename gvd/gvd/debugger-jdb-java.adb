@@ -130,20 +130,20 @@ package body Debugger.Jdb.Java is
       return Result;
    end Parse_Thread_List;
 
-   --------------------------
-   -- Get_Language_Context --
-   --------------------------
+   -----------------------------------
+   -- Get_Language_Debugger_Context --
+   -----------------------------------
 
-   function Get_Language_Context
+   function Get_Language_Debugger_Context
      (Lang : access Jdb_Java_Language)
-      return Language.Debugger.Language_Context is
+      return Language.Debugger.Language_Debugger_Context is
    begin
-      return (Record_Field_Length => 1,
-              Record_Start        => '{',
-              Record_End          => '}',
-              Array_Start         => '{',
-              Array_End           => '}',
-              Record_Field        => "=");
-   end Get_Language_Context;
+      return (Record_Field_Length  => 1,
+              Record_Start         => '{',
+              Record_End           => '}',
+              Array_Start          => '{',
+              Array_End            => '}',
+              Record_Field         => "=");
+   end Get_Language_Debugger_Context;
 
 end Debugger.Jdb.Java;

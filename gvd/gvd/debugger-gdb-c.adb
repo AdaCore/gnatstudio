@@ -32,13 +32,6 @@ package body Debugger.Gdb.C is
 
    use Language;
 
-   Record_Start : constant Character := '{';
-   Record_End   : constant Character := '}';
-   Array_Start  : constant Character := '{';
-   Array_End    : constant Character := '}';
-   Record_Field : constant String    := "=";
-   --  how are record field names separated from their values
-
    ---------------------
    -- Break Exception --
    ---------------------
@@ -67,6 +60,8 @@ package body Debugger.Gdb.C is
       Tmp  : Natural := Index;
       Save : Natural;
       Last : Natural := Type_Str'Last;
+      Context : constant Language_Debugger_Context :=
+        Get_Language_Debugger_Context (Lang);
 
    begin
       --  First: Skip the type itself, to check whether we have in fact an
@@ -80,7 +75,7 @@ package body Debugger.Gdb.C is
       if Looking_At (Type_Str, Index, "struct ")
         or else Looking_At (Type_Str, Index, "union ")
       then
-         Skip_To_Char (Type_Str, Index, Record_End);
+         Skip_To_Char (Type_Str, Index, Context.Record_End);
          Index := Index + 1;
       end if;
 
@@ -199,14 +194,14 @@ package body Debugger.Gdb.C is
                Tmp   := Index;
                Index := Index + 7;           --  skips "struct "
 
-               if Type_Str (Index) /= Record_Start then
+               if Type_Str (Index) /= Context.Record_Start then
                   Skip_Word (Type_Str, Index);  --  skips struct name
                end if;
 
                Skip_Blanks (Type_Str, Index);
 
                if Index <= Type_Str'Last
-                 and then Type_Str (Index) = Record_Start
+                 and then Type_Str (Index) = Context.Record_Start
                then
                   Index := Index + 1;
                   Parse_Record_Type
@@ -230,7 +225,7 @@ package body Debugger.Gdb.C is
                Skip_Blanks (Type_Str, Index);
 
                if Index <= Type_Str'Last
-                 and then Type_Str (Index) = Record_Start
+                 and then Type_Str (Index) = Context.Record_Start
                then
                   Index := Index + 1;
                   Parse_Record_Type
@@ -598,20 +593,20 @@ package body Debugger.Gdb.C is
       return Result;
    end Parse_Thread_List;
 
-   --------------------------
-   -- Get_Language_Context --
-   --------------------------
+   -----------------------------------
+   -- Get_Language_Debugger_Context --
+   -----------------------------------
 
-   function Get_Language_Context
-     (Lang : access Gdb_C_Language) return Language_Context is
+   function Get_Language_Debugger_Context
+     (Lang : access Gdb_C_Language) return Language_Debugger_Context is
    begin
-      return (Record_Field_Length => Record_Field'Length,
-              Record_Start        => Record_Start,
-              Record_End          => Record_End,
-              Array_Start         => Array_Start,
-              Array_End           => Array_End,
-              Record_Field        => Record_Field);
-   end Get_Language_Context;
+      return (Record_Field_Length  => 1,
+              Record_Start         => '{',
+              Record_End           => '}',
+              Array_Start          => '{',
+              Array_End            => '}',
+              Record_Field         => "=");
+   end Get_Language_Debugger_Context;
 
    ------------------
    -- Set_Variable --

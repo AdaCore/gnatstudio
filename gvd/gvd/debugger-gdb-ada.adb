@@ -867,20 +867,20 @@ package body Debugger.Gdb.Ada is
       return Result (1 .. Num_Threads);
    end Parse_Thread_List;
 
-   --------------------------
-   -- Get_Language_Context --
-   --------------------------
+   -----------------------------------
+   -- Get_Language_Debugger_Context --
+   -----------------------------------
 
-   function Get_Language_Context
-     (Lang : access Gdb_Ada_Language) return Language_Context is
+   function Get_Language_Debugger_Context
+     (Lang : access Gdb_Ada_Language) return Language_Debugger_Context is
    begin
-      return (Record_Field_Length => 2,
-              Record_Start        => '(',
-              Record_End          => ')',
-              Array_Start         => '(',
-              Array_End           => ')',
-              Record_Field        => "=>");
-   end Get_Language_Context;
+      return (Record_Field_Length  => 2,
+              Record_Start         => '(',
+              Record_End           => ')',
+              Array_Start          => '(',
+              Array_End            => ')',
+              Record_Field         => "=>");
+   end Get_Language_Debugger_Context;
 
    ------------------
    -- Set_Variable --

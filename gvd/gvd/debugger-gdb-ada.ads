@@ -91,9 +91,9 @@ package Debugger.Gdb.Ada is
       Value    : String)
      return String;
 
-   function Get_Language_Context
+   function Get_Language_Debugger_Context
      (Lang : access Gdb_Ada_Language)
-      return Language.Debugger.Language_Context;
+      return Language.Debugger.Language_Debugger_Context;
 
 private
 

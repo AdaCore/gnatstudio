@@ -1232,7 +1232,8 @@ package body Debugger.Gdb is
       Repeat_Num : out Positive;
       Parent     : Items.Generic_Type_Access)
    is
-      Context : constant Language_Context := Get_Language_Context (Lang);
+      Context : constant Language_Debugger_Context :=
+        Get_Language_Debugger_Context (Lang);
    begin
       Repeat_Num := 1;
 

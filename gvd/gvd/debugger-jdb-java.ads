@@ -78,9 +78,9 @@ package Debugger.Jdb.Java is
       Index    : in out Natural;
       Result   : in out Items.Arrays.Array_Type_Access);
 
-   function Get_Language_Context
+   function Get_Language_Debugger_Context
      (Lang : access Jdb_Java_Language)
-      return Language.Debugger.Language_Context;
+      return Language.Debugger.Language_Debugger_Context;
 
 private
 
