@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -55,7 +55,7 @@ package VCS.Generic_VCS is
    procedure Commit
      (Rep       : access Generic_VCS_Record;
       Filenames : String_List.List;
-      Logs      : String_List.List);
+      Log       : String);
 
    procedure Update
      (Rep       : access Generic_VCS_Record;
@@ -99,6 +99,9 @@ package VCS.Generic_VCS is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the VCS.Generic_VCS module
+
+   function Get_Identified_Actions
+     (Rep : access Generic_VCS_Record) return Action_Array;
 
 private
 
