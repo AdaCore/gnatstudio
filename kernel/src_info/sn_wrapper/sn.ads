@@ -2,7 +2,7 @@ with Ada.Unchecked_Deallocation,
      GNAT.OS_Lib;
 
 package SN is
-   --  Types and constant SN_Attributess specific to Source Navigator.
+   --  Types and constants specific to Source Navigator.
 
    type Table_Type is
       (BY, CL, COM, CON, COV, E, EC, F, FD, FIL, FR, FU, GV, SN_IN,
@@ -13,22 +13,22 @@ package SN is
      (Undef,   --  undefined symbol
       CL,      --  class/struct
       COM,     --  common block (Fortran)
-      COV,     --  common variable (Fortrun)
-      CON,     --  constant SN_Attributes
+      COV,     --  common variable (Fortran)
+      CON,     --  constant
       E,       --  enum
       EC,      --  enum value
       FD,      --  function declaration
       FR,      --  friend
       FU,      --  function
       GV,      --  global variable
-      SN_IN,   --  Inheritance
+      SN_IN,   --  inheritance
       IU,      --  include
       IV,      --  instance variable
       LV,      --  local variable
       MA,      --  macro
       MD,      --  method declaration
       MI,      --  method implementation
-      SU,      --  sunroutine (Fortran)
+      SU,      --  subroutine (Fortran)
       T,       --  typedef
       UN       --  union
       );
@@ -46,7 +46,7 @@ package SN is
    Invalid_String  : constant String := "";
 
    function "<" (P1, P2 : Point) return Boolean;
-   --  LessThan operation in the terms
+   --  LessThan operation for operands of Point type
 
    type Segment is
       record
