@@ -16,4 +16,8 @@ project Vsearch is
 
    package IDE renames Shared.IDE;
 
+   package Builder is
+      for Default_Switches ("Ada") use ("-g", "-m");
+   end Builder;
+
 end Vsearch;
