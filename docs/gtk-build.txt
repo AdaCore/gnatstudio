@@ -1,4 +1,4 @@
-Here are the complete procedures to build Gtk+ 2.0.9 from scratch
+Here are the complete procedures to build Gtk+ 2.2.0 from scratch
 (Systems tested are Redhat 7.1, Solaris 2.5.1, Solaris 2.8, Tru64 5.1a,
  HP-UX 11.00, IRIX 6.5 and AiX 5.1).
 
@@ -25,8 +25,8 @@ prefix=/opt/gtk-2.0
 ##############
 # pkg-config #
 ##############
-tar xzvf pkgconfig-0.12.0.tar.gz
-cd pkgconfig-0.12.0
+tar xzvf pkgconfig-0.14.0.tar.gz
+cd pkgconfig-0.14.0
 ./configure --prefix=$prefix
 make
 make install
@@ -146,11 +146,8 @@ make install
 ########
 # glib #
 ########
-tar xzvf glib-2.0.7.tar.gz
-cd glib-2.0.7
-
-# Under IRIX, apply the following patch:
-# patch -p0 < .../glib-2.0.6-irix-6.5.diff
+tar xzvf glib-2.2.0.tar.gz
+cd glib-2.2.0
 
 # on Linux and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
@@ -175,8 +172,8 @@ cd ..
 #######
 # atk #
 #######
-tar xzvf atk-1.0.3.tar.gz
-cd atk-1.0.3
+tar xzvf atk-1.2.0.tar.gz
+cd atk-1.2.0
 
 ./configure --prefix=$prefix
 make
@@ -186,17 +183,14 @@ cd ..
 #########
 # pango #
 #########
-tar xzvf pango-1.0.5.tar.gz
-cd pango-1.0.5
+tar xzvf pango-1.2.0.tar.gz
+cd pango-1.2.0
 
 # Note: to get all modules included, we could use --with-included-modules=yes
 # but basic-x should be all we need. Other modules are:
 # arabic-x,arabic-xft,hebrew-x,basic-x,basic-ft2,basic-xft,basic-win32,
 # hangul-x,tamil-x,tamil-xft,thai-x,gurmukhi-x,bengali-x,gujarati-x,
 # devanagari-x,myanmar-x
-
-# Under IRIX, apply the following patch:
-# patch -p0 < .../pango-1.0.4-irix-6.5.diff
 
 ./configure --prefix=$prefix --with-included-modules=basic-x
 make
@@ -206,8 +200,8 @@ cd ..
 #######
 # gtk #
 #######
-tar xzvf gtk+-2.0.9.tar.gz
-cd gtk+-2.0.9
+tar xzvf gtk+-2.2.0.tar.gz
+cd gtk+-2.2.0
 
 # Under certain platforms such as AiX or NT, a very recent version of
 # libtool may be needed. To install the most recent version of libtool,
