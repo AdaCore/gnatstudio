@@ -1,11 +1,16 @@
 Known Problems fixed in GVD 1.0.3
 
+- Parsing of unsigned char variables.
+  Problem:    When trying to display an unsigned char, GVD would recurse
+              infinitely.
+  Workaround: Use the tooltips or the command window to display such variables.
+
 - [8511-011] Parsing of Ada variant records with null part.
   Problem:    Variant records that have at least one alternative with a null
               part were incorrectly parsed (parsing error, nothing displayed in
               the canvas).
   Workaround: Use the tooltips in the source window to look at the value of
-              the variable
+              the variable.
 
 Known Problems fixed in GVD 1.0.2
 
