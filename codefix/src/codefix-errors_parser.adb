@@ -1137,8 +1137,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Pkg_Not_Referenced) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-       (Compile ("unit ""([^""]+)"" is not referenced")));
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("unit ""([^""]+)"" is not referenced")),
+         new Pattern_Matcher'
+           (Compile ("no entities of ""([^""]+)"" are referenced")));
    end Initialize;
 
    procedure Fix
