@@ -66,6 +66,7 @@ with Directory_Tree;           use Directory_Tree;
 with Switches_Editors;         use Switches_Editors;
 with Traces;                   use Traces;
 with Variable_Editors;         use Variable_Editors;
+with String_Utils;             use String_Utils;
 with Project_Properties;       use Project_Properties;
 
 with Prj;           use Prj;
@@ -754,16 +755,18 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      Project : Project_Id :=
+      Project   : Project_Id :=
         Project_Information (File_Selection_Context_Access (Context));
+      Old_Dir   : constant String :=
+        Name_As_Directory (GNAT.OS_Lib.Normalize_Pathname
+        (Get_Name_String (Prj.Projects.Table (Project).Object_Directory)));
       Directory : constant String := Select_Directory
-        (Title => -"Select object directory",
-         Base_Directory => GNAT.OS_Lib.Normalize_Pathname
-           (Get_Name_String (Prj.Projects.Table (Project).Object_Directory))
-            & Directory_Separator);
+        (Title => -"Select object directory", Base_Directory => Old_Dir);
       Prj : Project_Node_Id;
    begin
-      if Directory /= "" then
+      if Directory /= ""
+        and then Directory /= Old_Dir
+      then
          Prj := Get_Project_From_View (Project);
          Update_Attribute_Value_In_Scenario
            (Project            => Prj,
@@ -952,9 +955,9 @@ package body Project_Viewers is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
-      File : constant File_Selection_Context_Access :=
+      File    : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Kernel : Kernel_Handle := Get_Kernel (Context);
+      Kernel  : Kernel_Handle := Get_Kernel (Context);
       Project : Project_Node_Id;
    begin
       Project := Get_Project_From_View (Project_Information (File));
