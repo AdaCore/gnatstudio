@@ -764,8 +764,8 @@ package body KeyManager_Module is
       Kernel   : access Kernel_Handle_Record'Class;
       Event    : Gdk.Event.Gdk_Event) return Boolean
    is
-      Key     : constant Gdk_Key_Type      := Get_Key_Val (Event);
-      Modif   : constant Gdk_Modifier_Type := Get_State (Event);
+      Key     : constant Gdk_Key_Type := Get_Key_Val (Event);
+      Modif   : Gdk_Modifier_Type := Get_State (Event);
       Binding : Key_Description_List;
       Command : Action_Record;
       Any_Context_Command : Action_Record := No_Action;
@@ -776,6 +776,9 @@ package body KeyManager_Module is
       if Handler.Active
         and then Get_Event_Type (Event) = Key_Press
       then
+         --  Remove any num-lock and caps-lock modifiers.
+         Modif := Modif and not (Lock_Mask or Mod2_Mask);
+
          if Handler.Secondary_Keymap = null then
             Binding := Get (Handler.Table, (Key, Modif));
          else
