@@ -114,8 +114,7 @@ package body GVD.Memory_View is
    --  Gives the bloc number at the given position.
 
    procedure Swap_Blocks
-     (View : access GVD_Memory_View_Record'Class;
-      Size : Data_Size);
+     (View : access GVD_Memory_View_Record'Class; Size : Data_Size);
    --  Swap blocks of size Size in the View's values to swap endianness.
 
    -----------------
@@ -123,15 +122,13 @@ package body GVD.Memory_View is
    -----------------
 
    procedure Swap_Blocks
-     (View : access GVD_Memory_View_Record'Class;
-      Size : Data_Size)
+     (View : access GVD_Memory_View_Record'Class; Size : Data_Size)
    is
       Index     : Integer := 0;
       Unit_Size : Integer;
+
    begin
-      if View.Values = null
-        or else View.Flags = null
-      then
+      if View.Values = null or else View.Flags = null then
          return;
       end if;
 
@@ -145,29 +142,33 @@ package body GVD.Memory_View is
       end case;
 
       declare
-         Buffer     : String (1 .. Unit_Size);
+         Buffer : String (1 .. Unit_Size);
       begin
          while Index <= View.Number_Of_Bytes * 2 loop
-            Buffer (1 .. Unit_Size)
-              := View.Values.all
-              (View.Values.all'First + Index
-               .. View.Values.all'First + Index + Unit_Size - 1);
-            for I in 0 .. Unit_Size / 2 - 1 loop
-               View.Values.all
-                 (View.Values.all'First + Index + I * 2
-                  .. View.Values.all'First + Index + I * 2 + 1)
-                 := Buffer (Buffer'Last -  I * 2 - 1 .. Buffer'Last -  I * 2);
+            Buffer (1 .. Unit_Size) :=
+              View.Values
+                (View.Values'First + Index ..
+                 View.Values'First + Index + Unit_Size - 1);
+
+            for J in 0 .. Unit_Size / 2 - 1 loop
+               View.Values
+                 (View.Values'First + Index + J * 2
+                  .. View.Values'First + Index + J * 2 + 1) :=
+                 Buffer (Buffer'Last -  J * 2 - 1 .. Buffer'Last - J * 2);
             end loop;
-            Buffer (1 .. Unit_Size)
-              := View.Flags.all
-              (View.Flags.all'First + Index
-               .. View.Flags.all'First + Index + Unit_Size - 1);
-            for I in 0 .. Unit_Size / 2 - 1 loop
-               View.Flags.all
-                 (View.Flags.all'First + Index + I * 2
-                  .. View.Flags.all'First + Index + I * 2 + 1)
-                 := Buffer (Buffer'Last -  I * 2 - 1 .. Buffer'Last -  I * 2);
+
+            Buffer (1 .. Unit_Size) :=
+              View.Flags
+                (View.Flags'First + Index ..
+                 View.Flags'First + Index + Unit_Size - 1);
+
+            for J in 0 .. Unit_Size / 2 - 1 loop
+               View.Flags
+                 (View.Flags'First + Index + J * 2
+                  .. View.Flags'First + Index + J * 2 + 1) :=
+                 Buffer (Buffer'Last -  J * 2 - 1 .. Buffer'Last -  J * 2);
             end loop;
+
             Index := Index + Unit_Size;
          end loop;
       end;
@@ -189,23 +190,21 @@ package body GVD.Memory_View is
    begin
       if Get_Active (View.Show_Ascii) then
          ASCII_Size :=
-           Data_ASCII_Separator'Length
-           + Line_Base_Size
-           + ASCII_Separator'Length * View.Number_Of_Columns;
+           Data_ASCII_Separator'Length +
+           Line_Base_Size +
+           ASCII_Separator'Length * View.Number_Of_Columns;
       end if;
 
-      Row_Length := (Address_Length
-                     + Address_Separator'Length
-                     + (View.Number_Of_Columns
-                        * (View.Trunc + Data_Separator'Length))
-                     + ASCII_Size
-                     + End_Of_Line'Length);
+      Row_Length :=
+        Address_Length + Address_Separator'Length +
+        (View.Number_Of_Columns * (View.Trunc + Data_Separator'Length)) +
+        ASCII_Size + End_Of_Line'Length;
 
       Row := Integer (Position) / Row_Length;
 
-      Column := ((Integer (Position)
-                  - Row * Row_Length
-                  - (Address_Length + Address_Separator'Length)) + 1);
+      Column :=
+        (Integer (Position) - Row * Row_Length -
+          (Address_Length + Address_Separator'Length)) + 1;
 
       if Column <= 0 then
          Column := -1;
@@ -350,22 +349,24 @@ package body GVD.Memory_View is
    begin
       Put (Result, Address, Base);
       Skip_To_String (Result, Index, Hex_Footer);
+
       if Index > 3
         and then Index < Result'Length + 1
       then
          Result (Index - 3 .. Index) := "    ";
       end if;
+
       if Trunc_At = -1 then
-         return (Translate (Result (1 .. Result'Length - 1), Mapping));
+         return Translate (Result (1 .. Result'Length - 1), Mapping);
       else
          if Base = 10 then
-            return (Translate
-                    (Result (Result'Last - Trunc_At + 1 .. Result'Last),
-                     Mapping));
+            return
+              Translate
+                (Result (Result'Last - Trunc_At + 1 .. Result'Last), Mapping);
          else
-            return (Translate
-                    (Result (Result'Last - Trunc_At .. Result'Last - 1),
-                     Mapping));
+            return
+              Translate
+                (Result (Result'Last - Trunc_At .. Result'Last - 1), Mapping);
          end if;
       end if;
    end To_Standard_Base;
@@ -383,8 +384,8 @@ package body GVD.Memory_View is
       Current    : String_Access;
       Old_Size   : Data_Size := View.Data;
 
-      Endianness : Endian_Type
-        := Get_Endian_Type (Get_Current_Process (View.Window).Debugger);
+      Endianness : constant Endian_Type :=
+        Get_Endian_Type (Get_Current_Process (View.Window).Debugger);
 
    begin
       if View.Values = null then
@@ -454,8 +455,8 @@ package body GVD.Memory_View is
       Get_Size (Get_Text_Area (View.View), Width, Height);
 
       View.Number_Of_Lines := Integer (Height) /
-        Integer (Get_Ascent (View.View_Font)
-                 + Get_Descent (View.View_Font) + 1);
+        Integer (Get_Ascent (View.View_Font) +
+        Get_Descent (View.View_Font) + 1);
 
       View.Number_Of_Columns := Line_Base_Size * 2 / View.Unit_Size;
 
@@ -595,14 +596,12 @@ package body GVD.Memory_View is
       end if;
 
       declare
-         Values  : String (1 .. 2 * View.Number_Of_Bytes);
+         Values : String (1 .. 2 * View.Number_Of_Bytes);
       begin
-
-         Values := Get_Memory (Process.Debugger,
-                               View.Number_Of_Bytes,
-                               "0x"
-                               & To_Standard_Base (Address, 16));
-
+         Values := Get_Memory
+           (Process.Debugger,
+            View.Number_Of_Bytes,
+            "0x" & To_Standard_Base (Address, 16));
          View.Starting_Address := Address;
          Free (View.Values);
          Free (View.Flags);
@@ -610,8 +609,8 @@ package body GVD.Memory_View is
          View.Flags  := new String' (Values);
          View.Data   := Byte;
       end;
-      Update_Display (View);
 
+      Update_Display (View);
    end Display_Memory;
 
    --------------------
@@ -632,6 +631,7 @@ package body GVD.Memory_View is
         and then Address (Address'First .. Address'First + 1) = "0x"
       then
          Index := Address'First + 2;
+
          while Index <= Address'Last
            and then Is_Hexadecimal_Digit (Address (Index))
          loop
@@ -639,15 +639,15 @@ package body GVD.Memory_View is
          end loop;
 
          Real_Address := Long_Long_Integer'Value
-           (Hex_Header
-            & Address (Address'First + 2 .. Index - 1)
-            & Hex_Footer);
+           (Hex_Header &
+            Address (Address'First + 2 .. Index - 1) &
+            Hex_Footer);
          Display_Memory (View, Real_Address);
 
       else
          declare
-            New_Address : constant String
-              := Get_Variable_Address (Process.Debugger, Address);
+            New_Address : constant String :=
+              Get_Variable_Address (Process.Debugger, Address);
          begin
             if New_Address'Length > 2
               and then New_Address
@@ -674,8 +674,8 @@ package body GVD.Memory_View is
       end if;
 
       for J in 1 .. View.Number_Of_Bytes loop
-         if View.Flags (J * 2 - 1 .. J * 2)
-           /= View.Values (J * 2 - 1 .. J * 2)
+         if View.Flags (J * 2 - 1 .. J * 2) /=
+           View.Values (J * 2 - 1 .. J * 2)
          then
             Put_Memory_Byte
               (Get_Current_Process (View.Window).Debugger,
@@ -749,6 +749,7 @@ package body GVD.Memory_View is
       else
          Set_Label (View.Frame, "(no executable)");
       end if;
+
       Display_Memory (View, View.Starting_Address);
    end Update;
 
@@ -767,9 +768,9 @@ package body GVD.Memory_View is
    begin
       if Get_Active (View.Show_Ascii) then
          ASCII_Size :=
-           Data_ASCII_Separator'Length
-           + Line_Base_Size
-           + ASCII_Separator'Length * View.Number_Of_Columns;
+           Data_ASCII_Separator'Length +
+           Line_Base_Size +
+           ASCII_Separator'Length * View.Number_Of_Columns;
       end if;
 
       case Where is
@@ -900,18 +901,14 @@ package body GVD.Memory_View is
               Fore => View.Modified_Color,
               Chars => Char);
 
-      while Get_Chars (View.View,
-                       Bloc_Begin - 1,
-                       Bloc_Begin)
-        /= Data_Separator (Data_Separator'Last .. Data_Separator'Last)
+      while Get_Chars (View.View, Bloc_Begin - 1, Bloc_Begin) /=
+        Data_Separator (Data_Separator'Last .. Data_Separator'Last)
       loop
          Bloc_Begin := Bloc_Begin - 1;
       end loop;
 
-      while Get_Chars (View.View,
-                       Bloc_End,
-                       Bloc_End + 1)
-        /= Data_Separator (Data_Separator'First .. Data_Separator'First)
+      while Get_Chars (View.View, Bloc_End, Bloc_End + 1) /=
+        Data_Separator (Data_Separator'First .. Data_Separator'First)
       loop
          Bloc_End := Bloc_End + 1;
       end loop;
@@ -939,11 +936,10 @@ package body GVD.Memory_View is
                - Address_Length - Address_Separator'Length
                - (Column - 1) * (Data_Separator'Length)) * 2 - 1;
 
-            View.Flags (Value_Index .. Value_Index + 1)
-              := To_Standard_Base (Long_Long_Integer
-                                   (Character'Pos (Char (Char'First))),
-                                   16,
-                                   2);
+            View.Flags (Value_Index .. Value_Index + 1) :=
+              To_Standard_Base
+                (Long_Long_Integer (Character'Pos (Char (Char'First))),
+                 16, 2);
          end;
       else
          Value_Index :=
@@ -951,10 +947,11 @@ package body GVD.Memory_View is
            * Line_Base_Size / View.Number_Of_Columns * 2 + 1;
 
          declare
-            S : String := Get_Chars (View.View, Bloc_Begin, Bloc_End);
+            S : constant String :=
+              Get_Chars (View.View, Bloc_Begin, Bloc_End);
          begin
-            if View.Flags (Value_Index .. Value_Index)
-              /= Non_Valid_Character
+            if View.Flags (Value_Index .. Value_Index) /=
+              Non_Valid_Character
             then
                View.Flags (Value_Index .. Value_Index + View.Unit_Size - 1) :=
                  To_Standard_Base
