@@ -342,9 +342,9 @@ package Language is
       Cat_Switch,
       Cat_Select,
       Cat_Accept,
-      Cat_Declare,
-      Cat_Begin,
-      Cat_Exception_Block);
+      Cat_Declare_Block,
+      Cat_Simple_Block,
+      Cat_Exception_Handler);
 
    type Generic_Token_Type is new Integer;
    --  Generic token type.
