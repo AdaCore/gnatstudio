@@ -89,7 +89,6 @@ with GVD.Dialogs;                 use GVD.Dialogs;
 with Commands;                    use Commands;
 with Commands.Editor;             use Commands.Editor;
 with Find_Utils;                  use Find_Utils;
-with Casing_Exceptions;           use Casing_Exceptions;
 
 with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
@@ -1635,8 +1634,6 @@ package body Src_Editor_Box is
             Gtk_New (Item, -"Goto parent unit");
             Add (Menu, Item);
             Set_Sensitive (Item, False);
-
-            Casing_Contextual (Object, Context, Menu);
          end if;
       end if;
 
