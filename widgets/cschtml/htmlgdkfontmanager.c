@@ -48,7 +48,7 @@ HTMLGdkFontManager *html_gdk_font_manager_new (void) {
  ** unref_fonts
  ***************/
 
-void unref_fonts (gpointer key, GdkFont *font, gpointer user_data) {
+static void unref_fonts (gpointer key, GdkFont *font, gpointer user_data) {
    gdk_font_unref (font);
    g_free (key);
 }
@@ -57,7 +57,7 @@ void unref_fonts (gpointer key, GdkFont *font, gpointer user_data) {
  ** html_gdk_font_manager_destroy
  *********************************/
 
-static void html_gdk_font_manager_destroy (HTMLGdkFontManager *manager) {
+void html_gdk_font_manager_destroy (HTMLGdkFontManager *manager) {
 	g_return_if_fail (manager != NULL);
    g_hash_table_foreach (manager->font_hash, (GHFunc) unref_fonts, NULL);
    g_hash_table_destroy (manager->font_hash);
