@@ -132,26 +132,22 @@ package body VCS.CVS is
    --------------------
 
    function Atomic_Command
-     (D : String_List_And_Handler_Access)
-     return Boolean
+     (D : String_List_And_Handler_Access) return Boolean
    is
       Match  : Expect_Match := 1;
    begin
       Expect (D.Rep.Fd, Match, "\n",  10);
 
-      case Match is
-         when Expect_Timeout =>
-            return True;
-         when others =>
-            declare
-               S : String := Expect_Out (D.Rep.Fd);
-            begin
-               String_List.Prepend
-                 (D.List, S (S'First .. S'Last - 1));
-            end;
+      if Match /= Expect_Timeout then
+         declare
+            S : String := Expect_Out (D.Rep.Fd);
+         begin
+            String_List.Prepend
+              (D.List, S (S'First .. S'Last - 1));
+         end;
+      end if;
 
-            return True;
-      end case;
+      return True;
 
    exception
       when Process_Died =>
@@ -591,8 +587,7 @@ package body VCS.CVS is
 
       --  Open and parse the Entries file.
 
-      Open (File, In_File, New_Dir & "CVS" & Directory_Separator & "Entries");
-
+      Open (File, In_File, Format_Pathname (New_Dir & "CVS/Entries"));
 
       while Last >= 0
         and then not End_Of_File (File)
