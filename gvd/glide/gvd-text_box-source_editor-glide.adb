@@ -20,6 +20,7 @@
 
 with Gdk.Pixbuf;
 with Gtk.Container;        use Gtk.Container;
+with Gtkada.MDI;           use Gtkada.MDI;
 with Basic_Types;          use Basic_Types;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
@@ -27,8 +28,12 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Main_Window;    use Glide_Main_Window;
 
 with GVD.Process;          use GVD.Process;
+with GVD.Code_Editors;     use GVD.Code_Editors;
 with GVD.Types;            use GVD.Types;
+with GVD_Module;           use GVD_Module;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
+
+with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
 
 with Commands;             use Commands;
 with Commands.Debugger;    use Commands.Debugger;
@@ -40,6 +45,32 @@ with GVD.Preferences;      use GVD.Preferences;
 package body GVD.Text_Box.Source_Editor.Glide is
 
    use String_List_Utils.String_List;
+
+   ----------------
+   -- Apply_Mode --
+   ----------------
+
+   procedure Apply_Mode (Editor : access GEdit_Record; Mode : View_Mode) is
+      Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      Top      : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Kernel));
+      Process  : constant Visual_Debugger := Get_Current_Process (Top);
+      Edit     : constant Code_Editor  := Process.Editor_Text;
+      Assembly : constant Asm_Editor.Asm_Editor := Get_Asm (Edit);
+
+   begin
+      if Mode = Get_Mode (Edit) then
+         return;
+      end if;
+
+      case Mode is
+         when Source =>
+            Gtkada.MDI.Close (Get_MDI (Kernel), Assembly);
+
+         when Asm | Source_Asm =>
+            On_Assembly (Kernel, Kernel);
+      end case;
+   end Apply_Mode;
 
    ------------
    -- Attach --
