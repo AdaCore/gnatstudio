@@ -1611,12 +1611,6 @@ package body Prj_API is
       end Add_Or_Replace;
 
    begin
-      if Values'Length = 0 then
-         --  ??? Shouldn't exist if there is already such a package => remove
-         --  ??? the previous declaration.
-         return;
-      end if;
-
       Name_Len := Attribute_Name'Length;
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
@@ -2929,6 +2923,34 @@ package body Prj_API is
 
       return Project;
    end Create_Default_Project;
+
+   -----------------
+   -- Source_Dirs --
+   -----------------
+
+   function Source_Dirs (Project : Project_Id) return String_Id_Array is
+      Src   : String_List_Id := Projects.Table (Project).Source_Dirs;
+      Count : Natural := 0;
+   begin
+      while Src /= Nil_String loop
+         Count := Count + 1;
+         Src := String_Elements.Table (Src).Next;
+      end loop;
+
+      declare
+         Sources : String_Id_Array (1 .. Count);
+      begin
+         --  Store the directories
+         Count := Sources'First;
+         Src := Projects.Table (Project).Source_Dirs;
+         while Src /= Nil_String loop
+            Sources (Count) := String_Elements.Table (Src).Value;
+            Count := Count + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+         return Sources;
+      end;
+   end Source_Dirs;
 
 begin
    Namet.Initialize;

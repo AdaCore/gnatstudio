@@ -39,6 +39,7 @@ package Prj_API is
    type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
    type Project_Node_Array_Access is access Project_Node_Array;
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
+   type Project_Id_Array is array (Positive range <>) of Project_Id;
 
    Ada_String : constant String := "ada";  --  See also Snames.Name_Ada
    C_String   : constant String := "c";    --  See also Snames.Name_C
@@ -101,6 +102,9 @@ package Prj_API is
    function Enclose_In_Expression (Node : Project_Node_Id)
       return Project_Node_Id;
    --  Enclose the Node inside a N_Expression node, and return this expression.
+
+   function Source_Dirs (Project : Prj.Project_Id) return String_Id_Array;
+   --  Return the list of source directories for Prj, as an array
 
    --------------------
    -- Creating nodes --
