@@ -138,27 +138,28 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
-
       use type Gint_List.Glist;
-
-      Dialog    : constant Question_Dialog_Access :=
-        Question_Dialog_Access (Get_Toplevel (Object));
-      Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Visual_Debugger :=
-        Convert (Dialog.Main_Window, Debugger);
-
    begin
-      --  Unregister the dialog, since Send will not take care of it when
-      --  Wait_For_Prompt is false
+      declare
+         Dialog    : constant Question_Dialog_Access :=
+           Question_Dialog_Access (Get_Toplevel (Object));
+         Debugger  : constant Debugger_Access := Dialog.Debugger;
+         Process   : constant Visual_Debugger :=
+           Convert (Dialog.Main_Window, Debugger);
 
-      Unregister_Dialog (Process);
-      Set_Busy (Process, False);
+      begin
+         --  Unregister the dialog, since Send will not take care of it when
+         --  Wait_For_Prompt is false
 
-      Send (Debugger,
-            "y",
-            Mode => GVD.Types.Visible,
-            Empty_Buffer => False,
-            Wait_For_Prompt => False);
+         Unregister_Dialog (Process);
+         Set_Busy (Process, False);
+
+         Send (Debugger,
+               "y",
+               Mode => GVD.Types.Visible,
+               Empty_Buffer => False,
+               Wait_For_Prompt => False);
+      end;
 
    exception
       when E : others =>
@@ -174,27 +175,27 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
-
       use type Gint_List.Glist;
-
-      Dialog    : constant Question_Dialog_Access :=
-        Question_Dialog_Access (Get_Toplevel (Object));
-      Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Visual_Debugger :=
-        Convert (Dialog.Main_Window, Debugger);
-
    begin
-      --  Unregister the dialog, since Send will not take care of it when
-      --  Wait_For_Prompt is false
+      declare
+         Dialog    : constant Question_Dialog_Access :=
+           Question_Dialog_Access (Get_Toplevel (Object));
+         Debugger  : constant Debugger_Access := Dialog.Debugger;
+         Process   : constant Visual_Debugger :=
+           Convert (Dialog.Main_Window, Debugger);
 
-      Unregister_Dialog (Process);
-      Set_Busy (Process, False);
+      begin
+         --  Unregister the dialog, since Send will not take care of it when
+         --  Wait_For_Prompt is false
+         Unregister_Dialog (Process);
+         Set_Busy (Process, False);
 
-      Send (Debugger,
-            "n",
-            Mode => GVD.Types.Visible,
-            Empty_Buffer => False,
-            Wait_For_Prompt => False);
+         Send (Debugger,
+               "n",
+               Mode => GVD.Types.Visible,
+               Empty_Buffer => False,
+               Wait_For_Prompt => False);
+      end;
 
    exception
       when E : others =>
@@ -209,47 +210,50 @@ package body GVD.Dialogs.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      pragma Unreferenced (Params);
       use type Gint_List.Glist;
-
-      Dialog    : constant Question_Dialog_Access :=
-        Question_Dialog_Access (Get_Toplevel (Object));
-
-      Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);
-      S         : Unbounded_String;
-      Tmp       : Gint_List.Glist := Gint_List.First (Selection);
-      Button    : Message_Dialog_Buttons;
-      pragma Unreferenced (Params, Button);
-
-      Debugger  : constant Debugger_Access := Dialog.Debugger;
-      Process   : constant Visual_Debugger :=
-        Convert (Dialog.Main_Window, Debugger);
-
    begin
-      while Tmp /= Gint_List.Null_List loop
-         Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));
-         Tmp := Gint_List.Next (Tmp);
-      end loop;
+      declare
+         Dialog    : constant Question_Dialog_Access :=
+           Question_Dialog_Access (Get_Toplevel (Object));
 
-      if Length (S) = 0 then
-         Button :=
-           Message_Dialog
-             (-"You must select at least one of the choices",
-              Error, Button_OK);
-         Emit_Stop_By_Name (Object, "clicked");
-         return;
-      end if;
+         Selection : constant Gint_List.Glist := Get_Selection (Dialog.List);
+         S         : Unbounded_String;
+         Tmp       : Gint_List.Glist := Gint_List.First (Selection);
+         Button    : Message_Dialog_Buttons;
+         pragma Unreferenced (Button);
 
-      --  Unregister the dialog, since Send will not take care of it when
-      --  Wait_For_Prompt is false
+         Debugger  : constant Debugger_Access := Dialog.Debugger;
+         Process   : constant Visual_Debugger :=
+           Convert (Dialog.Main_Window, Debugger);
 
-      Unregister_Dialog (Process);
-      Set_Busy (Process, False);
+      begin
+         while Tmp /= Gint_List.Null_List loop
+            Append (S, Get_Text (Dialog.List, Gint_List.Get_Data (Tmp), 0));
+            Tmp := Gint_List.Next (Tmp);
+         end loop;
 
-      Send (Debugger,
-            To_String (S),
-            Mode => GVD.Types.Visible,
-            Empty_Buffer => False,
-            Wait_For_Prompt => False);
+         if Length (S) = 0 then
+            Button :=
+              Message_Dialog
+                (-"You must select at least one of the choices",
+                 Error, Button_OK);
+            Emit_Stop_By_Name (Object, "clicked");
+            return;
+         end if;
+
+         --  Unregister the dialog, since Send will not take care of it when
+         --  Wait_For_Prompt is false
+
+         Unregister_Dialog (Process);
+         Set_Busy (Process, False);
+
+         Send (Debugger,
+               To_String (S),
+               Mode => GVD.Types.Visible,
+               Empty_Buffer => False,
+               Wait_For_Prompt => False);
+      end;
 
    exception
       when E : others =>
