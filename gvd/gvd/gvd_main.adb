@@ -30,6 +30,7 @@ with Gtkada.Intl;           use Gtkada.Intl;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
 
 with GVD.Main_Window;       use GVD.Main_Window;
+with GVD.Menu;              use GVD.Menu;
 with Debugger;
 with Process_Proxies;
 with OS_Utils;              use OS_Utils;
@@ -256,7 +257,7 @@ begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;
    Init;
-   Gtk_New (Main_Debug_Window);
+   Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
 
    --  Load the window_settings, if any.
 
