@@ -53,13 +53,14 @@ package body Odd.Canvas is
       function Add_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  ??? Spec needed.
+      --  Check if Item should be added to the current selection in the canvas.
+      --  This is the case of Item is an alias of Selection, so that both are
+      --  moved at the same time.
 
       function Add_Item
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean is
       begin
-         --  Make sure we move all the aliases at the same time.
          if Is_Alias_Of (Display_Item (Item)) = Selection then
             Add_To_Selection (Canvas, Item);
          end if;
