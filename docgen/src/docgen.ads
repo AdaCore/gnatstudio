@@ -266,81 +266,6 @@ package Docgen is
    --  Updates the field Print_Me if necessary.
    --  Target : tagged type which is updated.
 
-   type Info_Types is
-     (Open_Info,
-      Close_Info,
-      Header_Info,
-      Subtitle_Info,
-      Header_Private_Info,
-      With_Info,
-      Package_Desc_Info,
-      Description_Info,
-      Entry_Info,
-      Exception_Info,
-      Package_Info,
-      Subprogram_Info,
-      Type_Info,
-      Var_Info,
-      Package_Info_Open_Close,
-      References_Info,
-      Tagged_Type_Info,
-      Body_Line_Info,
-
-      Unit_Index_Info,
-      Type_Index_Info,
-      Tagged_Type_Index_Info,
-      Subprogram_Index_Info,
-      --  The 4 fiels above are used to create the header of the index
-      --  file (units, types, subprograms or tagged types) and also to build
-      --  links (if allowed by the format) on the other index files
-      Private_Index_Info,
-      --  Used to print "Private" in the index file before all the
-      --  private types/subprograms
-      Public_Index_Info,
-      --  Used to print "Public" in the index file before all the
-      --  private types/subprograms
-      End_Of_Index_Info,
-      --  Used to close the index file ( of units, types, subprograms or
-      --  tagged types)
-      Index_Tagged_Type_Item,
-      --  Used to print a tagged type in the specific index file
-      Index_Item_Info,
-      --  Used to print a type/unit/subprogram in the specific index file
-      Footer_Info);
-   --  Structure used in the type Doc_Info.
-   --  Open_Info :
-   --  used possibly to create a header for the doc file (E.g. in html,
-   --  <head>...</head>).
-   --  Close_Info :
-   --  used to close the output of the doc file (E.g. in html </body></html>).
-   --  Header_Info   : used to put a title the doc file.
-   --  Subtitle_Info : used to put a subtitle the doc file.
-   --  Header_Private_Info :
-   --  used to put the subtitle "Private" into the doc file before private
-   --  part when the option "Show private" is chosen.
-   --  With_Info :
-   --  used to process the output of imported packages (clauses "with ...")
-   --  Package_Desc_Info :
-   --  used to print the description of the current file which is written
-   --  before the source code.
-   --  Description_Info :
-   --  used to print the comments given for an entity (type, subprogram,
-   --  exception...).
-   --  Entry_Info, Exception_Info, Package_Info, Subprogram_Info, Type_Info,
-   --  Var_Info :
-   --  used to print source code of entity (exception, subprogram, variable,
-   --  type, entry, package).
-   --  Package_Info_Open_Close :
-   --  used to print either the header or the footer when processing an inner
-   --  package. "package X is" or "end X".
-   --  References_Info :
-   --  used to print the subprogram callgraph of the current subprogram
-   --  entity.
-   --  Tagged_Type_Info :
-   --  used to print the list of children and parents of the current type
-   --  entity.
-   --  Body_Line_Info : used to print body files.
-
    type Type_Api_Doc is (HTML, TEXI);
    --  Type of documentation that can be generated.
    for Type_Api_Doc'Size use Integer'Size;
@@ -422,7 +347,6 @@ package Docgen is
    type Doc_Info_Subtitle is new Doc_Info_Base with record
       Subtitle_Name    : GNAT.OS_Lib.String_Access;
       Subtitle_Package : GNAT.OS_Lib.String_Access;
-      Subtitle_Kind    : Info_Types;
    end record;
    --  Used to add a subtitle to the information file
 
