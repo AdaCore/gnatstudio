@@ -50,6 +50,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Gtkada.Code_Editors is
 
+   use Odd;
+
    Do_Color_Highlighting : constant Boolean := True;
    --  Indicate whether the editor should provide color highlighting.
 
@@ -344,7 +346,8 @@ package body Gtkada.Code_Editors is
 
       function Func (File : String; Line : Positive) return Boolean is
       begin
-         return Line_Contains_Code (Debug, File, Line);
+         return Editor_Show_Line_With_Code
+           and then Line_Contains_Code (Debug, File, Line);
       end Func;
 
    begin
