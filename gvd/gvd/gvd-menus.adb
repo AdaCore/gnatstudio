@@ -33,6 +33,8 @@ with Odd_Intl;            use Odd_Intl;
 with Display_Items;       use Display_Items;
 with Items;               use Items;
 with Odd.Process;         use Odd.Process;
+with Debugger;            use Debugger;
+with Odd.Dialogs;         use Odd.Dialogs;
 
 with Ada.Text_IO;         use Ada.Text_IO;
 
@@ -98,6 +100,11 @@ package body Odd.Menus is
       Item    : Item_Record);
    --  Clone the item or its selected component.
 
+   procedure Set_Value
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record);
+   --  Set the value for a specific component
+
    procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
       Item    : Item_Record);
@@ -151,7 +158,7 @@ package body Odd.Menus is
    is
       pragma Warnings (Off, Widget);
    begin
-      Display_Items.Update (Item.Canvas, Item.Item);
+      Display_Items.Update (Item.Canvas, Item.Item, Redisplay_Canvas => True);
    end Update_Variable;
 
    --------------
@@ -216,6 +223,29 @@ package body Odd.Menus is
             Output_Command => True);
       end if;
    end Clone_Component;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value
+     (Widget  : access Gtk_Widget_Record'Class;
+      Item    : Item_Record)
+   is
+      pragma Warnings (Off, Widget);
+      S : constant String :=
+        Simple_Entry_Dialog
+        (Parent  => Get_Debugger (Item.Item).Window,
+         Title   => "Setting value of " & Item.Component_Name,
+         Message => "Setting value of " & Item.Component_Name & ':',
+         Key     => "odd_set_value_dialog");
+   begin
+      if S /= "" then
+         Set_Variable
+           (Get_Debugger (Item.Item).Debugger, Item.Component_Name, S);
+         Update_Variable (Widget, Item);
+      end if;
+   end Set_Value;
 
    --------------------------------
    -- Contextual_Background_Menu --
@@ -319,7 +349,6 @@ package body Odd.Menus is
       else
          Gtk_New (Mitem, Label => -"Clone");
       end if;
-
       Item_Handler.Connect
         (Mitem, "activate",
          Item_Handler.To_Marshaller (Clone_Component'Access),
@@ -330,6 +359,23 @@ package body Odd.Menus is
                       Component_Name => Component_Name,
                       Mode           => Value));
       Append (Menu, Mitem);
+
+      if Is_A_Variable (Item) then
+         Gtk_New (Mitem, Label => -"Set Value of " & " " & Component_Name);
+      else
+         Gtk_New (Mitem, Label => -"Set Value");
+      end if;
+      Item_Handler.Connect
+        (Mitem, "activate",
+         Item_Handler.To_Marshaller (Set_Value'Access),
+         Item_Record'(Name_Length    => Component_Name'Length,
+                      Canvas         => Odd_Canvas (Canvas),
+                      Item           => Display_Item (Item),
+                      Component      => Component,
+                      Component_Name => Component_Name,
+                      Mode           => Value));
+      Append (Menu, Mitem);
+      Set_Sensitive (Mitem, Is_A_Variable (Item));
 
       Gtk_New (Mitem, Label => -"Update Value");
       Item_Handler.Connect
