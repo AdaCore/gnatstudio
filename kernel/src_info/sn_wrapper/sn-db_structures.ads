@@ -167,12 +167,12 @@ package SN.DB_Structures is
 
       End_Position        : Point;
       Attributes          : SN_Attributes;
---      Return_Type         : Segment;
---      Arg_Types           : Segment;
+      Return_Type         : Segment;
+      Arg_Types           : Segment;
 --      Arg_Names : Segment_Vector.Node_Access;
 --      Comments            : Segment;
 --      Template_Parameters : Segment;
---      Data                : Buffer_String;
+      Data                : Buffer_String;
 
       DBI                 : Integer;
    end record;
@@ -246,6 +246,7 @@ package SN.DB_Structures is
 
       DBI                      : Integer;
    end record;
+   No_FU_Table : constant FU_Table;
    --  Interface to ".fu" tables and ".mi" tables
    --  Used to describe function and method implementations.
    --  Class is left to '#' for functions
@@ -518,4 +519,18 @@ package SN.DB_Structures is
    function Get_Class_Name (Key : Buffer_String; Seg : Segment) return String;
    --  Return the class name (or '#' if Seg is Empty_Segment
 
+private
+   No_FU_Table : constant FU_Table :=
+                   (Class          => Invalid_Segment,
+                    Name           => Invalid_Segment,
+                    File_Name      => Invalid_Segment,
+                    Start_Position => Invalid_Point,
+                    Key            => Null_Buffer,
+                    End_Position   => Invalid_Point,
+                    Attributes     => 0,
+                    Return_Type    => Invalid_Segment,
+                    Arg_Types      => Invalid_Segment,
+                    Arg_Names      => Invalid_Segment,
+                    Data           => Null_Buffer,
+                    DBI            => 0);
 end SN.DB_Structures;

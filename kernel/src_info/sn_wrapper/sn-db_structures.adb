@@ -533,15 +533,18 @@ package body SN.DB_Structures is
       Buffer : Unchecked_String_Access;
    begin
       CSF_Init (Key_Data_Pair.Key, Key);
-      CSF_Init (Key_Data_Pair.Data, Data, 2);
+      CSF_Init (Key_Data_Pair.Data, Data, 4);
 
       Tab.DBI  := Key_Data_Pair.DBI;
       Copy (Tab.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Copy (Tab.Data, Key_Data_Pair.Data, Key_Data_Pair.Data_Size);
 
       Buffer := To_Unchecked_String (Key_Data_Pair.Data);
       Parse_Key    (Key, Tab.Key, Tab.Name, Tab.File_Name, Tab.Start_Position);
       Get_Position    (Data, 1, Buffer, Tab.End_Position);
       Get_Hex         (Data, 2, Buffer, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Tab.Return_Type);
+      Get_No_Brackets (Data, 4, Tab.Arg_Types);
    end Parse_Pair;
 
    ----------------
