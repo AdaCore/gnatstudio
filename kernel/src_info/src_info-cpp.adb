@@ -213,6 +213,16 @@ package body Src_Info.CPP is
 
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
 
+   procedure Find_Or_Create_Class
+     (Env              : in out Handler_Environment;
+      CL_Tab           : in CL_Table;
+      Source_Filename  : in String;
+      Decl_Info        : out E_Declaration_Info_List);
+   --  Attempts to find class declaration among this Env.File declarations
+   --  and dependency declarations. If not found, creates it.
+   --  Return pointer to the created/found declaration or null
+   --  on error
+
    procedure Process_File
      (Source_Filename : in String;
       Full_Filename   : String;
@@ -743,6 +753,84 @@ package body Src_Info.CPP is
       when Declaration_Not_Found => -- ignore
          null;
    end Refer_Type;
+
+   --------------------------
+   -- Find_Or_Create_Class --
+   --------------------------
+
+   procedure Find_Or_Create_Class
+     (Env              : in out Handler_Environment;
+      CL_Tab           : in CL_Table;
+      Source_Filename  : in String;
+      Decl_Info        : out E_Declaration_Info_List)
+   is
+      Sym       : FIL_Table;
+   begin
+      if Source_Filename
+         = CL_Tab.Buffer (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last)
+      then -- this class should be declared in the current file
+         begin
+            Decl_Info := Find_Declaration
+              (File         => Env.File,
+               Symbol_Name  => CL_Tab.Buffer
+                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
+               Location     => CL_Tab.Start_Position);
+         exception
+            when Declaration_Not_Found => -- create it!
+               Sym.Buffer         := CL_Tab.Buffer;
+               Sym.File_Name      := CL_Tab.File_Name;
+               Sym.Start_Position := CL_Tab.Start_Position;
+               Sym.Identifier     := CL_Tab.Name;
+               Sym_CL_Handler (Sym, Env);
+               begin
+                  Decl_Info := Find_Declaration
+                    (File         => Env.File,
+                     Symbol_Name  => CL_Tab.Buffer
+                        (CL_Tab.Name.First .. CL_Tab.Name.Last),
+                     Location     => CL_Tab.Start_Position);
+               exception
+                  when Declaration_Not_Found =>
+                     Fail ("We've just called Sym_CL_Handler but it has"
+                         & " not created the declaration. Strange...");
+                     Decl_Info := null;
+               end;
+         end;
+      else -- this class should be declared as a dependency
+         begin
+            Decl_Info := Find_Dependency_Declaration
+              (File         => Env.File,
+               Symbol_Name  => CL_Tab.Buffer
+                  (CL_Tab.Name.First .. CL_Tab.Name.Last),
+               Location     => CL_Tab.Start_Position);
+         exception
+            when Declaration_Not_Found => -- create it!
+               Insert_Dependency_Declaration
+                 (Handler            => LI_Handler (Global_CPP_Handler),
+                  File               => Env.File,
+                  Source_Filename    => Source_Filename,
+                  Xref_Filename      => Name_As_Directory (Env.DB_Dir.all) &
+                     Xref_Filename_For
+                       (Source_Filename,
+                        Env.DB_Dir.all,
+                        Env.Xrefs).all,
+                  List               => Env.List_Of_Files,
+                  Symbol_Name        => CL_Tab.Buffer
+                    (CL_Tab.Name.First .. CL_Tab.Name.Last),
+                  Referred_Filename  => CL_Tab.Buffer
+                    (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+                  Referred_Xref_Filename =>
+                     Name_As_Directory (Env.DB_Dir.all)
+                     & Xref_Filename_For (CL_Tab.Buffer
+                       (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
+                     Env.DB_Dir.all,
+                     Env.Xrefs).all,
+                  Location           => CL_Tab.Start_Position,
+                  Kind               => Record_Type,
+                  Scope              => Global_Scope,
+                  Declaration_Info   => Decl_Info);
+         end;
+      end if;
+   end Find_Or_Create_Class;
 
    function Find_First_Forward_Declaration
      (Buffer       : SN.String_Access;
@@ -2726,7 +2814,8 @@ package body Src_Info.CPP is
       Super_Def  : CL_Table;
       Super_Desc : CType_Description;
    begin
-
+      --  Note: this handler is called from Find_Or_Create_Class function as
+      --  well
       Info ("Sym_CL_Hanlder: """
             & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
             & """");
@@ -3209,7 +3298,9 @@ package body Src_Info.CPP is
 
       if Sym.Symbol = MI then
          declare
-            Class_Def    : CL_Table;
+            Class_Def       : CL_Table;
+            Class_Decl_Info : E_Declaration_Info_List;
+            Ref             : E_Reference_List;
          begin
             MI_Tab := Find (Env.SN_Table (MI),
                 Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
@@ -3222,6 +3313,38 @@ package body Src_Info.CPP is
                   Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
                IsTemplate := Class_Def.Template_Parameters.First
                   < Class_Def.Template_Parameters.Last;
+               --  We want to add a reference to the class we belong to
+               --  but there may be already a reference created in the
+               --  MD handler. If MD and MI instances are the same we
+               --  don't need to duplicate references
+               Find_Or_Create_Class
+                  (Env,
+                   Class_Def,
+                   Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+                   Class_Decl_Info);
+               if Class_Decl_Info /= null then
+                  Ref := Class_Decl_Info.Value.References;
+                  loop
+                     exit when Ref = null
+                        or else (Get_LI_Filename (Ref.Value.Location.File.LI)
+                             = Get_LI_Filename (Env.File)
+                           and then Ref.Value.Location.Line
+                              = Sym.Start_Position.Line
+                           and then Ref.Value.Location.Column
+                              = Sym.Start_Position.Column
+                           and then Ref.Value.Kind = Reference);
+                     Ref := Ref.Next;
+                  end loop;
+                  if Ref = null then
+                     Insert_Reference
+                       (Class_Decl_Info,
+                        Env.File,
+                        Sym.Buffer (Sym.File_Name.First ..
+                                     Sym.File_Name.Last),
+                        Sym.Start_Position,
+                        Reference);
+                  end if;
+               end if;
                Free (Class_Def);
             exception
                when DB_Error | Not_Found =>
@@ -3753,12 +3876,27 @@ package body Src_Info.CPP is
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
 
       declare
-         Class_Def    : CL_Table;
+         Class_Def          : CL_Table;
+         Class_Decl_Info    : E_Declaration_Info_List;
       begin -- check if this class is template
          Class_Def := Find
            (Env.SN_Table (CL), Sym.Buffer (Sym.Class.First .. Sym.Class.Last));
          IsTemplate := Class_Def.Template_Parameters.First
             < Class_Def.Template_Parameters.Last;
+         --  Add reference to the class we belong to
+         Find_Or_Create_Class
+           (Env,
+            Class_Def,
+            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+            Class_Decl_Info);
+         if Class_Decl_Info /= null then
+            Insert_Reference
+              (Class_Decl_Info,
+               Env.File,
+               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+               Sym.Start_Position,
+               Reference);
+         end if;
          Free (Class_Def);
       exception
          when DB_Error | Not_Found =>
