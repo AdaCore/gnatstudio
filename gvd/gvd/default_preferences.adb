@@ -1275,6 +1275,7 @@ package body Default_Preferences is
       Result := Set_Font_Name (F, Get_Text (E));
 
       if Run (Dialog) = Gtk_Response_OK then
+         Data.Descr := null;
          Set_Text (E, Get_Font_Name (F));
 
          if Value_Type (Data.Param) = Pango.Font.Get_Type then
