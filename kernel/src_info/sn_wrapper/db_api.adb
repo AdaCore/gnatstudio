@@ -70,7 +70,11 @@ package body DB_API is
    -- Open --
    ----------
 
-   function Open (File_Names : String_List_Access) return DB_File is
+   procedure Open
+     (DB         : out DB_File;
+      File_Names : String_List_Access;
+      Success    : out Boolean) is
+
       function Internal_Open
         (Num_Of_Files : Integer;
          File_Names   : System.Address) return DB_File;
@@ -87,8 +91,8 @@ package body DB_API is
 
       C_File_Names : String_List (File_Names'Range);
       C_P_P_Char   : array (File_Names'Range) of System.Address; -- char **
-      DB           : DB_File;
    begin
+      Success := True;
       for I in File_Names'Range loop
          C_File_Names (I) := new String'(File_Names (I).all & ASCII.NUL);
          C_P_P_Char (I) := C_File_Names (I).all'Address;
@@ -98,12 +102,17 @@ package body DB_API is
 
       Free (C_File_Names);
 
-      if DB /= null and then Last_ErrNo (DB) /= 0 then
-         Internal_Free (DB);
-         DB := null;
+      if DB = null then
+         Success := False;
+         return;
       end if;
 
-      return DB;
+      if Last_ErrNo (DB) /= 0 then
+         Internal_Free (DB);
+         DB      := null;
+         Success := False;
+      end if;
+
    end Open;
 
    ---------
@@ -135,12 +144,18 @@ package body DB_API is
    -- Close --
    -----------
 
-   procedure Close (DB : in out DB_File) is
+   procedure Close (DB : in out DB_File; Success : out Boolean) is
       procedure Internal_Close (DB : DB_File);
       pragma Import (C, Internal_Close, "ada_db_close");
    begin
+      Success := True;
       if DB /= null then -- ignore uninitialized DB
          Internal_Close (DB);
+         if Last_ErrNo (DB) /= 0 then
+            Success := False;
+            DB := null;
+            return;
+         end if;
          Internal_Free (DB);
          DB := null;
       end if;

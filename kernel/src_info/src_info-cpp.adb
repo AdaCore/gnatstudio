@@ -958,6 +958,7 @@ package body Src_Info.CPP is
    procedure Open_DB_Files
      (DB_Dirs   : in GNAT.OS_Lib.String_List_Access;
       SN_Table  : out SN_Table_Array) is
+      Success : Boolean;
    begin
       for Table in Table_Type loop
          declare
@@ -972,7 +973,7 @@ package body Src_Info.CPP is
             end loop;
 
             if Ext /= "" then
-               SN_Table (Table) := DB_API.Open (Files);
+               DB_API.Open (SN_Table (Table), Files, Success);
             end if;
 
             Free (Files);
@@ -985,14 +986,10 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Close_DB_Files (SN_Table : in out SN_Table_Array) is
+      Success : Boolean;
    begin
       for Table in Table_Type loop
-         begin
-            Close (SN_Table (Table));
-         exception
-            when DB_Close_Error =>
-               null; -- ignore it
-         end;
+         Close (SN_Table (Table), Success);
       end loop;
    end Close_DB_Files;
 
@@ -1548,6 +1545,7 @@ package body Src_Info.CPP is
       First_MD_Pos : Point := Invalid_Point;
       CL_Tab       : CL_Table;
       MD_File      : DB_File;
+      Success      : Boolean;
    begin
       Decl_Info := null;
       if not Is_Open (Handler.SN_Table (MD)) then
@@ -1569,7 +1567,7 @@ package body Src_Info.CPP is
       loop
          P := Get_Pair (MD_File, Next_By_Key);
          if P = null then -- no fwd decls at all
-            Close (MD_File);
+            Close (MD_File, Success);
             return;
          end if;
          MD_Tab := Parse_Pair (P.all);
@@ -1621,7 +1619,7 @@ package body Src_Info.CPP is
       end loop;
 
       Release_Cursor (MD_File);
-      Close (MD_File);
+      Close (MD_File, Success);
 
       Assert (Fail_Stream, First_MD_Pos /= Invalid_Point, "DB inconsistency");
       if Filename
@@ -1714,6 +1712,7 @@ package body Src_Info.CPP is
       Match        : Boolean;
       Target_Kind  : E_Kind;
       FD_File      : DB_File;
+      Success      : Boolean;
    begin
       Decl_Info := null;
 
@@ -1754,7 +1753,7 @@ package body Src_Info.CPP is
 
       if not Match then
          --  we did not found what we wanted, that's strange
-         Close (FD_File);
+         Close (FD_File, Success);
          return;
       end if;
 
@@ -1793,7 +1792,7 @@ package body Src_Info.CPP is
       end loop;
 
       Release_Cursor (FD_File);
-      Close (FD_File);
+      Close (FD_File, Success);
 
       Assert (Fail_Stream, First_FD_Pos /= Invalid_Point, "DB inconsistency");
 
