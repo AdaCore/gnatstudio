@@ -683,25 +683,34 @@ package body Traces is
       while Tmp /= null loop
          Next := Tmp.Next;
          Free (Tmp.Name);
+
          if Tmp.Stream /= null
            and then Tmp.Stream /= Default_Output
          then
             --  Streams can be shared, so avoid freeing and closing them
             --  multiple times.
             Tmp2 := Tmp.Next;
+
             while Tmp2 /= null loop
                if Tmp2.Stream = Tmp.Stream then
                   Tmp2.Stream := null;
                end if;
+
                Tmp2 := Tmp2.Next;
             end loop;
 
             Close (Tmp.Stream.all);
             Unchecked_Free (Tmp.Stream);
          end if;
+
          Unchecked_Free (Tmp);
          Tmp := Next;
       end loop;
+
+      if Default_Output /= Convert (Ada.Text_IO.Standard_Output) then
+         Close (Default_Output.all);
+         Unchecked_Free (Default_Output);
+      end if;
    end Finalize;
 
 end Traces;
