@@ -444,7 +444,8 @@ package body Creation_Wizard is
    begin
       if Arr'Length /= 0 then
          Pack := Get_Or_Create_Package (Project, Name);
-         Var := Create_Attribute (Pack, "switches", Kind => List);
+         Var := Create_Attribute
+           (Pack, "default_switches", Ada_String, List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
          end loop;
@@ -518,14 +519,14 @@ package body Creation_Wizard is
       end;
 
       --  Append the switches
-      Emit_Switches (Wiz, Project, "gnatmake", Gnatmake);
+      Emit_Switches (Wiz, Project, "builder", Gnatmake);
 
       if Get_Active (Wiz.Ada_Support) then
          Emit_Switches (Wiz, Project, "compiler", Ada_Compiler);
       end if;
 
-      Emit_Switches (Wiz, Project, "gnatbind", Binder);
-      Emit_Switches (Wiz, Project, "gnatlink", Linker);
+      Emit_Switches (Wiz, Project, "binder", Binder);
+      Emit_Switches (Wiz, Project, "linker", Linker);
 
       --  Append the naming scheme
       Create_Project_Entry (Wiz.Naming, Project);
@@ -537,7 +538,7 @@ package body Creation_Wizard is
       end if;
 
       Pretty_Print
-        (Project, 3,
+        (Project, 3, True,
          Write_Char'Unrestricted_Access, Write_Str'Unrestricted_Access);
       Close (File);
 
