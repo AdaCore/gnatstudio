@@ -1,83 +1,6 @@
 with GNAT.Regpat; use GNAT.Regpat;
 
-package body Codefix.Error_Manager is
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize (This : in out Error_Message; Message : String) is
-   begin
-      Affect (This.Message, Message);
-      Parse_Head (Message, This);
-   end Initialize;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize (This : in out Error_Message; Line, Col : Positive) is
-   begin
-      Affect (This.Message, "");
-      This.Line := Line;
-      This.Col := Col;
-   end Initialize;
-
-   -----------------
-   -- Get_Message --
-   -----------------
-
-   function Get_Message (This : Error_Message) return String is
-   begin
-      return This.Message.all;
-   end Get_Message;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (This : in out Error_Message) is
-   begin
-      Free (File_Cursor (This));
-      Free (This.Message);
-   end Free;
-
-   ----------------
-   -- Parse_Head --
-   ----------------
-
-   procedure Parse_Head (Message : String; This : out Error_Message) is
-      Matches : Match_Array (0 .. 3);
-      Matcher : constant Pattern_Matcher :=
-         Compile ("([^:]*):([0-9]*):([0-9]*)");
-
-   begin
-      Match (Matcher, Message, Matches);
-
-      begin
-         Affect (This.File_Name,
-                 Message (Matches (1).First .. Matches (1).Last));
-         This.Line := Positive'Value
-            (Message (Matches (2).First .. Matches (2).Last));
-         This.Col := Positive'Value
-            (Message (Matches (3).First .. Matches (3).Last));
-      exception
-         when Constraint_Error => -- et tester No_Match
-            null; -- Lever une exception due au 'Value
-      end;
-   end Parse_Head;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (This : Error_Message) return Error_Message is
-      New_Message : Error_Message;
-   begin
-      New_Message := (Clone (File_Cursor (This)) with
-                         new String'(This.Message.all));
-      return New_Message;
-   end Clone;
+package body Codefix.Errors_Manager is
 
    -------------
    -- Analyse --
@@ -85,8 +8,8 @@ package body Codefix.Error_Manager is
 
    procedure Analyze
      (This        : in out Correction_Manager;
-      Source_Text : Text_Interface'Class;
-      Errors_List : Errors_Interface'Class;
+      Source_Text : Text_Navigator_Abstr'Class;
+      Errors_List : in out Errors_Interface'Class;
       Callback    : Error_Callback := null) is
 
       Current_Message : Error_Message;
@@ -94,16 +17,19 @@ package body Codefix.Error_Manager is
       New_Error       : Error_Id;
 
    begin
-      Set_Parse_Mode (Source_Text);
       while not No_More_Messages (Errors_List) loop
-         Current_Message := Get_Message (Errors_List);
-         Solutions := Get_Corrections (This.Current_Text, Current_Message);
+         Get_Message (Errors_List, Current_Message);
+         Solutions := Get_Solutions (Source_Text, Current_Message);
          if Length (Solutions) > 0 then
             Add_Error (This, Solutions, New_Error);
-            Callback (Current_Message, New_Error, Solutions);
+            Callback
+              (Current_Message,
+               New_Error,
+               Solutions,
+               Source_Text,
+               This);
          end if;
       end loop;
-      Set_Update_Mode (Source_Text);
    end Analyze;
 
    --------------
@@ -131,19 +57,19 @@ package body Codefix.Error_Manager is
    ------------
 
    procedure Update
-     (This     : in out Correction_Manager;
-      Success  : out Boolean;
-      Callback : Ambiguous_Callback := null) is
+     (This         : in out Correction_Manager;
+      Success      : out Boolean;
+      Current_Text : in out Text_Navigator_Abstr'Class;
+      Callback     : Ambiguous_Callback := null) is
 
       Current_Node     : Line_List.List_Node;
       Modifs_List      : Line_List.List;
-      Offset_Line      : Natural := 0;
+      Offset_Line      : Integer := 0;
       No_More_Problems : Boolean;
 
    begin
 
       Success := False;
-
       Check_Ambiguities (This.Valid_Corrections, Callback, No_More_Problems);
 
       if not No_More_Problems then return; end if;
@@ -154,12 +80,15 @@ package body Codefix.Error_Manager is
 
       while Current_Node /= Line_List.Null_Node loop
          Update (Data (Current_Node),
-                 This.Current_Text.all,
+                 Current_Text,
                  Offset_Line);
          Current_Node := Next (Current_Node);
       end loop;
 
       Free (Modifs_List);
+
+      Update (Current_Text);
+
       Success := True;
    end Update;
 
@@ -170,7 +99,7 @@ package body Codefix.Error_Manager is
    procedure Free (This : in out Correction_Manager) is
    begin
       Free (This.Potential_Corrections);
-      Free (This.Valid_Corrections);
+      Free (This.Valid_Corrections, True);
    end Free;
 
    -----------------------
@@ -183,7 +112,10 @@ package body Codefix.Error_Manager is
       No_More_Problems : out Boolean) is
 
       function Delete_And_Next (Node : Extract_List.List_Node)
-         return Extract_List.List_Node;
+        return Extract_List.List_Node;
+
+      function Conflict (Extract_1, Extract_2 : Extract)
+         return Boolean;
 
       Node_I, Node_J     : Extract_List.List_Node;
       Delete_I, Delete_J : Boolean;
@@ -195,37 +127,64 @@ package body Codefix.Error_Manager is
       begin
          Garbage := Node;
          Next_Node := Next (Node);
-         Remove_Nodes (Solutions, Prev (Garbage), Garbage);
-         return Next_Node
+         Remove_Nodes (Solutions, Prev (Solutions, Garbage), Garbage);
+         return Next_Node;
       end Delete_And_Next;
+
+      function Conflict (Extract_1, Extract_2 : Extract)
+        return Boolean is
+
+         Num_1, Num_2   : Natural;
+         Line_1, Line_2 : Extract_Line;
+
+      begin
+         Num_1 := Get_Number_Lines (Extract_1);
+         Num_2 := Get_Number_Lines (Extract_2);
+
+         for I_1 in 1 .. Num_1 loop
+            Line_1 := Get_Record (Extract_1, I_1).all;
+            for I_2 in 1 .. Num_2 loop
+               Line_2 := Get_Record (Extract_2, I_2).all;
+               if Get_Cursor (Line_1).Line = Get_Cursor (Line_2).Line then
+                  return True;
+               end if;
+            end loop;
+         end loop;
+
+         return False;
+      end Conflict;
 
    begin
       No_More_Problems := True;
       Node_I := First (Solutions);
       while Node_I /= Extract_List.Null_Node loop
-         Node_J := Node_I;
+         Node_J := Next (Node_I);
+         Delete_I := False;
          while Node_J /= Extract_List.Null_Node loop
-            if Callback = null then
-               No_More_Problems := False;
-               return;
-            else
-               Callback (Data (Node_I), Data (Node_J), Choice);
-               case Choice is
-                  when 0 =>
-                     No_More_Problems := False;
-                  when 1 =>
-                     Delete_I := True;
-                     exit;
-                  when 2 =>
-                     Delete_J := True;
-               end case;
-               if Delete_J then
-                  Node_J := Delete_And_Next (Node_J);
+            Delete_J := False;
+            if Conflict (Data (Node_I), Data (Node_J))then
+               if Callback = null then
+                  No_More_Problems := False;
+                  return;
                else
-                  Node_J := Next (Node_J);
+                  Callback (Data (Node_I), Data (Node_J), Choice);
+                  case Choice is
+                     when 0 =>
+                        No_More_Problems := False;
+                     when 1 =>
+                        Delete_I := True;
+                        exit;
+                     when 2 =>
+                        Delete_J := True;
+                  end case;
                end if;
             end if;
-         end loop
+            if Delete_J then
+               Node_J := Delete_And_Next (Node_J);
+            else
+               Node_J := Next (Node_J);
+            end if;
+         end loop;
          if Delete_I then
             Node_I := Delete_And_Next (Node_I);
          else
@@ -277,11 +236,11 @@ package body Codefix.Error_Manager is
 
    procedure Add_Error
      (This      : in out Correction_Manager;
-      Solutions : Solution_List
+      Solutions : Solution_List;
       New_Error : out Error_Id) is
    begin
       Append (This.Potential_Corrections, Solutions);
       New_Error.Ptr_Solutions := Last (This.Potential_Corrections);
    end Add_Error;
 
-end Codefix.Error_Manager;
+end Codefix.Errors_Manager;
