@@ -413,7 +413,7 @@ package body GVD.Text_Boxes is
    --------------------
 
    procedure Move_N_Columns
-     (Box     : access Gvd_Text_Box_Record'Class;
+     (Box     : access GVD_Text_Box_Record'Class;
       Index   : in out Natural;
       Columns : Integer)
    is
@@ -545,7 +545,7 @@ package body GVD.Text_Boxes is
                      --  Use the selection...
                      Menu := Child_Contextual_Menu
                        (Box, Line,
-                        Get_Chars (Box.Child, Select_Min,Select_Max));
+                        Get_Chars (Box.Child, Select_Min, Select_Max));
                   end;
 
                else

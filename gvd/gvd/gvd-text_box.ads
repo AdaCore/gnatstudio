@@ -103,7 +103,7 @@ package GVD.Text_Boxes is
    --  Return the index in the buffer at which Line starts.
 
    procedure Move_N_Columns
-     (Box     : access Gvd_Text_Box_Record'Class;
+     (Box     : access GVD_Text_Box_Record'Class;
       Index   : in out Natural;
       Columns : Integer);
    --  Move the current Index by Columns columns to the left, while
