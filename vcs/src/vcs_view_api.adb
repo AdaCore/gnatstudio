@@ -31,6 +31,8 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 
+with Prj_API;                   use Prj_API;
+
 with String_List;
 
 package body VCS_View_API is
@@ -68,6 +70,14 @@ package body VCS_View_API is
       Context : Selection_Context_Access);
 
    procedure On_Menu_Update_Dir
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Get_Status_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
+   procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
@@ -331,7 +341,8 @@ package body VCS_View_API is
          end if;
 
          if Has_File_Information (File)
-           and then Has_Directory_Information (File)
+           and then (Has_Directory_Information (File)
+                     or else Has_Project_Information (File))
          then
             Gtk_New (Item);
             Append (Menu, Item);
@@ -354,6 +365,32 @@ package body VCS_View_API is
                (On_Menu_Update_Dir'Access),
                Selection_Context_Access (Context));
          end if;
+
+         if Has_Project_Information (File)
+           and then Has_Directory_Information (File)
+         then
+            Gtk_New (Item);
+            Append (Menu, Item);
+         end if;
+
+         if Has_Project_Information (File) then
+            Gtk_New (Item, Label => -"Query status for project");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Get_Status_Project'Access),
+               Selection_Context_Access (Context));
+
+            Gtk_New (Item, Label => -"Update project");
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (On_Menu_Update_Project'Access),
+               Selection_Context_Access (Context));
+         end if;
+
       end if;
    end VCS_Contextual_Menu;
 
@@ -536,6 +573,57 @@ package body VCS_View_API is
          end if;
       end if;
    end On_Menu_Get_Status_Dir;
+
+   ----------------------------
+   -- On_Menu_Update_Project --
+   ----------------------------
+
+   procedure On_Menu_Update_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+   begin
+      Open_Explorer (Get_Kernel (Context));
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Files := Get_Files_In_Project
+              (Get_Project_From_View (Project_Information (File_Context)));
+            Update (Get_Current_Ref (Get_Kernel (Context)), Files);
+            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+         end if;
+      end if;
+   end On_Menu_Update_Project;
+
+   --------------------------------
+   -- On_Menu_Get_Status_Project --
+   --------------------------------
+
+   procedure On_Menu_Get_Status_Project
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files        : String_List.List;
+      File_Context : File_Selection_Context_Access;
+   begin
+      Open_Explorer (Get_Kernel (Context));
+
+      if Context.all in File_Selection_Context'Class then
+         File_Context := File_Selection_Context_Access (Context);
+
+         if Has_Project_Information (File_Context) then
+            Files := Get_Files_In_Project
+              (Get_Project_From_View (Project_Information (File_Context)));
+            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+         end if;
+      end if;
+   end On_Menu_Get_Status_Project;
 
    ------------------
    -- On_Menu_Diff --
