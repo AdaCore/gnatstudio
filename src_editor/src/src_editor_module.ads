@@ -62,6 +62,8 @@ package Src_Editor_Module is
    ---------------------------------------
 
    Remove_Blank_Lines_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
+   Hide_Block_Pixbuf   : Gdk_Pixbuf := Null_Pixbuf;
+   Unhide_Block_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
 
    -----------------------
    -- Local subprograms --
