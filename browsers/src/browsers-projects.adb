@@ -254,7 +254,7 @@ package body Browsers.Projects is
          Raise_Child (Child);
       else
          Child := Put (Get_MDI (Kernel), Create_Project_Browser (Kernel));
-         Set_Title (Child, "<project browser>");
+         Set_Title (Child, -"Project Browser");
       end if;
 
       return Child;

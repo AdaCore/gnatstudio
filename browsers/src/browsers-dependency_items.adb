@@ -254,7 +254,7 @@ package body Browsers.Dependency_Items is
          Raise_Child (Child);
       else
          Child := Put (Get_MDI (Kernel), Create_Dependency_Browser (Kernel));
-         Set_Title (Child, "<dependency browser>");
+         Set_Title (Child, -"Dependency Browser");
       end if;
 
       return Child;
@@ -650,7 +650,7 @@ package body Browsers.Dependency_Items is
             Width := Gint'Max (Width, String_Width (Font, Str2.all));
          else
             Width := Gint'Max
-              (Width, String_Width (Font, String' ("<unknown unit name>")));
+              (Width, String_Width (Font, String' (-"<unknown unit name>")));
          end if;
 
          Height := Height + (Get_Ascent (Font) + Get_Descent (Font))
@@ -701,7 +701,7 @@ package body Browsers.Dependency_Items is
                GC    => Get_Text_GC (Browser),
                X     => Margin,
                Y     => Margin + Get_Ascent (Font) * 2 + Get_Descent (Font),
-               Text  => "<unknown unit name>");
+               Text  => -"<unknown unit name>");
          end if;
       end if;
    end Refresh;
