@@ -85,7 +85,11 @@ package body Codefix.GPS_Io is
 
    procedure Free (This : in out GPS_Mark) is
    begin
+      --  ??? Free the mark in the console (this.id)
+
+      --  Free the string access:
       Free (This.Id);
+      Free (Mark_Abstr (This));
    end Free;
 
    ----------
@@ -164,7 +168,7 @@ package body Codefix.GPS_Io is
    is
       Garbage : Dynamic_String;
    begin
-      This.File_Modified.all := True; --  ??? To be deleted with the callback
+      This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       if Cursor.Line /= 0 then
@@ -209,7 +213,7 @@ package body Codefix.GPS_Io is
       Line_Str        : Dynamic_String;
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
-      This.File_Modified.all := True; --  ??? To be deleted with the callback
+      This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       Insert_Position.Col := 1;
@@ -234,7 +238,7 @@ package body Codefix.GPS_Io is
    is
       Garbage : Dynamic_String;
    begin
-      This.File_Modified.all := True; --  ??? To be deleted with the callback
+      This.File_Modified.all := True;
       Text_Has_Changed (This);
 
       Garbage := new String'
