@@ -1086,6 +1086,56 @@ package body String_Utils is
    function Substitute
      (Str               : String;
       Substitution_Char : Character;
+      Callback          : Substitute_Callback;
+      Recursive         : Boolean := False) return String
+   is
+      Result : Unbounded_String;
+      First, Last : Natural := Str'First;
+   begin
+      while First <= Str'Last loop
+         Last := First;
+         while Last <= Str'Last
+           and then Str (Last) /= Substitution_Char
+         loop
+            Last := Last + 1;
+         end loop;
+
+         Result := Result & Str (First .. Last - 1);
+
+         exit when Last > Str'Last;
+
+         First := Last + 1;
+         while First <= Str'Last
+           and then Is_Letter (Str (First))
+         loop
+            First := First + 1;
+         end loop;
+
+         declare
+            Sub : constant String := Callback (Str (Last + 1 .. First - 1));
+         begin
+            if Recursive then
+               Result := Result & Substitute
+                 (Sub, Substitution_Char, Callback, Recursive);
+            else
+               Result := Result & Sub;
+            end if;
+         end;
+      end loop;
+
+      return To_String (Result);
+   exception
+      when Invalid_Substitution =>
+         return Str;
+   end Substitute;
+
+   ----------------
+   -- Substitute --
+   ----------------
+
+   function Substitute
+     (Str               : String;
+      Substitution_Char : Character;
       Substrings        : Substitution_Array;
       Recursive         : Boolean := False) return String
    is

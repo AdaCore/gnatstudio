@@ -234,6 +234,21 @@ package String_Utils is
    --      Str := "%a"   results in   "cd"  if Recursive is True
    --                    results in   "c%b" otherwise
 
+   type Substitute_Callback is access function (Param : String)  return String;
+   --  A callback for Substitute below. It is called once for each '%...'
+   --  parameter found in the string. Param doesn't include the leading '%'
+   --  sign.
+   --  Should raise Invalid_Substitution if Param cannot be substituted
+
+   function Substitute
+     (Str               : String;
+      Substitution_Char : Character;
+      Callback          : Substitute_Callback;
+      Recursive         : Boolean := False) return String;
+   --  Same as Substitute above, except with a callback
+
+   Invalid_Substitution : exception;
+
    ----------------------------
    -- File name manipulation --
    ----------------------------
