@@ -5903,6 +5903,7 @@ nodes:
    this category.
    @end table
 
+@ifset extended_language
 @item Project_Field
 This tag describes the tools that are used to support this
 language. The name of these tools is stored in the project files, and
@@ -5910,7 +5911,7 @@ therefore only a limited number of tools can be specified. Note that this
 tag is currently only used by the project properties and wizard, and is
 not taken into account by other components.
 
-This nodes has two attributes:
+This node has two attributes:
 
    @table @code
    @item Name
@@ -5926,6 +5927,12 @@ This nodes has two attributes:
       for Name ("Index") use "value";
    @end smallexample
 
+   e.g:
+
+   @smallexample
+      for Compiler_Command ("my_language") use "my_compiler";
+   @end smallexample
+
    The value of the index should be either the empty string or the
    name of the language.
 
@@ -5933,7 +5940,7 @@ This nodes has two attributes:
 
 The value of this tag is the string to use in the project properties
 editor when editing this project field.
-
+@end ifset
 
 @end table
 
