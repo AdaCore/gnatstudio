@@ -209,7 +209,9 @@ package body Process_Tab_Pkg.Callbacks is
 
                Wind (Top.Window.Command_History, Forward);
 
-               if S'Length = 0 then
+               if S'Length = 0
+                 and then not Command_In_Process (Get_Process (Top.Debugger))
+               then
                   begin
                      Find_Match (Top.Window.Command_History,
                                  Natural (Get_Num (Top)),
