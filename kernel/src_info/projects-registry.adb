@@ -1499,7 +1499,7 @@ package body Projects.Registry is
       Project2, Real_Project : Project_Type;
       Path     : GNAT.OS_Lib.String_Access;
       Iterator : Imported_Project_Iterator;
-      Info     : Source_File_Data;
+      Info     : Source_File_Data := No_Source_File_Data;
 
    begin
       if Is_Absolute_Path (Filename) then
