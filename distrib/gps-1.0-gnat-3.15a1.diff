@@ -1,35 +1,3 @@
-Index: common/src/stubs.c
-*** gps-1.0.1/common/src/stubs.c	Sat Mar 24 05:37:44 2001
---- common/src/stubs.c	Sun Sep 22 11:59:25 2002
-***************
-*** 0 ****
---- 1,26 ----
-+ #include <sys/stat.h>
-+ #ifdef _WIN32
-+ #include <windows.h>
-+ #endif
-+ 
-+ extern int __gnat_stat (char *, struct stat *);
-+ 
-+ int __gnat_copy_attribs (from, to, mode) {}
-+ 
-+ const int __gnat_vmsp = 0;
-+ 
-+ int get_gcc_version () { return 2; }
-+ 
-+ int
-+ __gnat_is_symbolic_link (char *name)
-+ {
-+ #if defined (_WIN32) || defined (VMS)
-+   return 0;
-+ #else
-+   int ret;
-+   struct stat statbuf;
-+ 
-+   ret = lstat (name, &statbuf);
-+   return (!ret && S_ISLNK (statbuf.st_mode));
-+ #endif
-+ }
 *** shared.gpr.old	Tue Oct  1 18:21:51 2002
 --- shared.gpr	Tue Oct  1 18:22:03 2002
 ***************
@@ -49,19 +17,97 @@ Index: common/src/stubs.c
   
      for Source_Dirs use ();
   
-*** gps-1.2.0/glide/gps.gpr	10 Feb 2003 17:29:25
---- glide/gps.gpr	10 Feb 2003 17:30:55 -0000
-***************
-*** 33,43 ****
-        case Shared.Build is
-           when "Debug" =>
-             for Default_Switches ("Ada") use ("-m", "-a", "-g");
--            for Global_Configuration_Pragmas use "gnat_debug.adc";
-  
-           when "Production" =>
-             for Default_Switches ("Ada") use ("-a", "-g");
--            for Global_Configuration_Pragmas use "gnat.adc";
-        end case;
-     end Builder;
-  
---- 33,41 ----
+--- glide/gps.gpr	19 Apr 2003 07:29:18 -0000	1.55
++++ glide/gps.gpr	15 Jul 2003 12:17:11 -0000
+@@ -36,18 +36,16 @@
+       case Shared.Build is
+          when "Debug" =>
+            for Default_Switches ("Ada") use ("-m", "-a", "-g");
+-           for Global_Configuration_Pragmas use "gnat_debug.adc";
+ 
+          when "Production" =>
+            for Default_Switches ("Ada") use ("-a", "-g");
+-           for Global_Configuration_Pragmas use "gnat.adc";
+       end case;
+    end Builder;
+ 
+    package Compiler renames Shared.Compiler;
+ 
+    package Binder is
+-      for Default_Switches ("Ada") use ("-E");
++      for Default_Switches ("Ada") use ("-E", "-t");
+    end Binder;
+ 
+    package Linker is
+Index: common/src/stubs.c
+--- /dev/null	2002-08-31 01:31:37 +0200
++++ common/src/stubs.c	2003-07-15 14:28:25 +0200
+@@ -0,0 +1,68 @@
++#include <sys/stat.h>
++#include <sys/param.h>
++#ifdef _WIN32
++#include <windows.h>
++#include <process.h>
++#include "mingw32.h"
++#endif
++
++extern int __gnat_stat (char *, struct stat *);
++
++int __gnat_copy_attribs (from, to, mode) {}
++
++const int __gnat_vmsp = 0;
++
++int __gnat_max_path_len = MAXPATHLEN;
++
++/* char used as prefix/suffix for environment variables */
++#if defined (_WIN32)
++char __gnat_environment_char = '%';
++#else
++char __gnat_environment_char = '$';
++#endif
++
++int get_gcc_version () { return 2; }
++
++void
++__gnat_kill (int pid, int sig)
++{ 
++#if defined(_WIN32)
++  HANDLE process_handle;
++  
++  if (sig == 9)
++    { 
++      process_handle = OpenProcess (PROCESS_TERMINATE, FALSE, pid);
++      if (process_handle != NULL)
++        TerminateProcess (process_handle, 0);
++    }
++#else
++  kill (pid, sig);
++#endif
++}
++
++int
++__gnat_is_symbolic_link (char *name)
++{
++#if defined (_WIN32) || defined (VMS)
++  return 0;
++#else
++  int ret;
++  struct stat statbuf;
++
++  ret = lstat (name, &statbuf);
++  return (!ret && S_ISLNK (statbuf.st_mode));
++#endif
++}
++
++int
++__gnat_is_readable_file (char *name)
++{ 
++  int ret;
++  int mode;
++  struct stat statbuf;
++
++  ret = __gnat_stat (name, &statbuf);
++  mode = statbuf.st_mode & S_IRUSR;
++  return (!ret && mode);
++}
++
