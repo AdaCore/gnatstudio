@@ -23,7 +23,6 @@ with Glib.Object;             use Glib.Object;
 with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Stock;               use Gtk.Stock;
-with Gtk.Window;              use Gtk.Window;
 
 with Glide_Intl;              use Glide_Intl;
 
@@ -42,10 +41,15 @@ with GNAT.Expect;             use GNAT.Expect;
 with GNAT.Regpat;             use GNAT.Regpat;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Ada.Exceptions;          use Ada.Exceptions;
 with Traces;                  use Traces;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body Builder_Module is
+
+   Timeout : constant Guint32 := 50;
+   --  Timeout in millisecond to check the build process
+   --  <preferences>
 
    Builder_Module_Id   : Module_ID;
    Builder_Module_Name : constant String := "Builder";
@@ -57,7 +61,7 @@ package body Builder_Module is
       Descriptor : Process_Descriptor_Access;
    end record;
 
-   package Builder_Idle is new Gtk.Main.Idle (Builder_Data);
+   package Builder_Idle is new Gtk.Main.Timeout (Builder_Data);
 
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
@@ -67,9 +71,26 @@ package body Builder_Module is
    --  Called by the Gtk main loop when idle.
    --  Handle on going build.
 
+   procedure Set_Sensitive_Menus
+     (Kernel    : Kernel_Handle;
+      Sensitive : Boolean);
+   --  Change the sensitive aspect of the build menu items.
+
+   procedure Free (Ar : in out String_List);
+   procedure Free (Ar : in out String_List_Access);
+   --  Free the memory associate with Ar.
+
    --------------------
    -- Menu Callbacks --
    --------------------
+
+   procedure On_Check_Syntax
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Check Syntax menu
+
+   procedure On_Compile
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Build->Compile menu
 
    procedure On_Build
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -82,6 +103,46 @@ package body Builder_Module is
    procedure On_Stop_Build
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Build->Stop Build menu
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Ar : in out String_List) is
+   begin
+      for A in Ar'Range loop
+         Free (Ar (A));
+      end loop;
+   end Free;
+
+   procedure Free (Ar : in out String_List_Access) is
+      procedure Free is new
+        Ada.Unchecked_Deallocation (String_List, String_List_Access);
+   begin
+      if Ar /= null then
+         Free (Ar.all);
+         Free (Ar);
+      end if;
+   end Free;
+
+   -------------------------
+   -- Set_Sensitive_Menus --
+   -------------------------
+
+   procedure Set_Sensitive_Menus
+     (Kernel    : Kernel_Handle;
+      Sensitive : Boolean)
+   is
+      Build : constant String := '/' & (-"Build") & '/';
+   begin
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Build & (-"Check Syntax")), Sensitive);
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Build & (-"Compile File")), Sensitive);
+      Set_Sensitive (Find_Menu_Item (Kernel, Build & (-"Make")), Sensitive);
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Build & (-"Stop Build")), not Sensitive);
+   end Set_Sensitive_Menus;
 
    --------------
    -- On_Build --
@@ -101,7 +162,7 @@ package body Builder_Module is
         "gnatmake -P" & Project & " "
         & Scenario_Variables_Cmd_Line (Kernel)
         & " ";
-      Id        : Idle_Handler_Id;
+      Id        : Timeout_Handler_Id;
 
    begin
       if Get_Current_Explorer_Context (Kernel) /= null then
@@ -112,7 +173,11 @@ package body Builder_Module is
          return;
       end if;
 
+      --  ??? Ask for saving sources/projects before building
+
       Push_State (Kernel, Processing);
+      Console.Clear (Kernel);
+      Set_Sensitive_Menus (Kernel, False);
 
       if Project = "" then
          --  This is the default internal project
@@ -131,9 +196,33 @@ package body Builder_Module is
       Non_Blocking_Spawn
         (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
          Err_To_Out  => True);
-      --   ??? Free (Args);
-      Id := Builder_Idle.Add (Idle_Build'Access, (Kernel, Fd));
+      Free (Args);
+      Id := Builder_Idle.Add (Timeout, Idle_Build'Access, (Kernel, Fd));
    end On_Build;
+
+   ---------------------
+   -- On_Check_Syntax --
+   ---------------------
+
+   procedure On_Check_Syntax
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+   begin
+      --  ???
+      null;
+   end On_Check_Syntax;
+
+   ----------------
+   -- On_Compile --
+   ----------------
+
+   procedure On_Compile
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+   begin
+      --  ???
+      null;
+   end On_Compile;
 
    ----------------
    -- Idle_Build --
@@ -141,38 +230,49 @@ package body Builder_Module is
 
    function Idle_Build (Data : Builder_Data) return Boolean is
       Kernel  : Kernel_Handle renames Data.Kernel;
-      Fd      : Process_Descriptor renames Data.Descriptor.all;
+      Fd      : Process_Descriptor_Access := Data.Descriptor;
 
       Top     : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Matched : Match_Array (0 .. 0);
+      Matched : Match_Array (0 .. 3);
       Result  : Expect_Match;
       Matcher : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
+      Timeout : Integer := 0;
+
+      procedure Free is new Ada.Unchecked_Deallocation
+        (Process_Descriptor'Class, Process_Descriptor_Access);
 
    begin
       if Top.Interrupted then
-         Interrupt (Fd);
+         Interrupt (Fd.all);
          Console.Insert (Kernel, "<^C>");
+         Top.Interrupted := False;
+         Print_Message
+           (Top.Statusbar, GVD.Status_Bar.Help, -"Interrupting build...");
+         Timeout := 10;
       end if;
 
       loop
-         Expect (Fd, Result, ".+", Timeout => 0);
+         Expect (Fd.all, Result, ".+", Timeout => Timeout);
 
          exit when Result = Expect_Timeout;
 
          declare
-            S : constant String := Expect_Out (Fd);
+            S : constant String := Expect_Out (Fd.all);
          begin
             Match (Matcher, S, Matched);
 
             if Matched (0) = No_Match then
                Console.Insert (Kernel, S, Add_LF => False);
             else
-               Print_Message
-                 (Top.Statusbar, GVD.Status_Bar.Help,
-                  S (S'First + 1 .. S'Last));
+               Set_Fraction
+                 (Top.Statusbar,
+                  Gdouble'Value
+                    (S (Matched (3).First .. Matched (3).Last)) / 100.0);
+               Set_Progress_Text
+                 (Top.Statusbar, S (S'First + 1 .. Matched (2).Last));
             end if;
          end;
       end loop;
@@ -181,29 +281,23 @@ package body Builder_Module is
 
    exception
       when Process_Died =>
-         Console.Insert (Kernel, Expect_Out (Fd), Add_LF => False);
+         Console.Insert (Kernel, Expect_Out (Fd.all), Add_LF => True);
          --  ??? Check returned status.
-
+         Console.Insert (Kernel, -"process terminated.");
          Pop_State (Kernel);
+         Set_Sensitive_Menus (Kernel, True);
+         Close (Fd.all);
+         Free (Fd);
 
-         if Top.Interrupted then
-            Top.Interrupted := False;
-            Print_Message
-              (Top.Statusbar, GVD.Status_Bar.Help, -"build interrupted.");
-         else
-            Print_Message
-              (Top.Statusbar, GVD.Status_Bar.Help, -"build completed.");
-         end if;
-
-         Close (Fd);
-         --  ??? Free (Data.Descriptor);
          return False;
 
       when E : others =>
          Pop_State (Kernel);
-         Close (Fd);
-         --  ??? Free (Data.Descriptor);
+         Set_Sensitive_Menus (Kernel, True);
+         Close (Fd.all);
+         Free (Fd);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
          return False;
    end Idle_Build;
 
@@ -221,9 +315,7 @@ package body Builder_Module is
          Key     => "glide_run_arguments");
 
    begin
-      if Arguments = ""
-        or else Arguments (Arguments'First) /= ASCII.NUL
-      then
+      if Arguments = "" or else Arguments (Arguments'First) /= ASCII.NUL then
          null;
       end if;
 
@@ -255,8 +347,9 @@ package body Builder_Module is
       Mitem : Gtk_Menu_Item;
    begin
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
-      Register_Menu (Kernel, Build, -"Check File", "", null);
-      Register_Menu (Kernel, Build, -"Compile File", "", null);
+      Register_Menu (Kernel, Build, -"Check Syntax", "",
+                     On_Check_Syntax'Access);
+      Register_Menu (Kernel, Build, -"Compile File", "", On_Compile'Access);
       Register_Menu (Kernel, Build, -"Make", "", On_Build'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
@@ -266,6 +359,8 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, Mitem);
       Register_Menu
         (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access);
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Build & (-"Stop Build")), False);
    end Initialize_Module;
 
    ---------------------
