@@ -208,6 +208,15 @@ package body Codefix.Text_Manager is
    --  type Text_Navigator
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Mark_Abstr) is
+   begin
+      Free (This.File_Name);
+   end Free;
+
    ---------------
    -- Free_Data --
    ---------------
@@ -230,6 +239,20 @@ package body Codefix.Text_Manager is
       end if;
 
       Free_Pool (This);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Text_Navigator) is
+      procedure Free_Pool is new Ada.Unchecked_Deallocation
+        (Text_Navigator_Abstr'Class, Ptr_Text_Navigator);
+   begin
+      if This /= null then
+         Free (This.all);
+         Free_Pool (This);
+      end if;
    end Free;
 
    ----------
@@ -711,6 +734,7 @@ package body Codefix.Text_Manager is
       Free (This.Structure.all);
       Free (This.Structure);
       Free (This.File_Name);
+      Free (This.Structure_Up_To_Date);
    end Free;
 
    ----------
@@ -1323,6 +1347,8 @@ package body Codefix.Text_Manager is
       else
          Cursor.Col := Cursor.Col + 1;
       end if;
+
+      Free (Current_Line);
    end Next_Word;
 
    -------------------
@@ -3297,15 +3323,16 @@ package body Codefix.Text_Manager is
      (This         : Text_Command'Class;
       Current_Text : Text_Navigator_Abstr'Class;
       New_Extract  : out Extract'Class;
-      Success      : out Boolean) is
+      Error_Cb     : Execute_Corrupted := null) is
    begin
-      Success := True;
       Update_All (Current_Text);
       Execute (This, Current_Text, New_Extract);
 
    exception
-      when Codefix_Panic =>
-         Success := False;
+      when E : Codefix_Panic =>
+         if Error_Cb /= null then
+            Error_Cb (Exception_Information (E));
+         end if;
    end Secured_Execute;
 
    -----------------
