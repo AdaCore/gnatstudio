@@ -492,6 +492,10 @@ package body Src_Editor_Buffer is
 
    procedure Request_Blocks (Buffer : access Source_Buffer_Record'Class) is
    begin
+      if not Buffer.Parse_Blocks then
+         return;
+      end if;
+
       Buffer.Blocks_Request_Timestamp := Clock;
 
       if not Buffer.Blocks_Timeout_Registered then
@@ -1902,30 +1906,33 @@ package body Src_Editor_Buffer is
            (Guint32 (Timeout) * 1000,  Automatic_Save'Access, B.all'Access);
       end if;
 
-      --  ??? Should improve this when the preference for source highlightings
-      --  becomes more sophisticated.
-      Prev := B.Parse_Blocks;
-      B.Parse_Blocks :=
-        not Equal (Get_Pref (Kernel, Current_Block_Color),
-                   White (Get_Default_Colormap));
+      Prev := B.Block_Highlighting;
+      B.Block_Highlighting := Get_Pref (Kernel, Block_Highlighting);
 
-      if Prev /= B.Parse_Blocks then
-         Buffer_Information_Changed (B);
-      end if;
-
-      if not Prev and then B.Parse_Blocks then
+      if Prev /= B.Block_Highlighting then
          Request_Blocks (B);
       end if;
 
       Prev := B.Block_Folding;
       B.Block_Folding := Get_Pref (Kernel, Block_Folding);
 
+      if Prev /= B.Block_Folding then
+         Request_Blocks (B);
+      end if;
+
       if not B.Block_Folding and then Prev then
          Unfold_All (B);
          Remove_Block_Folding_Commands (B);
       end if;
 
-      if not Prev and then B.Block_Folding then
+      Prev := B.Parse_Blocks;
+      B.Parse_Blocks := B.Block_Folding or B.Block_Highlighting;
+
+      if Prev /= B.Parse_Blocks then
+         Buffer_Information_Changed (B);
+      end if;
+
+      if not Prev and then B.Parse_Blocks then
          Request_Blocks (B);
       end if;
    end Preferences_Changed;
