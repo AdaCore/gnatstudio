@@ -41,15 +41,26 @@
 --  However, the normalized projects are needed, so that we know exactly where
 --  to add new statements depending on the current scenario.
 --
---  The following format is used for normalized projects:
+--  There are two aspects to normalized projects:
+--  One shared project called <root>-internal.gpr (<root> is the name of the
+--  root node of the project hierarchy), with the following format:
 --
+--      project <root>.Internal is
+--          [Variable_Declarations]
+--          [Nested_Case]  --  Set up of the Scenario attribute
+--      end <root>.Internal;
+--
+--  In addition, all the projects from the user are modified to the following
+--  format:
+--
+--      with <root>.Internal;
 --      Project_Header
 --      [Variable_Declarations]
 --      [Common_Section]
---      [Nested_Case]
+--      [Case_On_Scenario]
 --      [Package_Declaration
 --         [Common_Section]
---         [Nested_Case]
+--         [Case_On_Scenario]
 --      ]*
 --
 --  Where:
@@ -71,22 +82,21 @@
 --           case Var1 is
 --              when Value1 =>
 --                 case Var2 is
---                    when Value1_1 => ...;
---                    when Value1_2 => ...;
+--                    when Value1_1 => for Scenario use "<NAME1>";
+--                    when Value1_2 => for Scenario use "<NAME2>";
 --                 end case;
 --              when Value2 =>
 --                 case Var2 is
---                    when Value2_1 => ...;
---                    when Value2_2 => ...;
+--                    when Value2_1 => for Scenario use "<NAME3>";
+--                    when Value2_2 => for Scenario use "<NAME4>";
 --                 end case;
 --           end case;
 --
 --     The "when others" section is not allowed in the nested cases, and are
 --     replaced by the appropriate list of "when" statements.
 --
---     However, actual statements like variable assignments can only appear
---     inside the deeper-nested case. It is then easy to find where new
---     statements should be added based on the current scenario.
+--     Case_On_Scenario is a single case statement that only tests the Scenario
+--     attribute.
 --
 --  </description>
 
