@@ -2,6 +2,49 @@ with GNAT.Regpat; use GNAT.Regpat;
 
 package body Codefix.Errors_Manager is
 
+   ----------------------------------------------------------------------------
+   --  type Errors_Interface
+   ----------------------------------------------------------------------------
+
+   procedure Get_Message
+     (This         : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Current      : out Error_Message)
+   is
+      Current_Line        : Dynamic_String;
+      Cursor_Line         : File_Cursor;
+      File_Pos, Logic_Pos : Natural;
+   begin
+      Get_Direct_Message (This, Current);
+
+      if Current.File_Name = null or else Current.File_Name.all = "" then
+         Current := Invalid_Error_Message;
+         return;
+      end if;
+
+      Cursor_Line := File_Cursor (Current);
+      Cursor_Line.Col := 1;
+      Affect (Current_Line, Get_Line (Current_Text, Cursor_Line));
+
+      Logic_Pos := 1;
+      File_Pos := 1;
+      loop
+         if Current_Line.all (File_Pos) = ASCII.HT then
+            Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
+         end if;
+         Logic_Pos := Logic_Pos + 1;
+         File_Pos := File_Pos + 1;
+         exit when Logic_Pos = Current.Col;
+      end loop;
+      Current.Col := File_Pos;
+
+      Free (Current_Line);
+   end Get_Message;
+
+   ----------------------------------------------------------------------------
+   --  type Correction_Manager
+   ----------------------------------------------------------------------------
+
    -------------
    -- Analyse --
    -------------
@@ -18,16 +61,18 @@ package body Codefix.Errors_Manager is
 
    begin
       while not No_More_Messages (Errors_List) loop
-         Get_Message (Errors_List, Current_Message);
-         Solutions := Get_Solutions (Source_Text, Current_Message);
-         if Length (Solutions) > 0 then
-            Add_Error (This, Solutions, New_Error);
-            Callback
-              (Current_Message,
-               New_Error,
-               Solutions,
-               Source_Text,
-               This);
+         Get_Message (Errors_List, Source_Text, Current_Message);
+         if Current_Message /= Invalid_Error_Message then
+            Solutions := Get_Solutions (Source_Text, Current_Message);
+            if Length (Solutions) > 0 then
+               Add_Error (This, Solutions, New_Error);
+               Callback
+                 (Current_Message,
+                  New_Error,
+                  Solutions,
+                  Source_Text,
+                  This);
+            end if;
          end if;
       end loop;
    end Analyze;
