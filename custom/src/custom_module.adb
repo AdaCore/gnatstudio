@@ -28,12 +28,9 @@ with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Glib.Object;               use Glib.Object;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System.Assertions;         use System.Assertions;
 
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
@@ -56,22 +53,9 @@ with Commands.Custom;           use Commands.Custom;
 
 with VFS;                       use VFS;
 
+with Expect_Interface;          use Expect_Interface;
+
 package body Custom_Module is
-
-   type Contextual_Menu_Record;
-   type Contextual_Menu_Access is access all Contextual_Menu_Record;
-   type Contextual_Menu_Record is record
-      Title  : String_Access;
-      Action : Action_Record_Access;
-      Next   : Contextual_Menu_Access;
-   end record;
-
-   type Custom_Module_ID_Record is new Module_ID_Record with record
-      Contextual : Contextual_Menu_Access;
-   end record;
-   type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
-
-   Custom_Module_ID   : Custom_Module_ID_Access;
 
    package Action_Callback is new Gtk.Handlers.User_Callback
      (Glib.Object.GObject_Record, Action_Record_Access);
@@ -838,6 +822,121 @@ package body Custom_Module is
          Contextual_Menu_Handler => Contextual_Handler'Access,
          Priority                => Low_Priority,
          Customization_Handler   => Customize'Access);
+
+      Custom_Module_ID.Kernel := Kernel_Handle (Kernel);
+
+      Register_Command
+        (Kernel,
+         Command => "Process.spawn",
+         Params  => "(command, regexp, on_match_action, on_exit_action)",
+         Minimum_Args => 4,
+         Maximum_Args => 4,
+         Return_Value => "string",
+         Description  =>
+         -("Spawn specified command. If regexp is not-empty and"
+           & " on_match_action is specified, launch on_match_action when"
+           & " regexp is found in the process output. If on_exit_action is"
+           & " specified, execute it when the process terminates."
+           & " Return the ID of the spawned process."
+           & ASCII.LF & ASCII.LF
+           & "on_match_action is an action with the parameters:" & ASCII.LF
+           & "  $1 = the ID of the process" & ASCII.LF
+           & "  $2 = the string which matched the regexp" & ASCII.LF
+           & "  $3 = the string since the last match" & ASCII.LF
+           & ASCII.LF
+           & "on_exit_action is an action with the parameters" & ASCII.LF
+           & "  $1 = the ID of the process" & ASCII.LF
+           & "  $2 = the exit status" & ASCII.LF
+           & "  $3 = the entire output of the process" & ASCII.LF
+           & "" & ASCII.LF),
+         Handler => Custom_Spawn_Handler'Access);
+      --  ??? should specify profiles of on_match_action and on_exit_action.
+      --  ??? should document return value
+
+      Register_Command
+        (Kernel,
+         Command => "Process.send",
+         Params  => "(id, command, add_lf[=TRUE])",
+         Minimum_Args => 2,
+         Maximum_Args => 3,
+         Return_Value => "(null)",
+         Description  =>
+         -("Send a line of text to process controlled by GPS."),
+         Handler => Custom_Spawn_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "Process.interrupt",
+         Params  => "(id)",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Return_Value => "(null)",
+         Description  =>
+         -("Interrupt a process controlled by GPS."),
+         Handler => Custom_Spawn_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "Process.kill",
+         Params  => "(id)",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Return_Value => "(null)",
+         Description  =>
+         -("Terminate a process controlled by GPS."),
+         Handler => Custom_Spawn_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "Process.expect",
+         Params  => "(id, regexp, expect_action)",
+         Minimum_Args => 3,
+         Maximum_Args => 3,
+         Return_Value => "(null)",
+         Description  =>
+         -("Listen to the output of specified process for regexp. When the"
+           & " regexp matches the output, execute the associated action, and"
+           & " stop listening for that specific regexp."
+           & ASCII.LF & ASCII.LF
+           & "expect_action is an action with the parameters:" & ASCII.LF
+           & "  $1 = the ID of the process" & ASCII.LF
+           & "  $2 = the string which matched the regexp" & ASCII.LF
+           & "  $3 = the string since the last match" & ASCII.LF),
+         Handler => Custom_Spawn_Handler'Access);
    end Register_Module;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Action_Record) is
+   begin
+      Free (X.Command);
+      Unchecked_Free (X.Pattern);
+      Free (X.Unmatched_Output);
+      Free (X.Processed_Output);
+   end Free;
+
+   procedure Free (X : in out Custom_Action_Access) is
+   begin
+      if X /= null then
+         Free (X.all);
+         Unchecked_Free (X);
+      end if;
+   end Free;
+
+   procedure Free (X : in out Expect_Filter) is
+   begin
+      Unchecked_Free (X.Pattern);
+   end Free;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (K : Integer) return Header_Num is
+   begin
+      return Header_Num ((K mod Integer (Header_Num'Last)) + 1);
+   end Hash;
 
 end Custom_Module;
