@@ -63,6 +63,7 @@ Description of the main windows
 * The Tool Bar::
 * The Call Stack Window::
 * The Data Window::
+* The Memory Window::
 * The Explorer Window::
 * The Source Window::
 * The Assembly Window::
@@ -123,6 +124,7 @@ at the moment it crashed.
 * The Tool Bar::
 * The Call Stack Window::
 * The Data Window::
+* The Memory Window::
 * The Explorer Window::
 * The Source Window::
 * The Assembly Window::
@@ -696,6 +698,13 @@ of breakpoints is recommended instead to stop programs.
    @end itemize
 
 @c --------------------------------------------------------------------
+@node The Memory Window
+@section The Memory Window
+@c --------------------------------------------------------------------
+
+@noindent
+
+@c --------------------------------------------------------------------
 @node The Explorer Window
 @section The Explorer Window
 @c --------------------------------------------------------------------
@@ -705,9 +714,23 @@ of breakpoints is recommended instead to stop programs.
 @image{explorer, 6cm}
 @end iftex
 
-   Note: some items are disabled until an executable is loaded using either the
-   Open Program, Open Core Dump, or Attach Process menu, or the corresponding
-   commands in the debugger console.
+The explorer window gives a fast access to the files contained in the
+module you debug (and that have been compiled with debug information).
+Note that you can have multiple entries with the same file name if there
+are duplicate file name located at different places (which can either be
+different files, e.g @code{/usr/include/signal.h} and
+@code{/usr/include/sys/signal.h}, or identical files located in different
+source paths).
+
+Each file can be opened (by clicking on the @code{+} icon on the left of
+the file name, or double clicking on the file name), giving access to
+language sensitive information such as packages, functions, tasks, etc...
+You can then open each of these sections and by selecting an item,
+the source editor will select and jump to this item.
+
+Note: some items are disabled until an executable is loaded using either the
+Open Program, Open Core Dump, or Attach Process menu, or the corresponding
+commands in the debugger console.
 
    Contextual menu:
    @itemize @bullet
