@@ -147,21 +147,6 @@ package body Entities is
       Subprogram_Access_Parameter              => True,
       others                                   => False);
 
-   Is_Read_Reference_Array : constant Reference_Kind_Filter :=
-     (Reference                                => True,
-      Instantiation_Reference                  => True,
-      Body_Entity                              => True,
-      Completion_Of_Private_Or_Incomplete_Type => True,
-      Type_Extension                           => True,
-      Label                                    => True,
-      With_Line                                => True,
-      Declaration                              => True,
-      others                                   => False);
-
-   Is_Write_Reference_Array : constant Reference_Kind_Filter :=
-     (Modification                             => True,
-      others                                   => False);
-
    Show_In_Call_Graph_Array : constant Reference_Kind_Filter :=
      (Reference                                => True,
       Modification                             => True,
@@ -182,7 +167,7 @@ package body Entities is
 
    function Is_Read_Reference  (Kind : Reference_Kind) return Boolean is
    begin
-      return Is_Read_Reference_Array (Kind);
+      return Read_Reference_Filter (Kind);
    end Is_Read_Reference;
 
    ------------------------
@@ -191,7 +176,7 @@ package body Entities is
 
    function Is_Write_Reference (Kind : Reference_Kind) return Boolean is
    begin
-      return Is_Write_Reference_Array (Kind);
+      return Write_Reference_Filter (Kind);
    end Is_Write_Reference;
 
    ----------------------------

@@ -251,6 +251,8 @@ package Entities is
 
    type Reference_Kind_Filter is array (Reference_Kind) of Boolean;
    Real_References_Filter : constant Reference_Kind_Filter;
+   Read_Reference_Filter  : constant Reference_Kind_Filter;
+   Write_Reference_Filter : constant Reference_Kind_Filter;
 
    function Is_End_Reference (Kind : Reference_Kind) return Boolean;
    pragma Inline (Is_End_Reference);
@@ -1014,5 +1016,21 @@ private
       With_Line                                => True,
       others                                   => False);
    --  See Is_Real_Reference
+
+   Read_Reference_Filter  : constant Reference_Kind_Filter :=
+     (Reference                                => True,
+      Instantiation_Reference                  => True,
+      Body_Entity                              => True,
+      Completion_Of_Private_Or_Incomplete_Type => True,
+      Type_Extension                           => True,
+      Label                                    => True,
+      With_Line                                => True,
+      Declaration                              => True,
+      others                                   => False);
+   --  See Is_Read_Reference
+
+   Write_Reference_Filter : constant Reference_Kind_Filter :=
+     (Modification                             => True,
+      others                                   => False);
 
 end Entities;
