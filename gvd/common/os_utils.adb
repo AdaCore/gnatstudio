@@ -30,11 +30,13 @@ package body OS_Utils is
    -- Executable_Location --
    -------------------------
 
-   Argv : chars_ptr;
+   type chars_ptr_ptr is access all chars_ptr;
+
+   Argv : chars_ptr_ptr;
    pragma Import (C, Argv, "gnat_argv");
 
    function Executable_Location return String is
-      Exec_Name : constant String := Value (Argv);
+      Exec_Name : constant String := Value (Argv.all);
 
       function Get_Install_Dir (S : String) return String;
       --  S is the executable name preceeded by the absolute or relative
