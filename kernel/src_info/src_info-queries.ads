@@ -30,7 +30,6 @@
 --  into the sources of Gnat and its tools.
 
 with Traces;
-with Unchecked_Deallocation;
 with Language_Handlers;
 with Projects;
 with String_Hash;
@@ -40,21 +39,6 @@ package Src_Info.Queries is
    type E_Kind_Set is array (E_Kinds) of Boolean;
    pragma Pack (E_Kind_Set);
    --  General type to implement sets of E_Kind
-
-   ----------------
-   -- Scope Tree --
-   ----------------
-
-   --  A scope tree is the base structure for the call graph and the type
-   --  browser.
-   --  Such a tree is generated from an LI structure, and becomes obsolete as
-   --  soon as that structure is scanned again (since we keep pointers to the
-   --  internal nodes of the structure
-
-   type Scope_Tree is private;
-   Null_Scope_Tree : constant Scope_Tree;
-
-   --  See below for operations on Scope_Tree
 
    -------------------------
    --  Entity information --
@@ -118,8 +102,7 @@ package Src_Info.Queries is
    function Get_Full_Name
      (Entity    : Entity_Information;
       Decl_File : LI_File_Ptr;
-      Separator : String := ".";
-      Scope     : Scope_Tree := Null_Scope_Tree) return String;
+      Separator : String := ".") return String;
    --  Compute the fully qualified name of the entity. For an entity defined in
    --  the function F of package P, the name would
    --     "P" & Separator & "F" & Separator & Get_Name (Entity)
@@ -688,34 +671,16 @@ package Src_Info.Queries is
    -- Scope tree --
    ----------------
 
-   type Scope_Tree_Node is private;
-   Null_Scope_Tree_Node : constant Scope_Tree_Node;
-
-   function Create_Tree
-     (Lib_Info : LI_File_Ptr; Declarations_Only : Boolean := False)
-      return Scope_Tree;
-   --  Create a new scope tree from an already parsed Library information.
-   --  Note that the resulting tree needs to be freed whenever Lib_Info
-   --  changes, since the tree points to internal nodes of Lib_Info.
-   --
-   --  If Declarations_Only is true, then only declarations are inserted into
-   --  the tree, no reference.
-   --
-   --  Consider using Glide_Kernel.Get_Scope_Tree instead, since it will parse
-   --  the right source file for an entity.
-
-   procedure Free (Tree : in out Scope_Tree);
-   --  Free the memory occupied by Tree.
-
-   procedure Trace_Dump
+   procedure Trace_Tree_Dump
      (Handler              : Traces.Debug_Handle;
-      Tree                 : Scope_Tree;
+      Lib_Info             : in out LI_File_Ptr;
       Node                 : Scope_Tree_Node := Null_Scope_Tree_Node;
       Subprograms_Pkg_Only : Boolean := True);
-   --  Dump the contentns of the tree to standard_output.
+   --  Dump the contents of the tree to standard_output.
 
    function Find_Entity_Scope
-     (Tree : Scope_Tree; Entity : Entity_Information) return Scope_Tree_Node;
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
+      return Scope_Tree_Node;
    --  Return the declaration node for the entity Name that is referenced
    --  at position Line, Column.
 
@@ -730,8 +695,8 @@ package Src_Info.Queries is
    --  entity.
 
    procedure Find_Entity_References
-     (Tree : Scope_Tree;
-      Entity : Entity_Information;
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information;
       Callback : Node_Callback);
    --  Search all the references to the entity Decl in the tree
 
@@ -831,11 +796,6 @@ private
       Dep  : Src_Info.Dependency_Info;
    end record;
 
-   type Scope_Type is (Declaration, Reference);
-   --  The type for the elements in the scope: these are either a
-   --  declaration, with subranges or subdeclarations, or a reference to
-   --  another entity.
-
    type Entity_Information is record
       Name        : String_Access;
       Decl_Line   : Positive;
@@ -849,62 +809,6 @@ private
 
    No_Entity_Information : constant Entity_Information :=
      (null, 1, 0, VFS.No_File, Global_Scope, Unresolved_Entity_Kind);
-
-   type Scope_Node;
-   type Scope_List is access Scope_Node;
-   type Scope_Node (Typ : Scope_Type) is record
-      Sibling : Scope_List;
-      Parent  : Scope_List;
-      --  Pointer to the next item at the same level.
-
-      Decl : E_Declaration_Access;
-      --  The declaration of the entity
-
-      case Typ is
-         when Declaration =>
-            Start_Of_Scope : File_Location;
-            End_Of_Scope : E_Reference;
-            Contents : Scope_List;
-
-         when Reference =>
-            Ref : E_Reference_Access;
-      end case;
-   end record;
-
-   type Scope_List_Array is array (Natural range <>) of Scope_List;
-   type Scope_List_Array_Access is access Scope_List_Array;
-   procedure Free is new Unchecked_Deallocation
-     (Scope_List_Array, Scope_List_Array_Access);
-
-   type Scope_Tree is record
-      Lib_Info    : LI_File_Ptr;
-      LI_Filename : VFS.Virtual_File;
-      Time_Stamp  : Ada.Calendar.Time;
-      --  For efficiency, we keep an access to the LI file that was used to
-      --  create the tree. However, we also keep the file name itself, so that
-      --  we can check whether the LI file was updated, and the tree is no
-      --  longer valid.
-
-      Body_Tree : Scope_List;
-      Spec_Tree : Scope_List;
-      Separate_Trees : Scope_List_Array_Access;
-      --  The information for the source files associated with Lib_Info.
-   end record;
-   --  This tree represents the global scope information for the files
-   --  associated with Lib_Info (spec, body and separate).
-
-   type Scope_Tree_Node is new Scope_List;
-   type Scope_Tree_Node_Iterator is new Scope_List;
-
-   Null_Scope_Tree_Node : constant Scope_Tree_Node := null;
-
-   Null_Scope_Tree : constant Scope_Tree :=
-     (Lib_Info       => null,
-      LI_Filename    => VFS.No_File,
-      Time_Stamp     => VFS.No_Time,
-      Body_Tree      => null,
-      Spec_Tree      => null,
-      Separate_Trees => null);
 
    procedure Free_Boolean (X : in out Boolean);
    --  Free memory associated to X.
@@ -1048,6 +952,17 @@ private
       --  The parent entities to examine. This is No_Parent_Iterator if we are
       --  not returning the inherited subprograms
    end record;
+
+   type Scope_Tree_Node_Iterator is new Scope_List;
+
+   procedure Create_Tree (Lib_Info : LI_File_Ptr);
+   --  Create a new scope tree from an already parsed Library information.
+   --  Note that the resulting tree needs to be freed whenever Lib_Info
+   --  changes, since the tree points to internal nodes of Lib_Info.
+   --
+   --  If Declarations_Only is true, then only declarations are inserted into
+   --  the tree, no reference.
+
 
    pragma Inline (File_Information);
    pragma Inline (Dependency_Information);
