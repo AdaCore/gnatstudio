@@ -259,8 +259,6 @@ begin
       Set_Sensitive (Find_Menu_Item (Glide.Kernel, Edit & (-"Redo")), False);
 
       Set_Sensitive (Find_Menu_Item
-        (Glide.Kernel, Navigate & (-"Goto File Spec<->Body")), False);
-      Set_Sensitive (Find_Menu_Item
         (Glide.Kernel, Navigate & (-"Goto Parent Unit")), False);
       Set_Sensitive (Find_Menu_Item
         (Glide.Kernel, Navigate & (-"Start Of Statement")), False);
