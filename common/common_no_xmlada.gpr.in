@@ -1,0 +1,29 @@
+with "../gtkada/gtkada";
+with "../gnat";
+with "../shared";
+
+project Common is
+
+   for Languages use ("Ada", "C");
+   for Source_Dirs use ("src", "gvd", "gnat", "tests");
+   for Object_Dir use "obj";
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("test_htables.adb") use ("-g", "-O2", "-gnatwue");
+
+      case Shared.Build is
+          when "Production" =>
+             for Switches ("tries.adb") use ("-O2", "-gnatpn");
+             for Switches ("dynamic_arrays.adb") use ("-O2", "-gnatpn");
+          when "Debug" =>
+      end case;
+   end Compiler;
+
+   package IDE renames Shared.IDE;
+
+   package Naming is
+      for Implementation ("xml_parsers") use "xml_parsers_gtk.adb";
+   end Naming;
+
+end Common;
