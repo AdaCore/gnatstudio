@@ -46,6 +46,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Odd.Explorer;        use Odd.Explorer;
 with Odd.Menus;           use Odd.Menus;
 with Odd.Process;         use Odd.Process;
+with Odd_Intl;            use Odd_Intl;
 with Process_Proxies;     use Process_Proxies;
 with Odd.Strings;         use Odd.Strings;
 
@@ -668,6 +669,27 @@ package body Odd.Code_Editors is
       Thaw (Editor.Buttons);
    end Update_Buttons;
 
+   --------------------
+   -- File_Not_Found --
+   --------------------
+
+   procedure File_Not_Found
+     (Editor    : access Code_Editor_Record;
+      File_Name : String)
+   is
+   begin
+      --  Clear the old file
+      Delete_Text (Editor.Text);
+      if Get_Parent (Editor.Current_Line_Button) /= null then
+         Remove (Editor.Buttons, Editor.Current_Line_Button);
+      end if;
+      Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
+
+      --  Print a warning message
+      Insert (Editor.Text, Editor.Font, Null_Color, Null_Color,
+              File_Name & (-": File not found"));
+   end File_Not_Found;
+
    ---------------
    -- Load_File --
    ---------------
@@ -690,17 +712,20 @@ package body Odd.Code_Editors is
          return;
       else
          Free (Editor.Current_File);
+         Free (Editor.Buffer);
          Editor.Current_File := new String' (File_Name);
       end if;
 
       --  Read the size of the file
       F      := Open_Read (Name'Address, Text);
 
-      if F /= Invalid_FD then
+      if F = Invalid_FD then
+         File_Not_Found (Editor, File_Name);
+         return;
+      else
          Length := Positive (File_Length (F));
 
          --  Allocate the buffer
-         Free (Editor.Buffer);
          Editor.Buffer := new String (1 .. Length);
          Length := Read (F, Editor.Buffer (1)'Address, Length);
          Close (F);

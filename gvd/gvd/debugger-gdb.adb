@@ -69,6 +69,10 @@ package body Debugger.Gdb is
               & "(.+):(\d+):\d+:beg:0x[0-9a-f]+", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
+   File_Name_Pattern2 : constant Pattern_Matcher :=
+     Compile ("^([^:]+):(\d+): No such file or directory", Multiple_Lines);
+   --  Second regexp used to detect when the current frame can not be displayed
+
    Language_Pattern : constant Pattern_Matcher := Compile
      ("^(The current source language is|Current language:) +" &
       """?(auto; currently )?([^""\s]+)", Multiple_Lines);
@@ -242,11 +246,7 @@ package body Debugger.Gdb is
          end if;
 
          --  Skip the '$nn =' part
-         while Index <= S'Last
-           and then S (Index) /= '='
-         loop
-            Index := Index + 1;
-         end loop;
+         Skip_To_Char (S, Index, '=');
          Index := Index + 1;
 
          return S (Index + 1 .. S'Last - Prompt_Length);
@@ -792,21 +792,28 @@ package body Debugger.Gdb is
       Last  := Matched (0).Last;
 
       if Matched (0) = No_Match then
-         Name_First := 0;
-         Name_Last  := 1;
-         Line       := 0;
-      else
-         --  Skip the line feed character.
 
-         if Last < Str'Last and then Str (Last + 1) = ASCII.LF then
-            Last := Last + 1;
+         --  Try another regexp
+         Match (File_Name_Pattern2, Str, Matched);
+         if Matched (0) = No_Match then
+            Name_First := 0;
+            Name_Last  := 1;
+            Line       := 0;
+            return;
          end if;
 
-         Name_First := Matched (1).First;
-         Name_Last  := Matched (1).Last;
-         Line       := Natural'Value
-           (Str (Matched (2).First .. Matched (2).Last));
+         First := Matched (0).First;
+         Last  := Matched (0).Last;
       end if;
+
+      if Last < Str'Last and then Str (Last + 1) = ASCII.LF then
+         Last := Last + 1;
+      end if;
+
+      Name_First := Matched (1).First;
+      Name_Last  := Matched (1).Last;
+      Line       := Natural'Value
+        (Str (Matched (2).First .. Matched (2).Last));
    end Found_File_Name;
 
    -----------------------
@@ -1030,7 +1037,7 @@ package body Debugger.Gdb is
                      --    (<ref> gnat.expect.process_descriptor) @0x818a990: (
                      --     pid => 2012, ...
 
-                     Skip_To_Char (Type_Str, Index, Context.Record_Field (1));
+                     Skip_To_String (Type_Str, Index, Context.Record_Field);
                      Index := Index + 1 + Context.Record_Field_Length;
                      Internal_Parse_Value
                        (Lang, Type_Str, Index, V, Repeat_Num,

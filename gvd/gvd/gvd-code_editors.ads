@@ -117,6 +117,12 @@ package Odd.Code_Editors is
    --  Debugger is used to calculate which lines should get icons on the side,
    --  through calls to Line_Contains_Code.
 
+   procedure File_Not_Found
+     (Editor    : access Code_Editor_Record;
+      File_Name : String);
+   --  Report a file not found.
+   --  This delete the currently displayed file, and display a warning message.
+
    procedure Set_Line
      (Editor    : access Code_Editor_Record;
       Line      : Natural);
