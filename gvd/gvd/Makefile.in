@@ -7,7 +7,7 @@ STRIP           = strip
 INSTALL         = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA    = @INSTALL_DATA@
-NATIVE_PS       = @NATIVE_PS@
+BUILTIN_PS      = @BUILTIN_PS@
 prefix          = @prefix@
 bindir          = $(prefix)/bin
 
@@ -38,13 +38,13 @@ pkg_files: ${PKG_FILES}
 ${PKG_FILES}: force
 	$(CC) -c $(ALL_CFLAGS) $@
 
-$(EXEC): gvd-proc_utils-native_ps.adb force
+$(EXEC): gvd-proc_utils-builtin.adb force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
 	  -largs $(LINK_FLAGS)
 
-gvd-proc_utils-native_ps.adb: gvd-proc_utils-native_ps_${NATIVE_PS}.adb Makefile
-	$(LN) gvd-proc_utils-native_ps_${NATIVE_PS}.adb \
-	      gvd-proc_utils-native_ps.adb
+gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
+	$(LN) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
+	      gvd-proc_utils-builtin.adb
 
 libgvd:
 	rm -f $(EXEC)
@@ -78,7 +78,7 @@ mostlyclean: clean
 
 distclean: mostlyclean
 	-$(RM) Makefile
-	-$(RM) gvd-proc_utils-native_ps.adb
+	-$(RM) gvd-proc_utils-builtin.adb
 
 maintainer-clean: distclean
 
