@@ -20,8 +20,8 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
-with Glib.Properties.Creation;  use Glib.Properties.Creation;
 with Gtk.Accel_Group;           use Gtk.Accel_Group;
+with Gdk.Color;                 use Gdk.Color;
 with Gdk.Types;                 use Gdk.Types;
 with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
 with Gtk.Enums;
@@ -200,6 +200,10 @@ package body Builder_Module is
       Fd              : Process_Descriptor_Access);
    --  Similar to procedure above, except that the command and its argument
    --  are provided as a string.
+
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Called when the preferences have changed.
 
    --------------------
    -- Menu Callbacks --
@@ -1726,18 +1730,32 @@ package body Builder_Module is
 
       --  Create the highlighting category corresponding to the module.
 
-      declare
-         Args : Argument_List (1 .. 2);
-      begin
-         Args (1) := new String'(-"Builder Results");
-         Args (2) := new String'
-           (Get_Pref (Kernel, Param_Spec_String (Message_Highlight)));
+      Kernel_Callback.Connect
+        (Kernel, Preferences_Changed_Signal,
+         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
+         User_Data   => Kernel_Handle (Kernel));
 
-         Interpret_Command
-           (Kernel_Handle (Kernel), "src.register_highlighting", Args);
-
-         Free (Args);
-      end;
+      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
    end Register_Module;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed
+     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (K);
+      Args : Argument_List (1 .. 2);
+
+   begin
+      Args (1) := new String'(-"Builder Results");
+      Args (2) := new String'
+        (To_String (Get_Pref (Kernel, Message_Src_Highlight)));
+
+      Interpret_Command (Kernel, "src.register_highlighting", Args);
+
+      Free (Args);
+   end Preferences_Changed;
 
 end Builder_Module;
