@@ -41,7 +41,7 @@ with Types;          use Types;
 with Namet;          use Namet;
 
 package body ALI_Parser is
-   Me        : constant Debug_Handle := Create ("ALI");
+   Me        : constant Debug_Handle := Create ("ALI", Off);
    Assert_Me : constant Debug_Handle := Create ("ALI.Assert", Off);
 
 
