@@ -37,9 +37,15 @@ generic
    type Data_Type (<>) is private;
 package Odd.Histories is
 
-   type History_List (Max_Items : Positive) is private;
+   type History_List (Max_Items           : Positive;
+                      Collapse_Duplicates : Boolean)
+      is private;
    --  This acts as a FIFO queue, ie if you are trying to add more items
    --  than can fit in the list then the first items entered are discarded.
+   --
+   --  If Collapse_Duplicates is True, then two identical entries one after
+   --  the other are collapsed into a single history entry. This way, going
+   --  up or down the history list can be much faster.
 
    procedure Append (History : in out History_List;
                      Data    : Data_Type);
@@ -66,8 +72,18 @@ package Odd.Histories is
 
 private
    type Data_Access is access Data_Type;
-   type Data_Array is array (Positive range <>) of Data_Access;
-   type History_List (Max_Items : Positive) is record
+
+   type History_Entry is record
+      Data       : Data_Access;
+
+      Repeat_Num : Positive := 1;
+      --  Number of times data was repeated sequentially.
+   end record;
+
+   type Data_Array is array (Positive range <>) of History_Entry;
+   type History_List (Max_Items           : Positive;
+                      Collapse_Duplicates : Boolean)
+   is record
       Contents : Data_Array (1 .. Max_Items);
       --  This is in fact a "circular" array, ie the item at position 1
       --  follows the item at position Max_Items.

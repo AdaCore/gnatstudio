@@ -35,12 +35,15 @@ package body Process_Tab_Pkg.Callbacks is
    Command_History_Size : constant := 100;
    --  Number of items in the command history list.
 
-   use Gtk.Arguments;
+   Command_History_Collapse_Entries : constant Boolean := True;
+   --  Whether we should collapse entries in the history list.
 
+   use Gtk.Arguments;
 
    package String_History is new Odd.Histories (String);
    use String_History;
-   Command_History : String_History.History_List (Command_History_Size);
+   Command_History : String_History.History_List
+     (Command_History_Size, Command_History_Collapse_Entries);
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --

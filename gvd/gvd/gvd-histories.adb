@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
+with Ada.Text_IO; use Ada.Text_IO;
 
 package body Odd.Histories is
 
@@ -32,23 +33,38 @@ package body Odd.Histories is
    procedure Append (History : in out History_List;
                      Data    : Data_Type)
    is
+      Prev_Last : constant Integer :=
+        (History.Last - 1 + History.Max_Items) mod History.Max_Items;
+      --  Index of the last item entered in the list.
+
    begin
       --  Free the previous item, if any
 
       if History.Last = History.First then
-         Free (History.Contents (History.Last + 1));
+         Free (History.Contents (History.Last + 1).Data);
          History.First := (History.First + 1) mod History.Max_Items;
       end if;
 
-      if History.Last = -1 then
-         History.Last := History.First;
-      end if;
+      if History.Collapse_Duplicates
+        and then History.Last /= -1
+        and then Data = History.Contents (Prev_Last + 1).Data.all
+      then
+         History.Contents (History.Last).Repeat_Num :=
+           History.Contents (History.Last).Repeat_Num + 1;
 
-      History.Contents (History.Last + 1) := new Data_Type'(Data);
+      else
+         if History.Last = -1 then
+            History.Last := History.First;
+         end if;
+
+         History.Contents (History.Last + 1) :=
+           History_Entry'(Data       => New Data_Type'(Data),
+                          Repeat_Num => 1);
+         History.Last := (History.Last + 1) mod History.Max_Items;
+      end if;
 
       --  Increment the pointers
 
-      History.Last := (History.Last + 1) mod History.Max_Items;
       History.Current := -1;
    end Append;
 
@@ -61,7 +77,7 @@ package body Odd.Histories is
       if History.Current = -1 then
          raise No_Such_Item;
       end if;
-      return History.Contents (History.Current + 1).all;
+      return History.Contents (History.Current + 1).Data.all;
    end Get_Current;
 
    ----------------------
