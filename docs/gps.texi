@@ -5854,12 +5854,6 @@ for instance in the file selector), and then press the special
 activation key (by default @key{control-o}, controlled by a
 preference), this name is removed from the source editor, and replaced
 by the text you have associated with it.
-Alias names may be composed of any character, but must start with a
-letter. GPS will jump to the start of each word before the current
-cursor position, and if the characters between this word start and the
-cursor position is an alias name, this alias is expanded.
-
-The alias editor has the following aspect:
 
 @iftex
 @cindex screen shot
@@ -5871,7 +5865,12 @@ The alias editor has the following aspect:
 @image{aliases}
 @end ifhtml
 
-It is divided into three main parts: on the left side, the list of
+Alias names may be composed of any character, but must start with a
+letter. GPS will jump to the start of each word before the current
+cursor position, and if the characters between this word start and the
+cursor position is an alias name, this alias is expanded.
+
+The alias editor is divided into three main parts: on the left side, the list of
 currently defined aliases is shown. Clicking on any of them will
 display the replacement text for this alias. If you click again the
 selected alias, GPS displays a text entry which you can use to rename
