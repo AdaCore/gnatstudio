@@ -24,7 +24,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Ada.Text_IO;               use Ada.Text_IO;
@@ -138,7 +138,7 @@ package body VCS.CVS is
    function Get_Path (Filename : String) return String is
    begin
       for J in reverse Filename'First .. Filename'Last loop
-         if Filename (J) = Directory_Separator then
+         if Filename (J) = GNAT.OS_Lib.Directory_Separator then
             return Filename (1 .. J);
          end if;
       end loop;
@@ -900,7 +900,7 @@ package body VCS.CVS is
 
       Display_Differences
         (Kernel, New_File => Current_File, Diff_File => Patch_File);
-      Delete_File (Patch_File, Success);
+      GNAT.OS_Lib.Delete_File (Patch_File, Success);
 
       return True;
    end Diff_Handler;
@@ -994,7 +994,7 @@ package body VCS.CVS is
       String_List.Free (L_Temp);
       Close (File);
       Open_File_Editor (Kernel, Text_File);
-      Delete_File (Text_File, Success);
+      GNAT.OS_Lib.Delete_File (Text_File, Success);
 
       return True;
    end Text_Output_Handler;
