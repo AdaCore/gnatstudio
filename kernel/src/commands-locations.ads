@@ -34,6 +34,15 @@ package Commands.Locations is
    type Html_Location_Command is access all Html_Location_Command_Type;
    --  Commands related to navigation in html files.
 
+   type Generic_Location_Command_Type is new Root_Command with private;
+   type Generic_Location_Command is access all Generic_Location_Command_Type;
+
+   procedure Create
+     (Item    : out Generic_Location_Command;
+      Kernel  : Kernel_Handle;
+      Command : String);
+   --  Create a new generic command corresponding to command-line Command.
+
    procedure Create
      (Item     : out Html_Location_Command;
       Kernel   : Kernel_Handle;
@@ -71,11 +80,20 @@ package Commands.Locations is
    function Execute
      (Command : access Html_Location_Command_Type) return Boolean;
 
+   function Execute
+     (Command : access Generic_Location_Command_Type) return Boolean;
+
+   procedure Free (X : in out Generic_Location_Command_Type);
    procedure Free (X : in out Source_Location_Command_Type);
    procedure Free (X : in out Html_Location_Command_Type);
    --  Free memory associated to X.
 
 private
+
+   type Generic_Location_Command_Type is new Root_Command with record
+      Kernel  : Kernel_Handle;
+      Command : String_Access;
+   end record;
 
    type Source_Location_Command_Type is new Root_Command with record
       Kernel         : Kernel_Handle;
