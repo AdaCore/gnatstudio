@@ -176,9 +176,6 @@ private
       Idle_Redraw_Registered : Boolean := False;
       --  Whether the Idle_Redraw has been registered
 
-      Has_Focus           : Boolean := False;
-      --  Whether the view currently has the focus
-
       Char_Width          : Gint;
 
       Current_Block_GC    : Gdk.GC.Gdk_GC;
