@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -86,7 +86,7 @@ package Src_Editor_Box is
       Source : access Source_Editor_Box_Record);
    --  Create a new view of the given box.
    --  ??? Do we want to copy the font attributes as well, or do we want
-   --  ??? to add another parameter?
+   --  to add another parameter?
 
    procedure Destroy (Box : in out Source_Editor_Box);
    --  Destroy the given Source_Editor_Box, then set it to null.
@@ -97,12 +97,11 @@ package Src_Editor_Box is
    --  Attach Box to the given Parent, if possible.
 
    procedure Detach
-     (Box    : access Source_Editor_Box_Record);
+     (Box : access Source_Editor_Box_Record);
    --  Detach Box of its Parent, if possible.
 
    function Get_Kernel
-     (Box : access Source_Editor_Box_Record)
-     return Glide_Kernel.Kernel_Handle;
+     (Box : access Source_Editor_Box_Record) return Glide_Kernel.Kernel_Handle;
    --  Accessor to the Kernel field.
 
    ------------------------------------
@@ -138,6 +137,14 @@ package Src_Editor_Box is
    --  Note that if Lang_Autodetect is True, and the editor could not guess
    --  the language from the filename, then Lang will be unset, and syntax
    --  highlighting will be deactivated.
+
+   procedure Load_Empty_File
+     (Editor          : access Source_Editor_Box_Record;
+      Filename        : String;
+      Lang_Handler    : Language_Handlers.Language_Handler;
+      Lang_Autodetect : Boolean := True);
+   --  Similar to Load_File, but assume that Filename is a new file that
+   --  is not present on the file system.
 
    procedure Save_To_File
      (Editor   : access Source_Editor_Box_Record;

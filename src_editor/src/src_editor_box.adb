@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -45,7 +45,6 @@ with Gtk.Menu_Item;              use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
-with Gtk.Window;                 use Gtk.Window;
 with Gtkada.Dialogs;             use Gtkada.Dialogs;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
@@ -276,7 +275,7 @@ package body Src_Editor_Box is
       if Source_Info = No_LI_File then
          Console.Insert
            (Kernel,
-            -"Failed to find or parse ALI file " & Get_Filename (Source),
+            -"Failed to find or parse ALI file for " & Get_Filename (Source),
             Highlight_Sloc => False);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -384,7 +383,8 @@ package body Src_Editor_Box is
                   -"Internal error, invalid location: " &
                   Get_Filename (Source) & ':' &
                   Image (L) & ':' & Image (C + Entity_Name'Length),
-                  Highlight_Sloc => False);
+                  Highlight_Sloc => False,
+                  Mode => Error);
                return;
             end if;
 
@@ -500,7 +500,7 @@ package body Src_Editor_Box is
       Line   : Gint;
       Column : Gint)
    is
-      Modified_Buffer           : constant Boolean :=
+      Modified_Buffer : constant Boolean :=
         Get_Modified (Box.Source_Buffer);
 
    begin
@@ -518,9 +518,12 @@ package body Src_Editor_Box is
       --  0. It is more natural to start from one, so the Line and Column
       --  number displayed are incremented by 1 to start from 1.
 
-      Set_Text
-        (Box.Cursor_Loc_Label,
-         Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column)));
+      declare
+         S : constant String :=
+           Image (To_Box_Line (Line)) & ':' & Image (To_Box_Column (Column));
+      begin
+         Set_Text (Box.Cursor_Loc_Label, S);
+      end;
    end Show_Cursor_Position;
 
    -------------------------------------
@@ -640,6 +643,8 @@ package body Src_Editor_Box is
       --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
+      --  ??? Should compute the size based on the font
+      Set_Size_Request (Frame, 60, -1);
       Pack_Start (Hbox, Frame, Expand => False, Fill => True);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");
       Add (Frame, Box.Cursor_Loc_Label);
@@ -1190,6 +1195,32 @@ package body Src_Editor_Box is
          end if;
       end if;
    end Load_File;
+
+   ---------------------
+   -- Load_Empty_File --
+   ---------------------
+
+   procedure Load_Empty_File
+     (Editor          : access Source_Editor_Box_Record;
+      Filename        : String;
+      Lang_Handler    : Language_Handlers.Language_Handler;
+      Lang_Autodetect : Boolean := True) is
+   begin
+      Free (Editor.Filename);
+
+      if Lang_Autodetect then
+         Set_Language
+           (Editor.Source_Buffer,
+            Get_Language_From_File (Lang_Handler, Filename));
+      end if;
+
+      Set_Cursor_Location (Editor, 1, 1);
+      Editor.Filename := new String' (Filename);
+      Set_Text (Editor.Modified_Label, -"Unmodified");
+      Editor.Modified := False;
+      Editor.Writable := True;
+      Set_Text (Editor.Read_Only_Label, -"Writable");
+   end Load_Empty_File;
 
    ------------------
    -- Save_To_File --
