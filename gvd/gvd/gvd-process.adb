@@ -1837,7 +1837,19 @@ package body GVD.Process is
       elsif Lowered_Command'Length <= Quit_String'Length
         and then Lowered_Command = Quit_String (1 .. Lowered_Command'Length)
       then
-         Close_Debugger (Debugger);
+         if Command_In_Process (Get_Process (Debugger.Debugger))
+           and then not Separate_Execution_Window (Debugger.Debugger)
+         then
+            --  If the debugger does not have a separate execution window,
+            --  send the command right away.
+
+            Send
+              (Debugger.Debugger, Command,
+               Wait_For_Prompt => False, Mode => Mode);
+
+         else
+            Close_Debugger (Debugger);
+         end if;
 
       else
          --  Regular debugger command, send it.
