@@ -3695,7 +3695,6 @@ package body Src_Editor_Module is
       Pref_Display_Line_Numbers : constant Boolean :=
         Get_Pref (Kernel, Display_Line_Numbers);
 
-      use String_List_Utils.String_List;
    begin
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
          return;
@@ -3714,22 +3713,16 @@ package body Src_Editor_Module is
                  Kernel);
 
             declare
-               Files : List := Open_Files (Kernel);
-               Node  : List_Node;
+               Files : VFS.File_Array := Open_Files (Kernel);
             begin
-               Node := First (Files);
-
-               while Node /= Null_Node loop
+               for Node in Files'Range loop
                   Create_Line_Information_Column
                     (Kernel,
-                     Create (Full_Filename => Data (Node)),
+                     Files (Node),
                      Src_Editor_Module_Name,
                      Stick_To_Data => False,
                      Every_Line    => True);
-                  Node := Next (Node);
                end loop;
-
-               Free (Files);
             end;
          end if;
 
