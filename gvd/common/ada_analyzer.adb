@@ -1397,6 +1397,8 @@ package body Ada_Analyzer is
                         Prev_Token := Tok_String_Literal;
                      end if;
 
+                     Do_Indent (P, Num_Spaces);
+
                      if Callback /= null then
                         if Callback
                           (String_Text,
