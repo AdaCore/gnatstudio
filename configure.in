@@ -64,7 +64,7 @@ AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
 ######## Support for ptys ###
 AC_CHECK_HEADERS(sys/stropts.h)
 AC_CHECK_FUNCS(getpt)
-AC_CHECK_FUNCS(grandpt)
+AC_CHECK_FUNCS(grantpt)
 AC_CHECK_FUNCS(unlockpt)
 AC_CHECK_FUNCS(openpty)
 AC_CHECK_FUNCS(_getpty)
