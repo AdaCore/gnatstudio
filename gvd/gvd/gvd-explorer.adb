@@ -113,7 +113,7 @@ package body GVD.Explorer is
      return Debugger_Process_Tab;
    --  Return the Process_Tab associated with an explorer.
 
-   Explorer_Contextual_Menu_Name : constant String := "odd_debugger_context";
+   Explorer_Contextual_Menu_Name : constant String := "gvd_debugger_context";
    --  String used to store the explorer menu in the user data of the explorer.
 
    function Find_Node_From_File
