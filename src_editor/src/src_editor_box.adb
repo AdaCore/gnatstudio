@@ -2054,10 +2054,10 @@ package body Src_Editor_Box is
 
                New_Base_Name := new String'
                  (Projects.Get_Filename_From_Unit
-                    (Project   => Get_Project (Editor.Kernel),
-                     Unit_Name => To_Lower (Info.Name.all),
-                     Part      => Part,
-                     Check_Predefined_Library => True));
+                    (Project         => Get_Project (Editor.Kernel),
+                     Unit_Name       => To_Lower (Info.Name.all),
+                     Part            => Part,
+                     File_Must_Exist => False));
             end if;
 
             Free (Constructs);
