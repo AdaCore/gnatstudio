@@ -597,7 +597,7 @@ procedure GPS is
    begin
       Initialize_Option_Scan;
       loop
-         case Getopt ("-version -help P: -log-level= " &
+         case Getopt ("-version -help P: " &
                       "-debug? -debugger= -host= -target= -load= -eval= " &
                       "-traceoff= -traceon= -tracefile= -tracelist")
          is
@@ -634,13 +634,11 @@ procedure GPS is
                      end if;
 
 
-                  -- --log-level --
+                  -- --load --
                   when 'l' =>
-                     if Full_Switch = "-load" then
-                        --  --load
-                        Free (Batch_File);
-                        Batch_File := new String'(Parameter);
-                     end if;
+                     --  --load
+                     Free (Batch_File);
+                     Batch_File := new String'(Parameter);
 
                   when 'd' =>
                      --  --debug
