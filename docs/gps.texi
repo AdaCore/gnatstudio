@@ -601,7 +601,7 @@ Log file created automatically by GPS
 
    @item $HOME/.gps/preferences
 Contains all the preferences in XML format, as specified in the
-preferences menu.
+preferences menu. See also @file{<prefix>/etc/gps/preferences}.
 
    @item $HOME/.gps/window_settings
 Contains all the settings of the windows (window sizes, pane
@@ -616,7 +616,7 @@ Directory containing the debugging sessions.
 The theme used by the gtk+ library on which gps is based. It allows you
 to configure the colors and fonts used in your
 application. @xref{Changing Colors Fonts and Pixmaps}.
-See also @file{<prefix>/bin/gtkrc}.
+See also @file{<prefix>/etc/gps/gtkrc}.
 
    @item $HOME/.gps/sessions/@i{session}
 Each file in the @code{sessions} directory represents a particular session
@@ -627,13 +627,25 @@ Default configuration for the system traces. This traces are used to analyse
 problems with GPS. By default, they are sent to the file @file{$HOME/.gps/log}.
 
    @item @i{prefix}
-The prefix directory where GPS is installed, e.g @file{/opt/gps}
+The prefix directory where GPS is installed, e.g @file{/opt/gps}.
 
    @item @i{prefix}/bin
-The directory containing the GPS executables
+The directory containing the GPS executables.
 
-   @item @i{prefix}/bin/gtkrc
-The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}
+   @item @i{prefix}/etc/gps
+The directory containing global configuration files for GPS.
+
+   @item @i{prefix}/etc/gps/gtkrc
+The global theme used by the gtk+ library. See also @file{$HOME/.gps/gtkrc}.
+
+   @item @i{prefix}/etc/gps/pangorc
+The pango (generic font handling) configuration file.
+
+   @item @i{prefix}/etc/gps/pangox.aliases
+File defining font aliases to X font set.
+
+   @item @i{prefix}/etc/gps/preferences
+Global preferences in XML format. See also @file{$HOME/.gps/preferences}.
 
    @item @i{prefix}/lib
 This directory contains the shared libraries used by GPS.
