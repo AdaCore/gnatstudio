@@ -2817,27 +2817,32 @@ package body Project_Explorers is
    is
       pragma Unreferenced (Widget);
       Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      File_C   : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
+      File_C   : Entity_Selection_Context_Access;
       C        : Search_Context_Access;
    begin
-      if Has_File_Information (File_C) then
-         C := Explorer_Search_Factory
-           (Kernel, All_Occurences => False, Extra_Information => null);
-         Set_Context
-           (Context  => C,
-            Look_For => File_Information (File_C),
-            Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
-                         Whole_Word     => True,
-                         Regexp         => False));
+      if Context /= null
+        and then Context.all in Entity_Selection_Context'Class
+      then
+         File_C := Entity_Selection_Context_Access (Context);
 
-         if not Search (C, Kernel, Search_Backward => False) then
-            Insert (Kernel,
-                    -"File not found in the explorer: "
-                    & File_Information (File_C));
+         if Has_File_Information (File_C) then
+            C := Explorer_Search_Factory
+              (Kernel, All_Occurences => False, Extra_Information => null);
+            Set_Context
+              (Context  => C,
+               Look_For => File_Information (File_C),
+               Options  => (Case_Sensitive => Filenames_Are_Case_Sensitive,
+                            Whole_Word     => True,
+                            Regexp         => False));
+
+            if not Search (C, Kernel, Search_Backward => False) then
+               Insert (Kernel,
+                       -"File not found in the explorer: "
+                       & File_Information (File_C));
+            end if;
+
+            Free (C);
          end if;
-
-         Free (C);
       end if;
    end Locate_File;
 
