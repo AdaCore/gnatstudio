@@ -1,0 +1,24 @@
+/* XPM */
+static char *var_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"    12    13        4            1",
+/* colors */
+". c #000000",
+"# c #808480",
+"a c #c0c4c0",
+"b c none g none m none s Background",
+/* pixels */
+"bbbb##bbbbbb",
+"bbb#aa##bbbb",
+"bb#aaaaa##bb",
+"b#aaaaaaaa##",
+"#aaaaaaaa##.",
+"#aaaaaaaa##.",
+"#baaaaaa###.",
+"#abbaaa####.",
+"#bababa####.",
+"#ababaa###.b",
+"b##baba##.bb",
+"bbb###a#.bbb",
+"bbbbbb#.bbbb"
+};

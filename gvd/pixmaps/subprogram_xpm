@@ -1,0 +1,22 @@
+/* XPM */
+char *subprogram_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"    13    10        5            1",
+/* colors */
+". c #000000",
+"# c #008400",
+"a c #00fc00",
+"b c #808480",
+"c c none g none m none s Background",
+/* pixels */
+"cccccbacccccc",
+"ccccbaaaccccc",
+"ccccb#aaacccc",
+"ccbcb##aaacac",
+"cbabb###aaaab",
+"baaab#...aaab",
+"c.aaa#.b#aaab",
+"cc.aa#.baaaab",
+"ccc...bbcbbbb",
+"ccccbbbcccccc"
+};
