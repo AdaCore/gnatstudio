@@ -43,11 +43,11 @@ package Odd.Types is
    --  Hidden commands are stored into the history but not shown in
    --  the debugger window. Their output is also not visible to the user.
    --
-   --  User commands are shown into the command history and displayed in
+   --  Visible commands are shown into the command history and displayed in
    --  the debugger window, as well as their output. This is typically the
    --  mode to be used for menu items or toolbar buttons.
    --
-   --  Entered is used for commands that have been typed manually by the user
+   --  User is used for commands that have been typed manually by the user
    --  in the command window. These commands are inserted into the history,
    --  their output is visible in the command window, but the command itself
    --  is not printed
