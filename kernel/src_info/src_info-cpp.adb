@@ -243,6 +243,7 @@ package body Src_Info.CPP is
       MD     => Ext ("md"),
       SN_IN  => Ext ("in"),
       UN     => Ext ("un"),
+      MA     => Ext ("ma"),
       CON    => Ext ("con"),
       others => Ext (""));
 
