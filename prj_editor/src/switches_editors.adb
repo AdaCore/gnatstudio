@@ -137,9 +137,14 @@ package body Switches_Editors is
    -------------
 
    procedure Gtk_New (Editor : out Switches_Edit) is
+      Default_Width : constant := 12;
    begin
       Editor := new Switches_Edit_Record;
       Switches_Editor_Pkg.Initialize (Editor);
+      Set_Width_Chars (Editor.Keyword_Casing_Entry, Default_Width);
+      Set_Width_Chars (Editor.Attribute_Casing_Entry, Default_Width);
+      Set_Width_Chars (Editor.References_Casing_Entry, Default_Width);
+      Set_Width_Chars (Editor.Pragma_Casing_Entry, Default_Width);
    end Gtk_New;
 
    -----------------------
@@ -613,7 +618,9 @@ package body Switches_Editors is
                Check_Combo (Editor.References_Casing, "-r", "DM", Arr, Index);
                Check_Combo (Editor.Pragma_Casing, "-p", "MLU", Arr, Index);
                Check_Combo (Editor.Construct_Layout, "-l", "123", Arr, Index);
-               Check_Combo (Editor.Comments_Layout, "-c", "1234", Arr, Index);
+               Check_Combo (Editor.Comments_Layout, "-c", "12", Arr, Index);
+               Check_Toggle (Editor.Gnat_Comment_Begin, "-c3", Arr, Index);
+               Check_Toggle (Editor.Reformat_Comment, "-c4", Arr, Index);
                Check_Toggle (Editor.Align_Colons, "-A1", Arr, Index);
                Check_Toggle (Editor.Align_Assign_Decl, "-A2", Arr, Index);
                Check_Toggle (Editor.Align_Assign_Stmt, "-A3", Arr, Index);
@@ -881,7 +888,9 @@ package body Switches_Editors is
             Set_Combo (Editor.References_Casing, "-r", "DM");
             Set_Combo (Editor.Pragma_Casing, "-p", "MLU");
             Set_Combo (Editor.Construct_Layout, "-l", "123");
-            Set_Combo (Editor.Comments_Layout, "-c", "1234");
+            Set_Combo (Editor.Comments_Layout, "-c", "12");
+            Set_Active (Editor.Gnat_Comment_Begin, Is_Set ("-c3"));
+            Set_Active (Editor.Reformat_Comment, Is_Set ("-c4"));
             Set_Active (Editor.Align_Colons, Is_Set ("-A1"));
             Set_Active (Editor.Align_Assign_Decl, Is_Set ("-A2"));
             Set_Active (Editor.Align_Assign_Stmt, Is_Set ("-A3"));
