@@ -455,13 +455,18 @@ static void
 destroy (GtkObject *object)
 {
 	CscHTML *html;
+	g_return_if_fail (GTK_IS_CSCHTML (object));
 
 	html = CSC_HTML (object);
+
+	/* Glide2 team: this widget is destroyed twice !??! */
+	if (html->engine == NULL) {
+           return;
+	}
 
 	g_free (html->pointer_url);
 
 	gdk_cursor_destroy (html->hand_cursor);
-	gdk_cursor_destroy (html->arrow_cursor);
 	gdk_cursor_destroy (html->ibeam_cursor);
 
 	if (html->idle_handler_id != 0)
@@ -471,6 +476,7 @@ destroy (GtkObject *object)
 		gtk_timeout_remove (html->scroll_timeout_id);
 
 	gtk_object_destroy (GTK_OBJECT (html->engine));
+	html->engine = NULL;
 
 	if (GTK_OBJECT_CLASS (parent_class)->destroy != NULL)
 		(* GTK_OBJECT_CLASS (parent_class)->destroy) (object);
@@ -528,7 +534,7 @@ realize (GtkWidget *widget)
 
 	html_engine_realize (html->engine, html->layout.bin_window);
 
-	gdk_window_set_cursor (widget->window, html->arrow_cursor);
+	gdk_window_set_cursor (widget->window, NULL);
 
 	/* This sets the backing pixmap to None, so that scrolling does not
            erase the newly exposed area, thus making the thing smoother.  */
@@ -674,7 +680,7 @@ motion_notify_event (GtkWidget *widget,
 		if (obj != NULL && html_object_is_text (obj))
 			gdk_window_set_cursor (widget->window, html->ibeam_cursor);
 		else
-			gdk_window_set_cursor (widget->window, html->arrow_cursor);
+			gdk_window_set_cursor (widget->window, NULL);
 	} else {
 		if (html->pointer_url == NULL || strcmp (html->pointer_url, url) != 0) {
 			g_free (html->pointer_url);
@@ -1137,7 +1143,6 @@ init (CscHTML* html)
 	html->pointer_url = NULL;
 	html->default_font_face = g_strdup("lucida");
 	html->hand_cursor = gdk_cursor_new (GDK_HAND2);
-	html->arrow_cursor = gdk_cursor_new (GDK_LEFT_PTR);
 	html->ibeam_cursor = gdk_cursor_new (GDK_XTERM);
 	html->hadj_connection = 0;
 	html->vadj_connection = 0;
