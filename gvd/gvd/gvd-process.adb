@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                 GVD - The Other Display Debugger                  --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -79,7 +79,7 @@ package body Odd.Process is
    --  Whether we should try to find the block of a variable when printing
    --  it, and memorize it with the item.
 
-   Process_User_Data_Name : constant String := "odd_editor_to_process";
+   Process_User_Data_Name : constant String := "gvd_editor_to_process";
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
 
@@ -356,6 +356,7 @@ package body Odd.Process is
       --  If there is no breakpoint defined, we force an update (in fact,
       --  "start" will always define such a breakpoint, and this is used to
       --  initialize the list).
+
       if Data.Process.Breakpoints /= null
         and then Data.Process.Breakpoints'Length > 0
       then
@@ -450,7 +451,7 @@ package body Odd.Process is
             Load_File_Post_Process'Access,
             Convert (new Load_File_Data'
                      (Process => Process,
-                      File_Name => new String'(Str (File_First .. File_Last)),
+                      File_Name => new String' (Str (File_First .. File_Last)),
                       Line      => 1,
                       Addr      => null)));
       end if;
@@ -470,11 +471,12 @@ package body Odd.Process is
          Register_Post_Cmd
            (Get_Process (Process.Debugger),
             Set_Addr_Post_Process'Access,
-            Convert (new Load_File_Data'
-                     (Process   => Process,
-                      File_Name => null,
-                      Line      => 1,
-                      Addr    => new String'(Str (Addr_First .. Addr_Last)))));
+            Convert
+              (new Load_File_Data'
+                (Process   => Process,
+                 File_Name => null,
+                 Line      => 1,
+                 Addr    => new String'(Str (Addr_First .. Addr_Last)))));
       end if;
    end Text_Output_Handler;
 
@@ -512,8 +514,8 @@ package body Odd.Process is
    begin
       if Get_Button (Event) = 3 then
          Popup (Debugger_Contextual_Menu (Process),
-                Button            => Get_Button (Event),
-                Activate_Time     => Get_Time (Event));
+                Button        => Get_Button (Event),
+                Activate_Time => Get_Time (Event));
          Emit_Stop_By_Name (Process.Debugger_Text, "button_press_event");
          return True;
       end if;
@@ -537,13 +539,12 @@ package body Odd.Process is
       Debugger_Name   : String := "") return Debugger_Process_Tab
    is
       Process       : Debugger_Process_Tab;
-      --  Id            : Gint;
       Label         : Gtk_Label;
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
+      Length        : Guint;
 
    begin
-
       Process := new Debugger_Process_Tab_Record;
       Initialize (Process);
       Initialize_Class_Record (Process, Signals, Class_Record);
@@ -573,10 +574,10 @@ package body Odd.Process is
          Widget_Callback.To_Marshaller (On_Canvas_Process_Stopped'Access));
       Widget_Callback.Connect
         (Gtk_Widget (Process), "process_stopped",
-         Widget_Callback.To_Marshaller (On_Backtrace_Process_Stopped'Access));
+         Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
       Widget_Callback.Connect
         (Gtk_Widget (Process), "context_changed",
-         Widget_Callback.To_Marshaller (On_Backtrace_Process_Stopped'Access));
+         Widget_Callback.To_Marshaller (On_Stack_Process_Stopped'Access));
       Widget_Callback.Connect
         (Gtk_Widget (Process), "process_stopped",
          Widget_Callback.To_Marshaller (On_Task_Process_Stopped'Access));
@@ -653,7 +654,11 @@ package body Odd.Process is
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
-      if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
+      Length := Page_List.Length (Get_Children (Window.Process_Notebook));
+
+      if Length > 1 then
+         Set_Show_Tabs (Window.Process_Notebook, True);
+      elsif Length /= 0 then
          Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
       end if;
 
@@ -692,16 +697,6 @@ package body Odd.Process is
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
          Text_Output_Handler'Access, Output, Window.all'Address,
          After => True);
-
-      --  This filter is only required in some rare cases, since most of the
-      --  time we do some polling.
---        Id := My_Input.Add
---          (To_Gint
---           (Get_Output_Fd
---            (Get_Descriptor (Get_Process (Process.Debugger)).all)),
---           Gdk.Types.Input_Read,
---           Output_Available'Access,
---           My_Input.Data_Access (Process));
 
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
@@ -1021,6 +1016,7 @@ package body Odd.Process is
    procedure Close_Debugger (Debugger : Debugger_Process_Tab) is
       Top      : constant Main_Debug_Window_Access := Debugger.Window;
       Notebook : constant Gtk_Notebook := Debugger.Window.Process_Notebook;
+      Length   : Guint;
       use String_History;
 
    begin
@@ -1032,7 +1028,11 @@ package body Odd.Process is
       --  If the last notebook page was destroyed, disable "Open Program"
       --  in the menu.
 
-      if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
+      Length := Page_List.Length (Get_Children (Notebook));
+
+      if Length = 1 then
+         Set_Show_Tabs (Notebook, False);
+      elsif Length = 0 then
          Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
       end if;
    end Close_Debugger;
@@ -1045,14 +1045,14 @@ package body Odd.Process is
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : Command_Type := Odd.Types.Visible)
+      Mode           : Visible_Command := Odd.Types.Visible)
    is
-      Command2 : constant String := To_Lower (Command);
-      First    : Natural := Command2'First;
-      Data     : History_Data;
+      Lowered_Command : constant String := To_Lower (Command);
+      First           : Natural := Lowered_Command'First;
+      Data            : History_Data;
       use String_History;
-   begin
 
+   begin
       if Output_Command then
          Text_Output_Handler
            (Debugger, Command & ASCII.LF, Is_Command => True);
@@ -1071,9 +1071,9 @@ package body Odd.Process is
 
       --  Ignore the blanks at the beginning of lines
 
-      Skip_Blanks (Command2, First);
+      Skip_Blanks (Lowered_Command, First);
 
-      if Looking_At (Command2, First, "graph") then
+      if Looking_At (Lowered_Command, First, "graph") then
          Data.Mode := Mode;
          Data.Debugger_Num := Integer (Get_Num (Debugger));
          Skip_Blanks (Command, First);
@@ -1082,11 +1082,11 @@ package body Odd.Process is
          Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
 
-      elsif Command2 = "quit" then
+      elsif Lowered_Command = "quit" then
          Close_Debugger (Debugger);
       else
-
          --  Regular debugger command, send it.
+
          Send
            (Debugger.Debugger, Command,
             Wait_For_Prompt =>
@@ -1119,16 +1119,21 @@ package body Odd.Process is
 
       --  If we are already processing a command, just wait until
       --  the debugger is available
+
       if not Command_In_Process (Get_Process (Tab.Debugger)) then
          Get_Line (Buffer, Len);
+
          if Len = 0 then
-            Find_Match (Tab.Window.Command_History,
-                        Natural (Get_Num (Tab)),
-                        Backward);
-            Process_User_Command (Tab, Get_Current
-                                  (Tab.Window.Command_History).Command.all,
-                                  Output_Command => True,
-                                  Mode => User);
+            Find_Match
+              (Tab.Window.Command_History,
+               Natural (Get_Num (Tab)),
+               Backward);
+            Process_User_Command
+              (Tab, Get_Current
+               (Tab.Window.Command_History).Command.all,
+               Output_Command => True,
+               Mode => User);
+
          else
             Process_User_Command (Tab, Buffer (1 .. Len));
          end if;
