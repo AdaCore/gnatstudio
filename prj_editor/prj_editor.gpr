@@ -39,8 +39,4 @@ project Prj_Editor is
 
    package IDE renames Shared.IDE;
 
-   package Linker is
-       for Default_Switches ("Ada") use ("../gvd/common/obj/gexpect_tty.o");
-   end Linker;
-
 end Prj_Editor;
