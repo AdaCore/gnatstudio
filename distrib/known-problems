@@ -7,6 +7,11 @@ Known Problems fixed in GPS 3.0.0
   Workaround: Add the directory containing these projects to your
               ADA_PROJECT_PATH environment variable
 
+- E204-020 Wrong display of system.address variables in the debugger
+  Problem:    If you do a Debug->Display... on a variable, the box in the data
+              window is too short to show the actual value of the variable
+  Workaround: Use Debug->Print... instead
+
 - E204-007 Wrong search results in comments
   Problem:    When searching for a string in comments only, or all but
               comments, GPS will sometimes report incorrect matches, or
