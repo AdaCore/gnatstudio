@@ -20,6 +20,8 @@
 
 with Glib;                         use Glib;
 with Gdk.Event;                    use Gdk.Event;
+with Gdk.Types;                    use Gdk.Types;
+with Gdk.Types.Keysyms;            use Gdk.Types.Keysyms;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.File_Selector;         use Gtkada.File_Selector;
@@ -272,6 +274,8 @@ package body Glide_Menu is
          Callback    => null,
          Command     => Commands.Command_Access (Command),
          Ref_Item    => -"Change Directory...",
+         Accel_Key   => GDK_LC_w,
+         Accel_Mods  => Control_Mask,
          Add_Before  => False);
 
       Command := new Close_Command;
