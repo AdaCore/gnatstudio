@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Strings.Maps;  use Ada.Strings.Maps;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Text_Iter;     use Gtk.Text_Iter;
 with Commands.Editor;   use Commands.Editor;
 
@@ -291,6 +290,7 @@ package body Src_Editor_Buffer.Text_Handling is
       W_Start       : Gtk_Text_Iter;
       Indent_Params : Indent_Parameters;
       Indent_Kind   : Indentation_Kind;
+      Result        : Boolean;
 
       ------------------
       -- Replace_Text --
@@ -302,11 +302,9 @@ package body Src_Editor_Buffer.Text_Handling is
       is
          pragma Unreferenced (Ln, F, L);
       begin
-         if Replace'Length > 0
-           and then Count (Replace, To_Set (" " & ASCII.HT)) /= Replace'Length
-         then
-            --  ??? The parser sometimes callback with an empty or null
-            --  replacement. Ignore those cases. This should probably be fixed
+         if Replace'Length > 0 then
+            --  ??? The parser sometimes callback with a null replacement.
+            --  Ignore those cases. This should probably be fixed
             --  in the parser.
             Replace_Slice
               (Buffer, Replace, Line, First,
@@ -342,18 +340,19 @@ package body Src_Editor_Buffer.Text_Handling is
 
       --  Look for the start of the word
 
-      declare
-         Result : Boolean;
-      begin
-         First := Column;
-         loop
-            Backward_Char (W_Start, Result);
-            exit when not Result
-              or else
-                not Is_In (Get_Char (W_Start), Word_Character_Set (Lang));
-            First := First - 1;
-         end loop;
-      end;
+      First := Column;
+
+      loop
+         Backward_Char (W_Start, Result);
+         exit when not Result
+           or else
+         not Is_In (Get_Char (W_Start), Word_Character_Set (Lang));
+         First := First - 1;
+      end loop;
+
+      --  Move one character forward, the first character in the word
+
+      Forward_Char (W_Start, Result);
 
       if First /= Column then
          --  We have a word, set casing
