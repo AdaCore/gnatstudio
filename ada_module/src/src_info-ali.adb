@@ -168,7 +168,6 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      New_ALI          : ALIs_Record;
       Source_Filename  : Virtual_File;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
@@ -192,7 +191,6 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File);
@@ -202,7 +200,6 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Subunit_Name     : Name_Id;
       File             : out Source_File);
@@ -239,7 +236,6 @@ package body Src_Info.ALI is
    procedure Process_Sdep
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table);
@@ -257,7 +253,6 @@ package body Src_Info.ALI is
    procedure Process_Sdep_As_External
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table;
@@ -563,7 +558,6 @@ package body Src_Info.ALI is
 
    procedure Get_Source_File
      (Handler          : ALI_Handler;
-      New_ALI          : ALIs_Record;
       Source_Filename  : Virtual_File;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
@@ -630,7 +624,6 @@ package body Src_Info.ALI is
       else
          Get_Subunit_Source_File
            (Handler, Source_Filename,
-            Locale_To_UTF8 (Get_String (New_ALI.Sfile)),
             Project,
             Subunit_Name, File);
       end if;
@@ -650,12 +643,11 @@ package body Src_Info.ALI is
          when Unit_Body =>
             Get_Unit_Source_File
               (Handler, Source_Filename,
-               Base_Name (Source_Filename), Project, Unit_Body, File);
+               Project, Unit_Body, File);
 
          when Unit_Spec =>
             Get_Unit_Source_File
               (Handler, Source_Filename,
-               Other_File_Base_Name (Project, Source_Filename),
                Project, Unit_Spec, File);
 
          when Unit_Separate =>
@@ -670,17 +662,17 @@ package body Src_Info.ALI is
    procedure Get_Unit_Source_File
      (Handler          : ALI_Handler;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Part             : Unit_Part;
       File             : out Source_File)
    is
-      ALI_Filename : constant String := Get_ALI_Filename (Sig_Base_Name);
-      --   ??? Could we use Sname instead
+      ALI_Filename : constant Virtual_File := LI_Filename_From_Source
+        (Handler, Source_Filename, Project);
 
    begin
       File :=
-        (LI              => Get (Handler.Table.all, ALI_Filename),
+        (LI              =>
+           Get (Handler.Table.all, Base_Name (ALI_Filename)),
          Part            => Part,
          Source_Filename => Source_Filename);
 
@@ -688,24 +680,15 @@ package body Src_Info.ALI is
       --  create a stub
 
       if File.LI = null then
-         declare
-            LI : Virtual_File :=
-              Create (ALI_Filename, Project, Use_Source_Path => False);
-         begin
-            if LI = VFS.No_File then
-               LI := Create_From_Base (ALI_Filename);
-            end if;
+         Create_LI_File
+           (File        => File.LI,
+            Project     => Project,
+            LI_Filename => ALI_Filename,
+            Handler     => LI_Handler (Handler));
 
-            Create_LI_File
-              (File        => File.LI,
-               Project     => Project,
-               LI_Filename => LI,
-               Handler     => LI_Handler (Handler));
-
-            if File.LI = null then
-               raise ALI_Internal_Error;
-            end if;
-         end;
+         if File.LI = null then
+            raise ALI_Internal_Error;
+         end if;
       end if;
 
       --  If the associated File_Info does not exist, then create it.
@@ -734,13 +717,12 @@ package body Src_Info.ALI is
    procedure Get_Subunit_Source_File
      (Handler          : ALI_Handler;
       Source_Filename  : Virtual_File;
-      Sig_Base_Name    : String;
       Project          : Project_Type;
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      ALI_Filename : constant String := Get_ALI_Filename (Sig_Base_Name);
-      --   ??? Could we use Sname
+      ALI_Filename : constant Virtual_File := LI_Filename_From_Source
+        (Handler, Source_Filename, Project);
       Sep          : File_Info_Ptr_List;
 
    begin
@@ -757,23 +739,11 @@ package body Src_Info.ALI is
       --  create a stub
 
       if File.LI = null then
-         declare
-            LI : constant String := Locate_ALI (ALI_Filename, Project);
-         begin
-            if LI /= "" then
-               Create_LI_File
-                 (File        => File.LI,
-                  Project     => Project,
-                  LI_Filename => Create (Full_Filename => LI),
-                  Handler     => LI_Handler (Handler));
-            else
-               Create_LI_File
-                 (File        => File.LI,
-                  Project     => Project,
-                  LI_Filename => Create_From_Base (ALI_Filename),
-                  Handler     => LI_Handler (Handler));
-            end if;
-         end;
+         Create_LI_File
+           (File        => File.LI,
+            Project     => Project,
+            LI_Filename => ALI_Filename,
+            Handler     => LI_Handler (Handler));
 
          if File.LI = null then
             File := No_Source_File;
@@ -931,7 +901,6 @@ package body Src_Info.ALI is
    procedure Process_Sdep
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table)
@@ -940,7 +909,8 @@ package body Src_Info.ALI is
    begin
       if Dep.Subunit_Name /= No_Name then
          Process_Sdep_As_External
-           (Handler, New_LI_File, New_ALI, Id, Project,
+           (Handler, New_LI_File,
+            Id, Project,
             Sfiles, Is_Separate => True);
 
       elsif New_LI_File.LI.Spec_Info /= null
@@ -959,7 +929,8 @@ package body Src_Info.ALI is
 
       else
          Process_Sdep_As_External
-           (Handler, New_LI_File, New_ALI, Id, Project,
+           (Handler, New_LI_File,
+            Id, Project,
             Sfiles, Is_Separate => False);
       end if;
    end Process_Sdep;
@@ -1010,7 +981,6 @@ package body Src_Info.ALI is
    procedure Process_Sdep_As_External
      (Handler     : ALI_Handler;
       New_LI_File : LI_File_Ptr;
-      New_ALI     : ALIs_Record;
       Id          : Sdep_Id;
       Project     : Project_Type;
       Sfiles      : in out Sdep_To_Sfile_Table;
@@ -1027,7 +997,8 @@ package body Src_Info.ALI is
 
    begin
       Get_Source_File
-        (Handler, New_ALI, Source, Dep.Subunit_Name, Project, Sfile);
+        (Handler,
+         Source, Dep.Subunit_Name, Project, Sfile);
       New_Dep :=
         (File              => Sfile,
          Dep_Info          => (Depends_From_Spec => False,
@@ -1068,7 +1039,8 @@ package body Src_Info.ALI is
    begin
       for Dep_Id in New_ALI.First_Sdep .. New_ALI.Last_Sdep loop
          Process_Sdep
-           (Handler, New_LI_File, New_ALI, Dep_Id, Project, Sfiles);
+           (Handler, New_LI_File,
+            Dep_Id, Project, Sfiles);
       end loop;
    end Process_Sdeps;
 
