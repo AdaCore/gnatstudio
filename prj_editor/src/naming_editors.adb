@@ -206,7 +206,6 @@ package body Naming_Editors is
       --  hidden, and the shown again, it is always displayed on top of the
       --  current page in the notebook. We thus see the contents of two or more
       --  pages at the same time...
-      Set_Current_Page (Editor, 1 + Current);
       Set_Current_Page (Editor, Current);
    end Set_Visible_Pages;
 
