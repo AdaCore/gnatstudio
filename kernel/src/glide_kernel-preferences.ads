@@ -155,7 +155,7 @@ package Glide_Kernel.Preferences is
    Strings_Style             : Param_Spec_Style;
    Source_Editor_Font        : Param_Spec_Font;
 
-   Default_HL_Line_Color     : Param_Spec_Color;
+   Delimiter_Color           : Param_Spec_Color;
    Block_Folding             : Param_Spec_Boolean;
    Block_Highlighting        : Param_Spec_Boolean;
    Current_Line_Color        : Param_Spec_Color;
