@@ -53,10 +53,12 @@ package body Docgen.Work_On_File is
       Process_Body_File  : Boolean;
       Subprogram_Index_List : in out Type_Entity_List.List;
       Type_Index_List       : in out Type_Entity_List.List;
+      Tagged_Types_List     : in out Type_List_Tagged_Element.List;
+      All_Tagged_Types_List : in out List_Entity_Handle.List;
       Converter          : Docgen.Doc_Subprogram_Type;
       Doc_Directory      : String;
       Doc_Suffix         : String);
-   --  called by Process_Files for each file from the given list
+   --  Called by Process_Files for each file from the given list
    --  will examine that file and call the function Work_On_Source
    --  from Docgen.Work_On_File.
 
@@ -66,6 +68,12 @@ package body Docgen.Work_On_File is
    --  lists of these entities by calling the procedures Process_Type_Index,
    --  Process_Subprogram_Index and Process_Unit_Index (the latter for the
    --  source file list) in the package Docgen.Work_On_File.
+   --  Tagged_Types_List is the list of all tagged types declared in the files
+   --  we are processing.
+   --  All_Tagged_Types_List contains all the tagged types that are used for
+   --  tagged types index: those declared in the processed files but also the
+   --  parents and the children even if they aren't declared in the processed
+   --  files.
 
    -------------------
    -- Process_Files --
@@ -79,6 +87,8 @@ package body Docgen.Work_On_File is
       Doc_Suffix       : String;
       Converter        : Docgen.Doc_Subprogram_Type)
    is
+      use Type_List_Tagged_Element;
+      use List_Entity_Handle;
       use TSFL;
       J                     : Natural;
       Source_File_Node      : Type_Source_File_List.List_Node;
@@ -87,10 +97,11 @@ package body Docgen.Work_On_File is
       Prev_Package          : GNAT.OS_Lib.String_Access;
       Subprogram_Index_List : Type_Entity_List.List;
       Type_Index_List       : Type_Entity_List.List;
+      Tagged_Types_List     : Type_List_Tagged_Element.List;
+      All_Tagged_Types_List : List_Entity_Handle.List;
       Unused                : List_Reference_In_File.List;
       Unused_Bis            : Type_Entity_List.List;
-
-      Doc_Directory_Root : constant String :=
+      Doc_Directory_Root    : constant String :=
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
 
       function Find_Next_Package
@@ -122,7 +133,7 @@ package body Docgen.Work_On_File is
             if not Is_Spec_File (Kernel, Data (Local_Node).File_Name) then
                Local_Node := Next (Local_Node);
             end if;
-            if Local_Node = Null_Node then
+            if Local_Node = Type_Source_File_List.Null_Node then
                --  don't change this return, needed in Docgen-Texi_Output
                --  in Write_Not_Regular_Beginning!
                return "";
@@ -155,7 +166,7 @@ package body Docgen.Work_On_File is
                Local_Node := Prev (Source_File_List, Local_Node);
             end if;
 
-            if Local_Node = Null_Node then
+            if Local_Node = Type_Source_File_List.Null_Node then
                --  Don't change this return, needed in Docgen-Texi_Output
                --  in Write_Not_Regular_Beginning!
                return "";
@@ -200,6 +211,8 @@ package body Docgen.Work_On_File is
                TSFL.Data (Source_File_Node).Other_File_Found,
                Subprogram_Index_List,
                Type_Index_List,
+               Tagged_Types_List,
+               All_Tagged_Types_List,
                Converter,
                Doc_Directory_Root,
                Doc_Suffix);
@@ -221,22 +234,28 @@ package body Docgen.Work_On_File is
 
       --  Create the index doc files for the packages
       Process_Unit_Index
-        (B, Kernel, Source_File_List,
-         Unused_Bis, Unused, Options, Converter,
+        (B, Kernel, Source_File_List, Unused_Bis, Unused, Options, Converter,
            Doc_Directory_Root, Doc_Suffix);
       Process_Subprogram_Index
-        (B, Kernel, Subprogram_Index_List,
-         Unused_Bis, Unused, Options,
-         Converter,
-           Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Subprogram_Index_List, Unused_Bis, Unused, Options,
+         Converter, Doc_Directory_Root, Doc_Suffix);
       Process_Type_Index
-        (B, Kernel, Type_Index_List,
-         Unused_Bis, Unused,  Options,
-         Converter,
-          Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Type_Index_List, Unused_Bis, Unused,  Options, Converter,
+         Doc_Directory_Root, Doc_Suffix);
+
+      if Options.Tagged_Types then
+         Sort_List_Name (Tagged_Types_List);
+         Process_Tagged_Type_Index
+           (B, Kernel, Tagged_Types_List, Unused_Bis, Unused,
+            Source_File_List, Options, Converter, Doc_Directory_Root,
+            Doc_Suffix);
+      end if;
 
       TEL.Free (Subprogram_Index_List);
       TEL.Free (Type_Index_List);
+      Type_List_Tagged_Element.Free (Tagged_Types_List);
+      List_Entity_Handle.Free (All_Tagged_Types_List);
+
    end Process_Files;
 
    ----------------------
@@ -256,7 +275,9 @@ package body Docgen.Work_On_File is
       Process_Body_File  : Boolean;
       Subprogram_Index_List : in out Type_Entity_List.List;
       Type_Index_List       : in out Type_Entity_List.List;
-      Converter          : Docgen.Doc_Subprogram_Type;
+      Tagged_Types_List     : in out Type_List_Tagged_Element.List;
+      All_Tagged_Types_List : in out List_Entity_Handle.List;
+      Converter             : Docgen.Doc_Subprogram_Type;
       Doc_Directory      : String;
       Doc_Suffix         : String)
    is
@@ -280,8 +301,15 @@ package body Docgen.Work_On_File is
 --        Tree_Field : Scope_Tree;
 --        Node_Field : Scope_Tree_Node;
 --        Iter_Field : Scope_Tree_Node_Iterator;
-
-
+      Me_Pointer       : Entity_Handle;
+      Child_Pointer    : Entity_Handle;
+      Parent_Pointer   : Entity_Handle;
+      Father           : Entity_Information;
+      Son              : Entity_Information;
+      Child            : Child_Type_Iterator;
+      Parent           : Parent_Iterator;
+      Tag_Elem_Me      : Tagged_Element_Handle;
+      --  The 8 variables above are used to create the call graph if required
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -323,8 +351,11 @@ package body Docgen.Work_On_File is
 
             Entity := Get_Entity (Child_Node);
 
-            if Is_Subprogram (Child_Node)
-              and then Is_Spec_File (Kernel, Get_Declaration_File_Of (Entity))
+            if (Get_Kind (Entity).Kind = Function_Or_Operator
+                or else
+                  Get_Kind (Entity).Kind =  Procedure_Kind)
+            --  Is_Subprogram (Child_Node) was the previous instruction.
+            --  ??? For this function package are subprograms.
             then
                Type_Reference_List.Append
                  (Calls_List,
@@ -335,7 +366,12 @@ package body Docgen.Work_On_File is
                         (Source_File_List, Get_Declaration_File_Of (Entity)))
                    and then
                      (Get_Scope (Entity) = Global_Scope
-                      or else Options.Show_Private)));
+                      or else Options.Show_Private
+                      or else (Options.Process_Body_Files
+                               and then
+                               not Is_Spec_File
+                                 (Kernel,
+                                  Get_Declaration_File_Of (Entity))))));
             else
                Destroy (Entity);
             end if;
@@ -359,6 +395,7 @@ package body Docgen.Work_On_File is
          Local_Ref_List       : Type_Reference_List.List;
          Local_Calls_List     : Type_Reference_List.List;
          Entity_Tree_Node     : Scope_Tree_Node;
+         LI_List              : Src_Info.LI_File_List;
 
          procedure Tree_Called_Callback
            (Node        : Scope_Tree_Node;
@@ -384,7 +421,6 @@ package body Docgen.Work_On_File is
             Local_Tree_Node : Scope_Tree_Node := Get_Parent (Node);
          begin
             --  Get the name of the subprogram which calls the entity
-
             while Local_Tree_Node /= Null_Scope_Tree_Node
               and then not Is_Subprogram (Local_Tree_Node)
             loop
@@ -426,29 +462,23 @@ package body Docgen.Work_On_File is
             end if;
          end Remove_Double_Nodes;
 
-         Status : Find_Decl_Or_Body_Query_Status;
       begin
          --  Only if the procedure is defined in this file AND
          --  the references are wished:
 
-         if Get_Declaration_File_Of (Entity_Node.Entity) = Source_Filename
+         if Entity_File = Source_Filename
            and then Options.References
          then
-            Find_Next_Body
-              (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
-            if Status /= Success then
-               Entity_Node.Line_In_Body := Null_File_Location;
-               Trace (Me, "Status returned is not success");
-            end if;
-
+            LI_List := Get_LI_File_List (Kernel);
             Find_All_References
                 (Get_Root_Project (Get_Registry (Kernel)),
                  Get_Language_Handler (Kernel),
                  Info,
-                 Get_LI_File_List (Kernel),
+                 LI_List,
                  Reference_Iter,
                  No_Project,
-                 True);
+                 True,
+                 VFS.No_File);
 
             --  1. Find all subprograms called in the subprogram processed
 
@@ -476,21 +506,14 @@ package body Docgen.Work_On_File is
                   Info,
                   Tree_Called_Callback'Unrestricted_Access);
 
-               Find_Next_Body
-                 (Kernel, LI_Unit, Info, Entity_Node.Line_In_Body, Status);
-               if Status /= Success then
-                  Entity_Node.Line_In_Body := Null_File_Location;
-                  Trace (Me, "Status returned is not success");
-               end if;
-
                Free (Reference_Scope_Tree);
                Next (Get_Language_Handler (Kernel),
                      Reference_Iter,
-                     Get_LI_File_List (Kernel));
+                     LI_List);
             end loop;
 
             --  Pass the local lists to the entity_node lists
-
+            Remove_Double_Nodes (Local_Ref_List);
             Entity_Node.Called_List := Local_Ref_List;
             Remove_Double_Nodes (Local_Calls_List);
             Entity_Node.Calls_List  := Local_Calls_List;
@@ -503,7 +526,7 @@ package body Docgen.Work_On_File is
            and then Source_Filename = Entity_File
          then
             Type_Entity_List.Append
-              (Subprogram_Index_List, Clone (Entity_Node));
+              (Subprogram_Index_List, Clone (Entity_Node, False));
          end if;
       end Process_Subprogram;
 
@@ -522,7 +545,8 @@ package body Docgen.Work_On_File is
          if Is_Spec_File (Kernel, Source_Filename)
            and then Source_Filename = Entity_File
          then
-            Type_Entity_List.Append (Type_Index_List, Clone (Entity_Node));
+            Type_Entity_List.Append
+              (Type_Index_List, Clone (Entity_Node, False));
          end if;
       end Process_Type;
 
@@ -546,9 +570,7 @@ package body Docgen.Work_On_File is
 
                if Ref_In_File = No_Reference then
                   --  New entity
-
                   Info := Get (Entity_Iter);
-
                   exit when Info = No_Entity_Information;
 
                   Ent_Handle := new Entity_Information'(Info);
@@ -556,7 +578,6 @@ package body Docgen.Work_On_File is
 
                else
                   --  New reference on the current entity
-
                   List_Reference_In_File.Append
                     (List_Ref_In_File,
                      (Name   =>
@@ -567,7 +588,6 @@ package body Docgen.Work_On_File is
                end if;
 
                --  Get next entity (or reference) in this file
-
                Next (Entity_Iter);
             end loop;
 
@@ -608,9 +628,7 @@ package body Docgen.Work_On_File is
 
                if Ref_In_File = No_Reference then
                   --  New entity
-
                   Info := Get (Entity_Iter);
-
                   exit when Info = No_Entity_Information;
 
                   Ent_Handle := new Entity_Information'(Info);
@@ -699,7 +717,7 @@ package body Docgen.Work_On_File is
 --                                Iter_Field := Start (Node_Field);
 --                                Found_Private := False;
 --                                loop
---                                   Node_Field := Get (Iter_Field);
+--                                 Node_Field := Get (Iter_Field);
 --                                exit when Node_Field = Null_Scope_Tree_Node;
 --                                   Field := Get_Entity (Node_Field);
 --
@@ -781,6 +799,86 @@ package body Docgen.Work_On_File is
                         when others =>
                            Entity_Node.Kind := Other_Entity;
                      end case;
+
+                     if (Options.Tagged_Types
+                         and then
+                           Get_Kind (Info).Is_Type
+                         and then
+                           (Get_Kind (Info).Kind = Record_Kind or else
+                     --  In Ada, tagged type are classified as Record
+                     --  The only way to distinguish them to classic
+                     --  record is to search for parent and children.
+                     --  ??? tagged types without child and without
+                     --  parent don't appear in the list
+                              Get_Kind (Info).Kind = Class or else
+                              Get_Kind (Info).Kind = Class_Wide))
+                     then
+                        if Get (Get_Parent_Types (LI_Unit, Info))
+                          /= No_Entity_Information
+                          or else
+                            Get (Get_Children_Types (LI_Unit, Info))
+                            /= No_Entity_Information
+                        then
+                           Tag_Elem_Me := new Tagged_Element;
+                           Me_Pointer := Find_In_List
+                             (All_Tagged_Types_List, Info);
+                           if Me_Pointer = null then
+                              --  tagged type seen for the first time
+                              Me_Pointer
+                                := new Entity_Information'(Copy (Info));
+                              List_Entity_Handle.Append
+                                (All_Tagged_Types_List, Me_Pointer);
+                           end if;
+                           Tag_Elem_Me.Me := Me_Pointer;
+                           Tag_Elem_Me.Number_Of_Children := 0;
+
+                           --  Parent of the tagged type
+                           --  ??? for c++ multiple parents are not processed
+                           Parent
+                             := Get_Parent_Types (LI_Unit, Me_Pointer.all);
+                           Father := Get (Parent);
+                           if Father /= No_Entity_Information then
+                              Parent_Pointer := Find_In_List
+                                (All_Tagged_Types_List, Father);
+                              if Parent_Pointer = null then
+                                 --  tagged type seen for the first time
+                                 Parent_Pointer
+                                   := new Entity_Information'(Father);
+                                 List_Entity_Handle.Append
+                                   (All_Tagged_Types_List, Parent_Pointer);
+                              end if;
+                              Tag_Elem_Me.My_Parent := Parent_Pointer;
+                           else
+                              --  This tagged type has no parent
+                              Tag_Elem_Me.My_Parent := null;
+                           end if;
+
+                           --  Children of the tagged type
+                           Child
+                             := Get_Children_Types (LI_Unit, Me_Pointer.all);
+                           loop
+                              Son := Get (Child);
+                              exit when Son = No_Entity_Information;
+                              Child_Pointer
+                                := Find_In_List (All_Tagged_Types_List, Son);
+                              if Child_Pointer = null then
+                                 --  tagged type seen for the first time
+                                 Child_Pointer := new Entity_Information'(Son);
+                                 List_Entity_Handle.Append
+                                   (All_Tagged_Types_List, Child_Pointer);
+                              end if;
+                              List_Entity_Handle.Append
+                                (Tag_Elem_Me.My_Children, Child_Pointer);
+                              Tag_Elem_Me.Number_Of_Children
+                                := Tag_Elem_Me.Number_Of_Children + 1;
+                              Next (Child);
+                           end loop;
+
+                           Type_List_Tagged_Element.Append
+                             (Tagged_Types_List, Tag_Elem_Me.all);
+                        end if;
+                     end if;
+
 
                      --  Add to the entity list of this file
                      Type_Entity_List.Append (Entity_List, Entity_Node);
