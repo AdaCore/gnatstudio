@@ -185,7 +185,7 @@ package body Glide_Kernel is
    function Save_Child
      (Handle : access Kernel_Handle_Record;
       Child  : Gtkada.MDI.MDI_Child;
-      Force  : Boolean := True) return Boolean
+      Force  : Boolean := True) return Save_Return_Value
    is
       Module : Module_ID;
    begin
@@ -201,7 +201,7 @@ package body Glide_Kernel is
               Force);
       end if;
 
-      return True;
+      return Saved;
    end Save_Child;
 
    ---------------------
@@ -262,12 +262,17 @@ package body Glide_Kernel is
       Iter   : Child_Iterator;
       Child  : MDI_Child;
       Module : Module_ID;
+      Save_Type : Save_Return_Value;
+      F      : Boolean := Force;
    begin
       Iter := First_Child (MDI);
       Child := Get (Iter);
 
-      if not Save_Project_Conditional (Handle, Force) then
+      Save_Type := Save_Project_Conditional (Handle, F);
+      if Save_Type = Cancel then
          return False;
+      elsif Save_Type = Save_All then
+         F := True;
       end if;
 
       --  Browse through all MDI children.
@@ -276,8 +281,11 @@ package body Glide_Kernel is
          --  Find the module associated to Child.
          Module := Get_Module_From_Child (Handle, Child);
 
-         if not Save_Child (Handle, Child, Force) then
+         Save_Type := Save_Child (Handle, Child, F);
+         if Save_Type = Cancel then
             return False;
+         elsif Save_Type = Save_All then
+            F := True;
          end if;
 
          Next (Iter);

@@ -350,10 +350,18 @@ package Glide_Kernel is
    --  Child is the widget that was put directly in the MDI. It is always of
    --  the type MDI_Child_Tag registered with Register_Module.
 
+   type Save_Return_Value is
+     (Saved, Not_Saved, Save_All, Cancel);
+   --  All possible return values from the module's save function.
+   --    - Saved: The child associated with the module was saved
+   --    - Not_Saved: the child associated with the mdoule was not saved.
+   --    - Save_All: The child was saved, as should all following children.
+   --    - Cancel: Abort the operation that requested the save.
+
    type Module_Save_Function is access function
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget;
-      Force  : Boolean := False) return Boolean;
+      Force  : Boolean := False) return Save_Return_Value;
    --  A function called when the kernel asks a MDI child to save itself.
    --  If Force is True, this function should save the child state
    --  automatically, and if Force is False, the widgets may decide to
@@ -396,7 +404,7 @@ package Glide_Kernel is
    function Save_Child
      (Handle : access Kernel_Handle_Record;
       Child  : Gtkada.MDI.MDI_Child;
-      Force  : Boolean := True) return Boolean;
+      Force  : Boolean := True) return Save_Return_Value;
    --  Save the given Child.
    --  If Force is False, then ask the user first.
    --  Return False if the action has been canceled.
