@@ -125,6 +125,8 @@ package body Glide_Kernel.Project is
 
       Push_State (Kernel_Handle (Kernel), Busy);
 
+      Entities.Reset (Get_Database (Kernel));
+
       Load_Default_Project
         (Kernel.Registry.all,
          Normalize_Pathname (Directory, Resolve_Links => False));
