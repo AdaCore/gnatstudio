@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -41,6 +41,9 @@ package Make_Harness_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class);
 
    procedure On_Cancel_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
+   procedure On_Browse_Directory_Clicked
      (Object : access Gtk_Button_Record'Class);
 
 end Make_Harness_Window_Pkg.Callbacks;

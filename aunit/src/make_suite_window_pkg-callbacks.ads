@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                      Copyright (C) 2001-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Arguments;
-with Gtk.Widget; use Gtk.Widget;
+with Gtk.Widget;    use Gtk.Widget;
 
 package Make_Suite_Window_Pkg.Callbacks is
    --  Handle callbacks for main "AUnit_Make_Suite" window.
@@ -38,6 +38,9 @@ package Make_Suite_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class);
 
    procedure On_Cancel_Clicked
+     (Object : access Gtk_Button_Record'Class);
+
+   procedure On_Browse_Directory_Clicked
      (Object : access Gtk_Button_Record'Class);
 
 end Make_Suite_Window_Pkg.Callbacks;
