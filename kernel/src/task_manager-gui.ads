@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003 - 2005                     --
+--                      Copyright (C) 2003-2005                      --
 --                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -51,7 +51,7 @@ package Task_Manager.GUI is
    procedure Interrupt_Command
      (Manager : Task_Manager_Access;
       Index   : Integer);
-   --  Resume command referenced by Index.
+   --  Interrupt command referenced by Index.
 
 private
 
