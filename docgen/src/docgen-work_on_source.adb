@@ -25,6 +25,7 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Language.Ada;              use Language.Ada;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with OS_Utils;                  use OS_Utils;
+with Basic_Types;
 
 package body Docgen.Work_On_Source is
 
@@ -754,13 +755,6 @@ package body Docgen.Work_On_Source is
             --  check if defined in this file, the others used only for bodys!
               and then TEL.Data (Entity_Node).File_Name.all = Source_Filename
             then
-               --  Check if the subtitle has been set already.
-               --  Can't be set before the "if"
-
-               if not First_Already_Set then
-                  Options.Doc_Subprogram (Doc_File, Data_Subtitle);
-                  First_Already_Set := True;
-               end if;
 
                Header := Get_Whole_Header
                  (File_Text.all,
@@ -769,24 +763,33 @@ package body Docgen.Work_On_Source is
                   TEL.Data (Entity_Node).Line);
 
                if Header /= null then
+
+                  --  Check if the subtitle has been set already.
+                  --  Can't be set before the "if"
+
+                  if not First_Already_Set then
+                     Options.Doc_Subprogram (Doc_File, Data_Subtitle);
+                     First_Already_Set := True;
+                  end if;
+
                   Description := Extract_Comment
                     (File_Text.all,
                      TEL.Data (Entity_Node).Line,
                      Count_Lines (Header.all),
                      False,
                      Options);
-               end if;
 
-               Data_Package := Doc_Info'
-                 (Package_Info,
-                  Doc_Info_Options    => Options,
-                  Doc_LI_Unit         => LI_Unit,
-                  Doc_File_List       => Source_File_List,
-                  Package_Entity      => TEL.Data (Entity_Node),
-                  Package_Description => Description,
-                  Package_Header      => Header,
-                  Package_Header_Line => TEL.Data (Entity_Node).Line);
-               Options.Doc_Subprogram (Doc_File, Data_Package);
+                  Data_Package := Doc_Info'
+                    (Package_Info,
+                     Doc_Info_Options    => Options,
+                     Doc_LI_Unit         => LI_Unit,
+                     Doc_File_List       => Source_File_List,
+                     Package_Entity      => TEL.Data (Entity_Node),
+                     Package_Description => Description,
+                     Package_Header      => Header,
+                     Package_Header_Line => TEL.Data (Entity_Node).Line);
+                  Options.Doc_Subprogram (Doc_File, Data_Package);
+               end if;
             end if;
 
             Entity_Node := TEL.Next (Entity_Node);
@@ -1439,6 +1442,7 @@ package body Docgen.Work_On_Source is
       Entity_Name : String;
       Entity_Line : Natural) return GNAT.OS_Lib.String_Access
    is
+
       Parse_Node      : Construct_Access;
       Parsed_List_End : Boolean;
       Result          : GNAT.OS_Lib.String_Access;
@@ -1450,16 +1454,21 @@ package body Docgen.Work_On_Source is
       --  ??? Exception if no parsed entities found: later
 
       while not Parsed_List_End loop
-         if To_Lower (Parse_Node.Name.all) =
-           To_Lower (Entity_Name) and then
-           Parse_Node.Sloc_Start.Line = Entity_Line
-         then
-            Result := new String (1 .. Parse_Node.Sloc_End.Index -
-                                    Parse_Node.Sloc_Start.Index + 1);
-            Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
-                                       Parse_Node.Sloc_End.Index);
-            return Result;
-         end if;
+         declare
+            use Basic_Types;
+         begin
+               if Parse_Node.Name /= null and then
+                 To_Lower (Parse_Node.Name.all) =
+                 To_Lower (Entity_Name) and then
+                 Parse_Node.Sloc_Start.Line = Entity_Line
+               then
+                  Result := new String (1 .. Parse_Node.Sloc_End.Index -
+                                          Parse_Node.Sloc_Start.Index + 1);
+                  Result.all := File_Text (Parse_Node.Sloc_Start.Index ..
+                                             Parse_Node.Sloc_End.Index);
+                  return Result;
+               end if;
+         end;
 
          if Parse_Node = Parsed_List.Last then
             Parsed_List_End := True;
