@@ -79,7 +79,7 @@ package Src_Editor_Buffer.Line_Information is
    --  Blank lines cannot be edited, and are not saved on disk.
 
    function Create_Mark
-     (Editor : access Source_Buffer_Record'Class;
+     (Buffer : access Source_Buffer_Record'Class;
       Line   : Editable_Line_Type;
       Column : Positive) return Gtk.Text_Mark.Gtk_Text_Mark;
    --  Create mark at Line, Column.
