@@ -17,9 +17,6 @@ procedure Normalize is
    type Variable_Ref_Array is array (Positive range <>) of Project_Node_Id;
    type Literal_String_Array is array (Positive range <>) of String_Id;
 
-   function Is_External_Variable (Var : Project_Node_Id) return Boolean;
-   --  Return True if Var is a reference to an external variable
-
    procedure Clone_Node (From : Project_Node_Id; To : Project_Node_Id);
    --  Make an exact copy of From to To. This overwrites all the fields in To.
 
@@ -32,11 +29,6 @@ procedure Normalize is
    --  declarative items.
    --  The new project is not independent of the old one, since most of the
    --  nodes are shared between the two for efficiency reasons.
-
-   function Find_Scenario_Variables (Project : Project_Node_Id)
-      return Variable_Ref_Array;
-   --  Create and return an array that contains references to all the scenario
-   --  variables in Project and its packages.
 
    function Create_Nested_Case (Scenario_Vars : Variable_Ref_Array)
       return Project_Node_Id;
@@ -52,6 +44,9 @@ procedure Normalize is
    --            case Var2 is
    --             .......
 
+   function Find_Scenario_Variables (Project : Project_Node_Id)
+      return Variable_Ref_Array;
+
    function Normalize_Project (Project : Project_Node_Id)
       return Project_Node_Id;
    --  Return a normalized version of Project
@@ -63,16 +58,6 @@ procedure Normalize is
    --  Add Expression to the list of instructions in the appropriate
    --  case_item(s) in In_Case, given the current values for all variables as
    --  given in Var_values.
-
-   --------------------------
-   -- Is_External_Variable --
-   --------------------------
-
-   function Is_External_Variable (Var : Project_Node_Id) return Boolean is
-   begin
-      return Kind_Of (Current_Term (First_Term (Expression_Of (Var))))
-        = N_External_Value;
-   end Is_External_Variable;
 
    -------------------------------
    -- Create_Variable_Reference --
@@ -124,67 +109,6 @@ procedure Normalize is
       Set_First_Declarative_Item_Of (Decl, Empty_Node);
       return Project2;
    end Clone_Project;
-
-   -----------------------------
-   -- Find_Scenario_Variables --
-   -----------------------------
-
-   function Find_Scenario_Variables (Project : Project_Node_Id)
-      return Variable_Ref_Array
-   is
-      Var : Project_Node_Id;
-      Pkg : Project_Node_Id := Project;
-      Count : Natural := 0;
-   begin
-      pragma Assert (Kind_Of (Project) = N_Project);
-
-      while Pkg /= Empty_Node loop
-         Var := First_Variable_Of (Pkg);
-         while Var /= Empty_Node loop
-            if Kind_Of (Var) = N_Typed_Variable_Declaration
-              and then Is_External_Variable (Var)
-            then
-               Count := Count + 1;
-            end if;
-
-            Var := Next_Variable (Var);
-         end loop;
-
-         if Pkg = Project then
-            Pkg := First_Package_Of (Project);
-         else
-            Pkg := Next_Package_In_Project (Pkg);
-         end if;
-      end loop;
-
-      declare
-         List : Variable_Ref_Array (1 .. Count);
-         Current : Positive := 1;
-      begin
-         Pkg := Project;
-         while Pkg /= Empty_Node loop
-            Var := First_Variable_Of (Pkg);
-            while Var /= Empty_Node loop
-               if Kind_Of (Var) = N_Typed_Variable_Declaration
-                 and then Is_External_Variable (Var)
-               then
-                  List (Current) := Create_Variable_Reference (Var);
-                  Current := Current + 1;
-               end if;
-
-               Var := Next_Variable (Var);
-            end loop;
-
-            if Pkg = Project then
-               Pkg := First_Package_Of (Project);
-            else
-               Pkg := Next_Package_In_Project (Pkg);
-            end if;
-         end loop;
-
-         return List;
-      end;
-   end Find_Scenario_Variables;
 
    ------------------------
    -- Create_Nested_Case --
@@ -278,6 +202,22 @@ procedure Normalize is
       end loop;
       return Nested_Case;
    end Create_Nested_Case;
+
+   -----------------------------
+   -- Find_Scenario_Variables --
+   -----------------------------
+
+   function Find_Scenario_Variables (Project : Project_Node_Id)
+      return Variable_Ref_Array
+   is
+      Vars : Variable_Decl_Array := Find_Scenario_Variables (Project);
+      Ref  : Variable_Ref_Array (Vars'Range);
+   begin
+      for Var in Variable_Decl_Array'Range loop
+         Vars (Var) := Create_Variable_Reference (Var);
+      end loop;
+      return Ref;
+   end Find_Scenario_Variables;
 
    ----------------------
    -- Add_To_Case_Item --
