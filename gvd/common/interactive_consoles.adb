@@ -453,6 +453,10 @@ package body Interactive_Consoles is
                           Prefix (Prefix'First + Text'Length .. Prefix'Last));
                end if;
 
+               if not More_Than_One then
+                  Insert (Console.Buffer, Pos, " ");
+               end if;
+
                Console.Internal_Insert := False;
 
                Free (Completions);
