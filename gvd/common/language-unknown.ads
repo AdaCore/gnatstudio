@@ -26,6 +26,16 @@ package Language.Unknown is
    Unknown_Lang : constant Language_Access;
    --  Class constant for the Unknown language.
 
+   procedure Parse_Constructs
+     (Lang   : access Unknown_Language;
+      Buffer : String;
+      Result : out Construct_List);
+
+   procedure Parse_Entities
+     (Lang     : access Unknown_Language;
+      Buffer   : String;
+      Callback : Entity_Callback);
+
    function Is_Simple_Type
      (Lang : access Unknown_Language;
       Str : String) return Boolean;

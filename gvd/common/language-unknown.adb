@@ -129,4 +129,32 @@ package body Language.Unknown is
       return (1 .. 0 => No_Project_Field);
    end Get_Project_Fields;
 
+   ----------------------
+   -- Parse_Constructs --
+   ----------------------
+
+   procedure Parse_Constructs
+     (Lang   : access Unknown_Language;
+      Buffer : String;
+      Result : out Construct_List)
+   is
+      pragma Unreferenced (Lang, Buffer);
+   begin
+      Result := (null, null, null);
+   end Parse_Constructs;
+
+   --------------------
+   -- Parse_Entities --
+   --------------------
+
+   procedure Parse_Entities
+     (Lang     : access Unknown_Language;
+      Buffer   : String;
+      Callback : Entity_Callback)
+   is
+      pragma Unreferenced (Lang, Buffer, Callback);
+   begin
+      null;
+   end Parse_Entities;
+
 end Language.Unknown;
