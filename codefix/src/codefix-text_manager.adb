@@ -2786,6 +2786,16 @@ package body Codefix.Text_Manager is
    -- Text_Command --
    ------------------
 
+   procedure Free (This : in out Text_Command) is
+   begin
+      Free (This.Caption);
+   end Free;
+
+   procedure Unchecked_Free (This : in out Text_Command) is
+   begin
+      This.Caption := null;
+   end Unchecked_Free;
+
    procedure Free_Data (This : in out Text_Command'Class) is
    begin
       Free (This);
@@ -2846,8 +2856,14 @@ package body Codefix.Text_Manager is
    procedure Free (This : in out Word_Mark) is
    begin
       Free (This.String_Match);
+      Free (This.Mark_Id);
    end Free;
 
+   procedure Unchecked_Free (This : in out Word_Mark) is
+   begin
+      This.String_Match := null;
+      This.Mark_Id := null;
+   end Unchecked_Free;
 
    ---------------------
    -- Remove_Word_Cmd --
@@ -2864,7 +2880,14 @@ package body Codefix.Text_Manager is
    procedure Free (This : in out Remove_Word_Cmd) is
    begin
       Free (This.Word);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Remove_Word_Cmd) is
+   begin
+      Unchecked_Free (This.Word);
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    procedure Execute
      (This         : Remove_Word_Cmd;
@@ -2921,7 +2944,14 @@ package body Codefix.Text_Manager is
    procedure Free (This : in out Insert_Word_Cmd) is
    begin
       Free (This.Word);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Insert_Word_Cmd) is
+   begin
+      Unchecked_Free (This.Word);
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    procedure Execute
      (This         : Insert_Word_Cmd;
@@ -3001,7 +3031,15 @@ package body Codefix.Text_Manager is
    begin
       Free (This.Step_Remove);
       Free (This.Step_Insert);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Move_Word_Cmd) is
+   begin
+      Unchecked_Free (This.Step_Remove);
+      Unchecked_Free (This.Step_Insert);
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    procedure Execute
      (This         : Move_Word_Cmd;
@@ -3030,7 +3068,15 @@ package body Codefix.Text_Manager is
    begin
       Free (This.Mark);
       Free (This.Str_Expected);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Replace_Word_Cmd) is
+   begin
+      Unchecked_Free (This.Mark);
+      This.Str_Expected := null;
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    procedure Execute
      (This         : Replace_Word_Cmd;
@@ -3073,7 +3119,15 @@ package body Codefix.Text_Manager is
    begin
       Free (This.Step_Word1);
       Free (This.Step_Word2);
+      Free (Text_Command (This));
    end Free;
+
+   procedure Unchecked_Free (This : in out Invert_Words_Cmd) is
+   begin
+      Unchecked_Free (This.Step_Word1);
+      Unchecked_Free (This.Step_Word2);
+      Unchecked_Free (Text_Command (This));
+   end Unchecked_Free;
 
    procedure Execute
      (This         : Invert_Words_Cmd;
