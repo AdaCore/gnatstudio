@@ -237,7 +237,6 @@ package Main_Debug_Window_Pkg is
       Button59 : Gtk_Widget;
       Frame7 : Gtk_Frame;
       Process_Notebook : Gtk_Notebook;
-      Label49 : Gtk_Label;
       Hbox1 : Gtk_Hbox;
       Button1 : Gtk_Button;
       Arrow1 : Gtk_Arrow;

@@ -1289,17 +1289,6 @@ begin
    Set_Tab_Vborder (Main_Debug_Window.Process_Notebook, 2);
    Set_Tab_Pos (Main_Debug_Window.Process_Notebook, Pos_Top);
 
-   Gtk_New (Process);
-   Add (Main_Debug_Window.Process_Notebook, Process.Process_Paned);
-   Create_Debugger (Process, List);
-
-   Gtk_New (Main_Debug_Window.Label49, -("Processus 1"));
-   Set_Alignment (Main_Debug_Window.Label49, 0.5, 0.5);
-   Set_Padding (Main_Debug_Window.Label49, 0, 0);
-   Set_Justify (Main_Debug_Window.Label49, Justify_Center);
-   Set_Line_Wrap (Main_Debug_Window.Label49, False);
-   Set_Tab (Main_Debug_Window.Process_Notebook, 0, Main_Debug_Window.Label49);
-
    Gtk_New_Hbox (Main_Debug_Window.Hbox1, False, 0);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Hbox1, False, False, 0);
 
