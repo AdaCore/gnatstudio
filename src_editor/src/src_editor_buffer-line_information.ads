@@ -140,4 +140,8 @@ package Src_Editor_Buffer.Line_Information is
    --  Return True if all editable lines are visible and all visible lines
    --  are editable lines.
 
+   procedure Remove_Block_Folding_Commands
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Remove the commands corresponding to block folding from the side column.
+
 end Src_Editor_Buffer.Line_Information;
