@@ -96,7 +96,6 @@ Multiple Document Interface
 Editing Files
 * General Information::
 * Editing Sources::
-* Defining Aliases::
 * The File Selector::
 * Menu Items::
 * Using an External Editor::
@@ -156,6 +155,7 @@ Working in a Cross Environment
 Customization
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
+* Defining Text Aliases::
 * Defining New Styles and Key Bindings::
 
 Environment
@@ -1260,7 +1260,6 @@ by side. Drag one of them on the drop area on the right side.
 @menu
 * General Information::
 * Editing Sources::
-* Defining Aliases::
 * The File Selector::
 * Menu Items::
 * Using an External Editor::
@@ -1439,6 +1438,9 @@ key bindings allowing easy navigation in the file.
 The key bindings are listed below in two sections: the common key bindings,
 always available; the Emacs key bindings, available as an option.
 
+In addition, there are several ways to define new key bindings, see
+@ref{Defining Text Aliases} and @ref{Defining new key bindings}.
+
 @table @b
 @item Common key bindings
 @cindex key
@@ -1571,192 +1573,6 @@ This is a useful extension compared to the default Emacs key bindings.
 @end table
 
 @end table
-
-@c --------------------------------------------------------------------------
-@node Defining Aliases
-@section Defining Aliases
-@cindex aliases
-@c --------------------------------------------------------------------------
-
-@noindent
-GPS provides a mechanism known as @b{aliases}. These are defined
-through the menu @code{Edit->Aliases}. Each alias has a name, which
-is generally a short string of characters. When you type them in any
-textual entry in GPS (generally a source editor, but also entry fields
-for instance in the file selector), and then press the special
-activation key (by default @key{control-o}, controlled by a
-preference), this name is removed from the source editor, and replaced
-by the text you have associated with it.
-Alias names may be composed of any character, but must start with a
-letter. GPS will jump to the start of each word before the current
-cursor position, and if the characters between this word start and the
-cursor position is an alias name, this alias is expanded.
-
-
-The aliases editor has the following aspect:
-
-@iftex
-@cindex screen shot
-@image{aliases, 10.7cm}
-@end iftex
-
-@ifhtml
-@cindex screen shot
-@image{aliases}
-@end ifhtml
-
-It is divided into three main parts: on the left side, the list of
-currently defined aliases is shown. Clicking on any of them will
-display the replacement text for this alias. If you click again the
-selected alias, GPS displays a text entry which you can use to rename
-an existing alias. Alias names must start with a letter. A check
-button at the bottom selects whether the read-only aliases
-(i.e. system-wide aliases) should be displayed.
-
-The second part is the expansion text for the alias, at the bottom
-right corner. This replacement text can used multiple lines, and
-contain some special text that act as a special replacement. These
-special texts are highlighted in a different color. You can insert
-these special entities either by typing them, or by right-clicking in
-the editor, and select the entity in the contextual menu.
-
-The following special entities are currently defined:
-
-@table @b
-@item %_
-This is the position where the cursor should be put once the
-replacement text has been inserted in the editor.
-
-@item %(name)
-This is the name of a parameter. @i{name} can be any string you want,
-excluding closing parenthesis. See below for more information on
-parameters.
-
-@item %D
-This is the current date, in ISO format. The year is displayed first,
-then the month and the day
-
-@item %H
-This is the current time (hour, minutes and seconds)
-
-@item %l
-If the expansion of the alias is done in a source editor, this is the
-line on which the cursor is when pressing @key{control-o}.
-
-@item %c
-This is similar to @i{%l}, except it returns the current column.
-
-@item %f
-If the expansion is done in a source editor, this is the name of the
-current file (its base name only, this doesn't include the directory)
-
-@item %d
-If the expansion is done in a source editor, this is the directory in
-which the current file is
-
-@item %p
-If the expansion is done in a source editor, this is the base name of
-the project file to which the file belongs.
-
-@item %P
-If the expansion is done in a source editor, this is the full path
-name to the project file (directory and base name).
-
-@end table
-
-The indentation as set in the expansion of the alias is preserved when
-the alias is expanded. All the lines will be indented the same amount
-to the right as the alias name.
-
-The third part of the aliases editor, at the top right corner, lists
-the parameters for the currently selected alias. Any time you insert a
-@i{%(name)} string in the expansion text, GPS automatically detects
-there is a new parameter reference (or an old reference has changed
-name or was removed); the list of parameters is automatically updated
-to show the current list.
-
-Each parameters has three attributes:
-
-@table @b
-@item name
-This is the name you use in the expansion text of the alias in the
-@i{%(name)} special entity.
-
-@item Environment
-This specifies whether the default value of the parameter comes from
-the list of environment variables set before GPS was started.
-
-@item default value
-Instead of getting the default value from the environment variable,
-you can also specify a fixed text.
-Clicking on the initial value of the currently selected variable opens
-a text entry which you can use to edit this default value.
-
-@end table
-
-When an alias that contains parameters is expanded, GPS will first
-display a dialog to ask for the value of the parameters. You can
-interactively enter this value, which replaces all the @i{%(name)}
-entities in the expansion text.
-
-
-@subsection Aliases files
-
-@noindent
-GPS manages multiple aliases files. One of them is editable
-interactively by the user through the @code{Edit->Aliases} menu,
-whereas all the others are defined system-wide, and are not editable
-interactively.
-
-The user-defined file is @file{$HOME/.gps/aliases}.
-
-The system files are all the files stored in the directory
-@file{<prefix>/share/gps/aliases}, where @file{<prefix>} is the path
-in which GPS was installed. The aliases defined in these files are
-read-only, and indicated as such in the aliases editor.
-
-All the files have the same XML format, which can be seen in the
-following example. Each alias has its own @i{<alias>} tag.
-
-@smallexample
-<?xml version="1.0"?>
-<Aliases>
-  <alias name="proc" >
-    <param name="p" >Proc1</param>
-    <param environment="true" name="env" />
-    <text>procedure %(p) is
-%(env)%_
-end %(p);</text>
-  </alias>
-</Aliases>
-@end smallexample
-
-The following tags are available:
-
-@table @code
-@item alias
-This indicates the start of a new alias. It has one mandatory
-attribute, @code{name}, which the text to type in the source editor
-before pressing @key{control-o}.
-
-@item param
-These are children of the @code{alias} node. There is one per
-parameter of the alias. They have one mandatory attribute,
-@code{name}, which is the name to type between @i{%(name)} in the
-alias expansion text.
-
-They have one optional attribute, @code{environment}, which indicates
-the default value must be read from the environment variables if it is
-set to true.
-
-These tags contain text, which is the default value for the parameter.
-
-@item text
-This is a child of the @code{alias} node, whose value is the
-replacement text for the alias.
-@end table
-
-
 
 @c --------------------------------------------------------------------------
 @node The File Selector
@@ -4797,6 +4613,7 @@ debugger.
 @menu
 * The Preferences Dialog::
 * Customizing the Menu Bar and the Tool Bar::
+* Defining Text Aliases::
 * Defining New Styles and Key Bindings::
 @end menu
 
@@ -5479,6 +5296,8 @@ GPS.
 The GPS menu bar can be customized through an XML file called
 @file{custom} in the gps home directory (@file{$HOME/.gps} on Unix
 systems, @file{%HOME%\.gps} on Windows systems).
+
+
 @cindex Unix
 @cindex Windows
 Here is an example for such a file:
@@ -5681,8 +5500,194 @@ directories in the current project, and all imported sub projects,
 recursively.
 @end table
 
+@c --------------------------------------------------------------------------
+@node Defining Text Aliases
+@section Defining Text Aliases
+@cindex aliases
+@c --------------------------------------------------------------------------
+
+@noindent
+GPS provides a mechanism known as @b{aliases}. These are defined
+through the menu @code{Edit->Aliases}. Each alias has a name, which
+is generally a short string of characters. When you type them in any
+textual entry in GPS (generally a source editor, but also entry fields
+for instance in the file selector), and then press the special
+activation key (by default @key{control-o}, controlled by a
+preference), this name is removed from the source editor, and replaced
+by the text you have associated with it.
+Alias names may be composed of any character, but must start with a
+letter. GPS will jump to the start of each word before the current
+cursor position, and if the characters between this word start and the
+cursor position is an alias name, this alias is expanded.
+
+The alias editor has the following aspect:
+
+@iftex
+@cindex screen shot
+@image{aliases, 10.7cm}
+@end iftex
+
+@ifhtml
+@cindex screen shot
+@image{aliases}
+@end ifhtml
+
+It is divided into three main parts: on the left side, the list of
+currently defined aliases is shown. Clicking on any of them will
+display the replacement text for this alias. If you click again the
+selected alias, GPS displays a text entry which you can use to rename
+an existing alias. Alias names must start with a letter. A check
+button at the bottom selects whether the read-only aliases
+(i.e. system-wide aliases) should be displayed.
+
+The second part is the expansion text for the alias, at the bottom
+right corner. This replacement text can used multiple lines, and
+contain some special text that act as a special replacement. These
+special texts are highlighted in a different color. You can insert
+these special entities either by typing them, or by right-clicking in
+the editor, and select the entity in the contextual menu.
+
+The following special entities are currently defined:
+
+@table @b
+@item %_
+This is the position where the cursor should be put once the
+replacement text has been inserted in the editor.
+
+@item %(name)
+This is the name of a parameter. @i{name} can be any string you want,
+excluding closing parenthesis. See below for more information on
+parameters.
+
+@item %D
+This is the current date, in ISO format. The year is displayed first,
+then the month and the day
+
+@item %H
+This is the current time (hour, minutes and seconds)
+
+@item %l
+If the expansion of the alias is done in a source editor, this is the
+line on which the cursor is when pressing @key{control-o}.
+
+@item %c
+This is similar to @i{%l}, except it returns the current column.
+
+@item %f
+If the expansion is done in a source editor, this is the name of the
+current file (its base name only, this doesn't include the directory)
+
+@item %d
+If the expansion is done in a source editor, this is the directory in
+which the current file is
+
+@item %p
+If the expansion is done in a source editor, this is the base name of
+the project file to which the file belongs.
+
+@item %P
+If the expansion is done in a source editor, this is the full path
+name to the project file (directory and base name).
+
+@end table
+
+The indentation as set in the expansion of the alias is preserved when
+the alias is expanded. All the lines will be indented the same amount
+to the right as the alias name.
+
+The third part of the aliases editor, at the top right corner, lists
+the parameters for the currently selected alias. Any time you insert a
+@i{%(name)} string in the expansion text, GPS automatically detects
+there is a new parameter reference (or an old reference has changed
+name or was removed); the list of parameters is automatically updated
+to show the current list.
+
+Each parameters has three attributes:
+
+@table @b
+@item name
+This is the name you use in the expansion text of the alias in the
+@i{%(name)} special entity.
+
+@item Environment
+This specifies whether the default value of the parameter comes from
+the list of environment variables set before GPS was started.
+
+@item default value
+Instead of getting the default value from the environment variable,
+you can also specify a fixed text.
+Clicking on the initial value of the currently selected variable opens
+a text entry which you can use to edit this default value.
+
+@end table
+
+When an alias that contains parameters is expanded, GPS will first
+display a dialog to ask for the value of the parameters. You can
+interactively enter this value, which replaces all the @i{%(name)}
+entities in the expansion text.
+
+
+@subsection Aliases files
+
+@noindent
+GPS manages multiple aliases files. One of them is editable
+interactively by the user through the @code{Edit->Aliases} menu,
+whereas all the others are defined system-wide, and are not editable
+interactively.
+
+The user-defined file is @file{$HOME/.gps/aliases}.
+
+The system files are all the files stored in the directory
+@file{<prefix>/share/gps/aliases}, where @file{<prefix>} is the path
+in which GPS was installed. The aliases defined in these files are
+read-only, and indicated as such in the aliases editor.
+
+All the files have the same XML format, which can be seen in the
+following example. Each alias has its own @i{<alias>} tag.
+
+@smallexample
+<?xml version="1.0"?>
+<Aliases>
+  <alias name="proc" >
+    <param name="p" >Proc1</param>
+    <param environment="true" name="env" />
+    <text>procedure %(p) is
+%(env)%_
+end %(p);</text>
+  </alias>
+</Aliases>
+@end smallexample
+
+The following tags are available:
+
+@table @code
+@item alias
+This indicates the start of a new alias. It has one mandatory
+attribute, @code{name}, which the text to type in the source editor
+before pressing @key{control-o}.
+
+@item param
+These are children of the @code{alias} node. There is one per
+parameter of the alias. They have one mandatory attribute,
+@code{name}, which is the name to type between @i{%(name)} in the
+alias expansion text.
+
+They have one optional attribute, @code{environment}, which indicates
+the default value must be read from the environment variables if it is
+set to true.
+
+These tags contain text, which is the default value for the parameter.
+
+@item text
+This is a child of the @code{alias} node, whose value is the
+replacement text for the alias.
+@end table
+
+
+@c --------------------------------------------------------------------------
 @node Defining New Styles and Key Bindings
 @section Defining New Styles and Key Bindings
+@c --------------------------------------------------------------------------
 
 @cindex Gtk+
 @cindex gtkrc
@@ -6260,7 +6265,7 @@ Log file created automatically by GPS
 
    @item $HOME/.gps/aliases
 @cindex aliases
-Contains the list of user-defined aliases (@pxref{Defining Aliases}).
+File containing the user-defined aliases (@pxref{Defining Text Aliases}).
 
    @item $HOME/.gps/custom
 You can edit this file to add your own menu and tool-bar entries in GPS.
@@ -6345,6 +6350,13 @@ This directory contains the sources used by the GPS tutorial.
 @cindex url
 See @url{gps-tutorial.html}.
 @end ifhtml
+
+   @item @i{prefix}/share/gps/aliases
+   @cindex aliases
+Directory containing files with system-wide aliases
+(@pxref{Defining Text Aliases}).
+
+   @item @i{prefix}/share/gps/customize
 
    @item @i{prefix}/share/gps/gps-animation.gif
 @cindex gif
