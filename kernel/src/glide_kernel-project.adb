@@ -20,7 +20,6 @@
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Projects;           use Projects;
 with Projects.Editor;    use Projects.Editor;
@@ -32,7 +31,6 @@ with Entities;
 
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
 with Glide_Result_View;        use Glide_Result_View;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 
@@ -341,19 +339,15 @@ package body Glide_Kernel.Project is
       Project   : Project_Type;
       Recursive : Boolean := False)
    is
-      Iter : Imported_Project_Iterator := Start (Project, Recursive);
+      Iter     : Imported_Project_Iterator := Start (Project, Recursive);
       Modified : Boolean := False;
-      Langs        : Argument_List := Get_Languages
-        (Project, Recursive => True);
    begin
       while Current (Iter) /= No_Project loop
          Modified := Modified or else Project_Modified (Current (Iter));
-         Save_Single_Project (Kernel, Current (Iter), Langs);
+         Save_Single_Project (Kernel, Current (Iter));
 
          Next (Iter);
       end loop;
-
-      Basic_Types.Free (Langs);
 
       --  Force a change in the icons in the explorer.
       --  ??? Probably not very efficient, however.
@@ -368,9 +362,8 @@ package body Glide_Kernel.Project is
    -------------------------
 
    procedure Save_Single_Project
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Projects.Project_Type;
-      Langs     : GNAT.OS_Lib.Argument_List)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Projects.Project_Type)
    is
       procedure Report_Error (Msg : String);
       --  Report errors to the user
@@ -385,49 +378,8 @@ package body Glide_Kernel.Project is
          Parse_File_Locations (Kernel, Msg, "Project save");
       end Report_Error;
 
-      Args    : Argument_List (1 .. 2);
-      Success : Boolean;
    begin
-      --  A multi-language project ? If yes, we need to generate the Makefile
-
-      if Langs'Length = 1 then
-         To_Lower (Langs (Langs'First).all);
-      end if;
-
-      if Langs'Length > 1
-        or else (Langs'Length = 1 and then Langs (Langs'First).all /= "ada")
-      then
-         if not Is_Regular_File (Project_Path (Project))
-           or else Project_Modified (Project)
-         then
-            Save_Project (Project, Report_Error'Unrestricted_Access);
-            Args (1) := new String'("-R");
-
-            declare
-               Name : constant String := Project_Path (Project);
-            begin
-               if not Is_Regular_File (Name)
-                 or else Is_Writable_File (Name)
-               then
-                  --  call gpr2make -R Name
-
-                  Free (Args (2));
-                  Args (2) := new String'(Name);
-                  Launch_Process
-                    (Kernel_Handle (Kernel),
-                     Command   => "gpr2make",
-                     Arguments => Args,
-                     Console   => Get_Console (Kernel),
-                     Success   => Success);
-               end if;
-            end;
-
-            Basic_Types.Free (Args);
-         end if;
-
-      else
-         Save_Project (Project, Report_Error'Unrestricted_Access);
-      end if;
+      Save_Project (Project, Report_Error'Unrestricted_Access);
    end Save_Single_Project;
 
    ------------------

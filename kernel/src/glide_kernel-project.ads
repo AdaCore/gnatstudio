@@ -75,24 +75,14 @@ package Glide_Kernel.Project is
    --  are saved at the same time.
    --  The kernel registers that it is no longer using the default project.
    --
-   --  This procedure will also regenerate the Makefiles whenever possible and
-   --  needed.
-   --
    --  There must be a project_view associated with the project
 
    procedure Save_Single_Project
-     (Kernel    : access Kernel_Handle_Record'Class;
-      Project   : Projects.Project_Type;
-      Langs     : GNAT.OS_Lib.Argument_List);
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Projects.Project_Type);
    --  Save project, but none of its imported projects. As opposed to
    --  Save_Project, the project doesn't need to have an associated view in
    --  this procedure.
-   --
-   --  This procedure will also regenerate the Makefiles whenever possible and
-   --  needed.
-   --
-   --  Langs is the list of languages defined for this project, and must be
-   --  freed by the caller.
 
    function Get_Project
      (Handle : access Kernel_Handle_Record'Class) return Projects.Project_Type;
