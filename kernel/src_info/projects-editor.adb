@@ -2789,16 +2789,7 @@ package body Projects.Editor is
                declare
                   D : constant String := Get_String (String_Value_Of (Node));
                begin
-                  Trace (Me, "MANU: " & D);
                   if not Is_Absolute_Path (D) then
-                     Trace (Me, "MANU: " & Normalize_Pathname
-                            (D, Old_Path, Resolve_Links => False));
-                     Trace (Me, "MANU: " & New_Path);
-                     Trace (Me, "MANU: " & Relative_Path_Name
-                        (Normalize_Pathname
-                           (D, Old_Path, Resolve_Links => False),
-                         New_Path));
-
                      Start_String;
                      Store_String_Chars
                        (Relative_Path_Name
@@ -2806,10 +2797,6 @@ package body Projects.Editor is
                            (D, Old_Path, Resolve_Links => False),
                          New_Path));
                      Set_String_Value_Of (Node, End_String);
-                     Trace (Me,
-                            "MANU => " & Get_String (String_Value_Of (Node)));
-                  else
-                     Trace (Me, "MANU: is absolute");
                   end if;
                end;
 
