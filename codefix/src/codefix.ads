@@ -11,6 +11,9 @@ package Codefix is
    Tab_Width : constant Natural := 8;
    --  Width of a tab in GNAT
 
+   Indentation_Width : constant := 3;
+   --  Width of an identation in GNAT
+
    ----------------------------------------------------------------------------
    --  type Dynamic_String
    ----------------------------------------------------------------------------
