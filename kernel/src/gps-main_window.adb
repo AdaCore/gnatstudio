@@ -124,6 +124,7 @@ package body GPS.Main_Window is
    Pref_Tabs_Policy     : Param_Spec_Enum;
    Pref_Tabs_Position   : Param_Spec_Enum;
    Pref_Toolbar_Style   : Param_Spec_Enum;
+   Pref_Show_Statusbar  : Param_Spec_Boolean;
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -393,6 +394,12 @@ package body GPS.Main_Window is
          when Always    => Policy := Show_Tabs_Policy_Enum'(Always);
       end case;
 
+      if Get_Pref (Kernel, Pref_Show_Statusbar) then
+         Show_All (Win.Statusbar);
+      else
+         Hide_All (Win.Statusbar);
+      end if;
+
       Configure
         (Get_MDI (Kernel),
          Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
@@ -469,6 +476,19 @@ package body GPS.Main_Window is
             Default => Large_Icons));
       Register_Property
         (Main_Window.Kernel, Param_Spec (Pref_Toolbar_Style), -"General");
+
+      Pref_Show_Statusbar := Param_Spec_Boolean
+        (Gnew_Boolean
+           (Name  => "Window-Show-Status-Bar",
+            Nick  => -"Show status bar",
+            Blurb => -("Whether the area at the bottom of the GPS window"
+                       & " should be displayed. This area contains the"
+                       & " progress bars while actions are taking place. The"
+                       & " same information is available from the Task"
+                       & " Manager"),
+            Default => True));
+      Register_Property
+        (Main_Window.Kernel, Param_Spec (Pref_Show_Statusbar), -"General");
 
       Gtk.Window.Initialize (Main_Window, Window_Toplevel);
       Initialize_Class_Record
