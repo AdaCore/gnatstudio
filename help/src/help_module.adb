@@ -1005,7 +1005,7 @@ package body Help_Module is
       pragma Unreferenced (Widget);
    begin
       declare
-         Filename : constant String :=
+         Filename : constant Virtual_File :=
            Select_File
              (-"Open HTML File",
               File_Pattern      => "*.htm*",
@@ -1015,8 +1015,8 @@ package body Help_Module is
               History           => Get_History (Kernel));
 
       begin
-         if Filename /= "" then
-            Open_Html (Kernel, Create_Html (Filename, Kernel));
+         if Filename /= VFS.No_File then
+            Open_Html (Kernel, Filename);
          end if;
       end;
 
