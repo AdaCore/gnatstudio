@@ -21,6 +21,8 @@
 --  This package provides a set of subprograms for manipulating and parsing
 --  strings.
 
+with GNAT.Directory_Operations;
+
 package String_Utils is
 
    procedure Skip_Blanks
@@ -166,6 +168,15 @@ package String_Utils is
    --  This function is now obsolete, and you should use
    --  GNAT.Directories.File_Extension instead. it is kept for compatibility
    --  with 3.14p only.
+
+   function Name_As_Directory
+     (Name : String;
+      Style : GNAT.Directory_Operations.Path_Style :=
+        GNAT.Directory_Operations.System_Default) return String;
+   --  Add a directory separator at the end of Name if there is none.
+   --  This also normalizes the pathname (see
+   --  GNAT.Directory_Operations.Normalize_Pathname).
+   --  ??? Should go into GNAT.Directory_Operations
 
    function Suffix_Matches
      (File_Name : String; Suffix : String) return Boolean;

@@ -22,6 +22,7 @@ with OS_Utils;                use OS_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body String_Utils is
 
@@ -761,5 +762,40 @@ package body String_Utils is
    begin
       return Tail (File_Name, Suffix'Length) = Suffix;
    end Suffix_Matches;
+
+   -----------------------
+   -- Name_As_Directory --
+   -----------------------
+
+   function Name_As_Directory
+     (Name : String;
+      Style : Path_Style := System_Default)
+      return String
+   is
+      Dir : constant String := GNAT.Directory_Operations.Normalize_Pathname
+        (Name, Style);
+   begin
+      if Dir = "" then
+         return "";
+
+      elsif Style = UNIX
+        and then Dir (Dir'Last) /= '/'
+      then
+         return Dir & '/';
+
+      elsif Style = DOS
+        and then Dir (Dir'Last) /= '\'
+      then
+         return Dir & '\';
+
+      elsif Style = System_Default
+        and then Dir (Dir'Last) /= Dir_Separator
+      then
+         return Dir & Dir_Separator;
+
+      else
+         return Dir;
+      end if;
+   end Name_As_Directory;
 
 end String_Utils;
