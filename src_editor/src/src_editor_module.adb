@@ -1744,17 +1744,18 @@ package body Src_Editor_Module is
 
       --  Connect necessary signal to display line numbers.
 
-      Kernel_Callback.Connect
-        (Kernel,
-         Source_Lines_Revealed_Signal,
-         On_Lines_Revealed'Access,
-         Kernel_Handle (Kernel));
-
-      Kernel_Callback.Connect
-        (Kernel,
-         File_Edited_Signal,
-         File_Edited_Cb'Access,
-         Kernel_Handle (Kernel));
+      if Get_Pref (Kernel, Display_Line_Numbers) then
+         Kernel_Callback.Connect
+           (Kernel,
+            Source_Lines_Revealed_Signal,
+            On_Lines_Revealed'Access,
+            Kernel_Handle (Kernel));
+         Kernel_Callback.Connect
+           (Kernel,
+            File_Edited_Signal,
+            File_Edited_Cb'Access,
+            Kernel_Handle (Kernel));
+      end if;
    end Register_Module;
 
    -------------------------
