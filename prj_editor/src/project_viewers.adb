@@ -110,9 +110,8 @@ package body Project_Viewers is
    --  destroyed afterwards.
 
    type XML_Switches_Record is new Switches_Page_Creator_Record with record
-      XML_Node : Node_Ptr;   --  The <switches> node
-      Tool_Name, Package_Name : GNAT.OS_Lib.String_Access;
-      Index    : GNAT.OS_Lib.String_Access;
+      XML_Node  : Node_Ptr;   --  The <switches> node
+      Tool_Name : GNAT.OS_Lib.String_Access;
       Languages : GNAT.OS_Lib.Argument_List_Access;
    end record;
    type XML_Switches is access all XML_Switches_Record'Class;
@@ -3415,10 +3414,12 @@ package body Project_Viewers is
       Cols : constant Integer :=
         Safe_Value (Get_Attribute (Creator.XML_Node, "columns", "1"));
       Page : Switches_Editor_Page;
+      Tool : constant Tool_Properties_Record :=
+        Get_Tool_Properties (Kernel, Creator.Tool_Name.all);
    begin
       Gtk_New (Page, Creator.Tool_Name.all,
-               Creator.Package_Name.all,
-               Creator.Index.all,
+               Tool.Project_Package.all,
+               Tool.Project_Index.all,
                Guint (Lines), Guint (Cols), Get_Tooltips (Kernel));
 
       if Creator.Languages /= null then
@@ -3438,9 +3439,7 @@ package body Project_Viewers is
    procedure Destroy (Creator : in out XML_Switches_Record) is
    begin
       Free (Creator.XML_Node);
-      Free (Creator.Package_Name);
       Free (Creator.Tool_Name);
-      Free (Creator.Index);
       Free (Creator.Languages);
    end Destroy;
 
@@ -3493,13 +3492,9 @@ package body Project_Viewers is
                      if N2.Tag.all = "switches" then
                         Creator := new XML_Switches_Record'
                           (Switches_Page_Creator_Record with
-                           XML_Node        => Deep_Copy (N2),
-                           Tool_Name       => new String'(Tool_Name),
-                           Index           => new String'
-                             (Get_Attribute (N, "index", Tool_Name)),
-                           Languages       => Get_Languages_From_Tool_Node (N),
-                           Package_Name    => new String'
-                             (Get_Attribute (N, "package", Ide_Package)));
+                           XML_Node  => Deep_Copy (N2),
+                           Tool_Name => new String'(Tool_Name),
+                           Languages => Get_Languages_From_Tool_Node (N));
                         Register_Switches_Page (Kernel, Creator);
                      end if;
 
