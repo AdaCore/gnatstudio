@@ -384,6 +384,10 @@ package Src_Editor_Buffer is
    procedure Select_All (Buffer : access Source_Buffer_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
 
+   procedure Select_Current_Word (Buffer : access Source_Buffer_Record);
+   --  Select the word the cursor is on. The insert mark is placed at the end
+   --  of the selection.
+
    procedure Select_Region
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : Gint;

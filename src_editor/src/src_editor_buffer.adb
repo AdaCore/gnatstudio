@@ -2697,6 +2697,64 @@ package body Src_Editor_Buffer is
       Column := Positive (Get_Line_Offset (Iter) + 1);
    end Get_Cursor_Position;
 
+   -------------------------
+   -- Select_Current_Word --
+   -------------------------
+
+   procedure Select_Current_Word (Buffer : access Source_Buffer_Record) is
+      function Ends_Word (Iter : Gtk_Text_Iter) return Boolean;
+      function Starts_Word (Iter : Gtk_Text_Iter) return Boolean;
+
+      function Ends_Word (Iter : Gtk_Text_Iter) return Boolean is
+      begin
+         return Gtk.Text_Iter.Ends_Word (Iter) and then Get_Char (Iter) /= '_';
+      end Ends_Word;
+
+      function Starts_Word (Iter : Gtk_Text_Iter) return Boolean is
+         Prev : Gtk_Text_Iter;
+         Res  : Boolean;
+      begin
+         Copy (Iter, Prev);
+         Backward_Char (Prev, Res);
+
+         if Res then
+            return Gtk.Text_Iter.Starts_Word (Iter)
+              and then Get_Char (Prev) /= '_';
+         else
+            return True;
+         end if;
+      end Starts_Word;
+
+      Success : Boolean := True;
+      Start_Iter, End_Iter, Iter : Gtk_Text_Iter;
+
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+
+      if Ends_Word (Iter)
+        or else not (Inside_Word (Iter) or else Get_Char (Iter) = '_')
+      then
+         return;
+      end if;
+
+      Copy (Iter, End_Iter);
+
+      while Success and then not Ends_Word (End_Iter) loop
+         Forward_Word_End (End_Iter, Success);
+      end loop;
+
+      Copy (Iter, Start_Iter);
+
+      Success := True;
+
+      while Success and then not Starts_Word (Start_Iter) loop
+         Backward_Word_Start (Start_Iter, Success);
+      end loop;
+
+      Move_Mark_By_Name (Buffer, "selection_bound", Start_Iter);
+      Move_Mark_By_Name (Buffer, "insert", End_Iter);
+   end Select_Current_Word;
+
    --------------------------
    -- Get_Selection_Bounds --
    --------------------------
