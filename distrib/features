@@ -1,5 +1,7 @@
 New features in GPS 1.0.1
 
+- It is now possible to configure the configuration pragma files (aka gnat.adc)
+  in the project editor.
 - The auto-indentation key in the editor can now be configured
 - Quitting GPS will now ask whether the desktop should be saved
 - Windows can be drag-and-dropped to reorganize the main window
