@@ -377,7 +377,7 @@ package body Docgen.Work_On_Source is
       return Boolean;
    --  Determine whether an entity is defined in a package.
 
-   function Package_Contain_Entity
+   function Package_Contains_Entity_From_List
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List)
       return Boolean;
@@ -399,6 +399,7 @@ package body Docgen.Work_On_Source is
    --  Return the Header of the entity. If no header was found, the empty
    --  string will be returned.
    --  The header is File_Text (Header_Start .. Header_End)
+   --  ??? This not clear and should probably be renamed.
 
    procedure Remove_Indent
      (Text       : String;
@@ -429,11 +430,13 @@ package body Docgen.Work_On_Source is
    is
       use TEL;
       use type Basic_Types.String_Access;
-      File_Text          : GNAT.OS_Lib.String_Access;
-      Entity_Node        : Type_Entity_List.List_Node;
-      Found_Main_Package : Boolean;
-      Parsed_List        : Construct_List;
-      Entity             : TEL.Data_Access;
+      File_Text            : GNAT.OS_Lib.String_Access;
+      Previous_Entity_Node : Type_Entity_List.List_Node := TEL.Null_Node;
+      Entity_Node          : Type_Entity_List.List_Node;
+      Found_Main_Package   : Boolean;
+      Parsed_List          : Construct_List;
+      Entity               : TEL.Data_Access;
+      Main_Package_Entity  : Entity_Information;
 
    begin
       File_Text := Read_File (Source_Filename);
@@ -457,8 +460,8 @@ package body Docgen.Work_On_Source is
 
       if Source_Is_Spec then
 
-         --  ??? Entity_List is always for files not compiled (no ALI file
-         --  generated). This is true for glu_h.ads for example.
+         --  ??? Entity_List is always empty for files not compiled
+         --  (no ALI file generated). This is true for glu_h.ads for example.
 
          if not TEL.Is_Empty (Entity_List) then
             --  Parse the source file and create the Parsed_List
@@ -484,16 +487,28 @@ package body Docgen.Work_On_Source is
                   exit;
                end if;
 
-               Entity_Node := TEL.Next (Entity_Node);
+               Previous_Entity_Node := Entity_Node;
+               Entity_Node          := TEL.Next (Entity_Node);
             end loop;
 
             if Found_Main_Package then
+               --  The main package must be removed form the entity list.
+
+               Main_Package_Entity := Entity.Entity;
+               Ref (Main_Package_Entity);
+
+               TEL.Remove_Nodes
+                 (Entity_List,
+                  Previous_Entity_Node,
+                  Entity_Node);
+
                Process_Package_Description
                  (B, Kernel, Result,
                   File_Text.all, Options,
                   Get_Language_From_File
                     (Get_Language_Handler (Kernel), Source_Filename),
                   Level);
+
                Process_With_Clause
                  (B, Kernel, Result,
                   Parsed_List,
@@ -512,7 +527,7 @@ package body Docgen.Work_On_Source is
                   Source_File_List,
                   Source_Filename,
                   Package_Name,
-                  Entity.Entity,
+                  Main_Package_Entity,
                   Entity_List,
                   List_Ref_In_File,
                   Tagged_Types_List,
@@ -521,6 +536,8 @@ package body Docgen.Work_On_Source is
                   Level,
                   File_Text,
                   Parsed_List);
+
+               Unref (Main_Package_Entity);
             end if;
 
             Free (Parsed_List);
@@ -1261,23 +1278,29 @@ package body Docgen.Work_On_Source is
 
       Description : GNAT.OS_Lib.String_Access;
       Start_Line  : Natural := Text'First;
-      End_Line    : Natural;
+      End_Line    : Natural := Start_Line;
 
    begin
       Skip_Blanks (Text, Start_Line);
       End_Line := Start_Line;
-
       Skip_To_Current_Comment_Block_End
         (Get_Language_Context (Language).all, Text, End_Line, True);
 
-      Description := new String'
-        (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
+      if End_Line > Start_Line then
+         --  Text actually begins with comments
+         Description := new String'
+           (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
+      else
+         Description := new String'("No description available");
+      end if;
 
-      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Description");
+      Doc_Subtitle
+        (B, Kernel, Result, Level, Subtitle_Name => "Description");
 
       Doc_Package_Desc
         (B, Kernel, Result, Level, Description => Description.all);
       Free (Description);
+
    end Process_Package_Description;
 
    --------------------------
@@ -1414,22 +1437,33 @@ package body Docgen.Work_On_Source is
         and then not TEL.Is_Empty (Entity_List)
       then
          First_Already_Set := False;
-         Entity_Node := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
+         Entity_Node       := TEL.First (Entity_List);
+         Entity_Node_Prec  := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
+
             Entity := TEL.Data_Ref (Entity_Node);
 
-            if Entity.Is_Private = Private_Entity
+            if Entity.Is_Private = Private_Entity -- ???
               and then Entity.Kind = Package_Entity
-              and then Get_Name (Entity.Entity).all /= Package_Name
               and then Source_Filename =
                 Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity)))
+              and then
+                Get_Name
+                  (Get_Caller (Declaration_As_Reference (Entity.Entity))).all =
+                Package_Name
               and then Entity_Defined_In_Package
-                (Entity.Entity, Package_Information)
+                (Entity.Entity, Package_Information) -- ??? Is that needed ?
+
             then
-               if Package_Contain_Entity (Entity.Entity, Entity_List) then
-                  --  Entities are declared in the current package
+               --  A nested or a child package has been found.
+
+               if Package_Contains_Entity_From_List
+                 (Entity.Entity, Entity_List)
+               then
+                  --  Some entities from the list are declared in the current
+                  --  package.
+
                   Get_Whole_Header
                     (File_Text.all,
                      Parsed_List,
@@ -1461,7 +1495,7 @@ package body Docgen.Work_On_Source is
                            File_Text.all));
 
                      --  We save in an Entity_Information the current package
-                     --  because it must be removed from Entity_List
+                     --  because it must be removed from Entity_List.
 
                      Info := Entity.Entity;
                      Ref (Info);
@@ -1478,11 +1512,12 @@ package body Docgen.Work_On_Source is
                         Level,
                         Entity => Info,
                         Header => "package " & Get_Name (Info).all & " is");
+
                      --  ??? This does not work for generic packages...
 
                      Level := Level + 1;
 
-                     --  Recursive call in order to deal with entity defined
+                     --  Recursive call in order to deal with entities defined
                      --  in the current package.
 
                      Process_Source_Spec
@@ -1520,20 +1555,36 @@ package body Docgen.Work_On_Source is
                      Unref (Info);
                      Free (Description);
 
-                     if Entity_Node_Prec = TEL.Null_Node then
-                        Entity_Node := TEL.First (Entity_List);
-                     else
-                        Entity_Node := Next (Entity_Node_Prec);
-                     end if;
+                     --  At least one item has been removed from the list and
+                     --  potentially more depending on the processing done
+                     --  during the recursive call.
+                     --  Items previously pointed in the list may have been
+                     --  removed.
+                     --  If the list is empty, the package processing is done.
+                     --  Otherwise we start over from the first element in the
+                     --  list. Remove packages from the list before they are
+                     --  processed should prevent from infinite loop or
+                     --  recursion.
+
+                     exit when TEL.Is_Empty (Entity_List);
+
+                     Entity_Node := TEL.First (Entity_List);
 
                   else
+                     --  No header ??? Not sure about the meaning.
+
+                     exit when Entity_Node = TEL.Last (Entity_List);
+
+                     --  No processing. Just step forward in the entity list.
+
                      Entity_Node_Prec := Entity_Node;
                      Entity_Node      := TEL.Next (Entity_Node);
                   end if;
 
                else
-                  --  The current package doesn't contain declaration of any
-                  --  entity from the list.
+                  --  The current package doesn't contain any declaration from
+                  --  any entity from the list.
+                  --  ??? Is all the following processing needed in that case?
 
                   Get_Whole_Header
                     (File_Text.all,
@@ -1582,26 +1633,38 @@ package body Docgen.Work_On_Source is
                         Entity_Node_Prec,
                         Entity_Node);
 
+                     exit when Is_Empty (Entity_List)
+                       or else Entity_Node_Prec = TEL.Last (Entity_List);
+
                      if Entity_Node_Prec = TEL.Null_Node then
                         Entity_Node := TEL.First (Entity_List);
                      else
                         Entity_Node := TEL.Next (Entity_Node_Prec);
                      end if;
-
                   else
+                     --  No header for the package. It might be a good idea
+                     --  to remove it from the list in order to prevent from
+                     --  infinite loop or recursion to happen.
+
+                     exit when Entity_Node = TEL.Last (Entity_List);
+
                      Entity_Node_Prec := Entity_Node;
                      Entity_Node      := TEL.Next (Entity_Node);
                   end if;
                end if;
             else
+               --  The current entity is not a package and is therefore not
+               --  to be processed here.
+
+               exit when Entity_Node = TEL.Last (Entity_List);
+
                Entity_Node_Prec := Entity_Node;
-               Entity_Node := TEL.Next (Entity_Node);
+               Entity_Node      := TEL.Next (Entity_Node);
             end if;
          end loop;
       end if;
+      Trace (Me, Package_Name & " processed");
    exception
-      when TEL.List_Empty =>
-         Trace (Me, "Empty_List caught");
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
@@ -2344,11 +2407,11 @@ package body Docgen.Work_On_Source is
    begin
       if not TEL.Is_Empty (Entity_List) then
          First_Already_Set := False;
-         Entity_Node := TEL.First (Entity_List);
-         Entity_Node_Prec := TEL.Null_Node;
+         Entity_Node       := TEL.First (Entity_List);
+         Entity_Node_Prec  := TEL.Null_Node;
 
          while Entity_Node /= TEL.Null_Node loop
-            Entity := TEL.Data_Ref (Entity_Node);
+            Entity      := TEL.Data_Ref (Entity_Node);
             Delete_Node := False;
 
             if Entity.Is_Private = Private_Entity
@@ -2463,11 +2526,11 @@ package body Docgen.Work_On_Source is
       return Entity /= null;
    end Entity_Defined_In_Package;
 
-   ----------------------------
-   -- Package_Contain_Entity --
-   ----------------------------
+   ---------------------------------------
+   -- Package_Contains_Entity_From_List --
+   ---------------------------------------
 
-   function Package_Contain_Entity
+   function Package_Contains_Entity_From_List
      (Package_Entity : Entity_Information;
       Entity_List    : Type_Entity_List.List) return Boolean
    is
@@ -2492,7 +2555,7 @@ package body Docgen.Work_On_Source is
       end if;
 
       return False;
-   end Package_Contain_Entity;
+   end Package_Contains_Entity_From_List;
 
    --------------------------
    -- Is_Ignorable_Comment --
