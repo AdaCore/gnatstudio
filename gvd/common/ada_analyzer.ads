@@ -25,8 +25,8 @@ with Language;             use Language;
 
 package Ada_Analyzer is
 
-   type Token_Type is (
-
+   type Token_Type is
+     (
       --  Token name          Token type   Class(es)
 
       Tok_Integer_Literal, -- numeric lit  Literal, Lit_Or_Name
@@ -177,6 +177,8 @@ package Ada_Analyzer is
       Tok_Project,
       Tok_Modifying,
       Tok_External,
+
+      Tok_Pound,           -- # sign, used by the preprocessor
 
       Tok_EOF,             -- End of file  Eterm, Sterm, Cterm, After_SM
 
