@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC30-003 Completion in File/Open From Project is always case sensitive
+  Problem:    On windows, if you use the dialog Open From Project, you must
+              type the file name with exactly the same casing as on the file
+              system, whereas comparison should be case insensitive.
+  Workaround: Use the appropriate casing
+
 - DC20-008 Crash when viewing HTML files that contain special characters
   Problem:    When viewing in the GPS Help the Ada95 Reference Manual, or any
               HTML file that contains special characters, GPS may freeze or
