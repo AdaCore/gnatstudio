@@ -73,7 +73,7 @@ package Src_Info is
 
    type Internal_File is private;
    --  Information on a file and its unit. This information can be stored for
-   --  later used, and remains valid even when the LI file is parsed again.
+   --  later usage, and remains valid even when the LI file is parsed again.
 
    type Unit_Part is (Unit_Spec, Unit_Body, Unit_Separate);
    --  A unit is usally composed of two parts: the spec and the body.
