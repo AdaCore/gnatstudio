@@ -279,6 +279,23 @@ package Codefix.Text_Manager is
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
 
+   function Get_Old_Text
+     (This         : Extract_Line;
+      Current_Text : Text_Navigator_Abstr'Class) return String;
+
+   function Get_New_Text
+     (This : Extract_Line;
+      Detail : Boolean := True) return String;
+
+   function Get_New_Text_Length
+     (This      : Extract_Line;
+      Recursive : Boolean := False) return Natural;
+
+   function Get_Old_Text_Length
+     (This      : Extract_Line;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Recursive : Boolean := False) return Natural;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -323,14 +340,6 @@ package Codefix.Text_Manager is
       Current_Text : in out Text_Navigator_Abstr'Class;
       Offset_Line  : in out Natural);
    --  Upate changes of the Extract_Line in the representation of the text.
-
-   procedure Put_Line (This : Extract);
-   --  Put on the screen the current version of the Extract.
-
-   procedure Put_Line_Original
-     (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class);
-   --  Put on the screen the original version of the Extrat.
 
    procedure Replace_Word
      (This         : in out Extract;
@@ -399,6 +408,18 @@ package Codefix.Text_Manager is
       Jump_String  : Boolean := True) return File_Cursor'Class;
    --  Search a string in the text and returns a cursor at the beginning. If
    --  noting is found, then the cursor is Null_Cursor.
+
+   function Get_Old_Text
+     (This         : Extract;
+      Current_Text : Text_Navigator_Abstr'Class) return String;
+
+   function Get_New_Text (This : Extract) return String;
+
+   function Get_New_Text_Length (This : Extract) return Natural;
+
+   function Get_Old_Text_Length
+     (This : Extract;
+      Current_Text : Text_Navigator_Abstr'Class) return Natural;
 
 private
 
@@ -481,11 +502,6 @@ private
      (This        : Text_Interface'Class;
       Cursor      : File_Cursor'Class;
       Destination : in out Extract_Line);
-
-   procedure Put_Line (This : Extract_Line; Detail : Boolean := True);
-   procedure Put_Line_Original
-     (This         : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class);
 
    ----------------------------------------------------------------------------
    --  type Extract

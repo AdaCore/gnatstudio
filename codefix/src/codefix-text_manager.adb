@@ -911,6 +911,116 @@ package body Codefix.Text_Manager is
         Str, null);
    end Get_Line;
 
+   ------------------
+   -- Get_New_Text --
+   ------------------
+
+   function Get_New_Text (This : Extract_Line; Detail : Boolean := True)
+     return String is
+
+      Buffer : String := "   " & Natural'Image (This.Cursor.Line) & ":" &
+        Natural'Image (This.Cursor.Col) & ": " &
+        This.Content.all & EOL_Str;
+
+   begin
+      if Detail then
+         case This.Context is
+            when Original_Line =>
+               Buffer (1 .. 3) := ("(O)");
+            when Line_Modified =>
+               Buffer (1 .. 3) := ("(M)");
+            when Line_Created =>
+               Buffer (1 .. 3) := ("(C)");
+            when Line_Deleted =>
+               Buffer (1 .. 3) := ("(D)");
+         end case;
+      end if;
+
+      return Buffer;
+
+   end Get_New_Text;
+
+   ------------------
+   -- Get_Old_Text --
+   ------------------
+
+   function Get_Old_Text
+     (This         : Extract_Line;
+      Current_Text : Text_Navigator_Abstr'Class) return String
+   is
+      Old_Extract : Extract;
+
+   begin
+      case This.Context is
+         when Original_Line | Line_Modified =>
+            --  Simplifier l'appel de GET pour n'avoir qu'une ligne et pas
+            --  un extrait
+            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
+
+            declare
+               Res : String := Get_New_Text
+                 (Get_Record (Old_Extract, 1).all,
+                  False);
+            begin
+               Free (Old_Extract);
+               return Res;
+            end;
+
+         when Line_Created =>
+            null;
+         when Line_Deleted =>
+            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
+
+            declare
+               Res : String := Get_New_Text
+                 (Get_Record (Old_Extract, 1).all,
+                  False);
+            begin
+               Free (Old_Extract);
+               return Res;
+            end;
+
+      end case;
+      return "";
+   end Get_Old_Text;
+
+   -------------------------
+   -- Get_New_Text_Length --
+   -------------------------
+
+   function Get_New_Text_Length
+     (This      : Extract_Line;
+      Recursive : Boolean := False) return Natural is
+      Total : Natural := 0;
+
+      Buffer : String := Get_New_Text (This);
+
+   begin
+      if Recursive and then This.Next /= null then
+         Total := Get_New_Text_Length (This, True);
+      end if;
+      return Total + Buffer'Length;
+   end Get_New_Text_Length;
+
+   -------------------------
+   -- Get_Old_Text_Length --
+   -------------------------
+
+   function Get_Old_Text_Length
+     (This      : Extract_Line;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Recursive : Boolean := False) return Natural is
+
+      Total  : Natural := 0;
+      Buffer : String := Get_Old_Text (This, Current_Text);
+
+   begin
+      if Recursive and then This.Next /= null then
+         Total := Get_Old_Text_Length (This, Current_Text, True);
+      end if;
+      return Total + Buffer'Length;
+   end Get_Old_Text_Length;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -1031,34 +1141,82 @@ package body Codefix.Text_Manager is
       Free (This.First);
    end Free;
 
-   --------------
-   -- Put_Line --
-   --------------
+   ------------------
+   -- Get_New_Text --
+   ------------------
 
-   procedure Put_Line (This : Extract) is
+   function Get_New_Text (This : Extract) return String is
       Current_Extract : Ptr_Extract_Line := This.First;
+      Buffer          : String (1 .. Get_New_Text_Length (This));
+      Current_Col     : Natural := 1;
+      Current_Length  : Natural;
    begin
       while Current_Extract /= null loop
-         Put_Line (Current_Extract.all);
+         Current_Length := Get_New_Text_Length (Current_Extract.all);
+         Buffer (Current_Col ..
+                   Current_Col + Current_Length - 1) :=
+           Get_New_Text (Current_Extract.all);
+         Current_Col := Current_Col + Current_Length;
          Current_Extract := Current_Extract.Next;
       end loop;
-   end Put_Line;
 
-   -----------------------
-   -- Put_Line_Original --
-   -----------------------
+      return Buffer;
+   end Get_New_Text;
 
-   procedure Put_Line_Original
+   ------------------
+   -- Get_Old_Text --
+   ------------------
+
+   function Get_Old_Text
      (This         : Extract;
-      Current_Text : Text_Navigator_Abstr'Class)
+      Current_Text : Text_Navigator_Abstr'Class) return String
    is
       Current_Extract : Ptr_Extract_Line := This.First;
+      Buffer          : String (1 .. Get_Old_Text_Length (This, Current_Text));
+      Current_Col     : Natural := 1;
+      Current_Length  : Natural;
    begin
       while Current_Extract /= null loop
-         Put_Line_Original (Current_Extract.all, Current_Text);
+         Current_Length := Get_Old_Text_Length
+           (Current_Extract.all,
+            Current_Text);
+         Buffer (Current_Col ..
+                   Current_Col + Current_Length - 1) :=
+           Get_Old_Text (Current_Extract.all, Current_Text);
+         Current_Col := Current_Col + Current_Length;
          Current_Extract := Current_Extract.Next;
       end loop;
-   end Put_Line_Original;
+
+      return Buffer;
+   end Get_Old_Text;
+
+   -------------------------
+   -- Get_New_Text_Length --
+   -------------------------
+
+   function Get_New_Text_Length (This : Extract) return Natural is
+   begin
+      if This.First /= null then
+         return Get_New_Text_Length (This.First.all, True);
+      else
+         return 0;
+      end if;
+   end Get_New_Text_Length;
+
+   -------------------------
+   -- Get_Old_Text_Length --
+   -------------------------
+
+   function Get_Old_Text_Length
+     (This         : Extract;
+      Current_Text : Text_Navigator_Abstr'Class) return Natural is
+   begin
+      if This.First /= null then
+         return Get_Old_Text_Length (This.First.all, Current_Text, True);
+      else
+         return 0;
+      end if;
+   end Get_Old_Text_Length;
 
    --------------
    -- Get_Line --
@@ -1115,61 +1273,6 @@ package body Codefix.Text_Manager is
 
       return Current_Extract;
    end Get_Record;
-
-   --------------
-   -- Put_Line --
-   --------------
-
-   procedure Put_Line (This : Extract_Line; Detail : Boolean := True) is
-   begin
-      if Detail then
-         case This.Context is
-            when Original_Line =>
-               Put ("(O)");
-            when Line_Modified =>
-               Put ("(M)");
-            when Line_Created =>
-               Put ("(C)");
-            when Line_Deleted =>
-               Put ("(D)");
-         end case;
-      else
-         Put ("   ");
-      end if;
-
-      Put (Natural'Image (This.Cursor.Line));
-      Put (":");
-      Put (Natural'Image (This.Cursor.Col));
-      Put (": " & This.Content.all);
-      New_Line;
-   end Put_Line;
-
-   -----------------------
-   -- Put_Line_Original --
-   -----------------------
-
-   procedure Put_Line_Original
-     (This         : Extract_Line;
-      Current_Text : Text_Navigator_Abstr'Class)
-   is
-      Old_Extract : Extract;
-   begin
-      case This.Context is
-         when Original_Line | Line_Modified =>
-            --  Simplifier l'appel de GET pour n'avoir qu'une ligne et pas
-            --  un extrait
-            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
-            Put_Line (Get_Record (Old_Extract, 1).all, False);
-            Free (Old_Extract);
-
-         when Line_Created =>
-            null;
-         when Line_Deleted =>
-            Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
-            Put_Line (Get_Record (Old_Extract, 1).all, False);
-            Free (Old_Extract);
-      end case;
-   end Put_Line_Original;
 
    ------------------
    -- Replace_Word --
