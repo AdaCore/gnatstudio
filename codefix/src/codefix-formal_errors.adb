@@ -296,7 +296,7 @@ package body Codefix.Formal_Errors is
             Set_String
               (New_Extract, New_Str (1 .. Message.Col - 1) &
                  New_Str (Message.Col + String_Unexpected'Length
-                          .. New_Str.all'Length));
+                          .. New_Str'Length));
 
          when Regular_Expression =>
             Set_String
@@ -458,7 +458,7 @@ package body Codefix.Formal_Errors is
       Cursor_Line.Col := 1;
       Get_Line (Current_Text, Cursor_Line, New_Extract);
       Assign (Line, Get_String (New_Extract));
-      Match (Word, Line.all (Cursor.Col .. Line.all'Length), Matches);
+      Match (Word, Line (Cursor.Col .. Line'Length), Matches);
 
       Size := Matches (1).Last - Matches (1).First + 1;
 
@@ -466,15 +466,13 @@ package body Codefix.Formal_Errors is
          Word_Chosen := new String'(Correct_Word);
       else
          Word_Chosen := new String'
-           (To_Correct_Case (Line.all
-                               (Matches (1).First .. Matches (1).Last)));
+           (To_Correct_Case (Line (Matches (1).First .. Matches (1).Last)));
       end if;
 
       Replace_Word
-           (New_Extract,
-            Cursor,
-            Word_Chosen.all
-              (Word_Chosen.all'Last - Size + 1 .. Word_Chosen.all'Last));
+        (New_Extract,
+         Cursor,
+         Word_Chosen (Word_Chosen'Last - Size + 1 .. Word_Chosen'Last));
 
       Set_Caption
         (New_Extract,
@@ -485,13 +483,14 @@ package body Codefix.Formal_Errors is
       return New_Extract;
    end Bad_Casing;
 
-   ---------------------
-   -- Not_Referrenced --
-   ---------------------
+   --------------------
+   -- Not_Referenced --
+   --------------------
 
-   --  Warning : this function is extremly dependant of the respect of the
+   --  Warning : this function is extremely dependent of the respect of the
    --  normalisation. Maybe should be re-programmed in order to make a smarter
    --  one
+
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -583,13 +582,16 @@ package body Codefix.Formal_Errors is
          Info := Get_Unit (Current_Text, Cursor);
 
          if Is_First_Var and then Is_Last_Var then
-            for I in Info.Sloc_Start.Line .. End_Declaration.Line loop
-               Line_Cursor.Line := I;
+            for J in Info.Sloc_Start.Line .. End_Declaration.Line loop
+               Line_Cursor.Line := J;
                Get_Line (Current_Text, Line_Cursor, New_Extract);
             end loop;
+
             Delete_All_Lines (New_Extract);
+
          else
             Get_Line (Current_Text, Line_Cursor, New_Extract);
+
             if File_Cursor
               (Search_String (New_Extract, Cursor, ",", Reverse_Step)) =
                  Null_File_Cursor
