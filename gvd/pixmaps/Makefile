@@ -12,5 +12,17 @@ pixmaps.o: pixmaps.c \
   var_xpm watch_xpm
 	gcc -c $(CFLAGS) $<
 
+install:
+
 clean:
-	rm -f *.o *.ali *~ b~*
+	-$(RM) *.o
+	-$(RM) *.ali
+	-$(RM) *~
+	-$(RM) b~*
+
+mostlyclean: clean
+
+distclean: mostlyclean
+
+maintainer-clean: distclean
+

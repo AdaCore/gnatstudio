@@ -16,4 +16,12 @@ $(LANGS):
 install: $(LANGS)
 
 clean:
-	$(RM) *.gmo skeleton.po.new
+	-$(RM) *.gmo 
+	-$(RM) skeleton.po.new
+	
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean

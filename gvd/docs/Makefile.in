@@ -1,5 +1,7 @@
 prefix = @prefix@
 docdir = $(prefix)/doc/gvd
+
+MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 
@@ -11,16 +13,37 @@ all: gvd.texi
 	perl texi2html -menu -monolithic gvd.texi
 	makeinfo --force -o gvd.info gvd.texi
 	makeinfo --force --no-headers --no-split -o gvd.txt gvd.texi
-	-$(RM) *.aux *.cp *.cps *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
+	$(MAKE) clean-temp-files
 
 install:
+	$(MKDIR) $(docdir)
 	$(INSTALL_DATA) gvd.html $(docdir)
 	$(INSTALL_DATA) gvd.info $(docdir)
 	$(INSTALL_DATA) gvd.ps   $(docdir)
 	$(INSTALL_DATA) gvd.texi $(docdir)
 	$(INSTALL_DATA) gvd.txt  $(docdir)
 
-clean:
-	-$(RM) *.aux *.cp *.cps *.dvi *.fn *.ky *.log *.pg *.toc *.tp *.vr
-	-$(RM) gvd.html gvd.info* gvd.ps gvd.txt
+clean-temp-files:
+	-$(RM) *.aux
+	-$(RM) *.cp
+	-$(RM) *.cps
+	-$(RM) *.dvi
+	-$(RM) *.fn
+	-$(RM) *.ky
+	-$(RM) *.log
+	-$(RM) *.pg
+	-$(RM) *.toc
+	-$(RM) *.tp
+	-$(RM) *.vr
+
+clean: clean-temp-files
+	-$(RM) gvd.info*
+	-$(RM) gvd.html gvd.ps gvd.txt
+
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean
 

@@ -18,7 +18,18 @@ g-exptty.o: g-exptty.adb g-exptty.ads g-expect.ads
 gexpect_tty.o: gexpect_tty.c systty.h Makefile
 	gcc -c $(ALL_CFLAGS) $<
 
-clean:
-	rm -f *.o *.ali *~ b~*
+install:
 
+clean:
+	-$(RM) *.o
+	-$(RM) *.ali
+	-$(RM) *~
+	-$(RM) b~*
+
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean
 

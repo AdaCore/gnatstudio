@@ -24,7 +24,7 @@ all: $(EXEC)
 
 stylechk: pkg_files style
 
-style: force
+style:
 	make CFLAGS="-gnaty $(CFLAGS)"
 
 pkg_files: ${PKG_FILES}
@@ -56,6 +56,19 @@ install: $(EXEC)
 	$(INSTALL_PROGRAM) $(EXEC) $(bindir)
 
 clean:
-	rm -f *.o *.ali *~ b~* $(EXEC) libgvd.a gvd_test
+	-$(RM) *.o
+	-$(RM) *.ali
+	-$(RM) *~
+	-$(RM) b~*
+	-$(RM) $(EXEC)
+	-$(RM) libgvd.a
+	-$(RM) gvd_test
+
+mostlyclean: clean
+
+distclean: mostlyclean
+	-$(RM) Makefile
+
+maintainer-clean: distclean
 
 force:
