@@ -253,11 +253,12 @@ package body Glide_Consoles is
               (Console.Text, Gint (Start) - 1, Gint (Matched (0).Last));
             Claim_Selection (Console.Text, False, 0);
             Thaw (Console.Text);
+
             Open_File_Editor
               (Console.Kernel,
                Contents (Matched (File_Index).First ..
                          Matched (File_Index).Last),
-               Line, Column);
+               Line, Column, From_Path => True);
          end if;
       end if;
 
