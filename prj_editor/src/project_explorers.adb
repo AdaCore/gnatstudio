@@ -2100,6 +2100,7 @@ package body Project_Explorers is
    -----------------
 
    function Has_Entries (Directory : String) return Boolean is
+      pragma Unreferenced (Directory);
    begin
       --  ??? Return always True for now, since the previous implementation
       --  was too inefficient, in particular across network disks.
