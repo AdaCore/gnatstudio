@@ -3,8 +3,6 @@ with Prj;         use Prj;
 with Prj.Pars;    use Prj.Pars;
 with Prj.Env;     use Prj.Env;
 with Namet;       use Namet;
-with Csets;       use Csets;
-with Snames;      use Snames;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Glide_Kernel.Project is
