@@ -40,8 +40,7 @@ package body Log_Editor_Window_Pkg is
       Label : Gtk_Label;
    begin
       if not Is_Empty (Log_Editor_Window.Files) then
-         Set_Text (Log_Editor_Window.Files_Label,
-                   -"Edit log for files :");
+         Set_Text (Log_Editor_Window.Files_Label, -"Edit log for files:");
       end if;
 
       Append (Log_Editor_Window.Files, File_Name);
@@ -121,7 +120,7 @@ package body Log_Editor_Window_Pkg is
       Gtk_New_Vbox (Vbox2, False, 0);
       Pack_Start (Hbox2, Vbox2, False, False, 3);
 
-      Gtk_New (Log_Editor_Window.Files_Label, -"Edit log for file :");
+      Gtk_New (Log_Editor_Window.Files_Label, -"Edit log for file:");
       Set_Alignment (Log_Editor_Window.Files_Label, 0.5, 0.5);
       Set_Padding (Log_Editor_Window.Files_Label, 3, 3);
       Set_Justify (Log_Editor_Window.Files_Label, Justify_Center);
