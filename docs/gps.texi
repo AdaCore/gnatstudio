@@ -5772,7 +5772,7 @@ Font is a font name as listed in the font selector in the preferences dialog,
 e.g. @i{"Sans Italic 10"}.
 
 @item GtkTextView::cursor-aspect-ratio = @i{value}
-Aspect ratio with which to draw insertion cursor. @i{Value} is a float value
+Width ratio with which to draw the insertion cursor. @i{Value} is a float value
 between 0.0 and 1.0. The default value is 0.04.
 
 @item GtkTextView::cursor-color = @i{color}
