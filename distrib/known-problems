@@ -5,6 +5,12 @@ Known Problems fixed in GPS 2.1.1
               GPS error in the console
   Workaround: Clear the combo and recreate it instead
 
+- DC11-004 Fatal error when tiling and then maxizing windows
+  Problem:    If you tile (horizontally or vertically) some windows in GPS,
+              then double-click on the title bar to maximize the items, and
+              finally select the Messages window, GPS will crash
+  Workaround: Do not tile the window, use the Split feature instead
+
 - DC06-007 Crash when selecting some fonts under Windows
   Problem:    When selecting some particular fonts (e.g. 'Serif') in the
               font selector under Windows, GPS will crash.
