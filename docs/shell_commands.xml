@@ -666,7 +666,14 @@ Related hooks:
   <shell_doc name="GPS.Project.name">
        <param name="self">An instance of GPS.Project</param>
        <return>A string, the name of the project</return>
-       <description>Return the name of the project</description>
+       <description>Return the name of the project. This doesn't include directory information, see self.file().name() if you wish to access that information</description>
+  </shell_doc>
+
+  <shell_doc name="GPS.Project.rename">
+       <param name="self">An instance of GPS.Project</param>
+       <param name="name">A string</param>
+       <param name="path" default="<current path>">A string</param>
+       <description>Rename and move a project file (the project will only be put in the new directory when it is saved, but will not be removed from its original directory). You must call GPS.Project.recompute() sometime after changing the name.</description>
   </shell_doc>
 
   <shell_doc name="GPS.Project.file">
@@ -822,7 +829,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
   <shell_doc name="GPS.Project.remove_dependency">
       <param name="self">The instance of GPS.Project</param>
       <param name="imported">An instance of GPS.Project</param>
-      <description>Remove a dependency between two projects</description>
+      <description>Remove a dependency between two projects. You must call GPS.Project.recompute() once you are done doing all the modifications on the projects</description>
   </shell_doc>
 
   <shell_doc name="GPS.add_predefined_paths"
