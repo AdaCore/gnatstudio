@@ -755,8 +755,7 @@ package body Src_Editor_Box is
       end if;
 
       Gtk_New (Box.Source_View, Box.Source_Buffer,
-               Get_Pref (Kernel, Default_Source_Editor_Font),
-               Show_Line_Numbers => True);
+               Get_Pref (Kernel, Default_Source_Editor_Font));
       Add (Scrolling_Area, Box.Source_View);
 
       Data.Box := Source_Editor_Box (Box);
@@ -1758,27 +1757,6 @@ package body Src_Editor_Box is
    begin
       Unhighlight_All (Editor.Source_Buffer);
    end Unhighlight_All;
-
-   ---------------------------
-   -- Set_Show_Line_Numbers --
-   ---------------------------
-
-   procedure Set_Show_Line_Numbers
-     (Editor       : access Source_Editor_Box_Record;
-      Show_Numbers : Boolean := True) is
-   begin
-      Set_Show_Line_Numbers (Editor.Source_View, Show_Numbers);
-   end Set_Show_Line_Numbers;
-
-   ---------------------------
-   -- Get_Show_Line_Numbers --
-   ---------------------------
-
-   function Get_Show_Line_Numbers
-     (Editor : access Source_Editor_Box_Record) return Boolean is
-   begin
-      return Get_Show_Line_Numbers (Editor.Source_View);
-   end Get_Show_Line_Numbers;
 
    --------------------------
    -- Add_File_Information --
