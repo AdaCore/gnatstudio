@@ -30,6 +30,7 @@ with Gtk.Enums;
 with Debugger; use Debugger;
 with Basic_Types;
 with Gtk.Widget;
+with Gtk.Handlers;
 
 package GVD.Dialogs is
 
@@ -41,6 +42,9 @@ package GVD.Dialogs is
 
    type Thread_Dialog_Record is new GVD_Dialog_Record with private;
    type Thread_Dialog_Access is access all Thread_Dialog_Record'Class;
+
+   type PD_Dialog_Record is new GVD_Dialog_Record with private;
+   type PD_Dialog_Access is access all PD_Dialog_Record'Class;
 
    type Question_Dialog_Record is new GVD_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
@@ -107,6 +111,31 @@ package GVD.Dialogs is
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the thread window associated with a given tab.
+
+   procedure Gtk_New
+     (PD_Dialog  : out PD_Dialog_Access;
+      Main_Window : Gtk_Window);
+   --  Create an empty protection domains dialog.
+   --  No information will be displayed in it, and you need to add it through
+   --  a call to Update.
+
+   procedure Initialize
+     (PD_Dialog  : access PD_Dialog_Record'Class;
+      Main_Window : Gtk_Window);
+   --  Internal initialization function
+
+   procedure Update
+     (PD_Dialog : access PD_Dialog_Record;
+      Debugger   : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the contents of the protection domains dialog.
+   --  The information is read from Debugger (which is in fact a
+   --  Debugger_Process_Tab).
+
+   procedure On_PD_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Callback function connected to the "process_stopped" signal.
+   --  It will update the protection domains window associated with a given
+   --  tab.
 
    procedure Update_Call_Stack
      (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
@@ -206,6 +235,7 @@ private
       Hbox1           : Gtk_Hbox;
       Hbuttonbox1     : Gtk_Hbutton_Box;
       Close_Button    : Gtk_Button;
+      Select_Row_Id   : Gtk.Handlers.Handler_Id;
    end record;
    --  ??? Why not store directly the Debugger_Process_Tab in this record,
    --  instead of having to convert in the callbacks ?
@@ -213,6 +243,8 @@ private
    type Task_Dialog_Record is new GVD_Dialog_Record with null record;
 
    type Thread_Dialog_Record is new GVD_Dialog_Record with null record;
+
+   type PD_Dialog_Record is new GVD_Dialog_Record with null record;
 
    type Question_Dialog_Record is new GVD_Dialog_Record with record
       Debugger : Debugger_Access;
@@ -236,5 +268,9 @@ private
       Freeze_Count     : Integer;
       --  Used to lock the History_Dialog while replaying commands.
    end record;
+
+   procedure Update_PD
+     (Dialog   : access GVD_Dialog_Record'Class;
+      Info     : in out PD_Information_Array);
 
 end GVD.Dialogs;

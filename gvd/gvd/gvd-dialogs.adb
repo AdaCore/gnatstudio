@@ -144,6 +144,14 @@ package body GVD.Dialogs is
    end Gtk_New;
 
    procedure Gtk_New
+     (PD_Dialog  : out PD_Dialog_Access;
+      Main_Window : Gtk_Window) is
+   begin
+      PD_Dialog := new PD_Dialog_Record;
+      Initialize (PD_Dialog, Main_Window);
+   end Gtk_New;
+
+   procedure Gtk_New
      (Question_Dialog            : out Question_Dialog_Access;
       Main_Window                : Gtk_Window;
       Debugger                   : Debugger_Access;
@@ -176,7 +184,7 @@ package body GVD.Dialogs is
          Gtk_New
            (Dialog.List, Gint (Num_Columns), Info (Info'First).Information);
          Show_All (Dialog.List);
-         Widget_Callback.Connect
+         Dialog.Select_Row_Id := Widget_Callback.Connect
            (Dialog.List,
             "select_row",
             On_Task_List_Select_Row'Access);
@@ -197,6 +205,17 @@ package body GVD.Dialogs is
 
       Free (Info);
    end Update_Task_Thread;
+
+   -----------------
+   --  Update_PD  --
+   -----------------
+
+   procedure Update_PD
+     (Dialog   : access GVD_Dialog_Record'Class;
+      Info     : in out PD_Information_Array) is
+   begin
+      Update_Task_Thread (Dialog, Info);
+   end Update_PD;
 
    ------------
    -- Update --
@@ -258,6 +277,35 @@ package body GVD.Dialogs is
       --  Read the information from the debugger
       Info_Threads (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
       Update_Task_Thread (Thread_Dialog, Info (1 .. Len));
+   end Update;
+
+   procedure Update
+     (PD_Dialog : access PD_Dialog_Record;
+      Debugger   : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Process : constant Process_Proxy_Access :=
+        Get_Process (Debugger_Process_Tab (Debugger).Debugger);
+      Info    : PD_Information_Array (1 .. Max_PD);
+      Len     : Natural;
+
+   begin
+      if not Visible_Is_Set (PD_Dialog) then
+         return;
+      end if;
+
+      --  If the debugger was killed, no need to refresh
+
+      if Process = null then
+         if PD_Dialog.List /= null then
+            Thaw (PD_Dialog.List);
+         end if;
+
+         return;
+      end if;
+
+      --  Read the information from the debugger
+      Info_PD (Debugger_Process_Tab (Debugger).Debugger, Info, Len);
+      Update_PD (PD_Dialog, Info (1 .. Len));
    end Update;
 
    -----------------------------
@@ -425,6 +473,18 @@ package body GVD.Dialogs is
       Update (Tab.Window.Thread_Dialog, Tab);
    end On_Thread_Process_Stopped;
 
+   ----------------------------
+   -- On_PD_Process_Stopped --
+   ----------------------------
+
+   procedure On_PD_Process_Stopped
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
+   begin
+      Update (Tab.Window.PD_Dialog, Tab);
+   end On_PD_Process_Stopped;
+
    ------------------------------
    -- On_Stack_Process_Stopped --
    ------------------------------
@@ -526,6 +586,14 @@ package body GVD.Dialogs is
    begin
       Initialize (Thread_Dialog, -"Thread Status", Main_Window);
       Initialize_Task_Thread (Thread_Dialog);
+   end Initialize;
+
+   procedure Initialize
+     (PD_Dialog  : access PD_Dialog_Record'Class;
+      Main_Window : Gtk_Window) is
+   begin
+      Initialize (PD_Dialog, -"Protection Domains", Main_Window);
+      Initialize_Task_Thread (PD_Dialog);
    end Initialize;
 
    procedure Initialize
