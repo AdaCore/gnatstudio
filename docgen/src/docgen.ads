@@ -98,15 +98,17 @@ package Docgen is
       Column       : Natural;
       Entity       : Entity_Handle;
    end record;
-   --  Record used to save a reference in a file
-   --  Entity is the declaration of the reference
+   --  Record used to save a reference in a file.
+   --  Line   : line of the reference in this file.
+   --  Column : column of the reference in this file.
+   --  Entity : pointer on the declaration of the reference.
 
    procedure Free (X : in out Reference_In_File);
-   --  Free the information associated with X
+   --  Free the information associated with X.
 
    package List_Reference_In_File is
      new Generic_List (Reference_In_File);
-   --  List used to record the references of a file
+   --  List used to record the references of a file.
 
    function Compare_Elements_By_Line_And_Column
      (X, Y : Reference_In_File) return Boolean;
@@ -114,21 +116,21 @@ package Docgen is
    procedure Sort_List_By_Line_And_Column is
      new Sort (List_Reference_In_File,
                "<" => Compare_Elements_By_Line_And_Column);
-   --  Sort the list by line and column
+   --  Sort the list by line and column.
 
    procedure Free (X : in out Src_Info.Queries.Entity_Information);
 
    package List_Entity_In_File is
      new Generic_List (Src_Info.Queries.Entity_Information);
-   --  List used to record the declaration of references of a file
+   --  List used to record the declaration of references of a file.
 
    type Entity_Type is
-     (Subprogram_Entity,
+     (Entry_Entity,
       Exception_Entity,
+      Package_Entity,
+      Subprogram_Entity,
       Type_Entity,
       Var_Entity,
-      Package_Entity,
-      Entry_Entity,
       Other_Entity);
    --  A simplified list of possible entity types
 
@@ -144,15 +146,21 @@ package Docgen is
       Public_Declaration  : Src_Info.Queries.Entity_Information
         := No_Entity_Information;
    end record;
-   --  Description of an entity
-   --  Calls_List, Called_List: only used for subprograms
-   --  Public_Declaration: when a public type has at least one private field,
+   --  Description of an entity.
+   --  Kind   : Simplified type of the entity.
+   --  Name   : Name of the entity.
+   --  Entity : Pointer on the current entity.
+   --  Calls_List, Called_List : only used for subprograms. Calls_List
+   --  contains the list of the subprograms called by the current entity.
+   --  Called_List contains the list of the subprograms which call current
+   --  entity.
+   --  Public_Declaration : when a public type has at least one private field,
    --  we need 2 Entity_List_Information: one for the public type itself and
    --  one in order to generate doc for the private part. This last element
    --  need to have a "pointer" on the public declaration. For all other
    --  entities (subprograms, exceptions, types without private fields ...),
    --  the field Public_Declaration has the value No_Entity_Information.
-   --  Line_In_Body: for types with private fields, it refers to the public
+   --  Line_In_Body : for types with private fields, it refers to the public
    --  declaration.
 
    type Entity_List_Information_Handle is access Entity_List_Information;
@@ -163,10 +171,10 @@ package Docgen is
    --  Return a deep-copy of Entity.
    --  Entity can be freed without impacting the copy
    --  If Copy_List is true, it copies also the lists used for the call graph
-   --  Calls_List and Called_List
+   --  Calls_List and Called_List.
 
    procedure Free (X : in out Entity_List_Information);
-   --  Free the memory associated with X
+   --  Free the memory associated with X.
 
    package Type_Entity_List is new Generic_List (Entity_List_Information);
 
@@ -179,16 +187,16 @@ package Docgen is
 
    procedure Sort_List_Line   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Line);
-   --  Sort list by line
+   --  Sort list by line.
 
    procedure Sort_List_Column is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Column);
-   --  Sort list by column
+   --  Sort list by column.
 
    procedure Sort_List_Name   is
      new Sort (Type_Entity_List, "<" => Compare_Elements_Name);
    --  Sort the entities in alphabetical order by name,
-   --  BUT all public entites stand in front of the private
+   --  BUT all public entites stand in front of the private.
 
    procedure Free (X : in out Entity_Handle);
 
@@ -209,9 +217,12 @@ package Docgen is
       Number_Of_Children   : Natural;
       Print_Me             : Boolean;
    end record;
-   --  Represent a tagged type
-   --  Print_Me indicates that the tagged type is defined in the processed
-   --  files, it must be printed in the specific index file.
+   --  Represent a tagged type.
+   --  Me         : Pointer on the tagged type itself.
+   --  My_Parents : list of pointers on the entities which are parents of Me.
+   --  My_Children: list of pointers on the entities which are children of Me.
+   --  Print_Me   : indicates that the tagged type is defined in the
+   --  processed files, it must be printed in the specific index file.
 
    type Tagged_Element_Handle is access Tagged_Element;
 
@@ -238,25 +249,43 @@ package Docgen is
                         Patch  : in Entity_Handle);
    --  For a current tagged type: update of the list of children with the
    --  local child in the current file.
+   --  Target : tagged type which is updated.
+   --  Patch  : child entity added the list My_Children of the Target.
 
    procedure Add_Parent (List   : in out Type_List_Tagged_Element.List;
                          Target : in Entity_Handle;
                          Patch  : in Entity_Handle);
    --  For a current tagged type: update of the list of parents with the
    --  local parent in the current file.
+   --  Target : tagged type which is updated.
+   --  Patch  : parent entity added the list My_Parents of the Target.
 
    procedure Must_Print_Tagged_Type
      (List : in out Type_List_Tagged_Element.List;
       Target : in Entity_Handle);
    --  Updates the field Print_Me if necessary.
+   --  Target : tagged type which is updated.
 
    type Info_Types is
-     (Open_Info, Close_Info, Subtitle_Info, Exception_Info, Type_Info,
-      Subprogram_Info, Header_Info, Header_Private_Info, Footer_Info,
-      With_Info, Package_Desc_Info, Body_Line_Info, Var_Info,
-      Package_Info, Package_Info_Open_Close, Entry_Info, Description_Info,
+     (Open_Info,
+      Close_Info,
+      Header_Info,
+      Subtitle_Info,
+      Header_Private_Info,
+      With_Info,
+      Package_Desc_Info,
+      Description_Info,
+      Entry_Info,
+      Exception_Info,
+      Package_Info,
+      Subprogram_Info,
+      Type_Info,
+      Var_Info,
+      Package_Info_Open_Close,
       References_Info,
       Tagged_Type_Info,
+      Body_Line_Info,
+
       Unit_Index_Info,
       Type_Index_Info,
       Tagged_Type_Index_Info,
@@ -275,13 +304,45 @@ package Docgen is
       --  tagged types)
       Index_Tagged_Type_Item,
       --  Used to print a tagged type in the specific index file
-      Index_Item_Info
+      Index_Item_Info,
       --  Used to print a type/unit/subprogram in the specific index file
-     );
-   --  The structure used in the type Doc_Info.
+      Footer_Info);
+   --  Structure used in the type Doc_Info.
+   --  Open_Info :
+   --  used possibly to create a header for the doc file (E.g. in html,
+   --  <head>...</head>).
+   --  Close_Info :
+   --  used to close the output of the doc file (E.g. in html </body></html>).
+   --  Header_Info   : used to put a title the doc file.
+   --  Subtitle_Info : used to put a subtitle the doc file.
+   --  Header_Private_Info :
+   --  used to put the subtitle "Private" into the doc file before private
+   --  part when the option "Show private" is chosen.
+   --  With_Info :
+   --  used to process the output of imported packages (clauses "with ...")
+   --  Package_Desc_Info :
+   --  used to print the description of the current file which is written
+   --  before the source code.
+   --  Description_Info :
+   --  used to print the comments given for an entity (type, subprogram,
+   --  exception...).
+   --  Entry_Info, Exception_Info, Package_Info, Subprogram_Info, Type_Info,
+   --  Var_Info :
+   --  used to print source code of entity (exception, subprogram, variable,
+   --  type, entry, package).
+   --  Package_Info_Open_Close :
+   --  used to print either the header or the footer when processing an inner
+   --  package. "package X is" or "end X".
+   --  References_Info :
+   --  used to print the subprogram callgraph of the current subprogram
+   --  entity.
+   --  Tagged_Type_Info :
+   --  used to print the list of children and parents of the current type
+   --  entity.
+   --  Body_Line_Info : used to print body files.
 
    type Type_Api_Doc is (HTML, TEXI);
-   --  Type of documentation that can be generated
+   --  Type of documentation that can be generated.
    for Type_Api_Doc'Size use Integer'Size;
 
    type All_Options is record
@@ -320,11 +381,6 @@ package Docgen is
    --  is put in the index and also if we can link this item to its
    --  declaration
 
-   --  The data structure used to pass the information
-   --  to the procedure which is defined
-   --  as the Doc_Subprogram_Type (see below) to
-   --  be the only procedure to be defined
-   --  when a new output format should be added
    type Doc_Info (Info_Type : Info_Types) is
       record
          Doc_Info_Options          : All_Options;
@@ -365,16 +421,19 @@ package Docgen is
                Subtitle_Package              : GNAT.OS_Lib.String_Access;
                Subtitle_Kind                 : Info_Types;
 
+               --  With clauses for imported packages
             when With_Info =>
                With_Header                   : GNAT.OS_Lib.String_Access;
                With_File                     : VFS.Virtual_File;
                With_Header_Line              : Natural;
 
+               --  Used to add a package info to the information file
             when Package_Info =>
                Package_Entity                : Entity_List_Information;
                Package_Header                : GNAT.OS_Lib.String_Access;
                Package_Header_Line           : Natural;
 
+               --  Used to add a header or a footer of an inner package
             when Package_Info_Open_Close =>
                Package_Open_Close_Entity      : Entity_List_Information;
                Package_Open_Close_Header      : GNAT.OS_Lib.String_Access;
@@ -417,12 +476,14 @@ package Docgen is
                Subprogram_Link               : Boolean;
                Subprogram_List               : Type_Entity_List.List;
 
+               --  Used to add the callgraph of a subprogram
             when References_Info =>
                References_Entity            : Entity_List_Information;
                References_Source_File_List  : Type_Source_File_List.List;
                References_Directory         : GNAT.OS_Lib.String_Access;
                References_Suffix            : GNAT.OS_Lib.String_Access;
 
+               --  Used to list parents and children of a tagged type
             when Tagged_Type_Info =>
                Tagged_Entity                 : Tagged_Element;
                Tagged_Source_File_List       : Type_Source_File_List.List;
@@ -431,7 +492,6 @@ package Docgen is
 
                --  Used to start the package index file
             when Unit_Index_Info =>
-               --  The list of the files
                Unit_File_List                : Type_Source_File_List.List;
                --  The name doc file name without the suffix
                Unit_Index_File_Name          : GNAT.OS_Lib.String_Access;
@@ -513,6 +573,12 @@ package Docgen is
          Level            : Natural);
       --  This method is transmited by a pointer whose type is
       --  Doc_Subprogram_Type. In its body, it calls Doc_Create.
+      --  File             : current file processed.
+      --  List_Ref_In_File : list of the references in the current file.
+      --  Info             : indicate which type of code must be processed.
+      --  See definition of Doc_Info and Info_Types just above.
+      --  Level            : level of indentation of the entity concerned by
+      --  this call.
 
       --  ??? This approach seems over complicated and could probably be
       --  simplified using standard OOP.
@@ -593,8 +659,16 @@ package Docgen is
          Source_File_List    : Type_Source_File_List.List;
          Link_All            : Boolean;
          Is_Body             : Boolean;
-         Process_Body        : Boolean) is abstract;
-      --  Format text as an identifier
+         Process_Body        : Boolean;
+         Level               : Natural;
+         Indent              : Natural) is abstract;
+      --  Format text as an identifier.
+      --  Level : number of indentation levels.
+      --  Indent: value of one indentation level.
+      --  Those 2 parameters are used to associate identifiers returned by
+      --  parse_entities in format_file (see docgen.adb) with a reference
+      --  contained in the list made in Process_One_File
+      --  (see docgen-work_on_File.adb).
 
       procedure Format_File
         (B                : access Backend'Class;
@@ -610,17 +684,34 @@ package Docgen is
          Link_All         : Boolean;
          Is_Body          : Boolean;
          Process_Body     : Boolean;
-         Info             : Doc_Info);
+         Info             : Doc_Info;
+         Level            : Natural;
+         Indent           : Natural);
       --  Generate documentation for a type of code in the file
       --  (eg. packages, subprograms, exceptions ...). All tokens of this text
       --  are analysed by Parse_Entities.
-      --  Parse_Entities calls Callback which reads the
-      --  nature of the token and calls the appropriate subprogram on it
-      --  (Format_String, Format_Character, Format_Comment, Format_Keyword,
-      --  Format_Identifier).
-      --  Line_In_Body is used only for subprograms to create not regular
+      --  Parse_Entities calls Callback which reads the nature of the token
+      --  and calls the appropriate subprogram on it (Format_String,
+      --  Format_Character, Format_Comment, Format_Keyword, Format_Identifier)
+      --  File        : current file processed.
+      --  File_Name   : name of current file.
+      --  Text        : String which must be processed.
+      --  Info        : indicate which type of code must be processed. See
+      --  definition of Doc_Info and Info_Types above.
+      --  Entity_Line : for an reference, it contains the line in file.
+      --  Used for links.
+      --  List_Ref_In_File : list of the references in the current file.
+      --  Line_In_Body     : for subprograms it's used to create not regular
       --  links (in this case it is not the line number of the declaration
-      --  which is needed, but the line of the definition in the body.
+      --  which is needed, but the line of the definition in the body). For
+      --  public type which has private fields, it's used to make a link from
+      --  private part to public part.
+      --  Is_Body      : indicate if the current file is a spec/body file.
+      --  Process_Body : indicate if the option "process body files" is chosen
+      --  in the preferences.
+      --  Link_All     : indicate if the option "create all links" is chosen
+      --  in the preferences.
+      --  Level, indent: same comments as those made for Format_Identifier.
 
       procedure Format_Link
         (B                : access Backend;
@@ -646,6 +737,10 @@ package Docgen is
       --  Generate a link for the element Entity_Info on its declaration.
       --  Even if the format of the documentation doesn't use links, it's
       --  necessary to override Format_Link with an empty body.
+      --  Entity_Info : entity which defines the reference. It may be pointed
+      --  by a link.
+      --  Entity_Abstract : indicate if this entity is abstract. The value is
+      --  set in Get_Declaration (e.g. see docgen_backend_html.adb)
 
       procedure Finish
         (B           : access Backend;
@@ -718,7 +813,9 @@ package Docgen is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean);
+      Process_Body        : Boolean;
+      Level               : Natural;
+      Indent              : Natural);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
@@ -726,6 +823,7 @@ package Docgen is
    --  This process is done in Docgen because for each entity we must search
    --  for its declaration in all concerned files: this work is
    --  independant of the choosen format of documentation.
+   --  Level, indent: same comments as those made for Format_Identifier.
 
    function Count_Lines (Line : String) return Natural;
    --  Return the number of lines in the String
