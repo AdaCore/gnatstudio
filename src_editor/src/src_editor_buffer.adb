@@ -375,7 +375,6 @@ package body Src_Editor_Buffer is
         Get_String (Nth (Params, 2), Length => Length);
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
       Indented    : Boolean := False;
-      Success     : Boolean;
 
    begin
       if Buffer.Inserting then
