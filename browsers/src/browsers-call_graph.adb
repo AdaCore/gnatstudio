@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -45,9 +45,11 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
+with Prj_API;                  use Prj_API;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
+with Prj;              use Prj;
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Language;         use Language;
 
@@ -179,6 +181,16 @@ package body Browsers.Call_Graph is
      (Kernel : access Kernel_Handle_Record'Class;
       Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
    --  Create a current kernel context, based on the currently selected item
+
+   procedure Print_Ref
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Id;
+      File    : String;
+      Line    : Natural;
+      Column  : Natural;
+      Name    : String);
+   --  Print a reference in the console, after looking for the directory
+   --  containing File.
 
    -------------
    -- Gtk_New --
@@ -865,25 +877,58 @@ package body Browsers.Call_Graph is
       Pop_State (Data.Kernel);
    end Destroy_Idle;
 
+   ---------------
+   -- Print_Ref --
+   ---------------
+
+   procedure Print_Ref
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Project : Project_Id;
+      File    : String;
+      Line    : Natural;
+      Column  : Natural;
+      Name    : String)
+   is
+      Path : String_Access;
+   begin
+      if Project /= No_Project then
+         Path := Locate_Regular_File
+           (File,
+            Include_Path (Project, Recursive => False)
+            & Path_Separator & Get_Predefined_Source_Path (Kernel));
+      else
+         Path := Locate_Regular_File
+           (File, Path_Separator & Get_Predefined_Source_Path (Kernel));
+      end if;
+
+      if Path = null then
+         Path := new String' (File);
+      end if;
+
+      Insert (Kernel,
+              Path.all & ':' & Image (Line)   & ':' & Image (Column) & ' '
+              & Name);
+      Free (Path);
+   end Print_Ref;
+
    -------------------------
    -- Find_Next_Reference --
    -------------------------
 
    function Find_Next_Reference (D : Entity_Idle_Data)
-      return Boolean is
+      return Boolean
+   is
+      Location : File_Location;
    begin
       if Get (D.Iter.all) = No_Reference then
          return False;
 
       else
-         Insert (D.Kernel,
-                 Get_File (Get_Location (Get (D.Iter.all)))
-                 & ':'
-                 & Image (Get_Line (Get_Location (Get (D.Iter.all))))
-                 & ':'
-                 & Image (Get_Column (Get_Location (Get (D.Iter.all))))
-                 & ' '
-                 & Get_Name (D.Entity));
+         Location := Get_Location (Get (D.Iter.all));
+         Print_Ref
+           (D.Kernel, Get (D.Iter.all), Get_File (Location),
+            Get_Line (Location), Get_Column (Location),
+            Get_Name (D.Entity));
          Next (D.Kernel, D.Iter.all);
          return True;
       end if;
@@ -909,14 +954,12 @@ package body Browsers.Call_Graph is
 
       if Info /= No_Entity_Information then
          begin
-            Insert (Get_Kernel (Entity),
-                    Get_Declaration_File_Of (Info)
-                    & ':'
-                    & Image (Get_Declaration_Line_Of (Info))
-                    & ':'
-                    & Image (Get_Declaration_Column_Of (Info))
-                    & ' '
-                    & Get_Name (Info));
+            Print_Ref (Get_Kernel (Entity),
+                       Project_Information (Entity),
+                       Get_Declaration_File_Of (Info),
+                       Get_Declaration_Line_Of (Info),
+                       Get_Declaration_Column_Of (Info),
+                       Get_Name (Info));
 
             Data := (Kernel => Get_Kernel (Entity),
                      Iter   => new Entity_Reference_Iterator,
