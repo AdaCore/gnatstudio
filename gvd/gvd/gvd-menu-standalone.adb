@@ -626,6 +626,7 @@ package body GVD.Menu.Standalone is
          Gtk_New (-"/_Data/Call Stack", "", On_Call_Stack'Access, Check_Item),
          Gtk_New (-"/_Data/Threads", "", On_Threads'Access),
          Gtk_New (-"/_Data/Tasks", "", On_Tasks'Access),
+         Gtk_New (-"/_Data/Protection Domains", "", On_PD'Access),
          Gtk_New (-"/_Data/sep1", Item_Type => Separator),
          Gtk_New (-"/_Data/Edit Breakpoints...", "",
                   On_Edit_Breakpoints'Access),
