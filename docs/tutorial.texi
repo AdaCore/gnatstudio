@@ -255,6 +255,10 @@ is highlighted.
 
 Close the search dialog by clicking on the @code{Close} button.
 
+Note that in this specific case, a simpler way to locate a file in the
+explorer is to use from the source editor the contextual menu
+@code{Locate in explorer: tokens.ads}.
+
 @c --------------------------------------------------------------------
 @node Project Explorer (entities)
 @chapter Project Explorer (entities)
