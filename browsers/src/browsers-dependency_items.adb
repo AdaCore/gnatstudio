@@ -25,7 +25,6 @@ with Glib.Object;          use Glib.Object;
 with Glib.Xml_Int;         use Glib.Xml_Int;
 with Gdk.Drawable;         use Gdk.Drawable;
 with Gdk.Event;            use Gdk.Event;
-with Gdk.Font;             use Gdk.Font;
 with Gdk.Pixbuf;           use Gdk.Pixbuf;
 with Gdk.Window;           use Gdk.Window;
 with Gtk.Check_Menu_Item;  use Gtk.Check_Menu_Item;
@@ -39,6 +38,7 @@ with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
+with Pango.Layout;         use Pango.Layout;
 
 with Browsers.Canvas;           use Browsers.Canvas;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
@@ -875,25 +875,22 @@ package body Browsers.Dependency_Items is
    is
       use type Gdk_Window;
       B : constant Dependency_Browser := Dependency_Browser (Browser);
-      Str           : constant String := Get_Source_Filename (File);
-      Font          : Gdk_Font;
       Width, Height : Gint;
 
    begin
       pragma Assert (Win /= null);
       Item.Source := File;
       Item.Browser := Glide_Browser (Browser);
+      Item.Layout := Create_Pango_Layout
+        (Browser, Get_Source_Filename (Item.Source));
+      Set_Font_Description
+        (Item.Layout, Get_Pref (Get_Kernel (Browser), Browsers_Link_Font));
 
-      Font := Get_Text_Font (Item.Browser);
-
-      Width  := String_Width (Font, Str) + 4 * Margin
+      Get_Pixel_Size (Item.Layout, Width, Height);
+      Width := Width + 2 * Margin
         + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
-      Height := (Get_Ascent (Font) + Get_Descent (Font));
-      Height := Gint'Max (Height, Get_Height (B.Left_Arrow));
-      Height := Height + 2 * Margin;
-
       Set_Screen_Size_And_Pixmap
-        (Item, Get_Window (Item.Browser), Width, Height);
+        (Item, Get_Window (Item.Browser), Width, Height + 2 * Margin);
    end Initialize;
 
    -------------
@@ -905,16 +902,14 @@ package body Browsers.Dependency_Items is
    is
       use type Gdk.Gdk_GC;
       B : constant Dependency_Browser := Dependency_Browser (Browser);
-      Font : constant Gdk_Font := Get_Text_Font (Browser);
    begin
       Draw_Item_Background (Browser, Item);
-      Draw_Text
-        (Pixmap (Item),
-         Font  => Font,
-         GC    => Get_Text_GC (Browser),
-         X     => Margin + Get_Width (B.Left_Arrow),
-         Y     => Margin + Get_Ascent (Font),
-         Text  => Get_Source_Filename (Item.Source));
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Browser),
+         X        => Margin + Get_Width (B.Left_Arrow),
+         Y        => Margin,
+         Layout   => Item.Layout);
 
       if not Item.From_Parsed then
          Render_To_Drawable_Alpha
@@ -1000,6 +995,7 @@ package body Browsers.Dependency_Items is
    procedure Destroy (Item : in out File_Item_Record) is
    begin
       Destroy (Item.Source);
+      Unref (Item.Layout);
    end Destroy;
 
    ----------------

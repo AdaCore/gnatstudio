@@ -21,7 +21,6 @@
 with Browsers.Canvas;          use Browsers.Canvas;
 with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
-with Gdk.Font;                 use Gdk.Font;
 with Glib;                     use Glib;
 with Glib.Graphs;              use Glib.Graphs;
 with Glib.Object;              use Glib.Object;
@@ -35,12 +34,13 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Pango.Layout;             use Pango.Layout;
 with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
 with Project_Browsers;         use Project_Browsers;
 with Types;                    use Types;
-with Ada.Exceptions;   use Ada.Exceptions;
-with Traces;           use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
+with Traces;                   use Traces;
 
 package body Browsers.Projects is
 
@@ -105,14 +105,22 @@ package body Browsers.Projects is
       Item    : access Browser_Project_Vertex) is
    begin
       Draw_Item_Background (Browser, Item);
-      Draw_Text
-        (Pixmap (Item),
-         Get_Text_Font (Browser),
-         Get_Text_GC (Browser),
-         Margin,
-         Get_Ascent (Get_Text_Font (Browser)) + Margin,
-         Get_String (Item.Name) & Prj.Project_File_Extension);
+      Draw_Layout
+        (Drawable => Pixmap (Item),
+         GC       => Get_Text_GC (Browser),
+         X        => Margin,
+         Y        => Margin,
+         Layout   => Item.Layout);
    end Refresh;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Item : in out Browser_Project_Vertex) is
+   begin
+      Unref (Item.Layout);
+   end Destroy;
 
    -------------------------------
    -- Examine_Project_Hierarchy --
@@ -124,7 +132,6 @@ package body Browsers.Projects is
       Project    : Prj.Tree.Project_Node_Id)
    is
       pragma Unreferenced (Kernel);
-      Font : constant Gdk_Font := Get_Text_Font (In_Browser);
 
       function Vertex_Factory (Project_Name : Types.Name_Id)
          return Vertex_Access;
@@ -158,14 +165,19 @@ package body Browsers.Projects is
            new Browser_Project_Vertex;
          Width, Height : Gint;
       begin
-         Height := Get_Ascent (Font) + Get_Descent (Font) + 2 * Margin;
-         Width := String_Width (Font, Get_String (Project_Name)
-                                & Prj.Project_File_Extension) + 2 * Margin;
+         V.Layout := Create_Pango_Layout
+           (In_Browser,
+            Get_String (Project_Name) & Prj.Project_File_Extension);
+         Set_Font_Description
+           (V.Layout, Get_Pref (Get_Kernel (In_Browser), Browsers_Link_Font));
+
+         Get_Pixel_Size (V.Layout, Width, Height);
          V.Name := Project_Name;
          V.Browser := Glide_Browser (In_Browser);
 
          Set_Screen_Size_And_Pixmap
-           (V, Get_Window (In_Browser), Width, Height);
+           (V, Get_Window (In_Browser),
+            Width + 2 * Margin, Height + 2 * Margin);
          Refresh (In_Browser, V);
          return Vertex_Access (V);
       end Vertex_Factory;

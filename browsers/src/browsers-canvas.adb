@@ -28,7 +28,6 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gdk.Drawable;        use Gdk.Drawable;
 with Gdk.Event;           use Gdk.Event;
-with Gdk.Font;            use Gdk.Font;
 with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
 with Gdk.Window;          use Gdk.Window;
@@ -41,7 +40,6 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Style;           use Gtk.Style;
 with Gtk.Widget;          use Gtk.Widget;
-with Pango.Font;          use Pango.Font;
 
 with Ada.Exceptions;      use Ada.Exceptions;
 
@@ -205,7 +203,6 @@ package body Browsers.Canvas is
 
       B      : Glide_Browser := Glide_Browser (Browser);
       Color  : Gdk_Color;
-      Desc   : Pango_Font_Description;
       Kernel : constant Kernel_Handle := Get_Kernel (B);
 
    begin
@@ -231,11 +228,6 @@ package body Browsers.Canvas is
 
          Gdk_New (B.Text_GC, Get_Window (B.Canvas));
          Set_Foreground (B.Text_GC, Get_Pref (B.Kernel, Browsers_Link_Color));
-
-         Desc := Get_Pref (B.Kernel, Browsers_Link_Font);
-         B.Text_Font := From_Description (Desc);
-         --  Do not free Desc, since this is taken care of by the preferences
-         --  engine
       end if;
    end Realized;
 
@@ -716,16 +708,6 @@ package body Browsers.Canvas is
    begin
       return Browser.Text_GC;
    end Get_Text_GC;
-
-   -------------------
-   -- Get_Text_Font --
-   -------------------
-
-   function Get_Text_Font
-     (Browser : access Glide_Browser_Record) return Gdk.Font.Gdk_Font is
-   begin
-      return Browser.Text_Font;
-   end Get_Text_Font;
 
    ---------------
    -- Draw_Link --

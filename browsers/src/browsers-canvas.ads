@@ -22,7 +22,6 @@ with Glib;
 with Gdk.Color;
 with Gdk.Event;
 with Gdk.GC;
-with Gdk.Font;
 with Gdk.Window;
 with Gtkada.Canvas;
 with Glide_Kernel;
@@ -138,10 +137,6 @@ package Browsers.Canvas is
      (Browser : access Glide_Browser_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use to draw the text in the items.
 
-   function Get_Text_Font
-     (Browser : access Glide_Browser_Record) return Gdk.Font.Gdk_Font;
-   --  Return the font to use to draw the text in the items.
-
    procedure Draw_Item_Background
      (Browser : access Glide_Browser_Record;
       Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
@@ -175,7 +170,6 @@ private
          Parent_Linked_Item_GC : Gdk.GC.Gdk_GC;
          Child_Linked_Item_GC  : Gdk.GC.Gdk_GC;
          Text_GC               : Gdk.GC.Gdk_GC;
-         Text_Font             : Gdk.Font.Gdk_Font;
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
       end record;

@@ -23,6 +23,7 @@ with Gdk.Pixbuf;
 with Gdk.Window;
 with Gtk.Main;
 with Gtk.Menu;
+with Pango.Layout;
 
 with Src_Info;
 with Glide_Kernel;
@@ -129,6 +130,8 @@ private
       --  These two booleans are set to True when the parents of the item have
       --  been fully parsed (ie all the subprograms that call Entity), or when
       --  all the children have been parsed.
+
+      Layout : Pango.Layout.Pango_Layout;
    end record;
 
    type Dependency_Link_Record is new Browsers.Canvas.Glide_Browser_Link_Record

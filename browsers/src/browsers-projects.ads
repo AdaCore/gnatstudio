@@ -26,6 +26,7 @@ with Prj.Tree;
 with Gdk.Event;
 with Gtk.Menu;
 with Types;
+with Pango.Layout;
 
 package Browsers.Projects is
 
@@ -60,11 +61,16 @@ package Browsers.Projects is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
+   procedure Destroy (Item : in out Browser_Project_Vertex);
+   --  Free the memory occupied by the item. This is called automatically when
+   --  the item is removed from the canvas.
+
 private
    type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
       Name    : Types.Name_Id;
       Browser : Browsers.Canvas.Glide_Browser;
+      Layout  : Pango.Layout.Pango_Layout;
    end record;
 
    procedure On_Button_Click
