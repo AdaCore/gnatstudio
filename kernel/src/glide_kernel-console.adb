@@ -30,16 +30,13 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GNAT.Regpat;       use GNAT.Regpat;
 with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page;        use Glide_Page;
+with Glide_Consoles;    use Glide_Consoles;
 with Gdk.Color;         use Gdk.Color;
 with Gtk.Text;          use Gtk.Text;
 with Gtk.Widget;        use Gtk.Widget;
 with GVD.Process;       use GVD.Process;
 
 package body Glide_Kernel.Console is
-
-   --  ??? Preferences
-
-   Highlight_File : constant String := "#FF0000000000";
 
    ------------
    -- Insert --
@@ -52,56 +49,10 @@ package body Glide_Kernel.Console is
       Add_LF         : Boolean := True)
    is
       Top       : constant Glide_Window := Glide_Window (Kernel.Main_Window);
-      Console   : constant Gtk_Text :=
+      Console   : constant Glide_Console :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Console;
-      New_Text  : String_Access;
-
    begin
-      if Add_LF then
-         New_Text := new String' (Text & ASCII.LF);
-      else
-         New_Text := new String' (Text);
-      end if;
-
-      if Highlight_Sloc then
-         declare
-            Matched   : Match_Array (0 .. 3);
-            File      : constant Pattern_Matcher :=
-              Compile ("([^:]*):(\d+):(\d+:)?");
-            Highlight : Gdk_Color;
-            Last      : Natural;
-
-         begin
-            Match (File, New_Text.all, Matched);
-
-            if Matched (0) /= No_Match then
-               Highlight := Parse (Highlight_File);
-               Alloc (Get_Default_Colormap, Highlight);
-
-               Insert
-                 (Console,
-                  Chars => New_Text (New_Text'First .. Matched (1).First - 1));
-
-               if Matched (3) = No_Match then
-                  Last := Matched (2).Last;
-               else
-                  Last := Matched (3).Last - 1;
-               end if;
-
-               Insert
-                 (Console,
-                  Fore => Highlight,
-                  Chars => New_Text (Matched (1).First .. Last));
-               Insert (Console, Chars => New_Text (Last + 1 .. New_Text'Last));
-
-               Free (New_Text);
-               return;
-            end if;
-         end;
-      end if;
-
-      Insert (Console, Chars => New_Text.all);
-      Free (New_Text);
+      Insert (Console, Text, Highlight_Sloc, Add_LF);
    end Insert;
 
 end Glide_Kernel.Console;
