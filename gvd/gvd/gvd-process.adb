@@ -55,8 +55,9 @@ package body Odd.Process is
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
-   procedure Text_Output_Handler (Pid : GNAT.Expect.Pipes_Id;
-                                  Str : String);
+   procedure Text_Output_Handler
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String);
    --  Standard handler to add gdb's input and output to the debugger
    --  window.
 
@@ -72,13 +73,14 @@ package body Odd.Process is
    -- Convert --
    -------------
 
-   function Convert (Pid : GNAT.Expect.Pipes_Id)
-                    return Debugger_Process_Tab
+   function Convert
+     (Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab
    is
-      Page : Gtk_Widget;
-      Num_Pages : Gint := Gint (Page_List.Length (Get_Children
-                                (Main_Debug_Window.Process_Notebook)));
-      Process     : Debugger_Process_Tab;
+      Page      : Gtk_Widget;
+      Num_Pages : Gint :=
+        Gint (Page_List.Length
+          (Get_Children (Main_Debug_Window.Process_Notebook)));
+      Process   : Debugger_Process_Tab;
    begin
       --  For all the process tabs in the application, check whether
       --  this is the one associated with Pid.
@@ -91,7 +93,9 @@ package body Odd.Process is
             --  Note: The process might have been already killed when this
             --  function is called.
 
-            if Get_Pipes (Get_Process (Process.Debugger.all)).all = Pid then
+            if Get_Descriptor
+              (Get_Process (Process.Debugger.all)).all = Descriptor
+            then
                return Process;
             end if;
          end if;
@@ -105,10 +109,10 @@ package body Odd.Process is
    -------------------------
 
    procedure Text_Output_Handler
-     (Pid : GNAT.Expect.Pipes_Id;
-      Str : String)
+     (Descriptor : GNAT.Expect.Process_Descriptor;
+      Str        : String)
    is
-      Process    : Debugger_Process_Tab := Convert (Pid);
+      Process    : Debugger_Process_Tab := Convert (Descriptor);
       Font       : Gdk_Font;
    begin
       Freeze (Process.Debugger_Text);
@@ -187,13 +191,13 @@ package body Odd.Process is
       Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy,
              Remote_Machine => "");
       Add_Output_Filter
-        (Get_Pipes (Get_Process (Process.Debugger.all)).all,
+        (Get_Descriptor (Get_Process (Process.Debugger.all)).all,
          Text_Output_Handler'Access);
 --        Add_Input_Filter (Get_Process (Process.Debugger.all).all,
       --                          Text_Output_Handler'Access);
       Id := My_Input.Add
         (To_Gint (Get_Output_Fd
-                  (Get_Pipes (Get_Process (Process.Debugger.all)).all)),
+                  (Get_Descriptor (Get_Process (Process.Debugger.all)).all)),
          Gdk.Types.Input_Read,
          Output_Available'Access,
          My_Input.Data_Access (Process));
@@ -209,6 +213,7 @@ package body Odd.Process is
          Mask   : Gdk.Gdk_Bitmap;
          Style  : Gtk_Style := Get_Style (Process.Editor_Text);
          Texts  : constant Chars_Ptr_Array := (0 => Null_Ptr);
+         Line   : Natural := 1;
 
       begin
          Realize (Process.Editor_Text);
@@ -219,8 +224,18 @@ package body Odd.Process is
          while not End_Of_File (Infile) loop
             Get_Line (File => Infile, Item => S, Last => Last);
             Row := Append (Process.Editor_Text, Texts);
-            Set_Pixtext
-              (Process.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
+
+            if Line_Contains_Code
+              (Process.Debugger.all, "odd_main.adb", Line)
+            then
+               Set_Pixtext
+                 (Process.Editor_Text, Row, 0, S (1 .. Last), 5, Pixmap, Mask);
+            else
+               Set_Text
+                 (Process.Editor_Text, Row, 0, S (1 .. Last));
+            end if;
+
+            Line := Line + 1;
          end loop;
       end;
       Close (Infile);

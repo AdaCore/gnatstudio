@@ -40,20 +40,22 @@ package Process_Proxies is
    --  the external debugger can process a single command at a time, the
    --  callback should not do anything.
 
-   function Get_Pipes (Proxy : Process_Proxy)
-                      return GNAT.Expect.Pipes_Id_Access;
-   --  Returns the associates Pipes_Id, so that all the functions of
+   function Get_Descriptor
+     (Proxy : Process_Proxy) return GNAT.Expect.Process_Descriptor_Access;
+   --  Returns the associates Process_Descriptor, so that all the functions of
    --  GNAT.Expect can be applied to it.
    --  You should not use Expect directly, but rather Wait below.
 
-   procedure Set_Pipes (Proxy : in out Process_Proxy;
-                        Pipes : GNAT.Expect.Pipes_Id_Access);
-   --  Set the external pipe.
+   procedure Set_Descriptor
+     (Proxy      : in out Process_Proxy;
+      Descriptor : GNAT.Expect.Process_Descriptor_Access);
+   --  Set the external process descriptor.
 
-   procedure Wait (Proxy   : Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Timeout : Integer := 20);
+   procedure Wait
+     (Proxy   : Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Timeout : Integer := 20);
    --  Wait until some output from the debugger matches Pattern.
    --  This functions waits at least (Timeout * 50ms), and is overriden
    --  in graphic mode so that we give a change to the GtkAda main loop to
@@ -62,14 +64,14 @@ package Process_Proxies is
    --  The function returns the same kind of result as an Expect call would.
    --  Default Timeout is one second.
 
-   procedure Wait (Proxy   : Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : String;
-                   Timeout : Integer := 20);
+   procedure Wait
+     (Proxy   : Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : String;
+      Timeout : Integer := 20);
    --  Same, but the regular expression is given a string.
 
-   procedure Send (Proxy : Process_Proxy;
-                   Cmd   : String);
+   procedure Send (Proxy : Process_Proxy; Cmd : String);
    --  Send a command to the underlying process.
 
    function Expect_Out (Proxy : Process_Proxy) return String;
@@ -77,10 +79,11 @@ package Process_Proxies is
 
    type Gui_Process_Proxy is new Process_Proxy with private;
 
-   procedure Wait (Proxy   : Gui_Process_Proxy;
-                   Result  : out GNAT.Expect.Expect_Match;
-                   Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Timeout : Integer := 20);
+   procedure Wait
+     (Proxy   : Gui_Process_Proxy;
+      Result  : out GNAT.Expect.Expect_Match;
+      Pattern : GNAT.Regpat.Pattern_Matcher;
+      Timeout : Integer := 20);
    --  In GUI mode, this processes the graphic events between each iteration.
 
 private
@@ -88,8 +91,8 @@ private
    type Boolean_Access is access Boolean;
 
    type Process_Proxy is tagged record
-      Pipes              : GNAT.Expect.Pipes_Id_Access;
-
+      Descriptor         : GNAT.Expect.Process_Descriptor_Access;
+      
       Command_In_Process : Boolean_Access := new Boolean'(False);
       --  This is implemented as an access type so that Process_Proxy does
       --  not always have to be passed as an "in out" parameter, but simply

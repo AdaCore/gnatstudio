@@ -70,7 +70,7 @@ package body Debugger is
       Proxy          : Process_Proxies.Process_Proxy_Access;
       Remote_Machine : String := "")
    is
-      Id : Pipes_Id_Access;
+      Descriptor : Process_Descriptor_Access;
    begin
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
@@ -79,10 +79,12 @@ package body Debugger is
       Debugger.Process := Proxy;
 
       if Remote_Machine = "" then
-         Id := new Pipes_Id'(Non_Blocking_Spawn
-                             (Debugger_Name, Arguments,
-                              Buffer_Size => 0,
-                              Err_To_Out => True));
+         Descriptor := new Process_Descriptor'
+           (Non_Blocking_Spawn
+             (Debugger_Name, Arguments,
+              Buffer_Size => 0,
+              Err_To_Out => True));
+
       else
          declare
             Real_Arguments : Argument_List (1 .. Arguments'Length + 2);
@@ -91,17 +93,18 @@ package body Debugger is
             Real_Arguments (2) := new String'(Debugger_Name);
             Real_Arguments (3 .. Real_Arguments'Last) := Arguments;
 
-            Id := new Pipes_Id'(Non_Blocking_Spawn
-                                (Remote_Protocol,
-                                 Real_Arguments,
-                                 Buffer_Size => 0,
-                                 Err_To_Out => True));
+            Descriptor := new Process_Descriptor'
+              (Non_Blocking_Spawn
+                (Remote_Protocol,
+                 Real_Arguments,
+                 Buffer_Size => 0,
+                 Err_To_Out => True));
             Free (Real_Arguments (1));
             Free (Real_Arguments (2));
          end;
       end if;
 
-      Set_Pipes (Debugger.Process.all, Id);
+      Set_Descriptor (Debugger.Process.all, Descriptor);
    end General_Spawn;
 
 end Debugger;

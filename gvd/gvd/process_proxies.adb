@@ -33,31 +33,33 @@ package body Process_Proxies is
       procedure Free_Internal is new Unchecked_Deallocation
         (Process_Proxy'Class, Process_Proxy_Access);
       procedure Free_Internal is new Unchecked_Deallocation
-        (GNAT.Expect.Pipes_Id, GNAT.Expect.Pipes_Id_Access);
+        (GNAT.Expect.Process_Descriptor,
+         GNAT.Expect.Process_Descriptor_Access);
    begin
-      Free_Internal (Proxy.Pipes);
+      Free_Internal (Proxy.Descriptor);
       Free_Internal (Proxy);
    end Free;
 
-   ---------------
-   -- Get_Pipes --
-   ---------------
+   --------------------
+   -- Get_Descriptor --
+   --------------------
 
-   function Get_Pipes (Proxy : Process_Proxy) return Pipes_Id_Access is
+   function Get_Descriptor
+     (Proxy : Process_Proxy) return Process_Descriptor_Access is
    begin
-      return Proxy.Pipes;
-   end Get_Pipes;
+      return Proxy.Descriptor;
+   end Get_Descriptor;
 
-   ---------------
-   -- Set_Pipes --
-   ---------------
+   --------------------
+   -- Set_Descriptor --
+   --------------------
 
-   procedure Set_Pipes (Proxy : in out Process_Proxy;
-                        Pipes : GNAT.Expect.Pipes_Id_Access)
-   is
+   procedure Set_Descriptor
+     (Proxy      : in out Process_Proxy;
+      Descriptor : GNAT.Expect.Process_Descriptor_Access) is
    begin
-      Proxy.Pipes := Pipes;
-   end Set_Pipes;
+      Proxy.Descriptor := Descriptor;
+   end Set_Descriptor;
 
    ------------------------
    -- Command_In_Process --
@@ -75,15 +77,17 @@ package body Process_Proxies is
    procedure Wait (Proxy   : Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : GNAT.Regpat.Pattern_Matcher;
-                   Timeout : Integer := 20)
-   is
+                   Timeout : Integer := 20) is
    begin
       Proxy.Command_In_Process.all := True;
+
       if Timeout = -1 then
-         Expect (Proxy.Pipes.all, Result, Pattern, Timeout => -1);
+         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => -1);
       else
-         Expect (Proxy.Pipes.all, Result, Pattern, Timeout => Timeout * 50);
+         Expect
+           (Proxy.Descriptor.all, Result, Pattern, Timeout => Timeout * 50);
       end if;
+
       Proxy.Command_In_Process.all := False;
    end Wait;
 
@@ -94,8 +98,7 @@ package body Process_Proxies is
    procedure Wait (Proxy   : Process_Proxy;
                    Result  : out GNAT.Expect.Expect_Match;
                    Pattern : String;
-                   Timeout : Integer := 20)
-   is
+                   Timeout : Integer := 20) is
    begin
       Wait (Proxy, Result, Compile (Pattern), Timeout);
    end Wait;
@@ -104,11 +107,9 @@ package body Process_Proxies is
    -- Send --
    ----------
 
-   procedure Send (Proxy : Process_Proxy;
-                   Cmd   : String)
-   is
+   procedure Send (Proxy : Process_Proxy; Cmd : String) is
    begin
-      Send (Proxy.Pipes.all, Cmd);
+      Send (Proxy.Descriptor.all, Cmd);
    end Send;
 
    ----------------
@@ -117,7 +118,7 @@ package body Process_Proxies is
 
    function Expect_Out (Proxy : Process_Proxy) return String is
    begin
-      return Expect_Out (Proxy.Pipes.all);
+      return Expect_Out (Proxy.Descriptor.all);
    end Expect_Out;
 
    ----------
@@ -129,8 +130,8 @@ package body Process_Proxies is
                    Pattern : GNAT.Regpat.Pattern_Matcher;
                    Timeout : Integer := 20)
    is
-      Tmp    : Boolean;
-      Num    : Integer := 1;
+      Tmp : Boolean;
+      Num : Integer := 1;
    begin
       Proxy.Command_In_Process.all := True;
 
@@ -141,13 +142,14 @@ package body Process_Proxies is
 
          --  In case the external process was killed during the wait.
 
-         if Proxy.Pipes = null then
+         if Proxy.Descriptor = null then
             exit;
          end if;
 
-         Expect (Proxy.Pipes.all, Result, Pattern, Timeout => 50);
+         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => 50);
 
          exit when Num = Timeout;
+
          Num := Num + 1;
 
          case Result is

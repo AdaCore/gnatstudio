@@ -158,9 +158,10 @@ package body Debugger.Gdb is
    ----------------
 
    procedure Initialize (Debugger : access Gdb_Debugger) is
-      Result    : Expect_Match;
-      Matched   : GNAT.Regpat.Match_Array (0 .. 2);
-      Pipes     : Pipes_Id_Access := Get_Pipes (Get_Process (Debugger.all));
+      Result     : Expect_Match;
+      Matched    : GNAT.Regpat.Match_Array (0 .. 2);
+      Descriptor : Process_Descriptor_Access := Get_Descriptor
+        (Get_Process (Debugger.all));
    begin
       --  Wait for initial prompt
       Wait_Prompt (Debugger.all);
@@ -174,7 +175,8 @@ package body Debugger.Gdb is
       Send (Get_Process (Debugger.all), "set annotate 1");
       Wait_Prompt (Debugger.all);
       Send (Get_Process (Debugger.all), "show lang");
-      Expect (Pipes.all, Result,
+      Expect
+        (Descriptor.all, Result,
          "The current source language is ""(auto; currently )?([^""]+)""",
          Matched);
 
@@ -212,7 +214,7 @@ package body Debugger.Gdb is
       --  kill it abruptly.
 
       Wait (Get_Process (Debugger), Result, ".*", Timeout => 100);
-      Close (Get_Pipes (Get_Process (Debugger)).all);
+      Close (Get_Descriptor (Get_Process (Debugger)).all);
       Free (Debugger.Process);
    end Close;
 

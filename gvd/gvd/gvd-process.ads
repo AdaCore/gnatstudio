@@ -74,13 +74,14 @@ package Odd.Process is
 
    Debugger_Not_Found : exception;
 
-   function Convert (Pid : GNAT.Expect.Pipes_Id)
-                    return Debugger_Process_Tab;
-   --  Return the debugger_descriptor associated with a pipes_id.
+   function Convert
+     (Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab;
+   --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
-   procedure Process_User_Command (Debugger : Debugger_Process_Tab;
-                                   Command : String);
+   procedure Process_User_Command
+     (Debugger : Debugger_Process_Tab;
+      Command : String);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to odd are filtered and
