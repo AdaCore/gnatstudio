@@ -1,5 +1,8 @@
 New features in GPS 1.0.2
 
+- VCS is now able to compare between the working revision in the
+  repository and the head revision in the repository.
+
 - Opening or closing a file or category node in the project explorer will
   now force a refresh
 
