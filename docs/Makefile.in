@@ -86,6 +86,7 @@ install:
 	-$(INSTALL_DATA) gps-splash.jpg $(sharedir)
 	-${INSTALL_DATA} gps_index.xml ${docdir}/html
 	-${INSTALL_DATA} help_index.html ${docdir}/html
+	-${INSTALL_DATA} shell_commands.xml ${sharedir}
 
 clean-temp-files:
 	-$(RM) *.aux
