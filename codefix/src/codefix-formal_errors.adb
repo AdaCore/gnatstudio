@@ -132,13 +132,76 @@ package body Codefix.Formal_Errors is
       Free (This, True);
    end Free;
 
+   -----------------
+   -- Delete_With --
+   -----------------
+
+   function Delete_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Ada_List
+   is
+      Extract_Use, New_Extract  : Ada_List;
+      Temp_Extract              : Extract;
+      Use_Info, With_Info       : Construct_Information;
+      Cursor_Use                : File_Cursor := File_Cursor (Cursor);
+      Success                   : Boolean := True;
+      Index_Name, Prev_Index    : Natural := 0;
+   begin
+      With_Info := Search_Unit
+        (Current_Text, Cursor.File_Name.all, Cat_With, Name);
+
+      Get_Unit (Current_Text, Cursor, New_Extract);
+      Remove_Elements (New_Extract, Name);
+
+      loop
+         Index_Name := Index_Name + 1;
+         Skip_To_Char (With_Info.Name.all, Index_Name, '.');
+         exit when Index_Name > With_Info.Name'Last + 1;
+
+         Use_Info := Search_Unit
+           (Current_Text,
+            Cursor.File_Name.all,
+            Cat_Use,
+            With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
+
+         if Use_Info.Category /= Cat_Unknown then
+            Cursor_Use.Col := Use_Info.Sloc_Start.Column;
+            Cursor_Use.Line := Use_Info.Sloc_Start.Line;
+            Get_Unit (Current_Text, Cursor_Use, Extract_Use);
+            Remove_Elements (Extract_Use, Name);
+            Unchecked_Assign (Temp_Extract, New_Extract);
+            Unchecked_Free (New_Extract);
+            Merge
+              (New_Extract,
+               Temp_Extract,
+               Extract_Use,
+               Current_Text,
+               Success);
+            Free (Temp_Extract);
+            Free (Extract_Use);
+            exit when not Success;
+         end if;
+
+         Prev_Index := Index_Name;
+      end loop;
+
+      if not Success then
+         null;
+      end if;
+
+      return New_Extract;
+
+   end Delete_With;
+
+
    ---------------
    -- Should_Be --
    ---------------
 
    function Should_Be
      (Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message;
+      Message      : File_Cursor'Class;
       Str_Expected : String;
       Str_Red      : String := "";
       Format_Red   : String_Mode := Text_Ascii;
@@ -220,13 +283,13 @@ package body Codefix.Formal_Errors is
         (New_Extract,
          Message,
          Second_String,
-         "^(" & First_String & ")");
+         First_String);
 
       Replace_Word
         (New_Extract,
          Second_Cursor,
          First_String,
-         "^(" & Second_String & ")");
+         Second_String);
 
       Set_Caption
         (New_Extract,
@@ -241,7 +304,7 @@ package body Codefix.Formal_Errors is
 
    function Expected
      (Current_Text    : Text_Navigator_Abstr'Class;
-      Message         : Error_Message;
+      Message         : File_Cursor'Class;
       String_Expected : String;
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Extract
@@ -254,18 +317,15 @@ package body Codefix.Formal_Errors is
    begin
 
       Assign (New_Str, String_Expected);
+      Line_Cursor.Col := 1;
 
       if Position = Specified then
-         Line_Cursor.Col := 1;
          Get_Line (Current_Text, Line_Cursor, New_Extract);
          Space_Cursor.Col := Space_Cursor.Col - 1;
 
          if Add_Spaces and then
            Message.Col > 1 and then
-           Get
-             (Current_Text,
-              Space_Cursor,
-              1) /= " "
+           Get (Current_Text, Space_Cursor, 1) /= " "
          then
             Assign (New_Str, " " & New_Str.all);
          end if;
@@ -302,7 +362,7 @@ package body Codefix.Formal_Errors is
 
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
-      Message           : Error_Message;
+      Message           : File_Cursor'Class;
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Extract
    is
@@ -352,7 +412,7 @@ package body Codefix.Formal_Errors is
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
-      Message         : Error_Message;
+      Message         : File_Cursor'Class;
       Column_Expected : Natural := 0) return Extract
    is
       function Closest (Size_Red : Positive) return Positive;
@@ -515,10 +575,6 @@ package body Codefix.Formal_Errors is
    -- Not_Referenced --
    --------------------
 
-   --  Warning : this function is extremely dependent of the respect of the
-   --  normalisation. Maybe should be re-programmed in order to make a smarter
-   --  one
-
    function Not_Referenced
      (Current_Text : Text_Navigator_Abstr'Class;
       Cursor       : File_Cursor'Class;
@@ -537,8 +593,6 @@ package body Codefix.Formal_Errors is
       --  after the body.
 
       function Add_Parameter_Pragma return Extract;
-
-      function Delete_With return Ada_List;
 
       ----------------
       -- Delete_Var --
@@ -606,66 +660,6 @@ package body Codefix.Formal_Errors is
          return New_Extract;
       end Add_Parameter_Pragma;
 
-      -----------------
-      -- Delete_With --
-      -----------------
-
-      function Delete_With return Ada_List is
-
-         Extract_Use, New_Extract  : Ada_List;
-         Temp_Extract              : Extract;
-         Use_Info, With_Info       : Construct_Information;
-         Cursor_Use                : File_Cursor := File_Cursor (Cursor);
-         Success                   : Boolean := True;
-         Index_Name, Prev_Index    : Natural := 0;
-
-      begin
-         With_Info := Search_Unit
-           (Current_Text, Cursor.File_Name.all, Cat_With, Name);
-
-         Get_Unit (Current_Text, Cursor, New_Extract);
-         Remove_Elements (New_Extract, Name);
-
-         loop
-            Index_Name := Index_Name + 1;
-            Skip_To_Char (With_Info.Name.all, Index_Name, '.');
-            exit when Index_Name > With_Info.Name'Last + 1;
-
-            Use_Info := Search_Unit
-              (Current_Text,
-               Cursor.File_Name.all,
-               Cat_Use,
-               With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
-
-            if Use_Info.Category /= Cat_Unknown then
-               Cursor_Use.Col := Use_Info.Sloc_Start.Column;
-               Cursor_Use.Line := Use_Info.Sloc_Start.Line;
-               Get_Unit (Current_Text, Cursor_Use, Extract_Use);
-               Remove_Elements (Extract_Use, Name);
-               Unchecked_Assign (Temp_Extract, New_Extract);
-               Unchecked_Free (New_Extract);
-               Merge
-                 (New_Extract,
-                  Temp_Extract,
-                  Extract_Use,
-                  Current_Text,
-                  Success);
-               Free (Temp_Extract);
-               Free (Extract_Use);
-               exit when not Success;
-            end if;
-
-            Prev_Index := Index_Name;
-         end loop;
-
-         if not Success then
-            null;
-         end if;
-
-         return New_Extract;
-
-      end Delete_With;
-
       --  begin of Not_Referenced
 
       New_Extract      : Extract;
@@ -721,7 +715,7 @@ package body Codefix.Formal_Errors is
 
          when Cat_With =>
 
-            New_Extract_List := Delete_With;
+            New_Extract_List := Delete_With (Current_Text, Cursor, Name);
             Set_Caption
               (New_Extract_List,
                "Delete with and use clause for unit """ & Name & """");
@@ -897,5 +891,59 @@ package body Codefix.Formal_Errors is
 
       return New_Extract;
    end Remove_Conversion;
+
+   -----------------------
+   -- Move_With_To_Body --
+   -----------------------
+
+   function Move_With_To_Body
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Ada_List
+   is
+      Spec_Extract         : Ada_List;
+      Body_Info, With_Info : Construct_Information;
+      Last_With            : File_Cursor;
+      Body_Name            : Dynamic_String;
+   begin
+      With_Info := Search_Unit
+        (Current_Text,
+         Cursor.File_Name.all,
+         Cat_With);
+
+      Spec_Extract := Delete_With (Current_Text, Cursor, With_Info.Name.all);
+
+      Assign (Body_Name, Cursor.File_Name.all
+                (Cursor.File_Name'First .. Cursor.File_Name'Last - 3) & "adb");
+
+      Body_Info := Search_Unit
+        (Current_Text,
+         Body_Name.all,
+         Cat_With,
+         With_Info.Name.all);
+
+      if Body_Info.Category = Cat_Unknown then
+         Assign (Last_With.File_Name, Body_Name.all);
+
+
+         Last_With.Col := 1;
+         Last_With.Line := 1;
+
+         Body_Info := Get_Unit (Current_Text, Last_With, After, Cat_Package);
+
+         Last_With.Line := Body_Info.Sloc_Start.Line - 1;
+
+         --  Test Use_Info to know if it is necessary to add use clauses ?
+         Add_Line
+           (Spec_Extract, Last_With, "with " & With_Info.Name.all & ";");
+      end if;
+
+      Set_Caption
+        (Spec_Extract,
+         "Move with clause from """ & Cursor.File_Name.all &
+           """ to """ & Body_Name.all & """");
+
+      Free (Body_Name);
+      return Spec_Extract;
+   end Move_With_To_Body;
 
 end Codefix.Formal_Errors;

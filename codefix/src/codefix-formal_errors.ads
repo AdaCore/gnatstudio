@@ -67,7 +67,7 @@ package Codefix.Formal_Errors is
 
    function Should_Be
      (Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message;
+      Message      : File_Cursor'Class;
       Str_Expected : String;
       Str_Red      : String := "";
       Format_Red   : String_Mode := Text_Ascii;
@@ -85,7 +85,7 @@ package Codefix.Formal_Errors is
 
    function Expected
      (Current_Text    : Text_Navigator_Abstr'Class;
-      Message         : Error_Message;
+      Message         : File_Cursor'Class;
       String_Expected : String;
       Add_Spaces      : Boolean := True;
       Position        : Relative_Position := Specified) return Extract;
@@ -93,14 +93,14 @@ package Codefix.Formal_Errors is
 
    function Unexpected
      (Current_Text      : Text_Navigator_Abstr'Class;
-      Message           : Error_Message;
+      Message           : File_Cursor'Class;
       String_Unexpected : String;
       Mode              : String_Mode := Text_Ascii) return Extract;
    --  Delete the unexpected string
 
    function Wrong_Column
      (Current_Text    : Text_Navigator_Abstr'Class;
-      Message         : Error_Message;
+      Message         : File_Cursor'Class;
       Column_Expected : Natural := 0) return Extract;
    --  Try re-indent the line
 
@@ -153,6 +153,10 @@ package Codefix.Formal_Errors is
       Object_Name  : String) return Ada_Instruction;
    --  Remove the conversion at made at Cursor position.
 
+   function Move_With_To_Body
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class) return Ada_List;
+
 private
 
    type Error_Message is new File_Cursor with record
@@ -166,6 +170,11 @@ private
    function Clone (This : Error_Message) return Error_Message;
    --  Duplicate all the information used in Error_Message, specially the
    --  object referenced in.
+
+   function Delete_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Name         : String) return Ada_List;
 
    Invalid_Error_Message : constant Error_Message := (0, 0, null, null);
 
