@@ -1,7 +1,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Input;
 
-package body Output is
+package body Screen_Output is
 
    ----------------
    -- Local Data --
@@ -92,4 +92,4 @@ package body Output is
       Skip_Line;
    end Pause;
 
-end Output;
+end Screen_Output;

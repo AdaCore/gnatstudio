@@ -1,6 +1,6 @@
 --  Routines used to print messages on the screen
 
-package Output is
+package Screen_Output is
 
    procedure Msg (S1 : String; S2 : String := ""; End_Line : Boolean := True);
    --  Prints message S1 followed by S2 on the screen. If End_Line is True
@@ -23,4 +23,4 @@ package Output is
    procedure Pause;
    --  Prints a pause message, and then wait for a carriage return.
 
-end Output;
+end Screen_Output;
