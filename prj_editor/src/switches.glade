@@ -2091,6 +2091,12 @@ mixedcase
 	<class>GtkEntry</class>
 	<name>variable_name</name>
 	<can_focus>True</can_focus>
+	<signal>
+	  <name>changed</name>
+	  <handler>on_variable_name_changed</handler>
+	  <object>New_Variable_Editor</object>
+	  <last_modification_time>Thu, 24 May 2001 04:11:59 GMT</last_modification_time>
+	</signal>
 	<editable>True</editable>
 	<text_visible>True</text_visible>
 	<text_max_length>0</text_max_length>
@@ -2224,7 +2230,6 @@ mixedcase
 	    <widget>
 	      <class>GtkCombo</class>
 	      <name>list_env_variables</name>
-	      <sensitive>False</sensitive>
 	      <value_in_list>False</value_in_list>
 	      <ok_if_empty>True</ok_if_empty>
 	      <case_sensitive>False</case_sensitive>
@@ -2376,6 +2381,12 @@ mixedcase
 	      <class>GtkText</class>
 	      <name>enumeration_value</name>
 	      <can_focus>True</can_focus>
+	      <signal>
+		<name>changed</name>
+		<handler>on_enumeration_value_changed</handler>
+		<object>New_Variable_Editor</object>
+		<last_modification_time>Thu, 24 May 2001 04:12:14 GMT</last_modification_time>
+	      </signal>
 	      <editable>True</editable>
 	      <text></text>
 	    </widget>

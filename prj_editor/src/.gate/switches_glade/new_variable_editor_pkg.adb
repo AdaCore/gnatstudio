@@ -43,6 +43,9 @@ begin
    Set_Max_Length (New_Variable_Editor.Variable_Name, 0);
    Set_Text (New_Variable_Editor.Variable_Name, -"");
    Set_Visibility (New_Variable_Editor.Variable_Name, True);
+   Widget_Callback.Object_Connect
+     (New_Variable_Editor.Variable_Name, "changed",
+      Widget_Callback.To_Marshaller (On_Variable_Name_Changed'Access), New_Variable_Editor);
    Add (New_Variable_Editor.Name_Frame, New_Variable_Editor.Variable_Name);
 
    Gtk_New (New_Variable_Editor.Frame33, -"Importing");
@@ -103,7 +106,6 @@ begin
    String_List.Append (List_Env_Variables_Items, -"");
    Combo.Set_Popdown_Strings (New_Variable_Editor.List_Env_Variables, List_Env_Variables_Items);
    Free_String_List (List_Env_Variables_Items);
-   Set_Sensitive (New_Variable_Editor.List_Env_Variables, False);
    Attach (New_Variable_Editor.Environment_Table, New_Variable_Editor.List_Env_Variables, 1, 2, 1, 2,
      Expand or Fill, 0,
      0, 0);
@@ -156,6 +158,9 @@ begin
 
    Gtk_New (New_Variable_Editor.Enumeration_Value);
    Set_Editable (New_Variable_Editor.Enumeration_Value, True);
+   Widget_Callback.Object_Connect
+     (New_Variable_Editor.Enumeration_Value, "changed",
+      Widget_Callback.To_Marshaller (On_Enumeration_Value_Changed'Access), New_Variable_Editor);
    Add (New_Variable_Editor.Enumeration_Scrolled, New_Variable_Editor.Enumeration_Value);
 
    Gtk_New (New_Variable_Editor.Untyped_List_Variable, Vbox39_Group, -"Any list value authorized");

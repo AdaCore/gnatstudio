@@ -12,6 +12,17 @@ package body New_Variable_Editor_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
+   ------------------------------
+   -- On_Variable_Name_Changed --
+   ------------------------------
+
+   procedure On_Variable_Name_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Variable_Name_Changed;
+
    --------------------------------
    -- On_Get_Environment_Toggled --
    --------------------------------
@@ -33,6 +44,17 @@ package body New_Variable_Editor_Pkg.Callbacks is
    begin
       null;
    end On_Typed_Variable_Toggled;
+
+   ----------------------------------
+   -- On_Enumeration_Value_Changed --
+   ----------------------------------
+
+   procedure On_Enumeration_Value_Changed
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Enumeration_Value_Changed;
 
    --------------------
    -- On_Add_Clicked --
