@@ -145,6 +145,12 @@ package body Memory_View_Pkg.Callbacks is
       end case;
 
       return False;
+
+   exception
+      --  On windows, it seems that pressing the control key generates
+      --  an event for which Get_String is invalid
+      when Invalid_Field =>
+         return False;
    end On_View_Key_Press_Event;
 
    ---------------------
