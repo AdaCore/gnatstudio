@@ -948,7 +948,7 @@ package body Src_Editor_View is
          Top_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
          for Line in Top_Line .. Bottom_Line loop
-            GC := Get_Highlight_GC (Buffer, Line);
+            GC := Get_Highlight_GC (Buffer, Line, Context => Highlight_Editor);
 
             if GC /= null then
                Get_Line_Yrange (View, Iter, Line_Y, Line_Height);
@@ -2084,7 +2084,9 @@ package body Src_Editor_View is
          Info_Exists := False;
 
          for J in 1 .. Total_Lines loop
-            GC := Get_Highlight_GC (Src_Buffer, Buffer_Line_Type (J));
+            GC := Get_Highlight_GC
+              (Src_Buffer, Buffer_Line_Type (J),
+               Context => Highlight_Speedbar);
 
             if GC /= null then
                Draw_Rectangle

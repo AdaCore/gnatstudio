@@ -37,9 +37,12 @@ package Src_Editor_Module.Line_Highlighting is
 
    procedure Add_Category
      (Id    : String;
-      Color : Gdk_Color);
+      Color : Gdk_Color;
+      Mark_In_Speedbar : Boolean := False);
    --  Add a new category to the category cache.
    --  Update the Color of the category if it already exists.
+   --  If Mark_In_Speedbar is true, then a mark is added in the speedbar even
+   --  if we only highlight part of a line.
 
    function Lookup_Category (Id : String) return Natural;
    --  Return the index corresponding to Id.

@@ -2504,9 +2504,10 @@ package body Src_Editor_Box is
    procedure Add_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Id     : String) is
+      Id     : String;
+      Highlight_In : Highlight_Location_Array) is
    begin
-      Add_Line_Highlighting (Editor.Source_Buffer, Line, Id);
+      Add_Line_Highlighting (Editor.Source_Buffer, Line, Id, Highlight_In);
    end Add_Line_Highlighting;
 
    ------------------------------

@@ -260,7 +260,8 @@ package Src_Editor_Box is
    procedure Add_Line_Highlighting
      (Editor : access Source_Editor_Box_Record;
       Line   : Src_Editor_Buffer.Editable_Line_Type;
-      Id     : String);
+      Id     : String;
+      Highlight_In : Src_Editor_Buffer.Highlight_Location_Array);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
    --  If Line is 0, highlight all lines in file.

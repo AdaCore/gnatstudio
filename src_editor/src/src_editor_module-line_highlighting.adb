@@ -59,7 +59,8 @@ package body Src_Editor_Module.Line_Highlighting is
                Box := Source_Box (Get_Widget (Child));
                if Command = "highlight" then
                   Add_Line_Highlighting
-                    (Box.Editor, Editable_Line_Type (Line), Category);
+                    (Box.Editor, Editable_Line_Type (Line), Category,
+                     Highlight_In => (others => True));
                else
                   Remove_Line_Highlighting
                     (Box.Editor, Editable_Line_Type (Line), Category);
@@ -93,6 +94,8 @@ package body Src_Editor_Module.Line_Highlighting is
         or else Command = "unhighlight_range"
       then
          declare
+            Module_Id : constant Source_Editor_Module :=
+              Source_Editor_Module (Src_Editor_Module_Id);
             File      : constant Virtual_File  :=
               Create (Nth_Arg (Data, 1), Kernel);
             Category  : constant String  := Nth_Arg (Data, 2);
@@ -111,11 +114,26 @@ package body Src_Editor_Module.Line_Highlighting is
                     (Get_Buffer (Box.Editor), Category,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col);
+
+                  if Module_Id.Categories
+                    (Lookup_Category (Category)).Mark_In_Speedbar
+                  then
+                     Add_Line_Highlighting
+                       (Box.Editor, Editable_Line_Type (Line), Category,
+                        Highlight_In => (Highlight_Speedbar => True,
+                                         others             => False));
+                  end if;
                else
                   Highlight_Range
                     (Get_Buffer (Box.Editor), Category,
                      Editable_Line_Type (Line),
                      Start_Col, End_Col, Remove => True);
+                  if Module_Id.Categories
+                    (Lookup_Category (Category)).Mark_In_Speedbar
+                  then
+                     Remove_Line_Highlighting
+                       (Box.Editor, Editable_Line_Type (Line), Category);
+                  end if;
                end if;
             else
                Set_Error_Msg
@@ -132,7 +150,8 @@ package body Src_Editor_Module.Line_Highlighting is
 
    procedure Add_Category
      (Id    : String;
-      Color : Gdk_Color)
+      Color : Gdk_Color;
+      Mark_In_Speedbar : Boolean := False)
    is
       Module_Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
@@ -153,11 +172,12 @@ package body Src_Editor_Module.Line_Highlighting is
 
       if Module_Id.Categories = null then
          Module_Id.Categories := new Highlighting_Category_Array (1 .. 1);
-         Module_Id.Categories (1) :=
-           new Highlighting_Category_Record'(L  => Id'Length,
-                                             Id => Id,
-                                             GC => null,
-                                             Color => Color);
+         Module_Id.Categories (1) := new Highlighting_Category_Record'
+           (L  => Id'Length,
+            Id => Id,
+            GC => null,
+            Mark_In_Speedbar => Mark_In_Speedbar,
+            Color => Color);
 
       else
          A := new Highlighting_Category_Array
@@ -171,6 +191,7 @@ package body Src_Editor_Module.Line_Highlighting is
            (L  => Id'Length,
             Id => Id,
             GC => null,
+            Mark_In_Speedbar => Mark_In_Speedbar,
             Color => Color);
 
          Module_Id.Categories := A;

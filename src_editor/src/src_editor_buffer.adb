@@ -320,7 +320,8 @@ package body Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type;
       Id     : String;
-      Set    : Boolean);
+      Set    : Boolean;
+      Highlight_In : Highlight_Location_Array);
    --  Common function for [Add|Remove]_Line_Highlighting.
 
    procedure Register_Cursor_Timeout
@@ -4134,7 +4135,8 @@ package body Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record;
       Line   : Buffer_Line_Type;
       Id     : String;
-      Set    : Boolean)
+      Set    : Boolean;
+      Highlight_In : Highlight_Location_Array)
    is
       Category   : Natural;
       Last_Index : Natural;
@@ -4165,25 +4167,14 @@ package body Src_Editor_Buffer is
          --  If we are removing a highlight where no highlight is defined,
          --  we can exit immediately.
 
-         if not Set then
-            return;
-         end if;
-
-         Editor.Line_Data (Line).Enabled_Highlights :=
-           new Boolean_Array (1 .. Last_Index);
-         Editor.Line_Data (Line).Enabled_Highlights.all :=
-           (others   => False);
-         Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
-
          if Set then
+            Editor.Line_Data (Line).Enabled_Highlights :=
+              new Boolean_Array (1 .. Last_Index);
+            Editor.Line_Data (Line).Enabled_Highlights.all :=
+              (others   => False);
+            Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
             Editor.Line_Data (Line).Highlight_Category := Category;
-         else
-            --  ??? This is never reached
-            for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
-               if Editor.Line_Data (Line).Enabled_Highlights (J) then
-                  Editor.Line_Data (Line).Highlight_Category := J;
-               end if;
-            end loop;
+            Editor.Line_Data (Line).Highlight_In       := Highlight_In;
          end if;
 
          return;
@@ -4203,6 +4194,7 @@ package body Src_Editor_Buffer is
          end;
       end if;
 
+      Editor.Line_Data (Line).Highlight_In := Highlight_In;
       Editor.Line_Data (Line).Enabled_Highlights (Category) := Set;
 
       for J in Editor.Line_Data (Line).Enabled_Highlights'Range loop
@@ -4225,19 +4217,20 @@ package body Src_Editor_Buffer is
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Id     : String)
+      Id     : String;
+      Highlight_In : Highlight_Location_Array)
    is
       The_Line : Buffer_Line_Type;
    begin
       if Line = 0 then
          for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Id, True);
+            Set_Line_Highlighting (Editor, J, Id, True, Highlight_In);
          end loop;
       else
          The_Line := Get_Buffer_Line (Editor, Line);
 
          if The_Line /= 0 then
-            Set_Line_Highlighting (Editor, The_Line, Id, True);
+            Set_Line_Highlighting (Editor, The_Line, Id, True, Highlight_In);
          end if;
       end if;
 
@@ -4259,13 +4252,14 @@ package body Src_Editor_Buffer is
          Highlight_Range (Editor, Id, 0, 1, 1, True);
 
          for J in Editor.Line_Data'Range loop
-            Set_Line_Highlighting (Editor, J, Id, False);
+            Set_Line_Highlighting (Editor, J, Id, False, (others => False));
          end loop;
       else
          The_Line := Get_Buffer_Line (Editor, Line);
 
          if The_Line /= 0 then
-            Set_Line_Highlighting (Editor, The_Line, Id, False);
+            Set_Line_Highlighting
+              (Editor, The_Line, Id, False, (others => False));
          end if;
       end if;
 
@@ -4277,8 +4271,9 @@ package body Src_Editor_Buffer is
    ----------------------
 
    function Get_Highlight_GC
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Gdk_GC is
+     (Editor  : access Source_Buffer_Record;
+      Line    : Buffer_Line_Type;
+      Context : Highlight_Location) return Gdk_GC is
    begin
       if Line = 0 then
          return null;
@@ -4286,6 +4281,7 @@ package body Src_Editor_Buffer is
 
       if Editor.Line_Data /= null
         and then Line <= Editor.Line_Data'Last
+        and then Editor.Line_Data (Line).Highlight_In (Context)
       then
          return Get_GC (Editor.Line_Data (Line).Highlight_Category);
       end if;

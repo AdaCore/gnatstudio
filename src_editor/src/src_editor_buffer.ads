@@ -518,10 +518,16 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Natural;
    --  Return the size of the total column width, in pixels.
 
+   type Highlight_Location is (Highlight_Speedbar, Highlight_Editor);
+   type Highlight_Location_Array is array (Highlight_Location) of Boolean;
+   pragma Pack (Highlight_Location_Array);
+   --  The various locations where a highlight can be made visible
+
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
-      Id     : String);
+      Id     : String;
+      Highlight_In : Highlight_Location_Array);
    --  Enable the highlighting of Line using colors defined in category
    --  corresponding to Id.
    --  See Src_Editor_Box.Add_Line_Highlighting.
@@ -535,8 +541,9 @@ package Src_Editor_Buffer is
    --  See Src_Editor_Box.Remove_Line_Highlighting.
 
    function Get_Highlight_GC
-     (Editor : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Gdk_GC;
+     (Editor  : access Source_Buffer_Record;
+      Line    : Buffer_Line_Type;
+      Context : Highlight_Location) return Gdk_GC;
    pragma Inline (Get_Highlight_GC);
    --  Return the current highlighting for Line, or null if no highlighting
    --  is set.
@@ -787,9 +794,13 @@ private
       File_Line          : File_Line_Type;
       --  The corresponding line in the file corresponding to Buffer.
       --  0 if the line is not in the file.
+
+      Highlight_In : Highlight_Location_Array;
+      --  Where the highlighting should take place
    end record;
 
-   New_Line_Data : constant Line_Data_Record := (0, 0, null, null, 0);
+   New_Line_Data : constant Line_Data_Record :=
+     (0, 0, null, null, 0, (others => False));
 
    type Line_Data_Array is array (Buffer_Line_Type range <>) of
      Line_Data_Record;
