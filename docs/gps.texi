@@ -8175,7 +8175,7 @@ command line to keep it shorter. It is also used to define aliases between
 switches.
 
 It is easier to explain it through an example. Specifying the GNAT switch
-"-gnaty" is equivalent to specifying "-gnatyabcefhiklmnprst". This is in
+"-gnaty" is equivalent to specifying "-gnatya3bcefhiklmnprst". This is in
 fact a style check switch, with a number of default values. But it is also
 equivalent to decomposing it into several switches, as in "-gnatya",
 "-gnaty3", "-gnatyb",@dots{} With this information, GPS will try to keep the
@@ -8183,12 +8183,12 @@ command line length as short as possible, to keep it readable.
 
 Both these aspects are defined in a unique @code{<expansion>} tag, which
 accepts two attributes: @code{switch} is mandatory, and @code{alias} is
-optional. Alias contains the text "gnatyabcefhiklmnprst" in our example.
+optional. Alias contains the text "-gnaty3abcefhiklmnprst" in our example.
 
 It also accepts any number of @code{<entry>} children, each has a mandatory
 @code{switch} access. The set of all these children define the expanded
 equivalent of the switch. In our example, we need one @code{<entry>} child
-for "'gnaty3", one for "-gnatya",@dots{}.
+for "-gnaty3", one for "-gnatya",@dots{}.
 
 @end table
 
