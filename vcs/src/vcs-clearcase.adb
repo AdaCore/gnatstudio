@@ -462,7 +462,8 @@ package body VCS.ClearCase is
          "",
          Args,
          Command_Head,
-         Status_Output_Handler'Access);
+         Status_Output_Handler'Access,
+         -"ClearCase : Querying status");
 
       Enqueue (Rep.Queue, C);
 
@@ -719,7 +720,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkout_Handler'Access);
+                    Checkout_Handler'Access,
+                    -"ClearCase: Checking out");
 
             Free (Args);
             Free (Head);
@@ -829,7 +831,8 @@ package body VCS.ClearCase is
                "",
                Args,
                Head,
-               Checkin_Handler'Access);
+               Checkin_Handler'Access,
+               -"ClearCase: Checking in");
 
             Free (Args);
             Free (Head);
@@ -896,7 +899,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Null_List,
-                    Display_Handler'Access);
+                    Display_Handler'Access,
+                    -"ClearCase: Updating");
 
             Free (Args);
 
@@ -1111,7 +1115,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkout_Handler'Access);
+                    Checkout_Handler'Access,
+                    -"ClearCase: Checking out");
 
             Free (Args);
             Free (Head);
@@ -1134,7 +1139,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkout_Handler'Access);
+                    Checkout_Handler'Access,
+                    -"ClearCase: Making element");
 
             Free (Args);
             Free (Head);
@@ -1154,7 +1160,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkin_Handler'Access);
+                    Checkin_Handler'Access,
+                    -"ClearCase: Checking in");
 
             Free (Args);
             Free (Head);
@@ -1173,7 +1180,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkin_Handler'Access);
+                    Checkin_Handler'Access,
+                    -"ClearCase: Checking in");
 
             Free (Args);
             Free (Head);
@@ -1272,7 +1280,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkout_Handler'Access);
+                    Checkout_Handler'Access,
+                    -"ClearCase: Checking out");
 
             Free (Args);
             Free (Head);
@@ -1295,7 +1304,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Remove_Handler'Access);
+                    Remove_Handler'Access,
+                    -"ClearCase: Removing element");
 
             Free (Args);
             Free (Head);
@@ -1314,7 +1324,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Head,
-                    Checkin_Handler'Access);
+                    Checkin_Handler'Access,
+                    -"ClearCase: Checking in directory");
 
             Free (Args);
             Free (Head);
@@ -1375,7 +1386,8 @@ package body VCS.ClearCase is
                     "",
                     Args,
                     Null_List,
-                    Display_Handler'Access);
+                    Display_Handler'Access,
+                    -"ClearCase: Reverting");
 
             Free (Args);
 
@@ -1463,7 +1475,8 @@ package body VCS.ClearCase is
               "",
               Args,
               Head,
-              Diff_Handler'Access);
+              Diff_Handler'Access,
+              -"ClearCase: Querying differences");
 
       Free (Args);
       Free (Head);
@@ -1498,7 +1511,8 @@ package body VCS.ClearCase is
          Dir_Name (File),
          Args,
          Command_Head,
-         Text_Output_Handler'Access);
+         Text_Output_Handler'Access,
+         -"ClearCase: Querying revision history");
 
       Enqueue (Rep.Queue, C);
 
@@ -1538,7 +1552,8 @@ package body VCS.ClearCase is
          Dir_Name (File),
          Args,
          Command_Head,
-         Annotation_Output_Handler'Access);
+         Annotation_Output_Handler'Access,
+         -"ClearCase: Querying annotations");
 
       Enqueue (Rep.Queue, C);
 
