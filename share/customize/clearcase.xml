@@ -18,8 +18,8 @@
    <!-- ClearCase annotate -->
    <!------------------------>
 
-   <action name="clearcase_annotate" show-command="true" output="">
-      <shell>echo "Querying annotations for $1"</shell>
+   <action name="clearcase_annotate" show-command="true" output="none">
+      <shell output="">echo "Querying annotations for $1"</shell>
       <external>cleartool annotate -nheader -force -fmt "%Sd\\040%-16.16u\\040%-40.39Vn:" -out - "$1"</external>
       <shell>VCS.annotations_parse "Custom ClearCase" "$1" "%1"</shell>
    </action>
@@ -28,7 +28,7 @@
    <!-- ClearCase local status -->
    <!---------------------------->
 
-   <action name="clearcase_local_status" show-command="true" output="">
+   <action name="clearcase_local_status" show-command="true" output="none">
       <external>cleartool ls -short "$2-"</external>
       <shell>VCS.status_parse "Custom ClearCase" "%1" FALSE TRUE</shell>
    </action>
@@ -53,14 +53,25 @@
    <!-- ClearCase history -->
    <!----------------------->
 
-   <!--  ??? Must find a way to query whole history>
 
-   <action name="clearcase_history" show-command="true" output="">
-      <external>cleartool lshistory "$2"</external>
+   <action name="clearcase_history" show-command="true" output="none">
+      <external>cleartool lshistory "$1"</external>
       <shell>dump "%1" TRUE</shell>
       <shell>Editor.edit "%1"</shell>
       <shell>MDI.split_vertically TRUE</shell>
       <shell>delete "%2"</shell>
+   </action>
+
+   <action name="clearcase_history_rev" show-command="true" output="none">
+      <external>cleartool lshistory "$2"</external>
+      <shell>dump "%1" TRUE</shell>
+      <shell>Editor.edit "%1" 1</shell>
+      <shell>MDI.split_vertically TRUE</shell>
+      <shell>File "%3"</shell>
+      <shell>File.search_next %1 "$1"</shell>
+      <shell>FileLocation.line %1</shell>
+      <shell>Editor.edit "%6" %1</shell>
+      <shell>delete "%7"</shell>
    </action>
 
    <!---------------------->
@@ -177,7 +188,8 @@
       <open             action="clearcase_checkout"       label="Check out"/>
       <update           action="clearcase_update"         label="Update"/>
       <commit           action="clearcase_checkin"        label="Check in"/>
-      <history          action="clearcase_history"        label="Query revision history"/>
+      <history          action="clearcase_history"        label="View entire revision history"/>
+      <history_revision action="clearcase_history_rev"    label="View specific revision history"/>
       <annotate         action="clearcase_annotate"       label="Annotate"/>
       <add              action="clearcase_add"            label="Add"/>
       <remove           action="clearcase_remove"         label="Remove"/>
