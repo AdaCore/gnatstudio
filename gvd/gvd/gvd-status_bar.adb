@@ -43,14 +43,15 @@ package body Odd.Status_Bar is
    --  Delay (in ms) after which the current message is hidden
 
    package Status_Timeout is new Gtk.Main.Timeout (Odd_Status_Bar);
-   function Hide_Callback (Status : Odd_Status_Bar) Return Boolean;
+
+   function Hide_Callback (Status : Odd_Status_Bar) return Boolean;
    --  Function called to hide the current message.
 
    procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class);
    --  Called when the user pressed the arrow
 
-   function Button_Press (Widget : access Gtk_Widget_Record'Class)
-                         return Boolean;
+   function Button_Press
+     (Widget : access Gtk_Widget_Record'Class) return Boolean;
    --  Called when a mouse button is pressed and the history window is
    --  displayed.
 
@@ -123,7 +124,7 @@ package body Odd.Status_Bar is
    -- Hide_Callback --
    -------------------
 
-   function Hide_Callback (Status : Odd_Status_Bar) Return Boolean is
+   function Hide_Callback (Status : Odd_Status_Bar) return Boolean is
       Id : Message_Id;
    begin
       if not Status.Is_Blank then
@@ -140,8 +141,7 @@ package body Odd.Status_Bar is
    -- Arrow_Cb --
    --------------
 
-   procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class)
-   is
+   procedure Arrow_Cb (Widget : access Gtk_Widget_Record'Class) is
       Status  : Odd_Status_Bar := Odd_Status_Bar (Widget);
       X, Y    : Gint;
       Success : Boolean;
@@ -221,7 +221,7 @@ package body Odd.Status_Bar is
 
          Realize (Status.Historic_Win);
          Y := Y - Gint (Get_Allocation_Height (Status.Historic_Win));
-         Set_Uposition (Status.Historic_Win, X, Y);
+         Set_UPosition (Status.Historic_Win, X, Y);
 
          Show_All (Status.Historic_Win);
 
@@ -268,8 +268,8 @@ package body Odd.Status_Bar is
    -- Button_Press --
    ------------------
 
-   function Button_Press (Widget : access Gtk_Widget_Record'Class)
-                         return Boolean is
+   function Button_Press
+     (Widget : access Gtk_Widget_Record'Class) return Boolean is
    begin
       Hide_Historic (Odd_Status_Bar (Widget));
       return False;
