@@ -46,15 +46,15 @@ package body Refactoring is
    -------------------
 
    function Confirm_Files
-     (Kernel              : access Kernel_Handle_Record'Class;
-      No_LI_List          : File_Array;
-      Stale_LI_List       : File_Array) return Boolean
+     (Kernel        : access Kernel_Handle_Record'Class;
+      No_LI_List    : File_Array;
+      Stale_LI_List : File_Array) return Boolean
    is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       Label  : Gtk_Label;
-      pragma Unreferenced (Button);
       Result : Boolean;
+
    begin
       if No_LI_List'Length = 0 and then Stale_LI_List'Length = 0 then
          return True;
@@ -64,33 +64,39 @@ package body Refactoring is
                Title  => -"Missing cross-reference",
                Parent => Get_Main_Window (Kernel),
                Flags  => Destroy_With_Parent or Modal);
+      Set_Default_Size (Dialog, -1, 350);
 
       Gtk_New (Label,
-               -"Errors in cross-references. Continue refactoring anyway?");
+               -"Errors in cross-references. Execute refactoring anyway?");
       Set_Alignment (Label, 0.0, 0.0);
-      Set_Padding (Label, 0, 20);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
 
       if No_LI_List'Length /= 0 then
-         Gtk_New (Label, -"The following files might contain references"
-                  & " to the entity," & ASCII.LF
-                  & "but no cross-reference information was found for them");
+         Gtk_New
+           (Label,
+            (-"The following files might contain references to the entity,"
+            & ASCII.LF
+            & "but no cross-reference information was found for them"));
          Set_Alignment (Label, 0.0, 0.0);
-         Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+         Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
          Pack_Start (Get_Vbox (Dialog), Create_File_List (No_LI_List));
       end if;
 
       if Stale_LI_List'Length /= 0 then
-         Gtk_New (Label, -"The following files contain references to the"
-                  & " entity, but the" & ASCII.LF
-                  & "cross-reference information is not up-to-date and replace"
-                  & " will fail");
+         Gtk_New
+           (Label,
+            (-"The following files contain references to the entity, but the"
+             & ASCII.LF
+             & "cross-reference information is not up-to-date and replace"
+             & " will fail"));
          Set_Alignment (Label, 0.0, 0.0);
          Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
          Pack_Start (Get_Vbox (Dialog), Create_File_List (Stale_LI_List));
       end if;
 
-      Grab_Default (Add_Button (Dialog, Stock_Execute, Gtk_Response_OK));
+      Button := Add_Button (Dialog, Stock_Execute, Gtk_Response_OK);
+      Grab_Default (Button);
+      Grab_Focus (Button);
       Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
 
       Show_All (Dialog);
