@@ -132,33 +132,11 @@ package body Browsers.Projects is
       Project          : Prj.Tree.Project_Node_Id);
    --  Add to the browser all the projects that with Project.
 
-   --------------------------
-   -- Button_Click_On_Left --
-   --------------------------
-
-   procedure Button_Click_On_Left (Item : access Browser_Project_Vertex) is
-      It : constant Browser_Project_Vertex_Access :=
-        Browser_Project_Vertex_Access (Item);
-   begin
-      Examine_Ancestor_Project_Hierarchy
-        (Browser => Project_Browser (Get_Browser (It)),
-         Root_Project => Get_Project (Get_Kernel (Get_Browser (It))),
-         Project => Get_Project_From_Name (It.Name));
-   end Button_Click_On_Left;
-
-   ---------------------------
-   -- Button_Click_On_Right --
-   ---------------------------
-
-   procedure Button_Click_On_Right (Item : access Browser_Project_Vertex) is
-      It : constant Browser_Project_Vertex_Access :=
-        Browser_Project_Vertex_Access (Item);
-   begin
-      Examine_Project_Hierarchy
-        (Browser          => Project_Browser (Get_Browser (It)),
-         Project          => Get_Project_From_Name (It.Name),
-         Recursive        => False);
-   end Button_Click_On_Right;
+   procedure On_Examine_Prj_Hierarchy
+     (Item : access Arrow_Item_Record'Class);
+   procedure On_Examine_Ancestor_Hierarchy
+     (Item : access Arrow_Item_Record'Class);
+   --  Callbacks for the button in the title bar
 
    ------------------
    -- Find_Project --
@@ -188,23 +166,38 @@ package body Browsers.Projects is
      (Browser : access Project_Browser_Record'Class;
       Project : Project_Node_Id) return Browser_Project_Vertex_Access
    is
-      Name : constant Name_Id := Prj.Tree.Name_Of (Project);
-      V : Browser_Project_Vertex_Access := Find_Project (Browser, Name);
+      V : Browser_Project_Vertex_Access := Find_Project
+        (Browser, Prj.Tree.Name_Of (Project));
    begin
       if V = null then
-         V := new Browser_Project_Vertex;
-         Initialize
-           (V, Browser, Get_String (Name) & Prj.Project_File_Extension);
-         V.Name    := Name;
-
-         Set_Right_Arrow (V, First_With_Clause_Of (Project) /= Empty_Node);
-
+         Gtk_New (V, Browser, Project);
          Put (Get_Canvas (Browser), V);
          Refresh (V);
       end if;
 
       return V;
    end Add_Project_If_Not_Present;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (V       : out Browser_Project_Vertex_Access;
+      Browser : access Project_Browser_Record'Class;
+      Project : Project_Node_Id)
+   is
+      Name : constant Name_Id := Prj.Tree.Name_Of (Project);
+   begin
+      V := new Browser_Project_Vertex;
+      Initialize (V, Browser,
+                  Get_String (Name) & Prj.Project_File_Extension,
+                  On_Examine_Ancestor_Hierarchy'Access,
+                  On_Examine_Prj_Hierarchy'Access);
+      V.Name           := Name;
+      Set_Children_Shown
+        (V, First_With_Clause_Of (Project) = Empty_Node);
+   end Gtk_New;
 
    -------------------------------
    -- Examine_Project_Hierarchy --
@@ -233,13 +226,13 @@ package body Browsers.Projects is
          L           : Browser_Link;
          Dest        : Browser_Project_Vertex_Access;
       begin
-         Set_Right_Arrow (Src, False);
+         Set_Children_Shown (Src, True);
 
          --  If we are displaying the recursive hierarchy for the root project,
          --  we know that there won't be remaining ancestor projects, so we can
          --  make it clear for the user.
          if Recursive and then Project = Get_Project (Kernel) then
-            Set_Left_Arrow (Src, False);
+            Set_Parents_Shown (Src, True);
          end if;
 
          while With_Clause /= Empty_Node loop
@@ -251,14 +244,14 @@ package body Browsers.Projects is
                Add_Link (Get_Canvas (Browser), L, Src, Dest);
             end if;
 
-            if Recursive and then Get_Right_Arrow (Dest) then
+            if Recursive and then not Children_Shown (Dest) then
                Process_Project (Project_Node_Of (With_Clause), Dest);
             end if;
 
             With_Clause := Next_With_Clause_Of (With_Clause);
          end loop;
 
-         Refresh (Src);
+         Redraw_Title_Bar (Browser_Item (Src));
       end Process_Project;
 
       Src : Browser_Project_Vertex_Access;
@@ -321,7 +314,7 @@ package body Browsers.Projects is
       Push_State (Kernel, Busy);
 
       Dest := Add_Project_If_Not_Present (Browser, Project);
-      Set_Left_Arrow (Dest, False);
+      Set_Parents_Shown (Dest, True);
 
       while Current (Iter) /= No_Project loop
          With_Clause := First_With_Clause_Of (Current (Iter));
@@ -342,7 +335,7 @@ package body Browsers.Projects is
          Next (Iter);
       end loop;
 
-      Refresh (Dest);
+      Redraw_Title_Bar (Browser_Item (Dest));
 
       Layout (Browser, Force => False);
       Refresh_Canvas (Get_Canvas (Browser));
@@ -353,6 +346,42 @@ package body Browsers.Projects is
          Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Ancestor_Project_Hierarchy;
+
+   ---------------------
+   -- Resize_And_Draw --
+   ---------------------
+
+   procedure Resize_And_Draw
+     (Item                        : access Browser_Project_Vertex;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class)
+   is
+      --  Project : constant Project_Id :=
+      --        Get_Project_View_From_Name (Item.Name);
+      W, H    : Gint;
+   begin
+      --  Set_text (Layout, Project_Path (Project));
+      --  Get_Pixel_Size (Layout, W, H);
+
+      --  Just reserve a little bit of space so that there is something else
+      --  than the title bar
+      W := 0;
+      H := 10;
+
+      Resize_And_Draw
+        (Arrow_Item_Record (Item.all)'Access,
+         Gint'Max (Width, W + 2 * Margin), H + Height,
+         Width_Offset, Height_Offset, Xoffset, Yoffset, Layout);
+
+      --  Draw_Layout
+      --    (Drawable => Pixmap (Item),
+      --     GC       => Get_Black_GC (Get_Style (Get_Browser (Item))),
+      --     X        => Xoffset + Margin,
+      --     Y        => Yoffset,
+      --     Layout   => Layout);
+   end Resize_And_Draw;
 
    ------------------------------
    -- On_Examine_Prj_Hierarchy --
@@ -372,6 +401,35 @@ package body Browsers.Projects is
          (Project_Information (File_Selection_Context_Access (Context))),
          Recursive        => False);
    end On_Examine_Prj_Hierarchy;
+
+   ------------------------------
+   -- On_Examine_Prj_Hierarchy --
+   ------------------------------
+
+   procedure On_Examine_Prj_Hierarchy
+     (Item : access Arrow_Item_Record'Class) is
+   begin
+      Examine_Project_Hierarchy
+        (Project_Browser (Get_Browser (Item)),
+         Get_Project_From_Name (Browser_Project_Vertex_Access (Item).Name),
+         Recursive        => False);
+   end On_Examine_Prj_Hierarchy;
+
+   -----------------------------------
+   -- On_Examine_Ancestor_Hierarchy --
+   -----------------------------------
+
+   procedure On_Examine_Ancestor_Hierarchy
+     (Item : access Arrow_Item_Record'Class)
+   is
+      B : constant Project_Browser := Project_Browser (Get_Browser (Item));
+   begin
+      Examine_Ancestor_Project_Hierarchy
+        (Browser      => B,
+         Root_Project => Get_Project (Get_Kernel (B)),
+         Project      => Get_Project_From_Name
+         (Browser_Project_Vertex_Access (Item).Name));
+   end On_Examine_Ancestor_Hierarchy;
 
    -----------------------------------
    -- On_Examine_Full_Prj_Hierarchy --
@@ -441,7 +499,7 @@ package body Browsers.Projects is
            (Mitem, "activate",
             Context_Callback.To_Marshaller (On_Examine_Prj_Hierarchy'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Right_Arrow (Item));
+         Set_Sensitive (Mitem, not Children_Shown (Item));
 
          Gtk_New (Mitem, Label => (-"Examine recursive dependencies for ")
                   & Name);
@@ -462,7 +520,7 @@ package body Browsers.Projects is
             Context_Callback.To_Marshaller
               (On_Examine_Ancestor_From_Contextual'Access),
             Context);
-         Set_Sensitive (Mitem, Get_Left_Arrow (Item));
+         Set_Sensitive (Mitem, not Parents_Shown (Item));
       end if;
 
       return Context;

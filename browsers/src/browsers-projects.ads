@@ -21,15 +21,18 @@
 --  This package implements the project hierarchy browsers
 
 with Browsers.Canvas;
+with Glib;
 with Glide_Kernel;
 with Gdk.Event;
 with Gtk.Menu;
 with Types;
+with Prj.Tree;
+with Pango.Layout;
 
 package Browsers.Projects is
 
    type Browser_Project_Vertex is new
-     Browsers.Canvas.Text_Item_With_Arrows_Record with private;
+     Browsers.Canvas.Arrow_Item_Record with private;
    type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
 
    type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
@@ -48,16 +51,23 @@ package Browsers.Projects is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
 
-   procedure Button_Click_On_Left (Item : access Browser_Project_Vertex);
-   --  Handles button clicks on the left arrow.
-
-   procedure Button_Click_On_Right (Item : access Browser_Project_Vertex);
-   --  Handles button clicks on the right arrow.
-
 private
-   type Browser_Project_Vertex is new
-     Browsers.Canvas.Text_Item_With_Arrows_Record
-   with record
-      Name    : Types.Name_Id;
-   end record;
+   procedure Resize_And_Draw
+     (Item                        : access Browser_Project_Vertex;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   procedure Gtk_New
+     (V       : out Browser_Project_Vertex_Access;
+      Browser : access Project_Browser_Record'Class;
+      Project : Prj.Tree.Project_Node_Id);
+   --  Create a new project vertex
+
+   type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
+      record
+         Name    : Types.Name_Id;
+      end record;
 end Browsers.Projects;
