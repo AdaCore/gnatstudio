@@ -212,10 +212,6 @@ package body Src_Editor_View is
       Event : Gdk_Event) return Boolean;
    --  Callback for the "button_press_event"
 
-   procedure Save_Cursor_Position
-     (View : access Source_View_Record'Class);
-   --  Save the cursor position
-
    procedure Restore_Cursor_Position
      (View : access Source_View_Record'Class);
    --  Restore the stored cursor position
@@ -666,12 +662,14 @@ package body Src_Editor_View is
       User   : Source_View)
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
+
    begin
-      if Position_Set_Explicitely (Buffer)
-        or else User.Child = Get_Focus_Child (Get_MDI (User.Kernel))
-      then
+      --  If we have the focus and are setting the position, scroll to the
+      --  location
+
+      if User.Child = Get_Focus_Child (Get_MDI (User.Kernel)) then
          Save_Cursor_Position (User);
-         Scroll_To_Cursor_Location (User);
+         Scroll_To_Cursor_Location (User, Position_Set_Explicitely (Buffer));
       end if;
 
       --  If we are doing block highlighting, re-expose the entire view if the
@@ -1458,6 +1456,12 @@ package body Src_Editor_View is
       View.Scrolling := False;
 
       return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Connect_Expose;
 
    -------------

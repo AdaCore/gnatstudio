@@ -134,6 +134,10 @@ package Src_Editor_View is
       Child : MDI_Child);
    --  Inform View that it is being contained in Child.
 
+   procedure Save_Cursor_Position
+     (View : access Source_View_Record'Class);
+   --  Save the cursor position
+
 private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
