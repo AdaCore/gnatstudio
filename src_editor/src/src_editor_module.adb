@@ -1685,8 +1685,11 @@ package body Src_Editor_Module is
          when Action =>
             if Needs_To_Be_Saved (Box) then
                Save_To_File (Box, Success => Success);
+               return Success;
+            else
+               --  Nothing to do => success
+               return True;
             end if;
-            return Success;
       end case;
    end Save_Function;
 
