@@ -1073,7 +1073,14 @@ package body KeyManager_Module is
                           Get_String (Editor.Model, Child, Action_Column),
                         Accel_Key  => Key,
                         Accel_Mods => Modif,
-                        Replace => True);
+                        Replace    => True);
+                  else
+                     Change_Entry
+                       (Accel_Path =>
+                          Get_String (Editor.Model, Child, Action_Column),
+                        Accel_Key  => 0,
+                        Accel_Mods => 0,
+                        Replace    => True);
                   end if;
                end;
                Next (Editor.Model, Child);
