@@ -41,7 +41,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ---------------------------------
 
    procedure On_Open_Core_Dump1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -52,7 +52,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------
 
    procedure On_Open_Source1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -63,7 +63,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Open_Session1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -74,7 +74,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ----------------------------------
 
    procedure On_Save_Session_As1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -85,7 +85,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------
 
    procedure On_Attach_To_Process1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -96,7 +96,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ---------------------------------
 
    procedure On_Detach_Process1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -107,7 +107,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------
 
    procedure On_Print_Graph1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -118,29 +118,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------------------
 
    procedure On_Change_Directory1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
    end On_Change_Directory1_Activate;
-
-   -----------------------
-   -- On_Make1_Activate --
-   -----------------------
-
-   procedure On_Make1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Make1_Activate;
 
    ------------------------
    -- On_Close1_Activate --
    ------------------------
 
    procedure On_Close1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -151,7 +140,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --------------------------
 
    procedure On_Restart1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -272,7 +261,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -------------------------------
 
    procedure On_Gdb_Settings1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -288,17 +277,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Save_Options1_Activate;
-
-   -------------------------------
-   -- On_Command_Tool1_Activate --
-   -------------------------------
-
-   procedure On_Command_Tool1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Command_Tool1_Activate;
 
    -----------------------------------
    -- On_Execution_Window1_Activate --
@@ -393,7 +371,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    ------------------------------------------
 
    procedure On_Run_In_Execution_Window1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
@@ -729,17 +707,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Down1_Activate;
 
-   -----------------------------------
-   -- On_Edit_Breakpoints1_Activate --
-   -----------------------------------
-
-   procedure On_Edit_Breakpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Edit_Breakpoints1_Activate;
-
    --------------------------
    -- On_Lookup_1_Activate --
    --------------------------
@@ -838,6 +805,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Reload_Source1_Activate;
+
+   -----------------------------------
+   -- On_Edit_Breakpoints1_Activate --
+   -----------------------------------
+
+   procedure On_Edit_Breakpoints1_Activate
+     (Object : access Gtk_Menu_Item_Record'Class)
+   is
+   begin
+      null;
+   end On_Edit_Breakpoints1_Activate;
 
    --------------------------------
    -- On_Edit_Displays1_Activate --

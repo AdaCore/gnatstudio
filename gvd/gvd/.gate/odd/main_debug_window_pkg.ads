@@ -39,7 +39,6 @@ package Main_Debug_Window_Pkg is
       Separator3 : Gtk_Menu_Item;
       Print_Graph1 : Gtk_Menu_Item;
       Change_Directory1 : Gtk_Menu_Item;
-      Make1 : Gtk_Menu_Item;
       Separator4 : Gtk_Menu_Item;
       Close1 : Gtk_Menu_Item;
       Restart1 : Gtk_Menu_Item;
@@ -63,7 +62,6 @@ package Main_Debug_Window_Pkg is
       Save_Options1 : Gtk_Menu_Item;
       View1 : Gtk_Menu_Item;
       View1_Menu : Gtk_Menu;
-      Command_Tool1 : Gtk_Menu_Item;
       Execution_Window1 : Gtk_Menu_Item;
       Separator9 : Gtk_Menu_Item;
       Gdb_Console1 : Gtk_Check_Menu_Item;
@@ -122,8 +120,6 @@ package Main_Debug_Window_Pkg is
       Down1 : Gtk_Menu_Item;
       Source1 : Gtk_Menu_Item;
       Source1_Menu : Gtk_Menu;
-      Edit_Breakpoints1 : Gtk_Menu_Item;
-      Separator20 : Gtk_Menu_Item;
       Lookup_1 : Gtk_Menu_Item;
       Find_1 : Gtk_Menu_Item;
       Find_2 : Gtk_Menu_Item;
@@ -138,6 +134,7 @@ package Main_Debug_Window_Pkg is
       Reload_Source1 : Gtk_Menu_Item;
       Data1 : Gtk_Menu_Item;
       Data1_Menu : Gtk_Menu;
+      Edit_Breakpoints1 : Gtk_Menu_Item;
       Edit_Displays1 : Gtk_Menu_Item;
       Edit_Watchpoints1 : Gtk_Menu_Item;
       Examine_Memory1 : Gtk_Menu_Item;

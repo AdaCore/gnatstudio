@@ -116,9 +116,9 @@ begin
    Free_String_List (Combo3_Items);
 
    Breakpoints.Combo_Entry3 := Get_Entry (Breakpoints.Combo3);
-   Set_Editable (Breakpoints.Combo_Entry3, True);
+   Set_Editable (Breakpoints.Combo_Entry3, False);
    Set_Max_Length (Breakpoints.Combo_Entry3, 0);
-   Set_Text (Breakpoints.Combo_Entry3, -"written");
+   Set_Text (Breakpoints.Combo_Entry3, -"read");
    Set_Visibility (Breakpoints.Combo_Entry3, True);
 
    Gtk_New (Breakpoints.Watchpoint, -("WatchPoint"));
