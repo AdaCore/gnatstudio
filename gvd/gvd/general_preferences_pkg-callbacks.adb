@@ -20,7 +20,7 @@
 
 with Gtk.Widget; use Gtk.Widget;
 
-package body Odd_Preferences_Pkg.Callbacks is
+package body General_Preferences_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
@@ -71,4 +71,4 @@ package body Odd_Preferences_Pkg.Callbacks is
       null;
    end On_Help_Button_Clicked;
 
-end Odd_Preferences_Pkg.Callbacks;
+end General_Preferences_Pkg.Callbacks;
