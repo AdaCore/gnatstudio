@@ -508,13 +508,13 @@ package Entities is
    --  Note that for case insensitive languages, the identifier names must be
    --  storer in lower cases in the LI structure.
 
-   procedure Parse_All_LI_Information
-     (Handler         : access LI_Handler_Record;
-      Project         : Projects.Project_Type;
-      In_Directory    : String := "") is abstract;
+   function Parse_All_LI_Information
+     (Handler   : access LI_Handler_Record;
+      Project   : Projects.Project_Type;
+      Recursive : Boolean := False) return Integer is abstract;
    --  Parse all the existing LI information for all the files in Project.
-   --  The search is limited to files in In_Directory if this isn't the
-   --  empty string. This should be called only after Generate_LI_For_Project.
+   --  This should be called only after Generate_LI_For_Project.
+   --  Return the number of files parsed.
 
    function Generate_LI_For_Project
      (Handler   : access LI_Handler_Record;
