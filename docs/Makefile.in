@@ -10,7 +10,7 @@ INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 IMAGES = gps_title.jpg
 
-TEXI2HTML_FLAGS=--split chapter -menu
+TEXI2HTML_FLAGS=-split_chapter -menu
 
 all: doc tutorial clean-temp-files
 non-ps: common clean-temp-files
