@@ -40,6 +40,10 @@ package body Layouts is
    Min_Horizontal_Dist : constant Natural := 30;
    --  Minimum distance between two nodes on the same layer.
 
+   Layer_Align : constant Float := 0.0;
+   --  Alignment of items in each layer. This should be a number between 0.0
+   --  (0%) and 1.0 (100%)
+
    type Natural_Array is array (Natural range <>) of Natural;
 
    type Node_Matrix is array (Natural range <>, Natural range <>)
@@ -628,8 +632,9 @@ package body Layouts is
             Current_Y := Current_Y + Min_Vertical_Dist + Max_Height / 2;
 
             for C in 0 .. Num_Per_Line (R) - 1 loop
-               Y (Get_Index (Lines (R, C))) :=
-                 Current_Y - Height (Lines (R, C), Vertical_Layout) / 2;
+               Y (Get_Index (Lines (R, C))) := Current_Y
+                 - Natural (Layer_Align *
+                         Float (Height (Lines (R, C), Vertical_Layout)));
             end loop;
 
             Current_Y := Current_Y + Max_Height / 2;
@@ -749,8 +754,9 @@ package body Layouts is
               - Width (Lines (Row, Column), Vertical_Layout);
          end loop;
 
-         Min_D (Row) := Integer'Max
-           (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
+         --  Min_D (Row) := Integer'Max
+         --    (Min_Dist, Min_D (Row) / Num_Per_Line (Row));
+         Min_D (Row) := Min_Dist;
       end loop;
 
 
@@ -962,34 +968,6 @@ package body Layouts is
          end if;
          Next (Iter);
       end loop;
-
-      --  Debug traces, to compare with the layout provided by dot. Will be
-      --  removed eventually.
-
-      --  declare
-      --     Iter : Edge_Iterator := First (Graph);
-      --     E    : Edge_Access;
-      --     File : File_Type;
-      --  begin
-      --     Create (File, Out_File, "layout.dot");
-
-      --     Put_Line (File, "digraph layouts {");
-      --     Put_Line (File, "   rankdir=LR;");
-      --     Put_Line (File, "   node [shape=box];");
-
-
-      --     while not At_End (Iter) loop
-      --        E := Get (Iter);
-      --        Put_Line (File, Natural'Image (Get_Index (Get_Src (E)))
-      --                  & " ->"
-      --                  & Natural'Image (Get_Index (Get_Dest (E)))
-      --                  & ";");
-      --        Next (Iter);
-      --     end loop;
-
-      --     Put_Line (File, "}");
-      --     Close (File);
-      --  end;
 
    end Layer_Layout;
 
