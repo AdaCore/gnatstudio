@@ -21,6 +21,7 @@
 --  This package contains a series of subprograms that can be used
 --  for misc. graphical tasks.
 
+with Glib;
 with Gdk.Event;
 with Gdk.Window;
 with Gtk.Combo;
@@ -29,6 +30,7 @@ with Gtk.List;
 with Gtk.Menu;
 with Gtk.Handlers;
 with Gtk.Widget;
+with Gtk.Clist;
 
 package GUI_Utils is
 
@@ -64,6 +66,14 @@ package GUI_Utils is
    --  Propagate the expose event Event to all the NO_WINDOW children of
    --  Container. You must call this when Container has a specific expose
    --  callback.
+
+   function Find_First_Row_Matching
+     (Clist  : access Gtk.Clist.Gtk_Clist_Record'Class;
+      Column : Glib.Gint;
+      Text   : String) return Glib.Gint;
+   --  Return the index of the first row that contains Text in the column
+   --  Column.
+   --  -1 is returned if no such row was found.
 
    ----------------------
    -- Contextual menus --

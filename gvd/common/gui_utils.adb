@@ -26,6 +26,7 @@ with Gdk.Types;     use Gdk.Types;
 pragma Warnings (On);
 with Gdk.Event;     use Gdk.Event;
 with Gdk.Window;    use Gdk.Window;
+with Gtk.Clist;     use Gtk.Clist;
 with Gtk.Combo;     use Gtk.Combo;
 with Gtk.Container; use Gtk.Container;
 with Gtk.GEntry;    use Gtk.GEntry;
@@ -155,6 +156,27 @@ package body GUI_Utils is
 
       Free (Children);
    end Propagate_Expose_Event;
+
+   -----------------------------
+   -- Find_First_Row_Matching --
+   -----------------------------
+
+   function Find_First_Row_Matching
+     (Clist  : access Gtk.Clist.Gtk_Clist_Record'Class;
+      Column : Gint;
+      Text   : String) return Gint
+   is
+      Row : Gint := 0;
+      Max : constant Gint := Get_Rows (Clist);
+   begin
+      while Row < Max loop
+         if Get_Text (Clist, Row, Column) = Text then
+            return Row;
+         end if;
+         Row := Row + 1;
+      end loop;
+      return -1;
+   end Find_First_Row_Matching;
 
    ---------------------
    -- Set_Busy_Cursor --
