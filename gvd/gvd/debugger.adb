@@ -32,8 +32,6 @@ with Ada.Unchecked_Deallocation;
 with Glib;              use Glib;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
-with Gdk.Input;
-with Gdk.Types;
 with Gtkada.Types;      use Gtkada.Types;
 
 with Odd_Intl;          use Odd_Intl;
@@ -56,7 +54,11 @@ package body Debugger is
 
    use String_History;
 
-   package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
+   Timeout : constant Guint32 := 50;
+   --  Timeout in millisecond to check input from the underlying debugger.
+   --  <preferences>
+
+   package Debugger_Timeout is new Gtk.Main.Timeout (Debugger_Process_Tab);
 
    ---------------------
    -- Local Functions --
@@ -64,11 +66,8 @@ package body Debugger is
 
    function To_Gint is new Ada.Unchecked_Conversion (File_Descriptor, Gint);
 
-   procedure Output_Available
-     (Process   : My_Input.Data_Access;
-      Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition);
-   --  Called whenever some output becomes available from the debugger.
+   function Output_Available (Process : Debugger_Process_Tab) return Boolean;
+   --  Called when waiting output from the debugger.
    --  This procedure is activated to handle asynchronous commands.
    --  All it does is read all the available data and call the filters
    --  that were set for the debugger, until a prompt is found.
@@ -360,12 +359,7 @@ package body Debugger is
    -- Output_Available --
    ----------------------
 
-   procedure Output_Available
-     (Process   : My_Input.Data_Access;
-      Source    : Gint;
-      Condition : Gdk.Types.Gdk_Input_Condition)
-   is
-      pragma Unreferenced (Source, Condition);
+   function Output_Available (Process : Debugger_Process_Tab) return Boolean is
       Debugger : constant Debugger_Access := Process.Debugger;
    begin
       --  Get everything that is available (and transparently call the
@@ -376,9 +370,9 @@ package body Debugger is
       --  output. We don't have to do that anyway, since the other Wait will
       --  indirectly call the output filter.
 
-      if Wait_Prompt (Debugger, Timeout => 0) then
-         Gdk.Input.Remove (Process.Input_Id);
-         Process.Input_Id := 0;
+      if Wait_Prompt (Debugger, Timeout => 1) then
+         Timeout_Remove (Process.Timeout_Id);
+         Process.Timeout_Id := 0;
 
          --  Put back the standard cursor
 
@@ -404,7 +398,7 @@ package body Debugger is
                --  ??? register if needed for
                --  executable_changed/context_changed/process_stopped
                --  before returning
-               return;
+               return False;
             end if;
 
             Set_Command_In_Process (Get_Process (Debugger));
@@ -440,6 +434,11 @@ package body Debugger is
 
             Result := Process_Command (Debugger);
          end;
+
+         return False;
+
+      else
+         return True;
       end if;
 
    exception
@@ -447,13 +446,14 @@ package body Debugger is
          --  Will close the debugger in GVD.Process when getting this
          --  exception the next time.
 
-         Gdk.Input.Remove (Process.Input_Id);
-         Process.Input_Id := 0;
+         Timeout_Remove (Process.Timeout_Id);
+         Process.Timeout_Id := 0;
          Debugger.Processing_User_Command := False;
          Set_Command_In_Process (Get_Process (Debugger), False);
          Set_Busy (Process, False);
          Free (Process.Current_Command);
          Unregister_Dialog (Process);
+         return False;
    end Output_Available;
 
    -----------------------
@@ -627,15 +627,10 @@ package body Debugger is
                         Process.Current_Command :=
                           new String' (Cmd (First .. Last - 1));
 
-                        pragma Assert (Process.Input_Id = 0);
+                        pragma Assert (Process.Timeout_Id = 0);
 
-                        Process.Input_Id := My_Input.Add
-                          (To_Gint
-                           (Get_Output_Fd
-                            (Get_Descriptor (Get_Process (Debugger)).all)),
-                           Gdk.Types.Input_Read,
-                           Output_Available'Access,
-                           My_Input.Data_Access (Process));
+                        Process.Timeout_Id := Debugger_Timeout.Add
+                          (Timeout, Output_Available'Access, Process);
                      end if;
                   end if;
             end case;
