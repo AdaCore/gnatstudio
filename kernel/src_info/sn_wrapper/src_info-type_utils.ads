@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                              G P S                                --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with DB_API; use DB_API;
 with HTables;
 
@@ -5,7 +25,7 @@ with SN; use SN;
 with GNAT.OS_Lib;
 with SN.DB_Structures; use SN.DB_Structures;
 
-private package Src_Info.Type_Utils is
+package Src_Info.Type_Utils is
 
    --  This package is private because it is using some declarations
    --  which are in the private section of Src_Info. This package is
@@ -23,19 +43,18 @@ private package Src_Info.Type_Utils is
    --  type for the chain of typedefs. Must be called after processing
    --  of each file.
 
-   type CType_Description is
-      record
-         Kind              : E_Kind;
-         IsVolatile        : Boolean := False;
-         IsConst           : Boolean := False;
-         IsTemplate        : Boolean := False;
-         Parent_Point      : Point   := Invalid_Point;
-         Parent_Filename   : GNAT.OS_Lib.String_Access;
-         Ancestor_Point    : Point   := Invalid_Point;
-         Ancestor_Filename : GNAT.OS_Lib.String_Access;
-         Builtin_Name      : GNAT.OS_Lib.String_Access;
-         Is_Typedef        : Boolean := False;
-      end record;
+   type CType_Description is record
+      Kind              : E_Kind;
+      IsVolatile        : Boolean := False;
+      IsConst           : Boolean := False;
+      IsTemplate        : Boolean := False;
+      Parent_Point      : Point   := Invalid_Point;
+      Parent_Filename   : GNAT.OS_Lib.String_Access;
+      Ancestor_Point    : Point   := Invalid_Point;
+      Ancestor_Filename : GNAT.OS_Lib.String_Access;
+      Builtin_Name      : GNAT.OS_Lib.String_Access;
+      Is_Typedef        : Boolean := False;
+   end record;
    --  Contains C type description. Used in these procedures:
    --    Type_Name_To_Kind
    --    Original_Type
@@ -60,7 +79,7 @@ private package Src_Info.Type_Utils is
    --  type for array that maps E_Kind type entities into
    --  object entities
 
-   Type_To_Object : Type_To_Object_Array :=
+   Type_To_Object : constant Type_To_Object_Array :=
      (Access_Type               => Access_Object,
       Array_Type                => Array_Object,
       Boolean_Type              => Boolean_Object,
