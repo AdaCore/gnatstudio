@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- DA07-011 GPS.Locations.parse can now specify the highlighting colors to use
+  in the editor (similar to what is done for standard build failures)
+
 - Relative paths in Project View: use absolute paths if the only common part
   of the path is the root directory of the file system
 
