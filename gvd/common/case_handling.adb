@@ -131,8 +131,7 @@ package body Case_Handling is
    is
       procedure Set_Substring_Exception
         (Word   : in out String;
-         L_Word : String;
-         Found  : out Boolean);
+         L_Word : String);
       --  Apply substring exception to word if possible and set Found to true
       --  in this case.
 
@@ -142,8 +141,7 @@ package body Case_Handling is
 
       procedure Set_Substring_Exception
         (Word   : in out String;
-         L_Word : String;
-         Found  : out Boolean)
+         L_Word : String)
       is
          procedure Apply (Substring : String);
          --  Check if a substring exception exists for this substring and
@@ -160,14 +158,11 @@ package body Case_Handling is
 
             if N.Word /= null then
                Word (Substring'Range) := N.Word.all;
-               Found := True;
             end if;
          end Apply;
 
          First : Natural;
       begin
-         Found := False;
-
          First := L_Word'First - 1;
 
          --  Look for all substring in this word
@@ -207,22 +202,7 @@ package body Case_Handling is
       end if;
 
       if N.Word = null then
-         --  No case exception for this word, or case exceptions feature
-         --  not activated. Check now for substring exceptions.
-
-         if C.S /= null then
-            declare
-               Found : Boolean;
-            begin
-               Set_Substring_Exception (Word, L_Word, Found);
-               if Found then
-                  --  Some substring exceptions have been found, return now
-                  return;
-               end if;
-            end;
-         end if;
-
-         --  No casing exceptions found, apply standard rules
+         --  No case exception for this word, apply standard rules
 
          case Casing is
             when Unchanged =>
@@ -242,6 +222,12 @@ package body Case_Handling is
             when Smart_Mixed =>
                Smart_Mixed_Case (Word);
          end case;
+
+         --  Check now for substring exceptions
+
+         if C.S /= null then
+            Set_Substring_Exception (Word, L_Word);
+         end if;
 
       else
          --  We have found a case exception
