@@ -433,19 +433,33 @@ package body Debugger.Gdb is
 
    procedure Start
      (Debugger : access Gdb_Debugger;
-      Display  : Boolean := False) is
+      Display  : Boolean := False)
+   is
+      Cmd   : String := Start (Get_Language (Debugger));
+      First : Positive;
+      Last  : Positive := Cmd'First;
    begin
-      --  ??? This should be disabled for C mode. Maybe we should directly
-      --  disable the begin button ?
+      if Cmd /= "" then
+         while Last <= Cmd'Last loop
+            First := Last;
+            while Last <= Cmd'Last
+              and then Cmd (Last) /= ASCII.LF
+            loop
+               Last := Last + 1;
+            end loop;
 
-      if Display then
-         Text_Output_Handler
-           (Convert (Debugger.Window, Debugger),
-            "begin" & ASCII.LF, True);
-         Append (Convert (Debugger.Window, Debugger).Command_History, "begin");
+            if Display then
+               Text_Output_Handler
+                 (Convert (Debugger.Window, Debugger),
+                  Cmd (First .. Last - 1) & ASCII.LF, True);
+               Append (Convert (Debugger.Window, Debugger).Command_History,
+                       Cmd (First .. Last - 1));
+            end if;
+            Send (Debugger, Cmd (First .. Last - 1));
+            Wait_Prompt (Debugger);
+            Last := Last + 1;
+         end loop;
       end if;
-      Send (Debugger, "begin");
-      Wait_Prompt (Debugger);
    end Start;
 
    ---------------
