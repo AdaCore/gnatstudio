@@ -215,7 +215,7 @@ package body Odd.Dialogs.Callbacks is
 
       --  This dialog is destroyed, not simply hidden, since it has to
       --  be recreated from scratch every time anyway.
-      Destroy (Dialog);
+      Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
    end On_Question_List_Select_Row;
 
    -------------------------------
@@ -233,7 +233,7 @@ package body Odd.Dialogs.Callbacks is
       Interrupt (Dialog.Debugger);
 
       --  Destroy the dialog, since we will have to recreate it anyway.
-      Destroy (Dialog);
+      Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
    end On_Question_Close_Clicked;
 
 end Odd.Dialogs.Callbacks;

@@ -29,6 +29,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Interfaces.C;    use Interfaces.C;
 with Interfaces.C.Strings;
 with Odd.Types;       use Odd.Types;
+with Odd.Process;     use Odd.Process;
 
 package body Odd.Dialogs is
 
@@ -293,6 +294,8 @@ package body Odd.Dialogs is
         + Optimal_Column_Width (Question_Dialog.List, 1)
         + 20;
       Set_Default_Size (Question_Dialog, Gint'Min (Width, 500), 200);
+
+      Register_Dialog (Convert (Main_Window, Debugger), Question_Dialog);
    end Initialize;
 
    ----------
