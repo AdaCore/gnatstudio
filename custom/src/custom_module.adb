@@ -138,8 +138,6 @@ package body Custom_Module is
                         Add_Consequence_Action (Command, Command_Access (C));
                      end if;
                   end;
-
-
                end if;
 
                Current_Child := Current_Child.Next;
