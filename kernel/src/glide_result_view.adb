@@ -1051,7 +1051,7 @@ package body Glide_Result_View is
 
             Path := Get_Path (Model, Iter);
             Select_Path (Get_Selection (View.Tree), Path);
-            Scroll_To_Cell (View.Tree, Path, null, True, 0.1, 0.1);
+            Scroll_To_Cell (View.Tree, Path, null, False, 0.1, 0.1);
             Path_Free (Path);
 
             if not Quiet
