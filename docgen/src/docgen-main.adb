@@ -40,8 +40,7 @@ with Docgen.ALI_Utils;          use Docgen.ALI_Utils;
 with Glide_Intl;                use Glide_Intl;
 with Src_Info;                  use Src_Info;
 with Language_Handlers;         use Language_Handlers;
-with Prj.Tree;                  use Prj.Tree;
-with Prj;                       use Prj;
+with Projects.Registry;         use Projects, Projects.Registry;
 
 procedure Docgen.Main is
 
@@ -53,10 +52,10 @@ procedure Docgen.Main is
    Source_File_List   : Type_Source_File_List.List;
    Prj_File_Name      : String_Access;
    Handler            : Language_Handler;
-   Project_Tree       : Project_Node_Id;
-   Project_View       : Project_Id;
+   Project            : Project_Type;
    Source_Info_List   : Src_Info.LI_File_List;
    Options            : All_Options;
+   Registry           : aliased Project_Registry;
 
    procedure Handle_Command_Line
      (Quit : out Boolean);
@@ -110,7 +109,7 @@ procedure Docgen.Main is
                   Prj_File_Name := new String'(S);
                   Options.Project_Name :=
                     new String'(File_Name_Without_Suffix (S));
-                  Load_Project (S, Handler, Project_Tree, Project_View);
+                  Load_Project (S, Registry, Project);
                else
                   raise Project_Not_First;
                end if;
@@ -139,8 +138,7 @@ procedure Docgen.Main is
                   Options.Doc_Directory := new String '(S (10 .. S'Last));
             elsif S'Length > 5 and then Is_Spec_File (S) then
                Load_LI_File
-                    (Source_Info_List, Handler, Project_View,
-                     S, LI_Unit);
+                 (Source_Info_List, Handler, Registry, S, LI_Unit);
                Source_File_Node.File_Name := new String'(S);
                Source_File_Node.Prj_File_Name := Prj_File_Name;
                Source_File_Node.Package_Name :=
@@ -209,8 +207,7 @@ procedure Docgen.Main is
                Put_Line (-"Adding file: " & New_Filename.all);
             end if;
             Load_LI_File
-              (Source_Info_List, Handler, Project_View,
-               New_Filename.all, LI_Unit);
+              (Source_Info_List, Handler, Registry, New_Filename.all, LI_Unit);
             New_Node.File_Name         :=
               new String'(New_Filename.all);
             New_Node.Prj_File_Name     :=
@@ -254,7 +251,7 @@ procedure Docgen.Main is
 begin --  DocGen
 
    --  get the language handler
-   Handler := Create_Lang_Handler;
+   Handler := Create_Lang_Handler (Registry'Unchecked_Access);
    --  get Project_Tree and Project_View
    Reset (Source_Info_List);
    --  the project is loaded in Command Line, as soon as the project
@@ -295,9 +292,9 @@ begin --  DocGen
 
       --  Process all files listed or all files from the project file
       Process_Files (Source_File_List,
+                     Registry,
                      Handler,
-                     Project_Tree,
-                     Project_View,
+                     Project,
                      Source_Info_List,
                      Options);
 

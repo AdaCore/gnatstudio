@@ -31,8 +31,9 @@ with Src_Info.CPP;            use Src_Info.CPP;
 with Traces;                  use Traces;
 with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Prj_API;                 use Prj_API;
 with Glide_Intl;              use Glide_Intl;
+with Projects;                use Projects;
+with Ada.Exceptions;          use Ada.Exceptions;
 
 package body Cpp_Module is
 
@@ -60,7 +61,7 @@ package body Cpp_Module is
       Handler : constant Glide_Language_Handler := Glide_Language_Handler
         (Get_Language_Handler (Kernel));
    begin
-      if Object_Path (Get_Project_View (Kernel), False) = "" then
+      if Object_Path (Get_Project (Kernel), False) = "" then
          Insert (Kernel,
                  -("The root project must have an object directory set, or"
                    & " C/C++ browsing is disabled"), Mode => Error);
@@ -69,7 +70,7 @@ package body Cpp_Module is
       Reset
         (CPP_LI_Handler
          (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
-         Get_Project_View (Kernel));
+         Get_Project (Kernel));
 
    exception
       when E : others =>
@@ -179,6 +180,10 @@ package body Cpp_Module is
          "OBJECT->member(",
          "\b(\w+)\s*->\s*\w+\s*\(");
 
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception in Register_Module: "
+                & Exception_Information (E));
    end Register_Module;
 
 end Cpp_Module;

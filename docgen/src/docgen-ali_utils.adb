@@ -19,17 +19,11 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;          use Ada.Text_IO;
-with Output;               use Output;
-with Prj;                  use Prj;
-with Prj.Part;             use Prj.Part;
-with Prj.Proc;             use Prj.Proc;
-with Prj.Tree;             use Prj.Tree;
-with Prj_API;              use Prj_API;
+with Projects.Registry;    use Projects, Projects.Registry;
 with Src_Info;             use Src_Info;
 with Src_Info.ALI;         use Src_Info.ALI;
 with Language_Handlers;       use Language_Handlers;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Docgen.ALI_Utils is
 
@@ -57,46 +51,26 @@ package body Docgen.ALI_Utils is
 
    procedure Load_Project
      (Name : String;
-      Handler      : access Language_Handlers.Language_Handler_Record'Class;
-      Project_Tree : out Project_Node_Id;
-      Project_View : out Project_Id)
+      Registry     : in out Project_Registry'Class;
+      Project      : out Project_Type)
    is
       procedure Report_Error (S : String);
-      procedure Report_Error_Project
-        (S       : String;
-         Project : Project_Id);
-      --  Output error messages from the project parser to the glide console.
-
-      ------------------
-      -- Report_Error --
-      ------------------
 
       procedure Report_Error (S : String) is
       begin
          Put_Line ("**Error**: " & S);
       end Report_Error;
 
-      procedure Report_Error_Project
-        (S       : String;
-         Project : Project_Id)
-      is
-         pragma Unreferenced (Project);
-      begin
-         Put_Line ("**Error**: " & S);
-      end Report_Error_Project;
-
+      New_Project_Loaded : Boolean;
    begin
-      Output.Set_Special_Output (Report_Error'Unrestricted_Access);
-      Prj.Part.Parse (Project_Tree, Name, True);
-      Prj.Proc.Process (Project_View, Project_Tree,
-                        Report_Error_Project'Unrestricted_Access);
+      Load (Registry, Name, Report_Error'Unrestricted_Access,
+            New_Project_Loaded);
+      Project := Get_Root_Project (Registry);
 
-      if Project_View = Prj.No_Project then
+      if Project = No_Project then
          Put_Line ("*** Error loading project file '" & Name & "'");
          return;
       end if;
-
-      Set_Project_View (Glide_Language_Handler (Handler), Project_View);
    end Load_Project;
 
    ------------------
@@ -106,26 +80,20 @@ package body Docgen.ALI_Utils is
    procedure Load_LI_File
      (Source_Info_List : in out Src_Info.LI_File_List;
       Handler          : Language_Handlers.Language_Handler;
-      Project_View     : Prj.Project_Id;
+      Registry         : Project_Registry'Class;
       Source_Filename  : String;
       LI               : out Src_Info.LI_File_Ptr)
    is
-      File_Project : Project_Id;
+      File_Project : constant Project_Type :=
+        Get_Project_From_File (Registry, Source_Filename);
    begin
       --  This code is extracted from Locate_From_Source_And_Complete
-
-      LI := Locate_From_Source (Source_Info_List, Source_Filename);
-      File_Project := Get_Project_From_File
-        (Project_View, Base_Name (Source_Filename));
-
-      if File_Project = Prj.No_Project then
-         return;
-      end if;
+      LI := No_LI_File;
 
       --  Create and parse the LI file
       Create_Or_Complete_LI
         (Handler                => Get_LI_Handler_From_File
-           (Glide_Language_Handler (Handler), Source_Filename, File_Project),
+           (Glide_Language_Handler (Handler), Source_Filename),
          File                   => LI,
          Source_Filename        => Source_Filename,
          List                   => Source_Info_List,
@@ -138,7 +106,10 @@ package body Docgen.ALI_Utils is
    -- Create_Lang_Handler --
    -------------------------
 
-   function Create_Lang_Handler return Language_Handlers.Language_Handler is
+   function Create_Lang_Handler
+     (Registry : access Project_Registry'Class)
+      return Language_Handlers.Language_Handler
+   is
       Handler : Glide_Language_Handler;
    begin
       Gtk_New (Handler);
@@ -152,6 +123,9 @@ package body Docgen.ALI_Utils is
          LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");
+
+      Set_Registry (Handler, Registry);
+
       return Language_Handler (Handler);
    end Create_Lang_Handler;
 

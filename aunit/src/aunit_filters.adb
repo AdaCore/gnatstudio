@@ -20,7 +20,7 @@
 
 with String_Utils;              use String_Utils;
 with Ada.Text_IO;               use Ada.Text_IO;
-with Prj;                       use Prj;
+with Projects;                  use Projects;
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with String_Utils; use String_Utils;

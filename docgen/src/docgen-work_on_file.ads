@@ -35,8 +35,7 @@
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
+with Projects.Registry;         use Projects.Registry;
 with Src_Info;                  use Src_Info;
 with Language_Handlers;         use Language_Handlers;
 
@@ -44,9 +43,9 @@ package Docgen.Work_On_File is
 
    procedure Process_Files
      (Source_File_List   : in out Type_Source_File_List.List;
+      Registry           : Projects.Registry.Project_Registry'Class;
       Handler            : in out Language_Handler;
-      Project_Tree       : in out Project_Node_Id;
-      Project_View       : in out Project_Id;
+      Project            : in out Projects.Project_Type;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Options            : All_Options);
    --  process all files, by creating the index lists of the type
@@ -57,6 +56,7 @@ private
 
    procedure Process_One_File
      (Doc_File           : File_Type;
+      Registry           : Projects.Registry.Project_Registry'Class;
       Source_Filename    : String;
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
@@ -64,8 +64,7 @@ private
       Source_File_List   : in out Type_Source_File_List.List;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Handler            : in out Language_Handler;
-      Project_Tree       : in out Project_Node_Id;
-      Project_View       : in out Project_Id;
+      Project            : in out Projects.Project_Type;
       Options            : All_Options;
       Process_Body_File  : Boolean);
    --  called by Process_Files for each file from the given list

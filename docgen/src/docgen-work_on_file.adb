@@ -22,8 +22,7 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Src_Info.Queries;          use Src_Info.Queries;
-with Prj;                       use Prj;
-with Prj.Tree;                  use Prj.Tree;
+with Projects;                  use Projects;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Language_Handlers;         use Language_Handlers;
@@ -51,9 +50,9 @@ package body Docgen.Work_On_File is
 
    procedure Process_Files
      (Source_File_List   : in out Type_Source_File_List.List;
+      Registry           : Projects.Registry.Project_Registry'Class;
       Handler            : in out Language_Handler;
-      Project_Tree       : in out Project_Node_Id;
-      Project_View       : in out Project_Id;
+      Project            : in out Project_Type;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Options            : All_Options)
    is
@@ -165,6 +164,7 @@ package body Docgen.Work_On_File is
 
          Process_One_File
            (Doc_File,
+            Registry,
             TSFL.Data (Source_File_Node).File_Name.all,
             TSFL.Data (Source_File_Node).Package_Name.all,
             Next_Package,
@@ -172,8 +172,7 @@ package body Docgen.Work_On_File is
             Source_File_List,
             Source_Info_List,
             Handler,
-            Project_Tree,
-            Project_View,
+            Project,
             Options,
             Options.Process_Body_Files and then
               TSFL.Data (Source_File_Node).Other_File_Found);
@@ -206,6 +205,7 @@ package body Docgen.Work_On_File is
 
    procedure Process_One_File
      (Doc_File           : File_Type;
+      Registry           : Projects.Registry.Project_Registry'Class;
       Source_Filename    : String;
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
@@ -213,8 +213,7 @@ package body Docgen.Work_On_File is
       Source_File_List   : in out Type_Source_File_List.List;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Handler            : in out Language_Handler;
-      Project_Tree       : in out Project_Node_Id;
-      Project_View       : in out Project_Id;
+      Project            : in out Project_Type;
       Options            : All_Options;
       Process_Body_File  : Boolean)
    is
@@ -325,11 +324,9 @@ package body Docgen.Work_On_File is
             Get_Declaration_Line_Of (Info),
             Get_Declaration_Column_Of (Info),
             Get_LI_Handler_From_File
-              (Glide_Language_Handler (Handler),
-               Source_Filename,
-               Project_View),
+              (Glide_Language_Handler (Handler), Source_Filename),
             Source_Info_List,
-            Project_View,
+            Project,
             "",
             "",
             Local_Location,
@@ -508,12 +505,12 @@ package body Docgen.Work_On_File is
          then
             Entity_Node.Line_In_Body := Search_Line_In_Body (Info);
             Find_All_References
-              (Project_Tree,
+              (Project,
                Handler,
                Info,
                Source_Info_List,
                Reference_Iter,
-               Project_View,
+               Project,
                True);
 
             --  1. Find all subprograms called in the subprogram processed
@@ -620,7 +617,7 @@ package body Docgen.Work_On_File is
 
    begin
       Load_LI_File
-        (Source_Info_List, Handler, Project_View,
+        (Source_Info_List, Handler, Registry,
          File_Name (Source_Filename),
          LI_Unit);
 
