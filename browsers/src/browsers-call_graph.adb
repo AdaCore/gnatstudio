@@ -799,7 +799,10 @@ package body Browsers.Call_Graph is
          return False;
 
       else
-         Add_Item (Get (Data.Iter.all));
+         if Get (Data.Iter.all) /= No_Entity_Reference then
+            Add_Item (Get (Data.Iter.all));
+         end if;
+
          Next (Data.Iter.all);
          return True;
       end if;
