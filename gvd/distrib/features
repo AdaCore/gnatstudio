@@ -1,9 +1,5 @@
 New features in GVD 2.0.0
 
-- [BA14-013] Provide a busy indication while debugger is spawned
-  Bring up the GVD main window and set a busy cursor before spawning
-  the debugger to provide some feedback to the user
-
 - Support for C++ methods in the file explorer.
 - A new multiple document interface (MDI) is provided.
 - Preferences handling has changed, and the old preferences file is no
