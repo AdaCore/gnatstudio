@@ -1,4 +1,4 @@
-New features in GVD 1.0.3
+New features in GVD 1.1.0
 
 - New command line option: --pargs to set program arguments on the command line
 - New command line option: --dargs to specify additional debugger arguments.
