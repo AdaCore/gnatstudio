@@ -29,6 +29,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Glib;              use Glib;
+with Glib.Object;       use Glib.Object;
 with Glib.Convert;
 with Gtk.Main;          use Gtk.Main;
 with Gtk.Window;        use Gtk.Window;
@@ -48,6 +49,8 @@ with Basic_Types;       use Basic_Types;
 with GVD.Main_Window;   use GVD.Main_Window;
 
 with Gtkada.Dialogs;    use Gtkada.Dialogs;
+with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
+with GVD.Code_Editors; use GVD.Code_Editors;
 
 package body Debugger is
 
@@ -551,6 +554,11 @@ package body Debugger is
       if Debugger.Window /= null then
          Process := GVD.Process.Convert (Debugger.Window, Debugger);
 
+         if Mode /= Internal then
+            Unhighlight_Current_Line
+              (Get_Source (Process.Editor_Text), GObject (Process));
+         end if;
+
          if Mode >= Visible then
             Set_Busy (Process);
          end if;
@@ -858,6 +866,12 @@ package body Debugger is
       Is_Started : Boolean) is
    begin
       Debugger.Is_Started := Is_Started;
+
+      --  ???
+      --  if not Is_Started then
+      --     reset call stack
+      --     reset task/thread windows
+      --  end if;
    end Set_Is_Started;
 
    ------------------
