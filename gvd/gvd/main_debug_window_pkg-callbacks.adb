@@ -127,7 +127,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Print_Message
               (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
                Error,
-               " Could not find file : " & S);
+               (-" Could not find file: ") & S);
          end if;
       end;
    end On_Open_Program1_Activate;
@@ -169,8 +169,28 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Core_Dump1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
+      declare
+         S : constant String :=
+           To_Unix_Pathname (File_Selection_Dialog ("Select Core File"));
+      begin
+         if Tab.Descriptor.Remote_Host /= null
+           or else Is_Regular_File (S)
+         then
+            Load_Core_File (Tab.Debugger, S, Mode => Hidden);
+         else
+            Print_Message
+              (Main_Debug_Window_Access (Get_Toplevel (Object)).Statusbar1,
+               Error, -(" Could not find core file: ") & S);
+         end if;
+      end;
    end On_Open_Core_Dump1_Activate;
 
    ------------------------------
@@ -271,7 +291,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top         : constant Main_Debug_Window_Access :=
+      Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
    begin
       Open_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
@@ -284,7 +304,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Save_Session_As1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top         : constant Main_Debug_Window_Access :=
+      Top : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
    begin
       Save_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
