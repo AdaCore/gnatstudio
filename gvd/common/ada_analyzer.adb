@@ -618,6 +618,7 @@ package body Ada_Analyzer is
       Comments_Skipped    : Boolean           := False;
       Token               : Token_Type;
       Prev_Token          : Token_Type        := No_Token;
+      Prev_Prev_Token     : Token_Type        := No_Token;
       Tokens              : Token_Stack.Simple_Stack;
       Indents             : Indent_Stack.Stack.Simple_Stack;
       Top_Token           : Token_Stack.Generic_Type_Access;
@@ -1652,7 +1653,9 @@ package body Ada_Analyzer is
            or else ((Top_Token.Token = Tok_Exception
                      or else Top_Token.Token = Tok_Case
                      or else Top_Token.Token = Tok_Select)
-                    and then Reserved = Tok_When)
+                    and then Reserved = Tok_When
+                    and then Prev_Token /= Tok_Exit
+                    and then Prev_Prev_Token /= Tok_Exit)
            or else (Top_Token.Declaration
                     and then Reserved = Tok_Private
                     and then
@@ -2911,8 +2914,9 @@ package body Ada_Analyzer is
             Compute_Indentation (Token, Prev_Token, Prec, Num_Spaces);
          end if;
 
-         Prec       := Current + 1;
-         Prev_Token := Token;
+         Prec            := Current + 1;
+         Prev_Prev_Token := Prev_Token;
+         Prev_Token      := Token;
 
          exit Main_Loop when Prec > Buffer_Last;
 
