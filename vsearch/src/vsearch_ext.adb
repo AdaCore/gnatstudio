@@ -70,6 +70,7 @@ with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 
 with Traces; use Traces;
+with VFS;
 
 with Commands;              use Commands;
 with Commands.Generic_Asynchronous;
@@ -221,6 +222,7 @@ package body Vsearch_Ext is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when a new customization in parsed
@@ -1573,10 +1575,11 @@ package body Vsearch_Ext is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Level);
+      pragma Unreferenced (Level, File);
       N : Node_Ptr := Node;
       Patt, Name : Node_Ptr;
    begin

@@ -384,6 +384,7 @@ package body Project_Viewers is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when a new customization in parsed
@@ -3669,10 +3670,11 @@ package body Project_Viewers is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Level);
+      pragma Unreferenced (Level, File);
       N : Node_Ptr := Node;
       N2, Child : Node_Ptr;
       Creator : XML_Switches;

@@ -355,6 +355,7 @@ package body KeyManager_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when new customization files are parsed
@@ -1889,10 +1890,11 @@ package body KeyManager_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Level);
+      pragma Unreferenced (Level, File);
       N : Node_Ptr := Node;
    begin
       while N /= null loop

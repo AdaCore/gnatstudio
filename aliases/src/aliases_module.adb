@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -81,6 +81,8 @@ with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with Commands.Interactive;     use Commands, Commands.Interactive;
+
+with VFS;                      use VFS;
 
 package body Aliases_Module is
 
@@ -346,6 +348,7 @@ package body Aliases_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    procedure Customize
@@ -2028,8 +2031,11 @@ package body Aliases_Module is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
-      Level  : Customization_Level) is
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (File);
    begin
       Customize (Kernel, Node, Level, Read_Only => True);
    end Customize;
