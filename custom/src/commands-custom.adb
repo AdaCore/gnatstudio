@@ -208,6 +208,10 @@ package body Commands.Custom is
                  or else Command.Args (J).all = "%P"
                then
                   New_Args (Last) := new String'(Project_Name (Project));
+               elsif Command.Args (J).all = "%pp"
+                 or else Command.Args (J).all = "%PP"
+               then
+                  New_Args (Last) := new String'(Project_Path (Project));
                else
                   Recurse := (Command.Args (J).all
                               (Command.Args (J)'First + 2) = 'r');
