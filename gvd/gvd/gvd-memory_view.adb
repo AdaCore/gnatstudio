@@ -20,13 +20,9 @@
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Strings.Maps;         use Ada.Strings.Maps;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with GNAT.OS_Lib;
-
-pragma Warnings (Off);
-with System.Img_BIU;           use System.Img_BIU;
---  used for Set_Image_Based_Integer
---  ??? Consider using Ada.Integer_Text_IO instead
-pragma Warnings (On);
 
 with Glib;             use Glib;
 
@@ -51,9 +47,24 @@ with Odd.Preferences; use Odd.Preferences;
 
 package body Odd.Memory_View is
 
+   --------------------
+   -- Local packages --
+   --------------------
+
+   package Long_Int_IO is new Ada.Text_IO.Integer_IO (Long_Long_Integer);
+   use Long_Int_IO;
+
    ---------------------
    -- Local constants --
    ---------------------
+
+   Address_Length    : constant Integer := 16;
+   Address_Separator : constant String := ": ";
+   Data_Separator    : constant String := " ";
+   End_Of_Line       : constant String := ASCII.CR & ASCII.LF;
+   Hex_Header        : constant String := "16#";
+   Scrollbar_Size    : constant Integer := 25;
+   Column_Base_Num   : constant Integer := 16;
 
    View_Font      : Gdk_Font;
    View_Color     : Gdk_Color;
@@ -97,13 +108,21 @@ package body Odd.Memory_View is
      (View     : Odd_Memory_View;
       Position : Gint) return Boolean
    is
-      Row    : Integer;
-      Column : Integer;
+      Row_Length : Integer;
+      Row        : Integer;
+      Column     : Integer;
    begin
-      Row := Integer (Position) /
-        (View.Number_Of_Columns * (View.Trunc + 1) + 20);
-      Column := Integer (Position) -
-        Row * (View.Number_Of_Columns * (View.Trunc + 1) + 20) - 18;
+      Row_Length := (Address_Length
+                     + Address_Separator'Length
+                     + (View.Number_Of_Columns
+                        * (View.Trunc + Data_Separator'Length))
+                     + End_Of_Line'Length);
+
+      Row := Integer (Position) / Row_Length;
+
+      Column := Integer (Position)
+        - Row * Row_Length
+        - (Address_Length + Address_Separator'Length);
 
       if (Column / (View.Trunc + 1) mod 2) = 1 then
          return True;
@@ -120,19 +139,28 @@ package body Odd.Memory_View is
      (View     : in Odd_Memory_View;
       Position : in Gint) return Integer
    is
-      Row    : Integer;
-      Column : Integer;
-      Unit   : Integer;
+      Row_Length : Integer;
+      Row        : Integer;
+      Column     : Integer;
+      Unit       : Integer;
 
    begin
-      Row := Integer (Position) /
-        (View.Number_Of_Columns * (View.Trunc + 1) + 20);
-      Column := Integer (Position) -
-        Row * (View.Number_Of_Columns * (View.Trunc + 1) + 20) - 18;
-      Unit := Column / (View.Trunc + 1) +
+      Row_Length := (Address_Length
+                     + Address_Separator'Length
+                     + (View.Number_Of_Columns
+                        * (View.Trunc + Data_Separator'Length))
+                     + End_Of_Line'Length);
+
+      Row := Integer (Position) / Row_Length;
+
+      Column := Integer (Position)
+        - Row * Row_Length
+        - (Address_Length + Address_Separator'Length);
+
+      Unit := Column / (View.Trunc + Data_Separator'Length) +
         Row * View.Number_Of_Columns;
 
-      return Unit * View.Unit_Size + 1;
+      return (Unit + 1) * View.Unit_Size;
    end Position_To_Index;
 
    ----------------
@@ -183,7 +211,7 @@ package body Odd.Memory_View is
                   if Value > 31 and then Value < 128 then
                      Result (J) := Character'Val (Value);
                   else
-                     Result (J) := 'x';
+                     Result (J) := '.';
                   end if;
                end loop;
 
@@ -234,40 +262,23 @@ package body Odd.Memory_View is
       Base     : Integer;
       Trunc_At : Integer := -1) return String
    is
-      Address_Buffer   : String (1 .. 40);
-      Offset_Buffer    : String (1 .. 40);
-      Offset_Last      : Natural;
-      Address_Last     : Natural;
-      Offset_Index     : Natural;
-      Address_Index    : Natural;
-      Dummy            : Long_Long_Integer := Long_Long_Integer (Base ** 7);
-
+      Index   : Integer := 1;
+      Result  : String (1 .. 64);
+      Mapping : Character_Mapping := To_Mapping ("ABCDEF ", "abcdef0");
    begin
-      Offset_Last := 1;
-      Set_Image_Based_Integer
-        (Integer (Address mod Dummy + Dummy),
-         Base, 20, Offset_Buffer, Offset_Last);
-      Offset_Index := 10;
-      Skip_Blanks (Offset_Buffer (10 .. Offset_Last), Offset_Index);
-
-      Address_Last := 1;
-      Set_Image_Based_Integer
-        (Integer (Address / Dummy + Dummy),
-         Base, 20, Address_Buffer, Address_Last);
-      Address_Index := 10;
-      Skip_Blanks (Offset_Buffer (10 .. Address_Last), Address_Index);
-
+      Put (Result, Address, Base);
+      Skip_To_String (Result, Index, "#");
+      if Index > 3
+        and then Index < Result'Length + 1
+      then
+         Result (Index - 3 .. Index) := "    ";
+      end if;
       if Trunc_At = -1 then
-         return Address_Buffer (Address_Index + 4 .. Address_Last - 1) &
-           Offset_Buffer (Offset_Index + 4 .. Offset_Last - 1);
-
-      elsif Trunc_At <= Offset_Last - 5 - Offset_Index then
-         return Offset_Buffer (Offset_Last - Trunc_At .. Offset_Last - 1);
+         return (Translate (Result (1 .. Result'Length - 1), Mapping));
       else
-         return Address_Buffer
-           (Address_Last - (Trunc_At - (Offset_Last - 5 - Offset_Index)) ..
-            Address_Last - 1) &
-           Offset_Buffer (Offset_Index + 4 .. Offset_Last - 1);
+         return (Translate
+                 (Result (Result'Last - Trunc_At .. Result'Last - 1),
+                  Mapping));
       end if;
    end To_Standard_Base;
 
@@ -320,8 +331,17 @@ package body Odd.Memory_View is
       Get_Size (Get_Text_Area (View.View), Width, Height);
 
       View.Number_Of_Columns :=
-        Integer ((Width / Char_Width (View_Font, Character' ('m')) - 30)) /
-          (View.Trunc + 1);
+        Integer ((Width / Char_Width (View_Font, Character' ('m'))
+                  - Gint (Scrollbar_Size)))
+        / (View.Trunc + Data_Separator'Length);
+
+      if View.Number_Of_Columns < Column_Base_Num * 2 / View.Unit_Size then
+         View.Number_Of_Columns := Column_Base_Num * 2 / View.Unit_Size;
+      else
+         View.Number_Of_Columns := View.Number_Of_Columns
+           - (View.Number_Of_Columns mod (Column_Base_Num * 2
+                                          / View.Unit_Size));
+      end if;
 
       Freeze (View.View);
       Clear_View (View);
@@ -332,8 +352,8 @@ package body Odd.Memory_View is
          Fore  => View_Color,
          Back  => Highlighted,
          Font  => View_Font,
-         Chars => "0x" & To_Standard_Base (View.Starting_Address, 16) & ":");
-      Insert (View.View, Font  => View_Font, Chars => " ");
+         Chars => To_Standard_Base (View.Starting_Address, 16,
+                                    Address_Length) & Address_Separator);
 
       while Index + View.Unit_Size - 1 <= View.Number_Of_Bytes * 2 loop
          if Count mod 2 = 0 then
@@ -373,7 +393,8 @@ package body Odd.Memory_View is
             Font  => View_Font,
             Fore  => Foreground,
             Back  => Background,
-            Chars => " ");
+            Chars => Data_Separator);
+
          Count := Count + 1;
 
          if ((Index + View.Unit_Size) / View.Unit_Size
@@ -388,14 +409,11 @@ package body Odd.Memory_View is
                Back => Highlighted,
                Font => View_Font,
                Chars =>
-                 "0x" & To_Standard_Base
-                          (View.Starting_Address
-                           + Long_Long_Integer
-                           ((Index + View.Unit_Size) / 2), 16) & ":");
-            Insert
-              (View.View,
-               Font  => View_Font,
-               Chars => " ");
+                 To_Standard_Base
+               (View.Starting_Address
+                + Long_Long_Integer
+                ((Index + View.Unit_Size) / 2), 16, Address_Length)
+               & Address_Separator);
          end if;
 
          Index := Index + View.Unit_Size;
@@ -439,9 +457,14 @@ package body Odd.Memory_View is
 
    procedure Display_Memory (View : Odd_Memory_View; Address : String) is
    begin
-      Display_Memory
-        (View,
-         Long_Long_Integer'Value ("16#" & Address (3 .. Address'Last) & "#"));
+      if Address'Length > 2
+        and then Address (1 .. 2) = "0x"
+      then
+         Display_Memory
+           (View,
+            Long_Long_Integer'Value
+            (Hex_Header & Address (3 .. Address'Last) & "#"));
+      end if;
    end Display_Memory;
 
    -------------------
@@ -466,18 +489,20 @@ package body Odd.Memory_View is
         (Interactive_Canvas (Get_Current_Process (View.Window).Data_Canvas));
    end Apply_Changes;
 
-   ------------------------
-   -- Create_Memory_View --
-   ------------------------
+   -------------
+   -- Gtk_New --
+   -------------
 
-   function Create_Memory_View (Window : Gtk_Widget) return Odd_Memory_View is
-      View : Odd_Memory_View;
+   procedure Gtk_New
+     (View   : out Odd_Memory_View;
+      Window : in Gtk_Widget) is
    begin
       View := new Odd_Memory_View_Record;
       Initialize (View);
+      Init_Graphics (Get_Window (Window));
       View.Window := Window;
-      return View;
-   end Create_Memory_View;
+      Set_Line_Wrap (View.View, False);
+   end Gtk_New;
 
    -------------
    -- Page_Up --
@@ -517,6 +542,7 @@ package body Odd.Memory_View is
       else
          Set_Label (View.Frame, "(no executable)");
       end if;
+      Display_Memory (View, View.Starting_Address);
    end Update;
 
    -----------------
@@ -532,15 +558,33 @@ package body Odd.Memory_View is
    begin
       case Where is
          when Right =>
-            if Get_Chars (View.View, Position + 1, Position + 2) = " " then
-               Move := 1;
+            if Position > Gint (Get_Length (View.View)) - 3 then
+               Move := -1;
+            else
+               if Get_Chars (View.View, Position + 1, Position + 2) = " " then
+                  Move := 1;
+               end if;
+               if Get_Chars
+                 (View.View, Position + 2, Position + 3) (1) = ASCII.CR
+               then
+                  Move := 21;
+               end if;
             end if;
 
          when Left =>
             if Get_Chars (View.View, Position - 1, Position) = " " then
-               Move := -1;
+               if Position_To_Index (View, Position)
+                 mod View.Number_Of_Columns = 1
+               then
+                  if Position_To_Index (View, Position) = 1 then
+                     Move := 1;
+                  else
+                     Move := -21;
+                  end if;
+               else
+                  Move := -1;
+               end if;
             end if;
-
          when others =>
             null;
       end case;
@@ -568,9 +612,10 @@ package body Odd.Memory_View is
       View.Cursor_Position := Get_Position (View.View);
       View.Cursor_Index := Position_To_Index (View, View.Cursor_Position);
 
-      if Get_Chars (View.View,
-                    Get_Position (View.View),
-                    Get_Position (View.View) + 1) = "-"
+      if Get_Position (View.View) > Gint (Get_Length (View.View) - 2)
+        or else Get_Chars (View.View,
+                           Get_Position (View.View),
+                           Get_Position (View.View) + 1) = "-"
       then
          return;
       end if;
@@ -607,7 +652,7 @@ package body Odd.Memory_View is
       declare
          Index      : Integer := 1;
          Next_Index : Integer := 1;
-         Current    : String (1 .. 2 * View.Trunc + 2);
+         Current    : String (1 .. 2 * (View.Trunc + Data_Separator'Length));
 
       begin
          --  Insert new char.
@@ -623,9 +668,9 @@ package body Odd.Memory_View is
 
          Current := Get_Chars (View.View,
                                Get_Position (View.View)
-                               - Gint (View.Trunc) - 1,
+                               - Gint (View.Trunc) - 2,
                                Get_Position (View.View)
-                               + Gint (View.Trunc) + 1);
+                               + Gint (View.Trunc));
          Skip_To_String (Current, Index, " ");
          Next_Index := Index + 1;
          Skip_To_String (Current, Next_Index, " ");
