@@ -1149,8 +1149,7 @@ package body Src_Info.CPP is
       Compute_Sources
         (Iterator,
          Project,
-         False, -- no recursion
-         Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
+         Recursive => False);
 
       --  If there is at least one source file, make sure the database
       --  directory exists.
@@ -1172,6 +1171,7 @@ package body Src_Info.CPP is
             File : constant Virtual_File := Current_Source_File (Iterator);
             Pool : constant Xref_Pool := Get_Xref_Pool
               (Iterator.Handler.Prj_HTable, DB_Dir);
+            Lang : Name_Id;
 
          begin
             exit when File = VFS.No_File;
@@ -1181,30 +1181,34 @@ package body Src_Info.CPP is
             --  1. Its xref file is invalid (just created)
             --  2. Source is newer than xref file
 
-            Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
+            Lang := Get_Language_From_File
+              (Project_Registry (Get_Registry (Project)), File);
+            if Lang = Name_C or else Lang = Name_C_Plus_Plus then
+               Xref_File_Name := Xref_Filename_For (File, DB_Dir, Pool);
 
-            if not Is_Xref_Valid (File, Pool)
-              or else File_Time_Stamp (File) >
-                File_Time_Stamp (Xref_File_Name)
-            then
-               Num_Source_Files := Num_Source_Files + 1;
+               if not Is_Xref_Valid (File, Pool)
+                 or else File_Time_Stamp (File) >
+                 File_Time_Stamp (Xref_File_Name)
+               then
+                  Num_Source_Files := Num_Source_Files + 1;
 
-               Set_Valid (File, True, Pool);
+                  Set_Valid (File, True, Pool);
 
-               --  Remove the current xref file if it exists, since
-               --  cbrowser opens it in append mode.
+                  --  Remove the current xref file if it exists, since
+                  --  cbrowser opens it in append mode.
 
-               if Is_Regular_File (Xref_File_Name) then
-                  Delete (Xref_File_Name);
+                  if Is_Regular_File (Xref_File_Name) then
+                     Delete (Xref_File_Name);
+                  end if;
+
+                  Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
+                  Put_Line (Tmp_File, Full_Name (File).all);
+
+               elsif File_Time_Stamp (Xref_File_Name) >
+                 File_Time_Stamp (TO_File_Name)
+               then
+                  Recompute_TO := True;
                end if;
-
-               Put_Line (Tmp_File, "@" & Full_Name (Xref_File_Name).all);
-               Put_Line (Tmp_File, Full_Name (File).all);
-
-            elsif File_Time_Stamp (Xref_File_Name) >
-              File_Time_Stamp (TO_File_Name)
-            then
-               Recompute_TO := True;
             end if;
          end;
 
