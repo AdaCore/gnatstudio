@@ -692,7 +692,6 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         Ref (Entity);
          Trace (Me, "Tooltip on " & Entity_Name);
          Set_Context_Information
            (Context'Unchecked_Access, Data.Box.Kernel, Src_Editor_Module_Id);
@@ -709,7 +708,6 @@ package body Src_Editor_Box is
            (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
 
          if Pixmap /= null then
-            Unref (Entity);
             Destroy (Context);
             return;
          end if;
@@ -724,6 +722,8 @@ package body Src_Editor_Box is
          if Entity = null then
             return;
          end if;
+
+         Ref (Entity);
 
          declare
             Str : constant String :=
