@@ -102,6 +102,9 @@ package body Codefix.Ada_Tools is
                end if;
             end loop;
 
+            Free (List_Of_With);
+            Free (List_Of_Use);
+
             return Result;
          end if;
 
@@ -152,9 +155,9 @@ package body Codefix.Ada_Tools is
    ----------------------
 
    procedure Try_Link_Clauses
-     (With_Clause : Ptr_With; Use_Clause  : Ptr_Use)
+     (With_Clause : Ptr_With; Use_Clause : Ptr_Use)
    is
-      Use_Parsed : constant Arr_Str := Get_Arr_Str (Use_Clause.Name.all);
+      Use_Parsed : Arr_Str := Get_Arr_Str (Use_Clause.Name.all);
       With_Index : Positive := 1;
       Success    : Boolean;
    begin
@@ -176,6 +179,11 @@ package body Codefix.Ada_Tools is
             Use_Clause.Nb_Ref := Use_Clause.Nb_Ref + 1;
             With_Clause.Clauses (With_Index + Use_Parsed'Length - 1) :=
               Use_Clause;
+
+            for J in Use_Parsed'Range loop
+               Free (Use_Parsed (J));
+            end loop;
+
             return;
          end if;
 
@@ -183,6 +191,10 @@ package body Codefix.Ada_Tools is
 
          exit when With_Index > With_Clause.Nb_Elems
            or else With_Clause.Clauses (With_Index) = null;
+      end loop;
+
+      for J in Use_Parsed'Range loop
+         Free (Use_Parsed (J));
       end loop;
    end Try_Link_Clauses;
 
