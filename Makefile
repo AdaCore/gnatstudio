@@ -40,6 +40,12 @@ ${DEPENDENCIES:%=%_clean}: force
 
 ${EXTERNAL_DEPENDENCIES}: force
 
+gvd: force
+	@echo "----------------------------------"
+	@echo "--------- Compiling $@"
+	@echo "----------------------------------"
+	make -C gvd/gvd
+
 ${DEPENDENCIES}: force
 	@echo "----------------------------------"
 	@echo "--------- Compiling $@"
