@@ -1225,6 +1225,12 @@ package body Generic_Values is
         X + Left_Border + Border_Spacing + Item.Gui_Fields_Width -
         Text_Width (Font, String'(" => "));
    begin
+      --  A null record ?
+
+      if Item.Fields'Length = 0 then
+         return;
+      end if;
+
       if not Item.Visible then
          Draw_Text (Pixmap,
                     Font => Font,
@@ -1382,7 +1388,12 @@ package body Generic_Values is
       end if;
 
       for A in Item.Ancestors'Range loop
-         if Item.Ancestors (A) /= null then
+
+         --  Draw the ancestor if it isn't a null record.
+
+         if Item.Ancestors (A) /= null
+           and then Item.Ancestors (A).Height /= 0
+         then
             --  Do not add Left_Border to X, since each of the ancestor is
             --  itself a Class_Type and will already draw it.
             Paint (Item.Ancestors (A).all, GC, Xref_Gc, Font, Pixmap,
@@ -1390,8 +1401,11 @@ package body Generic_Values is
             Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
          end if;
       end loop;
-      Paint (Item.Child.all, GC, Xref_Gc, Font, Pixmap,
-             X + Left_Border, Current_Y);
+
+      if Item.Child.Height /= 0 then
+         Paint (Item.Child.all, GC, Xref_Gc, Font, Pixmap,
+                X + Left_Border, Current_Y);
+      end if;
 
       if Item.Selected then
         Set_Function (GC, Copy);
@@ -1468,6 +1482,14 @@ package body Generic_Values is
       Total_Height, Total_Width : Gint := 0;
       Largest_Name : String_Access := null;
    begin
+      --  null record ?
+
+      if Item.Fields'Length = 0 then
+         Item.Width := 0;
+         Item.Height := 0;
+         return;
+      end if;
+
       if not Item.Visible then
          Item.Width := Left_Border + 2 * Border_Spacing +
            Text_Width (Font, Hidden_Text);
@@ -1560,8 +1582,12 @@ package body Generic_Values is
       for A in Item.Ancestors'Range loop
          if Item.Ancestors (A) /= null then
             Size_Request (Item.Ancestors (A).all, Font);
-            Total_Height := Total_Height + Item.Ancestors (A).Height
-              + Line_Spacing;
+
+            --  If we don't have an null record
+            if Item.Ancestors (A).Height /= 0 then
+               Total_Height := Total_Height + Item.Ancestors (A).Height
+                 + Line_Spacing;
+            end if;
             Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
          end if;
       end loop;
