@@ -44,6 +44,7 @@ with Commands.Interactive;      use Commands, Commands.Interactive;
 with Docgen.Backend.Text;       use Docgen.Backend; use Docgen.Backend.Text;
 with Docgen_Registry;           use Docgen_Registry;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Templates_Parser;          use Templates_Parser;
 
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Box;                   use Gtk.Box;
@@ -854,6 +855,8 @@ package body Docgen_Module is
          List,
          Nb_Files,
          Docgen_Module (Docgen_Module_Id).Options);
+
+      Release_Cache;
 
       Pop_State (Kernel);
 
