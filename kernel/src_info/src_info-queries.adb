@@ -655,16 +655,23 @@ package body Src_Info.Queries is
                List                   => Source_Info_List,
                Project                => Project);
 
-            Internal_Find_Declaration_Or_Body
-              (Lib_Info         => Body_LI,
-               File_Name        => Get_Declaration_File_Of (Entity),
-               Entity_Name      => Entity_Name,
-               Line             => Get_Declaration_Line_Of (Entity),
-               Column           => Get_Declaration_Column_Of (Entity),
-               Check_References => True,
-               Decl             => Decl,
-               Ref              => Ref,
-               Status           => Status);
+            if Body_LI /= null then
+               Internal_Find_Declaration_Or_Body
+                 (Lib_Info         => Body_LI,
+                  File_Name        => Get_Declaration_File_Of (Entity),
+                  Entity_Name      => Entity_Name,
+                  Line             => Get_Declaration_Line_Of (Entity),
+                  Column           => Get_Declaration_Column_Of (Entity),
+                  Check_References => True,
+                  Decl             => Decl,
+                  Ref              => Ref,
+                  Status           => Status);
+               Destroy (Entity);
+               Location := Decl.Declaration.Location;
+               Status := Success;
+               return;
+            end if;
+
             Destroy (Entity);
          end if;
       end if;
