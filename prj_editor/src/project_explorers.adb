@@ -1043,7 +1043,7 @@ package body Project_Explorers is
          Dir  : constant Name_Id_Array := Source_Dirs (Project);
          Dir_Node : String_List_Utils.String_List.List_Node;
          Files : File_Array_Access := Get_Source_Files
-           (Project, Recursive => False, Full_Path => True);
+           (Project, Recursive => False);
          File_Node : File_Array (Files'Range);
          File_Node_Index : Integer;
 
@@ -1693,7 +1693,7 @@ package body Project_Explorers is
    begin
       if Files = null then
          Files := Get_Source_Files
-           (Prj, Recursive => False, Full_Path => True);
+           (Prj, Recursive => False);
       end if;
 
       --  If the information about the node hasn't been computed before,
@@ -2397,8 +2397,7 @@ package body Project_Explorers is
             declare
                Sources : File_Array_Access := Get_Source_Files
                  (Project    => Current (Iter),
-                  Recursive  => False,
-                  Full_Path  => True);
+                  Recursive  => False);
             begin
                Project_Marked := False;
                for S in Sources'Range loop
