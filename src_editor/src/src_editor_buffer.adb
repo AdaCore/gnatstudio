@@ -223,6 +223,9 @@ package body Src_Editor_Buffer is
    procedure Cursor_Move_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever the cursor moves.
 
+   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class);
+   --  Actions that must be executed whenever the user inserts or deletes text.
+
    procedure End_Action_Hook (Buffer : access Source_Buffer_Record'Class);
    --  Actions that must be executed whenever an action is ended.
 
@@ -272,6 +275,17 @@ package body Src_Editor_Buffer is
 
       Clear (Buffer.Completion);
    end Cursor_Move_Hook;
+
+   --------------------
+   -- User_Edit_Hook --
+   --------------------
+
+   procedure User_Edit_Hook (Buffer : access Source_Buffer_Record'Class) is
+   begin
+      --  Clear the completion data.
+
+      Clear (Buffer.Completion);
+   end User_Edit_Hook;
 
    ------------------
    -- Destroy_Hook --
@@ -506,6 +520,8 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
+      User_Edit_Hook (Buffer);
+
       Get_Text_Iter (Nth (Params, 1), Pos);
 
       if Is_Null_Command (Command) then
@@ -639,6 +655,8 @@ package body Src_Editor_Buffer is
       if Buffer.Inserting then
          return;
       end if;
+
+      User_Edit_Hook (Buffer);
 
       Get_Text_Iter (Nth (Params, 1), Start_Iter);
       Get_Text_Iter (Nth (Params, 2), End_Iter);
