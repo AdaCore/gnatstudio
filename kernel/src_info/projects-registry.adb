@@ -621,13 +621,26 @@ package body Projects.Registry is
            (Get_String (Prj.Projects.Table (Get_View (P)).Exec_Directory));
 
          --  Add the Ada sources that are already in the project.
+         --  Convert the names to UTF8 for proper handling in GPS
 
          Sources := Prj.Projects.Table (Get_View (P)).Sources;
          while Sources /= Nil_String loop
-            Set (Registry.Data.Sources,
-                 K => Get_String (String_Elements.Table (Sources).Value),
-                 E => (P, Name_Ada, No_Name));
-            Sources := String_Elements.Table (Sources).Next;
+            Get_Name_String (String_Elements.Table (Sources).Value);
+
+            declare
+               --  ??? Should avoid function returning unconstrained array
+               UTF8 : constant String := Locale_To_UTF8
+                 (Name_Buffer (1 .. Name_Len));
+            begin
+               Name_Len := UTF8'Length;
+               Name_Buffer (1 .. Name_Len) := UTF8;
+               String_Elements.Table (Sources).Value := Name_Find;
+
+               Set (Registry.Data.Sources,
+                    K => UTF8,
+                    E => (P, Name_Ada, No_Name));
+               Sources := String_Elements.Table (Sources).Next;
+            end;
          end loop;
 
          --  Canonicalize the file names in the naming exception lists
@@ -937,42 +950,50 @@ package body Projects.Registry is
 
             Canonical_Case_File_Name (Buffer (1 .. Length));
 
-            --  Check if the file is in the list of sources for this project,
-            --  as specified in the project file
-            --  Nothing to do if the file is already registered
+            --  Convert the file to UTF8
 
-            if File_In_Sources (Buffer (1 .. Length))
-              and then Get_Project_From_File
-              (Registry          => Registry,
-               Source_Filename   => Create_From_Base (Buffer (1 .. Length)),
-               Root_If_Not_Found => False) = No_Project
-            then
-               --  Have to use the naming scheme, since the hash-table hasn't
-               --  been filled yet (Get_Language_From_File wouldn't work)
+            declare
+               UTF8 : constant String := Locale_To_UTF8
+                 (Buffer (1 .. Length));
+            begin
+               --  Check if the file is in the list of sources for this,
+               --  project, as specified in the project file
+               --  Nothing to do if the file is already registered
 
-               Get_Unit_Part_And_Name_From_Filename
-                 (Filename  => Buffer (1 .. Length),
-                  Project   => Project,
-                  Part      => Part,
-                  Unit_Name => Unit,
-                  Lang      => Lang);
-
-               --  Check if the returned language belongs to the supported
-               --  languages for the project
-
-               if Lang /= No_Name
-                 and then Lang /= Name_Ada
+               if File_In_Sources (UTF8)
+                 and then Get_Project_From_File
+                   (Registry          => Registry,
+                    Source_Filename   => Create_From_Base (UTF8),
+                    Root_If_Not_Found => False) = No_Project
                then
-                  for Index in Languages2'Range loop
-                     if Languages2 (Index) = Lang then
-                        Record_Source (Buffer (1 .. Length), Lang);
-                        Has_File := True;
-                        Languages3 (Index) := No_Name;
-                        exit;
-                     end if;
-                  end loop;
+                  --  Have to use the naming scheme, since the hash-table
+                  --  hasn't been filled yet (Get_Language_From_File wouldn't
+                  --  work)
+
+                  Get_Unit_Part_And_Name_From_Filename
+                    (Filename  => UTF8,
+                     Project   => Project,
+                     Part      => Part,
+                     Unit_Name => Unit,
+                     Lang      => Lang);
+
+                  --  Check if the returned language belongs to the supported
+                  --  languages for the project
+
+                  if Lang /= No_Name
+                    and then Lang /= Name_Ada
+                  then
+                     for Index in Languages2'Range loop
+                        if Languages2 (Index) = Lang then
+                           Record_Source (UTF8, Lang);
+                           Has_File := True;
+                           Languages3 (Index) := No_Name;
+                           exit;
+                        end if;
+                     end loop;
+                  end if;
                end if;
-            end if;
+            end;
          end loop;
 
          if Has_File then
@@ -1338,7 +1359,8 @@ package body Projects.Registry is
    begin
       if Is_Absolute_Path (Filename) then
          declare
-            S : constant String := Normalize_Pathname (Locale);
+            S : constant String := Locale_To_UTF8
+              (Normalize_Pathname (Locale));
          begin
             Name_Len := S'Length;
             Name_Buffer (1 .. Name_Len) := S;
@@ -1424,8 +1446,9 @@ package body Projects.Registry is
 
          if Path /= null then
             declare
-               Full : constant String := Normalize_Pathname
-                 (Path.all, Resolve_Links => False);
+               Full : constant String := Locale_To_UTF8
+                 (Normalize_Pathname
+                    (Path.all, Resolve_Links => False));
             begin
                Free (Path);
                Name_Len := Full'Length;
