@@ -1383,7 +1383,7 @@ EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
-PRINT_CMD="a2ps"
+PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
 PYTHON_LIBS=""
@@ -3974,6 +3974,7 @@ case "${host}" in
   ## PowerPC
   powerpc-*-linux-gnu )
     machine=powerpc opsys=gnu-linux
+    PRINT_CMD="a2ps"
   ;;
 
   ## Suns
@@ -4020,6 +4021,7 @@ case "${host}" in
                 ;;
       *-linux-gnu* )
   	        opsys=gnu-linux
+		PRINT_CMD="a2ps"
 		;;
       *) opsys=bsd4-2   ;;
     esac;;
@@ -4029,6 +4031,7 @@ case "${host}" in
     case "${host}" in
       *-linux-gnu* )
         opsys=gnu-linux
+	PRINT_CMD="a2ps"
         ;;
     esac
   ;;
@@ -4048,6 +4051,7 @@ case "${host}" in
       *-xenix* )                opsys=xenix ;;
       *-linux-gnu* )
 	opsys=gnu-linux
+	PRINT_CMD="a2ps"
 
 	# If we do not link with -Wl,-export-dynamic, commands like
 	# "import time" will raise errors in the interpreter
