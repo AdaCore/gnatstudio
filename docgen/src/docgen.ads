@@ -343,4 +343,34 @@ package Docgen is
      (Text : String) return Natural;
    --  returns the number of point in the given string
 
+   function Spec_Suffix
+     (Name_Of_File : String) return String;
+   --  return the spec suffix, without the "." in front, corresponding to
+   --  the given file name. This given file can be a body or a spec.
+   --  As using Other_File_Name this function works for all suffix's.
+
+   function Body_Suffix
+     (Name_Of_File : String) return String;
+   --  return the body suffix, without the "." in front, corresponding to
+   --  the given file name. This given file can be a body or a spec.
+   --  As using Other_File_Name this function works for all suffix's.
+
+   function File_Name_Without_Suffix
+     (Name_Of_File : String) return String;
+   --  return the file name without the point and the suffix at the end
+
+   function Is_Spec_File
+     (Name_Of_File : String) return Boolean;
+   --  returns True, if the File is a Spec file
+   --  ??? This function is not the final implementation !!!
+
+   function Other_File_Name
+     (Name_Of_File : String) return String;
+   --  Return the full path name to the other file associated with
+   --  Name_Of_File (the spec if Name_Of_File is a body or separate,
+   --  the body if Nme_Of_File is the spec).
+   --  The empty string is returned if the file wasn't found (and error
+   --  messages are printed to the console appropriately).
+   --  ??? This function is not the final implementation !!!
+
 end Docgen;

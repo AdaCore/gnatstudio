@@ -33,9 +33,9 @@ package body Docgen is
    function Compare_Elements (X, Y : Source_File_Information) return Boolean
    is
    begin
-      if X.File_Name.all (X.File_Name'First .. X.File_Name'Last - 3) =
-        Y.File_Name.all  (Y.File_Name'First .. Y.File_Name'Last - 3) then
-         if File_Extension (X.File_Name.all) = ".adb" then
+      if File_Name_Without_Suffix (X.File_Name.all) =
+         File_Name_Without_Suffix (Y.File_Name.all) then
+         if not Is_Spec_File (X.File_Name.all) then
             return False;
          else
             return True;
@@ -188,7 +188,7 @@ package body Docgen is
       Extens   : constant String := File_Extension (Source_Filename);
    begin
       return Source_Path &
-      Doc_File (Doc_File'First .. Doc_File'Last - 4)
+      File_Name_Without_Suffix (Doc_File)
       & "_"
       & Extens (Extens'First + 1 .. Extens'Last)
       & Doc_Suffix;
@@ -261,5 +261,105 @@ package body Docgen is
       end loop;
       return Counter;
    end Count_Points;
+
+   ------------------------------
+   -- File_Name_Without_Suffix --
+   ------------------------------
+
+   function File_Name_Without_Suffix
+     (Name_Of_File : String) return String is
+      Short_Name : constant String := File_Name (Name_Of_File);
+   begin
+      return Name_Of_File (Name_Of_File'First ..
+                             Get_String_Index (Short_Name,
+                                               Short_Name'First,
+                                               ".") - 1);
+   end  File_Name_Without_Suffix;
+
+   -----------------
+   -- Spec_Suffix --
+   -----------------
+
+   function Spec_Suffix
+     (Name_Of_File : String) return String is
+   begin
+      --  not using File_Extension, because don't want the point
+      if Is_Spec_File (Name_Of_File) then
+         return Name_Of_File
+           (Get_String_Index (File_Name (Name_Of_File),
+                              File_Name (Name_Of_File)'First,
+                              ".") + 1
+              ..  Name_Of_File'Last);
+      else
+         declare
+            Body_File_Name : constant String :=
+              Other_File_Name (Name_Of_File);
+            Suffix : constant String := Body_File_Name
+              (Get_String_Index (File_Name (Body_File_Name),
+                                 File_Name (Body_File_Name)'First,
+                                 ".") + 1
+                 ..  Body_File_Name'Last);
+         begin
+            return Suffix;
+         end;
+      end if;
+   end Spec_Suffix;
+
+   -----------------
+   -- Body_Suffix --
+   -----------------
+
+   function Body_Suffix
+     (Name_Of_File : String) return String is
+   begin
+      --  not using File_Extension, because don't want the point
+      if not Is_Spec_File (Name_Of_File) then
+         return Name_Of_File
+           (Get_String_Index (File_Name (Name_Of_File),
+                              File_Name (Name_Of_File)'First,
+                              ".") + 1
+              ..  Name_Of_File'Last);
+      else
+         declare
+            Spec_File_Name : constant String :=
+              Other_File_Name (Name_Of_File);
+            Suffix : constant String := Spec_File_Name
+              (Get_String_Index (File_Name (Spec_File_Name),
+                                 File_Name (Spec_File_Name)'First,
+                                 ".") + 1
+                 ..  Spec_File_Name'Last);
+         begin
+            return Suffix;
+         end;
+      end if;
+   end Body_Suffix;
+
+   ------------------
+   -- Is_Spec_File --
+   ------------------
+
+   function Is_Spec_File
+     (Name_Of_File : String) return Boolean is
+   begin
+      --  ??? replace this by the the call of the function from the Prj_API
+      return File_Extension (Name_Of_File) = ".ads";
+   end Is_Spec_File;
+
+   ---------------------
+   -- Other_File_Name --
+   ---------------------
+
+   function Other_File_Name
+     (Name_Of_File : String) return String is
+   begin
+      --  ??? replace this later by the the call of the real Other_File_Name
+      if Is_Spec_File (Name_Of_File) then
+         return File_Name_Without_Suffix (Name_Of_File)
+         & ".adb";
+      else
+         return File_Name_Without_Suffix (Name_Of_File)
+         & ".ads";
+      end if;
+   end Other_File_Name;
 
 end Docgen;
