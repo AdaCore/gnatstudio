@@ -877,7 +877,8 @@ package body GVD.Process is
    ------------------------
 
    procedure Final_Post_Process
-     (Process : access Debugger_Process_Tab_Record'Class)
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Mode    : GVD.Types.Command_Type := GVD.Types.Hidden)
    is
       File_First  : Natural := 0;
       File_Last   : Positive;
@@ -935,7 +936,9 @@ package body GVD.Process is
          end;
       end if;
 
-      if Line /= 0 then
+      if Line /= 0
+        and then Mode /= Internal
+      then
          Set_Line (Process.Editor_Text, Line);
       end if;
 
@@ -1578,8 +1581,11 @@ package body GVD.Process is
             new Gui_Process_Proxy,
             Process.Window.all'Access, Remote_Host, Remote_Target,
             Remote_Protocol, Debugger_Name);
-         Output_Error
-           (Process.Window, (-" Could not find file: ") & Executable);
+
+         if Executable /= "" then
+            Output_Error
+              (Process.Window, (-" Could not find file: ") & Executable);
+         end if;
       end if;
 
       --  Set the output filter, so that we output everything in the Gtk_Text
