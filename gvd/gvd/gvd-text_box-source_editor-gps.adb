@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gdk.Pixbuf;
-with Gdk.Color;                use Gdk.Color;
 with Gtk.Container;            use Gtk.Container;
 with Gtkada.MDI;               use Gtkada.MDI;
 with Basic_Types;              use Basic_Types;
@@ -27,7 +26,6 @@ with GPS.Kernel;             use GPS.Kernel;
 with GPS.Kernel.Console;     use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;     use GPS.Kernel.Scripts;
 with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Main_Window;        use GPS.Main_Window;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
@@ -49,7 +47,7 @@ with GNAT.OS_Lib;
 
 with GVD.Preferences;         use GVD.Preferences;
 
-package body GVD.Text_Box.Source_Editor.Glide is
+package body GVD.Text_Box.Source_Editor.GPS is
 
    Highlight_Category : constant String := "Debugger Highlight";
 
@@ -244,13 +242,22 @@ package body GVD.Text_Box.Source_Editor.Glide is
 
    procedure Initialize
      (Editor : access GEdit_Record'Class;
-      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
+      Window : access GVD.Main_Window.GVD_Main_Window_Record'Class)
+   is
+      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
+      Args   : GNAT.OS_Lib.Argument_List :=
+        (new String'(Highlight_Category), new String'("True"));
+
    begin
       Editor.Window := GVD.Main_Window.GVD_Main_Window (Window);
 
       --  Initialize the color for line highlighting.
 
-      Preferences_Changed (Editor);
+      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
+
+      for A in Args'Range loop
+         GNAT.OS_Lib.Free (Args (A));
+      end loop;
    end Initialize;
 
    ---------------
@@ -289,17 +296,9 @@ package body GVD.Text_Box.Source_Editor.Glide is
    -------------------------
 
    procedure Preferences_Changed (Editor : access GEdit_Record) is
-      Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
-      Args   : GNAT.OS_Lib.Argument_List :=
-        (1 => new String'(Highlight_Category),
-         2 => new String'
-           (To_String (Get_Pref (Kernel, Editor_Highlight_Color))));
+      pragma Unreferenced (Editor);
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.register_highlighting", Args);
-
-      for A in Args'Range loop
-         GNAT.OS_Lib.Free (Args (A));
-      end loop;
+      null;
    end Preferences_Changed;
 
    --------------
@@ -640,4 +639,4 @@ package body GVD.Text_Box.Source_Editor.Glide is
       end loop;
    end Free_Debug_Info;
 
-end GVD.Text_Box.Source_Editor.Glide;
+end GVD.Text_Box.Source_Editor.GPS;

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                      Copyright (C) 2000-2005                      --
+--                              AdaCore                              --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -50,9 +50,7 @@ package GVD.Text_Box.Asm_Editor is
      (Editor            : access Asm_Editor_Record;
       Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : Gdk.Color.Gdk_Color;
-      Keyword_Color     : Gdk.Color.Gdk_Color);
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array);
    --  Set the various settings of an editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
@@ -115,8 +113,6 @@ private
 
    type Asm_Editor_Record is new GVD_Text_Box_Record with record
       Process         : Glib.Object.GObject;
-      Keywords_Color  : Gdk.Color.Gdk_Color;
-      Strings_Color   : Gdk.Color.Gdk_Color;
       Highlight_Color : Gdk.Color.Gdk_Color;
 
       Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;

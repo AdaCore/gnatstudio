@@ -100,8 +100,8 @@ with Commands.Interactive;      use Commands.Interactive;
 with Commands.Debugger;         use Commands.Debugger;
 
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
-with GVD.Text_Box.Source_Editor.Glide;
-use  GVD.Text_Box.Source_Editor.Glide;
+with GVD.Text_Box.Source_Editor.GPS;
+use  GVD.Text_Box.Source_Editor.GPS;
 
 with Interactive_Consoles;      use Interactive_Consoles;
 with GPS.Kernel.Scripts;
@@ -582,11 +582,11 @@ package body GVD_Module is
      (Debugger : out GPS_Debugger;
       Window   : access GPS_Window_Record'Class)
    is
-      Edit : Glide.GEdit;
+      Edit : GVD.Text_Box.Source_Editor.GPS.GEdit;
    begin
       Debugger := new GPS_Debugger_Record;
 
-      Glide.Gtk_New (Edit, Window);
+      GVD.Text_Box.Source_Editor.GPS.Gtk_New (Edit, Window);
       GVD.Process.Initialize (Debugger, Window, Source_Editor (Edit));
    end Gtk_New;
 

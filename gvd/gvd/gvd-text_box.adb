@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -39,7 +39,6 @@ with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 with Basic_Types;         use Basic_Types;
-with GVD.Preferences;     use GVD.Preferences;
 with String_Utils;        use String_Utils;
 with Config;              use Config;
 with Pango.Font;          use Pango.Font;
@@ -417,7 +416,7 @@ package body GVD.Text_Box is
       Columns : Integer)
    is
       J        : Integer := 1;
-      Tab_Size : constant Integer := Integer (Get_Tab_Size (GVD_Prefs));
+      Tab_Size : constant Integer := 8;
 
    begin
       --  Go to the right column, but make sure we are still on
@@ -432,7 +431,7 @@ package body GVD.Text_Box is
            or else Box.Buffer (Index) = ASCII.LF;
 
          if Box.Buffer (Index) = ASCII.HT
-           and then J mod Integer (Get_Tab_Size (GVD_Prefs)) /= 0
+           and then J mod Tab_Size /= 0
          then
             --  Go to the next column that is a multiple of Tab_Size
             J := (1 + J / Tab_Size) * Tab_Size + 1;
@@ -815,8 +814,7 @@ package body GVD.Text_Box is
          declare
             S : constant String := Do_Tab_Expansion
               ((Box.Buffer (Integer (Box.Highlight_Start)
-                            .. Integer (Box.Highlight_End) - 1)),
-               Integer (Get_Tab_Size (GVD_Prefs)));
+                            .. Integer (Box.Highlight_End) - 1)), 8);
 
          begin
             pragma Assert
@@ -838,9 +836,7 @@ package body GVD.Text_Box is
       if From /= 0 and then To /= 0 then
          declare
             S : constant String := Do_Tab_Expansion
-              (Box.Buffer (Integer (From) .. Integer (To) - 1),
-               Integer (Get_Tab_Size (GVD_Prefs)));
-
+              (Box.Buffer (Integer (From) .. Integer (To) - 1), 8);
          begin
             Freeze (Box.Child);
             Box.Highlight_Start := From;

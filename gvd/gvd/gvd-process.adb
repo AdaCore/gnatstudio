@@ -88,7 +88,8 @@ with Config;                     use Config;
 
 with String_List_Utils;          use String_List_Utils;
 
-with GPS.Main_Window;          use GPS.Main_Window;
+with GPS.Main_Window;            use GPS.Main_Window;
+with GPS.Kernel.Preferences;     use GPS.Kernel.Preferences;
 
 package body GVD.Process is
 
@@ -984,8 +985,8 @@ package body GVD.Process is
 
       --  Initialize the canvas
 
-      Annotation_Font := Copy
-        (Get_Pref (GVD_Prefs, GVD.Preferences.Default_Font));
+      Annotation_Font :=
+        Copy (Get_Pref (GVD_Prefs, GPS.Kernel.Preferences.Default_Font));
       Set_Size
         (Annotation_Font,
          Gint'Max (Pango_Scale, Get_Size (Annotation_Font) - 2 * Pango_Scale));
@@ -1130,7 +1131,7 @@ package body GVD.Process is
       Process.Debugger_Text_Highlight_Color :=
         Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 
-      Process.Debugger_Text_Font := Get_Pref_Font (GVD_Prefs, Fixed_Style);
+      Process.Debugger_Text_Font := Get_Pref_Font (GVD_Prefs, Default_Style);
 
       Process.Separate_Data := False;
       --  ??? Should use MDI.Save/Load_Desktop instead
@@ -1150,10 +1151,8 @@ package body GVD.Process is
       Configure
         (Process.Editor_Text,
          Source,
-         Get_Pref_Font (GVD_Prefs, Fixed_Style),
-         arrow_xpm, stop_xpm,
-         Strings_Color  => Get_Pref (GVD_Prefs, Strings_Color),
-         Keywords_Color => Get_Pref (GVD_Prefs, Keywords_Color));
+         Get_Pref_Font (GVD_Prefs, Default_Style),
+         arrow_xpm, stop_xpm);
 
       Window.Current_Debugger := GObject (Process);
 

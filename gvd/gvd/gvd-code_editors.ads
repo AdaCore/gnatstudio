@@ -37,7 +37,6 @@
 
 with Glib;
 with Glib.Object;
-with Gdk.Color;
 with Gtk.Paned;
 with Gtk.Widget;
 with Gtk.Box;
@@ -113,9 +112,7 @@ package GVD.Code_Editors is
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Font              : Pango.Font.Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color);
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array);
    --  Set the various settings of an editor.
    --  Source is the source editor associated with Editor.
    --  Ps_Font_Name is the name of the postscript font that will be used to

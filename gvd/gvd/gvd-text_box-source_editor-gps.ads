@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCoree                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -29,7 +29,7 @@ with String_List_Utils;
 --  This package provides an implementation of Source_Editor based on
 --  the GPS Editor.
 
-package GVD.Text_Box.Source_Editor.Glide is
+package GVD.Text_Box.Source_Editor.GPS is
 
    type GEdit_Record is new Source_Editor_Record with private;
    type GEdit is access all GEdit_Record'Class;
@@ -124,4 +124,4 @@ private
       --  The list of files for which a location is currently highlighted.
    end record;
 
-end GVD.Text_Box.Source_Editor.Glide;
+end GVD.Text_Box.Source_Editor.GPS;

@@ -52,6 +52,8 @@ with GNAT.Regpat;       use GNAT.Regpat;
 with Ada.Exceptions;    use Ada.Exceptions;
 with Traces;            use Traces;
 
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
+
 package body GVD.Text_Box.Asm_Editor is
 
    package Editor_Cb is new Callback (Asm_Editor_Record);
@@ -162,9 +164,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor            : access Asm_Editor_Record;
       Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : Gdk.Color.Gdk_Color;
-      Keyword_Color     : Gdk.Color.Gdk_Color) is
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array) is
    begin
       Configure (Editor, Font, Current_Line_Icon);
 
@@ -176,8 +176,6 @@ package body GVD.Text_Box.Asm_Editor is
          White (Get_Default_Colormap),
          Stop_Icon);
 
-      Editor.Strings_Color  := Strings_Color;
-      Editor.Keywords_Color := Keyword_Color;
       Editor.Highlight_Color := Get_Pref (GVD_Prefs, Asm_Highlight_Color);
    end Configure;
 
@@ -231,8 +229,7 @@ package body GVD.Text_Box.Asm_Editor is
 
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data := new String'
-           (Do_Tab_Expansion (S.all, Integer (Get_Tab_Size (GVD_Prefs)))
-            & ASCII.LF & S2.all);
+           (Do_Tab_Expansion (S.all, 8) & ASCII.LF & S2.all);
          Free (S2);
 
       --  Should we append to the current buffer
@@ -259,8 +256,7 @@ package body GVD.Text_Box.Asm_Editor is
          S2 := Editor.Current_Range.Data;
          Editor.Current_Range.Data := new String'
            (S2.all & ASCII.LF &
-            Do_Tab_Expansion (S (S_First .. S'Last),
-            Integer (Get_Tab_Size (GVD_Prefs))));
+            Do_Tab_Expansion (S (S_First .. S'Last), 8));
          Free (S2);
 
       --  Else get a whole new range (minimum size Assembly_Range_Size)
@@ -340,9 +336,7 @@ package body GVD.Text_Box.Asm_Editor is
                Editor.Cache := new Cache_Data'
                  (Low  => Low_Range,
                   High => High_Range,
-                  Data => new String'
-                  (Do_Tab_Expansion
-                   (S.all, Integer (Get_Tab_Size (GVD_Prefs)))),
+                  Data => new String'(Do_Tab_Expansion (S.all, 8)),
                   Next => Editor.Cache);
             end if;
             Free (S);
@@ -811,7 +805,7 @@ package body GVD.Text_Box.Asm_Editor is
      (Editor : access Asm_Editor_Record'Class) is
    begin
       Editor.Highlight_Color := Get_Pref (GVD_Prefs, Asm_Highlight_Color);
-      Set_Font (Editor, Get_Pref_Font (GVD_Prefs, Fixed_Style));
+      Set_Font (Editor, Get_Pref_Font (GVD_Prefs, Default_Style));
       Update_Child (Editor);
 
       --  The currently highlighted range is reset in Gvd.Code_Editors.
@@ -859,7 +853,7 @@ package body GVD.Text_Box.Asm_Editor is
                Addr : constant String := Address_From_Line
                  (Box, Get_Line (Box));
                F : constant Gdk_Font := From_Description
-                 (Get_Pref_Font (GVD_Prefs, Fixed_Style));
+                 (Get_Pref_Font (GVD_Prefs, Default_Style));
                Line : Natural;
             begin
                On_Frame_Changed (Box, "", "-1");

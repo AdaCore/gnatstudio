@@ -46,6 +46,7 @@ with String_Utils;     use String_Utils;
 with GUI_Utils;        use GUI_Utils;
 with GVD.Process;      use GVD.Process;
 with GVD.Preferences;  use GVD.Preferences;
+with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 
 package body GVD.Memory_View is
 
@@ -326,7 +327,7 @@ package body GVD.Memory_View is
       pragma Unreferenced (Window);
    begin
       View.View_Font   := From_Description
-        (Get_Pref_Font (GVD_Prefs, Fixed_Style));
+        (Get_Pref_Font (GVD_Prefs, Default_Style));
       View.View_Color  := Get_Pref (GVD_Prefs, Memory_View_Color);
       View.Highlighted := Get_Pref (GVD_Prefs, Memory_Highlighted_Color);
       View.White_Color := White (Get_Default_Colormap);

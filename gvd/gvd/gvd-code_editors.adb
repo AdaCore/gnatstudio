@@ -230,14 +230,9 @@ package body GVD.Code_Editors is
       Source            : GVD.Text_Box.Source_Editor.Source_Editor;
       Font              : Pango_Font_Description;
       Current_Line_Icon : Gtkada.Types.Chars_Ptr_Array;
-      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array;
-      Strings_Color     : Gdk.Color.Gdk_Color;
-      Keywords_Color    : Gdk.Color.Gdk_Color) is
+      Stop_Icon         : Gtkada.Types.Chars_Ptr_Array) is
    begin
-      Configure
-        (Editor.Asm, Font, Current_Line_Icon,
-         Stop_Icon, Strings_Color, Keywords_Color);
-
+      Configure (Editor.Asm, Font, Current_Line_Icon, Stop_Icon);
       pragma Assert (Editor.Source = null);
       Editor.Source := Source;
       Attach (Editor.Source, Editor);
