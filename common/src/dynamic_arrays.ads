@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -67,10 +67,10 @@ package Dynamic_Arrays is
 
    function Length (T : Instance) return Index_Type;
    pragma Inline (Length);
-   --  Return the number of allocated elements in T.
+   --  Return the number of allocated elements in T
 
    procedure Append (T : in out Instance; Item : Data);
-   --  Add a new element at the end of the table, which is grown if needed.
+   --  Add a new element at the end of the table, which is grown if needed
 
    procedure Remove (T : in out Instance; Item : Data);
    pragma Inline (Remove);
@@ -86,13 +86,13 @@ package Dynamic_Arrays is
    --  of (First - 1) if the table doesn't contain that element
 
    procedure Free (T : in out Instance);
-   --  Free the memory allocated for T.
+   --  Free the memory allocated for T
 
 private
 
    type Table_Private is record
       Next_To_Last : Index_Type := First;
-      --  Pointer to the element after the last logical element in the table.
+      --  Pointer to the element after the last logical element in the table
 
       Last_Allocated : Index_Type;
       --  Size of the currently allocated array

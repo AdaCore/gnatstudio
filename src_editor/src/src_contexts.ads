@@ -81,9 +81,9 @@ package Src_Contexts is
    --  It doesn't support All_Occurrences.
 
    function Current_File_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
@@ -100,10 +100,10 @@ package Src_Contexts is
      File_Search_Context with private;
 
    function Search
-     (Context         : access Abstract_Files_Context;
-      Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Kernel          : Glide_Kernel.Kernel_Handle;
-      Callback        : Scan_Callback) return Boolean;
+     (Context  : access Abstract_Files_Context;
+      Handler  : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel   : Glide_Kernel.Kernel_Handle;
+      Callback : Scan_Callback) return Boolean;
    --  Search either the next match or all the occurrences, depending on the
    --  parameter All_Occurrences. For each one of them, Callback is called.
    --  This function returns True if there are potentially more matches in the
@@ -185,17 +185,17 @@ package Src_Contexts is
    --  No copy of Files is made, the memory will be freed automatically.
 
    function Files_From_Project_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget)
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget)
       return Search_Context_Access;
    --  Factory for "Files From Project".
    --  The list of files is automatically set to the files of the root project
    --  and its imported projects
 
    function Files_From_Project_Factory
-     (Scope              : Search_Scope;
-      All_Occurrences    : Boolean) return Files_Project_Context_Access;
+     (Scope           : Search_Scope;
+      All_Occurrences : Boolean) return Files_Project_Context_Access;
    --  Same as above, but suitable for use outside the GUI.
    --  No file is set, you need to call Set_File_List explicitely
 
@@ -220,9 +220,9 @@ package Src_Contexts is
    --  No copy of Files is made, the memory will be freed automatically.
 
    function Open_Files_Factory
-     (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
-      All_Occurrences    : Boolean;
-      Extra_Information  : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
+     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+      All_Occurrences   : Boolean;
+      Extra_Information : Gtk.Widget.Gtk_Widget) return Search_Context_Access;
    --  Factory for "Open Files".
    --  The list of files is automatically set to the currently opend files
 

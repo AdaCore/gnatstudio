@@ -1302,6 +1302,10 @@ package body Commands.Custom is
          --  Execute a shell or an external component. Return the success
          --  status.
 
+         ---------------
+         -- To_String --
+         ---------------
+
          function To_String (P : in GNAT.OS_Lib.String_Access) return String is
          begin
             if P = null then
@@ -1310,6 +1314,10 @@ package body Commands.Custom is
                return P.all;
             end if;
          end To_String;
+
+         -------------------
+         -- Execute_Shell --
+         -------------------
 
          function Execute_Shell
            (Component : Shell_Component_Record'Class) return Boolean
@@ -1351,6 +1359,10 @@ package body Commands.Custom is
 
             return not Errors;
          end Execute_Shell;
+
+         ----------------------
+         -- Execute_External --
+         ----------------------
 
          function Execute_External
            (Component : External_Component_Record'Class) return Boolean
@@ -1494,6 +1506,7 @@ package body Commands.Custom is
 
       use type Glib.String_Ptr;
       Old_Dir        : GNAT.OS_Lib.String_Access;
+
    begin  --  Execute
       --  If there was an external command executing:
       if Command.Execution /= null then

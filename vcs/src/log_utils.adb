@@ -133,6 +133,10 @@ package body Log_Utils is
       First, Last : Natural;
       F           : Natural;
 
+      ------------------
+      -- Get_GPS_User --
+      ------------------
+
       function Get_GPS_User return String is
          User_Ptr : String_Access   := Getenv ("USER");
          GCU_Ptr  : String_Access   := Getenv ("GPS_CHANGELOG_USER");
@@ -158,6 +162,10 @@ package body Log_Utils is
             end if;
          end if;
       end Get_GPS_User;
+
+      ----------------
+      -- Add_Header --
+      ----------------
 
       procedure Add_Header (Pos : Positive; Date_Header : Boolean) is
          Header   : constant String :=

@@ -141,9 +141,9 @@ package Glide_Kernel.Contexts is
    type Message_Context_Access is access all Message_Context;
 
    procedure Set_Message_Information
-     (Context     : access Message_Context;
-      Category    : String := "";
-      Message     : String := "");
+     (Context  : access Message_Context;
+      Category : String := "";
+      Message  : String := "");
    --  Set the information in the context
 
    function Has_Category_Information

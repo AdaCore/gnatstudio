@@ -175,8 +175,7 @@ package body Src_Editor_Module is
       3 => Start_Column_Cst'Access,
       4 => End_Column_Cst'Access);
 
-   type Editor_Child_Record is new GPS_MDI_Child_Record
-      with null record;
+   type Editor_Child_Record is new GPS_MDI_Child_Record with null record;
 
    function Dnd_Data
      (Child : access Editor_Child_Record; Copy : Boolean) return MDI_Child;
@@ -353,7 +352,7 @@ package body Src_Editor_Module is
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
    procedure On_Edit_File
-     (Widget : access GObject_Record'Class;
+     (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Edit a file (from a contextual menu)
 
@@ -394,28 +393,28 @@ package body Src_Editor_Module is
    --  Callback for the "delete_event" signal.
 
    procedure File_Edited_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for the "file_edited" hook.
 
    procedure File_Closed_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for the "file_closed" hook.
 
    procedure File_Changed_On_Disk_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for the "file_changed_on_disk" hook.
 
    procedure File_Saved_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for the "file_saved" hook.
 
    procedure Cursor_Stopped_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class);
    --  Callback for the "cursor_stopped" hook.
 
    procedure Preferences_Changed
@@ -423,18 +422,18 @@ package body Src_Editor_Module is
    --  Called when the preferences have changed.
 
    procedure Edit_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    --  Interactive command handler for the source editor module.
 
    procedure Current_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    procedure File_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Project_Search_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String);
+     (Data : in out Callback_Data'Class; Command : String);
    procedure Common_Search_Command_Handler
-     (Data    : in out Callback_Data'Class;
-      Files   : VFS.File_Array_Access);
+     (Data  : in out Callback_Data'Class;
+      Files : VFS.File_Array_Access);
    --  Interactive command handler for the source editor module (Search part)
 
    procedure Add_To_Recent_Menu
@@ -640,16 +639,20 @@ package body Src_Editor_Module is
      (Data    : in out Callback_Data'Class;
       Files   : File_Array_Access)
    is
-      Kernel    : constant Kernel_Handle := Get_Kernel (Data);
-      Context   : Files_Project_Context_Access;
-      Pattern   : constant String  := Nth_Arg (Data, 2);
-      Casing    : constant Boolean := Nth_Arg (Data, 3, False);
-      Regexp    : constant Boolean := Nth_Arg (Data, 4, False);
-      Scope     : constant String  := Nth_Arg (Data, 5, "whole");
-      S         : Search_Scope;
+      Kernel  : constant Kernel_Handle := Get_Kernel (Data);
+      Context : Files_Project_Context_Access;
+      Pattern : constant String  := Nth_Arg (Data, 2);
+      Casing  : constant Boolean := Nth_Arg (Data, 3, False);
+      Regexp  : constant Boolean := Nth_Arg (Data, 4, False);
+      Scope   : constant String  := Nth_Arg (Data, 5, "whole");
+      S       : Search_Scope;
 
       function Callback (Match : Match_Result) return Boolean;
       --  Store the result of the match in Data
+
+      --------------
+      -- Callback --
+      --------------
 
       function Callback (Match : Match_Result) return Boolean is
       begin
@@ -726,6 +729,10 @@ package body Src_Editor_Module is
       function Callback (Match : Match_Result) return Boolean;
       --  Store the result of the match in Data
 
+      --------------
+      -- Callback --
+      --------------
+
       function Callback (Match : Match_Result) return Boolean is
       begin
          Set_Return_Value
@@ -737,6 +744,7 @@ package body Src_Editor_Module is
                Match.Column));
          return True;
       end Callback;
+
    begin
       if Id.Search_Context = null
         or else Id.Search_Pattern = null
@@ -804,15 +812,15 @@ package body Src_Editor_Module is
    --------------------------
 
    procedure Edit_Command_Handler
-     (Data    : in out Callback_Data'Class; Command : String)
+     (Data : in out Callback_Data'Class; Command : String)
    is
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      Id       : constant Source_Editor_Module :=
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      Id     : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
-      Length   : Natural := 0;
-      Line     : Natural := 1;
-      Column   : Natural := 1;
-      Force    : Boolean;
+      Length : Natural := 0;
+      Line   : Natural := 1;
+      Column : Natural := 1;
+      Force  : Boolean;
 
    begin
       if Command = "edit" or else Command = "create_mark" then
@@ -1728,7 +1736,7 @@ package body Src_Editor_Module is
      (Kernel : Kernel_Handle;
       File   : VFS.Virtual_File)
    is
-      Id    : constant Source_Editor_Module :=
+      Id : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
 
       use Mark_Identifier_List;
@@ -1780,10 +1788,10 @@ package body Src_Editor_Module is
    --------------------
 
    procedure File_Edited_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
       Id    : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       Infos : Line_Information_Data;
@@ -1820,10 +1828,10 @@ package body Src_Editor_Module is
    -----------------------------
 
    procedure File_Changed_On_Disk_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
       Iter  : Child_Iterator := First_Child (Get_MDI (Kernel));
       Child : MDI_Child;
       Box   : Source_Box;
@@ -1931,11 +1939,11 @@ package body Src_Editor_Module is
    -------------------
 
    procedure File_Saved_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      D : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Base  : constant String := Base_Name (D.File);
+      D    : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Base : constant String := Base_Name (D.File);
    begin
       --  Insert the saved file in the Recent menu.
 
@@ -1956,12 +1964,12 @@ package body Src_Editor_Module is
    -----------------------
 
    procedure Cursor_Stopped_Cb
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Data    : Hooks_Data'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Data   : Hooks_Data'Class)
    is
-      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
-      Box   : Source_Editor_Box;
-      Id    : constant Source_Editor_Module :=
+      D   : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Box : Source_Editor_Box;
+      Id  : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
    begin
       if Id.Show_Subprogram_Names then
@@ -2270,9 +2278,9 @@ package body Src_Editor_Module is
      (Kernel  : access Kernel_Handle_Record'Class;
       Current : Source_Editor_Box) return Source_Box
    is
-      Editor  : Source_Editor_Box;
-      Box     : Source_Box;
-      Child   : MDI_Child;
+      Editor : Source_Editor_Box;
+      Box    : Source_Box;
+      Child  : MDI_Child;
 
    begin
       if Current = null then
@@ -2421,13 +2429,13 @@ package body Src_Editor_Module is
       Focus      : Boolean := True;
       Force      : Boolean := False) return Source_Box
    is
-      No_Name    : constant String := -"Untitled";
-      MDI        : constant MDI_Window := Get_MDI (Kernel);
-      Editor     : Source_Editor_Box;
-      Box        : Source_Box;
-      Child      : MDI_Child;
-      Dummy      : Boolean;
-      Id         : constant Source_Editor_Module :=
+      No_Name : constant String := -"Untitled";
+      MDI     : constant MDI_Window := Get_MDI (Kernel);
+      Editor  : Source_Editor_Box;
+      Box     : Source_Box;
+      Child   : MDI_Child;
+      Dummy   : Boolean;
+      Id      : constant Source_Editor_Module :=
         Source_Editor_Module (Src_Editor_Module_Id);
       pragma Unreferenced (Dummy);
 
@@ -2681,9 +2689,9 @@ package body Src_Editor_Module is
       Button : Gtk_Widget;
       pragma Unreferenced (Widget, Button);
 
-      Open_File_Dialog  : Gtk_Dialog;
-      Open_File_Entry   : Gtkada_Entry;
-      Hist              : constant String_List_Access :=
+      Open_File_Dialog : Gtk_Dialog;
+      Open_File_Entry  : Gtkada_Entry;
+      Hist             : constant String_List_Access :=
         Get_History (Get_History (Kernel).all, Open_From_Path_History);
 
    begin
@@ -3447,6 +3455,10 @@ package body Src_Editor_Module is
       procedure Apply_Mime_On_Child (Child : MDI_Child);
       --  Apply the mime information on Child.
 
+      -------------------------
+      -- Apply_Mime_On_Child --
+      -------------------------
+
       procedure Apply_Mime_On_Child (Child : MDI_Child) is
       begin
          if D.Info'First = 0 then
@@ -3493,9 +3505,9 @@ package body Src_Editor_Module is
    is
       pragma Unreferenced (Widget);
 
-      File     : constant File_Selection_Context_Access :=
+      File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Line     : Natural;
+      Line : Natural;
 
    begin
       Trace (Me, "On_Edit_File: " & Full_Name (File_Information (File)).all);
@@ -3583,8 +3595,8 @@ package body Src_Editor_Module is
       Expansion : String;
       Special   : Character) return String
    is
-      Box : Source_Editor_Box;
-      W   : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
+      Box          : Source_Editor_Box;
+      W            : Gtk_Widget := Get_Current_Focus_Widget (Kernel);
       Line, Column : Positive;
    begin
       if W.all in Source_View_Record'Class then

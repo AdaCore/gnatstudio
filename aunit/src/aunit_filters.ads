@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,35 +61,35 @@ package Aunit_Filters is
    --  This filter shows only files containing tests or test suites.
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Ada;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access);
+     (Filter : access Filter_Show_Ada;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Ada.
    --  Text is set to the name of the main unit in the file.
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Suites;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access);
+     (Filter : access Filter_Show_Suites;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Suites.
    --  Text is set to the name of the suite found in the file.
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Tests;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access);
+     (Filter : access Filter_Show_Tests;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access);
    --  Use_File_Filter procedure for Filter_Show_Tests.
    --  Text is set to the name of the suite/test case found in the file.
 

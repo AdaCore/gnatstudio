@@ -402,7 +402,7 @@ package body VCS_View_API is
       end if;
 
       if Ref = null then
-         --  ??? Should add a menu item to add a VCS in the project.
+         --  ??? Should add a menu item to add a VCS in the project
          return;
       end if;
 
@@ -414,7 +414,7 @@ package body VCS_View_API is
          File_Name := File_Selection_Context_Access (Context);
       end if;
 
-      --  Determine which sections should be displayed.
+      --  Determine which sections should be displayed
 
       File_Section := File_Name /= null
         and then Has_File_Information (File_Name);
@@ -423,7 +423,7 @@ package body VCS_View_API is
       Project_Section := File_Name /= null
         and then Has_Project_Information (File_Name);
 
-      --  Look for the special case for handling log files.
+      --  Look for the special case for handling log files
 
       if File_Section then
          declare

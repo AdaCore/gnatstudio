@@ -423,18 +423,18 @@ package Glide_Kernel.Scripts is
    --  See comment for Register_Command in the kernel.
 
    procedure Register_Class
-     (Script        : access Scripting_Language_Record;
-      Name          : String;
-      Base          : Class_Type := No_Class) is abstract;
+     (Script : access Scripting_Language_Record;
+      Name   : String;
+      Base   : Class_Type := No_Class) is abstract;
    --  Create a new class in the interpreter
 
    procedure Execute_Command
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : out Boolean) is abstract;
+     (Script       : access Scripting_Language_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : out Boolean) is abstract;
    --  Execute a command in the script language.
    --  It isn't possible to retrieve the result of that command, this command
    --  is only used for its side effect.
@@ -449,12 +449,12 @@ package Glide_Kernel.Scripts is
    --  itself is also printed in the console
 
    function Execute_Command
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Show_Command       : Boolean := True;
-      Errors             : access Boolean) return String;
+     (Script       : access Scripting_Language_Record;
+      Command      : String;
+      Console      : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output  : Boolean := False;
+      Show_Command : Boolean := True;
+      Errors       : access Boolean) return String;
    --  Execute a command, and return its output as a displayable string.
    --  Note: some languages might simply return an empty string if they cannot
    --  capture the output of their interpreter. This command is mostly useful
@@ -463,11 +463,11 @@ package Glide_Kernel.Scripts is
    --  separated).
 
    function Execute_Command
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : access Boolean) return Boolean is abstract;
+     (Script      : access Scripting_Language_Record;
+      Command     : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : access Boolean) return Boolean is abstract;
    --  Execute a command and evaluate its return value (*not* its output) as a
    --  boolean. This is different from the version returning a string, in that
    --  only the return value is considered, not the full output.
@@ -481,9 +481,9 @@ package Glide_Kernel.Scripts is
    --  Returns the value returned by the command itself.
 
    function Execute_Command_With_Args
-     (Script             : access Scripting_Language_Record;
-      Command            : String;
-      Args               : GNAT.OS_Lib.Argument_List) return String;
+     (Script  : access Scripting_Language_Record;
+      Command : String;
+      Args    : GNAT.OS_Lib.Argument_List) return String;
    --  Execute a command, the arguments of which are already splitted and
    --  unquoted.
    --  This procedure needs only be implemented for the GPS shell, in all other
@@ -492,11 +492,11 @@ package Glide_Kernel.Scripts is
    --  All output is hidden
 
    procedure Execute_File
-     (Script             : access Scripting_Language_Record;
-      Filename           : String;
-      Console            : Interactive_Consoles.Interactive_Console := null;
-      Hide_Output        : Boolean := False;
-      Errors             : out Boolean) is abstract;
+     (Script      : access Scripting_Language_Record;
+      Filename    : String;
+      Console     : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output : Boolean := False;
+      Errors      : out Boolean) is abstract;
    --  Execute a script contained in an external file.
 
    function Get_Name (Script : access Scripting_Language_Record)
@@ -529,7 +529,7 @@ package Glide_Kernel.Scripts is
    --  Finalize this module, and free associated memory
 
    procedure Register_Default_Script_Commands
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class);
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Add the standard script commands.
    --  This subprogram should be called only after all scripting languages
    --  have been registered.
@@ -584,14 +584,14 @@ package Glide_Kernel.Scripts is
    --  a separate main loop (Gtk.Main.Gtk_Main or modal dialogs).
 
    procedure Register_Scripting_Language
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Script  : access Scripting_Language_Record'Class);
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Script : access Scripting_Language_Record'Class);
    --  Register a new scripting language in the kernel.
    --  Scripting languages are freed when the kernel is destroyed
 
    function Lookup_Scripting_Language
-     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Name    : String) return Scripting_Language;
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Name   : String) return Scripting_Language;
    --  Lookup one of the registered languages by name.
 
    type Scripting_Language_Array is
@@ -697,7 +697,7 @@ package Glide_Kernel.Scripts is
    --  that.
 
    function Get_Instance
-     (Widget   : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
      return Class_Instance;
    --  Return the instance that was associated with the widget, if any.
 
@@ -834,7 +834,7 @@ private
    end record;
 
    type File_Location_Info is record
-      File : Class_Instance;
+      File         : Class_Instance;
       Line, Column : Natural;
    end record;
 

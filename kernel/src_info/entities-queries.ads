@@ -444,9 +444,9 @@ private
       Importing             : Projects.Imported_Project_Iterator;
       --  List of projects to check
 
-      Db           : Entities_Database;
+      Db                    : Entities_Database;
 
-      Handler      : LI_Handler;
+      Handler               : LI_Handler;
       --  The handler used to parse all LI information.
       --  Set to null when we have finished parsing all projects' LI files
 
@@ -468,13 +468,13 @@ private
    end record;
 
    type File_Dependency_Iterator is record
-      File                  : Source_File;
-      Dep_Index             : Dependency_Arrays.Index_Type;
+      File      : Source_File;
+      Dep_Index : Dependency_Arrays.Index_Type;
    end record;
 
    type Subprogram_Iterator is record
-      Index  : Entity_Reference_Arrays.Index_Type;
-      Entity : Entity_Information;
+      Index         : Entity_Reference_Arrays.Index_Type;
+      Entity        : Entity_Information;
       Cache_Current : Entity_Information;
    end record;
 

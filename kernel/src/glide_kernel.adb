@@ -438,6 +438,10 @@ package body Glide_Kernel is
       procedure Save_Child (Child : MDI_Child);
       --  Save a specific child
 
+      -------------------------
+      -- Add_Child_If_Needed --
+      -------------------------
+
       procedure Add_Child_If_Needed (Child : MDI_Child) is
          Module : Module_ID;
       begin
@@ -458,6 +462,10 @@ package body Glide_Kernel is
             Num_Unsaved := Num_Unsaved + 1;
          end if;
       end Add_Child_If_Needed;
+
+      ----------------
+      -- Save_Child --
+      ----------------
 
       procedure Save_Child (Child : MDI_Child) is
          Module : constant Module_ID := Get_Module_From_Child (Child);

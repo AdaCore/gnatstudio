@@ -115,6 +115,7 @@ package Vsearch_Ext is
    --  Return the default Tab width.
 
 private
+
    type Vsearch_Extended_Record is new Vsearch_Pkg.Vsearch_Record with record
       Kernel                 : Glide_Kernel.Kernel_Handle;
       Search_Next_Button     : Gtk.Button.Gtk_Button;

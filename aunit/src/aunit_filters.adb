@@ -29,9 +29,9 @@ with Language;                use Language;
 
 package body Aunit_Filters is
 
-   ----------------
-   -- Suite_Name --
-   ----------------
+   --------------------
+   -- Get_Suite_Name --
+   --------------------
 
    procedure Get_Suite_Name
      (File_Name    : String;
@@ -139,13 +139,13 @@ package body Aunit_Filters is
    ---------------------
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Suites;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access)
+     (Filter : access Filter_Show_Suites;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
       Suite_Name   : GNAT.OS_Lib.String_Access;
@@ -177,13 +177,13 @@ package body Aunit_Filters is
    ---------------------
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Tests;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access)
+     (Filter : access Filter_Show_Tests;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
       Suite_Name   : GNAT.OS_Lib.String_Access;
@@ -210,13 +210,13 @@ package body Aunit_Filters is
    ---------------------
 
    procedure Use_File_Filter
-     (Filter    : access Filter_Show_Ada;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : in String;
-      File      : in String;
-      State     : out File_State;
-      Pixbuf    : out Gdk_Pixbuf;
-      Text      : out GNAT.OS_Lib.String_Access)
+     (Filter : access Filter_Show_Ada;
+      Win    : access File_Selector_Window_Record'Class;
+      Dir    : String;
+      File   : String;
+      State  : out File_State;
+      Pixbuf : out Gdk_Pixbuf;
+      Text   : out GNAT.OS_Lib.String_Access)
    is
       pragma Unreferenced (Win);
    begin

@@ -66,15 +66,15 @@ package Glide_Kernel is
    --  Home_Dir is the directory under which config files can be loaded/saved.
 
    procedure Load_Preferences (Handle : access Kernel_Handle_Record);
-   --  Load the preferences from the user's file ~/.gps/preferences.
+   --  Load the preferences from the user's file ~/.gps/preferences
 
    procedure Destroy (Handle : access Kernel_Handle_Record);
-   --  Free the memory occupied by the kernel.
+   --  Free the memory occupied by the kernel
 
    function Get_Default_Accelerators
      (Handle : access Kernel_Handle_Record)
       return Gtk.Accel_Group.Gtk_Accel_Group;
-   --  Returns the defauls accelerators group for the main window.
+   --  Returns the defauls accelerators group for the main window
 
    function Has_User_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean;
@@ -106,11 +106,11 @@ package Glide_Kernel is
 
    function Get_Tooltips
      (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips;
-   --  Return the widget used to register tooltips for the graphical interface.
+   --  Return the widget used to register tooltips for the graphical interface
 
    function Get_Toolbar
      (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
-   --  Return the main toolbar associated with the kernel.
+   --  Return the main toolbar associated with the kernel
 
    function Get_History
      (Handle : access Kernel_Handle_Record) return Histories.History;
@@ -486,7 +486,6 @@ package Glide_Kernel is
       Context : Selection_Context_Access;
       Kernel  : access Kernel_Handle_Record'Class) return Boolean;
    --  Same as Filter_Matches_Primitive, except it matches if Filter is null
-
 
    procedure Register_Filter
      (Kernel : access Kernel_Handle_Record;

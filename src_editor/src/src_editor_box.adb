@@ -114,9 +114,9 @@ package body Src_Editor_Box is
    --------------------------
 
    procedure Get_Declaration_Info
-     (Editor      : access Source_Editor_Box_Record;
-      Context     : access Entity_Selection_Context'Class;
-      Entity      : out Entity_Information);
+     (Editor  : access Source_Editor_Box_Record;
+      Context : access Entity_Selection_Context'Class;
+      Entity  : out Entity_Information);
    --  Perform a cross-reference to the declaration of the entity located at
    --  (Line, Column) in Editor. Fail silently when no declaration or no
    --  entity can be located, and set File_Decl to null.
@@ -547,12 +547,12 @@ package body Src_Editor_Box is
    --------------------------
 
    procedure Get_Declaration_Info
-     (Editor      : access Source_Editor_Box_Record;
-      Context     : access Entity_Selection_Context'Class;
-      Entity      : out Entity_Information)
+     (Editor  : access Source_Editor_Box_Record;
+      Context : access Entity_Selection_Context'Class;
+      Entity  : out Entity_Information)
    is
-      Status      : Find_Decl_Or_Body_Query_Status;
-      Filename    : constant Virtual_File := Get_Filename (Editor);
+      Status   : Find_Decl_Or_Body_Query_Status;
+      Filename : constant Virtual_File := Get_Filename (Editor);
 
    begin
       if Filename = VFS.No_File then
