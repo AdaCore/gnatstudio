@@ -121,7 +121,6 @@ package body Source_Analyzer is
       New_Buffer      : in out Extended_Line_Buffer;
       P               : in out Word;
       Num_Parens      : in out Integer;
-      Semicolon       : in out Boolean;
       Line_Count      : in out Word;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
@@ -487,7 +486,6 @@ package body Source_Analyzer is
       New_Buffer      : in out Extended_Line_Buffer;
       P               : in out Word;
       Num_Parens      : in out Integer;
-      Semicolon       : in out Boolean;
       Line_Count      : in out Word;
       Indents         : in out Indent_Stack.Simple_Stack;
       Num_Spaces      : Integer;
@@ -762,7 +760,6 @@ package body Source_Analyzer is
             when ',' | ';' =>
                if Buffer (P) = ';' then
                   Prev_Token := Tok_Semicolon;
-                  Semicolon  := True;
                else
                   Prev_Token := Tok_Comma;
                end if;
@@ -878,7 +875,6 @@ package body Source_Analyzer is
       Num_Parens          : Integer           := 0;
       Prev_Num_Parens     : Integer           := 0;
       In_Generic          : Boolean           := False;
-      Semicolon           : Boolean           := False;
       Type_Decl           : Boolean           := False;
       Was_Type_Decl       : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
@@ -913,10 +909,23 @@ package body Source_Analyzer is
          elsif Prev_Token /= Tok_End and then Word = Tok_If then
             Push (Tokens, Temp);
 
-         elsif Prev_Reserved = Tok_Is and then not Was_Type_Decl
-           and then
-             (Word = Tok_New or else Word = Tok_Abstract
-               or else Word = Tok_Separate)
+         elsif Word = Tok_Renames then
+            Val := Top (Tokens);
+
+            if not Val.Declaration
+              and then (Val.Token = Tok_Function
+                or else Val.Token = Tok_Procedure
+                or else Val.Token = Tok_Package)
+            then
+               Subprogram_Decl := False;
+               Pop (Tokens);
+            end if;
+
+         elsif not Was_Type_Decl
+           and then Prev_Token = Tok_Is
+           and then (Word = Tok_New
+             or else Word = Tok_Abstract
+             or else Word = Tok_Separate)
          then
             --  unindent since this is a declaration, e.g:
             --  package ... is new ...;
@@ -963,7 +972,7 @@ package body Source_Analyzer is
 
                Push (Tokens, Temp);
 
-            elsif Prev_Reserved /= Tok_With then
+            elsif Prev_Token /= Tok_With then
                --  unindent after a generic declaration, e.g:
                --
                --  generic
@@ -1033,15 +1042,16 @@ package body Source_Analyzer is
            or else (Prev_Token /= Tok_End and then Word = Tok_Select)
            or else (Top (Tokens).Token = Tok_Select and then Word = Tok_Or)
            or else (Prev_Token /= Tok_End and then Word = Tok_Loop)
-           or else (Prev_Token /= Tok_End and then Prev_Reserved /= Tok_Null
+           or else (Prev_Token /= Tok_End and then Prev_Token /= Tok_Null
                       and then Word = Tok_Record)
            or else ((Top (Tokens).Token = Tok_Exception
                        or else Top (Tokens).Token = Tok_Case)
                      and then Word = Tok_When)
            or else (Top (Tokens).Declaration
                       and then Word = Tok_Private
-                      and then Prev_Reserved /= Tok_Is
-                      and then Prev_Reserved /= Tok_With)
+                      and then Prev_Token /= Tok_Is
+                      and then Prev_Token /= Tok_Limited
+                      and then Prev_Token /= Tok_With)
          then
             --  unindent for this reserved word, and then indent again, e.g:
             --
@@ -1102,6 +1112,8 @@ package body Source_Analyzer is
             end if;
 
             if Word = Tok_Is then
+               --  ??? should use the stack instead
+
                if Prev_Reserved = Tok_Case then
                   Temp.Token := Tok_Case;
                   Push (Tokens, Temp);
@@ -1130,8 +1142,8 @@ package body Source_Analyzer is
             In_Generic := True;
 
          elsif (Word = Tok_Type
-                and then Prev_Reserved /= Tok_Task
-                and then Prev_Reserved /= Tok_Protected)
+                and then Prev_Token /= Tok_Task
+                and then Prev_Token /= Tok_Protected)
            or else Word = Tok_Subtype
          then
             --  Entering a type declaration/definition.
@@ -1164,7 +1176,7 @@ package body Source_Analyzer is
       Push (Indents, None);
 
       Next_Word
-        (Buffer, New_Buffer, Prec, Num_Parens, Semicolon,
+        (Buffer, New_Buffer, Prec, Num_Parens,
          Line_Count, Indents, Indent_Continue, Num_Spaces,
          Indent_Done, Prev_Token);
       Current := End_Of_Word (Buffer, Prec);
@@ -1181,10 +1193,12 @@ package body Source_Analyzer is
 
             if Subprogram_Decl then
                if Num_Parens = 0 then
-                  if Semicolon or else Prev_Num_Parens > 0 then
+                  if Prev_Token = Tok_Semicolon
+                    or else Prev_Num_Parens > 0
+                  then
                      Subprogram_Decl := False;
 
-                     if Semicolon and then not In_Generic then
+                     if Prev_Token = Tok_Semicolon and then not In_Generic then
                         --  subprogram decl with no following reserved word,
                         --  e.g:
                         --  procedure ... ();
@@ -1255,11 +1269,10 @@ package body Source_Analyzer is
 
          Prec_Last       := Prec;
          Prev_Num_Parens := Num_Parens;
-         Semicolon       := False;
          Prec            := Current + 1;
          Prev_Token      := Token;
          Next_Word
-           (Buffer, New_Buffer, Prec, Num_Parens, Semicolon,
+           (Buffer, New_Buffer, Prec, Num_Parens,
             Line_Count, Indents, Indent_Continue, Num_Spaces,
             Indent_Done, Prev_Token);
 
