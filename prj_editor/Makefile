@@ -1,7 +1,2 @@
-include ../Makefile.common
-
-PROJECT_FILE = prj_editor.gpr
-ADA_SOURCES = prj_wizard.adb testsuite.adb
-
-include $(ROOT)/builder/src/Makefile.glide
-
+all build compile link ada c c++ clean internal-clean :
+	$(MAKE) -s -f Makefile.prj_editor $@
