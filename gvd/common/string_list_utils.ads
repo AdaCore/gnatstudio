@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
+with List_Utils;
 
 package String_List_Utils is
 
@@ -31,7 +32,7 @@ package String_List_Utils is
      (S : in String_List.List) return String_List.List;
    --  Return a deep copy of S.
 
-   procedure Sort (L : in out String_List.List);
+   procedure Sort is new List_Utils.Sort (String_List);
    --  Sort L alphabetically.
 
 end String_List_Utils;
