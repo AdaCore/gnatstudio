@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -193,7 +193,11 @@ package body Histories is
       Num  : Natural;
       Value : History_Key_Access;
    begin
-      File := Parse (File_Name);
+      if Is_Regular_File (File_Name) then
+         File := Parse (File_Name);
+      else
+         return;
+      end if;
 
       Key := File.Child;
 
