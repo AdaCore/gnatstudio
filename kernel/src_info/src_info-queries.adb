@@ -78,14 +78,22 @@ package body Src_Info.Queries is
      (Procedure_Kind        => True,
       Function_Or_Operator  => True,
       Entry_Or_Entry_Family => True,
+      others                => False);
+   --  This table should contain true if the corresponding element is
+   --  considered as a subprogram (see Is_Subprogram)
+
+   Is_Container_Entity : constant E_Kind_Set :=
+     (Procedure_Kind        => True,
+      Function_Or_Operator  => True,
+      Entry_Or_Entry_Family => True,
       Task_Kind             => True,
       Package_Kind          => True,
       Overloaded_Entity     => True,
       --  ??? Should we check that at least one of the possible
       --  completions is a subprogram
       others                => False);
-   --  This table should contain true if the corresponding element is
-   --  considered as a subprogram (see Is_Subprogram)
+   --  This table should contain true if the corresponding element can
+   --  contain other elements (calls or declarations)
 
    Is_Label_Entity : constant E_Kind_Set :=
      (Label_On_Loop      => True,
@@ -895,7 +903,7 @@ package body Src_Info.Queries is
    begin
       while L /= null loop
          if not Subprograms_Pkg_Only
-           or else Is_Subprogram (Scope_Tree_Node (L))
+           or else Is_Container (Scope_Tree_Node (L))
            or else L.Decl.Kind.Kind = Package_Kind
          then
             Trace (Handler, Prefix & Dump (L));
@@ -974,6 +982,26 @@ package body Src_Info.Queries is
    begin
       return Is_Subprogram_Entity (Entity.Kind.Kind);
    end Is_Subprogram;
+
+   ------------------
+   -- Is_Container --
+   ------------------
+
+   function Is_Container (Node : Scope_Tree_Node) return Boolean is
+   begin
+      return Is_Container_Entity (Node.Decl.Kind.Kind)
+        and then (Node.Typ = Declaration
+                  or else not Is_End_Reference (Node.Ref.Kind));
+   end Is_Container;
+
+   ------------------
+   -- Is_Container --
+   ------------------
+
+   function Is_Container (Entity : Entity_Information) return Boolean is
+   begin
+      return Is_Container_Entity (Entity.Kind.Kind);
+   end Is_Container;
 
    --------------
    -- Is_Label --
@@ -1489,8 +1517,6 @@ package body Src_Info.Queries is
           (Lib_Info.LI.Body_Info /= null
            and then Lib_Info.LI.Body_Info.Scope_Tree /= null)
       then
-         Trace (Me, "Scope tree already parsed for "
-                  & Base_Name (Get_LI_Filename (Lib_Info)));
          return;
       end if;
 
@@ -2884,6 +2910,9 @@ package body Src_Info.Queries is
 
       Iterator.Current_File := Iterator.Source_Files'First - 1;
       Iterator.Current_Progress := 0;
+
+      Trace (Me, "Find_Ancestor_Dependencies Total_Progress="
+             & Iterator.Total_Progress'Img);
 
       Next (Lang_Handler, Iterator);
 
