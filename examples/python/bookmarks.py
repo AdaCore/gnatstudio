@@ -1,7 +1,5 @@
 # This file adds support for bookmarks in GPS
 # Missing in this very partial implementation:
-#   - saving bookmarks from one session to the next. This could be done if the
-#     locations window was saving its contents
 #   - Add known bookmarks to a menu dynamically, for easy jumps
 
 import GPS
@@ -23,7 +21,7 @@ GPS.parse_xml ("""
   <action name="add bookmark" >
      <filter id="Source editor" />
      <description>Add a bookmark for the current line</description>
-     <shell lang="python">bookmarks.add_bookmark()</shell>
+     <shell lang="python" output="none">bookmarks.add_bookmark()</shell>
   </action>
   <Submenu>
      <Title>Navigate/Bookmarks</Title>
