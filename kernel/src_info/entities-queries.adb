@@ -30,7 +30,7 @@ with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body Entities.Queries is
-   Me : constant Debug_Handle := Create ("Entities.Queries");
+   Me : constant Debug_Handle := Create ("Entities.Queries", Off);
 
    Find_Deps_File_Granularity : constant Debug_Handle :=
      Create ("Entities.Queries_File_Granularity", On);
@@ -148,6 +148,24 @@ package body Entities.Queries is
    --  Return the actual entity corresponding to a specific reference to
    --  Entity.
 
+   function To_String (Location : File_Location) return String;
+   --  For debugging purposes only
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (Location : File_Location) return String is
+   begin
+      if Location = No_File_Location then
+         return "<no loc>";
+      else
+         return Full_Name (Get_Filename (Location.File)).all
+           & ':' & Location.Line'Img
+           & ':' & Location.Column'Img;
+      end if;
+   end To_String;
+
    ----------
    -- Find --
    ----------
@@ -203,6 +221,8 @@ package body Entities.Queries is
                end loop;
             end if;
          end loop For_Each_Entity;
+      else
+         Trace (Me, "Find: no Entity List");
       end if;
    end Find;
 
@@ -274,6 +294,11 @@ package body Entities.Queries is
       Distance : Integer := Integer'Last;
       Closest  : Entity_Information;
    begin
+      Trace (Me, "Find name=" & Normalized_Entity_Name
+             & " Source=" & Full_Name (Get_Filename (Source)).all
+             & " line=" & Line'Img & " column=" & Column'Img
+             & " check_decl=" & Check_Decl_Only'Img);
+
       if Normalized_Entity_Name = "" then
          Find_Any_Entity
            (Source, Line, Column, Check_Decl_Only, Distance, Closest);
@@ -282,9 +307,12 @@ package body Entities.Queries is
            (Get (Source.Entities, Normalized_Entity_Name), Source, Line,
             Column, Check_Decl_Only, Distance, Closest);
 
+         Trace (Me, "After find in entities: distance=" & Distance'Img);
+
          if Distance /= 0 and then not Check_Decl_Only then
             Find (Get (Source.All_Entities, Normalized_Entity_Name),
                   Source, Line, Column, Check_Decl_Only, Distance, Closest);
+            Trace (Me, "After find in all entities: distance=" & Distance'Img);
          end if;
       end if;
 
@@ -352,6 +380,10 @@ package body Entities.Queries is
       Updated : Source_File;
       pragma Unreferenced (Updated);
    begin
+      Trace (Me, "Find_Declaration entity=" & Entity_Name
+             & " source=" & Full_Name (Get_Filename (Source)).all
+             & " line=" & Line'Img
+             & " column=" & Column'Img);
       if Source = Get_Predefined_File (Db) then
          Entity := Get_Or_Create
            (Name         => Entity_Name,
@@ -360,6 +392,7 @@ package body Entities.Queries is
             Column       => Column,
             Allow_Create => True);
          Status := Success;
+         Trace (Me, "Found in predefined package");
          return;
       end if;
 
@@ -377,9 +410,11 @@ package body Entities.Queries is
             Find (Source, Entity_Name, Line, Column, Check_Decl_Only,
                   Entity, Status);
          end if;
+         Trace (Me, "Result=" & Status'Img);
       else
          Status := Entity_Not_Found;
          Entity := null;
+         Trace (Me, "Entity not found");
       end if;
    end Find_Declaration;
 
@@ -398,6 +433,10 @@ package body Entities.Queries is
         Entity_Reference_Arrays.First - 1;
       Return_Next : Boolean := Current_Location = No_File_Location;
    begin
+      Trace (Me, "Find_Next_Body for "
+             & Get_Name (Entity).all
+             & " current=" & To_String (Current_Location));
+
       Update_Xref (Entity.Declaration.File);
 
       for R in Entity_Reference_Arrays.First .. Last (Entity.References) loop
@@ -521,6 +560,10 @@ package body Entities.Queries is
    begin
       Assert (Me, Entity /= null,
               "No Entity specified to Find_All_References");
+
+      Trace (Me, "Find_All_References to " & Get_Name (Entity).all
+             & ' ' & To_String (Entity.Declaration)
+             & " in_file=" & Boolean'Image (In_File /= null));
 
       if In_Scope /= null then
          loop
