@@ -19,15 +19,22 @@
 -----------------------------------------------------------------------
 
 with Unchecked_Deallocation;
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Exceptions;          use Ada.Exceptions;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with System.Assertions; use System.Assertions;
-with Traces; use Traces;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with System.Assertions;       use System.Assertions;
+with Traces;                  use Traces;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Prj;                     use Prj;
+with Prj.Tree;                use Prj.Tree;
+
+with Prj_API;                 use Prj_API;
+with Basic_Types;             use Basic_Types;
 
 package body Src_Info.Queries is
 
    Me : Debug_Handle := Create ("SRC_INFO");
+
+   use Name_Htable;
 
    procedure Free is new
      Unchecked_Deallocation (Dependency_Node, Dependency_List);
@@ -97,8 +104,16 @@ package body Src_Info.Queries is
    --  Find the declaration for Name in Scope.
    --  Name must be all lower-case if the language is case-insensitive
 
+   procedure Find_Entity_References
+     (Node     : Scope_List;
+      Decl     : E_Declaration_Info;
+      Callback : Node_Callback);
+   --  Find the references to Decl in Node
+
    function Is_Same_Entity
      (Decl : E_Declaration; Entity : Entity_Information) return Boolean;
+   function Is_Same_Entity (Decl1, Decl2 : E_Declaration)
+      return Boolean;
    --  True if Entity1 and Entity2 represent the same entity. You can not use a
    --  direct equality test
 
@@ -417,16 +432,10 @@ package body Src_Info.Queries is
               (Value =>
                  (File =>
                     (File_Name => new String' (FI.Source_Filename.all),
-                     Unit_Name => null,
                      LI_Name   => new String'
                        (Current_Dep.Value.File.LI.LI.LI_Filename.all)),
                   Dep  => Current_Dep.Value.Dep_Info),
                Next  => Dependencies);
-
-            if FI.Unit_Name /= null then
-               Dependencies.Value.File.Unit_Name :=
-                 new String' (FI.Unit_Name.all);
-            end if;
 
             Current_Dep := Current_Dep.Next;
          end;
@@ -606,7 +615,9 @@ package body Src_Info.Queries is
       --  Add the declarations from Decl into L.
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List; Node : in out Scope_List);
+        (Decl : in out Scope_List;
+         Node : in out Scope_List;
+         Parent : Scope_List);
       procedure Add_Single_Entity
         (Decl : in out Scope_List; T : in out Scope_Tree);
       --  Add a single reference in the tree (either starting at the top-level
@@ -632,6 +643,7 @@ package body Src_Info.Queries is
       procedure Add_In_List
         (L        : in out Scope_List;
          Previous : in out Scope_List;
+         Parent   : Scope_List;
          New_Item : Scope_List);
       --  Add New_Item in the list L, after Previous (or at the beginning if
       --  Previous is null.
@@ -765,10 +777,12 @@ package body Src_Info.Queries is
       procedure Add_In_List
         (L        : in out Scope_List;
          Previous : in out Scope_List;
+         Parent   : Scope_List;
          New_Item : Scope_List) is
       begin
          Assert (Me, New_Item.Sibling = null,
                  "Inserting item with existing sibling");
+         New_Item.Parent := Parent;
          if Previous = null then
             New_Item.Sibling := L;
             L := New_Item;
@@ -784,7 +798,8 @@ package body Src_Info.Queries is
 
       procedure Add_Single_Entity
         (Decl : in out Scope_List;
-         Node : in out Scope_List)
+         Node : in out Scope_List;
+         Parent : Scope_List)
       is
          Pos      : Integer;
          List     : Scope_List := Node;
@@ -795,22 +810,22 @@ package body Src_Info.Queries is
             Pos := In_Range (Decl, List);
             case In_Range (Decl, List) is
                when -1 =>
-                  Add_In_List (Node, Previous, Decl);
+                  Add_In_List (Node, Previous, Parent, Decl);
                   return;
 
                when 0 =>
-                  Add_Single_Entity (Decl, List.Contents);
+                  Add_Single_Entity (Decl, List.Contents, List);
                   return;
 
                when 1 =>
                   null;
 
                when 2 =>
-                  Add_In_List (Node, Previous, Decl);
+                  Add_In_List (Node, Previous, Parent, Decl);
                   loop
                      Save := List.Sibling;
                      List.Sibling := null;
-                     Add_Single_Entity (List, Decl.Contents);
+                     Add_Single_Entity (List, Decl.Contents, Decl);
                      Decl.Sibling := Save;
                      List := Save;
 
@@ -825,7 +840,7 @@ package body Src_Info.Queries is
             List := List.Sibling;
          end loop;
 
-         Add_In_List (Node, Previous, Decl);
+         Add_In_List (Node, Previous, Parent, Decl);
       end Add_Single_Entity;
 
       -----------------------
@@ -833,13 +848,13 @@ package body Src_Info.Queries is
       -----------------------
 
       procedure Add_Single_Entity
-        (Decl : in out Scope_List;
-         T : in out Scope_Tree)
+        (Decl   : in out Scope_List;
+         T      : in out Scope_Tree)
       is
          P : Unit_Part;
          File_List : File_Info_Ptr_List;
          Num : Positive := 1;
-         Unit_Name : String_Access;
+         Source_Filename : GNAT.OS_Lib.String_Access;
       begin
          if Decl.Typ = Declaration then
             if Decl.Start_Of_Scope.File.LI /= Lib_Info then
@@ -848,7 +863,7 @@ package body Src_Info.Queries is
             end if;
 
             P := Decl.Start_Of_Scope.File.Part;
-            Unit_Name := Decl.Start_Of_Scope.File.Unit_Name;
+            Source_Filename := Decl.Start_Of_Scope.File.Source_Filename;
          else
             if Decl.Ref.Location.File.LI /= Lib_Info then
                Free (Decl);
@@ -856,26 +871,27 @@ package body Src_Info.Queries is
             end if;
 
             P := Decl.Ref.Location.File.Part;
-            Unit_Name := Decl.Ref.Location.File.Unit_Name;
+            Source_Filename := Decl.Ref.Location.File.Source_Filename;
          end if;
 
          case P is
             when Unit_Body =>
-               Add_Single_Entity (Decl, T.Body_Tree);
+               Add_Single_Entity (Decl, T.Body_Tree, null);
 
             when Unit_Spec =>
-               Add_Single_Entity (Decl, T.Spec_Tree);
+               Add_Single_Entity (Decl, T.Spec_Tree, null);
 
             when Unit_Separate =>
                File_List := Lib_Info.LI.Separate_Info;
                while File_List /= null loop
-                  exit when File_List.Value.Unit_Name.all = Unit_Name.all;
+                  exit when File_List.Value.Source_Filename.all =
+                    Source_Filename.all;
                   Num := Num + 1;
                   File_List := File_List.Next;
                end loop;
 
                if Num <= T.Separate_Trees'Last then
-                  Add_Single_Entity (Decl, T.Separate_Trees (Num));
+                  Add_Single_Entity (Decl, T.Separate_Trees (Num), null);
                end if;
          end case;
       end Add_Single_Entity;
@@ -904,6 +920,7 @@ package body Src_Info.Queries is
                New_Item := new Scope_Node'
                  (Typ         => Reference,
                   Sibling     => null,
+                  Parent      => null,
                   Decl        => Decl.Declaration'Unrestricted_Access,
                   Ref         => R.Value'Unrestricted_Access);
                Add_Single_Entity (New_Item, T);
@@ -929,6 +946,7 @@ package body Src_Info.Queries is
                Decl           => List.Value.Declaration'Unrestricted_Access,
                Contents       => null,
                Start_Of_Scope => Null_File_Location,
+               Parent      => null,
                Sibling        => null);
             Compute_Scope (New_Item, List.Value.References);
             Start_Of_Scope := New_Item.Start_Of_Scope;
@@ -1048,6 +1066,47 @@ package body Src_Info.Queries is
       return Result;
    end Find_Entity_Scope;
 
+   ----------------------------
+   -- Find_Entity_References --
+   ----------------------------
+
+   procedure Find_Entity_References
+     (Node     : Scope_List;
+      Decl     : E_Declaration_Info;
+      Callback : Node_Callback)
+   is
+      L : Scope_List := Node;
+   begin
+      while L /= null loop
+         case L.Typ is
+            when Declaration =>
+               Find_Entity_References (L.Contents, Decl, Callback);
+
+            when Reference =>
+               if Is_Same_Entity (L.Decl.all, Decl.Declaration) then
+                  Callback (Scope_Tree_Node (L));
+               end if;
+         end case;
+         L := L.Sibling;
+      end loop;
+   end Find_Entity_References;
+
+   ----------------------------
+   -- Find_Entity_References --
+   ----------------------------
+
+   procedure Find_Entity_References
+     (Tree : Scope_Tree;
+      Decl : E_Declaration_Info;
+      Callback : Node_Callback) is
+   begin
+      Find_Entity_References (Tree.Body_Tree, Decl, Callback);
+      Find_Entity_References (Tree.Spec_Tree, Decl, Callback);
+      for P in Tree.Separate_Trees'Range loop
+         Find_Entity_References (Tree.Separate_Trees (P), Decl, Callback);
+      end loop;
+   end Find_Entity_References;
+
    -----------
    -- Start --
    -----------
@@ -1076,6 +1135,15 @@ package body Src_Info.Queries is
    begin
       return Scope_Tree_Node (Iter);
    end Get;
+
+   ----------------
+   -- Get_Parent --
+   ----------------
+
+   function Get_Parent (Node : Scope_Tree_Node) return Scope_Tree_Node is
+   begin
+      return Scope_Tree_Node (Node.Parent);
+   end Get_Parent;
 
    --------------
    -- Get_Name --
@@ -1169,5 +1237,367 @@ package body Src_Info.Queries is
            Entity.Decl_File.all;
    end Is_Same_Entity;
 
+   --------------------
+   -- Is_Same_Entity --
+   --------------------
+
+   function Is_Same_Entity (Decl1, Decl2 : E_Declaration)
+      return Boolean is
+   begin
+      return Decl1.Location.Line         = Decl2.Location.Line
+        and then Decl1.Location.Column   = Decl2.Location.Column
+        and then Decl1.Name.all          = Decl2.Name.all
+        and then Get_Source_Filename (Decl1.Location.File) =
+          Get_Source_Filename (Decl2.Location.File);
+   end Is_Same_Entity;
+
+   ----------
+   -- Hash --
+   ----------
+
+   function Hash (F : GNAT.OS_Lib.String_Access) return Name_Htable_Num is
+   begin
+      return Hash (F.all);
+   end Hash;
+
+   -----------
+   -- Equal --
+   -----------
+
+   function Equal (F1, F2 : GNAT.OS_Lib.String_Access) return Boolean is
+   begin
+      return F1.all = F2.all;
+   end Equal;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out Entity_Reference_Iterator) is
+   begin
+      Free (Iterator.Importing);
+      Free (Iterator.Source_Files);
+      Reset (Iterator.Examined);
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Entity_Reference_Iterator, Entity_Reference_Iterator_Access);
+   begin
+      Destroy (Iterator.all);
+      Unchecked_Free (Iterator);
+   end Destroy;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iterator : Entity_Reference_Iterator) return E_Reference is
+   begin
+      if Iterator.References = null then
+         return No_Reference;
+      else
+         return Iterator.References.Value;
+      end if;
+   end Get;
+
+   ------------
+   -- Get_LI --
+   ------------
+
+   function Get_LI (Iterator : Entity_Reference_Iterator) return LI_File_Ptr is
+   begin
+      return Iterator.LI;
+   end Get_LI;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next
+     (Iterator : in out Entity_Reference_Iterator;
+      List         : in out LI_File_List)
+   is
+      function Check_Declarations (Declarations : E_Declaration_Info_List)
+         return E_Reference_List;
+      --  Return the list of references to the entity in Declarations, or null
+      --  if there is none.
+
+      function Check_File return E_Reference_List;
+      --  Check the current file in the iterator, and return the list of
+      --  references that matches the declaration (or null if there is none).
+
+      function Check_LI (LI : LI_File_Ptr) return E_Reference_List;
+      --  Set the iterator to examine the declarations in LI
+
+      function Check_Decl_File return E_Reference_List;
+      --  Check the next declaration list in Iterator.LI
+
+      ------------------------
+      -- Check_Declarations --
+      ------------------------
+
+      function Check_Declarations (Declarations : E_Declaration_Info_List)
+         return E_Reference_List
+      is
+         D : E_Declaration_Info_List := Declarations;
+      begin
+         while D /= null loop
+            if Is_Same_Entity
+              (D.Value.Declaration, Iterator.Decl.Declaration)
+            then
+               return D.Value.References;
+            end if;
+
+            D := D.Next;
+         end loop;
+         return null;
+      end Check_Declarations;
+
+      ----------------
+      -- Check_File --
+      ----------------
+
+      function Check_File return E_Reference_List is
+         LI      : LI_File_Ptr;
+         Handler : LI_Handler;
+         Sep_List : File_Info_Ptr_List;
+      begin
+         if not Get
+           (Iterator.Examined,
+            GNAT.OS_Lib.String_Access
+            (Iterator.Source_Files (Iterator.Current_File)))
+         then
+            LI := Locate_From_Source
+              (List, Iterator.Source_Files (Iterator.Current_File).all);
+            Handler := Handler_From_Filename
+              (Iterator.Importing (Iterator.Current_Project),
+               Iterator.Source_Files (Iterator.Current_File).all);
+
+            --  Do nothing if the file is not the same language
+            if LI = null
+              or else LI.LI.Handler = Handler
+            then
+               Create_Or_Complete_LI
+                 (Handler                => Handler,
+                  File                   => LI,
+                  Source_Filename        =>
+                    Iterator.Source_Files (Iterator.Current_File).all,
+                  List                   => List,
+                  Project                =>
+                    Iterator.Importing (Iterator.Current_Project),
+                  Predefined_Source_Path => "",
+                  Predefined_Object_Path => "");
+            end if;
+
+            if LI /= null then
+               --  Memorize the list of files that have been examined, to avoid
+               --  parsing again the same LI file
+               if LI.LI.Spec_Info /= null then
+                  Set
+                    (Iterator.Examined, LI.LI.Spec_Info.Source_Filename, True);
+               end if;
+
+               if LI.LI.Body_Info /= null then
+                  Set
+                    (Iterator.Examined, LI.LI.Body_Info.Source_Filename, True);
+               end if;
+
+               Sep_List := LI.LI.Separate_Info;
+               while Sep_List /= null loop
+                  if Sep_List.Value /= null then
+                     Set (Iterator.Examined,
+                          Sep_List.Value.Source_Filename, True);
+                  end if;
+                  Sep_List := Sep_List.Next;
+               end loop;
+
+               return Check_LI (LI);
+            end if;
+         end if;
+         return null;
+      end Check_File;
+
+      --------------
+      -- Check_LI --
+      --------------
+
+      function Check_LI (LI : LI_File_Ptr) return E_Reference_List is
+         Ref       : E_Reference_List;
+         Decl_List : Dependency_File_Info_List;
+         Decl_LI   : LI_File_Ptr := Iterator.Decl.Declaration.Location.File.LI;
+      begin
+         --  If this is the LI file for Decl, we need to parse the
+         --  body and spec infos. Otherwise, only the dependencies
+         Iterator.LI := LI;
+         if LI = Decl_LI then
+            Iterator.Part := Unit_Spec;
+
+            if LI.LI.Spec_Info /= null then
+               Ref := Check_Declarations (LI.LI.Spec_Info.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+            end if;
+
+            return Check_Decl_File;
+
+
+         --  Otherwise, check all the dependencies to see if we
+         --  have the entity.
+         else
+            Decl_List := LI.LI.Dependencies_Info;
+            while Decl_List /= null loop
+               if Decl_List.Value.File.LI = Decl_LI then
+                  return Check_Declarations (Decl_List.Value.Declarations);
+               end if;
+
+               Decl_List := Decl_List.Next;
+            end loop;
+         end if;
+         return null;
+      end Check_LI;
+
+      ---------------------
+      -- Check_Decl_File --
+      ---------------------
+
+      function Check_Decl_File return E_Reference_List is
+         Ref : E_Reference_List;
+      begin
+         --  Were we checking the declarations from the spec ?
+         if Iterator.Part = Unit_Spec then
+            Iterator.Part := Unit_Body;
+            if Iterator.LI.LI.Body_Info /= null then
+               Ref := Check_Declarations
+                 (Iterator.LI.LI.Body_Info.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+            end if;
+         end if;
+
+         --  Were we checking the declarations from the body ?
+         if Iterator.Part = Unit_Body then
+            Iterator.Part := Unit_Separate;
+            Iterator.Current_Separate := Iterator.LI.LI.Separate_Info;
+         end if;
+
+         --  Are we currently checking the separates
+         if Iterator.Part = Unit_Separate then
+            while Iterator.Current_Separate /= null loop
+               Ref := Check_Declarations
+                 (Iterator.Current_Separate.Value.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+
+               Iterator.Current_Separate := Iterator.Current_Separate.Next;
+            end loop;
+         end if;
+         return null;
+      end Check_Decl_File;
+
+   begin
+      --  If necessary, force skipping to the next LI file
+      if Iterator.LI_Once then
+         Iterator.References := null;
+         Iterator.Part := Unit_Separate;
+         Iterator.Current_Separate := null;
+      end if;
+
+      --  If there are still some references
+      if Iterator.References /= null then
+         Iterator.References := Iterator.References.Next;
+      end if;
+
+      if Iterator.References = null then
+         --  Were we processing the LI file for the source file that contains
+         --  the initial declaration ?
+         if Iterator.LI = Iterator.Decl.Declaration.Location.File.LI then
+            Iterator.References := Check_Decl_File;
+            if Iterator.References /= null then
+               return;
+            end if;
+         end if;
+
+         while Iterator.References = null loop
+
+            --  Move to the next file in the current project
+            loop
+               Iterator.Current_File := Iterator.Current_File + 1;
+               exit when Iterator.Current_File > Iterator.Source_Files'Last;
+               Iterator.References := Check_File;
+               if Iterator.References /= null then
+                  return;
+               end if;
+            end loop;
+
+            --  Move to the next project
+
+            Free (Iterator.Source_Files);
+            Reset (Iterator.Examined);
+            Iterator.Current_Project := Iterator.Current_Project + 1;
+
+            if Iterator.Current_Project > Iterator.Importing'Last then
+               Free (Iterator.Importing);
+               return;
+            end if;
+
+            Iterator.Source_Files := Get_Source_Files
+              (Get_Project_From_View
+                 (Iterator.Importing (Iterator.Current_Project)),
+               Recursive => False,
+               Full_Path => False);
+            Iterator.Current_File := Iterator.Source_Files'First - 1;
+         end loop;
+      end if;
+   end Next;
+
+   -------------------------
+   -- Find_All_References --
+   -------------------------
+   --  Algorithm:
+
+   --  For efficiency, we only look in the direct sources of all the projects
+   --  that import, even indirectly the project that contains the declaration
+   --  source file. No files in other projects can reference that entity, since
+   --  it is not visible.
+   --  We also only look in the files that are in the same language.
+
+   procedure Find_All_References
+     (Root_Project : Prj.Tree.Project_Node_Id;
+      Decl         : E_Declaration_Info;
+      List         : in out LI_File_List;
+      Iterator     : out Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False)
+   is
+      Decl_Project : Project_Id := Project;
+   begin
+      if Decl_Project = No_Project then
+         Decl_Project := Get_Project_From_File
+           (Get_Project_View_From_Project (Root_Project),
+            Get_File (Get_Location (Decl)));
+      end if;
+
+      Iterator.Decl := Decl;
+      Iterator.LI_Once := LI_Once;
+      Iterator.Importing := new Project_Id_Array'
+        (Find_All_Projects_Importing (Root_Project, Decl_Project));
+      Iterator.Current_Project := Iterator.Importing'First;
+      Iterator.Source_Files := Get_Source_Files
+        (Get_Project_From_View (Iterator.Importing
+                                (Iterator.Current_Project)),
+         Recursive => False,
+         Full_Path => False);
+      Iterator.Current_File := Iterator.Source_Files'First - 1;
+
+      Next (Iterator, List);
+   end Find_All_References;
 
 end Src_Info.Queries;

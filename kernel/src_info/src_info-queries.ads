@@ -31,6 +31,10 @@
 
 with Traces;
 with Unchecked_Deallocation;
+with Prj.Tree;
+with Prj_API;
+with HTables;
+with Basic_Types;
 
 package Src_Info.Queries is
 
@@ -63,6 +67,52 @@ package Src_Info.Queries is
    --
    --  If no entity could be found, Status is set to a value other than
    --  Success. In that case, Entity_Declaration and Location are irrelevant.
+
+   ----------------
+   -- References --
+   ----------------
+
+   type Entity_Reference_Iterator is private;
+   type Entity_Reference_Iterator_Access is access Entity_Reference_Iterator;
+
+   procedure Find_All_References
+     (Root_Project : Prj.Tree.Project_Node_Id;
+      Decl         : E_Declaration_Info;
+      List         : in out LI_File_List;
+      Iterator     : out Entity_Reference_Iterator;
+      Project      : Prj.Project_Id := Prj.No_Project;
+      LI_Once      : Boolean := False);
+   --  Find all the references to the entity described in Decl.
+   --  Root_Project should be the root project under which we are looking.
+   --  Source files that don't belong to Root_Project or one of its imported
+   --  project will not be searched.
+   --  Project is the project to which the file where the declaration is found
+   --  belongs. It can optionally be left to Empty_Node if this is not known,
+   --  but the search will take a little bit longer.
+   --  Note also that the declaration itself is not returned.
+   --
+   --  if LI_Once is True, then a single reference will be returned for each LI
+   --  file. This can be used for instance if you are only looking for matching
+   --  LI files.
+   --
+   --  You must destroy the iterator when you are done with it, to avoid memory
+   --  leaks.
+
+   procedure Next
+     (Iterator : in out Entity_Reference_Iterator;
+      List     : in out LI_File_List);
+   --  Get the next reference to the entity
+
+   function Get (Iterator : Entity_Reference_Iterator) return E_Reference;
+   --  Return the reference currently pointed to. No_Reference is returned if
+   --  there are no more reference.
+
+   function Get_LI (Iterator : Entity_Reference_Iterator) return LI_File_Ptr;
+   --  Return the current LI file
+
+   procedure Destroy (Iterator : in out Entity_Reference_Iterator);
+   procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
+   --  Free the memory occupied by the iterator.
 
    ---------------------------
    -- Dependencies requests --
@@ -172,6 +222,19 @@ package Src_Info.Queries is
    --  Return the declaration node for the entity Name that is referenced
    --  at position Line, Column.
 
+   type Node_Callback is access procedure (Node : Scope_Tree_Node);
+   --  Called for each node matching a given criteria.
+
+   procedure Find_Entity_References
+     (Tree : Scope_Tree;
+      Decl : E_Declaration_Info;
+      Callback : Node_Callback);
+   --  Search all the references to the entity Decl in the tree
+
+   function Get_Parent (Node : Scope_Tree_Node) return Scope_Tree_Node;
+   --  Return the parent of Node, or Null_Scope_Tree_Node if there is no
+   --  parent.
+
    function Is_Subprogram (Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node is associated with a subprogram
 
@@ -221,6 +284,7 @@ private
    type Scope_List is access Scope_Node;
    type Scope_Node (Typ : Scope_Type) is record
       Sibling : Scope_List;
+      Parent  : Scope_List;
       --  Pointer to the next item at the same level.
 
       Decl : E_Declaration_Access;
@@ -270,6 +334,53 @@ private
       Body_Tree      => null,
       Spec_Tree      => null,
       Separate_Trees => null);
+
+   type Name_Htable_Num is new Natural range 0 .. 1000;
+   function Hash (F : GNAT.OS_Lib.String_Access) return Name_Htable_Num;
+   function Hash is new HTables.Hash (Name_Htable_Num);
+   function Equal (F1, F2 : GNAT.OS_Lib.String_Access) return Boolean;
+
+   package Name_Htable is new HTables.Simple_HTable
+     (Header_Num => Name_Htable_Num,
+      Element    => Boolean,
+      No_Element => False,
+      Key        => GNAT.OS_Lib.String_Access,
+      Hash       => Hash,
+      Equal      => Equal);
+
+   type Entity_Reference_Iterator is record
+      Decl : E_Declaration_Info;
+      --  The entity we are looking for
+
+      Importing : Prj_API.Project_Id_Array_Access;
+      --  List of projects to check
+
+      Current_Project : Natural;
+      --  The current project in the list above
+
+      Examined     : Name_Htable.HTable;
+      --  List of source files in the current project that have already been
+      --  examined.
+
+      Source_Files : Basic_Types.String_Array_Access;
+      --  The list of source files in the current project
+
+      Current_File : Natural;
+      --  The current source file
+
+      References : E_Reference_List;
+      --  The current list of references we are processing.
+
+      LI_Once : Boolean;
+      --  True if we should return only one reference per LI file
+
+      LI : LI_File_Ptr;
+      Part : Unit_Part;
+      Current_Separate : File_Info_Ptr_List;
+      --  The LI file we are currently examining. If this is the file in which
+      --  the entity was declared, we need to examine the body, spec, and
+      --  separates, and part indicates which part we are examining
+   end record;
 
    pragma Inline (File_Information);
    pragma Inline (Dependency_Information);
