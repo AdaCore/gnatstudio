@@ -104,10 +104,9 @@ package Process_Proxies is
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Timeout : Integer := 20);
    --  Wait until some output from the debugger matches Pattern.
-   --  This functions waits at least (Timeout * 50ms), and is overriden
-   --  in graphic mode so that we give a change to the GtkAda main loop to
-   --  handle events. The procedure can actually wait longer, depending on
-   --  what is processes between each iteration.
+   --  This functions waits at least (Timeout * 50ms). It does *not*
+   --  handle graphic events (e.g Gtk+ events), so this is the responsibility
+   --  of the caller to handle these events between calls to Wait if desired.
    --  The function returns the same kind of result as an Expect call would.
    --  Default Timeout is one second.
 
@@ -190,9 +189,6 @@ private
 
       Interrupted        : Boolean := False;
       --  Whether the process has been interrupted
-
-      Waiting            : Boolean := False;
-      --  Whether we are already polling the output of the process.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
