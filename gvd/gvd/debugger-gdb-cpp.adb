@@ -28,6 +28,7 @@ with Items;          use Items;
 with Items.Arrays;   use Items.Arrays;
 with Items.Records;  use Items.Records;
 with Items.Classes;  use Items.Classes;
+with Items.Simples;  use Items.Simples;
 
 with Ada.Tags;       use Ada.Tags;
 with Debugger.Gdb.C; use Debugger.Gdb.C;
@@ -265,6 +266,7 @@ package body Debugger.Gdb.Cpp is
    is
       Ancestor   : Natural := 1;
       V          : Generic_Type_Access;
+      Num_Ancestors : Natural;
 
    begin
       pragma Assert (Result /= null);
@@ -283,20 +285,40 @@ package body Debugger.Gdb.Cpp is
          end if;
 
          --  Parse the ancestors
-         if Get_Num_Ancestors (Class_Type (Result.all)) > 0 then
-            while Type_Str (Index) = '<' loop
-               Skip_To_Char (Type_Str, Index, '>');
-               Index := Index + 5;  --  skips "> = "
-               V := Get_Ancestor (Class_Type (Result.all), Ancestor);
-               Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
-               pragma Assert (Looking_At (Type_Str, Index, ", "));
-               Index := Index + 2; --  skips ", "
-               Ancestor := Ancestor + 1;
-            end loop;
-         end if;
+         --  We cannot simply skip while we see a '<', with the following
+         --  example returned by gdb:
+         --     <CL2> = {_vptr.CL2 = 0x8049e68, x = 10}, <No data fields>}
+
+         Num_Ancestors := Get_Num_Ancestors (Class_Type (Result.all));
+         while Ancestor <= Num_Ancestors
+           and then Type_Str (Index) = '<'
+         loop
+            Skip_To_Char (Type_Str, Index, '>');
+            Index := Index + 5;  --  skips "> = "
+            V := Get_Ancestor (Class_Type (Result.all), Ancestor);
+            Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
+            pragma Assert (Looking_At (Type_Str, Index, ", "));
+            Index := Index + 2; --  skips ", "
+            Ancestor := Ancestor + 1;
+         end loop;
 
          --  Parse the child
          V := Get_Child (Class_Type (Result.all));
+
+         --  Recent versions of gdb display the virtual table as
+         --     {_vptr.CLASS = 0xffff, a = 1}
+
+         if Looking_At (Type_Str, Index, "_vptr.") then
+            Index := Index + 6;
+            while Type_Str (Index) /= ','
+              and then Type_Str (Index) /= '}'
+            loop
+               Index := Index + 1;
+            end loop;
+
+            Index := Index + 1;
+         end if;
+
          Internal_Parse_Value
            (Lang, Type_Str, Index, V, Repeat_Num,
             Parent => Result);
@@ -308,7 +330,7 @@ package body Debugger.Gdb.Cpp is
          --  We can also have the following format:
          --     ", _vptr. = 0x9049b60}, "    (ie no <..>)
 
-         if Looking_At (Type_Str, Index, ", _vptr. = ") then
+         if Looking_At (Type_Str, Index, ", _vptr.")  then
             Index := Index + 11;
             while Type_Str (Index) /= '}' loop
                Index := Index + 1;
@@ -376,6 +398,7 @@ package body Debugger.Gdb.Cpp is
    is
       Num_Fields  : Natural := 0;
       Tmp         : Natural := Index;
+      Tmp2        : Natural;
       Field       : Natural := 1;
       Field_Value : Generic_Type_Access := null;
       Name_Start, Name_End, Field_End : Natural;
@@ -387,21 +410,31 @@ package body Debugger.Gdb.Cpp is
       --  Count the number of fields.
       --  Gdb first displays the fields (along with public:, protected: or
       --  private:), then a blank line, and the methods with their visibility.
-      --  If there is no blank line, there there is no field.
+      --
+      --  If there is no blank line, there there is no field or no methods.
 
       while Tmp <= Type_Str'Last
         and then (Type_Str (Tmp) /= ASCII.LF
                   or else Type_Str (Tmp + 1) /= ASCII.LF)
       loop
+         Tmp2 := Tmp;
          Skip_To_Char (Type_Str, Tmp, ';');
-         Num_Fields := Num_Fields + 1;
+
+         --  This is a field if there are no parenthesis, unless we have a
+         --  pointer to subprogram:
+         --      void (*foo) ()  is a field
+         --      void foo ()     is a method
+         if Tmp <= Type_Str'Last then
+            Skip_To_Char (Type_Str (Tmp2 .. Tmp - 1), Tmp2, '(');
+            if Tmp2 >= Tmp - 1
+              or else Type_Str (Tmp2 + 1) = '*'
+            then
+               Num_Fields := Num_Fields + 1;
+            end if;
+         end if;
+
          Tmp := Tmp + 1;
       end loop;
-
-      --  No field ?
-      if Tmp > Type_Str'Last then
-         Num_Fields := 0;
-      end if;
 
       if Is_Union then
          Result := New_Union_Type (Num_Fields);
@@ -427,6 +460,11 @@ package body Debugger.Gdb.Cpp is
          Set_Field_Name
            (Record_Type (Result.all), Field,
             Type_Str (Name_Start .. Name_End), Variant_Parts => 0);
+
+         if Field_Value = null then
+            Field_Value := New_Simple_Type;
+         end if;
+
          Set_Value (Record_Type (Result.all), Field_Value, Field);
 
          Index := Field_End + 1;
