@@ -34,6 +34,7 @@ with GNAT.Regpat;          use GNAT.Regpat;
 
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Ada.Exceptions;       use Ada.Exceptions;
+with Ada.Unchecked_Conversion;
 
 with String_Utils;         use String_Utils;
 with Traces;               use Traces;
@@ -41,6 +42,7 @@ with Traces;               use Traces;
 with Glide_Kernel;               use Glide_Kernel;
 with Glide_Kernel.Console;       use Glide_Kernel.Console;
 with Interactive_Consoles;       use Interactive_Consoles;
+with System;                     use System;
 
 with Glide_Intl;           use Glide_Intl;
 
@@ -83,8 +85,9 @@ package body Glide_Kernel.Timeout is
    --  Close the process descriptor and free its associated memory
 
    function Data_Handler
-     (Input     : in String;
-      User_Data : access GObject_Record'Class) return String;
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : in String;
+      User_Data : System.Address) return String;
    --  Handler for user input on the console.
 
    -------------
@@ -199,23 +202,27 @@ package body Glide_Kernel.Timeout is
    ------------------
 
    function Data_Handler
-     (Input     : in String;
-      User_Data : access GObject_Record'Class) return String
+     (Console   : access Interactive_Console_Record'Class;
+      Input     : in String;
+      User_Data : System.Address) return String
    is
-      Console : constant Console_Process := Console_Process (User_Data);
+      pragma Unreferenced (Console);
+      function Convert is new Ada.Unchecked_Conversion
+        (System.Address, Console_Process);
+      Process : constant Console_Process := Convert (User_Data);
    begin
-      if not Console.Died then
-         Send (Console.D.Descriptor.all, Input);
+      if not Process.Died then
+         Send (Process.D.Descriptor.all, Input);
       end if;
 
       return "";
 
    exception
       when E : others =>
-         Timeout_Remove (Console.Id);
-         Unchecked_Free (Console.Expect_Regexp);
-         Cleanup (Console.D);
-         Unref (Console);
+         Timeout_Remove (Process.Id);
+         Unchecked_Free (Process.Expect_Regexp);
+         Cleanup (Process.D);
+         Unref (Process);
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
          return "";
@@ -337,7 +344,7 @@ package body Glide_Kernel.Timeout is
       Initialize (Data);
 
       if Console /= null then
-         Set_Command_Handler (Console, Data_Handler'Access, GObject (Data));
+         Set_Command_Handler (Console, Data_Handler'Access, Data.all'Address);
          Data.Delete_Id := Object_Return_Callback.Object_Connect
            (Console, "delete_event",
             Delete_Handler'Access,
