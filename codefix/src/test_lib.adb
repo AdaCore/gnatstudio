@@ -57,7 +57,7 @@ package body Test_Lib is
       end if;
       Num_Sol := Get_Number (0, Num_Sol);
 
-      Validate (Corrector, Id, Num_Sol, True);
+      Validate (Corrector, Id, Num_Sol);
 
       if Is_Open (Capture_File) then
          Put (Capture_File, Num_Sol);
