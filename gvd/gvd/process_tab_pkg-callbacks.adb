@@ -87,7 +87,7 @@ package body Process_Tab_Pkg.Callbacks is
       Reparent (Process.Editor_Text, Get_Child (Notebook_Page));
       Handler_Block (Object, Process.Notebook_Handler_Id);
       Set_Page (Process.Thread_Notebook, Gint (Arg2));
-      Thread_Switch (Process.Debugger, Thread);
+      Thread_Switch (Process.Debugger, Thread, Display => True);
       Handler_Unblock (Object, Process.Notebook_Handler_Id);
    end On_Thread_Notebook_Switch_Page;
 

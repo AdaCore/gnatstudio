@@ -499,7 +499,8 @@ package Debugger is
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
-      Thread   : Natural);
+      Thread   : Natural;
+      Display  : Boolean := False);
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread" or "task"
 

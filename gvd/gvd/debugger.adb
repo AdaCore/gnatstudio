@@ -214,9 +214,11 @@ package body Debugger is
 
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
-      Thread   : Natural) is
+      Thread   : Natural;
+      Display  : Boolean := False) is
    begin
-      Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread));
+      Send (Debugger, Thread_Switch (Get_Language (Debugger), Thread),
+            Display => Display);
    end Thread_Switch;
 
    -----------------------
