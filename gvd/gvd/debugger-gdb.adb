@@ -1885,18 +1885,24 @@ package body Debugger.Gdb is
 
    procedure Info_WTX
      (Debugger : access Gdb_Debugger;
-      Version  : out Natural)
-   is
-      Output : constant String :=
-        Send (Debugger, "info wtx", Mode => Internal);
+      Version  : out Natural) is
    begin
-      if Output = "WTX protocol version 2" then
-         Version := 2;
-      elsif Output = "WTX protocol version 3" then
-         Version := 3;
-      else
-         Version := 0;
+      if Debugger.WTX_Version = -1 then
+         declare
+            Output : constant String :=
+              Send (Debugger, "info wtx", Mode => Internal);
+         begin
+            if Output = "WTX protocol version 2" then
+               Debugger.WTX_Version := 2;
+            elsif Output = "WTX protocol version 3" then
+               Debugger.WTX_Version := 3;
+            else
+               Debugger.WTX_Version := 0;
+            end if;
+         end;
       end if;
+
+      Version := Debugger.WTX_Version;
    end Info_WTX;
 
    ------------------------

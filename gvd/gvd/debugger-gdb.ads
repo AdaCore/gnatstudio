@@ -396,6 +396,7 @@ private
       Stored_Language : GNAT.OS_Lib.String_Access;
       WTX_List        : GNAT.OS_Lib.String_Access;
       WTX_Index       : Natural;
+      WTX_Version     : Integer := -1;
       Endian          : Endian_Type := Unknown_Endian;
       Has_Terminated  : Boolean := False;
    end record;
