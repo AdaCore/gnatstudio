@@ -25,6 +25,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel;              use Glide_Kernel;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Check_Button;          use Gtk.Check_Button;
@@ -44,8 +45,16 @@ with Prj_API;                   use Prj_API;
 with String_Utils;              use String_Utils;
 with Basic_Types;               use Basic_Types;
 with Language_Handlers;         use Language_Handlers;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
 
 package body Project_Properties is
+
+   type Widget_Array is array (Natural range <>) of Gtk_Widget;
+   type Widget_Array_Access is access Widget_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Widget_Array, Widget_Array_Access);
 
    type Properties_Editor_Record is new Gtk.Dialog.Gtk_Dialog_Record with
       record
@@ -56,7 +65,8 @@ package body Project_Properties is
          Compiler    : Gtk.GEntry.Gtk_Entry;
          Debugger    : Gtk.GEntry.Gtk_Entry;
          Convert     : Gtk.Check_Button.Gtk_Check_Button;
-         Languages   : Gtk.Table.Gtk_Table;
+         Compilers   : Widget_Array_Access;
+         Languages   : Widget_Array_Access;
       end record;
    type Properties_Editor is access all Properties_Editor_Record'Class;
 
@@ -81,6 +91,9 @@ package body Project_Properties is
    --  Set Ent to sensitive or insensitive state, depending on whether Check is
    --  active or not.
 
+   procedure Destroyed (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the editor is destroyed
+
    -------------
    -- Gtk_New --
    -------------
@@ -93,6 +106,17 @@ package body Project_Properties is
       Editor := new Properties_Editor_Record;
       Initialize (Editor, Project_View, Kernel);
    end Gtk_New;
+
+   ---------------
+   -- Destroyed --
+   ---------------
+
+   procedure Destroyed (Editor : access Gtk_Widget_Record'Class) is
+      E : Properties_Editor := Properties_Editor (Editor);
+   begin
+      Unchecked_Free (E.Languages);
+      Unchecked_Free (E.Compilers);
+   end Destroyed;
 
    ---------------------------
    -- Command_Set_Sensitive --
@@ -118,9 +142,11 @@ package body Project_Properties is
       Button2 : Gtk_Button;
       Label   : Gtk_Label;
       Check   : Gtk_Check_Button;
-      Table   : Gtk_Table;
+      Table, Lang  : Gtk_Table;
       Languages : String_Array := Known_Languages
         (Get_Language_Handler (Kernel));
+      Project_Languages : Argument_List :=
+        Get_Attribute_Value (Project_View, Languages_Attribute);
       Ent     : Gtk_GEntry;
    begin
       Gtk.Dialog.Initialize
@@ -129,6 +155,10 @@ package body Project_Properties is
            & Project_Name (Project_View),
          Parent => Get_Main_Window (Kernel),
          Flags  => Modal or Destroy_With_Parent);
+
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (Destroyed'Access));
 
       Gtk_New (Table, Rows => 7, Columns => 3, Homogeneous => False);
       Pack_Start
@@ -196,20 +226,23 @@ package body Project_Properties is
       Gtk_New (Label, -"Compiler commands:");
       Set_Alignment (Label, 0.0, 0.0);
       Attach (Table, Label, 0, 1, 6, 7, Xoptions => Fill);
-      Gtk_New (Editor.Languages, Rows => Languages'Length, Columns => 2,
+      Gtk_New (Lang, Rows => Languages'Length, Columns => 2,
                Homogeneous => False);
-      Attach (Table, Editor.Languages, 1, 3, 6, 7);
+      Attach (Table, Lang, 1, 3, 6, 7);
+
+      Editor.Compilers := new Widget_Array (Languages'Range);
+      Editor.Languages := new Widget_Array (Languages'Range);
 
       for L in Languages'Range loop
          Gtk_New (Check, Languages (L).all);
-         Attach (Editor.Languages, Check, 0, 1,
+         Attach (Lang, Check, 0, 1,
                  Guint (L - Languages'First),
                  Guint (L - Languages'First + 1),
                  Xoptions => Fill);
 
          Gtk_New (Ent);
          Set_Sensitive (Ent, False);
-         Attach (Editor.Languages, Ent, 1, 2,
+         Attach (Lang, Ent, 1, 2,
                  Guint (L - Languages'First),
                  Guint (L - Languages'First + 1));
          Set_Text (Ent,
@@ -218,16 +251,27 @@ package body Project_Properties is
                       Ide_Package, Default => "",
                       Index => Languages (L).all));
 
+         Editor.Languages (L) := Gtk_Widget (Check);
+         Editor.Compilers (L) := Gtk_Widget (Ent);
+
          Object_User_Callback.Connect
            (Check, "toggled",
             Object_User_Callback.To_Marshaller (Command_Set_Sensitive'Access),
             User_Data => GObject (Ent));
 
          Set_Active (Check, False);
+
+         for PL in Project_Languages'Range loop
+            if To_Lower (Project_Languages (PL).all) =
+              To_Lower (Languages (L).all)
+            then
+               Set_Active (Check, True);
+            end if;
+         end loop;
       end loop;
 
-
       Free (Languages);
+      Free (Project_Languages);
    end Initialize;
 
    ---------------------
@@ -257,6 +301,14 @@ package body Project_Properties is
       Editor  : Properties_Editor;
       Changed : Boolean := False;
       Project : Project_Node_Id;
+      Project_Languages : Argument_List :=
+        Get_Attribute_Value (Project_View, Languages_Attribute);
+      Num_Languages : Natural;
+      Languages : String_Array := Known_Languages
+        (Get_Language_Handler (Kernel));
+      Ent : Gtk_GEntry;
+      Check : Gtk_Check_Button;
+
    begin
       Gtk_New (Editor, Project_View, Kernel);
       Show_All (Editor);
@@ -309,6 +361,62 @@ package body Project_Properties is
                   Value              => Get_Text (Editor.Debugger));
                Changed := True;
             end if;
+
+            declare
+               New_Languages : Argument_List (Editor.Languages'Range);
+            begin
+               Num_Languages := New_Languages'First;
+               for J in Editor.Languages'Range loop
+                  Check := Gtk_Check_Button (Editor.Languages (J));
+                  Ent   := Gtk_GEntry (Editor.Compilers (J));
+
+                  if Get_Active (Check) then
+                     New_Languages (Num_Languages) := GNAT.OS_Lib.String_Access
+                       (Languages (J));
+                     Num_Languages := Num_Languages + 1;
+
+                     if Get_Attribute_Value
+                       (Project_View, Compiler_Command_Attribute,
+                        Ide_Package, Default => "",
+                        Index => Languages (J).all) /= Get_Text (Ent)
+                     then
+                        Update_Attribute_Value_In_Scenario
+                          (Project  => Get_Project_From_View (Project_View),
+                           Pkg_Name => Ide_Package,
+                           Scenario_Variables => Scenario_Variables (Kernel),
+                           Attribute_Name => Compiler_Command_Attribute,
+                           Value => Get_Text (Ent),
+                           Attribute_Index => Languages (J).all);
+                        Changed := True;
+                     end if;
+                  end if;
+               end loop;
+
+               if Num_Languages - New_Languages'First /=
+                 Project_Languages'Length
+               then
+                  Changed := True;
+               else
+                  for N in New_Languages'First .. Num_Languages - 1 loop
+                     if New_Languages (N).all /= Project_Languages
+                       (N + Project_Languages'First - New_Languages'First).all
+                     then
+                        Changed := True;
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+
+               if Changed then
+                  Update_Attribute_Value_In_Scenario
+                    (Project           => Get_Project_From_View (Project_View),
+                     Pkg_Name          => "",
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Languages_Attribute,
+                     Values             => New_Languages
+                       (New_Languages'First .. Num_Languages - 1));
+               end if;
+            end;
          end;
 
          if Changed then
@@ -317,6 +425,8 @@ package body Project_Properties is
       end if;
 
       Destroy (Editor);
+      Free (Languages);
+      Free (Project_Languages);
    end Edit_Properties;
 
    -----------------------------
