@@ -27,7 +27,11 @@
 --  the passed parameter Info : Doc_Info the subprogram will know which
 --  of the private subprograms is to be called to generate the right
 --  part of the documentation.
-
+--
+--  For each processed source file a .htm file will be generated,
+--  but the program will also generate some index packages
+--  (unit_index.htm, sub_index.htm, type_index.htm) and for using
+--  frames the index file will be created too (index.htm).
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -57,6 +61,11 @@ private
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add a subtitle for the entity type to the documentation
+
+   procedure Doc_HTML_Entry
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Add aa entry or entry family to the documentation
 
    procedure Doc_HTML_Subprogram
      (File   : Ada.Text_IO.File_Type;

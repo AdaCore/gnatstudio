@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 --  This package is the part of the Docgen tool responsable for the
---  processing of the program structure information (for Ada it is ALI)
---  for the source file list passed by the procedure Docgen.
+--  processing of the program structure information for the source file
+--  list passed by the procedure Docgen.
 
 --  In the procedure Process_Files each file from the list will be passed
 --  to the procedure Process_One_File, while collecting information about
@@ -29,9 +29,9 @@
 --  Process_Subprogram_Index and Process_Unit_Index (the latter for the
 --  source file list) in the package Docgen.Work_On_File.
 
---  The procedure Process_One_File creates for each file the lists of
---  subprograms, types, exceptions, variables and packages and passes them
---  to the procedure Process_Source in Docgen.Work_On_Source.
+--  The procedure Process_One_File creates for each file a list of
+--  entities and passes them to the procedure Process_Source in
+--  Docgen.Work_On_Source.
 
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -53,8 +53,6 @@ private
 
    procedure Process_One_File
      (Doc_File           : File_Type;
-      First_File         : Boolean;
-      Last_File          : Boolean;
       Source_Filename    : String;
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
