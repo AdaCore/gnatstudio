@@ -38,6 +38,7 @@ package body Src_Info.LI_Utils is
    procedure Create_LI_File
      (File                    : out LI_File_Ptr;
       Xref_Filename           : in String;
+      --  Full (!) path to the xref file
       Handler                 : in LI_Handler;
       Source_Filename         : in String;
       Parsed                  : in Boolean);
@@ -176,7 +177,7 @@ package body Src_Info.LI_Utils is
                         Body_Info     => Tmp_LI_File.Body_Info,
                         Separate_Info => Tmp_LI_File.Separate_Info,
                         LI_Timestamp  => To_Timestamp
-                          (File_Time_Stamp (Source_Filename)),
+                          (File_Time_Stamp (Xref_Filename)),
                         --  ??? if file is not found?
                         Compilation_Errors_Found => False,
                         Dependencies_Info        => null);
@@ -186,7 +187,7 @@ package body Src_Info.LI_Utils is
       --  Now we are searching through common list of LI_Files and
       --  trying to locate file with given name. If not found we are
       --  inserting new dependency
-      Tmp_LI_File_Ptr := Get (List.Table, Xref_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Xref_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
@@ -299,7 +300,7 @@ package body Src_Info.LI_Utils is
                        Body_Info    => Tmp_LI_File.Body_Info,
                        Separate_Info     => Tmp_LI_File.Separate_Info,
                        LI_Timestamp      => To_Timestamp
-                         (File_Time_Stamp (Source_Filename)),
+                         (File_Time_Stamp (Xref_Filename)),
             --  ??? if file is not found?
                        Compilation_Errors_Found => False,
                        Dependencies_Info => null);
@@ -309,7 +310,7 @@ package body Src_Info.LI_Utils is
       --  trying to locate file with given name. If not found or if there
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
-      Tmp_LI_File_Ptr := Get (List.Table, Xref_Filename);
+      Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Xref_Filename));
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
@@ -673,7 +674,7 @@ package body Src_Info.LI_Utils is
 
       else
          --  Processing parent information
-         if Xref_Filename = Parent_Filename then
+         if Base_Name (Xref_Filename) = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
@@ -781,7 +782,7 @@ package body Src_Info.LI_Utils is
          File := new LI_File_Constrained'
            (LI => (Parsed => True,
                    Handler => LI_Handler (Handler),
-                   LI_Filename => new String' (Xref_Filename),
+                   LI_Filename => new String' (Base_Name (Xref_Filename)),
                    Body_Info => null,
                    Spec_Info => null,
                    Dependencies_Info => null,
@@ -789,21 +790,16 @@ package body Src_Info.LI_Utils is
                    Separate_Info => null,
                    LI_Timestamp => To_Timestamp
                      (File_Time_Stamp (Xref_Filename))));
-                     --  ??? We have to provide full path to the DB_Directory
-         --  ??? If source_filename is incorrect?
-
       else
          File := new LI_File_Constrained'
            (LI =>  (Parsed => False,
                     Handler => LI_Handler (Handler),
-                    LI_Filename => new String' (Xref_Filename),
+                    LI_Filename => new String' (Base_Name (Xref_Filename)),
                     Body_Info => null,
                     Spec_Info => null,
                     Separate_Info => null,
                     LI_Timestamp => To_Timestamp
                       (File_Time_Stamp (Xref_Filename))));
-                     --  ??? We have to provide full path to the DB_Directory
-         --  ??? If source_filename is incorrect?
       end if;
    end Create_LI_File;
 

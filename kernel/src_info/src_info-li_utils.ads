@@ -8,7 +8,8 @@ private package Src_Info.LI_Utils is
       File                    : in out LI_File_Ptr;
       --  root pointer to whole LI_File structure
       Xref_Filename           : in String;
-      --  this names will be assigned to the LI_File
+      --  Full (!) path of the xref file.
+      --  The base name of this path will be assigned to the LI_File
       List                    : in out LI_File_List;
       --  common list of LI_Files
       Symbol_Name             : in String;
@@ -18,9 +19,9 @@ private package Src_Info.LI_Utils is
       Location                : in Point;
       --  Line & Column pair where declaration is occured
       Parent_Filename         : in String := "";
-      --  this filename is the Xref filename of the parent entity
+      --  this filename is the Base Name of the Xref filename of the parent
+      --  entity
       --  (if parent available - for classes, subtypes and etc)
-      --  Name of file where the parent is declared
       Parent_Location         : in Point := Invalid_Point;
       --  Location of parent declaration in file
       Kind                    : in E_Kind;
@@ -50,6 +51,8 @@ private package Src_Info.LI_Utils is
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       Xref_Filename           : in String;
+      --  Full (!) path of the xref file.
+      --  The base name of this path will be assigned to the LI_File
       List                    : in out LI_File_List;
       Source_Filename         : in String;
       Referred_Filename       : in String);
@@ -59,13 +62,16 @@ private package Src_Info.LI_Utils is
      (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       Xref_Filename           : in String;
+      --  Full (!) path of the xref file.
+      --  The base name of this path will be assigned to the LI_File
       List                    : in out LI_File_List;
       Symbol_Name             : in String;
       Referred_Filename       : in String;
       Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
-      --  this filename is the Xref filename of the parent entity
+      --  this filename is the Base Name of the Xref filename of the parent
+      --  entity
       Parent_Location         : in Point := Invalid_Point;
       Kind                    : in E_Kind;
       Scope                   : in E_Scope;
@@ -83,7 +89,8 @@ private package Src_Info.LI_Utils is
       List                    : in LI_File_List;
       Parent_Filename         : in String;
       Parent_Location         : in Point);
-      --  this filename is the Xref filename of the parent entity
+      --  this filename is the Base Name of the Xref filename of the parent
+      --  entity
    --  Adds a new parent to the list of parent locations for given declaration
 
    procedure Set_End_Of_Scope
