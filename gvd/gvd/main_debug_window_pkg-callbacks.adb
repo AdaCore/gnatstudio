@@ -51,9 +51,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --  by looking at all the pages of the main notebook.
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access) is
-      Tab  : Debugger_Process_Tab;
+      Tab      : Debugger_Process_Tab;
       Page_Num : Gint := 0;
-      Page : Gtk_Widget;
+      Page     : Gtk_Widget;
 
    begin
       loop
@@ -117,7 +117,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --    <command>
    --  (etc)
 
-
    -------------------------------
    -- On_Open_Program1_Activate --
    -------------------------------
@@ -128,7 +127,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Program : Program_Descriptor;
       List    : Argument_List (1 .. 0);
       Process : Debugger_Process_Tab;
-      Top     : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Top     : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
       Tab     : Debugger_Process_Tab;
 
    begin
@@ -157,8 +157,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
             null;
       end case;
 
+      --  Why is this call commented out ???
       --  Free (Program);
-
    end On_Open_Program1_Activate;
 
    ---------------------------------
@@ -180,22 +180,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       File         : File_Type;
-      S            : String :=  File_Selection_Dialog;
+      S            : constant String := File_Selection_Dialog;
       Program      : Program_Descriptor;
       Buffer       : String (1 .. 256);
       Last         : Natural;
       Tab          : Debugger_Process_Tab := Get_Current_Process (Object);
       List         : Argument_List (1 .. 0);
       Process      : Debugger_Process_Tab;
-      Top          : Main_Debug_Window_Access
-        := Main_Debug_Window_Access (Object);
+      Top          : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
       Num_Pages    : Gint;
       Page         : Gtk_Widget;
       Page_Num     : Gint;
+
    begin
-
       if S /= "" then
-
          Open (File, In_File, S);
          Get_Line (File, Buffer, Last);
 
@@ -204,8 +203,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
             return;
          end if;
 
-         Page_Num := Gint (Page_List.Length
-                           (Get_Children (Top.Process_Notebook)));
+         Page_Num :=
+           Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
 
          while Page_Num /= -1 loop
             Page := Get_Nth_Page
@@ -239,20 +238,19 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Get_Line (File, Buffer, Last);
             Process :=
               Create_Debugger
-              (Main_Debug_Window_Access (Object),
-               Program.Debugger,
-               Program.Program.all,
-               List,
-               Program.Remote_Host.all,
-               Program.Remote_Target.all,
-               Program.Protocol.all);
+                (Main_Debug_Window_Access (Object),
+                 Program.Debugger,
+                 Program.Program.all,
+                 List,
+                 Program.Remote_Host.all,
+                 Program.Remote_Target.all,
+                 Program.Protocol.all);
             Tab := Get_Current_Process (Object);
             Tab.Descriptor := Program;
 
             loop
                Get_Line (File, Buffer, Last);
-               exit when Last > 4
-                 and then Buffer (1 .. 4) = "----";
+               exit when Last > 4 and then Buffer (1 .. 4) = "----";
                Send (Tab.Debugger, Buffer (1 .. Last), True);
             end loop;
          end loop;
@@ -275,25 +273,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       File        : File_Type;
-      S           : String :=  File_Selection_Dialog;
+      S           : constant String := File_Selection_Dialog;
       Page        : Gtk_Widget;
-      Top         : Main_Debug_Window_Access
-        := Main_Debug_Window_Access (Object);
+      Top         : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
       Num_Pages   : Gint;
       Tab         : Debugger_Process_Tab;
       Hist_Length : Integer;
+
    begin
       Num_Pages := Gint
         (Page_List.Length (Get_Children (Top.Process_Notebook)));
+
       if S /= "" then
          Create (File, Out_File, S);
          Put_Line (File, "[Session_File Header]");
          Put_Line (File, Gint'Image (Num_Pages));
          Put_Line (File, "---------------------");
 
-         for Page_Num in 0 .. Gint ((Page_List.Length
-                                     (Get_Children (Top.Process_Notebook)))
-                                    - 1) loop
+         for Page_Num in 0 ..
+           Gint ((Page_List.Length (Get_Children (Top.Process_Notebook))) - 1)
+         loop
             Page := Get_Nth_Page
               (Top.Process_Notebook, Page_Num);
 
@@ -310,16 +310,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
                Move_To_Next (Tab.Command_History);
 
                for J in reverse 1 .. Length (Tab.Command_History) loop
-                  for Count in 1
-                    .. Get_Current_Repeat_Num (Tab.Command_History)
+                  for Count in 1 ..
+                    Get_Current_Repeat_Num (Tab.Command_History)
                   loop
                      Put_Line (File, Get_Current (Tab.Command_History));
                   end loop;
+
                   if J /= 1 then
                      Move_To_Next (Tab.Command_History);
                   end if;
                end loop;
-
             end if;
 
             Put_Line (File, "--------------");
@@ -327,6 +327,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          Close (File);
       end if;
+
    exception
       when No_Such_Item =>
          Close (File);
@@ -529,7 +530,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Preferences1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Top : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
    begin
       if Top.Odd_Preferences = null then
          Gtk_New (Top.Odd_Preferences);
@@ -666,7 +668,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Run1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Command_In_Process (Get_Process (Tab.Debugger)) then
          return;
@@ -695,11 +697,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Start1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Command_In_Process (Get_Process (Tab.Debugger)) then
          return;
       end if;
+
       Set_Busy_Cursor (Tab, True);
       Start (Tab.Debugger, True);
       Set_Busy_Cursor (Tab, False);
@@ -723,7 +726,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Step1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Step_Into (Tab.Debugger, True);
@@ -737,7 +740,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Step_Instruction1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Step_Into_Instruction (Tab.Debugger, True);
@@ -751,7 +754,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Next1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Step_Over (Tab.Debugger, True);
@@ -765,7 +768,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Next_Instruction1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Step_Over_Instruction (Tab.Debugger, True);
@@ -779,7 +782,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Until1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       null;
@@ -793,7 +796,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Finish1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Finish (Tab.Debugger, True);
@@ -807,7 +810,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Continue1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Set_Busy_Cursor (Tab, True);
       Continue (Tab.Debugger, True);
@@ -843,8 +846,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Interrupt1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
-      Tmp   : Boolean;
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tmp : Boolean;
+
    begin
       --  Give some visual feedback to the user
       Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
@@ -1019,15 +1023,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Backtrace1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top      : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab      : Debugger_Process_Tab;
+      Top      : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Top);
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
       Internal : Boolean;
 
    begin
-      Tab := Get_Current_Process (Top);
-
       Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
       Push_Internal_Command_Status (Get_Process (Tab.Debugger), True);
       Backtrace (Tab.Debugger, Bt, Len);
@@ -1053,8 +1056,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Threads1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top      : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
-      Tab      : Debugger_Process_Tab := Get_Current_Process (Object);
+      Top      : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Internal : Boolean;
 
    begin
@@ -1109,7 +1113,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
+      Top : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
    begin
       Breakpoint_Editor
         (Breakpoints_Access (Top.Breakpoints_Editor),
@@ -1145,8 +1150,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_Local_Variables1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Process : constant Debugger_Process_Tab :=
-        Get_Current_Process (Object);
+      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Process_User_Command
         (Process,
@@ -1161,8 +1165,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_Arguments1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Process : constant Debugger_Process_Tab :=
-        Get_Current_Process (Object);
+      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Process_User_Command
         (Process,
@@ -1177,8 +1180,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Display_Registers1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Process : constant Debugger_Process_Tab :=
-        Get_Current_Process (Object);
+      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       Process_User_Command
         (Process,

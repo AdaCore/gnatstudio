@@ -21,36 +21,6 @@
 with Gtk.Arguments;
 with Gtk.Widget; use Gtk.Widget;
 
-   ----------------------
-   -- Session Handling --
-   ----------------------
-
-   --  The format for session files is this :
-   --
-   --  [Session_File Header]
-   --  <number_of_processes>
-   --  ---------------------
-   --      <program_file_name_1>
-   --      <debugger_type_1>
-   --      <remote_host_1>
-   --      <remote_target_1>
-   --      <protocol_1>
-   --  [History]
-   --    <command>
-   --    <command>
-   --  (etc)
-   --  --------------
-   --      <program_file_name_2>
-   --      <debugger_type_2>
-   --      <remote_host_2>
-   --      <remote_target_2>
-   --      <protocol_2>
-   --  [History]
-   --    <command>
-   --    <command>
-   --  (etc)
-
-
 package Main_Debug_Window_Pkg.Callbacks is
    function On_Main_Debug_Window_Delete_Event
      (Object : access Gtk_Widget_Record'Class;
