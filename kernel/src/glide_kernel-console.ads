@@ -73,4 +73,9 @@ package Glide_Kernel.Console is
       return Glide_Interactive_Console;
    --  Return the interactive console associated with the kernel.
 
+   function Get_Console
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Glide_Interactive_Console;
+   --  Return the interactive console associated with the kernel.
+
 end Glide_Kernel.Console;
