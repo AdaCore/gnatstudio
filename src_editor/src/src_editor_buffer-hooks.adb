@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                        Copyright (C) 2004                         --
+--                        Copyright (C) 2004-2005                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -23,6 +23,9 @@ with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Intl;                  use Glide_Intl;
+with Entities;                    use Entities;
+with Src_Editor_Box;              use Src_Editor_Box;
+with Src_Editor_Module;           use Src_Editor_Module;
 
 package body Src_Editor_Buffer.Hooks is
 
@@ -31,6 +34,43 @@ package body Src_Editor_Buffer.Hooks is
    procedure Simple_Editor_Run_Hook_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handles calls to run_hook from the shell for the simple editor hooks
+
+   type Src_File_Location_Hooks_Args is new File_Location_Hooks_Args with
+      record
+         Parent_Entity : Entities.Entity_Information;
+      end record;
+   function Compute_Parent_Entity
+     (Data : access Src_File_Location_Hooks_Args)
+      return Entity_Information;
+   --  See inherited documentation
+
+   ---------------------------
+   -- Compute_Parent_Entity --
+   ---------------------------
+
+   function Compute_Parent_Entity
+     (Data : access Src_File_Location_Hooks_Args)
+      return Entity_Information
+   is
+      Box : Source_Editor_Box;
+   begin
+      if Data.Parent_Entity = null then
+         Box := Get_Source_Box_From_MDI
+           (Find_Editor (Data.Kernel, Data.File));
+         if Box /= null then
+            Data.Parent_Entity := Get_Or_Create
+              (Name   => Get_Subprogram_Name
+                 (Box, Editable_Line_Type (Data.Line)),
+               File   => Get_Or_Create
+                 (Db    => Get_Database (Data.Kernel),
+                  File  => Data.File),
+               Line   => Data.Line,
+               Column => Data.Column);
+         end if;
+      end if;
+
+      return Data.Parent_Entity;
+   end Compute_Parent_Entity;
 
    ------------------------------------
    -- Simple_Editor_Run_Hook_Handler --
@@ -41,34 +81,45 @@ package body Src_Editor_Buffer.Hooks is
    is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Name   : constant String := Get_Hook_Name (Data, 1);
-      Args   : File_Hooks_Args :=
-        (Hooks_Data with
+      Args   : aliased File_Hooks_Args :=
+        (Kernel,
          Get_File (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))));
       pragma Unreferenced (Command);
    begin
-      Run_Hook (Kernel, Name, Args);
+      Run_Hook (Kernel, Name, Args'Unchecked_Access);
    end Simple_Editor_Run_Hook_Handler;
 
-   --------------------
-   -- Cursor_Stopped --
-   --------------------
+   ----------------------
+   -- Location_Changed --
+   ----------------------
 
-   procedure Cursor_Stopped (Buffer : Source_Buffer) is
-      Data : constant File_Hooks_Args :=
-        (Hooks_Data with File => Buffer.Filename);
+   procedure Location_Changed (Buffer : Source_Buffer) is
+      Data : aliased Src_File_Location_Hooks_Args :=
+        (File          => Buffer.Filename,
+         Kernel        => Get_Kernel (Buffer),
+         Line          => 0,
+         Column        => 0,
+         Parent_Entity => null);
+      Box : constant Source_Editor_Box := Get_Source_Box_From_MDI
+        (Find_Editor (Get_Kernel (Buffer), Buffer.Filename));
    begin
-      Run_Hook (Buffer.Kernel, Cursor_Stopped_Hook, Data, False);
-   end Cursor_Stopped;
+      if Box /= null then
+         Get_Cursor_Location (Box, Data.Line, Data.Column);
+         Run_Hook (Buffer.Kernel, Location_Changed_Hook,
+                   Data'Unchecked_Access, False);
+      end if;
+   end Location_Changed;
 
    ----------------
    -- Word_Added --
    ----------------
 
    procedure Word_Added (Buffer : Source_Buffer) is
-      Data : constant File_Hooks_Args :=
-        (Hooks_Data with File => Buffer.Filename);
+      Data : aliased  File_Hooks_Args :=
+        (Kernel => Get_Kernel (Buffer),
+         File   => Buffer.Filename);
    begin
-      Run_Hook (Buffer.Kernel, Word_Added_Hook, Data, False);
+      Run_Hook (Buffer.Kernel, Word_Added_Hook, Data'Unchecked_Access, False);
    end Word_Added;
 
    ---------------------------
@@ -76,7 +127,10 @@ package body Src_Editor_Buffer.Hooks is
    ---------------------------
 
    procedure Register_Editor_Hooks
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Hook : Src_File_Location_Hooks_Args;
+      pragma Warnings (Off, Hook);
    begin
       Create_Hook_Type
         (Kernel, Simple_Editor_Hook_Type,
@@ -85,9 +139,10 @@ package body Src_Editor_Buffer.Hooks is
          Hook_With_Args, Simple_Editor_Run_Hook_Handler'Access);
 
       Register_Hook
-        (Kernel, Cursor_Stopped_Hook,
-         -("Hook called when the cursor has stopped moving"),
-         Type_Name => Simple_Editor_Hook_Type);
+        (Kernel, Location_Changed_Hook,
+         -("Hook called when the location in the current editor has changed,"
+           & " and the cursor has stopped moving."),
+         Type_Name => Get_Name (Hook));
 
       Register_Hook
         (Kernel, Word_Added_Hook,

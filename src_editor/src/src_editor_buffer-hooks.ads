@@ -22,10 +22,9 @@
 
 package Src_Editor_Buffer.Hooks is
 
-   Cursor_Stopped_Hook : constant String := "cursor_stopped";
    Word_Added_Hook     : constant String := "word_added";
 
-   procedure Cursor_Stopped (Buffer : Source_Buffer);
+   procedure Location_Changed (Buffer : Source_Buffer);
    --  Emit the hook Cursor_Stopped_Hook
 
    procedure Word_Added (Buffer : Source_Buffer);
