@@ -13,6 +13,8 @@ New features in GPS 1.0.1
 - The Multiple Document Interface (MDI) has been improved and can now be
   customized
 
+- Windows can be drag-and-dropped to reorganize the main window
+
 - Documentation updates
 
 - When opening a file, the focus is automatically set on the editor
@@ -27,8 +29,6 @@ New features in GPS 1.0.1
 
 - Quitting GPS will now ask whether the desktop should be saved
 
-- Windows can be drag-and-dropped to reorganize the main window
-
 - Files will be searched in the object directory as well when clicking on
   error message or selecting File->Open From Path. This allows automatically
   generated files such as b~* or *.dg files to be found
@@ -37,3 +37,5 @@ New features in GPS 1.0.1
 
 - The font "tahoma" is used under Windows by default
 
+- The call graph now automatically computes whether a subprogram calls any
+  other subprogram.
