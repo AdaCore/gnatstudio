@@ -1,0 +1,113 @@
+<?xml version="1.0"?>
+
+<cvs_support>
+
+   <!---------------->
+   <!-- CVS status -->
+   <!---------------->
+
+   <action name="generic_cvs_status" show-command="false" output="none">
+      <shell>echo "Querying status for $2-"</shell>
+      <external>cvs status $2-</external>
+      <shell>VCS.status_parse "Custom CVS" "%1" $1</shell>
+   </action>
+
+   <!---------------->
+   <!-- CVS commit -->
+   <!---------------->
+
+   <action name="generic_cvs_commit" show-command="false" output="">
+      <shell>echo "Committing files $2-"</shell>
+      <shell>dump "$1" TRUE</shell>
+      <external>cvs commit -F %1 $2-</external>
+      <shell>delete %2</shell>
+   </action>
+
+   <!----------------->
+   <!-- CVS history -->
+   <!----------------->
+
+   <!--  ??? what happens when the file "CVS revision history" exists ?>
+
+   <action name="generic_cvs_history" show-command="false" output="">
+      <shell output="">echo "Querying history for $1"</shell>
+      <shell>Editor.edit "CVS revision history"</shell>
+      <shell>Editor.replace_text "CVS revision history" 1 1 "-- History for $1
+" 0 0</shell>
+      <external>cvs log $1</external>
+      <shell>Editor.replace_text "CVS revision history" 2 1 "%1" 0 0</shell>
+      <shell>Editor.save false false</shell>
+      <shell>delete "CVS revision history"</shell>
+   </action>
+
+   <!---------------->
+   <!-- CVS update -->
+   <!---------------->
+
+   <action name="generic_cvs_update">
+      <external>cvs update $*</external>
+   </action>
+
+   <!-------------->
+   <!-- CVS diff -->
+   <!-------------->
+
+   <action name="generic_cvs_diff_head">
+      <external>cvs -f diff -rHEAD $1</external>
+
+      <!--  ??? need to find convenient way to dump output to file>
+      <!--  ??? what if file already exists ? >
+      <on-failure>
+        <shell>dump "%1" TRUE</shell>
+        <shell>File %1</shell>
+        <shell>File $1</shell>
+        <shell>Hook "diff_action_hook"</shell>
+        <shell>Hook.run %1 null %2 %3</shell>
+        <shell>delete %5</shell>
+      </on-failure>
+      <shell>echo No differences found</shell>
+   </action>
+
+   <!-------------->
+   <!-- CVS open -->
+   <!-------------->
+
+   <action name="generic_cvs_open">
+      <shell>echo "not implemented"</shell>
+   </action>
+
+   <!--------->
+   <!-- CVS -->
+   <!--------->
+
+   <vcs name="Custom CVS">
+      <status action="generic_cvs_status"       label="Query status"/>
+      <open action="generic_cvs_open"           label="Open"/>
+      <update action="generic_cvs_update"       label="Update"/>
+      <commit action="generic_cvs_commit"       label="Commit"/>
+      <history action="generic_cvs_history"     label="Query revision history"/>
+      <annotate action="generic_cvs_status"     label="Annotate"/>
+      <add action="generic_cvs_add"             label="Add"/>
+      <remove action="generic_cvs_remove"       label="Remove"/>
+      <diff_head action="generic_cvs_diff_head" label="Compare against head rev."/>
+
+      <status_parser>
+         <regexp>File: ([^\s]*)\s*Status: (.*?)\n\n *Working revision:\t([^\t]*)\s.*\n *Repository revision:\t([^\t]*)\s.*</regexp>
+
+         <file_name_index>1</file_name_index>
+         <status_index>2</status_index>
+         <local_revision_index>3</local_revision_index>
+         <repository_revision_index>4</repository_revision_index>
+
+         <up_to_date>Up-to-date</up_to_date>
+         <locally_modified>Locally Modified</locally_modified>
+         <needs_merge>Needs Merge</needs_merge>
+         <needs_update>Needs Patch</needs_update>
+         <removed>Locally Removed</removed>
+         <added>Locally Added</added>
+         <modified>Locally Modified</modified>
+      </status_parser>
+   </vcs>
+
+</cvs_support>
+
