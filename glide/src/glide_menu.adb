@@ -40,7 +40,6 @@ with Debugger;                use Debugger;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Help;       use Glide_Kernel.Help;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
 with Glide_Main_Window;       use Glide_Main_Window;
@@ -50,7 +49,6 @@ with Vdiff_Pkg;               use Vdiff_Pkg;
 with Vdiff_Utils;             use Vdiff_Utils;
 with Diff_Utils;              use Diff_Utils;
 
-with OS_Utils;                use OS_Utils;
 with GVD.Dialogs;             use GVD.Dialogs;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -79,36 +77,6 @@ package body Glide_Menu is
    -- Menu Callbacks --
    --------------------
 
-   procedure On_Open_File
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Open menu
-
-   procedure On_New_View
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->New View menu
-
-   procedure On_New_File
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->New menu
-
-   procedure On_Save
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Save menu
-
-   procedure On_Save_As
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  File->Save As menu
-
    procedure On_Close
      (Object : Data_Type_Access;
       Action : Guint;
@@ -127,53 +95,11 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  File->Exit menu
 
-   procedure On_Undo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Undo menu
-
-   procedure On_Redo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Redo menu
-
-   procedure On_Cut
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Cut menu
-
-   procedure On_Copy
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Copy menu
-
-   procedure On_Paste
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Paste menu
-
-   procedure On_Select_All
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Edit->Select All menu
-
    procedure On_Preferences
      (Object : Data_Type_Access;
       Action : Guint;
       Widget : Limited_Widget);
    --  Edit->Preferences menu
-
-   procedure On_Goto_Declaration_Or_Body
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Navigate->Goto Declaration<->Body
 
    procedure On_Open_Project
      (Object : Data_Type_Access;
@@ -241,12 +167,6 @@ package body Glide_Menu is
       Widget : Limited_Widget);
    --  Debug->Continue menu
 
-   procedure On_Generate_Body
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget);
-   --  Tools->Generate Body menu
-
    procedure On_Compare_Two_Files
      (Object : Data_Type_Access;
       Action : Guint;
@@ -284,30 +204,6 @@ package body Glide_Menu is
       end loop;
    end Refresh;
 
-   ------------------
-   -- On_Open_File --
-   ------------------
-
-   procedure On_Open_File
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      declare
-         Filename : constant String := Select_File (Title => -"Open File");
-      begin
-         if Filename = "" then
-            return;
-         end if;
-
-         Open_Or_Create (Glide_Window (Object).Kernel, Filename);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Open_File;
-
    ---------------------
    -- On_Open_Project --
    ---------------------
@@ -334,62 +230,6 @@ package body Glide_Menu is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Open_Project;
-
-   -----------------
-   -- On_New_File --
-   -----------------
-
-   procedure On_New_File
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      New_Editor (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_New_File;
-
-   -------------
-   -- On_Save --
-   -------------
-
-   procedure On_Save
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Success : Boolean;
-   begin
-      Save_To_File (Glide_Window (Object).Kernel, Success => Success);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Save;
-
-   ----------------
-   -- On_Save_As --
-   ----------------
-
-   procedure On_Save_As
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Success : Boolean;
-   begin
-      declare
-         Name : constant String := Select_File (-"Save File As");
-      begin
-         Save_To_File (Glide_Window (Object).Kernel, Name, Success);
-      end;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Save_As;
 
    --------------
    -- On_Close --
@@ -451,120 +291,6 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Save_Desktop;
 
-   -------------
-   -- On_Undo --
-   -------------
-
-   procedure On_Undo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      null;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Undo;
-
-   -------------
-   -- On_Redo --
-   -------------
-
-   procedure On_Redo
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      null;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Redo;
-
-   ------------
-   -- On_Cut --
-   ------------
-
-   procedure On_Cut
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      Cut_Clipboard (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Cut;
-
-   -------------
-   -- On_Copy --
-   -------------
-
-   procedure On_Copy
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      Copy_Clipboard (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Copy;
-
-   --------------
-   -- On_Paste --
-   --------------
-
-   procedure On_Paste
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      Paste_Clipboard (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Paste;
-
-   -------------------
-   -- On_Select_All --
-   -------------------
-
-   procedure On_Select_All
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget) is
-   begin
-      Select_All (Glide_Window (Object).Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Select_All;
-
-   -----------------
-   -- On_New_View --
-   -----------------
-
-   procedure On_New_View
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top : constant Glide_Window := Glide_Window (Object);
-   begin
-      New_View (Top.Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_New_View;
-
    --------------------
    -- On_Preferences --
    --------------------
@@ -580,29 +306,6 @@ package body Glide_Menu is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Preferences;
-
-   ---------------------------------
-   -- On_Goto_Declaration_Or_Body --
-   ---------------------------------
-
-   procedure On_Goto_Declaration_Or_Body
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top  : constant Glide_Window := Glide_Window (Object);
-   begin
-      if Get_Editor_Filename (Top.Kernel) = "" then
-         --  Nothing to do, since no saved editor has the focus
-         return;
-      end if;
-
-      Goto_Declaration_Or_Body (Top.Kernel);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Declaration_Or_Body;
 
    --------------
    -- On_Build --
@@ -621,7 +324,9 @@ package body Glide_Menu is
       Matcher   : constant Pattern_Matcher := Compile
         ("completed ([0-9]+) out of ([0-9]+) \((.*)%\)\.\.\.$",
          Multiple_Lines);
-      Title     : constant String := Get_Editor_Filename (Top.Kernel);
+      Title     : constant String := "foo";
+      --  ??? Should get the name of the real main
+      --  ??? Get_Editor_Filename (Top.Kernel);
       Project   : constant String := Get_Project_File_Name (Top.Kernel);
       Cmd       : constant String :=
         "gnatmake -P" & Project & " "
@@ -920,60 +625,6 @@ package body Glide_Menu is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Continue;
 
-   ----------------------
-   -- On_Generate_Body --
-   ----------------------
-
-   procedure On_Generate_Body
-     (Object : Data_Type_Access;
-      Action : Guint;
-      Widget : Limited_Widget)
-   is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      Success : Boolean;
-      Title   : constant String := Get_Editor_Filename (Top.Kernel);
-
-      function Body_Name (Name : String) return String;
-      --  Return the name of the body corresponding to a spec file.
-
-      procedure Gnatstub (Name : String; Success : out Boolean);
-      --  Launch gnatstub process and wait for it.
-
-      function Body_Name (Name : String) return String is
-      begin
-         return Name (Name'First .. Name'Last - 1) & 'b';
-      end Body_Name;
-
-      procedure Gnatstub (Name : String; Success : out Boolean) is
-         Args : Argument_List (1 .. 1);
-         Exec : String_Access := Locate_Exec_On_Path ("gnatstub");
-
-      begin
-         if Exec = null then
-            Success := False;
-            return;
-         end if;
-
-         Args (1) := new String' (Name);
-         Spawn (Exec.all, Args, Refresh'Access, Success);
-         Free (Exec);
-         Free (Args (1));
-      end Gnatstub;
-
-   begin
-      if Title /= "" then
-         Gnatstub (Title, Success);
-
-         if Success then
-            Open_File (Top.Kernel, Body_Name (Title), Success);
-         end if;
-      end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Generate_Body;
-
    --------------------------
    -- On_Compare_Two_Files --
    --------------------------
@@ -1105,16 +756,7 @@ package body Glide_Menu is
 
    begin
       return new Gtk_Item_Factory_Entry_Array'
-        (Gtk_New (File & (-"New"), "", Stock_New, On_New_File'Access),
-         Gtk_New (File & (-"New View"), "", On_New_View'Access),
-         Gtk_New (File & "sep1", Item_Type => Separator),
-         Gtk_New (File & (-"Open..."), "F3", Stock_Open, On_Open_File'Access),
-         Gtk_New (File & (-"Reopen"), Item_Type => Branch),
-         Gtk_New (File & "sep2", Item_Type => Separator),
-         Gtk_New (File & (-"Save"), "", Stock_Save, On_Save'Access),
-         Gtk_New (File & (-"Save As..."), "",
-                  Stock_Save_As, On_Save_As'Access),
-         Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
+        (Gtk_New (File & (-"Close"), "", Stock_Close, On_Close'Access),
          Gtk_New (File & (-"Close All"), "", null),
          Gtk_New (File & (-"Save Desktop"), "", On_Save_Desktop'Access),
          Gtk_New (File & "sep3", Item_Type => Separator),
@@ -1123,23 +765,10 @@ package body Glide_Menu is
          Gtk_New (File & (-"Exit"), "<control>Q",
                   Stock_Quit, On_Exit'Access),
 
-         Gtk_New (Edit & (-"Undo"), "", Stock_Undo, On_Undo'Access),
-         Gtk_New (Edit & (-"Redo"), "", Stock_Redo, On_Redo'Access),
-         Gtk_New (Edit & "sep1", Item_Type => Separator),
-         Gtk_New (Edit & (-"Cut"), "<shift>DEL", Stock_Cut, On_Cut'Access),
-         Gtk_New
-           (Edit & (-"Copy"), "<control>INS", Stock_Copy, On_Copy'Access),
-         Gtk_New
-           (Edit & (-"Paste"), "<shift>INS", Stock_Paste, On_Paste'Access),
-         Gtk_New
-           (Edit & (-"Select All"), "<control>A", On_Select_All'Access),
-         Gtk_New (Edit & "sep2", Item_Type => Separator),
          Gtk_New (Edit & (-"Preferences"), "",
                   Stock_Preferences, On_Preferences'Access),
 
          Gtk_New (Gotom & (-"Goto Line..."), "", Stock_Jump_To, null),
-         Gtk_New (Gotom & (-"Goto Declaration<->Body"), "", Stock_Home,
-                  On_Goto_Declaration_Or_Body'Access),
          Gtk_New (Gotom & (-"Goto Body"), "", "", null),
          Gtk_New (Gotom & (-"Goto File Spec<->Body"), "", Stock_Convert, null),
          Gtk_New (Gotom & (-"Goto Previous Reference"), "", Stock_Undo, null),
@@ -1207,7 +836,6 @@ package body Glide_Menu is
          Gtk_New (Debug & (-"Detach Process"), "", null),
 
          Gtk_New (Tools & (-"Pretty Print"), "", null),
-         Gtk_New (Tools & (-"Generate Body"), "", On_Generate_Body'Access),
          Gtk_New (Tools & (-"Call Graph"), "", null),
          Gtk_New (Tools & (-"Code Fixing"), "", null),
          Gtk_New (Tools & (-"Profile"), "", null),
