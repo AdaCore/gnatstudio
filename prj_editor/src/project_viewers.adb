@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -2689,18 +2689,17 @@ package body Project_Viewers is
          Filter => Filter,
          Label  => "Edit project/Dependencies...");
 
-      Filter := Action_Filter (Create (Module => "Explorer"));
-      Register_Contextual_Menu (Kernel, "", Filter => Filter);
-
       Command := new Add_Variable_Command;
       Register_Contextual_Menu
         (Kernel, "Add configuration variable",
          Action => Command,
          Label  => "Edit project/Add configuration variable",
-         Filter => Filter);
+         Filter => Action_Filter
+           (Create (Module => "Explorer") and Filter));
 
       Filter := Lookup_Filter (Kernel, "Project and file");
-      Register_Contextual_Menu (Kernel, "", Filter => Filter);
+      Register_Contextual_Menu
+        (Kernel, "", Filter => Filter);
 
       Command := new Edit_Switches_Command;
       Register_Contextual_Menu
