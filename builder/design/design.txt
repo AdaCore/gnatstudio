@@ -433,24 +433,17 @@ end case;
 
 will be converted into:
 
-BUILD_VAR := $(shell echo $(BUILD) | to_lower)
-
 CFLAGS := -O
 
-ifeq ($(BUILD_VAR),debug)
+ifeq ($(BUILD),debug)
    CFLAGS := $(CFLAGS) -g
 else
-   ifeq ($(BUILD_VAR),production)
+   ifeq ($(BUILD),production)
       CFLAGS := $(CFLAGS) -O2
    else
       CFLAGS := -O2
    endif
 endif
-
-to_lower is a small executable/script provided with Glide that converts the
-standard input to lower case on standard output, e.g on unix:
-#!/bin/sh
-tr '[A-Z]' '[a-z]'
 
 - The Attribute Main_Sources is translated as a variable ADA_SOURCES:
 
