@@ -635,14 +635,18 @@ package body Glide_Kernel.Modules is
    -----------------
 
    procedure Create_Menu
-     (Widget  : access GObject_Record'Class;
-      Data    : Menu_Factory_User_Data)
+     (Widget : access GObject_Record'Class;
+      Data   : Menu_Factory_User_Data)
    is
       pragma Unreferenced (Widget);
 
       procedure Remove_Item
         (Item : access Gtk.Widget.Gtk_Widget_Record'Class);
       --  Remove one item from Data.Menu.
+
+      -----------------
+      -- Remove_Item --
+      -----------------
 
       procedure Remove_Item
         (Item : access Gtk.Widget.Gtk_Widget_Record'Class) is
