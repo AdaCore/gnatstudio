@@ -575,6 +575,10 @@ package Src_Editor_Buffer is
       Last_Line         : Editable_Line_Type := 0;
       --  Indicate the lines that bound the block.
 
+      Name              : String_Access;
+      --  The name of the block, this is the subprogram or package name. This
+      --  pointer is null for a block where name has no meaning.
+
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0.
 
@@ -714,11 +718,11 @@ private
    -----------------------
 
    type Block_Access is access Block_Record;
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Block_Record, Block_Access);
+
+   procedure Free_Block (Block : in out Block_Access);
 
    package Block_List is new Generic_List
-     (Block_Access, Free => Unchecked_Free);
+     (Block_Access, Free => Free_Block);
 
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
@@ -727,7 +731,7 @@ private
      (Boolean_Array, Boolean_Array_Access);
 
    New_Block : constant Block_Record :=
-     (0, 0, 0, 0, 0, Language.Cat_Unknown, null);
+     (0, 0, 0, 0, 0, null, Language.Cat_Unknown, null);
 
    procedure Create_Side_Info
      (Buffer : access Source_Buffer_Record;
@@ -866,8 +870,8 @@ private
    type Source_Buffer_Record is
      new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
    with record
-      Kernel        : Glide_Kernel.Kernel_Handle;
-      Filename      : VFS.Virtual_File;
+      Kernel          : Glide_Kernel.Kernel_Handle;
+      Filename        : VFS.Virtual_File;
       File_Identifier : VFS.Virtual_File;
       --  This identifier is used to identify buffers for untitled files.
 
@@ -879,13 +883,13 @@ private
       Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag for text that cannot be interactively deleted.
 
-      Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
+      Insert_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark or the "gtk_drag_target" mark.
       --  This could be easily looked-up when needed, but having a copy is
       --  helping performance-wise, since a  lot of subprograms use it.
       --  This must always be a valid text mark.
 
-      Inserting     : Boolean := False;
+      Inserting : Boolean := False;
       --  Used to avoid recursion, when using commands.
 
       Do_Not_Move_Cursor : Boolean := False;
@@ -893,10 +897,10 @@ private
       --  "cursor_position_changed" signal when we know we are going to
       --  move the cursor a lot.
 
-      Queue         : Command_Queue;
+      Queue           : Command_Queue;
       --  Contains the queue of editor commands for this editor.
 
-      Saved_Position      : Integer := 0;
+      Saved_Position  : Integer := 0;
       --  The saved position in the command queue.
 
       Current_Command : Command_Access := null;
@@ -905,17 +909,17 @@ private
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status.
 
-      Timestamp      : Ada.Calendar.Time := VFS.No_Time;
+      Timestamp : Ada.Calendar.Time := VFS.No_Time;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 
-      References     : Integer := 0;
+      References : Integer := 0;
       --  The number of objects viewing the buffer.
 
       Total_References : Integer := 0;
       --  The total number of times the buffer was referenced.
 
-      Modified_Auto  : Boolean := False;
+      Modified_Auto : Boolean := False;
       --  Whether the buffer has been modified since last auto save.
 
       Line_Terminator : Line_Terminator_Style := Unknown;
@@ -924,7 +928,7 @@ private
       Timeout_Registered : Boolean := False;
       --  Whether Timeout corresponds to a registered timeout.
 
-      Setting_Mark   : Boolean := False;
+      Setting_Mark : Boolean := False;
       --  Used to prevent recursion when creating text marks.
 
       Has_Delimiters_Highlight   : Boolean := False;
@@ -944,7 +948,7 @@ private
       --  The following is related to information regarding
       --  the side column information.
 
-      Buffer_Line_Info_Columns   : Columns_Config_Access;
+      Buffer_Line_Info_Columns : Columns_Config_Access;
       --  The information concerning columns of data that should be displayed
       --  in the left window.
       --  Must never be null.
@@ -954,10 +958,10 @@ private
       --  in the left window.
       --  Must never be null.
 
-      Editable_Lines      : Editable_Line_Array_Access;
+      Editable_Lines : Editable_Line_Array_Access;
       --  Reference array for editable lines.
 
-      Last_Editable_Line  : Editable_Line_Type := 1;
+      Last_Editable_Line : Editable_Line_Type := 1;
       --  The last editable line in the buffer (corresponds to an index in
       --  Editable_Lines)
 
@@ -965,14 +969,14 @@ private
       --  Whether we are currently making modifications to the
       --  editable lines. This is True in normal operations.
 
-      Line_Data           : Line_Data_Array_Access;
+      Line_Data : Line_Data_Array_Access;
       --  This array contains all data that are relative to lines: current
       --  highlighting, indentation, collapsing, etc.
 
       Original_Lines_Number : Buffer_Line_Type := 1;
       --  The number of lines in the file on disk.
 
-      Total_Column_Width  : Natural := 0;
+      Total_Column_Width : Natural := 0;
       --  Width of the Left Window, in pixels.
 
       Original_Text_Inserted : Boolean := False;
@@ -992,7 +996,7 @@ private
       --  Whether the block information should be computed next time it is
       --  needed.
 
-      Blocks       : Block_List.List;
+      Blocks : Block_List.List;
       --  A cache structure containing all the blocks in the buffer.
 
       Blocks_Timeout_Registered : Boolean := False;
