@@ -975,10 +975,10 @@ package body Src_Editor_Box is
                return Block.Name.all;
             end if;
 
-            if Block.First_Line /= 0 then
+            if Block.First_Line > 1 then
                L := Get_Buffer_Line (Box.Source_Buffer, Block.First_Line - 1);
             else
-               L := L - 1;
+               exit;
             end if;
 
             Block := Get_Block (Box.Source_Buffer, L);
