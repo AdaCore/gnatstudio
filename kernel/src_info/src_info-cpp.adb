@@ -417,8 +417,9 @@ package body Src_Info.CPP is
    function Get_SN_Dirs (Project : Prj.Project_Id)
       return GNAT.OS_Lib.String_List_Access;
    pragma Inline (Get_SN_Dirs);
-   --  Return the name of the directory that contains the source navigator
-   --  database, or the empty string if this directory couldn't be found.
+   --  Return the names of the directories that contain the source navigator
+   --  databases for the current project and all nested ones, or null if no
+   --  directories are available
 
    procedure Refer_Type
      (Type_Name          : String;

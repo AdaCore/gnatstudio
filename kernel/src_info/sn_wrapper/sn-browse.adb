@@ -170,15 +170,14 @@ package body SN.Browse is
       Args (2) := new String' (Temp_Name);
       Args (3) := new String' ("-l");
 
-      for I in DB_Directories.all'Range loop
-         Args (4 + I - DB_Directories.all'First)
-            := new String' (DB_Directories (I).all & DB_File_Name);
+      for J in DB_Directories.all'Range loop
+         Args (4 + J - DB_Directories.all'First)
+            := new String' (DB_Directories (J).all & DB_File_Name);
       end loop;
 
       GNAT.Expect.Non_Blocking_Spawn
         (PD, DBIMP_Path, Args.all, Err_To_Out => True);
       GNAT.Expect.Add_Filter (PD, Output_Filter'Access, GNAT.Expect.Output);
-      --  Basic_Types.Free (Args.all);
       GNAT.OS_Lib.Free (Args);
    end Generate_Xrefs;
 
