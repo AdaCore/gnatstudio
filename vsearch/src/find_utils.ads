@@ -249,7 +249,7 @@ package Find_Utils is
    --  Function called to create the search context.
    --  It should return null if it couldn't create the context, and thus if the
    --  search/replace won't be performed.
-   --  The memory will be freed automatically by Glide2
+   --  The memory will be freed automatically by GPS
 
    -----------------------------
    -- Standard search support --
