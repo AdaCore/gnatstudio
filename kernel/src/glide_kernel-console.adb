@@ -65,19 +65,19 @@ package body Glide_Kernel.Console is
 
    function Console_Delete_Event
      (Console : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
-   --  Prevent the destrution of the console in the MDI
+   --  Prevent the destruction of the console in the MDI
 
    procedure On_Save_Console_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Console->Save As... menu.
+   --  Callback for File->Messages->Save As... menu.
 
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Console->Load Contents... menu.
+   --  Callback for File->Messages->Load Contents... menu.
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Console->Clear menu.
+   --  Callback for File->Messages->Clear menu.
 
    -----------------
    -- Get_Console --
@@ -308,7 +308,7 @@ package body Glide_Kernel.Console is
 
          Glide_Page.Glide_Page (Get_Current_Process (Top)).Console := Console;
          Glide_Page.Glide_Page (Get_Current_Process (Top)).Interactive_Console
-            := Interactive_Console;
+           := Interactive_Console;
 
          Kernel_Callback.Connect
            (Console, "destroy",
