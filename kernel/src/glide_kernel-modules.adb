@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -840,7 +840,7 @@ package body Glide_Kernel.Modules is
       Set_Boolean (Value (5), Enable_Navigation);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
-         Trace (Me, -"No file editor was registered");
+         Trace (Me, "No file editor was registered");
       end if;
 
       for J in Value'Range loop
@@ -862,7 +862,7 @@ package body Glide_Kernel.Modules is
       Set_String (Value (1), Filename);
 
       if not Mime_Action (Kernel, Mime_Html_File, Value) then
-         Trace (Me, -"No html viewer was registered");
+         Trace (Me, "No html viewer was registered");
       end if;
 
       Unset (Value (1));
