@@ -774,6 +774,40 @@ package body Commands.Custom is
       --  If Quoted is True, escape all quotes in S and return result,
       --  otherwise return S.
 
+      function Unprotect (Arg : String) return String;
+      --  Unprotect an argument: remove the leading and ending '"',
+      --  and un-escape the "\" when necessary.
+
+      ---------------
+      -- Unprotect --
+      ---------------
+
+      function Unprotect (Arg : String) return String is
+         Result : String (Arg'Range);
+         Index  : Natural := Result'First;
+         S      : Natural := Arg'First;
+      begin
+         while S <= Arg'Last loop
+            if Arg (S) = '\' then
+               Result (Index) := Arg (S + 1);
+               S := S + 2;
+            else
+               Result (Index) := Arg (S);
+               S := S + 1;
+            end if;
+
+            Index := Index + 1;
+         end loop;
+
+         if Result (Result'First) = '"'
+           and then Result (Index - 1) = '"'
+         then
+            return Result (Result'First + 1 .. Index - 2);
+         else
+            return Result (Result'First .. Index - 1);
+         end if;
+      end Unprotect;
+
       --------------------
       -- Protect_Quoted --
       --------------------
@@ -882,7 +916,7 @@ package body Commands.Custom is
                if Interval = 1 then
                   return Protect_Quoted (Result (1 .. Index - 1), Quoted);
                else
-                  return Result (1 .. Index - 1);
+                  return Result (1 .. Index - 4);
                end if;
             end;
 
@@ -1139,6 +1173,7 @@ package body Commands.Custom is
          Args           : String_List_Access;
          Errors         : aliased Boolean;
          Console        : Interactive_Console;
+         Tmp            : GNAT.OS_Lib.String_Access;
 
       begin
          if Success and then Output_Location /= No_Output then
@@ -1202,6 +1237,12 @@ package body Commands.Custom is
             end if;
 
             Args := Argument_String_To_List (Subst_Cmd_Line);
+
+            for J in Args'Range loop
+               Tmp := Args (J);
+               Args (J) := new String'(Unprotect (Tmp.all));
+               Free (Tmp);
+            end loop;
 
             Launch_Process
               (Command.Kernel,
