@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4-p5 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p1 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -208,12 +208,11 @@ AUTOMAKE_OPTIONS = cygnus
 
 #SUBDIRS = ../parsers/cpp/cpplib
 
-INCLUDES = $(WINFLAGS) -I$(top_srcdir)/misc/libutils -I$(top_srcdir)/hyper \
-		-I$(DB_INCDIR) -I../dbutils $(TCLHDIR)
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/misc/libutils -I$(top_srcdir)/hyper 		-I$(DB_INCDIR) -I../dbutils $(TCLHDIR)
 
-@MSVC_TRUE@LINK = @MSVC_TRUE@link -DEBUG $(CFLAGS) $(LDFLAGS) -L../dbutils -OUT:$@
-@MSVC_FALSE@LINK = @MSVC_FALSE@$(PURIFY) $(CC) $(CFLAGS) $(LDFLAGS) -L../dbutils -o $@
-@MSVC_FALSE@CFLAGS = @MSVC_FALSE@ -Wall
+@MSVC_TRUE@LINK = link -DEBUG $(CFLAGS) $(LDFLAGS) -L../dbutils -OUT:$@
+@MSVC_FALSE@LINK = $(PURIFY) $(CC) $(CFLAGS) $(LDFLAGS) -L../dbutils -o $@
+@MSVC_FALSE@CFLAGS =  -Wall
 
 sdkdir = @SN_SDK_EXEC_PREFIX@/lib
 
@@ -227,22 +226,15 @@ dbcp_LDADD = -L../dbutils -ldbutils $(DB_LIBDIR)/libdb.a
 dbcp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a
 
 dbdump_SOURCES = dbdump.c
-dbdump_LDADD = -L../dbutils -ldbutils $(DB_LIBDIR)/libdb.a \
-		$(top_builddir)/misc/libutils/libutils.a $(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
+dbdump_LDADD = -L../dbutils -ldbutils $(DB_LIBDIR)/libdb.a 		$(top_builddir)/misc/libutils/libutils.a $(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
 
-dbdump_DEPENDENCIES = $(DB_LIBDIR)/libdb.a \
-		$(top_builddir)/misc/libutils/libutils.a
+dbdump_DEPENDENCIES = $(DB_LIBDIR)/libdb.a 		$(top_builddir)/misc/libutils/libutils.a
 
 
 dbimp_SOURCES = dbimp.c
-@MSVC_TRUE@dbimp_LDADD = @MSVC_TRUE@$(CPPLib) libdbutils.a $(DB_LIBDIR)/libdb.a \
-@MSVC_TRUE@		$(top_builddir)/misc/libutils/libutils.a \
-@MSVC_TRUE@		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS) wsock32.lib
-@MSVC_FALSE@dbimp_LDADD = @MSVC_FALSE@-L$(CPPLibDir) -lcpp2  -L../dbutils -ldbutils -L$(DB_LIBDIR) -ldb \
-@MSVC_FALSE@		$(top_builddir)/misc/libutils/libutils.a \
-@MSVC_FALSE@		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS) @SOCKLIB@
-dbimp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a \
-		$(top_builddir)/misc/libutils/libutils.a
+@MSVC_TRUE@dbimp_LDADD = $(CPPLib) libdbutils.a $(DB_LIBDIR)/libdb.a 		$(top_builddir)/misc/libutils/libutils.a 		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS) wsock32.lib
+@MSVC_FALSE@dbimp_LDADD = -L$(CPPLibDir) -lcpp2  -L../dbutils -ldbutils -L$(DB_LIBDIR) -ldb 		$(top_builddir)/misc/libutils/libutils.a 		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS) @SOCKLIB@
+dbimp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a 		$(top_builddir)/misc/libutils/libutils.a
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
