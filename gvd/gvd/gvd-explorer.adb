@@ -1072,6 +1072,13 @@ package body Odd.Explorer is
                Row_Get_Parent (Node_Get_Row (Explorer.Current_File_Node)));
          end if;
          Gtk_Select (Explorer, Explorer.Current_File_Node);
+
+         --  Scroll the explorer to make the file visible
+         if Node_Is_Visible (Explorer, Explorer.Current_File_Node)
+           /= Visibility_Full
+         then
+            Node_Moveto (Explorer, Explorer.Current_File_Node, 0, 0.5, 0.0);
+         end if;
       end if;
    end Show_Current_File;
 
