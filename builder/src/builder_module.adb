@@ -144,8 +144,8 @@ package body Builder_Module is
    --  Query the Xref information for the next files in the project.
 
    package Xref_Commands is new Commands.Generic_Asynchronous
-     (Data_Type   => Compute_Xref_Data_Access,
-      Free        => Deep_Free);
+     (Data_Type => Compute_Xref_Data_Access,
+      Free      => Deep_Free);
 
    procedure Free (Ar : in out String_List);
    procedure Free (Ar : in out String_List_Access);
@@ -192,20 +192,20 @@ package body Builder_Module is
    --  (build "all", "compile all sources")
 
    procedure Add_Run_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List);
+     (Menu    : in out Gtk_Menu;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Mains   : Argument_List);
    --  Same as Add_Build_Menu, but for the Run menu
 
    procedure Builder_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    procedure Run_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu for Build/ or Run/
 
    procedure Insert_And_Launch
@@ -523,18 +523,18 @@ package body Builder_Module is
       Main_Units  : Boolean := False;
       Synchronous : Boolean := False)
    is
-      Fd           : Process_Descriptor_Access;
-      Cmd          : String_Access;
-      Args         : Argument_List_Access;
+      Fd      : Process_Descriptor_Access;
+      Cmd     : String_Access;
+      Args    : Argument_List_Access;
 
-      Context      : Selection_Context_Access;
-      Prj          : Project_Type;
-      Langs        : Argument_List := Get_Languages
+      Context : Selection_Context_Access;
+      Prj     : Project_Type;
+      Langs   : Argument_List := Get_Languages
         (Get_Project (Kernel), Recursive => True);
-      Syntax       : Command_Syntax;
-      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
+      Syntax  : Command_Syntax;
+      Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
 
-      C            : Build_Command_Access;
+      C       : Build_Command_Access;
 
    begin
       if Langs'Length = 0 then
@@ -789,19 +789,19 @@ package body Builder_Module is
       Quiet       : Boolean := False;
       Shadow      : Boolean := False)
    is
-      Prj          : constant Project_Type :=
+      Prj             : constant Project_Type :=
         Get_Project_From_File (Get_Registry (Kernel).all, File);
-      Cmd          : String_Access;
-      Fd           : Process_Descriptor_Access;
-      Local_File   : String_Access;
-      Lang         : String := Get_Language_From_File
+      Cmd             : String_Access;
+      Fd              : Process_Descriptor_Access;
+      Local_File      : String_Access;
+      Lang            : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
-      C            : Build_Command_Access;
-      Common_Args  : Argument_List_Access;
-      Args         : Argument_List_Access;
-      Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
-      Syntax       : Command_Syntax;
-      Shadow_Path  : String_Access;
+      C               : Build_Command_Access;
+      Common_Args     : Argument_List_Access;
+      Args            : Argument_List_Access;
+      Old_Dir         : constant Dir_Name_Str := Get_Current_Dir;
+      Syntax          : Command_Syntax;
+      Shadow_Path     : String_Access;
       Compilable_File : Virtual_File := File;
 
    begin
@@ -1029,10 +1029,10 @@ package body Builder_Module is
       Command : String)
    is
       use String_List_Utils.String_List;
-      Node     : List_Node;
-      Info     : File_Info;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
-      C        : Xref_Commands.Generic_Asynchronous_Command_Access;
+      Node   : List_Node;
+      Info   : File_Info;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
+      C      : Xref_Commands.Generic_Asynchronous_Command_Access;
    begin
       if Command = "compile" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -1458,11 +1458,11 @@ package body Builder_Module is
       Set_Shortcut : Boolean;
       Mains        : Argument_List)
    is
-      Mitem        : Dynamic_Menu_Item;
+      Mitem          : Dynamic_Menu_Item;
       Builder_Module : constant Builder_Module_ID_Access :=
         Builder_Module_ID_Access (Builder_Module_ID);
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
-      Main : Virtual_File;
+      Main  : Virtual_File;
 
    begin
       if Menu = null then
@@ -1574,10 +1574,10 @@ package body Builder_Module is
    ------------------
 
    procedure Add_Run_Menu
-     (Menu         : in out Gtk_Menu;
-      Project      : Project_Type;
-      Kernel       : access Kernel_Handle_Record'Class;
-      Mains        : Argument_List)
+     (Menu    : in out Gtk_Menu;
+      Project : Project_Type;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Mains   : Argument_List)
    is
       Mitem : Dynamic_Menu_Item;
       Group : constant Gtk_Accel_Group := Get_Default_Accelerators (Kernel);
@@ -1792,9 +1792,9 @@ package body Builder_Module is
    ------------------------
 
    procedure Builder_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
       File_Context : constant File_Selection_Context_Access :=
@@ -1822,9 +1822,9 @@ package body Builder_Module is
    --------------------
 
    procedure Run_Contextual
-     (Object    : access GObject_Record'Class;
-      Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class)
+     (Object  : access GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       pragma Unreferenced (Object);
       File_Context : constant File_Selection_Context_Access :=
