@@ -34,6 +34,7 @@ with Gdk.Event;            use Gdk.Event;
 with Gdk.Pixmap;           use Gdk.Pixmap;
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
+with Glib.Values;          use Glib.Values;
 with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Menu;             use Gtk.Menu;
@@ -335,6 +336,11 @@ package body Project_Explorers is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Raise the existing explorer, or open a new one.
 
+   procedure Child_Selected
+     (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
+   --  Called every time a new child is selected in the MDI. This makes sure
+   --  that the selected not in the explorer doesn't reflect false information.
+
    -------------
    -- Gtk_New --
    -------------
@@ -443,7 +449,28 @@ package body Project_Explorers is
 
       --  Update the tree with the current project
       Refresh (Kernel, GObject (Explorer));
+
+      Widget_Callback.Object_Connect
+        (Get_MDI (Kernel), "child_selected",
+         Child_Selected'Unrestricted_Access, Explorer);
    end Initialize;
+
+   --------------------
+   -- Child_Selected --
+   --------------------
+
+   procedure Child_Selected
+     (Explorer : access Gtk_Widget_Record'Class; Args : GValues)
+   is
+      E : Project_Explorer := Project_Explorer (Explorer);
+      Child : MDI_Child := MDI_Child (To_Object (Args, 1));
+   begin
+      if Child = null
+        or else not (Get_Widget (Child).all in Project_Explorer_Record'Class)
+      then
+         Unselect_Recursive (E.Tree);
+      end if;
+   end Child_Selected;
 
    ------------------
    -- Load_Desktop --
