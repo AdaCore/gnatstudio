@@ -1,3 +1,18 @@
+Known Problems fixed in GPS 1.2.2
+
+- C519-020 GPS installation overrides system libraries under Linux
+  Problem:    Under Linux, the GPS installation will incorrectly suggests
+              /usr as the default base installation in case a version of
+              gnat is found under this directory, overriding the system Gtk+
+              libraries.
+  Workaround: Specify explicitely a different path when installing GPS.
+
+- C306-010 Incorrect handling of cygwin path in the debugger
+  Problem:    Some versions of gdb generate references to cygwin mounted drives
+              (e.g. /cygdrive/c), which is not handled properly by GPS.
+  Workaround: Use a version of gdb that does not generate references to cygwin
+              paths.
+
 Known Problems fixed in GPS 1.2.1
 
 - C424-012 Cancel button not working under Windows in 'Save As' dialog
