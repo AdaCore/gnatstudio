@@ -53,6 +53,9 @@ package body Glide_Main_Window is
       Kernel      : Kernel_Handle);
    --  Called when the preferences have changed.
 
+   procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class);
+   --  Called when the the main window is destroyed
+
    -------------
    -- Anim_Cb --
    -------------
@@ -140,6 +143,7 @@ package body Glide_Main_Window is
             Save_Desktop (Main_Window.Kernel);
          end if;
 
+         Destroy (Dialog);
          Main_Quit;
       else
          Destroy (Dialog);
@@ -235,6 +239,10 @@ package body Glide_Main_Window is
          end if;
       end;
 
+      Widget_Callback.Connect
+        (Main_Window, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
+
       Kernel_Callback.Connect
         (Main_Window, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
@@ -248,5 +256,18 @@ package body Glide_Main_Window is
          Gtk_Widget (Main_Window),
          After => False);
    end Initialize;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Main_Window : access Gtk_Widget_Record'Class) is
+      Win : constant Glide_Window := Glide_Window (Main_Window);
+   begin
+      Free (Win.Home_Dir);
+      Free (Win.Prefix_Directory);
+      Unref (Win.Animation);
+      Unref (Win.Animation_Iter);
+   end On_Destroy;
 
 end Glide_Main_Window;
