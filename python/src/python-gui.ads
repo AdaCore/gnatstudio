@@ -21,13 +21,8 @@
 --  This package provides a set of subprograms to facilitate the embedding of a
 --  python interpreter into a GtkAda application
 
-with Gtk.Text_View;
-with Gtk.Text_Mark;
-with Gtk.Text_Tag;
 with Gtk.Handlers;
-with Gtk.Widget;
 with GNAT.OS_Lib;
-with Histories;
 with Ada.Calendar;
 with Interactive_Consoles;
 
@@ -36,13 +31,8 @@ package Python.GUI is
    type Python_Interpreter_Record is tagged private;
    type Python_Interpreter is access all Python_Interpreter_Record'Class;
 
-   Console_Class_Name : constant String := "Console";
-   --  The name of the class that redirects the output of Python to one of
-   --  GPS's windows
-
    procedure Initialize
-     (Interpreter : access Python_Interpreter_Record'Class;
-      History     : Histories.History);
+     (Interpreter : access Python_Interpreter_Record'Class);
    --  Initialize the interpreter. Only one such object can be created in the
    --  application, since there is only one shared python interpreter.  Raises
    --  Interpreter_Error if the interpreter couldn't be initialized
@@ -54,18 +44,9 @@ package Python.GUI is
    --  Initialize the redirection of stdin, stdout and stderr.
    --  Module_Name is the name of the module in which the new class is defined
 
-   procedure Set_Console
-     (Interpreter    : access Python_Interpreter_Record'Class;
-      Class_Instance : PyObject;
-      Console        : Gtk.Text_View.Gtk_Text_View);
-   --  Set the console that should be used by an instance of Console_Class_Name
-   --  and to which all its output should be directed.
-   --  If Console is null, the default interpreter console will be used.
-
    procedure Set_Default_Console
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Console     : Gtk.Text_View.Gtk_Text_View;
-      Grab_Widget : Gtk.Widget.Gtk_Widget := null;
+     (Interpreter    : access Python_Interpreter_Record'Class;
+      Console        : Interactive_Consoles.Interactive_Console;
       Display_Prompt : Boolean := False);
    --  Bind the interpreter to Console, so that all input comes from Console
    --  and all output goes to it.
@@ -78,7 +59,7 @@ package Python.GUI is
 
    function Get_Console
      (Interpreter : access Python_Interpreter_Record'Class)
-      return Gtk.Text_View.Gtk_Text_View;
+      return Interactive_Consoles.Interactive_Console;
    --  Return the current console of the interpreter, or null if the
    --  interpreter is not associated with a console
 
@@ -130,28 +111,10 @@ private
       --  The output of the current command, and whether we should save it,
       --  or discard it as soon as it has been printed in the console.
 
-      History : Histories.History;
-      History_Position : Integer := -1;
-
-      Key_Press_Id : Gtk.Handlers.Handler_Id;
       Destroy_Id   : Gtk.Handlers.Handler_Id;
 
-      Uneditable : Gtk.Text_Tag.Gtk_Text_Tag;
-      Prompt_End_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-
-      Console : Gtk.Text_View.Gtk_Text_View;
+      Console : Interactive_Consoles.Interactive_Console;
       --  The default python console
-
-      Grab_Widget : Gtk.Widget.Gtk_Widget;
-      --  The widget which should grab the keyboard focus while commands are
-      --  executing in the python interpreter.
-
-      Scroll_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  Mark to which the view should be scrolled
-
-      Waiting_For_Input : Boolean := False;
-      --  Set to true if the python interpreter is waiting for user input while
-      --  executing a command. While this is true, the rest of GPS is frozen.
 
       Refresh_Timeout : Ada.Calendar.Time := Ada.Calendar.Clock;
       --  Time since we last checked the list of gtk+ events. This avoids
