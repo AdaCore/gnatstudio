@@ -490,12 +490,16 @@ package body Shell_Script is
 
    function Interpret_Command_Handler
      (Input  : String;
-      Kernel : access GObject_Record'Class) return String is
+      Kernel : access GObject_Record'Class) return String
+   is
+      K : constant Kernel_Handle := Kernel_Handle (Kernel);
    begin
       declare
-         S : constant String := Execute_GPS_Shell_Command
-           (Kernel_Handle (Kernel), Input);
+         S : constant String := Execute_GPS_Shell_Command (K, Input);
       begin
+         --  Preserver the focus on the console after an interactive execution
+         Set_Focus_Child (Get_Or_Create_Console (K));
+
          if S = ""
            or else S (S'Last) = ASCII.LF
            or else S (S'Last) = ASCII.CR
