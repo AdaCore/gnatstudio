@@ -262,9 +262,13 @@ KERNEL_SRC=../../kernel
 
 C_FILES+=../../prj_editor/src/prj_pixmaps.c ../../prj_editor/src/env.c
 MODULE_LIB+=../../gvd/gnat/gexpect_tty.o
-MODULE_INCLUDE+=-aI${KERNEL_SRC}/src -aL../../kbody/obj -aO../../glide/obj \
- -aO../../src_editor/obj \
- -aO../../prj_editor/obj -aO../../gvd
+MODULE_INCLUDE+=-aI${KERNEL_SRC}/src -aI../../kbody/src \
+ -aI../../src_editor/src \
+ -aI../../prj_editor/src \
+ -aI../../gnat \
+ -I../../gvd/gvd \
+ -aO../../kbody/obj \
+ -aO../../prj_editor/obj
 endif
 
 .PHONY: check_kernel
