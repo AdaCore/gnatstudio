@@ -22,7 +22,7 @@ with Glib;
 with Gtk.Widget;
 with Gtkada.Canvas;
 with Gdk.Window;
-with Generic_Values;
+with Items;
 with Odd.Process;
 with Gdk.Event;
 with Odd.Types;
@@ -34,15 +34,21 @@ package Display_Items is
    type Display_Item is access all Display_Item_Record'Class;
 
    procedure Gtk_New
-     (Item          : out Display_Item;
-      Win           : Gdk.Window.Gdk_Window;
-      Variable_Name : String;
-      Debugger      : Odd.Process.Debugger_Process_Tab;
-      Auto_Refresh  : Boolean := True);
+     (Item           : out Display_Item;
+      Win            : Gdk.Window.Gdk_Window;
+      Variable_Name  : String;
+      Debugger       : Odd.Process.Debugger_Process_Tab;
+      Auto_Refresh   : Boolean := True;
+      Default_Entity : Items.Generic_Type_Access := null);
    --  Create a new item to display the value of Variable_Name.
    --  Auto_Refresh should be set to True if the value of Variable should
    --  be parsed again whenever the debugger stops. This is the default
    --  behavior, that can be changed by the user.
+   --
+   --  If Variable_Name is "", then no parsing is done to get the type and
+   --  or value of the variable.
+   --  Default_Entity can be used to initialize the entity associated with the
+   --  item. This will be used instead of Variable_Name if not null.
 
    procedure Free (Item : access Display_Item_Record);
    --  Remove the item from the canvas and free the memory occupied by it,
@@ -81,11 +87,14 @@ package Display_Items is
       Item   : access Display_Item_Record'Class);
    --  Unconditionally update the value of Item after parsing the new value.
 
+   procedure Reset_Recursive (Item : access Display_Item_Record'Class);
+   --  Calls Reset_Recursive for the entity represented by the item.
+
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
          Name         : Odd.Types.String_Access := null;
-         Entity       : Generic_Values.Generic_Type_Access := null;
+         Entity       : Items.Generic_Type_Access := null;
          Auto_Refresh : Boolean := True;
          Debugger     : Odd.Process.Debugger_Process_Tab;
 

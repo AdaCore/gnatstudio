@@ -29,7 +29,6 @@ with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Window;       use Gdk.Window;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
-with Generic_Values;   use Generic_Values;
 with Odd.Process;      use Odd.Process;
 with Process_Proxies;  use Process_Proxies;
 with Debugger;         use Debugger;
@@ -40,6 +39,9 @@ with Odd.Pixmaps;      use Odd.Pixmaps;
 with Gtk.Menu;         use Gtk.Menu;
 with Odd.Menus;        use Odd.Menus;
 with Odd.Types;        use Odd.Types;
+
+with Items;            use Items;
+with Items.Simples;    use Items.Simples;
 
 with Ada.Text_IO;      use Ada.Text_IO;
 
@@ -176,11 +178,12 @@ package body Display_Items is
    -------------
 
    procedure Gtk_New
-     (Item          : out Display_Item;
-      Win           : Gdk.Window.Gdk_Window;
-      Variable_Name : String;
-      Debugger      : Debugger_Process_Tab;
-      Auto_Refresh  : Boolean := True)
+     (Item           : out Display_Item;
+      Win            : Gdk.Window.Gdk_Window;
+      Variable_Name  : String;
+      Debugger       : Debugger_Process_Tab;
+      Auto_Refresh   : Boolean := True;
+      Default_Entity : Items.Generic_Type_Access := null)
    is
       Entity : Generic_Type_Access;
       Value_Found : Boolean := False;
@@ -188,61 +191,71 @@ package body Display_Items is
    begin
       Push_Internal_Command_Status (Get_Process (Debugger.Debugger), True);
 
-      declare
-         Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
-      begin
+      if Default_Entity = null then
+
+         declare
+            Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
+         begin
 
          --  Do not create a new item if the Id is the same, and Detect_Aliases
          --  is True.
-         Item := null;
+            Item := null;
 
-         Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+            Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
 
-         if Alias_Item /= null then
-            Select_Item (Alias_Item, Alias_Item.Entity);
-            Show_Item (Debugger.Data_Canvas, Alias_Item);
-            Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
-            return;
-         end if;
-
-         --  Parse the type and value of the variable. If we have an error at
-         --  this level, this means that the variable is unknown, and we don't
-         --  create an item in that case.
-
-         begin
-            Entity := Parse_Type (Debugger.Debugger, Variable_Name);
-
-            if Entity = null then
+            if Alias_Item /= null then
+               Select_Item (Alias_Item, Alias_Item.Entity);
+               Show_Item (Debugger.Data_Canvas, Alias_Item);
                Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
                return;
-            else
-               Parse_Value
-                 (Debugger.Debugger, Variable_Name, Entity, Value_Found);
             end if;
 
-            Item := new Display_Item_Record;
-            Item.Entity := Entity;
-            Set_Valid (Item.Entity, Value_Found);
+            --  Parse the type and value of the variable. If we have an error
+            --  at this level, this means that the variable is unknown, and we
+            --  don't create an item in that case.
 
-            --  If we got an exception while parsing the value, we do not
-            --  create the item, since otherwise the user would be able to
-            --  try to update the value for instance, and the type would have
-            --  nothing to do with what the variable really is.
-            --  ??? Should display an error message somewhere.
-         exception
-            when Language.Unexpected_Type | Constraint_Error =>
-               Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
-               return;
+            begin
+               Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+
+               if Entity = null then
+                  Pop_Internal_Command_Status
+                    (Get_Process (Debugger.Debugger));
+                  return;
+               else
+                  Parse_Value
+                    (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+               end if;
+
+               Item := new Display_Item_Record;
+               Item.Entity := Entity;
+               Set_Valid (Item.Entity, Value_Found);
+
+               --  If we got an exception while parsing the value, we do not
+               --  create the item, since otherwise the user would be able to
+               --  try to update the value for instance, and the type would
+               --  have nothing to do with what the variable really is.  ???
+               --  Should display an error message somewhere.
+            exception
+               when Language.Unexpected_Type | Constraint_Error =>
+                  Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
+                  return;
+            end;
+
+            if Id /= "" then
+               Item.Id := new String'(Id);
+            end if;
          end;
 
-         if Id /= "" then
-            Item.Id := new String'(Id);
-         end if;
+      --  Default_Entity /= null
+      else
+         Item := new Display_Item_Record;
+         Item.Entity := Default_Entity;
+         Set_Valid (Item.Entity, True);
+      end if;
 
-         Item.Debugger := Debugger;
-         Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
-         Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
-      end;
+      Item.Debugger := Debugger;
+      Pop_Internal_Command_Status (Get_Process (Debugger.Debugger));
+      Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
    end Gtk_New;
 
    ----------------
@@ -566,9 +579,18 @@ package body Display_Items is
       Push_Internal_Command_Status
         (Get_Process (Item.Debugger.Debugger), True);
 
-      Parse_Value (Item.Debugger.Debugger, Item.Name.all,
-                   Item.Entity, Value_Found);
-      Set_Valid (Item.Entity, Value_Found);
+      if Item.Entity.all in Debugger_Output_Type'Class then
+         Set_Value
+           (Debugger_Output_Type (Item.Entity.all),
+            Send (Item.Debugger.Debugger,
+                  Refresh_Command (Debugger_Output_Type (Item.Entity.all))));
+
+      elsif Item.Name /= null then
+         Parse_Value (Item.Debugger.Debugger, Item.Name.all,
+                      Item.Entity, Value_Found);
+         Set_Valid (Item.Entity, Value_Found);
+
+      end if;
 
       --  ??? Should we recompute the address ?
       --  This is part of the bigger picture for aliases detection/update.
@@ -750,6 +772,10 @@ package body Display_Items is
                      if Item.Auto_Refresh then
                         Update (Item.Debugger.Data_Canvas, Item);
                      else
+                        --  Redisplay the item, so that no field is displayed
+                        --  in red anymore.
+                        Reset_Recursive (Item);
+                        Update_Display (Item);
                         Item_Updated (Item.Debugger.Data_Canvas, Item);
                      end if;
 
@@ -931,5 +957,14 @@ package body Display_Items is
    begin
       For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
    end On_Canvas_Process_Stopped;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Display_Item_Record'Class) is
+   begin
+      Reset_Recursive (Item.Entity);
+   end Reset_Recursive;
 
 end Display_Items;
