@@ -35,6 +35,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Basic_Types;               use Basic_Types;
@@ -277,6 +278,19 @@ package body Src_Editor_Module is
    procedure On_Pretty_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Edit->Pretty Print menu
+
+   procedure On_Comment_Lines
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Comment Lines menu
+
+   procedure On_Uncomment_Lines
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Uncomment Lines menu
+
+   procedure Comment_Uncomment
+     (Kernel : Kernel_Handle; Comment : Boolean);
+   --  Comment or uncomment the current selection, if any.
+   --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
    procedure On_Edit_File
      (Widget : access GObject_Record'Class;
@@ -1985,6 +1999,154 @@ package body Src_Editor_Module is
       end if;
    end Pretty_Print_Cb;
 
+   -----------------------
+   -- Comment_Uncomment --
+   -----------------------
+
+   procedure Comment_Uncomment
+     (Kernel : Kernel_Handle; Comment : Boolean)
+   is
+      Context    : constant Selection_Context_Access :=
+        Get_Current_Context (Kernel);
+
+      Area       : File_Area_Context_Access;
+      Start_Line : Integer;
+      End_Line   : Integer;
+
+
+      use String_List_Utils.String_List;
+   begin
+      if Context /= null
+        and then Context.all in File_Selection_Context'Class
+        and then Has_File_Information
+          (File_Selection_Context_Access (Context))
+        and then Has_Directory_Information
+          (File_Selection_Context_Access (Context))
+      then
+         Area := File_Area_Context_Access (Context);
+
+         declare
+            Lang       : Language_Access;
+            File       : constant String
+              := Directory_Information (Area) & File_Information (Area);
+
+            Lines      : List;
+            Length     : Integer := 0;
+         begin
+
+            if Context.all in File_Area_Context'Class then
+               Area := File_Area_Context_Access (Context);
+               Get_Area (Area, Start_Line, End_Line);
+
+            elsif Context.all in Entity_Selection_Context'Class
+              and then Has_Line_Information
+                (Entity_Selection_Context_Access (Context))
+            then
+               Start_Line := Line_Information
+                 (Entity_Selection_Context_Access (Context));
+
+               End_Line := Start_Line;
+            else
+               return;
+            end if;
+
+            Lang := Get_Language_From_File
+              (Get_Language_Handler (Kernel), File);
+
+            --  Create a list of lines, in order to perform the replace
+            --  as a block.
+
+            for J in Start_Line .. End_Line loop
+               declare
+                  Line : constant String :=
+                    Interpret_Command
+                      (Kernel, "get_chars " & File & " -l " & J'Img);
+               begin
+                  Length := Length + Line'Length;
+                  if Line = "" then
+                     Append (Lines, "");
+                  else
+                     if Comment then
+                        Append (Lines,
+                                Comment_Line
+                                  (Lang, Line (Line'First .. Line'Last - 1)));
+                     else
+                        Append (Lines,
+                                Uncomment_Line
+                                  (Lang, Line (Line'First .. Line'Last - 1)));
+                     end if;
+                  end if;
+               end;
+            end loop;
+
+            --  Create a String containing the modified lines.
+
+            declare
+               L : Integer := 0;
+               N : List_Node := First (Lines);
+            begin
+               while N /= Null_Node loop
+                  L := L + Data (N)'Length + 1;
+                  N := Next (N);
+               end loop;
+
+               declare
+                  S    : String (1 .. L);
+                  Args : List;
+               begin
+                  N := First (Lines);
+                  L := 1;
+
+                  while N /= Null_Node loop
+                     S (L .. L + Data (N)'Length) := Data (N) & ASCII.LF;
+                     L := L + Data (N)'Length + 1;
+                     N := Next (N);
+                  end loop;
+
+                  Append (Args, File);
+                  Append (Args, "-l");
+                  Append (Args, Image (Start_Line));
+                  Append (Args, "-a");
+                  Append (Args, Image (Length));
+                  Append (Args, """" & S & """");
+
+                  Interpret_Command
+                    (Kernel,
+                     "replace_text",
+                     Args);
+
+                  Free (Args);
+               end;
+            end;
+         end;
+      end if;
+   end Comment_Uncomment;
+
+   ----------------------
+   -- On_Comment_Lines --
+   ----------------------
+
+   procedure On_Comment_Lines
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+   begin
+      Comment_Uncomment (Kernel, Comment => True);
+   end On_Comment_Lines;
+
+   ------------------------
+   -- On_Uncomment_Lines --
+   ------------------------
+
+   procedure On_Uncomment_Lines
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Comment_Uncomment (Kernel, Comment => False);
+   end On_Uncomment_Lines;
+
    ---------------------
    -- On_Pretty_Print --
    ---------------------
@@ -2438,6 +2600,14 @@ package body Src_Editor_Module is
       --  Emacs keybindings for people who want to use them.
       Register_Menu (Kernel, Edit, -"_Select All",  "",
                      On_Select_All'Access, Ref_Item => -"Preferences");
+
+      Gtk_New (Mitem);
+      Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
+
+      Register_Menu (Kernel, Edit, -"Comment Lines", "",
+                     On_Comment_Lines'Access, Ref_Item => -"Preferences");
+      Register_Menu (Kernel, Edit, -"Uncomment Lines", "",
+                     On_Uncomment_Lines'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
