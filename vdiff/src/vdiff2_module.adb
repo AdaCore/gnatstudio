@@ -31,7 +31,7 @@ with VFS;                       use VFS;
 
 with Pixmaps_Vdiff2;            use Pixmaps_Vdiff2;
 with Diff_Utils2;               use Diff_Utils2;
-with Vdiff2_Command;            use Vdiff2_Command;
+with Vdiff2_Command_Block;      use Vdiff2_Command_Block;
 with Vdiff2_Module.Callback;    use Vdiff2_Module.Callback;
 with Vdiff2_Module.Utils;       use Vdiff2_Module.Utils;
 
