@@ -1001,16 +1001,17 @@ package body VCS_View_API is
       Kernel   : Kernel_Handle;
 
    begin
-      if Context /= null
-        and then Get_Creator (Context) = VCS_Module_ID
-      then
-         Kernel := Get_Kernel (Context);
+      if Context = null then
+         return Get_VCS_From_Id ("");
+      end if;
+
+      Kernel := Get_Kernel (Context);
+
+      if Get_Creator (Context) = VCS_Module_ID then
          Explorer := Get_Explorer (Kernel);
          return Get_Current_Ref (Explorer);
 
-      elsif Context /= null
-        and then Context.all in File_Selection_Context'Class
-      then
+      elsif Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
 
          if Has_Project_Information (File) then
