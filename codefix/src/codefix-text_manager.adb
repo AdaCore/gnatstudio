@@ -1279,6 +1279,7 @@ package body Codefix.Text_Manager is
      (This : Text_Interface'Class) return Construct_List_Access
    is
       procedure Display_Constructs;
+      pragma Unreferenced (Display_Constructs);
       --  Debug procedure used to display the contents of New_Text
 
       -----------------------
@@ -1332,7 +1333,7 @@ package body Codefix.Text_Manager is
             Prev_Indent => Ignore,
             Callback => null);
 
-         pragma Debug (Display_Constructs);
+         --  pragma Debug (Display_Constructs);
 
          Free (Buffer);
          This.Structure_Up_To_Date.all := True;
