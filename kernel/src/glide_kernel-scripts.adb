@@ -1006,6 +1006,16 @@ package body Glide_Kernel.Scripts is
 
          List := Tmp;
       end loop;
+
+      Free (Scripting_Data (Kernel.Scripts).Entity_Class.Name);
+      Free (Scripting_Data (Kernel.Scripts).File_Class.Name);
+      Free (Scripting_Data (Kernel.Scripts).Project_Class.Name);
+      Free (Scripting_Data (Kernel.Scripts).File_Context_Class.Name);
+      Free (Scripting_Data (Kernel.Scripts).File_Location_Class.Name);
+      Free (Scripting_Data (Kernel.Scripts).Entity_Context_Class.Name);
+
+      Classes_Hash.String_Hash_Table.Reset
+        (Scripting_Data (Kernel.Scripts).Classes);
    end Finalize;
 
    -------------
