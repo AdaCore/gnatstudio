@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,9 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;      use Glide_Kernel;
-with String_List_Utils; use String_List_Utils;
-with VCS;               use VCS;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with String_List_Utils;    use String_List_Utils;
+with VCS;                  use VCS;
+with Commands.Interactive; use Commands.Interactive;
 
 package Commands.VCS is
 
@@ -32,6 +34,18 @@ package Commands.VCS is
 
    type Update_Files_Command_Type is new Root_Command with private;
    type Update_Files_Command_Access is access all Update_Files_Command_Type;
+
+   type Generic_Kernel_Command is new Interactive_Command with record
+      Kernel   : Kernel_Handle;
+      Callback : Context_Callback.Marshallers.Void_Marshaller.Handler;
+   end record;
+   type Generic_Kernel_Command_Access is access all Generic_Kernel_Command;
+
+   procedure Create
+     (Item      : out Generic_Kernel_Command_Access;
+      Kernel    : Kernel_Handle;
+      Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler);
+   --  Create a new Generic_Kernel_Command.
 
    procedure Create
      (Item      : out Commit_Command_Access;
@@ -64,14 +78,19 @@ package Commands.VCS is
      (Command : access Get_Status_Command_Type) return Command_Return_Type;
    function Execute
      (Command : access Update_Files_Command_Type) return Command_Return_Type;
+   function Execute
+     (Command : access Generic_Kernel_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
 
    function Name (X : access Commit_Command_Type) return String;
    function Name (X : access Get_Status_Command_Type) return String;
    function Name (X : access Update_Files_Command_Type) return String;
+   function Name (X : access Generic_Kernel_Command) return String;
 
    procedure Free (X : in out Commit_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);
    procedure Free (X : in out Update_Files_Command_Type);
+   procedure Free (X : in out Generic_Kernel_Command);
    --  Free memory associated to X.
 
 private
