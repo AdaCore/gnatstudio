@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2001-2002                         --
+--                   Copyright (C) 2001-2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -122,6 +122,10 @@ private
       --  Whether the view currently has the focus.
 
       Char_Width          : Gint;
+
+      Current_Block_GC    : Gdk.GC.Gdk_GC;
+      Highlight_Blocks    : Boolean := False;
+      --  Whether source blocks should be highlighted.
    end record;
 
 end Src_Editor_View;
