@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -626,17 +626,27 @@ package body Language.Custom is
    ------------------------
 
    function Get_Project_Fields
-     (Lang : access Custom_Language) return Project_Field_Array is
+     (Lang : access Custom_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
    begin
-      if Lang.Project_Fields = null then
-         if Lang.Parent = null then
-            return (1 .. 0 => No_Project_Field);
-         else
-            return Get_Project_Fields (Lang.Parent);
-         end if;
-      else
-         return Lang.Project_Fields.all;
-      end if;
+      return (1 .. 0 => No_Project_Field);
+
+      --  ??? Support for project fields in xml files isn't complete yet,
+      --  so the following code is currently disabled. When enabled, it
+      --  will mean that languages will by default inherit the fields from
+      --  the parent, which is probably not desirable. Consider instead
+      --  having an explicit XML tag to ask for inheritance.
+
+      --  if Lang.Project_Fields = null then
+      --     if Lang.Parent = null then
+      --        return (1 .. 0 => No_Project_Field);
+      --     else
+      --        return Get_Project_Fields (Lang.Parent);
+      --     end if;
+      --  else
+      --     return Lang.Project_Fields.all;
+      --  end if;
    end Get_Project_Fields;
 
    -------------------
