@@ -47,7 +47,7 @@ with Projects.Editor;           use Projects, Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Src_Info;                  use Src_Info;
 with Histories;                 use Histories;
-with Shell;                     use Shell;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 
 with Glide_Main_Window;         use Glide_Main_Window;
 
@@ -67,7 +67,6 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Case_Util;            use GNAT.Case_Util;
 
 with Traces;                    use Traces;
-with Shell;                     use Shell;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
 
@@ -243,10 +242,9 @@ package body Builder_Module is
    --  Called every time the project view has changed, ie potentially the list
    --  of main units.
 
-   function Compile_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : Argument_List) return String;
+   procedure Compile_Command
+     (Data    : in out Callback_Data'Class;
+      Command : String);
    --  Command handler for the "compile" command.
 
    procedure Compile_File
@@ -848,53 +846,29 @@ package body Builder_Module is
    -- Compile_Command --
    ---------------------
 
-   function Compile_Command
-     (Kernel  : access Kernel_Handle_Record'Class;
-      Command : String;
-      Args    : GNAT.OS_Lib.Argument_List) return String
+   procedure Compile_Command
+     (Data    : in out Callback_Data'Class;
+      Command : String)
    is
       use String_List_Utils.String_List;
       Node : List_Node;
-      L    : Integer := 0;
-
    begin
       if Command = "compile" then
-         for Index in Args'Range loop
-            Compile_File (Kernel_Handle (Kernel), Args (Index).all);
+         for Index in 1 .. Number_Of_Arguments (Data) loop
+            Compile_File (Get_Kernel (Data), Nth_Arg (Data, Index));
          end loop;
 
       elsif Command = "get_build_output" then
          Node := First
            (Builder_Module_ID_Access (Builder_Module_ID).Output);
 
+         Set_Return_Value_As_List (Data);
          while Node /= Null_Node loop
-            L := L + Data (Node)'Length;
+            Set_Return_Value
+              (Data, String_List_Utils.String_List.Data (Node), True);
             Node := Next (Node);
          end loop;
-
-         if L /= 0 then
-            declare
-               S      : String (1 .. L);
-               Length : Natural;
-            begin
-               L := 1;
-               Node := First
-                 (Builder_Module_ID_Access (Builder_Module_ID).Output);
-
-               while Node /= Null_Node loop
-                  Length := Data (Node)'Length;
-                  S (L .. L + Length - 1) := Data (Node);
-                  L := L + Length;
-
-                  Node := Next (Node);
-               end loop;
-
-               return S;
-            end;
-         end if;
       end if;
-
-      return "";
    end Compile_Command;
 
    ----------------
@@ -1302,7 +1276,8 @@ package body Builder_Module is
             else
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, Execute_Command) & ' ' & Command);
+                    (Get_Pref (K, GVD.Preferences.Execute_Command)
+                     & ' ' & Command);
                else
                   Args := Argument_String_To_List (Command);
                end if;
@@ -1333,7 +1308,7 @@ package body Builder_Module is
             then
                if Active then
                   Args := Argument_String_To_List
-                    (Get_Pref (K, Execute_Command) & ' ' &
+                    (Get_Pref (K, GVD.Preferences.Execute_Command) & ' ' &
                      Executables_Directory (Data.Project) & Data.File & ' ' &
                      Arguments);
                   Launch
@@ -1707,7 +1682,7 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "compile",
-         Usage        => "compile file1 [file2] ...",
+         Usage        => "compile (file1, [file2...]) -> None",
          Description  => -"Compile a list of files from the project.",
          Minimum_Args => 1,
          Maximum_Args => Natural'Last,
@@ -1716,7 +1691,7 @@ package body Builder_Module is
       Register_Command
         (Kernel,
          Command      => "get_build_output",
-         Usage        => "get_build_output",
+         Usage        => "get_build_output () -> list of lines",
          Description  => -"Return the last compilation results.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -1740,15 +1715,12 @@ package body Builder_Module is
      (K : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (K);
-      Args : Argument_List (1 .. 2);
-
+      Args : Argument_List :=
+        (1 => new String'(-"Builder Results"),
+         2 => new String'
+           (To_String (Get_Pref (Kernel, Message_Src_Highlight))));
    begin
-      Args (1) := new String'(-"Builder Results");
-      Args (2) := new String'
-        (To_String (Get_Pref (Kernel, Message_Src_Highlight)));
-
-      Interpret_Command (Kernel, "src.register_highlighting", Args);
-
+      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
       Free (Args);
    end Preferences_Changed;
 
