@@ -1,0 +1,69 @@
+<?xml version="1.0" ?>
+
+<!--  This file adds support for the gnatmetric utility.
+      This external tool generates a set of software metrics -->
+
+<gnatmetric>
+  <action name="metrics project" >
+     <filter id="Project only" language="ada" />
+     <description>Run GNAT Metrics on a project</description>
+     <external
+      progress-regexp="completed (\d+) out of (\d+).*"
+      progress-current="1"
+      progress-final="2"
+      progress-hide="true">gnat metric -dd -x "%pps"</external>
+     <on-failure>
+         <shell>Locations.parse "%1" category</shell>
+     </on-failure>
+     <shell>Editor.edit "metrix.xml"</shell>
+  </action>
+
+  <action name="metrics file" >
+     <filter id="File" language="ada" />
+     <description>Run GNAT Metrics on a single file</description>
+     <external
+      progress-regexp="completed (\d+) out of (\d+).*"
+      progress-current="1"
+      progress-final="2"
+      progress-hide="true">gnat metric -x -dd "%pps" "%F"</external>
+     <on-failure>
+         <shell>Locations.parse "%1" category</shell>
+     </on-failure>
+     <shell>Editor.edit "metrix.xml"</shell>
+  </action>
+
+  <action name="metrics entity" >
+     <filter id="Entity" language="ada" />
+     <description>Run GNAT Metrics on a single entity</description>
+     <external
+      progress-regexp="completed (\d+) out of (\d+).*"
+      progress-current="1"
+      progress-final="2"
+      progress-hide="true">gnat metric -x -dd "%pps" "%F"</external>
+     <on-failure>
+         <shell>Locations.parse "%1" category</shell>
+     </on-failure>
+     <shell>Editor.edit "metrix.xml"</shell>
+  </action>
+
+  <contextual action="metrics project" >
+     <Title>Metrics for project</Title>
+  </contextual>
+  <contextual action="metrics file" >
+     <Title>Metrics for source</Title>
+  </contextual>
+  <contextual action="metrics entity" >
+     <Title>Metrics for entity</Title>
+  </contextual>
+
+  <Submenu>
+     <Title>Tools/Metrics</Title>
+     <menu action="metrics project">
+        <Title>Compute metrics for current project</Title>
+     </menu>
+     <menu action="metrics file">
+        <Title>Compute metrics for current file</Title>
+     </menu>
+  </Submenu>
+
+</gnatmetric>
