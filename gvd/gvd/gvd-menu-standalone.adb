@@ -51,6 +51,9 @@ package body GVD.Menu.Standalone is
    procedure Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
+   function Idle_Exit (Window : GVD_Main_Window) return Boolean;
+   --  Idle function called to finish handling of exiting.
+
    ----------------------
    -- On_Open_Debugger --
    ----------------------
@@ -334,12 +337,9 @@ package body GVD.Menu.Standalone is
       end if;
    end On_Close;
 
-   -------------
-   -- On_Exit --
-   -------------
-
-   function Idle_Exit (Window : GVD_Main_Window) return Boolean;
-   --  Idle function called to finish handling of exiting.
+   ---------------
+   -- Idle_Exit --
+   ---------------
 
    function Idle_Exit (Window : GVD_Main_Window) return Boolean is
    begin
@@ -347,6 +347,10 @@ package body GVD.Menu.Standalone is
       Main_Quit;
       return False;
    end Idle_Exit;
+
+   -------------
+   -- On_Exit --
+   -------------
 
    procedure On_Exit
      (Object : Data_Type_Access;
