@@ -42,7 +42,6 @@ package body List_Select_Pkg.Callbacks is
 
       use Widget_List;
 
-      --  ??? This will not work without Gtk.Type_Conversion
       Text : String :=
         Get (Gtk_Label (Get_Data (Children (Gtk_Container (Arg1)))));
 

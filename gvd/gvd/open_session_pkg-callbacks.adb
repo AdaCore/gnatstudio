@@ -26,8 +26,6 @@ with Gtk.List; use Gtk.List;
 with Open_Session_Pkg; use Open_Session_Pkg;
 with Gtk.Container; use Gtk.Container;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Type_Conversion;
-pragma Warnings (Off, Gtk.Type_Conversion);
 
 package body Open_Session_Pkg.Callbacks is
 
@@ -46,11 +44,8 @@ package body Open_Session_Pkg.Callbacks is
       Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
       use Widget_List;
 
-      --  ??? We will not get a Gtk_Label without Gtk.Type_Conversion
-      Text : String := Get (Gtk_Label
-                            (Get_Data
-                             (Children
-                              (Gtk_Container (Arg1)))));
+      Text : String :=
+        Get (Gtk_Label (Get_Data (Children (Gtk_Container (Arg1)))));
 
    begin
       Set_Text (Open.Entry1, Text);

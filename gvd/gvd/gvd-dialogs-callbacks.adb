@@ -214,7 +214,6 @@ package body Odd.Dialogs.Callbacks is
          Process_User_Command
            (Tab,
             Get
-         --  ??? Will not work without Gtk.Type_Conversion
               (Gtk_Label
                 (Get_Data (Children (Gtk_Container (Get_Data (Selected)))))));
          Selected := Next (Selected);
