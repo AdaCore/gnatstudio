@@ -168,6 +168,15 @@ package body Vdiff2_Module is
       Register_Property
         (Kernel, Param_Spec (Diff_Change_Color), -"Visual diff");
 
+      Diff_Fine_Change_Color := Param_Spec_Color
+        (Gnew_Color
+           (Name     =>  "Horizontal-Diff-Change-Color",
+            Nick     => -"Fine Change Color",
+            Blurb    => -"Color used for highlighting in Visual Diff2",
+            Default  => "#FDE66A"));
+      Register_Property
+        (Kernel, Param_Spec (Diff_Fine_Change_Color), -"Visual diff");
+
       Kernel_Callback.Connect
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),

@@ -35,11 +35,12 @@ package Vdiff2_Module is
    Vdiff_Module_Name  : constant String := "Visual_Diff2";
    Diff3_Cmd                : Param_Spec_String;
 
-   Diff_Default_Color : Param_Spec_Color;
-   Diff_Old_Color     : Param_Spec_Color;
-   Diff_Append_Color  : Param_Spec_Color;
-   Diff_Remove_Color  : Param_Spec_Color;
-   Diff_Change_Color  : Param_Spec_Color;
+   Diff_Default_Color      : Param_Spec_Color;
+   Diff_Old_Color          : Param_Spec_Color;
+   Diff_Append_Color       : Param_Spec_Color;
+   Diff_Remove_Color       : Param_Spec_Color;
+   Diff_Change_Color       : Param_Spec_Color;
+   Diff_Fine_Change_Color  : Param_Spec_Color;
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
