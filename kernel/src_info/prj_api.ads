@@ -414,6 +414,12 @@ package Prj_API is
    --  the external variable External_Name.
    --  In normalized projects, there should be only such variable.
 
+   function Find_Project_Of_Package
+     (Project : Project_Node_Id; Pkg_Name : String) return Project_Node_Id;
+   --  Return the id of the project that contains Pkg_Name. It will be
+   --  different from Project if the package declaration is a renaming of
+   --  another package.
+
    ------------------
    -- Node cloning --
    ------------------

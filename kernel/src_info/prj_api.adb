@@ -1725,6 +1725,7 @@ package body Prj_API is
       Attribute_N : Name_Id;
       List : Project_Node_Id := Empty_Node;
       Pkg, Term, Expr : Project_Node_Id;
+      Rename_Prj : Project_Node_Id := Project;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1779,7 +1780,7 @@ package body Prj_API is
                Term := Current_Term (Term);
 
                Set_Name_Of (Term, Attribute_N);
-               Set_Project_Node_Of (Term, Project);
+               Set_Project_Node_Of (Term, Rename_Prj);
             end if;
 
             Set_Expression_Of (Decl, Expr);
@@ -1791,8 +1792,23 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
 
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+
+         --  If we have a renamed package, modify the target package.
+         Rename_Prj := Project_Of_Renamed_Package_Of (Pkg);
+         if Rename_Prj /= Empty_Node then
+            Pkg := Get_Or_Create_Package (Rename_Prj, Pkg_Name);
+         else
+            Rename_Prj := Project;
+         end if;
+      else
+         Pkg := Empty_Node;
+      end if;
+
       Move_From_Common_To_Case_Construct
-        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
+        (Rename_Prj, Pkg_Name, Scenario_Variables,
+         Attribute_N, Attribute_Index);
 
       --  Create the string list for the new values.
       --  This can be prepended later on to the existing list of values.
@@ -1808,14 +1824,9 @@ package body Prj_API is
          Set_First_Expression_In_List (List, Expr);
       end loop;
 
-      if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
-      else
-         Pkg := Empty_Node;
-      end if;
-
       For_Each_Scenario_Case_Item
-        (Project, Pkg, Scenario_Variables, Add_Or_Replace'Unrestricted_Access);
+        (Rename_Prj, Pkg, Scenario_Variables,
+         Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
    ----------------------------------------
@@ -1912,6 +1923,7 @@ package body Prj_API is
       Attribute_N : Name_Id;
       Val : Project_Node_Id := Empty_Node;
       Pkg : Project_Node_Id;
+      Rename_Prj : Project_Node_Id := Project;
 
       procedure Add_Or_Replace (Case_Item : Project_Node_Id);
       --  Add or replace the attribute Attribute_Name in the declarative list
@@ -1947,8 +1959,23 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
 
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+
+         --  If we have a renamed package, modify the target package.
+         Rename_Prj := Project_Of_Renamed_Package_Of (Pkg);
+         if Rename_Prj /= Empty_Node then
+            Pkg := Get_Or_Create_Package (Rename_Prj, Pkg_Name);
+         else
+            Rename_Prj := Project;
+         end if;
+      else
+         Pkg := Empty_Node;
+      end if;
+
       Move_From_Common_To_Case_Construct
-        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
+        (Rename_Prj, Pkg_Name, Scenario_Variables,
+         Attribute_N, Attribute_Index);
 
       --  Create the node for the new value
 
@@ -1956,14 +1983,9 @@ package body Prj_API is
       Store_String_Chars (Value);
       Val := Create_Literal_String (End_String);
 
-      if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
-      else
-         Pkg := Empty_Node;
-      end if;
-
       For_Each_Scenario_Case_Item
-        (Project, Pkg, Scenario_Variables, Add_Or_Replace'Unrestricted_Access);
+        (Rename_Prj, Pkg, Scenario_Variables,
+         Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
    ----------------------
@@ -1979,6 +2001,7 @@ package body Prj_API is
    is
       Attribute_N : Name_Id;
       Pkg : Project_Node_Id;
+
 
       procedure Delete_Attr (Case_Item : Project_Node_Id);
       --  Remove all definitions for the attribute in the case item
@@ -1998,14 +2021,21 @@ package body Prj_API is
       Name_Buffer (1 .. Name_Len) := Attribute_Name;
       Attribute_N := Name_Find;
 
-      Move_From_Common_To_Case_Construct
-        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
-
       if Pkg_Name /= "" then
-         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+         Name_Len := Pkg_Name'Length;
+         Name_Buffer (1 .. Name_Len) := Pkg_Name;
+         Pkg := Find_Package_Declaration (Project, Name_Find);
+
+         --  If the package doesn't exist, no need to do anything
+         if Pkg = Empty_Node then
+            return;
+         end if;
       else
          Pkg := Empty_Node;
       end if;
+
+      Move_From_Common_To_Case_Construct
+        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
 
       For_Each_Scenario_Case_Item
         (Project, Pkg, Scenario_Variables, Delete_Attr'Unrestricted_Access);
@@ -4237,6 +4267,28 @@ package body Prj_API is
             Package_Name   => Ide_Package);
       end if;
    end Get_Vcs_Kind;
+
+   -----------------------------
+   -- Find_Project_Of_Package --
+   -----------------------------
+
+   function Find_Project_Of_Package
+     (Project : Project_Node_Id; Pkg_Name : String) return Project_Node_Id
+   is
+      Pkg : Project_Node_Id;
+   begin
+      Name_Len := Pkg_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Pkg_Name;
+      Pkg := Find_Package_Declaration (Project, Name_Find);
+
+      if Pkg = Empty_Node
+        or else Project_Of_Renamed_Package_Of (Pkg) = Empty_Node
+      then
+         return Project;
+      else
+         return Project_Of_Renamed_Package_Of (Pkg);
+      end if;
+   end Find_Project_Of_Package;
 
    ----------------
    -- Initialize --
