@@ -523,20 +523,20 @@ package body Builder_Module is
            and then Has_File_Information
              (File_Selection_Context_Access (Context))
          then
-            Prj := Get_Project_From_File
-              (Get_Registry (K),
-               File_Information (File_Selection_Context_Access (Context)));
+            declare
+               File : constant String :=
+                 File_Information (File_Selection_Context_Access (Context));
+            begin
+               Prj := Get_Project_From_File (Get_Registry (K), File);
 
-            if Prj = No_Project or else Is_Default (Project) then
-               Args := new Argument_List'
-                 (Clone (Default_Builder_Switches)
-                  & new String'(File_Information
-                    (File_Selection_Context_Access (Context))));
-            else
-               Args := Compute_Arguments
-                 (K, Syntax, Project_Path (Prj),
-                  File_Information (File_Selection_Context_Access (Context)));
-            end if;
+               if Prj = No_Project or else Is_Default (Project) then
+                  Args := new Argument_List'
+                    (Clone (Default_Builder_Switches) & new String'(File));
+               else
+                  Args := Compute_Arguments
+                    (K, Syntax, Project_Path (Prj), File);
+               end if;
+            end;
 
          --  There is no current file, so we can't compile anything
 
@@ -552,9 +552,15 @@ package body Builder_Module is
          if Is_Default (Get_Project (K)) then
             case Syntax is
                when GNAT_Syntax =>
-                  Args := new Argument_List'
-                    (Clone (Default_Builder_Switches)
-                     & new String'(Data.File));
+                  if Data.File = All_Files then
+                     Console.Insert
+                       (K, -"Default project has no main unit", Mode => Error);
+                     return;
+                  else
+                     Args := new Argument_List'
+                       (Clone (Default_Builder_Switches)
+                        & new String'(Data.File));
+                  end if;
 
                when Make_Syntax =>
                   Console.Insert
@@ -726,8 +732,7 @@ package body Builder_Module is
      (Kernel : Kernel_Handle;
       File   : String)
    is
-      Arg1         : aliased String := "-q";
-      Arg2         : aliased String := "-u";
+      Arg1         : aliased String := "-u";
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Prj : constant Project_Type :=
@@ -792,14 +797,13 @@ package body Builder_Module is
               (Prj, Remote_Host_Attribute, Ide_Package),
             Command         => Cmd.all,
             Arguments       => Default_Builder_Switches &
-              (Arg1'Unchecked_Access, Arg2'Unchecked_Access,
-               Local_File'Unchecked_Access),
+              (Arg1'Unchecked_Access, Local_File'Unchecked_Access),
             Fd              => Fd);
 
       else
          declare
             Args    : Argument_List_Access := Argument_String_To_List
-              ("-q -u " & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
+              ("-u " & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax));
             Prj_Arg : aliased String := "-P" & Project_Path (Prj);
 
          begin
