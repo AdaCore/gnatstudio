@@ -46,7 +46,7 @@ with Language;
 with Language_Handlers;
 with Glide_Kernel;
 with Glide_Kernel.Modules;
-with Src_Editor_Buffer;
+with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with VFS;
 
@@ -176,26 +176,9 @@ package Src_Editor_Box is
       return Language.Language_Access;
    --  Return the current language.
 
-   function Is_Valid_Location
-     (Editor : access Source_Editor_Box_Record;
-      Line   : Positive;
-      Column : Positive := 1) return Boolean;
-   --  Return True if the given cursor location is valid. If Column is set
-   --  to 1, then this function just verifies the given line number (Column 1
-   --  of a given line always exists).
-
-   procedure Set_Screen_Location
-     (Editor      : access Source_Editor_Box_Record;
-      Line        : Positive;
-      Column      : Positive := 1;
-      Force_Focus : Boolean  := True);
-   --  Move the insert cursor to the given location, after expanding Tabs.
-   --  If Force_Focus is False, then the editor will not grab the focus
-   --  before setting the cursor position.
-
    procedure Set_Cursor_Location
      (Editor      : access Source_Editor_Box_Record;
-      Line        : Positive;
+      Line        : Editable_Line_Type;
       Column      : Positive := 1;
       Force_Focus : Boolean  := True);
    --  Move the insert cursor to the given location. Success is set to False
@@ -217,32 +200,6 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record);
    --  Scroll the view so that the given position is visible on the screen.
 
-   procedure Get_Selection_Bounds
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : out Positive;
-      Start_Column : out Positive;
-      End_Line     : out Positive;
-      End_Column   : out Positive;
-      Found        : out Boolean);
-   --  If a portion of the buffer is currently selected, then return the
-   --  location of the beginning and the end of the selection. Otherwise,
-   --  Found is set to False and the location returned both point to the
-   --  begining of the buffer.
-
-   function Get_Slice
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Natural := 0;
-      End_Column   : Natural := 0) return String;
-   --  Return the text located between (Start_Line, Start_Column) and
-   --  (End_Line, End_Column). The first line is 1, the first column is 1.
-   --  If End_Line = 0, contents until the end of the buffer will be retrieved.
-   --
-   --  The validity of both locations should be verified before invoking this
-   --  function. An incorrect location will cause an Assertion_Failure when
-   --  compiled with assertion checks, or an undefined behavior otherwise.
-
    procedure Replace_Slice
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
@@ -255,19 +212,6 @@ package Src_Editor_Box is
    --  The validity of the given locations must be verified before invoking
    --  this procedure. An incorrect location  will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
-
-   procedure Select_Region
-     (Editor       : access Source_Editor_Box_Record;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive;
-      Expand_Tabs  : Boolean := True);
-   --  Select the given region.
-   --  Both start and end positions must be verified before calling this
-   --  procedure. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-   --  Takes Tabs into account when Expand_Tabs = True.
 
    procedure Select_All (Editor : access Source_Editor_Box_Record);
    --  Set the selection bounds from the begining to the end of the buffer.
