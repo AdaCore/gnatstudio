@@ -91,96 +91,130 @@ package body Boyer_Moore is
       From_String : String;
       Case_Sensitive : Boolean := True)
    is
-      Motif_First : constant := 1; --  Index of Motif.Motif'First
-      Prefix_Func : Offset_Array (Motif_First .. From_String'Length);
-      K, K2 : Natural;
+      --  Prefix contains the following:
+      --    Prefix (J) is the length of the longest prefix of Motif
+      --    which is also a suffix of
+      --    Motif (Motif'First .. Motif'First + J - 1)
+      --    ie of the motif made of the j-th first characters of Motif
+      --
+      --  Reverse_Prefix is the Prefix function applied to the reverse of Motif
+      --
+      --  Motif.Last_Occurrence contains the index of the last occurrence of
+      --    the character in the motif. This is in the range 1 .. Motif'Length
+      --
+      --  Good_Suffix at index J:
+      --    If a mismatch occurs in the j-th character of the pattern, we
+      --    can safely advance by good_suffix (j).
+      --       m = Motif'Length
+      --       GS(J) = m
+      --          - Max (k; 0<=k<m
+      --                    and (Motif (J+1 .. m) suffix of Motif (1 .. k)
+      --                         or Motif (1 .. j) suffix of Motif (J+1 .. m))
+      --
+      --    For instance:  Motif="AABBA"
+      --       GS(1) = 5 - 1 = 4
+      --          since Motif (1 .. 1)="A" is a suffix "ABBA"
+      --       GS(4) = 5 - 2 = 3
+      --          since "A" is a suffix of Motif (1 .. 2) = "AA"
+      --       GS(5) = 5 - 1 = 4
+      --          since "" is a suffix of Motif (1 .. 4) = "AABB"
+
+      Prefix          : Offset_Array (1 .. From_String'Length);
+      Reverse_Prefix  : Offset_Array (1 .. From_String'Length);
+      K, K2           : Natural := 0;
+      Tmp             : Natural;
+
    begin
-      --  Compute the last occurrence function
-
-      pragma Assert (From_String'Length <= Max_Pattern_Length);
-
       Motif.Case_Sensitive  := Case_Sensitive;
-      Motif.Last_Occurrence := (others => 1);
-      Motif.Motif           := new String (Motif_First .. From_String'Length);
+      Motif.Last_Occurrence := (others => 0);
+      Motif.Motif           := new String (1 .. From_String'Length);
       Motif.Motif.all       := From_String;
       if not Case_Sensitive then
          To_Lower (Motif.Motif.all);
       end if;
 
-      for Q in Motif_First .. From_String'Length loop
+      Prefix (Prefix'First)                   := 0;
+      Reverse_Prefix (Reverse_Prefix'First)   := 0;
+      Motif.Last_Occurrence (Motif.Motif (1)) := 1;
 
-         --  The last occurrence function
+      for Q in 2 .. Motif.Motif'Last loop
+         --  Compute Last occurrence
 
-         Motif.Last_Occurrence (Motif.Motif (Q)) := Q - Motif_First + 1;
+         Motif.Last_Occurrence (Motif.Motif (Q)) := Q;
 
-         --  Prefix_Func (Q) is the length of the longest suffix of
-         --  Motif (1 .. Q) that is also a suffix of Motif
+         --  Compute prefix function
 
-         K := 1;
-         if Q /= From_String'Length then
-            while Q - K + 1 >= Motif_First
-              and then Motif.Motif (Q - K + 1) =
-              Motif.Motif (Motif.Motif'Last - K + 1)
-            loop
-               K := K + 1;
-            end loop;
+         while K > 0
+           and then Motif.Motif (K + 1) /= Motif.Motif (Q)
+         loop
+            K := Prefix (K);
+         end loop;
+
+         if Motif.Motif (K + 1) = Motif.Motif (Q) then
+            K := K + 1;
          end if;
 
-         Prefix_Func (Q) := K - 1;
+         Prefix (Q) := K;
+
+         --  Compute the reverse prefix function
+
+         while K2 > 0
+           and then Motif.Motif (Motif.Motif'Last - K2) /=
+           Motif.Motif (Motif.Motif'Last + 1 - Q)
+         loop
+            K2 := Reverse_Prefix (K2);
+         end loop;
+
+         if Motif.Motif (Motif.Motif'Last - K2) =
+           Motif.Motif (Motif.Motif'Last + 1 - Q)
+         then
+            K2 := K2 + 1;
+         end if;
+
+         Reverse_Prefix (Q) := K2;
       end loop;
 
-      K := From_String'Length - Prefix_Func (From_String'Length);
+      --  Compute the good suffix function
+
+      K := From_String'Length - Prefix (From_String'Length);
       Motif.Good_Suffix := new Offset_Array'(0 .. From_String'Length => K);
 
       for L in Motif.Motif'Range loop
-         K2 := Prefix_Func (Prefix_Func'Last + 1 - L);
-         K := Motif.Motif'Last - K2;
-         if Motif.Good_Suffix (K) > L - K2 then
-            Motif.Good_Suffix (K) := L - K2;
+         K   := From_String'Length - Reverse_Prefix (L);
+         Tmp := L - Reverse_Prefix (L);
+
+         if Motif.Good_Suffix (K) > Tmp then
+            Motif.Good_Suffix (K) := Tmp;
          end if;
       end loop;
 
       if Debug then
-         Put_Line ("Pattern, and reverse-pattern: P and RP");
-         Put_Line ("Prefix and Suffix functions (F and RF):");
-         Put_Line ("   If fail when matching character i, move i-F[i] chars"
-                   & " forward");
-         Put_Line ("   and restart match at location F[i]+1 in pattern");
-         Put_Line ("Good_Suffix_Function: SF");
-         Put_Line ("Last_Occurrence_Function: L");
-
          Put ("   i   =  ");
-         for J in From_String'Range loop
+         for J in Motif.Motif'Range loop
             Put (Item => J, Width => 3);
          end loop;
          New_Line;
 
-         Put ("   P[i]=  ");
+         Put ("  Pat[i]=  ");
          for J in Motif.Motif'Range loop
             Put ("  " & Motif.Motif (J));
          end loop;
          New_Line;
 
-         Put ("   L   =  ");
-         for J in From_String'Range loop
-            Put (Item => Motif.Last_Occurrence (Motif.Motif (J)), Width => 3);
+         Put ("  Pre[i]=  ");
+         for J in Prefix'Range loop
+            Put (Item => Prefix (J), Width => 3);
          end loop;
          New_Line;
 
-         Put ("   F[i]=  ");
-         for J in Prefix_Func'Range loop
-            Put (Item => Prefix_Func (J), Width => 3);
+         Put ("RevPre[i]=  ");
+         for J in Reverse_Prefix'Range loop
+            Put (Item => Reverse_Prefix (J), Width => 3);
          end loop;
          New_Line;
 
-         Put ("   RP[i]= ");
-         for J in reverse Motif.Motif'Range loop
-            Put ("  " & Motif.Motif (J));
-         end loop;
-         New_Line;
-
-         Put ("   GS[i]= ");
-         for J in From_String'Range loop
+         Put ("GoodSu[i]=  ");
+         for J in Motif.Good_Suffix'Range loop
             Put (Item => Motif.Good_Suffix (J), Width => 3);
          end loop;
          New_Line;
@@ -235,7 +269,9 @@ package body Boyer_Moore is
 
          if Debug_Run then
             New_Line;
-            Put_Line ("Offset : J=" & J'Img
+            Put_Line ("Offset : Shift+j="
+                      & Integer'Image (Shift + J)
+                      & " J=" & J'Img
                       & " Last_Occ=" & In_String (Shift + J)
                       & " Max ("
                       & Motif.Good_Suffix (J)'Img
@@ -243,11 +279,17 @@ package body Boyer_Moore is
                       & Integer'Image
                       (J - Motif.Last_Occurrence (In_String (Shift + J)))
                       & ")");
-            Dump_Str (In_String);
-            Put ((1 .. Shift - In_String'First + 1 => ' '));
+
+            if In_String'Length < 400 then
+               Dump_Str (In_String);
+               Put ((1 .. Shift - In_String'First + 1 => ' '));
+            end if;
             Dump_Str (Motif.Motif.all);
-            Put ((1 .. Shift + J - In_String'First => ' '));
-            Put_Line ("^");
+
+            if Shift + J - In_String'First < 400 then
+               Put ((1 .. Shift + J - In_String'First => ' '));
+               Put_Line ("^");
+            end if;
          end if;
 
          if J = 0 then
@@ -268,13 +310,11 @@ package body Boyer_Moore is
                J := J - 1;
             end loop;
 
-            if Debug then
-               Dump;
-            end if;
-
             if J = 0 then
                return Shift + 1;
                --  Shift := Shift + Motif.Good_Suffix (0)   to find next
+            elsif Debug then
+               Dump;
             end if;
 
             Shift := Shift +
@@ -290,13 +330,11 @@ package body Boyer_Moore is
                J := J - 1;
             end loop;
 
-            if Debug then
-               Dump;
-            end if;
-
             if J = 0 then
                return Shift + 1;
                --  Shift := Shift + Motif.Good_Suffix (0)   to find next
+            elsif Debug then
+               Dump;
             end if;
 
             Shift := Shift +
