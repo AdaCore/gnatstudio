@@ -72,10 +72,18 @@ procedure Gnatfix is
 
 begin
 
-   if Argument_Count /= 1 then
+   if Argument_Count < 1 then
       Print_Help;
       Free_Objects;
       return;
+   end if;
+
+   if Argument_Count >= 2 and then Argument (2) = "-r" then
+      if Argument_Count >= 3 then
+         Create (Capture_File, Out_File, Argument (3));
+      else
+         Visible := False;
+      end if;
    end if;
 
    Open (Errors_Found, Argument (1));
@@ -87,11 +95,15 @@ begin
 
    Update (Errors_List, Successfull_Update, Current_Text, Ambiguity'Access);
 
-   if Successfull_Update then
-      Put_Line ("Update successful");
-   else
-      Put_Line ("Update error");
+   if Visible then
+      if Successfull_Update then
+         Put_Line ("Update successful");
+      else
+         Put_Line ("Update error");
+      end if;
    end if;
+
+   if Is_Open (Capture_File) then Close (Capture_File); end if;
 
    Free_Objects;
 end Gnatfix;
