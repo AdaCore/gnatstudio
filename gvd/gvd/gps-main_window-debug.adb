@@ -20,6 +20,7 @@
 
 with Glib;               use Glib;
 with Gtk;                use Gtk;
+with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 
@@ -29,6 +30,7 @@ with GVD.Types;          use GVD.Types;
 with GVD.Process;        use GVD.Process;
 with Debugger;           use Debugger;
 with Process_Proxies;    use Process_Proxies;
+with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Intl;           use GPS.Intl;
 
 package body GPS.Main_Window.Debug is
@@ -184,7 +186,7 @@ package body GPS.Main_Window.Debug is
       Debugger : Glib.Object.GObject)
    is
       Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
-      Widget      : Gtk_Widget;
+      Widget      : Gtk_Menu_Item;
       WTX_Version : Natural;
 
       use type Glib.Object.GObject;
@@ -220,16 +222,12 @@ package body GPS.Main_Window.Debug is
       --  Update the sensitivity of the Data/Protection Domains menu
       --  item
 
-      Widget := Get_Widget (Window.Factory, -"/Debug/Data/Protection Domains");
+      Widget := Find_Menu_Item
+        (Window.Kernel, -"/Debug/Data/Protection Domains");
 
       if Widget /= null then
          Info_WTX (Process.Debugger, WTX_Version);
-
-         if WTX_Version /= 3 then
-            Set_Sensitive (Widget, False);
-         else
-            Set_Sensitive (Widget, True);
-         end if;
+         Set_Sensitive (Widget, WTX_Version >= 3);
       end if;
    end Switch_Debugger;
 
