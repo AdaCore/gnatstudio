@@ -92,9 +92,6 @@ package GVD.Main_Window is
       First_Debugger      : Debugger_List_Link;
       --  The pointer to the list of debuggers.
 
-      Locked              : Boolean := False;
-      --  Boolean used to handle global locking between debugger pages.
-
       Standalone          : Boolean := True;
       --  True if the gvd main window is used on its own (e.g, not as part
       --  of an integrated environment).
