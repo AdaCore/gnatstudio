@@ -36,7 +36,6 @@ with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Src_Editor_Buffer;
 
 with Generic_List;
-with Commands;    use Commands;
 with Basic_Types; use Basic_Types;
 
 package Src_Editor_View is
@@ -150,8 +149,6 @@ private
 
       Line_Info           : Line_Info_Display_Access;
       Total_Column_Width  : Natural := 0;
-
-      Queue               : Command_Queue;
    end record;
 
 end Src_Editor_View;
