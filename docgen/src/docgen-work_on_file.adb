@@ -76,6 +76,7 @@ package body Docgen.Work_On_File is
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Type_Source_File_Table.HTable;
       Source_File_Node : in out Type_Source_File_Table.Iterator;
+      Nb_Skiped        : out Natural;
       Package_Name     : out GNAT.OS_Lib.String_Access);
    --  Returns the name of the next package in the list
    --  (body files with the same package name are ignored)
@@ -605,10 +606,13 @@ package body Docgen.Work_On_File is
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Type_Source_File_Table.HTable;
       Source_File_Node : in out Type_Source_File_Table.Iterator;
+      Nb_Skiped        : out Natural;
       Package_Name     : out GNAT.OS_Lib.String_Access)
    is
       use Type_Source_File_Table;
    begin
+      Nb_Skiped := 0;
+
       if Get_Element (Source_File_Node) = No_Source_File_Information then
          Package_Name := null;
 
@@ -622,6 +626,7 @@ package body Docgen.Work_On_File is
          if not Is_Spec_File
            (Kernel, Get_Filename (Get_Key (Source_File_Node)))
          then
+            Nb_Skiped := Nb_Skiped  + 1;
             Get_Next (Source_File_List, Source_File_Node);
          end if;
 
@@ -731,6 +736,7 @@ package body Docgen.Work_On_File is
 
             Process_Result  : Unbounded_String;
             Next_Package    : GNAT.OS_Lib.String_Access;
+            Nb_Skiped       : Natural;
          begin
             Process_One_File
               (Data.Backend,
@@ -758,7 +764,10 @@ package body Docgen.Work_On_File is
               (Data.Kernel,
                Data.Source_File_List,
                Data.Source_File_Node,
+               Nb_Skiped,
                Next_Package);
+
+            Data.Nb_Processed := Data.Nb_Processed + Nb_Skiped;
          end;
 
          Data.Nb_Processed := Data.Nb_Processed + 1;
