@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;   use Glib;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Expect; use GNAT.Expect;
 with GNAT.Regpat; use GNAT.Regpat;
@@ -276,11 +275,11 @@ package body Remote_Connections is
    ---------------
 
    procedure Parse_URL
-     (URL         : String;
-      Protocol    : out GNAT.OS_Lib.String_Access;
-      Remote_User : out GNAT.OS_Lib.String_Access;
-      Remote_Host : out GNAT.OS_Lib.String_Access;
-      Remote_Path : out GNAT.OS_Lib.String_Access)
+     (URL           : String;
+      Protocol      : out GNAT.OS_Lib.String_Access;
+      Remote_User   : out GNAT.OS_Lib.String_Access;
+      Remote_Host   : out GNAT.OS_Lib.String_Access;
+      Start_Of_Path : out Integer)
    is
       Index   : Natural := URL'First;
       Protocol_End : Natural;
@@ -300,7 +299,7 @@ package body Remote_Connections is
          Protocol := null;
          Remote_User := null;
          Remote_Host := null;
-         Remote_Path := null;
+         Start_Of_Path := URL'First;
          return;
       end if;
 
@@ -339,11 +338,7 @@ package body Remote_Connections is
          Remote_Host := new String'(URL (At_Sign + 1 .. Index - 1));
       end if;
 
-      if Index <= URL'Last then
-         Remote_Path := new String'(URL (Index .. URL'Last));
-      else
-         Remote_Path := new String'("/");
-      end if;
+      Start_Of_Path := Index;
    end Parse_URL;
 
    ---------------------

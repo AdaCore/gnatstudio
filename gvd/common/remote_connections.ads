@@ -198,15 +198,16 @@ package Remote_Connections is
    --  See also the function GUI_Utils.Query_Password
 
    procedure Parse_URL
-     (URL         : String;
-      Protocol    : out GNAT.OS_Lib.String_Access;
-      Remote_User : out GNAT.OS_Lib.String_Access;
-      Remote_Host : out GNAT.OS_Lib.String_Access;
-      Remote_Path : out GNAT.OS_Lib.String_Access);
+     (URL           : String;
+      Protocol      : out GNAT.OS_Lib.String_Access;
+      Remote_User   : out GNAT.OS_Lib.String_Access;
+      Remote_Host   : out GNAT.OS_Lib.String_Access;
+      Start_Of_Path : out Integer);
    --  Parses a string starting with "protocol://user@host/dir/foo", and return
    --  its components. If these are not specified, the current user and/or
    --  current hostname are returned.
    --  All output parameters are set to null if URL is not a valid URL.
+   --  Start_Of_Path is the index of the first character of the local file
 
    function User_Login_Name return String;
    --  Return the login name of the user.
