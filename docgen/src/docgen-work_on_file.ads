@@ -43,8 +43,12 @@ with Language_Handlers;         use Language_Handlers;
 package Docgen.Work_On_File is
 
    procedure Process_Files
-     (Source_File_List : in out Type_Source_File_List.List;
-      Options          : All_Options);
+     (Source_File_List   : in out Type_Source_File_List.List;
+      Handler            : in out Language_Handler;
+      Project_Tree       : in out Project_Node_Id;
+      Project_View       : in out Project_Id;
+      Source_Info_List   : in out Src_Info.LI_File_List;
+      Options            : All_Options);
    --  process all files, by creating the index lists of the type
    --  and subprogram entities and by calling Process_One_File
    --  for each file from the list.
@@ -57,7 +61,6 @@ private
       Package_Name       : String;
       Next_Package       : GNAT.OS_Lib.String_Access;
       Prev_Package       : GNAT.OS_Lib.String_Access;
-      Def_In_Line        : Integer;
       Source_File_List   : in out Type_Source_File_List.List;
       Source_Info_List   : in out Src_Info.LI_File_List;
       Handler            : in out Language_Handler;
