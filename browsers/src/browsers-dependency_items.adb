@@ -796,7 +796,6 @@ package body Browsers.Dependency_Items is
          Get_Project_View (Get_Kernel (Browser)),
          Get_Predefined_Source_Path (Get_Kernel (Browser)));
    begin
-      Src := Get_Source (Item);
       Set_File_Name_Information
         (File_Name_Selection_Context_Access (Context),
          Directory    => Dir_Name (Filename),
