@@ -38,6 +38,58 @@ package body Src_Info.Queries is
 
    Me : constant Debug_Handle := Create ("SRC_INFO");
 
+   type E_Kind_To_Boolean_Map is array (E_Kind) of Boolean;
+
+   Is_Scope_Entity : constant E_Kind_To_Boolean_Map :=
+     (Overloaded_Entity                => False,
+      Unresolved_Entity                => False,
+      Access_Object                    => False,
+      Access_Type                      => False,
+      Array_Object                     => False,
+      Array_Type                       => False,
+      Boolean_Object                   => False,
+      Boolean_Type                     => False,
+      Class_Wide_Object                => False,
+      Class_Wide_Type                  => False,
+      Decimal_Fixed_Point_Object       => False,
+      Decimal_Fixed_Point_Type         => False,
+      Entry_Or_Entry_Family            => False,
+      Enumeration_Literal              => False,
+      Enumeration_Object               => False,
+      Enumeration_Type                 => False,
+      Exception_Entity                 => False,
+      Floating_Point_Object            => False,
+      Floating_Point_Type              => False,
+      Generic_Class                    => True,
+      Generic_Function_Or_Operator     => True,
+      Generic_Package                  => True,
+      Generic_Procedure                => True,
+      Label_On_Block                   => False,
+      Label_On_Loop                    => False,
+      Label_On_Statement               => False,
+      Modular_Integer_Object           => False,
+      Modular_Integer_Type             => False,
+      Named_Number                     => False,
+      Non_Generic_Function_Or_Operator => True,
+      Non_Generic_Package              => True,
+      Non_Generic_Procedure            => True,
+      Ordinary_Fixed_Point_Object      => False,
+      Ordinary_Fixed_Point_Type        => False,
+      Private_Type                     => False,
+      Protected_Object                 => False,
+      Protected_Type                   => False,
+      Record_Object                    => True,
+      Record_Type                      => True,
+      Signed_Integer_Object            => False,
+      Signed_Integer_Type              => False,
+      String_Object                    => False,
+      String_Type                      => False,
+      Task_Object                      => False,
+      Task_Type                        => False);
+   --  This table should contain true if the corresponding element should
+   --  appear when computing the full scope name for an entity (see
+   --  Get_Full_Name).
+
    use Name_Htable.String_Hash_Table;
 
    procedure Free is new
@@ -812,8 +864,8 @@ package body Src_Info.Queries is
       L : Scope_List := Scope;
    begin
       while L /= null loop
-         if (not Subprograms_Pkg_Only
-             or else Is_Subprogram (Scope_Tree_Node (L)))
+         if not Subprograms_Pkg_Only
+           or else Is_Subprogram (Scope_Tree_Node (L))
            or else L.Decl.Kind = Generic_Package
            or else L.Decl.Kind = Non_Generic_Package
          then
@@ -1303,6 +1355,8 @@ package body Src_Info.Queries is
                Parent         => null,
                Sibling        => null);
 
+            --  Add the body into the tree
+
             Compute_Scope (New_Item, List.Value.References);
 
             declare
@@ -1316,6 +1370,25 @@ package body Src_Info.Queries is
                Add_Single_Entity (New_Item, T);
                Add_References (List.Value, T, Start_Of_Scope);
             end;
+
+            --  If the entity has an End_Of_Spec reference, we need to add it
+            --  to the spec tree as well, and is a package (the one in which
+            --  we are
+
+            if List.Value.Declaration.End_Of_Scope /= No_Reference
+              and then
+              (List.Value.Declaration.Kind = Non_Generic_Package
+               or else List.Value.Declaration.Kind = Generic_Package)
+            then
+               New_Item := new Scope_Node'
+                 (Typ            => Declaration,
+                  Decl     => List.Value.Declaration'Unrestricted_Access,
+                  Contents       => null,
+                  Start_Of_Scope => List.Value.Declaration.Location,
+                  Parent         => null,
+                  Sibling        => null);
+               Add_Single_Entity (New_Item, T);
+            end if;
 
             List := List.Next;
          end loop;
@@ -1680,7 +1753,10 @@ package body Src_Info.Queries is
 
       Tmp := Node;
       while Tmp /= Null_Scope_Tree_Node loop
-         if not Is_Label (Tmp) then
+         --  Only include the names that are actually part of a scope (the
+         --  entity itself is automatically part of the scope, whatever its
+         --  kind)
+         if Tmp = Node or else Is_Scope_Entity (Get_Kind (Tmp)) then
             T := Get_Entity (Tmp);
 
             if Length (Full_Name) /= 0 then
