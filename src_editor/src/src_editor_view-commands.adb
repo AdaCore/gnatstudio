@@ -138,7 +138,7 @@ package body Src_Editor_View.Commands is
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
 
    begin
-      if Do_Indentation (Buffer) then
+      if Do_Indentation (Buffer, Force => True) then
          return Success;
       else
          return Failure;
