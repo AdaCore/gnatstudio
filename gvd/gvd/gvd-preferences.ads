@@ -29,20 +29,6 @@ package GVD.Preferences is
    Hide_Delay : constant Guint32 := 5000;
    --  Delay (in ms) after which the current message is hidden
 
-   Use_Ptys : constant Boolean := True;
-   --  True if we should connect to the debugger through pseudo-terminals
-   --  (at least on Unix machines). False if we should use pipes.
-   --  Although the latter is more portable, and should be used for machines
-   --  that don't support ptys, we recommend using the former since this
-   --  provides a better support for remote debuggers and the "interrupt"
-   --  button, among other things.
-
-   Async_Commands : constant Boolean := True;
-   --  True if user commands are handled asynchronousely, to avoid recursion
-   --  in the event processing. See design/commands.txt for more details.
-   --  This variable is useful for debugging, and also for systems that do
-   --  not fully support the Gdk_Input package (e.g Windows).
-
    Remote_Protocol : constant String := "rsh";
    --  How to run a process on a remote machine ?
 
