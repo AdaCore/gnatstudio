@@ -169,6 +169,16 @@ package body Builder_Module is
       Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Add entries to the contextual menu
 
+   procedure Insert_And_Launch
+     (Kernel          : Kernel_Handle;
+      Remote_Host     : String;
+      Remote_Protocol : String;
+      Command         : String;
+      Fd              : Process_Descriptor_Access);
+   --  Compute the command to be executed from Command, Remote_Host
+   --  and Remote_Protocol (execution is local when
+   --  Remote_Host = "" or Remote_Protocol = ""
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -381,6 +391,49 @@ package body Builder_Module is
         (Kernel, Build & (-"Interrupt")), not Sensitive);
    end Set_Sensitive_Menus;
 
+   -----------------------
+   -- Insert_And_Launch --
+   -----------------------
+
+   procedure Insert_And_Launch
+     (Kernel          : Kernel_Handle;
+      Remote_Host     : String;
+      Remote_Protocol : String;
+      Command         : String;
+      Fd              : Process_Descriptor_Access)
+   is
+      New_Args     : Argument_List_Access;
+   begin
+      Console.Raise_Console (Kernel);
+
+      if Remote_Host /= ""
+        and then Remote_Protocol /= ""
+      then
+         New_Args := Argument_String_To_List
+           (Remote_Protocol & " " & Remote_Host & " command");
+         New_Args (New_Args'Last) := new String'(Command);
+
+         Console.Insert
+           (Kernel, Remote_Protocol & " " & Remote_Host & " " & Command);
+
+         Non_Blocking_Spawn
+           (Fd.all,
+            New_Args (New_Args'First).all,
+            New_Args (New_Args'First + 1 .. New_Args'Last),
+            Buffer_Size => 0, Err_To_Out => True);
+
+         Free (New_Args);
+      else
+         Console.Insert (Kernel, Command);
+         New_Args := Argument_String_To_List (Command);
+         Non_Blocking_Spawn
+           (Fd.all,
+            New_Args (New_Args'First).all,
+            New_Args (New_Args'First + 1 .. New_Args'Last),
+            Buffer_Size => 0, Err_To_Out => True);
+      end if;
+   end Insert_And_Launch;
+
    --------------
    -- On_Build --
    --------------
@@ -496,21 +549,21 @@ package body Builder_Module is
             Cmd := new String'("make");
       end case;
 
-      Console.Insert (K, Cmd.all, Add_LF => False);
-      Console.Raise_Console (K);
-
-      for J in Args'First .. Args'Last - 1 loop
-         Console.Insert (K, " " & Args (J).all, Add_LF => False);
-      end loop;
-
-      Console.Insert (K, " " & Args (Args'Last).all);
-
       Set_Sensitive_Menus (K, False);
 
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
-      Non_Blocking_Spawn
-        (Fd.all, Cmd.all, Args.all, Buffer_Size => 0, Err_To_Out => True);
+
+      Insert_And_Launch
+        (K,
+         Remote_Protocol  =>
+           Get_Pref (GVD_Prefs, Remote_Protocol),
+         Remote_Host =>
+           Get_Attribute_Value
+             (Project_View, Remote_Host_Attribute, Ide_Package),
+         Command => Cmd.all & " " & Argument_List_To_String (Args.all),
+         Fd => Fd);
+
       Free (Cmd);
       Free (Args);
       Id := Process_Timeout.Add
@@ -645,7 +698,7 @@ package body Builder_Module is
           (Project_View, Compiler_Command_Attribute,
            Ide_Package, Default => "gnatmake", Index => "Ada") & " -q -u ";
       Fd           : Process_Descriptor_Access;
-      Args         : Argument_List_Access;
+      Command      : String_Access;
       Id           : Timeout_Handler_Id;
       pragma Unreferenced (Id);
 
@@ -679,36 +732,30 @@ package body Builder_Module is
       Set_Sensitive_Menus (Kernel, False);
 
       if Project = "" then
-         declare
-            Full_Cmd : constant String :=
-              Cmd & Argument_List_To_String (Default_Builder_Switches) & File;
-         begin
-            Args := Argument_String_To_List (Full_Cmd);
-            Console.Insert (Kernel, Full_Cmd);
-         end;
+         Command := new String'
+           (Cmd & Argument_List_To_String (Default_Builder_Switches) & File);
 
       else
-         declare
-            Full_Cmd : constant String :=
-              Cmd & "-P" & Project & " "
-                & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
-            & " " & File;
-
-         begin
-            Trace (Me, "On_Compile: " & Full_Cmd);
-            Args := Argument_String_To_List (Full_Cmd);
-            Console.Insert (Kernel, Full_Cmd);
-         end;
+         Command := new String'
+           (Cmd & "-P" & Project & " "
+            & Scenario_Variables_Cmd_Line (Kernel, GNAT_Syntax)
+            & " " & File);
       end if;
-
-      Console.Raise_Console (Kernel);
 
       Top.Interrupted := False;
       Fd := new Process_Descriptor;
-      Non_Blocking_Spawn
-        (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-         Err_To_Out  => True);
-      Free (Args);
+
+      Insert_And_Launch
+        (Kernel,
+         Remote_Protocol =>
+           Get_Pref (GVD_Prefs, Remote_Protocol),
+         Remote_Host =>
+           Get_Attribute_Value
+             (Project_View, Remote_Host_Attribute, Ide_Package),
+         Command => Command.all,
+         Fd => Fd);
+
+      Free (Command);
       Id := Process_Timeout.Add
         (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
 
@@ -717,7 +764,7 @@ package body Builder_Module is
          Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
-         Free (Args);
+         Free (Command);
          Free (Fd);
    end Compile_File;
 
@@ -816,7 +863,8 @@ package body Builder_Module is
    is
       pragma Unreferenced (Widget);
 
-      Cmd : constant String := Simple_Entry_Dialog
+      Project_View : constant Project_Id := Get_Project_View (Kernel);
+      Cmd          : constant String := Simple_Entry_Dialog
         (Parent   => Get_Main_Window (Kernel),
          Title    => -"Custom Execution",
          Message  => -"Enter the command to execute:",
@@ -847,14 +895,19 @@ package body Builder_Module is
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
 
-         Console.Insert (Kernel, Cmd);
-         Console.Raise_Console (Kernel);
-
          Top.Interrupted := False;
          Fd := new Process_Descriptor;
-         Non_Blocking_Spawn
-           (Fd.all, Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
-            Err_To_Out  => True);
+
+         Insert_And_Launch
+           (Kernel,
+            Remote_Protocol  =>
+              Get_Pref (GVD_Prefs, Remote_Protocol),
+            Remote_Host =>
+              Get_Attribute_Value
+                (Project_View, Remote_Host_Attribute, Ide_Package),
+            Command => Argument_List_To_String (Args.all),
+            Fd => Fd);
+
          Free (Args);
          Id := Process_Timeout.Add
            (Timeout, Idle_Build'Access, (Kernel, Fd, null, null, null));
@@ -1108,6 +1161,59 @@ package body Builder_Module is
       Exec    : String_Access;
       Success : Boolean;
 
+      procedure Launch
+        (Command   : String;
+         Arguments : GNAT.OS_Lib.Argument_List;
+         Title     : String);
+      --  Launch Command (with Args) locally, or remotely if necessary.
+
+
+      procedure Launch
+        (Command   : String;
+         Arguments : GNAT.OS_Lib.Argument_List;
+         Title     : String)
+      is
+         Remote_Cmd : constant String :=
+           Get_Pref (GVD_Prefs, Remote_Protocol);
+         Remote_Host     : constant String :=
+           Get_Attribute_Value
+             (Data.Project, Remote_Host_Attribute, Ide_Package);
+         Exec : String_Access;
+      begin
+         if Remote_Host = ""
+           or else Remote_Cmd = ""
+         then
+            Exec := Locate_Exec_On_Path (Command);
+
+            if Exec = null then
+               Insert (K, -"Could not locate executable on path: " & Command);
+            else
+               Launch_Process
+                 (K, Exec.all, Arguments,
+                  Title, null, null, "", Success, True);
+            end if;
+
+            Free (Exec);
+
+         else
+            declare
+               Full_Command : constant String :=
+                 Command & " " & Argument_List_To_String (Arguments);
+               New_Args     : Argument_List_Access
+                 := Argument_String_To_List
+                   (Remote_Cmd & " " & Remote_Host & " command");
+            begin
+               New_Args (New_Args'Last) := new String'(Full_Command);
+               Launch_Process
+                 (K, New_Args (New_Args'First).all,
+                  New_Args (New_Args'First + 1 .. New_Args'Last),
+                  Title, null, null, "", Success, True);
+
+               Free (New_Args);
+            end;
+         end if;
+      end Launch;
+
    begin
       if Data.Length = 0 then
          declare
@@ -1133,18 +1239,10 @@ package body Builder_Module is
                   Args := Argument_String_To_List (Command);
                end if;
 
-               Exec := Locate_Exec_On_Path (Args (1).all);
-
-               if Exec = null then
-                  Insert (K, -"Could not locate executable on path: "
-                            & Args (1).all);
-               else
-                  Launch_Process
-                    (K, Exec.all, Args (2 .. Args'Last), -"Run: " & Command,
-                     null, null, "", Success, True);
-                  Free (Exec);
-               end if;
-
+               Launch
+                 (Args (Args'First).all,
+                  Args (Args'First + 1 .. Args'Last), -"Run: " & Command);
+               Free (Exec);
                Free (Args);
             end if;
          end;
@@ -1169,17 +1267,15 @@ package body Builder_Module is
                     (Get_Pref (K, Execute_Command) & ' ' &
                      Executables_Directory (Data.Project) & Data.File & ' ' &
                      Arguments);
-                  Launch_Process
-                    (K, Args (1).all, Args (2 .. Args'Last),
-                     -"Run: " & Data.File & ' ' & Arguments,
-                     null, null, "", Success, True);
+                  Launch
+                    (Args (Args'First).all, Args (Args'First + 1 .. Args'Last),
+                     -"Run: " & Data.File & ' ' & Arguments);
 
                else
                   Args := Argument_String_To_List (Arguments);
-                  Launch_Process
-                    (K, Executables_Directory (Data.Project) & Data.File,
-                     Args.all, -"Run: " & Data.File & ' ' & Arguments,
-                     null, null, "", Success, True);
+                  Launch
+                    (Executables_Directory (Data.Project) & Data.File,
+                     Args.all, -"Run: " & Data.File & ' ' & Arguments);
                end if;
 
                Free (Args);
