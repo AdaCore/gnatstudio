@@ -50,6 +50,11 @@ with GNAT.OS_Lib;           use GNAT.OS_Lib;
 
 with Factory_Data;          use Factory_Data;
 
+--  AUnit components
+with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
+with Make_Test_Window_Pkg; use Make_Test_Window_Pkg;
+with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
+
 package body Glide_Menu is
 
    Highlight_File : constant String := "#FF0000000000";
@@ -165,6 +170,24 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget);
    --  Run->Debug menu
+
+   procedure On_New_Test_Case
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Tools->Unit Testing->New Test Case menu
+
+   procedure On_New_Test_Suite
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Tools->Unit Testing->New Test Suite menu
+
+   procedure On_New_Test_Harness
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+   --  Tools->Unit Testing->New Test Harness menu
 
    procedure On_Compare_Two_Files
      (Object : Data_Type_Access;
@@ -368,7 +391,7 @@ package body Glide_Menu is
    is
       Top  : constant GVD_Main_Window := GVD_Main_Window (Object);
       Grep : Hyper_Grep_Access;
-      Id   : Message_Id;
+      --  Id   : Message_Id;
 
    begin
       Gtk_New (Grep, Object.all'Access);
@@ -402,7 +425,7 @@ package body Glide_Menu is
       File      : constant Pattern_Matcher :=
         Compile ("([^:]*):(\d+):(\d+:)?");
       Dead      : Boolean;
-      Id        : Message_Id;
+      --  Id        : Message_Id;
       Last      : Natural;
       Highlight : Gdk_Color;
       Console   : constant Gtk_Text :=
@@ -507,6 +530,46 @@ package body Glide_Menu is
       --  GVD.Menu.On_Run (null, Action, Widget);
       null;
    end On_Debug;
+
+   --------------------------
+   -- On_Compare_Two_Files --
+   --------------------------
+
+   procedure On_New_Test_Case
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Make_Test_Window : Make_Test_Window_Access;
+   begin
+      Gtk_New (Make_Test_Window);
+      Show_All (Make_Test_Window);
+      Gtk.Main.Main;
+   end On_New_Test_Case;
+
+   procedure On_New_Test_Suite
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Make_Suite_Window : Make_Suite_Window_Access;
+   begin
+      Gtk_New (Make_Suite_Window);
+      Show_All (Make_Suite_Window);
+      Gtk.Main.Main;
+   end On_New_Test_Suite;
+
+   procedure On_New_Test_Harness
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Make_Harness_Window : Make_Harness_Window_Access;
+   begin
+      Gtk_New (Make_Harness_Window);
+      Show_All (Make_Harness_Window);
+      Gtk.Main.Main;
+   end On_New_Test_Harness;
 
    --------------------------
    -- On_Compare_Two_Files --
@@ -692,10 +755,13 @@ package body Glide_Menu is
          Gtk_New (-"/_Tools/Metrics...", "", null),
          Gtk_New (-"/_Tools/Code Fixing...", "", null),
          Gtk_New (-"/_Tools/Unit Testing", Item_Type => Branch),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Case", "", null),
+         Gtk_New (-"/_Tools/Unit Testing/New Test Case", "",
+                  On_New_Test_Case'Access),
          Gtk_New (-"/_Tools/Unit Testing/Add Routine", "", null),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Suite", "", null),
-         Gtk_New (-"/_Tools/Unit Testing/New Test Harness", "", null),
+         Gtk_New (-"/_Tools/Unit Testing/New Test Suite", "",
+                  On_New_Test_Suite'Access),
+         Gtk_New (-"/_Tools/Unit Testing/New Test Harness", "",
+                  On_New_Test_Harness'Access),
          Gtk_New (-"/_Tools/Compare", Item_Type => Branch),
          Gtk_New (-"/_Tools/Compare/Two Files...", "",
                   On_Compare_Two_Files'Access),
