@@ -80,6 +80,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Open_Source1_Activate;
 
+   ---------------------------------
+   -- On_Reload_Sources1_Activate --
+   ---------------------------------
+
+   procedure On_Reload_Sources1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end On_Reload_Sources1_Activate;
+
    -------------------------------
    -- On_Open_Session1_Activate --
    -------------------------------

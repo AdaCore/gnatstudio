@@ -95,6 +95,13 @@ begin
       Widget_Callback.To_Marshaller (On_Open_Source1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Source1);
 
+   Gtk_New (Main_Debug_Window.Reload_Sources1, -"Reload Sources");
+   Set_Right_Justify (Main_Debug_Window.Reload_Sources1, False);
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Reload_Sources1, "activate",
+      Widget_Callback.To_Marshaller (On_Reload_Sources1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Reload_Sources1);
+
    Gtk_New (Main_Debug_Window.Separator1);
    Set_Right_Justify (Main_Debug_Window.Separator1, False);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator1);
