@@ -30,8 +30,7 @@ with Glib;                     use Glib;
 
 package Vdiff2_Module is
 
-
-   type VDiff2_Module_Record is private;
+   type VDiff2_Module is private;
    Vdiff_Module_ID        : Glide_Kernel.Module_ID;
    Vdiff_Module_Name  : constant String := "Visual_Diff2";
    Diff3_Cmd                : Param_Spec_String;
