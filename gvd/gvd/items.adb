@@ -102,6 +102,14 @@ package body Items is
       Item.Valid := Valid;
    end Set_Valid;
 
+   --------------
+   -- Is_Valid --
+   --------------
+
+   function Is_Valid (Item : access Generic_Type) return Boolean is
+   begin
+      return Item.Valid;
+   end Is_Valid;
 
    --------------------
    -- Set_Visibility --

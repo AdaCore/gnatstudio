@@ -185,7 +185,8 @@ package body Items.Classes is
       Item.Y := Y;
 
       if not Item.Valid
-        or else (Item.Ancestors'Length = 0 and then not Item.Child.Valid)
+        or else (Item.Ancestors'Length = 0
+                 and then not Is_Valid (Item.Child))
       then
          Display_Pixmap
            (Context.Pixmap, Context.GC, Unknown_Pixmap,
@@ -226,7 +227,7 @@ package body Items.Classes is
          end if;
       end loop;
 
-      if Item.Child.Height /= 0 then
+      if Get_Height (Item.Child.all) /= 0 then
          Paint (Item.Child.all, Context, X + Left_Border, Current_Y);
       end if;
 
@@ -269,13 +270,13 @@ package body Items.Classes is
 
          Size_Request (Item.Child.all, Context, Hide_Big_Items);
 
-         Total_Width := Gint'Max (Total_Width, Item.Child.Width) + Left_Border;
-         Item.Child.Width := Total_Width;
+         Total_Width := Gint'Max (Total_Width, Get_Width (Item.Child.all)) + Left_Border;
+         Propagate_Width (Item.Child.all, Total_Width);
 
          --  Dont print an extra border around, since each ancestors and child
          --  are records and already have their own borders.
          Item.Width  := Total_Width;
-         Item.Height := Total_Height + Item.Child.Height;
+         Item.Height := Total_Height + Get_Height (Item.Child.all);
 
          if Hide_Big_Items and then Item.Height > Big_Item_Height then
             Item.Visible := False;

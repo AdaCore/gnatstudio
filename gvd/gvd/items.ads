@@ -249,6 +249,10 @@ package Items is
    --  Indicate whether the value given in Item is valid (ie there was no
    --  error when getting the value from the debugger, ...)
 
+   function Is_Valid (Item : access Generic_Type) return Boolean;
+   --  Return True if the value given in Item is valid, ie was correctly
+   --  parsed
+
    function Replace
      (Parent       : access Generic_Type;
       Current      : access Generic_Type'Class;
