@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,7 +20,6 @@
 
 with Glib;                use Glib;
 with Gdk.Window;          use Gdk.Window;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
@@ -34,6 +33,7 @@ with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
 with GVD.Process;         use GVD.Process;
 with GVD.Proc_Utils;      use GVD.Proc_Utils;
+with GVD.Call_Stack;      use GVD.Call_Stack;
 with GVD.Canvas;          use GVD.Canvas;
 with GVD.Dialogs;         use GVD.Dialogs;
 with GVD.Trace;           use GVD.Trace;
@@ -642,7 +642,7 @@ package body GVD.Menu is
          Process := Visual_Debugger (List.Debugger);
 
          if Process.Debugger /= null then
-            if Process.Stack_Scrolledwindow = null then
+            if Process.Stack = null then
                Create_Call_Stack (Process);
 
                if Command_In_Process (Get_Process (Process.Debugger)) then
@@ -657,8 +657,7 @@ package body GVD.Menu is
                   Update_Call_Stack (Process);
                end if;
             else
-               Child := Find_MDI_Child
-                 (Top.Process_Mdi, Process.Stack_Scrolledwindow);
+               Child := Find_MDI_Child (Top.Process_Mdi, Process.Stack);
 
                if Child /= null then
                   Raise_Child (Child);
@@ -666,8 +665,8 @@ package body GVD.Menu is
                   --  Something really bad happened: the stack window is not
                   --  part of the MDI, reset it.
 
-                  Destroy (Process.Stack_Scrolledwindow);
-                  Process.Stack_Scrolledwindow := null;
+                  Destroy (Process.Stack);
+                  Process.Stack := null;
                   Create_Call_Stack (Process);
                end if;
             end if;
