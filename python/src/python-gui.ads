@@ -64,10 +64,6 @@ private
       Globals : Python.PyObject;
       --  The global symbols for the python interpreter
 
-      Capture, Capture_Err : Python.PyObject;
-      --  The python objects used to capture the output of the python
-      --  interpreter.
-
       Use_Secondary_Prompt : Boolean := False;
       --  Which type of prompt should be displayed
 

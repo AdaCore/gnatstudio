@@ -36,6 +36,9 @@ with Histories;         use Histories;
 
 with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with System;
+with Python.Ada;      use Python.Ada;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Ada.Unchecked_Conversion;
 
 package body Python.GUI is
 
@@ -46,6 +49,9 @@ package body Python.GUI is
    --  events ?
 
    Python_Key : constant History_Key := "python_console";
+
+   function Convert is new Standard.Ada.Unchecked_Conversion
+     (System.Address, Python_Interpreter);
 
    package Interpreter_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Python_Interpreter);
@@ -73,6 +79,66 @@ package body Python.GUI is
       return System.Address;
    pragma Import (C, Signal, "signal");
 
+   function Write (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Write);
+   function Flush (Self : PyObject; Args : PyObject) return PyObject;
+   pragma Convention (C, Flush);
+   --  Override the python's methods of the File class.
+
+   -----------
+   -- Write --
+   -----------
+
+   function Write (Self : PyObject; Args : PyObject) return PyObject is
+      pragma Unreferenced (Self);
+      S : aliased chars_ptr;
+      N : aliased Integer;
+      Stdout : aliased PyObject;
+      Interpreter : Python_Interpreter;
+      Data : PyObject;
+      Buffer : Gtk_Text_Buffer;
+      Iter   : Gtk_Text_Iter;
+      Dead   : Boolean;
+      pragma Unreferenced (Dead);
+   begin
+      if not PyArg_ParseTuple
+        (Args, "Os#", Stdout'Address, S'Address, N'Address)
+      then
+         return null;
+      end if;
+
+      Data := PyObject_GetAttrString (Stdout, "gpsdata");
+      Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+
+      Buffer := Get_Buffer (Interpreter.Console);
+      Get_End_Iter (Buffer, Iter);
+      Insert (Buffer, Iter, Value (S));
+--      Get_End_Iter (Buffer, Iter);
+      Dead := Scroll_To_Iter (Interpreter.Console, Iter, 0.0,
+                      Use_Align => False, Xalign => 0.0, Yalign => 0.0);
+
+      --  Process all gtk+ events, so that the text becomes visible
+      --  immediately, even if the python program hasn't finished executing
+
+      while Gtk.Main.Events_Pending loop
+         Dead := Gtk.Main.Main_Iteration;
+      end loop;
+
+      Py_INCREF (Py_None);
+      return Py_None;
+   end Write;
+
+   -----------
+   -- Flush --
+   -----------
+
+   function Flush (Self : PyObject; Args : PyObject) return PyObject is
+      pragma Unreferenced (Self, Args);
+   begin
+      Py_INCREF (Py_None);
+      return Py_None;
+   end Flush;
+
    ----------------
    -- Initialize --
    ----------------
@@ -81,14 +147,15 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class;
       History     : Histories.History)
    is
-      Setup_Cmd : constant String :=
-        "import sys, StringIO" & ASCII.LF &
-        "sys.stdout=sys._capture=StringIO.StringIO()" & ASCII.LF &
-        "sys.stderr=sys._capture_err=StringIO.StringIO()" & ASCII.LF;
+      Setup_Cmd   : constant String := "import sys" & ASCII.LF;
       Main_Module : PyObject;
       Sigint      : constant Integer := 2;
       Old_Handler : System.Address;
       Prompt      : PyObject;
+      Stdout      : PyClassObject;
+      Meths       : PyObject;
+      Ignored     : Integer;
+      pragma Unreferenced (Ignored);
 
    begin
       --  Prevent python's standard Ctrl-C handling, to leave it to the calling
@@ -107,18 +174,35 @@ package body Python.GUI is
          raise Interpreter_Error;
       end if;
 
-      Interpreter.Capture     := PySys_GetObject ("_capture");
-      Interpreter.Capture_Err := PySys_GetObject ("_capture_err");
-
-      if Interpreter.Capture = null or else Interpreter.Capture_Err = null then
-         raise Interpreter_Error;
-      end if;
-
       Main_Module := PyImport_AddModule ("__main__");
       if Main_Module = null then
          raise Interpreter_Error;
       end if;
       Interpreter.Globals := PyModule_GetDict (Main_Module);
+
+      --  Create our own stdout handler
+
+      Meths := PyDict_New;
+      PyDict_SetItemString (Meths, "__module__", PyString_FromString ("gps"));
+      PyDict_SetItemString
+        (Meths, "gpsdata", PyCObject_FromVoidPtr (Interpreter.all'Address));
+
+      Stdout := PyClass_New
+        (Bases => null,
+         Dict  => Meths,
+         Name  => PyString_FromString ("GPSStdout"));
+      Ignored := PyModule_AddObject (Main_Module, "GPSStdout", Stdout);
+
+      Add_Method (Meths, Create_Method_Def ("write", Write'Access), Stdout);
+      Add_Method (Meths, Create_Method_Def ("flush", Flush'Access), Stdout);
+
+      if not PyRun_SimpleString
+        ("sys.stdout=sys.stderr=GPSStdout ()" & ASCII.LF)
+      then
+         raise Interpreter_Error;
+      end if;
+
+      --  Initialize various variables
 
       Prompt := PySys_GetObject ("ps1");
       if Prompt = null then
@@ -205,10 +289,6 @@ package body Python.GUI is
    is
       Obj            : PyObject;
       Code           : PyCodeObject;
-      Result, Stream : PyObject;
-      Iter           : Gtk_Text_Iter;
-      Buffer         : constant Gtk_Text_Buffer :=
-        Get_Buffer (Interpreter.Console);
       Tmp            : String_Access;
       Indented_Input : constant Boolean := Command'Length > 0
         and then (Command (Command'First) = ASCII.HT
@@ -222,7 +302,6 @@ package body Python.GUI is
          return;
       end if;
 
-      Get_End_Iter (Buffer, Iter);
       Code := Py_CompileString (Cmd, "<stdin>", Py_Single_Input);
 
       --  If code compiled just fine
@@ -233,17 +312,11 @@ package body Python.GUI is
 
          if Obj = null then
             PyErr_Print;
-            Stream := Interpreter.Capture_Err;
          else
             Py_DECREF (Obj);
-            Stream := Interpreter.Capture;
          end if;
 
          Interpreter.Use_Secondary_Prompt := False;
-         Result := PyObject_CallMethod (Stream, "getvalue");
-         if not Hide_Output then
-            Insert (Buffer, Iter, PyString_AsString (Result));
-         end if;
          Free (Interpreter.Buffer);
          Interpreter.Buffer := new String'("");
 
@@ -253,20 +326,16 @@ package body Python.GUI is
          Interpreter.Use_Secondary_Prompt := Indented_Input;
 
          if not Interpreter.Use_Secondary_Prompt then
-            PyErr_Print;
-            Stream := Interpreter.Capture_Err;
-            Result := PyObject_CallMethod (Stream, "getvalue");
-
             declare
-               Str : constant String := PyString_AsString (Result);
-               Eof : constant String :=
-                 "unexpected EOF while parsing" & ASCII.LF;
+               Typ, Occurrence, Traceback : PyObject;
+               S : PyObject;
             begin
-               Interpreter.Use_Secondary_Prompt := Str'Length > Eof'Length
-                 and then Str (Str'Last - Eof'Length + 1 .. Str'Last) = Eof;
+               PyErr_Fetch (Typ, Occurrence, Traceback);
+               S := PyTuple_GetItem (Occurrence, 0);
+               Interpreter.Use_Secondary_Prompt :=
+                 PyString_AsString (S) = "unexpected EOF while parsing";
+               PyErr_Clear;
             end;
-         else
-            Stream := null;
          end if;
 
          if Interpreter.Use_Secondary_Prompt then
@@ -275,19 +344,9 @@ package body Python.GUI is
               (Interpreter.Buffer.all & Command & ASCII.LF);
             Free (Tmp);
          else
-            Insert (Buffer, Iter, PyString_AsString (Result));
             Free (Interpreter.Buffer);
             Interpreter.Buffer := new String'("");
          end if;
-      end if;
-
-      if Stream /= null then
-         Py_DECREF (Result);
-
-         Result := PyObject_CallMethod (Stream, "seek", 0);
-         Py_DECREF (Result);
-         Result := PyObject_CallMethod (Stream, "truncate");
-         Py_DECREF (Result);
       end if;
 
       if not Hide_Output then
