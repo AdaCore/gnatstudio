@@ -1,0 +1,15 @@
+#!/bin/sh
+# .gps_wrapper
+#
+# Copyright 2002 by ACT Europe.
+
+prog=`basename $0`
+root=`dirname $0`
+
+# Strip 'bin' directory to retrieve the real root
+
+root=`dirname $root`
+LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
+PATH=$root/bin/real:$PATH
+export LD_LIBRARY_PATH PATH
+exec $root/bin/real/$prog "$@"
