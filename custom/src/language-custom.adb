@@ -493,7 +493,7 @@ package body Language.Custom is
       begin
          if Keywords /= "" then
             Lang.Keywords := new Pattern_Matcher'
-              (Compile (Keywords, Flags and not Multiple_Lines));
+              (Compile ("^(" & Keywords & ")", Flags and not Multiple_Lines));
          end if;
       end;
 
@@ -627,17 +627,11 @@ package body Language.Custom is
    ------------------------
 
    function Get_Project_Fields
-     (Lang : access Custom_Language) return Project_Field_Array is
+     (Lang : access Custom_Language) return Project_Field_Array
+   is
+      pragma Unreferenced (Lang);
    begin
-      if Lang.Project_Fields = null then
-         if Lang.Parent = null then
-            return (1 .. 0 => No_Project_Field);
-         else
-            return Get_Project_Fields (Lang.Parent);
-         end if;
-      else
-         return Lang.Project_Fields.all;
-      end if;
+      return (1 .. 0 => No_Project_Field);
    end Get_Project_Fields;
 
    -------------------
