@@ -96,6 +96,10 @@ Limitations
 @c --------------------------------------------------------------------
 
 @noindent
+IMPORTANT Notice: this document is still very much a work in progress.
+Most sections are present, but many of them are empty of incomplete, and many
+cross references are also missing.
+
 GVD is a graphical front-end for text based debuggers such as GDB.
 A knowledge of the basics of the underlying debugger used by GVD will help
 understanding how GVD works and what kind of functionalities it provides.
