@@ -235,6 +235,19 @@ package Src_Info is
    --  Build a Construct_List, either using the src_info tools (like SN)
    --  or a language parser.
 
+   ----------------
+   -- Scope Tree --
+   ----------------
+
+   --  A scope tree is the base structure for the call graph and the type
+   --  browser.
+   --  You can no longer use a node when the LI file has been reparsed.
+
+   type Scope_Tree_Node is private;
+   Null_Scope_Tree_Node : constant Scope_Tree_Node;
+
+   --  See src_info.queries for operations on Scope_Tree
+
    --------------
    -- Entities --
    --------------
@@ -875,6 +888,48 @@ private
      (Str : Types.Time_Stamp_Type) return Ada.Calendar.Time;
    --  Convert the string to an internal timestamp.
 
+   ----------------
+   -- Scope_Tree --
+   ----------------
+
+   type Scope_Type is (Declaration, Reference);
+   --  The type for the elements in the scope: these are either a
+   --  declaration, with subranges or subdeclarations, or a reference to
+   --  another entity.
+
+   type Scope_Node;
+   type Scope_List is access Scope_Node;
+   type Scope_Node (Typ : Scope_Type) is record
+      Sibling : Scope_List;
+      Parent  : Scope_List;
+      --  Pointer to the next item at the same level.
+
+      Decl : E_Declaration_Access;
+      --  The declaration of the entity
+
+      case Typ is
+         when Declaration =>
+            Start_Of_Scope : File_Location;
+            End_Of_Scope : E_Reference;
+            Contents : Scope_List;
+
+         when Reference =>
+            Ref : E_Reference_Access;
+      end case;
+   end record;
+
+   type Scope_Tree_Node is new Scope_List;
+   type Scope_Tree_Node_Iterator is new Scope_List;
+
+   Null_Scope_Tree_Node : constant Scope_Tree_Node := null;
+
+   procedure Free (Scope : in out Scope_List);
+   --  Free the memory occupied by Scope.
+
+   ---------------
+   -- File_Info --
+   ---------------
+
    type File_Info is record
       Unit_Name         : String_Access;
       --  ??? Should be only for languages where it makes sense, for instance
@@ -886,6 +941,7 @@ private
       Original_Filename : String_Access;
       Original_Line     : Positive;
       Declarations      : E_Declaration_Info_List;
+      Scope_Tree        : Scope_List;
    end record;
    --  The information associated to a source file.
    --  Directory_Name is set on demand only. In fact, you should only access it
