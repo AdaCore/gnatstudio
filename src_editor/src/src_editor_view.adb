@@ -753,49 +753,51 @@ package body Src_Editor_View is
          Y_In_Window :=
            Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
 
-         for J in View.Line_Info.all'Range loop
-            if View.Line_Info (J).Stick_To_Data then
-               if View.Real_Lines (Current_Line) /= 0 then
-                  Data := View.Line_Info (J).Column_Info
-                    (View.Real_Lines (Current_Line));
+         if Current_Line /= 0 then
+            for J in View.Line_Info.all'Range loop
+               if View.Line_Info (J).Stick_To_Data then
+                  if View.Real_Lines (Current_Line) /= 0 then
+                     Data := View.Line_Info (J).Column_Info
+                       (View.Real_Lines (Current_Line));
+                  else
+                     Data := (null, 0);
+                  end if;
                else
-                  Data := (null, 0);
-               end if;
-            else
-               Data := View.Line_Info (J).Column_Info (Current_Line);
-            end if;
-
-            if Data.Info /= null then
-               if Data.Info.Text /= null then
-                  Draw_Text
-                    (Drawable => Left_Window,
-                     Font => View.Font,
-                     Gc => View.Side_Column_GC,
-                     X =>  Gint (View.Line_Info (J).Starting_X
-                                 + View.Line_Info (J).Width
-                                 - Data.Width
-                                 - 2),
-                     Y => Y_In_Window,
-                     Text => Data.Info.Text.all);
+                  Data := View.Line_Info (J).Column_Info (Current_Line);
                end if;
 
-               if Data.Info.Image /= Null_Pixbuf then
-                  Render_To_Drawable
-                    (Pixbuf   => Data.Info.Image,
-                     Drawable => Left_Window,
-                     Gc       => View.Side_Column_GC,
-                     Src_X    => 0,
-                     Src_Y    => 0,
-                     Dest_X   => Gint (View.Line_Info (J).Starting_X
-                                       + View.Line_Info (J).Width
-                                       - Data.Width
-                                       - 2),
-                     Dest_Y   => Y_Pix_In_Window,
-                     Width    => -1,
-                     Height   => -1);
+               if Data.Info /= null then
+                  if Data.Info.Text /= null then
+                     Draw_Text
+                       (Drawable => Left_Window,
+                        Font => View.Font,
+                        Gc => View.Side_Column_GC,
+                        X =>  Gint (View.Line_Info (J).Starting_X
+                                    + View.Line_Info (J).Width
+                                    - Data.Width
+                                    - 2),
+                        Y => Y_In_Window,
+                        Text => Data.Info.Text.all);
+                  end if;
+
+                  if Data.Info.Image /= Null_Pixbuf then
+                     Render_To_Drawable
+                       (Pixbuf   => Data.Info.Image,
+                        Drawable => Left_Window,
+                        Gc       => View.Side_Column_GC,
+                        Src_X    => 0,
+                        Src_Y    => 0,
+                        Dest_X   => Gint (View.Line_Info (J).Starting_X
+                                          + View.Line_Info (J).Width
+                                          - Data.Width
+                                          - 2),
+                        Dest_Y   => Y_Pix_In_Window,
+                        Width    => -1,
+                        Height   => -1);
+                  end if;
                end if;
-            end if;
-         end loop;
+            end loop;
+         end if;
 
          Forward_Line (Iter, Dummy_Boolean);
 
