@@ -1,13 +1,18 @@
 with "../gtkada/gtkada";
-with "gnat_gvd";
 
 project GVD_Common is
 
-  for Source_Dirs use ("common");
-  for Object_Dir use "gvd";
+  for Source_Dirs use ("common", "gnat");
+  for Object_Dir use "obj";
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-a");
+   end Builder;
 
    package Compiler is
-      for Default_Switches ("Ada") use ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+      for Default_Switches ("Ada") use
+        ("-gnata", "-g", "-O2", "-gnaty", "-gnatwue");
+      for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
    end Compiler;
 
 end GVD_Common;
