@@ -103,7 +103,7 @@ scripting languages permitting most of the extensions described below.
 
 Likewise, adding basic support for new languages will be made easier,
 and doable through external text files, requiring no
-programmation. This is not available for this first release of the GPS
+programming. This is not available for this first release of the GPS
 environment.
 
 @c --------------------------------------------------------------------
@@ -220,7 +220,7 @@ other tooltips.
 
 @item extended documentation
 Extended documentation should be written in HTML.
-See the GPS user's guide on how to make new documentation availble to
+See the GPS user's guide on how to make new documentation available to
 users. 
 
 @end itemize
@@ -297,7 +297,7 @@ should do the following in the debugger:
   (gdb) cont
 @end smallexample
 
-This will stop the appliation as soon as the gtk+ warning is printed.
+This will stop the application as soon as the gtk+ warning is printed.
 
 @c --------------------------------------------------------------------
 @node Contexts
