@@ -151,13 +151,16 @@ package body Python.GUI is
       --  be sent to the python console, thus avoiding recursive loops inside
       --  GPS.
 
-      if Force
-        or else Clock - Interpreter.Refresh_Timeout > Timeout_Threshold
-      then
-         while Gtk.Main.Events_Pending loop
-            Dead := Gtk.Main.Main_Iteration;
-         end loop;
-         Interpreter.Refresh_Timeout := Clock;
+      --  ??? Fails if we are displaying a dialog
+      if not Interpreter.Hide_Output then
+         if Force
+           or else Clock - Interpreter.Refresh_Timeout > Timeout_Threshold
+         then
+            while Gtk.Main.Events_Pending loop
+               Dead := Gtk.Main.Main_Iteration;
+            end loop;
+            Interpreter.Refresh_Timeout := Clock;
+         end if;
       end if;
    end Process_Gtk_Events;
 
@@ -307,6 +310,7 @@ package body Python.GUI is
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
 
       if Interpreter.Console = null
+        or else Interpreter.Hide_Output
         or else Gtk.Object.Destroyed_Is_Set (Interpreter.Console)
       then
          --  Report EOF on stdin
@@ -474,6 +478,7 @@ package body Python.GUI is
 
       if Interpreter.Uneditable /= null then
          Unref (Interpreter.Uneditable);
+         Interpreter.Uneditable := null;
       end if;
 
       if Interpreter.Console /= null
@@ -627,12 +632,14 @@ package body Python.GUI is
          return;
       end if;
 
-      if Console /= null then
-         if Default_Console /= null then
-            Ref (Default_Console);
-         end if;
+      if Default_Console /= null then
+         Ref (Default_Console);
+      end if;
 
+      if Console /= null then
          Set_Console (Interpreter, Get_View (Console));
+      else
+         Set_Console (Interpreter, null);
       end if;
 
       Trace (Me, "Running command: " & Command);
@@ -731,19 +738,17 @@ package body Python.GUI is
          PyErr_Clear;
       end if;
 
-      if not Hide_Output and then Console = null then
+      if not Hide_Output and then Console /= null then
          Display_Prompt (Interpreter);
       end if;
 
       Interpreter.In_Process := False;
       Interpreter.Hide_Output := False;
 
-      if Console /= null then
-         Set_Console (Interpreter, Default_Console);
+      Set_Console (Interpreter, Default_Console);
 
-         if Default_Console /= null then
-            Unref (Default_Console);
-         end if;
+      if Default_Console /= null then
+         Unref (Default_Console);
       end if;
 
    exception
