@@ -884,5 +884,19 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'with clause can be moved to body'
 
+   type Not_Fully_Conformant is new Error_Parser
+    (new String'("Not_Fully_Conformant"), 2)
+   with null record;
+
+   procedure Initialize (This : in out Not_Fully_Conformant);
+
+   procedure Fix
+     (This         : Not_Fully_Conformant;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Fix problem 'not fully conformant with declaration'
 
 end Codefix.Errors_Parser;

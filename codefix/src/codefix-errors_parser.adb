@@ -1672,6 +1672,53 @@ package body Codefix.Errors_Parser is
    begin
       Concat (Solutions, Move_With_To_Body (Current_Text, Message));
    end Fix;
+
+   --------------------------
+   -- Not_Fully_Conformant --
+   --------------------------
+
+   procedure Initialize (This : in out Not_Fully_Conformant) is
+   begin
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("not fully conformant with declaration at " &
+                     "([^\:]+):([\d]+)")),
+         new Pattern_Matcher'
+           (Compile ("not fully conformant with declaration at " &
+                     "(line) ([\d]+)")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Not_Fully_Conformant;
+      Errors_List  : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array)
+   is
+      pragma Unreferenced (This, Errors_List);
+
+      Spec_Cursor : File_Cursor;
+   begin
+      Spec_Cursor.Col := 1;
+      Spec_Cursor.Line := Natural'Value
+        (Get_Message (Message)
+           (Matches (2).First .. Matches (2).Last));
+
+
+      if Get_Message (Message)
+        (Matches (1).First .. Matches (1).Last) = "line"
+      then
+         Assign (Spec_Cursor.File_Name, Message.File_Name);
+      else
+         Assign
+           (Spec_Cursor.File_Name,
+            Get_Message (Message)
+              (Matches (1).First .. Matches (1).Last));
+      end if;
+
+      Concat (Solutions, Make_Conformant (Current_Text, Message, Spec_Cursor));
+   end Fix;
 begin
    Add_Parser (new Agregate_Misspelling);
    Add_Parser (new Double_Misspelling);
@@ -1715,6 +1762,7 @@ begin
    Add_Parser (new Hidden_Declaration);
    Add_Parser (new Redundant_Conversion);
    Add_Parser (new Missplaced_With);
+   Add_Parser (new Not_Fully_Conformant);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
