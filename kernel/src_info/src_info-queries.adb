@@ -2128,7 +2128,6 @@ package body Src_Info.Queries is
                Iterator.Current_Separate := Iterator.Current_Separate.Next;
 
                if Ref /= null then
-                  Trace (Me, "Found in current_separate");
                   return Ref;
                end if;
             end loop;
@@ -2143,13 +2142,11 @@ package body Src_Info.Queries is
                Iterator.Current_Dependency := Iterator.Current_Dependency.Next;
 
                if Ref /= null then
-                  Trace (Me, "Found in current_dependency");
                   return Ref;
                end if;
             end loop;
          end if;
 
-         Trace (Me, "Returning null");
          return null;
       end Check_Decl_File;
 
@@ -2181,7 +2178,6 @@ package body Src_Info.Queries is
             if Iterator.References /= null then
                return;
             end if;
-            Trace (Me, "Not found in current");
          end if;
 
          if not First_Next then
