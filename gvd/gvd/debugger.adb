@@ -252,7 +252,7 @@ package body Debugger is
                     Error,
                     Button_OK,
                     Button_OK);
-               OS_Exit (1);
+               return;
             end;
          end if;
       else
@@ -285,7 +285,7 @@ package body Debugger is
                      Error,
                      Button_OK,
                      Button_OK);
-                  OS_Exit (1);
+                  return;
                end;
          end;
       end if;
