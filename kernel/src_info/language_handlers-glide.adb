@@ -306,4 +306,22 @@ package body Language_Handlers.Glide is
       end if;
    end Get_Nth_Handler;
 
+   ----------------------
+   -- Get_Nth_Language --
+   ----------------------
+
+   function Get_Nth_Language
+     (Handler : access Glide_Language_Handler_Record;
+      Num     : Positive) return String is
+   begin
+      if Handler.Languages = null
+        or else Num > Handler.Languages'Length
+      then
+         return "";
+      else
+         return Handler.Languages
+           (Handler.Languages'First + Num - 1).Language_Name.all;
+      end if;
+   end Get_Nth_Language;
+
 end Language_Handlers.Glide;
