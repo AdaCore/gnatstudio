@@ -577,7 +577,8 @@ package body Odd.Process is
                Set_Value
                  (Debugger_Output_Type (Entity.all),
                   Send (Debugger.Debugger,
-                        Refresh_Command (Debugger_Output_Type (Entity.all))));
+                        Refresh_Command (Debugger_Output_Type (Entity.all)),
+                        Is_Internal => True));
                Gtk_New
                  (Item, Get_Window (Debugger.Data_Canvas),
                   Variable_Name  => Command (Start + 1 .. Tmp - 1),
