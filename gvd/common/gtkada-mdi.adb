@@ -2524,12 +2524,8 @@ package body Gtkada.MDI is
          Show_All (MDI.Docks (Side));
 
       else
-         --  Putting the following creates an infinite loop with the
-         --  size_allocate signal in GVD (in the source window, when it is
-         --  maximized).
-         --  Is this still True ???
-
-         Set_Show_Tabs (MDI.Docks (Side), True);
+         Set_Show_Tabs
+           (MDI.Docks (Side), Get_Nth_Page (MDI.Docks (Side), 0) /= null);
       end if;
    end Create_Notebook;
 
