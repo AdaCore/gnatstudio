@@ -11798,15 +11798,6 @@ actions (e.g compilation) are on going.
 @cindex jpeg
 Splash screen displayed by default when GPS is started.
 
-   @item @i{prefix}/share/themes
-@cindex Gtk+
-@cindex theme
-Directory containing the Gtk+ predefined themes.
-
-   @item @i{prefix}/share/make
-Directory containing shared makefiles used by the multi-language build
-system.
-
    @item @i{prefix}/share/locale
 Directory used to retrieve the translation files, when relevant.
 
