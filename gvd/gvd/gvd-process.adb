@@ -672,7 +672,9 @@ package body GVD.Process is
          declare
             File_Name : constant Virtual_File := Create
               (Full_Filename =>
-                 Process.Current_Output (File_First .. File_Last));
+                 Normalize_Pathname
+                   (Process.Current_Output (File_First .. File_Last),
+                    Resolve_Links => False));
          begin
             Set_Current_Language
               (Process.Editor_Text, Get_Language_From_File
