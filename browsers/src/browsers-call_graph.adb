@@ -820,6 +820,11 @@ package body Browsers.Call_Graph is
       Info := Get_Entity (Entity);
       if Info /= No_Entity_Information then
          Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+      else
+         Insert (Get_Kernel (Entity),
+                 -"No information found for the file "
+                   & File_Information (Entity),
+                 Mode => Error);
       end if;
 
       Pop_State (Get_Kernel (Entity));
