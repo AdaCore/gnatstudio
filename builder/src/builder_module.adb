@@ -1061,7 +1061,7 @@ package body Builder_Module is
       Command : String)
    is
       use String_List_Utils.String_List;
-      Node : List_Node;
+      Node     : List_Node;
       Info     : File_Info;
       Kernel   : constant Kernel_Handle := Get_Kernel (Data);
       C        : Xref_Commands.Generic_Asynchronous_Command_Access;
