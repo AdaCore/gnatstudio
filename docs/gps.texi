@@ -259,7 +259,8 @@ This is a standard menu bar that gives access to all the global
 functionalities of GPS. It is usually easier to access a given functionality
 using the various contextual menus provided throughout GPS: these menus
 give direct access to the most relevant actions given the current context
-(e.g. a project, a directory, a file, an entity, @dots{})
+(e.g. a project, a directory, a file, an entity, @dots{}). Contextual menus
+pop up when the right mouse button is clicked.
 
 @c --------------------------------------------------------------------
 @node The Tool Bar
@@ -296,7 +297,7 @@ by using the @code{Project} menu items.
 @subsection The explorer views
 
 The explorer views are
-initially displayed on the left side of the GPS window. Its goal is to
+initially displayed on the left side of the GPS window. Their goal is to
 show a full view of the various components of your projects. These
 various components are presented below.
 
@@ -318,7 +319,7 @@ following:
 @item projects
 As mentioned before, all the sources you are working with are put under
 control of projects. These projects are a way to store the switches to
-use for the various tools, as well as a number of other setup.
+use for the various tools, as well as a number of other properties.
 
 They can be organized into a project hierarchy, where a root project
 can import other projects, with their own set of sources.
@@ -379,10 +380,10 @@ menu, you have the possibility to search for anything in the explorer,
 either a file or an entity. Note that searching for an entity might be
 a little slow if you have lots of files.
 
-A contextual menu is also provided when inside a source editor, or
-anywhere when you right-click on a file, whose name is @code{Locate in
-Explorer}, and that will automatically search for the first entry for
-this file in the explorer.
+A contextual menu, named @code{Locate in Explorer}, is also provided when
+inside a source editor. This will automatically search for the first entry for
+this file in the explorer. This contextual menu is also available in other
+modules, e.g. when selecting a file in the @code{Dependency Browser}.
 
 
 @subsection The configuration variables
@@ -398,7 +399,7 @@ area on top of the @code{Project View}. These variables are called
 @code{Configuration Variables}, since they provide various scenarios for
 the same set of project files.
 
-A combo box is displayed in this area for each of the environment
+A combo box is displayed in this area for each environment
 variable the project depends on. The current value of the variable can
 be set simply by selecting it from the popdown window that appears
 when you click on the arrow on the right of the variable name
@@ -475,7 +476,7 @@ search, compilation results, and so on).
 The Location Tree shows a hierarchy of categories, which contain
 files, which contain locations. Clicking on a location item will bring
 up a file editor at the requested place. Right-clicking on file or
-category items brings up a contextual menu which permits to remove the
+category items brings up a contextual menu allowing you to remove the
 corresponding node from the view.
 
 @c --------------------------------------------------------------------
@@ -760,8 +761,8 @@ menu @code{Window->Docked}. We will see in @ref{Moving Windows} that
 there is a more intuitive way to do the same thing.
 
 In some cases, GPS will change the color used to draw the title of the
-window in the notebook tab. This indicates that the contents of the
-window has been updated, but the window wasn't visible. Typically,
+window in the notebook tab. This indicates that the window content
+has been updated, but the window wasn't visible. Typically,
 this is used to indicate that new messages have been written in the
 messages or console window.
 
@@ -787,8 +788,8 @@ be detached, and can be moved anywhere on your screen, even outside of
 GPS's main window.
 
 There are two ways to put a floating window back under control of GPS.
-The more general method is toselect the window through its title in
-the menu @code{Window}, and then select @code{Window->Floatings}.
+The more general method is to select the window through its title in
+the menu @code{Window}, and then select @code{Window->Floating}.
 
 The second method assumes that the preference @b{Destroy Floats} in
 the menu @code{Edit->Preferences} has been set to false. Then, you can
@@ -831,7 +832,7 @@ It is important to note that some widgets in GPS have their own
 drag-and-drop support, and will not react when you drop a window on
 them. For instance, editors use drag-and-drop for copy-paste
 operations. Therefore, dropping a window on them will result in a
-failed operation. In that case, it always work to drop the window in
+failed operation. In that case, it always works to drop the window in
 the title bar of another window to adopt the same state.
 
 
@@ -1010,15 +1011,15 @@ that if you load a new project in GPS, or modify the paths of the current
 project, you should kill any running Emacs, so that a new one is spawned
 by GPS with the appropriate project.
 
-Of course, you can alternatively reload explicitely the project from
+Of course, you can alternatively reload explicitly the project from
 Emacs itself by using the menu @code{Project->Load}
 
 
 In the preferences, there are two settings that allow you to select
-the external editor (if left to an an empty string, GPS will
+the external editor (if left to an empty string, GPS will
 automatically select the first editor available on your system) and
 whether this editor should always be used every time you double-click
-on a file, or whether you need to explicitely select the contextual
+on a file, or whether you need to explicitly select the contextual
 menu to open the external editor.
 
 @c --------------------------------------------------------------------------
