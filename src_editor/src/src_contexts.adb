@@ -314,7 +314,8 @@ package body Src_Contexts is
                      if Buffer (Pos) = Str_Delim
                        and then (Quote_Char = ASCII.NUL or else
                                  (Pos > Buffer_First and then
-                                  Buffer (Pos - 1) /= Quote_Char))
+                                  Buffer (Pos - 1) /= Quote_Char)
+                                 or else Pos = Buffer_First)
                      then
                         State := Statements;
                         Section_End := Pos - 1;
