@@ -27,7 +27,8 @@ unmodified in any copy.
 
 @include gvd_contents.texi
 
-@c @printindex cp
+@unnumbered Index
+@printindex cp
 
 @contents
 
