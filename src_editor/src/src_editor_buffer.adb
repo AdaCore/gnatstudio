@@ -1297,6 +1297,10 @@ package body Src_Editor_Buffer is
 
       L, C : Gint;
    begin
+      if Buffer.Do_Not_Move_Cursor then
+         return;
+      end if;
+
       Get_Screen_Position (Buffer, L, C);
 
       Emit_By_Name
@@ -2519,6 +2523,10 @@ package body Src_Editor_Buffer is
       Buffer_Line : Buffer_Line_Type :=
         Get_Buffer_Line (Buffer, Line);
    begin
+      if Buffer.Do_Not_Move_Cursor then
+         return;
+      end if;
+
       --  If the line is in a non-visible line, make the line visible.
 
       if Buffer_Line = 0 then
@@ -4118,6 +4126,8 @@ package body Src_Editor_Buffer is
          return False;
       end if;
 
+      Buffer.Do_Not_Move_Cursor := True;
+
       Get_Indentation_Parameters
         (Lang         => Lang,
          Params       => Indent_Params,
@@ -4187,6 +4197,8 @@ package body Src_Editor_Buffer is
       if Cursor_Offset > 0 then
          Forward_Chars (Iter, Cursor_Offset, Result);
       end if;
+
+      Buffer.Do_Not_Move_Cursor := False;
 
       Place_Cursor (Buffer, Iter);
 
