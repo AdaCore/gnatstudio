@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,7 +32,6 @@ package body Codefix.Merge_Utils is
       Success             : out Boolean;
       Chronologic_Changes : Boolean)
    is
-
       It_1, It_2      : Merge_Iterator;
       New_Unit        : Merged_Unit;
       Internal_Result : Merge_Type;
@@ -139,14 +138,13 @@ package body Codefix.Merge_Utils is
                end if;
                --  This block means that if the same thing is added at the same
                --  position in both objects, then the result must have only one
-               --  occurence of it.
+               --  occurrence of it.
          end case;
       end Merge_Created;
 
       --  begin of Merge
 
    begin
-
       It_1 := First (Object_1);
       It_2 := First (Object_2);
       Success := True;
