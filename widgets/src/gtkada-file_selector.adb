@@ -79,135 +79,6 @@ package body Gtkada.File_Selector is
    --  a filter to it, and displays the corresponding information in the
    --  file list.
 
-   -----------------------
-   -- String_List Utils --
-   -----------------------
-
-   procedure Prepend
-     (L    : in out String_List;
-      Item : String);
-   --  Add an item at the beginning of a list. The cost is O(1).
-
-   procedure List_Fusion_Sort (L : in out String_List);
-   --  Sorts a String_List alphabetically. The cost is O(n*log(n)).
-
-   procedure List_Split (L : in out String_List; L1, L2 : out String_List);
-   --  Splits a list into two lists of equal size.
-   --  The cost is O(n) where n = length(L).
-
-   function List_Fuse (L1, L2 : in String_List) return String_List;
-   --  Fuses two sorted lists into a sorted list.
-   --  The cost is O(n) where n = (length(L1), length(L2)).
-
-   procedure List_Fusion_Sort (L : in out String_List)
-   is
-      L1, L2 : String_List;
-   begin
-      if L /= null
-        and then L.Next /= null
-      then
-         List_Split (L, L1, L2);
-         List_Fusion_Sort (L1);
-         List_Fusion_Sort (L2);
-         L := List_Fuse (L1, L2);
-      end if;
-   end List_Fusion_Sort;
-
-   procedure List_Split (L : in out String_List; L1, L2 : out String_List) is
-      Append_To_L1 : Boolean := True;
-      L1_First : String_List;
-      L2_First : String_List;
-      L1_Last  : String_List;
-      L2_Last  : String_List;
-   begin
-      if L = null then
-         L1 := null;
-         L2 := null;
-      elsif L.Next = null then
-         L1 := L;
-         L2 := null;
-      else
-         L1_First := L;
-         L2_First := L.Next;
-         L1_Last := L1_First;
-         L2_Last := L2_First;
-         L := L.Next.Next;
-
-         while L /= null loop
-            if Append_To_L1 then
-               L1_Last.Next := L;
-               L1_Last := L1_Last.Next;
-               Append_To_L1 := False;
-            else
-               L2_Last.Next := L;
-               L2_Last := L2_Last.Next;
-               Append_To_L1 := True;
-            end if;
-
-            L := L.Next;
-         end loop;
-
-         L1_Last.Next := null;
-
-         if L2_Last /= null then
-            L2_Last.Next := null;
-         end if;
-
-         L1 := L1_First;
-         L2 := L2_First;
-      end if;
-   end List_Split;
-
-   function List_Fuse (L1, L2 : in String_List) return String_List
-   is
-      List_First : String_List;
-      List_Last : String_List;
-      LL1 : String_List := L1;
-      LL2 : String_List := L2;
-   begin
-      if LL1 = null then
-         return LL2;
-      elsif LL2 = null then
-         return LL1;
-      else
-         if LL1.Element.all'Length = 0
-           or else (LL2.Element.all'Length /= 0
-                    and then LL1.Element.all < LL2.Element.all)
-         then
-            List_First := LL1;
-            LL1 := LL1.Next;
-         else
-            List_First := LL2;
-            LL2 := LL2.Next;
-         end if;
-      end if;
-
-      List_Last := List_First;
-
-      while LL1 /= null and then LL2 /= null loop
-         if LL1.Element.all'Length = 0
-           or else (LL2.Element.all'Length /= 0
-                    and then LL1.Element.all < LL2.Element.all)
-         then
-            List_Last.Next := LL1;
-            LL1 := LL1.Next;
-         else
-            List_Last.Next := LL2;
-            LL2 := LL2.Next;
-         end if;
-
-         List_Last := List_Last.Next;
-      end loop;
-
-      if LL1 = null then
-         List_Last.Next := LL2;
-      else
-         List_Last.Next := LL1;
-      end if;
-
-      return List_First;
-   end List_Fuse;
-
    ---------------
    -- Callbacks --
    ---------------
@@ -369,7 +240,7 @@ package body Gtkada.File_Selector is
       Current_Row  : Gint;
       Style        : Gtk_Style;
    begin
-      if Win.Remaining_Files = null then
+      if Is_Empty (Win.Remaining_Files) then
          return False;
       end if;
 
@@ -377,7 +248,7 @@ package body Gtkada.File_Selector is
         (Win.Current_Filter,
          Win,
          Win.Current_Directory.all,
-         Win.Remaining_Files.Element.all,
+         Head (Win.Remaining_Files),
          State,
          Pixmap,
          Mask,
@@ -410,7 +281,7 @@ package body Gtkada.File_Selector is
 
          Set_Text (Win.File_List,
                    Current_Row, 1,
-                   Win.Remaining_Files.Element.all);
+                   Head (Win.Remaining_Files));
 
          if Text /= null then
             Set_Text (Win.File_List,
@@ -427,9 +298,9 @@ package body Gtkada.File_Selector is
 
       Free (Text);
 
-      Win.Remaining_Files := Win.Remaining_Files.Next;
+      Win.Remaining_Files := Tail (Win.Remaining_Files);
 
-      if Win.Remaining_Files = null then
+      if Is_Empty (Win.Remaining_Files) then
          return False;
       else
          return True;
@@ -446,6 +317,7 @@ package body Gtkada.File_Selector is
    is
       Buffer       : String (1 .. 256);
       Last         : Natural;
+
    begin
       if not Win.Current_Directory_Is_Open then
          return False;
@@ -457,14 +329,26 @@ package body Gtkada.File_Selector is
          Win.Current_Directory_Is_Open := False;
 
          Clear (Win.File_List);
-         List_Fusion_Sort (Win.Files);
          Win.Remaining_Files := Win.Files;
 
          --  Register the function that will fill the list in the background.
          declare
             Id : Idle_Handler_Id;
+            function Comparison (Arg1, Arg2 : String) return Boolean;
+            --  Simple string comparison used for sorting the files list.
+
+            function Comparison (Arg1, Arg2 : String) return Boolean
+            is
+            begin
+               if Arg1 < Arg2 then
+                  return True;
+               else
+                  return False;
+               end if;
+            end Comparison;
          begin
             Id := Add (Display_File'Access, Win);
+            Sort (Win.Files, Comparison'Unrestricted_Access);
          end;
 
          return False;
@@ -490,20 +374,8 @@ package body Gtkada.File_Selector is
      (Win    : File_Selector_Window_Access;
       Filter : access File_Filter_Record'Class)
    is
-      Current_Node : Filter_List := Win.Filters;
    begin
-      if Current_Node = null then
-         Win.Filters := new Filter_List_Node
-           '(Element => File_Filter (Filter),
-             Next    => null);
-      else
-         while Current_Node.Next /= null loop
-            Current_Node := Current_Node.Next;
-         end loop;
-         Current_Node.Next := new Filter_List_Node'
-           (Element => File_Filter (Filter),
-            Next    => null);
-      end if;
+      Append (Win.Filters, File_Filter (Filter));
       Add_Unique_Combo_Entry (Win.Filter_Combo, Filter.Label.all);
    end Register_Filter;
 
@@ -527,21 +399,6 @@ package body Gtkada.File_Selector is
       Text := new String'("");
    end Use_File_Filter;
 
-   -------------
-   -- Prepend --
-   -------------
-
-   procedure Prepend
-     (L    : in out String_List;
-      Item : String)
-   is
-      L2 : String_List := L;
-   begin
-      L := new String_List_Node'
-       (Element => new String' (Item),
-        Next    => L2);
-   end Prepend;
-
    -------------------
    -- Refresh_Files --
    -------------------
@@ -559,21 +416,20 @@ package body Gtkada.File_Selector is
 
       Set_Busy_Cursor (Get_Window (Win), True, True);
       Clear (Win.File_List);
-      Free_String_List (Win.Files);
-      Win.Remaining_Files := null;
+      Free (Win.Files);
 
       --  Find out which filter to use.
 
       declare
          S : String := Get_Text (Win.Filter_Combo_Entry);
-         C : Filter_List := Win.Filters;
+         C : Filter_List.List := Win.Filters;
       begin
-         while C /= null loop
-            if C.Element.Label.all = S then
-               Filter := C.Element;
+         while not Is_Empty (C) loop
+            if Head (C).Label.all = S then
+               Filter := Head (C);
                exit;
             else
-               C := C.Next;
+               C := Tail (C);
             end if;
          end loop;
       end;
@@ -1030,22 +886,6 @@ package body Gtkada.File_Selector is
 
       return False;
    end On_Selection_Entry_Key_Press_Event;
-
-   ----------------------
-   -- Free_String_List --
-   ----------------------
-
-   procedure Free_String_List (List : in out String_List)
-   is
-      Previous : String_List;
-   begin
-      while List /= null loop
-         Previous := List;
-         Free (List.Element);
-         List := List.Next;
-         Free (Previous);
-      end loop;
-   end Free_String_List;
 
    -------------
    -- Gtk_New --

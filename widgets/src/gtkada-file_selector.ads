@@ -75,11 +75,10 @@ with Gdk.Bitmap;
 
 with Directory_Tree; use Directory_Tree;
 with Generic_Stack;
+with Generic_List;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-
-with Unchecked_Deallocation;
 
 package Gtkada.File_Selector is
 
@@ -170,6 +169,12 @@ package Gtkada.File_Selector is
 
 private
 
+   package String_List is new Generic_List (String);
+   use String_List;
+
+   package Filter_List is new Generic_List (File_Filter);
+   use Filter_List;
+
    package File_Selector_Idle is new Idle (File_Selector_Window_Access);
    use File_Selector_Idle;
 
@@ -188,28 +193,6 @@ private
    --  Implementation of the Use_File_Filter procedure for
    --  the Filter_Show_All filter.
 
-   type Filter_List_Node;
-   type Filter_List is access Filter_List_Node;
-
-   type Filter_List_Node is record
-      Element : File_Filter;
-      Next    : Filter_List;
-   end record;
-
-   type String_List_Node;
-   type String_List is access String_List_Node;
-
-   type String_List_Node is record
-      Element : String_Access;
-      Next    : String_List;
-   end record;
-
-   procedure Free is new
-     Unchecked_Deallocation (String_List_Node, String_List);
-
-   procedure Free_String_List (List : in out String_List);
-   --  Free the memory associated with List;
-
    type Dir_Type_Access is access Dir_Type;
 
    type File_Selector_Window_Record is new Gtk_Window_Record with record
@@ -221,10 +204,10 @@ private
       Current_Directory_Is_Open : Boolean := False;
       --  Tells whether the current directory is being read.
 
-      Files : String_List;
+      Files : String_List.List;
       --  The list of files in the current directory.
 
-      Remaining_Files : String_List;
+      Remaining_Files : String_List.List;
       --  The list of files that are in the current directory but not yet
       --  filtered nor shown in the file list.
       --  This list should never be allocated any memory explicitly, but
@@ -233,7 +216,7 @@ private
       Current_Filter : File_Filter;
       --  The filter that is currently used for displaying files.
 
-      Filters : Filter_List;
+      Filters : Filter_List.List;
       --  A list of all registered filters.
 
       Normal_Style : Gtk_Style;
