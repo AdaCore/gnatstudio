@@ -181,7 +181,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Word    : Mark_List.List_Node;
       Current_Extract : Ada_Lists.List_Node;
       Extract_Temp    : Ada_List;
-      Already_Loaded   : Boolean;
+      Already_Loaded  : Boolean;
       Merge_Success   : Boolean;
    begin
       Current_Word := First (This.Remove_List);
@@ -218,6 +218,8 @@ package body Codefix.Text_Manager.Ada_Commands is
 
          Current_Word := Next (Current_Word);
       end loop;
+
+      Current_Extract := First (Remove_Extracts);
 
       while Current_Extract /= Ada_Lists.Null_Node loop
 
