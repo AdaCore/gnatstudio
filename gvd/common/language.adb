@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with GNAT.IO;                     use GNAT.IO;
 with Odd_Intl;                    use Odd_Intl;
 with OS_Utils;                    use OS_Utils;
+with String_Utils;                use String_Utils;
 with Ada.Characters.Handling;     use Ada.Characters.Handling;
 with Ada.Exceptions;              use Ada.Exceptions;
 
@@ -213,12 +214,22 @@ package body Language is
          return;
       end if;
 
+      --  Do we have a keyword ?
+
+      Match (Keys, Buffer, Matched);
+
+      if Matched (0) /= No_Match then
+         Next_Char := Matched (0).Last + 1;
+         Entity := Keyword_Text;
+         return;
+      end if;
+
       --  Another special character, not part of a word: just skip it, before
       --  doing some regexp matching
       --  It is better to return a pointer to the newline, so that the icons
       --  on the side might be displayed properly.
 
-      if not Is_Letter (Buffer (Buffer'First)) then
+      if not Is_Entity_Letter (Buffer (Buffer'First)) then
          Entity := Normal_Text;
          Next_Char := Buffer'First + 1;
 
@@ -249,17 +260,7 @@ package body Language is
          return;
       end if;
 
-      --  Do we have a keyword ?
-
-      Match (Keys, Buffer, Matched);
-
-      if Matched (0) /= No_Match then
-         Next_Char := Matched (0).Last + 1;
-         Entity := Keyword_Text;
-         return;
-      end if;
-
-      --  If not, skip to the next meaningful character. we know we are
+      --  Skip to the next meaningful character. we know we are
       --  starting with a letter
 
       Next_Char := Buffer'First + 1;
@@ -268,8 +269,7 @@ package body Language is
       --  Skip the current word
 
       while Next_Char <= Buffer'Last
-        and then (Is_Letter (Buffer (Next_Char))
-                  or else Buffer (Next_Char) = '_')
+        and then Is_Entity_Letter (Buffer (Next_Char))
       loop
          Next_Char := Next_Char + 1;
       end loop;
