@@ -100,26 +100,19 @@ package body Language.Unknown is
    is
       pragma Unreferenced (Lang);
    begin
-      return (Comment_Start_Length          => 0,
-              Comment_End_Length            => 0,
-              New_Line_Comment_Start_Length => 0,
-              Comment_Start                 => "",
-              Comment_End                   => "",
-              New_Line_Comment_Start        => "",
-              String_Delimiter              => ASCII.NUL,
-              Quote_Character               => ASCII.NUL,
-              Constant_Character            => ASCII.NUL);
+      return
+        (Comment_Start_Length          => 0,
+         Comment_End_Length            => 0,
+         New_Line_Comment_Start_Length => 0,
+         Comment_Start                 => "",
+         Comment_End                   => "",
+         New_Line_Comment_Start        => "",
+         String_Delimiter              => ASCII.NUL,
+         Quote_Character               => ASCII.NUL,
+         Constant_Character            => ASCII.NUL,
+         Can_Indent                    => False,
+         Syntax_Highlighting           => False);
    end Get_Language_Context;
-
-   ----------------
-   -- Can_Indent --
-   ----------------
-
-   function Can_Indent (Lang : access Unknown_Language) return Boolean is
-      pragma Unreferenced (Lang);
-   begin
-      return False;
-   end Can_Indent;
 
    -----------------------
    -- Is_Case_Sensitive --
