@@ -30,7 +30,7 @@ PRJ_EDITOR_OBJ_DIR = $(PRJ_EDITOR_BASE_DIR)/obj
 OBJ_DIR = $(PRJ_EDITOR_OBJ_DIR)
 
 CFLAGS = -g -O2
-ADA_SOURCES = prj_wizard.adb testsuite.adb
+ADA_SOURCES = testsuite.adb
 
 PROJECT_FILE = prj_editor
 LIBS := $(PRJ_EDITOR_OBJ_DIR)/libprj_editor$(AR_EXT) $(LIBS)
