@@ -6,17 +6,20 @@ separate (Src_Info.CPP)
 ------------------------
 
 procedure Fu_To_Fu_Handler (Ref : TO_Table) is
-   P            : Pair_Ptr;
-   Fn           : FU_Table;
-   Decl_Info    : E_Declaration_Info_List;
-   Overloaded   : Boolean := False;
-   Init         : Boolean := True;
-   No_Body      : Boolean := True;
-   Kind         : E_Kind;
-   FDecl        : FD_Table;
-   FDecl_Tmp    : FD_Table;
-   Ref_Id       : constant String := Ref.Buffer
+   P              : Pair_Ptr;
+   Fn             : FU_Table;
+   Decl_Info      : E_Declaration_Info_List;
+   Overloaded     : Boolean := False;
+   Init           : Boolean := True;
+   No_Body        : Boolean := True;
+   Kind           : E_Kind;
+   FDecl          : FD_Table;
+   FDecl_Tmp      : FD_Table;
+   Ref_Id         : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
+   Filename_Buf   : SN.String_Access;
+   Filename       : Segment;
+   Start_Position : Point;
 
    function Find_Function (Fn : FU_Table; FD_Tab : FD_Table)
       return E_Declaration_Info_List;
@@ -101,6 +104,16 @@ begin
          No_Body := True;
       end loop;
 
+      if No_Body then
+         Filename_Buf   := FDecl.Buffer;
+         Filename       := FDecl.File_Name;
+         Start_Position := FDecl.Start_Position;
+      else
+         Filename_Buf   := Fn.Buffer;
+         Filename       := Fn.File_Name;
+         Start_Position := Fn.Start_Position;
+      end if;
+
       --  If procedure
       --    defined in the current file => add reference
       --    defined in another file => add dep decl and reference it
@@ -110,10 +123,7 @@ begin
       else
          Kind := Non_Generic_Procedure;
       end if;
-      if (No_Body
-         and then FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last)
-            = Get_LI_Filename (Global_LI_File))
-         or else Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
+      if Filename_Buf (Filename.First .. Filename.Last)
             = Get_LI_Filename (Global_LI_File) then
          begin
             --  this is a function defined in the current file
@@ -140,10 +150,9 @@ begin
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Global_LI_File,
                   List               => Global_LI_File_List,
-                  Symbol_Name        =>
-                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
-                  Source_Filename    =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Symbol_Name        => Ref_Id,
+                  Source_Filename    => Ref.Buffer
+                     (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
@@ -154,26 +163,24 @@ begin
             --  this function is defined somewhere else...
             Decl_Info := Find_Dependency_Declaration
               (File                 => Global_LI_File,
-               Symbol_Name          => Fn.Buffer
-                 (Fn.Name.First .. Fn.Name.Last),
-               Filename             => Fn.Buffer
-                 (Fn.File_Name.First .. Fn.File_Name.Last),
-               Location             => Fn.Start_Position);
+               Symbol_Name          => Ref_Id,
+               Filename             => Filename_Buf
+                 (Filename.First .. Filename.Last),
+               Location             => Start_Position);
          exception
             when Declaration_Not_Found => -- insert dep decl
                Insert_Dependency_Declaration
                  (Handler            => LI_Handler (Global_CPP_Handler),
                   File               => Global_LI_File,
                   List               => Global_LI_File_List,
-                  Symbol_Name        =>
-                     Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+                  Symbol_Name        => Ref_Id,
                   Source_Filename    =>
                      Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Fn.Start_Position,
+                  Location           => Start_Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
-                  Referred_Filename  =>
-                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
+                  Referred_Filename  => Filename_Buf
+                    (Filename.First .. Filename.Last),
                   Declaration_Info   => Decl_Info);
          end;
       end if;
@@ -186,7 +193,7 @@ begin
       begin
          Decl_Info := Find_Declaration
            (File        => Global_LI_File,
-            Symbol_Name => Fn.Buffer (Fn.Name.First .. Fn.Name.Last),
+            Symbol_Name => Ref_Id,
             Kind        => Overloaded_Entity);
       exception
          when Declaration_Not_Found =>
@@ -195,8 +202,7 @@ begin
                  (Declaration => No_Declaration,
                   References => null),
                Next => Global_LI_File.LI.Body_Info.Declarations);
-            Decl_Info.Value.Declaration.Name :=
-               new String'(Ref_Id);
+            Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
             Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end;

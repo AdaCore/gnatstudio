@@ -6,21 +6,24 @@ separate (Src_Info.CPP)
 ------------------------
 
 procedure Fu_To_Mi_Handler (Ref : TO_Table) is
-   P            : Pair_Ptr;
-   Fn           : MI_Table;
-   MDecl        : MD_Table;
-   MDecl_Tmp    : MD_Table;
-   Decl_Info    : E_Declaration_Info_List;
-   Overloaded   : Boolean := False;
-   Init         : Boolean := True;
-   Pure_Virtual : Boolean := False;
-   Kind         : E_Kind;
-   IsTemplate   : Boolean := False;
-   Ref_Id       : constant String := Ref.Buffer
+   P             : Pair_Ptr;
+   Fn            : MI_Table;
+   MDecl         : MD_Table;
+   MDecl_Tmp     : MD_Table;
+   Decl_Info     : E_Declaration_Info_List;
+   Overloaded    : Boolean := False;
+   Init          : Boolean := True;
+   Pure_Virtual  : Boolean := False;
+   Kind          : E_Kind;
+   IsTemplate    : Boolean := False;
+   Ref_Id        : constant String := Ref.Buffer
      (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
-   Ref_Class    : constant String := Ref.Buffer
+   Ref_Class     : constant String := Ref.Buffer
      (Ref.Referred_Class.First .. Ref.Referred_Class.Last);
-   Attributes   : SN_Attributes;
+   Attributes    : SN_Attributes;
+   Filename_Buf  : SN.String_Access;
+   Filename      : Segment;
+   Start_Position : Point;
 
    function Find_Method (Fn : MI_Table; MD_Tab : MD_Table)
       return E_Declaration_Info_List;
@@ -139,6 +142,16 @@ begin
             null;
       end;
 
+      if Pure_Virtual then
+         Filename_Buf   := MDecl.Buffer;
+         Filename       := MDecl.File_Name;
+         Start_Position := MDecl.Start_Position;
+      else
+         Filename_Buf   := Fn.Buffer;
+         Filename       := Fn.File_Name;
+         Start_Position := Fn.Start_Position;
+      end if;
+
       if MDecl.Buffer (MDecl.Return_Type.First .. MDecl.Return_Type.Last)
             = "void" then
          if IsTemplate then
@@ -153,10 +166,7 @@ begin
             Kind := Non_Generic_Procedure;
          end if;
       end if;
-      if (Pure_Virtual
-         and then MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last)
-            = Get_LI_Filename (Global_LI_File))
-         or else Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last)
+      if Filename_Buf (Filename.First .. Filename.Last)
             = Get_LI_Filename (Global_LI_File) then
          begin
             --  this is a method defined in the current file
@@ -185,8 +195,8 @@ begin
                   File               => Global_LI_File,
                   List               => Global_LI_File_List,
                   Symbol_Name        => Ref_Id,
-                  Source_Filename    =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Source_Filename    => Ref.Buffer
+                    (Ref.File_Name.First .. Ref.File_Name.Last),
                   Location           => Ref.Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
@@ -199,9 +209,9 @@ begin
               (File                 => Global_LI_File,
                Symbol_Name          => Ref_Id,
                Class_Name           => Ref_Class,
-               Filename             => Fn.Buffer
-                 (Fn.File_Name.First .. Fn.File_Name.Last),
-               Location             => Fn.Start_Position);
+               Filename             => Filename_Buf
+                 (Filename.First .. Filename.Last),
+               Location             => Start_Position);
          exception
             when Declaration_Not_Found => -- insert dep decl
                Insert_Dependency_Declaration
@@ -209,13 +219,13 @@ begin
                   File               => Global_LI_File,
                   List               => Global_LI_File_List,
                   Symbol_Name        => Ref_Id,
-                  Source_Filename    =>
-                     Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
-                  Location           => Fn.Start_Position,
+                  Source_Filename    => Ref.Buffer
+                     (Ref.File_Name.First .. Ref.File_Name.Last),
+                  Location           => Start_Position,
                   Kind               => Kind,
                   Scope              => Global_Scope,
-                  Referred_Filename  =>
-                     Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last),
+                  Referred_Filename  => Filename_Buf
+                     (Filename.First .. Filename.Last),
                   Declaration_Info   => Decl_Info);
          end;
       end if;
@@ -238,8 +248,7 @@ begin
                  (Declaration => No_Declaration,
                   References => null),
                Next => Global_LI_File.LI.Body_Info.Declarations);
-            Decl_Info.Value.Declaration.Name :=
-               new String'(Ref_Id);
+            Decl_Info.Value.Declaration.Name := new String'(Ref_Id);
             Decl_Info.Value.Declaration.Kind := Overloaded_Entity;
             Global_LI_File.LI.Body_Info.Declarations := Decl_Info;
       end;
