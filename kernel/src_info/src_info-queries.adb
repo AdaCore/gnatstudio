@@ -1429,12 +1429,16 @@ package body Src_Info.Queries is
            (Name   => Decl.Name.all,
             Line   => Decl.Location.Line,
             Column => Decl.Location.Column,
+            Scope  => Decl.Scope,
+            Kind   => Decl.Kind,
             File   => Get_Source_Filename (Decl.Location.File));
       else
          return Create
            (Name   => Decl.Name.all,
             Line   => Decl.Location.Line,
             Column => Decl.Location.Column,
+            Scope  => Decl.Scope,
+            Kind   => Decl.Kind,
             File   => "");
       end if;
    end Get_Entity;
@@ -1452,7 +1456,9 @@ package body Src_Info.Queries is
            (Name   => Entity.Name.all,
             Line   => Entity.Decl_Line,
             Column => Entity.Decl_Column,
-            File   => Entity.Decl_File.all);
+            File   => Entity.Decl_File.all,
+            Scope  => Entity.Scope,
+            Kind   => Entity.Kind);
       end if;
    end Copy;
 
@@ -1464,6 +1470,7 @@ package body Src_Info.Queries is
    begin
       Free (Entity.Decl_File);
       Free (Entity.Name);
+      Entity := No_Entity_Information;
    end Destroy;
 
    -----------------------------
@@ -1495,6 +1502,24 @@ package body Src_Info.Queries is
    begin
       return Entity.Decl_File.all;
    end Get_Declaration_File_Of;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (Entity : Entity_Information) return E_Kind is
+   begin
+      return Entity.Kind;
+   end Get_Kind;
+
+   ---------------
+   -- Get_Scope --
+   ---------------
+
+   function Get_Scope (Entity : Entity_Information) return E_Scope is
+   begin
+      return Entity.Scope;
+   end Get_Scope;
 
    --------------------
    -- Is_Same_Entity --
@@ -2442,13 +2467,17 @@ package body Src_Info.Queries is
      (File   : String;
       Line   : Positive;
       Column : Natural;
-      Name   : String) return Entity_Information is
+      Name   : String;
+      Scope  : E_Scope;
+      Kind   : E_Kind) return Entity_Information is
    begin
       return Entity_Information'
         (Name        => new String'(Name),
          Decl_Line   => Line,
          Decl_Column => Column,
-         Decl_File   => new String'(File));
+         Decl_File   => new String'(File),
+         Scope       => Scope,
+         Kind        => Kind);
    end Create;
 
 end Src_Info.Queries;

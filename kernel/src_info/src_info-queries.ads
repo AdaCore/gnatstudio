@@ -68,6 +68,14 @@ package Src_Info.Queries is
    --  The declaration file might be the empty string if the exact location for
    --  the declaration could not be resolved (case of overloaded entities).
 
+   function Get_Kind (Entity : Entity_Information) return E_Kind;
+   --  Return the kind of the entity. See glide_kernel.ads on how to convert
+   --  this to a string.
+
+   function Get_Scope (Entity : Entity_Information) return E_Scope;
+   --  Return the scope of the entity.  See glide_kernel.ads on how to convert
+   --  this to a string.
+
    function Copy (Entity : Entity_Information) return Entity_Information;
    --  Return a copy of Entity. The result must be explicitely destroyed.
 
@@ -75,7 +83,9 @@ package Src_Info.Queries is
      (File   : String;
       Line   : Positive;
       Column : Natural;
-      Name   : String) return Entity_Information;
+      Name   : String;
+      Scope  : E_Scope;
+      Kind   : E_Kind) return Entity_Information;
    --  Return a new entity information structure. It is the responsability of
    --  the user to free the allocated memory.
 
@@ -508,10 +518,12 @@ private
       Decl_Line   : Positive;
       Decl_Column : Natural;
       Decl_File   : String_Access;
+      Scope       : E_Scope;
+      Kind        : E_Kind;
    end record;
 
    No_Entity_Information : constant Entity_Information :=
-     (null, 1, 0, null);
+     (null, 1, 0, null, Global_Scope, Unresolved_Entity);
 
    type Scope_Node;
    type Scope_List is access Scope_Node;
