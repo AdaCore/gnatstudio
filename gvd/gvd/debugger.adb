@@ -240,8 +240,14 @@ package body Debugger is
       Cmd              : String;
       Display          : Boolean := False;
       Empty_Buffer     : Boolean := True;
-      Wait_For_Prompt  : Boolean := True) is
+      Wait_For_Prompt  : Boolean := True;
+      Is_Internal      : Boolean := False)
+   is
    begin
+      if Is_Internal then
+         Push_Internal_Command_Status (Get_Process (Debugger), Is_Internal);
+      end if;
+
       if Display then
          Text_Output_Handler
            (Convert (Debugger.Window, Debugger),
@@ -268,6 +274,10 @@ package body Debugger is
            and then not Is_Internal_Command (Get_Process (Debugger)) then
             Update_Breakpoints (Convert (Debugger.Window, Debugger));
          end if;
+      end if;
+
+      if Is_Internal then
+         Pop_Internal_Command_Status (Get_Process (Debugger));
       end if;
    end Send;
 

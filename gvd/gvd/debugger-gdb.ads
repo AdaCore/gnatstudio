@@ -212,7 +212,8 @@ private
       Cmd             : String;
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True)
+      Wait_For_Prompt : Boolean := True;
+      Is_Internal     : Boolean := False)
      return String;
 
    type Gdb_Debugger is new Debugger.Debugger_Root with record

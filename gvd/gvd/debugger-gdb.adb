@@ -241,11 +241,13 @@ package body Debugger.Gdb is
       Cmd             : String;
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True)
+      Wait_For_Prompt : Boolean := True;
+      Is_Internal     : Boolean := False)
      return String
    is
    begin
-      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt);
+      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt,
+            Is_Internal);
       if Wait_For_Prompt then
          declare
             S : String := Expect_Out (Get_Process (Debugger));
@@ -1301,9 +1303,7 @@ package body Debugger.Gdb is
    is
       Num_Breakpoints : Natural := 0;
    begin
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
-      Send (Debugger, "info breakpoints");
-      Pop_Internal_Command_Status (Get_Process (Debugger));
+      Send (Debugger, "info breakpoints", Is_Internal => True);
 
       declare
          S     : String := Expect_Out (Get_Process (Debugger));
@@ -1467,12 +1467,10 @@ package body Debugger.Gdb is
       --  ??? This should be done directly from the sources, since this would
       --  be closer to what the user would expect.
 
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
       Set_Parse_File_Name (Get_Process (Debugger), False);
-      Send (Debugger, "frame");
+      Send (Debugger, "frame", Is_Internal => True);
       Parse_Backtrace_Info (Expect_Out (Get_Process (Debugger)), Bt, Len);
       Set_Parse_File_Name (Get_Process (Debugger), True);
-      Pop_Internal_Command_Status (Get_Process (Debugger));
 
       if Len >= 1 then
          Name_Last := Bt (1).Subprogram'First;
@@ -1495,9 +1493,7 @@ package body Debugger.Gdb is
      return Odd.Types.Exception_Array
    is
    begin
-      Push_Internal_Command_Status (Get_Process (Debugger), True);
-      Send (Debugger, "info exceptions");
-      Pop_Internal_Command_Status (Get_Process (Debugger));
+      Send (Debugger, "info exceptions", Is_Internal => True);
 
       declare
          S     : String := Expect_Out (Get_Process (Debugger));

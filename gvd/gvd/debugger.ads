@@ -105,20 +105,24 @@ package Debugger is
       Cmd             : String;
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True);
+      Wait_For_Prompt : Boolean := True;
+      Is_Internal     : Boolean := False);
    --  Send a command to the underlying process associated with Debugger.
    --  If Display is True, display the command in the debugger window.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
    --  Send_Completed is called right after the command is sent to the
    --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
+   --  If Is_Internal is true, then the output of the command won't be shown
+   --  in the command window.
 
    function Send
      (Debugger        : access Debugger_Root;
       Cmd             : String;
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
-      Wait_For_Prompt : Boolean := True)
+      Wait_For_Prompt : Boolean := True;
+      Is_Internal     : Boolean := False)
      return String
      is abstract;
    --  Same as above, but also returns the output of the debugger.
