@@ -418,7 +418,7 @@ package body VCS.CVS is
 
       if not File_Status_List.Is_Empty (Result) then
          Insert (Kernel,
-                 -"CVS: Status obtained.",
+                 -"CVS: Status obtained for files in " & New_Dir,
                  Highlight_Sloc => False,
                  Mode => Verbose);
       end if;
@@ -455,21 +455,18 @@ package body VCS.CVS is
       --  If the first argument is a directory, do a simple query for
       --  all files in that directory.
 
+      Insert (Rep.Kernel,
+              -"CVS: Querying status for files in "
+              & Dir_Name (Data (Files)),
+              Highlight_Sloc => False,
+              Mode => Verbose);
+
       if Data (Files) = Dir_Name (Data (Files)) then
          Append (Args, "status");
          Append (Args, "-l");
 
-         Insert (Rep.Kernel,
-                 -"CVS: Querying status for " & Dir_Name (Data (Files)) & ".",
-                 Highlight_Sloc => False,
-                 Mode => Verbose);
       else
          Append (Args, "status");
-
-         Insert (Rep.Kernel,
-                 -"CVS: Querying status.",
-                 Highlight_Sloc => False,
-                 Mode => Verbose);
 
          while Files /= Null_Node loop
             Append (Args, Base_Name (Data (Files)));
