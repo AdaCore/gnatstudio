@@ -956,7 +956,7 @@ package body Glide_Kernel.Standard_Hooks is
            & " stick_to_data, every_line, normalize)"),
           Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
       Register_Hook
-        (Kernel, Open_File_Action_Hook,
+        (Kernel, File_Line_Action_Hook,
          -("Hook called to request the display of new information on the side"
            & " of the editors"),
          Type_Name => File_Line_Hook_Type);
