@@ -361,12 +361,7 @@ package body Projects.Editor is
 
       --  Find the correct package id to use
 
-      for Index in Package_First .. Package_Attributes.Last loop
-         if N = Package_Attributes.Table (Index).Name then
-            Set_Package_Id_Of (Pack, Index);
-            exit;
-         end if;
-      end loop;
+      Set_Package_Id_Of (Pack, Package_Node_Id_Of (N));
 
       --  Add it to the list of packages
       Set_Next_Package_In_Project (Pack, First_Package_Of (Project));
@@ -2045,7 +2040,6 @@ package body Projects.Editor is
       end case;
       return S;
    end To_Argument_List;
-
 
    ---------------
    -- To_String --
