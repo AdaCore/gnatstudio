@@ -729,6 +729,7 @@ package body Src_Info.Queries is
               or else K = Generic_Procedure
               or else K = Non_Generic_Function_Or_Operator
               or else K = Non_Generic_Procedure
+              or else K = Entry_Or_Entry_Family
 
                --  ??? Should we check that at least one of the possible
                --  completions is a subprogram
@@ -736,6 +737,15 @@ package body Src_Info.Queries is
         and then (Node.Typ = Declaration
                   or else not Is_End_Reference (Node.Ref.Kind));
    end Is_Subprogram;
+
+   --------------
+   -- Get_Kind --
+   --------------
+
+   function Get_Kind (Node : Scope_Tree_Node) return E_Kind is
+   begin
+      return Node.Decl.Kind;
+   end Get_Kind;
 
    ----------
    -- Free --

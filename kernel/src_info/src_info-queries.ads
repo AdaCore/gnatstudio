@@ -423,6 +423,9 @@ package Src_Info.Queries is
    --  Return the information for the entity defined in Node.
    --  You must call Destroy on the returned information.
 
+   function Get_Kind (Node : Scope_Tree_Node) return E_Kind;
+   --  Return the type of the entity pointed to by Node.
+
    function Is_Renaming_Of
      (Entity : Entity_Information; Node : Scope_Tree_Node) return Boolean;
    --  Return True if Node points to an entity that is a renaming of Entity.
