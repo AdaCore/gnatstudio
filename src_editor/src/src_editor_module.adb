@@ -85,6 +85,8 @@ with Gtkada.Types;                use Gtkada.Types;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 with Generic_List;
+with Ada.Characters.Handling;     use Ada.Characters.Handling;
+with File_Utils;                  use File_Utils;
 with GVD.Preferences; use GVD.Preferences;
 
 with Src_Editor_Module.Line_Highlighting;
@@ -5018,7 +5020,11 @@ package body Src_Editor_Module is
 
    function Hash (F : Virtual_File) return Header_Num is
    begin
-      return Hash (Full_Name (F).all);
+      if Filenames_Are_Case_Sensitive then
+         return Hash (Full_Name (F).all);
+      else
+         return Hash (To_Lower (Full_Name (F).all));
+      end if;
    end Hash;
 
    -----------
