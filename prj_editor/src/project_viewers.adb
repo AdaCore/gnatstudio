@@ -1180,15 +1180,21 @@ package body Project_Viewers is
       return Selection_Context_Access (Context);
    end Project_Editor_Context_Factory;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
    begin
+      Prj_Editor_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Project_Editor_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => Project_Editor_Contextual'Access);
+
       Register_Menu
         (Kernel, Project, -"New...", "",
          On_New_Project'Access, Ref_Item => -"Open...");
@@ -1199,21 +1205,6 @@ package body Project_Viewers is
         (Kernel, Project, -"Save All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Switches",
          Add_Before => False);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Prj_Editor_Module_ID := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => Project_Editor_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => Project_Editor_Contextual'Access);
    end Register_Module;
 
 end Project_Viewers;

@@ -115,10 +115,6 @@ package body Browsers.Dependency_Items is
    --  It could also simply use the paths to detect whether the file is in
    --  one of the predefined paths.
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
-
    procedure On_Dependency_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Tools->Dependency Browser
@@ -707,19 +703,6 @@ package body Browsers.Dependency_Items is
                 & Exception_Information (E));
    end Edit_Ancestor_Dependencies_From_Contextual;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Tools : constant String := '/' & (-"Tools");
-   begin
-      Register_Menu (Kernel, Tools, -"Dependency Browser", "",
-                     On_Dependency_Browser'Access);
-   end Initialize_Module;
-
    ---------------
    -- Open_File --
    ---------------
@@ -803,18 +786,22 @@ package body Browsers.Dependency_Items is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Tools : constant String := '/' & (-"Tools");
    begin
       Dependency_Browser_Module_ID := Register_Module
         (Kernel                  => Kernel,
          Module_Name             => Dependency_Browser_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          MDI_Child_Tag           => Dependency_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      Register_Menu (Kernel, Tools, -"Dependency Browser", "",
+                     On_Dependency_Browser'Access);
    end Register_Module;
 
    -------------

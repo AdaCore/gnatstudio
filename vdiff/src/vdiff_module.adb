@@ -45,10 +45,6 @@ package body Vdiff_Module is
 
    Me : Debug_Handle := Create (Vdiff_Module_Name);
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize Vdiff module.
-
    function Mime_Action
      (Kernel    : access Kernel_Handle_Record'Class;
       Mime_Type : String;
@@ -207,32 +203,22 @@ package body Vdiff_Module is
       return False;
    end Mime_Action;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
-   begin
-      Register_Menu
-        (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
-   end Initialize_Module;
-
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
    begin
       Vdiff_Module_ID := Register_Module
         (Kernel       => Kernel,
          Module_Name  => Vdiff_Module_Name,
          Priority     => Default_Priority,
-         Initializer  => Initialize_Module'Access,
          Mime_Handler => Mime_Action'Access);
+      Register_Menu
+        (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
    end Register_Module;
 
 end Vdiff_Module;

@@ -47,10 +47,6 @@ package body VCS.CVS is
    -- Local Subprograms --
    -----------------------
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize module information.
-
    function Identify_VCS (S : String) return VCS_Access;
    --  Return an access to VCS_Record if S describes a CVS system.
 
@@ -1087,18 +1083,6 @@ package body VCS.CVS is
       return null;
    end Identify_VCS;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      CVS_Reference := new CVS_Record;
-      CVS_Reference.Kernel := Kernel_Handle (Kernel);
-      CVS_Reference.Queue  := New_Queue;
-   end Initialize_Module;
-
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1111,8 +1095,11 @@ package body VCS.CVS is
         (Kernel                  => Kernel,
          Module_Name             => VCS_CVS_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => null);
+
+      CVS_Reference := new CVS_Record;
+      CVS_Reference.Kernel := Kernel_Handle (Kernel);
+      CVS_Reference.Queue  := New_Queue;
    end Register_Module;
 
 end VCS.CVS;

@@ -35,11 +35,6 @@ package Project_Viewers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize the project editor module. This must be invoked prior to any
-   --  other function in this package.
-
    procedure Gtk_New
      (Viewer  : out Project_Viewer;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);

@@ -1063,7 +1063,6 @@ package body Browsers.Call_Graph is
         (Kernel                  => Kernel,
          Module_Name             => Call_Graph_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => null,
          Contextual_Menu_Handler => Call_Graph_Contextual_Menu'Access,
          MDI_Child_Tag           => Call_Graph_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);

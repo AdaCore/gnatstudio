@@ -56,10 +56,6 @@ package body Builder_Module is
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize Builder module.
-
    function Idle_Build (Data : Process_Data) return Boolean;
    --  Called by the Gtk main loop when idle.
    --  Handle on going build.
@@ -498,16 +494,21 @@ package body Builder_Module is
       Top.Interrupted := True;
    end On_Stop_Build;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Build : constant String := '/' & (-"Build") & '/';
       Mitem : Gtk_Menu_Item;
    begin
+      Builder_Module_ID := Register_Module
+        (Kernel       => Kernel,
+         Module_Name  => Builder_Module_Name,
+         Priority     => Default_Priority);
+
       Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
       Register_Menu (Kernel, Build, -"Check Syntax", "",
                      On_Check_Syntax'Access);
@@ -523,20 +524,6 @@ package body Builder_Module is
         (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Build & (-"Stop Build")), False);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Builder_Module_ID := Register_Module
-        (Kernel       => Kernel,
-         Module_Name  => Builder_Module_Name,
-         Priority     => Default_Priority,
-         Initializer  => Initialize_Module'Access);
    end Register_Module;
 
 end Builder_Module;

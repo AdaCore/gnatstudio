@@ -43,10 +43,6 @@ package body VCS_Module is
    VCS_Module_Name : constant String := "VCS_Interface";
    Me : Debug_Handle := Create (VCS_Module_Name);
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
-
    procedure On_Open_Interface
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -130,46 +126,6 @@ package body VCS_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end List_Open_Files;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Menu_Item : Gtk_Menu_Item;
-      VCS_Root  : constant String := -"VCS";
-      VCS       : constant String := '/' & VCS_Root;
-
-   begin
-      Register_Menu
-        (Kernel,
-         "/_" & VCS_Root,
-         Ref_Item => -"Navigate",
-         Add_Before => False);
-
-      Register_Menu (Kernel, VCS, -"Explorer", "", On_Open_Interface'Access);
-      Register_Menu (Kernel, VCS, -"Update project", "", On_Update_All'Access);
-      Register_Menu
-        (Kernel, VCS, -"List open files in project", "",
-         List_Open_Files'Access);
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, VCS, Menu_Item);
-      Register_Menu (Kernel, VCS, -"Update", "", Update'Access);
-      Register_Menu (Kernel, VCS, -"Start Editing", "", Open'Access);
-      Register_Menu (Kernel, VCS, -"View Diff", "", View_Diff'Access);
-      Register_Menu (Kernel, VCS, -"Edit log", "", Edit_Log'Access);
-      Register_Menu (Kernel, VCS, -"Commit", "", Commit'Access);
-      Register_Menu (Kernel, VCS, -"Annotate", "", View_Annotate'Access);
-      Register_Menu (Kernel, VCS, -"View Changelog", "", View_Log'Access);
-      Register_Menu (Kernel, VCS, -"Revert", "", Revert'Access);
-      Register_Menu (Kernel, VCS, -"Add to repository", "", Add'Access);
-      Register_Menu
-        (Kernel, VCS, -"Remove from repository", "", Remove'Access);
-
-      Log_Utils.Initialize (Kernel);
-   end Initialize_Module;
-
    -------------------------
    -- VCS_Contextual_Menu --
    -------------------------
@@ -196,14 +152,45 @@ package body VCS_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Menu_Item : Gtk_Menu_Item;
+      VCS_Root  : constant String := -"VCS";
+      VCS       : constant String := '/' & VCS_Root;
+
    begin
       VCS_Module_ID := Register_Module
         (Kernel                  => Kernel,
          Module_Name             => VCS_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => VCS_Contextual_Menu'Access);
+
+      Register_Menu
+        (Kernel,
+         "/_" & VCS_Root,
+         Ref_Item => -"Navigate",
+         Add_Before => False);
+
+      Register_Menu (Kernel, VCS, -"Explorer", "", On_Open_Interface'Access);
+      Register_Menu (Kernel, VCS, -"Update project", "", On_Update_All'Access);
+      Register_Menu
+        (Kernel, VCS, -"List open files in project", "",
+         List_Open_Files'Access);
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, VCS, Menu_Item);
+      Register_Menu (Kernel, VCS, -"Update", "", Update'Access);
+      Register_Menu (Kernel, VCS, -"Start Editing", "", Open'Access);
+      Register_Menu (Kernel, VCS, -"View Diff", "", View_Diff'Access);
+      Register_Menu (Kernel, VCS, -"Edit log", "", Edit_Log'Access);
+      Register_Menu (Kernel, VCS, -"Commit", "", Commit'Access);
+      Register_Menu (Kernel, VCS, -"Annotate", "", View_Annotate'Access);
+      Register_Menu (Kernel, VCS, -"View Changelog", "", View_Log'Access);
+      Register_Menu (Kernel, VCS, -"Revert", "", Revert'Access);
+      Register_Menu (Kernel, VCS, -"Add to repository", "", Add'Access);
+      Register_Menu
+        (Kernel, VCS, -"Remove from repository", "", Remove'Access);
+
+      Log_Utils.Initialize (Kernel);
    end Register_Module;
 
 end VCS_Module;

@@ -29,15 +29,11 @@ package body Metrics_Module is
    Metrics_Module_ID   : Module_ID;
    Metrics_Module_Name : constant String := "Metrics";
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
@@ -45,8 +41,13 @@ package body Metrics_Module is
       Complex   : constant String := '/' & (-"Code Complexity");
       Packages  : constant String := '/' & (-"Packages");
       Lines     : constant String := '/' & (-"Lines");
-
    begin
+      Metrics_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Metrics_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => null);
+
       Gtk_New (Menu_Item, -"Cyclomatic Complexity");
       Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Complex, Menu_Item);
@@ -86,21 +87,6 @@ package body Metrics_Module is
       Gtk_New (Menu_Item, -"Number of mixed code and comment lines");
       Set_Sensitive (Menu_Item, False);
       Register_Menu (Kernel, Metrics & Lines, Menu_Item);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Metrics_Module_ID := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => Metrics_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null);
    end Register_Module;
 
 end Metrics_Module;

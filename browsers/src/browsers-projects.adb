@@ -364,7 +364,6 @@ package body Browsers.Projects is
         (Kernel                  => Kernel,
          Module_Name             => Project_Browser_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => null,
          Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
          MDI_Child_Tag           => Project_Browser_Record'Tag,
          Default_Context_Factory => Default_Factory'Access);

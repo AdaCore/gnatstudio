@@ -39,10 +39,6 @@ package body Aunit_Module is
 
    Me : Debug_Handle := Create ("Aunit_Module");
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
-
    procedure On_New_Test_Case
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle);
@@ -156,18 +152,23 @@ package body Aunit_Module is
                 & Exception_Information (E));
    end On_New_Test_Harness;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item    : Gtk_Menu_Item;
       Edit         : constant String := '/' & (-"Edit") & '/';
       Unit_Testing : constant String := -"Unit Testing";
-
    begin
+      Aunit_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Aunit_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => null);
+
       Register_Menu (Kernel, Edit & Unit_Testing, Ref_Item => -"Preferences");
       Register_Menu (Kernel, Edit & Unit_Testing,
                      -"New Test Case...", "", On_New_Test_Case'Access);
@@ -179,20 +180,5 @@ package body Aunit_Module is
                      -"New Test Harness...", "", On_New_Test_Harness'Access);
       Gtk_New (Menu_Item);
       Register_Menu (Kernel, Edit, Menu_Item, Ref_Item => -"Preferences");
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Aunit_Module_ID := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => Aunit_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null);
    end Register_Module;
 end Aunit_Module;

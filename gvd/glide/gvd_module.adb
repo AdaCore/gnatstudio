@@ -58,10 +58,6 @@ package body GVD_Module is
 
    Me : Debug_Handle := Create ("Debugger");
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
-
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
       Context : access Selection_Context'Class;
@@ -816,11 +812,11 @@ package body GVD_Module is
       Close (Page.Debugger);
    end On_Destroy_Window;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Toolbar      : constant Gtk_Toolbar := Get_Toolbar (Kernel);
@@ -831,8 +827,13 @@ package body GVD_Module is
       Data_Sub     : constant String := Debug & (-"Data") & '/';
       Session_Sub  : constant String := Debug & (-"Session") & '/';
       Mitem        : Gtk_Menu_Item;
-
    begin
+      GVD_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => GVD_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => GVD_Contextual'Access);
+
       --  Add debugger menus
 
       Register_Menu (Kernel, Debug, -"Initialize", "", On_Debug_Init'Access,
@@ -965,21 +966,6 @@ package body GVD_Module is
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
       Set_Sensitive (Top.Finish_Button, False);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      GVD_Module_ID := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => GVD_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => GVD_Contextual'Access);
    end Register_Module;
 
 end GVD_Module;

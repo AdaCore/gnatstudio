@@ -76,10 +76,6 @@ package body Navigation_Module is
      (Handle : access Kernel_Handle_Record'Class);
    --  Refresh the active/inactive state of the location buttons.
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialization function for the module
-
    procedure On_Back
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    procedure On_Forward
@@ -185,68 +181,6 @@ package body Navigation_Module is
       return (Navigation_Data.Get (Kernel, Navigation_ID));
    end Get_Navigation_Data;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Button        : Gtk_Button;
-      Data          : constant Navigation_Info_Access := new Navigation_Info;
-      Navigate_Root : constant String := -"Navigate";
-      Navigate      : constant String := "/" & Navigate_Root;
-      Menu_Item     : Gtk_Menu_Item;
-
-   begin
-      Register_Menu
-        (Kernel,
-         "/_" & Navigate_Root,
-         Ref_Item => -"Edit",
-         Add_Before => False);
-
-      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To, null);
-      Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
-                     Stock_Convert, On_Other_File'Access);
-      Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
-      Register_Menu (Kernel, Navigate, -"Goto Previous Location",
-                     Stock_Go_Back, null);
-      Register_Menu (Kernel, Navigate, -"Find All References", "", null);
-      Gtk_New (Menu_Item);
-      Register_Menu (Kernel, Navigate, Menu_Item);
-      Register_Menu (Kernel, Navigate, -"Start Of Statement",
-                     Stock_Go_Up, null);
-      Register_Menu (Kernel, Navigate, -"End Of Statement",
-                     Stock_Go_Down, null);
-      Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
-      Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
-
-      Append_Space (Toolbar);
-
-      Button := Insert_Stock
-        (Toolbar, Stock_Go_Back, -"Goto Previous Location");
-      Data.Back_Button := Gtk_Widget (Button);
-
-      Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Back'Access),
-         Kernel_Handle (Kernel));
-
-      Button := Insert_Stock
-        (Toolbar, Stock_Go_Forward, -"Goto Next Location");
-      Data.Forward_Button := Gtk_Widget (Button);
-
-      Kernel_Callback.Connect
-        (Button, "clicked",
-         Kernel_Callback.To_Marshaller (On_Forward'Access),
-         Kernel_Handle (Kernel));
-
-      Data.Locations_Queue := New_Queue;
-      Set_Navigation_Data (Kernel_Handle (Kernel), Data);
-      Refresh_Location_Buttons (Kernel);
-   end Initialize_Module;
-
    -------------
    -- On_Back --
    -------------
@@ -350,15 +284,67 @@ package body Navigation_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Button        : Gtk_Button;
+      Data          : constant Navigation_Info_Access := new Navigation_Info;
+      Navigate_Root : constant String := -"Navigate";
+      Navigate      : constant String := "/" & Navigate_Root;
+      Menu_Item     : Gtk_Menu_Item;
    begin
       Navigation_Module_ID := Register_Module
         (Kernel                  => Kernel,
          Module_Name             => Navigation_Module_Name,
          Priority                => High_Priority,
-         Initializer             => Initialize_Module'Access,
          Contextual_Menu_Handler => Navigation_Contextual_Menu'Access,
          Mime_Handler            => Mime_Action'Access);
+
+      Register_Menu
+        (Kernel,
+         "/_" & Navigate_Root,
+         Ref_Item => -"Edit",
+         Add_Before => False);
+
+      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To, null);
+      Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
+                     Stock_Convert, On_Other_File'Access);
+      Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
+      Register_Menu (Kernel, Navigate, -"Goto Previous Location",
+                     Stock_Go_Back, null);
+      Register_Menu (Kernel, Navigate, -"Find All References", "", null);
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, Navigate, Menu_Item);
+      Register_Menu (Kernel, Navigate, -"Start Of Statement",
+                     Stock_Go_Up, null);
+      Register_Menu (Kernel, Navigate, -"End Of Statement",
+                     Stock_Go_Down, null);
+      Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
+      Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
+
+      Append_Space (Toolbar);
+
+      Button := Insert_Stock
+        (Toolbar, Stock_Go_Back, -"Goto Previous Location");
+      Data.Back_Button := Gtk_Widget (Button);
+
+      Kernel_Callback.Connect
+        (Button, "clicked",
+         Kernel_Callback.To_Marshaller (On_Back'Access),
+         Kernel_Handle (Kernel));
+
+      Button := Insert_Stock
+        (Toolbar, Stock_Go_Forward, -"Goto Next Location");
+      Data.Forward_Button := Gtk_Widget (Button);
+
+      Kernel_Callback.Connect
+        (Button, "clicked",
+         Kernel_Callback.To_Marshaller (On_Forward'Access),
+         Kernel_Handle (Kernel));
+
+      Data.Locations_Queue := New_Queue;
+      Set_Navigation_Data (Kernel_Handle (Kernel), Data);
+      Refresh_Location_Buttons (Kernel);
    end Register_Module;
 
    ------------------------------

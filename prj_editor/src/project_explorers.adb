@@ -118,11 +118,6 @@ package body Project_Explorers is
    --  this checks that there are as many elements in the array as columns in
    --  the tree
 
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize the explorer module. This must be invoked prior to any other
-   --  function in this package.
-
    ------------------
    -- Adding nodes --
    ------------------
@@ -1888,15 +1883,25 @@ package body Project_Explorers is
       return Explorer_Context_Factory (Kernel, Child, Child, null, null);
    end Default_Factory;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
+   ---------------------
+   -- Register_Module --
+   ---------------------
 
-   procedure Initialize_Module
+   procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
    begin
+      Explorer_Module_ID := Register_Module
+        (Kernel                  => Kernel,
+         Module_Name             => Explorer_Module_Name,
+         Priority                => Default_Priority,
+         Contextual_Menu_Handler => null,
+         MDI_Child_Tag           => Project_Explorer_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
+
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
       if not Desktop_Was_Loaded (Get_MDI (Kernel)) then
@@ -1906,25 +1911,6 @@ package body Project_Explorers is
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
       Vsearch_Ext.Register_Default_Search (Kernel);
-   end Initialize_Module;
-
-   ---------------------
-   -- Register_Module --
-   ---------------------
-
-   procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Explorer_Module_ID := Register_Module
-        (Kernel                  => Kernel,
-         Module_Name             => Explorer_Module_Name,
-         Priority                => Default_Priority,
-         Initializer             => Initialize_Module'Access,
-         Contextual_Menu_Handler => null,
-         MDI_Child_Tag           => Project_Explorer_Record'Tag,
-         Default_Context_Factory => Default_Factory'Access);
-      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
 end Project_Explorers;
