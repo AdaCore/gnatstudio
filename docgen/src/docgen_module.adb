@@ -530,7 +530,6 @@ package body Docgen_Module is
            (File_Selection_Context_Access (Context));
       else
          Project := Get_Root_Project (Get_Registry (Kernel));
-
       end if;
 
       Sources := Get_Source_Files (Project, Recursive);
@@ -577,17 +576,19 @@ package body Docgen_Module is
       Is_Spec          : Boolean;
 
    begin
-      if not Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files then
-         return;
-      end if;
-
       Is_Spec := Is_Spec_File (Kernel, File);
 
-      if not Is_Spec then
+      if not Is_Spec and
+      not Docgen_Module (Docgen_Module_ID).Options.Process_Body_Files
+      then
          return;
       end if;
 
       LI := Locate_From_Source_And_Complete (Kernel, File, False);
+      if LI = No_LI_File then
+         return;
+      end if;
+
       Append
         (Source_File_List,
          (File_Name        => File,
@@ -622,6 +623,7 @@ package body Docgen_Module is
       use Type_Source_File_List;
       use Docgen.Docgen_Backend;
    begin
+
       Push_State (Kernel, Busy);
 
       --  Reset all the LI files currently in memory. For optimization
@@ -630,15 +632,17 @@ package body Docgen_Module is
       --  a clean list.
 
       Reset_LI_File_List (Kernel);
-
+      --  ??? The instruction above generate an stack exception. It must
+      --  be commented while the bug is not fixed.
 
       case Docgen_Module (Docgen_Module_ID).Options.Type_Of_File is
          when HTML =>
             Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
 
---  ???
---       when TEXI =>
---          Docgen_Module (Docgen_Module_ID).B := new Backend_TEXI;
+            --  ???
+            --       when TEXI =>
+            --          Docgen_Module (Docgen_Module_ID).B
+            --       := new Backend_TEXI;
 
          when others =>
             Docgen_Module (Docgen_Module_ID).B := new Backend_HTML;
