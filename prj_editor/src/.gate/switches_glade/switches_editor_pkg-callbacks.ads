@@ -27,4 +27,7 @@ package Switches_Editor_Pkg.Callbacks is
    procedure On_Linker_Switches_Entry_Changed
      (Object : access Gtk_Widget_Record'Class);
 
+   procedure Refresh_Linker_Switches
+     (Object : access Gtk_Widget_Record'Class);
+
 end Switches_Editor_Pkg.Callbacks;

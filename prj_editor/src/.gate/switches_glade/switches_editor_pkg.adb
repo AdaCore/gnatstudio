@@ -458,14 +458,17 @@ begin
      (Switches_Editor.Linker_Switches_Entry, "changed",
       Widget_Callback.To_Marshaller (On_Linker_Switches_Entry_Changed'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label21, -("No specific switches can be set at this time"));
-   Set_Alignment (Switches_Editor.Label21, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label21, 0, 0);
-   Set_Justify (Switches_Editor.Label21, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label21, False);
-   Attach (Switches_Editor.Linker_Switches, Switches_Editor.Label21, 0, 1, 0, 1,
-     0, Expand,
+   Gtk_New_Vbox (Switches_Editor.Vbox40, False, 0);
+   Attach (Switches_Editor.Linker_Switches, Switches_Editor.Vbox40, 0, 1, 0, 1,
+     Fill, Expand or Fill,
      0, 0);
+
+   Gtk_New (Switches_Editor.Linker_Strip, -"Strip Symbols");
+   Set_Active (Switches_Editor.Linker_Strip, False);
+   Pack_Start (Switches_Editor.Vbox40, Switches_Editor.Linker_Strip, False, False, 0);
+   Widget_Callback.Object_Connect
+     (Switches_Editor.Linker_Strip, "toggled",
+      Widget_Callback.To_Marshaller (Refresh_Linker_Switches'Access), Switches_Editor);
 
    Gtk_New (Switches_Editor.Label20, -("Linker"));
    Set_Alignment (Switches_Editor.Label20, 0.5, 0.5);

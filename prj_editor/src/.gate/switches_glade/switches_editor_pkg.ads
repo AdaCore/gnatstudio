@@ -79,7 +79,8 @@ package Switches_Editor_Pkg is
       Label19 : Gtk_Label;
       Linker_Switches : Gtk_Table;
       Linker_Switches_Entry : Gtk_Entry;
-      Label21 : Gtk_Label;
+      Vbox40 : Gtk_Vbox;
+      Linker_Strip : Gtk_Check_Button;
       Label20 : Gtk_Label;
       Hbuttonbox1 : Gtk_Hbutton_Box;
    end record;

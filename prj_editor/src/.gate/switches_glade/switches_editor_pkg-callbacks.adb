@@ -103,4 +103,15 @@ package body Switches_Editor_Pkg.Callbacks is
       null;
    end On_Linker_Switches_Entry_Changed;
 
+   -----------------------------
+   -- Refresh_Linker_Switches --
+   -----------------------------
+
+   procedure Refresh_Linker_Switches
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      null;
+   end Refresh_Linker_Switches;
+
 end Switches_Editor_Pkg.Callbacks;
