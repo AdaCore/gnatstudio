@@ -24,13 +24,9 @@ with Glib.Properties;          use Glib.Properties;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glib.XML;
 with Gdk.Color;                use Gdk.Color;
-with Gdk.Cursor;               use Gdk.Cursor;
-with Gdk.Event;                use Gdk.Event;
 with Gdk.Font;                 use Gdk.Font;
 with Gdk.Keyval;               use Gdk.Keyval;
-with Gdk.Main;                 use Gdk.Main;
 with Gdk.Types;                use Gdk.Types;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
@@ -47,7 +43,6 @@ with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
-with Gtk.Main;                 use Gtk.Main;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
@@ -183,19 +178,8 @@ package body Default_Preferences is
    procedure Reset_Specific_Data (Node : Node_Ptr);
    --  Remove (but do not free), the cached data associated with each node.
 
-   procedure Key_Grab
-     (Ent  : access GObject_Record'Class; Data : Nodes);
+   procedure Key_Grab (Ent  : access Gtk_Widget_Record'Class);
    --  Callback for the "grab" button when editing a key preference
-
-   function Key_Press_In_Grab
-     (Ent : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean;
-   --  Temporary event filter set when grabing the key for a key preference
-
-   function To_String (Modif : Gdk_Modifier_Type) return String;
-   procedure From_String
-     (Descr : String; Modif : out Gdk_Modifier_Type; Key : out Gdk_Key_Type);
-   --  Convert a modifier to or from a string
 
    function To_String (Font, Fg, Bg : String) return String;
    function Style_Token (Value : String; Num : Positive) return String;
@@ -312,8 +296,7 @@ package body Default_Preferences is
    is
       P : constant Param_Spec_Key := Param_Spec_Key
         (Gnew_String (Name, Nick, Blurb,
-                      To_String (Default_Modifier)
-                      & Gdk.Keyval.Name (Default_Key),
+                      Image (Default_Key, Default_Modifier),
                       Flags));
    begin
       Set_Value_Type (Param_Spec (P), Gdk.Keyval.Get_Type);
@@ -539,11 +522,11 @@ package body Default_Preferences is
       if N /= null
         and then N.Value.all /= ""
       then
-         From_String (N.Value.all, Modifier, Key);
+         Value (N.Value.all, Key, Modifier);
          return;
       end if;
 
-      From_String (Default (Param_Spec_String (Pref)), Modifier, Key);
+      Value (Default (Param_Spec_String (Pref)), Key, Modifier);
    end Get_Pref;
 
    -------------------
@@ -733,9 +716,7 @@ package body Default_Preferences is
       Modifier : Gdk_Modifier_Type;
       Key      : Gdk_Key_Type) is
    begin
-      Set_Pref
-        (Manager.Preferences, Name,
-         To_String (Modifier) & Gdk.Keyval.Name (Key));
+      Set_Pref (Manager.Preferences, Name, Image (Key, Modifier));
    end Set_Pref;
 
    --------------
@@ -965,87 +946,17 @@ package body Default_Preferences is
       return False;
    end Font_Entry_Changed;
 
-   -----------------------
-   -- Key_Press_In_Grab --
-   -----------------------
-
-   function Key_Press_In_Grab
-     (Ent : access Gtk_Widget_Record'Class;
-      Event : Gdk_Event) return Boolean
-   is
-      E     : constant Gtk_Entry := Gtk_Entry (Ent);
-      Modif : constant Gdk_Modifier_Type := Get_State (Event);
-   begin
-      case Get_Key_Val (Event) is
-         when GDK_Shift_L
-           | GDK_Shift_R
-           | GDK_Control_L
-           | GDK_Control_R
-           | GDK_Caps_Lock
-           | GDK_Shift_Lock
-           | GDK_Meta_L
-           | GDK_Meta_R
-           | GDK_Alt_L
-           | GDK_Alt_R
-           =>
-            null;
-
-         when others =>
-            if Modif = Shift_Mask then
-               Set_Text (E, "Shift-");
-            elsif Modif = Control_Mask then
-               Set_Text (E, "Control-");
-            elsif Modif = Mod1_Mask then
-               Set_Text (E, "Meta-");
-            else
-               Set_Text (E, "");
-            end if;
-
-            Append_Text (E, Gdk.Keyval.Name (Get_Key_Val (Event)));
-
-            Main_Quit;
-      end case;
-      return True;
-   end Key_Press_In_Grab;
-
    --------------
    -- Key_Grab --
    --------------
 
-   procedure Key_Grab
-     (Ent  : access GObject_Record'Class; Data : Nodes)
-   is
-      Tmp    : Gdk_Grab_Status;
-      pragma Unreferenced (Data, Tmp);
-
-      Id     : Handler_Id;
+   procedure Key_Grab (Ent : access Gtk_Widget_Record'Class) is
       E      : constant Gtk_Entry := Gtk_Entry (Ent);
-      Cursor : Gdk.Cursor.Gdk_Cursor;
+      Key    : Gdk.Types.Gdk_Key_Type;
+      Mods   : Gdk.Types.Gdk_Modifier_Type;
    begin
-      Tmp := Keyboard_Grab
-        (Get_Window (E), Owner_Events => False, Time => 0);
-
-      Gdk_New (Cursor, Watch);
-      Tmp := Pointer_Grab
-        (Window     => Get_Window (E),
-         Event_Mask => Button_Press_Mask or Button_Release_Mask,
-         Confine_To => Get_Window (E),
-         Cursor     => Cursor,
-         Time       => 0);
-      Unref (Cursor);
-
-      Grab_Focus (E);
-
-      Id := Gtkada.Handlers.Return_Callback.Connect
-        (E, "key_press_event",
-         Gtkada.Handlers.Return_Callback.To_Marshaller
-           (Key_Press_In_Grab'Access));
-
-      Gtk.Main.Main;
-
-      Keyboard_Ungrab (0);
-      Pointer_Ungrab (0);
-      Gtk.Handlers.Disconnect (E, Id);
+      GUI_Utils.Key_Grab (E, Key, Mods);
+      Set_Text (E, Image (Key, Mods));
    end Key_Grab;
 
    -------------------
@@ -1120,62 +1031,6 @@ package body Default_Preferences is
                               Bg   => Get_Color (C)));
       end if;
    end Bg_Color_Changed;
-
-   ---------------
-   -- To_String --
-   ---------------
-
-   function To_String (Modif : Gdk_Modifier_Type) return String is
-      Shift   : constant String := "Shift-";
-      Meta    : constant String := "Meta-";
-      Control : constant String := "Control-";
-      Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
-      Buffer : String (1 .. Max);
-      Current : Natural := Buffer'First;
-   begin
-      if (Modif and Shift_Mask) /= 0 then
-         Buffer (Current .. Current + Shift'Length - 1) := Shift;
-         Current := Current + Shift'Length;
-      end if;
-
-      if (Modif and Control_Mask) /= 0 then
-         Buffer (Current .. Current + Control'Length - 1) := Control;
-         Current := Current + Control'Length;
-      end if;
-
-      if (Modif and Mod1_Mask) /= 0 then
-         Buffer (Current .. Current + Meta'Length - 1) := Meta;
-         Current := Current + Meta'Length;
-      end if;
-
-      return Buffer (Buffer'First .. Current - 1);
-   end To_String;
-
-   -----------------
-   -- From_String --
-   -----------------
-
-   procedure From_String
-     (Descr : String; Modif : out Gdk_Modifier_Type; Key : out Gdk_Key_Type)
-   is
-      Start : Natural := Descr'First;
-   begin
-      Modif := 0;
-      for D in Descr'Range loop
-         if Descr (D) = '-' then
-            if Descr (Start .. D - 1) = "Shift" then
-               Modif := Modif or Shift_Mask;
-            elsif Descr (Start .. D - 1) = "Control" then
-               Modif := Modif or Control_Mask;
-            elsif Descr (Start .. D - 1) = "Meta" then
-               Modif := Modif or  Mod1_Mask;
-            end if;
-            Start := D + 1;
-         end if;
-      end loop;
-
-      Key := From_Name (Descr (Start .. Descr'Last));
-   end From_String;
 
    ---------------
    -- To_String --
@@ -1387,13 +1242,12 @@ package body Default_Preferences is
 
             Get_Pref (Manager, Prop, Modif, Key);
 
-            Append_Text (Ent, To_String (Modif) & Gdk.Keyval.Name (Key));
+            Append_Text (Ent, Image (Key, Modif));
 
-            Param_Handlers.Object_Connect
+            Widget_Callback.Object_Connect
               (Button, "clicked",
-               Param_Handlers.To_Marshaller (Key_Grab'Access),
-               Slot_Object => GObject (Ent),
-               User_Data   => N);
+               Widget_Callback.To_Marshaller (Key_Grab'Access),
+               Slot_Object => Ent);
             Param_Handlers.Connect
               (Ent, "insert_text",
                Param_Handlers.To_Marshaller (Entry_Changed'Access),
