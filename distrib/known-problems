@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.3.0
 
+- C703-014 Locations window is raised for every compiling message
+  Problem:    When the compilation outputs many error/warning messages,
+              the locations window is raised above the messages window with
+              every new error.
+  Workaround: Move the locations window or the messages window to another part
+              of the MDI.
+
 - C605-005 Duplicate key bindings in Build menu
   Problem:    If you are using an extending project, then the build menu
               (Build->Make) will contain an entry for the executables from
