@@ -58,19 +58,40 @@ package body Glide_Kernel.Scripts is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Class_Instance_Record'Class, Class_Instance);
 
-   type Scripting_Language_Data;
-   type Scripting_Language_List is access Scripting_Language_Data;
-   type Scripting_Language_Data is record
-      Script : Scripting_Language;
-      Next   : Scripting_Language_List;
-   end record;
+   type Scripting_Language_List is access Scripting_Language_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Scripting_Language_Array, Scripting_Language_List);
 
    procedure Free (Class : in out Class_Type);
    package Classes_Hash is new String_Hash (Class_Type, Free, No_Class);
    use Classes_Hash.String_Hash_Table;
 
+   type Instance_Array is array (Natural range <>) of Class_Instance;
+   type Instance_List  is access Instance_Array;
+   --  Stores the instance created for some GPS internal data, so that the same
+   --  script instance is reused every time we reference the same Ada object.
+
+   procedure Free (List : in out Instance_List);
+   --  Free the instances stored in the list
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : Instance_List;
+      Script : Scripting_Language) return Class_Instance;
+   --  Return the instance for a given script. Return value needs to be Ref'ed
+   --  by the caller if it keeps a reference to it.
+
+   procedure Set
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Instance_List;
+      Script : Scripting_Language;
+      Inst   : Class_Instance);
+   --  Set the instance for a specific language
+
+
    type Scripting_Data_Record is new Kernel_Scripting_Data_Record with record
-      Scripting_Languages  : Scripting_Language_List;
+      Scripting_Languages  : Scripting_Language_List :=
+        new Scripting_Language_Array'(1 .. 0 => null);
       Classes              : Classes_Hash.String_Hash_Table.HTable;
       Entity_Class         : Class_Type := No_Class;
       File_Class           : Class_Type := No_Class;
@@ -82,6 +103,8 @@ package body Glide_Kernel.Scripts is
       Entity_Context_Class : Class_Type := No_Class;
       GUI_Class            : Class_Type := No_Class;
       Hook_Class           : Class_Type := No_Class;
+
+      Context_Instances    : Instance_List;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -188,6 +211,15 @@ package body Glide_Kernel.Scripts is
    procedure Free (File : in out File_Info);
    --  Free the contents of File_Info
 
+   function Get_Or_Create_Context
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      Context : access Glide_Kernel.Selection_Context'Class)
+      return Class_Instance;
+   --  Create a new instance representing the context. If such an instance
+   --  already exists for that context, return the same one so that the user
+   --  can store his own data in it.
+
    Name_Cst       : aliased constant String := "name";
    Filename_Cst   : aliased constant String := "filename";
    File_Cst       : aliased constant String := "file";
@@ -249,6 +281,69 @@ package body Glide_Kernel.Scripts is
    -- Free --
    ----------
 
+   procedure Free (List : in out Instance_List) is
+   begin
+      if List /= null then
+         for L in List'Range loop
+            if List (L) /= null then
+               Free (List (L));
+            end if;
+         end loop;
+      end if;
+   end Free;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : Instance_List;
+      Script : Scripting_Language) return Class_Instance
+   is
+      Tmp : constant Scripting_Language_Array :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+   begin
+      if List /= null then
+         for T in Tmp'Range loop
+            if Tmp (T) = Script then
+               return List (T);
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get;
+
+   ---------
+   -- Set --
+   ---------
+
+   procedure Set
+     (Kernel : access Kernel_Handle_Record'Class;
+      List   : in out Instance_List;
+      Script : Scripting_Language;
+      Inst   : Class_Instance)
+   is
+      Tmp : constant Scripting_Language_Array :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
+   begin
+      if List = null then
+         List := new Instance_Array (Tmp'Range);
+      end if;
+
+      for T in Tmp'Range loop
+         if Tmp (T) = Script then
+            List (T) := Inst;
+            Ref (Inst);
+            exit;
+         end if;
+      end loop;
+   end Set;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (Class : in out Class_Type) is
    begin
       Free (Class.Name);
@@ -260,12 +355,15 @@ package body Glide_Kernel.Scripts is
 
    procedure Register_Scripting_Language
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Script : access Scripting_Language_Record'Class) is
+      Script : access Scripting_Language_Record'Class)
+   is
+      Tmp : constant Scripting_Language_Array :=
+        Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
    begin
+      Unchecked_Free (Scripting_Data (Kernel.Scripts).Scripting_Languages);
       Scripting_Data (Kernel.Scripts).Scripting_Languages :=
-        new Scripting_Language_Data'
-          (Script => Scripting_Language (Script),
-           Next   => Scripting_Data (Kernel.Scripts).Scripting_Languages);
+        new Scripting_Language_Array'
+          (Tmp & Scripting_Language (Script));
    end Register_Scripting_Language;
 
    -------------------------------
@@ -276,15 +374,13 @@ package body Glide_Kernel.Scripts is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Name   : String) return Scripting_Language
    is
-      Tmp : Scripting_Language_List :=
+      Tmp : constant Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
-      while Tmp /= null loop
-         if Case_Insensitive_Equal (Get_Name (Tmp.Script), Name) then
-            return Tmp.Script;
+      for T in Tmp'Range loop
+         if Case_Insensitive_Equal (Get_Name (Tmp (T)), Name) then
+            return Tmp (T);
          end if;
-
-         Tmp := Tmp.Next;
       end loop;
 
       return null;
@@ -296,30 +392,9 @@ package body Glide_Kernel.Scripts is
 
    function Get_Scripting_Languages
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-      return Scripting_Language_Array
-   is
-      Tmp : Scripting_Language_List :=
-        Scripting_Data (Kernel.Scripts).Scripting_Languages;
-      Count : Natural := 0;
+      return Scripting_Language_Array is
    begin
-      while Tmp /= null loop
-         Count := Count + 1;
-         Tmp := Tmp.Next;
-      end loop;
-
-      declare
-         Result : Scripting_Language_Array (1 .. Count);
-      begin
-         Count := Result'First;
-         Tmp := Scripting_Data (Kernel.Scripts).Scripting_Languages;
-         while Tmp /= null loop
-            Result (Count) := Tmp.Script;
-            Count := Count + 1;
-            Tmp := Tmp.Next;
-         end loop;
-
-         return Result;
-      end;
+      return Scripting_Data (Kernel.Scripts).Scripting_Languages.all;
    end Get_Scripting_Languages;
 
    --------------------
@@ -330,12 +405,11 @@ package body Glide_Kernel.Scripts is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Block  : Boolean)
    is
-      Tmp : Scripting_Language_List :=
+      Tmp : constant Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
-      while Tmp /= null loop
-         Block_Commands (Tmp.Script, Block);
-         Tmp := Tmp.Next;
+      for T in Tmp'Range loop
+         Block_Commands (Tmp (T), Block);
       end loop;
    end Block_Commands;
 
@@ -352,7 +426,7 @@ package body Glide_Kernel.Scripts is
       Class         : Class_Type := No_Class;
       Static_Method : Boolean := False)
    is
-      Tmp : Scripting_Language_List :=
+      Tmp : constant Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
    begin
       Assert (Me,
@@ -361,11 +435,10 @@ package body Glide_Kernel.Scripts is
       Assert (Me, not Static_Method or else Class /= No_Class,
               "Static method can only be created for classes");
 
-      while Tmp /= null loop
+      for T in Tmp'Range loop
          Register_Command
-           (Tmp.Script, Command,
+           (Tmp (T), Command,
             Minimum_Args, Maximum_Args, Handler, Class, Static_Method);
-         Tmp := Tmp.Next;
       end loop;
    end Register_Command;
 
@@ -378,7 +451,7 @@ package body Glide_Kernel.Scripts is
       Name        : String;
       Base        : Class_Type := No_Class) return Class_Type
    is
-      Tmp   : Scripting_Language_List :=
+      Tmp   : constant Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
       Class : Class_Type;
 
@@ -386,9 +459,8 @@ package body Glide_Kernel.Scripts is
       Class := Get (Scripting_Data (Kernel.Scripts).Classes, Name);
 
       if Class = No_Class then
-         while Tmp /= null loop
-            Register_Class (Tmp.Script, Name, Base);
-            Tmp := Tmp.Next;
+         for T in Tmp'Range loop
+            Register_Class (Tmp (T), Name, Base);
          end loop;
 
          Class := Class_Type'(Name => new String'(Name));
@@ -749,7 +821,7 @@ package body Glide_Kernel.Scripts is
             if Action = null then
                Set_Error_Msg (Data, -"No such registered action");
             elsif Context = null
-               or else not Filter_Matches (Action.Filter, Context)
+              or else not Filter_Matches (Action.Filter, Context)
             then
                Set_Error_Msg (Data, -"Invalid context for the action");
             else
@@ -1349,22 +1421,14 @@ package body Glide_Kernel.Scripts is
    procedure Finalize
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Scripting_Language_Data, Scripting_Language_List);
-
       List : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
-      Tmp  : Scripting_Language_List;
-
    begin
-      while List /= null loop
-         Tmp := List.Next;
-         Destroy (List.Script);
-         Unchecked_Free (List);
-
-         List := Tmp;
+      for L in List'Range loop
+         Destroy (List (L));
       end loop;
 
+      Unchecked_Free (List);
       --  Various classes instances stored in the kernel are freed when this
       --  table is freed.
       Classes_Hash.String_Hash_Table.Reset
@@ -1463,9 +1527,7 @@ package body Glide_Kernel.Scripts is
 
             if On_Destroy /= null then
                Subprogram_Callback.Connect
-                 (Console, "destroy",
-                  Subprogram_Callback.To_Marshaller
-                    (On_Console_Destroy'Access),
+                 (Console, "destroy", On_Console_Destroy'Access,
                   User_Data => On_Destroy);
             end if;
          end;
@@ -2313,13 +2375,12 @@ package body Glide_Kernel.Scripts is
    function Create_Area_Context
      (Script  : access Scripting_Language_Record'Class;
       Context : Glide_Kernel.Contexts.File_Area_Context_Access)
-      return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script, Get_Area_Context_Class (Get_Kernel (Script)));
+      return Class_Instance is
    begin
-      Set_Data (Instance, Selection_Context_Access (Context));
-      return Instance;
+      return Get_Or_Create_Context
+        (Script,
+         Get_Area_Context_Class (Get_Kernel (Script)),
+         Context);
    end Create_Area_Context;
 
    --------------
@@ -2472,6 +2533,47 @@ package body Glide_Kernel.Scripts is
         (Selection_Context_Access'(Convert (Value)));
    end Get_Data;
 
+   ---------------------------
+   -- Get_Or_Create_Context --
+   ---------------------------
+
+   function Get_Or_Create_Context
+     (Script : access Scripting_Language_Record'Class;
+      Class  : Class_Type;
+      Context : access Glide_Kernel.Selection_Context'Class)
+      return Class_Instance
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Script);
+      Instance : Class_Instance := Get
+        (Get_Kernel (Script),
+         Scripting_Data (Kernel.Scripts).Context_Instances,
+         Scripting_Language (Script));
+      Old_Context : Selection_Context_Access;
+   begin
+      --  Has the context changes since we stored the instances ?
+      if Instance /= null then
+         Old_Context := Convert
+           (Get_Data (Instance, Get_Context_Class (Kernel)));
+         if Old_Context /= Selection_Context_Access (Context) then
+            Trace (Me, "Context has changed since we created the instances");
+            Free (Scripting_Data (Kernel.Scripts).Context_Instances);
+            Instance := null;
+         end if;
+      end if;
+
+      if Instance = null then
+         Trace (Me, "Create a new instance for the current context");
+         Instance := New_Instance (Script, Class);
+         Set_Data (Instance, Selection_Context_Access (Context));
+         Set (Get_Kernel (Script),
+              Scripting_Data (Kernel.Scripts).Context_Instances,
+              Scripting_Language (Script),
+              Instance);
+      end if;
+
+      return Instance;
+   end Get_Or_Create_Context;
+
    -------------------------
    -- Create_File_Context --
    -------------------------
@@ -2479,13 +2581,12 @@ package body Glide_Kernel.Scripts is
    function Create_File_Context
      (Script  : access Scripting_Language_Record'Class;
       Context : Glide_Kernel.Contexts.File_Selection_Context_Access)
-      return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script, Get_File_Context_Class (Get_Kernel (Script)));
+      return Class_Instance is
    begin
-      Set_Data (Instance, Selection_Context_Access (Context));
-      return Instance;
+      return Get_Or_Create_Context
+        (Script,
+         Get_File_Context_Class (Get_Kernel (Script)),
+         Context);
    end Create_File_Context;
 
    ---------------------------
@@ -2495,13 +2596,12 @@ package body Glide_Kernel.Scripts is
    function Create_Entity_Context
      (Script  : access Scripting_Language_Record'Class;
       Context : Glide_Kernel.Contexts.Entity_Selection_Context_Access)
-      return Class_Instance
-   is
-      Instance : constant Class_Instance := New_Instance
-        (Script, Get_Entity_Context_Class (Get_Kernel (Script)));
+      return Class_Instance is
    begin
-      Set_Data (Instance, Selection_Context_Access (Context));
-      return Instance;
+      return Get_Or_Create_Context
+        (Script,
+         Get_Entity_Context_Class (Get_Kernel (Script)),
+         Context);
    end Create_Entity_Context;
 
    ---------
