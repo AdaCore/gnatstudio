@@ -464,11 +464,6 @@ package body Gtkada.MDI is
       Destroy (Cursor);
       Destroy (Window_Attr);
 
-      --  Reposition all handles correctly (since this wasn't done when
-      --  Size_Allocate was called prior to realizing the MDI).
-
-      Reposition_Handles (M);
-
       --  Initialize the size of all children.
       --  This couldn't be done earlier since the child would have requested
       --  a size of 0x0..
