@@ -32,14 +32,11 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gtk.Object;      use Gtk.Object;
 with Gtkada.Intl;     use Gtkada.Intl;
 with GVD.Canvas;      use GVD.Canvas;
-with Gtk.Style;       use Gtk.Style;
-with Gdk.Color;       use Gdk.Color;
-with Gtk.Widget;      use Gtk.Widget;
+--  with Gtk.Style;       use Gtk.Style;
+--  with Gdk.Color;       use Gdk.Color;
+--  with Gtk.Widget;      use Gtk.Widget;
 
 package body Process_Tab_Pkg is
-
-   MDI_Background_Color : constant String := "#666666";
-   --  <preference> Background color to use for the MDI window
 
    Signals : constant Chars_Ptr_Array :=
      (1 => New_String ("executable_changed"));
@@ -54,8 +51,6 @@ end Gtk_New;
 procedure Initialize (Process_Tab : access Process_Tab_Record'Class) is
    pragma Suppress (All_Checks);
    Child : MDI_Child;
-   Color : Gdk_Color;
-   Style : Gtk_Style;
 
 begin
    Gtk.Window.Initialize (Process_Tab, Window_Toplevel);
@@ -70,11 +65,6 @@ begin
      (Process_Tab, "delete_event", On_Process_Tab_Delete_Event'Access);
 
    Gtk_New (Process_Tab.Process_Mdi);
-   Color := Parse (MDI_Background_Color);
-   Alloc (Get_Default_Colormap, Color);
-   Style := Copy (Get_Style (Process_Tab.Process_Mdi));
-   Set_Background (Style, State_Normal, Color);
-   Set_Style (Process_Tab.Process_Mdi, Style);
    Set_Priorities
      (Process_Tab.Process_Mdi,
       (Left => 4, Right => 3, Top => 1, Bottom => 2));
