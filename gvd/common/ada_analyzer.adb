@@ -335,7 +335,8 @@ package body Ada_Analyzer is
       Indent           : Boolean               := True;
       Constructs       : Construct_List_Access := null;
       Current_Indent   : out Natural;
-      Prev_Indent      : out Natural)
+      Prev_Indent      : out Natural;
+      Callback         : Entity_Callback := null)
    is
       ---------------
       -- Constants --
@@ -367,11 +368,11 @@ package body Ada_Analyzer is
       Current             : Natural;
       Prec                : Natural           := 1;
       Token_Prec          : Natural           := 0;
+      Start_Of_Line       : Natural;
       Prev_Spaces         : Integer           := 0;
       Num_Spaces          : Integer           := 0;
       Indent_Done         : Boolean           := False;
       Num_Parens          : Integer           := 0;
-      Prev_Num_Parens     : Integer           := 0;
       In_Generic          : Boolean           := False;
       Subprogram_Decl     : Boolean           := False;
       Syntax_Error        : Boolean           := False;
@@ -658,14 +659,22 @@ package body Ada_Analyzer is
       --------------------------
 
       procedure Handle_Reserved_Word (Reserved : Token_Type) is
-         Temp      : Extended_Token;
-         Top_Token : Token_Stack.Generic_Type_Access := Top (Tokens);
+         Temp          : Extended_Token;
+         Top_Token     : Token_Stack.Generic_Type_Access := Top (Tokens);
+         Start_Of_Line : Natural;
 
       begin
          Temp.Token       := Reserved;
+         Start_Of_Line    := Line_Start (Prec);
          Temp.Sloc.Line   := Line_Count;
-         Temp.Sloc.Column := Prec - Line_Start (Prec) + 1;
+         Temp.Sloc.Column := Prec - Start_Of_Line + 1;
          Temp.Sloc.Index  := Prec;
+
+         if Callback /= null then
+            Callback
+              (Ent_Reserved_Word,
+               Temp.Sloc, (Line_Count, Current - Start_Of_Line + 1, Current));
+         end if;
 
          --  Note: the order of the following conditions is important
 
@@ -1105,27 +1114,43 @@ package body Ada_Analyzer is
             --  Skip comments
 
             if Buffer (P) = '-' and then Buffer (Next_Char (P)) = '-' then
-               while Buffer (P) = '-'
-                 and then Buffer (Next_Char (P)) = '-'
-               loop
-                  --  Following line commented because it is too disruptive,
-                  --  e.g:
-                  --  procedure F  --  multiline
-                  --               --  comment should be aligned properly
-                  --  ??? Do_Indent (P, Num_Spaces);
+               declare
+                  Prev_Line       : constant Natural := Line_Count;
+                  Prev_Start_Line : constant Natural := Start_Of_Line;
+               begin
+                  First := P;
 
-                  P := Next_Line (Next_Char (P));
-                  New_Line (Line_Count);
-               end loop;
+                  while Buffer (P) = '-'
+                    and then Buffer (Next_Char (P)) = '-'
+                  loop
+                     --  Following line commented because it is too disruptive,
+                     --  e.g:
+                     --  procedure F  --  multiline
+                     --               --  comment should be aligned properly
+                     --  ??? Do_Indent (P, Num_Spaces);
 
-               if P < Buffer_Length and then Buffer (P) = ASCII.LF then
-                  P := Prev_Char (P);
-               end if;
+                     P := Next_Line (Next_Char (P));
+                     New_Line (Line_Count);
+                  end loop;
 
-               Start_Of_Line := P;
-               End_Of_Line   := Line_End (P);
-               Padding       := 0;
-               Indent_Done   := False;
+                  Last := Prev_Char (P);
+
+                  if P < Buffer_Length and then Buffer (P) = ASCII.LF then
+                     P := Last;
+                  end if;
+
+                  Start_Of_Line := P;
+                  End_Of_Line   := Line_End (P);
+                  Padding       := 0;
+                  Indent_Done   := False;
+
+                  if Callback /= null then
+                     Callback
+                       (Ent_Comment,
+                        (Prev_Line, First - Prev_Start_Line + 1, First),
+                        (Line_Count - 1, Last - Line_Start (Last) + 1, Last));
+                  end if;
+               end;
             end if;
 
             exit when P = Buffer_Length or else Is_Word_Char (Buffer (P));
@@ -1188,15 +1213,12 @@ package body Ada_Analyzer is
 
                when '"' =>
                   declare
-                     First     : constant Natural := P;
-                     Len       : Natural;
-
+                     Len : Natural;
                   begin
-                     P := Next_Char (P);
+                     First := P;
+                     P     := Next_Char (P);
 
-                     while P <= End_Of_Line
-                       and then Buffer (P) /= '"'
-                     loop
+                     while P <= End_Of_Line and then Buffer (P) /= '"' loop
                         P := Next_Char (P);
                      end loop;
 
@@ -1214,6 +1236,13 @@ package body Ada_Analyzer is
 
                      else
                         Prev_Token := Tok_String_Literal;
+                     end if;
+
+                     if Callback /= null then
+                        Callback
+                          (Ent_String,
+                           (Line_Count, First - Start_Of_Line + 1, First),
+                           (Line_Count, P - Start_Of_Line + 1, P));
                      end if;
                   end;
 
@@ -1467,7 +1496,8 @@ package body Ada_Analyzer is
                   then
                      Prev_Token := Tok_Apostrophe;
                   else
-                     P := Next_Char (Next_Char (P));
+                     First := P;
+                     P     := Next_Char (Next_Char (P));
 
                      while P <= End_Of_Line
                        and then Buffer (P) /= '''
@@ -1476,6 +1506,13 @@ package body Ada_Analyzer is
                      end loop;
 
                      Prev_Token := Tok_Char_Literal;
+
+                     if Callback /= null then
+                        Callback
+                          (Ent_Character,
+                           (Line_Count, First - Start_Of_Line + 1, First),
+                           (Line_Count, P - Start_Of_Line + 1, P));
+                     end if;
                   end if;
 
                when others =>
@@ -1520,6 +1557,14 @@ package body Ada_Analyzer is
 
             Casing := Ident_Casing;
 
+            if Callback /= null then
+               Start_Of_Line := Line_Start (Prec);
+               Callback
+                 (Ent_Identifier,
+                  (Line_Count, Prec - Start_Of_Line + 1, Prec),
+                  (Line_Count, Current - Start_Of_Line + 1, Current));
+            end if;
+
          elsif Prev_Token = Tok_Apostrophe
            and then (Token = Tok_Delta or else Token = Tok_Digits
                      or else Token = Tok_Range or else Token = Tok_Access)
@@ -1527,6 +1572,14 @@ package body Ada_Analyzer is
             --  This token should not be considered as a reserved word
 
             Casing := Ident_Casing;
+
+            if Callback /= null then
+               Start_Of_Line := Line_Start (Prec);
+               Callback
+                 (Ent_Identifier,
+                  (Line_Count, Prec - Start_Of_Line + 1, Prec),
+                  (Line_Count, Current - Start_Of_Line + 1, Current));
+            end if;
 
          else
             Casing := Reserved_Casing;
@@ -1595,7 +1648,6 @@ package body Ada_Analyzer is
             Started := True;
          end if;
 
-         Prev_Num_Parens := Num_Parens;
          Token_Prec      := Prec;
          Prec            := Current + 1;
          Prev_Token      := Token;

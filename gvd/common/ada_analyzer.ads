@@ -270,8 +270,10 @@ package Ada_Analyzer is
       Indent           : Boolean               := True;
       Constructs       : Construct_List_Access := null;
       Current_Indent   : out Natural;
-      Prev_Indent      : out Natural);
+      Prev_Indent      : out Natural;
+      Callback         : Entity_Callback := null);
    --  Analyze a given Ada source in Buffer, and store the result in New_Buffer
-   --  if New_Buffer.First isn't null.
+   --  if Indent is True.
+   --  If Callback is not null, call it for each Source_Entity_Kind.
 
 end Ada_Analyzer;
