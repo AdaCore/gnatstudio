@@ -666,8 +666,6 @@ procedure GPS is
       --  We do not document the --log-level flag, since it will be replaced
       --  by the regular Traces mechanism.
 
-      --  ??? Document =source1 feature
-
       if GVD.Can_Output then
          Put_Line (GPS_Name (GPS) & " " & GVD.Version &
                    " (" & GVD.Source_Date & ")" &
