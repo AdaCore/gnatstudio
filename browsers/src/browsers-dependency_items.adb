@@ -34,6 +34,7 @@ with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
+with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
 
 with Gint_Xml;                  use Gint_Xml;
@@ -181,6 +182,9 @@ package body Browsers.Dependency_Items is
       return Dependency_Browser;
    --  Create a new dependency browser
 
+   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
+   --  Called when the browser is destroyed
+
    -----------------------------
    -- Browser_Context_Factory --
    -----------------------------
@@ -248,12 +252,29 @@ package body Browsers.Dependency_Items is
         (Browser, Stock_Go_Back, Icon_Size_Menu);
       Browser.Right_Arrow := Render_Icon
         (Browser, Stock_Go_Forward, Icon_Size_Menu);
+
+      Widget_Callback.Connect
+        (Browser, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
+
       Set_Size_Request
         (Browser,
          Get_Pref (Kernel, Default_Widget_Width),
          Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Dependency_Browser;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class) is
+      B : Dependency_Browser := Dependency_Browser (Browser);
+   begin
+      if B.Idle_Id /= 0 then
+         Idle_Remove (B.Idle_Id);
+      end if;
+   end On_Destroy;
 
    -----------------------------
    -- Open_Dependency_Browser --
