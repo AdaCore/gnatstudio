@@ -232,9 +232,7 @@ package body Codefix.Errors_Manager is
 
                if Callback /= null then
                   Callback
-                    (Current_Message,
-                     New_Error,
-                     Solutions,
+                    (New_Error,
                      Source_Text,
                      This);
                end if;
@@ -397,7 +395,9 @@ package body Codefix.Errors_Manager is
       Current_Id : Error_Id := Get_First_Error (This);
 
       function Cmp_Messages (Str1, Str2 : String) return Boolean;
-      --  ???
+      --  Compare two message labels, without taking into account the
+      --  differences of the col/line format.
+
 
       function Cmp_Messages (Str1, Str2 : String) return Boolean is
          Ind_Begin_1, Ind_End_1 : Natural := Str1'First;
