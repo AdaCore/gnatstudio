@@ -1173,7 +1173,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        ("GVD " & Version & (-" built for ") & GVD.Target & ASCII.LF &
+        ("GVD " & Version & " (" & Source_Date & ")" &
+         (-" built for ") & GVD.Target & ASCII.LF &
          (-"The GNU Visual Debugger") & ASCII.LF & ASCII.LF &
          (-"by Emmanuel Briot & Arnaud Charlet") & ASCII.LF & ASCII.LF &
            "(c) 2000, 2001 ACT-Europe",
