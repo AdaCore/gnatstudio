@@ -437,10 +437,15 @@ package body Src_Info.Debug is
       New_Line;
 
       --  Generate the unit dependency sections
-      Dump_Unit_Dependency_Section (LIF, Unit_Body);
-      New_Line;
-      Dump_Unit_Dependency_Section (LIF, Unit_Spec);
-      New_Line;
+      if LIF.Body_Info /= null then
+         Dump_Unit_Dependency_Section (LIF, Unit_Body);
+         New_Line;
+      end if;
+
+      if LIF.Spec_Info /= null then
+         Dump_Unit_Dependency_Section (LIF, Unit_Spec);
+         New_Line;
+      end if;
 
       --  Generate the file dependency section
       Dump_File_Dependency_Section (LIF);
