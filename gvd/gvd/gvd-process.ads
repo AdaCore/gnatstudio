@@ -77,9 +77,9 @@ package GVD.Process is
    All_Info        : constant Stack_List_Mask := 2 ** 5 - 1;
    --  Lists the information to be displayed in the stack list window.
 
-   ---------------------------
+   --------------------------
    -- Debugger_Process_Tab --
-   ---------------------------
+   --------------------------
    --  This type represents one of the tabs in the process notebook, and
    --  its associated debugger session.
    --  This is the graphical part of the Debugger.* packages, and all graphic
@@ -195,8 +195,18 @@ package GVD.Process is
    --  ??? This would not be required if Process_Tab_Record was directly
    --  a Gtk_VPaned, instead of a toplevel window.
 
-   function Create_Debugger
-     (Window          : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+   procedure Gtk_New
+     (Process : out Debugger_Process_Tab;
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+   --  Create a new debugger page and add it to Window.
+
+   procedure Initialize
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class);
+   --  Internal initialize procedure.
+
+   procedure Configure
+     (Process         : access Debugger_Process_Tab_Record'Class;
       Kind            : GVD.Types.Debugger_Type;
       Executable      : String;
       Debugger_Args   : Argument_List;
@@ -204,10 +214,8 @@ package GVD.Process is
       Remote_Host     : String := "";
       Remote_Target   : String := "";
       Remote_Protocol : String := "";
-      Debugger_Name   : String := "") return Debugger_Process_Tab;
-   --  Create a debugger with a given list of arguments.
-   --  A new page is added to the window's main notebook.
-   --
+      Debugger_Name   : String := "");
+   --  Configure a process tab.
    --  Kind specifies which debugger should be launched.
    --  Currently, only gdb and jdb are supported.
    --
@@ -221,11 +229,25 @@ package GVD.Process is
    --  See Debugger.Spawn for a documentation on Remote_Host, Remote_Target,
    --  Remote_Protocol and Debugger_Name.
 
+   function Create_Debugger
+     (Window          : access GVD.Main_Window.GVD_Main_Window_Record'Class;
+      Kind            : GVD.Types.Debugger_Type;
+      Executable      : String;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "") return Debugger_Process_Tab;
+   --  Create a debugger with a given list of arguments.
+   --  A new page is added to the window's main notebook.
+   --  See Configure for details on the arguments.
+
    Debugger_Not_Supported : exception;
    --  Raised by Create_Debugger when the debugger type is not supported.
 
    Debugger_Not_Found : exception;
-   --  ??? This needs documentation.
+   --  Raised by Convert when no debugger is found.
 
    type Regexp_Filter_Function is access procedure
      (Process : access Debugger_Process_Tab_Record'Class;

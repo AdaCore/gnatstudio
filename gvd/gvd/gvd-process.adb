@@ -578,7 +578,7 @@ package body GVD.Process is
         Convert (To_Main_Debug_Window (Window), Descriptor);
       Tmp_Str        : GNAT.OS_Lib.String_Access;
       Current_Filter : Regexp_Filter_List;
-      Matched        : Match_Array (0 .. Max_Parenthesis);
+      Matched        : Match_Array (0 .. Max_Paren_Count);
       First, Last    : Natural := 0;
       Last_Match     : Natural := 0;
 
@@ -680,62 +680,58 @@ package body GVD.Process is
       return False;
    end Debugger_Button_Press;
 
-   ---------------------
-   -- Create_Debugger --
-   ---------------------
+   -------------
+   -- Gtk_New --
+   -------------
 
-   function Create_Debugger
-     (Window          : access GVD_Main_Window_Record'Class;
-      Kind            : Debugger_Type;
-      Executable      : String;
-      Debugger_Args   : Argument_List;
-      Executable_Args : String;
-      Remote_Host     : String := "";
-      Remote_Target   : String := "";
-      Remote_Protocol : String := "";
-      Debugger_Name   : String := "") return Debugger_Process_Tab
+   procedure Gtk_New
+     (Process : out Debugger_Process_Tab;
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class) is
+   begin
+      Process := new Debugger_Process_Tab_Record;
+      Initialize (Process, Window);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Window  : access GVD.Main_Window.GVD_Main_Window_Record'Class)
    is
-      Process       : Debugger_Process_Tab;
+      Geometry_Info : Process_Tab_Geometry;
+      Menu_Item     : Gtk_Menu_Item;
       Label         : Gtk_Label;
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
       Length        : Guint;
-      Geometry_Info : Process_Tab_Geometry;
-      Menu_Item     : Gtk_Menu_Item;
       Call_Stack    : Gtk_Check_Menu_Item;
+      Widget        : Gtk_Widget;
 
    begin
-      Process := new Debugger_Process_Tab_Record;
-      Initialize (Process);
+      Process_Tab_Pkg.Initialize (Process);
       Initialize_Class_Record
         (Process, Signals, Class_Record,
          Type_Name => "GvdDebuggerProcessTab");
 
       --  Remove the stack window if needed.
 
-      if not Get_Active (Gtk_Check_Menu_Item (Get_Item
-        (Window.Factory, -"/Data/Call Stack")))
-      then
+      Widget := Get_Widget (Window.Factory, -"/Data/Call Stack");
+
+      if Widget = null then
+         Widget := Get_Widget (Window.Factory, -"/Run/Data/Call Stack");
+      end if;
+
+      Call_Stack := Gtk_Check_Menu_Item (Widget);
+
+      if not Get_Active (Call_Stack) then
          Ref (Process.Stack_Scrolledwindow);
          Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
       end if;
 
       Menu_Item := Gtk_Menu_Item (Get_Widget (Window.Factory, -"/Window"));
       Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
-
-      Process.Descriptor.Debugger := Kind;
-      Process.Descriptor.Remote_Host := new String' (Remote_Host);
-
-      if Remote_Protocol = "" then
-         Process.Descriptor.Remote_Target := new String' ("");
-         Process.Descriptor.Protocol := new String' ("");
-      else
-         Process.Descriptor.Remote_Target := new String' (Remote_Target);
-         Process.Descriptor.Protocol := new String' (Remote_Protocol);
-      end if;
-
-      Process.Descriptor.Program := new String' (Executable);
-      Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
 
       Process.Window := Window.all'Access;
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
@@ -833,10 +829,6 @@ package body GVD.Process is
          Geometry_Info := Get_Process_Tab_Geometry
            (Page_Num (Window.Process_Notebook, Process.Process_Mdi));
 
-         Call_Stack :=
-           Gtk_Check_Menu_Item
-             (Get_Item (Window.Factory, -"/Data/Call Stack"));
-
          if Get_Pref (Separate_Data) then
             Float_Child
               (Find_MDI_Child (Process.Process_Mdi, Process.Data_Paned),
@@ -868,52 +860,18 @@ package body GVD.Process is
       if Length > 1 then
          Set_Show_Tabs (Window.Process_Notebook, True);
       elsif Length /= 0 then
-         Set_Sensitive
-           (Get_Item (Window.Factory, -"/File/Open Program..."), True);
+         Widget := Get_Item (Window.Factory, -"/File/Open Program...");
+
+         if Widget /= null then
+            Set_Sensitive (Widget, True);
+         end if;
       end if;
 
       --  Set the user data, so that we can easily convert afterwards.
 
       Process_User_Data.Set
-        (Process.Editor_Text, Process, Process_User_Data_Name);
+        (Process.Editor_Text, Process.all'Access, Process_User_Data_Name);
       Process_User_Data.Set (Process.Process_Mdi, Process.all'Access);
-
-      --  Spawn the debugger. Note that this needs to be done after the
-      --  creation of a new notebook page, since Spawn might need to access
-      --  the current page (via Convert).
-
-      case Kind is
-         when Gdb_Type =>
-            Process.Debugger := new Gdb_Debugger;
-         when Jdb_Type =>
-            Process.Debugger := new Jdb_Debugger;
-         when others =>
-            raise Debugger_Not_Supported;
-      end case;
-
-      if Process.Descriptor.Remote_Host /= null
-        or else Is_Regular_File (Executable)
-      then
-         Spawn
-           (Process.Debugger,
-            Executable,
-            Debugger_Args,
-            Executable_Args,
-            new Gui_Process_Proxy,
-            Window.all'Access,
-            Remote_Host,
-            Remote_Target,
-            Remote_Protocol,
-            Debugger_Name);
-      else
-         Spawn
-           (Process.Debugger, "", Debugger_Args, Executable_Args,
-            new Gui_Process_Proxy,
-            Window.all'Access, Remote_Host, Remote_Target,
-            Remote_Protocol, Debugger_Name);
-         Output_Error
-           (Window.all'Access, (-" Could not find file: ") & Executable);
-      end if;
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -948,13 +906,6 @@ package body GVD.Process is
             Annotation_Height => Get_Pref (Annotation_Font_Size));
       end if;
 
-      --  Set the output filter, so that we output everything in the Gtk_Text
-      --  window.
-
-      Add_Filter
-        (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         First_Text_Output_Filter'Access, Output, Window.all'Address);
-
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
          Window.First_Debugger := new Debugger_List_Node'
@@ -975,6 +926,81 @@ package body GVD.Process is
             Debugger => Gtk_Widget (Process));
       end if;
 
+      --  Initialize the pixmaps and colors for the canvas
+
+      Realize (Process.Data_Canvas);
+      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
+   end Initialize;
+
+   ---------------
+   -- Configure --
+   ---------------
+
+   procedure Configure
+     (Process         : access Debugger_Process_Tab_Record'Class;
+      Kind            : Debugger_Type;
+      Executable      : String;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "") is
+   begin
+      Process.Descriptor.Debugger := Kind;
+      Process.Descriptor.Remote_Host := new String' (Remote_Host);
+
+      if Remote_Protocol = "" then
+         Process.Descriptor.Remote_Target := new String' ("");
+         Process.Descriptor.Protocol := new String' ("");
+      else
+         Process.Descriptor.Remote_Target := new String' (Remote_Target);
+         Process.Descriptor.Protocol := new String' (Remote_Protocol);
+      end if;
+
+      Process.Descriptor.Program := new String' (Executable);
+      Process.Descriptor.Debugger_Name := new String' (Debugger_Name);
+
+      case Kind is
+         when Gdb_Type =>
+            Process.Debugger := new Gdb_Debugger;
+         when Jdb_Type =>
+            Process.Debugger := new Jdb_Debugger;
+         when others =>
+            raise Debugger_Not_Supported;
+      end case;
+
+      --  Spawn the debugger.
+
+      if Remote_Host /= "" or else Is_Regular_File (Executable) then
+         Spawn
+           (Process.Debugger,
+            Executable,
+            Debugger_Args,
+            Executable_Args,
+            new Gui_Process_Proxy,
+            Process.Window.all'Access,
+            Remote_Host,
+            Remote_Target,
+            Remote_Protocol,
+            Debugger_Name);
+      else
+         Spawn
+           (Process.Debugger, "", Debugger_Args, Executable_Args,
+            new Gui_Process_Proxy,
+            Process.Window.all'Access, Remote_Host, Remote_Target,
+            Remote_Protocol, Debugger_Name);
+         Output_Error
+           (Process.Window, (-" Could not find file: ") & Executable);
+      end if;
+
+      --  Set the output filter, so that we output everything in the Gtk_Text
+      --  window.
+
+      Add_Filter
+        (Get_Descriptor (Get_Process (Process.Debugger)).all,
+         First_Text_Output_Filter'Access, Output, Process.Window.all'Address);
+
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
 
@@ -983,11 +1009,29 @@ package body GVD.Process is
       --  Display the initial prompt
 
       Display_Prompt (Process.Debugger);
+   end Configure;
 
-      --  Initialize the pixmaps and colors for the canvas
-      Realize (Process.Data_Canvas);
-      Init_Graphics (GVD_Canvas (Process.Data_Canvas));
+   ---------------------
+   -- Create_Debugger --
+   ---------------------
 
+   function Create_Debugger
+     (Window          : access GVD_Main_Window_Record'Class;
+      Kind            : Debugger_Type;
+      Executable      : String;
+      Debugger_Args   : Argument_List;
+      Executable_Args : String;
+      Remote_Host     : String := "";
+      Remote_Target   : String := "";
+      Remote_Protocol : String := "";
+      Debugger_Name   : String := "") return Debugger_Process_Tab
+   is
+      Process : Debugger_Process_Tab;
+   begin
+      Gtk_New (Process, Window);
+      Configure
+        (Process, Kind, Executable, Debugger_Args,
+         Remote_Host, Remote_Target, Remote_Protocol, Debugger_Name);
       return Process;
    end Create_Debugger;
 
