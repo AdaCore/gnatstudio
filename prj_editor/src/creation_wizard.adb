@@ -39,9 +39,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Text_IO;               use Ada.Text_IO;
 
-with Prj.PP;   use Prj.PP;
 with Prj.Tree; use Prj.Tree;
 with Prj;      use Prj;
 with Snames;   use Snames;
@@ -55,6 +53,7 @@ with Prj_API;          use Prj_API;
 with Pixmaps_Prj;      use Pixmaps_Prj;
 with Glide_Kernel;     use Glide_Kernel;
 with Glide_Intl;       use Glide_Intl;
+with String_Utils;     use String_Utils;
 
 package body Creation_Wizard is
 
@@ -415,35 +414,11 @@ package body Creation_Wizard is
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String is
       Wiz  : Prj_Wizard := Prj_Wizard (W);
       Project, Var : Project_Node_Id;
-      File : File_Type;
-      Dir : constant String := Get_Text (Wiz.Project_Location);
+      Dir : constant String := Name_As_Directory
+        (Get_Text (Wiz.Project_Location));
       Name : constant String := Get_Text (Wiz.Project_Name);
 
-      procedure Write_Char (C : Character);
-      procedure Write_Str  (S : String);
-      --  Required functions to instanciate Pretty_Print
-
-      ----------------
-      -- Write_Char --
-      ----------------
-
-      procedure Write_Char (C : Character) is
-      begin
-         Put (File, C);
-      end Write_Char;
-
-      ---------------
-      -- Write_Str --
-      ---------------
-
-      procedure Write_Str  (S : String) is
-      begin
-         Put (File, S);
-      end Write_Str;
-
    begin
-      --  ??? Shouldn'T use Hard-Coded Strings in here
-
       Project := Create_Project (Name => Name, Path => Dir);
 
       --  Append the source directories
@@ -491,23 +466,9 @@ package body Creation_Wizard is
       --  Append the naming scheme
       Create_Project_Entry (Wiz.Naming, Project);
 
-      if Dir (Dir'Last) = Directory_Separator then
-         Create (File, Out_File, Dir & Name & Project_File_Extension);
-      else
-         Create (File, Out_File, Dir & Directory_Separator & Name
-                 & Project_File_Extension);
-      end if;
+      Save_Project (Project, Recursive => False);
 
-      Pretty_Print
-        (Project, 3, True,
-         Write_Char'Unrestricted_Access, Write_Str'Unrestricted_Access);
-      Close (File);
-
-      if Dir (Dir'Last) = Directory_Separator then
-         return Dir & Name & Project_File_Extension;
-      else
-         return Dir & Directory_Separator & Name & Project_File_Extension;
-      end if;
+      return Dir & Name & Project_File_Extension;
    end Generate_Prj;
 
    ---------
