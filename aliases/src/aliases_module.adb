@@ -314,9 +314,9 @@ package body Aliases_Module is
         (Tree, Iter : System.Address;
          Col1  : Gint := 0; Name : String;
          Col2  : Gint := 1; Initial : String;
-         Col3  : Gint := 2; Editable : Boolean := True;
-         Col4  : Gint := 3; From_Env : Boolean := False;
-         Col5  : Gint := 4; Seen : Boolean := True;
+         Col3  : Gint := 2; Editable : Gboolean := 1;
+         Col4  : Gint := 3; From_Env : Gboolean := 0;
+         Col5  : Gint := 4; Seen : Gboolean := 1;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
 
@@ -326,7 +326,8 @@ package body Aliases_Module is
       Internal
         (Get_Object (Editor.Variables_Model), Iter'Address,
          Name => Name & ASCII.NUL, Initial => Default & ASCII.NUL,
-         Editable => not From_Env, From_Env => From_Env);
+         Editable => Boolean'Pos (not From_Env),
+         From_Env => Boolean'Pos (From_Env));
    end Set_Variable;
 
    ----------
@@ -945,8 +946,11 @@ package body Aliases_Module is
                end loop;
 
                if Name /= Old then
-                  Set (Ed.Local_Aliases, '_' & Old, Clone (Alias));
-                  Set (Ed.Local_Aliases, Name, Clone (Alias));
+                  if Alias /= No_Alias then
+                     Set (Ed.Local_Aliases, '_' & Old, Clone (Alias));
+                     Set (Ed.Local_Aliases, Name, Clone (Alias));
+                  end if;
+
                   Remove (Ed.Local_Aliases, Old);
 
                   Free (Ed.Current_Var);
@@ -970,6 +974,7 @@ package body Aliases_Module is
    begin
       if Ed.Current_Var /= null then
          Value := Get_Value (Ed, Ed.Current_Var.all);
+
          Set (Ed.Local_Aliases, '_' & Ed.Current_Var.all, Clone (Value));
          Remove (Ed.Local_Aliases, Ed.Current_Var.all);
 
@@ -1480,7 +1485,7 @@ package body Aliases_Module is
       procedure Set_Alias
         (Tree, Iter : System.Address;
          Col1  : Gint; Name : String;
-         Col2  : Gint := 1; Editable : Boolean := True;
+         Col2  : Gint := 1; Editable : Gboolean := 1;
          Final : Gint := -1);
       pragma Import (C, Set_Alias, "gtk_tree_store_set");
 
@@ -1503,6 +1508,7 @@ package body Aliases_Module is
    procedure Update_Contents (Editor : access Alias_Editor_Record'Class) is
       Iter       : Iterator;
       Value      : Alias_Record;
+      It         : Gtk_Tree_Iter;
    begin
       Get_First (Aliases_Module_Id.Aliases, Iter);
 
@@ -1514,8 +1520,10 @@ package body Aliases_Module is
          Get_Next (Aliases_Module_Id.Aliases, Iter);
       end loop;
 
-      Select_Iter (Get_Selection (Editor.Aliases),
-                   Get_Iter_First (Editor.Aliases_Model));
+      It := Get_Iter_First (Editor.Aliases_Model);
+      if It /= Null_Iter then
+         Select_Iter (Get_Selection (Editor.Aliases), It);
+      end if;
    end Update_Contents;
 
    --------------------
