@@ -852,8 +852,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    ------------------------
 
    procedure Update_Breakpoints
-     (Editor    : access Builtin_Record;
-      Br        : GVD.Types.Breakpoint_Array)
+     (Editor  : access Builtin_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget)
    is
       use Gtk.Widget.Widget_List;
       Tmp  : Glist := Editor.Breakpoint_Buttons;

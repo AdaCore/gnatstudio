@@ -56,12 +56,15 @@ package GVD.Text_Box.Source_Editor is
    --  be displayed).
 
    procedure Update_Breakpoints
-     (Editor : access Source_Editor_Record;
-      Br     : GVD.Types.Breakpoint_Array) is abstract;
+     (Editor  : access Source_Editor_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget) is abstract;
    --  Change the list of breakpoints to highlight in the editor.
    --  All the breakpoints that previously existed are removed from the screen,
    --  and replaced by the new ones.
    --  The breakpoints that do not apply to the current file are ignored.
+   --  Process is the Debugger_Process_Tab which corresponds to the debugger
+   --  that emitted the request.
 
    function Get_Current_File
      (Editor : access Source_Editor_Record) return String;

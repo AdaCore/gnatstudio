@@ -223,10 +223,11 @@ package body GVD.Text_Box.Source_Editor.Socket is
    ------------------------
 
    procedure Update_Breakpoints
-     (Editor : access Socket_Record;
-      Br     : GVD.Types.Breakpoint_Array)
+     (Editor  : access Socket_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget)
    is
-      pragma Unreferenced (Editor, Br);
+      pragma Unreferenced (Editor, Br, Process);
    begin
       null;
    end Update_Breakpoints;

@@ -91,8 +91,9 @@ package GVD.Text_Box.Source_Editor.Builtin is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
-     (Editor : access Builtin_Record;
-      Br     : GVD.Types.Breakpoint_Array);
+     (Editor  : access Builtin_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Set_Show_Line_Nums

@@ -62,8 +62,9 @@ package GVD.Text_Box.Source_Editor.Socket is
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
-     (Editor : access Socket_Record;
-      Br     : GVD.Types.Breakpoint_Array);
+     (Editor  : access Socket_Record;
+      Br      : GVD.Types.Breakpoint_Array;
+      Process : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Show_Message
