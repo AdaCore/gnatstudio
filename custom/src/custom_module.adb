@@ -21,6 +21,7 @@
 with Glib;                    use Glib;
 with Glib.Xml_Int;            use Glib.Xml_Int;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
+with Gtk.Image;               use Gtk.Image;
 
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Ada.Exceptions;          use Ada.Exceptions;
@@ -32,6 +33,7 @@ with Traces;                  use Traces;
 with Commands;                use Commands;
 with Commands.Custom;         use Commands.Custom;
 with String_Utils;            use String_Utils;
+with Gtk.Toolbar;             use Gtk.Toolbar;
 
 with Ada.Unchecked_Deallocation;
 
@@ -63,9 +65,11 @@ package body Custom_Module is
       is
          Current_Child : Node_Ptr;
          Current_Child_Child : Node_Ptr;
-         Command       : Command_Access := null;
-         Current_Title : String_Access;
-         Item          : Gtk_Menu_Item;
+         Command        : Command_Access := null;
+         Current_Title  : String_Access;
+         Current_Pixmap : String_Access;
+         Item           : Gtk_Menu_Item;
+         Menuitem       : Boolean := False;
       begin
          if Current_Node = null
            or else Current_Node.Tag = null
@@ -89,7 +93,13 @@ package body Custom_Module is
                end loop;
             end if;
 
-         elsif Current_Node.Tag.all = "Menuitem" then
+         elsif Current_Node.Tag.all = "Menuitem"
+           or else Current_Node.Tag.all = "Toolbar_Item"
+         then
+            if Current_Node.Tag.all = "Menuitem" then
+               Menuitem := True;
+            end if;
+
             Current_Child := Current_Node.Child;
 
             while Current_Child /= null loop
@@ -99,6 +109,14 @@ package body Custom_Module is
                   end if;
 
                   Current_Title := new String'(Current_Child.Value.all);
+               end if;
+
+               if Current_Child.Tag.all = "Pixmap" then
+                  if Current_Pixmap /= null then
+                     Free (Current_Pixmap);
+                  end if;
+
+                  Current_Pixmap := new String'(Current_Child.Value.all);
                end if;
 
                if Current_Child.Tag.all = "Action"
@@ -147,20 +165,44 @@ package body Custom_Module is
             end loop;
 
             if Current_Title /= null and then Current_Title.all /= "" then
-               Register_Menu
-                 (Kernel,
-                  Parent_Path,
-                  Current_Title.all,
-                  "",
-                  null,
-                  Command);
+               if Menuitem then
+                  Register_Menu
+                    (Kernel,
+                     Parent_Path,
+                     Current_Title.all,
+                     "",
+                     null,
+                     Command);
+               else
+                  declare
+                     Image  : Gtk_Image;
+
+                  begin
+                     if Current_Pixmap /= null
+                       and then Is_Regular_File (Current_Pixmap.all)
+                     then
+                        Gtk_New (Image, Current_Pixmap.all);
+                     end if;
+
+                     Register_Button
+                       (Kernel,
+                        Current_Title.all,
+                        Command,
+                        Image);
+                  end;
+               end if;
             else
-               Gtk_New (Item);
-               Register_Menu (Kernel, Parent_Path, Item);
+               if Menuitem then
+                  Gtk_New (Item);
+                  Register_Menu (Kernel, Parent_Path, Item);
+               else
+                  Append_Space (Get_Toolbar (Kernel));
+               end if;
             end if;
          end if;
 
          Free (Current_Title);
+         Free (Current_Pixmap);
       end Add_Child;
 
    begin
