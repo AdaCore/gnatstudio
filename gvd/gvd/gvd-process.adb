@@ -37,6 +37,7 @@ with Gtk.Label;    use Gtk.Label;
 with Gtk.Object;   use Gtk.Object;
 with Gtk.Dialog;   use Gtk.Dialog;
 with Gtk.Window;   use Gtk.Window;
+with Gtk.Adjustment; use Gtk.Adjustment;
 
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
@@ -308,6 +309,13 @@ package body GVD.Process is
       end if;
 
       Thaw (Process.Debugger_Text);
+
+      --  Force a scroll of the text widget. This speeds things up a lot for
+      --  programs that output a lot of things, since its takes a very long
+      --  time for the text widget to scroll smoothly otherwise (lots of
+      --  events...)
+      Set_Value (Get_Vadj (Process.Debugger_Text),
+           Get_Upper (Get_Vadj (Process.Debugger_Text)));
 
       --  Note: we can not systematically modify Process.Edit_Pos in this
       --  function, since otherwise the history (up and down keys in the
