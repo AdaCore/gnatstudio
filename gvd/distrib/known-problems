@@ -5,6 +5,13 @@ Known Problems fixed in GVD 2.0.0
               loading another executable, a bug box is displayed.
   Workaround: Load the file in another debugger.
 
+- [9118-007] Display update problems under Windows NT/2000
+  Problem:    After a question dialog is displayed, drawing in the debugger
+              console gets messed up.
+  
+  Workaround: When this happens, put another window in front to force the
+              display, or use the scrollbar.
+
 - [9022-014] Tab key does not work with long names
   Problem:    When using the tab key in the debugger console to complete
               a long identifier (longer than 100 characters), a bug box is
