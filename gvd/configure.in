@@ -182,6 +182,21 @@ case "${host}" in
      exit;;
 esac
 
+OS_LIBS=
+
+case "${opsys}" in
+  windows)
+     OS_LIBS=-luser32
+     ;;
+  *)
+     OS_LIBS=''
+     ;;
+esac
+AC_SUBST(OS_LIBS)
+
+
+
+
 machfile="'\"machine/${machine}.h\"'"
 opsysfile="'\"system/${opsys}.h\"'"
 
