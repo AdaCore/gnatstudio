@@ -30,6 +30,7 @@ with Ada.Exceptions;            use Ada.Exceptions;
 with Language;                  use Language;
 with Language_Handlers;         use Language_Handlers;
 with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 
 package body Docgen is
 
@@ -85,11 +86,14 @@ package body Docgen is
         (B             : Backend_Handle;
          Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
          File          : in Ada.Text_IO.File_Type;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          Info          : in out Docgen.Doc_Info;
          Doc_Directory : String;
          Doc_Suffix    : String) is
       begin
-         Doc_Create (B, Kernel, File, Info, Doc_Directory, Doc_Suffix);
+         Doc_Create (B, Kernel, File,
+                     List_Ref_In_File,
+                     Info, Doc_Directory, Doc_Suffix);
       end Launch_Doc_Create;
 
       -----------------
@@ -97,9 +101,10 @@ package body Docgen is
       -----------------
 
       procedure Format_File
-         (B                : access Backend'Class;
+        (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
@@ -175,6 +180,7 @@ package body Docgen is
                when Identifier_Text =>
                   Format_Identifier
                     (B,
+                     List_Ref_In_File,
                      Sloc_Start.Index,
                      Sloc_Start.Line,
                      Sloc_Start.Column,
@@ -217,6 +223,7 @@ package body Docgen is
 
    procedure Format_All_Link
      (B                : access Backend'Class;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -233,11 +240,47 @@ package body Docgen is
       Is_Body          : Boolean;
       Process_Body     : Boolean)
    is
+
+      use List_Reference_In_File;
       Loc_End         : Natural;
       Loc_Start       : Natural;
-      Point_In_Column : Natural;
+      Point_In_Column : Natural := 0;
       Entity_Info     : Entity_Information;
-      Status          : Find_Decl_Or_Body_Query_Status;
+      Ref_List_Info   : List_Reference_In_File.List_Node;
+      Ref_List_Info_Prec   : List_Reference_In_File.List_Node;
+      Result          : Boolean;
+
+      procedure Get_Declaration
+        (Text   : String;
+         E_I    : in out Src_Info.Queries.Entity_Information;
+         Line   : Natural;
+         Column : Natural;
+         E_L_I  : in List_Reference_In_File.List_Node;
+         Result : in out Boolean);
+      --  Looks if the reference E_L_I is the same as (Text+Line+Column)
+      --  If yes, the declaration of E_L_I is returned and Result is True
+
+      procedure Get_Declaration
+        (Text   : String;
+         E_I    : in out Src_Info.Queries.Entity_Information;
+         Line   : Natural;
+         Column : Natural;
+         E_L_I  : in List_Reference_In_File.List_Node;
+         Result : in out Boolean) is
+         pragma Unreferenced (Column);
+      begin
+         if List_Reference_In_File.Data (E_L_I).Line = Line
+           and then
+             To_Lower (Text) = List_Reference_In_File.Data (E_L_I).Name.all
+         --             and then
+         --       List_Reference_In_File.Data (E_L_I).Column = Column
+         --  ??? perhaps problems with Parse_Entites about columns
+         then
+            Result := True;
+            E_I := List_Reference_In_File.Data (E_L_I).Entity.all;
+         end if;
+      end Get_Declaration;
+
    begin
       Loc_Start := Start_Index;
 
@@ -257,16 +300,37 @@ package body Docgen is
          if LI_Unit /= No_LI_File then
             --  We search the declaration of the entity
             --  (which is an identifier)
-            Find_Declaration
-              (LI_Unit,
-               File_Name,
-               Text (Loc_Start .. Loc_End),
-               Start_Line + Entity_Line - 1,
-               Start_Column + Loc_Start - Start_Index,
-               Entity_Info,
-               Status);
-            if Status = Success or Status = Fuzzy_Match then
-               --  We create a link on the declaration for this entity
+            Result := False;
+            Ref_List_Info
+              := List_Reference_In_File.First (List_Ref_In_File);
+            Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
+
+            --  Text(Loc_Start .. Loc_End) is a reference.
+            --  We search it in the list we have made before in order to
+            --     find its declaration.
+            while Ref_List_Info /= List_Reference_In_File.Null_Node loop
+
+               Get_Declaration
+                 (Text (Loc_Start .. Loc_End),
+                  Entity_Info,
+                  Start_Line + Entity_Line - 1,
+                  Start_Column + Loc_Start - Start_Index,
+                  Ref_List_Info,
+                  Result);
+               if Result = True then
+                  List_Reference_In_File.Remove_Nodes
+                    (List_Ref_In_File, Ref_List_Info_Prec,
+                     Ref_List_Info);
+               end if;
+
+               exit when Result = True;
+               Ref_List_Info_Prec := Ref_List_Info;
+               Ref_List_Info
+                 := List_Reference_In_File.Next (Ref_List_Info);
+            end loop;
+
+            --  We create a link on the declaration for this entity
+            if Result = True then
                Format_Link
                  (B,
                   Start_Index, Start_Line, Start_Column, End_Index,
@@ -356,6 +420,18 @@ package body Docgen is
       return Get_Name (X.Entity) < Get_Name (Y.Entity);
    end Compare_Elements_Name;
 
+   -----------------------------------------
+   -- Compare_Elements_By_Line_And_Column --
+   -----------------------------------------
+
+   function Compare_Elements_By_Line_And_Column
+     (X, Y : Reference_In_File) return Boolean is
+   begin
+      return X.Line < Y.Line or else
+      (X.Line = Y.Line and then X.Column < Y.Column);
+   end Compare_Elements_By_Line_And_Column;
+
+
    ----------
    -- Free --
    ----------
@@ -390,6 +466,26 @@ package body Docgen is
    procedure Free (X : in out Reference_List_Information) is
    begin
       Destroy (X.Entity);
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+   procedure Free (X : in out Reference_In_File) is
+   begin
+      Free (X.Name);
+      --  Memory accessed by the field Entity is free separately: those
+      --     records are saved in a list. When we destroy this list, it calls
+      --     subprogram Free(Entity_Information).
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Src_Info.Queries.Entity_Information) is
+   begin
+      Destroy (X);
    end Free;
 
    -----------------
