@@ -5,6 +5,7 @@ gps*.html
 gps.info*
 gps.ps
 gps_pg.ps
+*.pdf
 assembly.gif
 breakpoints.gif
 call-stack.gif
