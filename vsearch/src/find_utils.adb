@@ -20,6 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Exceptions;            use Ada.Exceptions;
 with Glib.Unicode;              use Glib.Unicode;
 with Boyer_Moore;               use Boyer_Moore;
 with Glide_Kernel;              use Glide_Kernel;
@@ -468,6 +469,11 @@ package body Find_Utils is
       pragma Unreferenced (Object);
    begin
       Run_Hook (Kernel, Search_Reset_Hook);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
    end Reset_Search;
 
    -----------------
