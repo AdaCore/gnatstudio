@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                        Copyright (C) 2001-2002                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -37,6 +37,7 @@ package body VCS is
    ----------
 
    procedure Free (Identifier : in out VCS_Id_Identifier) is
+      pragma Unreferenced (Identifier);
    begin
       null;
    end Free;
@@ -89,6 +90,7 @@ package body VCS is
    ----------
 
    procedure Free (Ref : access VCS_Record) is
+      pragma Unreferenced (Ref);
    begin
       null;
    end Free;
