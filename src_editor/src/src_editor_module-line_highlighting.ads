@@ -36,8 +36,9 @@ package Src_Editor_Module.Line_Highlighting is
    --  The category indexes begin at 1.
 
    procedure Add_Category
-     (Id : String;
-      GC : Gdk_GC);
+     (Id    : String;
+      GC    : Gdk_GC;
+      Color : Gdk_Color);
    --  Add a new category to the category cache.
 
    function Lookup_Category (Id : String) return Natural;
@@ -46,6 +47,9 @@ package Src_Editor_Module.Line_Highlighting is
 
    function Get_GC (Index : Natural) return Gdk_GC;
    --  Return the GC corresponding to a category Index.
+
+   function Get_Color (Index : Natural) return Gdk_Color;
+   --  Return the color corresponding to a category Index.
 
    function Get_Last_Index return Natural;
    --  Return the number of categories.
