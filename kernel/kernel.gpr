@@ -7,6 +7,7 @@ project Kernel is
 
    for Source_Dirs use
      ("src",
+      "tests_src_info",
       "../prj_editor/src",
       "../glide/src",
       "../gvd/common",
@@ -37,6 +38,7 @@ project Kernel is
       "glide_kernel.adb",
       "glide_kernel.ads",
       "kernel.ads",
+      "read_ali.adb",
       "src_info-ali.adb",
       "src_info-ali.ads",
       "src_info-ali_maps.ads",
