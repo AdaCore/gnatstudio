@@ -1,11 +1,18 @@
 Known Problems fixed in GPS 1.3.0
 
-- C115-009: Added files not displayed in the VCS Explorer
+- C626-007 Extra blank lines in messages window under Windows
+  Problem:    When running external processes (e.g. using a custom file)
+              that output CR/LF line terminators, extra blank line are
+              displayed in the messages window.
+  Workaround: Add a wrapper around the external process that transforms
+              CR/LF into LF.
+
+- C115-009 Added files not displayed in the VCS Explorer
   Problem:    When a file has been locally added but not committed to the
               repository, it appears as "Not registered".
   Workaround: None
 
-- C625-002: Debugger breakpoints not always appearing in the GPS source editor
+- C625-002 Debugger breakpoints not always appearing in the GPS source editor
   Problem:    When in debugger mode, setting a breakpoint by clicking on the
               dots in the editor does not always display a breakpoint icon.
   Workaround: The breakpoint is active even if it's not displayed. To delete
