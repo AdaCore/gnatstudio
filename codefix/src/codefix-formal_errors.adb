@@ -163,7 +163,7 @@ package body Codefix.Formal_Errors is
             "Replace misspelled word by """ & Str_Expected & """");
       else
          Replace_Word
-           (New_Extract, Message, Str_Expected, Str_Red);
+           (New_Extract, Message, Str_Expected, Str_Red, Format_Red);
          Set_Caption
            (New_Extract,
             "Replace """ & Str_Red & """ by """ & Str_Expected & """");
@@ -297,7 +297,7 @@ package body Codefix.Formal_Errors is
       Line_Cursor.Col := 1;
       Get_Line (Current_Text, Line_Cursor, New_Extract);
 
-      New_Str := new String' (Get_String (New_Extract));
+      New_Str := new String'(Get_String (New_Extract));
 
       case Mode is
          when Text_Ascii =>
