@@ -946,12 +946,17 @@ package body String_Utils is
       Result        : Unbounded_String;
       First, Last   : Natural := Str'First;
       Between_Curly : Boolean;
+      Quoted        : Boolean := False;
    begin
       while First <= Str'Last loop
          Last := First;
          while Last <= Str'Last
            and then Str (Last) /= Substitution_Char
          loop
+            if Str (Last) = '"' then
+               Quoted := not Quoted;
+            end if;
+
             Last := Last + 1;
          end loop;
 
@@ -987,10 +992,7 @@ package body String_Utils is
                Sub : constant String :=
                  Callback
                    (Str (Last + 1 .. First - 1),
-                    Quoted => (Last - 1 >= Str'First
-                               and then First <= Str'Last
-                               and then Str (Last - 1) = '"'
-                               and then Str (First) = '"'));
+                    Quoted => Quoted);
             begin
                if Recursive then
                   Result := Result & Substitute
