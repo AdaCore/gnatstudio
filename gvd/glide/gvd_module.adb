@@ -294,10 +294,10 @@ package body GVD_Module is
    --  Debug->Data->Threads
 
    procedure On_Tasks is new Generic_Debug_Command (GVD.Menu.On_Tasks);
-   --  Debug->Data->Protection Domains
+   --  Debug->Data->Tasks
 
    procedure On_PD is new Generic_Debug_Command (GVD.Menu.On_PD);
-   --  Debug->Data->Tasks
+   --  Debug->Data->Protection Domains
 
    procedure On_Assembly
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -436,6 +436,8 @@ package body GVD_Module is
 
    function Idle_Reveal_Lines return Boolean;
    --  Idle/Timeout function to query the line information from the debugger.
+   --  ??? Should provide proper user data instead of using a global variable
+   --  to access debugger info.
 
    -----------------
    -- On_Assembly --
@@ -689,9 +691,7 @@ package body GVD_Module is
    is
       Selection      : Entity_Selection_Context_Access;
       Debugger       : Debugger_Process_Tab;
-      Lang           : Language_Access;
       Kernel         : Kernel_Handle;
-
       Value          : Basic_Types.String_Access;
       Context        : Items.Drawing_Context;
       Chars_Per_Line : Gint;
@@ -721,15 +721,14 @@ package body GVD_Module is
       end if;
 
       Push_State (Kernel, Busy);
-      Lang := Get_Language_From_File
-        (Get_Language_Handler (Kernel), File_Information (Selection));
 
       declare
          Variable_Name : constant String :=
            Entity_Name_Information (Selection);
       begin
          if Variable_Name /= ""
-           and then Can_Tooltip_On_Entity (Lang, Variable_Name)
+           and then Can_Tooltip_On_Entity
+             (Get_Language (Debugger.Debugger), Variable_Name)
          then
             Value := new String' (Value_Of (Debugger.Debugger, Variable_Name));
 
@@ -834,65 +833,21 @@ package body GVD_Module is
      (Kernel    : Kernel_Handle;
       Sensitive : Boolean)
    is
-      Top          : constant Glide_Window :=
+      Top   : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Debug        : constant String := '/' & (-"Debug") & '/';
-      Debug_Sub    : constant String := Debug & (-"Debug") & '/';
-      Data_Sub     : constant String := Debug & (-"Data") & '/';
-      Session_Sub  : constant String := Debug & (-"Session") & '/';
+      Debug : constant String := '/' & (-"Debug") & '/';
 
    begin
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug & (-"Initialize")), not Sensitive);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Debug & (-"Initialize")), not Sensitive);
 
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Connect to Board...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Load File...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Add Symbols...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Attach...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Detach")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Debug Core File...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Debug_Sub & (-"Kill")), Sensitive);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Debug & (-"Debug")), Sensitive);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Debug & (-"Data")), Sensitive);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Debug & (-"Session")), Sensitive);
 
-      --  ??? Set_Sensitive (Find_Menu_Item
-      --    (Kernel, Session_Sub & (-"Open...")), Sensitive);
-      --  ??? Set_Sensitive (Find_Menu_Item
-      --    (Kernel, Session_Sub & (-"Save As...")), Sensitive);
-
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Session_Sub & (-"Command History")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Call Stack")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Threads")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Tasks")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Protection Domains")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Assembly")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Edit Breakpoints")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Examine Memory")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Display Local Variables")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Display Arguments")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Display Registers")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Display Any Expression...")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Refresh")), Sensitive);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Data_Sub & (-"Show")), Sensitive);
       Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Start")), Sensitive);
       Set_Sensitive (Find_Menu_Item (Kernel, Debug & (-"Step")), Sensitive);
       Set_Sensitive (Find_Menu_Item
@@ -933,6 +888,7 @@ package body GVD_Module is
       Push_State (K, Busy);
 
       --  Initialize the debugger if necessary
+      --  ??? Should use the Debugger property of the main project
       if Page.Debugger = null then
          Configure
            (Page, Gdb_Type, "", (1 .. 0 => null), "", Success => Success);
@@ -1164,11 +1120,11 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      Top     : constant Glide_Window :=
+      Top  : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Get_Kernel (Context)));
-      Name    : constant String :=
+      Name : constant String :=
         Get_Text (Gtk_Label (Get_Child (Gtk_Bin (Widget))));
-      View    : constant String := -"View Memory at &";
+      View : constant String := -"View Memory at &";
 
    begin
       Show_All (Top.Memory_View);
@@ -1190,10 +1146,18 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      pragma Unreferenced (Widget, Context);
+      pragma Unreferenced (Widget);
+
+      Top  : constant Glide_Window :=
+        Glide_Window (Get_Main_Window (Get_Kernel (Context)));
+      Edit : constant GEdit := GEdit (Get_Source
+        (Debugger_Process_Tab (Get_Current_Process (Top)).Editor_Text));
+      Name : constant String := Get_Current_File (Edit);
+
    begin
-      --  ???
-      null;
+      if Name /= "" then
+         Highlight_Current_Line (Edit);
+      end if;
 
    exception
       when E : others =>
@@ -1230,9 +1194,9 @@ package body GVD_Module is
       Close (Page.Debugger);
    end On_Destroy_Window;
 
-   ------------------------
-   --  Idle_Reveal_Lines --
-   ------------------------
+   -----------------------
+   -- Idle_Reveal_Lines --
+   -----------------------
 
    function Idle_Reveal_Lines return Boolean is
       Kind         : Line_Kind;
@@ -1258,8 +1222,7 @@ package body GVD_Module is
 
       elsif GVD_Module (GVD_Module_ID).Slow_Query then
          GVD_Module (GVD_Module_ID).Slow_Query := False;
-         Timeout_Id := Timeout_Add
-           (1, Idle_Reveal_Lines'Access);
+         Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
          return False;
       end if;
 
@@ -1281,12 +1244,13 @@ package body GVD_Module is
          A : Line_Information_Array (L .. L);
       begin
          if Kind = Have_Code then
-            Create (C,
-                    GVD_Module (GVD_Module_ID).Kernel,
-                    Debugger,
-                    Set,
-                    File_Line.File.all,
-                    File_Line.Line);
+            Create
+              (C,
+               GVD_Module (GVD_Module_ID).Kernel,
+               Debugger,
+               Set,
+               File_Line.File.all,
+               File_Line.Line);
             A (L).Image := Line_Has_Code_Pixbuf;
             A (L).Associated_Command := Command_Access (C);
          end if;
@@ -1318,8 +1282,8 @@ package body GVD_Module is
      (Widget  : access Gtk_Widget_Record'Class;
       Args    : GValues)
    is
-      Top          : constant Glide_Window := Glide_Window (Widget);
-      File         : constant String := Get_String (Nth (Args, 1));
+      Top  : constant Glide_Window := Glide_Window (Widget);
+      File : constant String := Get_String (Nth (Args, 1));
    begin
       Create_Debugger_Columns (Top.Kernel, File);
    end File_Edited_Cb;
@@ -1359,8 +1323,7 @@ package body GVD_Module is
             if File_Line_List.Is_Empty
               (GVD_Module (GVD_Module_ID).Unexplored_Lines)
             then
-               Timeout_Id := Timeout_Add
-                 (1, Idle_Reveal_Lines'Access);
+               Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
             else
                GVD_Module (GVD_Module_ID).List_Modified := True;
                File_Line_List.Free
@@ -1390,8 +1353,8 @@ package body GVD_Module is
    is
       pragma Unreferenced (K);
       Mitem : Gtk_Menu_Item;
-      Menu : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
-      Iter : Imported_Project_Iterator := Start (Get_Project (Kernel));
+      Menu  : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
+      Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
 
    begin
       --  Remove all existing menus
@@ -1420,6 +1383,7 @@ package body GVD_Module is
                         File    => Exec));
                end;
             end loop;
+
             Free (Mains);
          end;
 
@@ -1437,7 +1401,6 @@ package body GVD_Module is
            (Length  => 0,
             Project => Get_Project_View (Kernel),
             File    => ""));
-
       Show_All (Menu);
 
    exception
@@ -1462,6 +1425,7 @@ package body GVD_Module is
       Mitem        : Gtk_Menu_Item;
       Menu         : Gtk_Menu;
       --  ??? Should get the right process
+
    begin
       GVD_Module_ID := new GVD_Module_Record;
       GVD_Module (GVD_Module_ID).Kernel := Kernel_Handle (Kernel);
@@ -1487,69 +1451,76 @@ package body GVD_Module is
 
       --  Add debugger menus
 
-      Register_Menu (Kernel, Debug_Sub, Ref_Item => -"Data");
+      Register_Menu
+        (Kernel, Debug_Sub, Ref_Item => -"Data");
+      Set_Sensitive (Find_Menu_Item (Kernel, Debug_Sub), False);
       Register_Menu (Kernel, Debug_Sub, -"Connect to Board...", "",
-                     On_Connect_To_Board'Access, Sensitive => False);
+                     On_Connect_To_Board'Access);
       Register_Menu (Kernel, Debug_Sub, -"Load File...", "",
-                     On_Debug_Executable'Access, Sensitive => False);
+                     On_Debug_Executable'Access);
       Register_Menu (Kernel, Debug_Sub, -"Add Symbols...", "",
-                     On_Add_Symbols'Access, Sensitive => False);
+                     On_Add_Symbols'Access);
       Register_Menu (Kernel, Debug_Sub, -"Attach...", "",
-                     On_Attach'Access, Sensitive => False);
+                     On_Attach'Access);
       Register_Menu (Kernel, Debug_Sub, -"Detach", "",
-                     On_Detach'Access, Sensitive => False);
+                     On_Detach'Access);
       Register_Menu (Kernel, Debug_Sub, -"Debug Core File...", "",
-                     On_Load_Core'Access, Sensitive => False);
+                     On_Load_Core'Access);
       Register_Menu (Kernel, Debug_Sub, -"Kill", "",
-                     On_Kill'Access, Sensitive => False);
+                     On_Kill'Access);
 
+      --  ???
       Register_Menu (Kernel, Session_Sub, -"Open...", Stock_Open,
                      null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"Save As...", Stock_Save_As,
                      null, Sensitive => False);
       Register_Menu (Kernel, Session_Sub, -"Command History", Stock_Index,
-                     On_Command_History'Access, Sensitive => False);
+                     On_Command_History'Access);
+      Set_Sensitive (Find_Menu_Item (Kernel, Session_Sub), False);
 
+      Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub), False);
       Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Call Stack"));
-      Set_Sensitive (Mitem, False);
       Kernel_Callback.Connect
         (Mitem, "activate",
          Kernel_Callback.To_Marshaller (On_Call_Stack'Access),
          User_Data => Kernel_Handle (Kernel));
 
       Register_Menu (Kernel, Data_Sub, -"Threads", "",
-                     On_Threads'Access, Sensitive => False);
+                     On_Threads'Access, Ref_Item => -"Protection Domains");
       Register_Menu (Kernel, Data_Sub, -"Tasks", "",
-                     On_Tasks'Access, Sensitive => False);
-      Register_Menu (Kernel, Data_Sub, -"Protection Domains", "",
-                     On_PD'Access, Sensitive => False);
-      Register_Menu (Kernel, Data_Sub, -"Assembly", "",
-                     On_Assembly'Access, Sensitive => False);
+                     On_Tasks'Access, Ref_Item => -"Protection Domains");
+      Mitem := Find_Menu_Item (Kernel, Data_Sub & (-"Protection Domains"));
+      Set_Sensitive (Mitem, False);
+      Kernel_Callback.Connect
+        (Mitem, "activate",
+         Kernel_Callback.To_Marshaller (On_PD'Access),
+         User_Data => Kernel_Handle (Kernel));
+      Register_Menu (Kernel, Data_Sub, -"Assembly", "", On_Assembly'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Edit Breakpoints", "",
-                     On_Edit_Breakpoints'Access, Sensitive => False);
+                     On_Edit_Breakpoints'Access);
       Register_Menu (Kernel, Data_Sub, -"Examine Memory", "",
-                     On_Examine_Memory'Access, Sensitive => False);
+                     On_Examine_Memory'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Display Local Variables", "",
                      On_Display_Locals'Access, null,
-                     GDK_L, Mod1_Mask, Sensitive => False);
+                     GDK_L, Mod1_Mask);
       Register_Menu (Kernel, Data_Sub, -"Display Arguments", "",
                      On_Display_Args'Access, null,
-                     GDK_U, Mod1_Mask, Sensitive => False);
+                     GDK_U, Mod1_Mask);
       Register_Menu (Kernel, Data_Sub, -"Display Registers", "",
-                     On_Display_Regs'Access, Sensitive => False);
+                     On_Display_Regs'Access);
       Register_Menu (Kernel, Data_Sub, -"Display Any Expression...", "",
-                     On_Display_Expression'Access, Sensitive => False);
+                     On_Display_Expression'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Data_Sub, Mitem);
       Register_Menu (Kernel, Data_Sub, -"Refresh", Stock_Refresh,
                      On_Data_Refresh'Access, null,
-                     GDK_L, Control_Mask, Sensitive => False);
+                     GDK_L, Control_Mask);
       Register_Menu (Kernel, Data_Sub, -"Show", "",
-                     On_Data_Show'Access, Sensitive => False);
+                     On_Data_Show'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
@@ -1627,13 +1598,11 @@ package body GVD_Module is
          Source_Lines_Revealed_Signal,
          Lines_Revealed_Cb'Access,
          Top);
-
       Widget_Callback.Object_Connect
         (Kernel,
          File_Edited_Signal,
          File_Edited_Cb'Access,
          Top);
-
       Init_Graphics;
    end Register_Module;
 
