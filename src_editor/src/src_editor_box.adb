@@ -1263,16 +1263,7 @@ package body Src_Editor_Box is
    begin
       Editor.Explicit_Writable_Set := True;
 
-      Editor.Writable := not Editor.Writable;
-      Set_Editable (Editor.Source_View, Editor.Writable);
-
-      if Editor.Writable then
-         Set_Text (Editor.Read_Only_Label, -"Writable");
-         Add_Controls (Editor.Source_Buffer);
-      else
-         Set_Text (Editor.Read_Only_Label, -"Read Only");
-         Remove_Controls (Editor.Source_Buffer);
-      end if;
+      Set_Writable (Editor, not Editor.Writable);
 
       return False;
 
@@ -2693,5 +2684,25 @@ package body Src_Editor_Box is
    begin
       return Editor.Writable;
    end Get_Writable;
+
+   ------------------
+   -- Set_Writable --
+   ------------------
+
+   procedure Set_Writable
+     (Editor   : access Source_Editor_Box_Record;
+      Writable : Boolean) is
+   begin
+      Editor.Writable := Writable;
+      Set_Editable (Editor.Source_View, Editor.Writable);
+
+      if Editor.Writable then
+         Set_Text (Editor.Read_Only_Label, -"Writable");
+         Add_Controls (Editor.Source_Buffer);
+      else
+         Set_Text (Editor.Read_Only_Label, -"Read Only");
+         Remove_Controls (Editor.Source_Buffer);
+      end if;
+   end Set_Writable;
 
 end Src_Editor_Box;
