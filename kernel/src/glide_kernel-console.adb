@@ -525,6 +525,7 @@ package body Glide_Kernel.Console is
                History_List => Get_History (Kernel),
                Key          => "shell",
                Wrap_Mode    => Wrap_Char);
+      Set_Completion_Handler (Interactive, Commands_As_List'Access);
       Child := Put
         (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button);
