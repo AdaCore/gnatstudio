@@ -28,6 +28,10 @@
 
 with Generic_List;
 
+with Gtk.Widget;
+
+-- generic
+--    type Data_Type is private;
 package VCS is
 
    --  This package provides utilities for communicating with a VCS
@@ -220,20 +224,39 @@ package VCS is
 
    type Idle_Function is access
      procedure;
-   --  (Data : Data_Type);
 
    procedure Register_Idle_Function
-     (Rep  : access VCS_Record;
-      Func : Idle_Function;
+     (Rep     : access VCS_Record;
+      Func    : Idle_Function;
       Timeout : Integer := 100) is abstract;
-      --    end Idle;
+   --
+
+   type Error_Function is access
+     procedure (Error_Message : String;
+                User_Data     : Gtk.Widget.Gtk_Widget);
+
+   procedure Register_Error_Function
+     (Rep  : access VCS_Record;
+      Func : Error_Function;
+      Data : Gtk.Widget.Gtk_Widget);
+
+   procedure Set_Error (Rep     : access VCS_Record;
+                        Message : String);
+
+   --  Register a function that will be called every time that
+   --  an error occurs.
+   --  ??? maybe this doesn't have to be abstract.
 
 
    --  missing:
    --  annotate
    --  init
    --  tag
+   --  other version
 
 private
-   type VCS_Record is abstract tagged limited null record;
+   type VCS_Record is abstract tagged limited record
+      Local_Error_Function : Error_Function := null;
+      User_Data            : Gtk.Widget.Gtk_Widget;
+   end record;
 end VCS;

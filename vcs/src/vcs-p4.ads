@@ -96,6 +96,11 @@ package VCS.P4 is
 
    function Get_Message (Rep : access P4_Record) return String;
 
+   procedure Register_Idle_Function
+     (Rep  : access P4_Record;
+      Func : Idle_Function;
+      Timeout : Integer := 100);
+
 private
    type P4_Record is new VCS_Record with record
       Success : Boolean := False;

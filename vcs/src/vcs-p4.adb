@@ -181,5 +181,18 @@ package body VCS.P4 is
       null;
    end Update;
 
+   ----------------------------
+   -- Register_Idle_Function --
+   ----------------------------
+
+   procedure Register_Idle_Function
+     (Rep  : access P4_Record;
+      Func : Idle_Function;
+      Timeout : Integer := 100)
+   is
+   begin
+      null;
+   end Register_Idle_Function;
+
 end VCS.P4;
 

@@ -174,7 +174,6 @@ package body VCS.CVS is
       Non_Blocking_Spawn (Fd, Command, Arguments,
                           Err_To_Out => True);
       begin
-
          if Rep.Local_Idle_Function = null then
             while Match = 1 loop
                Expect (Fd, Match, "\n");
@@ -196,7 +195,8 @@ package body VCS.CVS is
                      declare
                         S : String := Expect_Out (Fd);
                      begin
-                        String_List.Prepend (Result, S (S'First .. S'Last - 1));
+                        String_List.Prepend
+                          (Result, S (S'First .. S'Last - 1));
                      end;
                end case;
             end loop;
@@ -231,7 +231,7 @@ package body VCS.CVS is
       Args_Length      : Natural := Length (Arguments);
 
       Args             : Argument_List
-        (1 .. Filenames_Length + Args_Length + 1);
+        (1 .. Filenames_Length + Args_Length);
 
       Old_Dir : Dir_Name_Str := Get_Current_Dir;
       New_Dir : Dir_Name_Str := Get_Path (Head (Filenames));
@@ -240,12 +240,12 @@ package body VCS.CVS is
 
       --  Build arguments list.
 
-      for J in 1 .. Args_Length + 1 loop
+      for J in 1 .. Args_Length loop
          Args (J) := new String'(Head (Arguments_Temp));
          Arguments_Temp := Next (Arguments_Temp);
       end loop;
 
-      for J in Args_Length + 1 .. Args_Length + Filenames_Length + 1 loop
+      for J in Args_Length + 1 .. Args_Length + Filenames_Length loop
          Args (J) := new String'(Base_File_Name (Head (Filenames_Temp)));
          Filenames_Temp := Next (Filenames_Temp);
       end loop;
@@ -390,8 +390,9 @@ package body VCS.CVS is
 
       while not Is_Empty (Output) loop
          declare
-            Line  : String := Head (Output);
-            Index : Natural;
+            Line       : String := Head (Output);
+            Index      : Natural;
+            Next_Index : Natural;
          begin
             if Line'Length > 4
               and then Line (Line'First .. Line'First + 3) = "===="
@@ -425,6 +426,22 @@ package body VCS.CVS is
                  and then Line (Index .. Index + 15) = "Locally Modified"
                then
                   Current_Status.Status := Modified;
+               elsif Line'Last >= Index + 14
+                 and then Line (Index .. Index + 14) = "Locally Removed"
+               then
+                  Current_Status.Status := Not_Registered;
+                  declare
+                     S : String := Head (Current_Status.File_Name);
+                  begin
+                     if S (S'First + New_Dir'Length
+                           .. S'First + New_Dir'Length + 7) = "no file "
+                     then
+                        Free (Current_Status.File_Name);
+                        Append (Current_Status.File_Name,
+                                New_Dir &
+                                S (S'First + New_Dir'Length + 8 .. S'Last));
+                     end if;
+                  end;
                elsif Line'Last >= Index + 10
                  and then Line (Index .. Index + 10) = "Needs Merge"
                then
@@ -455,8 +472,11 @@ package body VCS.CVS is
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
+                  Skip_Blanks (Line (Index .. Line'Last), Index);
+                  Next_Index := Index + 1;
+                  Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
                   Append (Current_Status.Working_Revision,
-                          Line (Index .. Line'Last));
+                          Line (Index .. Next_Index));
                end if;
 
             elsif Line'Length > 15
@@ -467,8 +487,11 @@ package body VCS.CVS is
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
+                  Skip_Blanks (Line (Index .. Line'Last), Index);
+                  Next_Index := Index + 1;
+                  Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
                   Append (Current_Status.Repository_Revision,
-                          Line (Index .. Line'Last));
+                          Line (Index .. Next_Index));
                end if;
             end if;
 
@@ -874,15 +897,21 @@ package body VCS.CVS is
       S   : String)
    is
    begin
-      String_List.Append (Rep.Message, S);
+      Set_Error (Rep, S);
    end Append_To_Message;
 
    procedure Append_To_Message
      (Rep : access CVS_Record;
       L   : String_List.List)
    is
+      Temp_L : String_List.List := L;
    begin
-      String_List.Concat (Rep.Message, L);
+      while not String_List.Is_Empty (Temp_L) loop
+         Set_Error (Rep, String_List.Head (Temp_L));
+
+         Temp_L := String_List.Next (Temp_L);
+      end loop;
+
    end Append_To_Message;
 
    -----------------
@@ -895,11 +924,7 @@ package body VCS.CVS is
    is
       use String_List;
    begin
-      if not Is_Empty (Rep.Message) then
-         Free (Rep.Message);
-      end if;
-
-      Append (Rep.Message, M);
+      Set_Error (Rep, M);
    end Set_Message;
 
    -----------------
@@ -921,26 +946,18 @@ package body VCS.CVS is
       return To_String (S);
    end Get_Message;
 
-   ----------
-   -- Idle --
-   ----------
-
-   --    package body Idle is
+   ----------------------------
+   -- Register_Idle_Function --
+   ----------------------------
 
    procedure Register_Idle_Function
      (Rep  : access CVS_Record;
       Func : Idle_Function;
       Timeout : Integer := 200)
    is
-      procedure Call_Idle_Function is
-      begin
-         Put_Line ("bla");
-      end Call_Idle_Function;
    begin
       Rep.Local_Idle_Function := Func;
       Rep.Timeout := Timeout;
    end Register_Idle_Function;
-
-   --    end Idle;
 
 end VCS.CVS;

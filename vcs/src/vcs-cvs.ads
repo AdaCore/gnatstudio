@@ -31,6 +31,9 @@
 --
 --  See package VCS for a complete spec of this package.
 
+-- generic
+--    type Data_Type is private;
+
 package VCS.CVS is
 
    type CVS_Record is new VCS_Record with private;
@@ -95,17 +98,17 @@ package VCS.CVS is
    function Get_Message (Rep : access CVS_Record) return String;
 
    procedure Register_Idle_Function
-     (Rep  : access CVS_Record;
-      Func : Idle_Function;
+     (Rep     : access CVS_Record;
+      Func    : Idle_Function;
       Timeout : Integer := 200);
 
 private
    type Parameterless_Procedure is access procedure;
 
    type CVS_Record is new VCS_Record with record
-      Success             : Boolean := True;
-      Message             : String_List.List;
-      Local_Idle_Function : Idle_Function := null;
-      Timeout             : Integer := 200;
+      Success              : Boolean := True;
+      Message              : String_List.List;
+      Local_Idle_Function  : Idle_Function := null;
+      Timeout              : Integer := 200;
    end record;
 end VCS.CVS;
