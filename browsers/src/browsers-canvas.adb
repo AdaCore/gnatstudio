@@ -34,7 +34,6 @@ with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
@@ -43,10 +42,8 @@ with Gtk.Widget;          use Gtk.Widget;
 with Pango.Font;          use Pango.Font;
 
 with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Intl;                use Glide_Intl;
-with Browsers.Module;           use Browsers.Module;
 with Layouts;                   use Layouts;
 
 package body Browsers.Canvas is
@@ -106,26 +103,12 @@ package body Browsers.Canvas is
      (Mitem : access Gtk_Widget_Record'Class; Data : Cb_Data);
    --  Toggle the display of links for the item
 
-   -------------
-   -- Gtk_New --
-   -------------
-
-   procedure Gtk_New
-     (Browser : out Glide_Browser;
-      Mask    : Browser_Type_Mask;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Browser := new Glide_Browser_Record;
-      Initialize (Browser, Mask, Kernel);
-   end Gtk_New;
-
    ----------------
    -- Initialize --
    ----------------
 
    procedure Initialize
-     (Browser : out Glide_Browser;
-      Mask    : Browser_Type_Mask;
+     (Browser : access Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Gtk.Scrolled_Window.Initialize (Browser);
@@ -133,7 +116,6 @@ package body Browsers.Canvas is
       Gtk_New (Browser.Canvas);
       Add (Browser, Browser.Canvas);
       Add_Events (Browser.Canvas, Key_Press_Mask);
-      Browser.Mask := Mask;
       Browser.Kernel := Kernel_Handle (Kernel);
 
       Set_Layout_Algorithm (Browser.Canvas, Layer_Layout'Access);
@@ -205,16 +187,6 @@ package body Browsers.Canvas is
       end if;
    end Realized;
 
-   --------------
-   -- Get_Mask --
-   --------------
-
-   function Get_Mask (Browser : access Glide_Browser_Record)
-      return Browser_Type_Mask is
-   begin
-      return Browser.Mask;
-   end Get_Mask;
-
    ----------------
    -- Get_Canvas --
    ----------------
@@ -239,11 +211,11 @@ package body Browsers.Canvas is
       return null;
    end Contextual_Factory;
 
-   -----------------------------
-   -- Browser_Context_Factory --
-   -----------------------------
+   -------------------------------------
+   -- Default_Browser_Context_Factory --
+   -------------------------------------
 
-   function Browser_Context_Factory
+   function Default_Browser_Context_Factory
      (Kernel       : access Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
@@ -254,7 +226,6 @@ package body Browsers.Canvas is
       B          : Glide_Browser := Glide_Browser (Object);
       Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
-      Check      : Gtk_Check_Menu_Item;
       Zooms_Menu : Gtk_Menu;
       Item       : Canvas_Item;
       Xr, Yr     : Gint;
@@ -297,25 +268,6 @@ package body Browsers.Canvas is
          Unlock (Get_Default_Accelerators (Kernel));
 
          Context := new Selection_Context;
-
-         --  ??? Should be set only for browsers related to files
-         Gtk_New (Mitem, Label => -"Open file...");
-         Append (Menu, Mitem);
-         Context_Callback.Object_Connect
-           (Mitem, "activate",
-            Context_Callback.To_Marshaller (Open_File'Access),
-            Slot_Object => B,
-            User_Data   => Selection_Context_Access (Context));
-
-         Gtk_New (Check, Label => -"Hide system files");
-         Set_Active (Check, True);
-         Set_Sensitive (Check, False);
-         Append (Menu, Check);
-
-         Gtk_New (Check, Label => -"Hide implicit dependencies");
-         Set_Active (Check, True);
-         Set_Sensitive (Check, False);
-         Append (Menu, Check);
 
          Gtk_New (Mitem, Label => -"Refresh");
          Append (Menu, Mitem);
@@ -362,7 +314,7 @@ package body Browsers.Canvas is
       end if;
 
       return Context;
-   end Browser_Context_Factory;
+   end Default_Browser_Context_Factory;
 
    ------------------
    -- Toggle_Links --

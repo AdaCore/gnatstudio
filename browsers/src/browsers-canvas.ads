@@ -42,24 +42,12 @@ package Browsers.Canvas is
    --  The type of links that are put in the canvas. These are automatically
    --  highlighted if they connect a selected item to another one.
 
-   procedure Gtk_New
-     (Browser : out Glide_Browser;
-      Mask    : Browser_Type_Mask;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new browser that can include items related to all types
-   --  described in Browser_Type. For instance, if Browser_Type is Any_Browser,
-   --  then Glide will include a single browser, and the class,
-   --  dependency,... browsers will all be mixed.
-
    procedure Initialize
-     (Browser : out Glide_Browser;
-      Mask    : Browser_Type_Mask;
+     (Browser : access Glide_Browser_Record'Class;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Internal Initialization function.
-
-   function Get_Mask (Browser : access Glide_Browser_Record)
-      return Browser_Type_Mask;
-   --  Return the list of browser types supported by Browser.
+   --  Initialize a new browser.
+   --  It sets up all the contextual menu for this browser, as well as the key
+   --  shortcuts to manipulate the browser.
 
    function Get_Canvas (Browser : access Glide_Browser_Record)
       return Gtkada.Canvas.Interactive_Canvas;
@@ -73,11 +61,6 @@ package Browsers.Canvas is
    function Selected_Item (Browser : access Glide_Browser_Record)
       return Gtkada.Canvas.Canvas_Item;
    --  Return the currently selected item, or null if there is none.
-
-   type Refresh_Item_Func is access procedure
-     (Browser : access Glide_Browser_Record'Class;
-      Item    : access Gtkada.Canvas.Buffered_Item_Record'Class);
-   --  This should refresh the display of the item on the window.
 
    procedure Select_Item
      (Browser : access Glide_Browser_Record;
@@ -152,14 +135,16 @@ package Browsers.Canvas is
    -- Contextual menus --
    ----------------------
 
-   function Browser_Context_Factory
+   function Default_Browser_Context_Factory
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
       return Glide_Kernel.Selection_Context_Access;
-   --  Return the context to use for a contextual menu in the canvas
+   --  Return the context to use for a contextual menu in the canvas.
+   --  This version takes care of checking whether the user clicked on an item,
+   --  and adds the standard menu entries
 
 private
    type Glide_Browser_Record is new
@@ -167,7 +152,6 @@ private
       record
          Canvas    : Gtkada.Canvas.Interactive_Canvas;
          Kernel    : Glide_Kernel.Kernel_Handle;
-         Mask      : Browser_Type_Mask;
 
          Selected_Link_GC      : Gdk.GC.Gdk_GC;
          Selected_Item_GC      : Gdk.GC.Gdk_GC;
@@ -187,6 +171,5 @@ private
       Hide_Links : Boolean := False;
    end record;
 
-   pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);
 end Browsers.Canvas;
