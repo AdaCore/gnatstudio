@@ -474,7 +474,7 @@ package body Builder_Module is
          exit when Result = Expect_Timeout;
 
          declare
-            S : constant String := Expect_Out (Fd.all);
+            S : constant String := Strip_CR (Expect_Out (Fd.all));
          begin
             Match (Matcher, S, Matched);
 
