@@ -49,6 +49,7 @@ package body Glide_Kernel.Scripts is
       Scripting_Languages : Scripting_Language_List;
       Classes             : Classes_Hash.String_Hash_Table.HTable;
       Entity_Class        : Class_Type := No_Class;
+      File_Class          : Class_Type := No_Class;
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
@@ -60,6 +61,14 @@ package body Glide_Kernel.Scripts is
    procedure On_Destroy_Entity (Value : System.Address);
    pragma Convention (C, On_Destroy_Entity);
 
+   type File_Info_Access is access all File_Info;
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, File_Info_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (File_Info, File_Info_Access);
+   procedure On_Destroy_File (Value : System.Address);
+   pragma Convention (C, On_Destroy_File);
+
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the default commands
@@ -67,6 +76,10 @@ package body Glide_Kernel.Scripts is
    procedure Create_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the "create_entity" command
+
+   procedure Create_File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
+   --  Handler for the "create_file" command
 
    ----------
    -- Free --
@@ -203,6 +216,26 @@ package body Glide_Kernel.Scripts is
       Unchecked_Free (Ent);
    end On_Destroy_Entity;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (File : in out File_Info) is
+   begin
+      Free (File.Name);
+   end Free;
+
+   ---------------------
+   -- On_Destroy_File --
+   ---------------------
+
+   procedure On_Destroy_File (Value : System.Address) is
+      File : File_Info_Access := Convert (Value);
+   begin
+      Free (File.all);
+      Unchecked_Free (File);
+   end On_Destroy_File;
+
    --------------
    -- Set_Data --
    --------------
@@ -213,7 +246,14 @@ package body Glide_Kernel.Scripts is
    is
       Ent : constant Entity_Information_Access :=
         new Entity_Information'(Copy (Entity));
+      Script : constant Scripting_Language := Get_Script (Instance);
    begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
       Set_Data
         (Instance,
          Value      => Ent.all'Address,
@@ -224,11 +264,65 @@ package body Glide_Kernel.Scripts is
    -- Get_Data --
    --------------
 
-   function Get_Data (Data : access Class_Instance_Record'Class)
+   function Get_Data (Instance : access Class_Instance_Record'Class)
       return Entity_Information
    is
-      Ent : constant Entity_Information_Access := Convert (Get_Data (Data));
+      Script : constant Scripting_Language := Get_Script (Instance);
+      Ent : Entity_Information_Access;
    begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_Entity_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Ent := Convert (Get_Data (Instance));
+      return Ent.all;
+   end Get_Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      File     : File_Info)
+   is
+      Ent    : File_Info_Access;
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Ent      := new File_Info;
+      Ent.Name := new String'(Get_Name (File));
+
+      Set_Data
+        (Instance,
+         Value      => Ent.all'Address,
+         On_Destroy => On_Destroy_File'Access);
+   end Set_Data;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return File_Info
+   is
+      Ent : File_Info_Access;
+      Script : constant Scripting_Language := Get_Script (Instance);
+   begin
+      if not Is_Subclass
+        (Script, Get_Class (Instance), Get_File_Class (Get_Kernel (Script)))
+      then
+         raise Invalid_Data;
+      end if;
+
+      Ent := Convert (Get_Data (Instance));
       return Ent.all;
    end Get_Data;
 
@@ -284,7 +378,7 @@ package body Glide_Kernel.Scripts is
      (Data : in out Callback_Data'Class; Command : String)
    is
       pragma Unreferenced (Command);
-      Kernel     : constant Kernel_Handle := Get_Kernel (Data);
+      Kernel : constant Kernel_Handle := Get_Kernel (Data);
       L, C   : Positive        := 1;
       Name   : constant String := Nth_Arg (Data, 1);
       File   : constant String := Nth_Arg (Data, 2);
@@ -315,9 +409,29 @@ package body Glide_Kernel.Scripts is
       else
          Instance := New_Instance (Data, Get_Entity_Class (Kernel));
          Set_Data (Instance, Entity);
+         Destroy (Entity);
          Set_Return_Value (Data, Instance);
       end if;
    end Create_Entity_Command_Handler;
+
+   ---------------------------------
+   -- Create_File_Command_Handler --
+   ---------------------------------
+
+   procedure Create_File_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      pragma Unreferenced (Command);
+      Kernel   : constant Kernel_Handle := Get_Kernel (Data);
+      Name     : constant String := Nth_Arg (Data, 1);
+      Instance : constant Class_Instance := New_Instance
+        (Data, Get_File_Class (Kernel));
+      Info     : File_Info := (Name => new String'(Name));
+   begin
+      Set_Data (Instance, Info);
+      Free (Info);
+      Set_Return_Value (Data, Instance);
+   end Create_File_Command_Handler;
 
    ----------------
    -- Initialize --
@@ -365,6 +479,15 @@ package body Glide_Kernel.Scripts is
          Minimum_Args => 2,
          Maximum_Args => 4,
          Handler      => Create_Entity_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "create_file",
+         Usage        => "create_file (file_name) -> File",
+         Description  => -"Create a new file, from its name.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Create_File_Command_Handler'Access);
    end Register_Default_Script_Commands;
 
    ----------------------
@@ -383,6 +506,22 @@ package body Glide_Kernel.Scripts is
       end if;
       return Scripting_Data (Kernel.Scripts).Entity_Class;
    end Get_Entity_Class;
+
+   --------------------
+   -- Get_File_Class --
+   --------------------
+
+   function Get_File_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type is
+   begin
+      if Scripting_Data (Kernel.Scripts).File_Class = No_Class then
+         Scripting_Data (Kernel.Scripts).File_Class := New_Class
+           (Kernel,
+            "File", "Represents a source file of your application");
+      end if;
+      return Scripting_Data (Kernel.Scripts).File_Class;
+   end Get_File_Class;
 
    -------------------------------
    -- Execute_GPS_Shell_Command --
@@ -413,5 +552,18 @@ package body Glide_Kernel.Scripts is
         (Scripting_Language (Script), Cmd, Display_In_Console => False);
       return "";
    end Execute_Command;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name (File : File_Info) return String is
+   begin
+      if File.Name /= null then
+         return File.Name.all;
+      else
+         return "";
+      end if;
+   end Get_Name;
 
 end Glide_Kernel.Scripts;

@@ -31,6 +31,9 @@ with Src_Info.Queries;
 
 package Glide_Kernel.Scripts is
 
+   type Scripting_Language_Record is abstract tagged private;
+   type Scripting_Language is access all Scripting_Language_Record'Class;
+
    -----------------
    -- Class types --
    -----------------
@@ -154,6 +157,10 @@ package Glide_Kernel.Scripts is
    --  call to Set_Return_Value. In this case, it is adopted by the
    --  Callback_Data.
 
+   function Get_Script (Instance : access Class_Instance_Record)
+      return Scripting_Language is abstract;
+   --  Return the scripting language that creates this instance
+
    function Get_Class (Instance : access Class_Instance_Record)
       return Class_Type is abstract;
    --  Return the class to which this instance belongs
@@ -207,9 +214,6 @@ package Glide_Kernel.Scripts is
    --  The number of parameters has been checked before this procedure is
    --  called.
 
-   type Scripting_Language_Record is abstract tagged private;
-   type Scripting_Language is access all Scripting_Language_Record'Class;
-
    procedure Register_Command
      (Script       : access Scripting_Language_Record;
       Command      : String;
@@ -248,6 +252,16 @@ package Glide_Kernel.Scripts is
    function Get_Name (Script : access Scripting_Language_Record)
       return String is abstract;
    --  The name of the scripting language
+
+   function Get_Kernel (Script : access Scripting_Language_Record)
+      return Kernel_Handle is abstract;
+   --  Return the kernel in which Script is registered
+
+   function Is_Subclass
+     (Script : access Scripting_Language_Record;
+      Class  : Class_Type;
+      Base   : Class_Type) return Boolean is abstract;
+   --  Whether Class is a Base or a subclass of Base.
 
    --------------------------
    -- Commands and methods --
@@ -319,15 +333,45 @@ package Glide_Kernel.Scripts is
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
       Entity   : Src_Info.Queries.Entity_Information);
-   function Get_Data (Data : access Class_Instance_Record'Class)
+   function Get_Data (Instance : access Class_Instance_Record'Class)
       return Src_Info.Queries.Entity_Information;
    --  The Entity class stores some Entity_Information data in Instance
+   --  You should destroy the entity passed to Set_Data, but not the value
+   --  returned by Get_Data.
+
+
+   function Get_File_Class
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+      return Class_Type;
+   --  Return the class to use for file types. This encapsulate a File_Info
+
+   type File_Info is private;
+   No_File : constant File_Info;
+   procedure Free (File : in out File_Info);
+
+   function Get_Name (File : File_Info) return String;
+   --  Return the name of File
+
+   procedure Set_Data
+     (Instance : access Class_Instance_Record'Class;
+      File     : File_Info);
+   function Get_Data (Instance : access Class_Instance_Record'Class)
+      return File_Info;
+   --  Store some file information with a file entity
+   --  You should free the file passed to Set_Data, but not the value returned
+   --  by Get_Data.
+
 
 private
    type Class_Type is record
       Name : GNAT.OS_Lib.String_Access;
    end record;
 
+   type File_Info is record
+      Name : GNAT.OS_Lib.String_Access;
+   end record;
+
+   No_File  : constant File_Info := (Name => null);
    No_Class : constant Class_Type := (Name => null);
 
    type Class_Instance_Record is abstract tagged null record;
