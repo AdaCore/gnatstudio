@@ -325,7 +325,7 @@ package body Glide_Kernel.Project is
    ----------------------
 
    function Get_Source_Files
-     (Handle : access Kernel_Handle_Record)
+     (Handle : access Kernel_Handle_Record'Class)
       return Basic_Types.String_Array_Access
    is
       use Basic_Types;

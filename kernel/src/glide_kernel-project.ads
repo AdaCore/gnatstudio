@@ -113,7 +113,7 @@ package Glide_Kernel.Project is
    --  editor, or simply select the existing one.
 
    function Get_Source_Files
-     (Handle : access Kernel_Handle_Record)
+     (Handle : access Kernel_Handle_Record'Class)
       return Basic_Types.String_Array_Access;
    --  Return the list of source files belonging to the project described in
    --  Handle. Only the direct sources of the project are currently returned,
