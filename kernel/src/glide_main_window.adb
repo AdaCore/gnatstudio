@@ -80,6 +80,53 @@ package body Glide_Main_Window is
    --  Check whether Event should activate the selection dialog for MDI
    --  children.
 
+   type Window_Mode is
+     (Split_H, Split_V, Tile_H, Tile_V, Cascade, Maximize, Unmaximize, Single);
+   type MDI_Window_Actions_Command is new Interactive_Command with record
+      Kernel : Kernel_Handle;
+      Mode   : Window_Mode;
+   end record;
+   type MDI_Window_Actions_Command_Access is access all
+     MDI_Window_Actions_Command'Class;
+   function Execute
+     (Command : access MDI_Window_Actions_Command;
+      Event   : Gdk_Event)
+      return Command_Return_Type;
+   --  Act on the layout of windows
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access MDI_Window_Actions_Command;
+      Event   : Gdk_Event)
+      return Command_Return_Type
+   is
+      pragma Unreferenced (Event);
+   begin
+      case Command.Mode is
+         when Split_H =>
+            Split (Get_MDI (Command.Kernel), Orientation_Horizontal);
+         when Split_V =>
+            Split (Get_MDI (Command.Kernel), Orientation_Vertical);
+         when Tile_H =>
+            Tile_Horizontally (Get_MDI (Command.Kernel));
+         when Tile_V =>
+            Tile_Vertically (Get_MDI (Command.Kernel));
+         when Cascade =>
+            Cascade_Children (Get_MDI (Command.Kernel));
+         when Maximize =>
+            Maximize_Children (Get_MDI (Command.Kernel), True);
+         when Unmaximize =>
+            Maximize_Children (Get_MDI (Command.Kernel), False);
+         when Single =>
+            Maximize_Children (Get_MDI (Command.Kernel), False);
+            Maximize_Children (Get_MDI (Command.Kernel), True);
+      end case;
+      return Success;
+   end Execute;
+
    -------------
    -- Anim_Cb --
    -------------
@@ -281,6 +328,7 @@ package body Glide_Main_Window is
 
    procedure Register_Keys (Main_Window : access Glide_Window_Record'Class) is
       Command : MDI_Child_Selection_Command_Access;
+      Command2 : MDI_Window_Actions_Command_Access;
    begin
       Command              := new MDI_Child_Selection_Command;
       Command.Kernel       := Main_Window.Kernel;
@@ -324,6 +372,72 @@ package body Glide_Main_Window is
          Command     => Command,
          Description =>
            -("Select the next splitted window in the central area of GPS."));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Split_H;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Split horizontally",
+         Command     => Command2,
+         Description => -("Split the current window in two horizontally"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Split_V;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Split vertically",
+         Command     => Command2,
+         Description => -("Split the current window in two vertically"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Tile_H;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Tile horizontally",
+         Command     => Command2,
+         Description =>
+           -("Tile the windows in the central area horizontally"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Tile_V;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Tile vertically",
+         Command     => Command2,
+         Description =>
+           -("Tile the windows in the central area vertically"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Maximize;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Maximize windows",
+         Command     => Command2,
+         Description => -("Maximize all windows in the central area"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Unmaximize;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Unmaximize windows",
+         Command     => Command2,
+         Description => -("Unmaximize all windows in the central area"));
+
+      Command2        := new MDI_Window_Actions_Command;
+      Command2.Kernel := Main_Window.Kernel;
+      Command2.Mode   := Single;
+      Register_Action
+        (Main_Window.Kernel,
+         Name        => "Single window",
+         Command     => Command2,
+         Description => -("Unsplit the central area of GPS, so that only one"
+                          & " window is visible"));
    end Register_Keys;
 
    -------------
