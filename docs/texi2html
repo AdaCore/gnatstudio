@@ -4176,11 +4176,11 @@ while (@lines) {
 	if ($in_menu_listing)
 	{
 	  $in_menu_listing = 0;
-	  push(@lines2, &debug("</TABLE>\n", __LINE__));
+	  push(@lines2, &debug("</TABLE><p>\n", __LINE__));
 	}
 	# should be like verbatim -- preseve spaces, etc
 	s/ /\&nbsp;/g;
-	$_ .= "<br>\n";
+	#$_ .= "<p>\n";
 	push(@lines2, $_);
       }
       if ($node)
