@@ -112,15 +112,28 @@ package VCS.Generic_VCS is
    function Get_Identified_Actions
      (Rep : access Generic_VCS_Record) return Action_Array;
 
+   function Get_Registered_Status
+     (Rep : access Generic_VCS_Record) return Status_Array;
 private
 
    type Pattern_Matcher_Access is access Pattern_Matcher;
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Pattern_Matcher, Pattern_Matcher_Access);
 
+   type Regexp_Status_Record is record
+      Regexp : Pattern_Matcher_Access;
+      Index  : Natural;
+   end record;
+
+   procedure Free (X : in out Regexp_Status_Record);
+   --  Free memory associated to X.
+
+   package Status_Parser is new Generic_List
+     (Regexp_Status_Record);
+
    type Status_Parser_Record is record
-      Status   : Status_Array;
-      Regexp   : Pattern_Matcher_Access;
+      Regexp             : Pattern_Matcher_Access;
+      Status_Identifiers : Status_Parser.List;
 
       File_Index           : Natural := 0;
       Status_Index         : Natural := 0;
@@ -132,6 +145,8 @@ private
       Id       : String_Access;
       Commands : Action_Array;
       Labels   : Action_Array;
+
+      Status   : Status_Array_Access;
 
       Status_Parser       : Status_Parser_Record;
       Local_Status_Parser : Status_Parser_Record;
