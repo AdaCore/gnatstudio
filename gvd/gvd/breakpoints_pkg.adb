@@ -65,6 +65,8 @@ begin
    Set_Modal (Breakpoints, False);
    Return_Callback.Connect
      (Breakpoints, "delete_event", On_Breakpoints_Delete_Event'Access);
+   Return_Callback.Connect
+     (Breakpoints, "key_press_event", On_Breakpoints_Key_Press_Event'Access);
 
    Gtk_New_Hbox (Breakpoints.Main_Box, False, 0);
    Add (Breakpoints, Breakpoints.Main_Box);
@@ -481,36 +483,36 @@ begin
    Set_Policy (Breakpoints.Scrolledwindow2, Policy_Automatic, Policy_Always);
    Pack_Start (Breakpoints.Vbox16, Breakpoints.Scrolledwindow2, True, True, 0);
 
-   Gtk_New (Breakpoints.Clist1, 8);
-   Set_Selection_Mode (Breakpoints.Clist1, Selection_Single);
-   Set_Shadow_Type (Breakpoints.Clist1, Shadow_In);
-   Set_Show_Titles (Breakpoints.Clist1, True);
-   --  Set_Column_Width (Breakpoints.Clist1, 0, 80);
-   --  Set_Column_Width (Breakpoints.Clist1, 1, 186);
-   Add (Breakpoints.Scrolledwindow2, Breakpoints.Clist1);
+   Gtk_New (Breakpoints.Breakpoint_List, 8);
+   Set_Selection_Mode (Breakpoints.Breakpoint_List, Selection_Single);
+   Set_Shadow_Type (Breakpoints.Breakpoint_List, Shadow_In);
+   Set_Show_Titles (Breakpoints.Breakpoint_List, True);
+   --  Set_Column_Width (Breakpoints.Breakpoint_List, 0, 80);
+   --  Set_Column_Width (Breakpoints.Breakpoint_List, 1, 186);
+   Add (Breakpoints.Scrolledwindow2, Breakpoints.Breakpoint_List);
 
-   Set_Column_Title (Breakpoints.Clist1, 0, -"Num");
-   Set_Column_Title (Breakpoints.Clist1, 1, -"Enb");
-   Set_Column_Title (Breakpoints.Clist1, 2, -"Type");
-   Set_Column_Title (Breakpoints.Clist1, 3, -"Disp");
-   Set_Column_Title (Breakpoints.Clist1, 4, -"File/Variable");
-   Set_Column_Title (Breakpoints.Clist1, 5, -"Line");
-   Set_Column_Title (Breakpoints.Clist1, 6, -"Exception");
-   Set_Column_Title (Breakpoints.Clist1, 7, -"Subprogram");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 0, -"Num");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 1, -"Enb");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 2, -"Type");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 3, -"Disp");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 4, -"File/Variable");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 5, -"Line");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 6, -"Exception");
+   Set_Column_Title (Breakpoints.Breakpoint_List, 7, -"Subprogram");
 
    --  Gtk_New (Breakpoints.Label15, -("label15"));
    --  Set_Alignment (Breakpoints.Label15, 0.5, 0.5);
    --  Set_Padding (Breakpoints.Label15, 0, 0);
    --  Set_Justify (Breakpoints.Label15, Justify_Center);
    --  Set_Line_Wrap (Breakpoints.Label15, False);
-   --  Set_Column_Widget (Breakpoints.Clist1, 0, Breakpoints.Label15);
+   --  Set_Column_Widget (Breakpoints.Breakpoint_List, 0, Breakpoints.Label15);
 
    --  Gtk_New (Breakpoints.Label16, -("label16"));
    --  Set_Alignment (Breakpoints.Label16, 0.5, 0.5);
    --  Set_Padding (Breakpoints.Label16, 0, 0);
    --  Set_Justify (Breakpoints.Label16, Justify_Center);
    --  Set_Line_Wrap (Breakpoints.Label16, False);
-   --  Set_Column_Widget (Breakpoints.Clist1, 1, Breakpoints.Label16);
+   --  Set_Column_Widget (Breakpoints.Breakpoint_List, 1, Breakpoints.Label16);
 
    Gtk_New (Breakpoints.Hbuttonbox8);
    Set_Spacing (Breakpoints.Hbuttonbox8, 30);
