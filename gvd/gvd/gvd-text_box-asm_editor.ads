@@ -116,9 +116,6 @@ private
       Strings_Color   : Gdk.Color.Gdk_Color;
       Highlight_Color : Gdk.Color.Gdk_Color;
 
-      Highlight_Start : Integer := 0;
-      Highlight_End   : Integer := 0;
-
       Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
       Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
 

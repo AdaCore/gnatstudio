@@ -28,7 +28,6 @@ with Gtk.Layout;       use Gtk.Layout;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Pixmap;       use Gtk.Pixmap;
-with Gtk.Text;         use Gtk.Text;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Types;     use Gtkada.Types;
 
@@ -149,7 +148,7 @@ package body Odd.Asm_Editors is
       Editor.Keywords_Color := Parse (Keywords_Color);
       Alloc (Get_System, Editor.Keywords_Color);
 
-      Editor.Highlight_Color := Parse (Editor_Highlight_Color);
+      Editor.Highlight_Color := Parse (Asm_Highlight_Color);
       Alloc (Get_System, Editor.Highlight_Color);
    end Configure;
 
@@ -176,7 +175,6 @@ package body Odd.Asm_Editors is
       if Editor.Current_Range = null then
          Set_Buffer (Editor, new String'(-"Getting assembly code..."),
                      Clear_Previous => False);
-         Editor.Highlight_Start := 0;
          Update_Child (Editor);
 
          Get_Machine_Code
@@ -204,7 +202,6 @@ package body Odd.Asm_Editors is
       end if;
 
       Set_Buffer (Editor, Editor.Current_Range.Data, Clear_Previous => False);
-      Editor.Highlight_Start := 0;
       Update_Child (Editor);
       Set_Busy_Cursor (Process, False);
    end On_Frame_Changed;
@@ -328,53 +325,14 @@ package body Odd.Asm_Editors is
       if Pos_Start /= 0 then
          Pos_End := Pos_From_Address
            (Editor, Range_End (1 .. Range_End_Len));
-
-         --  If this range is currently highlighted, do nothing for efficiency
-         if Pos_Start = Editor.Highlight_Start
-           and then Pos_End = Editor.Highlight_End
-         then
-            return;
-         end if;
       end if;
 
-      --  Restore the previous range tothe default color
+      --  In the params below, Line is set to 0 since anyway there is no
+      --  invisible column in this editor.
 
-      if Editor.Highlight_Start /= 0 then
-         Freeze (Get_Child (Editor));
-         Delete_Text
-           (Get_Child (Editor),
-            Gint (Editor.Highlight_Start) - 1,
-            Gint (Editor.Highlight_End) - 1);
-         Set_Point
-           (Get_Child (Editor), Guint (Editor.Highlight_Start) - 1);
-         Insert
-           (Editor,
-            Chars => Get_Buffer (Editor)
-            (Editor.Highlight_Start .. Editor.Highlight_End - 1));
-         Editor.Highlight_Start := 0;
-         Thaw (Get_Child (Editor));
-      end if;
-
-      --  Highlight the new range
-      if Pos_Start /= 0 then
-         if Pos_End /= 0 then
-            Freeze (Get_Child (Editor));
-            Editor.Highlight_Start := Pos_Start;
-            Editor.Highlight_End   := Pos_End;
-            Delete_Text
-              (Get_Child (Editor),
-               Gint (Editor.Highlight_Start) - 1,
-               Gint (Editor.Highlight_End) - 1);
-            Set_Point
-              (Get_Child (Editor), Guint (Editor.Highlight_Start) - 1);
-            Insert
-              (Editor,
-               Fore  => Editor.Highlight_Color,
-               Chars => Get_Buffer (Editor)
-               (Editor.Highlight_Start .. Editor.Highlight_End - 1));
-            Thaw (Get_Child (Editor));
-         end if;
-      end if;
+      Highlight_Range
+        (Editor, Gint (Pos_Start), Gint (Pos_End), 0,
+         Fore => Editor.Highlight_Color);
 
       Thaw (Get_Buttons (Editor));
    end Highlight_Address_Range;
