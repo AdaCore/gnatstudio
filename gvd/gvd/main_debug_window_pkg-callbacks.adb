@@ -39,16 +39,20 @@ with Odd.Process;         use Odd.Process;
 with GNAT.Expect;         use GNAT.Expect;
 with Ada.Text_IO;         use Ada.Text_IO;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Odd.Types;           use Odd.Types;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
    use Odd;
    use Gtk.Arguments;
-   use Process.String_History;
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
    --  Close all the debuggers associated with a given main debug window
    --  by looking at all the pages of the main notebook.
+
+   -----------------------
+   -- Cleanup_Debuggers --
+   -----------------------
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access) is
       Tab      : Debugger_Process_Tab;
@@ -56,6 +60,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Page     : Gtk_Widget;
 
    begin
+      Free (Top.Command_History);
       loop
          Page := Get_Nth_Page (Top.Process_Notebook, Page_Num);
 
@@ -63,7 +68,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
          Page_Num := Page_Num + 1;
          Tab := Process_User_Data.Get (Page);
-         Free (Tab.Command_History);
          Close (Tab.Debugger);
       end loop;
    end Cleanup_Debuggers;
@@ -101,23 +105,23 @@ package body Main_Debug_Window_Pkg.Callbacks is
    --      <remote_target_1>
    --      <protocol_1>
    --      <debugger_name_1>
-   --  [History]
-   --    <number of commands for process 1>
-   --    <command>
-   --    <command>
-   --  (etc)
-   --  --------------
+   --  ---------------------
    --      <program_file_name_2>
    --      <debugger_type_2>
    --      <remote_host_2>
    --      <remote_target_2>
    --      <protocol_2>
    --      <debugger_name_2>
+   --  (etc)
    --  [History]
-   --    <number of commands for process 2>
+   --    <debugger_number>
+   --    <command_type>
    --    <command>
+   --    <debugger_number>
+   --    <command_type>
    --    <command>
    --  (etc)
+   --  ---------------------
 
    -------------------------------
    -- On_Open_Program1_Activate --
@@ -165,7 +169,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
               Program.Remote_Target.all,
               Program.Protocol.all,
               Program.Debugger_Name.all);
-         Process.Descriptor := Program;
       end if;
    end On_Open_Debugger1_Activate;
 
@@ -188,7 +191,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       File         : File_Type;
-      S            : constant String := File_Selection_Dialog;
+      S            : Types.String_Access;
       Program      : Program_Descriptor;
       Buffer       : String (1 .. 256);
       Last         : Natural;
@@ -200,10 +203,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Num_Pages    : Gint;
       Page         : Gtk_Widget;
       Page_Num     : Gint;
+      Mode         : Command_Type;
 
    begin
-      if S /= "" then
-         Open (File, In_File, S);
+      Open_Session (Top.Open_Session, S);
+
+      if S /= null
+        and then S.all /= ""
+      then
+         Open (File, In_File, Getenv ("HOME").all & Directory_Separator
+               & ".gvd" & Directory_Separator & "sessions"
+               & Directory_Separator & S.all);
+
          Get_Line (File, Buffer, Last);
 
          if Buffer (1 .. Last) /= "[Session_File Header]" then
@@ -211,16 +222,17 @@ package body Main_Debug_Window_Pkg.Callbacks is
             return;
          end if;
 
+         --  Remove all the pages in the notebook before opening session.
+
          Page_Num :=
            Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
-
+         Free (Top.Command_History);
          while Page_Num /= -1 loop
             Page := Get_Nth_Page
               (Top.Process_Notebook, Page_Num);
 
             if Page /= null then
                Tab := Process_User_Data.Get (Page);
-               Free (Tab.Command_History);
                Close (Tab.Debugger);
             end if;
 
@@ -228,9 +240,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Page_Num := Page_Num - 1;
          end loop;
 
+         --  Get the number of processes.
+
          Get_Line (File, Buffer, Last);
          Num_Pages := Gint'Value (Buffer (1 ..  Last));
          Get_Line (File, Buffer, Last);
+
+         --  Read the descriptors and create the debuggers.
 
          for J in 1 .. Num_Pages loop
             Get_Line (File, Buffer, Last);
@@ -246,6 +262,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Get_Line (File, Buffer, Last);
             Program.Debugger_Name := new String' (Buffer (1 .. Last));
             Get_Line (File, Buffer, Last);
+
             Process :=
               Create_Debugger
                 (Main_Debug_Window_Access (Object),
@@ -256,17 +273,52 @@ package body Main_Debug_Window_Pkg.Callbacks is
                  Program.Remote_Target.all,
                  Program.Protocol.all,
                  Program.Debugger_Name.all);
-            Tab := Get_Current_Process (Object);
-            Tab.Descriptor := Program;
 
-            loop
-               Get_Line (File, Buffer, Last);
-               exit when Last > 4 and then Buffer (1 .. 4) = "----";
-               Send (Tab.Debugger, Buffer (1 .. Last), True);
-            end loop;
+            Tab := Get_Current_Process (Object);
          end loop;
 
+         --  Read and compute the commands history.
+
+         Get_Line (File, Buffer, Last);
+
+         loop
+            Get_Line (File, Buffer, Last);
+            exit when Last > 4 and then Buffer (1 .. 4) = "----";
+            Page := Get_Nth_Page
+              (Top.Process_Notebook, Gint'Value (Buffer (1 .. Last)));
+            Tab := Process_User_Data.Get (Page);
+
+            Get_Line (File, Buffer, Last);
+            Mode := Command_Type'Value (Buffer (1 .. Last));
+
+            Get_Line (File, Buffer, Last);
+
+            Set_Busy_Cursor (Tab, True);
+
+            Push_Internal_Command_Status
+              (Get_Process (Tab.Debugger), True);
+
+            if Mode = Hidden then
+
+               Send (Tab.Debugger,
+                     Buffer (1 .. Last),
+                     Display => False,
+                     Wait_For_Prompt => True,
+                     Mode => Hidden);
+
+            elsif Mode = User then
+               Process_User_Command (Tab, Buffer (1 .. Last));
+            end if;
+
+            Pop_Internal_Command_Status (Get_Process (Tab.Debugger));
+
+            Set_Busy_Cursor (Tab, False);
+         end loop;
          Close (File);
+      end if;
+
+      if S /= null then
+         Free (S);
       end if;
 
    exception
@@ -284,20 +336,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       File        : File_Type;
-      S           : constant String := File_Selection_Dialog;
+      S           : Types.String_Access;
       Page        : Gtk_Widget;
       Top         : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
       Num_Pages   : Gint;
       Tab         : Debugger_Process_Tab;
       Hist_Length : Integer;
-
    begin
+
       Num_Pages := Gint
         (Page_List.Length (Get_Children (Top.Process_Notebook)));
 
-      if S /= "" then
-         Create (File, Out_File, S);
+      Open_Session (Top.Open_Session, S);
+
+      if S /= null
+        and then S.all /= ""
+      then
+         Create (File, Out_File,
+                 Getenv ("HOME").all & Directory_Separator &
+                 ".gvd" & Directory_Separator &
+                 "sessions" & Directory_Separator & S.all);
          Put_Line (File, "[Session_File Header]");
          Put_Line (File, Gint'Image (Num_Pages));
          Put_Line (File, "---------------------");
@@ -310,38 +369,51 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
             if Page /= null then
                Tab := Process_User_Data.Get (Page);
-               Hist_Length := Length (Tab.Command_History);
+               Hist_Length := Length (Top.Command_History);
                Put_Line (File, Tab.Descriptor.Program.all);
                Put_Line (File, Debugger_Type'Image (Tab.Descriptor.Debugger));
                Put_Line (File, Tab.Descriptor.Remote_Host.all);
                Put_Line (File, Tab.Descriptor.Remote_Target.all);
                Put_Line (File, Tab.Descriptor.Protocol.all);
                Put_Line (File, Tab.Descriptor.Debugger_Name.all);
-               Put_Line (File, "[History]");
-               Wind (Tab.Command_History, Backward);
-               Move_To_Next (Tab.Command_History);
-
-               for J in reverse 1 .. Length (Tab.Command_History) loop
-                  for Count in 1 ..
-                    Get_Current_Repeat_Num (Tab.Command_History)
-                  loop
-                     Put_Line (File, Get_Current (Tab.Command_History));
-                  end loop;
-
-                  if J /= 1 then
-                     Move_To_Next (Tab.Command_History);
-                  end if;
-               end loop;
+               Put_Line (File, "------------------------");
             end if;
 
-            Put_Line (File, "--------------");
          end loop;
+         Put_Line (File, "[History]");
+         Wind (Top.Command_History, Backward);
 
+         for J in reverse 1 .. Length (Top.Command_History) loop
+            for Count in 1 ..
+              Get_Current_Repeat_Num (Top.Command_History)
+            loop
+               declare Data : History_Data :=
+                 Get_Current (Top.Command_History);
+               begin
+                  Put_Line (File,
+                            Natural'Image (Data.Debugger_Num));
+
+                  Put_Line (File,
+                            Command_Type'Image (Data.Mode));
+
+                  Put_Line (File, Data.Command.all);
+               end;
+            end loop;
+            if J /= 1 then
+               Move_To_Next (Top.Command_History);
+            end if;
+         end loop;
+         Put_Line (File, "---------------------");
          Close (File);
+      end if;
+
+      if S /= null then
+         Free (S);
       end if;
 
    exception
       when No_Such_Item =>
+         Put_Line (File, "---------------------");
          Close (File);
       when Use_Error =>
          null;
