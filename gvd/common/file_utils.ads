@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -34,7 +34,7 @@ package File_Utils is
      (Buffer : out String;
       Len    : out Natural);
    --  Store in Buffer (Buffer'First .. Buffer'First + Len) a ASCII.NUL
-   --  separated string containing the names of the --  drives, e.g
+   --  separated string containing the names of the drives, e.g
    --  "a:\" & NUL & "c:\", or a null string if not relevant on the target.
 
    function Read_Files_From_Dirs
