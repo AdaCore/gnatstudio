@@ -88,13 +88,17 @@ package Glide_Kernel.Editor is
    procedure Select_All (Kernel : access Kernel_Handle_Record'Class);
    --  Set the selection bounds from the begining to the end of the buffer.
 
-   function Focus_Is_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return Boolean;
-   --  Return True if the focus window in Glide is an editor.
+   procedure Set_Editor_Child (Kernel : access Kernel_Handle_Record'Class);
+   --  Set the editor child to the focus widget.
 
-   function Get_Focus_Title
+   function Get_Editor_Child
+     (Kernel : access Kernel_Handle_Record'Class) return Gtkada.MDI.MDI_Child;
+   --  Return the last editor child that had the focus, null if none.
+
+   function Get_Editor_Filename
      (Kernel : access Kernel_Handle_Record'Class) return String;
-   --  Return the Title of the focus window.
+   --  Return the filename of the last editor window that had the focus,
+   --  "" if none.
 
    ------------------
    -- Xref support --
