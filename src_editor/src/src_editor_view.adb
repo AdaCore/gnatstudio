@@ -1316,7 +1316,7 @@ package body Src_Editor_View is
    begin
       --  Set the font.
 
-      Descr := Get_Pref (Kernel, Source_Editor_Font);
+      Descr := Get_Pref_Font (Kernel, Default_Style);
       Set_Font (Source, Descr);
 
       --  Recompute the width of one character.
@@ -1359,8 +1359,27 @@ package body Src_Editor_View is
             Source.Speed_Column_Buffer := null;
          end if;
 
-         Redraw_Speed_Column (Source);
+         if Realized_Is_Set (Source.Area) then
+            Redraw_Speed_Column (Source);
+         end if;
       end if;
+
+      --  Modify the text background and color.
+
+      Color := Get_Pref_Bg (Kernel, Default_Style);
+
+      if Color /= Source.Background_Color then
+         Source.Background_Color := Color;
+         Modify_Base (Source, State_Normal, Color);
+      end if;
+
+      Color := Get_Pref_Fg (Kernel, Default_Style);
+
+      if Color /= Source.Text_Color then
+         Source.Text_Color := Color;
+         Modify_Text (Source, State_Normal, Color);
+      end if;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
