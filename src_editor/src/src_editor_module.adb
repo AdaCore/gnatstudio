@@ -2014,10 +2014,9 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class;
       Kernel : Kernel_Handle)
    is
-      Item  : constant Gtk_Menu_Item := Gtk_Menu_Item (Widget);
-      Label : constant Gtk_Label := Gtk_Label (Get_Child (Item));
+      Mitem : constant Full_Path_Menu_Item := Full_Path_Menu_Item (Widget);
    begin
-      Open_File_Editor (Kernel, Get_Text (Label), From_Path => False);
+      Open_File_Editor (Kernel, Get_Path (Mitem), From_Path => False);
 
    exception
       when E : others =>
@@ -3419,7 +3418,6 @@ package body Src_Editor_Module is
       Value       : constant String_List_Access := Get_History
         (Get_History (Kernel).all, Hist_Key);
       Recent_Menu : Gtk_Menu;
-      Mitem       : Gtk_Menu_Item;
    begin
       if Get_Submenu (The_Data.Recent_Menu_Item) /= null then
          Remove_Submenu (The_Data.Recent_Menu_Item);
@@ -3430,14 +3428,20 @@ package body Src_Editor_Module is
 
       if Value /= null then
          for V in Value'Range loop
-            Gtk_New (Mitem, Value (V).all);
-            Append (Recent_Menu, Mitem);
+            declare
+               Path  : constant String := Value (V).all;
+               Mitem : Full_Path_Menu_Item;
+            begin
+               Gtk_New (Mitem, Shorten (Path), Path);
+               Append (Recent_Menu, Mitem);
 
-            Kernel_Callback.Connect
-              (Mitem,
-               "activate",
-               Kernel_Callback.To_Marshaller (On_Recent'Access),
-               Kernel_Handle (Kernel));
+               Kernel_Callback.Connect
+                 (Mitem,
+                  "activate",
+                  Kernel_Callback.To_Marshaller (On_Recent'Access),
+                  Kernel_Handle (Kernel));
+
+            end;
          end loop;
 
          Show_All (Recent_Menu);
