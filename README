@@ -27,6 +27,7 @@ The directory containing this README (usually called glidiator if taken
 fresh from CVS) should look like:
 
 aunit/
+browsers/
 common/
 gbuilder/
 glide/
