@@ -30,6 +30,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
+with Language;            use Language;
 with Odd.Types;
 
 package body Main_Debug_Window_Pkg.Callbacks is
@@ -775,7 +776,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       if Top.Backtrace_Dialog = null then
          Gtk_New (Top.Backtrace_Dialog, Gtk_Window (Object), Bt (1 .. Len));
          Widget_Callback.Connect
-           (Gtk_Widget (Tab), "process_stopped",
+           (Gtk_Widget (Tab), "context_changed",
             On_Backtrace_Process_Stopped'Access);
       else
          Update (Top.Backtrace_Dialog, Bt (1 .. Len));
@@ -814,17 +815,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Internal := Is_Internal_Command (Get_Process (Tab.Debugger));
       Set_Internal_Command (Get_Process (Tab.Debugger), True);
 
-      if Top.Task_Dialog = null then
-         Gtk_New
-           (Top.Task_Dialog, Gtk_Window (Object), Info_Threads (Tab.Debugger));
-      else
-         Update (Top.Task_Dialog, Info_Threads (Tab.Debugger));
-      end if;
+      declare
+         Info : Thread_Information_Array := Info_Threads (Tab.Debugger);
+      begin
+         if Top.Task_Dialog = null then
+            Gtk_New (Top.Task_Dialog, Gtk_Window (Object), Info);
+            Widget_Callback.Connect
+              (Gtk_Widget (Tab), "process_stopped",
+               On_Task_Process_Stopped'Access);
+         else
+            Update (Top.Task_Dialog, Info);
+         end if;
+
+         Free (Info);
+      end;
 
       Set_Internal_Command (Get_Process (Tab.Debugger), Internal);
-
-      --  Should free the memory returned by Info_Threads [MEMORY_LEAK] ???
-
       Show_All (Top.Task_Dialog);
    end On_Threads1_Activate;
 
