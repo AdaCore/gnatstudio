@@ -170,6 +170,26 @@ package body Codefix.Errors_Manager is
          Memorized_Corrections.List_Node (Error));
    end Validate;
 
+   --------------
+   -- Validate --
+   --------------
+
+   procedure Validate
+     (This         : in out Correction_Manager;
+      Error        : Error_Id;
+      Choice       : Extract;
+      Later_Update : Boolean := True) is
+   begin
+      Append (This.Valid_Corrections, Clone (Choice));
+
+      Remove_Nodes
+        (This.Potential_Corrections,
+         Prev
+           (This.Potential_Corrections,
+            Memorized_Corrections.List_Node (Error)),
+         Memorized_Corrections.List_Node (Error));
+   end Validate;
+
    ------------
    -- Update --
    ------------
