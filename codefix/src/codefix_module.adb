@@ -805,11 +805,9 @@ package body Codefix_Module is
          declare
             Codefix : constant Class_Instance :=
               Nth_Arg (Data, 2, Codefix_Module_ID.Codefix_Class);
-            Loc     : constant Class_Instance :=
-              Nth_Arg (Data, 3, Get_File_Location_Class (Get_Kernel (Data)));
             Message : constant String  := Nth_Arg (Data, 4, "");
             Session : constant Codefix_Session := Get_Data (Codefix);
-            Location : constant File_Location_Info := Get_Data (Loc);
+            Location : constant File_Location_Info := Get_Data (Data, 3);
             File    : constant Class_Instance := Get_File (Location);
             Error   : constant Error_Id := Search_Error
               (Session.Corrector.all,
