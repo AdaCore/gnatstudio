@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -370,14 +370,19 @@ private
       Source_Buffer        : Src_Editor_Buffer.Source_Buffer;
       --  The status bar
       Filename_Label       : Gtk.Label.Gtk_Label;
+      Read_Only_Label      : Gtk.Label.Gtk_Label;
+      Modified_Label       : Gtk.Label.Gtk_Label;
       Cursor_Line_Label    : Gtk.Label.Gtk_Label;
       Cursor_Column_Label  : Gtk.Label.Gtk_Label;
       --  The non graphical attributes
       Filename             : String_Access;
 
-      Tooltip : Editor_Tooltips.Tooltips;
+      Tooltip              : Editor_Tooltips.Tooltips;
       --  Those tooltips display the value of variables pointed to by the
       --  mouse.
+
+      Modified             : Boolean := False;
+      Writable             : Boolean := False;
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
