@@ -437,7 +437,7 @@ package body Odd.Text_Boxes is
                   Line := Line_From_Pixels (Box, Y);
                   X := Gint (Get_X (Event))
                     / Char_Width (Box.Font, Character'('m'))
-                    - Invisible_Column_Width (Box);
+                    - Invisible_Column_Width (Box) + 1;
 
                   --  Get the index of the item
                   if X < 0 then
@@ -557,11 +557,14 @@ package body Odd.Text_Boxes is
    ----------------
 
    procedure Set_Buffer
-     (Box    : access Odd_Text_Box_Record;
-      Buffer : Odd.Types.String_Access := null)
+     (Box            : access Odd_Text_Box_Record;
+      Buffer         : Odd.Types.String_Access := null;
+      Clear_Previous : Boolean := True)
    is
    begin
-      Free (Box.Buffer);
+      if Clear_Previous then
+         Free (Box.Buffer);
+      end if;
       Box.Buffer := Buffer;
       Delete_Text (Box.Child);
    end Set_Buffer;

@@ -126,13 +126,14 @@ package Odd.Text_Boxes is
    --  below the cursor was Entity.
 
    procedure Set_Buffer
-     (Box    : access Odd_Text_Box_Record;
-      Buffer : Odd.Types.String_Access := null);
+     (Box            : access Odd_Text_Box_Record;
+      Buffer         : Odd.Types.String_Access := null;
+      Clear_Previous : Boolean := True);
    --  Changes the buffer associated with the child. The child widget is simply
    --  cleared, but not redrawn, and you should call Update_Child to draw it
    --  again.
-   --  The previous buffer is freed, but no copy of Buffer is made (we simply
-   --  store the pointer).
+   --  The previous buffer is freed if Clear_Previous, but no copy of Buffer is
+   --  made (we simply store the pointer).
    --  Set Buffer to null if you simply want to free the memory.
 
    function Get_Buffer (Box : access Odd_Text_Box_Record)
