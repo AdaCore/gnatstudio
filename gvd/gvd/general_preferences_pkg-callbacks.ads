@@ -29,10 +29,10 @@ package General_Preferences_Pkg.Callbacks is
    procedure On_Ok_Button_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Reset_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Apply_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Help_Button_Clicked
-     (Object : access Gtk_Button_Record'Class);
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class);
 
 end General_Preferences_Pkg.Callbacks;

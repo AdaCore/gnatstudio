@@ -21,6 +21,7 @@
 with Gtk.Widget; use Gtk.Widget;
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 with GVD.Preferences;        use GVD.Preferences;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
 package body General_Preferences_Pkg.Callbacks is
 
@@ -50,31 +51,41 @@ package body General_Preferences_Pkg.Callbacks is
       Pref : General_Preferences_Access :=
         General_Preferences_Access (Object);
    begin
-      Set_From_Dialog (Pref);
+      Set_Preferences (Pref);
       Hide (Get_Toplevel (Object));
       Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+      Save_Preferences
+        (Main_Debug_Window_Access (Pref.Main_Window).Gvd_Home_Dir.all
+         & Directory_Separator & "preferences");
    end On_Ok_Button_Clicked;
 
    -----------------------------
-   -- On_Reset_Button_Clicked --
+   -- On_Apply_Button_Clicked --
    -----------------------------
 
-   procedure On_Reset_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+   procedure On_Apply_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Pref : General_Preferences_Access :=
+        General_Preferences_Access (Object);
    begin
-      null;
-   end On_Reset_Button_Clicked;
+      Apply_Preferences (Pref);
+      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+   end On_Apply_Button_Clicked;
 
-   ----------------------------
-   -- On_Help_Button_Clicked --
-   ----------------------------
+   ------------------------------
+   -- On_Cancel_Button_Clicked --
+   ------------------------------
 
-   procedure On_Help_Button_Clicked
-     (Object : access Gtk_Button_Record'Class)
+   procedure On_Cancel_Button_Clicked
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Pref : General_Preferences_Access :=
+        General_Preferences_Access (Object);
    begin
-      null;
-   end On_Help_Button_Clicked;
+      Cancel_Preferences (Pref);
+      Hide (Get_Toplevel (Object));
+      Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
+   end On_Cancel_Button_Clicked;
 
 end General_Preferences_Pkg.Callbacks;
