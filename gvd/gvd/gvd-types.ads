@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
 with Gtkada.Types;
 with Unchecked_Deallocation;
 
