@@ -139,17 +139,6 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
 }
 
 /*************************************************************************
- ** ada_db_dup
- *************************************************************************/
-
-DB_File *ada_db_dup(const DB_File * file)
-{
-  DB_File *new_file;
-  new_file = ada_db_open (file->dbc + 1, (const char **) file->fname);
-  return new_file;
-}
-
-/*************************************************************************
  ** ada_get_last_errno
  *************************************************************************/
 
@@ -218,8 +207,11 @@ void ada_db_set_cursor(DB_File * file, int pos, char *key_p, int key_size,
 #endif
       free (file->key_p);
     }
-    file->key_p = strdup (key_p);
-    file->key_size = key_size;
+    /* key_p doesn't end with \0, since it comes from Ada */
+    file->key_p = (char*) malloc (key_size + 1);
+    strncpy (file->key_p, key_p, key_size);
+    file->key_p [key_size] = '\0';
+    file->key_size = key_size + 1;
     file->exact_match = exact_match;
   }
   file->pos = pos;
