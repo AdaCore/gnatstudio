@@ -85,6 +85,12 @@ package body Python_Module is
       Command            : String;
       Display_In_Console : Boolean := True);
    function Get_Name (Script : access Python_Scripting_Record) return String;
+   function Is_Subclass
+     (Script : access Python_Scripting_Record;
+      Class  : Class_Type;
+      Base   : Class_Type) return Boolean;
+   function Get_Kernel (Script : access Python_Scripting_Record)
+      return Kernel_Handle;
    --  See doc from inherited subprograms
 
    --------------------------
@@ -154,6 +160,8 @@ package body Python_Module is
      (Instance   : access Python_Class_Instance_Record;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null);
+   function Get_Script (Instance : access Python_Class_Instance_Record)
+      return Scripting_Language;
    procedure Primitive_Free (Instance : in out Python_Class_Instance_Record);
    --  See doc from inherited subprogram
 
@@ -482,6 +490,26 @@ package body Python_Module is
       return Data.Script.Kernel;
    end Get_Kernel;
 
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Script : access Python_Scripting_Record)
+      return Kernel_Handle is
+   begin
+      return Script.Kernel;
+   end Get_Kernel;
+
+   ----------------
+   -- Get_Script --
+   ----------------
+
+   function Get_Script (Instance : access Python_Class_Instance_Record)
+      return Scripting_Language is
+   begin
+      return Scripting_Language (Instance.Script);
+   end Get_Script;
+
    -------------------------
    -- Number_Of_Arguments --
    -------------------------
@@ -567,6 +595,23 @@ package body Python_Module is
       return new Python_Class_Instance_Record'
         (Class_Instance_Record with Script => Data.Script, Data => Item);
    end Nth_Arg;
+
+   -----------------
+   -- Is_Subclass --
+   -----------------
+
+   function Is_Subclass
+     (Script : access Python_Scripting_Record;
+      Class  : Class_Type;
+      Base   : Class_Type) return Boolean
+   is
+      C : constant PyObject := Lookup_Class_Object
+        (Script.GPS_Module, Get_Name (Class));
+      B : constant PyObject := Lookup_Class_Object
+        (Script.GPS_Module, Get_Name (Base));
+   begin
+      return PyClass_IsSubclass (C, Base => B);
+   end Is_Subclass;
 
    ------------------------
    -- Setup_Return_Value --

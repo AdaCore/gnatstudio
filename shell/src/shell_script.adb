@@ -83,6 +83,12 @@ package body Shell_Script is
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String;
    function Get_Name (Script : access Shell_Scripting_Record) return String;
+   function Is_Subclass
+     (Script : access Shell_Scripting_Record;
+      Class  : Class_Type;
+      Base   : Class_Type) return Boolean;
+   function Get_Kernel (Script : access Shell_Scripting_Record)
+      return Kernel_Handle;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -90,7 +96,7 @@ package body Shell_Script is
    -------------------------
 
    type Shell_Callback_Data is new Callback_Data with record
-      Kernel       : Glide_Kernel.Kernel_Handle;
+      Script       : Shell_Scripting;
       Args         : GNAT.OS_Lib.Argument_List_Access;
       Return_Value : GNAT.OS_Lib.String_Access;
    end record;
@@ -144,8 +150,9 @@ package body Shell_Script is
    --------------------------
 
    type Shell_Class_Instance_Record is new Class_Instance_Record with record
-      Class : Class_Type;
-      Data  : Instance_Data;
+      Class  : Class_Type;
+      Script : Shell_Scripting;
+      Data   : Instance_Data;
    end record;
    type Shell_Class_Instance is access all Shell_Class_Instance_Record'Class;
 
@@ -168,6 +175,8 @@ package body Shell_Script is
      (Instance   : access Shell_Class_Instance_Record;
       Value      : System.Address;
       On_Destroy : Destroy_Handler := null);
+   function Get_Script (Instance : access Shell_Class_Instance_Record)
+      return Scripting_Language;
    procedure Primitive_Free (Instance : in out Shell_Class_Instance_Record);
    --  See doc from inherited subprogram
 
@@ -282,9 +291,6 @@ package body Shell_Script is
          Index := Index + 1;
       end loop;
 
-      Trace (Me, "Instance_From_Name: addr="
-             & Name (Index + 3 .. Name'Last - 1));
-
       return Instance_From_Address
         (Value ("16#" & Name (Index + 3 .. Name'Last - 1) & "#"));
 
@@ -375,6 +381,21 @@ package body Shell_Script is
       Free (X.Description);
    end Free;
 
+   -----------------
+   -- Is_Subclass --
+   -----------------
+
+   function Is_Subclass
+     (Script : access Shell_Scripting_Record;
+      Class  : Class_Type;
+      Base   : Class_Type) return Boolean
+   is
+      pragma Unreferenced (Script, Class, Base);
+   begin
+      --  ??? Not checked
+      return True;
+   end Is_Subclass;
+
    --------------------------
    -- Console_Delete_Event --
    --------------------------
@@ -444,7 +465,7 @@ package body Shell_Script is
          Focus_Widget => Gtk_Widget (Get_View (Script.Console)),
          Default_Width => 400,
          Default_Height => 100);
-      Set_Title (Child, -"Shell Script");
+      Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);
 
@@ -705,7 +726,8 @@ package body Shell_Script is
             if Data.Minimum_Args <= Args'Length
               and then Args'Length <= Data.Maximum_Args
             then
-               Callback.Kernel := Kernel_Handle (Kernel);
+               Callback.Script := Shell_Scripting
+                 (Lookup_Scripting_Language (Kernel, GPS_Shell_Name));
                Callback.Args := new Argument_List (1 .. Args'Length);
                for A in Args'Range loop
                   Callback.Args (A - Args'First + 1) := Args (A);
@@ -776,8 +798,28 @@ package body Shell_Script is
 
    function Get_Kernel (Data : Shell_Callback_Data) return Kernel_Handle is
    begin
-      return Data.Kernel;
+      return Data.Script.Kernel;
    end Get_Kernel;
+
+   ----------------
+   -- Get_Kernel --
+   ----------------
+
+   function Get_Kernel (Script : access Shell_Scripting_Record)
+      return Kernel_Handle is
+   begin
+      return Script.Kernel;
+   end Get_Kernel;
+
+   ----------------
+   -- Get_Script --
+   ----------------
+
+   function Get_Script (Instance : access Shell_Class_Instance_Record)
+      return Scripting_Language is
+   begin
+      return Scripting_Language (Instance.Script);
+   end Get_Script;
 
    -------------------------
    -- Number_Of_Arguments --
@@ -844,9 +886,7 @@ package body Shell_Script is
         (Nth_Arg (Data, N));
    begin
       if Ins = null
-
-         --  ??? Should check the children of Class as well
-        or else Get_Class (Ins) /= Class
+        or else not Is_Subclass (Data.Script, Get_Class (Ins), Class)
       then
          Trace (Me, "Instance not found: " & Nth_Arg (Data, N));
          raise Invalid_Parameter;
@@ -940,13 +980,13 @@ package body Shell_Script is
    function New_Instance
      (Data : Shell_Callback_Data; Class : Class_Type) return Class_Instance
    is
-      pragma Unreferenced (Data);
       Instance : Shell_Class_Instance;
    begin
       Instance := new Shell_Class_Instance_Record'
         (Class_Instance_Record
-         with Class => Class,
-              Data  => (Data => Strings, Str => null));
+         with Script => Data.Script,
+              Class  => Class,
+              Data   => (Data => Strings, Str => null));
       Instances_List.Prepend (Shell_Module_Id.Instances, Instance);
       return Class_Instance (Instance);
    end New_Instance;
