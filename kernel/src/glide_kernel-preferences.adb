@@ -651,6 +651,36 @@ package body Glide_Kernel.Preferences is
 
       -- Browsers --
 
+      Browsers_Bg_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Bg-Color",
+         Default => "#BBBBBB",
+         Blurb   => -"Color used to draw the background of the browsers",
+         Nick    => -"Background color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Bg_Color),
+         -"Browsers:General");
+
+      Browsers_Bg_Image := Param_Spec_String (Gnew_String
+        (Name    => "Browsers-Bg-Image",
+         Nick    => -"Background image",
+         Blurb   =>
+           -("Image to draw in the background of browsers. If left empty,"
+             & " no image is drawn. Using a large image will slow down"
+             & " performances"),
+         Default => ""));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Bg_Image),
+         -"Browsers:General");
+
+      Browsers_Draw_Grid := Param_Spec_Boolean (Gnew_Boolean
+        (Name    => "Browsers-Draw-Grid",
+         Default => True,
+         Blurb   => -("Whether a grid should be displayed in the browsers"),
+         Nick    => -"Draw grid"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Browsers_Draw_Grid),
+         -"Browsers:General");
+
       Browsers_Link_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Browsers-Link-Font",
          Default => "sans 10",
@@ -660,13 +690,13 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Browsers_Link_Font),
          -"Browsers:General");
 
-      Browsers_Link_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Browsers-Link-Color",
+      Browsers_Hyper_Link_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Hyper-Link-Color",
          Default => "#0000FF",
-         Blurb   => -"Color used to draw the links between unselected items",
-         Nick    => -"Link color"));
+         Blurb   => -"Color used to draw the hyper links in the items",
+         Nick    => -"Hyper link color"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Browsers_Link_Color),
+        (Kernel.Preferences, Param_Spec (Browsers_Hyper_Link_Color),
          -"Browsers:General");
 
       Selected_Link_Color := Param_Spec_Color (Gnew_Color
@@ -676,6 +706,15 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Selected link color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Selected_Link_Color),
+         -"Browsers:General");
+
+      Unselected_Link_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Browsers-Unselected-Link-Color",
+         Default => "#000000",
+         Blurb   => -"Color to use for links between unselected items",
+         Nick    => -"Default link color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Unselected_Link_Color),
          -"Browsers:General");
 
       Parent_Linked_Item_Color := Param_Spec_Color (Gnew_Color

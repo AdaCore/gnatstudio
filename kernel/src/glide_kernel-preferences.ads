@@ -192,9 +192,13 @@ package Glide_Kernel.Preferences is
    Wizard_Title_Font : Param_Spec_Font;
 
    -- Browsers --
+   Browsers_Bg_Color        : Param_Spec_Color;
+   Browsers_Bg_Image        : Param_Spec_String;
+   Browsers_Draw_Grid       : Param_Spec_Boolean;
    Browsers_Link_Font       : Param_Spec_Font;
-   Browsers_Link_Color      : Param_Spec_Color;
+   Browsers_Hyper_Link_Color : Param_Spec_Color;
    Selected_Link_Color      : Param_Spec_Color;
+   Unselected_Link_Color    : Param_Spec_Color;
    Parent_Linked_Item_Color : Param_Spec_Color;
    Child_Linked_Item_Color  : Param_Spec_Color;
    Browsers_Vertical_Layout : Param_Spec_Boolean;
