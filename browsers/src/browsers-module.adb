@@ -134,9 +134,9 @@ package body Browsers.Module is
             Object          => Browser,
             ID              => Dependency_Browser_Module_ID,
             Context_Func    => Browser_Context_Factory'Access);
-         Child := Put (Get_MDI (Kernel), Browser);
          Set_Size_Request
            (Browser, Default_Browser_Width, Default_Browser_Height);
+         Child := Put (Get_MDI (Kernel), Browser);
          Set_Title (Child, "<browser>");
       end if;
 
