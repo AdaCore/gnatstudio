@@ -59,7 +59,6 @@ with GVD.Menu;                  use GVD.Menu;
 with GVD.Preferences;           use GVD.Preferences;
 with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box.Asm_Editor;
 with GVD.Types;                 use GVD.Types;
-with GVD.Toolbar;               use GVD.Toolbar;
 with GVD.Process;               use GVD.Process;
 with Process_Proxies;           use Process_Proxies;
 with Debugger;                  use Debugger;
@@ -670,14 +669,6 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Kill);
    --  Debug->Debug->Kill
 
-   --  ??? procedure On_Session_Open is new
-   --    Generic_Debug_Command (GVD.Menu.On_Open_Session);
-   --  Debug->Session->Open
-
-   --  ??? procedure On_Session_Save is new
-   --    Generic_Debug_Command (GVD.Menu.On_Save_Session_As);
-   --  Debug->Session->Save As
-
    procedure On_Command_History is new
      Generic_Debug_Command (GVD.Menu.On_Command_History);
    --  Debug->Session->Command History
@@ -769,6 +760,21 @@ package body GVD_Module is
 
    procedure On_Start_Continue (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "start/continue" button
+
+   procedure On_Step (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "step" button
+
+   procedure On_Next (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "next" button
+
+   procedure On_Finish (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "finish" button
+
+   procedure On_Up (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "up" button
+
+   procedure On_Down (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "down" button
 
    --------------------
    -- Misc Callbacks --
@@ -2039,6 +2045,66 @@ package body GVD_Module is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Start_Continue;
+
+   -------------
+   -- On_Step --
+   -------------
+
+   procedure On_Step (Object : access Gtk_Widget_Record'Class) is
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   begin
+      if Tab /= null and then Tab.Debugger /= null then
+         Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
+   end On_Step;
+
+   -------------
+   -- On_Next --
+   -------------
+
+   procedure On_Next (Object : access Gtk_Widget_Record'Class) is
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   begin
+      if Tab /= null and then Tab.Debugger /= null then
+         Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
+   end On_Next;
+
+   ---------------
+   -- On_Finish --
+   ---------------
+
+   procedure On_Finish (Object : access Gtk_Widget_Record'Class) is
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   begin
+      if Tab /= null and then Tab.Debugger /= null then
+         Finish (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
+   end On_Finish;
+
+   -----------
+   -- On_Up --
+   -----------
+
+   procedure On_Up (Object : access Gtk_Widget_Record'Class) is
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   begin
+      if Tab /= null and then Tab.Debugger /= null then
+         Stack_Up (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
+   end On_Up;
+
+   -------------
+   -- On_Down --
+   -------------
+
+   procedure On_Down (Object : access Gtk_Widget_Record'Class) is
+      Tab : constant Visual_Debugger := Get_Current_Process (Object);
+   begin
+      if Tab /= null and then Tab.Debugger /= null then
+         Stack_Down (Tab.Debugger, Mode => GVD.Types.Visible);
+      end if;
+   end On_Down;
 
    ---------------------------
    -- On_Executable_Changed --
