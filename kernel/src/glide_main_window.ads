@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -38,6 +38,7 @@ package Glide_Main_Window is
       Animation_Iter  : Gdk_Pixbuf_Animation_Iter;
       Animation_Image : Gtk_Image;
       Timeout_Id      : Gtk.Main.Timeout_Handler_Id;
+      State_Level     : Integer := 0;
       Busy_Level      : Integer := 0;
       Interrupted     : Boolean := False;
    end record;
