@@ -692,8 +692,8 @@ package body Help_Module is
 
       Args := Argument_String_To_List
         (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
-
-      Cmd  := Locate_Exec_On_Path (Args (Args'First).all);
+      Cmd := Locate_Exec_On_Path
+               (Unprotect (Protect (Args (Args'First).all, False)));
 
       if Cmd = null then
          Insert
@@ -704,7 +704,6 @@ package body Help_Module is
 
       else
          File := new String'(Full_Name (Help_File, True).all);
-
          Process :=
            Non_Blocking_Spawn
              (Cmd.all, Args (Args'First + 1 .. Args'Last) & (1 => File));
