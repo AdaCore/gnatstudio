@@ -396,7 +396,7 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <param name="column" default="1">An integer, the column at which the entity is referenced</param>
       <description>Initializes a new instance of the Entity class, from any reference to the entity. The file parameter should only be omitted for a predefined entity of the language. This will only work for languages for which a cross-reference engine has been defined</description>
       <example lang="python">
-          GPS.Entity ("foo", GPS.File ("a.adb"), 10, 23).decl_file().name()
+          GPS.Entity ("foo", GPS.File ("a.adb"), 10, 23).declaration().file().name()
           will return the full path name of the file in which the entity "foo",
           referenced in a.adb at line 10, column 23, is defined.
       </example>
@@ -408,33 +408,15 @@ Optionally you can also pass the full contents of an XML file, starting from the
       <description>Return the name of the entity. The casing of the name has been normalized to lower-cases for case-insensitive languages</description>
   </shell_doc>
 
-  <shell_doc name="GPS.Entity.decl_file">
+  <shell_doc name="GPS.Entity.declaration">
       <param name="self">The instance of GPS.Entity</param>
-      <return>An instance of GPS.File, in which the entity is declared</return>
-      <description>Return the file in which the entity is declared. This file's name is "&lt;predefined&gt;" for predefined entities</description>
+      <return>An instance of GPS.FileLocation, where the entity is declared</return>
+      <description>Return the location of the declaration for the entity. The file's name is is "&lt;predefined&gt;" for predefined entities</description>
       <example lang="python">
           entity=GPS.Entity  ("integer")
-          if entity.decl_file().name == "&lt;predefined&gt;":
+          if entity.declaration().file().name == "&lt;predefined&gt;":
              print "This is a predefined entity"
       </example>
-      <see_also name="GPS.Entity.decl_line()"/>
-      <see_also name="GPS.Entity.decl_column()"/>
-  </shell_doc>
-
-  <shell_doc name="GPS.Entity.decl_line">
-      <param name="self">The instance of GPS.Entity</param>
-      <return>An integer, the line at which the entity is declared</return>
-      <description>Return the line in self.decl_file() at which the entity is declared</description>
-      <see_also name="GPS.Entity.decl_file()"/>
-      <see_also name="GPS.Entity.decl_column()"/>
-  </shell_doc>
-
-  <shell_doc name="GPS.Entity.decl_column">
-      <param name="self">The instance of GPS.Entity</param>
-      <return>An integer, the column at which the entity is declared</return>
-      <description>Return the column in self.decl_file() at which the entity is declared</description>
-      <see_also name="GPS.Entity.decl_file()"/>
-      <see_also name="GPS.Entity.decl_line()"/>
   </shell_doc>
 
   <shell_doc name="GPS.Entity.body">
