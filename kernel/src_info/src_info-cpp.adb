@@ -38,6 +38,7 @@ with SN.Xref_Pools;     use SN.Xref_Pools;
 with Traces;  use Traces;
 with String_Utils; use String_Utils;
 with Prj_API;
+with Snames; use Snames;
 
 package body Src_Info.CPP is
 
@@ -305,7 +306,6 @@ package body Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
-      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
@@ -318,7 +318,9 @@ package body Src_Info.CPP is
       HI.SN_Dir := new String' (Get_SN_Dir (Root_Project));
 
       --  Prepare the list of files
-      Compute_Sources (HI, Project, Recursive, Language => Language);
+      Compute_Sources
+        (HI, Project, Recursive,
+         Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
       if not Is_Directory (HI.SN_Dir.all) then
          GNAT.Directory_Operations.Make_Dir (HI.SN_Dir.all);

@@ -25,7 +25,6 @@ with SN;             use SN;
 with SN.Xref_Pools;  use SN.Xref_Pools;
 
 with Prj;
-with Types;
 
 package Src_Info.CPP is
 
@@ -93,7 +92,6 @@ package Src_Info.CPP is
      (Handler       : access CPP_LI_Handler_Record;
       Root_Project  : Prj.Project_Id;
       Project       : Prj.Project_Id;
-      Language      : Types.Name_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class;
    --  Generate the LI information for all the source files in Project (and all
