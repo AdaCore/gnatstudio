@@ -36,6 +36,7 @@ with SN.Browse;
 with SN.Xref_Pools;     use SN.Xref_Pools;
 
 with File_Buffer;
+with String_Utils;      use String_Utils;
 with Traces;  use Traces;
 with Prj_API;
 
@@ -343,8 +344,8 @@ package body Src_Info.CPP is
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String is
    begin
-      return Prj_API.Object_Path (Project, Recursive => False)
-        & Browse.DB_Dir_Name;
+      return Name_As_Directory (Prj_API.Object_Path
+        (Project, Recursive => False)) & Browse.DB_Dir_Name;
    end Get_SN_Dir;
 
    ----------------------------------
