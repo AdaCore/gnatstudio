@@ -18,6 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This file contains the procedure Docgen, the main procedure of the
+--  program for the creation of project documentation.
+
+--  The procedure examines the command line options, creates the list of
+--  source files to be processed and calls the procedure Process_File
+--  from the package Docgen.Work_On_File.
+
+
 with Ada.Command_Line;          use Ada.Command_Line;
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
@@ -25,21 +33,18 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with String_Utils;              use String_Utils;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Strings.Unbounded;
-with Work_on_File;              use Work_on_File;
+with Work_On_File;              use Work_On_File;
 with Doc_Types;                 use Doc_Types;
 with Html_Output;               use Html_Output;
 with Texi_Output;               use Texi_Output;
 
 procedure Docgen is
 
-   package ASU renames Ada.Strings.Unbounded;
    package TSFL renames Type_Source_File_List;
 
    Help_Requested : exception;
    --  raised when the help option was used. no need to go on!
    Command_Line_Error : exception;
-   --  this is a  second comment
 
    Source_File_List   : Type_Source_File_List.List;
    Prj_File_Name      : String_Access;
@@ -53,6 +58,7 @@ procedure Docgen is
    function Get_Package_Name
      (File_Name : String) return Package_Info;
    --  extracts the package name from the given source file
+   --  To be replace later!
 
    procedure Handle_Command_Line
      (Quit : out Boolean);
@@ -66,7 +72,7 @@ procedure Docgen is
       --  return the path of the first source file in the list
 
    ----------------------
-   -- Get_Package_Name --
+   --  Get_Package_Name --      To be replace later!
    ----------------------
 
    function Get_Package_Name
@@ -83,8 +89,9 @@ procedure Docgen is
       Open (File, In_File, File_Name);
       Line_Nr := 1;
 
-      --  look for the first word "package" in the file
-      --  and return the identifier behind
+      --  looks for the first string "package " in the file
+      --  which is not in a comment
+      --  and returns the identifier behind
       while not Package_Name_Found and not End_Of_File (File) loop
          Ada.Text_IO.Get_Line (File, Line_From_File, Last);
          declare
@@ -117,8 +124,6 @@ procedure Docgen is
 
       Close (File);
       Put_Line ("ERROR: Package Definition not found!!!");
-      --  later exception!
-
       return Result;
    end Get_Package_Name;
 
@@ -205,10 +210,9 @@ procedure Docgen is
          raise Command_Line_Error;
       end if;
 
-
    exception
       when Command_Line_Error =>
-         --  Check the remaining arguments if there's a help option
+         --  check the remaining arguments if there's a help option
          --  somewhere. If so, translate this into a Help_Requested.
          J := J + 1;
          while J <= N loop
@@ -233,13 +237,13 @@ procedure Docgen is
 
    procedure Add_Body_Files
      (Source_File_List : in out Type_Source_File_List.List) is
-      --  add to the list the body files of the spec files in the list
-
+      --  add to the list the body files from the spec files in the list
+      --  add an .adb file for each .ads file found in the list
       Source_File_Node : Type_Source_File_List.List_Node;
       New_Node         : Source_File_Information;
-      New_Filename     : ASU.Unbounded_String;
+      New_Filename     : GNAT.OS_Lib.String_Access;
+      Old_Filename     : GNAT.OS_Lib.String_Access;
       New_Package      : Package_Info;
-      --  add a .adb file for each .ads file found in the list
    begin
       Source_File_Node := TSFL.First (Source_File_List);
       for J in 1 .. Type_Source_File_List.Length (Source_File_List) loop
@@ -247,18 +251,17 @@ procedure Docgen is
          --  only if the .adb file really exists
          if TSFL.Data (Source_File_Node).Other_File_Found then
 
-            New_Filename := ASU.To_Unbounded_String
+            Old_Filename := new String'
               (TSFL.Data (Source_File_Node).File_Name.all);
-            New_Filename := ASU.Replace_Slice
-              (New_Filename,
-               ASU.Index (New_Filename, "."),
-               ASU.Index (New_Filename, ".") + 3, ".adb");
+            New_Filename := new String'
+              (Old_Filename.all (Old_Filename'First .. Old_Filename'Last - 4)
+               & ".adb");
             if Options.Info_Output then
-               Put_Line ("Adding file: " & ASU.To_String (New_Filename));
+               Put_Line ("Adding file: " & New_Filename.all);
             end if;
 
             New_Node.File_Name         :=
-              new String'(ASU.To_String (New_Filename));
+              new String'(New_Filename.all);
             New_Node.Prj_File_Name     :=
               new String'(TSFL.Data (Source_File_Node).Prj_File_Name.all);
             New_Package := Get_Package_Name
@@ -266,7 +269,8 @@ procedure Docgen is
             New_Node.Package_Name      := New_Package.Package_Name;
             New_Node.Def_In_Line       := New_Package.Line;
             Type_Source_File_List.Append (Source_File_List, New_Node);
-
+            Free (New_Filename);
+            Free (Old_Filename);
          end if;
 
          Source_File_Node := TSFL.Next (Source_File_Node);
@@ -288,7 +292,7 @@ procedure Docgen is
 
    function Get_Source_Dir
      (Source_File_List   : TSFL.List) return String is
-      --  return the path of the first source file in the list
+      --  returns the path of the first source file in the list
 
       Node : TSFL.List_Node;
    begin
@@ -310,8 +314,6 @@ begin --  DocGen
          return;
       end if;
    end Parse_Command_Line;
-
-   --  AD.User_Tags.Verify;
 
    if Options.Info_Output then
       Put_Line ("--------------------------------------------------------");
