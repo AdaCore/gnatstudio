@@ -123,12 +123,8 @@ package Main_Debug_Window_Pkg is
       Data1_Menu : Gtk_Menu;
       Edit_Breakpoints1 : Gtk_Menu_Item;
       Edit_Displays1 : Gtk_Menu_Item;
-      Edit_Watchpoints1 : Gtk_Menu_Item;
       Examine_Memory1 : Gtk_Menu_Item;
       Separator24 : Gtk_Menu_Item;
-      Print_1 : Gtk_Menu_Item;
-      Display_1 : Gtk_Menu_Item;
-      Separator25 : Gtk_Menu_Item;
       Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
       Display_Registers1 : Gtk_Menu_Item;
@@ -157,11 +153,10 @@ package Main_Debug_Window_Pkg is
       Separator32 : Gtk_Menu_Item;
       About_Odd1 : Gtk_Menu_Item;
       Toolbar1 : Gtk_Toolbar;
-      Combo6 : Gtk_Combo;
-      Entry15 : Gtk_Entry;
+      Toolbar_Combo : Gtk_Combo;
+      Toolbar_Entry : Gtk_Entry;
       Button62 : Gtk_Widget;
       Button63 : Gtk_Widget;
-      Button64 : Gtk_Widget;
       Button65 : Gtk_Widget;
       Button66 : Gtk_Widget;
       Button67 : Gtk_Widget;

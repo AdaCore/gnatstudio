@@ -751,17 +751,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_Edit_Displays1_Activate;
 
-   -----------------------------------
-   -- On_Edit_Watchpoints1_Activate --
-   -----------------------------------
-
-   procedure On_Edit_Watchpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
-   is
-   begin
-      null;
-   end On_Edit_Watchpoints1_Activate;
-
    ---------------------------------
    -- On_Examine_Memory1_Activate --
    ---------------------------------
@@ -772,28 +761,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       null;
    end On_Examine_Memory1_Activate;
-
-   ------------------------
-   -- On_Print1_Activate --
-   ------------------------
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Print1_Activate;
-
-   --------------------------
-   -- On_Display1_Activate --
-   --------------------------
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-   begin
-      null;
-   end On_Display1_Activate;
 
    ------------------------------------------
    -- On_Display_Local_Variables1_Activate --
@@ -1004,29 +971,29 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_About_Odd1_Activate;
 
-   -----------------------
-   -- On_Print1_Clicked --
-   -----------------------
+   ------------------------
+   -- On_Print1_Activate --
+   ------------------------
 
-   procedure On_Print1_Clicked
+   procedure On_Print1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
    begin
       null;
-   end On_Print1_Clicked;
+   end On_Print1_Activate;
 
-   -------------------------
-   -- On_Display1_Clicked --
-   -------------------------
+   --------------------------
+   -- On_Display1_Activate --
+   --------------------------
 
-   procedure On_Display1_Clicked
+   procedure On_Display1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
    begin
       null;
-   end On_Display1_Clicked;
+   end On_Display1_Activate;
 
    ---------------------
    -- On_Up1_Activate --

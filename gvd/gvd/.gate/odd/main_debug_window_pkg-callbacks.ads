@@ -204,17 +204,8 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Displays1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Edit_Watchpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class);
-
    procedure On_Examine_Memory1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
-
-   procedure On_Print1_Activate
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Display1_Activate
-     (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Display_Local_Variables1_Activate
      (Object : access Gtk_Widget_Record'Class);
@@ -273,11 +264,11 @@ package Main_Debug_Window_Pkg.Callbacks is
    procedure On_About_Odd1_Activate
      (Object : access Gtk_Menu_Item_Record'Class);
 
-   procedure On_Print1_Clicked
+   procedure On_Print1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
-   procedure On_Display1_Clicked
+   procedure On_Display1_Activate
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args);
 
