@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
+with Glib;                use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Types;           use Gdk.Types;

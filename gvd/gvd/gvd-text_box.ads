@@ -89,12 +89,12 @@ package Odd.Text_Boxes is
 
    function Pixels_From_Line
      (Box  : access Odd_Text_Box_Record;
-      Line : Natural) return Gint;
+      Line : Natural) return Glib.Gint;
    --  Return the location (in pixels) for a given line.
 
    function Line_From_Pixels
      (Box  : access Odd_Text_Box_Record;
-      Y    : Gint) return Natural;
+      Y    : Glib.Gint) return Natural;
    --  Return the line for a given location in pixels.
 
    procedure Hide_Current_Line_Button (Box : access Odd_Text_Box_Record);
