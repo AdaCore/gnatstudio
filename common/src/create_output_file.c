@@ -27,7 +27,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <process.h>
-#include "mingw32.h"
 #endif
 
 #ifndef O_TEXT

@@ -27,7 +27,6 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <process.h>
-#include "mingw32.h"
 #endif
 
-int __gnat_max_path_len = MAXPATHLEN;
+int __gnat_max_path_len = MAX_PATH;
