@@ -558,6 +558,8 @@ package body Src_Editor_Box is
          end if;
 
          Trace (Me, "Tooltip: " & File.all & ':' & Image (L));
+
+         Free (File);
       end;
 
    exception
