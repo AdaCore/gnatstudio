@@ -448,11 +448,12 @@ package body Odd.Menus is
       Append (Menu, Mitem);
 
       --  Display a separator
-
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
+
       Gtk_New (Check, Label => -"Show Value");
+      Set_Active (Check, Show_Value (Get_Display_Mode (Item)));
       Item_Handler.Connect
         (Check, "activate",
          Item_Handler.To_Marshaller (Change_Value_Mode'Access),
@@ -463,9 +464,9 @@ package body Odd.Menus is
                       Component_Name => Component_Name));
       Append (Menu, Check);
       Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Show_Value (Get_Display_Mode (Item)));
 
       Gtk_New (Check, Label => -"Show Type");
+      Set_Active (Check, Show_Type (Get_Display_Mode (Item)));
       Item_Handler.Connect
         (Check, "activate",
          Item_Handler.To_Marshaller (Change_Type_Mode'Access),
@@ -476,7 +477,6 @@ package body Odd.Menus is
                       Component_Name => Component_Name));
       Append (Menu, Check);
       Set_Always_Show_Toggle (Check, True);
-      Set_Active (Check, Show_Type (Get_Display_Mode (Item)));
 
       Show_All (Menu);
       Menu_User_Data.Set (Canvas, Menu, Item_Contextual_Menu_Name);
