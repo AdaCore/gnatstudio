@@ -204,6 +204,11 @@ package body Directory_Tree is
    procedure On_Destroy (Tree : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
+   function Button_Press_Cb
+     (Selector : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+      return Boolean;
+   --  Callback for the "button_press" event
+
    -------------
    -- Gtk_New --
    -------------
@@ -354,6 +359,48 @@ package body Directory_Tree is
         and then Dir_Name /= ".."
         and then Dir_Name /= "CVS";
    end Filter;
+
+   ---------------------
+   -- Button_Press_Cb --
+   ---------------------
+
+   function Button_Press_Cb
+     (Selector : access Gtk_Widget_Record'Class; Args : Gtk_Args)
+      return Boolean
+   is
+      Sel      : constant Directory_Selector := Directory_Selector (Selector);
+      Event    : constant Gdk_Event := To_Event (Args, 1);
+      Row      : Gint;
+      Column   : Gint;
+      Is_Valid : Boolean;
+
+   begin
+      Get_Selection_Info
+        (Sel.Directory, Gint (Get_X (Event)), Gint (Get_Y (Event)),
+         Row, Column, Is_Valid);
+
+      if not Is_Valid then
+         return False;
+      end if;
+
+      if Get_Button (Event) = 1 then
+         if Get_Event_Type (Event) = Gdk_2button_Press then
+            Add_Single_Directory_Cb (Sel);
+
+            --  Stop the propagation of the event, otherwise the
+            --  node will also be expanded, which is confusing.
+
+            return True;
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Button_Press_Cb;
 
    --------------------
    -- Expand_Tree_Cb --
@@ -1224,11 +1271,11 @@ package body Directory_Tree is
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
    is
-      Scrolled  : Gtk_Scrolled_Window;
-      Bbox      : Gtk_Hbutton_Box;
-      Button    : Gtk_Button;
-      Arrow     : Gtk_Arrow;
-      Vbox      : Gtk_Box;
+      Scrolled : Gtk_Scrolled_Window;
+      Bbox     : Gtk_Hbutton_Box;
+      Button   : Gtk_Button;
+      Arrow    : Gtk_Arrow;
+      Vbox     : Gtk_Box;
 
    begin
       Initialize_Vpaned (Selector);
@@ -1241,6 +1288,10 @@ package body Directory_Tree is
       Add (Scrolled, Selector.Directory);
 
       Show_Directory (Selector.Directory, Initial_Directory, Busy_Cursor_On);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Selector.Directory, "button_press_event",
+         Button_Press_Cb'Access, Selector);
 
       if Multiple_Directories then
          Widget_Menus.Register_Contextual_Menu
@@ -1277,6 +1328,7 @@ package body Directory_Tree is
          Pack_Start (Vbox, Scrolled, Expand => True, Fill => True);
 
          Gtk_New (Selector.List, Columns => 1);
+         Set_Size_Request (Selector.List, -1, 150);
          Add (Scrolled, Selector.List);
          Set_Selection_Mode (Selector.List, Selection_Multiple);
          Widget_Menus.Register_Contextual_Menu
