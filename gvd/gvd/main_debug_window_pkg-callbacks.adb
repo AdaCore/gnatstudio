@@ -28,10 +28,6 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
-with Breakpoints_Pkg;     use Breakpoints_Pkg;
-with Open_Program_Pkg;    use Open_Program_Pkg;
-with Print_Dialog_Pkg;    use Print_Dialog_Pkg;
-with Task_Dialog_Pkg;     use Task_Dialog_Pkg;
 with Generic_Values;
 
 with Ada.Text_IO;  use Ada.Text_IO;
@@ -90,7 +86,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab     : Debugger_Process_Tab;
 
    begin
-      Open_Program (Program);
+      Open_Program (Top.Open_Program, Program);
 
       case Program.Launch is
          when Current_Debugger =>
@@ -780,12 +776,16 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Top    : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
       Tab    : Debugger_Process_Tab;
-      Dialog : Task_Dialog_Access;
    begin
       Tab := Process_User_Data.Get
         (Get_Child (Get_Cur_Page (Top.Process_Notebook)));
-      Gtk_New (Dialog, Top, Info_Threads (Tab.Debugger));
-      Show_All (Dialog);
+
+      if Top.Task_Dialog = null then
+         Gtk_New
+           (Top.Task_Dialog, Gtk_Window (Object), Info_Threads (Tab.Debugger));
+      end if;
+
+      Show_All (Top.Task_Dialog);
    end On_Threads1_Activate;
 
    ----------------------------
@@ -944,11 +944,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    -----------------------------------
 
    procedure On_Edit_Breakpoints1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+     (Object : access Gtk_Widget_Record'Class)
    is
       Descriptor : Breakpoint_Descriptor;
    begin
-      Breakpoint_Editor (Descriptor);
+      Breakpoint_Editor
+        (Main_Debug_Window_Access (Object).Breakpoints, Descriptor);
    end On_Edit_Breakpoints1_Activate;
 
    --------------------------------
