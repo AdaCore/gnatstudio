@@ -941,6 +941,37 @@ package body Glide_Kernel.Hooks is
          -("Hook called when the project has changed. A new project has been"
            & " loaded, and all previous settings and caches are now"
            & " obsolete."));
+      Register_Hook
+        (Kernel, Context_Changed_Hook,
+         -("Hook called when the current context changes in GPS, ie a new file"
+           & " is selected, or a new entity, or a new window,..."),
+         Type_Name => "context_hooks");
+      Register_Hook
+        (Kernel, File_Edited_Hook,
+         -("Hook called when a file editor has been opened for a file that"
+           & " wasn't already opened before"),
+         Type_Name => "file_hooks");
+      Register_Hook
+        (Kernel, File_Closed_Hook,
+         -("Hook called when the last editor for a file has been closed"),
+         Type_Name => "file_hooks");
+      Register_Hook
+        (Kernel, File_Changed_On_Disk_Hook,
+         -("Hook called when some external action has changed the contents"
+           & " of a file on the disk, such as a VCS operation. The parameter"
+           & " might be a directory instead of a file, indicating that any"
+           & " file in that directory might have changed"),
+         Type_Name => "file_hooks");
+      Register_Hook
+        (Kernel, Compilation_Finished_Hook,
+         -("Hook called when a compile operation has finished. The parameter"
+           & " indicates what file has just been compiled if GPS was compiling"
+           & " a single file"),
+         Type_Name => "file_hooks");
+      Register_Hook
+        (Kernel, Source_Lines_Revealed_Hook,
+         -"Hook called when a range of line becomes visible on the screen",
+         Type_Name => "context_hooks");
 
       Register_Command
         (Kernel,
