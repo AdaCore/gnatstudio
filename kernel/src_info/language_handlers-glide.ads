@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                     Copyright (C) 2002-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -164,8 +164,8 @@ private
    type Language_Info_Access is access Language_Info_Array;
 
    type Handler_Info is record
-      Name          : Basic_Types.String_Access;
-      Handler       : Src_Info.LI_Handler;
+      Name    : Basic_Types.String_Access;
+      Handler : Src_Info.LI_Handler;
    end record;
 
    type Handler_Info_Array is array (Positive range <>) of Handler_Info;
