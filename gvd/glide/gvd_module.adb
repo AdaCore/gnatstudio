@@ -514,9 +514,6 @@ package body GVD_Module is
    -- Misc Callbacks --
    --------------------
 
-   procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "destroy" signal to clean up the debugger.
-
    procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "executable_changed" signal on the debugger process.
 
@@ -1195,16 +1192,17 @@ package body GVD_Module is
    procedure On_Debug_Init
      (Kernel : access GObject_Record'Class; Data : File_Project_Record)
    is
-      K            : constant Kernel_Handle := Kernel_Handle (Kernel);
-      Top          : constant Glide_Window :=
+      K              : constant Kernel_Handle := Kernel_Handle (Kernel);
+      Top            : constant Glide_Window :=
         Glide_Window (Get_Main_Window (K));
-      Page         : GPS_Debugger;
-      Module       : String_Access;
-      Program_Args : String_Access;
-      Blank_Pos    : Natural;
-      Proxy        : Process_Proxy_Access;
-      Success      : Boolean;
-      Id           : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+      Page           : GPS_Debugger;
+      Module         : String_Access;
+      Program_Args   : String_Access;
+      Blank_Pos      : Natural;
+      Proxy          : Process_Proxy_Access;
+      Success        : Boolean;
+      Id             : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+      First_Debugger : Boolean;
 
       use Debugger;
       use type GNAT.OS_Lib.String_Access;
@@ -1212,118 +1210,114 @@ package body GVD_Module is
    begin
       Push_State (K, Busy);
 
-      if Get_Current_Process (Top) = null then
-         Gtk_New (Page, Top);
-         Kernel_Callback.Connect
-           (Page,
-            "debugger_closed",
-            Kernel_Callback.To_Marshaller (On_Debug_Terminate'Access),
-            K);
+      First_Debugger := Top.Current_Debugger = null;
+      Gtk_New (Page, Top);
+      Kernel_Callback.Connect
+        (Page,
+         "debugger_closed",
+         --  ??? Should connect to On_Debug_Terminate_Single
+         Kernel_Callback.To_Marshaller (On_Debug_Terminate'Access),
+         K);
 
-      else
-         Page := GPS_Debugger (Get_Current_Process (Top));
-      end if;
+      Program_Args := new String'("");
 
-      --  Initialize the debugger if necessary
+      if Data.File /= No_File then
+         Module := new String'
+           (Full_Name (Data.File));
 
-      if Page.Debugger = null then
-         Program_Args := new String'("");
+      elsif Top.Program_Args /= null then
+         Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");
 
-         if Data.File /= No_File then
-            Module := new String'(Full_Name (Data.File));
-
-         elsif Top.Program_Args /= null then
-            Blank_Pos := Ada.Strings.Fixed.Index (Top.Program_Args.all, " ");
-
-            if Blank_Pos = 0 then
-               Module := new String'(Top.Program_Args.all);
-            else
-               Module := new String'
-                 (Top.Program_Args (Top.Program_Args'First .. Blank_Pos - 1));
-               Free (Program_Args);
-               Program_Args := new String'
-                 (Top.Program_Args (Blank_Pos + 1 .. Top.Program_Args'Last));
-            end if;
-
+         if Blank_Pos = 0 then
+            Module := new String'(Top.Program_Args.all);
          else
-            Module := new String'("");
+            Module := new String'
+              (Top.Program_Args (Top.Program_Args'First .. Blank_Pos - 1));
+            Free (Program_Args);
+            Program_Args := new String'
+              (Top.Program_Args (Blank_Pos + 1 .. Top.Program_Args'Last));
          end if;
 
-         declare
-            Ptr         : GNAT.OS_Lib.String_Access :=
-              GNAT.OS_Lib.Get_Executable_Suffix;
-            Module_Exec : constant String := Module.all & Ptr.all;
-
-         begin
-            GNAT.OS_Lib.Free (Ptr);
-
-            if Module'Length > 0
-              and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
-              and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
-            then
-               Free (Module);
-               Module := new String'(Module_Exec);
-            end if;
-         end;
-
-         declare
-            Args : GNAT.OS_Lib.Argument_List_Access :=
-              GNAT.OS_Lib.Argument_String_To_List (Get_Attribute_Value
-                (Get_Project (K), Debugger_Command_Attribute,
-                 Default => "gdb"));
-
-         begin
-            Proxy := new GPS_Proxy;
-            GPS_Proxy (Proxy.all).Kernel := K;
-            Configure
-              (Process         => Page,
-               Kind            => Gdb_Type,
-               Proxy           => Proxy,
-               Executable      => Module.all,
-               Debugger_Args   => Args (2 .. Args'Last),
-               Executable_Args => Program_Args.all,
-               Remote_Host     =>
-                 Get_Attribute_Value (Get_Project (K), Remote_Host_Attribute),
-               Remote_Target   =>
-                 Get_Attribute_Value (Get_Project (K), Program_Host_Attribute),
-               Remote_Protocol =>
-                 Get_Attribute_Value (Get_Project (K), Protocol_Attribute),
-               Debugger_Name   => Args (1).all,
-               History         => Get_History (K),
-               Success => Success);
-            GNAT.OS_Lib.Free (Args);
-            Free (Module);
-
-            if not Success then
-               Pop_State (K);
-               Debug_Terminate (K);
-               return;
-            end if;
-         end;
-
-         Set_Sensitive (K, Debug_Available);
-         Page.Destroy_Id := Widget_Callback.Connect
-           (Top, "destroy",
-            Widget_Callback.To_Marshaller (On_Destroy_Window'Access));
-
-         Widget_Callback.Object_Connect
-           (Page, "executable_changed",
-            Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
-            Top);
+      else
+         Module := new String'("");
       end if;
 
-      --  Add columns information for not currently opened files.
+      declare
+         Ptr         : GNAT.OS_Lib.String_Access :=
+           GNAT.OS_Lib.Get_Executable_Suffix;
+         Module_Exec : constant String := Module.all & Ptr.all;
 
-      Id.Lines_Revealed_Id := Widget_Callback.Object_Connect
-        (K, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
-      Id.File_Edited_Id := Widget_Callback.Object_Connect
-        (K, File_Edited_Signal, File_Edited_Cb'Access, Top);
+      begin
+         GNAT.OS_Lib.Free (Ptr);
 
-      --  Add columns for debugging information to all the files that
-      --  are currently open.
+         if Module'Length > 0
+           and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
+           and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
+         then
+            Free (Module);
+            Module := new String'(Module_Exec);
+         end if;
+      end;
 
-      Create_Debugger_Columns (K, VFS.No_File);
-      Pop_State (K);
+      declare
+         Args : GNAT.OS_Lib.Argument_List_Access :=
+           GNAT.OS_Lib.Argument_String_To_List
+             (Get_Attribute_Value
+               (Get_Project (K), Debugger_Command_Attribute,
+                Default => "gdb"));
+
+      begin
+         Proxy := new GPS_Proxy;
+         GPS_Proxy (Proxy.all).Kernel := K;
+         Configure
+           (Process         => Page,
+            Kind            => Gdb_Type,
+            Proxy           => Proxy,
+            Executable      => Module.all,
+            Debugger_Args   => Args (2 .. Args'Last),
+            Executable_Args => Program_Args.all,
+            Remote_Host     =>
+              Get_Attribute_Value (Get_Project (K), Remote_Host_Attribute),
+            Remote_Target   =>
+              Get_Attribute_Value (Get_Project (K), Program_Host_Attribute),
+            Remote_Protocol =>
+              Get_Attribute_Value (Get_Project (K), Protocol_Attribute),
+            Debugger_Name   => Args (1).all,
+            History         => Get_History (K),
+            Success => Success);
+         GNAT.OS_Lib.Free (Args);
+         Free (Module);
+
+         if not Success then
+            if Top.Current_Debugger = null then
+               Debug_Terminate (K);
+            end if;
+
+            Pop_State (K);
+            return;
+         end if;
+      end;
+
+      Set_Sensitive (K, Debug_Available);
+      Widget_Callback.Object_Connect
+        (Page, "executable_changed",
+         Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
+         Top);
+
+      if First_Debugger then
+         --  Add columns information for not currently opened files.
+
+         Id.Lines_Revealed_Id := Widget_Callback.Object_Connect
+           (K, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
+         Id.File_Edited_Id := Widget_Callback.Object_Connect
+           (K, File_Edited_Signal, File_Edited_Cb'Access, Top);
+
+         --  Add columns for debugging information to all the files that
+         --  are currently open.
+
+         Create_Debugger_Columns (K, VFS.No_File);
+         Pop_State (K);
+      end if;
 
       Id.Initialized := True;
    exception
@@ -1337,94 +1331,101 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Top    : constant Glide_Window :=
+      Top              : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-      Page   : constant GPS_Debugger :=
-        GPS_Debugger (Get_Current_Process (Top));
-      Id     : constant GVD_Module   := GVD_Module (GVD_Module_ID);
-      Editor : Code_Editor;
+      Debugger_List    : Debugger_List_Link;
+      Next             : Debugger_List_Link;
+      Current_Debugger : GPS_Debugger;
+      Id               : constant GVD_Module := GVD_Module (GVD_Module_ID);
+      Editor           : Code_Editor;
 
       use Debugger;
 
    begin
       Id.Initialized := False;
-
       File_Line_List.Free (Id.Unexplored_Lines);
       Id.Total_Explored_Lines := 0;
       Id.Total_Unexplored_Lines := 0;
 
-      if Page = null or else Page.Debugger = null then
-         return;
-      end if;
-
+      Debugger_List := Top.First_Debugger;
       Push_State (Kernel, Busy);
-      Page.Exiting := True;
-      Editor := Page.Editor_Text;
 
-      Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
-      Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
-      Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
+      while Debugger_List /= null loop
+         Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
+         Current_Debugger.Exiting := True;
+         Editor := Current_Debugger.Editor_Text;
 
-      Set_Pref (Kernel, Show_Call_Stack, Page.Stack /= null);
+         Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
+         Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
 
-      if Page.Debugger /= null
-        and then Get_Process (Page.Debugger) /= null
-      then
-         Close (Page.Debugger);
-      end if;
+         Set_Pref (Kernel, Show_Call_Stack, Current_Debugger.Stack /= null);
 
-      Page.Debugger := null;
+         if Current_Debugger.Debugger /= null
+           and then Get_Process (Current_Debugger.Debugger) /= null
+         then
+            Close (Current_Debugger.Debugger);
+         end if;
 
-      --  This might have been closed by the user
+         Current_Debugger.Debugger := null;
 
-      if Page.Debugger_Text /= null then
-         Close (Top.Process_Mdi, Page.Debugger_Text);
-      end if;
+         --  This might have been closed by the user
 
-      if Page.Debuggee_Console /= null then
-         Close (Top.Process_Mdi, Page.Debuggee_Console);
-      end if;
+         if Current_Debugger.Debugger_Text /= null then
+            Close (Top.Process_Mdi, Current_Debugger.Debugger_Text);
+         end if;
 
-      if Page.Data_Scrolledwindow /= null then
-         Close (Top.Process_Mdi, Page.Data_Scrolledwindow);
-      end if;
+         if Current_Debugger.Debuggee_Console /= null then
+            Close (Top.Process_Mdi, Current_Debugger.Debuggee_Console);
+         end if;
 
-      if Page.Stack /= null then
-         Close (Top.Process_Mdi, Page.Stack);
-      end if;
+         if Current_Debugger.Data_Scrolledwindow /= null then
+            Close (Top.Process_Mdi, Current_Debugger.Data_Scrolledwindow);
+         end if;
 
-      if Top.History_Dialog /= null then
-         Hide (Top.History_Dialog);
-      end if;
+         if Current_Debugger.Stack /= null then
+            Close (Top.Process_Mdi, Current_Debugger.Stack);
+         end if;
 
-      if Top.Thread_Dialog /= null then
-         Hide (Top.Thread_Dialog);
-      end if;
+         if Top.History_Dialog /= null then
+            Hide (Top.History_Dialog);
+         end if;
 
-      if Top.Task_Dialog /= null then
-         Hide (Top.Task_Dialog);
-      end if;
+         if Top.Thread_Dialog /= null then
+            Hide (Top.Thread_Dialog);
+         end if;
 
-      if Top.PD_Dialog /= null then
-         Hide (Top.PD_Dialog);
-      end if;
+         if Top.Task_Dialog /= null then
+            Hide (Top.Task_Dialog);
+         end if;
 
-      if Top.Breakpoints_Editor /= null then
-         Hide (Top.Breakpoints_Editor);
-      end if;
+         if Top.PD_Dialog /= null then
+            Hide (Top.PD_Dialog);
+         end if;
 
-      if Page.Breakpoints /= null then
-         Free (Page.Breakpoints);
-      end if;
+         if Top.Breakpoints_Editor /= null then
+            Hide (Top.Breakpoints_Editor);
+         end if;
 
-      if Get_Mode (Editor) /= Source then
-         Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
-      end if;
+         if Current_Debugger.Breakpoints /= null then
+            Free (Current_Debugger.Breakpoints);
+         end if;
 
-      Remove_Debugger_Columns (Kernel, VFS.No_File);
-      Free_Debug_Info (GEdit (Get_Source
-        (Visual_Debugger (Get_Current_Process (Top)).Editor_Text)));
-      Page.Exiting := False;
+         if Get_Mode (Editor) /= Source then
+            Gtkada.MDI.Close (Get_MDI (Kernel), Get_Asm (Editor));
+         end if;
+
+         Remove_Debugger_Columns (Kernel, VFS.No_File);
+         Free_Debug_Info (GEdit (Get_Source (Current_Debugger.Editor_Text)));
+         Current_Debugger.Exiting := False;
+         Unref (Current_Debugger);
+         Next := Debugger_List.Next;
+         Free (Debugger_List);
+         Debugger_List := Next;
+         Top.First_Debugger := Debugger_List;
+      end loop;
+
+      Top.First_Debugger := null;
+      Top.Current_Debugger := null;
       Set_Sensitive (Kernel, Debug_None);
       Pop_State (Kernel);
    end Debug_Terminate;
@@ -1795,19 +1796,10 @@ package body GVD_Module is
       Top : constant Glide_Window := Glide_Window (Object);
    begin
       --  Re-create all debugger columns.
+
       Remove_Debugger_Columns (Top.Kernel, VFS.No_File);
       Create_Debugger_Columns (Top.Kernel, VFS.No_File);
    end On_Executable_Changed;
-
-   -----------------------
-   -- On_Destroy_Window --
-   -----------------------
-
-   procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class) is
-   begin
-      --  ??? Should destroy all debuggers, not only the current one.
-      Close (Get_Current_Process (Object).Debugger);
-   end On_Destroy_Window;
 
    ------------------------------
    -- Line_Information_Compute --
@@ -1825,7 +1817,6 @@ package body GVD_Module is
       Tab        : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Id.Kernel));
       Debugger   : constant Debugger_Access := Tab.Debugger;
-      --  ??? Should attach the right debugger.
 
    begin
       if File_Line_List.Is_Empty (Id.Unexplored_Lines)
@@ -2218,7 +2209,6 @@ package body GVD_Module is
       Data_Sub     : constant String := Debug & (-"Data") & '/';
       Mitem        : Gtk_Menu_Item;
       Menu         : Gtk_Menu;
-      --  ??? Should get the right process
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
