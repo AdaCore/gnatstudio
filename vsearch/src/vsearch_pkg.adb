@@ -25,7 +25,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Vsearch; use Callbacks_Vsearch;
-with Vsearch_Intl; use Vsearch_Intl;
+with Glide_Intl; use Glide_Intl;
 
 package body Vsearch_Pkg is
 
