@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 3.0.0
 
+- Files duplicates in the "Open From Project" dialog
+  Problem:    If source directories are specified both in the projects and
+              through ADA_INCLUDE_PATH, the dialog contains duplicate entries.
+  Workaround: this is just a display glitch
+
 - E302-018 GPS hangs when modifying invalid debugger memory contents
   Problem:    During a debugging session, trying to modify the contents
               of the memory in the memory view of an invalid address (e.g. 0x0)
