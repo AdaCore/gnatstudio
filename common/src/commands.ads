@@ -61,7 +61,7 @@ package Commands is
    --  IMPORTANT: at the end of undoing, Command_Finished must be
    --  called. See above for details.
 
-   procedure Destroy (X : access Root_Command);
+   procedure Free (X : in out Root_Command) is abstract;
    --  Free memory associated to X.
 
    type Command_Queue is private;
@@ -115,10 +115,11 @@ package Commands is
    --   - if they are not executed, then the memory associated to them
    --  is freed when Item finishes.
 
-   procedure Free (X : in out Command_Access);
+   procedure Destroy (X : in out Command_Access);
    --  Free memory associated with X.
 
-   package Command_Queues is new Generic_List (Command_Access);
+   package Command_Queues is
+     new Generic_List (Command_Access, Free => Destroy);
 
 private
 
