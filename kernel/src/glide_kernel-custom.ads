@@ -50,6 +50,7 @@
 --      are called initially.
 
 with Glib;
+with Glib.Xml_Int;
 
 package Glide_Kernel.Custom is
 
@@ -74,5 +75,12 @@ package Glide_Kernel.Custom is
    --  If the customization files have already been loaded through
    --  Load_All_Custom_Files, this function immediately calls all the
    --  callback which the modules have registered.
+
+   procedure Execute_Customization_String
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Node   : Glib.Xml_Int.Node_Ptr;
+      Level  : Glide_Kernel.Customization_Level);
+   --  Send a signal to all registered modules to indicate a new customization
+   --  string.
 
 end Glide_Kernel.Custom;

@@ -37,13 +37,6 @@ package body Glide_Kernel.Custom is
    XML_Extension            : constant String := ".xml";
    GPS_Custom_Path_External : constant String := "GPS_CUSTOM_PATH";
 
-   procedure Execute_Customization_String
-     (Kernel : access Kernel_Handle_Record'Class;
-      Node   : Node_Ptr;
-      Level  : Customization_Level);
-   --  Send a signal to all registered modules to indicate a new customization
-   --  string.
-
    procedure Parse_Custom_Dir
      (Kernel    : access Kernel_Handle_Record'Class;
       Directory : String;
