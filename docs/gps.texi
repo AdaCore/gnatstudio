@@ -8102,6 +8102,9 @@ sub projects, recursively.
 Replaced by the name of a file that contains a list of source
 directories in the current project, and all imported sub projects,
 recursively.
+
+@item %%
+Replaced by the % sign.
 @end table
 
 @c ----------------------------------------------------------------------
