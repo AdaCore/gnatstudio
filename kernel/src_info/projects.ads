@@ -443,9 +443,6 @@ package Projects is
    --  If Recursive is True, this function will also return True if one of the
    --  imported project has been modified.
 
-   procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
-   --  Set the modified flag for Project.
-
    type Paths_Type_Information is (Relative, Absolute, From_Pref);
 
    procedure Set_Paths_Type
@@ -508,6 +505,9 @@ private
 
    procedure Set_Is_Default (Project : Project_Type; Default : Boolean);
    --  Indicate whether the project is a default project
+
+   procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
+   --  Set the modified flag for Project.
 
    function Is_External_Variable
      (Var : Prj.Tree.Project_Node_Id) return Boolean;
