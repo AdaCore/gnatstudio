@@ -3028,7 +3028,6 @@ package body Src_Editor_Buffer is
          Prev : Gtk_Text_Iter;
          Res  : Boolean;
          P    : Character;
-         C    : Character;
       begin
          Copy (Iter, Prev);
          Backward_Char (Prev, Res);
@@ -3039,13 +3038,7 @@ package body Src_Editor_Buffer is
             if P = '_' then
                return False;
             else
-               C := Get_Char (Iter);
-
-               if C = '_' then
-                  return not Is_Alphanumeric (P);
-               else
-                  return Gtk.Text_Iter.Starts_Word (Iter);
-               end if;
+               return not Is_Alphanumeric (P);
             end if;
          else
             return True;
