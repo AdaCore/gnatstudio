@@ -2092,7 +2092,7 @@ package body Aliases_Module is
          Command     => Command,
          Description => -"Expand the alias found just before the cursor");
       Bind_Default_Key
-        (Get_Key_Handler (Kernel),
+        (Kernel,
          Action      => "Expand alias",
          Default_Key => "control-o");
 
