@@ -39,7 +39,6 @@ with Projects.Editor;           use Projects.Editor;
 with Projects.Registry;         use Projects.Registry;
 with Snames;                    use Snames;
 with String_Hash;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
 with VFS;                       use VFS;

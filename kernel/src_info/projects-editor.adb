@@ -35,7 +35,6 @@ with Projects.Graphs;           use Projects.Graphs;
 with Projects.Registry;         use Projects.Registry;
 with Projects.Editor.Normalize; use Projects.Editor.Normalize;
 with Snames;                    use Snames;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
 

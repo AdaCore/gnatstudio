@@ -47,7 +47,6 @@ with Projects.Editor;           use Projects.Editor;
 with Snames;                    use Snames;
 with Stringt;
 with String_Hash;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Types;                     use Types;
 with VFS;                       use VFS;
