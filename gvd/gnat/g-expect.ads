@@ -265,7 +265,7 @@ package GNAT.Expect is
    --  then sets the return values for the subprograms Expect_Out and
    --  Expect_Out_Match.
    --  The empty string "" will never match, and can be used if you only want
-   --  to match after a specific timeout. Beware that if Timeout is 0 at the
+   --  to match after a specific timeout. Beware that if Timeout is -1 at the
    --  time, the current task will be blocked forever.
    --
    --  This command times out after Timeout milliseconds (or never if Timeout

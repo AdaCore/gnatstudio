@@ -134,19 +134,19 @@ package body GNAT.Expect is
          if Current = null then
             Descriptor.Filters :=
               new Filter_List_Elem'
-                (Filter => Filter, Filter_On => Filter_On,
-                 User_Data => User_Data, Next => null);
+              (Filter => Filter, Filter_On => Filter_On,
+               User_Data => User_Data, Next => null);
          else
             Current.Next :=
               new Filter_List_Elem'
-                (Filter => Filter, Filter_On => Filter_On,
-                 User_Data => User_Data, Next => null);
+              (Filter => Filter, Filter_On => Filter_On,
+               User_Data => User_Data, Next => null);
          end if;
       else
          Descriptor.Filters :=
            new Filter_List_Elem'
-             (Filter => Filter, Filter_On => Filter_On,
-              User_Data => User_Data, Next => Descriptor.Filters);
+           (Filter => Filter, Filter_On => Filter_On,
+            User_Data => User_Data, Next => Descriptor.Filters);
       end if;
    end Add_Filter;
 
