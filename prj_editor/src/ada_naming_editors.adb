@@ -32,6 +32,7 @@ with Casing;                   use Casing;
 with Prj.Tree;                 use Prj.Tree;
 with Prj.Util;                 use Prj.Util;
 with Prj_API;                  use Prj_API;
+with Prj_Normalize;            use Prj_Normalize;
 with Prj;                      use Prj;
 with Types;                    use Types;
 with Namet;                    use Namet;
@@ -200,6 +201,10 @@ package body Ada_Naming_Editors is
          Scenar := new Project_Node_Array ' (Scenario_Variables (Kernel));
       end if;
 
+      if not Has_Been_Normalized (Project) then
+         Normalize (Project, Recurse => False);
+      end if;
+
       --  Eliminate all the Ada-related attributes.
       Delete_Attribute
         (Project            => Project,
@@ -217,20 +222,17 @@ package body Ada_Naming_Editors is
         (Project            => Project,
          Pkg_Name           => Naming,
          Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Separate_Suffix),
-         Attribute_Index    => Ada_String);
+         Attribute_Name     => Get_Name_String (Name_Separate_Suffix));
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
          Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Casing),
-         Attribute_Index    => Ada_String);
+         Attribute_Name     => Get_Name_String (Name_Casing));
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
          Scenario_Variables => Scenar.all,
-         Attribute_Name     => Get_Name_String (Name_Dot_Replacement),
-         Attribute_Index    => Ada_String);
+         Attribute_Name     => Get_Name_String (Name_Dot_Replacement));
       Delete_Attribute
         (Project            => Project,
          Pkg_Name           => Naming,
