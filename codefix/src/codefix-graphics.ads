@@ -38,6 +38,7 @@ package Codefix.Graphics is
    Display_Lines_After  : constant Integer := 5;
 
    procedure Free (This : in out Vdiff_Access);
+   --  Free the memory associated to This.
 
    package Vdiff_Lists is new Generic_List (Vdiff_Access);
    use Vdiff_Lists;
@@ -45,6 +46,7 @@ package Codefix.Graphics is
    type Fix_Action is access procedure (Error : Error_Id);
 
    procedure No_Free (This : in out Error_Id);
+   --  Do not free anything.
 
    package Error_Id_Lists is new Generic_List (Error_Id, No_Free);
    use Error_Id_Lists;
@@ -74,6 +76,7 @@ package Codefix.Graphics is
       Corrector       : Ptr_Correction_Manager;
       Fixed_Cb        : Fix_Action := null;
       Unfixed_Cb      : Fix_Action := null);
+   --  Creates a new Graphic_Codefix.
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
@@ -82,6 +85,8 @@ package Codefix.Graphics is
       Corrector       : Ptr_Correction_Manager;
       Fixed_Cb        : Fix_Action := null;
       Unfixed_Cb      : Fix_Action := null);
+   --  Display and load the first error of the Graphic_Codefix. If no error
+   --  found, then only open a dialog.
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Free the memory associated to a Graphic_Codefix.
@@ -120,7 +125,6 @@ package Codefix.Graphics is
 
    procedure Cancel_All_Fixes
      (Graphic_Codefix : access Graphic_Codefix_Record'Class);
-   --  Cancel all the fixes that have been made in This. Graphic_Codefix has to
-   --  be freed after this call.
+   --  Cancel all the fixes that have been made in This.
 
 end Codefix.Graphics;
