@@ -28,7 +28,9 @@ with Gtk.Image;                 use Gtk.Image;
 with Gtk.Main;                  use Gtk.Main;
 with Gtk.Window;                use Gtk.Window;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Gtkada.Handlers;           use Gtkada.Handlers;
+with Glide_Intl;                use Glide_Intl;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
@@ -91,9 +93,19 @@ package body Glide_Main_Window is
    is
       pragma Unreferenced (Params);
 
-      Win : constant Glide_Window := Glide_Window (Widget);
+      Win    : constant Glide_Window := Glide_Window (Widget);
+      Button : constant Message_Dialog_Buttons :=
+        Message_Dialog
+          (Msg            => -"Are you sure you want to quit ?",
+           Dialog_Type    => Confirmation,
+           Buttons        => Button_Yes or Button_No,
+           Default_Button => Button_No,
+           Parent         => Gtk_Window (Win));
    begin
-      Quit (Win);
+      if Button = Button_Yes then
+         Quit (Win);
+      end if;
+
       return True;
    end Delete_Callback;
 
