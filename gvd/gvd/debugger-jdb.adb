@@ -102,6 +102,17 @@ package body Debugger.Jdb is
       return S (Index + 1 .. Matches (0).First - 1);
    end Value_Of;
 
+   -----------------
+   -- Print_Value --
+   -----------------
+   
+   procedure Print_Value
+     (Debugger : access Jdb_Debugger;
+      Entity   : String) is
+   begin
+      Send (Debugger, "dump " & Entity, Mode => Visible);
+   end Print_Value;
+
    -----------
    -- Spawn --
    -----------

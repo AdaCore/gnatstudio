@@ -409,6 +409,17 @@ package body Debugger.Gdb is
    end Value_Of;
 
    -----------------
+   -- Print_Value --
+   -----------------
+
+   procedure Print_Value
+     (Debugger : access Gdb_Debugger;
+      Entity   : String) is
+   begin
+      Send (Debugger, "print " & Entity, Mode => Visible);
+   end Print_Value;
+
+   -----------------
    -- Get_Uniq_Id --
    -----------------
 

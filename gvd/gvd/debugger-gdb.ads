@@ -101,6 +101,10 @@ package Debugger.Gdb is
       Entity   : String;
       Format   : Value_Format := Decimal) return String;
 
+   procedure Print_Value
+     (Debugger : access Gdb_Debugger;
+      Entity   : String);
+
    function Info_Locals (Debugger : access Gdb_Debugger) return String;
 
    function Info_Args (Debugger : access Gdb_Debugger) return String;

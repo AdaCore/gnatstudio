@@ -259,7 +259,15 @@ package Debugger is
       Format   : Value_Format := Decimal) return String is abstract;
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
+   --  JDB_COMMAND: "dump"
 
+   procedure Print_Value
+     (Debugger : access Debugger_Root;
+      Entity   : String) is abstract;
+   --  Print the value of the entity
+   --  GDB_COMMAND: "print"
+   --  JDB_COMMAND: "dump"
+   
    procedure Set_Variable
      (Debugger : access Debugger_Root;
       Var_Name : String;
