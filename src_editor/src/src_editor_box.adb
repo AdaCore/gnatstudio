@@ -512,6 +512,7 @@ package body Src_Editor_Box is
       Location         : Gdk_Rectangle;
       File             : String_Access;
       Filename         : constant String := Get_Filename (Data.Box);
+      Out_Of_Bounds    : Boolean;
 
    begin
       Width  := 0;
@@ -525,9 +526,10 @@ package body Src_Editor_Box is
 
       Get_Pointer
         (Get_Window (Widget, Text_Window_Text), Mouse_X, Mouse_Y, Mask, Win);
-      Window_To_Buffer_Coords (Widget, Mouse_X, Mouse_Y, Line, Col);
+      Window_To_Buffer_Coords
+        (Widget, Mouse_X, Mouse_Y, Line, Col, Out_Of_Bounds);
 
-      if Line = -1 or else Col = -1 then
+      if Out_Of_Bounds then
          --  Invalid position: the cursor is outside the text, do not
          --  display a tooltip.
 
@@ -951,6 +953,7 @@ package body Src_Editor_Box is
       Context    : Entity_Selection_Context_Access;
       Filename   : String := Get_Filename (Editor.Source_Buffer);
       Result     : Boolean;
+      Out_Of_Bounds : Boolean := False;
 
    begin
       Context := new Entity_Selection_Context;
@@ -1005,23 +1008,20 @@ package body Src_Editor_Box is
             Column := Get_Line_Offset (Start_Iter);
 
          else
-            Event_To_Buffer_Coords (Editor.Source_View, Event, Line, Column);
+            Event_To_Buffer_Coords
+              (Editor.Source_View, Event, Line, Column, Out_Of_Bounds);
          end if;
 
-         L := To_Box_Line (Line);
-         C := To_Box_Column (Column);
-
-         if L = 0 or else C = 0 then
+         if Out_Of_Bounds then
             --  Invalid position: the cursor is outside the text.
 
-            Get_Start_Iter (Editor.Source_Buffer, Start_Iter);
-            Get_Start_Iter (Editor.Source_Buffer, End_Iter);
+            Get_Iter_At_Line_Offset
+              (Editor.Source_Buffer, Start_Iter, Line, Column);
 
-            if L /= 0 then
-               Set_Entity_Information
-                 (Context, Line => Integer (Get_Line (Start_Iter)) + 1);
-            end if;
          else
+            L := To_Box_Line (Line);
+            C := To_Box_Column (Column);
+
             --  Check whether there is a selection
 
             Get_Selection_Bounds
@@ -1034,8 +1034,7 @@ package body Src_Editor_Box is
                --  the cursor instead.
 
                Get_Iter_At_Line_Offset
-                 (Editor.Source_Buffer, Start_Iter,
-                  To_Buffer_Line (L), To_Buffer_Column (C));
+                 (Editor.Source_Buffer, Start_Iter, Line, Column);
 
                Search_Entity_Bounds
                  (Editor.Source_Buffer, Start_Iter, End_Iter);
@@ -1045,14 +1044,14 @@ package body Src_Editor_Box is
               (Context, Get_Text (Start_Iter, End_Iter),
                Integer (Get_Line (Start_Iter)) + 1,
                Integer (Get_Line_Offset (Start_Iter)) + 1);
-
-            --  Get the focus now. If we let the contextual menu handler in the
-            --  kernel do the grab focus, then the source window will be
-            --  scrolled up.
-
-            Place_Cursor (Editor.Source_Buffer, Start_Iter);
-            Grab_Focus (Editor.Source_View);
          end if;
+
+         --  Get the focus now. If we let the contextual menu handler in the
+         --  kernel do the grab focus, then the source window will be
+         --  scrolled up.
+
+         Place_Cursor (Editor.Source_Buffer, Start_Iter);
+         Grab_Focus (Editor.Source_View);
 
          if Menu /= null then
             if Has_Entity_Name_Information (Context) then
