@@ -537,7 +537,7 @@
 		<object>Breakpoints</object>
 		<last_modification_time>Wed, 07 Mar 2001 04:50:45 GMT</last_modification_time>
 	      </signal>
-	      <label>Update</label>
+	      <label>Apply</label>
 	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
@@ -721,7 +721,7 @@ read or written
 		<object>Breakpoints</object>
 		<last_modification_time>Wed, 07 Mar 2001 04:52:25 GMT</last_modification_time>
 	      </signal>
-	      <label>Update</label>
+	      <label>Apply</label>
 	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
@@ -964,7 +964,7 @@ read or written
 		<object>Breakpoints</object>
 		<last_modification_time>Wed, 07 Mar 2001 04:53:31 GMT</last_modification_time>
 	      </signal>
-	      <label>Update</label>
+	      <label>Apply</label>
 	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
