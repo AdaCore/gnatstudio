@@ -51,7 +51,6 @@ package body Entities is
    --  provided as a backdoor.
    --  ??? Comment above is obsolete and should be updated
 
-
    use Entities_Tries;
    use Files_HTable;
    use LI_HTable;
@@ -2295,6 +2294,7 @@ package body Entities is
       Context            : Language_Context_Access;
       Location           : File_Location;
       Must_Free_Buffer   : Boolean := False;
+
    begin
       if Lang = null then
          Trace (Assert_Me, "Get_Documentation language unknown for "
@@ -2366,8 +2366,11 @@ package body Entities is
 
       if Beginning /= 0 then
          declare
-            Result : constant String := Buffer
-              (Line_Start (Buffer.all, Beginning) .. Current);
+            Result : constant String := Comment_Block
+              (Lang,
+               Buffer (Line_Start (Buffer.all, Beginning) .. Current),
+               Comment => False,
+               Clean   => True);
          begin
             if Must_Free_Buffer then
                Free (Buffer);
