@@ -1120,9 +1120,22 @@ package body Debugger.Gdb is
       Addr_First  : out Natural;
       Addr_Last   : out Natural)
    is
+      Start : Natural := Str'First;
       Matched : Match_Array (0 .. 3);
+      Matched2 : Match_Array (0 .. 3);
    begin
-      Match (File_Name_Pattern, Str, Matched);
+
+      --  Search for the last file reference in the output. There might be
+      --  several of them, for instance when we hit a breakpoint with an
+      --  associated 'up' command.
+      Matched (0) := No_Match;
+      loop
+         Match (File_Name_Pattern, Str (Start .. Str'Last), Matched2);
+         exit when Matched2 (0) = No_Match;
+         Matched := Matched2;
+         Start := Matched (0).Last + 1;
+      end loop;
+
 
       First := Matched (0).First;
       Last  := Matched (0).Last;
@@ -1739,6 +1752,13 @@ package body Debugger.Gdb is
       end loop;
 
       --  Ignore the first line ("All defined exceptions")
+      if Nums = 0 then
+         declare
+            Arr : Exception_Array (1 .. 0);
+         begin
+            return Arr;
+         end;
+      end if;
       Nums := Nums - 1;
 
       declare
