@@ -473,15 +473,6 @@ package Src_Editor_Box is
       Identifier     : String);
    --  See Glide_Kernel.Modules for more information.
 
-   function Get_Saved_Position
-     (Editor : access Source_Editor_Box_Record) return Integer;
-   --  Accessor to the Saved_Position field.
-
-   procedure Set_Modified_State
-     (Editor   : access Source_Editor_Box_Record;
-      Modified : Boolean);
-   --  Change the "modified" flag.
-
    procedure Undo (Editor : access Source_Editor_Box_Record);
    procedure Redo (Editor : access Source_Editor_Box_Record);
    --  Undo/Redo last edit command.
@@ -540,16 +531,17 @@ private
       --  Those tooltips display the value of variables pointed to by the
       --  mouse.
 
-      Modified             : Boolean := False;
       Writable             : Boolean := True;
-
-      Saved_Position       : Integer := 0;
 
       Default_GC, Bg_GC    : Gdk.Gdk_GC;
 
       Cursor_Handler       : Gtk.Handlers.Handler_Id;
       --  Handler connected to the signal "cursor_position_changed" in
       --  the Source_Buffer.
+
+      Status_Handler       : Gtk.Handlers.Handler_Id;
+      --  Handler connected to the signal "status_changed"
+      --  from the source buffer.
    end record;
    --  Note that it is straightforward to retrieve the Source_Buffer from
    --  the Source_View, thus making the Source_View field not absolutely
