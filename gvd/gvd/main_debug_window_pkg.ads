@@ -67,6 +67,7 @@ package Main_Debug_Window_Pkg is
       Odd_Preferences     : Odd_Preferences_Access;
       Open_Program        : Open_Program_Access;
       Open_Session        : Open_Session_Access;
+      History_Dialog      : History_Dialog_Access;
       Task_Dialog         : Task_Dialog_Access;
       Backtrace_Dialog    : Backtrace_Dialog_Access;
       Breakpoints_Editor  : Gtk.Window.Gtk_Window;
