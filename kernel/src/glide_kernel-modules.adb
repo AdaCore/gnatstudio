@@ -39,6 +39,7 @@ with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
 with Gtk.Widget;        use Gtk.Widget;
+with Gtkada.MDI;        use Gtkada.MDI;
 with Language;          use Language;
 with Prj;               use Prj;
 with Prj_API;           use Prj_API;
@@ -557,6 +558,33 @@ package body Glide_Kernel.Modules is
          Menu_Create  => Create_Contextual_Menu'Access,
          Menu_Destroy => Destroy_Contextual_Menu'Access);
    end Register_Contextual_Menu;
+
+   ------------------------------
+   -- Add_Default_Desktop_Item --
+   ------------------------------
+
+   procedure Add_Default_Desktop_Item
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Node        : Glib.Xml_Int.Node_Ptr;
+      X           : Integer := 100;
+      Y           : Integer := 100;
+      Width       : Integer := 100;
+      Height      : Integer := 100;
+      Short_Title : String := "";
+      Title       : String := "";
+      State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
+      Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
+      Focus       : Boolean := False)
+   is
+   begin
+      Add_To_Tree
+        (Get_MDI (Kernel),
+         Kernel.Default_Desktop,
+         Node,
+         X, Y, Width, Height,
+         Short_Title, Title,
+         State, Dock, Focus);
+   end Add_Default_Desktop_Item;
 
    --------------------
    -- Find_Menu_Item --

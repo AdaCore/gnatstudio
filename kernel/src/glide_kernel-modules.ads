@@ -85,6 +85,7 @@ with Gdk.Pixbuf;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
 with Gtk.Widget;
+with Gtkada.MDI;
 with Prj;
 with Src_Info;
 with Language;
@@ -154,6 +155,26 @@ package Glide_Kernel.Modules is
 
    procedure Free_Modules (Kernel : access Kernel_Handle_Record'Class);
    --  Free all the registered modules, and call Destroy for each of these.
+
+   ----------------------
+   -- Desktop handling --
+   ----------------------
+
+   procedure Add_Default_Desktop_Item
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Node        : Glib.Xml_Int.Node_Ptr;
+      X           : Integer := 100;
+      Y           : Integer := 100;
+      Width       : Integer := 100;
+      Height      : Integer := 100;
+      Short_Title : String := "";
+      Title       : String := "";
+      State       : Gtkada.MDI.State_Type := Gtkada.MDI.Normal;
+      Dock        : Gtkada.MDI.Dock_Side := Gtkada.MDI.None;
+      Focus       : Boolean := False);
+   --  Add an item to the default desktop.
+   --  Node is a node that will generate the desired widget when
+   --  passed to the Kernel.Desktop.Load_Desktop_Function.
 
    ----------------------
    -- Contextual menus --
