@@ -152,6 +152,9 @@ package body Projects.Registry is
       Extensions : Languages_Htable.String_Hash_Table.HTable;
       --  The extensions registered for each language.
 
+      Trusted_Mode : Boolean := True;
+      --  Whether we are in trusted mode when recomputing the project view:
+
       --  Implicit dependency on the global htables in the Prj.* packages.
    end record;
 
@@ -258,6 +261,17 @@ package body Projects.Registry is
 
       return True;
    end Is_Valid_Project_Name;
+
+   ----------------------
+   -- Set_Trusted_Mode --
+   ----------------------
+
+   procedure Set_Trusted_Mode
+     (Registry        : Project_Registry'Class;
+      Trusted_Mode    : Boolean) is
+   begin
+      Registry.Data.Trusted_Mode := Trusted_Mode;
+   end Set_Trusted_Mode;
 
    ------------------------------------
    -- Reset_Scenario_Variables_Cache --
@@ -572,7 +586,8 @@ package body Projects.Registry is
       Errout.Initialize;
       Prj.Proc.Process
         (View, Success, Registry.Data.Root.Node,
-         Report_Error'Unrestricted_Access);
+         Report_Error'Unrestricted_Access,
+         Trusted_Mode => Registry.Data.Trusted_Mode);
 
       --  Lower case the languages attribute
 
@@ -824,16 +839,17 @@ package body Projects.Registry is
       Sources_Specified : Boolean := False;
 
       procedure Record_Source (Dir, File : String; Lang : Name_Id);
-      --  Add file to the list of source files for Project
+      --  Add file to the list of source files for Project.
 
       function File_In_Sources (File : String) return Boolean;
       --  Whether File belongs to the list of source files for this project
 
       procedure Record_Source (Dir, File : String; Lang : Name_Id) is
+         Full_Path : constant Name_Id := Get_String (Dir & File);
       begin
          String_Elements.Increment_Last;
          String_Elements.Table (String_Elements.Last) :=
-           (Value         => Get_String (Dir & File),
+           (Value         => Full_Path,
             Display_Value => Get_String (File),
             Flag          => False,  --  Irrelevant for files
             Location      => No_Location,
@@ -841,7 +857,8 @@ package body Projects.Registry is
          Prj.Projects.Table (Get_View (Project)).Sources :=
            String_Elements.Last;
 
-         Set (Registry.Data.Sources, K => File, E => (Project, Lang, No_Name));
+         Set (Registry.Data.Sources, K => File,
+              E => (Project, Lang, Full_Path));
       end Record_Source;
 
       function File_In_Sources (File : String) return Boolean is
