@@ -4754,37 +4754,45 @@ extern template_param* template_argument_skip( LongString *plstr )
       }
 
       if ( !bSeekNext && token (0) == SN_CLASS ) {
-         if ( token (1) == SN_IDENTIFIER ) {
-             tp = (template_param*) malloc (sizeof (template_param));
-             if  ( !tp ) {
-                fprintf (stderr, "memory allocation error\n");
-                abort ();
-             }
+         tp = (template_param*) malloc (sizeof (template_param));
+         if  ( !tp ) {
+            fprintf (stderr, "memory allocation error\n");
+            abort ();
+         }
 
-             tp->kind = PAF_TA_TYPE;
-             LongStringInit (&tp->name, -1);
+         tp->kind = PAF_TA_TYPE;
+         LongStringInit (&tp->name, -1);
+
+         LongStringInit (&tp->type, -1);
+         LongStringMyAppend (&tp->type, StringToText (ident (0)));
+         tp->type_lineno = f_lineno (0);
+         tp->type_charno = f_charno (0);
+         tp->params = 0;
+         tp->next = root;
+
+         root = tp;
+
+         if ( token (1) == SN_IDENTIFIER ) {
              LongStringMyAppend (&tp->name, StringToText (ident (1)));
              tp->name_lineno = f_lineno (1);
              tp->name_charno = f_charno (1);
-             LongStringInit (&tp->type, -1);
-             LongStringMyAppend (&tp->type, StringToText (ident (0)));
-             tp->type_lineno = f_lineno (0);
-             tp->type_charno = f_charno (0);
-             tp->params = 0;
-             tp->next = root;
-
-             root = tp;
-
-             bSeekNext = True;
-
-             if ( plstr ) 
-                 LongStringMyAppend (plstr, StringToText (ident (0)));
-             /* skip name: it is really of no use
-             LongStringMyAppend (plstr, " ");
-             LongStringMyAppend (plstr, StringToText (ident (1)));
-             */
              step( 2 );
+         } else {
+             LongStringMyAppend (&tp->name, "");
+             tp->name_lineno = 0;
+             tp->name_charno = 0;
+             step( 1 );
          }
+
+         bSeekNext = True;
+
+         if ( plstr ) 
+            LongStringMyAppend (plstr, "class");
+         /* skip name: it is really of no use
+         LongStringMyAppend (plstr, " ");
+         LongStringMyAppend (plstr, StringToText (ident (1)));
+         */
+
       } else if ( !bSeekNext && token (0) == SN_TEMPLATE ) {
          if ( token (1) == '<' ) {
              tp = (template_param*) malloc (sizeof (template_param));
@@ -4805,12 +4813,20 @@ extern template_param* template_argument_skip( LongString *plstr )
              tp->params = template_argument_skip (&tp->type);
              LongStringMyAppend (&tp->type, " class");
 
-             if ( token (0) != SN_CLASS || token (1) != SN_IDENTIFIER )
+             if ( token (0) != SN_CLASS )
                  return 0;
 
-             LongStringMyAppend (&tp->name, StringToText (ident (1)));
-             tp->name_lineno = f_lineno (1);
-             tp->name_charno = f_charno (1);
+             if ( token (1) == SN_IDENTIFIER ) {
+                 LongStringMyAppend (&tp->name, StringToText (ident (1)));
+                 tp->name_lineno = f_lineno (1);
+                 tp->name_charno = f_charno (1);
+                 step (2);
+             } else {
+                 LongStringMyAppend (&tp->name, "");
+                 tp->name_lineno = 0;
+                 tp->name_charno = 0;
+                 step (1);
+             }
              tp->next = root;
 
              root = tp;
@@ -4823,7 +4839,6 @@ extern template_param* template_argument_skip( LongString *plstr )
              LongStringMyAppend (plstr, " ");
              LongStringMyAppend (plstr, tp->name.buf);
              */
-             step (2);
          } else {
              return 0;
          }
