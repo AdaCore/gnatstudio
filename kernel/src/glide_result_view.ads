@@ -22,6 +22,7 @@ with Gdk.Color;                use Gdk.Color;
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
 with Gtk.Box;                  use Gtk.Box;
+with Gtk.Main;                 use Gtk.Main;
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Standard_Hooks;  use Glide_Kernel.Standard_Hooks;
@@ -137,6 +138,7 @@ package Glide_Result_View is
    --  relevant parenthesis pair in the regexp.
 
 private
+
    type Result_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
@@ -150,6 +152,9 @@ private
       File_Pixbuf     : Gdk.Pixbuf.Gdk_Pixbuf;
 
       Action_Column   : Gtk_Tree_View_Column;
+
+      Idle_Handler    : Timeout_Handler_Id;
+      Idle_Registered : Boolean := False;
    end record;
 
 end Glide_Result_View;
