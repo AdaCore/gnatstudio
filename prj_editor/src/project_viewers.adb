@@ -2421,29 +2421,29 @@ package body Project_Viewers is
       Register_Menu (Kernel, Project, null, Ref_Item => -"Edit",
                      Add_Before => False);
 
-      Register_Menu (Kernel, Project, -"New...", "", On_New_Project'Access,
+      Register_Menu (Kernel, Project, -"_New...", "", On_New_Project'Access,
                      Ref_Item => -"Open...", Add_Before => True);
 
       Prj_Editor_Module_ID.Reopen_Menu := Register_Menu
-        (Kernel, Project, -"Recent", "",
+        (Kernel, Project, -"_Recent", "",
          null, Ref_Item => -"Open...", Add_Before => False);
       Refresh_Reopen_Menu (Kernel);
 
       Register_Menu
-        (Kernel, Project, -"Edit Switches", "",
+        (Kernel, Project, -"Edit _Switches", "",
          On_Edit_Switches'Access, Ref_Item => -"Recent", Add_Before => False);
       Register_Menu
-        (Kernel, Project, -"Edit Properties", "",
+        (Kernel, Project, -"Edit _Properties", "",
          On_Project_Properties'Access, Ref_Item => -"Recent",
          Add_Before => False);
       Register_Menu
-        (Kernel, Project, -"Save All", "",
+        (Kernel, Project, -"Save _All", "",
          Save_All_Projects'Access, Ref_Item => -"Edit Properties",
          Add_Before => False);
       Set_Tip
         (Get_Tooltips (Kernel),
          Register_Menu
-         (Kernel, Project, -"Recompute Project", "",
+         (Kernel, Project, -"R_ecompute Project", "",
           On_Project_Recompute'Access, Ref_Item => -"Edit Switches",
           Add_Before => False),
          Tip_Text => -("Recompute the contents of the project after"
