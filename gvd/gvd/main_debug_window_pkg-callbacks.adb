@@ -726,9 +726,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
-      Set_Busy_Cursor (Tab, True);
-      Run (Tab.Debugger, Mode => User);
-      Set_Busy_Cursor (Tab, False);
+      declare
+         Arguments : constant String := Simple_Entry_Dialog
+           (Parent  => Tab.Window,
+            Title   => -"Arguments Selection",
+            Message => -"Enter the arguments to your application:",
+            Key     => -"odd_run_arguments");
+      begin
+         if Arguments = ""
+           or else Arguments (Arguments'First) /= ASCII.Nul
+         then
+            Set_Busy_Cursor (Tab, True);
+            Run (Tab.Debugger, Arguments, Mode => User);
+            Set_Busy_Cursor (Tab, False);
+         end if;
+      end;
    end On_Run1_Activate;
 
    ----------------------------
@@ -1179,22 +1191,55 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      if Command_In_Process (Get_Process (Process.Debugger)) then
+         return;
+      end if;
+
       Process_User_Command
         (Process,
          "graph display `" & Info_Registers (Process.Debugger) & '`',
          Output_Command => True);
    end On_Display_Registers1_Activate;
 
-   ---------------------------------------
-   -- On_Display_Machine_Code1_Activate --
-   ---------------------------------------
+   -------------------------------------
+   -- On_Display_Expression1_Activate --
+   -------------------------------------
 
-   procedure On_Display_Machine_Code1_Activate
-     (Object : access Gtk_Menu_Item_Record'Class)
+   procedure On_Display_Expression1_Activate
+     (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
-   end On_Display_Machine_Code1_Activate;
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         return;
+      end if;
+
+      declare
+         Is_Func : aliased Boolean;
+         Expression : constant String := Display_Entry_Dialog
+           (Parent  => Tab.Window,
+            Title   => -"Expression Selection",
+            Message => -"Enter an expression to display:",
+            Key     => -"odd_display_expression_dialog",
+            Is_Func => Is_Func'Access);
+      begin
+         if Expression /= ""
+           and then Expression (Expression'First) /= ASCII.Nul
+         then
+            if Is_Func then
+               Process_User_Command
+                 (Tab,
+                  "graph display `" & Expression & '`',
+                  Output_Command => True);
+            else
+               Process_User_Command
+                 (Tab,
+                  "graph display " & Expression,
+                  Output_Command => True);
+            end if;
+         end if;
+      end;
+   end On_Display_Expression1_Activate;
 
    --------------------------------------
    -- On_More_Status_Display1_Activate --

@@ -777,6 +777,13 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Registers1);
    Set_Right_Justify (Main_Debug_Window.Display_Registers1, False);
 
+   Gtk_New (Main_Debug_Window.Display_Expression1, -"Display Any Expression...");
+   Widget_Callback.Object_Connect
+     (Main_Debug_Window.Display_Expression1, "activate",
+      Widget_Callback.To_Marshaller (On_Display_Expression1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Expression1);
+   Set_Right_Justify (Main_Debug_Window.Display_Expression1, False);
+
    Gtk_New (Main_Debug_Window.More_Status_Display1, -"More Status Display...");
    Set_Sensitive (Main_Debug_Window.More_Status_Display1, False);
    Menu_Item_Callback.Connect
