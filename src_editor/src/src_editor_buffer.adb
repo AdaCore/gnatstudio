@@ -919,6 +919,12 @@ package body Src_Editor_Buffer is
             Buffer.End_Delimiters_Highlight := Create_Mark
               (Buffer, "", Last_Highlight_Iter);
 
+            Forward_To_Line_End (Last_Highlight_Iter, Success);
+            Set_Line_Offset (First_Highlight_Iter, 0);
+
+            Highlight_Slice
+              (Buffer, First_Highlight_Iter, Last_Highlight_Iter);
+
             Buffer.Has_Delimiters_Highlight := True;
          end if;
       end;
