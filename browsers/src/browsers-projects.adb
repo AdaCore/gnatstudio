@@ -37,6 +37,7 @@ with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtkada.Canvas;            use Gtkada.Canvas;
 with Gtkada.MDI;               use Gtkada.MDI;
+with Pango.Layout;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
 with Types;                    use Types;
@@ -52,6 +53,49 @@ package body Browsers.Projects is
 
    type Browser_Search_Context is new Search_Context with null record;
    type Browser_Search_Context_Access is access all Browser_Search_Context;
+
+   ---------------------
+   -- Project_Browser --
+   ---------------------
+
+   type Project_Browser_Record is new Browsers.Canvas.General_Browser_Record
+     with null record;
+   type Project_Browser is access all Project_Browser_Record'Class;
+
+   ----------------------------
+   -- Browser_Project_Vertex --
+   ----------------------------
+
+   type Browser_Project_Vertex is new Browsers.Canvas.Arrow_Item_Record with
+      record
+         Name    : Types.Name_Id;
+      end record;
+   type Browser_Project_Vertex_Access is access all Browser_Project_Vertex;
+
+   function Contextual_Factory
+     (Item    : access Browser_Project_Vertex;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Event   : Gdk.Event.Gdk_Event;
+      Menu    : Gtk.Menu.Gtk_Menu)
+      return Glide_Kernel.Selection_Context_Access;
+   procedure Resize_And_Draw
+     (Item             : access Browser_Project_Vertex;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   procedure Gtk_New
+     (V       : out Browser_Project_Vertex_Access;
+      Browser : access Project_Browser_Record'Class;
+      Project : Standard.Projects.Project_Type);
+   --  Create a new project vertex
+
+   ----------
+   -- Misc --
+   ----------
 
    procedure Examine_Project_Hierarchy
      (Browser : access Project_Browser_Record'Class;
@@ -91,7 +135,7 @@ package body Browsers.Projects is
       return Gtkada.MDI.MDI_Child;
    --  Find, or create, a project browser
 
-   function Project_Of (Item : access Browser_Project_Vertex)
+   function Project_Of (Item : access Browser_Project_Vertex'Class)
       return Project_Type;
    --  Return the project associated with Item
 
@@ -145,7 +189,7 @@ package body Browsers.Projects is
    -- Project_Of --
    ----------------
 
-   function Project_Of (Item : access Browser_Project_Vertex)
+   function Project_Of (Item : access Browser_Project_Vertex'Class)
       return Project_Type is
    begin
       return Get_Project_From_Name
@@ -294,7 +338,8 @@ package body Browsers.Projects is
          --
          --  As a side effect, this also refreshes the canvas
 
-         Select_Item (Browser, Src);
+         Clear_Selection (Get_Canvas (Browser));
+         Add_To_Selection (Get_Canvas (Browser), Src);
          Show_Item (Get_Canvas (Browser), Src);
       end if;
 
@@ -659,13 +704,17 @@ package body Browsers.Projects is
    is
       pragma Unreferenced (Kernel);
       Browser : constant Project_Browser := Project_Browser (Child);
+      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
-      if Selected_Item (Browser) = null then
+      --  If there is no selection, or more than one item, nothing we can do
+      if Get (Iter) = null
+        or else Get (Next (Iter)) /= null
+      then
          return null;
       end if;
 
       return Contextual_Factory
-        (Item    => Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Get (Iter)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -703,7 +752,8 @@ package body Browsers.Projects is
       Child        : constant MDI_Child := Open_Project_Browser (Kernel);
       Browser      : Project_Browser;
       Iter         : Item_Iterator;
-      It           :  Browser_Project_Vertex_Access;
+      It           : Browser_Project_Vertex_Access;
+      Selection    : Selection_Iterator;
 
    begin
       if Child = null then
@@ -711,8 +761,9 @@ package body Browsers.Projects is
       end if;
 
       Browser := Project_Browser (Get_Widget (Child));
+      Selection := Start (Get_Canvas (Browser));
 
-      Saw_Selected := Selected_Item (Browser) = null;
+      Saw_Selected := Get (Selection) = null;
 
       --  We have to start from the beginning, but to save some time in case we
       --  have no more item after the current one, we memorize the first
@@ -734,7 +785,7 @@ package body Browsers.Projects is
             end if;
          end if;
 
-         if Selected_Item (Browser) = Canvas_Item (It) then
+         if Is_Selected (Get_Canvas (Browser), It) then
             Saw_Selected := True;
          end if;
 
@@ -742,7 +793,8 @@ package body Browsers.Projects is
       end loop;
 
       if First_Match /= null then
-         Select_Item (Browser, First_Match);
+         Clear_Selection (Get_Canvas (Browser));
+         Add_To_Selection (Get_Canvas (Browser), First_Match);
          Show_Item (Get_Canvas (Browser), First_Match);
          return True;
       else

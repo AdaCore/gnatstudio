@@ -44,6 +44,7 @@ with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
+with Projects.Registry;        use Projects.Registry;
 
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
@@ -70,6 +71,85 @@ package body Browsers.Call_Graph is
    Automatically_Check_To_Dependencies : constant Boolean := True;
    --  If True, then every time an item is added to the call graph we check,
    --  and if no to dependency exists, the right arrow is not displayed.
+
+   ------------------------
+   -- Call graph browser --
+   ------------------------
+
+   type Call_Graph_Browser_Record is new
+     Browsers.Canvas.General_Browser_Record
+   with record
+      Idle_Id : Gtk.Main.Idle_Handler_Id;
+   end record;
+   type Call_Graph_Browser is access all Call_Graph_Browser_Record'Class;
+
+   ------------------
+   -- Entity items --
+   ------------------
+
+   type Entity_Item_Record is new Browsers.Canvas.Arrow_Item_Record
+   with record
+      Entity : Src_Info.Queries.Entity_Information;
+   end record;
+   type Entity_Item is access all Entity_Item_Record'Class;
+
+   procedure Gtk_New
+     (Item    : out Entity_Item;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean);
+   --  Create a new entity item.
+   --  If May_Have_To_Dependencies is False, the right arrow will not be
+   --  displayed in the items.
+
+   procedure Initialize
+     (Item    : access Entity_Item_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Entity  : Src_Info.Queries.Entity_Information;
+      May_Have_To_Dependencies : Boolean);
+   --  Internal initialization function
+
+   procedure Destroy (Item : in out Entity_Item_Record);
+   --  Free the memory occupied by the item. This is called automatically when
+   --  the item is removed from the canvas.
+
+   function Contextual_Factory
+     (Item  : access Entity_Item_Record;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for this item
+
+   procedure Resize_And_Draw
+     (Item                        : access Entity_Item_Record;
+      Width, Height               : Glib.Gint;
+      Width_Offset, Height_Offset : Glib.Gint;
+      Xoffset, Yoffset            : in out Glib.Gint;
+      Layout                  : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   --------------------
+   -- Renaming links --
+   --------------------
+
+   type Renaming_Link_Record is new Browsers.Canvas.Browser_Link_Record
+     with null record;
+   --  The type of link used between an entity and the entities that rename
+   --  it.
+   --  A renaming link should always be created from the renaming entity to the
+   --  renamed entity.
+
+   procedure Draw_Link
+     (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+      Link        : access Renaming_Link_Record;
+      Invert_Mode : Boolean;
+      GC          : Gdk.GC.Gdk_GC;
+      Edge_Number : Glib.Gint);
+   --  Override the default drawing procedure for links
+
+   ----------
+   -- Misc --
+   ----------
 
    type Entity_Idle_Data is record
       Kernel : Kernel_Handle;
@@ -495,7 +575,8 @@ package body Browsers.Call_Graph is
          Set_Children_Shown (Item, True);
 
          --  If we have a renaming, add the entry for the renamed entity
-         Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
+         Renaming_Of
+           (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
          if Is_Renaming and then Rename /= No_Entity_Information then
             Child := Add_Entity_If_Not_Present (Browser, Rename);
             if not Has_Link (Get_Canvas (Browser), Item, Child) then
@@ -618,6 +699,7 @@ package body Browsers.Call_Graph is
       end Add_Item;
 
       Tree : Scope_Tree;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data.Browser);
    begin
       if Get (Data.Iter.all) = No_Reference then
          return False;
@@ -631,7 +713,8 @@ package body Browsers.Call_Graph is
                Free (Tree);
             end if;
 
-            Next (Get_Kernel (Data.Browser), Data.Iter.all);
+            Next (Get_Language_Handler (Kernel), Data.Iter.all,
+                  Get_LI_File_List (Kernel));
             return True;
 
          exception
@@ -673,7 +756,7 @@ package body Browsers.Call_Graph is
       Redraw_Title_Bar (Item);
 
       --  If we have a renaming, add the entry for the renamed entity
-      Renaming_Of (Kernel, Entity, Is_Renaming, Rename);
+      Renaming_Of (Get_LI_File_List (Kernel), Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
          Child := Add_Entity_If_Not_Present (Browser, Rename);
          if not Has_Link (Get_Canvas (Browser), Item, Child) then
@@ -695,7 +778,13 @@ package body Browsers.Call_Graph is
                Browser => Browser,
                Entity  => Copy (Entity),
                Item    => Item);
-      Find_All_References (Kernel, Entity, Data.Iter.all, LI_Once => True);
+      Find_All_References
+        (Get_Project (Kernel),
+         Get_Language_Handler (Kernel),
+         Entity,
+         Get_LI_File_List (Kernel),
+         Data.Iter.all,
+         LI_Once => True);
 
       Browser.Idle_Id := Examine_Ancestors_Idle.Add
         (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
@@ -928,7 +1017,8 @@ package body Browsers.Call_Graph is
                Get_Name (D.Entity),
                D.Category.all & Get_Name (D.Entity));
          end if;
-         Next (D.Kernel, D.Iter.all);
+         Next (Get_Language_Handler (D.Kernel), D.Iter.all,
+               Get_LI_File_List (D.Kernel));
 
          return True;
       end if;
@@ -972,7 +1062,10 @@ package body Browsers.Call_Graph is
                      Category       => new String'(Category_Title),
                      Entity         => Copy (Info));
 
-            Find_All_References (Kernel, Info, Data.Iter.all);
+            Find_All_References
+              (Get_Project (Kernel),
+               Get_Language_Handler (Kernel),
+               Info, Get_LI_File_List (Kernel), Data.Iter.all);
 
             Idle_Id := Entity_Iterator_Idle.Add
               (Cb       => Find_Next_Reference'Access,
@@ -1063,9 +1156,10 @@ package body Browsers.Call_Graph is
       Info     : Entity_Information;
       Iter     : Entity_Reference_Iterator;
       Location : File_Location;
+      Kernel   : constant Kernel_Handle := Get_Kernel (Entity);
 
    begin
-      Push_State (Get_Kernel (Entity), Busy);
+      Push_State (Kernel, Busy);
       Info := Get_Entity (Entity);
 
       if Info /= No_Entity_Information then
@@ -1073,10 +1167,10 @@ package body Browsers.Call_Graph is
          --  current file. Otherwise, this is too surprising for the use
 
          Remove_Result_Category
-           (Get_Kernel (Entity), -"References for: " & Get_Name (Info));
+           (Kernel, -"References for: " & Get_Name (Info));
 
          if Get_Declaration_File_Of (Info) = File_Information (Entity) then
-            Print_Ref (Get_Kernel (Entity),
+            Print_Ref (Kernel,
                        Get_Declaration_File_Of (Info),
                        Get_Declaration_Line_Of (Info),
                        Get_Declaration_Column_Of (Info),
@@ -1085,24 +1179,29 @@ package body Browsers.Call_Graph is
          end if;
 
          Find_All_References
-           (Get_Kernel (Entity), Info, Iter,
+           (Get_Project (Kernel),
+            Get_Language_Handler (Kernel),
+            Info, Get_LI_File_List (Kernel), Iter,
             In_File => File_Information (Entity));
 
          while Get (Iter) /= No_Reference loop
             Location := Get_Location (Get (Iter));
             Print_Ref
-              (Get_Kernel (Entity), Get_File (Location),
+              (Kernel, Get_File (Location),
                Get_Line (Location), Get_Column (Location),
                Get_Name (Info),
                -"References for: " & Get_Name (Info));
 
-            Next (Get_Kernel (Entity), Iter);
+            Next
+              (Get_Language_Handler (Kernel),
+               Iter,
+               Get_LI_File_List (Kernel));
          end loop;
 
          Destroy (Iter);
       end if;
 
-      Pop_State (Get_Kernel (Entity));
+      Pop_State (Kernel);
 
    exception
       when E : others =>
@@ -1239,10 +1338,11 @@ package body Browsers.Call_Graph is
    begin
       if Get_Declaration_File_Of (Item.Entity) /= ":" then
          declare
-            Filename : constant String := Find_Source_File
-              (Kernel                 => Get_Kernel (Browser),
-               Short_File_Name        => Get_Declaration_File_Of (Item.Entity),
-               Use_Predefined_Source_Path => True);
+            Filename : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (Get_Kernel (Browser)),
+               Filename        => Get_Declaration_File_Of (Item.Entity),
+               Use_Source_Path => True,
+               Use_Object_Path => False);
          begin
             Set_File_Information
               (File_Selection_Context_Access (Context),
@@ -1345,13 +1445,17 @@ package body Browsers.Call_Graph is
    is
       pragma Unreferenced (Kernel);
       Browser : constant Call_Graph_Browser := Call_Graph_Browser (Child);
+      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
-      if Selected_Item (Browser) = null then
+      --  If there is no selection, or more than one item, nothing we can do
+      if Get (Iter) = null
+        or else Get (Next (Iter)) /= null
+      then
          return null;
       end if;
 
       return Contextual_Factory
-        (Item    => Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Get (Iter)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -1492,7 +1596,6 @@ package body Browsers.Call_Graph is
    procedure Draw_Link
      (Canvas      : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
       Link        : access Renaming_Link_Record;
-      Window      : Gdk.Window.Gdk_Window;
       Invert_Mode : Boolean;
       GC          : Gdk.GC.Gdk_GC;
       Edge_Number : Glib.Gint)
@@ -1507,7 +1610,7 @@ package body Browsers.Call_Graph is
 
       Draw_Link
         (Canvas, Browser_Link_Record (Link.all)'Access,
-         Window, Invert_Mode, GC, Edge_Number);
+         Invert_Mode, GC, Edge_Number);
 
       Set_Line_Attributes
         (GC,

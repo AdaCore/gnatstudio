@@ -35,9 +35,9 @@ with Gtkada.Canvas;        use Gtkada.Canvas;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
+with Pango.Layout;         use Pango.Layout;
 
 with Browsers.Canvas;           use Browsers.Canvas;
-with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
@@ -62,6 +62,90 @@ package body Browsers.Dependency_Items is
    Me : constant Debug_Handle := Create ("Browsers.Dependency");
 
    Dependency_Browser_Module_ID : Module_ID;
+
+   ------------------------
+   -- Dependency browser --
+   ------------------------
+
+   type Dependency_Browser_Record is new
+     Browsers.Canvas.General_Browser_Record with
+   record
+      Idle_Id : Gtk.Main.Idle_Handler_Id;
+   end record;
+   type Dependency_Browser is access all Dependency_Browser_Record'Class;
+
+   ----------------
+   -- File items --
+   ----------------
+   --  These items represent source files from the application.
+
+   type File_Item_Record is new Browsers.Canvas.Arrow_Item_Record with
+   record
+      Source : Src_Info.Internal_File;
+   end record;
+   type File_Item is access all File_Item_Record'Class;
+
+   procedure Gtk_New
+     (Item    : out File_Item;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      File    : Src_Info.Internal_File);
+   --  Create a new dependency item that represents Dep.
+
+   procedure Gtk_New
+     (Item            : out File_Item;
+      Browser         : access Browsers.Canvas.General_Browser_Record'Class;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Source_Filename : String);
+   --  Create a new dependency item directly from a source filename
+
+   procedure Initialize
+     (Item    : access File_Item_Record'Class;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      File    : Src_Info.Internal_File);
+   --  Internal initialization function
+
+   function Get_Source (Item : access File_Item_Record'Class)
+      return Src_Info.Internal_File;
+   pragma Inline (Get_Source);
+   --  Return the source file associated with Item
+
+   procedure Destroy (Item : in out File_Item_Record);
+   --  Free the memory associated with the item
+
+   function Contextual_Factory
+     (Item  : access File_Item_Record;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
+   --  Return the context to use for this item
+
+   procedure Resize_And_Draw
+     (Item             : access File_Item_Record;
+      Width, Height    : Glib.Gint;
+      Width_Offset     : Glib.Gint;
+      Height_Offset    : Glib.Gint;
+      Xoffset, Yoffset : in out Glib.Gint;
+      Layout           : access Pango.Layout.Pango_Layout_Record'Class);
+   --  See doc for inherited subprogram
+
+   ----------------------
+   -- Dependency links --
+   ----------------------
+
+   type Dependency_Link_Record is new Browsers.Canvas.Browser_Link_Record
+   with record
+      Dep : Src_Info.Dependency_Info;
+   end record;
+   type Dependency_Link is access all Dependency_Link_Record'Class;
+
+   procedure Gtk_New
+     (Link : out Dependency_Link;
+      Dep  : Src_Info.Dependency_Info);
+   --  Create a new link.
+
+   ----------
+   -- Misc --
+   ----------
 
    type Examine_Dependencies_Idle_Data is record
       Iter    : Dependency_Iterator_Access;
@@ -464,6 +548,7 @@ package body Browsers.Dependency_Items is
       Child : File_Item;
       Link  : Browser_Link;
       Dep   : Dependency;
+      Kernel : constant Kernel_Handle := Get_Kernel (Data.Browser);
    begin
       if Get (Data.Iter.all) = No_LI_File then
          return False;
@@ -495,7 +580,8 @@ package body Browsers.Dependency_Items is
          end if;
 
          Destroy (Dep);
-         Next (Get_Kernel (Data.Browser), Data.Iter.all);
+         Next (Get_Language_Handler (Kernel), Data.Iter.all,
+               Get_LI_File_List (Kernel));
          return True;
       end if;
 
@@ -542,7 +628,13 @@ package body Browsers.Dependency_Items is
                Browser          => Browser,
                Item             => Item,
                Recompute_Layout => Recompute_Layout);
-      Find_Ancestor_Dependencies (Kernel, File, Data.Iter.all);
+      Find_Ancestor_Dependencies
+        (Get_Project (Kernel),
+         Get_Language_Handler (Kernel),
+         File,
+         Get_LI_File_List (Kernel),
+         Data.Iter.all,
+         Include_Self => False);
 
       if Interactive then
          Browser.Idle_Id := Dependency_Idle.Add
@@ -782,13 +874,17 @@ package body Browsers.Dependency_Items is
    is
       pragma Unreferenced (Kernel);
       Browser : constant Dependency_Browser := Dependency_Browser (Child);
+      Iter    : constant Selection_Iterator := Start (Get_Canvas (Browser));
    begin
-      if Selected_Item (Browser) = null then
+      --  If there is no selection, or more than one item, nothing we can do
+      if Get (Iter) = null
+        or else Get (Next (Iter)) /= null
+      then
          return null;
       end if;
 
       return Contextual_Factory
-        (Item    => Browser_Item (Selected_Item (Browser)),
+        (Item    => Browser_Item (Get (Iter)),
          Browser => Browser,
          Event   => null,
          Menu    => null);
@@ -804,56 +900,16 @@ package body Browsers.Dependency_Items is
       Args    : String_List_Utils.String_List.List) return String
    is
       use String_List_Utils.String_List;
-      Node    : List_Node;
-      Browser : Dependency_Browser;
-      Found   : Canvas_Item;
-      Iter    : Item_Iterator;
-
+      Node    : List_Node := First (Args);
    begin
-      if Command = "uses_all" then
-         Browser := Dependency_Browser
-           (Get_Widget (Open_Dependency_Browser (Kernel)));
-
-         Examine_Dependencies (Kernel, File => Data (First (Args)));
-
-         loop
-            Found := null;
-            Iter := Start (Get_Canvas (Browser));
-            loop
-               Found := Get (Iter);
-               exit when Found = null
-                 or else not Parents_Shown (File_Item (Found))
-                 or else not Children_Shown (File_Item (Found));
-               Next (Iter);
-            end loop;
-
-            exit when Found = null;
-
-            Examine_Dependencies
-              (Kernel, Get_Source_Filename (File_Item (Found).Source), False);
-            Examine_From_Dependencies
-              (Kernel, Get_Source_Filename (File_Item (Found).Source),
-               Interactive => False, Recompute_Layout => False);
-         end loop;
-
-         --  Do the layout only once
-
-         Layout (Browser, Force => False);
-         Refresh_Canvas (Get_Canvas (Browser));
-
-         Trace (Me, "No more unexpanded items");
-
-      else
-         Node := First (Args);
-         while Node /= Null_Node loop
-            if Command = "uses" then
-               Examine_Dependencies (Kernel, File => Data (Node));
-            elsif Command = "used_by" then
-               Examine_From_Dependencies (Kernel, File => Data (Node));
-            end if;
-            Node := Next (Node);
-         end loop;
-      end if;
+      while Node /= Null_Node loop
+         if Command = "uses" then
+            Examine_Dependencies (Kernel, File => Data (Node));
+         elsif Command = "used_by" then
+            Examine_From_Dependencies (Kernel, File => Data (Node));
+         end if;
+         Node := Next (Node);
+      end loop;
 
       return "";
    end Depends_On_Command_Handler;
@@ -882,7 +938,7 @@ package body Browsers.Dependency_Items is
                      On_Dependency_Browser'Access);
 
       Register_Command
-        (Kernel, "uses",
+        (Kernel, "file.uses",
          (-"Usage:") & ASCII.LF & "  uses file_name [file_name...]"
          & ASCII.LF
          & (-("Display in the dependency browser the list of files that"
@@ -890,16 +946,12 @@ package body Browsers.Dependency_Items is
               & " file on the command line.")),
          Handler => Depends_On_Command_Handler'Access);
       Register_Command
-        (Kernel, "used_by",
+        (Kernel, "file.used_by",
          (-"Usage:") & ASCII.LF & "  used_by file_name [file_name...]"
          & ASCII.LF
          & (-("Display in the dependency browser the list of files that"
               & " depends on file_name. This is done for each of the"
               & " file on the command line.")),
-         Handler => Depends_On_Command_Handler'Access);
-      Register_Command
-        (Kernel, "uses_all",
-         -"Reproducer for a bug -- ignore",
          Handler => Depends_On_Command_Handler'Access);
    end Register_Module;
 
@@ -934,8 +986,7 @@ package body Browsers.Dependency_Items is
         (Item, Browser,
          Make_Source_File (Source_Filename,
                            Handler,
-                           Get_Project (Kernel),
-                           Get_Predefined_Source_Path (Kernel)));
+                           Get_Project (Kernel)));
    end Gtk_New;
 
    ----------------
@@ -981,7 +1032,7 @@ package body Browsers.Dependency_Items is
    -- Get_Source --
    ----------------
 
-   function Get_Source (Item : access File_Item_Record)
+   function Get_Source (Item : access File_Item_Record'Class)
       return Src_Info.Internal_File is
    begin
       return Item.Source;
@@ -1055,7 +1106,8 @@ package body Browsers.Dependency_Items is
             Refresh_Canvas (Get_Canvas (B));
 
          end if;
-         Select_Item (B, Item);
+         Clear_Selection (Get_Canvas (B));
+         Add_To_Selection (Get_Canvas (B), Item);
       end if;
    exception
       when E : others =>
@@ -1077,8 +1129,11 @@ package body Browsers.Dependency_Items is
          new File_Selection_Context;
       Src     : constant Src_Info.Internal_File := Get_Source (Item);
       Filename : constant String := Get_Source_Filename (Src);
-      Full_Name : constant String := Find_Source_File
-        (Get_Kernel (Browser), Filename, True);
+      Full_Name : constant String := Get_Full_Path_From_File
+        (Registry        => Get_Registry (Get_Kernel (Browser)),
+         Filename        => Filename,
+         Use_Source_Path => True,
+         Use_Object_Path => False);
       Mitem : Gtk_Image_Menu_Item;
       Pix   : Gtk_Image;
    begin
