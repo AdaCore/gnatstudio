@@ -210,16 +210,14 @@ procedure GPS is
    procedure Gtk_Log
      (Log_Domain : String;
       Log_Level  : Log_Level_Flags;
-      Message    : String)
-   is
-      pragma Unreferenced (Log_Domain);
+      Message    : String) is
    begin
       if (Log_Level and Log_Level_Critical) /= 0 then
-         Trace (Gtk_Trace, "gtk-critical: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-Critical: " & Message);
       elsif (Log_Level and Log_Level_Warning) /= 0 then
-         Trace (Gtk_Trace, "gtk-warning: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-Warning: " & Message);
       else
-         Trace (Gtk_Trace, "gtk-misc: " & Message);
+         Trace (Gtk_Trace, Log_Domain & "-Misc: " & Message);
       end if;
    end Gtk_Log;
 
