@@ -53,6 +53,8 @@
 --  </description>
 
 with GNAT.Spitbol;
+--  ??? consider using GNAT.HTable instead
+
 with Prj_API;
 
 with Types;
@@ -60,6 +62,7 @@ with Types;
 package Prj_Scenarios is
 
    type Scenario_Manager is private;
+   --  See description above.
 
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
    --  A list of values for the environment variables.
@@ -91,7 +94,7 @@ package Prj_Scenarios is
 
    function Variable_Index
      (Manager : Scenario_Manager; Env_Variable_Name : Types.String_Id)
-     return Natural;
+      return Natural;
    --  Return the index that should be used in a String_Id_Array to represent
    --  the environment variable Env_Variable_Name.
    --  Note that Env_Variable_Name is not the internal name used in project
@@ -134,4 +137,5 @@ private
       --  The size for Names is an estimated of the number of named scenarios
       --  in the GUI. It is not a hard limit.
    end record;
+
 end Prj_Scenarios;
