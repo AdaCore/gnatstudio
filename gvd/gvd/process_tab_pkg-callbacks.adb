@@ -22,21 +22,22 @@ with System; use System;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Unchecked_Conversion;
 
-with Glib; use Glib;
-with Gdk.Types; use Gdk.Types;
-with Gtk.Widget; use Gtk.Widget;
-with Gtk.Handlers; use Gtk.Handlers;
-with Gtk.Editable; use Gtk.Editable;
-with Gtk.Notebook; use Gtk.Notebook;
-with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
-with Gdk.Event;   use Gdk.Event;
-with Gtk.Menu;    use Gtk.Menu;
+with Glib;                  use Glib;
+with Gdk.Types;             use Gdk.Types;
+with Gtk.Widget;            use Gtk.Widget;
+with Gtk.Handlers;          use Gtk.Handlers;
+with Gtk.Editable;          use Gtk.Editable;
+with Gtk.Notebook;          use Gtk.Notebook;
+with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
+with Gdk.Event;             use Gdk.Event;
+with Gtk.Menu;              use Gtk.Menu;
 
-with GVD.Process; use GVD.Process;
+with GVD.Preferences;       use GVD.Preferences;
+with GVD.Process;           use GVD.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Debugger; use Debugger;
-with Process_Proxies; use Process_Proxies;
-with GVD.Types; use GVD.Types;
+with Debugger;              use Debugger;
+with Process_Proxies;       use Process_Proxies;
+with GVD.Types;             use GVD.Types;
 
 package body Process_Tab_Pkg.Callbacks is
 
@@ -52,6 +53,19 @@ package body Process_Tab_Pkg.Callbacks is
    --  Scan the history to find an entry which begins like S.
    --  Index indicates the number of characters found beyond that pattern.
 
+   ---------------------------------
+   -- On_Process_Tab_Delete_Event --
+   ---------------------------------
+
+   function On_Process_Tab_Delete_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+   begin
+      Hide (Get_Toplevel (Object));
+      return True;
+   end On_Process_Tab_Delete_Event;
+
    ------------------------------
    -- On_Stack_List_Select_Row --
    ------------------------------
@@ -60,22 +74,24 @@ package body Process_Tab_Pkg.Callbacks is
      (Object : access Gtk_Clist_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Frame : Gint := To_Gint (Params, 1) + 1;
-
-      --  Get the process notebook from the main window which is associated
-      --  with the stack list (toplevel (object)).
-
-      Main_Window : constant Gtk_Window := Gtk_Window (Get_Toplevel (Object));
-      Notebook    : constant Gtk_Notebook :=
-        Main_Debug_Window_Access (Main_Window).Process_Notebook;
-
-      --  Get the current page in the process notebook.
-
-      Process     : constant Debugger_Process_Tab :=
-        Process_User_Data.Get (Get_Nth_Page
-          (Notebook, Get_Current_Page (Notebook)));
+      Frame     : Gint := To_Gint (Params, 1) + 1;
+      Top_Level : constant Gtk_Window := Gtk_Window (Get_Toplevel (Object));
+      Process   : Debugger_Process_Tab;
+      Notebook  : Gtk_Notebook;
+      Paned     : Gtk_Paned;
+      Page      : Gint;
 
    begin
+      if Get_Pref (Separate_Data) then
+         Paned    := Process_Tab_Access (Top_Level).Process_Paned;
+         Notebook := Gtk_Notebook (Get_Parent (Paned));
+         Page     := Page_Num (Notebook, Paned);
+      else
+         Notebook := Main_Debug_Window_Access (Top_Level).Process_Notebook;
+         Page     := Get_Current_Page (Notebook);
+      end if;
+
+      Process := Process_User_Data.Get (Get_Nth_Page (Notebook, Page));
       Stack_Frame (Process.Debugger, Positive (Frame), GVD.Types.Visible);
    end On_Stack_List_Select_Row;
 
