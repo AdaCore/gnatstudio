@@ -40,4 +40,21 @@ package body XML_Parsers is
       end if;
    end Parse;
 
+   ------------------
+   -- Parse_Buffer --
+   ------------------
+
+   procedure Parse_Buffer
+     (Buffer : Glib.UTF8_String;
+      Tree   : out Glib.Xml_Int.Node_Ptr;
+      Error  : out GNAT.OS_Lib.String_Access) is
+   begin
+      Tree := Glib.Xml_Int.Parse_Buffer (Buffer);
+      if Tree = null then
+         Error := new String'
+           ("Error while parsing custom string: " & Buffer);
+      else
+         Error := null;
+      end if;
+   end Parse_Buffer;
 end XML_Parsers;

@@ -30,4 +30,10 @@ package XML_Parsers is
    --  Parse File, and return a pointer to the resulting Tree.
    --  The resulting value must be freed by the user
 
+   procedure Parse_Buffer
+     (Buffer : Glib.UTF8_String;
+      Tree   : out Glib.Xml_Int.Node_Ptr;
+      Error  : out GNAT.OS_Lib.String_Access);
+   --  Same as above, but the XML string is already in memory
+
 end XML_Parsers;

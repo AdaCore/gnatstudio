@@ -40,4 +40,19 @@ package body XML_Parsers is
       Error := GNAT.OS_Lib.String_Access (Err);
    end Parse;
 
+   ------------------
+   -- Parse_Buffer --
+   ------------------
+
+   procedure Parse_Buffer
+     (Buffer : Glib.UTF8_String;
+      Tree   : out Glib.Xml_Int.Node_Ptr;
+      Error  : out GNAT.OS_Lib.String_Access)
+   is
+      Err : Unicode.CES.Byte_Sequence_Access;
+   begin
+      Gtk_Readers.Parse_Buffer (Buffer, Tree, Err);
+      Error := GNAT.OS_Lib.String_Access (Err);
+   end Parse_Buffer;
+
 end XML_Parsers;
