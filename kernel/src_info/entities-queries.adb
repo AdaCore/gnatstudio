@@ -325,9 +325,11 @@ package body Entities.Queries is
       else
          Source := Get_Source_Info (Handler, File_Name);
 
-         Find_Declaration
-           (Db, Source, Entity_Name, Line, Column, Entity, Status,
-            Check_Decl_Only, Handler);
+         if Source /= null then
+            Find_Declaration
+              (Db, Source, Entity_Name, Line, Column, Entity, Status,
+               Check_Decl_Only, Handler);
+         end if;
       end if;
    end Find_Declaration;
 
