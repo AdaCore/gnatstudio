@@ -52,13 +52,13 @@ with GVD.Code_Editors;      use GVD.Code_Editors;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
 with GVD.Strings;           use GVD.Strings;
+with GVD.Trace;             use GVD.Trace;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
 with Process_Proxies;       use Process_Proxies;
 with GVD.Files;             use GVD.Files;
-with GVD.Status_Bar;        use GVD.Status_Bar;
 
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.Types; use Gdk.Types;
@@ -125,10 +125,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Name         : String (1 .. Name_Length);
       Auto_Refresh : Boolean;
    end record;
-
-   package Contextual_Register is new Register_Generic
-     (Contextual_Data_Record, Gtk_Widget_Record);
-   use Contextual_Register;
 
    package Check_Editor_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, Builtin);
@@ -956,7 +952,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Set_Buffer (Edit, Contents);
 
       if Contents = null then
-         Print_Message (Process.Window.Statusbar1, Error, Error_Msg.all);
+         Output_Error (Process.Window, Error_Msg.all);
          Free (Error_Msg);
          File_Not_Found (Editor, File_Name);
          return;
@@ -1102,12 +1098,8 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record) is
    begin
-      if not Register_Post_Cmd_If_Needed
-        (Get_Process (Br.Process.Debugger), Widget, Set_Breakpoint'Access, Br)
-      then
-         Break_Source
-           (Br.Process.Debugger, Br.File, Br.Line, Mode => GVD.Types.Visible);
-      end if;
+      Break_Source
+        (Br.Process.Debugger, Br.File, Br.Line, Mode => GVD.Types.Visible);
    end Set_Breakpoint;
 
    ---------------------
@@ -1118,13 +1110,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record) is
    begin
-      if not Register_Post_Cmd_If_Needed
-        (Get_Process (Br.Process.Debugger), Widget, Till_Breakpoint'Access, Br)
-      then
-         Break_Source
-           (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
-         Continue (Br.Process.Debugger, Mode => GVD.Types.Visible);
-      end if;
+      Break_Source
+        (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
+      Continue (Br.Process.Debugger, Mode => GVD.Types.Visible);
    end Till_Breakpoint;
 
    --------------------
@@ -1135,11 +1123,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record) is
    begin
-      if not Register_Post_Cmd_If_Needed
-        (Get_Process (Br.Process.Debugger), Widget, Print_Variable'Access, Br)
-      then
-         Print_Value (Br.Process.Debugger, Br.Name);
-      end if;
+      Print_Value (Br.Process.Debugger, Br.Name);
    end Print_Variable;
 
    ---------------------------------
@@ -1150,14 +1134,9 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record) is
    begin
-      if not Register_Post_Cmd_If_Needed
-               (Get_Process (Br.Process.Debugger), Widget,
-                Print_Dereferenced_Variable'Access, Br)
-      then
-         Print_Value
-           (Br.Process.Debugger,
-            Dereference_Name (Get_Language (Br.Process.Debugger), Br.Name));
-      end if;
+      Print_Value
+        (Br.Process.Debugger,
+         Dereference_Name (Get_Language (Br.Process.Debugger), Br.Name));
    end Print_Dereferenced_Variable;
 
    --------------------------
@@ -1168,21 +1147,14 @@ package body GVD.Text_Box.Source_Editor.Builtin is
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record) is
    begin
-      if not
-        Register_Post_Cmd_If_Needed
-          (Get_Process (Br.Process.Debugger),
-           Widget,
-           Graph_Print_Variable'Access, Br)
-      then
-         if Br.Auto_Refresh then
-            Process_User_Command
-              (Br.Process, "graph display " & Br.Name,
-               Output_Command => True);
-         else
-            Process_User_Command
-              (Br.Process, "graph print " & Br.Name,
-               Output_Command => True);
-         end if;
+      if Br.Auto_Refresh then
+         Process_User_Command
+           (Br.Process, "graph display " & Br.Name,
+            Output_Command => True);
+      else
+         Process_User_Command
+           (Br.Process, "graph print " & Br.Name,
+            Output_Command => True);
       end if;
    end Graph_Print_Variable;
 
@@ -1244,8 +1216,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
    ------------------------
 
    function Idle_Compute_Lines (Editor : Builtin) return Boolean is
-      Edit     : constant Builtin_Text_Box :=
-        Builtin_Text_Box (Editor.Widget);
+      Edit     : constant Builtin_Text_Box := Builtin_Text_Box (Editor.Widget);
       Process  : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
       Debug    : Debugger_Access := Process.Debugger;
@@ -1302,6 +1273,12 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Found := Check_Single_Line (Editor, Line);
 
       return True;
+
+   exception
+      when Constraint_Error =>
+         --  Most likely the underlying debugger no longer exists
+         Editor.Idle_Id := 0;
+         return False;
    end Idle_Compute_Lines;
 
    -----------------------
