@@ -153,7 +153,7 @@ package body Items.Simples is
       then
          Draw_Text (Context.Pixmap,
                     Font => Context.Type_Font,
-                    GC   => Text_Gc,
+                    GC   => Text_GC,
                     X    => X,
                     Y    => Y2 + Get_Ascent (Context.Type_Font),
                     Text => Item.Type_Name.all);
@@ -182,8 +182,7 @@ package body Items.Simples is
    procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
-      Hide_Big_Items : Boolean := False)
-   is
+      Hide_Big_Items : Boolean := False) is
    begin
       Item.Width := Unknown_Width;
       Item.Height := 0;
@@ -217,12 +216,11 @@ package body Items.Simples is
    -- Get_Component_Name --
    ------------------------
 
-   function Get_Component_Name (Item : access Simple_Type;
-                                Lang : access Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String
-   is
+   function Get_Component_Name
+     (Item : access Simple_Type;
+      Lang : access Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String is
    begin
       return Name;
    end Get_Component_Name;
@@ -231,10 +229,9 @@ package body Items.Simples is
    -- Get_Component --
    -------------------
 
-   function Get_Component (Item : access Simple_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access
-   is
+   function Get_Component
+     (Item : access Simple_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access is
    begin
       return Generic_Type_Access (Item);
    end Get_Component;
@@ -246,9 +243,7 @@ package body Items.Simples is
    function Replace
      (Parent       : access Simple_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-   is
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access is
    begin
       return null;
    end Replace;
@@ -280,13 +275,10 @@ package body Items.Simples is
    -- New_Range_Type --
    --------------------
 
-   function New_Range_Type (Min, Max : Long_Integer)
-                           return Generic_Type_Access
-   is
+   function New_Range_Type
+     (Min, Max : Long_Integer) return Generic_Type_Access is
    begin
-      return new Range_Type'(Simple_Type with
-                             Min      => Min,
-                             Max      => Max);
+      return new Range_Type' (Simple_Type with Min => Min, Max => Max);
    end New_Range_Type;
 
    ------------------
@@ -295,8 +287,7 @@ package body Items.Simples is
 
    function New_Mod_Type (Modulo : Long_Integer) return Generic_Type_Access is
    begin
-      return new Mod_Type'(Simple_Type with
-                           Modulo   => Modulo);
+      return new Mod_Type' (Simple_Type with Modulo => Modulo);
    end New_Mod_Type;
 
    ---------------------
@@ -398,7 +389,7 @@ package body Items.Simples is
       then
          Draw_Text (Context.Pixmap,
                     Font => Context.Type_Font,
-                    GC   => Text_Gc,
+                    GC   => Text_GC,
                     X    => X,
                     Y    => Y2 + Get_Ascent (Context.Type_Font),
                     Text => Item.Type_Name.all);

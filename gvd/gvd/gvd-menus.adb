@@ -245,10 +245,9 @@ package body Odd.Menus is
 
    procedure Change_Display_Mode
      (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
-   is
+      Item    : Item_Record) is
    begin
-      if Get_active (Gtk_Radio_Menu_Item (Widget))
+      if Get_Active (Gtk_Radio_Menu_Item (Widget))
         and then Get_Display_Mode (Item.Item) /= Item.Mode
       then
          Set_Display_Mode (Item.Item, Item.Mode);
@@ -412,7 +411,7 @@ package body Odd.Menus is
       Gtk_New (Mitem);
       Append (Menu, Mitem);
 
-      Gtk_New (Radio, Widget_Slist.Null_List, -"Show Value");
+      Gtk_New (Radio, Widget_SList.Null_List, -"Show Value");
       Set_Active (Radio, Get_Display_Mode (Item) = Value);
       Item_Handler.Connect
         (Radio, "activate",

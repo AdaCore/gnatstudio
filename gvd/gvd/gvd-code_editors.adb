@@ -825,8 +825,9 @@ package body Odd.Code_Editors is
    -- Set_Show_Line_Nums --
    ------------------------
 
-   procedure Set_Show_Line_Nums (Editor : access Code_Editor_Record;
-                                 Show   : Boolean := False)
+   procedure Set_Show_Line_Nums
+     (Editor : access Code_Editor_Record;
+      Show   : Boolean := False)
    is
       --  Save the currently displayed line
       Value : constant Gfloat := Get_Value (Get_Vadj (Editor.Text));
@@ -842,9 +843,8 @@ package body Odd.Code_Editors is
    -- Get_Show_Line_Nums --
    ------------------------
 
-   function Get_Show_Line_Nums (Editor : access Code_Editor_Record)
-                               return Boolean
-   is
+   function Get_Show_Line_Nums
+     (Editor : access Code_Editor_Record) return Boolean is
    begin
       return Editor.Show_Line_Nums;
    end Get_Show_Line_Nums;
@@ -853,9 +853,8 @@ package body Odd.Code_Editors is
    -- Get_Current_File --
    ----------------------
 
-   function Get_Current_File (Editor : access Code_Editor_Record)
-                             return String
-   is
+   function Get_Current_File
+     (Editor : access Code_Editor_Record) return String is
    begin
       if Editor.Current_File = null then
          return "";
@@ -868,9 +867,8 @@ package body Odd.Code_Editors is
    -- Set_Show_Lines_With_Code --
    ------------------------------
 
-   procedure Set_Show_Lines_With_Code (Editor : access Code_Editor_Record;
-                                       Show   : Boolean)
-   is
+   procedure Set_Show_Lines_With_Code
+     (Editor : access Code_Editor_Record; Show : Boolean) is
    begin
       if Show /= Editor.Show_Lines_With_Code then
          Editor.Show_Lines_With_Code := Show;
@@ -882,9 +880,8 @@ package body Odd.Code_Editors is
    -- Get_Show_Lines_With_Code --
    ------------------------------
 
-   function Get_Show_Lines_With_Code (Editor : access Code_Editor_Record)
-                                     return Boolean
-   is
+   function Get_Show_Lines_With_Code
+     (Editor : access Code_Editor_Record) return Boolean is
    begin
       return Editor.Show_Lines_With_Code;
    end Get_Show_Lines_With_Code;
@@ -950,50 +947,49 @@ package body Odd.Code_Editors is
      (Editor   : access Code_Editor_Record;
       Position : Odd.Explorer.Position_Type)
    is
-     Last   : Positive;
-     Pos    : Positive :=
-       Position.Index + (Position.Line + 1) * (Line_Numbers_Width + 1) - 1;
-     Buffer : String := Get_Chars (Editor.Text, Gint (Pos));
+      Last   : Positive;
+      Pos    : Positive :=
+        Position.Index + (Position.Line + 1) * (Line_Numbers_Width + 1) - 1;
+      Buffer : String := Get_Chars (Editor.Text, Gint (Pos));
 
-  begin
-     Last := Buffer'First;
+   begin
+      Last := Buffer'First;
 
-     while Last < Buffer'Last
-       and then Buffer (Last) /= ' '
-       and then Buffer (Last) /= '('
-       and then Buffer (Last) /= ';'
-     loop
-        Last := Last + 1;
-     end loop;
+      while Last < Buffer'Last
+        and then Buffer (Last) /= ' '
+        and then Buffer (Last) /= '('
+        and then Buffer (Last) /= ';'
+      loop
+         Last := Last + 1;
+      end loop;
 
-     Freeze (Editor.Text);
+      Freeze (Editor.Text);
 
-     --  Set the adjustment directly, so that the text is not scrolled
-     --  on the screen (which is too slow for big files)
-     Set_Value
-       (Get_Vadj (Editor.Text),
-        Gfloat (Position.Line + 1) *
-        Gfloat ((Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))));
-     Changed (Get_Vadj (Editor.Text));
+      --  Set the adjustment directly, so that the text is not scrolled
+      --  on the screen (which is too slow for big files)
+      Set_Value
+        (Get_Vadj (Editor.Text),
+         Gfloat (Position.Line + 1) *
+         Gfloat ((Get_Ascent (Editor.Font) + Get_Descent (Editor.Font))));
+      Changed (Get_Vadj (Editor.Text));
 
-     --  Change the cursor position, and highlight the entity.
-     --  We claim the selection so that the selected entity always has the
-     --  same color (if we don't, the first selection has a different color
-     --  than the following ones).
-     Claim_Selection (Editor.Text, True, 0);
-     Set_Position (Editor.Text, Gint (Pos));
-     Select_Region
-       (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
-     Thaw (Editor.Text);
+      --  Change the cursor position, and highlight the entity.
+      --  We claim the selection so that the selected entity always has the
+      --  same color (if we don't, the first selection has a different color
+      --  than the following ones).
+      Claim_Selection (Editor.Text, True, 0);
+      Set_Position (Editor.Text, Gint (Pos));
+      Select_Region
+        (Editor.Text, Gint (Pos), Gint (Last + Pos - Buffer'First));
+      Thaw (Editor.Text);
    end Highlight_Word;
 
    -----------------
    -- Get_Process --
    -----------------
 
-   function Get_Process (Editor : access Code_Editor_Record'Class)
-                        return Gtk.Widget.Gtk_Widget
-   is
+   function Get_Process
+     (Editor : access Code_Editor_Record'Class) return Gtk.Widget.Gtk_Widget is
    begin
       return Editor.Process;
    end Get_Process;

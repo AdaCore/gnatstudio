@@ -21,7 +21,6 @@
 with Gdk.Bitmap;            use Gdk.Bitmap;
 with Gdk.Color;             use Gdk.Color;
 with Gdk.Pixmap;            use Gdk.Pixmap;
-with Gdk.Font;              use Gdk.Font;
 with Gtk.Handlers;          use Gtk.Handlers;
 with Gtkada.Types;          use Gtkada.Types;
 with Gtkada.Handlers;       use Gtkada.Handlers;
@@ -100,7 +99,6 @@ package body Odd.Explorer is
       Code_Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Color : Gdk.Color.Gdk_Color;
-      Font  : Gdk.Font.Gdk_Font;
    begin
       Explorer := new Explorer_Record;
       Initialize (Explorer, Columns => 1);
@@ -115,10 +113,6 @@ package body Odd.Explorer is
                       Black (Get_System));
 
       Explorer.File_Name_Style := Copy (Get_Style (Code_Editor));
---       Gdk.Font.Load
---         (Font => Font,
---          Font_Name => "-*-courier-medium-*-*-*-*-300-*-*-*-*-*-*");
---       Set_Font (Explorer.File_Name_Style, Font);
 
       Widget_Callback.Connect
         (Explorer, "tree_expand", Expand_Explorer_Tree'Access);
@@ -165,6 +159,7 @@ package body Odd.Explorer is
       --  ctree is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
       Set_Column_Auto_Resize (Explorer, 0, True);
+
 --       Set_Indent (Explorer, 20);
 --       Set_Spacing (Explorer, 0);
 --       Set_Expander_Style (Explorer, Ctree_Expander_None);
@@ -423,8 +418,8 @@ package body Odd.Explorer is
       Node            : Gtk_Ctree_Node;
       Data            : Node_Data_Access;
       Extension_Node  : Gtk_Ctree_Node;
-   begin
 
+   begin
       if Tree.Explorer_Root /= null then
          Remove_Node (Tree, Tree.Explorer_Root);
          Tree.Explorer_Root := null;
@@ -434,13 +429,16 @@ package body Odd.Explorer is
       Extension_Nodes := Get_Row_List (Tree);
       if Extension_Nodes /= Row_List.Null_List then
          Extension_Node :=
-          Find_Node_Ptr (Tree, Row_List.Get_Data (Extension_Nodes));
+           Find_Node_Ptr (Tree, Row_List.Get_Data (Extension_Nodes));
+
          while Extension_Node /= null loop
             Data := Row_Data_Pkg.Node_Get_Row_Data (Tree, Extension_Node);
+
             if Data.Extension = Extension then
                Row_Found := True;
-            exit;
+               exit;
             end if;
+
             Extension_Node := Row_Get_Sibling (Node_Get_Row (Extension_Node));
          end loop;
       end if;
@@ -481,8 +479,6 @@ package body Odd.Explorer is
          Mask_Opened   => Tree.Folder_Open_Mask,
          Is_Leaf       => False,
          Expanded      => False);
---      Node_Set_Cell_Style (Tree, Node, 0, Tree.File_Name_Style);
-
       Data := new Node_Data'(Length       => File_Name'Length,
                              Extension    => File_Name,
                              Is_File_Node => True,
@@ -491,6 +487,7 @@ package body Odd.Explorer is
 
       --  Insert a dummy node so that the ctree displays a [+] button on
       --  the left side.
+
       Data.Dummy_Node := Insert_Node
         (Tree,
          Parent        => Node,
@@ -512,8 +509,7 @@ package body Odd.Explorer is
 
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
-      List : Odd.Types.String_Array)
-   is
+      List : Odd.Types.String_Array) is
    begin
       Freeze (Tree);
       for File in List'Range loop

@@ -186,11 +186,11 @@ private
       Show_Line_Nums      : Boolean := False;
 
       Show_Lines_With_Code : Boolean := True;
- --  Whether the lines where one can set a breakpoint have a small dot
- --  on the side.
+      --  Whether the lines where one can set a breakpoint have a small dot
+      --  on the side.
 
       Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
- --  The pixmaps for each of the breakpoints
+      --  The pixmaps for each of the breakpoints
 
       Possible_Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
       --  The pixmaps for each of the possible breakpoints location
