@@ -90,6 +90,20 @@
            <check label="Unassigned variable" switch="-gnatwv" />
            <check label="Size/align warnings for unchecked conversion"
                   switch="-gnatwz" />
+           <expansion switch="-gnatw" alias="-gnatwfikmopeuvz" />
+           <expansion switch="-gnatwa" >
+               <entry switch="-gnatwc" />
+               <entry switch="-gnatwf" />
+               <entry switch="-gnatwi" />
+               <entry switch="-gnatwk" />
+               <entry switch="-gnatwm" />
+               <entry switch="-gnatwo" />
+               <entry switch="-gnatwp" />
+               <entry switch="-gnatwe" />
+               <entry switch="-gnatwu" />
+               <entry switch="-gnatwv" />
+               <entry switch="-gnatwz" />
+           </expansion>
          </popup>
 
          <popup label="Validity checking mode" line="2" column="1" >
