@@ -801,7 +801,7 @@ package body Python_Module is
             Set_Return_Value
               (Data,
                Get_Name (Entity) & ':'
-               & Base_Name (Get_Declaration_File_Of (Entity))
+               & Base_Name (Get_Declaration_File_Of (Entity).all)
                & ':'
                & Image (Get_Declaration_Line_Of (Entity)) & ':'
                & Image (Get_Declaration_Column_Of (Entity)));
@@ -811,7 +811,7 @@ package body Python_Module is
          Set_Return_Value
            (Data, Integer
             (Hash (Get_Name (Entity)
-                   & Full_Name (Get_Declaration_File_Of (Entity)).all
+                   & Full_Name (Get_Declaration_File_Of (Entity).all).all
                    & Image (Get_Declaration_Line_Of (Entity))
                    & Image (Get_Declaration_Column_Of (Entity)))));
 
@@ -827,9 +827,9 @@ package body Python_Module is
             elsif Name1 = Name2 then
                declare
                   File1 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity)).all;
+                    Full_Name (Get_Declaration_File_Of (Entity).all).all;
                   File2 : constant String :=
-                    Full_Name (Get_Declaration_File_Of (Entity2)).all;
+                    Full_Name (Get_Declaration_File_Of (Entity2).all).all;
                begin
                   if File1 < File2 then
                      Set_Return_Value (Data, -1);

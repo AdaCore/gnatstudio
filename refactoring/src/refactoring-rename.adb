@@ -102,10 +102,13 @@ package body Refactoring.Rename is
          Parent => Get_Main_Window (Kernel),
          Flags  => Destroy_With_Parent);
 
-      Gtk_New (Label, -"Renaming "
-               & Get_Full_Name (Entity    => Entity,
-                                Decl_File => Locate_From_Source_And_Complete
-                                  (Kernel, Get_Declaration_File_Of (Entity))));
+      Gtk_New
+        (Label,
+         -"Renaming " &
+         Get_Full_Name
+           (Entity    => Entity,
+            Decl_File => Locate_From_Source_And_Complete
+              (Kernel, Get_Declaration_File_Of (Entity).all)));
       Set_Alignment (Label, 0.0, 0.0);
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
 

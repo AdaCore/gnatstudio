@@ -499,7 +499,7 @@ package body Src_Editor_Box is
 
          L := Get_Declaration_Line_Of (Entity);
          C := Get_Declaration_Column_Of (Entity);
-         Filename := Get_Declaration_File_Of (Entity);
+         Filename := Get_Declaration_File_Of (Entity).all;
 
          if Dir_Name (Filename).all = "" then
             Insert (Kernel, -"File not found: "
@@ -763,11 +763,11 @@ package body Src_Editor_Box is
               Get_Full_Name
                 (Entity,
                  Locate_From_Source_And_Complete
-                   (Data.Box.Kernel, Get_Declaration_File_Of (Entity)),
+                   (Data.Box.Kernel, Get_Declaration_File_Of (Entity).all),
                  ".")
               & ASCII.LF
               & (-"declared at ")
-              & Base_Name (Get_Declaration_File_Of (Entity)) & ':'
+              & Base_Name (Get_Declaration_File_Of (Entity).all) & ':'
               & Image (Get_Declaration_Line_Of (Entity));
 
          begin
@@ -830,7 +830,7 @@ package body Src_Editor_Box is
    begin
       Set_Text
         (Box.Cursor_Loc_Label,
-         Image (Integer (Line)) & ':' & Image (Integer (Column)));
+         Image (Integer (Line)) & ":" & Image (Integer (Column)));
    end Show_Cursor_Position;
 
    ----------------------------
@@ -1086,7 +1086,7 @@ package body Src_Editor_Box is
       --  Line:Column number area...
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_None);
-      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => True);
+      Pack_End (Box.Label_Box, Frame, Expand => False, Fill => False);
       Gtk_New (Event_Box);
       Add (Frame, Event_Box);
       Gtk_New (Box.Cursor_Loc_Label, "1:1");

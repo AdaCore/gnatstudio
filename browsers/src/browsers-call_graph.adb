@@ -422,12 +422,12 @@ package body Browsers.Call_Graph is
       if not Is_Predefined_Entity (Entity) then
          Add_Line
            (Item.Refs,
-            "(Decl) @" & Base_Name (Get_Declaration_File_Of (Item.Entity))
+            "(Decl) @" & Base_Name (Get_Declaration_File_Of (Item.Entity).all)
             & ':' & Image (Get_Declaration_Line_Of (Item.Entity)) & '@',
             Callback =>
               (1 => Build (Get_Kernel (Get_Browser (Item)),
                            Item,
-                           Get_Declaration_File_Of (Item.Entity),
+                           Get_Declaration_File_Of (Item.Entity).all,
                            Get_Declaration_Line_Of (Item.Entity),
                            Get_Declaration_Column_Of (Item.Entity))));
       else
@@ -683,7 +683,7 @@ package body Browsers.Call_Graph is
       Renaming_Of
         (Get_LI_Handler_From_File
            (Glide_Language_Handler (Get_Language_Handler (Kernel)),
-            Get_Declaration_File_Of (Entity)),
+            Get_Declaration_File_Of (Entity).all),
          Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
          Execute (Callback, Rename, No_Reference, Is_Renaming => True);
@@ -870,7 +870,7 @@ package body Browsers.Call_Graph is
       Renaming_Of
         (Get_LI_Handler_From_File
            (Glide_Language_Handler (Get_Language_Handler (Kernel)),
-            Get_Declaration_File_Of (Entity)),
+            Get_Declaration_File_Of (Entity).all),
          Entity, Is_Renaming, Rename);
       if Is_Renaming and then Rename /= No_Entity_Information then
          Execute (Callback, Rename, No_Reference, Is_Renaming => False);
@@ -984,7 +984,7 @@ package body Browsers.Call_Graph is
             Get_Full_Name (Cb.Item.Entity,
                            Locate_From_Source_And_Complete
                              (Get_Kernel (Get_Browser (Child)),
-                              Get_Declaration_File_Of (Cb.Item.Entity)))
+                              Get_Declaration_File_Of (Cb.Item.Entity).all))
             & ": @"
             & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
             Callback => (1 => New_Cb));
@@ -1015,7 +1015,7 @@ package body Browsers.Call_Graph is
             Get_Full_Name (Child.Entity,
                            Locate_From_Source_And_Complete
                              (Get_Kernel (Get_Browser (Child)),
-                              Get_Declaration_File_Of (Child.Entity)))
+                              Get_Declaration_File_Of (Child.Entity).all))
             & ": @"
             & Image (Get_Line (Loc)) & ':' & Image (Get_Column (Loc)) & '@',
             Callback => (1 => New_Cb));
@@ -1125,7 +1125,7 @@ package body Browsers.Call_Graph is
       else
          Open_File_Editor
            (Get_Kernel (Context),
-            Get_Declaration_File_Of (Entity),
+            Get_Declaration_File_Of (Entity).all,
             Line   => Get_Declaration_Line_Of (Entity),
             Column => Get_Declaration_Column_Of (Entity));
       end if;
@@ -1317,12 +1317,13 @@ package body Browsers.Call_Graph is
               (Kernel, Category_Title & Get_Name (Info));
 
             if Include_Reads then
-               Print_Ref (Kernel,
-                          Get_Declaration_File_Of (Info),
-                          Get_Declaration_Line_Of (Info),
-                          Get_Declaration_Column_Of (Info),
-                          Get_Name (Info),
-                          Category_Title & Get_Name (Info));
+               Print_Ref
+                 (Kernel,
+                  Get_Declaration_File_Of (Info).all,
+                  Get_Declaration_Line_Of (Info),
+                  Get_Declaration_Column_Of (Info),
+                  Get_Name (Info),
+                  Category_Title & Get_Name (Info));
             end if;
 
             Data := (Kernel         => Kernel_Handle (Kernel),
@@ -1439,13 +1440,14 @@ package body Browsers.Call_Graph is
          Remove_Result_Category
            (Kernel, -"References for: " & Get_Name (Info));
 
-         if Get_Declaration_File_Of (Info) = File_Information (Entity) then
-            Print_Ref (Kernel,
-                       Get_Declaration_File_Of (Info),
-                       Get_Declaration_Line_Of (Info),
-                       Get_Declaration_Column_Of (Info),
-                       Get_Name (Info),
-                       -"References for: " & Get_Name (Info));
+         if Get_Declaration_File_Of (Info).all = File_Information (Entity) then
+            Print_Ref
+              (Kernel,
+               Get_Declaration_File_Of (Info).all,
+               Get_Declaration_Line_Of (Info),
+               Get_Declaration_Column_Of (Info),
+               Get_Name (Info),
+               -"References for: " & Get_Name (Info));
          end if;
 
          Find_All_References
@@ -1621,7 +1623,7 @@ package body Browsers.Call_Graph is
       if not Is_Predefined_Entity (Item.Entity) then
          Set_File_Information
            (File_Selection_Context_Access (Context),
-            File => Get_Declaration_File_Of (Item.Entity),
+            File => Get_Declaration_File_Of (Item.Entity).all,
             Line => Get_Declaration_Line_Of (Item.Entity));
       end if;
 

@@ -1449,7 +1449,7 @@ package body Glide_Kernel is
       Find_Next_Body
         (Kernel,
          Lib_Info,
-         Get_Declaration_File_Of (Entity),
+         Get_Declaration_File_Of (Entity).all,
          Get_Name (Entity),
          Get_Declaration_Line_Of (Entity),
          Get_Declaration_Column_Of (Entity),
@@ -1500,7 +1500,7 @@ package body Glide_Kernel is
             Find_Next_Body
               (Kernel      => Kernel,
                Lib_Info    => Lib_Info,
-               File_Name   => Get_Declaration_File_Of (Entity),
+               File_Name   => Get_Declaration_File_Of (Entity).all,
                Entity_Name => Entity_Name,
                Line        => Get_Declaration_Line_Of (Entity),
                Column      => Get_Declaration_Column_Of (Entity),
@@ -1637,7 +1637,7 @@ package body Glide_Kernel is
 
          Append (Model, It, Null_Iter);
          Set (Get_Object (Model), It'Address,
-              0, Full_Name (Get_Declaration_File_Of (Candidate)).all
+              0, Full_Name (Get_Declaration_File_Of (Candidate).all).all
               & ASCII.NUL,
               1, Gint (Get_Declaration_Line_Of (Candidate)),
               2, Gint (Get_Declaration_Column_Of (Candidate)),
@@ -1817,7 +1817,7 @@ package body Glide_Kernel is
       Status   : Find_Decl_Or_Body_Query_Status;
    begin
       Lib_Info := Locate_From_Source_And_Complete
-        (Kernel, Get_Declaration_File_Of (Entity));
+        (Kernel, Get_Declaration_File_Of (Entity).all);
 
       if Lib_Info /= No_LI_File then
          --  We need to find the body of the entity in fact. In Ada, this
@@ -1827,7 +1827,7 @@ package body Glide_Kernel is
          Find_Next_Body
            (Kernel      => Kernel,
             Lib_Info    => Lib_Info,
-            File_Name   => Get_Declaration_File_Of (Entity),
+            File_Name   => Get_Declaration_File_Of (Entity).all,
             Entity_Name => Get_Name (Entity),
             Line        => Get_Declaration_Line_Of (Entity),
             Column      => Get_Declaration_Column_Of (Entity),
@@ -1842,13 +1842,13 @@ package body Glide_Kernel is
       end if;
 
       if Lib_Info = No_LI_File then
-         Insert (Kernel,
-                 -"LI file not found for "
-               & Full_Name (Get_Declaration_File_Of (Entity)).all);
+         Insert (Kernel, -"LI file not found for "
+                 & Full_Name (Get_Declaration_File_Of (Entity).all).all);
          Node := Null_Scope_Tree_Node;
 
       else
          Node := Find_Entity_Scope (Lib_Info, Entity);
+
          if Node = Null_Scope_Tree_Node then
             Insert (Kernel,
                     -"Couldn't find the scope tree for " & Get_Name (Entity));

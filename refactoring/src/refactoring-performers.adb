@@ -130,10 +130,11 @@ package body Refactoring.Performers is
 
       Push_State (Data.Kernel, Busy);
 
-      Append (Data.Refs,
-              (File   => Get_Declaration_File_Of (Entity),
-               Line   => Get_Declaration_Line_Of (Entity),
-               Column => Get_Declaration_Column_Of (Entity)));
+      Append
+        (Data.Refs,
+         (File   => Get_Declaration_File_Of (Entity).all,
+          Line   => Get_Declaration_Line_Of (Entity),
+          Column => Get_Declaration_Column_Of (Entity)));
       Find_All_References
         (Root_Project          => Get_Project (Kernel),
          Lang_Handler          => Get_Language_Handler (Kernel),
@@ -142,10 +143,11 @@ package body Refactoring.Performers is
          Iterator              => Data.Iter.all);
 
       Create (C, -"Refactoring", Data, Find_Next_Location'Access);
-      Set_Progress (Command_Access (C),
-                    (Running,
-                     Get_Current_Progress (Data.Iter.all),
-                     Get_Total_Progress   (Data.Iter.all)));
+      Set_Progress
+        (Command_Access (C),
+         (Running,
+          Get_Current_Progress (Data.Iter.all),
+          Get_Total_Progress   (Data.Iter.all)));
       Launch_Background_Command
         (Kernel, Command_Access (C), True, True, "Refactoring");
 

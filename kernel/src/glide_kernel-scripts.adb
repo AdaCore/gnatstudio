@@ -779,7 +779,7 @@ package body Glide_Kernel.Scripts is
             Set_Return_Value
               (Data,
                Create_File
-                 (Get_Script (Data), Get_Declaration_File_Of (Entity)));
+                 (Get_Script (Data), Get_Declaration_File_Of (Entity).all));
          end if;
 
       elsif Command = "decl_line" then
@@ -798,11 +798,11 @@ package body Glide_Kernel.Scripts is
          begin
             Entity := Get_Data (Data, 1);
             Lib_Info := Locate_From_Source_And_Complete
-              (Kernel, Get_Declaration_File_Of (Entity));
+              (Kernel, Get_Declaration_File_Of (Entity).all);
             Find_Next_Body
               (Kernel,
                Lib_Info    => Lib_Info,
-               File_Name   => Get_Declaration_File_Of (Entity),
+               File_Name   => Get_Declaration_File_Of (Entity).all,
                Entity_Name => Get_Name (Entity),
                Line        => Get_Declaration_Line_Of (Entity),
                Column      => Get_Declaration_Column_Of (Entity),
