@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -152,6 +152,8 @@ package body Glide_Kernel.Timeout is
    exception
       when Process_Died =>
          if Data.Console /= null then
+            --  Capture all remaining output
+            Expect (Fd.all, Result, "[.\n]*$", Timeout => -1);
             Insert
               (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
             Highlight_Child
