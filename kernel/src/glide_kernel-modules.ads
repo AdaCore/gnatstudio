@@ -96,9 +96,11 @@ with Prj;
 
 package Glide_Kernel.Modules is
 
-   Explorer_Module_Name       : constant String := "Explorer";
-   Project_Editor_Module_Name : constant String := "Project_Editor";
-   Aunit_Module_Name          : constant String := "Unit_Testing";
+   Explorer_Module_Name           : constant String := "Explorer";
+   Project_Editor_Module_Name     : constant String := "Project_Editor";
+   Aunit_Module_Name              : constant String := "Unit_Testing";
+   Dependency_Browser_Module_Name : constant String :=
+     "dependency_browser";
    --  Names for the internal modules
 
    -----------
