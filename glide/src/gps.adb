@@ -326,9 +326,9 @@ procedure GPS is
       Builder_Module.Register_Module (GPS.Kernel);
       Vdiff_Module.Register_Module (GPS.Kernel);
       VCS_Module.Register_Module (GPS.Kernel);
+      VCS.Unknown_VCS.Register_Module (GPS.Kernel);
       VCS.CVS.Register_Module (GPS.Kernel);
       VCS.ClearCase.Register_Module (GPS.Kernel);
-      VCS.Unknown_VCS.Register_Module (GPS.Kernel);
       Aunit_Module.Register_Module (GPS.Kernel);
       Glide_Kernel.Console.Register_Module (GPS.Kernel);
       Glide_Kernel.Help.Register_Module (GPS.Kernel);
