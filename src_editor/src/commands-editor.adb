@@ -25,6 +25,8 @@ with String_Utils;             use String_Utils;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Src_Editor_Box;           use Src_Editor_Box;
 with Src_Editor_Module;        use Src_Editor_Module;
+with Src_Editor_Buffer.Line_Information;
+use Src_Editor_Buffer.Line_Information;
 with Interfaces.C;
 
 package body Commands.Editor is
@@ -404,11 +406,16 @@ package body Commands.Editor is
 
       Editor := Get_Source_Box_From_MDI
         (Find_Current_Editor (Get_Kernel (Command.Buffer)));
-      Set_Cursor_Position
-        (Command.Buffer,
-         Command.End_Line_After,
-         Command.End_Column_After);
-      Scroll_To_Cursor_Location (Editor);
+
+      if Is_Valid_Position
+        (Command.Buffer, Command.End_Line_After, Command.End_Column_After)
+      then
+         Set_Cursor_Position
+           (Command.Buffer,
+            Command.End_Line_After,
+            Command.End_Column_After);
+         Scroll_To_Cursor_Location (Editor);
+      end if;
 
       Command_Finished (Command, True);
 
@@ -491,5 +498,18 @@ package body Commands.Editor is
            (Text, "UTF-8",
             Get_Pref (Get_Kernel (Buffer), Default_Charset)));
    end Create;
+
+   -------------
+   -- Execute --
+   -------------
+
+   function Execute
+     (Command : access Remove_Blank_Lines_Command_Type)
+      return Command_Return_Type is
+   begin
+      Remove_Blank_Lines (Command.Buffer, Command.Mark, Command.Number);
+
+      return Success;
+   end Execute;
 
 end Commands.Editor;
