@@ -358,41 +358,6 @@ package body Codefix.Text_Manager is
    is
       Iterator    : Text_List.List_Node := First (This.Files.all);
       New_Text    : Ptr_Text;
-      New_Buffer  : Extended_Line_Buffer;
-      Ignore      : Natural;
-      Buffer      : Dynamic_String;
-
-      procedure Display_Constructs;
-      --  Debug procedure used to display the contents of New_Text
-
-      procedure Display_Constructs is
-         Current : Construct_Access := New_Text.Tokens_List.First;
-      begin
-         while Current /= null loop
-            if Current.Name /= null then
-               Put (Current.Name.all & ": ");
-            end if;
-
-            Put (Current.Category'Img);
-            Put (", [" & Current.Sloc_Start.Line'Img & ", ");
-            Put (Current.Sloc_Start.Column'Img);
-            Put ("]-[");
-            Put (Current.Sloc_End.Line'Img & ", ");
-            Put (Current.Sloc_End.Column'Img);
-            Put ("] (");
-
-            if Current.Is_Declaration then
-               Put ("spec");
-            else
-               Put ("body");
-            end if;
-
-            Put (")");
-            New_Line;
-            Current := Current.Next;
-         end loop;
-      end Display_Constructs;
-
    begin
       while Iterator /= Text_List.Null_Node loop
          if Get_File_Name (Data (Iterator).all) = Name then
@@ -410,24 +375,6 @@ package body Codefix.Text_Manager is
 
       New_Text.File_Name := new String'(Name);
       Initialize (New_Text.all, Name);
-      Buffer := Read_File (New_Text.all);
-
-      Analyze_Ada_Source
-        (Buffer => Buffer.all,
-         New_Buffer => New_Buffer,
-         Indent_Params => Default_Indent_Parameters,
-         Reserved_Casing  => Unchanged,
-         Ident_Casing => Unchanged,
-         Format_Operators => False,
-         Indent => False,
-         Constructs => New_Text.Tokens_List,
-         Current_Indent => Ignore,
-         Prev_Indent => Ignore,
-         Callback => null);
-
-      pragma Debug (Display_Constructs);
-
-      Free (Buffer);
 
       return New_Text;
    end Get_File;
@@ -589,7 +536,9 @@ package body Codefix.Text_Manager is
      return String is
    begin
       return Get_Extended_Unit_Name
-        (Get_File (This, Cursor.File_Name.all).all, Cursor, Category);
+        (Get_File (This, Cursor.File_Name.all).all,
+         Cursor,
+         Category);
    end Get_Extended_Unit_Name;
 
    ---------------------
@@ -667,6 +616,32 @@ package body Codefix.Text_Manager is
 
    end Get_Entity;
 
+   ---------------
+   -- Next_Word --
+   ---------------
+
+   procedure Next_Word
+     (This   : Text_Navigator_Abstr'Class;
+      Cursor : in out File_Cursor'Class;
+      Word   : out Dynamic_String) is
+   begin
+      Next_Word
+        (Get_File (This, Cursor.File_Name.all).all,
+         Cursor,
+         Word);
+   end Next_Word;
+
+   -------------------
+   -- Get_Structure --
+   -------------------
+
+   function Get_Structure
+     (This      : Text_Navigator_Abstr'Class;
+      File_Name : String) return Construct_List_Access is
+   begin
+      return Get_Structure (Get_File (This, File_Name).all);
+   end Get_Structure;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -677,8 +652,8 @@ package body Codefix.Text_Manager is
 
    procedure Free (This : in out Text_Interface) is
    begin
-      Free (This.Tokens_List.all);
-      Free (This.Tokens_List);
+      Free (This.Structure.all);
+      Free (This.Structure);
       Free (This.File_Name);
    end Free;
 
@@ -752,7 +727,7 @@ package body Codefix.Text_Manager is
       --  begin of Get_Unit
 
    begin
-      Current_Info := Current_Text.Tokens_List.First;
+      Current_Info := Get_Structure (Current_Text).First;
 
       while Current_Info /= null loop
 
@@ -964,7 +939,7 @@ package body Codefix.Text_Manager is
       end Seeker;
 
    begin
-      Current_Info := Current_Text.Tokens_List.Last;
+      Current_Info := Get_Structure (Current_Text).Last;
       First_Scope := new Scope_Node;
       Current_Scope := First_Scope;
       Seeker (Current_Info.Sloc_Start, True);
@@ -1076,7 +1051,7 @@ package body Codefix.Text_Manager is
 
    begin
 
-      Current_Info := This.Tokens_List.First;
+      Current_Info := Get_Structure (This).First;
 
       while Current_Info /= null loop
          if Current_Info.Category = Category
@@ -1195,7 +1170,7 @@ package body Codefix.Text_Manager is
 
 
    begin
-      Current_Info := This.Tokens_List.Last;
+      Current_Info := Get_Structure (This).Last;
       Seeker (Current_Info.Sloc_Start);
 
       declare
@@ -1247,6 +1222,134 @@ package body Codefix.Text_Manager is
 
       raise Codefix_Panic;
    end Get_Right_Paren;
+
+   ---------------
+   -- Next_Word --
+   ---------------
+
+   procedure Next_Word
+     (This   : Text_Interface'Class;
+      Cursor : in out Text_Cursor'Class;
+      Word   : out Dynamic_String)
+   is
+      Current_Line : Dynamic_String;
+      Line_Cursor  : Text_Cursor := Text_Cursor (Cursor);
+      Begin_Word   : Natural;
+   begin
+      Line_Cursor.Col := 1;
+      Assign (Current_Line, Get_Line (This, Line_Cursor));
+
+      while Is_Blank (Current_Line (Cursor.Col .. Current_Line'Last)) loop
+         Cursor.Col := 1;
+         Cursor.Line := Cursor.Line + 1;
+         Assign (Current_Line, Get_Line (This, Cursor));
+      end loop;
+
+      while Is_Blank (Current_Line (Cursor.Col)) loop
+         Cursor.Col := Cursor.Col + 1;
+      end loop;
+
+      Begin_Word := Cursor.Col;
+
+      while Cursor.Col < Current_Line'Last
+        and then not Is_Blank (Current_Line (Cursor.Col))
+      loop
+         Cursor.Col := Cursor.Col + 1;
+      end loop;
+
+      if Is_Blank (Current_Line (Cursor.Col)) then
+         Word := new String'(Current_Line (Begin_Word .. Cursor.Col - 1));
+      else
+         Word := new String'(Current_Line (Begin_Word .. Cursor.Col));
+      end if;
+
+      if Cursor.Col = Current_Line'Last then
+         Cursor.Col := 1;
+         Cursor.Line := Cursor.Line + 1;
+      else
+         Cursor.Col := Cursor.Col + 1;
+      end if;
+   end Next_Word;
+
+   -------------------
+   -- Get_Structure --
+   -------------------
+
+   function Get_Structure
+     (This : Text_Interface'Class) return Construct_List_Access
+   is
+
+         procedure Display_Constructs;
+      --  Debug procedure used to display the contents of New_Text
+
+      procedure Display_Constructs is
+         Current : Construct_Access := This.Structure.First;
+      begin
+         while Current /= null loop
+            if Current.Name /= null then
+               Put (Current.Name.all & ": ");
+            end if;
+
+            Put (Current.Category'Img);
+            Put (", [" & Current.Sloc_Start.Line'Img & ", ");
+            Put (Current.Sloc_Start.Column'Img);
+            Put ("]-[");
+            Put (Current.Sloc_End.Line'Img & ", ");
+            Put (Current.Sloc_End.Column'Img);
+            Put ("] (");
+
+            if Current.Is_Declaration then
+               Put ("spec");
+            else
+               Put ("body");
+            end if;
+
+            Put (")");
+            New_Line;
+            Current := Current.Next;
+         end loop;
+      end Display_Constructs;
+
+
+      New_Buffer  : Extended_Line_Buffer;
+      Ignore      : Natural;
+      Buffer      : Dynamic_String;
+   begin
+      if not This.Structure_Up_To_Date.all then
+
+         Buffer := Read_File (This);
+
+         Analyze_Ada_Source
+           (Buffer => Buffer.all,
+            New_Buffer => New_Buffer,
+            Indent_Params => Default_Indent_Parameters,
+            Reserved_Casing  => Unchanged,
+            Ident_Casing => Unchanged,
+            Format_Operators => False,
+            Indent => False,
+            Constructs => This.Structure,
+            Current_Indent => Ignore,
+            Prev_Indent => Ignore,
+            Callback => null);
+
+         pragma Debug (Display_Constructs);
+
+         Free (Buffer);
+
+         This.Structure_Up_To_Date.all := True;
+      end if;
+
+      return This.Structure;
+   end Get_Structure;
+
+   -----------------------
+   --  Text_Has_Changed --
+   -----------------------
+
+   procedure Text_Has_Changed (This : in out Text_Interface'Class) is
+   begin
+      This.Structure_Up_To_Date.all := False;
+   end Text_Has_Changed;
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -1451,6 +1554,7 @@ package body Codefix.Text_Manager is
 
    begin
 
+      --  ??? Maybe manage this offset in a lower level
       Cursor.Line := This.Cursor.Line + Offset_Line;
 
       case This.Context is
@@ -1993,15 +2097,6 @@ package body Codefix.Text_Manager is
    --  type Extract
    ----------------------------------------------------------------------------
 
-   ----------------------
-   -- Unchecked_Assign --
-   ----------------------
-
-   procedure Unchecked_Assign (This, Value : in out Extract'Class) is
-   begin
-      This.First := Value.First;
-   end Unchecked_Assign;
-
    -----------
    -- Clone --
    -----------
@@ -2091,7 +2186,7 @@ package body Codefix.Text_Manager is
    -------------
 
    procedure Replace
-     (This          : Extract;
+     (This          : in out Extract;
       Start, Length : Natural;
       Value         : String;
       Line_Number   : Natural := 1)
@@ -2104,6 +2199,21 @@ package body Codefix.Text_Manager is
 
       Replace (Current_Extract.all, Start, Length, Value);
 
+   end Replace;
+
+   -------------
+   -- Replace --
+   -------------
+
+   procedure Replace
+     (This   : in out Extract;
+      Start  : File_Cursor'Class;
+      Length : Natural;
+      Value  : String)
+   is
+      Current_Extract : constant Ptr_Extract_Line := Get_Line (This, Start);
+   begin
+      Replace (Current_Extract.all, Start.Col, Length, Value);
    end Replace;
 
    -------------
@@ -2401,7 +2511,7 @@ package body Codefix.Text_Manager is
       end loop;
 
       Raise_Exception
-        (Text_Manager_Error'Identity,
+        (Codefix_Panic'Identity,
          "line" & Natural'Image (Position.Line) & " of " &
            Position.File_Name.all & " not found in an extract");
    end Get_Line;
@@ -2422,7 +2532,7 @@ package body Codefix.Text_Manager is
       loop
          if Current_Extract = null then
             Raise_Exception
-              (Text_Manager_Error'Identity,
+              (Codefix_Panic'Identity,
                "record" & Natural'Image (Number) & " not found in an extract");
          end if;
 
