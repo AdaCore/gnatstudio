@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                              G P S                                --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
@@ -205,6 +205,7 @@ package body Glide_Kernel.Project is
       Handle.Predefined_Object_Path := new String' ("");
 
       Path := Locate_Exec_On_Path (Gnatls);
+
       if Path /= null then
          Args (1) := new String' ("-v");
          Non_Blocking_Spawn
