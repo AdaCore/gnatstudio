@@ -271,15 +271,17 @@ package body Debugger.Gdb.Cpp is
          end if;
 
          --  Parse the ancestors
-         while Type_Str (Index) = '<' loop
-            Skip_To_Char (Type_Str, Index, '>');
-            Index := Index + 5;  --  skips "> = "
-            V := Get_Ancestor (Class_Type (Result.all), Ancestor);
-            Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
-            pragma Assert (Looking_At (Type_Str, Index, ", "));
-            Index := Index + 2; --  skips ", "
-            Ancestor := Ancestor + 1;
-         end loop;
+         if Get_Num_Ancestors (Class_Type (Result.all)) > 0 then
+            while Type_Str (Index) = '<' loop
+               Skip_To_Char (Type_Str, Index, '>');
+               Index := Index + 5;  --  skips "> = "
+               V := Get_Ancestor (Class_Type (Result.all), Ancestor);
+               Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
+               pragma Assert (Looking_At (Type_Str, Index, ", "));
+               Index := Index + 2; --  skips ", "
+               Ancestor := Ancestor + 1;
+            end loop;
+         end if;
 
          --  Parse the child
          V := Get_Child (Class_Type (Result.all));
