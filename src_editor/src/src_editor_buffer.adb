@@ -45,7 +45,6 @@ with Src_Highlighting;          use Src_Highlighting;
 
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with System;
-with Src_Info;                  use Src_Info;
 with Glide_Intl;                use Glide_Intl;
 
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -3376,9 +3375,7 @@ package body Src_Editor_Buffer is
       Success : Boolean;
       Line, Column : Gint;
    begin
-      if Buffer.Filename /= VFS.No_File
-        and then Is_Regular_File (Buffer.Filename)
-      then
+      if Buffer.Filename /= VFS.No_File then
          New_Timestamp := File_Time_Stamp (Buffer.Filename);
 
          if New_Timestamp > Buffer.Timestamp then

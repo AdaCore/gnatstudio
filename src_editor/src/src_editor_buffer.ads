@@ -43,7 +43,6 @@ with Ada.Calendar;
 with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Generic_List;
-with Src_Info;
 with VFS;
 
 with String_List_Utils;
@@ -973,7 +972,7 @@ private
       Current_Status  : Status_Type := Unmodified;
       --  The current buffer status.
 
-      Timestamp      : Ada.Calendar.Time := Src_Info.No_Time;
+      Timestamp      : Ada.Calendar.Time := VFS.No_Time;
       --  Timestamp of the file the last time it was checked. It it used to
       --  detect cases where the file was edited by an external editor.
 
