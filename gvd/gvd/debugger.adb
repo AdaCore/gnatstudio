@@ -252,7 +252,8 @@ package body Debugger is
                     Error,
                     Button_OK,
                     Button_OK);
-               return;
+
+               raise Spawn_Error;
             end;
          end if;
       else
@@ -297,7 +298,8 @@ package body Debugger is
                      Error,
                      Button_OK,
                      Button_OK);
-                  return;
+
+                  raise Spawn_Error;
                end;
          end;
       end if;
