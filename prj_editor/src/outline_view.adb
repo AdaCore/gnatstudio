@@ -22,14 +22,14 @@ with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Properties.Creation;    use Glib.Properties.Creation;
 with Glib.Xml_Int;                use Glib.Xml_Int;
-with GPS.Kernel;                use GPS.Kernel;
-with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
-with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
-with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
+with GPS.Kernel;                  use GPS.Kernel;
+with GPS.Kernel.Contexts;         use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;              use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;          use GPS.Kernel.Modules;
+with GPS.Kernel.Standard_Hooks;   use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel.Preferences;      use GPS.Kernel.Preferences;
+with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
+with GPS.Kernel.Hooks;            use GPS.Kernel.Hooks;
 with GUI_Utils;                   use GUI_Utils;
 with Basic_Types;                 use Basic_Types;
 with VFS;                         use VFS;
@@ -46,12 +46,13 @@ with Gtk.Tree_Selection;          use Gtk.Tree_Selection;
 with Gtk.Widget;                  use Gtk.Widget;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GPS.Intl;                  use GPS.Intl;
+with GPS.Intl;                    use GPS.Intl;
 with Entities;                    use Entities;
+with Entities.Queries;            use Entities.Queries;
 with String_Utils;                use String_Utils;
 with Projects;                    use Projects;
 with Language;                    use Language;
-with Language_Handlers.GPS;     use Language_Handlers.GPS;
+with Language_Handlers.GPS;       use Language_Handlers.GPS;
 with Basic_Types;                 use Basic_Types;
 with Gtk.Scrolled_Window;         use Gtk.Scrolled_Window;
 with Project_Explorers_Common;    use Project_Explorers_Common;
@@ -74,6 +75,7 @@ package body Outline_View is
 
    Entity_Name_Column : constant := 2;
    Mark_Column        : constant := 3;
+   Line_Column        : constant := 4;
 
    procedure On_Context_Changed
      (Kernel : access Kernel_Handle_Record'Class;
@@ -183,6 +185,9 @@ package body Outline_View is
       Model   : Gtk_Tree_Store;
       Path    : Gtk_Tree_Path;
       Subprogram : Entity_Information;
+
+      Distance : Gint := Gint'Last;
+      Closest  : Gtk_Tree_Iter;
    begin
       if Get_Pref (Kernel, Outline_View_Link_Editor)
         and then Child /= null
@@ -203,24 +208,64 @@ package body Outline_View is
                     File_Location_Hooks_Args_Access (Data).File);
                Case_Insensitive : constant Boolean :=
                  Case_Insensitive_Identifiers (Handler);
+               Line : Gint := Gint'First;
+               Loc  : File_Location;
             begin
+               --  Find the relevant line for the entity, so that the outline
+               --  view can handle overloaded entities at least approximately.
+               --  We need to know whether we should look at the spec or at one
+               --  of the bodies for the entity.
+               Loc := Get_Declaration_Of (Subprogram);
+               if Get_Filename (Loc.File) = Outline.File then
+                  Line := Gint (Loc.Line);
+               else
+                  Loc := Entities.No_File_Location;
+                  loop
+                     Find_Next_Body
+                       (Subprogram,
+                        Current_Location     => Loc,
+                        Location             => Loc,
+                        No_Location_If_First => True);
+                     exit when Loc = Entities.No_File_Location;
+
+                     if Get_Filename (Loc.File) = Outline.File then
+                        Line := Gint (Loc.Line);
+                        exit;
+                     end if;
+                  end loop;
+               end if;
+
+               --  Next find all occurrences for entities with the same name,
+               --  and select the closest one to the current line
+
                Iter := Children (Model, Get_Iter_First (Model));
                while Iter /= Null_Iter loop
                   if (Case_Insensitive
                        and then Case_Insensitive_Equal
-                        (Get_String (Model, Iter, 1), Subprogram_Name))
+                        (Get_String (Model, Iter, Entity_Name_Column),
+                         Subprogram_Name))
                     or else
                       (not Case_Insensitive
-                       and then Get_String (Model, Iter, 1) = Subprogram_Name)
+                       and then Get_String (Model, Iter, Entity_Name_Column) =
+                         Subprogram_Name)
                   then
-                     Path := Get_Path (Model, Iter);
-                     Set_Cursor (Outline.Tree, Path, null, False);
-                     Path_Free (Path);
-                     exit;
+                     if abs (Get_Int (Model, Iter, Line_Column) - Line) <
+                       Distance
+                     then
+                        Iter_Copy (Iter, Closest);
+                        Distance :=
+                          abs (Get_Int (Model, Iter, Line_Column) - Line);
+                     end if;
                   end if;
 
                   Next (Model, Iter);
                end loop;
+
+               if Distance /= Gint'Last then
+                  Path := Get_Path (Model, Closest);
+                  Set_Cursor (Outline.Tree, Path, null, False);
+                  Path_Free (Path);
+               end if;
             end;
          end if;
       end if;
@@ -462,7 +507,8 @@ package body Outline_View is
            (0 => Gdk.Pixbuf.Get_Type,
             1 => GType_String,
             Entity_Name_Column => GType_String,
-            Mark_Column        => GType_String), --  mark ID
+            Mark_Column        => GType_String, --  mark ID
+            Line_Column        => GType_Int),
          Column_Names       => (1 => null, 2 => null),
          Show_Column_Titles => False,
          Initial_Sort_On    => Initial_Sort,
@@ -602,6 +648,8 @@ package body Outline_View is
                                        Show_Profiles => Show_Profiles));
                   Set (Model, Iter, Entity_Name_Column,
                        Constructs.Current.Name.all);
+                  Set (Model, Iter, Line_Column,
+                       Gint (Constructs.Current.Sloc_Entity.Line));
 
                   Args (1) := new String'(Full_Name (Outline.File).all);
                   Args (2) := new String'
