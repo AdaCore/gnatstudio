@@ -150,8 +150,7 @@ GNAT_SOURCES= \
   widechar.ads \
   widechar.adb \
   Makefile.prolog \
-  Makefile.generic \
-  g-regpat.adb
+  Makefile.generic
 
 list-sources:
 	@echo $(GNAT_SOURCES)
