@@ -219,10 +219,12 @@ package body Shell_Script is
    end record;
    --  subprograms in GPS shell are just GPS actions
 
-   procedure Execute
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
-      Args       : Callback_Data'Class);
+      Args       : Callback_Data'Class) return Boolean;
    procedure Free (Subprogram : in out Shell_Subprogram_Record);
+   function Get_Name
+     (Subprogram : access Shell_Subprogram_Record) return String;
    --  See doc from inherited subprograms
 
    -------------------------
@@ -1950,9 +1952,9 @@ package body Shell_Script is
    -- Execute --
    -------------
 
-   procedure Execute
+   function Execute
      (Subprogram : access Shell_Subprogram_Record;
-      Args       : Callback_Data'Class)
+      Args       : Callback_Data'Class) return Boolean
    is
       D    : Shell_Callback_Data := Shell_Callback_Data (Args);
       Custom : Command_Access;
@@ -1974,7 +1976,20 @@ package body Shell_Script is
          True,
          "",
          True);
+
+      --  ??? Should evaluate output properly, but we are in asynchronous mode
+      return True;
    end Execute;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+     (Subprogram : access Shell_Subprogram_Record) return String is
+   begin
+      return "action: " & Subprogram.Action_Name.all;
+   end Get_Name;
 
    ----------
    -- Free --
