@@ -119,8 +119,10 @@ package body Src_Editor_Module is
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
-      Create_New : Boolean := True) return Source_Editor_Box;
+      Create_New : Boolean := True;
+      Add_To_MDI : Boolean := True) return Source_Box;
    --  Open a file and return the handle associated with it.
+   --  If Add_To_MDI is set to True, the box will be added to the MDI window.
    --  See Create_File_Exitor.
 
    function Create_File_Editor
@@ -152,6 +154,9 @@ package body Src_Editor_Module is
 
    function Location_Callback (D : Location_Idle_Data) return Boolean;
    --  Idle callback used to scroll the source editors.
+
+   function File_Edit_Callback (D : Location_Idle_Data) return Boolean;
+   --  Emit the File_Edited signal.
 
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
@@ -324,6 +329,16 @@ package body Src_Editor_Module is
         = Cancel;
    end Delete_Callback;
 
+   ------------------------
+   -- File_Edit_Callback --
+   ------------------------
+
+   function File_Edit_Callback (D : Location_Idle_Data) return Boolean is
+   begin
+      File_Edited (Get_Kernel (D.Edit), Get_Filename (D.Edit));
+      return False;
+   end File_Edit_Callback;
+
    ------------------
    -- Load_Desktop --
    ------------------
@@ -331,16 +346,20 @@ package body Src_Editor_Module is
    function Load_Desktop
      (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
    is
-      Box : Source_Editor_Box;
       Src : Source_Box := null;
       File : Glib.String_Ptr;
+      Data : Location_Idle_Data;
+      Id   : Idle_Handler_Id;
    begin
       if Node.Tag.all = "Source_Editor" then
          File := Get_Field (Node, "File");
          if File /= null then
-            Box := Create_File_Editor (User, File.all, False);
-            Gtk_New (Src, Box);
-            Attach (Box, Src);
+            Src := Open_File (User, File.all, False, False);
+            Data.Edit := Src.Editor;
+
+            Id := Location_Idle.Add
+              (File_Edit_Callback'Access,
+               (Src.Editor, 1, 1));
          end if;
 
          return Gtk_Widget (Src);
@@ -617,7 +636,8 @@ package body Src_Editor_Module is
    function Open_File
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
-      Create_New : Boolean := True) return Source_Editor_Box
+      Create_New : Boolean := True;
+      Add_To_MDI : Boolean := True) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Short_File : constant String := Base_Name (File);
@@ -638,7 +658,7 @@ package body Src_Editor_Module is
          if Child /= null then
             Raise_Child (Child);
             Set_Focus_Child (Child);
-            return Source_Box (Get_Widget (Child)).Editor;
+            return Source_Box (Get_Widget (Child));
          end if;
       end if;
 
@@ -654,7 +674,18 @@ package body Src_Editor_Module is
             Get_Pref (Kernel, Default_Widget_Width),
             Get_Pref (Kernel, Default_Widget_Height));
          Attach (Editor, Box);
-         Child := Put (MDI, Box);
+
+         if Add_To_MDI then
+            Child := Put (MDI, Box);
+
+            if File /= "" then
+               Set_Title (Child, File, Short_File);
+            else
+               Set_Title (Child, -"No Name");
+            end if;
+
+            File_Edited (Kernel, File);
+         end if;
 
          Gtkada.Handlers.Return_Callback.Object_Connect
            (Box,
@@ -663,17 +694,9 @@ package body Src_Editor_Module is
             Gtk_Widget (Box),
             After => False);
 
-         if File /= "" then
-            Set_Title (Child, File, Short_File);
-         else
-            Set_Title (Child, -"No Name");
-         end if;
-
-
          --  We have created a new file editor : emit the corresponding signal.
          --  ??? what do we do when opening an editor with no name ?
 
-         File_Edited (Kernel, File);
 
          --  Update and save the "Reopen" menu state.
          declare
@@ -732,7 +755,7 @@ package body Src_Editor_Module is
             Mode           => Error);
       end if;
 
-      return Editor;
+      return Box;
    end Open_File;
 
    -----------------------
@@ -909,7 +932,7 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Editor : Source_Editor_Box;
+      Editor : Source_Box;
    begin
       Editor := Open_File (Kernel, File => "");
 
@@ -1339,7 +1362,7 @@ package body Src_Editor_Module is
               Get_Boolean (Data (Data'First + 5));
 
          begin
-            Edit := Open_File (Kernel, File, Create_New => New_File);
+            Edit := Open_File (Kernel, File, Create_New => New_File).Editor;
 
             if Edit /= null
               and then (Line /= 0 or else Column /= 0)
@@ -1429,6 +1452,7 @@ package body Src_Editor_Module is
             else
                loop
                   Child := Get (Iter);
+
                   exit when Child = null
                     or else Get_Title (Child) = File
                     or else Get_Title (Child) = -"No Name";
