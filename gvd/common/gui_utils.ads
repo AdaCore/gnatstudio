@@ -24,6 +24,7 @@
 with Gdk.Color;
 with Gdk.Event;
 with Gtk.Menu_Item;
+with Gdk.Types;
 with Gdk.Window;
 with Glib.Object;
 with Glib;                     use Glib;
@@ -188,6 +189,34 @@ package GUI_Utils is
    function Get_Path
      (Menu_Item : access Full_Path_Menu_Item_Record) return String;
    --  Return the string associated with Menu_Item.
+
+   ------------
+   -- Events --
+   ------------
+
+   function Image
+     (Key  : Gdk.Types.Gdk_Key_Type;
+      Mods : Gdk.Types.Gdk_Modifier_Type) return String;
+   --  Return a string suitable for display to show the key binding.
+   --  Special_Key_Binding is returned if the key cannot be described
+
+   procedure Value
+     (From : String;
+      Key  : out Gdk.Types.Gdk_Key_Type;
+      Mods : out Gdk.Types.Gdk_Modifier_Type);
+   --  Revert of Image
+
+   Special_Key_Binding : constant String := "<special>";
+
+   procedure Key_Grab
+     (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Key  : out Gdk.Types.Gdk_Key_Type;
+      Mods : out Gdk.Types.Gdk_Modifier_Type);
+   --  Temporarily grab the pointer and keyboards for In_Widget, and returns
+   --  the first fully defined key that the user has pressed.
+   --  Nothing is done in In_Widget, it is only used as a target for the grab
+   --  operations.
+   --  In_Widget must be realized.
 
    --------------
    -- Tooltips --

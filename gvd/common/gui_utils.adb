@@ -23,8 +23,10 @@ with Gdk.Cursor;               use Gdk.Cursor;
 with Gdk.Drawable;             use Gdk.Drawable;
 with Gdk.Event;                use Gdk.Event;
 with Gdk.GC;                   use Gdk.GC;
+with Gdk.Keyval;               use Gdk.Keyval;
 with Gdk.Main;                 use Gdk.Main;
 with Gdk.Pixmap;               use Gdk.Pixmap;
+with Gdk.Types;                use Gdk.Types;
 with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gdk.Window;               use Gdk.Window;
 with Glib.Convert;             use Glib.Convert;
@@ -41,6 +43,7 @@ with Gtk.Item;                 use Gtk.Item;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
+with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
@@ -101,6 +104,16 @@ package body GUI_Utils is
       Prepend : Boolean := False) return Gtk_List_Item;
    --  Internal version of Add_Unique_List_Entry, that also returns the added
    --  item.
+
+   type Event_Access is access all Gdk_Event;
+   package Event_Callback is new Gtk.Handlers.User_Return_Callback
+     (Gtk_Widget_Record, Boolean, Event_Access);
+
+   function Key_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Access) return Boolean;
+   --  Temporary event filter set when grabing the key for a key preference
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -879,5 +892,150 @@ package body GUI_Utils is
    begin
       Internal (Get_Object (Tree), Column_Id);
    end Thaw_Sort;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image
+     (Key  : Gdk.Types.Gdk_Key_Type;
+      Mods : Gdk.Types.Gdk_Modifier_Type) return String
+   is
+      Shift   : constant String := "Shift-";
+      Meta    : constant String := "Meta-";
+      Control : constant String := "Control-";
+      Max : constant Natural := Shift'Length + Control'Length + Meta'Length;
+      Buffer : String (1 .. Max);
+      Current : Natural := Buffer'First;
+   begin
+      case Key is
+         when GDK_Shift_L
+           | GDK_Shift_R
+           | GDK_Control_L
+           | GDK_Control_R
+           | GDK_Caps_Lock
+           | GDK_Shift_Lock
+           | GDK_Meta_L
+           | GDK_Meta_R
+           | GDK_Alt_L
+           | GDK_Alt_R
+           =>
+            return Special_Key_Binding;
+
+         when others =>
+            if (Mods and Shift_Mask) /= 0 then
+               Buffer (Current .. Current + Shift'Length - 1) := Shift;
+               Current := Current + Shift'Length;
+            end if;
+
+            if (Mods and Control_Mask) /= 0 then
+               Buffer (Current .. Current + Control'Length - 1) := Control;
+               Current := Current + Control'Length;
+            end if;
+
+            if (Mods and Mod1_Mask) /= 0 then
+               Buffer (Current .. Current + Meta'Length - 1) := Meta;
+               Current := Current + Meta'Length;
+            end if;
+
+            return
+              Buffer (Buffer'First .. Current - 1) & Gdk.Keyval.Name (Key);
+      end case;
+   end Image;
+
+   -----------
+   -- Value --
+   -----------
+
+   procedure Value
+     (From : String;
+      Key  : out Gdk.Types.Gdk_Key_Type;
+      Mods : out Gdk.Types.Gdk_Modifier_Type)
+   is
+      Start : Natural := From'First;
+   begin
+      Mods := 0;
+      for D in From'Range loop
+         if From (D) = '-' then
+            if From (Start .. D - 1) = "Shift" then
+               Mods := Mods or Shift_Mask;
+            elsif From (Start .. D - 1) = "Control" then
+               Mods := Mods or Control_Mask;
+            elsif From (Start .. D - 1) = "Meta" then
+               Mods := Mods or Mod1_Mask;
+            end if;
+            Start := D + 1;
+         end if;
+      end loop;
+
+      Key := From_Name (From (Start .. From'Last));
+   end Value;
+
+   -----------------------
+   -- Key_Press_In_Grab --
+   -----------------------
+
+   function Key_Press_In_Grab
+     (In_Widget : access Gtk_Widget_Record'Class;
+      Event     : Gdk_Event;
+      Output    : Event_Access) return Boolean
+   is
+      pragma Unreferenced (In_Widget);
+      Text  : constant String :=
+        Image (Get_Key_Val (Event), Get_State (Event));
+   begin
+      if Text /= Special_Key_Binding then
+         Deep_Copy (From => Event, To => Output.all);
+         Main_Quit;
+      end if;
+      return True;
+   end Key_Press_In_Grab;
+
+   --------------
+   -- Key_Grab --
+   --------------
+
+   procedure Key_Grab
+     (In_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Key  : out Gdk.Types.Gdk_Key_Type;
+      Mods : out Gdk.Types.Gdk_Modifier_Type)
+   is
+      Tmp    : Gdk_Grab_Status;
+      pragma Unreferenced (Tmp);
+
+      Id     : Handler_Id;
+      Cursor : Gdk.Cursor.Gdk_Cursor;
+      Output : aliased Gdk_Event := null;
+      O      : constant Event_Access := Output'Unchecked_Access;
+   begin
+      Tmp := Keyboard_Grab
+        (Get_Window (In_Widget), Owner_Events => False, Time => 0);
+
+      Gdk_New (Cursor, Watch);
+      Tmp := Pointer_Grab
+        (Window     => Get_Window (In_Widget),
+         Event_Mask => Button_Press_Mask or Button_Release_Mask,
+         Confine_To => Get_Window (In_Widget),
+         Cursor     => Cursor,
+         Time       => 0);
+      Unref (Cursor);
+
+      Grab_Focus (In_Widget);
+
+      Id := Event_Callback.Connect
+        (In_Widget, "key_press_event",
+         Event_Callback.To_Marshaller (Key_Press_In_Grab'Access),
+         User_Data => O);
+
+      Gtk.Main.Main;
+
+      Key  := Get_Key_Val (Output);
+      Mods := Get_State (Output);
+      Free (Output);
+
+      Keyboard_Ungrab (0);
+      Pointer_Ungrab (0);
+      Gtk.Handlers.Disconnect (In_Widget, Id);
+   end Key_Grab;
 
 end GUI_Utils;
