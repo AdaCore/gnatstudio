@@ -33,6 +33,7 @@ with Glib.Convert;              use Glib.Convert;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 
 with String_List_Utils;         use String_List_Utils;
@@ -1007,8 +1008,10 @@ package body VCS_View_API is
          String_List.Append (Dirs, Get_Current_Dir (Context));
 
          Gtk_New (Explorer, Kernel);
-         Set_Size_Request (Explorer, 400, 400);
-         Child := Put (MDI, Explorer);
+         Child := Put
+           (MDI, Explorer,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"VCS Explorer");
          Change_Context (Explorer, Context);

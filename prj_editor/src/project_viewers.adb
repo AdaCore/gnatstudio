@@ -755,12 +755,6 @@ package body Project_Viewers is
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
          Slot_Object => Viewer,
          User_Data   => Kernel_Handle (Kernel));
-
-      Set_Size_Request
-        (Viewer,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
-
       Show_All (Viewer);
    end Initialize;
 
@@ -882,7 +876,10 @@ package body Project_Viewers is
          Viewer := Project_Viewer (Get_Widget (Child));
       else
          Gtk_New (Viewer, Kernel);
-         Child := Put (Get_MDI (Kernel), Viewer);
+         Child := Put
+           (Get_MDI (Kernel), Viewer,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
       end if;
 
       --  The initial contents of the viewer should be read immediately from

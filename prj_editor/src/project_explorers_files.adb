@@ -578,11 +578,6 @@ package body Project_Explorers_Files is
       Widget_Callback.Object_Connect
         (Explorer.File_Tree, "destroy",
          On_File_Destroy'Access, Explorer, False);
-
-      Set_Size_Request
-        (Explorer,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    ------------------------------
@@ -1083,7 +1078,10 @@ package body Project_Explorers_Files is
 
       if Child = null then
          Gtk_New (Files, Kernel);
-         Child := Put (Get_MDI (Kernel), Files);
+         Child := Put
+           (Get_MDI (Kernel), Files,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title
            (Child, -"Project Explorer - File View",  -"File View");
@@ -1112,7 +1110,10 @@ package body Project_Explorers_Files is
    begin
       if Node.Tag.all = "Project_Explorer_Files" then
          Gtk_New (Files, User);
-         return Put (MDI, Gtk_Widget (Files));
+         return Put
+           (MDI, Gtk_Widget (Files),
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;

@@ -624,10 +624,6 @@ package body Browsers.Projects is
          Object          => Browser,
          ID              => Project_Browser_Module_ID,
          Context_Func    => Default_Browser_Context_Factory'Access);
-      Set_Size_Request
-        (Browser,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
       return Browser;
    end Create_Project_Browser;
 
@@ -650,7 +646,9 @@ package body Browsers.Projects is
          Browser := Create_Project_Browser (Kernel);
          Child := Put
            (Get_MDI (Kernel), Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Project Browser");
       end if;
@@ -701,7 +699,10 @@ package body Browsers.Projects is
       User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Project_Browser" then
-         return Put (MDI, Gtk_Widget (Create_Project_Browser (User)));
+         return Put
+           (MDI, Gtk_Widget (Create_Project_Browser (User)),
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;

@@ -684,10 +684,6 @@ package body Help_Module is
       Set_Policy (Html, Policy_Automatic, Policy_Always);
       Gtk_New (Html.Csc);
       Add (Html, Html.Csc);
-      Set_Size_Request
-        (Html,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
 
       Widget_Callback.Object_Connect
         (Html.Csc, "url_requested", Url_Requested'Access, Slot_Object => Html);
@@ -751,7 +747,9 @@ package body Help_Module is
          Scrolled := Create_Html_Editor (Kernel, Help_File);
          Child := Put
            (MDI, Scrolled,
-            Focus_Widget => Gtk_Widget (Scrolled.Csc));
+            Focus_Widget => Gtk_Widget (Scrolled.Csc),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Help");
          Show_All (Scrolled);
@@ -786,9 +784,14 @@ package body Help_Module is
          File := Get_Field (Node, "File");
          if File /= null then
             Editor := Create_Html_Editor (User, File.all);
-         end if;
 
-         return Put (MDI, Gtk_Widget (Editor));
+            return Put
+              (MDI, Gtk_Widget (Editor),
+               Default_Width  => Get_Pref (User, Default_Widget_Width),
+               Default_Height => Get_Pref (User, Default_Widget_Height));
+         else
+            return null;
+         end if;
       end if;
       return null;
    end Load_Desktop;

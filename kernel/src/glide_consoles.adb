@@ -85,7 +85,6 @@ package body Glide_Consoles is
       Console.Kernel := Kernel_Handle (Kernel);
 
       Set_Policy (Console, Policy_Never, Policy_Always);
-      Set_Size_Request (Console, -1, 100);
 
       Gtk_New (Console.Text);
       Set_Editable (Console.Text, False);

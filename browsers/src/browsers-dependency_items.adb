@@ -499,7 +499,9 @@ package body Browsers.Dependency_Items is
          Browser := Create_Dependency_Browser (Kernel);
          Child := Put
            (Get_MDI (Kernel), Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Dependency Browser");
       end if;
@@ -1322,7 +1324,10 @@ package body Browsers.Dependency_Items is
       User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Dependency_Browser" then
-         return Put (MDI, Gtk_Widget (Create_Dependency_Browser (User)));
+         return Put
+           (MDI, Gtk_Widget (Create_Dependency_Browser (User)),
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;

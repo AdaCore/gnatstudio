@@ -840,8 +840,6 @@ package body Interactive_Consoles is
 
       Console.Internal_Insert := True;
 
-      Set_Size_Request (Console, -1, 100);
-
       Modify_Font (Console.View, Font);
 
       Widget_Callback.Connect

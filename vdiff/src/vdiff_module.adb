@@ -107,16 +107,15 @@ package body Vdiff_Module is
          end if;
 
          Gtk_New (Vdiff);
-         Set_Size_Request
-           (Vdiff,
-            Get_Pref (Kernel, Default_Widget_Width),
-            Get_Pref (Kernel, Default_Widget_Height));
          Set_Text (Vdiff.File_Label1, File1);
          Set_Text (Vdiff.File_Label2, File2);
          Fill_Diff_Lists
            (Kernel, Vdiff.Clist1, Vdiff.Clist2, File1, File2, Result);
          Show_All (Vdiff);
-         Child := Put (Get_MDI (Kernel), Vdiff);
+         Child := Put
+           (Get_MDI (Kernel), Vdiff,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Visual Comparison");
 
@@ -236,12 +235,12 @@ package body Vdiff_Module is
                Free (Result);
             end if;
 
-            Set_Size_Request
-              (Vdiff,
-               Get_Pref (Kernel, Default_Widget_Width),
-               Get_Pref (Kernel, Default_Widget_Height));
             Show_All (Vdiff);
-            Child := Put (Get_MDI (Kernel), Vdiff);
+            Child := Put
+              (Get_MDI (Kernel), Vdiff,
+               Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+               Default_Height => Get_Pref (Kernel, Default_Widget_Height));
+
             Set_Focus_Child (Child);
             Set_Title (Child, -"Visual Comparison");
             return True;

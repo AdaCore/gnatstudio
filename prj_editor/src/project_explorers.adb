@@ -555,11 +555,6 @@ package body Project_Explorers is
       Widget_Callback.Object_Connect
         (Get_MDI (Kernel), "child_selected",
          Child_Selected'Unrestricted_Access, Explorer, After => True);
-
-      Set_Size_Request
-        (Explorer,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    --------------------
@@ -605,7 +600,10 @@ package body Project_Explorers is
       if Node.Tag.all = "Project_Explorer_Project" then
          Gtk_New (Explorer, User);
          Refresh (User, GObject (Explorer));
-         return Put (MDI, Explorer);
+         return Put
+           (MDI, Explorer,
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;
@@ -1837,7 +1835,10 @@ package body Project_Explorers is
       if Child = null then
          Gtk_New (Explorer, Kernel);
          Refresh (Kernel, GObject (Explorer));
-         Child := Put (Get_MDI (Kernel), Explorer);
+         Child := Put
+           (Get_MDI (Kernel), Explorer,
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
          Set_Focus_Child (Child);

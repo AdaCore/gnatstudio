@@ -310,11 +310,6 @@ package body Browsers.Canvas is
         (Kernel, "preferences_changed",
          Widget_Callback.To_Marshaller (On_Preferences_Changed'Access),
          Browser);
-
-      Set_Size_Request
-        (Browser,
-         Get_Pref (Kernel, Default_Widget_Width),
-         Get_Pref (Kernel, Default_Widget_Height));
    end Initialize;
 
    ---------------

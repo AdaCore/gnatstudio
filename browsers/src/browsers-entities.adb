@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 
 with Src_Info.Queries;     use Src_Info, Src_Info.Queries;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Browsers.Canvas;      use Browsers.Canvas;
@@ -574,7 +575,9 @@ package body Browsers.Entities is
          Browser := Open_Type_Browser (Kernel);
          Child := Put
            (Get_MDI (Kernel), Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Entity Browser");
       end if;
@@ -1445,7 +1448,10 @@ package body Browsers.Entities is
       User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Entities_Browser" then
-         return Put (MDI, Gtk_Widget (Open_Type_Browser (User)));
+         return Put
+           (MDI, Gtk_Widget (Open_Type_Browser (User)),
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;

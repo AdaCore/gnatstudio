@@ -521,11 +521,12 @@ package body Glide_Kernel.Console is
                Key          => "",
                Wrap_Mode    => Wrap_Char);
       Enable_Prompt_Display (Console, False);
-      Set_Size_Request (Console, 400, 100);
 
       Child := Put
         (Get_MDI (Kernel), Console, Iconify_Button or Maximize_Button,
-         Gtk_Widget (Get_View (Console)));
+         Gtk_Widget (Get_View (Console)),
+         Default_Width => 400,
+         Default_Height => 100);
       Set_Focus_Child (Child);
       Set_Title (Child, -"Messages");
       Set_Dock_Side (Child, Bottom);
@@ -541,11 +542,12 @@ package body Glide_Kernel.Console is
                Key          => "shell",
                Wrap_Mode    => Wrap_Char);
       Set_Completion_Handler (Interactive, Commands_As_List'Access);
-      Set_Size_Request (Interactive, 400, 100);
       Child := Put
         (Get_MDI (Kernel), Interactive,
          Iconify_Button or Maximize_Button,
-         Focus_Widget => Gtk_Widget (Get_View (Interactive)));
+         Focus_Widget => Gtk_Widget (Get_View (Interactive)),
+         Default_Width => 400,
+         Default_Height => 100);
       Set_Title (Child, -"Shell");
       Set_Dock_Side (Child, Bottom);
       Dock_Child (Child);

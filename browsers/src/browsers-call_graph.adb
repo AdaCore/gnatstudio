@@ -42,6 +42,7 @@ with Src_Info.Queries;         use Src_Info.Queries;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with String_Utils;             use String_Utils;
 with Browsers.Canvas;          use Browsers.Canvas;
@@ -423,7 +424,9 @@ package body Browsers.Call_Graph is
          Browser := Create_Call_Graph_Browser (Kernel);
          Child := Put
            (Get_MDI (Kernel), Browser,
-            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)));
+            Focus_Widget => Gtk_Widget (Get_Canvas (Browser)),
+            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height => Get_Pref (Kernel, Default_Widget_Height));
          Set_Focus_Child (Child);
          Set_Title (Child, -"Call graph Browser");
       end if;
@@ -1609,7 +1612,10 @@ package body Browsers.Call_Graph is
       User : Kernel_Handle) return MDI_Child is
    begin
       if Node.Tag.all = "Call_Graph" then
-         return Put (MDI, Gtk_Widget (Create_Call_Graph_Browser (User)));
+         return Put
+           (MDI, Gtk_Widget (Create_Call_Graph_Browser (User)),
+            Default_Width  => Get_Pref (User, Default_Widget_Width),
+            Default_Height => Get_Pref (User, Default_Widget_Height));
       end if;
 
       return null;
