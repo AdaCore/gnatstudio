@@ -21,6 +21,7 @@
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Generic_List;
 
 package body Docgen is
@@ -192,5 +193,73 @@ package body Docgen is
       & Extens (Extens'First + 1 .. Extens'Last)
       & Doc_Suffix;
    end Get_Doc_File_Name;
+
+   ------------------------------
+   -- Is_Defined_In_Subprogram --
+   ------------------------------
+
+   function Is_Defined_In_Subprogram
+     (Entity          : String;
+      Short_Entity    : String;
+      Package_Name    : String) return Boolean is
+   begin
+      --  check if the short name of the entity starts right
+      --  after the package name followed by "."
+      if not (Get_String_Index (Entity, 1, To_Lower (Package_Name)) +
+                Package_Name'Length + 1
+                  < Get_String_Index (Entity, 1, Short_Entity)) and
+      --  and that it is really the name at the end of the
+      --  entity name, followed by nothing
+        Entity'Last = (Get_String_Index (Entity, 1, Short_Entity)) +
+        Short_Entity'Last - 1
+      then
+         return False;
+      else
+         return True;
+      end if;
+
+   end Is_Defined_In_Subprogram;
+
+   -------------------------
+   -- Source_File_In_List --
+   -------------------------
+
+   function Source_File_In_List
+     (Source_File_List : Type_Source_File_List.List;
+      Name             : String) return Boolean
+   is
+      package TSFL renames Type_Source_File_List;
+
+      Source_File_Node : Type_Source_File_List.List_Node;
+      Found            : Boolean;
+   begin
+      Found := False;
+      Source_File_Node := TSFL.First (Source_File_List);
+      for J in 1 .. TSFL.Length (Source_File_List) loop
+         if File_Name  (TSFL.Data (Source_File_Node).File_Name.all)
+           = (Name) then
+            Found := True;
+         end if;
+         Source_File_Node := TSFL.Next (Source_File_Node);
+      end loop;
+      return Found;
+   end Source_File_In_List;
+
+   ------------------
+   -- Count_Points --
+   ------------------
+
+   function Count_Points
+     (Text : String) return Natural is
+      Counter : Natural;
+   begin
+      Counter := 0;
+      for J in Text'First .. Text'Last loop
+         if Text (J) = '.' then
+            Counter := Counter + 1;
+         end if;
+      end loop;
+      return Counter;
+   end Count_Points;
 
 end Docgen;
