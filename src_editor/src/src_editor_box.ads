@@ -361,19 +361,6 @@ package Src_Editor_Box is
    --  of the declaration of the entity. It is the responsibility of the
    --  caller to free the memory associated with File_Decl.
 
-   ----------------------------------
-   -- Source_View related services --
-   ----------------------------------
-
-   procedure Set_Show_Line_Numbers
-     (Editor       : access Source_Editor_Box_Record;
-      Show_Numbers : Boolean := True);
-   --  Set whether the line numbers should be displayed or not.
-
-   function Get_Show_Line_Numbers
-     (Editor : access Source_Editor_Box_Record) return Boolean;
-   --  Returns True if the line numbers are displayed.
-
    ---------------------
    -- Contextual menu --
    ---------------------
