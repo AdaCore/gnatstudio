@@ -44,6 +44,11 @@ MA 02111-1307, USA.
 
 #ifdef WIN32
 #define  OPEN_MODE   O_RDONLY|O_BINARY
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN 1024
+#endif
+
 #else
 #define  OPEN_MODE   O_RDONLY
 #include <sys/param.h>
