@@ -248,7 +248,7 @@ package body Browsers.Dependency_Items is
       Child   : MDI_Child;
    begin
       Child := Find_MDI_Child_By_Tag
-        (Get_MDI (Kernel), Glide_Browser_Record'Tag);
+        (Get_MDI (Kernel), Dependency_Browser_Record'Tag);
 
       if Child /= null then
          Raise_Child (Child);
@@ -280,32 +280,14 @@ package body Browsers.Dependency_Items is
       Must_Add_Link : Boolean;
       Part : Unit_Part;
 
-      function Has_One
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean;
-      --  Set Add_Link to False if there is at least one link returned.
-      --  ??? Would be nicer if we had real iterators in the canvas
-
-      -------------
-      -- Has_One --
-      -------------
-
-      function Has_One
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Link   : access Canvas_Link_Record'Class) return Boolean is
-      begin
-         Must_Add_Link := False;
-         return False;
-      end Has_One;
-
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
       Lib_Info := Locate_From_Source_And_Complete (Kernel, F);
 
       if Lib_Info = No_LI_File then
          Trace (Me,
-                "Examine_Dependencies: Couldn't find ALI file for " & File);
-         Insert (Kernel, -"Couldn't find ALI file for " & File,
+                "Examine_Dependencies: Couldn't find LI file for " & File);
+         Insert (Kernel, -"Couldn't find LI file for " & File,
                  Mode => Glide_Kernel.Console.Error);
          Pop_State (Kernel_Handle (Kernel));
          return;
@@ -342,10 +324,8 @@ package body Browsers.Dependency_Items is
                else
                   --  If the item already existed, chances are that the link
                   --  also existed. Don't duplicate it in that case.
-
-                  For_Each_Link
-                    (Get_Canvas (In_Browser), Has_One'Unrestricted_Access,
-                     From => Canvas_Item (Initial), To => Canvas_Item (Item));
+                  Must_Add_Link := not Has_Link
+                    (Get_Canvas (In_Browser), Initial, Item);
                end if;
 
                if Must_Add_Link then
