@@ -120,6 +120,11 @@ package Src_Editor_Box is
    --  Return the filename associated the given Editor. Return the empty
    --  string if Editor does not have any filename.
 
+   procedure Set_File_Identifier
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String);
+   --  Change the file identifier of the given editor to be Filename.
+
    procedure Load_File
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
@@ -490,9 +495,9 @@ package Src_Editor_Box is
    ----------------------
 
    procedure Add_File_Information
-     (Editor        : access Source_Editor_Box_Record;
-      Identifier    : String;
-      Info          : Glide_Kernel.Modules.Line_Information_Data);
+     (Editor     : access Source_Editor_Box_Record;
+      Identifier : String;
+      Info       : Glide_Kernel.Modules.Line_Information_Data);
    --  See Glide_Kernel.Modules for more information.
 
    procedure Create_Line_Information_Column
