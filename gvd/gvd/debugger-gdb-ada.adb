@@ -707,16 +707,14 @@ package body Debugger.Gdb.Ada is
             Int := Int + 1;
          end loop;
 
+         Bounds := Get_Dimensions (Result.all, Dim);
+
          if Type_Str (Int) = '=' then
             --  Looking at "index => ".
             --  If we have an array with dynamic bounds, now is a good time to
             --  find the index
 
-            Bounds := Get_Dimensions (Result.all, Dim);
-
-            if Bounds.Last < Bounds.First
-              and then Bounds.First = Long_Integer'Last
-            then
+            if Bounds.Last < Bounds.First then
                Parse_Num (Type_Str, Index, Bounds.First);
                Set_Dimensions (Result.all, Dim, Bounds);
             end if;
@@ -733,6 +731,10 @@ package body Debugger.Gdb.Ada is
                return;
             end if;
 
+         elsif Bounds.Last < Bounds.First then
+            Bounds.First := 1;
+            Bounds.Last := Lengths (Dim);
+            Set_Dimensions (Result.all, Dim, Bounds);
          end if;
 
          --  Parse the next item
@@ -753,6 +755,13 @@ package body Debugger.Gdb.Ada is
             Repeat_Num => Repeat_Num);
          Current_Index := Current_Index + Long_Integer (Repeat_Num);
          Lengths (Dim) := Lengths (Dim) + Long_Integer (Repeat_Num);
+
+         --  In case the bounds were dynamic and we weren't able before to
+         --  get the number of items correctly...
+         if Bounds.Last < Bounds.First + Lengths (Dim) - 1 then
+            Bounds.Last := Bounds.First + Lengths (Dim) - 1;
+            Set_Dimensions (Result.all, Dim, Bounds);
+         end if;
       end Parse_Item;
 
    begin
