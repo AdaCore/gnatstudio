@@ -30,7 +30,7 @@ with VFS;                   use VFS;
 
 package body Commands.Codefix is
 
-   Me : constant Debug_Handle := Create ("Commands.Codefix");
+   Me : constant Debug_Handle := Create ("Commands.Codefix", Off);
 
    -------------
    -- Execute --
