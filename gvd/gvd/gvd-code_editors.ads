@@ -107,10 +107,12 @@ package Odd.Code_Editors is
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
-      Lang   : access Language.Language_Root'Class);
+      Lang   : Language.Language_Access);
    --  Change the current language for the editor.
    --  The text already present in the editor is not re-highlighted for the
    --  new language, this only influences future addition to the editor.
+   --
+   --  If Lang is null, then no color highlighting will be performed.
 
    procedure Clear (Editor : access Code_Editor_Record);
    --  Clear the contents of the editor.

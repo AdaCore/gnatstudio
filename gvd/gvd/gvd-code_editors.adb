@@ -337,10 +337,12 @@ package body Odd.Code_Editors is
 
    procedure Set_Current_Language
      (Editor : access Code_Editor_Record;
-      Lang   : access Language.Language_Root'Class) is
+      Lang   : Language.Language_Access) is
    begin
       Free (Editor.Lang);
-      Editor.Lang := new Language_Root'Class'(Lang.all);
+      if Lang /= null then
+         Editor.Lang := new Language_Root'Class'(Lang.all);
+      end if;
    end Set_Current_Language;
 
    ---------------------
