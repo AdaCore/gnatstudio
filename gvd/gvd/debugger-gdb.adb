@@ -2507,9 +2507,9 @@ package body Debugger.Gdb is
             R   : constant Record_Type_Access := Record_Type_Access (Result);
             Int : Natural;
          begin
-
             --  Skip initial '(' if we are still looking at it (we might not
             --  if we are parsing a variant part)
+
             if Index <= Type_Str'Last
               and then Type_Str (Index) = Context.Record_Start
             then
