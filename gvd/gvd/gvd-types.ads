@@ -63,6 +63,36 @@ package GVD.Types is
    --  How breakpoints are identified. Currently, the debuggers supported
    --  by gvd all associate numbers with breakpoints.
 
+   type Scope_Type is (Current_Task, Tasks_In_PD, Any_Task, No_Scope);
+   type Action_Type is (Current_Task, Tasks_In_PD, All_Tasks, No_Action);
+   --  For the VxWorks AE debugger, specify the "scope" (which tasks
+   --  can hit a given breakpoint) and the "action" (which tasks to
+   --  stop after a breakpoint has been hit) of a breakpoint.
+   --
+   --  Scope values:
+   --  * Current_Task (task): only the running task
+   --  * Tasks_In_PD (pd): all the tasks in a given protection domain
+   --  * Any_Task (any): any task
+   --
+   --  Action values:
+   --  * Current_Task (task): only the running task
+   --  * Tasks_In_PD (pd): all the tasks in a given protection domain
+   --  * All_Tasks (all): all breakable tasks
+   --
+   --  The No_Scope and No_Action value are provided as null values
+   --
+   --  These are the different combinations:
+   --  scope        action     notes
+   --   task         task       like monotask mode
+   --   task         pd         stops all breakable tasks in current pd
+   --   task         all        stops all breakable tasks
+   --   pd           task
+   --   pd           pd
+   --   pd           all
+   --   any          task       "any" only allowed in kernel domain
+   --   any          pd         "any" only allowed in kernel domain
+   --   any          all        "any" only allowed in kernel domain
+
    type Breakpoint_Data is record
       Num         : Breakpoint_Identifier;
       --  breakpoint number (internal to the debugger)
@@ -107,6 +137,12 @@ package GVD.Types is
 
       Commands    : String_Access;
       --  Commands to execute when the debugger stops at this breakpoint
+
+      Scope       : Scope_Type;
+      --  The scope of the breakpoint
+
+      Action      : Action_Type;
+      --  The action of the breakpoint
    end record;
    --  Information for a specific breakpoint
 
