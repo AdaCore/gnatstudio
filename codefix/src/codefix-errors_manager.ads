@@ -89,6 +89,7 @@ package Codefix.Errors_Manager is
    ----------------------------------------------------------------------------
 
    type Correction_Manager is private;
+   type Ptr_Correction_Manager is access all Correction_Manager;
 
    type Error_Callback is access procedure
      (Message      : Error_Message; --  ??? Remove this parameter ?
