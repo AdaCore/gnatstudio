@@ -642,7 +642,6 @@ package body Src_Info.Type_Utils is
          Get_Pair (SN_Table (TA), Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, Arg);
-         Free (P);
 
          if File_Name = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
             and Template_Args
