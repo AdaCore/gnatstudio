@@ -290,12 +290,13 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Call_Stack);
    --  Debug->Data->Call Stack
 
-   procedure On_Threads is new
-     Generic_Debug_Command (GVD.Menu.On_Threads);
+   procedure On_Threads is new Generic_Debug_Command (GVD.Menu.On_Threads);
    --  Debug->Data->Threads
 
-   procedure On_Tasks is new
-     Generic_Debug_Command (GVD.Menu.On_Tasks);
+   procedure On_Tasks is new Generic_Debug_Command (GVD.Menu.On_Tasks);
+   --  Debug->Data->Protection Domains
+
+   procedure On_PD is new Generic_Debug_Command (GVD.Menu.On_PD);
    --  Debug->Data->Tasks
 
    procedure On_Assembly
@@ -872,6 +873,8 @@ package body GVD_Module is
         (Kernel, Data_Sub & (-"Threads")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Data_Sub & (-"Tasks")), Sensitive);
+      Set_Sensitive (Find_Menu_Item
+        (Kernel, Data_Sub & (-"Protection Domains")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Data_Sub & (-"Assembly")), Sensitive);
       Set_Sensitive (Find_Menu_Item
@@ -1518,6 +1521,8 @@ package body GVD_Module is
                      On_Threads'Access, Sensitive => False);
       Register_Menu (Kernel, Data_Sub, -"Tasks", "",
                      On_Tasks'Access, Sensitive => False);
+      Register_Menu (Kernel, Data_Sub, -"Protection Domains", "",
+                     On_PD'Access, Sensitive => False);
       Register_Menu (Kernel, Data_Sub, -"Assembly", "",
                      On_Assembly'Access, Sensitive => False);
       Gtk_New (Mitem);
