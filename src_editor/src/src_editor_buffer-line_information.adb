@@ -826,6 +826,8 @@ package body Src_Editor_Buffer.Line_Information is
       EL : Columns_Config_Access renames Editor.Editable_Line_Info_Columns;
       Buffer_Line_Starting_X : Gint := 0;
       Editable_Line          : Editable_Line_Type;
+      Result : Command_Return_Type;
+      pragma Unreferenced (Result);
    begin
       Set_Cursor_Position (Editor, Gint (Line - 1), 0);
 
@@ -844,7 +846,7 @@ package body Src_Editor_Buffer.Line_Information is
                     (Editable_Line).Side_Info_Data
                     (Col).Info.Associated_Command /= null
                   then
-                     Launch_Synchronous
+                     Result := Execute
                        (Editor.Editable_Lines
                           (Editable_Line).Side_Info_Data
                           (Col).Info.Associated_Command);
@@ -874,7 +876,7 @@ package body Src_Editor_Buffer.Line_Information is
                 (Line).Side_Info_Data
                 (Col).Info.Associated_Command /= null
             then
-               Launch_Synchronous
+               Result := Execute
                  (Editor.Line_Data
                     (Line).Side_Info_Data
                     (Col).Info.Associated_Command);
