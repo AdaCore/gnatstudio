@@ -770,7 +770,7 @@ package body Glide_Kernel.Preferences is
          Nick  => -"Diff command",
          Blurb => -("Command used to compute differences between two files."
                     & " Arguments can also be specified"),
-         Default => GVD.Diff_Cmd));
+         Default => GVD.Default_Diff_Cmd));
       Register_Property
         (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
 
@@ -779,7 +779,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Patch command",
          Blurb   =>
            -"Command used to apply a patch. Arguments can also be specified",
-         Default => GVD.Patch_Cmd));
+         Default => GVD.Default_Patch_Cmd));
       Register_Property
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
 
