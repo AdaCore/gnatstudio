@@ -57,6 +57,8 @@ package body Language.C is
    type Token_Type is
      (Tok_Identifier,
 
+      --  Reserved words for C:
+
       --  Type specifiers:
       Tok_Char,
       Tok_Float,
@@ -95,8 +97,45 @@ package body Language.C is
       Tok_Switch,
       Tok_Typedef,
       Tok_Union,
-      Tok_While);
-   --  Reserved words for C
+      Tok_While,
+
+      --  Reserved words for C++:
+
+      Tok_Abstract,
+      Tok_Asm,
+      Tok_Bool,
+      Tok_Catch,
+      Tok_Class,
+      Tok_Const_Cast,
+      Tok_Delete,
+      Tok_Dynamic_Cast,
+      Tok_Explicit,
+      Tok_False,
+      Tok_Final,
+      Tok_Friend,
+      Tok_Interface,
+      Tok_Mutable,
+      Tok_Namespace,
+      Tok_New,
+      Tok_Operator,
+      Tok_Private,
+      Tok_Protected,
+      Tok_Public,
+      Tok_Reinterpret_Cast,
+      Tok_Static_Cast,
+      Tok_Synchronized,
+      Tok_Template,
+      Tok_This,
+      Tok_Throw,
+      Tok_True,
+      Tok_Try,
+      Tok_Typeid,
+      Tok_Typename,
+      Tok_Using,
+      Tok_Virtual,
+      Tok_Wchar_t);
+
+   subtype Cpp_Token is Token_Type range Tok_Abstract .. Tok_Wchar_t;
 
    ----------------------
    -- Local procedures --
@@ -104,19 +143,6 @@ package body Language.C is
 
    function Get_Token (S : String) return Token_Type;
    --  Return a Token_Type given a string.
-
-   procedure Analyze_C_Source
-     (Buffer        : String;
-      Indent        : out Integer;
-      Indent_Params : Indent_Parameters;
-      No_Contents   : out Boolean;
-      Callback      : Entity_Callback := null);
-   --  Analyze buffer.
-   --  Indent is set to the current indentation level after having parsed
-   --  Buffer.
-   --  No_Contents is set to True if the last line parsed contained no
-   --  contents other than closing curlys and parentheses.
-   --  If Callback is not null, it will be called for each entity.
 
    ---------------
    -- Get_Token --
@@ -140,18 +166,33 @@ package body Language.C is
          when 'a' =>
             if S (Second .. S'Last) = "uto" then
                return Tok_Auto;
+            elsif S (Second .. S'Last) = "bstract" then
+               return Tok_Abstract;
+            elsif S (Second .. S'Last) = "sm" then
+               return Tok_Asm;
             end if;
 
          when 'b' =>
             if S (Second .. S'Last) = "reak" then
                return Tok_Break;
+            elsif S (Second .. S'Last) = "ool" then
+               return Tok_Bool;
             end if;
 
          when 'c' =>
             if S (Second .. S'Last) = "ase" then
                return Tok_Case;
-            elsif S (Second .. S'Last) = "onst" then
-               return Tok_Const;
+            elsif S (Second .. S'Last) = "atch" then
+               return Tok_Catch;
+            elsif S (Second .. S'Last) = "lass" then
+               return Tok_Class;
+            elsif S'Length > 4 and then S (Second .. Second + 3) = "onst" then
+               if S'Length = 5 then
+                  return Tok_Const;
+               elsif S (Second  + 4 .. S'Last) = "_cast" then
+                  return Tok_Const_Cast;
+               end if;
+
             elsif S (Second .. S'Last) = "ontinue" then
                return Tok_Continue;
             elsif S (Second .. S'Last) = "har" then
@@ -161,10 +202,14 @@ package body Language.C is
          when 'd' =>
             if S (Second .. S'Last) = "efault" then
                return Tok_Default;
+            elsif S (Second .. S'Last) = "elete" then
+               return Tok_Delete;
             elsif S (Second .. S'Last) = "o" then
                return Tok_Do;
             elsif S (Second .. S'Last) = "ouble" then
                return Tok_Double;
+            elsif S (Second .. S'Last) = "ynamic_cast" then
+               return Tok_Dynamic_Cast;
             end if;
 
          when 'e' =>
@@ -174,13 +219,21 @@ package body Language.C is
                return Tok_Enum;
             elsif S (Second .. S'Last) = "xtern" then
                return Tok_Extern;
+            elsif S (Second .. S'Last) = "xplicit" then
+               return Tok_Explicit;
             end if;
 
          when 'f' =>
-            if S (Second .. S'Last) = "or" then
+            if S (Second .. S'Last) = "alse" then
+               return Tok_False;
+            elsif S (Second .. S'Last) = "or" then
                return Tok_For;
+            elsif S (Second .. S'Last) = "inal" then
+               return Tok_Final;
             elsif S (Second .. S'Last) = "loat" then
                return Tok_Float;
+            elsif S (Second .. S'Last) = "riend" then
+               return Tok_Friend;
             end if;
 
          when 'g' =>
@@ -191,10 +244,14 @@ package body Language.C is
          when 'i' =>
             if S (Second .. S'Last) = "f" then
                return Tok_If;
-            elsif S (Second .. S'Last) = "nt" then
-               return Tok_Int;
-            elsif S (Second .. S'Last) = "nline" then
-               return Tok_Inline;
+            elsif S (Second) = 'n' then
+               if S (Second + 1 .. S'Last) = "t" then
+                  return Tok_Int;
+               elsif S (Second + 1 .. S'Last) = "line" then
+                  return Tok_Inline;
+               elsif S (Second + 1 .. S'Last) = "terface" then
+                  return Tok_Interface;
+               end if;
             end if;
 
          when 'l' =>
@@ -202,10 +259,41 @@ package body Language.C is
                return Tok_Long;
             end if;
 
+         when 'm' =>
+            if S (Second .. S'Last) = "utable" then
+               return Tok_Mutable;
+            end if;
+
+         when 'n' =>
+            if S (Second .. S'Last) = "amespace" then
+               return Tok_Namespace;
+            elsif S (Second .. S'Last) = "ew" then
+               return Tok_New;
+            end if;
+
+         when 'o' =>
+            if S (Second .. S'Last) = "perator" then
+               return Tok_Operator;
+            end if;
+
+         when 'p' =>
+            if S (Second) = 'r' then
+               if S (Second + 1 .. S'Last) = "ivate" then
+                  return Tok_Private;
+               elsif S (Second + 1 .. S'Last) = "otected" then
+                  return Tok_Protected;
+               end if;
+
+            elsif S (Second .. S'Last) = "ublic" then
+               return Tok_Public;
+            end if;
+
          when 'r' =>
             if S (Second) = 'e' then
                if S (Second + 1 .. S'Last) = "gister" then
                   return Tok_Register;
+               elsif S (Second + 1 .. S'Last) = "interpret_cast" then
+                  return Tok_Reinterpret_Cast;
                elsif S (Second + 1 .. S'Last) = "strict" then
                   return Tok_Restrict;
                elsif S (Second + 1 .. S'Last) = "turn" then
@@ -215,8 +303,15 @@ package body Language.C is
 
          when 's' =>
             if S (Second) = 't' then
-               if S (Second + 1 .. S'Last) = "atic" then
-                  return Tok_Static;
+               if S'Length > 5
+                 and then S (Second + 1 .. Second + 4) = "atic"
+               then
+                  if S'Length = 6 then
+                     return Tok_Static;
+                  elsif S (Second + 5 .. S'Last) = "_cast" then
+                     return Tok_Static_Cast;
+                  end if;
+
                elsif S (Second + 1 .. S'Last) = "ruct" then
                   return Tok_Struct;
                end if;
@@ -230,18 +325,38 @@ package body Language.C is
 
             elsif S (Second .. S'Last) = "hort" then
                return Tok_Short;
+            elsif S (Second .. S'Last) = "ynchronized" then
+               return Tok_Synchronized;
             elsif S (Second .. S'Last) = "witch" then
                return Tok_Switch;
             end if;
 
          when 't' =>
-            if S (Second .. S'Last) = "ypedef" then
-               return Tok_Typedef;
+            if S (Second .. S'Last) = "emplate" then
+               return Tok_Template;
+            elsif S (Second .. S'Last) = "his" then
+               return Tok_This;
+            elsif S (Second .. S'Last) = "hrow" then
+               return Tok_Throw;
+            elsif S (Second .. S'Last) = "ry" then
+               return Tok_Try;
+            elsif S (Second .. S'Last) = "rue" then
+               return Tok_True;
+            elsif S'Length > 6 and then S (Second .. Second + 2) = "ype" then
+               if S (Second + 3 .. S'Last) = "def" then
+                  return Tok_Typedef;
+               elsif S (Second + 3 .. S'Last) = "id" then
+                  return Tok_Typeid;
+               elsif S (Second + 3 .. S'Last) = "name" then
+                  return Tok_Typename;
+               end if;
             end if;
 
          when 'u' =>
             if S (Second .. S'Last) = "nion" then
                return Tok_Union;
+            elsif S (Second .. S'Last) = "sing" then
+               return Tok_Using;
             elsif S (Second .. S'Last) = "nsigned" then
                return Tok_Unsigned;
             end if;
@@ -253,11 +368,15 @@ package body Language.C is
                elsif S (Second + 1 .. S'Last) = "latile" then
                   return Tok_Volatile;
                end if;
+            elsif S (Second .. S'Last) = "irtual" then
+               return Tok_Virtual;
             end if;
 
          when 'w' =>
             if S (Second .. S'Last) = "hile" then
                return Tok_While;
+            elsif S (Second .. S'Last) = "char_t" then
+               return Tok_Wchar_t;
             end if;
 
          when others =>
@@ -398,7 +517,8 @@ package body Language.C is
       Indent        : out Integer;
       Indent_Params : Indent_Parameters;
       No_Contents   : out Boolean;
-      Callback      : Entity_Callback := null)
+      Callback      : Entity_Callback := null;
+      Enable_Cpp    : Boolean := False)
    is
       pragma Suppress (All_Checks);
       --  For efficiency
@@ -541,7 +661,9 @@ package body Language.C is
                      exit when Callback
                        (Identifier_Text,
                         (0, 0, First), (0, 0, Index), False);
-                  else
+                  elsif Enable_Cpp
+                    or else Token not in Cpp_Token
+                  then
                      exit when Callback
                        (Keyword_Text, (0, 0, First), (0, 0, Index), False);
                   end if;

@@ -96,6 +96,20 @@ package Language.C is
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters);
 
+   procedure Analyze_C_Source
+     (Buffer        : String;
+      Indent        : out Integer;
+      Indent_Params : Indent_Parameters;
+      No_Contents   : out Boolean;
+      Callback      : Entity_Callback := null;
+      Enable_Cpp    : Boolean := False);
+   --  Analyze buffer.
+   --  Indent is set to the current indentation level after having parsed
+   --  Buffer.
+   --  No_Contents is set to True if the last line parsed contained no
+   --  contents other than closing curlys and parentheses.
+   --  If Callback is not null, it will be called for each entity.
+
 private
    type C_Language is new Language_Root with null record;
 
