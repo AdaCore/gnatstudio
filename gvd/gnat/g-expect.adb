@@ -905,9 +905,11 @@ package body GNAT.Expect is
 
       if Descriptor.Pid = Null_Pid then
 
+         Command_With_Path := Locate_Exec_On_Path (Command);
+
          --  Prepare an array of arguments to pass to C
-         Arg                   := new String (1 .. Command'Length + 1);
-         Arg (1 .. Command'Length) := Command;
+         Arg   := new String (1 .. Command_With_Path'Length + 1);
+         Arg (1 .. Command_With_Path'Length) := Command_With_Path.all;
          Arg (Arg'Last)        := ASCII.Nul;
          Arg_List (1)          := Arg.all'Address;
 
@@ -919,8 +921,6 @@ package body GNAT.Expect is
          end loop;
 
          Arg_List (Arg_List'Last) := System.Null_Address;
-
-         Command_With_Path := Locate_Exec_On_Path (Command);
 
          --  This does not return on Unix systems.
          Set_Up_Child_Communications
