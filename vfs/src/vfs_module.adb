@@ -315,7 +315,6 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "pwd",
-         Usage        => "() -> None",
          Description  => -"Print name of current/working directory.",
          Minimum_Args => 0,
          Maximum_Args => 0,
@@ -323,7 +322,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "cd",
-         Usage        => Parameter_Names_To_Usage (Cd_Cmd_Parameters, "None"),
+         Params       => Parameter_Names_To_Usage (Cd_Cmd_Parameters),
          Description  => -"Change the current directory to dir.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -331,8 +330,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "delete",
-         Usage        =>
-           Parameter_Names_To_Usage (Delete_Cmd_Parameters, "None"),
+         Params       => Parameter_Names_To_Usage (Delete_Cmd_Parameters),
          Description  => -"Delete file/directory name from the file system.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -340,8 +338,7 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "dir",
-         Usage        =>
-           Parameter_Names_To_Usage (Dir_Cmd_Parameters, "None", 1),
+         Params       => Parameter_Names_To_Usage (Dir_Cmd_Parameters, 1),
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
@@ -350,8 +347,8 @@ package body VFS_Module is
       Register_Command
         (Kernel,
          Command      => "ls",
-         Usage        =>
-           Parameter_Names_To_Usage (Dir_Cmd_Parameters, "list", 1),
+         Params       => Parameter_Names_To_Usage (Dir_Cmd_Parameters, 1),
+         Return_Value => "list",
          Description  =>
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
