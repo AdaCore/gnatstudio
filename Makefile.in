@@ -8,6 +8,8 @@ prefix          = @prefix@
 bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share
 
+export TP_TASKING = No_Tasking
+
 default build compile link ada c c++:
 	$(MAKE) -s -C glide -f Makefile.gps $@
 
