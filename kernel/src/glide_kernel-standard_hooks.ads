@@ -44,6 +44,12 @@ package Glide_Kernel.Standard_Hooks is
    end record;
    --  Base type for hooks that take a single context in parameter
 
+   type Compilation_Hooks_Args (Category_Length : Natural) is new Hooks_Data
+   with record
+      File     : VFS.Virtual_File := VFS.No_File;
+      Category : String (1 .. Category_Length);
+   end record;
+
    ------------------
    -- Action hooks --
    ------------------
@@ -331,6 +337,14 @@ private
       Command   : String;
       Hook_Name : String;
       Data      : Source_File_Hooks_Args) return Boolean;
+   --  See inherited doc
+
+   function Get_Name (Data : Compilation_Hooks_Args) return String;
+   function Execute_Shell
+     (Script    : access Glide_Kernel.Scripts.Scripting_Language_Record'Class;
+      Command   : String;
+      Hook_Name : String;
+      Data      : Compilation_Hooks_Args) return Boolean;
    --  See inherited doc
 
    function Get_Name (Data : Location_Hooks_Args) return String;
