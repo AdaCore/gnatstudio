@@ -929,7 +929,9 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Open_File_Hook_Type,
         -("Common type for all hooks related to opening files." & ASCII.LF
           & "Arguments are the following: (file, line, column, column_end,"
-          & " enable_navigation, new_file, force_reload)"),
+          & " enable_navigation, new_file, force_reload)" & ASCII.LF
+          & "Do not confuse with " & File_Edited_Hook & " which signals that"
+          & " a file has just been opened."),
          Hook_With_Args_And_Return, Open_File_Run_Hook_Handler'Access);
       Register_Hook
         (Kernel, Open_File_Action_Hook,
