@@ -145,6 +145,14 @@ package body Debugger.Gdb.C is
       then
          Index := Index + 1;
          Result := New_Access_Type;
+
+         --  Even though doing a Get_Type_Info is more costly, we must do
+         --  it, since otherwise it is hard to get the real type name directly
+         --  from the general Type_Str (see  void (*field[2])(int a))
+         Set_Type_Name
+           (Result,
+            Get_Type_Info (Get_Debugger (Lang), Entity,
+                           Type_Str (Type_Str'First .. Index - 1)));
          return;
       end if;
 
@@ -168,6 +176,7 @@ package body Debugger.Gdb.C is
                Skip_To_Char (Type_Str, Index, '}');
                Index := Index + 1;
                Result := New_Enum_Type;
+               Set_Type_Name (Result, Type_Str (Type_Str'First .. Index - 1));
                return;
             end if;
             --  Else falls through
@@ -175,16 +184,20 @@ package body Debugger.Gdb.C is
          when 's' =>
 
             --  Structures.
-            --  There are two possible cases here:
+            --  There are several possible cases here:
             --      "struct My_Record { ... }"
             --   or "struct My_Record a"
+            --   or "struct { ... } a"   (anonymous types)
             --  The second case needs a further ptype to get the real
             --  definition.
 
             if Looking_At (Type_Str, Index, "struct ") then
                Tmp := Index;
                Index := Index + 7;           --  skips "struct "
-               Skip_Word (Type_Str, Index);  --  skips struct name
+
+               if Type_Str (Index) /= Record_Start then
+                  Skip_Word (Type_Str, Index);  --  skips struct name
+               end if;
                Skip_Blanks (Type_Str, Index);
                if Index <= Type_Str'Last
                  and then Type_Str (Index) = Record_Start
@@ -230,6 +243,7 @@ package body Debugger.Gdb.C is
 
       if Is_Simple_Type (Lang, Type_Str (Tmp .. Type_Str'Last)) then
          Result := New_Simple_Type;
+         Set_Type_Name (Result, Type_Str (Tmp .. Type_Str'Last));
          return;
       end if;
 
@@ -298,6 +312,7 @@ package body Debugger.Gdb.C is
 
       Result := New_Array_Type (Num_Dimensions => Num_Dim);
       R := Array_Type_Access (Result);
+      Set_Type_Name (R, Get_Type_Info (Get_Debugger (Lang), Entity, Type_Str));
 
       --  Then parse the dimensions.
       Num_Dim := 0;
@@ -362,6 +377,7 @@ package body Debugger.Gdb.C is
          Result := New_Record_Type (Num_Fields);
       end if;
       R := Record_Type_Access (Result);
+      Set_Type_Name (R, Type_Str (Type_Str'First .. Initial - 2));
 
       --  Parse the type
 
@@ -416,12 +432,21 @@ package body Debugger.Gdb.C is
          Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. End_Of_Name - 1),
                          Variant_Parts => 0);
 
-         Parse_Type
-           (Lang, Type_Str (Tmp .. Save - 1), --  End_Of_Name - 1),
-            Record_Field_Name
-              (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
-            Tmp,
-            Field_Value);
+         --  Avoid some calls to ptype if possible. Note that we have to get
+         --  rid of the field's name before calling Is_Simple_Type, since
+         --  otherwise "int a" is not recognized as a simple type.
+
+         if Is_Simple_Type (Lang, Type_Str (Tmp .. Index - 1)) then
+            Field_Value := New_Simple_Type;
+            Set_Type_Name (Field_Value, Type_Str (Tmp .. Save - 1));
+         else
+            Parse_Type
+              (Lang, Type_Str (Tmp .. Save - 1),
+               Record_Field_Name
+               (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
+               Tmp,
+               Field_Value);
+         end if;
          Set_Value (R.all, Field_Value, Field);
          Index := Save + 1;
          Field := Field + 1;
