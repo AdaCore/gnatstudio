@@ -33,7 +33,8 @@ package Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node);
+      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
+      Title  : String);
    --  Create an editor for the variable Var (or for a new variable if
    --  Var is Empty_Node.
    --  If Scenario_Variable_Only is True, then only the options related to

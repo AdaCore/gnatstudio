@@ -132,7 +132,8 @@ package body Variable_Editors is
    procedure Gtk_New
      (Editor : out New_Var_Edit;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node)
+      Var    : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node;
+      Title  : String)
    is
       Item          : Gtk_List_Item;
       Index         : Natural := 0;
@@ -151,6 +152,7 @@ package body Variable_Editors is
       Editor.Kernel := Kernel_Handle (Kernel);
       New_Variable_Editor_Pkg.Initialize (Editor);
       Set_Transient_For (Editor, Get_Main_Window (Kernel));
+      Set_Title (Editor, Title);
 
       Set_Mode (Get_Selection (Editor.Values_List), Selection_Single);
 
@@ -588,7 +590,8 @@ package body Variable_Editors is
    is
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Get_Kernel (Context));
+      Gtk_New (Edit, Get_Kernel (Context),
+               Title => -"Creating a new variable");
       Show_All (Edit);
       while Run (Edit) = Gtk_Response_OK
         and then not Update_Variable (Edit)
