@@ -52,6 +52,7 @@ with Factory_Data;            use Factory_Data;
 with Display_Items;             use Display_Items;
 with Items;                     use Items;
 with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Call_Stack;            use GVD.Call_Stack;
 with GVD.Dialogs;               use GVD.Dialogs;
 with GVD.Main_Window;           use GVD.Main_Window;
 with GVD.Memory_View;           use GVD.Memory_View;
@@ -107,6 +108,8 @@ package body GVD_Module is
      GVD.Process.Visual_Debugger_Record with null record;
    type GPS_Debugger is access all GPS_Debugger_Record'Class;
 
+   type Bp_Array is array (Integer range <>) of Breakpoint_Identifier;
+
    procedure Gtk_New
      (Debugger : out GPS_Debugger;
       Window   : access Glide_Window_Record'Class);
@@ -138,6 +141,9 @@ package body GVD_Module is
 
    type GVD_Module_Record is new Module_ID_Record with record
       Kernel           : Kernel_Handle;
+
+      Initialized      : Boolean := False;
+      --  Whether the debugger is running;
 
       Unexplored_Lines : File_Line_List.List := File_Line_List.Null_List;
       --  The list of lines which are currently revealed in the editor
@@ -213,12 +219,14 @@ package body GVD_Module is
       File   : String);
    --  Create the side information columns corresponding to the debugger
    --  in the editors for file.
+   --  If File is empty, create them for all files.
 
    procedure Remove_Debugger_Columns
      (Kernel : Kernel_Handle;
       File   : String);
    --  Remove the side information columns corresponding to the debugger
    --  in the editors for file.
+   --  If File is empty, remove them for all files.
 
    procedure Preferences_Changed
      (Kernel : access GObject_Record'Class; User : GObject);
@@ -1230,6 +1238,7 @@ package body GVD_Module is
       Create_Debugger_Columns (K, "");
       Pop_State (K);
 
+      Id.Initialized := True;
    exception
       when E : others =>
          Pop_State (K);
@@ -1248,6 +1257,8 @@ package body GVD_Module is
       use Debugger;
 
    begin
+      Id.Initialized := False;
+
       if Page = null or else Page.Debugger = null then
          return;
       end if;
@@ -1259,7 +1270,7 @@ package body GVD_Module is
       Gtk.Handlers.Disconnect (Kernel, Id.Lines_Revealed_Id);
       Gtk.Handlers.Disconnect (Kernel, Id.File_Edited_Id);
 
-      Set_Pref (Kernel, Show_Call_Stack, Page.Stack_Scrolledwindow /= null);
+      Set_Pref (Kernel, Show_Call_Stack, Page.Stack /= null);
 
       if Page.Debugger /= null
         and then Get_Process (Page.Debugger) /= null
@@ -1283,8 +1294,8 @@ package body GVD_Module is
          Close (Top.Process_Mdi, Page.Data_Scrolledwindow);
       end if;
 
-      if Page.Stack_Scrolledwindow /= null then
-         Close (Top.Process_Mdi, Page.Stack_Scrolledwindow);
+      if Page.Stack /= null then
+         Close (Top.Process_Mdi, Page.Stack);
       end if;
 
       if Top.History_Dialog /= null then
@@ -1619,9 +1630,7 @@ package body GVD_Module is
       then
          return False;
 
-      elsif Id.Show_Lines_With_Code
-        and then Command_In_Process (Get_Process (Debugger))
-      then
+      elsif Command_In_Process (Get_Process (Debugger)) then
          Id.Slow_Query := True;
          Timeout_Id := Timeout_Add (100, Idle_Reveal_Lines'Access);
          return False;
@@ -1634,12 +1643,8 @@ package body GVD_Module is
 
       File_Line := File_Line_List.Head (Id.Unexplored_Lines);
 
-      if Id.Show_Lines_With_Code then
-         Kind := Line_Contains_Code
-           (Debugger, File_Line.File.all, File_Line.Line);
-      else
-         Kind := Have_Code;
-      end if;
+      Kind := Line_Contains_Code
+        (Debugger, File_Line.File.all, File_Line.Line);
 
       if Id.List_Modified then
          Id.List_Modified := False;
@@ -1659,11 +1664,7 @@ package body GVD_Module is
 
       begin
          if Kind = Have_Code then
-            if Id.Show_Lines_With_Code then
-               A (L).Image := Line_Has_Code_Pixbuf;
-            else
-               A (L).Image := Line_Might_Have_Code_Pixbuf;
-            end if;
+            A (L).Image := Line_Has_Code_Pixbuf;
 
             --  Check whether a breakpoint is set at this location, if so,
             --  set the mode accordingly.
@@ -1801,27 +1802,80 @@ package body GVD_Module is
             File : constant String := Directory_Information (Area_Context) &
               File_Information (Area_Context);
             Line1, Line2 : Integer;
+            Identifier : Breakpoint_Identifier := 0;
 
          begin
             Get_Area (Area_Context, Line1, Line2);
 
-            if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
-            else
-               Id.List_Modified := True;
-               File_Line_List.Free
-                 (Id.Unexplored_Lines);
-               Id.Unexplored_Lines
-                 := File_Line_List.Null_List;
-            end if;
+            if Id.Show_Lines_With_Code then
+               if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+                  Timeout_Id := Timeout_Add (1, Idle_Reveal_Lines'Access);
+               else
+                  Id.List_Modified := True;
+                  File_Line_List.Free
+                    (Id.Unexplored_Lines);
+                  Id.Unexplored_Lines
+                    := File_Line_List.Null_List;
+               end if;
 
-            for J in Line1 .. Line2 loop
-               File_Line_List.Append
-                 (Id.Unexplored_Lines, (new String'(File), J));
-               --  ??? We might want to use a LIFO structure here
-               --  instead of FIFO, so that the lines currently shown
-               --  are displayed first.
-            end loop;
+               for J in Line1 .. Line2 loop
+                  File_Line_List.Append
+                    (Id.Unexplored_Lines, (new String'(File), J));
+                  --  ??? We might want to use a LIFO structure here
+                  --  instead of FIFO, so that the lines currently shown
+                  --  are displayed first.
+               end loop;
+            else
+               --  If we are not showing lines with code, no need to do the
+               --  following in an idle loop.
+               declare
+                  A    : Line_Information_Array (Line1 .. Line2);
+                  C    : Set_Breakpoint_Command_Access;
+                  Mode : Breakpoint_Command_Mode := Set;
+                  Tab  : constant Visual_Debugger :=
+                    Get_Current_Process (Get_Main_Window (Id.Kernel));
+                  Debugger : constant Debugger_Access := Tab.Debugger;
+                  Bps  : Bp_Array (Line1 .. Line2) := (others => 0);
+               begin
+                  --  Build an array of breakpoints in the current range, more
+                  --  efficient than re-browsing the whole array of breakpoints
+                  --  for each line.
+
+                  if Tab.Breakpoints /= null then
+                     for J in Tab.Breakpoints'Range loop
+                        if Tab.Breakpoints (J).Line in Bps'Range
+                          and then Tab.Breakpoints (J).File /= null
+                          and then Tab.Breakpoints (J).File.all = File
+                        then
+                           Bps (Tab.Breakpoints (J).Line) :=
+                             Tab.Breakpoints (J).Num;
+                        end if;
+                     end loop;
+                  end if;
+
+                  for J in A'Range loop
+                     A (J).Image := Line_Might_Have_Code_Pixbuf;
+
+                     if Bps (J) /= 0 then
+                        Mode := Unset;
+                        A (J).Image := Line_Has_Breakpoint_Pixbuf;
+                        Identifier := Bps (J);
+                     else
+                        Mode := Set;
+                        Identifier := 0;
+                     end if;
+
+                     Create
+                       (C, Id.Kernel, Debugger, Mode, File, J, Identifier);
+
+                     A (J).Associated_Command := Command_Access (C);
+                  end loop;
+
+                  Add_Line_Information
+                    (Id.Kernel, File, Breakpoints_Column_Id,
+                     new Line_Information_Array'(A));
+               end;
+            end if;
          end;
       end if;
 
@@ -1920,13 +1974,16 @@ package body GVD_Module is
 
    begin
       GVD.Main_Window.Preferences_Changed (Top);
-      Prev   := Id.Show_Lines_With_Code;
-      Id.Show_Lines_With_Code :=
-        Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
 
-      if Prev /= Id.Show_Lines_With_Code then
-         Remove_Debugger_Columns (Kernel_Handle (Kernel), "");
-         Create_Debugger_Columns (Kernel_Handle (Kernel), "");
+      if Id.Initialized then
+         Prev   := Id.Show_Lines_With_Code;
+         Id.Show_Lines_With_Code :=
+           Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
+
+         if Prev /= Id.Show_Lines_With_Code then
+            Remove_Debugger_Columns (Kernel_Handle (Kernel), "");
+            Create_Debugger_Columns (Kernel_Handle (Kernel), "");
+         end if;
       end if;
    end Preferences_Changed;
 
