@@ -3439,6 +3439,42 @@ package body Src_Editor_Module is
 
       Command := new Move_Command;
       Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Line;
+      Move_Command (Command.all).Step := 1;
+      Register_Action
+        (Kernel, "Move to next line", Command,
+           -"Move to the next line in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Line;
+      Move_Command (Command.all).Step := -1;
+      Register_Action
+        (Kernel, "Move to previous line", Command,
+           -"Move to the previous line in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Char;
+      Move_Command (Command.all).Step := 1;
+      Register_Action
+        (Kernel, "Move to next character", Command,
+           -"Move to the next character in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
+      Move_Command (Command.all).Kind := Char;
+      Move_Command (Command.all).Step := -1;
+      Register_Action
+        (Kernel, "Move to previous character", Command,
+           -"Move to the previous character in the current source editor",
+         Src_Action_Context);
+
+      Command := new Move_Command;
+      Move_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Move_Command (Command.all).Kind := Paragraph;
       Move_Command (Command.all).Step := -1;
       Register_Action
