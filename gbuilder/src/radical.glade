@@ -24,7 +24,7 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <default_width>500</default_width>
+  <default_width>510</default_width>
   <default_height>400</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
@@ -108,10 +108,10 @@
     </widget>
 
     <widget>
-      <class>GtkHPaned</class>
-      <name>hpaned1</name>
-      <handle_size>10</handle_size>
-      <gutter_size>6</gutter_size>
+      <class>GtkHBox</class>
+      <name>hbox1</name>
+      <homogeneous>False</homogeneous>
+      <spacing>0</spacing>
       <child>
 	<padding>0</padding>
 	<expand>True</expand>
@@ -120,17 +120,18 @@
 
       <widget>
 	<class>GtkVBox</class>
-	<name>vbox5</name>
+	<name>vbox10</name>
 	<homogeneous>False</homogeneous>
 	<spacing>0</spacing>
 	<child>
-	  <shrink>True</shrink>
-	  <resize>False</resize>
+	  <padding>0</padding>
+	  <expand>False</expand>
+	  <fill>True</fill>
 	</child>
 
 	<widget>
 	  <class>GtkHandleBox</class>
-	  <name>handlebox2</name>
+	  <name>handlebox5</name>
 	  <shadow_type>GTK_SHADOW_OUT</shadow_type>
 	  <handle_position>GTK_POS_LEFT</handle_position>
 	  <snap_edge>GTK_POS_TOP</snap_edge>
@@ -142,7 +143,7 @@
 
 	  <widget>
 	    <class>GtkToolbar</class>
-	    <name>toolbar4</name>
+	    <name>toolbar7</name>
 	    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
 	    <type>GTK_TOOLBAR_BOTH</type>
 	    <space_size>5</space_size>
@@ -153,29 +154,32 @@
 	    <widget>
 	      <class>GtkButton</class>
 	      <child_name>Toolbar:button</child_name>
-	      <name>button10</name>
-	      <label>Open</label>
+	      <name>button15</name>
+	      <label> Open </label>
+	      <icon>open_xpm</icon>
 	    </widget>
 
 	    <widget>
 	      <class>GtkButton</class>
 	      <child_name>Toolbar:button</child_name>
-	      <name>button11</name>
+	      <name>button16</name>
 	      <label>Save</label>
+	      <icon>save_xpm</icon>
 	    </widget>
 
 	    <widget>
 	      <class>GtkButton</class>
 	      <child_name>Toolbar:button</child_name>
-	      <name>button12</name>
+	      <name>button17</name>
 	      <label>Build</label>
+	      <icon>source_xpm</icon>
 	    </widget>
 	  </widget>
 	</widget>
 
 	<widget>
 	  <class>GtkHandleBox</class>
-	  <name>handlebox3</name>
+	  <name>handlebox6</name>
 	  <shadow_type>GTK_SHADOW_OUT</shadow_type>
 	  <handle_position>GTK_POS_LEFT</handle_position>
 	  <snap_edge>GTK_POS_TOP</snap_edge>
@@ -187,7 +191,7 @@
 
 	  <widget>
 	    <class>GtkNotebook</class>
-	    <name>notebook6</name>
+	    <name>notebook10</name>
 	    <can_focus>True</can_focus>
 	    <show_tabs>True</show_tabs>
 	    <show_border>True</show_border>
@@ -199,13 +203,13 @@
 
 	    <widget>
 	      <class>GtkFrame</class>
-	      <name>frame18</name>
+	      <name>frame27</name>
 	      <label_xalign>0</label_xalign>
 	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 
 	      <widget>
 		<class>GtkToolbar</class>
-		<name>toolbar5</name>
+		<name>toolbar8</name>
 		<orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
 		<type>GTK_TOOLBAR_ICONS</type>
 		<space_size>5</space_size>
@@ -216,7 +220,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton1</name>
+		  <name>togglebutton28</name>
 		  <tooltip>Horizontal Box</tooltip>
 		  <label></label>
 		  <icon>hbox_xpm</icon>
@@ -226,7 +230,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton2</name>
+		  <name>togglebutton29</name>
 		  <tooltip>Vertical Box</tooltip>
 		  <label></label>
 		  <icon>vbox_xpm</icon>
@@ -236,7 +240,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton3</name>
+		  <name>togglebutton30</name>
 		  <tooltip>Table</tooltip>
 		  <label></label>
 		  <icon>table_xpm</icon>
@@ -246,7 +250,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton4</name>
+		  <name>togglebutton31</name>
 		  <tooltip>Packer</tooltip>
 		  <label></label>
 		  <icon>packer_xpm</icon>
@@ -256,7 +260,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton5</name>
+		  <name>togglebutton32</name>
 		  <tooltip>Fixed Positions</tooltip>
 		  <label></label>
 		  <icon>fixed_xpm</icon>
@@ -266,7 +270,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton6</name>
+		  <name>togglebutton33</name>
 		  <tooltip>Horizontal Button Box</tooltip>
 		  <label></label>
 		  <icon>hbuttonbox_xpm</icon>
@@ -276,7 +280,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton7</name>
+		  <name>togglebutton34</name>
 		  <tooltip>Vertical Button Box</tooltip>
 		  <label></label>
 		  <icon>vbuttonbox_xpm</icon>
@@ -286,7 +290,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton8</name>
+		  <name>togglebutton35</name>
 		  <tooltip>Horizontal Pane</tooltip>
 		  <label></label>
 		  <icon>hpaned_xpm</icon>
@@ -296,7 +300,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton9</name>
+		  <name>togglebutton36</name>
 		  <tooltip>Vertical Pane</tooltip>
 		  <label></label>
 		  <icon>vpaned_xpm</icon>
@@ -306,7 +310,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton10</name>
+		  <name>togglebutton37</name>
 		  <tooltip>Frame</tooltip>
 		  <label></label>
 		  <icon>frame_xpm</icon>
@@ -316,7 +320,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton11</name>
+		  <name>togglebutton38</name>
 		  <tooltip>Scrolled Window</tooltip>
 		  <label></label>
 		  <icon>scrolledwindow_xpm</icon>
@@ -326,7 +330,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton12</name>
+		  <name>togglebutton39</name>
 		  <tooltip>Layou</tooltip>
 		  <label></label>
 		  <icon>layout_xpm</icon>
@@ -336,7 +340,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton13</name>
+		  <name>togglebutton40</name>
 		  <tooltip>Viewport</tooltip>
 		  <label></label>
 		  <icon>viewport_xpm</icon>
@@ -346,7 +350,7 @@
 		<widget>
 		  <class>GtkToggleButton</class>
 		  <child_name>Toolbar:button</child_name>
-		  <name>togglebutton14</name>
+		  <name>togglebutton41</name>
 		  <tooltip>Alignment</tooltip>
 		  <label></label>
 		  <icon>alignment_xpm</icon>
@@ -358,7 +362,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>Notebook:tab</child_name>
-	      <name>label40</name>
+	      <name>label74</name>
 	      <label>Containers</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -370,7 +374,7 @@
 
 	    <widget>
 	      <class>GtkFrame</class>
-	      <name>frame19</name>
+	      <name>frame28</name>
 	      <label_xalign>0</label_xalign>
 	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 
@@ -382,7 +386,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>Notebook:tab</child_name>
-	      <name>label41</name>
+	      <name>label75</name>
 	      <label>Standard</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -394,7 +398,7 @@
 
 	    <widget>
 	      <class>GtkFrame</class>
-	      <name>frame20</name>
+	      <name>frame29</name>
 	      <label_xalign>0</label_xalign>
 	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 
@@ -406,7 +410,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>Notebook:tab</child_name>
-	      <name>label42</name>
+	      <name>label76</name>
 	      <label>Additional</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -418,7 +422,7 @@
 
 	    <widget>
 	      <class>GtkFrame</class>
-	      <name>frame21</name>
+	      <name>frame30</name>
 	      <label_xalign>0</label_xalign>
 	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 
@@ -430,7 +434,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>Notebook:tab</child_name>
-	      <name>label43</name>
+	      <name>label77</name>
 	      <label>Dialogs</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -442,7 +446,7 @@
 
 	    <widget>
 	      <class>GtkFrame</class>
-	      <name>frame22</name>
+	      <name>frame31</name>
 	      <label_xalign>0</label_xalign>
 	      <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
 
@@ -454,7 +458,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>Notebook:tab</child_name>
-	      <name>label44</name>
+	      <name>label78</name>
 	      <label>Gnome</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -468,7 +472,7 @@
 
 	<widget>
 	  <class>GtkScrolledWindow</class>
-	  <name>scrolledwindow8</name>
+	  <name>scrolledwindow16</name>
 	  <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
 	  <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
 	  <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -481,7 +485,7 @@
 
 	  <widget>
 	    <class>GtkCTree</class>
-	    <name>ctree1</name>
+	    <name>ctree2</name>
 	    <can_focus>True</can_focus>
 	    <columns>2</columns>
 	    <column_widths>80,80</column_widths>
@@ -492,7 +496,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>CTree:title</child_name>
-	      <name>label45</name>
+	      <name>label79</name>
 	      <label>label7</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -505,7 +509,7 @@
 	    <widget>
 	      <class>GtkLabel</class>
 	      <child_name>CTree:title</child_name>
-	      <name>label46</name>
+	      <name>label80</name>
 	      <label>label8</label>
 	      <justify>GTK_JUSTIFY_CENTER</justify>
 	      <wrap>False</wrap>
@@ -519,7 +523,7 @@
 
 	<widget>
 	  <class>GtkStatusbar</class>
-	  <name>statusbar1</name>
+	  <name>statusbar2</name>
 	  <child>
 	    <padding>0</padding>
 	    <expand>False</expand>
@@ -530,18 +534,19 @@
 
       <widget>
 	<class>GtkVBox</class>
-	<name>vbox6</name>
+	<name>vbox11</name>
 	<border_width>3</border_width>
 	<homogeneous>False</homogeneous>
 	<spacing>5</spacing>
 	<child>
-	  <shrink>True</shrink>
-	  <resize>True</resize>
+	  <padding>0</padding>
+	  <expand>True</expand>
+	  <fill>True</fill>
 	</child>
 
 	<widget>
 	  <class>GtkCombo</class>
-	  <name>combo2</name>
+	  <name>combo3</name>
 	  <value_in_list>False</value_in_list>
 	  <ok_if_empty>True</ok_if_empty>
 	  <case_sensitive>False</case_sensitive>
@@ -557,7 +562,7 @@
 	  <widget>
 	    <class>GtkEntry</class>
 	    <child_name>GtkCombo:entry</child_name>
-	    <name>entry1</name>
+	    <name>entry2</name>
 	    <can_focus>True</can_focus>
 	    <editable>True</editable>
 	    <text_visible>True</text_visible>
@@ -568,7 +573,7 @@
 
 	<widget>
 	  <class>GtkNotebook</class>
-	  <name>notebook7</name>
+	  <name>notebook11</name>
 	  <can_focus>True</can_focus>
 	  <show_tabs>True</show_tabs>
 	  <show_border>True</show_border>
@@ -585,7 +590,7 @@
 
 	  <widget>
 	    <class>GtkScrolledWindow</class>
-	    <name>scrolledwindow11</name>
+	    <name>scrolledwindow17</name>
 	    <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
 	    <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
 	    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -593,7 +598,7 @@
 
 	    <widget>
 	      <class>GtkCList</class>
-	      <name>clist6</name>
+	      <name>clist9</name>
 	      <can_focus>True</can_focus>
 	      <columns>2</columns>
 	      <column_widths>80,80</column_widths>
@@ -604,7 +609,7 @@
 	      <widget>
 		<class>GtkLabel</class>
 		<child_name>CList:title</child_name>
-		<name>label55</name>
+		<name>label81</name>
 		<label>label3</label>
 		<justify>GTK_JUSTIFY_CENTER</justify>
 		<wrap>False</wrap>
@@ -617,7 +622,7 @@
 	      <widget>
 		<class>GtkLabel</class>
 		<child_name>CList:title</child_name>
-		<name>label56</name>
+		<name>label82</name>
 		<label>label4</label>
 		<justify>GTK_JUSTIFY_CENTER</justify>
 		<wrap>False</wrap>
@@ -632,7 +637,7 @@
 	  <widget>
 	    <class>GtkLabel</class>
 	    <child_name>Notebook:tab</child_name>
-	    <name>label57</name>
+	    <name>label83</name>
 	    <label>Properties</label>
 	    <justify>GTK_JUSTIFY_CENTER</justify>
 	    <wrap>False</wrap>
@@ -644,7 +649,7 @@
 
 	  <widget>
 	    <class>GtkScrolledWindow</class>
-	    <name>scrolledwindow12</name>
+	    <name>scrolledwindow18</name>
 	    <hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
 	    <vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
 	    <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
@@ -652,7 +657,7 @@
 
 	    <widget>
 	      <class>GtkCList</class>
-	      <name>clist7</name>
+	      <name>clist10</name>
 	      <can_focus>True</can_focus>
 	      <columns>2</columns>
 	      <column_widths>80,80</column_widths>
@@ -663,7 +668,7 @@
 	      <widget>
 		<class>GtkLabel</class>
 		<child_name>CList:title</child_name>
-		<name>label58</name>
+		<name>label84</name>
 		<label>Signal</label>
 		<justify>GTK_JUSTIFY_CENTER</justify>
 		<wrap>False</wrap>
@@ -676,7 +681,7 @@
 	      <widget>
 		<class>GtkLabel</class>
 		<child_name>CList:title</child_name>
-		<name>label59</name>
+		<name>label85</name>
 		<label>Handler</label>
 		<justify>GTK_JUSTIFY_CENTER</justify>
 		<wrap>False</wrap>
@@ -691,7 +696,7 @@
 	  <widget>
 	    <class>GtkLabel</class>
 	    <child_name>Notebook:tab</child_name>
-	    <name>label60</name>
+	    <name>label86</name>
 	    <label>Signals</label>
 	    <justify>GTK_JUSTIFY_CENTER</justify>
 	    <wrap>False</wrap>
