@@ -45,6 +45,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Recase_Word_Cmd);
    --  Free the memory associated to a Recase_Word_Cmd.
 
+   procedure Unchecked_Free (This : in out Recase_Word_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    ----------------------------
    -- Remove_Instruction_Cmd --
    ----------------------------
@@ -65,6 +69,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Instruction_Cmd);
    --  Free the memory associated to a Remove_Instruction_Cmd.
+
+   procedure Unchecked_Free (This : in out Remove_Instruction_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    -------------------------
    -- Remove_Elements_Cmd --
@@ -87,6 +95,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Remove_Elements_Cmd);
    --  Free the memory associated to a Remove_Elements_Cmd.
 
+   procedure Unchecked_Free (This : in out Remove_Elements_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
    ----------------------------
@@ -96,8 +108,11 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Initialize
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
-      Word         : Word_Cursor);
-   --  Set all the marks that will be needed to remove package clauses.
+      Word         : Word_Cursor;
+      Destination  : String := "");
+   --  Set all the marks that will be needed to remove package clauses.If
+   --  Destination is different from "", then the procedure Execute will add
+   --  the removed Pkg clauses at the beginning of the destination file.
 
    procedure Execute
      (This         : Remove_Pkg_Clauses_Cmd;
@@ -107,6 +122,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd);
    --  Free the memory associated to a Remove_Pkg_Cmd.
+
+   procedure Unchecked_Free (This : in out Remove_Pkg_Clauses_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    -----------------------
    -- Remove_Entity_Cmd --
@@ -128,6 +147,10 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Entity_Cmd);
    --  Free the memory associated to a Remove_Entity_Cmd.
+
+   procedure Unchecked_Free (This : in out Remove_Entity_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
    --------------------
    -- Add_Pragma_Cmd --
@@ -151,6 +174,10 @@ package Codefix.Text_Manager.Ada_Commands is
    procedure Free (This : in out Add_Pragma_Cmd);
    --  Free the memory associated to an Add_Pragma_Cmd.
 
+   procedure Unchecked_Free (This : in out Add_Pragma_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
    -----------------------
    -- Make_Constant_Cmd --
    -----------------------
@@ -172,6 +199,35 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Make_Constant_Cmd);
    --  Free the memory associated to a Make_Constant_Cmd.
+
+   procedure Unchecked_Free (This : in out Make_Constant_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
+
+   ----------------------------
+   -- Remove_Parenthesis_Cmd --
+   ----------------------------
+
+   type Remove_Parenthesis_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class);
+   --  Set all the marks that will be needed to remove the conversion later.
+
+   procedure Execute
+     (This         : Remove_Parenthesis_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+   --  Updade an Extract with the remove of the conversion.
+
+   procedure Free (This : in out Remove_Parenthesis_Cmd);
+   --  Free the memory associated to a Remove_Parenthesis_Cmd.
+
+   procedure Unchecked_Free (This : in out Remove_Parenthesis_Cmd);
+   --  Initialize all fields of This to default values, but do not free any
+   --  memory.
 
 private
 
@@ -214,6 +270,10 @@ private
    type Make_Constant_Cmd is new Text_Command with record
       Position : Ptr_Mark;
       Name     : Dynamic_String;
+   end record;
+
+   type Remove_Parenthesis_Cmd is new Text_Command with record
+      Cursor : Ptr_Mark;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
