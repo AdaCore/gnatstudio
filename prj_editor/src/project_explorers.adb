@@ -237,12 +237,6 @@ package body Project_Explorers is
    --  Expand a project node, ie add children for all the imported projects,
    --  the directories, ...
 
-   procedure Expand_Directory_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter);
-   --  Expand a directory node, ie add children for all the files and
-   --  subirectories.
-
    procedure Expand_File_Node
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter);
@@ -942,7 +936,6 @@ package body Project_Explorers is
       Exec_Directory   : Boolean := False) return Gtk_Tree_Iter
    is
       N         : Gtk_Tree_Iter;
-      Is_Leaf   : Boolean;
       Node_Type : Node_Types := Directory_Node;
    begin
       if Object_Directory then
@@ -950,10 +943,6 @@ package body Project_Explorers is
       elsif Exec_Directory then
          Node_Type := Exec_Directory_Node;
       end if;
-
-      Is_Leaf := Node_Type = Obj_Directory_Node
-        or else Node_Type = Exec_Directory_Node
-        or else not Directory_Contains_Files (Project, Directory);
 
       if Object_Directory then
          --  Append the object directory before the first project.
@@ -995,10 +984,6 @@ package body Project_Explorers is
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
       Set (Explorer.Tree.Model, N, Up_To_Date_Column, False);
-
-      if not Is_Leaf then
-         Append_Dummy_Iter (Explorer.Tree.Model, N);
-      end if;
 
       return N;
    end Add_Directory_Node;
@@ -1054,16 +1039,27 @@ package body Project_Explorers is
 
       procedure Add_Source_Directories is
          N    : Gtk_Tree_Iter;
-         pragma Unreferenced (N);
          Dirs : String_List_Utils.String_List.List;
          Dir  : constant Name_Id_Array := Source_Dirs (Project);
          Dir_Node : String_List_Utils.String_List.List_Node;
+         Files : File_Array_Access := Get_Source_Files
+           (Project, Recursive => False, Full_Path => True);
+         File_Node : File_Array (Files'Range);
+         File_Node_Index : Integer;
+
       begin
-         --  ??? Should show only first-level directories
+         --  Prepare all the source files for all the directories now, so that
+         --  we can properly take into account cases where a project contains
+         --  duplicate source files (in which case we only want to list the
+         --  one that appears in the first directory).
+         --  Note: We have to use a system call below. Two files with the same
+         --  name can appear in the hiearchy, for instance when using extending
+         --  projects, and Get_Full_Path_From_File would only return the first
+         --  instance of the file.
 
          for D in Dir'Range loop
             Get_Name_String (Dir (D));
-            Append (Dirs, Name_Buffer (1 .. Name_Len));
+            Append (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
          end loop;
 
          if Filenames_Are_Case_Sensitive then
@@ -1080,9 +1076,30 @@ package body Project_Explorers is
                Directory        => Data (Dir_Node),
                Project          => Project,
                Parent_Node      => Node);
+
+            File_Node_Index := File_Node'First;
+            for S in Files'Range loop
+               if Dir_Name (Files (S)).all = Data (Dir_Node) then
+                  File_Node (File_Node_Index) := Files (S);
+                  File_Node_Index := File_Node_Index + 1;
+               end if;
+            end loop;
+
+            Sort (File_Node (File_Node'First .. File_Node_Index - 1));
+
+            for S in File_Node'First .. File_Node_Index - 1 loop
+               Append_File
+                 (Kernel => Explorer.Kernel,
+                  Model  => Explorer.Tree.Model,
+                  File   => File_Node (S),
+                  Base   => N);
+            end loop;
+
+            Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
             Dir_Node := Next (Dir_Node);
          end loop;
 
+         Unchecked_Free (Files);
          Free (Dirs);
       end Add_Source_Directories;
 
@@ -1143,51 +1160,6 @@ package body Project_Explorers is
       end if;
    end Add_Object_Directories;
 
-   ---------------------------
-   -- Expand_Directory_Node --
-   ---------------------------
-
-   procedure Expand_Directory_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
-   is
-      use String_List_Utils.String_List;
-
-      Project : constant Project_Type := Get_Project_From_Node
-        (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Dir     : constant String :=
-        Get_Directory_From_Node (Explorer.Tree.Model, Node);
-      Src       : constant Name_Id_Array :=
-        Get_Source_Files (Project, Recursive => False);
-      File_Node : File_Array (Src'Range);
-      File_Node_Index : Integer := File_Node'First;
-
-   begin
-      for S in Src'Range loop
-         --  Note: We have to use a system call below. Two files with the same
-         --  name can appear in the hiearchy, for instance when using extending
-         --  projects, and Get_Full_Path_From_File would only return the first
-         --  instance of the file
-
-         File_Node (File_Node_Index) :=
-           Create (Full_Filename => Dir & Get_String (Src (S)));
-
-         if Is_Regular_File (File_Node (File_Node_Index)) then
-            File_Node_Index := File_Node_Index + 1;
-         end if;
-      end loop;
-
-      Sort (File_Node (File_Node'First .. File_Node_Index - 1));
-
-      for J in File_Node'First .. File_Node_Index - 1 loop
-         Append_File
-           (Kernel => Explorer.Kernel,
-            Model  => Explorer.Tree.Model,
-            File   => File_Node (J),
-            Base   => Node);
-      end loop;
-   end Expand_Directory_Node;
-
    ----------------------
    -- Expand_File_Node --
    ----------------------
@@ -1239,10 +1211,7 @@ package body Project_Explorers is
             when Extends_Project_Node =>
                Expand_Project_Node (Explorer, Node);
 
-            when Directory_Node =>
-               Expand_Directory_Node (Explorer, Node);
-
-            when Obj_Directory_Node | Exec_Directory_Node =>
+            when Directory_Node | Obj_Directory_Node | Exec_Directory_Node =>
                null;
 
             when File_Node =>
@@ -1660,7 +1629,7 @@ package body Project_Explorers is
 
                while Index <= Files_In_Project'Last loop
                   if New_File (Index)
-                    and then Base_Name (Files_In_Project (Index)) = F
+                    and then Full_Name (Files_In_Project (Index)).all = Dir & F
                   then
                      New_File (Index) := False;
                      exit;
@@ -1759,8 +1728,13 @@ package body Project_Explorers is
       if Is_Up_To_Date (Explorer.Tree.Model, Node) then
          --  Likewise, if a node is not expanded, we simply remove all
          --  underlying information.
+         --  Directory_Node contents is computed along with the project node,
+         --  so we mustn't remove its contents
 
-         if Force_Expanded or else Expanded then
+         if Force_Expanded
+           or else Expanded
+           or else Node_Type = Directory_Node
+         then
             case Node_Type is
                when Project_Node | Modified_Project_Node =>
                   Update_Project_Node (Explorer, Files, Node);
