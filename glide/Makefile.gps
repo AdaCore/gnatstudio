@@ -63,6 +63,8 @@ BASE_DIR=$(GLIDE_BASE_DIR)/../shell
 include $(BASE_DIR)/Makefile.shell
 BASE_DIR=$(GLIDE_BASE_DIR)/../theme_manager
 include $(BASE_DIR)/Makefile.theme_manager
+BASE_DIR=$(GLIDE_BASE_DIR)/../refactoring
+include $(BASE_DIR)/Makefile.refactoring
 
 GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
 SRC_DIRS += $(GLIDE_SRC_DIRS)

@@ -24,6 +24,7 @@ with "../python/python";
 with "../shell/shell";
 with "../keymanager/keymanager";
 with "../theme_manager/theme_manager";
+with "../refactoring/refactoring";
 
 project GPS is
 
@@ -56,6 +57,7 @@ project GPS is
          when "Windows_NT" =>
             for Default_Switches ("Ada") use ("obj/gps.res");
       end case;
+--      for Default_Switches ("Ada") use ("-lgmem");
    end Linker;
 
    package Naming is
