@@ -52,6 +52,7 @@ package body Glide_Menu is
       GNAT_RM_Help,
       ARM95_Help,
       GDB_Help,
+      Glide_Help,
       GCC_Help);
 
    --------------------
@@ -240,6 +241,11 @@ package body Glide_Menu is
               Format_Pathname
                 (Top.Prefix_Directory.all & "/doc/glide2/html/gvd.html"));
 
+         when Glide_Help =>
+            Open_Html (Top.Kernel,
+              Format_Pathname
+                (Top.Prefix_Directory.all & "/doc/glide2/html/glide2.html"));
+
          when GNAT_UG_Help =>
             Open_Html (Top.Kernel,
               Format_Pathname
@@ -341,6 +347,9 @@ package body Glide_Menu is
          Gtk_New (Help & (-"Welcome"),
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (Welcome_Help)),
+         Gtk_New (Help & (-"Using the Glide2 Development Environment"), "",
+                  Callback => On_Manual'Access,
+                  Callback_Action => Help_Context'Pos (Glide_Help)),
          Gtk_New (Help & (-"Using the GNU Visual Debugger"), "",
                   Callback => On_Manual'Access,
                   Callback_Action => Help_Context'Pos (GVD_Help)),
