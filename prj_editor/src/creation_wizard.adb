@@ -185,7 +185,11 @@ package body Creation_Wizard is
       Wiz.Title_Style := Copy (Get_Style (Wiz));
       Set_Font_Description
         (Wiz.Title_Style,
-         From_String ("helvetica Bold Oblique 14"));
+         To_Font_Description
+         (Family_Name => "helvetica",
+          Weight      => Pango_Weight_Bold,
+          Style       => Pango_Style_Oblique,
+          Size        => 14));
 
       Add_Page (Wiz, First_Page (Wiz),  "Naming the project");
       Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
