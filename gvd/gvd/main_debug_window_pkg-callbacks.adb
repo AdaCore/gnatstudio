@@ -281,8 +281,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Source1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      File_Name : constant String :=
+        File_Selection_Dialog (Title => -"Source name", Must_Exist => True);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      null;
+      Load_File (Tab.Editor_Text, File_Name, Set_Current => False);
+      Set_Line (Tab.Editor_Text, 1, Set_Current => False);
    end On_Open_Source1_Activate;
 
    -------------------------------
