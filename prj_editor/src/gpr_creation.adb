@@ -23,13 +23,12 @@ with Traces;                    use Traces;
 with HTables;
 with Ada.Unchecked_Deallocation;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Ada.Text_IO;               use Ada.Text_IO;
+with Projects.Editor;           use Projects, Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
 
 package body GPR_Creation is
 
    Me : constant Debug_Handle := Create ("Creator");
-
-   Gpr_Extension  : constant String := ".gpr";
 
    type File_Info_Record is record
       Src_Dir_Index : Integer;
@@ -80,26 +79,22 @@ package body GPR_Creation is
    --  Free the information in X
 
    procedure Process_List
-     (File         : File_Type;
-      Gpr_Variable : String;
-      List         : String_List);
+     (Project         : Project_Type;
+      Attribute       : Attribute_Pkg;
+      List            : String_List;
+      Attribute_Index : String := "");
    --  Create a new GPR attribute in File, with List as its value.
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (String_List, String_List_Access);
 
    procedure Process_Switches
-     (File          : File_Type;
-      Gpr_Package   : String;
-      Gpr_Attribute : String;
-      Value         : String);
+     (Project         : Project_Type;
+      Attribute       : Attribute_Pkg;
+      Value           : String;
+      Attribute_Index : String := "");
    --  Process a switches attribute, which needs to be splitted in the .gpr
    --  file
-
-   function Project_Name
-     (Project_Index : Natural; Root_Project_Name : String) return String;
-   --  Return the name of the project to use for the Project_Index-th project.
-   --  0 is the root project
 
    procedure Parse_Source_Dirs
      (Source_Dirs : GNAT.OS_Lib.String_List;
@@ -129,7 +124,7 @@ package body GPR_Creation is
    --  directories together
 
    procedure Generate_Project_Attributes
-     (File              : File_Type;
+     (Project           : Project_Type;
       Is_Root_Project   : Boolean;
       Main_Units        : String_List_Access := null;
       Builder_Switches  : String;
@@ -148,13 +143,12 @@ package body GPR_Creation is
    --  directory.
 
    procedure Generate_Withs
-     (File              : File_Type;
+     (Projects          : Project_Type_Array;
       Related_To        : Is_Related_To;
       Source_Dirs       : String_List;
       Obj_Dirs          : String_List;
       Src_Files         : File_Htables.HTable;
       Object_Dirs       : in out Object_Directory_Info_Array;
-      Root_Project_Name : String;
       Current_Project   : Integer;
       All_Source_Dirs   : Boolean := False);
    --  Generate all the withs statements.
@@ -166,7 +160,7 @@ package body GPR_Creation is
    --  all the projects, and a Source_Files attribute is generated
 
    procedure Generate_Source_Files_List
-     (Output         : File_Type;
+     (Project        : Project_Type;
       Src_Files      : File_Htables.HTable;
       Obj_Dir_Index  : Integer);
    --  Generate the list of source files for the given Obj_Dir
@@ -383,36 +377,54 @@ package body GPR_Creation is
    --------------------------------
 
    procedure Generate_Source_Files_List
-     (Output         : File_Type;
+     (Project        : Project_Type;
       Src_Files      : File_Htables.HTable;
       Obj_Dir_Index  : Integer)
    is
       Iter  : File_Htables.Iterator;
       Info  : File_Info;
-      First : Boolean := True;
+      Count : Natural := 0;
    begin
-      Put (Output, "   for Source_Files use (");
-
       Get_First (Src_Files, Iter);
       loop
          Info := Get_Element (Iter);
          exit when Info = No_File_Info;
 
          if Info.Obj_Dir_Index = Obj_Dir_Index then
-            if First then
-               First := False;
-            else
-               Put_Line (Output, ",");
-               Put (Output, "      ");
-            end if;
-
-            Put (Output, '"' & Get_Key (Iter) & '"');
+            Count := Count + 1;
          end if;
 
          Get_Next (Src_Files, Iter);
       end loop;
 
-      Put_Line (Output, ");");
+      declare
+         List : String_List (1 .. Count);
+      begin
+         Count := List'First;
+
+         Get_First (Src_Files, Iter);
+         loop
+            Info := Get_Element (Iter);
+            exit when Info = No_File_Info;
+
+            if Info.Obj_Dir_Index = Obj_Dir_Index then
+               List (Count) := new String'(Get_Key (Iter));
+               Count := Count + 1;
+            end if;
+
+            Get_Next (Src_Files, Iter);
+         end loop;
+
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Source_Files_Attribute,
+            Values             => List);
+
+         for F in List'Range loop
+            Free (List (F));
+         end loop;
+      end;
    end Generate_Source_Files_List;
 
    ------------------
@@ -420,23 +432,17 @@ package body GPR_Creation is
    ------------------
 
    procedure Process_List
-     (File         : File_Type;
-      Gpr_Variable : String;
-      List         : String_List) is
+     (Project         : Project_Type;
+      Attribute       : Attribute_Pkg;
+      List            : String_List;
+      Attribute_Index : String := "") is
    begin
-      Put (File, "   for " & Gpr_Variable & " use (");
-      for L in List'Range loop
-         if L /= List'First then
-            Put_Line (File, ",");
-            Put (File, "      """);
-         else
-            Put (File, """");
-         end if;
-
-         Put (File, List (L).all & """");
-      end loop;
-
-      Put_Line (File, ");");
+      Update_Attribute_Value_In_Scenario
+        (Project            => Project,
+         Scenario_Variables => No_Scenario,
+         Attribute          => Attribute,
+         Values             => List,
+         Attribute_Index    => Attribute_Index);
    end Process_List;
 
    ----------------------
@@ -444,35 +450,22 @@ package body GPR_Creation is
    ----------------------
 
    procedure Process_Switches
-     (File          : File_Type;
-      Gpr_Package   : String;
-      Gpr_Attribute : String;
-      Value         : String)
+     (Project         : Project_Type;
+      Attribute       : Attribute_Pkg;
+      Value           : String;
+      Attribute_Index : String := "")
    is
       List  : Argument_List_Access;
    begin
       if Value /= "" then
-         New_Line (File);
-         Put_Line (File, "   package " & Gpr_Package & " is");
-         Put      (File, "      for " & Gpr_Attribute & " use (");
-
          List := Argument_String_To_List (Value);
-
-         for L in List'Range loop
-            if L /= List'First then
-               Put_Line (File, ",");
-               Put (File, "         """);
-            else
-               Put (File, """");
-            end if;
-
-            Put (File, List (L).all & '"');
-         end loop;
-
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Attribute,
+            Values             => List.all,
+            Attribute_Index    => Attribute_Index);
          Free (List);
-
-         Put_Line (File, ");");
-         Put_Line (File, "   end " & Gpr_Package & ";");
       end if;
    end Process_Switches;
 
@@ -481,7 +474,7 @@ package body GPR_Creation is
    ---------------------------------
 
    procedure Generate_Project_Attributes
-     (File              : File_Type;
+     (Project           : Project_Type;
       Is_Root_Project   : Boolean;
       Main_Units        : String_List_Access := null;
       Builder_Switches  : String;
@@ -497,44 +490,57 @@ package body GPR_Creation is
       if Main_Units /= null
         and then Main_Units'Length /= 0
       then
-         Process_List (File, "Main", Main_Units.all);
+         Process_List (Project, Main_Attribute, Main_Units.all);
       end if;
 
       if Is_Root_Project then
          Process_Switches
-           (File, "Builder", "Default_Switches (""Ada"")", Builder_Switches);
+           (Project, Builder_Default_Switches_Attribute,
+            Builder_Switches, "Ada");
       end if;
 
       Process_Switches
-        (File, "Compiler", "Default_Switches (""Ada"")", Compiler_Switches);
+        (Project, Compiler_Default_Switches_Attribute,
+         Compiler_Switches, "Ada");
 
       if Is_Root_Project then
          Process_Switches
-           (File, "Binder", "Default_Switches (""Ada"")", Binder_Switches);
+           (Project, Binder_Default_Switches_Attribute,
+            Binder_Switches, "Ada");
          Process_Switches
-           (File, "Linker", "Default_Switches (""Ada"")", Linker_Switches);
+           (Project, Linker_Default_Switches_Attribute,
+            Linker_Switches, "Ada");
 
          if Cross_Prefix /= "" then
-            New_Line (File);
-            Put_Line (File, "   package Ide is");
-            Put_Line (File, "      for Compiler_Command (""Ada"") use """
-                      & Cross_Prefix & "gnatmake"";");
-            Put_Line (File, "      for Debugger_Command use """
-                      & Cross_Prefix & "gdb"";");
-            Put_Line (File, "   end Ide;");
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Compiler_Command_Attribute,
+               Value              => Cross_Prefix & "gnatmake",
+               Attribute_Index    => "Ada");
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Debugger_Command_Attribute,
+               Value              => Cross_Prefix & "gdb");
          end if;
       end if;
 
       if Spec_Extension /= ".ads"
         or else Body_Extension /= ".adb"
       then
-         New_Line (File);
-         Put_Line (File, "   package Naming is");
-         Put_Line (File, "      for Specification_Suffix (""Ada"") use """
-                   & Spec_Extension & """;");
-         Put_Line (File, "      for Implementation_Suffix (""Ada"") use """
-                   & Body_Extension & """;");
-         Put_Line (File, "   end Naming;");
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Specification_Suffix_Attribute,
+            Value              => Spec_Extension,
+            Attribute_Index    => "Ada");
+         Update_Attribute_Value_In_Scenario
+           (Project            => Project,
+            Scenario_Variables => No_Scenario,
+            Attribute          => Implementation_Suffix_Attribute,
+            Value              => Body_Extension,
+            Attribute_Index    => "Ada");
       end if;
    end Generate_Project_Attributes;
 
@@ -561,78 +567,71 @@ package body GPR_Creation is
       return True;
    end Src_Dirs_Have_Unique_Obj_Dir;
 
-   ------------------
-   -- Project_Name --
-   ------------------
-
-   function Project_Name
-     (Project_Index : Natural; Root_Project_Name : String) return String is
-   begin
-      if Project_Index = 0 then
-         return Root_Project_Name;
-      else
-         return "project" & Image (Project_Index);
-      end if;
-   end Project_Name;
-
    --------------------
    -- Generate_Withs --
    --------------------
 
    procedure Generate_Withs
-     (File              : File_Type;
+     (Projects          : Project_Type_Array;
       Related_To        : Is_Related_To;
       Source_Dirs       : String_List;
       Obj_Dirs          : String_List;
       Src_Files         : File_Htables.HTable;
       Object_Dirs       : in out Object_Directory_Info_Array;
-      Root_Project_Name : String;
       Current_Project   : Integer;
       All_Source_Dirs   : Boolean := False)
    is
       Current_Dir : Natural;
-      First : Boolean;
+      Tmp  : Import_Project_Error;
    begin
       for D in Object_Dirs'Range loop
          --  Have we found the object directory matching our current project ?
-         if Object_Dirs (D).Project_Num = Current_Project  then
+         if Object_Dirs (D).Project_Num = Current_Project then
             Current_Dir := D;
          else
-            Put_Line
-              (File,
-               "limited with """ & Project_Name
-                 (Object_Dirs (D).Project_Num, Root_Project_Name) & """;");
+            Tmp := Add_Imported_Project
+              (Project           => Projects (Current_Project),
+               Imported_Project  => Projects (Object_Dirs (D).Project_Num),
+               Use_Relative_Path => True,
+               Limited_With      => True);
+            if Tmp /= Success then
+               Trace (Me, "Error when adding with " & Tmp'Img
+                      & " current=" & Current_Project'Img
+                      & " num=" & Object_Dirs (D).Project_Num'Img);
+            end if;
          end if;
       end loop;
 
-      Put_Line (File, "project "
-                & Project_Name (Current_Project, Root_Project_Name) & " is");
-      Put_Line (File,
-                "   for Object_Dir use """
-                & Obj_Dirs (Current_Dir).all & """;");
+      Update_Attribute_Value_In_Scenario
+        (Project            => Projects (Current_Project),
+         Scenario_Variables => No_Scenario,
+         Attribute          => Obj_Dir_Attribute,
+         Value              => Obj_Dirs (Current_Dir).all);
 
       if not All_Source_Dirs then
-         Put (File, "   for Source_Dirs use (");
-         First := True;
-         for Src in Related_To'Range (1) loop
-            if Related_To (Src, Current_Dir) then
-               if First then
-                  Put (File, """");
-                  First := False;
-               else
-                  Put_Line (File, ",");
-                  Put (File, "      """);
+         declare
+            List  : String_List (Related_To'Range (1));
+            Index : Integer := List'First;
+         begin
+            for Src in Related_To'Range (1) loop
+               if Related_To (Src, Current_Dir) then
+                  List (Index) := Source_Dirs (Src);
+                  Index := Index + 1;
                end if;
+            end loop;
 
-               Put (File, Source_Dirs (Src).all & """");
-            end if;
-         end loop;
+            Update_Attribute_Value_In_Scenario
+              (Project            => Projects (Current_Project),
+               Scenario_Variables => No_Scenario,
+               Attribute          => Source_Dirs_Attribute,
+               Values             => List (List'First .. Index - 1));
+         end;
 
-         Put_Line (File, ");");
       else
-         Process_List (File, "Source_Dirs", Source_Dirs);
+         Process_List (Projects (Current_Project),
+                       Source_Dirs_Attribute, Source_Dirs);
          Generate_Source_Files_List
-           (Output        => File,
+           (Project       => Projects (Current_Project),
             Src_Files     => Src_Files,
             Obj_Dir_Index => Current_Dir);
       end if;
@@ -642,9 +641,9 @@ package body GPR_Creation is
    -- Create_Gpr_Files --
    ----------------------
 
-   function Create_Gpr_Files
-     (Root_Project_Name : String;
-      Output_Dir        : String;
+   procedure Create_Gpr_Files
+     (Registry          : Projects.Registry.Project_Registry'Class;
+      Root_Project      : Project_Type;
       Source_Dirs       : GNAT.OS_Lib.String_List;
       Object_Dirs       : GNAT.OS_Lib.String_List;
       Spec_Extension    : String;
@@ -654,12 +653,12 @@ package body GPR_Creation is
       Compiler_Switches : String;
       Binder_Switches   : String;
       Linker_Switches   : String;
-      Cross_Prefix      : String := "") return String
+      Cross_Prefix      : String := "")
    is
+      Project         : Project_Type;
       Obj_Dirs        : Object_Directory_Info_Array (Object_Dirs'Range);
       Src_Files       : File_Htables.HTable;
       Obj_Files_Count : Natural;
-      File            : File_Type;
       Single_Obj_Dir  : Boolean;
       Related_To      : Is_Related_To (Source_Dirs'Range, Object_Dirs'Range) :=
         (others => (others => False));
@@ -682,16 +681,26 @@ package body GPR_Creation is
          --  Ignore all other object directories but the first one.
          --  The other directories do not contain any object file anyway
 
-         Trace
-           (Me, "Creating " & Output_Dir & Root_Project_Name & Gpr_Extension);
-         Create (File, Out_File,
-                 Output_Dir & Root_Project_Name & Gpr_Extension);
-         Put_Line (File, "project " & Root_Project_Name & " is");
-         Process_List (File, "Source_Dirs", Source_Dirs);
-         Put_Line (File, "   for Object_Dir use """
-                   & Object_Dirs (Object_Dirs'First).all & """;");
+         Trace (Me, "Creating " & Project_Path (Root_Project));
+         Project := Root_Project;
+         Process_List (Project, Source_Dirs_Attribute, Source_Dirs);
+
+         if Object_Dirs'Length = 0 then
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Obj_Dir_Attribute,
+               Value              => ".");
+         else
+            Update_Attribute_Value_In_Scenario
+              (Project            => Project,
+               Scenario_Variables => No_Scenario,
+               Attribute          => Obj_Dir_Attribute,
+               Value              => Object_Dirs (Object_Dirs'First).all);
+         end if;
+
          Generate_Project_Attributes
-           (File              => File,
+           (Project           => Project,
             Is_Root_Project   => True,
             Main_Units        => Main_Units,
             Builder_Switches  => Builder_Switches,
@@ -701,56 +710,64 @@ package body GPR_Creation is
             Cross_Prefix      => Cross_Prefix,
             Spec_Extension    => Spec_Extension,
             Body_Extension    => Body_Extension);
-         Put_Line (File, "end " & Root_Project_Name & ";");
-         Close (File);
+         Save_Project (Project);
 
       else
          Single_Obj_Dir := Src_Dirs_Have_Unique_Obj_Dir (Related_To);
          Trace (Me, "Case: complex case. Source dirs associated with single"
                 & " obj dir: " & Boolean'Image (Single_Obj_Dir));
 
-         for P in 0 .. Object_Dirs'Length - 1 loop
-            Trace
-              (Me, "Creating " & Output_Dir
-               & Project_Name (P, Root_Project_Name)
-               & Gpr_Extension);
-            Create (File, Out_File,
-                    Output_Dir
-                    & Project_Name (P, Root_Project_Name)
-                    & Gpr_Extension);
-            Generate_Withs
-              (File              => File,
-               Related_To        => Related_To,
-               Source_Dirs       => Source_Dirs,
-               Obj_Dirs          => Object_Dirs,
-               Src_Files         => Src_Files,
-               Object_Dirs       => Obj_Dirs,
-               Root_Project_Name => Root_Project_Name,
-               Current_Project      => P,
-               All_Source_Dirs   => not Single_Obj_Dir);
+         declare
+            Projects : Project_Type_Array (0 .. Object_Dirs'Length - 1);
+         begin
 
-            Generate_Project_Attributes
-              (File              => File,
-               Is_Root_Project   => P = 0,
-               Main_Units        => Main_Units,
-               Builder_Switches  => Builder_Switches,
-               Compiler_Switches => Compiler_Switches,
-               Binder_Switches   => Binder_Switches,
-               Linker_Switches   => Linker_Switches,
-               Cross_Prefix      => Cross_Prefix,
-               Spec_Extension    => Spec_Extension,
-               Body_Extension    => Body_Extension);
+            --  Create all projects immedatiately, so that we can create
+            --  dependencies between them later on
 
-            Put_Line
-              (File, "end " & Project_Name (P, Root_Project_Name) & ";");
+            Projects (0) := Root_Project;
 
-            Close (File);
-         end loop;
+            for P in 1 .. Object_Dirs'Length - 1 loop
+               Projects (P) := Create_Project
+                 (Registry,
+                  Name => "project" & Image (P),
+                  Path => Project_Directory (Root_Project));
+            end loop;
+
+            --  Then complete the contents of each project
+
+            for P in 0 .. Object_Dirs'Length - 1 loop
+               Trace
+                 (Me, "Manipulating " & Project_Path (Projects (P)));
+
+               Generate_Withs
+                 (Projects          => Projects,
+                  Related_To        => Related_To,
+                  Source_Dirs       => Source_Dirs,
+                  Obj_Dirs          => Object_Dirs,
+                  Src_Files         => Src_Files,
+                  Object_Dirs       => Obj_Dirs,
+                  Current_Project   => P,
+                  All_Source_Dirs   => not Single_Obj_Dir);
+
+               Generate_Project_Attributes
+                 (Project           => Projects (P),
+                  Is_Root_Project   => P = 0,
+                  Main_Units        => Main_Units,
+                  Builder_Switches  => Builder_Switches,
+                  Compiler_Switches => Compiler_Switches,
+                  Binder_Switches   => Binder_Switches,
+                  Linker_Switches   => Linker_Switches,
+                  Cross_Prefix      => Cross_Prefix,
+                  Spec_Extension    => Spec_Extension,
+                  Body_Extension    => Body_Extension);
+
+               Save_Project (Projects (P));
+            end loop;
+         end;
       end if;
 
       Free (Obj_Dirs);
       File_Htables.Reset (Src_Files);
-      return Output_Dir & Root_Project_Name & Gpr_Extension;
    end Create_Gpr_Files;
 
 end GPR_Creation;

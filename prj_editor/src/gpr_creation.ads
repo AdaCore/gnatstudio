@@ -22,12 +22,13 @@
 --  files given input data.
 
 with GNAT.OS_Lib;
+with Projects.Registry;
 
 package GPR_Creation is
 
-   function Create_Gpr_Files
-     (Root_Project_Name : String;
-      Output_Dir        : String;
+   procedure Create_Gpr_Files
+     (Registry          : Projects.Registry.Project_Registry'Class;
+      Root_Project      : Projects.Project_Type;
       Source_Dirs       : GNAT.OS_Lib.String_List;
       Object_Dirs       : GNAT.OS_Lib.String_List;
       Spec_Extension    : String;
@@ -37,18 +38,19 @@ package GPR_Creation is
       Compiler_Switches : String;
       Binder_Switches   : String;
       Linker_Switches   : String;
-      Cross_Prefix      : String := "") return String;
+      Cross_Prefix      : String := "");
+   --  Complete the attributes of Root_Project, and possibly add dependencies
+   --  to other project files as needed.
+   --  Root_Project must have been created already, and other projects will
+   --  be created in the same directory.
+   --
    --  Attempt to create one or more .gpr project file to match the setup.
    --  If the application was not compiled, a single object directory is kept,
    --  and a single .gpr file is created. Otherwise, we try and generate a
    --  set of project files that match the current setup as much as possible.
    --
-   --  Root_Project_Name is the name of the root project to create.
    --  Paths in Source_Dirs and Obj_dirs must be absolute paths
    --  The first directory in Object_Dirs is the one that will be kept if a
    --  single search directory is needed.
-   --
-   --  The full path name for the root project is given. All projects are
-   --  created in the same directory (Output_Dir).
 
 end GPR_Creation;
