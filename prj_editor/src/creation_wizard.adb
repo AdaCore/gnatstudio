@@ -436,8 +436,7 @@ package body Creation_Wizard is
    begin
       if Arr'Length /= 0 then
          Pack := Get_Or_Create_Package (Project, Name);
-         Var := Create_Attribute
-           (Pack, "default_switches", Ada_String, List);
+         Var := Create_Attribute (Pack, "default_switches", "ada", List);
          for J in Arr'Range loop
             Append_To_List (Var, Arr (J).all);
          end loop;
