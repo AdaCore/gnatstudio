@@ -41,6 +41,7 @@ with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
 with Foreign_Naming_Editors;   use Foreign_Naming_Editors;
+with Case_Handling;            use Case_Handling;
 
 package body Cpp_Module is
 
@@ -101,8 +102,8 @@ package body Cpp_Module is
          Indent_Decl       => 0,
          Tab_Width         => Integer (Get_Pref (Kernel, Tab_Width)),
          Indent_Case_Extra => False,
-         Reserved_Casing   => Unchanged,
-         Ident_Casing      => Unchanged,
+         Reserved_Casing   => Case_Handling.Unchanged,
+         Ident_Casing      => Case_Handling.Unchanged,
          Format_Operators  => False,
          Use_Tabs          => Tabs,
          Align_On_Colons   => False,
