@@ -54,9 +54,14 @@ with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with File_Utils;                use File_Utils;
 with Traces;                    use Traces;
-with Unchecked_Deallocation;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
+with Ada.Unchecked_Deallocation;
+with System;
 
 package body Directory_Tree is
+
+   Drives_String : constant String := "Drives";
+   --  String used on systems that support the notion of drives (e.g Windows).
 
    Me : Debug_Handle := Create ("Directory_Tree");
 
@@ -70,13 +75,22 @@ package body Directory_Tree is
       Busy_Cursor : Gdk_Window;
    end record;
    type Idle_Data_Access is access Idle_Data;
-   procedure Free is new Unchecked_Deallocation (Idle_Data, Idle_Data_Access);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Idle_Data, Idle_Data_Access);
 
    package Dir_Idle is new Gtk.Main.Idle (Idle_Data_Access);
 
    package Widget_Menus is new GUI_Utils.User_Contextual_Menus
      (User_Data => Directory_Selector);
    --  Used to register contextual menus with a user data.
+
+   function Get_File_Names_Case_Sensitive return Integer;
+   pragma Import
+     (C, Get_File_Names_Case_Sensitive,
+      "__gnat_get_file_names_case_sensitive");
+
+   Case_Sensitive_File_Name : constant Boolean :=
+     Get_File_Names_Case_Sensitive = 1;
 
    function Add_Directory_Node
      (Tree               : access Dir_Tree_Record'Class;
@@ -268,7 +282,15 @@ package body Directory_Tree is
          return Directory (Tree, Row_Get_Parent (Node_Get_Row (N)), Absolute)
            & Node_Get_Text (Tree, N, 0);
       else
-         return Node_Get_Text (Tree, N, 0);
+         declare
+            S : constant String := Node_Get_Text (Tree, N, 0);
+         begin
+            if S = -Drives_String then
+               return "";
+            else
+               return Node_Get_Text (Tree, N, 0);
+            end if;
+         end;
       end if;
    end Directory;
 
@@ -381,6 +403,10 @@ package body Directory_Tree is
          return;
       end if;
 
+      if Node_Get_Text (Tree, Current, 0) = -Drives_String then
+         return;
+      end if;
+
       Freeze (Tree);
 
       --  Leave only one child, so as to keep the "[+]" visible
@@ -475,40 +501,74 @@ package body Directory_Tree is
    ------------------------
 
    function Add_Directory_Node
-     (Tree       : access Dir_Tree_Record'Class;
-      Dir        : String;
-      Parent     : Gtk_Ctree_Node;
+     (Tree               : access Dir_Tree_Record'Class;
+      Dir                : String;
+      Parent             : Gtk_Ctree_Node;
       Num_Subdirectories : Integer) return Gtk_Ctree_Node
    is
-      N, N2   : Gtk_Ctree_Node;
-      Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
+      N, N2     : Gtk_Ctree_Node;
+      Buffer    : aliased String (1 .. 1024);
+      Last, Len : Integer;
 
-   begin
-      --  Always create a node for directories, in case the user wants to add
-      --  some extra information (files, ...) later on
+      function Insert_Directory_Node
+        (Parent, Sibling : Gtk_Ctree_Node; Dir : String) return Gtk_Ctree_Node;
+      --  Insert a directory node in Tree given a parent and a sibling node.
+      --  Dir is the name of the directory to insert.
 
-      Strings (1) := New_String (Dir);
-      N := Insert_Node
-        (Tree,
-         Parent        => Parent,
-         Sibling       => null,
-         Text          => Strings,
-         Spacing       => 5,
-         Pixmap_Closed => Tree.Folder_Pix,
-         Mask_Closed   => Tree.Folder_Mask,
-         Pixmap_Opened => Tree.Ofolder_Pix,
-         Mask_Opened   => Tree.Ofolder_Mask,
-         Is_Leaf       => False,
-         Expanded      => False);
-      Free (Strings);
-      Boolean_Data.Node_Set_Row_Data (Tree, N, False);
+      procedure Add_Dummy_Node (N : Gtk_Ctree_Node);
+      --  Add a dummy node in Tree for a given node N.
 
-      --  Add a dummy node so that it is possible to expand dynamically a
-      --  directory
+      procedure Get_Logical_Drive_Strings
+        (Buffer : out String;
+         Len    : out Natural);
+      --  Store in Buffer (Buffer'First .. Buffer'First + Len) a ASCII.NUL
+      --  separated string containing the names of the --  drives, e.g
+      --  "a:\" & NUL & "c:\", or a null string if not relevant on the target.
 
-      if Num_Subdirectories > 0 then
+      procedure Get_Logical_Drive_Strings
+        (Buffer : out String;
+         Len    : out Natural)
+      is
+         function Internal
+           (Buffer : System.Address;
+            Length : Integer) return Integer;
+         pragma Import (C, Internal, "__gnat_get_logical_drive_strings");
+
+      begin
+         Len := Internal (Buffer'Address, Buffer'Length);
+      end Get_Logical_Drive_Strings;
+
+      function Insert_Directory_Node
+        (Parent, Sibling : Gtk_Ctree_Node; Dir : String)
+         return Gtk_Ctree_Node
+      is
+         Strings : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
+         Node    : Gtk_Ctree_Node;
+      begin
+         Strings (1) := New_String (Dir);
+         Node := Insert_Node
+           (Tree,
+            Parent        => Parent,
+            Sibling       => Sibling,
+            Text          => Strings,
+            Spacing       => 5,
+            Pixmap_Closed => Tree.Folder_Pix,
+            Mask_Closed   => Tree.Folder_Mask,
+            Pixmap_Opened => Tree.Ofolder_Pix,
+            Mask_Opened   => Tree.Ofolder_Mask,
+            Is_Leaf       => False,
+            Expanded      => False);
+         Free (Strings);
+         Boolean_Data.Node_Set_Row_Data (Tree, Node, False);
+         return Node;
+      end Insert_Directory_Node;
+
+      procedure Add_Dummy_Node (N : Gtk_Ctree_Node) is
+         Strings    : Gtkada.Types.Chars_Ptr_Array (1 .. 1);
+         Dummy_Node : Gtk_Ctree_Node;
+      begin
          Strings (1) := New_String (".");
-         N2 := Insert_Node
+         Dummy_Node := Insert_Node
            (Tree,
             Parent        => N,
             Sibling       => null,
@@ -521,6 +581,40 @@ package body Directory_Tree is
             Is_Leaf       => True,
             Expanded      => False);
          Free (Strings);
+      end Add_Dummy_Node;
+
+   begin
+      --  Always create a node for directories, in case the user wants to add
+      --  some extra information (files, ...) later on
+
+      if Dir = (1 => Directory_Separator) then
+         Get_Logical_Drive_Strings (Buffer, Len);
+
+         if Len /= 0 then
+            N := Insert_Directory_Node (Parent, null, -Drives_String);
+            Boolean_Data.Node_Set_Row_Data (Tree, N, True);
+            Last := 1;
+
+            for J in 1 .. Len loop
+               if Buffer (J) = ASCII.NUL then
+                  N2 := Insert_Directory_Node
+                          (N, null, Buffer (Last .. J - 1));
+                  Add_Dummy_Node (N2);
+                  Last := J + 1;
+               end if;
+            end loop;
+
+            return N;
+         end if;
+      end if;
+
+      N := Insert_Directory_Node (Parent, null, Dir);
+
+      --  Add a dummy node so that it is possible to expand dynamically a
+      --  directory
+
+      if Num_Subdirectories > 0 then
+         Add_Dummy_Node (N);
       end if;
 
       return N;
@@ -555,14 +649,14 @@ package body Directory_Tree is
       D        : constant String := Name_As_Directory (Dir);
 
    begin
-      if Busy_Cursor_On /= null then
-         Set_Busy_Cursor (Busy_Cursor_On, True);
-      end if;
-
       if Dir'Length < Root_Dir'Length
         or else D (D'First .. D'First + Root_Dir'Length - 1) /= Root_Dir
       then
          return;
+      end if;
+
+      if Busy_Cursor_On /= null then
+         Set_Busy_Cursor (Busy_Cursor_On, True);
       end if;
 
       Tree.Idle := Dir_Idle.Add
@@ -604,8 +698,19 @@ package body Directory_Tree is
       Tmp := Row_Get_Children (Node_Get_Row (Data.Node));
 
       while Tmp /= null loop
-         exit when Node_Get_Text (Data.Tree, Tmp, 0) =
-           Data.Dir (Data.Index + 1 .. Dir_End);
+         if Case_Sensitive_File_Name then
+            if Node_Get_Text (Data.Tree, Tmp, 0) =
+              Data.Dir (Data.Index + 1 .. Dir_End)
+            then
+               exit;
+            end if;
+
+         elsif To_Lower (Node_Get_Text (Data.Tree, Tmp, 0)) =
+           To_Lower (Data.Dir (Data.Index + 1 .. Dir_End))
+         then
+            exit;
+         end if;
+
          Tmp := Row_Get_Sibling (Node_Get_Row (Tmp));
       end loop;
 
@@ -1067,7 +1172,7 @@ package body Directory_Tree is
    procedure Gtk_New
      (Selector             : out Directory_Selector;
       Initial_Directory    : String;
-      Root_Directory       : String := "/";
+      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection) is
@@ -1085,7 +1190,7 @@ package body Directory_Tree is
    procedure Initialize
      (Selector             : access Directory_Selector_Record'Class;
       Initial_Directory    : String;
-      Root_Directory       : String := "/";
+      Root_Directory       : String := (1 => GNAT.OS_Lib.Directory_Separator);
       Multiple_Directories : Boolean := False;
       Busy_Cursor_On       : Gdk.Window.Gdk_Window := null;
       Initial_Selection    : GNAT.OS_Lib.Argument_List := No_Selection)
