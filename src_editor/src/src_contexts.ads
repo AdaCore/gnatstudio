@@ -30,6 +30,7 @@ with Gtk.Combo;
 with Gtk.Frame;
 with Find_Utils;   use Find_Utils;
 with Files_Extra_Info_Pkg;
+with Language_Handlers;
 
 package Src_Contexts is
 
@@ -54,6 +55,18 @@ package Src_Contexts is
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Create a new widget
 
+   type Search_Scope is
+     (Whole,
+      Comments_Only,
+      Comments_And_Strings,
+      Strings_Only,
+      All_But_Comments);
+   --  Scope wanted for the search.
+   --  Whole scope means never use any context (i.e. files are whole scanned).
+   --  This scope mostly applies to source files.
+   --  Warning: do not change the contents or order of this type without
+   --  synchronizing with vsearch.glade and Scan_Buffer.
+
    ------------------
    -- File context --
    ------------------
@@ -73,11 +86,44 @@ package Src_Contexts is
    --  Factory for "Current File". A Files_Project_Context is returned if
    --  searching for All_Occurrences
 
+   ----------------------------
+   -- Abstract files context --
+   ----------------------------
+   --  This context groups the common behavior for all the searches that are
+   --  done on a set of files. It is mostly exposed so that it can be reused by
+   --  the automatic testsuite
+
+   type Abstract_Files_Context is abstract new
+     File_Search_Context with private;
+
+   function Search
+     (Context         : access Abstract_Files_Context;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel          : Glide_Kernel.Kernel_Handle;
+      Callback        : Scan_Callback;
+      All_Occurrences : Boolean) return Boolean;
+   --  Search either the next match or all the occurrences, depending on the
+   --  parameter All_Occurrences. For each one of them, Callback is called.
+   --  This function returns True if there are potentially more matches in the
+   --  set of files, and False if either there are no more matches or Callback
+   --  itself has returned False.
+   --  If Kernel is not null, then this subprogram will first check whether
+   --  there exists an open editor in GPS for the current file.
+
+   function Current_File
+     (Context : access Abstract_Files_Context) return String is abstract;
+   --  Return the current file.
+   --  Return the empty string if there are no more files to examine
+
+   procedure Move_To_Next_File
+     (Context : access Abstract_Files_Context) is abstract;
+   --  Move to the next file in the list.
+
    -------------------
    -- Files context --
    -------------------
 
-   type Files_Context is new File_Search_Context with private;
+   type Files_Context is new Abstract_Files_Context with private;
    type Files_Context_Access is access all Files_Context'Class;
    --  A special context for searching in a specific list of files
 
@@ -95,11 +141,18 @@ package Src_Contexts is
       return Search_Context_Access;
    --  Factory for "Files..."
 
+   function Files_Factory
+     (All_Occurrences : Boolean;
+      Scope           : Search_Scope) return Files_Context_Access;
+   --  Same as above, but independent from a GUI. This is mostly used for the
+   --  testsuite.
+   --  No list of files is set, you need to call Set_File_List appropriately
+
    --------------------------------
    -- Files From Project context --
    --------------------------------
 
-   type Files_Project_Context is new File_Search_Context with private;
+   type Files_Project_Context is new Abstract_Files_Context with private;
    type Files_Project_Context_Access is access all Files_Project_Context'Class;
 
    procedure Set_File_List
@@ -129,18 +182,6 @@ private
       Replace_String  : String;
       Search_Backward : Boolean) return Boolean;
    --  Replace function for "Current File"
-
-   type Search_Scope is
-     (Whole,
-      Comments_Only,
-      Comments_And_Strings,
-      Strings_Only,
-      All_But_Comments);
-   --  Scope wanted for the search.
-   --  Whole scope means never use any context (i.e. files are whole scanned).
-   --  This scope mostly applies to source files.
-   --  Warning: do not change the contents or order of this type without
-   --  synchronizing with vsearch.glade and Scan_Buffer.
 
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
@@ -204,15 +245,6 @@ private
       Replace_String  : String;
       Search_Backward : Boolean) return Boolean;
    --  Replace function for "Files From Project"
-
-   function Current_File
-     (Context : access Abstract_Files_Context) return String is abstract;
-   --  Return the current file.
-   --  Return the empty string if there are no more files to examine
-
-   procedure Move_To_Next_File
-     (Context : access Abstract_Files_Context) is abstract;
-   --  Move to the next file in the list.
 
    type Files_Context is new Abstract_Files_Context with record
       Files_Pattern : GNAT.Regexp.Regexp;

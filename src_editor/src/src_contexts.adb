@@ -73,33 +73,45 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
       Ref_Line      : Natural         := 1;
-      Ref_Column    : Natural         := 1);
+      Ref_Column    : Natural         := 1;
+      Was_Partial   : out Boolean);
    --  Search Context in buffer, searching only in the appropriate scope.
    --  Buffer is assumed to contain complete contexts (e.g the contents of
    --  a whole file).
    --  (Ref_Line, Ref_Column) is the position in the actual file that Buffer
    --  starts at
    --  Lexical_State is the scope at the first character in Buffer.
+   --  On exit, Was_Partial is set to True if the search was interrupted
+   --  because the callback returned False at some point
 
    procedure Scan_File
      (Context       : access Search_Context'Class;
-      Kernel        : access Kernel_Handle_Record'Class;
+      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel        : Kernel_Handle := null;
       Name          : String;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
-      Start_Column  : Natural := 1);
+      Start_Column  : Natural := 1;
+      Force_Read    : Boolean := False;
+      Was_Partial   : out Boolean);
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
    --  If there is already an opened editor for this file, its contents will be
    --  used, otherwise the file is read from the disk.
    --  The search will start at position (Start_Line, Start_Column)
    --  Lexical_State is the scope at current_line, current_column.
+   --  If Force_Read is True, then this procedure does not check whether there
+   --  already exists an open editor. This should be set to False when running
+   --  in text-only mode. Kernel can be null only if Force_Read is True.
+   --  On exit, Was_Partial is set to True if the callback returned False at
+   --  some point.
 
    function Scan_And_Store
      (Context  : access Search_Context'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
+      Handler  : access Language_Handler_Record'Class;
+      Kernel   : Kernel_Handle;
       Str      : String;
       Is_File  : Boolean;
       Scope    : Search_Scope;
@@ -111,6 +123,8 @@ package body Src_Contexts is
    --  It returns the list of matches that were found in the buffer, or null if
    --  no match was found. It is the responsability of the caller to free the
    --  returned array.
+   --  If Kernel is null, not check is done whether an editor is currently open
+   --  for the file.
 
    procedure Scan_Next
      (Context        : access Search_Context'Class;
@@ -134,17 +148,21 @@ package body Src_Contexts is
 
    procedure First_Match
      (Context       : access Search_Context'Class;
-      Kernel        : access Kernel_Handle_Record'Class;
+      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel        : Kernel_Handle;
       Name          : String;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
       Start_Column  : Natural := 1;
-      Result        : out Match_Result_Access);
+      Result        : out Match_Result_Access;
+      Force_Read    : Boolean := False);
    --  Lightweight interface that returns the first occurence of Context in the
    --  file Name.
    --  The returned value must be freed by the caller
    --  Current_Scope is the scope at (Start_Line, Start_Column)
+   --  See description of Force_Read in Scan_File. Kernel can be null only if
+   --  Force_Read is True.
 
    procedure Highlight_Result
      (Kernel      : access Kernel_Handle_Record'Class;
@@ -195,7 +213,8 @@ package body Src_Contexts is
       Lexical_State : in out Recognized_Lexical_States;
       Lang          : Language_Access := null;
       Ref_Line      : Natural         := 1;
-      Ref_Column    : Natural         := 1)
+      Ref_Column    : Natural         := 1;
+      Was_Partial   : out Boolean)
    is
       Scanning_Allowed : constant array (Recognized_Lexical_States) of Boolean
         := (Statements     => Scope = Whole or else Scope = All_But_Comments,
@@ -350,9 +369,10 @@ package body Src_Contexts is
       Last_Index    : Positive := Buffer'First;
       Section_End   : Integer;
       Old_State     : Recognized_Lexical_States;
-      Was_Partial   : Boolean;
 
    begin  --  Scan_Buffer
+      Was_Partial := False;
+
       if Buffer'Length = 0 then
          return;
       end if;
@@ -417,13 +437,16 @@ package body Src_Contexts is
 
    procedure Scan_File
      (Context       : access Search_Context'Class;
-      Kernel        : access Kernel_Handle_Record'Class;
+      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel        : Glide_Kernel.Kernel_Handle := null;
       Name          : String;
       Callback      : Scan_Callback;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
-      Start_Column  : Natural := 1)
+      Start_Column  : Natural := 1;
+      Force_Read    : Boolean := False;
+      Was_Partial   : out Boolean)
    is
       Lang          : Language_Access;
       Buffer        : GNAT.OS_Lib.String_Access;
@@ -436,13 +459,16 @@ package body Src_Contexts is
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
-      Lang := Get_Language_From_File (Get_Language_Handler (Kernel), Name);
+      Was_Partial := False;
+      Lang := Get_Language_From_File (Handler, Name);
 
       --  If there is already an open editor, that might contain local
       --  modification, use its contents, otherwise read the buffer from the
       --  file itself.
 
-      Child := Get_File_Editor (Kernel, Name);
+      if not Force_Read then
+         Child := Get_File_Editor (Kernel, Name);
+      end if;
 
       if Child = null then
          Buffer := Read_File (Name);
@@ -480,7 +506,7 @@ package body Src_Contexts is
       if Start <= Buffer'Last then
          Scan_Buffer
            (Buffer (Start .. Buffer'Last), Context, Callback, Scope,
-            Lexical_State, Lang, Start_Line, Start_Column);
+            Lexical_State, Lang, Start_Line, Start_Column, Was_Partial);
       end if;
 
       Free (Buffer);
@@ -584,6 +610,7 @@ package body Src_Contexts is
          return True;
       end Backward_Callback;
 
+      Was_Partial : Boolean;
    begin
       Result := null;
 
@@ -591,12 +618,13 @@ package body Src_Contexts is
          Scan_Buffer
            (Get_Slice (Editor, 1, 1), Context,
             Backward_Callback'Unrestricted_Access, Scope,
-            Lexical_State, Lang);
+            Lexical_State, Lang, Was_Partial => Was_Partial);
       else
          Scan_Buffer
            (Get_Slice (Editor, Current_Line, Current_Column), Context,
             Stop_At_First_Callback'Unrestricted_Access, Scope,
-            Lexical_State, Lang, Current_Line, Current_Column);
+            Lexical_State, Lang, Current_Line, Current_Column,
+            Was_Partial);
 
          --  Start from the beginning if necessary
          if Result = null then
@@ -607,7 +635,7 @@ package body Src_Contexts is
             Scan_Buffer
               (Get_Slice (Editor, 1, 1), Context,
                Stop_At_First_Callback'Unrestricted_Access, Scope,
-               Lexical_State, Lang);
+               Lexical_State, Lang, Was_Partial => Was_Partial);
          end if;
       end if;
    end Scan_Next;
@@ -618,7 +646,8 @@ package body Src_Contexts is
 
    function Scan_And_Store
      (Context  : access Search_Context'Class;
-      Kernel   : access Kernel_Handle_Record'Class;
+      Handler  : access Language_Handler_Record'Class;
+      Kernel   : Kernel_Handle;
       Str      : String;
       Is_File  : Boolean;
       Scope    : Search_Scope;
@@ -649,14 +678,19 @@ package body Src_Contexts is
       end Callback;
 
       State : Recognized_Lexical_States := Statements;
+      Was_Partial : Boolean;
    begin
       if Is_File then
-         Scan_File (Context, Kernel, Str, Callback'Unrestricted_Access, Scope,
-                    Lexical_State => State);
+         Scan_File (Context,
+                    Handler, Kernel,
+                    Str, Callback'Unrestricted_Access, Scope,
+                    Lexical_State => State, Force_Read => Kernel = null,
+                    Was_Partial => Was_Partial);
       else
          Scan_Buffer (Str, Context, Callback'Unrestricted_Access, Scope,
                       Lexical_State => State,
-                      Lang          => Lang);
+                      Lang          => Lang,
+                      Was_Partial   => Was_Partial);
       end if;
 
       return Result;
@@ -668,13 +702,15 @@ package body Src_Contexts is
 
    procedure First_Match
      (Context       : access Search_Context'Class;
-      Kernel        : access Kernel_Handle_Record'Class;
+      Handler       : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel        : Kernel_Handle;
       Name          : String;
       Scope         : Search_Scope;
       Lexical_State : in out Recognized_Lexical_States;
       Start_Line    : Natural := 1;
       Start_Column  : Natural := 1;
-      Result        : out Match_Result_Access)
+      Result        : out Match_Result_Access;
+      Force_Read    : Boolean := False)
    is
       function Callback (Match : Match_Result) return Boolean;
       --  Save Match in the result array.
@@ -685,9 +721,12 @@ package body Src_Contexts is
          return False;
       end Callback;
 
+      Was_Partial : Boolean;
    begin
-      Scan_File (Context, Kernel, Name, Callback'Unrestricted_Access, Scope,
-                 Lexical_State, Start_Line, Start_Column);
+      Scan_File (Context, Handler, Kernel,
+                 Name, Callback'Unrestricted_Access, Scope,
+                 Lexical_State, Start_Line, Start_Column, Force_Read,
+                 Was_Partial);
    end First_Match;
 
    ----------
@@ -826,6 +865,22 @@ package body Src_Contexts is
    -------------------
 
    function Files_Factory
+     (All_Occurrences : Boolean;
+      Scope           : Search_Scope) return Files_Context_Access
+   is
+      Context : Files_Context_Access := new Files_Context;
+   begin
+      Context.Scope := Scope;
+      Context.All_Occurrences := All_Occurrences;
+      Context.Begin_Line := 0;
+      return Context;
+   end Files_Factory;
+
+   -------------------
+   -- Files_Factory --
+   -------------------
+
+   function Files_Factory
      (Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       All_Occurrences    : Boolean;
       Extra_Information  : Gtk.Widget.Gtk_Widget)
@@ -840,12 +895,9 @@ package body Src_Contexts is
 
    begin
       if Get_Text (Extra.Files_Entry) /= "" then
-         Context := new Files_Context;
-
-         Context.Scope := Search_Scope'Val (Get_Index_In_List (Extra.Combo));
-         Context.All_Occurrences := All_Occurrences;
-         Context.Begin_Line := 0;
-
+         Context := Files_Factory
+           (All_Occurrences,
+            Search_Scope'Val (Get_Index_In_List (Extra.Combo)));
          Re := Compile
            (Get_Text (Extra.Files_Entry),
             Glob => True,
@@ -1018,20 +1070,19 @@ package body Src_Contexts is
 
    function Search
      (Context         : access Abstract_Files_Context;
-      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Search_Backward : Boolean) return Boolean
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
+      Kernel          : Kernel_Handle;
+      Callback        : Scan_Callback;
+      All_Occurrences : Boolean) return Boolean
    is
-      pragma Unreferenced (Search_Backward);
-      Interactive : constant Boolean := not Context.All_Occurrences;
       Match       : Match_Result_Access;
-      Matches     : Match_Result_Array_Access;
-
       C           : constant Abstract_Files_Context_Access :=
         Abstract_Files_Context_Access (Context);
       --  For dispatching purposes
+      Tmp : Boolean;
 
    begin
-      if Interactive then
+      if not All_Occurrences then
          --  Are there any more match in the current file ?
          --  Stop looking in this file if the editor was closed (we know it was
          --  opened when the first match was seen)
@@ -1039,27 +1090,24 @@ package body Src_Contexts is
          if Context.Begin_Line /= 0 then
             First_Match
               (Context       => Context,
+               Handler       => Handler,
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
                Start_Line    => Context.Begin_Line,
                Start_Column  => Context.Begin_Column + 1,
-               Result        => Match);
+               Result        => Match,
+               Force_Read    => Kernel = null);
 
             if Match /= null then
                Context.Begin_Line   := Match.Line;
                Context.Begin_Column := Match.Column;
                Context.End_Line     := Match.Line;
                Context.End_Column   := Match.End_Column;
-
-               Highlight_Result
-                 (Kernel      => Kernel,
-                  File_Name   => Current_File (C),
-                  Match       => Match.all,
-                  Interactive => True);
+               Tmp := Callback (Match.all);
                Unchecked_Free (Match);
-               return True;
+               return Tmp;
             end if;
          end if;
 
@@ -1072,25 +1120,22 @@ package body Src_Contexts is
 
             First_Match
               (Context       => Context,
+               Handler       => Handler,
                Kernel        => Kernel,
                Name          => Current_File (C),
                Scope         => Context.Scope,
                Lexical_State => Context.Current_Lexical,
-               Result        => Match);
+               Result        => Match,
+               Force_Read    => Kernel = null);
 
             if Match /= null then
                Context.Begin_Line   := Match.Line;
                Context.Begin_Column := Match.Column;
                Context.End_Line     := Match.Line;
                Context.End_Column   := Match.End_Column;
-
-               Highlight_Result
-                 (Kernel      => Kernel,
-                  File_Name   => Current_File (C),
-                  Match       => Match.all,
-                  Interactive => True);
+               Tmp := Callback (Match.all);
                Unchecked_Free (Match);
-               return True;
+               return Tmp;
             end if;
          end loop;
 
@@ -1102,28 +1147,75 @@ package body Src_Contexts is
             return False;
 
          else
-            Matches := Scan_And_Store
-              (Context => Context,
-               Kernel  => Kernel,
-               Str     => Current_File (C),
-               Is_File => True,
-               Scope   => Context.Scope,
-               Lang    => Get_Language_From_File
-                 (Get_Language_Handler (Kernel), Current_File (C)));
-
-            if Matches /= null then
-               for M in Matches'Range loop
-                  Highlight_Result
-                    (Kernel      => Kernel,
-                     File_Name   => Current_File (C),
-                     Match       => Matches (M).all,
-                     Interactive => False);
-               end loop;
-               Free (Matches);
-            end if;
-
-            return True;
+            declare
+               State : Recognized_Lexical_States := Statements;
+               Was_Partial : Boolean;
+            begin
+               Scan_File
+                 (Context,
+                  Handler, Kernel,
+                  Current_File (C), Callback, Context.Scope,
+                  Lexical_State => State, Force_Read => Kernel = null,
+                  Was_Partial => Was_Partial);
+               return not Was_Partial;
+            end;
          end if;
+      end if;
+   end Search;
+
+   ------------
+   -- Search --
+   ------------
+
+   function Search
+     (Context         : access Abstract_Files_Context;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Search_Backward : Boolean) return Boolean
+   is
+      pragma Unreferenced (Search_Backward);
+      Interactive : constant Boolean := not Context.All_Occurrences;
+      C : constant Abstract_Files_Context_Access :=
+        Abstract_Files_Context_Access (Context);
+      --  For dispatching purposes
+
+      function Interactive_Callback (Match : Match_Result) return Boolean;
+      function Non_Interactive_Callback (Match : Match_Result) return Boolean;
+      --  Callbacks for the general search function
+
+      function Interactive_Callback (Match : Match_Result) return Boolean is
+      begin
+         Highlight_Result
+           (Kernel      => Kernel,
+            File_Name   => Current_File (C),
+            Match       => Match,
+            Interactive => True);
+         return True;
+      end Interactive_Callback;
+
+      function Non_Interactive_Callback (Match : Match_Result)
+         return Boolean is
+      begin
+         Highlight_Result
+           (Kernel      => Kernel,
+            File_Name   => Current_File (C),
+            Match       => Match,
+            Interactive => False);
+         return True;
+      end Non_Interactive_Callback;
+
+   begin
+      if Interactive then
+         return Search (Context,
+                        Get_Language_Handler (Kernel),
+                        Kernel_Handle (Kernel),
+                        Interactive_Callback'Unrestricted_Access,
+                        All_Occurrences => False);
+      else
+         return Search (Context,
+                        Get_Language_Handler (Kernel),
+                        Kernel_Handle (Kernel),
+                        Non_Interactive_Callback'Unrestricted_Access,
+                        All_Occurrences => True);
       end if;
    end Search;
 
@@ -1199,7 +1291,8 @@ package body Src_Contexts is
 
          Matches := Scan_And_Store
            (Context => Context,
-            Kernel  => Kernel,
+            Handler => Get_Language_Handler (Kernel),
+            Kernel  => Kernel_Handle (Kernel),
             Str     => Current_File (C),
             Is_File => True,
             Scope   => Context.Scope,
