@@ -77,7 +77,7 @@ package body Project_Explorers is
 
    subtype Tree_Chars_Ptr_Array is Chars_Ptr_Array (1 .. Number_Of_Columns);
 
-   type User_Data (Node_Type : Node_Types) is record
+   type User_Data (Node_Type : Node_Types; Name_Length : Natural) is record
       Up_To_Date : Boolean := False;
       --  Indicates whether the children of this node (imported projects,
       --  directories,...) have already been parsed and added to the tree. If
@@ -106,6 +106,7 @@ package body Project_Explorers is
             Category : Language_Category;
 
          when Entity_Node =>
+            Entity_Name : String (1 .. Name_Length);
             Sloc_Start, Sloc_Entity, Sloc_End : Source_Location;
 
       end case;
@@ -535,7 +536,7 @@ package body Project_Explorers is
          if Data.Node_Type = Entity_Node then
             Set_Entity_Information
               (Context     => Entity_Selection_Context_Access (Context),
-               Entity_Name => Node_Get_Text (T.Tree, Node, 0),
+               Entity_Name => Data.Entity_Name,
                Category    => Node_Get_Row_Data (T.Tree, Parent).Category,
                Line        => Data.Sloc_Entity.Line,
                Column      => Data.Sloc_Entity.Column);
@@ -621,9 +622,10 @@ package body Project_Explorers is
          Expanded      => True);
       Node_Set_Row_Data
         (Explorer.Tree, N,
-         (Node_Type  => Obj_Directory_Node,
-          Directory  => No_String,
-          Up_To_Date => False));
+         (Node_Type   => Obj_Directory_Node,
+          Name_Length => 0,
+          Directory   => No_String,
+          Up_To_Date  => False));
    end Add_Dummy_Node;
 
    ----------------------
@@ -664,16 +666,18 @@ package body Project_Explorers is
       if Node_Type = Project_Node then
          Node_Set_Row_Data
            (Explorer.Tree, N,
-            (Node_Type  => Project_Node,
-             Name       => Projects.Table (Project).Name,
-             Up_To_Date => False));
+            (Node_Type   => Project_Node,
+             Name_Length => 0,
+             Name        => Projects.Table (Project).Name,
+             Up_To_Date  => False));
 
       elsif Node_Type = Modified_Project_Node then
          Node_Set_Row_Data
            (Explorer.Tree, N,
-            (Node_Type  => Modified_Project_Node,
-             Name       => Projects.Table (Project).Name,
-             Up_To_Date => False));
+            (Node_Type   => Modified_Project_Node,
+             Name_Length => 0,
+             Name        => Projects.Table (Project).Name,
+             Up_To_Date  => False));
       end if;
 
       if not Is_Leaf then
@@ -742,15 +746,17 @@ package body Project_Explorers is
       if Object_Directory then
          Node_Set_Row_Data
            (Explorer.Tree, N,
-            (Obj_Directory_Node,
-             Directory => Directory_String,
-             Up_To_Date => False));
+            (Node_Type   => Obj_Directory_Node,
+             Name_Length => 0,
+             Directory   => Directory_String,
+             Up_To_Date  => False));
       else
          Node_Set_Row_Data
            (Explorer.Tree, N,
-            (Directory_Node,
-             Directory => Directory_String,
-             Up_To_Date => False));
+            (Node_Type   => Directory_Node,
+             Name_Length => 0,
+             Directory   => Directory_String,
+             Up_To_Date  => False));
       end if;
 
       if not Is_Leaf then
@@ -787,7 +793,9 @@ package body Project_Explorers is
          Expanded      => False);
 
       Node_Set_Row_Data
-        (Explorer.Tree, N, (File_Node, File => File, Up_To_Date => False));
+        (Explorer.Tree, N, (Node_Type   => File_Node,
+                            Name_Length => 0,
+                            File        => File, Up_To_Date => False));
 
       if not Is_Leaf then
          Add_Dummy_Node (Explorer, N);
@@ -822,7 +830,10 @@ package body Project_Explorers is
 
       Node_Set_Row_Data
         (Explorer.Tree, N,
-         (Category_Node, Category => Category, Up_To_Date => True));
+         (Node_Type   => Category_Node,
+          Name_Length => 0,
+          Category    => Category,
+          Up_To_Date  => True));
       return N;
    end Add_Category_Node;
 
@@ -870,7 +881,9 @@ package body Project_Explorers is
 
       Node_Set_Row_Data
         (Explorer.Tree, N,
-         (Entity_Node,
+         (Node_Type   => Entity_Node,
+          Name_Length => Construct.Name'Length,
+          Entity_Name => Construct.Name.all,
           Sloc_Start  => Construct.Sloc_Start,
           Sloc_Entity => Construct.Sloc_Entity,
           Sloc_End    => Construct.Sloc_End,
