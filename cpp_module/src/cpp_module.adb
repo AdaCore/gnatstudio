@@ -102,6 +102,7 @@ package body Cpp_Module is
                   Tab_Width           =>
                     Integer (Get_Pref (Kernel, Tab_Width)),
                   Indent_Case_Extra   => Automatic,
+                  Casing_Policy       => Case_Handling.Disabled,
                   Reserved_Casing     => Case_Handling.Unchanged,
                   Ident_Casing        => Case_Handling.Unchanged,
                   Format_Operators    => False,
