@@ -84,6 +84,20 @@ package body Glide_Kernel.Editor is
    --  ??? file. Over simplistic algorithm applied: replaces the extension by
    --  ??? ".ali". That'll do it until the demo.
 
+   type LI_File_Update_Status is
+     (Failure,
+      Success);
+   --  The status returned by the Update_LI_File_If_Necessary routine.
+
+   procedure Update_LI_File_If_Necessary
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Info     : in out LI_File_Ptr;
+      Source_Filename : String;
+      Status          : out LI_File_Update_Status);
+   --  Bring the given Source_Info to an up to date. If Source_Info is null,
+   --  then Source_Filename is used to locate the associated LI file and
+   --  parse it.
+
    type Location_Idle_Data is record
       Edit : Source_Editor_Box;
       Line, Column : Natural;
@@ -152,6 +166,43 @@ package body Glide_Kernel.Editor is
          end if;
       end;
    end Tmp_Get_ALI_Filename;
+
+   ---------------------------------
+   -- Update_LI_File_If_Necessary --
+   ---------------------------------
+
+   procedure Update_LI_File_If_Necessary
+     (Kernel          : access Kernel_Handle_Record'Class;
+      Source_Info     : in out LI_File_Ptr;
+      Source_Filename : String;
+      Status          : out LI_File_Update_Status)
+   is
+   begin
+      Status := Success;
+
+      if Source_Info = No_LI_File or else Is_Incomplete (Source_Info) then
+         --  ??? At the moment, this procedure does not handle out of date
+         --  ??? LI information. This should be corrected.
+         declare
+            ALI_Filename : constant String :=
+              Tmp_Get_ALI_Filename (Kernel, Source_Filename);
+            Success : Boolean;
+         begin
+            Parse_ALI_File
+              (ALI_Filename, Get_Project_View (Kernel), Kernel.Source_Path.all,
+               Kernel.Source_Info_List, Source_Info, Success);
+            --  ??? Define functions to access the source path and use it
+            --  ??? to access this function. The idea is that they can hide
+            --  ??? some caching mechnism.
+            if not Success then
+               Console.Insert
+                 (Kernel, "Could not find associated ALI file.",
+                  Highlight_Sloc => False);
+               Status := Failure;
+            end if;
+         end;
+      end if;
+   end Update_LI_File_If_Necessary;
 
    -------------
    -- Gtk_New --
@@ -486,17 +537,18 @@ package body Glide_Kernel.Editor is
    procedure Goto_Declaration_Or_Body
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Top          : constant Glide_Window :=
+      Top           : constant Glide_Window :=
         Glide_Window (Kernel.Main_Window);
-      Source       : Source_Editor_Box := Get_Current_Editor (Top);
-      Source_Info  : LI_File_Ptr;
-      Filename     : String_Access;
-      Start_Line   : Positive;
-      Start_Column : Positive;
-      End_Line     : Positive;
-      End_Column   : Positive;
-      Status       : Src_Info.Queries.Query_Status;
-      Is_Success   : Boolean;
+      Source        : Source_Editor_Box := Get_Current_Editor (Top);
+      Source_Info   : LI_File_Ptr;
+      Filename      : String_Access;
+      Start_Line    : Positive;
+      Start_Column  : Positive;
+      End_Line      : Positive;
+      End_Column    : Positive;
+      Status        : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Is_Success    : Boolean;
+      Update_Status : LI_File_Update_Status;
 
    begin
       if Get_Filename (Source) = "" then
@@ -509,24 +561,8 @@ package body Glide_Kernel.Editor is
       Source_Info :=
         Locate_From_Source
           (Get_Source_Info_List (Kernel), Get_Filename (Source));
-
-      if Source_Info = No_LI_File or else Is_Incomplete (Source_Info) then
-         declare
-            ALI_Filename : constant String :=
-              Tmp_Get_ALI_Filename (Kernel, Get_Filename (Source));
-            Success : Boolean;
-         begin
-            Parse_ALI_File
-              (ALI_Filename, Get_Project_View (Kernel), Kernel.Source_Path.all,
-               Kernel.Source_Info_List, Source_Info, Success);
-            if not Success then
-               Console.Insert
-                 (Kernel, "Could not find associated ALI file.",
-                  Highlight_Sloc => False);
-               return;
-            end if;
-         end;
-      end if;
+      Update_LI_File_If_Necessary
+        (Kernel, Source_Info, Get_Filename (Source), Update_Status);
 
       Find_Declaration_Or_Body
         (Editor => Source, Lib_Info => Source_Info, Filename => Filename,
@@ -582,5 +618,56 @@ package body Glide_Kernel.Editor is
       Highlight_Region
         (Source, Start_Line, Start_Column, End_Line, End_Column);
    end Goto_Declaration_Or_Body;
+
+   -----------------------
+   -- Find_Dependencies --
+   -----------------------
+
+   procedure Find_Dependencies
+     (Kernel       : access Kernel_Handle_Record'Class;
+      Source_Name  : String;
+      Dependencies : out Src_Info.Queries.Dependency_List;
+      Status       : out Src_Info.Queries.Dependencies_Query_Status)
+   is
+      Source_Info   : LI_File_Ptr;
+      Update_Status : LI_File_Update_Status;
+
+      procedure Handle_Internal_Error (Msg : String);
+      --  Set the return values to appropriate values when an internal error
+      --  is detected.
+
+      procedure Handle_Internal_Error (Msg : String) is
+      begin
+         Console.Insert
+           (Kernel, "Internal Error detected: " & Msg & ".",
+            Highlight_Sloc => False);
+         Destroy (Dependencies);
+         Status := Internal_Error;
+      end Handle_Internal_Error;
+
+   begin
+      Dependencies := null;
+
+      if Source_Name = "" then
+         Handle_Internal_Error (Msg => "Empty source file name");
+         return;
+      end if;
+
+      Source_Info :=
+        Locate_From_Source (Get_Source_Info_List (Kernel), Source_Name);
+      Update_LI_File_If_Necessary
+        (Kernel, Source_Info, Source_Name, Update_Status);
+
+      case Update_Status is
+         when Failure =>
+            Dependencies := null;
+            Status := Failure;
+            return;
+         when Success =>
+            null;
+      end case;
+
+      Find_Dependencies (Source_Info, Dependencies, Status);
+   end Find_Dependencies;
 
 end Glide_Kernel.Editor;
