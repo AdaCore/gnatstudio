@@ -1418,7 +1418,17 @@ package body GVD.Process is
          Close_Debugger (Debugger);
       else
          --  Regular debugger command, send it.
-         Send (Debugger.Debugger, Command, Mode => Mode);
+         --  If a dialog is currently displayed, do not wait for the debugger
+         --  prompt, since the prompt won't be displayed before the user
+         --  answers the question...
+
+         if Debugger.Registered_Dialog /= null then
+            Send
+              (Debugger.Debugger, Command,
+               Wait_For_Prompt => False, Mode => Mode);
+         else
+            Send (Debugger.Debugger, Command, Mode => Mode);
+         end if;
       end if;
    end Process_User_Command;
 
