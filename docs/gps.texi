@@ -4869,6 +4869,9 @@ built-in and uses a generic GPS terminology for VCS operations, and the Native
 ClearCase interface, which is fully customizable and uses by default the
 terminology specific to ClearCase.
 
+Note that, at the moment, only Snapshot Views are supported in the
+ClearCase integration; Dynamic Views are not supported.
+
 See @ref{Adding support for new Version Control Systems} for more information
 on how to customize and modify the existing ClearCase and CVS interfaces, as
 well as adding support for new ones.
@@ -8282,7 +8285,7 @@ your @file{$HOME/.gps/customize} directory, as usual.
       editor_page="Tests single"
       editor_section="Single"
       description="Any string">
-      
+
      <string default="Default value" />
   </project_attribute>
 
@@ -8292,7 +8295,7 @@ your @file{$HOME/.gps/customize} directory, as usual.
       editor_page="Tests single"
       editor_section="Single"
       description="Any file" >
-      
+
       <string type="file" default="/my/file" />
   </project_attribute>
 
@@ -8302,7 +8305,7 @@ your @file{$HOME/.gps/customize} directory, as usual.
       editor_page="Tests single"
       editor_section="Single"
       description="Any directory" >
-      
+
       <string type="directory" default="/my/directory/" />
   </project_attribute>
 </custom>
@@ -8323,7 +8326,7 @@ be one of the three possible choices.
       editor_page="Tests single"
       editor_section="Single"
       description="Choice from static list (or any string)" >
-      
+
       <choice>Choice1</choice>
       <choice default="true" >Choice2</choice>
       <choice>Choice3</choice>
@@ -8346,7 +8349,7 @@ list.
       editor_page="Tests single"
       editor_section="Single"
       description="Choice from dynamic list" >
-      
+
       <shell default="C" >supported_languages</shell>
   </project_attribute>
 </custom>
@@ -8367,9 +8370,9 @@ are using this project attribute.
       list="true"
       ordered="true"
       description="List of any file" >
-      
+
       <string type="file" default="Default file" />
-  </project_attribute> 
+  </project_attribute>
 </custom>
 @end smallexample
 
@@ -8387,11 +8390,11 @@ unless the user overrides this default setting.
       editor_section="Lists"
       list="true"
       description="Any set of values from a static list" >
-      
+
       <choice>Choice1</choice>
       <choice default="true">Choice2</choice>
       <choice default="true">Choice3</choice>
-  </project_attribute> 
+  </project_attribute>
 </custom>
 @end smallexample
 
