@@ -36,7 +36,6 @@ with Gtk.Arguments;       use Gtk.Arguments;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
-with Gtk.Item_Factory;    use Gtk.Item_Factory;
 with Gtk.Main;            use Gtk.Main;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
@@ -1093,8 +1092,6 @@ package body GVD.Process is
    is
       Debugger_List : Debugger_List_Link;
       Debugger_Num  : Natural := 1;
-      Widget        : Gtk_Widget;
-
    begin
       Initialize (Process);
       Ref (Process);
@@ -1136,15 +1133,6 @@ package body GVD.Process is
         Get_Pref (GVD_Prefs, Debugger_Highlight_Color);
 
       Process.Debugger_Text_Font := Get_Pref_Font (GVD_Prefs, Default_Style);
-
-      Process.Separate_Data := False;
-      --  ??? Should use MDI.Save/Load_Desktop instead
-
-      Widget := Get_Item (Window.Factory, -"/File/Open Program...");
-
-      if Widget /= null then
-         Set_Sensitive (Widget, True);
-      end if;
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
