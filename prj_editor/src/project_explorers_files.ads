@@ -23,7 +23,9 @@
 with Glide_Kernel;
 with Gdk.Pixbuf;
 with Gtk.Main;
+with Gtk.Handlers;
 with Gtk.Scrolled_Window;
+with Gtk.Tree_Model;
 with Gtk.Tree_View;
 with Gtk.Tree_Store;
 
@@ -105,6 +107,10 @@ private
 
       Open_Pixbufs  : Pixbuf_Array;
       Close_Pixbufs : Pixbuf_Array;
+
+      Scroll_To_Directory : Boolean := False;
+      Path                : Gtk.Tree_Model.Gtk_Tree_Path;
+      Realize_Cb_Id       : Gtk.Handlers.Handler_Id;
 
       Fill_Timeout_Ids : Timeout_Id_List.List;
       --  ??? This is implemented as a list of handlers instead of just one
