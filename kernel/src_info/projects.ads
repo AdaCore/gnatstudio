@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002                            --
+--                   Copyright (C) 2002-2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -112,6 +112,12 @@ package Projects is
    function Extending_Project (Project : Project_Type) return Project_Type;
    --  Return the project that extends Project, or No_Project if Project is not
    --  extended within the hierarchy
+
+   procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
+   --  Set the modified flag for Project.
+   --  This is usually handled automatically by the other functions in this
+   --  package, use it only to override the default behavior (e.g. mark the
+   --  default project as unmodified).
 
    -----------------
    -- Directories --
@@ -534,9 +540,6 @@ private
 
    procedure Set_View_Is_Complete (Project : Project_Type; Complete : Boolean);
    --  Indicate whether the view for the project was correctly computed.
-
-   procedure Set_Project_Modified (Project : Project_Type; Modified : Boolean);
-   --  Set the modified flag for Project.
 
    function Is_External_Variable
      (Var : Prj.Tree.Project_Node_Id) return Boolean;
