@@ -183,6 +183,10 @@ package Src_Info is
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported.
 
+   procedure Destroy (Handler : in out LI_Handler_Record);
+   procedure Destroy (Handler : in out LI_Handler);
+   --  Free the memory occupied by Handler. By default, this does nothing
+
    procedure Create_Or_Complete_LI
      (Handler                : access LI_Handler_Record;
       File                   : in out LI_File_Ptr;

@@ -450,6 +450,7 @@ package body Src_Info is
 
    procedure Destroy (FI : in out File_Info) is
    begin
+      Free (FI.Unit_Name);
       Free (FI.Source_Filename);
       Free (FI.Directory_Name);
       Free (FI.Original_Filename);
@@ -853,5 +854,27 @@ package body Src_Info is
          Unchecked_Free (LI);
       end if;
    end Free;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out LI_Handler_Record) is
+      pragma Unreferenced (Handler);
+   begin
+      null;
+   end Destroy;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Handler : in out LI_Handler) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (LI_Handler_Record'Class, LI_Handler);
+   begin
+      Destroy (Handler.all);
+      Unchecked_Free (Handler);
+   end Destroy;
 
 end Src_Info;
