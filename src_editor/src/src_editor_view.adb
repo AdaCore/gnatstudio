@@ -701,9 +701,9 @@ package body Src_Editor_View is
 
       --  Recalculate the width of one character.
 
-      Layout := Create_Pango_Layout (Source_View (View));
+      Layout := Create_Pango_Layout (Source);
       Set_Font_Description (Layout, Descr);
-      Set_Text (Layout, " ");
+      Set_Text (Layout, "m");
       Get_Pixel_Size (Layout, Source.Char_Width, Height);
       Unref (Layout);
 
