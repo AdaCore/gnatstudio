@@ -23,6 +23,7 @@ install-common:
 	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/make
 	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/make
 	$(INSTALL_DATA) share/ada_support.xml $(sharedir)/gps/customize
+	$(INSTALL_DATA) share/c_support.xml $(sharedir)/gps/customize
 	$(INSTALL_DATA) share/gpr.xml $(sharedir)/gps/customize
 	$(MAKE) -C docs install
 
