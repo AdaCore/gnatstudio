@@ -480,7 +480,7 @@ package Glide_Kernel is
    --  create a tooltip that only contains text
 
    type Customization_Level is
-     (Hard_Coded, System_Wide, Project_Wide, User_Specific);
+     (Hard_Coded, System_Wide, Project_Wide, User_Specific, Themes);
    --  The various level of customization (See Glide_Kernel.Custom).
    --  Hard_Coded is used for customization that are hard-coded in the GPS code
    --  System_Wide is used if customization comes from a custom file found in
@@ -489,6 +489,8 @@ package Glide_Kernel is
    --  in one of the directories lists in GPS_CUSTOM_PATH.
    --  User_Specific is used if the customization comes from a custom file
    --  found in the user's own directory (see GPS_HOME/.gps/customize).
+   --  Themes is used if the customization was found in a theme definition,
+   --  wherever that definition was found.
 
    type Module_Customization_Handler is access procedure
      (Kernel : access Kernel_Handle_Record'Class;
