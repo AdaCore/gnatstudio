@@ -24,29 +24,29 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
-with Projects;             use Projects;
-with Projects.Editor;      use Projects.Editor;
-with Projects.Registry;    use Projects.Registry;
-with Src_Info;             use Src_Info;
-with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
-with Src_Info.Type_Utils;  use Src_Info.Type_Utils;
+with Projects;                  use Projects;
+with Projects.Editor;           use Projects.Editor;
+with Projects.Registry;         use Projects.Registry;
+with Src_Info;                  use Src_Info;
+with Src_Info.LI_Utils;         use Src_Info.LI_Utils;
+with Src_Info.Type_Utils;       use Src_Info.Type_Utils;
 
-with DB_API;            use DB_API;
+with DB_API;                    use DB_API;
 
-with SN;                use SN;
-with SN.DB_Structures;  use SN.DB_Structures;
-with SN.Find_Fns;       use SN.Find_Fns;
+with SN;                        use SN;
+with SN.DB_Structures;          use SN.DB_Structures;
+with SN.Find_Fns;               use SN.Find_Fns;
 with SN.Browse;
-with SN.Xref_Pools;     use SN.Xref_Pools;
+with SN.Xref_Pools;             use SN.Xref_Pools;
 
-with Snames;            use Snames;
-with Types;             use Types;
-with Traces;            use Traces;
-with File_Utils;        use File_Utils;
+with Snames;                    use Snames;
+with Types;                     use Types;
+with Traces;                    use Traces;
+with File_Utils;                use File_Utils;
 with Ada.Strings.Fixed;
-with Ada.Calendar;      use Ada.Calendar;
+with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
-with VFS;               use VFS;
+with VFS;                       use VFS;
 
 package body Src_Info.CPP is
 
@@ -121,14 +121,14 @@ package body Src_Info.CPP is
    --  ??? Shouldn't we create a stub LI file for the parent instead.
 
    procedure Insert_Declaration
-     (D_Ptr                   : in out E_Declaration_Info_List;
-      File                    : LI_File_Ptr;
-      Symbol_Name             : String;
-      Location                : SN.Point;
-      Kind                    : E_Kind;
-      Scope                   : E_Scope;
-      End_Of_Scope_Location   : SN.Point := SN.Invalid_Point;
-      Rename_Location         : SN.Point := SN.Invalid_Point);
+     (D_Ptr                 : in out E_Declaration_Info_List;
+      File                  : LI_File_Ptr;
+      Symbol_Name           : String;
+      Location              : SN.Point;
+      Kind                  : E_Kind;
+      Scope                 : E_Scope;
+      End_Of_Scope_Location : SN.Point := SN.Invalid_Point;
+      Rename_Location       : SN.Point := SN.Invalid_Point);
    --  Inserts declaration into specified E_Declaration_Info_List
 
    procedure Set_Parent_Location
@@ -153,11 +153,11 @@ package body Src_Info.CPP is
    --  even though no entity will be declared for it.
 
    procedure Insert_Dependency
-     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                 : in out LI_File_Ptr;
-      Referred_Filename    : VFS.Virtual_File;
-      Referred_LI          : out LI_File_Ptr;
-      Dep_Ptr              : out Dependency_File_Info_List);
+     (Handler           : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      File              : in out LI_File_Ptr;
+      Referred_Filename : VFS.Virtual_File;
+      Referred_LI       : out LI_File_Ptr;
+      Dep_Ptr           : out Dependency_File_Info_List);
    --  Same as the procedure with the same name, but also returns the newly
    --  inserted dependency.
 
@@ -166,9 +166,9 @@ package body Src_Info.CPP is
    -----------------------
 
    procedure Insert_Dependency
-     (Handler              : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
-      File                 : in out LI_File_Ptr;
-      Referred_Filename    : VFS.Virtual_File)
+     (Handler           : access Src_Info.CPP.CPP_LI_Handler_Record'Class;
+      File              : in out LI_File_Ptr;
+      Referred_Filename : VFS.Virtual_File)
    is
       Dep_Ptr     : Dependency_File_Info_List;
       Referred_LI : LI_File_Ptr;
@@ -875,11 +875,11 @@ package body Src_Info.CPP is
    --  directories are available
 
    procedure Refer_Type
-     (Type_Name          : String;
-      Type_Decl          : Point;
-      File               : in out LI_File_Ptr;
-      Reference_Point    : Point;
-      Kind               : Reference_Kind := Reference);
+     (Type_Name       : String;
+      Type_Decl       : Point;
+      File            : in out LI_File_Ptr;
+      Reference_Point : Point;
+      Kind            : Reference_Kind := Reference);
    --  Adds reference object into Handler.File if
    --  type Type_Name already exists in the tree.
    --
@@ -891,20 +891,20 @@ package body Src_Info.CPP is
    --  Kind is a kind of a reference.
 
    procedure Create_Overload_List
-     (Name             : String;
-      Class_Name       : String;
-      Full_Filename    : String;
-      Handler          : access CPP_LI_Handler_Record'Class;
-      File             : out LI_File_Ptr;
+     (Name          : String;
+      Class_Name    : String;
+      Full_Filename : String;
+      Handler       : access CPP_LI_Handler_Record'Class;
+      File          : out LI_File_Ptr;
       Module_Type_Defs : Module_Typedefs_List);
    --  Generates list of dependency declarations for the method
    --  with given name
 
    procedure Create_Overload_List
-     (Name             : String;
-      Full_Filename    : String;
-      Handler          : access CPP_LI_Handler_Record'Class;
-      File             : out LI_File_Ptr);
+     (Name          : String;
+      Full_Filename : String;
+      Handler       : access CPP_LI_Handler_Record'Class;
+      File          : out LI_File_Ptr);
    --  Generates list of dependency declarations for the function
    --  with given name
 
@@ -915,9 +915,9 @@ package body Src_Info.CPP is
    --  return type and template flag in the attributes
 
    function Get_Method_Kind
-     (Class_Def               : CL_Table;
-      Return_Type             : String;
-      Attributes              : SN_Attributes) return E_Kind;
+     (Class_Def   : CL_Table;
+      Return_Type : String;
+      Attributes  : SN_Attributes) return E_Kind;
    --  Returns method E_Kind after investigation of its return
    --  type and template parameters of the class
 
@@ -930,34 +930,34 @@ package body Src_Info.CPP is
 
 
    procedure Find_First_Forward_Declaration
-     (Key          : Buffer_String;
-      Data         : Buffer_String;
-      Class_Name   : Segment;
-      Name         : Segment;
-      Full_Filename : String;
-      Return_Type  : Segment;
-      Arg_Types    : Segment;
-      Handler      : access CPP_LI_Handler_Record'Class;
-      File         : in out LI_File_Ptr;
+     (Key              : Buffer_String;
+      Data             : Buffer_String;
+      Class_Name       : Segment;
+      Name             : Segment;
+      Full_Filename    : String;
+      Return_Type      : Segment;
+      Arg_Types        : Segment;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
       Module_Type_Defs : Module_Typedefs_List;
-      Decl_Info    : out E_Declaration_Info_List;
-      Strict       : Boolean := False);
+      Decl_Info        : out E_Declaration_Info_List;
+      Strict           : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the method. Returns null if not found
    --  Strict controls how arguments for functions and methods
    --  are compared (see Cmp_Arg_Types).
 
    procedure Find_First_Forward_Declaration
-     (Key          : Buffer_String;
-      Data         : Buffer_String;
-      Name         : Segment;
+     (Key           : Buffer_String;
+      Data          : Buffer_String;
+      Name          : Segment;
       Full_Filename : String;
-      Return_Type  : Segment;
-      Arg_Types    : Segment;
-      Handler      : access CPP_LI_Handler_Record'Class;
-      File         : in out LI_File_Ptr;
-      Decl_Info    : out E_Declaration_Info_List;
-      Strict       : Boolean := False);
+      Return_Type   : Segment;
+      Arg_Types     : Segment;
+      Handler       : access CPP_LI_Handler_Record'Class;
+      File          : in out LI_File_Ptr;
+      Decl_Info     : out E_Declaration_Info_List;
+      Strict        : Boolean := False);
    --  Attempts to find/create the first forward declaration
    --  for the function. Returns null if not found
    --  Strict controls how arguments for functions and methods
@@ -1081,8 +1081,8 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Browse_Project
-     (Project    : Project_Type;
-      Iterator   : in out CPP_LI_Handler_Iterator)
+     (Project  : Project_Type;
+      Iterator : in out CPP_LI_Handler_Iterator)
    is
       DB_Dir           : constant String := Get_DB_Dir (Project);
       Num_Source_Files : Natural := 0;
@@ -1206,10 +1206,10 @@ package body Src_Info.CPP is
    -----------------------------
 
    function Generate_LI_For_Project
-     (Handler       : access CPP_LI_Handler_Record;
-      Root_Project  : Project_Type;
-      Project       : Project_Type;
-      Recursive     : Boolean := False)
+     (Handler      : access CPP_LI_Handler_Record;
+      Root_Project : Project_Type;
+      Project      : Project_Type;
+      Recursive    : Boolean := False)
       return LI_Handler_Iterator'Class
    is
       HI : CPP_LI_Handler_Iterator;
@@ -1490,8 +1490,8 @@ package body Src_Info.CPP is
    -------------------
 
    procedure Open_DB_Files
-     (DB_Dirs   : in GNAT.OS_Lib.String_List_Access;
-      SN_Table  : out SN_Table_Array)
+     (DB_Dirs  : in GNAT.OS_Lib.String_List_Access;
+      SN_Table : out SN_Table_Array)
    is
       Success : Boolean;
    begin
