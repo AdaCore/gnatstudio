@@ -123,6 +123,15 @@ package body Projects.Registry is
       Null_Ptr  => No_Name);
    use Languages_Htable.String_Hash_Table;
 
+   type Naming_Scheme_Record;
+   type Naming_Scheme_Access is access Naming_Scheme_Record;
+   type Naming_Scheme_Record is record
+      Language            : GNAT.OS_Lib.String_Access;
+      Default_Spec_Suffix : GNAT.OS_Lib.String_Access;
+      Default_Body_Suffix : GNAT.OS_Lib.String_Access;
+      Next                : Naming_Scheme_Access;
+   end record;
+
    type Project_Registry_Data is record
       Tree      : Prj.Tree.Project_Node_Tree_Ref;
       View_Tree : Prj.Project_Tree_Ref;
@@ -141,6 +150,9 @@ package body Projects.Registry is
       --  Index on project names. Some project of the hierarchy might not
       --  exist, since the Project_Type are created lazily the first time they
       --  are needed.
+
+      Naming_Schemes : Naming_Scheme_Access;
+      --  The list of default naming schemes for the languages known to GPS
 
       Scenario_Variables : Scenario_Variable_Array_Access;
       --  Cached value of the scenario variables. This should be accessed only
@@ -218,6 +230,8 @@ package body Projects.Registry is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Scenario_Variable_Array, Scenario_Variable_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Naming_Scheme_Record, Naming_Scheme_Access);
 
    function String_Elements
      (R : Project_Registry) return Prj.String_Element_Table.Table_Ptr;
@@ -399,7 +413,9 @@ package body Projects.Registry is
 
    procedure Reset
      (Registry  : in out Project_Registry;
-      View_Only : Boolean) is
+      View_Only : Boolean)
+   is
+      Naming : Naming_Scheme_Access;
    begin
       if Registry.Data /= null then
          Unload_Project (Registry, View_Only);
@@ -416,6 +432,25 @@ package body Projects.Registry is
       end if;
 
       Prj.Initialize (Registry.Data.View_Tree);
+
+      if View_Only then
+         Naming := Registry.Data.Naming_Schemes;
+         while Naming /= null loop
+            Prj.Register_Default_Naming_Scheme
+              (Language            => Get_String (Naming.Language.all),
+               Default_Spec_Suffix =>
+                 Get_String (Naming.Default_Spec_Suffix.all),
+               Default_Body_Suffix =>
+                 Get_String (Naming.Default_Body_Suffix.all),
+               In_Tree             => Registry.Data.View_Tree);
+
+            Add_Language_Extension
+              (Registry, Naming.Language.all, Naming.Default_Spec_Suffix.all);
+            Add_Language_Extension
+              (Registry, Naming.Language.all, Naming.Default_Body_Suffix.all);
+            Naming := Naming.Next;
+         end loop;
+      end if;
    end Reset;
 
    ------------------
@@ -1502,14 +1537,11 @@ package body Projects.Registry is
       Default_Spec_Suffix : String;
       Default_Body_Suffix : String) is
    begin
-      Prj.Register_Default_Naming_Scheme
-        (Language            => Get_String (To_Lower (Language_Name)),
-         Default_Spec_Suffix => Get_String (Default_Spec_Suffix),
-         Default_Body_Suffix => Get_String (Default_Body_Suffix),
-         In_Tree             => Registry.Data.View_Tree);
-
-      Add_Language_Extension (Registry, Language_Name, Default_Spec_Suffix);
-      Add_Language_Extension (Registry, Language_Name, Default_Body_Suffix);
+      Registry.Data.Naming_Schemes := new Naming_Scheme_Record'
+        (Language            => new String'(To_Lower (Language_Name)),
+         Default_Spec_Suffix => new String'(Default_Spec_Suffix),
+         Default_Body_Suffix => new String'(Default_Body_Suffix),
+         Next                => Registry.Data.Naming_Schemes);
    end Register_Default_Language_Extension;
 
    ----------------------------
@@ -1603,8 +1635,23 @@ package body Projects.Registry is
    -------------
 
    procedure Destroy (Registry : in out Project_Registry) is
+      Naming : Naming_Scheme_Access;
+      Naming2 : Naming_Scheme_Access;
    begin
       Unload_Project (Registry);
+
+      if Registry.Data /= null then
+         Naming := Registry.Data.Naming_Schemes;
+         while Naming /= null loop
+            Free (Naming.Language);
+            Free (Naming.Default_Spec_Suffix);
+            Free (Naming.Default_Body_Suffix);
+
+            Naming2 := Naming.Next;
+            Unchecked_Free (Naming);
+            Naming := Naming2;
+         end loop;
+      end if;
    end Destroy;
 
    ------------------
