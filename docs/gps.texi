@@ -7679,7 +7679,7 @@ file name, and displays each in the Messages window.
 @noindent
 The output of external commands is send by default to the GPS console window.
 In addition, finer control can be exercised using the @code{output} attribute
-of the @code{<external>} tag.
+of the @code{<external>} and @code{<shell>} tags.
 
 This attribute is a string that may take any value. Two values have specific
 meanings:
@@ -7691,17 +7691,21 @@ be shown to the user at all.
 
 @item ""
 The output of the command is sent to the GPS console window, entitled
-"Messages". This is the default value of this attribute
+"Messages". This is the default value of this attribute. If you are using the
+@code{<shell>} tag, the output is sent to the default console for that
+language.
 
 @item other values
 A new window is created, the name of which is given by the attribute. If such
-a window already exists, it is cleared up. The output of the command, as well
+a window already exists, it is cleared up before any of the command in the
+chain is executed. The output of the command, as well
 as the text of the command itself, are sent to this new window.
 @end table
 
 @smallexample
 <action name="ls current directory">
-   <external output="Current directory" >/bin/ls </external>
+   <shell output="Current directory" >pwd</shell>
+   <external output="Current directory contents" >/bin/ls </external>
 </action>
 @end smallexample
 
