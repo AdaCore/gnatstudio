@@ -32,6 +32,7 @@ with Gtk.Menu;
 with Gtk.Object; use Gtk.Object;
 pragma Elaborate_All (Gtk.Object);
 with Gtk.Dialog;
+with Gtk.Main;
 with Gtk.Window;
 with Gtk.Widget;
 with Gtkada.Canvas;
@@ -154,9 +155,10 @@ package GVD.Process is
       --  This is used to store the launching method.
       --  (Added to handle sessions)
 
-      Input_Id                : Glib.Gint := 0;
+      Timeout_Id              : Gtk.Main.Timeout_Handler_Id := 0;
+      --  Timeout Id used to handle async. commands.
 
-      Backtrace_Mask : Stack_List_Mask := Subprog_Name or Params;
+      Backtrace_Mask          : Stack_List_Mask := Subprog_Name or Params;
       --  What columns to be displayed in the stack list window
 
       Current_Command         : String_Access;
