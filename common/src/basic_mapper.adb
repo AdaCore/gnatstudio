@@ -168,9 +168,11 @@ package body Basic_Mapper is
         (File_Mapper, File_Mapper_Access);
 
    begin
-      Double_String_Table.String_Hash_Table.Reset (Mapper.Table_1);
-      Double_String_Table.String_Hash_Table.Reset (Mapper.Table_2);
-      Unchecked_Free (Mapper);
+      if Mapper /= null then
+         Double_String_Table.String_Hash_Table.Reset (Mapper.Table_1);
+         Double_String_Table.String_Hash_Table.Reset (Mapper.Table_2);
+         Unchecked_Free (Mapper);
+      end if;
    end Free;
 
 end Basic_Mapper;
