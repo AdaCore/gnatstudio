@@ -151,6 +151,7 @@ package body Builder_Module is
    procedure On_Build
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Top       : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
       Fd        : Process_Descriptor_Access;
@@ -207,6 +208,7 @@ package body Builder_Module is
    procedure On_Check_Syntax
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget, Kernel);
    begin
       --  ???
       null;
@@ -219,6 +221,7 @@ package body Builder_Module is
    procedure On_Compile
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget, Kernel);
    begin
       --  ???
       null;
@@ -308,6 +311,7 @@ package body Builder_Module is
    procedure On_Run
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Arguments : constant String := Simple_Entry_Dialog
         (Parent  => Get_Main_Window (Kernel),
          Title   => -"Arguments Selection",
@@ -331,6 +335,7 @@ package body Builder_Module is
    procedure On_Stop_Build
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Top : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
    begin
       Top.Interrupted := True;
