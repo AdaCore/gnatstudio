@@ -96,6 +96,41 @@ package body Outline_View is
       User : Kernel_Handle) return MDI_Child;
    --  Handling of desktops
 
+   function Filter_Category
+     (Category : Language.Language_Category) return Language.Language_Category;
+   --  Return Cat_Unknown if the category should be filtered out, and the
+   --  name of the category to use otherwise.
+
+   ---------------------
+   -- Filter_Category --
+   ---------------------
+
+   function Filter_Category
+     (Category : Language_Category) return Language_Category is
+   begin
+      --  No "with", "use", "#include"
+      --  No constructs ("loop", "if", ...)
+
+      if Category in Dependency_Category
+        or else Category in Construct_Category
+        or else Category = Cat_Representation_Clause
+        or else Category = Cat_Local_Variable
+      then
+         return Cat_Unknown;
+
+         --  All subprograms are grouped together
+
+      elsif Category in Subprogram_Explorer_Category then
+         return Cat_Procedure;
+
+      elsif Category in Type_Category then
+         return Cat_Type;
+
+      end if;
+
+      return Category;
+   end Filter_Category;
+
    ------------------
    -- Save_Desktop --
    ------------------
@@ -242,15 +277,20 @@ package body Outline_View is
          Constructs.Current := Constructs.First;
          while Constructs.Current /= null loop
             if Constructs.Current.Name /= null then
-               Append (Model, Iter, Null_Iter);
-               Set (Model, Iter, 0, Entity_Name_Of (Constructs.Current.all));
-               Set (Model, Iter, 1,
-                    Gint (Constructs.Current.Sloc_Entity.Line));
-               Set (Model, Iter, 2,
-                    Gint (Constructs.Current.Sloc_Entity.Column));
-               Set (Model, Iter, 3,
-                    Gint (Constructs.Current.Sloc_Entity.Column
-                          + Constructs.Current.Name'Length));
+               if Filter_Category (Constructs.Current.Category) /=
+                 Cat_Unknown
+               then
+                  Append (Model, Iter, Null_Iter);
+                  Set (Model, Iter, 0,
+                       Entity_Name_Of (Constructs.Current.all));
+                  Set (Model, Iter, 1,
+                       Gint (Constructs.Current.Sloc_Entity.Line));
+                  Set (Model, Iter, 2,
+                       Gint (Constructs.Current.Sloc_Entity.Column));
+                  Set (Model, Iter, 3,
+                       Gint (Constructs.Current.Sloc_Entity.Column
+                             + Constructs.Current.Name'Length));
+               end if;
             end if;
             Constructs.Current := Constructs.Current.Next;
          end loop;
@@ -321,12 +361,17 @@ package body Outline_View is
       D       : constant Context_Hooks_Args := Context_Hooks_Args (Data);
       Outline : Outline_View_Access;
       File    : Virtual_File;
+      Child   : MDI_Child;
    begin
-      if D.Context.all in File_Selection_Context'Class
+      Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Outline_View_Record'Tag);
+
+      if Child /= null
+        and then D.Context.all in File_Selection_Context'Class
         and then Has_File_Information
           (File_Selection_Context_Access (D.Context))
       then
-         Outline := Outline_View_Access (Get_Widget (Open_Outline (Kernel)));
+         Outline := Outline_View_Access (Get_Widget (Child));
          File := File_Information
            (File_Selection_Context_Access (D.Context));
          if File /= Outline.File then
