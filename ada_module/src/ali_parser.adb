@@ -641,8 +641,9 @@ package body ALI_Parser is
       pragma Import (C, Unchecked_Free, "free");
 
    begin
-      --  Ignore labels for now. GNAT no longer outputs them anyway, and their
+      --  Ignore labels for now. GNAT no longer outputs them anyway, and they
       --  do not work in the callgraph browser
+
       if Kind.Kind = Label_On_Block
         or else Kind.Kind = Label_On_Statement
         or else Kind.Kind = Label_On_Loop
