@@ -18,13 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Traces; use Traces;
-with Basic_Types;  use Basic_Types;
-with Language; use Language;
-with Language_Handlers; use Language_Handlers;
-with Ada.Characters.Handling;   use Ada.Characters.Handling;
-with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Traces;                  use Traces;
+with Basic_Types;             use Basic_Types;
+with Language;                use Language;
+with Language_Handlers;       use Language_Handlers;
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 package body Docgen.Backend is
 
@@ -80,7 +80,7 @@ package body Docgen.Backend is
    procedure Format_Code
      (B                : access Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Text             : String;
       File_Name        : VFS.Virtual_File;
@@ -156,8 +156,7 @@ package body Docgen.Backend is
          case Entity is
             when Comment_Text =>
                Format_Comment
-                 (B,
-                  File,
+                 (B, Kernel, Result,
                   Text,
                   Sloc_Start.Index,
                   Sloc_Start.Line,
@@ -167,8 +166,7 @@ package body Docgen.Backend is
 
             when Keyword_Text =>
                Format_Keyword
-                 (B,
-                  File,
+                 (B, Kernel, Result,
                   Text,
                   Sloc_Start.Index,
                   Sloc_Start.Line,
@@ -228,8 +226,7 @@ package body Docgen.Backend is
 --                    else
 --                       Simple String
                Format_String
-                 (B,
-                  File,
+                 (B, Kernel, Result,
                   Text,
                   Sloc_Start.Index,
                   Sloc_Start.Line,
@@ -252,8 +249,7 @@ package body Docgen.Backend is
 
             when Character_Text =>
                Format_Character
-                 (B,
-                  File,
+                 (B, Kernel, Result,
                   Text,
                   Sloc_Start.Index,
                   Sloc_Start.Line,
@@ -270,15 +266,13 @@ package body Docgen.Backend is
                   --  the reason is that in the body the ";" ended the
                   --  file.
                   Format_Identifier
-                    (B,
+                    (B, Kernel, Result,
                      List_Ref_In_File,
                      Sloc_Start.Index,
                      Sloc_Start.Line,
                      Sloc_Start.Column,
                      Sloc_End.Index,
                      Sloc_End.Line,
-                     Kernel,
-                     File,
                      Text,
                      File_Name,
                      Entity_Line,
@@ -299,12 +293,12 @@ package body Docgen.Backend is
 
    begin
       Initialize (B, Text);
-      Parse_Entities (Get_Language_From_File
-                        (Get_Language_Handler (Kernel), File_Name),
-                      Text,
-                      Callback'Unrestricted_Access);
-      Finish (B, File, Text, Entity_Line);
 
+      Parse_Entities
+        (Get_Language_From_File (Get_Language_Handler (Kernel), File_Name),
+         Text, Callback'Unrestricted_Access);
+
+      Finish (B, Kernel, Result, Text, Entity_Line);
    exception
       when E : others =>
          Trace (Exception_Handle,
@@ -316,24 +310,24 @@ package body Docgen.Backend is
    ---------------------
 
    procedure Format_All_Link
-     (B                   : access Backend'Class;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Start_Index         : Natural;
-      Start_Line          : Natural;
-      Start_Column        : Natural;
-      End_Index           : Natural;
-      Kernel              : access Kernel_Handle_Record'Class;
-      File                : File_Descriptor;
-      Text                : String;
-      File_Name           : VFS.Virtual_File;
-      Entity_Line         : Natural;
-      Line_In_Body        : in out Natural;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Link_All            : Boolean;
-      Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Level               : Natural;
-      Indent              : Natural)
+     (B                : access Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Start_Index      : Natural;
+      Start_Line       : Natural;
+      Start_Column     : Natural;
+      End_Index        : Natural;
+      Text             : String;
+      File_Name        : VFS.Virtual_File;
+      Entity_Line      : Natural;
+      Line_In_Body     : in out Natural;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Level            : Natural;
+      Indent           : Natural)
    is
       use type Basic_Types.String_Access;
       use List_Reference_In_File;
@@ -344,34 +338,40 @@ package body Docgen.Backend is
       Entity_Info        : Entity_Information;
       Ref_List_Info      : List_Reference_In_File.List_Node;
       Ref_List_Info_Prec : List_Reference_In_File.List_Node;
-      Result             : Boolean;
+      Found              : Boolean;
       Entity_Abstract    : Boolean;
       Indentation        : Natural;
       --  This last parameter is used to add levels of indentation
       --  for spec files
 
       procedure Get_Declaration
-        (Text             : String;
-         E_I              : in out Entity_Information;
-         Line             : Natural;
-         Column           : Natural;
-         E_L_I            : in List_Reference_In_File.List_Node;
-         Result           : in out Boolean;
-         Entity_Abstract  : in out Boolean);
+        (Text            : String;
+         E_I             : in out Entity_Information;
+         Line            : Natural;
+         Column          : Natural;
+         E_L_I           : in List_Reference_In_File.List_Node;
+         Result          : out Boolean;
+         Entity_Abstract : in out Boolean);
       --  Looks if the reference E_L_I is the same as (Text+Line+Column)
       --  If yes, the declaration of E_L_I is returned and Result is True
 
+      ---------------------
+      -- Get_Declaration --
+      ---------------------
+
       procedure Get_Declaration
-        (Text             : String;
-         E_I              : in out Entity_Information;
-         Line             : Natural;
-         Column           : Natural;
-         E_L_I            : in List_Reference_In_File.List_Node;
-         Result           : in out Boolean;
-         Entity_Abstract  : in out Boolean)
+        (Text            : String;
+         E_I             : in out Entity_Information;
+         Line            : Natural;
+         Column          : Natural;
+         E_L_I           : in List_Reference_In_File.List_Node;
+         Result          : out Boolean;
+         Entity_Abstract : in out Boolean)
       is
          Ref : List_Reference_In_File.Data_Access;
       begin
+         Result := False;
+
          Ref := List_Reference_In_File.Data_Ref (E_L_I);
 
          if Ref.Line = Line
@@ -416,9 +416,8 @@ package body Docgen.Backend is
          --  We search the declaration of the entity
          --  (which is an identifier)
 
-         Result := False;
          Entity_Abstract := False;
-         Ref_List_Info := List_Reference_In_File.First (List_Ref_In_File);
+         Ref_List_Info      := List_Reference_In_File.First (List_Ref_In_File);
          Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
 
          --  Text(Loc_Start .. Loc_End) is a reference.
@@ -431,33 +430,32 @@ package body Docgen.Backend is
                Start_Line + Entity_Line - 1,
                Start_Column + Loc_Start - Start_Index + Indentation,
                Ref_List_Info,
-               Result,
+               Found,
                Entity_Abstract);
 
-            if Result then
+            if Found then
                List_Reference_In_File.Remove_Nodes
                  (List_Ref_In_File, Ref_List_Info_Prec,
                   Ref_List_Info);
             end if;
 
-            exit when Is_Body;
+            exit when Is_Body or else Found;
 
             --  For body files, no loop because references in the list
             --  are sorted. So the first element met in list is the right
             --  one (for this elements are removed after being met).
-
-            exit when Result;
 
             Ref_List_Info_Prec := Ref_List_Info;
             Ref_List_Info := List_Reference_In_File.Next (Ref_List_Info);
          end loop;
 
          --  We create a link on the declaration for this entity
-         if Result then
+
+         if Found then
             Format_Link
-              (B,
+              (B, Kernel, Result,
                Start_Index, Start_Line, Start_Column, End_Index,
-               Kernel, File, Text, File_Name, Entity_Line,
+               Text, File_Name, Entity_Line,
                Line_In_Body, Source_File_List, Link_All, Is_Body,
                Process_Body, Loc_End, Loc_Start, Entity_Info,
                Entity_Abstract);
@@ -468,5 +466,14 @@ package body Docgen.Backend is
          end if;
       end loop;
    end Format_All_Link;
+
+   -------------------
+   -- Get_Extension --
+   -------------------
+
+   function Get_Extension (B : access Backend'Class) return String is
+   begin
+      return '.' & B.Output_Description.Extension.all;
+   end Get_Extension;
 
 end Docgen.Backend;

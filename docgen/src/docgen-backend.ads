@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,62 +18,69 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Docgen_Registry;       use Docgen_Registry;
+
 package Docgen.Backend is
 
-   type Backend is abstract tagged private;
+   type Backend
+     (Output_Description : Output_Description_Access)
+   is abstract tagged private;
+
    type Backend_Handle is access all Backend'Class;
 
-   procedure Initialize (B : access Backend; Text : String) is abstract;
+   procedure Initialize
+     (B : access Backend; Text : String) is abstract;
    --  Initialize the private fields before starting the documentation
    --  process.
 
    procedure Doc_Open
      (B          : access Backend;
-      Kernel     : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File       : File_Descriptor;
+      Kernel     : access Kernel_Handle_Record'Class;
+      Result     : in out Unbounded_String;
       Open_Title : String) is abstract;
    --  Called each time a new file is created
 
    procedure Doc_Close
      (B      : access Backend;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor) is abstract;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String) is abstract;
    --  Called each time a file is closed
 
    procedure Doc_Header
      (B              : access Backend;
-      Kernel         : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File           : File_Descriptor;
+      Kernel         : access Kernel_Handle_Record'Class;
+      Result         : in out Unbounded_String;
       Header_File    : VFS.Virtual_File;
       Header_Package : String;
       Header_Line    : Natural;
       Header_Link    : Boolean) is abstract;
 
    procedure Doc_Header_Private
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Header_Title     : String;
-      Level            : Natural) is abstract;
+     (B            : access Backend;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Result       : in out Unbounded_String;
+      Header_Title : String;
+      Level        : Natural) is abstract;
 
    procedure Doc_Footer
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor) is abstract;
+     (B      : access Backend;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String) is abstract;
    --  Called when we finished processing an entity.
 
    procedure Doc_Subtitle
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Level            : Natural;
-      Subtitle_Name    : String) is abstract;
+     (B             : access Backend;
+      Kernel        : access Kernel_Handle_Record'Class;
+      Result        : in out Unbounded_String;
+      Level         : Natural;
+      Subtitle_Name : String) is abstract;
    --  Add a subtitle for the entity type to the documentation
 
    procedure Doc_With
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -84,41 +91,41 @@ package Docgen.Backend is
    --  With clauses for imported packages
 
    procedure Doc_Package
-     (B                   : access Backend;
-      Kernel              : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File                : in File_Descriptor;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Options             : All_Options;
-      Level               : Natural;
-      Package_Entity      : Entity_Information;
-      Package_Header      : String) is abstract;
+     (B                : access Backend;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Package_Entity   : Entity_Information;
+      Package_Header   : String) is abstract;
    --  Used to add a package info to the information file
 
    procedure Doc_Package_Open_Close
-     (B                 : access Backend;
-      Kernel            : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File              : in File_Descriptor;
-      List_Ref_In_File  : in out List_Reference_In_File.List;
-      Source_File_List  : Type_Source_File_Table.HTable;
-      Options           : All_Options;
-      Level             : Natural;
-      Entity            : Entity_Information;
-      Header            : String) is abstract;
+     (B                : access Backend;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Options          : All_Options;
+      Level            : Natural;
+      Entity           : Entity_Information;
+      Header           : String) is abstract;
    --  Used to add a header or a gooter for an inner package
 
    procedure Doc_Package_Desc
      (B           : access Backend;
-      Kernel      : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Level       : Natural;
       Description : String) is abstract;
    --  Used to add a package description
 
    procedure Doc_Var
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : in File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -129,8 +136,8 @@ package Docgen.Backend is
 
    procedure Doc_Exception
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -141,8 +148,8 @@ package Docgen.Backend is
 
    procedure Doc_Type
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -153,8 +160,8 @@ package Docgen.Backend is
 
    procedure Doc_Entry
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -164,8 +171,8 @@ package Docgen.Backend is
 
    procedure Doc_Subprogram
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -177,7 +184,7 @@ package Docgen.Backend is
    procedure Doc_Caller_References
      (B                 : access Backend;
       Kernel            : access Kernel_Handle_Record'Class;
-      File              : File_Descriptor;
+      Result            : in out Unbounded_String;
       Options           : All_Options;
       Level             : Natural;
       Callers           : Entities.Entity_Information_Arrays.Instance;
@@ -187,7 +194,7 @@ package Docgen.Backend is
    procedure Doc_Calls_References
      (B                 : access Backend;
       Kernel            : access Kernel_Handle_Record'Class;
-      File              : File_Descriptor;
+      Result            : in out Unbounded_String;
       Options           : All_Options;
       Level             : Natural;
       Calls             : Entities.Entity_Information_Arrays.Instance;
@@ -196,8 +203,8 @@ package Docgen.Backend is
 
    procedure Doc_Tagged_Type
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       Source_File_List : Type_Source_File_Table.HTable;
       Level            : Natural;
       Entity           : Entity_Information) is abstract;
@@ -205,8 +212,8 @@ package Docgen.Backend is
 
    procedure Doc_Unit_Index
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
       Level            : Natural;
@@ -214,68 +221,68 @@ package Docgen.Backend is
    --  Start the output the Unit index file
 
    procedure Doc_Subprogram_Index
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Options          : All_Options) is abstract;
+     (B       : access Backend;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Result  : in out Unbounded_String;
+      Options : All_Options) is abstract;
    --  Start the output of the subprogram index file
 
    procedure Doc_Type_Index
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Options          : All_Options) is abstract;
+     (B       : access Backend;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Result  : in out Unbounded_String;
+      Options : All_Options) is abstract;
    --  Start the output of the type index file
 
    procedure Doc_Tagged_Type_Index
      (B      : access Backend;
-      Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File   : File_Descriptor) is abstract;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String) is abstract;
    --  Start the output of the index for tagged types
 
    procedure Doc_Private_Index
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Title            : String) is abstract;
+     (B      : access Backend;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Title  : String) is abstract;
    --  Start a new section in the current index for private entities
 
    procedure Doc_Public_Index
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Title            : String) is abstract;
+     (B      : access Backend;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String;
+      Title  : String) is abstract;
    --  Start a new section in the current index for public entities
 
    procedure Doc_End_Of_Index
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor) is abstract;
+     (B      : access Backend;
+      Kernel : access Kernel_Handle_Record'Class;
+      Result : in out Unbounded_String) is abstract;
    --  Terminate the current index file
 
    procedure Doc_Index_Tagged_Type
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       Source_File_List : Type_Source_File_Table.HTable;
       Entity           : Entity_Information;
       Family           : Family_Type) is abstract;
    --  Add items to the tagged types index file
 
    procedure Doc_Index_Item
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Name             : String;
-      Item_File        : Entities.Source_File;
-      Line             : Natural;
-      Doc_File         : String) is abstract;
+     (B         : access Backend;
+      Kernel    : access Kernel_Handle_Record'Class;
+      Result    : in out Unbounded_String;
+      Name      : String;
+      Item_File : Entities.Source_File;
+      Line      : Natural;
+      Doc_File  : String) is abstract;
    --  Add items to one of the index files (units, types and subprograms)
 
    procedure Doc_Body_Line
      (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Source_File_List : Type_Source_File_Table.HTable;
       Options          : All_Options;
@@ -285,16 +292,17 @@ package Docgen.Backend is
    --  Process one line of the body file
 
    procedure Doc_Description
-     (B                : access Backend;
-      Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Level            : Natural;
-      Description      : String) is abstract;
+     (B           : access Backend;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
+      Level       : Natural;
+      Description : String) is abstract;
    --  Pass comments written after or before the current entity
 
    procedure Format_Comment
      (B           : access Backend;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Text        : String;
       Start_Index : Natural;
       Start_line  : Natural;
@@ -305,7 +313,8 @@ package Docgen.Backend is
 
    procedure Format_Keyword
      (B           : access Backend;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Text        : String;
       Start_Index : Natural;
       Start_line  : Natural;
@@ -316,7 +325,8 @@ package Docgen.Backend is
 
    procedure Format_String
      (B           : access Backend;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Text        : String;
       Start_Index : Natural;
       Start_line  : Natural;
@@ -327,7 +337,8 @@ package Docgen.Backend is
 
    procedure Format_Character
      (B           : access Backend;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Text        : String;
       Start_Index : Natural;
       Start_line  : Natural;
@@ -337,25 +348,25 @@ package Docgen.Backend is
    --  Format text as a character (between two ')
 
    procedure Format_Identifier
-     (B                   : access Backend;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Start_Index         : Natural;
-      Start_Line          : Natural;
-      Start_Column        : Natural;
-      End_Index           : Natural;
-      End_Line            : Natural;
-      Kernel              : access Kernel_Handle_Record'Class;
-      File                : File_Descriptor;
-      Text                : String;
-      File_Name           : VFS.Virtual_File;
-      Entity_Line         : Natural;
-      Line_In_Body        : Natural;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Link_All            : Boolean;
-      Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Level               : Natural;
-      Indent              : Natural) is abstract;
+     (B                : access Backend;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Start_Index      : Natural;
+      Start_Line       : Natural;
+      Start_Column     : Natural;
+      End_Index        : Natural;
+      End_Line         : Natural;
+      Text             : String;
+      File_Name        : VFS.Virtual_File;
+      Entity_Line      : Natural;
+      Line_In_Body     : Natural;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Level            : Natural;
+      Indent           : Natural) is abstract;
    --  Format text as an identifier.
    --  Level : number of indentation levels.
    --  Indent: value of one indentation level.
@@ -367,7 +378,7 @@ package Docgen.Backend is
    procedure Format_Code
      (B                : access Backend'Class;
       Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
+      Result           : in out Unbounded_String;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Text             : String;
       File_Name        : VFS.Virtual_File;
@@ -406,12 +417,12 @@ package Docgen.Backend is
 
    procedure Format_Link
      (B                : access Backend;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
       End_Index        : Natural;
-      Kernel           : access Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
       Text             : String;
       File_Name        : VFS.Virtual_File;
       Entity_Line      : Natural;
@@ -434,16 +445,15 @@ package Docgen.Backend is
 
    procedure Finish
      (B           : access Backend;
-      File        : File_Descriptor;
+      Kernel      : access Kernel_Handle_Record'Class;
+      Result      : in out Unbounded_String;
       Text        : String;
       Entity_Line : Natural) is abstract;
    --  Terminate processing of a block of code which has been analysed
    --  by Parse_Entities + Callback + Format_xxx
 
-   function Get_Extension
-     (B : access Backend) return String is abstract;
-   --  Return the extension of doc files (eg. ".htm" for an instance of
-   --  object Backend_HTML).
+   function Get_Extension (B : access Backend'Class) return String;
+   --  Returns the extension of the doc files generated by the backend
 
    function Get_Doc_Directory
      (B      : access Backend;
@@ -463,24 +473,24 @@ package Docgen.Backend is
    --  in a string.
 
    procedure Format_All_Link
-     (B                   : access Backend'Class;
-      List_Ref_In_File    : in out List_Reference_In_File.List;
-      Start_Index         : Natural;
-      Start_Line          : Natural;
-      Start_Column        : Natural;
-      End_Index           : Natural;
-      Kernel              : access Kernel_Handle_Record'Class;
-      File                : File_Descriptor;
-      Text                : String;
-      File_Name           : VFS.Virtual_File;
-      Entity_Line         : Natural;
-      Line_In_Body        : in out Natural;
-      Source_File_List    : Type_Source_File_Table.HTable;
-      Link_All            : Boolean;
-      Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Level               : Natural;
-      Indent              : Natural);
+     (B                : access Backend'Class;
+      Kernel           : access Kernel_Handle_Record'Class;
+      Result           : in out Unbounded_String;
+      List_Ref_In_File : in out List_Reference_In_File.List;
+      Start_Index      : Natural;
+      Start_Line       : Natural;
+      Start_Column     : Natural;
+      End_Index        : Natural;
+      Text             : String;
+      File_Name        : VFS.Virtual_File;
+      Entity_Line      : Natural;
+      Line_In_Body     : in out Natural;
+      Source_File_List : Type_Source_File_Table.HTable;
+      Link_All         : Boolean;
+      Is_Body          : Boolean;
+      Process_Body     : Boolean;
+      Level            : Natural;
+      Indent           : Natural);
    --  This procedure is used by formats of documentation like html to
    --  create links for each entity of the file File_Name on their
    --  own declaration. It's called by the method Format_Identifier of
@@ -492,7 +502,9 @@ package Docgen.Backend is
 
 private
 
-   type Backend is abstract tagged record
+   type Backend
+     (Output_Description : Output_Description_Access)
+   is abstract tagged record
       Indent     : Natural := 3;
       --  Number of space which correspond to one step of indentation
       --  ??? Use Get_Pref instead
