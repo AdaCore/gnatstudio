@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                        Copyright (C) 2001-2003                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -22,6 +22,7 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Gtk.Label;                 use Gtk.Label;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtkada.File_Selector;      use Gtkada.File_Selector;
@@ -55,6 +56,11 @@ package body Vdiff_Module is
    procedure On_Compare_Two_Files
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for Tools->Compare->Two Files...
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Return the default context factory for Vdiff widgets.
 
    --------------------------
    -- On_Compare_Two_Files --
@@ -253,6 +259,48 @@ package body Vdiff_Module is
    end Mime_Action;
 
    ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      Vdiff   : constant Vdiff_Access := Vdiff_Access (Child);
+      Context : File_Selection_Context_Access;
+   begin
+      if Vdiff = null then
+         return null;
+      end if;
+
+      declare
+         Label_1 : constant String := Get_Text (Vdiff.File_Label1);
+         Label_2 : constant String := Get_Text (Vdiff.File_Label2);
+      begin
+         Context := new File_Selection_Context;
+
+         Set_Context_Information
+           (Context => Context,
+            Kernel  => Kernel,
+            Creator => Vdiff_Module_ID);
+
+         if Is_Regular_File (Label_1) then
+            Set_File_Information
+              (Context,
+               Directory => Dir_Name (Label_1),
+               File_Name => Base_Name (Label_1));
+         elsif Is_Regular_File (Label_2) then
+            Set_File_Information
+              (Context,
+               Directory => Dir_Name (Label_2),
+               File_Name => Base_Name (Label_2));
+         end if;
+
+         return Selection_Context_Access (Context);
+      end;
+   end Default_Factory;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -262,11 +310,12 @@ package body Vdiff_Module is
       Tools : constant String := '/' & (-"Tools") & '/' & (-"Compare") & '/';
    begin
       Register_Module
-        (Module       => Vdiff_Module_ID,
-         Kernel       => Kernel,
-         Module_Name  => Vdiff_Module_Name,
-         Priority     => Default_Priority,
-         Mime_Handler => Mime_Action'Access);
+        (Module                  => Vdiff_Module_ID,
+         Kernel                  => Kernel,
+         Module_Name             => Vdiff_Module_Name,
+         Priority                => Default_Priority,
+         Mime_Handler            => Mime_Action'Access,
+         Default_Context_Factory => Default_Factory'Access);
       Register_Menu
         (Kernel, Tools, -"Two Files...", "", On_Compare_Two_Files'Access);
    end Register_Module;
