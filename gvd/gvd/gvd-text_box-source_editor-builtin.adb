@@ -164,6 +164,11 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       Br     : Contextual_Data_Record);
    --  Callback for the "print" contextual menu item.
 
+   procedure Print_Dereferenced_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record);
+   --  Callback for the "print <variable>.all" contextual menu item.
+
    procedure Graph_Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
@@ -462,6 +467,24 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Set_State (Mitem, State_Insensitive);
       end if;
 
+      declare
+         Dereferenced_Name : constant String :=
+           Dereference_Name (Get_Language (Data.Process.Debugger),
+                             Name => Entity);
+      begin
+         Gtk_New (Mitem, Label => -"Print " & Dereferenced_Name);
+      end;
+      Append (Source.Editor.Contextual_Menu, Mitem);
+      Widget_Breakpoint_Handler.Connect
+        (Mitem, "activate",
+         Widget_Breakpoint_Handler.To_Marshaller
+           (Print_Dereferenced_Variable'Access),
+         Data);
+
+      if Entity'Length = 0 then
+         Set_State (Mitem, State_Insensitive);
+      end if;
+
       Gtk_New (Mitem, Label => -"Display " & Entity);
       Append (Source.Editor.Contextual_Menu, Mitem);
       Data.Auto_Refresh := True;
@@ -484,6 +507,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       if Entity'Length = 0 then
          Set_State (Mitem, State_Insensitive);
       end if;
+
       --  Display a separator
 
       Gtk_New (Mitem);
@@ -1118,6 +1142,24 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Print_Value (Br.Process.Debugger, Br.Name);
       end if;
    end Print_Variable;
+
+   ---------------------------------
+   -- Print_Dereferenced_Variable --
+   ---------------------------------
+
+   procedure Print_Dereferenced_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record) is
+   begin
+      if not Register_Post_Cmd_If_Needed
+               (Get_Process (Br.Process.Debugger), Widget,
+                Print_Dereferenced_Variable'Access, Br)
+      then
+         Print_Value
+           (Br.Process.Debugger,
+            Dereference_Name (Get_Language (Br.Process.Debugger), Br.Name));
+      end if;
+   end Print_Dereferenced_Variable;
 
    --------------------------
    -- Graph_Print_Variable --
