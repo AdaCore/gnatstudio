@@ -213,6 +213,7 @@ package body Builder_Module is
    exception
       when Invalid_Process =>
          Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+         Pop_State (Kernel);
          Free (Args);
          Free (Fd);
 
@@ -274,6 +275,7 @@ package body Builder_Module is
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Pop_State (Kernel);
             Free (Args);
             Free (Fd);
       end;
@@ -357,6 +359,7 @@ package body Builder_Module is
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Pop_State (Kernel);
             Free (Args);
             Free (Fd);
       end;
@@ -412,6 +415,7 @@ package body Builder_Module is
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command.", False, Mode => Error);
+            Pop_State (Kernel);
             Free (Args);
             Free (Fd);
       end;
