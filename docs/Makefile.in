@@ -2,7 +2,6 @@ prefix = @prefix@
 docdir = $(prefix)/doc/gps
 sharedir = $(prefix)/share/gps
 
-DVIPS= @DVIPS@
 MAKEINFO= @MAKEINFO@
 TEXI2DVI= @TEXI2DVI@
 MKDIR = mkdir -p
@@ -15,8 +14,8 @@ IMAGES = gps_title.jpg *.gif
 TEXI2HTML_FLAGS=-split_chapter -menu
 TEXI=gps.texi ../gvd/docs/gvd_contents.texi
 
-all: cp_gvd stamp-eps doc tutorial gps_pg clean-temp-files
-distrib: cp_gvd stamp-eps doc tutorial clean-temp-files
+all: cp_gvd stamp-pdf doc tutorial gps_pg clean-temp-files
+distrib: cp_gvd stamp-pdf doc tutorial clean-temp-files
 non-ps: common clean-temp-files
 static:
 
@@ -27,49 +26,33 @@ cp_gvd:
 	  $(CP) ../gvd/docs/$${img}.gif .; \
 	done
 
-stamp-eps: $(IMAGES)
-	@echo "Converting images to Encapsulated postscript"
+stamp-pdf: $(IMAGES)
+	@echo "Converting images to PDF"
 	@-for img in [^g]*.gif; do \
-	  $(CONVERT) $${img} `basename $${img} .gif`.eps; \
+	  $(CONVERT) $${img} `basename $${img} .gif`.pdf; \
 	done
-	touch stamp-eps
+	touch stamp-pdf
 
 tutorial: gps-tutorial.html
-doc:      gps.txt gps.html gps.info gps.ps
-gps_pg:   gps_pg.ps gps_pg.html
+doc:      gps.txt gps.html gps.pdf
+gps_pg:   gps_pg.pdf gps_pg.html
 
 gps-tutorial.html:                tutorial.texi
 	perl ./texi2html -out_file $@ $< -menu
 
-gps_pg.html gps_pg.ps:            gps_pg.texi
-gps.html gps.ps gps.info gps.txt: ${TEXI}
+gps_pg.html gps_pg.pdf:            gps_pg.texi
+gps.html gps.pdf gps.txt: ${TEXI}
 
 %.html::
 	perl ./texi2html $< ${TEXI2HTML_FLAGS}
 
-%.ps::
+%.pdf::
 ifneq (${TEXI2DVI},)
-	echo x | ${TEXI2DVI} $<
-ifneq (${DVIPS},)
-	${DVIPS} ${<:.texi=.dvi} -o $@
+	echo x | ${TEXI2DVI} -p $<
 else
-	@echo "------------------------------------------------------"
-	@echo "dvips not found, cannot build POSTSCRIPT documentation"
-	@echo "------------------------------------------------------"
-endif
-else
-	@echo "--------------------------------------------------------"
-	@echo "texi2dvi not found, cannot build DVI or PS documentation"
-	@echo "--------------------------------------------------------"
-endif
-
-%.info: ${TEXI}
-ifneq (${MAKEINFO},)
-	${MAKEINFO} --force -o $@ $<
-else
-	@echo "----------------------------------------------------"
-	@echo "makeinfo not found, cannot build INFO documentation"
-	@echo "----------------------------------------------------"
+	@echo "--------------------------------------------------"
+	@echo "texi2dvi not found, cannot build PDF documentation"
+	@echo "--------------------------------------------------"
 endif
 
 %.txt: ${TEXI}
@@ -86,8 +69,7 @@ install:
 	$(MKDIR) $(docdir)
 	$(MKDIR) $(sharedir)
 	$(MKDIR) $(docdir)/html
-	$(MKDIR) $(docdir)/info
-	$(MKDIR) $(docdir)/ps
+	$(MKDIR) $(docdir)/pdf
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) gps-welcome.html $(docdir)/html
 	-$(INSTALL_DATA) gps-tutorial.html $(docdir)/html
@@ -95,10 +77,7 @@ install:
 	  $(INSTALL_DATA) $$file $(docdir)/html; \
 	done
 	-cd ../design; ./convert.pl > $(docdir)/html/TODO.html
-	-for file in $(wildcard gps.info*); do \
-	  $(INSTALL_DATA) $$file $(docdir)/info; \
-	done
-	-$(INSTALL_DATA) gps.ps  $(docdir)/ps
+	-$(INSTALL_DATA) gps.pdf  $(docdir)/pdf
 	-$(INSTALL_DATA) gps.txt  $(docdir)/txt
 	-for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir)/html; \
@@ -112,7 +91,6 @@ clean-temp-files:
 	-$(RM) *.aux
 	-$(RM) *.cp
 	-$(RM) *.cps
-	-$(RM) *.dvi
 	-$(RM) *.fn
 	-$(RM) *.ky
 	-$(RM) *.log
@@ -122,8 +100,7 @@ clean-temp-files:
 	-$(RM) *.vr
 
 clean: clean-temp-files
-	-$(RM) gps.info*
-	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.ps gps.txt stamp-*
+	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.pdf gps.txt stamp-*
 
 mostlyclean: clean
 
