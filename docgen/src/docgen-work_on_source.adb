@@ -1259,8 +1259,7 @@ package body Docgen.Work_On_Source is
       Description := new String'
         (Text (Line_Start (Text, Start_Line) .. Line_End (Text, End_Line)));
 
-      Doc_Subtitle
-        (B, Kernel, Result, Level, Subtitle_Name => "Description");
+      Doc_Subtitle (B, Kernel, Result, Level, Subtitle_Name => "Description");
 
       Doc_Package_Desc
         (B, Kernel, Result, Level, Description => Description.all);

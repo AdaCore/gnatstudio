@@ -284,7 +284,7 @@ package Docgen.Backend.Text is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  Generate a comment in Text format.
+   --  Generate a comment in Text format
 
    procedure Format_Keyword
      (B           : access Backend;
@@ -296,7 +296,7 @@ package Docgen.Backend.Text is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  Generate a keyword in Text format.
+   --  Generate a keyword in Text format
 
    procedure Format_String
      (B           : access Backend;
@@ -308,7 +308,7 @@ package Docgen.Backend.Text is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  Generate a string (between two ") in Text format.
+   --  Generate a string (between two ") in Text format
 
    procedure Format_Character
      (B           : access Backend;
@@ -320,7 +320,7 @@ package Docgen.Backend.Text is
       End_Index   : Natural;
       End_Line    : Natural;
       Entity_Line : Natural);
-   --  Generate a character (between two ') in Text format.
+   --  Generate a character (between two ') in Text format
 
    procedure Format_Identifier
      (B                : access Backend;
@@ -342,7 +342,7 @@ package Docgen.Backend.Text is
       Process_Body     : Boolean;
       Level            : Natural;
       Indent           : Natural);
-   --  Generate an identifier in Text format.
+   --  Generate an identifier in Text format
 
    procedure Format_Link
      (B                : access Backend;
@@ -364,7 +364,7 @@ package Docgen.Backend.Text is
       Loc_Start        : Natural;
       Entity_Info      : Entity_Information;
       Entity_Abstract  : in out Boolean);
-   --  Generate a link for the element Entity_Info on its declaration.
+   --  Generate a link for the element Entity_Info on its declaration
 
    procedure Finish
      (B           : access Backend;

@@ -67,7 +67,7 @@ package Docgen.Backend is
      (B      : access Backend;
       Kernel : access Kernel_Handle_Record'Class;
       Result : in out Unbounded_String) is abstract;
-   --  Called when we finished processing an entity.
+   --  Called when we finished processing an entity
 
    procedure Doc_Subtitle
      (B             : access Backend;

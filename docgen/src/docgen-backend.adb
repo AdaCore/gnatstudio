@@ -405,8 +405,8 @@ package body Docgen.Backend is
       for J in 1 ..
         1 + Count_Points (Text (Start_Index .. End_Index))
       loop
-         Point_In_Column :=
-           Index (Text (Loc_Start .. End_Index), ".");
+         Point_In_Column := Index (Text (Loc_Start .. End_Index), ".");
+
          if Point_In_Column > 0 then
             Loc_End := Point_In_Column - 1;
          else
@@ -416,7 +416,7 @@ package body Docgen.Backend is
          --  We search the declaration of the entity
          --  (which is an identifier)
 
-         Entity_Abstract := False;
+         Entity_Abstract    := False;
          Ref_List_Info      := List_Reference_In_File.First (List_Ref_In_File);
          Ref_List_Info_Prec := List_Reference_In_File.Null_Node;
 
