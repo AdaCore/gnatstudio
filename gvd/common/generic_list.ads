@@ -84,6 +84,17 @@ package Generic_List is
    --  will share the same nodes.
    --  If Node is Null_Node, L2 is inserted at the beginning of L1.
 
+   procedure Remove_Nodes
+     (L1         : in out List;
+      Start_Node : List_Node;
+      End_Node   : List_Node := Null_Node);
+   --  Remove all the nodes in L1, from Start_Node (NOT included) to
+   --  End_Node (Included).
+   --  If End_Node is not a valid node or is before Start_Node,
+   --  all the nodes after Start_Node will be removed from the list.
+   --  If First_Node is Null_Node, then the nodes are removed from the
+   --  beginning of the list.
+
    procedure Free (L : in out List);
    --  Free memory associated to L.
 

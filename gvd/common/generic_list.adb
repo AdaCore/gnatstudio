@@ -146,6 +146,53 @@ package body Generic_List is
       end if;
    end Concat;
 
+   ------------------
+   -- Remove_Nodes --
+   ------------------
+
+   procedure Remove_Nodes
+     (L1         : in out List;
+      Start_Node : List_Node;
+      End_Node   : List_Node := Null_Node)
+   is
+      Next_Node : List_Node;
+      Current   : List_Node;
+      Next_End  : List_Node := Null_Node;
+   begin
+      if Start_Node = Null_Node then
+         while First (L1) /= End_Node
+           and then not Is_Empty (L1)
+         loop
+            Next (L1);
+         end loop;
+
+         return;
+      end if;
+
+      if End_Node /= Null_Node then
+         Next_End := Next (End_Node);
+      end if;
+
+      Next_Node := Next (Start_Node);
+
+      while Next_Node /= Null_Node
+        and then Next_Node /= End_Node
+      loop
+         Current := Next_Node;
+         Next_Node := Next (Next_Node);
+
+         Free_Element (Current.Element);
+         Free_Node (Current);
+      end loop;
+
+      if Next_Node = Null_Node then
+         L1.Last := Start_Node;
+         Start_Node.Next := null;
+      else
+         Start_Node.Next := Next_End;
+      end if;
+   end Remove_Nodes;
+
    ------------
    -- Insert --
    ------------
