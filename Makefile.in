@@ -25,6 +25,8 @@ install-common:
 	$(INSTALL_DATA) share/ada_support.xml $(sharedir)/gps/customize
 	$(INSTALL_DATA) share/c_support.xml $(sharedir)/gps/customize
 	$(INSTALL_DATA) share/gpr.xml $(sharedir)/gps/customize
+	$(INSTALL_DATA) share/gnatstub.xml $(sharedir)/gps/customize
+	$(INSTALL_DATA) share/gnatpp.xml $(sharedir)/gps/customize
 	$(MAKE) -C docs install
 
 install: install-common
