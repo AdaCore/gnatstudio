@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -211,20 +211,14 @@ package body Src_Editor_Buffer is
    is
       Mark : constant Gtk_Text_Mark :=
         Get_Text_Mark (Glib.Values.Nth (Params, 2));
+      Line : Gint;
+      Col  : Gint;
    begin
       --  Emit the new cursor position if it is the Insert_Mark that was
       --  changed.
       if Get_Object (Mark) /= Get_Object (Buffer.Insert_Mark) then
-         declare
-            Iter : Gtk_Text_Iter;
-            Line : Gint;
-            Col  : Gint;
-         begin
-            Get_Text_Iter (Glib.Values.Nth (Params, 1), Iter);
-            Line := Get_Line (Iter);
-            Col := Get_Line_Offset (Iter);
-            Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
-         end;
+         Get_Cursor_Position (Buffer, Line, Col);
+         Emit_New_Cursor_Position (Buffer, Line => Line, Column => Col);
       end if;
    end Mark_Set_Handler;
 
