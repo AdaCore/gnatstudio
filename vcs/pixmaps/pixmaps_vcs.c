@@ -1,6 +1,6 @@
-#include "unknown_xpm"
+#include "unknown_file_xpm"
 #include "modified_xpm"
-#include "test_xpm"
 #include "up_to_date_xpm"
 #include "needs_merge_xpm"
 #include "needs_update_xpm"
+#include "not_registered_xpm"
