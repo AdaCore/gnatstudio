@@ -4112,7 +4112,7 @@ Recompute the cross-reference information for C and C++ source files.
    When using an external terminal, GPS launches an external terminal
    utility that will take care of the execution and input/output of your
    application. This external utility can be configured in the preferences
-   dialog (@i{Helpers->Execute command}).
+   dialog (@i{External Commands->Execute command}).
 
    Similarly, the @code{Run} contextual menu accessible from a project
    entity contains the same entries.
@@ -7099,8 +7099,9 @@ Color used for selected items.
 
 @end table
 
-@item @b{Helpers}
+@item @b{External Commands}
 @cindex helper
+@cindex external commands
 @table @i
 @item List processes
 Command used to list processes running on the machine.
