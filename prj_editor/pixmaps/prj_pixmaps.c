@@ -2,3 +2,5 @@
 #include "delete_var_xpm"
 #include "project_closed_xpm"
 #include "project_xpm"
+#include "project_modified_xpm"
+#include "mini-folder_object_xpm"
