@@ -1,5 +1,15 @@
 Known Problems fixed in GPS 1.4.0
 
+- Messages window not raised when initial project has errors
+  Problem:    If you load from the command line a project file that contains
+              errors, the Messages window is not raised to make them visible.
+  Workaround: Switch to the Messages window manually
+
+- Saving project with languages other than Ada doesn't always generate Makefile
+  Problem:    If a project is importing another project that has languages
+              other than Ada, no Makefile is generated for the project.
+  Workaround: run gpr2make by hand
+
 - A project with no source files couldn't be open in the Project View
   Problem:    If source directories were defined for the project, but no
               source file was found in them, the source directories couldn't
