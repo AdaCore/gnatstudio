@@ -232,7 +232,6 @@ package body Glide_Main_Window is
         (Get_MDI (Kernel),
          Opaque_Resize     => Get_Pref (Kernel, MDI_Opaque),
          Opaque_Move       => Get_Pref (Kernel, MDI_Opaque),
-         Opaque_Docks      => Get_Pref (Kernel, MDI_Opaque),
          Close_Floating_Is_Unfloat =>
            not Get_Pref (Kernel, MDI_Destroy_Floats),
          Title_Font        => Get_Pref (Kernel, Default_Font),
