@@ -51,7 +51,9 @@ package body Src_Info.ALI is
    --  be propagated outside of this package.
 
    procedure Destroy (T : in out Sdep_To_Sfile_Table);
+   pragma Warnings (Off, Destroy);
    --  Free the memory allocated for the given table.
+   --  ??? Not used for now
 
    function Char_To_E_Kind (C : Character) return E_Kind;
    --  Translate the given character into the associated E_Kind value.
