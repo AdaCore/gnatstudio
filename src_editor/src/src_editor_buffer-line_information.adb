@@ -1193,7 +1193,7 @@ package body Src_Editor_Buffer.Line_Information is
          return;
       end if;
 
-      for J in Start_Line + 1 .. Buffer_Lines'Last - Number loop
+      for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
          Buffer_Lines (J) := Buffer_Lines (J + Number);
 
          if Buffer.Modifying_Editable_Lines then
@@ -1209,7 +1209,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       --  Reset bottom lines
 
-      for J in Buffer_Lines'Last + Start_Line - End_Line + 1
+      for J in Buffer_Lines'Last - Number
         .. Buffer_Lines'Last
       loop
          if Buffer_Lines (J).Editable_Line /= 0 then
@@ -1237,11 +1237,8 @@ package body Src_Editor_Buffer.Line_Information is
    is
       Iter     : Gtk_Text_Iter;
       End_Iter : Gtk_Text_Iter;
-      Success  : Boolean;
       Buffer_Line_At_Blanks  : Buffer_Line_Type;
       Buffer_Lines   : Line_Data_Array_Access renames Buffer.Line_Data;
-      Editable_Line_After_Blanks  : Editable_Line_Type;
-      Editable_Line_Before_Blanks : Editable_Line_Type;
 
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
@@ -1253,19 +1250,25 @@ package body Src_Editor_Buffer.Line_Information is
       Buffer_Line : Buffer_Line_Type;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
-      Backward_Char (Iter, Success);
 
-      --  Compute the real number of blan lines.
+      --  Compute the real number of blank lines.
 
       Get_Iter_At_Line (Buffer, End_Iter, Get_Line (Iter));
       Buffer_Line_At_Blanks := Buffer_Line_Type (Get_Line (Iter)) + 1;
 
-      Buffer_Line := Buffer_Line_At_Blanks + 1;
+      Buffer_Line := Buffer_Line_At_Blanks;
 
-      while Result and then Buffer_Lines (Buffer_Line).Editable_Line = 0 loop
+      while Result loop
          Forward_Line (End_Iter, Result);
          Buffer_Line := Buffer_Line + 1;
+         exit when Buffer_Lines (Buffer_Line).Editable_Line /= 0;
       end loop;
+
+      Trace (Me, Gint'Image (Get_Line (Iter))
+             & Gint'Image (Get_Line_Offset (Iter)));
+
+      Trace (Me, Gint'Image (Get_Line (End_Iter))
+             & Gint'Image (Get_Line_Offset (End_Iter)));
 
       Real_Number := Buffer_Line - Buffer_Line_At_Blanks;
 
@@ -1273,27 +1276,13 @@ package body Src_Editor_Buffer.Line_Information is
          Real_Number := Buffer_Line_Type (Number);
       end if;
 
-      --  Find the first editable line after the blanks.
-
-      for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
-         Editable_Line_After_Blanks := Get_Editable_Line (Buffer, J);
-         exit when Editable_Line_After_Blanks /= 0;
-      end loop;
-
-      --  Find the first editable line before the blanks.
-
-      for J in reverse Buffer_Lines'First .. Buffer_Line_At_Blanks loop
-         Editable_Line_Before_Blanks := Get_Editable_Line (Buffer, J);
-         exit when Editable_Line_Before_Blanks /= 0;
-      end loop;
-
       Buffer.Modifying_Editable_Lines := False;
       Buffer.Inserting := True;
       Delete (Buffer, Iter, End_Iter);
       Buffer.Inserting := False;
       Buffer.Modifying_Editable_Lines := True;
 
-      for J in Buffer_Line_At_Blanks + 1 .. Buffer_Lines'Last loop
+      for J in Buffer_Line_At_Blanks .. Buffer_Lines'Last loop
          if Buffer_Lines (J).Editable_Line /= 0 then
             Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line :=
               Editable_Lines (Buffer_Lines (J).Editable_Line).Buffer_Line
