@@ -39,7 +39,8 @@ with Types;                    use Types;
 
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
-with Glide_Main_Window;        use Glide_Main_Window;
+with Glide_Result_View;        use Glide_Result_View;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 
 package body Glide_Kernel.Project is
 
@@ -220,7 +221,7 @@ package body Glide_Kernel.Project is
 
       --  Compute the project
 
-      Project_Changed (Kernel);
+      Run_Hook (Kernel, Project_Changed_Hook);
       Recompute_View (Kernel);
 
       --  Reload the default desktop
@@ -229,8 +230,6 @@ package body Glide_Kernel.Project is
          Close_All_Children (Kernel);
          Had_Project_Desktop := Load_Desktop (Kernel);
       end if;
-
-      Reset_Title (Glide_Window (Kernel.Main_Window));
    end Load_Default_Project;
 
    ------------------
@@ -284,14 +283,13 @@ package body Glide_Kernel.Project is
             return;
          end if;
 
-         Project_Changed (Kernel);
+         Run_Hook (Kernel, Project_Changed_Hook);
          Recompute_View (Kernel);
 
          --  Reload the desktop, in case there is a project-specific setup
          --  already
          if not Same_Project then
             Had_Project_Desktop := Load_Desktop (Kernel);
-            Reset_Title (Glide_Window (Kernel.Main_Window));
          end if;
 
       elsif not Same_Project then
@@ -327,7 +325,7 @@ package body Glide_Kernel.Project is
    begin
       Recompute_View (Handle.Registry.all, Report_Error'Unrestricted_Access);
       Compute_Predefined_Paths (Handle);
-      Project_View_Changed (Handle);
+      Run_Hook (Handle, Project_View_Changed_Hook);
    end Recompute_View;
 
    ---------------------------------
@@ -404,7 +402,7 @@ package body Glide_Kernel.Project is
       --  ??? Probably not very efficient, however.
 
       if Modified then
-         Project_View_Changed (Kernel);
+         Run_Hook (Kernel, Project_View_Changed_Hook);
       end if;
    end Save_Project;
 
