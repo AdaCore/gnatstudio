@@ -114,10 +114,12 @@ package Generic_List is
    function Next (Node : List_Node) return List_Node;
    --  Return the node following Node. The cost is O(1).
 
-   procedure Next (L : in out List);
+   procedure Next
+     (L         : in out List;
+      Free_Data : Boolean := True);
    --  Return the list following the first element.
    --  Raise List_Empty if L is empty.
-   --  The first element is removed from the list and freed.
+   --  If Free_Data is True, the first element is freed.
 
    function Head (L : List) return Data_Type;
    --  Return the first data associated with L.

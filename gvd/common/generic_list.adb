@@ -382,7 +382,10 @@ package body Generic_List is
       end if;
    end Next;
 
-   procedure Next (L : in out List) is
+   procedure Next
+     (L         : in out List;
+      Free_Data : Boolean := True)
+   is
       First : List_Node;
    begin
       if L.First = null or else L.First.all = null then
@@ -395,7 +398,9 @@ package body Generic_List is
             L.Last.all := null;
          end if;
 
-         if First.Element /= null then
+         if Free_Data
+           and then First.Element /= null
+         then
             Free (First.Element.all);
          end if;
 
