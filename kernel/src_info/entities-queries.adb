@@ -843,10 +843,12 @@ package body Entities.Queries is
       Count     : Natural;
       pragma Unreferenced (Count);
    begin
---        Trace (Me, "Find_Ancestor_Dependencies: "
---               & Full_Name (Get_Filename (File)).all
---               & " Self=" & Boolean'Image (Include_Self)
---               & " Single=" & Boolean'Image (Single_Source_File));
+      if Active (Me) then
+         Trace (Me, "Find_Ancestor_Dependencies: "
+                & Full_Name (Get_Filename (File)).all
+                & " Self=" & Boolean'Image (Include_Self)
+                & " Single=" & Boolean'Image (Single_Source_File));
+      end if;
 
       Update_Xref (File, File_Has_No_LI_Report);
 
