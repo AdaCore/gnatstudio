@@ -1573,6 +1573,51 @@ package body Prj_API is
         (Project, Pkg, Scenario_Variables, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
 
+   ----------------------
+   -- Delete_Attribute --
+   ----------------------
+
+   procedure Delete_Attribute
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String;
+      Attribute_Index    : Types.String_Id := Types.No_String)
+   is
+      Attribute_N : Name_Id;
+      Pkg : Project_Node_Id;
+
+      procedure Delete_Attr (Case_Item : Project_Node_Id);
+      --  Remove all definitions for the attribute in the case item
+
+      -----------------
+      -- Delete_Attr --
+      -----------------
+
+      procedure Delete_Attr (Case_Item : Project_Node_Id) is
+      begin
+         Remove_Attribute_Declarations
+           (Case_Item, Attribute_N, Attribute_Index);
+      end Delete_Attr;
+
+   begin
+      Name_Len := Attribute_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Attribute_Name;
+      Attribute_N := Name_Find;
+
+      Move_From_Common_To_Case_Construct
+        (Project, Pkg_Name, Scenario_Variables, Attribute_N, Attribute_Index);
+
+      if Pkg_Name /= "" then
+         Pkg := Get_Or_Create_Package (Project, Pkg_Name);
+      else
+         Pkg := Empty_Node;
+      end if;
+
+      For_Each_Scenario_Case_Item
+        (Project, Pkg, Scenario_Variables, Delete_Attr'Unrestricted_Access);
+   end Delete_Attribute;
+
    ---------------------------------
    -- Get_Unit_Part_From_Filename --
    ---------------------------------

@@ -174,6 +174,16 @@ package Prj_API is
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
 
+   procedure Delete_Attribute
+     (Project            : Project_Node_Id;
+      Pkg_Name           : String := "";
+      Scenario_Variables : Project_Node_Array;
+      Attribute_Name     : String;
+      Attribute_Index    : Types.String_Id := Types.No_String);
+   --  Remove all declarations for the attribute Attribute_Name in the current
+   --  scenario. This effectively reverses to the default behavior for the
+   --  attribute.
+
    function Create_Variable_Reference (Var : Project_Node_Id)
       return Project_Node_Id;
    --  Create and return a reference to the variable Var.
