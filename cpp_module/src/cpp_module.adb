@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib.Object;             use Glib.Object;
+with Glib.Xml_Int;            use Glib.Xml_Int;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
@@ -34,10 +35,10 @@ with Glide_Intl;              use Glide_Intl;
 with Projects;                use Projects;
 with Projects.Editor;         use Projects.Editor;
 with Ada.Exceptions;          use Ada.Exceptions;
-with Vsearch_Ext;             use Vsearch_Ext;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Glide_Kernel.Custom;      use Glide_Kernel.Custom;
 with Glib.Object;              use Glib, Glib.Object;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
@@ -440,66 +441,70 @@ package body Cpp_Module is
          Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cpp");
 
-      Register_Search_Pattern
+      Add_Customization_String
         (Kernel,
-         "->MEMBER",
-         "->\s*(\w+)\s*[^(]");
+         "<vsearch-pattern>"
+         & "<name>" & Protect ("C: ->MEMBER") & "</name>"
+         & "<regexp>" & Protect ("\s*(\w+)\s*[^(]")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "->MEMBER(",
-         "->\s*(\w+)\s*(");
+         & "<vsearch-pattern>"
+         & "<name>" & Protect ("C: ->MEMBER(") & "</name>"
+         & "<regexp>" & Protect ("->\s*(\w+)\s*(")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "C assignment",
-         "(\b(\w+)\s*(([-+*/%&|^]|<<|>>)?=[^=]|\+\+|--))|((\+\+|--)\s*(\w+))");
+         & "<vsearch-pattern>"
+         & "<name>C assignment</name>"
+         & "<regexp>"
+         & Protect ("(\b(\w+)\s*(([-+*/%&|^]|<<|>>)?=[^=]|\+\+|--))|"
+                    & "((\+\+|--)\s*(\w+))")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "call",
-         "\b(\w+)\s*(");
+         & "<vsearch-pattern>"
+         & "<name>C call</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*(")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "CLASS::member",
-         "\b(\w+)\s*::\s*\w+\s*[^(]");
+         & "<vsearch-pattern>"
+         & "<name>C++ CLASS::member</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*::\s*\w+\s*[^(]")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "class::MEMBER",
-         "\b\w+\s*::\s*(\w+)\s*[^(]");
+         & "<vsearch-pattern>"
+         & "<name>C++ class::MEMBER</name>"
+         & "<regexp>" & Protect ("\b\w+\s*::\s*(\w+)\s*[^(]")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "CLASS::member(",
-         "\b(\w+)\s*::\s*\w+\s*\(");
+         & "<vsearch-pattern>"
+         & "<name>C++ CLASS::member(</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*::\s*\w+\s*\(")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "class::MEMBER(",
-         "\b\w+\s*::\s*(\w+)\s*\(");
+         & "<vsearch-pattern>"
+         & "<name>C++ class::MEMBER(</name>"
+         & "<regexp>" & Protect ("\b\w+\s*::\s*(\w+)\s*\(")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "CLASS<...>",
-         "\b(\w+)<[\w,\s]+>");
+         & "<vsearch-pattern>"
+         & "<name>" & Protect ("C++ CLASS<...>") & "</name>"
+         & "<regexp>" & Protect ("\b(\w+)<[\w,\s]+>")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "comparison",
-         "\b(\w+)\s*(==|!=|>=|<=|>[^>]|<[^<])|" &
-         "(==|!=|[^>]>=|[^<]<=|[^->]>|[^<]<)\s*(\w+)");
+         & "<vsearch-pattern>"
+         & "<name>C comparison</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*(==|!=|>=|<=|>[^>]|<[^<])|" &
+                                 "(==|!=|[^>]>=|[^<]<=|[^->]>|[^<]<)\s*(\w+)")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "OBJECT->member",
-         "\b(\w+)\s*->\s*\w+\s*[^(]");
+         & "<vsearch-pattern>"
+         & "<name>" & Protect ("C++ OBJECT->member") & "</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*->\s*\w+\s*[^(]")
+         & "</regexp></vsearch-pattern>"
 
-      Register_Search_Pattern
-        (Kernel,
-         "OBJECT->member(",
-         "\b(\w+)\s*->\s*\w+\s*\(");
+         & "<vsearch-pattern>"
+         & "<name>" & Protect ("C++ OBJECT->member(") & "</name>"
+         & "<regexp>" & Protect ("\b(\w+)\s*->\s*\w+\s*\(")
+         & "</regexp></vsearch-pattern>");
 
       C_Automatic_Indentation := Param_Spec_Enum
         (Indentation_Properties.Gnew_Enum
