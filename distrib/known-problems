@@ -9,21 +9,3 @@ Known Problems fixed in GPS 1.0.1
               around, but always modify all the possible values in the project
               properties editor.
 
-Known Problems fixed in GPS 1.0.0
-
-- Tooltip displayed outside the source editor
-  Problem:    When an editor has the focus, a tooltip may be displayed, even
-              if the mouse is outside the editor area.
-  Workaround: Click on another window or move the mouse to make the tooltip
-              disappear
-
-- Cursor no longer hidden under Windows
-  Problem:    Under Windows, the mouse cursor sometimes disappears (e.g in the
-              help window).
-  Workaround: Moving the mouse will make it reappear.
-
-- IDE project attributes not taken into account
-  Problem:    When setting values for the compiler or debugger, GPS will not
-              take them into account when building or debugging.
-  Workaround: Use a wrapper script called gnatmake (or gdb) that calls the
-              proper tool (e.g powerpc-wrs-vxworks-gnatmake).
