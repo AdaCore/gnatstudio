@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                   Copyright (C) 2003 - 2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -20,6 +20,7 @@
 
 with Gdk.Event;   use Gdk.Event;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Commands.Interactive is
 
@@ -82,7 +83,20 @@ package body Commands.Interactive is
      (Command : access Interactive_Command_Proxy) return Command_Return_Type
    is
    begin
-      return Execute (Command.Command, Command.Context);
+      if Command.Context.Dir = null then
+         return Execute (Command.Command, Command.Context);
+      else
+         declare
+            Old_Dir : constant Dir_Name_Str := Get_Current_Dir;
+            Result  : Command_Return_Type;
+         begin
+            Change_Dir (Command.Context.Dir.all);
+            Result := Execute (Command.Command, Command.Context);
+            Change_Dir (Old_Dir);
+
+            return Result;
+         end;
+      end if;
    end Execute;
 
    ----------
@@ -105,6 +119,8 @@ package body Commands.Interactive is
 
          Free (X.Args);
       end if;
+
+      Free (X.Dir);
    end Free;
 
 end Commands.Interactive;
