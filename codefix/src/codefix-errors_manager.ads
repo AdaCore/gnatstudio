@@ -14,11 +14,18 @@ package Codefix.Errors_Manager is
    type Errors_Interface is abstract tagged private;
    --  Type used to manage error messages send by the compilator.
 
-   procedure Get_Message
+   procedure Get_Direct_Message
      (This    : in out Errors_Interface;
       Current : out Error_Message)
-      is abstract;
-   --  Returns the next message to be analyzed.
+   is abstract;
+   --  Get a message without any modification of cols or lines numbers
+
+   procedure Get_Message
+     (This         : in out Errors_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Current      : out Error_Message);
+   --  Returns the next message to be analyzed, with the correct modifications.
+   --  (change the cols to be conformant with tabs).
 
    function No_More_Messages (This : Errors_Interface) return Boolean
       is abstract;
