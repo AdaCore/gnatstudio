@@ -28,6 +28,14 @@ GNAT_SOURCES= \
   lib.adb \
   lib-list.adb \
   lib-sort.adb \
+  mlib.ads \
+  mlib.adb \
+  mlib-tgt.ads \
+  mlib-tgt.adb \
+  mlib-utl.ads \
+  mlib-utl.adb \
+  mlib-fil.ads \
+  mlib-fil.adb \
   namet.ads \
   namet.adb \
   nlists.ads \
