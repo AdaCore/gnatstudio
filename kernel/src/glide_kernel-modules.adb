@@ -107,7 +107,8 @@ package body Glide_Kernel.Modules is
          Name            => Module_Name,
          Priority        => Priority,
          Initializer     => Initializer,
-         Contextual_Menu => Contextual_Menu_Handler);
+         Contextual_Menu => Contextual_Menu_Handler,
+         Was_Initialized => False);
    begin
       --  ??? Should check that the module isn't already in the list
       Module_List.Append (Global_Modules_List, ID);
