@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  This package implements a text area target to the display of source
+--  This package implements a text area target for the display of source
 --  code.
---  It knows how to highligh keywords, strings and commands, and how
+--  It knows how to highlight keywords, strings and commands, and how
 --  to display icons at the beginning of each line where a given function
 --  returns True.
 --  It also provides a source explorer that can quickly display and jump
@@ -116,16 +116,17 @@ package Odd.Code_Editors is
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
 
-   function Get_Process (Editor : access Code_Editor_Record'Class)
-                        return Gtk.Widget.Gtk_Widget;
+   function Get_Process
+     (Editor : access Code_Editor_Record'Class) return Gtk.Widget.Gtk_Widget;
    --  Return the process tab in which the editor is inserted.
 
-   function Get_Source (Editor : access Code_Editor_Record'Class)
-                       return Odd.Source_Editors.Source_Editor;
+   function Get_Source
+     (Editor : access Code_Editor_Record'Class)
+      return Odd.Source_Editors.Source_Editor;
    --  Return the widget used to display the source code
 
-   function Get_Current_File (Editor : access Code_Editor_Record)
-                             return String;
+   function Get_Current_File
+     (Editor : access Code_Editor_Record) return String;
    --  Return the name of the currently edited file.
    --  "" is returned if there is no current file.
 

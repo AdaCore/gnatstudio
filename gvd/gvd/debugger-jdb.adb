@@ -64,8 +64,9 @@ package body Debugger.Jdb is
    function Type_Of
      (Debugger : access Jdb_Debugger; Entity : String) return String
    is
-      S : String := Send (Debugger, "fields " & Entity);
+      S       : constant String := Send (Debugger, "fields " & Entity);
       Matches : Match_Array (0 .. 0);
+
    begin
       Match (Prompt_Regexp, S, Matches);
       return S (S'First .. Matches (0).First - 1);
@@ -81,10 +82,11 @@ package body Debugger.Jdb is
       Format   : Value_Format := Decimal) return String
    is
       Matches : Match_Array (0 .. 0);
-      S : String := Send (Debugger, "dump " & Entity);
-      Index : Natural := S'First;
+      S       : constant String := Send (Debugger, "dump " & Entity);
+      Index   : Natural := S'First;
    begin
       --  Skip the 'var =' part
+
       while Index <= S'Last
         and then S (Index) /= '='
       loop
@@ -222,6 +224,7 @@ package body Debugger.Jdb is
    -----------------
 
    In_Wait : Boolean := False;
+   --  ??? Temporary kludge to suppress when this unit is correctly implemented
 
    procedure Wait_Prompt (Debugger : access Jdb_Debugger) is
       Num     : Expect_Match;
@@ -729,8 +732,7 @@ package body Debugger.Jdb is
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
       null;
       --  ??? Enabling/disabling breakpoints will have to be emulated in jdb
@@ -743,8 +745,7 @@ package body Debugger.Jdb is
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
-      Display  : Boolean := False)
-   is
+      Display  : Boolean := False) is
    begin
       null;
    end Remove_Breakpoint;
@@ -759,9 +760,7 @@ package body Debugger.Jdb is
       Display         : Boolean := False;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Is_Internal     : Boolean := False)
-     return String
-   is
+      Is_Internal     : Boolean := False) return String is
    begin
       Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt,
             Is_Internal);
@@ -776,8 +775,10 @@ package body Debugger.Jdb is
             loop
                Index := Index - 1;
             end loop;
+
             return S (S'First .. Index - 1);
          end;
+
       else
          return "";
       end if;
@@ -820,8 +821,7 @@ package body Debugger.Jdb is
       Range_Start     : out Address_Type;
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
-      Range_End_Len   : out Natural)
-   is
+      Range_End_Len   : out Natural) is
    begin
       Range_Start (1 .. 1) := " ";
       Range_End (1 .. 1) := " ";

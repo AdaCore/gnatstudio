@@ -179,7 +179,6 @@ package body Display_Items is
    --  Instead, both the first and the second will refer the same third. It is
    --  thus much easier to deal with aliases.
 
-
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
       Win           : Gdk.Window.Gdk_Window;
@@ -272,8 +271,9 @@ package body Display_Items is
       Auto_Refresh   : Boolean := True;
       Default_Entity : Items.Generic_Type_Access := null)
    is
-      Entity : Generic_Type_Access;
+      Entity      : Generic_Type_Access;
       Value_Found : Boolean := False;
+
    begin
       Push_Internal_Command_Status (Get_Process (Debugger.Debugger), True);
 

@@ -65,8 +65,8 @@ package Odd.Source_Editors is
       Line   : Natural) return Boolean;
    --  See Odd.Boxes for documentation
 
-   function Invisible_Column_Width (Editor : access Source_Editor_Record)
-                                   return Glib.Gint;
+   function Invisible_Column_Width
+     (Editor : access Source_Editor_Record) return Glib.Gint;
    --  See Odd.Boxes for documentation
 
    function Child_Contextual_Menu
@@ -105,23 +105,25 @@ package Odd.Source_Editors is
    --  and replaced by the new ones.
    --  The breakpoints that do not apply to the current file are ignored.
 
-   procedure Set_Show_Line_Nums (Editor : access Source_Editor_Record;
-                                 Show   : Boolean := False);
+   procedure Set_Show_Line_Nums
+     (Editor : access Source_Editor_Record;
+      Show   : Boolean := False);
    --  Indicate whether line numbers should be displayed or not.
 
-   function Get_Show_Line_Nums (Editor : access Source_Editor_Record)
-                               return Boolean;
+   function Get_Show_Line_Nums
+     (Editor : access Source_Editor_Record) return Boolean;
    --  Return the state of line numbers in the editor
 
-   procedure Set_Show_Lines_With_Code (Editor : access Source_Editor_Record;
-                                       Show   : Boolean);
-   function Get_Show_Lines_With_Code (Editor : access Source_Editor_Record)
-                                     return Boolean;
+   procedure Set_Show_Lines_With_Code
+     (Editor : access Source_Editor_Record;
+      Show   : Boolean);
+   function Get_Show_Lines_With_Code
+     (Editor : access Source_Editor_Record) return Boolean;
    --  Indicate whether lines where a user can set a breakpoint have a small
    --  dot displayed on the side.
 
-   function Get_Current_File (Editor : access Source_Editor_Record)
-                             return String;
+   function Get_Current_File
+     (Editor : access Source_Editor_Record) return String;
    --  See Odd.Code_Editors for more information
 
    procedure Load_File
@@ -147,36 +149,36 @@ private
      Gdk.Color.Gdk_Color;
 
    type Source_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
-      record
-         Process        : Gtk.Widget.Gtk_Widget;
+   record
+      Process        : Gtk.Widget.Gtk_Widget;
 
-         Show_Line_Nums       : Boolean := Odd.Editor_Show_Line_Nums;
-         Show_Lines_With_Code : Boolean := Odd.Editor_Show_Line_With_Code;
-         --  Whether the lines where one can set a breakpoint have a small dot
-         --  on the side.
+      Show_Line_Nums       : Boolean := Odd.Editor_Show_Line_Nums;
+      Show_Lines_With_Code : Boolean := Odd.Editor_Show_Line_With_Code;
+      --  Whether the lines where one can set a breakpoint have a small dot
+      --  on the side.
 
-         Current_File : Odd.Types.String_Access;
+      Current_File : Odd.Types.String_Access;
 
-         Debugger_Current_File : Odd.Types.String_Access;
-         --  The file/line on which the debugger is stopped (ie these were set
-         --  when the Set_Current parameter is True for Set_line and Load_File)
+      Debugger_Current_File : Odd.Types.String_Access;
+      --  The file/line on which the debugger is stopped (ie these were set
+      --  when the Set_Current parameter is True for Set_line and Load_File)
 
-         Lang           : Language.Language_Access;
-         Default_Pixmap : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-         Default_Mask   : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
-         Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-         Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
-         Colors         : Color_Array := (others => Gdk.Color.Null_Color);
+      Lang           : Language.Language_Access;
+      Default_Pixmap : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Default_Mask   : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Colors         : Color_Array := (others => Gdk.Color.Null_Color);
 
-         Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
-         --  The pixmaps for each of the breakpoints
+      Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
+      --  The pixmaps for each of the breakpoints
 
-         Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
-         --  Id for the Idle handle that is used to recompute the lines that
-         --  contain some code.
+      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      --  Id for the Idle handle that is used to recompute the lines that
+      --  contain some code.
 
-         Current_File_Cache : Odd.Types.File_Cache_Access;
-         --  Cached data for the file currently displayed
-      end record;
+      Current_File_Cache : Odd.Types.File_Cache_Access;
+      --  Cached data for the file currently displayed
+   end record;
 
 end Odd.Source_Editors;

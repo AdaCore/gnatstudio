@@ -48,8 +48,7 @@ package body Debugger.Jdb.Java is
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Generic_Type_Access;
-      Repeat_Num : out Positive)
-   is
+      Repeat_Num : out Positive) is
    begin
       raise Program_Error;
    end Parse_Value;
@@ -64,8 +63,7 @@ package body Debugger.Jdb.Java is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access)
-   is
+      Result    : out Generic_Type_Access) is
    begin
       raise Program_Error;
    end Parse_Array_Type;
@@ -81,8 +79,7 @@ package body Debugger.Jdb.Java is
       Index     : in out Natural;
       Is_Union  : Boolean;
       Result    : out Generic_Type_Access;
-      End_On    : String)
-   is
+      End_On    : String) is
    begin
       raise Program_Error;
    end Parse_Record_Type;
@@ -95,8 +92,7 @@ package body Debugger.Jdb.Java is
      (Lang     : access Jdb_Java_Language;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Array_Type_Access)
-   is
+      Result   : in out Array_Type_Access) is
    begin
       raise Program_Error;
    end Parse_Array_Value;
@@ -138,9 +134,9 @@ package body Debugger.Jdb.Java is
    -- Get_Language_Context --
    --------------------------
 
-   function Get_Language_Context (Lang : access Jdb_Java_Language)
-                                 return Language.Debugger.Language_Context
-   is
+   function Get_Language_Context
+     (Lang : access Jdb_Java_Language)
+      return Language.Debugger.Language_Context is
    begin
       return (Record_Field_Length => 1,
               Record_Start        => '{',

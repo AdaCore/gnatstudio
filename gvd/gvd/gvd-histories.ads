@@ -20,7 +20,7 @@
 
 --  This package handles all the history lists that are used throughout
 --  odd, like for instance the command history.
---  All these histories can be imagined as lists, with a pointer to the
+--  All these histories can be viewed as lists, with a pointer to the
 --  last item retrieved.
 --
 --  To traverse the whole history, you should do:
@@ -44,8 +44,9 @@ package Odd.Histories is
 
    type Direction is (Forward, Backward);
 
-   procedure Append (History : in out History_List;
-                     Data    : Data_Type);
+   procedure Append
+     (History : in out History_List;
+      Data    : Data_Type);
    --  Append a new value to the history.
    --  The pointer to the current value now points to this new entry.
 

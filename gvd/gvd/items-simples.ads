@@ -53,8 +53,8 @@ package Items.Simples is
    --  A range value, as in Ada 'range 0 .. 10', ie a number between the min
    --  and max value.
 
-   function New_Range_Type (Min, Max : Long_Integer)
-                           return Generic_Type_Access;
+   function New_Range_Type
+     (Min, Max : Long_Integer) return Generic_Type_Access;
    --  Create a new range item, whose specific range is given in parameter.
 
    ---------------
@@ -92,9 +92,9 @@ package Items.Simples is
    function New_Enum_Type return Generic_Type_Access;
    --  Create a new enum type.
 
-   -------------------
+   --------------------
    -- Debugger types --
-   -------------------
+   --------------------
 
    type Debugger_Output_Type is new Simple_Type with private;
    type Debugger_Output_Type_Access is access all Debugger_Output_Type'Class;
@@ -113,7 +113,6 @@ package Items.Simples is
    --  Since there is no pre-processing done on Value, we filter out ^Ms for
    --  Value as well.
 
-
 private
    type Simple_Type is new Generic_Type with record
       Value : Odd.Types.String_Access := null;
@@ -124,14 +123,16 @@ private
    end record;
 
    procedure Print (Value : Simple_Type; Indent : Natural := 0);
-   procedure Free (Item : access Simple_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Simple_Type;
+      Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Simple_Type;
       Clone : out Generic_Type_Access);
-   procedure Paint (Item    : in out Simple_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Simple_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Simple_Type;
       Context        : Drawing_Context;
@@ -165,9 +166,10 @@ private
    type Access_Type is new Simple_Type with null record;
    procedure Print (Value : Access_Type; Indent : Natural := 0);
    --  Free is inherited from Simple_Type.
-   procedure Paint (Item    : in out Access_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Access_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
 
    type Enum_Type is new Simple_Type with null record;
    procedure Print (Value : Enum_Type; Indent : Natural := 0);

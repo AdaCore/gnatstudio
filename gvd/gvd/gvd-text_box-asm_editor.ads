@@ -110,21 +110,20 @@ private
    --  Some debuggers (gdb) might take a long time to output the assembly code
    --  for a specific region, so it is better to keep it once we have it.
 
-   type Asm_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with
-      record
-         Process         : Gtk.Widget.Gtk_Widget;
-         Keywords_Color  : Gdk.Color.Gdk_Color;
-         Strings_Color   : Gdk.Color.Gdk_Color;
-         Highlight_Color : Gdk.Color.Gdk_Color;
+   type Asm_Editor_Record is new Odd.Text_Boxes.Odd_Text_Box_Record with record
+      Process         : Gtk.Widget.Gtk_Widget;
+      Keywords_Color  : Gdk.Color.Gdk_Color;
+      Strings_Color   : Gdk.Color.Gdk_Color;
+      Highlight_Color : Gdk.Color.Gdk_Color;
 
-         Highlight_Start : Integer := 0;
-         Highlight_End   : Integer := 0;
+      Highlight_Start : Integer := 0;
+      Highlight_End   : Integer := 0;
 
-         Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
-         Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
+      Stop_Pixmap    : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
+      Stop_Mask      : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
 
-         Cache          : Cache_Data_Access;
-         Current_Range  : Cache_Data_Access;
-      end record;
+      Cache          : Cache_Data_Access;
+      Current_Range  : Cache_Data_Access;
+   end record;
 
 end Odd.Asm_Editors;

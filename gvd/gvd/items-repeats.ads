@@ -60,33 +60,34 @@ private
    end record;
 
    procedure Print (Value : Repeat_Type; Indent : Natural := 0);
-   procedure Free (Item : access Repeat_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Repeat_Type;
+      Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Repeat_Type;
       Clone : out Generic_Type_Access);
 
-   procedure Paint (Item    : in out Repeat_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Repeat_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
 
    procedure Size_Request
      (Item           : in out Repeat_Type;
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name (Item : access Repeat_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String;
-   function Get_Component (Item : access Repeat_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access;
+   function Get_Component_Name
+     (Item : access Repeat_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String;
+   function Get_Component
+     (Item : access Repeat_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access;
    function Replace
      (Parent       : access Repeat_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
 
    type Repeat_Iterator is new Generic_Iterator with record
       Item   : Repeat_Type_Access;

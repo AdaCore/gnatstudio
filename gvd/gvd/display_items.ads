@@ -76,8 +76,9 @@ package Display_Items is
      return Display_Item;
    --  Return the item whose identifier is Num, or null if there is none
 
-   procedure On_Button_Click (Item   : access Display_Item_Record;
-                              Event  : Gdk.Event.Gdk_Event_Button);
+   procedure On_Button_Click
+     (Item   : access Display_Item_Record;
+      Event  : Gdk.Event.Gdk_Event_Button);
    --  React to button clicks on an item.
 
    procedure Set_Auto_Refresh
@@ -160,42 +161,42 @@ package Display_Items is
    --  forced to hidden state.
 
 private
-   type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
-      record
-         Num          : Integer;
-         Name         : Odd.Types.String_Access := null;
-         Entity       : Items.Generic_Type_Access := null;
-         Auto_Refresh : Boolean := True;
-         Debugger     : Odd.Process.Debugger_Process_Tab;
 
-         Is_A_Variable : Boolean := True;
-         --  Set to False if the item is not related to a variable
+   type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with record
+      Num          : Integer;
+      Name         : Odd.Types.String_Access := null;
+      Entity       : Items.Generic_Type_Access := null;
+      Auto_Refresh : Boolean := True;
+      Debugger     : Odd.Process.Debugger_Process_Tab;
 
-         Title_Height : Glib.Gint;
+      Is_A_Variable : Boolean := True;
+      --  Set to False if the item is not related to a variable
 
-         Id           : Odd.Types.String_Access := null;
-         --  Uniq ID used for the variable.
-         --  This Id is returned by the debugger, and can be the address of a
-         --  variable (in Ada or C), or simply the name of the variable (in
-         --  Java) when no overloading exists and addresses don't have any
-         --  meaning.  This is used to detect aliases.
+      Title_Height : Glib.Gint;
 
-         Is_Alias_Of  : Display_Item := null;
-         --  Item for which we are an alias.
+      Id           : Odd.Types.String_Access := null;
+      --  Uniq ID used for the variable.
+      --  This Id is returned by the debugger, and can be the address of a
+      --  variable (in Ada or C), or simply the name of the variable (in
+      --  Java) when no overloading exists and addresses don't have any
+      --  meaning. This is used to detect aliases.
 
-         Is_Dereference : Boolean := False;
-         --  True if the item was created as a result of a derefence of an
-         --  access type. Such items can be hidden as a result of aliases
-         --  detection, whereas items explicitly displayed by the user are
-         --  never hidden.
+      Is_Alias_Of  : Display_Item := null;
+      --  Item for which we are an alias.
 
-         Was_Alias      : Boolean := False;
-         --  Memorize whether the item was an alias in the previous display, so
-         --  that we can compute a new position for it.
+      Is_Dereference : Boolean := False;
+      --  True if the item was created as a result of a derefence of an
+      --  access type. Such items can be hidden as a result of aliases
+      --  detection, whereas items explicitly displayed by the user are
+      --  never hidden.
 
-         Mode           : Items.Display_Mode := Items.Value;
-         --  Whether we should display the mode itself.
-      end record;
+      Was_Alias      : Boolean := False;
+      --  Memorize whether the item was an alias in the previous display, so
+      --  that we can compute a new position for it.
+
+      Mode           : Items.Display_Mode := Items.Value;
+      --  Whether we should display the mode itself.
+   end record;
 
    type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
       Alias_Link : Boolean := False;

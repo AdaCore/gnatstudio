@@ -79,24 +79,22 @@ package Odd.Text_Boxes is
    function Get_Line (Box : access Odd_Text_Box_Record) return Natural;
    --  Return the current line.
 
-   function Get_Child (Box : access Odd_Text_Box_Record)
-                      return Gtk.Text.Gtk_Text;
+   function Get_Child
+     (Box : access Odd_Text_Box_Record) return Gtk.Text.Gtk_Text;
    --  Return the child
 
-   function Get_Buttons (Box : access Odd_Text_Box_Record)
-                        return Gtk.Layout.Gtk_Layout;
+   function Get_Buttons
+     (Box : access Odd_Text_Box_Record) return Gtk.Layout.Gtk_Layout;
    --  The layout where the buttons are displayed.
 
    function Pixels_From_Line
      (Box  : access Odd_Text_Box_Record;
-      Line : Natural)
-     return Gint;
+      Line : Natural) return Gint;
    --  Return the location (in pixels) for a given line.
 
    function Line_From_Pixels
      (Box  : access Odd_Text_Box_Record;
-      Y    : Gint)
-     return Natural;
+      Y    : Gint) return Natural;
    --  Return the line for a given location in pixels.
 
    procedure Hide_Current_Line_Button (Box : access Odd_Text_Box_Record);
@@ -105,13 +103,12 @@ package Odd.Text_Boxes is
    function On_Pixmap_Clicked
      (Box    : access Odd_Text_Box_Record;
       Button : Natural;
-      Line   : Natural)
-     return Boolean;
+      Line   : Natural) return Boolean;
    --  Called whenever the left or right mouse buttons are pressed in the
    --  buttons area.
 
-   function Invisible_Column_Width (Box : access Odd_Text_Box_Record)
-                                   return Glib.Gint;
+   function Invisible_Column_Width
+     (Box : access Odd_Text_Box_Record) return Glib.Gint;
    --  Return the width, in pixels, of the column on the left side of the
    --  text widget, whose contents is not included in the buffer.
    --  This column can be used for instance to display line numbers.
@@ -136,8 +133,8 @@ package Odd.Text_Boxes is
    --  made (we simply store the pointer).
    --  Set Buffer to null if you simply want to free the memory.
 
-   function Get_Buffer (Box : access Odd_Text_Box_Record)
-                       return Odd.Types.String_Access;
+   function Get_Buffer
+     (Box : access Odd_Text_Box_Record) return Odd.Types.String_Access;
    --  Return the buffer associated with the box
 
    function Lines_Count (Box : access Odd_Text_Box_Record) return Natural;

@@ -46,34 +46,32 @@ package Language.Debugger.C is
    -- Language specific functions --
    ---------------------------------
 
-   function Start
-     (Debugger  : access C_Language)
-     return String;
+   function Start (Debugger  : access C_Language) return String;
 
    --------------
    -- Explorer --
    --------------
 
-   function Explorer_Regexps (Lang : access C_Language)
-                             return Explorer_Categories;
+   function Explorer_Regexps
+     (Lang : access C_Language) return Explorer_Categories;
 
    ------------------------
    -- Naming Conventions --
    ------------------------
 
-   function Dereference_Name (Lang : access C_Language;
-                              Name : String)
-                             return String;
+   function Dereference_Name
+     (Lang : access C_Language;
+      Name : String) return String;
 
-   function Array_Item_Name (Lang  : access C_Language;
-                             Name  : String;
-                             Index : String)
-                            return String;
+   function Array_Item_Name
+     (Lang  : access C_Language;
+      Name  : String;
+      Index : String) return String;
 
-   function Record_Field_Name (Lang  : access C_Language;
-                               Name  : String;
-                               Field : String)
-                              return String;
+   function Record_Field_Name
+     (Lang  : access C_Language;
+      Name  : String;
+      Field : String) return String;
 
 private
    type C_Language is new Language_Debugger with null record;

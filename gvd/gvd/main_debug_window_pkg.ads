@@ -228,11 +228,9 @@ package Main_Debug_Window_Pkg is
    procedure Initialize
      (Main_Debug_Window : access Main_Debug_Window_Record'Class);
 
-
    function Find_In_Cache
      (Window    : access Main_Debug_Window_Record'Class;
-      File_Name : String)
-     return Odd.Types.File_Cache_Access;
+      File_Name : String) return Odd.Types.File_Cache_Access;
    --  Return the cached data for a given file.
    --  If no data was previously cached for that file, then a new File_Cache
    --  is returned.

@@ -38,7 +38,7 @@ package Items.Arrays is
    --  The value of an array is stored in a sparse table, ie all equal adjacent
    --  values are merged into a single element of type Repeat_Type, as returned
    --  for instance by gdb in <repeat .. times>.
-   --  Note also that for unidmensional arrays of characters, their value is
+   --  Note also that for unidimensional arrays of characters, their value is
    --  stored as a single item (a string).
 
    type Dimension is record
@@ -75,8 +75,7 @@ package Items.Arrays is
    --  Set the type of items contained in Item.
    --  The_Type is not duplicated, we just keep an access to it.
 
-   function Get_Item_Type (Item : Array_Type)
-                          return Generic_Type_Access;
+   function Get_Item_Type (Item : Array_Type) return Generic_Type_Access;
    --  Return the Item_Type for the array.
    --  The returned structure should not be modified!
    --  ??? Could we use an access to constant ???
@@ -111,14 +110,15 @@ package Items.Arrays is
    --  minimal size.
    --  This is never mandatory, but saves some memory in some cases.
 
-   procedure Propagate_Width (Item  : in out Array_Type;
-                              Width : Glib.Gint);
+   procedure Propagate_Width
+     (Item  : in out Array_Type;
+      Width : Glib.Gint);
 
 private
 
    --  The structure for arrays is slightly complex, since we need to be able
    --  to handle multi-dimensional arrays as well as store the values in a
-   --  spare table.
+   --  sparse table.
 
    type Dimension_Array is array (Positive range <>) of Dimension;
    --  Represents one of the dimension of the array.
@@ -157,31 +157,32 @@ private
    --      access
 
    procedure Print (Value : Array_Type; Indent : Natural := 0);
-   procedure Free (Item : access Array_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Array_Type;
+      Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Array_Type;
       Clone : out Generic_Type_Access);
-   procedure Paint (Item    : in out Array_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Array_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Array_Type;
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name (Item : access Array_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String;
-   function Get_Component (Item : access Array_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access;
+   function Get_Component_Name
+     (Item : access Array_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String;
+   function Get_Component
+     (Item : access Array_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access;
    function Replace
      (Parent       : access Array_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
 
    type Array_Iterator is new Generic_Iterator with record
       Item  : Array_Type_Access;

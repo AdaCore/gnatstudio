@@ -41,64 +41,69 @@ package Items.Records is
    function Num_Fields (Item : Record_Type) return Natural;
    --  Return the number of fields in the record, or 0 for a null record.
 
-   procedure Set_Field_Name (Item          : in out Record_Type;
-                             Index         : Positive;
-                             Name          : String;
-                             Variant_Parts : Natural := 0);
+   procedure Set_Field_Name
+     (Item          : in out Record_Type;
+      Index         : Positive;
+      Name          : String;
+      Variant_Parts : Natural := 0);
    --  Set the name of the Index-nth field in the record.
    --  If Variant_Parts is not 0, then the field in the record is considered
    --  as a field with a variant_part (ie whose value depends on another field
    --  in the record (Name)).
 
-   function Get_Variant_Parts (Item  : Record_Type;
-                               Field : Positive)
-                              return Natural;
+   function Get_Variant_Parts
+     (Item  : Record_Type;
+      Field : Positive) return Natural;
    --  Get the number of variant parts for a specific field in the record.
 
-   function Get_Field_Name (Item  : in Record_Type;
-                            Index : Positive)
-                           return Odd.Types.String_Access;
+   function Get_Field_Name
+     (Item  : in Record_Type;
+      Index : Positive) return Odd.Types.String_Access;
    --  Return the name of the Index-th field in Item.
 
-   function Find_Variant_Part (Item     : Record_Type;
-                               Field    : Positive;
-                               Contains : String)
-                              return Items.Generic_Type_Access;
+   function Find_Variant_Part
+     (Item     : Record_Type;
+      Field    : Positive;
+      Contains : String) return Items.Generic_Type_Access;
    --  Return the variant part of the field-th of Item, whose first field is
    --  Contains.
    --  null is returned if no such part is found.
 
-   procedure Set_Variant_Field (Item          : in out Record_Type;
-                                Index         : Positive;
-                                Variant_Index : Positive;
-                                Value         : access Record_Type'Class);
+   procedure Set_Variant_Field
+     (Item          : in out Record_Type;
+      Index         : Positive;
+      Variant_Index : Positive;
+      Value         : access Record_Type'Class);
    --  Set the Variant_Index-nth part of the Index-nth element in the array.
    --  Nothing is done if the Index-nth field in Item does not have any
    --  variant part.
 
-   procedure Set_Value (Item  : in out Record_Type;
-                        Value : access Generic_Type'Class;
-                        Field : String);
+   procedure Set_Value
+     (Item  : in out Record_Type;
+      Value : access Generic_Type'Class;
+      Field : String);
    --  Set the value of a specific field in the record.
    --  Value is not duplicated, we simply keep a pointer to it.
 
-   procedure Set_Value (Item  : in out Record_Type;
-                        Value : access Generic_Type'Class;
-                        Field : Positive);
+   procedure Set_Value
+     (Item  : in out Record_Type;
+      Value : access Generic_Type'Class;
+      Field : Positive);
    --  Same as above, for a specific field index.
 
-   function Get_Value (Item  : Record_Type;
-                       Field : String)
-                      return Generic_Type_Access;
+   function Get_Value
+     (Item  : Record_Type;
+      Field : String) return Generic_Type_Access;
    --  Get the value of a specific field.
 
-   function Get_Value (Item  : Record_Type;
-                       Field : Positive)
-                      return Generic_Type_Access;
+   function Get_Value
+     (Item  : Record_Type;
+      Field : Positive) return Generic_Type_Access;
    --  Same as above, but for a specific field index.
 
-   procedure Propagate_Width (Item  : in out Record_Type;
-                              Width : Glib.Gint);
+   procedure Propagate_Width
+     (Item  : in out Record_Type;
+      Width : Glib.Gint);
 
    ------------
    -- Unions --
@@ -149,31 +154,32 @@ private
      (Record_Type_Array, Record_Type_Array_Access);
 
    procedure Print (Value : Record_Type; Indent : Natural := 0);
-   procedure Free (Item : access Record_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Record_Type;
+      Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Record_Type;
       Clone : out Generic_Type_Access);
-   procedure Paint (Item    : in out Record_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Record_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Record_Type;
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name (Item : access Record_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String;
-   function Get_Component (Item : access Record_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access;
+   function Get_Component_Name
+     (Item : access Record_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String;
+   function Get_Component
+     (Item : access Record_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access;
    function Replace
      (Parent       : access Record_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
 
    type Record_Iterator is new Generic_Iterator with record
       Item  : Record_Type_Access;

@@ -317,9 +317,7 @@ package body Debugger is
 
    function Variable_Name_With_Frame
      (Debugger : access Debugger_Root;
-      Var      : String)
-     return String
-   is
+      Var      : String) return String is
    begin
       return Var;
    end Variable_Name_With_Frame;
@@ -329,8 +327,7 @@ package body Debugger is
    ---------------------
 
    function List_Exceptions
-     (Debugger : access Debugger_Root)
-     return Odd.Types.Exception_Array
+     (Debugger : access Debugger_Root) return Odd.Types.Exception_Array
    is
       Arr : Exception_Array (1 .. 0);
    begin
@@ -344,8 +341,7 @@ package body Debugger is
    function Get_Type_Info
      (Debugger  : access Debugger_Root;
       Entity    : String;
-      Default   : String) return String
-   is
+      Default   : String) return String is
    begin
       return Default;
    end Get_Type_Info;
@@ -355,9 +351,7 @@ package body Debugger is
    ---------------
 
    function Find_File
-     (Debugger : access Debugger_Root; File_Name : String)
-     return String
-   is
+     (Debugger : access Debugger_Root; File_Name : String) return String is
    begin
       return File_Name;
    end Find_File;
@@ -366,8 +360,7 @@ package body Debugger is
    -- Is_Started --
    ----------------
 
-   function Is_Started (Debugger : access Debugger_Root)
-     return Boolean is
+   function Is_Started (Debugger : access Debugger_Root) return Boolean is
    begin
       return Debugger.Is_Started;
    end Is_Started;
@@ -378,8 +371,7 @@ package body Debugger is
 
    procedure Set_Is_Started
      (Debugger   : access Debugger_Root;
-      Is_Started : Boolean)
-   is
+      Is_Started : Boolean) is
    begin
       Debugger.Is_Started := Is_Started;
    end Set_Is_Started;

@@ -39,7 +39,7 @@ package Odd.Menus is
 
    function Contextual_Background_Menu
      (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class)
-     return Gtk.Menu.Gtk_Menu;
+      return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used when the user
    --  clicks in the background of the canvas.
 
@@ -47,8 +47,7 @@ package Odd.Menus is
      (Canvas         : access Odd.Canvas.Odd_Canvas_Record'Class;
       Item           : access Display_Items.Display_Item_Record'Class;
       Component      : Items.Generic_Type_Access;
-      Component_Name : String)
-     return Gtk.Menu.Gtk_Menu;
+      Component_Name : String) return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used when a specific
    --  component in an item is selected.
    --  Note that Component can be null if the user has clicked for instance
@@ -56,7 +55,7 @@ package Odd.Menus is
 
    function Debugger_Contextual_Menu
      (Process  : access Odd.Process.Debugger_Process_Tab_Record'Class)
-     return Gtk.Menu.Gtk_Menu;
+      return Gtk.Menu.Gtk_Menu;
    --  Create (if necessary) and reset the contextual menu used in the
    --  debugger command window.
    --  ??? Should we pass a Task_Dialog_Record as well, for the current

@@ -31,78 +31,82 @@ package Items.Classes is
 
    type Class_Type (<>) is new Generic_Type with private;
    type Class_Type_Access is access all Class_Type'Class;
-   --  This type represents a C++ class, or Ada tagged type.
+   --  This type represents an object, such as a C++ class, an Ada tagged type
+   --  or a Java object.
    --  It can have one or more ancestors, whose contents is also displayed when
-   --  the value of the variable is show.
+   --  the value of the variable is shown.
 
-   function New_Class_Type (Num_Ancestors : Natural)
-                           return Generic_Type_Access;
+   function New_Class_Type
+     (Num_Ancestors : Natural) return Generic_Type_Access;
    --  Create a new class type, with a specific number of ancestors (parent
    --  classes).
 
-   procedure Add_Ancestor (Item     : in out Class_Type;
-                           Num      : Positive;
-                           Ancestor : Class_Type_Access);
-   --  Defines one of the ancestors of item.
+   procedure Add_Ancestor
+     (Item     : in out Class_Type;
+      Num      : Positive;
+      Ancestor : Class_Type_Access);
+   --  Define one of the ancestors of item.
    --  When the value of item, its components are parsed in the following
    --  order: first, all the fields of the first ancestor, then all the fields
    --  of the second ancestor, ..., then the fields of Item.
    --  No copy of Ancestor is made, we just keep the pointer.
 
-   procedure Set_Child (Item  : in out Class_Type;
-                        Child : Items.Records.Record_Type_Access);
+   procedure Set_Child
+     (Item  : in out Class_Type;
+      Child : Items.Records.Record_Type_Access);
    --  Record the child component of Item (where the fields of Item are
    --  defined).
 
    function Get_Child (Item : Class_Type) return Generic_Type_Access;
    --  Return a pointer to the child.
 
-   function Get_Ancestor (Item : Class_Type;
-                          Num  : Positive)
-                         return Generic_Type_Access;
+   function Get_Ancestor
+     (Item : Class_Type;
+      Num  : Positive) return Generic_Type_Access;
    --  Return a pointer to the Num-th ancestor.
 
    function Get_Num_Ancestors (Item : Class_Type) return Natural;
    --  Return the number of ancestors.
 
-   procedure Propagate_Width (Item  : in out Class_Type;
-                              Width : Glib.Gint);
+   procedure Propagate_Width
+     (Item  : in out Class_Type;
+      Width : Glib.Gint);
 
 private
 
    type Class_Type_Array is array (Positive range <>) of Class_Type_Access;
 
-   type Class_Type (Num_Ancestors : Natural) is new Generic_Type
-     with record
-        Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
-        Child     : Items.Records.Record_Type_Access;
-     end record;
+   type Class_Type (Num_Ancestors : Natural) is new Generic_Type with record
+     Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
+     Child     : Items.Records.Record_Type_Access;
+   end record;
    procedure Print (Value : Class_Type; Indent : Natural := 0);
-   procedure Free (Item : access Class_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Class_Type;
+      Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Class_Type;
       Clone : out Generic_Type_Access);
-   procedure Paint (Item    : in out Class_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0);
+   procedure Paint
+     (Item    : in out Class_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0);
    procedure Size_Request
      (Item           : in out Class_Type;
       Context        : Drawing_Context;
       Hide_Big_Items : Boolean := False);
-   function Get_Component_Name (Item : access Class_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String;
-   function Get_Component (Item : access Class_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access;
+   function Get_Component_Name
+     (Item : access Class_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String;
+   function Get_Component
+     (Item : access Class_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access;
    function Replace
      (Parent       : access Class_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access;
 
    type Class_Iterator is new Generic_Iterator with record
       Item     : Class_Type_Access;

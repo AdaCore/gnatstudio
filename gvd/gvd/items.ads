@@ -38,21 +38,23 @@ package Items is
    --  first parsed, and then the value itself is parsed.
    --
    --  Doing this in two steps means that parsing the value can be done
-   --  much faster this way, which is what we need since this needs to be done
-   --  every time the debugger is stopped.
+   --  much faster this way, which is mandatory since this needs to be done
+   --  every time the debugger is stopped for auto-display variables.
    --
    --  The items are organized in a tree. Each item in the tree contains both
    --  the description of the type and its current value. Whereas the type
-   --  itself is never freed, the values are delete every time we need to
+   --  itself is never freed, the values are deleted every time we need to
    --  parse a new value.
 
-   procedure Set_Hidden_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                                Mask   : Gdk.Bitmap.Gdk_Bitmap);
+   procedure Set_Hidden_Pixmap
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap);
    --  Set the pixmap used for hidden items.
    --  This must be called, or hidden items will not be displayed at all.
 
-   procedure Set_Unknown_Pixmap (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                                 Mask   : Gdk.Bitmap.Gdk_Bitmap);
+   procedure Set_Unknown_Pixmap
+     (Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap);
    --  Set the pixmap used when the value of an item is unknown.
    --  This must be called.
 
@@ -98,7 +100,6 @@ package Items is
    function Show_Type (Mode : in Display_Mode) return Boolean;
    --  Whether we should display the type of the item
 
-
    type Drawing_Context is record
       GC          : Gdk.GC.Gdk_GC;
       Xref_GC     : Gdk.GC.Gdk_GC;
@@ -125,16 +126,17 @@ package Items is
    -- Printing and Displaying --
    -----------------------------
 
-   procedure Print (Value  : Generic_Type;
-                    Indent : Natural := 0) is abstract;
+   procedure Print
+     (Value  : Generic_Type;
+      Indent : Natural := 0) is abstract;
    --  Print Value on Standard_Output.
    --  Indent is the indentation level.
    --  This function is intended for debug purposes only.
 
-   procedure Paint (Item    : in out Generic_Type;
-                    Context : Drawing_Context;
-                    X, Y    : Glib.Gint := 0)
-      is abstract;
+   procedure Paint
+     (Item    : in out Generic_Type;
+      Context : Drawing_Context;
+      X, Y    : Glib.Gint := 0) is abstract;
    --  Paint the item on the pixmap, that will be used to show the item in the
    --  canvas.
    --  The item should be drawn so that its upper-left corner is at coordinates
@@ -145,8 +147,7 @@ package Items is
    procedure Size_Request
      (Item           : in out Generic_Type;
       Context        : Drawing_Context;
-      Hide_Big_Items : Boolean := False)
-      is abstract;
+      Hide_Big_Items : Boolean := False) is abstract;
    --  Compute the size that Item needs to display itself on the screen.
    --  The two fields Width and Height are initialized by this function.
    --  This function is always guaranteed to be called when an item is resized,
@@ -158,8 +159,9 @@ package Items is
    -- Manipulating the structure --
    --------------------------------
 
-   procedure Free (Item : access Generic_Type;
-                   Only_Value : Boolean := False);
+   procedure Free
+     (Item : access Generic_Type;
+      Only_Value : Boolean := False);
    --  Free the memory occupied by Item and its components.
    --  if Only_Value is True, then only clear the value fields, but keep alive
    --  the structure that describes the type.
@@ -200,17 +202,18 @@ package Items is
    --  Found is set to False if Component is not part of the item hierarchy. In
    --  that case, Is_Visible's value is irrelevant.
 
-   procedure Propagate_Width (Item  : in out Generic_Type;
-                              Width : Glib.Gint);
+   procedure Propagate_Width
+     (Item  : in out Generic_Type;
+      Width : Glib.Gint);
    --  Set a specific width for the item.
    --  This width is propagated, with appropriate modifications, to the
    --  children of Item.
 
-   function Get_Component_Name (Item : access Generic_Type;
-                                Lang : access Language.Language_Root'Class;
-                                Name : String;
-                                X, Y : Glib.Gint)
-                               return String is abstract;
+   function Get_Component_Name
+     (Item : access Generic_Type;
+      Lang : access Language.Language_Root'Class;
+      Name : String;
+      X, Y : Glib.Gint) return String is abstract;
    --  Return a string that described the fields at coordinates (X, Y).
    --  (X, Y) must be relative to the upper-left corner of item.
    --
@@ -225,13 +228,14 @@ package Items is
    --
    --  Name is the name of item iself, in case we need to add a suffix to it.
 
-   function Get_Component (Item : access Generic_Type;
-                           X, Y : Glib.Gint)
-                          return Generic_Type_Access is abstract;
+   function Get_Component
+     (Item : access Generic_Type;
+      X, Y : Glib.Gint) return Generic_Type_Access is abstract;
    --  As above, but return the component itself.
 
-   procedure Set_Selected (Item     : access Generic_Type;
-                           Selected : Boolean := True);
+   procedure Set_Selected
+     (Item     : access Generic_Type;
+      Selected : Boolean := True);
    --  Set the selected status of item.
    --  If Selected if False, then all the children are also unselected.
    --  The item is not redrawn.
@@ -239,17 +243,17 @@ package Items is
    function Get_Selected (Item : access Generic_Type) return Boolean;
    --  Return the selected status of Item.
 
-   procedure Set_Valid (Item  : access Generic_Type;
-                        Valid : Boolean := True);
+   procedure Set_Valid
+     (Item  : access Generic_Type;
+      Valid : Boolean := True);
    --  Indicate whether the value given in Item is valid (ie there was no
    --  error when getting the value from the debugger, ...)
 
    function Replace
      (Parent       : access Generic_Type;
       Current      : access Generic_Type'Class;
-      Replace_With : access Generic_Type'Class)
-     return Generic_Type_Access
-     is abstract;
+      Replace_With : access Generic_Type'Class) return Generic_Type_Access
+      is abstract;
    --  Substitute a field/value/element in Parent.
    --  The field that is currently equal to Current is replaced with
    --  Replace_With. Current is then Freed completly.
@@ -306,7 +310,6 @@ package Items is
    Unknown_Height : Glib.Gint;
    Unknown_Width  : Glib.Gint;
 
-
    procedure Clone_Dispatching
      (Item  : Generic_Type;
       Clone : out Generic_Type_Access);
@@ -316,11 +319,12 @@ package Items is
 
 private
 
-   procedure Display_Pixmap (On_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-                             GC        : Gdk.GC.Gdk_GC;
-                             Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
-                             Mask      : Gdk.Bitmap.Gdk_Bitmap;
-                             X, Y      : Glib.Gint);
+   procedure Display_Pixmap
+     (On_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      GC        : Gdk.GC.Gdk_GC;
+      Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
+      Mask      : Gdk.Bitmap.Gdk_Bitmap;
+      X, Y      : Glib.Gint);
    --  Display a masked pixmap at specific coordinates.
 
    type Generic_Type is abstract tagged record

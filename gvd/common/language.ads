@@ -136,15 +136,14 @@ package Language is
    --  is the index in this table, and is passed to each Make_Entry_Func
    --  functions.
 
-   function Explorer_Regexps (Lang : access Language_Root)
-                             return Explorer_Categories;
+   function Explorer_Regexps
+     (Lang : access Language_Root) return Explorer_Categories;
    --  Return the list of categories for a given language.
    --  By default, no category is defined, and thus the explorer is empty.
 
    function Is_System_File
      (Lang : access Language_Root;
-      File_Name : String)
-     return Boolean;
+      File_Name : String) return Boolean;
    --  Return True if File_Name is the name of a system file (standard include
    --  files in C or run-time file in Ada). These files are displayed
    --  separately in the explorer.
@@ -155,8 +154,7 @@ package Language is
    --  The following functions provide a way to convert from file names to
    --  their associated language, based on regular expressions.
 
-   function Get_Language_From_File (File_Name : String)
-     return Language_Access;
+   function Get_Language_From_File (File_Name : String) return Language_Access;
    --  Return the language to use for a specific file name.
    --  Note that the language returned is an instance of Language_Debugger_Ada,
    --  Language_Debugger_C, or other similar-level objects, and does not know
@@ -193,9 +191,7 @@ package Language is
    -- Special commands --
    ----------------------
 
-   function Start
-     (Debugger  : access Language_Root)
-     return String;
+   function Start (Debugger  : access Language_Root) return String;
    --  Return the command used in the current debugger to start the program
    --  and stop on the first line of user's code.
    --  The resulting string can be either null (in which case this function

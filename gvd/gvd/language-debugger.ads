@@ -19,9 +19,9 @@
 -----------------------------------------------------------------------
 
 --  The default implementation of some of these subprograms raises
---  Program_Error.  since they require a debugger session. However, since we
+--  Program_Error since they require a debugger session. However, since we
 --  need to be able to declare some instances of Language_Debugger_Ada, for
---  instance, we need a non-abstract subprogram.
+--  instance, we need non-abstract subprograms.
 
 with Debugger; use Debugger;
 with Items;
@@ -126,8 +126,8 @@ package Language.Debugger is
    --  some given languages.
 
 
-   function Get_Language_Context (Lang : access Language_Debugger)
-                                 return Language_Context;
+   function Get_Language_Context
+     (Lang : access Language_Debugger) return Language_Context;
    --  Return the context to use for a specific language
    --
    --  The default implementation raises Program_Error (See comment above)

@@ -42,8 +42,8 @@ package Odd.Canvas is
    procedure Gtk_New (Canvas : out Odd_Canvas);
    --  Create a new canvas.
 
-   function Get_Detect_Aliases (Canvas : access Odd_Canvas_Record'Class)
-                               return Boolean;
+   function Get_Detect_Aliases
+     (Canvas : access Odd_Canvas_Record'Class) return Boolean;
    --  Return True if aliases detection has been activated.
 
    procedure Set_Detect_Aliases
@@ -51,8 +51,8 @@ package Odd.Canvas is
       Activate : Boolean);
    --  Change the status of aliases detection in the canvas
 
-   function Get_Next_Item_Num (Canvas : access Odd_Canvas_Record'Class)
-                              return Integer;
+   function Get_Next_Item_Num
+     (Canvas : access Odd_Canvas_Record'Class) return Integer;
    --  Return the number that should be used for the next item inserted into
    --  the canvas.
    --  Two successive calls to that function will not return the same value.
@@ -60,8 +60,8 @@ package Odd.Canvas is
 private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
-      record
-         Detect_Aliases : Boolean := Default_Detect_Aliases;
-         Item_Num       : Integer := 0;
-      end record;
+   record
+      Detect_Aliases : Boolean := Default_Detect_Aliases;
+      Item_Num       : Integer := 0;
+   end record;
 end Odd.Canvas;
