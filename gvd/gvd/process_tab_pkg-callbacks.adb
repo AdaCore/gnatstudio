@@ -200,19 +200,6 @@ package body Process_Tab_Pkg.Callbacks is
          Index := Get_Current (History).Command.all'Length - S'Length;
    end Move_Until_Match;
 
-
-   ---------------------------
-   -- On_Debugger_Get_Focus --
-   ---------------------------
-
-   procedure On_Debugger_Get_Focus
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-   begin
-      Wind (Debugger_Process_Tab (Object).Window.Command_History, Forward);
-   end On_Debugger_Get_Focus;
-
    --------------------------------------
    -- On_Debugger_Text_Key_Press_Event --
    --------------------------------------
@@ -264,5 +251,16 @@ package body Process_Tab_Pkg.Callbacks is
          end if;
          return True;
    end On_Debugger_Text_Key_Press_Event;
+
+   ---------------------------------
+   -- On_Debugger_Text_Grab_Focus --
+   ---------------------------------
+
+   procedure On_Debugger_Text_Grab_Focus
+     (Object : access Gtk_Widget_Record'Class)
+   is
+   begin
+      Wind (Debugger_Process_Tab (Object).Window.Command_History, Forward);
+   end On_Debugger_Text_Grab_Focus;
 
 end Process_Tab_Pkg.Callbacks;

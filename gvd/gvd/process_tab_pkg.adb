@@ -88,7 +88,8 @@ begin
    Return_Callback.Object_Connect
      (Process_Tab.Debugger_Text, "key_press_event", On_Debugger_Text_Key_Press_Event'Access, Process_Tab);
    Widget_Callback.Object_Connect
-     (Process_Tab.Debugger_Text, "grab_focus", On_Debugger_Get_Focus'Access, Process_Tab);
+     (Process_Tab.Debugger_Text, "grab_focus",
+      Widget_Callback.To_Marshaller (On_Debugger_Text_Grab_Focus'Access), Process_Tab);
    Add (Process_Tab.Scrolledwindow7, Process_Tab.Debugger_Text);
    Set_Editable (Process_Tab.Debugger_Text, True);
 
