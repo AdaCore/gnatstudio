@@ -105,7 +105,7 @@ package body Language is
          loop
             Next_Char := Next_Char + 1;
          end loop;
-         Next_Char := Next_Char + 1;
+         Next_Char := Next_Char + Context.Comment_End_Length;
          return;
       end if;
 
