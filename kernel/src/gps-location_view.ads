@@ -21,17 +21,20 @@
 --  This package handles source file locations and displays them
 --  in a graphical tree, per category.
 
-with Gdk.Color;                use Gdk.Color;
-with Gdk.Pixbuf;               use Gdk.Pixbuf;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Box;                  use Gtk.Box;
-with Gtk.Main;                 use Gtk.Main;
+with Gdk.Color;                 use Gdk.Color;
+with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Box;                   use Gtk.Box;
+with Gtk.Main;                  use Gtk.Main;
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Standard_Hooks;  use GPS.Kernel.Standard_Hooks;
+with GPS.Kernel;                use GPS.Kernel;
+with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with VFS;
 
-with Gtkada.Tree_View;         use Gtkada.Tree_View;
+with Gtkada.Tree_View;          use Gtkada.Tree_View;
+with Basic_Types;               use Basic_Types;
+
+with Generic_List;
 
 package GPS.Location_View is
 
@@ -150,6 +153,23 @@ package GPS.Location_View is
 
 private
 
+   type Location_Record is record
+      Category           : String_Access;
+      File               : VFS.Virtual_File;
+      Line               : Integer;
+      Column             : Integer;
+      Length             : Integer;
+      Highlight          : Boolean;
+      Message            : String_Access;
+      Highlight_Category : String_Access;
+   end record;
+
+   procedure Free (X : in out Location_Record);
+   --  Free memory associated to X
+
+   package Location_List is new Generic_List (Location_Record, Free);
+   use Location_List;
+
    type Location_View_Record is new Gtk_Hbox_Record with record
       Kernel : Kernel_Handle;
       Tree   : Tree_View;
@@ -170,6 +190,8 @@ private
       --  Whether the view should be sorted by category.
 
       Sorting_Column   : Gtk_Tree_View_Column;
+
+      Stored_Locations : List;
    end record;
 
 end GPS.Location_View;
