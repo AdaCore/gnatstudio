@@ -37,7 +37,7 @@ procedure Prj_Editor is
    Kernel : Kernel_Handle;
 begin
    Gtk.Main.Init;
-   Gtk_New (Kernel);
+   Gtk_New (Kernel, null);
    Load_Project (Kernel, Argument (1));
 
    Gtk_New (Win, Kernel);
