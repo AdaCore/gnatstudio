@@ -392,8 +392,8 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-
       --  Clear the side columns cache.
+
       User.Buffer_Top_Line := 0;
       User.Bottom_Line := User.Bottom_Line + 1;
 
