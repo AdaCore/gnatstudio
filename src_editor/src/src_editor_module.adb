@@ -600,9 +600,9 @@ package body Src_Editor_Module is
       Set_Context
         (Context,
          Look_For => Pattern,
-         Options => (Case_Sensitive => Casing,
-                     Whole_Word     => False,
-                     Regexp         => Regexp));
+         Options  => (Case_Sensitive => Casing,
+                      Whole_Word     => False,
+                      Regexp         => Regexp));
 
       Set_Return_Value_As_List (Data);
 
@@ -1317,11 +1317,11 @@ package body Src_Editor_Module is
                Set_Data
                  (Node,
                   Mark_Identifier_Record'
-                    (Id => Mark_Record.Id,
-                     Child => Child,
-                     File => File,
-                     Line => Mark_Record.Line,
-                     Mark =>
+                    (Id     => Mark_Record.Id,
+                     Child  => Child,
+                     File   => File,
+                     Line   => Mark_Record.Line,
+                     Mark   =>
                        Create_Mark
                          (Box.Editor,
                           Editable_Line_Type (Mark_Record.Line),
@@ -1457,15 +1457,16 @@ package body Src_Editor_Module is
                  Src_Editor_Buffer.Line_Information.Get_Column
                    (Get_Buffer (Box.Editor), Mark_Record.Mark);
 
-               Set_Data (Node,
-                         Mark_Identifier_Record'
-                           (Id => Mark_Record.Id,
-                            Child => null,
-                            File => File,
-                            Line => Mark_Record.Line,
-                            Mark => null,
-                            Column => Mark_Record.Column,
-                            Length => Mark_Record.Length));
+               Set_Data
+                 (Node,
+                  Mark_Identifier_Record'
+                    (Id     => Mark_Record.Id,
+                     Child  => null,
+                     File   => File,
+                     Line   => Mark_Record.Line,
+                     Mark   => null,
+                     Column => Mark_Record.Column,
+                     Length => Mark_Record.Length));
 
                if not Added then
                   Add_Unique_Sorted (Id.Unopened_Files, Full_Name (File).all);
@@ -1812,10 +1813,10 @@ package body Src_Editor_Module is
          Initialize (Child, Box, All_Buttons);
          Child := Put
            (Kernel, Child,
-            Focus_Widget => Gtk_Widget (Get_View (Editor)),
+            Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Src_Editor_Module_Id);
+            Module         => Src_Editor_Module_Id);
 
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
          Set_Focus_Child (Child);
@@ -1973,10 +1974,11 @@ package body Src_Editor_Module is
          Child := new Editor_Child_Record;
          Initialize (Child, Box, All_Buttons);
          Child := Put
-           (Kernel, Child, Focus_Widget => Gtk_Widget (Get_View (Editor)),
+           (Kernel, Child,
+            Focus_Widget   => Gtk_Widget (Get_View (Editor)),
             Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
-            Module => Src_Editor_Module_Id);
+            Module         => Src_Editor_Module_Id);
          Set_Icon (Child, Gdk_New_From_Xpm_Data (editor_xpm));
 
          if Focus then
@@ -2542,8 +2544,9 @@ package body Src_Editor_Module is
       end if;
 
       Goto_Declaration_Or_Body
-        (Kernel, To_Body => True,
-         Editor => Editor,
+        (Kernel,
+         To_Body => True,
+         Editor  => Editor,
          Context => Entity_Selection_Context_Access
            (Default_Factory (Kernel, Editor)));
 
@@ -2591,10 +2594,11 @@ package body Src_Editor_Module is
       declare
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         File       : constant Virtual_File := File_Information (File_Context);
-         Success    : Boolean;
-         Args       : Argument_List (1 .. 4);
-         Lang       : String := Get_Language_From_File
+         File         : constant Virtual_File :=
+           File_Information (File_Context);
+         Success      : Boolean;
+         Args         : Argument_List (1 .. 4);
+         Lang         : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
       begin
@@ -2882,12 +2886,13 @@ package body Src_Editor_Module is
       declare
          File_Context : constant File_Selection_Context_Access :=
            File_Selection_Context_Access (Context);
-         File       : constant Virtual_File := File_Information (File_Context);
-         Project    : constant String := Project_Name
+         File         : constant Virtual_File :=
+           File_Information (File_Context);
+         Project      : constant String := Project_Name
            (Get_Project_From_File (Get_Registry (Kernel), File));
-         Success    : Boolean;
-         Args, Vars : Argument_List_Access;
-         Lang       : String := Get_Language_From_File
+         Success      : Boolean;
+         Args, Vars   : Argument_List_Access;
+         Lang         : String := Get_Language_From_File
            (Get_Language_Handler (Kernel), File);
 
       begin
@@ -3245,20 +3250,20 @@ package body Src_Editor_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File             : constant String := '/' & (-"File") & '/';
-      Save             : constant String := File & (-"Save More") & '/';
-      Edit             : constant String := '/' & (-"Edit") & '/';
-      Navigate         : constant String := '/' & (-"Navigate") & '/';
-      Mitem            : Gtk_Menu_Item;
-      Button           : Gtk_Button;
-      Toolbar          : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Undo_Redo        : Undo_Redo_Information;
-      Selector         : Scope_Selector;
-      Extra            : Files_Extra_Scope;
-      Recent_Menu_Item : Gtk_Menu_Item;
-      Command          : Interactive_Command_Access;
+      File               : constant String := '/' & (-"File") & '/';
+      Save               : constant String := File & (-"Save More") & '/';
+      Edit               : constant String := '/' & (-"Edit") & '/';
+      Navigate           : constant String := '/' & (-"Navigate") & '/';
+      Mitem              : Gtk_Menu_Item;
+      Button             : Gtk_Button;
+      Toolbar            : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Undo_Redo          : Undo_Redo_Information;
+      Selector           : Scope_Selector;
+      Extra              : Files_Extra_Scope;
+      Recent_Menu_Item   : Gtk_Menu_Item;
+      Command            : Interactive_Command_Access;
 
-      Src_Action_Context  : constant Action_Context :=
+      Src_Action_Context : constant Action_Context :=
         new Src_Editor_Action_Context;
       --  Memory is never freed, but this is needed for the whole life of
       --  the application
@@ -3273,20 +3278,19 @@ package body Src_Editor_Module is
       Command := new Indentation_Command;
       Indentation_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
-        (Kernel, "Indent current line",
-         Command, -"Auto-indent the current line or block of lines",
+        (Kernel, "Format selection",
+         Command, -"Format the current line or selection",
          Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
-         Action      => "Indent current line",
+         Action      => "Format selection",
          Default_Key => "control-Tab");
 
       Command := new Completion_Command;
       Completion_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Complete identifier", Command,
-         -("Completion the current identifier based on the"
-           & " contents of the editor"),
+         -("Complete current identifier based on the contents of the editor"),
          Src_Action_Context);
       Bind_Default_Key
         (Kernel      => Kernel,
@@ -3345,7 +3349,7 @@ package body Src_Editor_Module is
       Scroll_Command (Command.all).Kernel := Kernel_Handle (Kernel);
       Register_Action
         (Kernel, "Center cursor on screen", Command,
-           -"Scroll the current source editor so that the cursor is centerd",
+           -"Scroll the current source editor so that the cursor is centered",
          Src_Action_Context);
 
       Command := new Delete_Command;
@@ -3421,12 +3425,14 @@ package body Src_Editor_Module is
       Undo_Redo.Undo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Undo", Stock_Undo,
                        null, null,
-                       GDK_Z, Control_Mask, Ref_Item => -"Preferences",
+                       GDK_Z, Control_Mask,
+                       Ref_Item  => -"Preferences",
                        Sensitive => False);
       Undo_Redo.Redo_Menu_Item :=
         Register_Menu (Kernel, Edit, -"_Redo", Stock_Redo,
                        null, null,
-                       GDK_R, Control_Mask, Ref_Item => -"Preferences",
+                       GDK_R, Control_Mask,
+                       Ref_Item  => -"Preferences",
                        Sensitive => False);
 
       Gtk_New (Mitem);
@@ -3612,7 +3618,7 @@ package body Src_Editor_Module is
              & " Use the command goto_mark to jump to this mark."),
          Minimum_Args => 1,
          Maximum_Args => 4,
-         Handler => Edit_Command_Handler'Access);
+         Handler      => Edit_Command_Handler'Access);
 
       Register_Command
         (Kernel,
@@ -4176,6 +4182,7 @@ package body Src_Editor_Module is
       Editor : Src_Editor_Box.Source_Editor_Box;
       Child  : MDI_Child;
       Source : Source_Buffer;
+
    begin
       Child := Get (Iter);
 
