@@ -127,13 +127,14 @@ package body Log_Utils is
          declare
             Logs_Dir : constant String := Get_Home_Dir (Kernel) & "log_files";
             File     : File_Descriptor;
-
-            --  ??? Using the base name here won't work if there are multiple
-            --  files with the same base name
             S        : Virtual_File := VFS.Create
               (Full_Filename =>
                  Logs_Dir & Directory_Separator & Base_Name (Real_Name)
                  & "$log");
+            --  In case there are multiple files with the same base name, see
+            --  the loop below to use an alternate name and store it in the
+            --  mapping file.
+
          begin
             if not Is_Regular_File (S) then
                File := Create_New_File (Locale_Full_Name (S), Text);
