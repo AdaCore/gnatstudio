@@ -334,10 +334,10 @@ package body Odd.Process is
          --  Display the file
 
          Push_Internal_Command_Status (Get_Process (Process.Debugger), True);
+         Update_Breakpoints (Process);
          Load_File
            (Process.Editor_Text,
             Str (File_First .. File_Last));
-         Update_Breakpoints (Process);
 
          Pop_Internal_Command_Status (Get_Process (Process.Debugger));
       end if;
