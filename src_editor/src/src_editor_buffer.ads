@@ -1030,6 +1030,9 @@ private
 
       Highlight_Needed : Boolean := False;
       --  Whether the text should be re-highlighted.
+
+      Auto_Syntax_Check : Boolean := False;
+      --  Whether the syntax should be checked automatically.
    end record;
 
 end Src_Editor_Buffer;
