@@ -68,7 +68,8 @@ package body Commands.Generic_Asynchronous is
    -- Name --
    ----------
 
-   function Name (Command : access Generic_Asynchronous_Command) return String
+   function Name
+     (Command : access Generic_Asynchronous_Command) return String
    is
       pragma Unreferenced (Command);
    begin

@@ -1031,9 +1031,9 @@ package body Python_Module is
 
          if Static_Method then
             Add_Static_Method
-              (Class => Klass, Func  => Def, Self   => User_Data);
+              (Class => Klass, Func => Def, Self => User_Data);
          else
-            Add_Method (Class => Klass, Func  => Def, Self   => User_Data);
+            Add_Method (Class => Klass, Func => Def, Self => User_Data);
          end if;
       end if;
    end Register_Command;
@@ -1099,6 +1099,7 @@ package body Python_Module is
       if Get_Console (Script.Interpreter) /= null then
          Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
       end if;
+
       Execute_Command (Script, Cmd, Display_In_Console);
    end Execute_File;
 
@@ -1426,6 +1427,7 @@ package body Python_Module is
       Obj, List : PyObject;
       Tmp : Integer;
       pragma Unreferenced (Tmp);
+
    begin
       if Data.Return_Dict = null then
          Data.Return_Dict := PyDict_New;
@@ -1433,6 +1435,7 @@ package body Python_Module is
 
       if Append then
          Obj := PyDict_GetItem (Data.Return_Dict, Key);
+
          if Obj /= null then
             if PyList_Check (Obj) then
                List := Obj;
@@ -1440,10 +1443,13 @@ package body Python_Module is
                List := PyList_New;
                Tmp := PyList_Append (List, Obj);
             end if;
+
             Tmp := PyList_Append (List, Data.Return_Value);
+
          else
             List := Data.Return_Value;
          end if;
+
       else
          List := Data.Return_Value;
       end if;

@@ -1001,6 +1001,7 @@ package body Builder_Module is
 
          Launch_Background_Command
            (Kernel, Command_Access (C), Active => False, Queue_Id => "");
+
       exception
          when Invalid_Process =>
             Console.Insert (Kernel, -"Invalid command", Mode => Error);

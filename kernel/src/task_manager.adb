@@ -187,8 +187,7 @@ package body Task_Manager is
 
          case Result is
             when Success | Failure =>
-               --  ??? add the command to the list of done commands or
-               --  ??? add the command to the list of failed commands.
+               --  ??? add the command to the list of done or failed commands.
 
                if Result = Success then
                   Command_Queues.Concat
@@ -374,11 +373,10 @@ package body Task_Manager is
       Active   : Boolean;
       Queue_Id : String := "")
    is
-      Task_Queue : constant Integer
-        := Get_Or_Create_Task_Queue (Manager, Queue_Id, Active);
+      Task_Queue : constant Integer :=
+        Get_Or_Create_Task_Queue (Manager, Queue_Id, Active);
    begin
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
-
       Run (Manager, Active);
    end Add_Command;
 
@@ -388,8 +386,7 @@ package body Task_Manager is
 
    procedure Set_Progress_Area
      (Manager : Task_Manager_Access;
-      Area    : Gtk.Box.Gtk_Hbox)
-   is
+      Area    : Gtk.Box.Gtk_Hbox) is
    begin
       Manager.Progress_Area := Area;
    end Set_Progress_Area;
