@@ -87,11 +87,15 @@ package Python.Ada is
    --  Flags indicates how the arguments should be passed.
    --  Doc is the optional documentation string for the method
 
+   No_MethodDef : constant PyMethodDef;
+
    type PyMethodDef_Array is array (Natural range <>) of PyMethodDef;
    pragma Convention (C, PyMethodDef_Array);
    --  The full list of methods supported by a type.
    --  You do not need to terminate this array by a null element, as is done in
    --  C. This is automatically taken care of by Ada.
+
+   No_MethodDef_Array : constant PyMethodDef_Array;
 
    procedure Free (Method : in out PyMethodDef);
    procedure Free (Methods : in out PyMethodDef_Array);
@@ -103,7 +107,7 @@ package Python.Ada is
 
    function Py_InitModule
      (Module_Name : String;
-      Methods     : PyMethodDef_Array;
+      Methods     : PyMethodDef_Array := No_MethodDef_Array;
       Doc         : String := "") return PyObject;
    --  Create and initialize a new module, which a set of predefined methods.
    --  Do not free Methods while the module is in use.
@@ -171,10 +175,14 @@ package Python.Ada is
    --     Klass := Lookup_Class_Object ("__builtin__", "file");
    --  null is returned if the class is not found
 
-   procedure Add_Method (Class : PyClassObject; Func : PyMethodDef);
+   procedure Add_Method
+     (Klass : PyClassObject; Func : PyMethodDef; Self : PyObject := null);
    --  Add a new method to the class.
-   --  The method is an instance method, whose first implied parameter is the
-   --  instance.
+   --  The method is an instance method.
+   --  When the method is called from the python interpreter, its Self argument
+   --  is set to the value of Self.
+   --  Its first argument will always be the instance itself. Therefore the
+   --  first character in the argument to PyArg_ParseTuple should be "O".
 
    procedure Add_Static_Method (Class : PyClassObject; Func : PyMethodDef);
    --  Return a static version of Method. This method doesn't receive an
@@ -188,18 +196,6 @@ package Python.Ada is
    --  It can be called either on the class or an instance. If a class method
    --  is called for a derived class, the derived class object is passed as the
    --  implied first argument.
-
-   procedure Add_Method
-     (Dict  : PyDictObject;
-      Func  : PyMethodDef;
-      Klass : PyClassObject;
-      Self  : PyObject := null);
-   --  Add a new method in Dict.
-   --  Dict should be the dictionnary of Klass.
-   --  When the method is called from the python interpreter, its Self argument
-   --  is set to the value of Self.
-   --  Its first argument will always be the instance itself. Therefore the
-   --  first character in the argument to PyArg_ParseTuple should be "O".
 
    ------------------------------------
    -- Creating and declaring methods --
@@ -259,6 +255,11 @@ package Python.Ada is
 
 private
    type C_Callback_Record is new Integer; --  whatever
+
+   No_MethodDef : constant PyMethodDef :=
+     (Interfaces.C.Strings.Null_Ptr, null, 0,
+      Interfaces.C.Strings.Null_Ptr);
+   No_MethodDef_Array : constant PyMethodDef_Array := (1 .. 0 => No_MethodDef);
 
    type PyTypeObject_Record is new Integer; --  whatever
    pragma Convention (C, PyTypeObject);

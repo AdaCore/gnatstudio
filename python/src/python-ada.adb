@@ -31,9 +31,9 @@ package body Python.Ada is
    function Python_API_Version return Integer;
    pragma Import (C, Python_API_Version, "ada_python_api_version");
 
-   PyInstance_Type_Record : aliased PyTypeObject_Record;
-   pragma Import (C, PyInstance_Type_Record, "PyInstance_Type");
-   PyInstance_Type : constant PyTypeObject := PyInstance_Type_Record'Access;
+--   PyInstance_Type_Record : aliased PyTypeObject_Record;
+--   pragma Import (C, PyInstance_Type_Record, "PyInstance_Type");
+--   PyInstance_Type : constant PyTypeObject := PyInstance_Type_Record'Access;
    --  The type of instances created by a PyClassObject class, when called.
 
    type Methods_Access is access PyMethodDef_Array;
@@ -48,10 +48,10 @@ package body Python.Ada is
    --  This should be used only for standard functions, not for object methods
    --  Self is the first argument that will be passed to the Ada subprogram.
 
-   function PyDescr_NewMethod
-     (Instance_Class : PyTypeObject;
-      Method         : MethodDef_Access) return PyObject;
-   pragma Import (C, PyDescr_NewMethod, "PyDescr_NewMethod");
+--   function PyDescr_NewMethod
+--     (Instance_Class : PyTypeObject;
+--      Method         : MethodDef_Access) return PyObject;
+--   pragma Import (C, PyDescr_NewMethod, "PyDescr_NewMethod");
    --  Create a new method, bound to an Ada subprogram.
    --  This is different from PyCFunction_New since, when called, it is bound
    --  to a specific class instance, which then acts as the first parameter to
@@ -72,7 +72,7 @@ package body Python.Ada is
 
    function Py_InitModule
      (Module_Name : String;
-      Methods     : PyMethodDef_Array;
+      Methods     : PyMethodDef_Array := No_MethodDef_Array;
       Doc         : String := "") return PyObject
    is
       function Internal
@@ -133,25 +133,9 @@ package body Python.Ada is
    -- Add_Method --
    ----------------
 
-   procedure Add_Method (Class : PyClassObject; Func : PyMethodDef) is
-      C_Func : constant PyObject := PyDescr_NewMethod
-        (PyInstance_Type, new PyMethodDef'(Func));
-      Result : Integer;
-      pragma Unreferenced (Result);
-   begin
-      if C_Func /= null then
-         Result := PyObject_SetAttrString (Class, Func.Name, C_Func);
-      end if;
-   end Add_Method;
-
-   ----------------
-   -- Add_Method --
-   ----------------
-
    procedure Add_Method
-     (Dict  : PyDictObject;
+     (Klass : PyClassObject;
       Func  : PyMethodDef;
-      Klass : PyClassObject;
       Self  : PyObject := null)
    is
       C_Func : constant PyObject :=
@@ -160,7 +144,7 @@ package body Python.Ada is
       Ignored : Integer;
       pragma Unreferenced (Ignored);
    begin
-      Ignored := PyDict_SetItemString (Dict, Func.Name, C_Meth);
+      Ignored := PyObject_SetAttrString (Klass, Func.Name, C_Meth);
    end Add_Method;
 
    -----------------------
