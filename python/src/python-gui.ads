@@ -114,9 +114,9 @@ private
       --  Set to true if the python interpreter is waiting for user input while
       --  executing a command. While this is true, the rest of GPS is frozen.
 
-      Refresh_Timeout : Ada.Calendar.Time;
+      Refresh_Timeout : Ada.Calendar.Time := Ada.Calendar.Clock;
       --  Time since we last checked the list of gtk+ events. This avoids
-      --  checking too often, which slow things done too much
+      --  checking too often, which slow things down too much
 
       In_Process : Boolean := False;
       --  True while we are processing a command. This is used to control the
