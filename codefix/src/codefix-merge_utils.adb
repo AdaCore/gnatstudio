@@ -204,10 +204,13 @@ package body Codefix.Merge_Utils is
       J := Position;
       K := 1;
 
-
       loop
          while Copy_Infos (J) = Unit_Deleted loop
             J := J + 1;
+
+            if J > This.Infos'Last then
+               raise Codefix_Panic;
+            end if;
          end loop;
 
          if Copy_Infos (J) = Original_Unit
