@@ -59,6 +59,7 @@ with Gtk.Main;                    use Gtk.Main;
 with Gtk.Stock;                   use Gtk.Stock;
 with Gtk.Toolbar;                 use Gtk.Toolbar;
 with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
 with Gtkada.Entry_Completion;     use Gtkada.Entry_Completion;
 with Gtkada.Handlers;             use Gtkada.Handlers;
@@ -827,7 +828,31 @@ package body Src_Editor_Module is
                  or else not Do_Indentation
                    (Get_Buffer (Box.Editor), Current_Line_Only)
                then
-                  Set_Error_Msg (Data, -"Could not reindent selection");
+                  Set_Error_Msg (Data, -"Could not indent selection");
+               end if;
+            end if;
+         end;
+
+      elsif Command = "indent_buffer" then
+         declare
+            Child    : constant MDI_Child := Find_Current_Editor (Kernel);
+            Box      : Source_Box;
+            Buffer   : Source_Buffer;
+            From, To : Gtk_Text_Iter;
+
+         begin
+            if Child /= null then
+               Box := Source_Box (Get_Widget (Child));
+               Buffer := Get_Buffer (Box.Editor);
+
+               Get_Start_Iter (Buffer, From);
+               Get_End_Iter (Buffer, To);
+
+               if not Get_Editable (Get_View (Box.Editor))
+                 or else not Do_Indentation
+                   (Get_Buffer (Box.Editor), From, To)
+               then
+                  Set_Error_Msg (Data, -"Could not indent buffer");
                end if;
             end if;
          end;
@@ -4175,11 +4200,23 @@ package body Src_Editor_Module is
          Command       => "indent",
          Params        => Parameter_Names_To_Usage (Indent_Cmd_Parameters, 1),
          Description   =>
-         -("Indent the selection (or the current line only if required) in"
-           & " current editor. This command has no effect if the current GPS"
+         -("Indent the selection (or the current line if requested) in"
+           & " current editor. Do nothing if the current GPS"
            & " window is not an editor."),
          Minimum_Args  => Indent_Cmd_Parameters'Length - 1,
          Maximum_Args  => Indent_Cmd_Parameters'Length,
+         Class         => Editor_Class,
+         Static_Method => True,
+         Handler       => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command       => "indent_buffer",
+         Description   =>
+         -("Indent the current editor. Do nothing if the current GPS"
+           & " window is not an editor."),
+         Minimum_Args  => 0,
+         Maximum_Args  => 0,
          Class         => Editor_Class,
          Static_Method => True,
          Handler       => Edit_Command_Handler'Access);
