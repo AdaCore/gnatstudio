@@ -380,15 +380,27 @@ package body Welcome is
    procedure On_Browse_Load (Screen : access Gtk_Widget_Record'Class) is
       S : constant Welcome_Screen := Welcome_Screen (Screen);
       Project_Name : constant String := Get_Text (Get_Entry (S.Open_Project));
-      File : constant String := Select_File
-        (Title             => -"Select project file",
-         Base_Directory    => Dir_Name (Project_Name),
-         Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
-         History           => Get_History (S.Kernel));
+      Dir : String_Access;
    begin
-      if File /= "" then
-         Set_Text (Get_Entry (S.Open_Project), File);
+      if Project_Name = "" then
+         Dir := new String'(Get_Text (S.Default_Dir));
+      else
+         Dir := new String'(Dir_Name (Project_Name));
       end if;
+
+      declare
+         File : constant String := Select_File
+           (Title             => -"Select project file",
+            Base_Directory    => Dir.all,
+            Use_Native_Dialog => Get_Pref (S.Kernel, Use_Native_Dialogs),
+            History           => Get_History (S.Kernel));
+      begin
+         if File /= "" then
+            Set_Text (Get_Entry (S.Open_Project), File);
+         end if;
+      end;
+
+      Free (Dir);
    end On_Browse_Load;
 
    --------------------------------
