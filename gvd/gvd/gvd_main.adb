@@ -33,6 +33,7 @@ with Gtk.Notebook;          use Gtk.Notebook;
 with Gtk.Rc;                use Gtk.Rc;
 with Gtkada.Intl;           use Gtkada.Intl;
 with Gtkada.Dialogs;        use Gtkada.Dialogs;
+with Gtkada.Toolbar;        use Gtkada.Toolbar;
 
 with GVD.Main_Window;       use GVD.Main_Window;
 with GVD.Menu;              use GVD.Menu;
@@ -45,6 +46,7 @@ with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Window_Settings;   use GVD.Window_Settings;
 with GVD.Code_Editors;      use GVD.Code_Editors;
+with GVD.Toolbar;           use GVD.Toolbar;
 
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
@@ -272,6 +274,9 @@ begin
    Gtk.Main.Init;
    Init;
    Gtk_New (Main_Debug_Window, "<gvd>", GVD_Menu_Items.all);
+   Set_Toolbar
+     (Main_Debug_Window,
+      Get_Handle_Box (Create_Toolbar (Main_Debug_Window)));
 
    --  Load the window_settings, if any.
 
