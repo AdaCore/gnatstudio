@@ -1,7 +1,2 @@
-include ../Makefile.common
-
-PROJECT_FILE = syntax.gpr
-ADA_SOURCES = gnatpp.adb gnatparse.adb
-
-include $(ROOT)/builder/src/Makefile.glide
-
+all build compile link ada c c++ clean internal-clean :
+	$(MAKE) -s -f Makefile.syntax $@ ADA_SOURCES="gnatpp.adb gnatparse.adb"
