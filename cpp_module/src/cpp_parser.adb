@@ -883,8 +883,13 @@ package body CPP_Parser is
         or else Name (Last) = ' '
         or else Name (Last) = '>'
       loop
+         --  Special case for "operator>>"
          if Name (Last) = '>' then
-            Skip_Brackets (Name, Last, '<', '>');
+            if Name (Last - 1) /= '>' then
+               Skip_Brackets (Name, Last, '<', '>');
+            else
+               Last := Last - 1;
+            end if;
          end if;
 
          Last := Last - 1;
@@ -1347,7 +1352,12 @@ package body CPP_Parser is
             Check_Template_Arguments       => False,
             Check_Class_Template_Arguments => False,
             Class_Or_Function              => Invalid_String);
-         Add_Primitive_Subprogram (Class, Primitive => Entity);
+
+         if Class /= null then
+            Add_Primitive_Subprogram (Class, Primitive => Entity);
+         else
+            Trace (Me, "Class not found in CL: " & Entity_Class);
+         end if;
       end if;
    end Parse_Method_Table_Internal;
 
@@ -1412,26 +1422,26 @@ package body CPP_Parser is
                          Column => Column_Type (D.End_Position.Column)),
             Kind => End_Of_Spec);
       else
-         Entity := Get_Or_Create
-           (Name   => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
-            File   => Source,
-            Line   => Sym.Start_Position.Line,
-            Column => Sym.Start_Position.Column);
-
          if SuccessI then
             Parse_Method_Table_Internal
               (Handler,
                Entity       => Entity,
                Return_Type  =>
-                 D.Data (D.Return_Type.First .. D.Return_Type.Last),
-               Entity_Name  => D.Key (D.Name.First .. D.Name.Last),
-               Entity_Start => D.Start_Position,
-               Entity_File  => D.Key (D.File_Name.First .. D.File_Name.Last),
-               Entity_Class => D.Key (D.Class.First .. D.Class.Last),
-               Arg_Types    => D.Data (D.Arg_Types.First .. D.Arg_Types.Last),
-               Arg_Names    => D.Data (D.Arg_Names.First .. D.Arg_Names.Last),
+                 M.Data (M.Return_Type.First .. M.Return_Type.Last),
+               Entity_Name  => M.Key (M.Name.First .. M.Name.Last),
+               Entity_Start => M.Start_Position,
+               Entity_File  => M.Key (M.File_Name.First .. M.File_Name.Last),
+               Entity_Class => M.Key (M.Class.First .. M.Class.Last),
+               Arg_Types    => M.Data (M.Arg_Types.First .. M.Arg_Types.Last),
+               Arg_Names    => M.Data (M.Arg_Names.First .. M.Arg_Names.Last),
                Source       => Source,
                Class        => Class);
+         else
+            Entity := Get_Or_Create
+              (Name   => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
+               File   => Source,
+               Line   => Sym.Start_Position.Line,
+               Column => Sym.Start_Position.Column);
          end if;
       end if;
 
@@ -1441,7 +1451,7 @@ package body CPP_Parser is
          if Class = null then
             Class := Lookup_Entity_In_Tables
               (Handler,
-               D.Key (D.Class.First .. D.Class.Last),
+               M.Key (M.Class.First .. M.Class.Last),
                Current_Source                 => Source,
                Tables                         => (CL => True, others => False),
                Check_Predefined               => False,
@@ -1457,7 +1467,7 @@ package body CPP_Parser is
          --  Do not insert a new reference to the class is the MI and MD are
          --  at the same location
 
-         Class_Length := D.Class.Last - D.Class.First + 1;
+         Class_Length := M.Class.Last - M.Class.First + 1;
 
          if Class /= null
            and then M.Start_Position.Column - 2 - Class_Length > 0
