@@ -242,7 +242,7 @@ ifneq (,$(findstring aunit,$(MODULES)))
 # information on how to setup the required links
 AUNIT_SRC=../../aunit
 
-MODULE_INCLUDE+=-I${AUNIT_SRC}/src
+MODULE_INCLUDE+=-aI${AUNIT_SRC}/src -aO${AUNIT_SRC}/obj
 endif
 
 .PHONY: check_aunit
