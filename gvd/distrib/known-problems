@@ -1,5 +1,16 @@
 Known Problems fixed in GVD 1.0.3
 
+- [8531-006] --no-explorer option generates a bug box
+  Problem:    When using the --no-explorer command line option, GVD generates
+              an assert failure.
+  Workaround: Do not use the --no-explorer option, or create a file
+              $HOME/.gvd/preferences containing the following lines:
+ 
+              <?xml version="1.0"?>
+              <preferences>
+                <Display_Explorer>FALSE</Display_Explorer>
+              </preferences>
+
 - Parsing of unsigned char variables.
   Problem:    When trying to display an unsigned char, GVD would recurse
               infinitely.
