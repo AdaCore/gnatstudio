@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 2.1.0
 
+- Custom toolbar buttons are not shown when created through parse_xml
+  Problem:    If you use the GPS shell command "parse_xml" to create toolbar
+              buttons, those buttons are not displayed.
+  Workaround: use the XML files mechanism to create toolbar buttons.
+
 - D802-017 GPS scrolls back to line 1 when opening an already opened file
   Problem:    If you double-click on a file name in the explorer (or
               select it in the Open From Project menu), and the file is
