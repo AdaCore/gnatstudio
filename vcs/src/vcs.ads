@@ -20,7 +20,7 @@
 
 with Generic_List;
 with String_List;
-with Glide_Kernel;
+with Glide_Kernel; use Glide_Kernel;
 
 package VCS is
 
@@ -113,14 +113,13 @@ package VCS is
    procedure Free (F : in out File_Status_Record);
    package File_Status_List is new Generic_List (File_Status_Record);
 
-   function Get_Status
+   procedure Get_Status
      (Rep         : access VCS_Record;
       Filenames   :        String_List.List;
       Get_Status  :        Boolean          := True;
       Get_Version :        Boolean          := True;
       Get_Tags    :        Boolean          := False;
-      Get_Users   :        Boolean          := False)
-     return File_Status_List.List is abstract;
+      Get_Users   :        Boolean          := False) is abstract;
    --  Return the status of a list of files.
    --  The returned File_Status_Record is to be filled only with information
    --  that have the corresponding parameter set to True, all the other fields
@@ -188,26 +187,26 @@ package VCS is
       Filenames : String_List.List) is abstract;
    --  Remove a given file/directory name from the specified VCS repository
 
-   function Diff
+   procedure Diff
      (Rep       : access VCS_Record;
       File      : String;
       Version_1 : String := "";
-      Version_2 : String := "") return String_List.List is abstract;
+      Version_2 : String := "") is abstract;
    --  Return a diff between two versions of one file.
    --  The result is a String_List.List with one element for each line,
    --  in the standard basic diff format.
    --  If Version_1 is empty, then the local file is taken.
    --  If Version_2 is empty, then the latest revision is taken.
 
-   function Log
+   procedure Log
      (Rep  : access VCS_Record;
-      File : String) return String_List.List is abstract;
+      File : String) is abstract;
    --  Return a changelog for the corresponding file.
    --  The result String_List.List with one element for each line.
 
-   function Annotate
+   procedure Annotate
      (Rep  : access VCS_Record;
-      File : String) return String_List.List is abstract;
+      File : String) is abstract;
    --  Return annotations for the corresponding file.
    --  The result String_List.List with one element for each line.
 
