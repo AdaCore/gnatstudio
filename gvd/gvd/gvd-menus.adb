@@ -23,7 +23,7 @@ with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtkada.Types;        use Gtkada.Types;
-with Gtkada.Canvas;       use Gtkada.Canvas;
+with Odd.Canvas;          use Odd.Canvas;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Widget;          use Gtk.Widget;
@@ -74,7 +74,7 @@ package body Odd.Menus is
    end record;
 
    type Item_Record is record
-      Canvas : Interactive_Canvas;
+      Canvas : Odd_Canvas;
       Item   : Display_Item;
    end record;
 
@@ -85,7 +85,7 @@ package body Odd.Menus is
    package Menu_User_Data is new Gtk.Object.User_Data (Gtk_Menu);
 
    package Check_Canvas_Handler is new Gtk.Handlers.User_Callback
-     (Gtk_Check_Menu_Item_Record, Interactive_Canvas);
+     (Gtk_Check_Menu_Item_Record, Odd_Canvas);
    package Check_Editor_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Check_Menu_Item_Record, Odd.Code_Editors.Code_Editor);
    package Widget_Breakpoint_Handler is new Gtk.Handlers.User_Callback
@@ -111,12 +111,12 @@ package body Odd.Menus is
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Interactive_Canvas);
+      Canvas : Odd_Canvas);
    --  Callback for the "align on grid" contextual menu item.
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Interactive_Canvas);
+      Canvas : Odd_Canvas);
    --  Callback for the "detect aliases" contextual menu item.
 
    procedure Change_Line_Nums
@@ -146,7 +146,7 @@ package body Odd.Menus is
 
    procedure Change_Align_On_Grid
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Interactive_Canvas) is
+      Canvas : Odd_Canvas) is
    begin
       Align_On_Grid (Canvas, Get_Active (Item));
    end Change_Align_On_Grid;
@@ -157,10 +157,10 @@ package body Odd.Menus is
 
    procedure Change_Detect_Aliases
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
-      Canvas : Interactive_Canvas)
+      Canvas : Odd_Canvas)
    is
    begin
-      null;
+      Set_Detect_Aliases (Canvas, not Get_Detect_Aliases (Canvas));
    end Change_Detect_Aliases;
 
    ----------------------
@@ -249,7 +249,7 @@ package body Odd.Menus is
    --------------------------------
 
    function Contextual_Background_Menu
-     (Canvas : access Interactive_Canvas_Record'Class)
+     (Canvas : access Odd_Canvas_Record'Class)
      return Gtk.Menu.Gtk_Menu
    is
       Check : Gtk_Check_Menu_Item;
@@ -269,17 +269,16 @@ package body Odd.Menus is
          Check_Canvas_Handler.Connect
            (Check, "activate",
             Check_Canvas_Handler.To_Marshaller (Change_Align_On_Grid'Access),
-            Interactive_Canvas (Canvas));
+            Odd_Canvas (Canvas));
 
---           Gtk_New (Check, Label => -"Detect Aliases");
---           Set_Always_Show_Toggle (Check, True);
---           Set_Active (Check, Get_Detect_Aliases (Canvas));
---           Append (Menu, Check);
---           Check_Canvas_Handler.Connect
---             (Check, "activate",
---              Check_Canvas_Handler.To_Marshaller
---                (Change_Detect_Aliases'Access),
---              Interactive_Canvas (Canvas));
+         Gtk_New (Check, Label => -"Detect Aliases");
+         Set_Always_Show_Toggle (Check, True);
+         Set_Active (Check, Get_Detect_Aliases (Canvas));
+         Append (Menu, Check);
+         Check_Canvas_Handler.Connect
+           (Check, "activate",
+            Check_Canvas_Handler.To_Marshaller (Change_Detect_Aliases'Access),
+            Odd_Canvas (Canvas));
 
          Show_All (Menu);
          Menu_User_Data.Set (Canvas, Menu, Contextual_Background_Menu_Name);
@@ -291,7 +290,7 @@ package body Odd.Menus is
    --------------------------
 
    function Item_Contextual_Menu
-     (Canvas    : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
+     (Canvas    : access Odd_Canvas_Record'Class;
       Item      : access Display_Items.Display_Item_Record'Class;
       Component : Items.Generic_Type_Access)
      return Gtk.Menu.Gtk_Menu
@@ -320,7 +319,7 @@ package body Odd.Menus is
          Item_Handler.Connect
            (Mitem, "activate",
             Item_Handler.To_Marshaller (Update_Variable'Access),
-            Item_Record'(Canvas => Interactive_Canvas (Canvas),
+            Item_Record'(Canvas => Odd_Canvas (Canvas),
                          Item   => Display_Item (Item)));
          Append (Menu, Mitem);
 
