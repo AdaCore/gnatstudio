@@ -3427,11 +3427,12 @@ The wizard gives access to the following list of pages:
 
 @itemize @bullet
 @item Project Naming
-@item VCS Selection
+@item Languages selection
+@item Version Control System Selection
 @item Source Directories Selection
 @item Build Directory
-@item Naming Scheme
 @item Main Units
+@item Naming Scheme
 @item Switches
 @end itemize
 
@@ -3468,6 +3469,17 @@ project files by hand, or be able to duplicate a project hierarchy to
 another location on your disk, it might be useful to indicate that
 paths should be stored as relative paths (they will be relative to the
 location of the project file).
+
+@c ------------------------------------------------------------------
+@subsection Languages Selection
+@cindex Languages
+@c ------------------------------------------------------------------
+
+@noindent
+This page is used to select the programming languages used for the
+sources of this project. By default, only @code{Ada} is selected.
+New languages can be added to this list by using XML files, see the
+section on customizing GPS (@pxref{Adding support for new languages}).
 
 @c ------------------------------------------------------------------
 @subsection VCS Selection
@@ -3539,6 +3551,34 @@ The exec directory is the location where the executables are put. By
 default, this is the same directory as the object directory.
 
 @c ------------------------------------------------------------------
+@subsection Main Units
+@cindex main units
+@c ------------------------------------------------------------------
+
+@noindent
+The main units of a project are the files that should be compiled and
+linked to obtain executables.
+
+Typically, for C applications, these are the files that contain the
+@code{main()} function. For Ada applications, these are the files that
+contain the main subprogram each partition in the project.
+
+These files are treated specially by GPS. Some sub-menus of
+@code{Build} and @code{Debug} will have predefined entries for the
+main units, which make it more convenient to compile and link your
+executables.
+
+To add main units click on the @code{Add} button. This opens a file
+selection dialog. No check is currently done that the selected file
+belongs to the project, but GPS will complain later if it doesn't.
+
+When compiled, each main unit will generate an executable, whose name
+is visible in the second column in this page. If you are using a
+recent enough version of GNAT (3.16 or more recent), you can change
+the name of this executable by clicking in the second column and
+changing the name interactively.
+
+@c ------------------------------------------------------------------
 @subsection Naming Scheme
 @cindex naming scheme
 @c ------------------------------------------------------------------
@@ -3590,34 +3630,6 @@ double-clicking on the line and column you want to edit.
 
 To add new entries to this list, use the fields at the bottom of
 the window, and press the update button.
-
-@c ------------------------------------------------------------------
-@subsection Main Units
-@cindex main units
-@c ------------------------------------------------------------------
-
-@noindent
-The main units of a project are the files that should be compiled and
-linked to obtain executables.
-
-Typically, for C applications, these are the files that contain the
-@code{main()} function. For Ada applications, these are the files that
-contain the main subprogram each partition in the project.
-
-These files are treated specially by GPS. Some sub-menus of
-@code{Build} and @code{Debug} will have predefined entries for the
-main units, which make it more convenient to compile and link your
-executables.
-
-To add main units click on the @code{Add} button. This opens a file
-selection dialog. No check is currently done that the selected file
-belongs to the project, but GPS will complain later if it doesn't.
-
-When compiled, each main unit will generate an executable, whose name
-is visible in the second column in this page. If you are using a
-recent enough version of GNAT (3.16 or more recent), you can change
-the name of this executable by clicking in the second column and
-changing the name interactively.
 
 @c ------------------------------------------------------------------
 @subsection Switches
@@ -5714,7 +5726,7 @@ Color to use for the title bar of unselected items.
 Color to use for the title bar of selected items.
 
 @item Show title bars
-If True, each window in GPS will have its own title bars, showing some 
+If True, each window in GPS will have its own title bars, showing some
 particular information (like the name of the file edited for editors), and
 some buttons to iconify, maximize or close the window. This title bar is
 highlighted when the window is the one currently selected.
@@ -8779,7 +8791,7 @@ GPS.Project.root().get_attribute_as_list ("main")
 
 @noindent
 A set of case exceptions can be declared in this file. Each case
-exception is put inside the tag @code{<word>} or @code{<substring>}. These 
+exception is put inside the tag @code{<word>} or @code{<substring>}. These
 exceptions are used by GPS to set identifiers or keywords case when
 editing case insensitive languages (except if corresponding case is
 set to Unchanged). @pxref{The Preferences Dialog}.
@@ -9586,7 +9598,7 @@ file name, and displays each in the Messages window.
 <?xml version="1.0" ?>
 <query_file>
   <action name="query file and dir">
-    <shell lang="python">list=GPS.MDI.input_dialog \ 
+    <shell lang="python">list=GPS.MDI.input_dialog \
       ("Please enter directory and file name", "Directory", "File")</shell>
     <shell lang="python">print ("Dir=" + list[0], "File=" + list[1])</shell>
     </shell>
@@ -9973,7 +9985,7 @@ The list of actions known to GPS can be found through the
 Some of the shell commands take subprograms as parameters. If you are using
 the GPS shell, this means you have to pass the name of a GPS action. If
 you are using Python, this means that you pass a subprogram,
-@xref{Subprogram parameters}. 
+@xref{Subprogram parameters}.
 
 @c ------------------------------------------------------------------------
 @node The GPS Shell
@@ -10723,7 +10735,7 @@ to convert the text file into a postscript document.
 @end ifset
 
 @c -------------------------------------------
-@node Automatically loading python files at startup 
+@node Automatically loading python files at startup
 @subsubsection Automatically loading python files at startup
 
 @noindent
