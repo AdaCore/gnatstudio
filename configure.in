@@ -201,8 +201,8 @@ case "${host}" in
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
 	PRINT_CMD=""
-	DIFF_CMD="windiff"
-	PATCH_CMD="winpatch"
+	DIFF_CMD="gnudiff"
+	PATCH_CMD="patch"
 	OPAQUE_MDI=True
 	HOST_TYPE=Windows
 	;;
