@@ -308,7 +308,6 @@ package body Src_Editor_View is
             end if;
 
             Redraw_Columns (View);
-            --  return True;
          end;
       end if;
 
@@ -475,7 +474,7 @@ package body Src_Editor_View is
          After     => False);
 
       View.Line_Info := new Line_Info_Display_Array (1 .. 0);
-      View.Real_Lines := new Natural_Array (1 .. 0);
+      View.Real_Lines := new Natural_Array (1 .. 1);
       --  ??? when is this freed ?
    end Initialize;
 
@@ -833,7 +832,7 @@ package body Src_Editor_View is
                   Data := (null, 0);
                end if;
             else
-               if Current_Line < View.Line_Info (J).Column_Info'Last then
+               if Current_Line <= View.Line_Info (J).Column_Info'Last then
                   Data := View.Line_Info (J).Column_Info (Current_Line);
                else
                   Data := (null, 0);
@@ -981,6 +980,10 @@ package body Src_Editor_View is
          end if;
       end loop;
 
+
+      --  If we reach this point, that means no column was found that
+      --  corresponds to Identifier. Therefore we create one.
+
       declare
          A : Line_Info_Display_Array
            (View.Line_Info.all'First .. View.Line_Info.all'Last + 1);
@@ -988,6 +991,7 @@ package body Src_Editor_View is
            (1 .. View.Original_Lines_Number);
       begin
          A (View.Line_Info'First .. View.Line_Info'Last) := View.Line_Info.all;
+
          A (A'Last) := new Line_Info_Display_Record'
            (Identifier  => new String' (Identifier),
             Starting_X  => View.Total_Column_Width + 2,
@@ -1019,6 +1023,18 @@ package body Src_Editor_View is
 
       if not View.Original_Text_Inserted then
          View.Original_Lines_Number := Number;
+
+         if View.Original_Lines_Number > View.Real_Lines'Last then
+            declare
+               A : Natural_Array := View.Real_Lines.all;
+            begin
+               View.Real_Lines := new Natural_Array
+                 (1 .. Number * 2);
+               View.Real_Lines (A'Range) := A;
+               View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
+                 := (others => 0);
+            end;
+         end if;
 
          for J in 1 .. Number loop
             View.Real_Lines (J) := J;
