@@ -11,6 +11,13 @@ Known Problems fixed in GPS 2.1.1
               GPS error in the console
   Workaround: Clear the combo and recreate it instead
 
+- DC15-011 Line numbering loses synchronization
+  Problem:    When line numbers are displayed, adding or removing lines in
+              one place may cause lines outside of the visible area to become
+              associated to wrong numbers.
+  Workaround: Adding or removing a line in the visible area restores
+              synchronization.
+
 - DC11-004 Fatal error when tiling and then maxizing windows
   Problem:    If you tile (horizontally or vertically) some windows in GPS,
               then double-click on the title bar to maximize the items, and
