@@ -84,6 +84,7 @@ package body Debugger is
       Repeat_Num : Positive;
 
    begin
+      Reset_Recursive (Value);
       Value_Found := Type_Str'Length /= 0;
       if Value_Found then
          Parse_Value
