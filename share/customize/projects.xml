@@ -219,7 +219,7 @@
         description="Directory in which the executable will be copied. By default, this is the same as the object directory, and doesn't need to be further specified"
         label="Exec directory"
         omit_if_default="true">
-        <string type="directory" default="(same as build directory)" />
+        <string type="directory" default="/(same as build directory)" />
     </project_attribute>
 
     <!--  Main units -->
