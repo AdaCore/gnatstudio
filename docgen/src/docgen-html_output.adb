@@ -49,7 +49,7 @@ package body Docgen.Html_Output is
       Level  : Natural;
       Indent : Natural);
    --  Add a subtitle for the entity type to the documentation
-   --  Level : level of the current package.
+   --  Level  : level of the current package.
    --  Indent : number of space by step of indentation. This value is defined
    --  in docgen.ads (attribute Indent of the type Backend).
 
@@ -116,6 +116,7 @@ package body Docgen.Html_Output is
       File   : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info   : Doc_Info;
+      Level  : Natural;
       Indent : Natural);
    --  Add the dependencies to the documentation
 
@@ -231,7 +232,9 @@ package body Docgen.Html_Output is
       Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info : in out Doc_Info);
+      Info   : in out Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Format the body by calling Format_HTML for the whole body file
    --  and write it to the doc file
 
@@ -266,6 +269,7 @@ package body Docgen.Html_Output is
          when Open_Info             => Doc_HTML_Open (File, Info);
          when Close_Info            => Doc_HTML_Close (File, Info);
          when Header_Info           => Doc_HTML_Header (Kernel, File, Info);
+
          when Header_Private_Info   =>
             Doc_HTML_Header_Private
               (Kernel, File, Info, Level, Get_Indent (B.all));
@@ -275,8 +279,8 @@ package body Docgen.Html_Output is
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
          when With_Info             =>
             Doc_HTML_With
-              (B, Kernel, File,
-               List_Ref_In_File, Info, Get_Indent (B.all));
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Package_Info_Open_Close =>
             Doc_HTML_Package
               (B, Kernel, File, List_Ref_In_File, Info, Level,
@@ -303,8 +307,8 @@ package body Docgen.Html_Output is
                Get_Indent (B.all));
          when Type_Info             =>
             Doc_HTML_Type
-              (B, Kernel, File,
-               List_Ref_In_File, Info, Level, Get_Indent (B.all));
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Tagged_Type_Info      =>
             Doc_Family_HTML
               (File, Info, Level, Get_Indent (B.all));
@@ -337,7 +341,8 @@ package body Docgen.Html_Output is
             --  For the body file
          when Body_Line_Info        =>
             Doc_HTML_Body
-              (B, Kernel, File, List_Ref_In_File, Info);
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
       end case;
    end Doc_HTML_Create;
 
@@ -453,7 +458,9 @@ package body Docgen.Html_Output is
             Info.Doc_Info_Options.Link_All,
             False,
             Info.Doc_Info_Options.Process_Body_Files,
-            Info);
+            Info,
+            Level,
+            Get_Indent (B.all));
       else
          --  This package contains declarations.
          --  Here we print either the header (package ... is)
@@ -485,7 +492,9 @@ package body Docgen.Html_Output is
             Info.Doc_Info_Options.Link_All,
             False,
             Info.Doc_Info_Options.Process_Body_Files,
-            Info);
+            Info,
+            Level,
+            Get_Indent (B.all));
       end if;
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
@@ -502,7 +511,9 @@ package body Docgen.Html_Output is
       File   : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info   : Doc_Info;
+      Level  : Natural;
       Indent : Natural) is
+      pragma Unreferenced (Level);
    begin
       Put_Line
         (File,
@@ -527,8 +538,11 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
-
+         Info,
+         0,
+         Get_Indent (B.all));
+      --  With clauses hava no indentation. So the parameter Level has the
+      --  value 0.
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_With;
 
@@ -572,7 +586,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Var;
 
@@ -616,7 +632,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Exception;
 
@@ -650,7 +668,6 @@ package body Docgen.Html_Output is
         (B,
          Kernel,
          File,
-         --  Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Type_Header.all,
@@ -661,7 +678,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Type;
 
@@ -896,7 +915,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Entry;
@@ -1059,7 +1080,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          False,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Subprogram;
@@ -1468,7 +1491,10 @@ package body Docgen.Html_Output is
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : in out Doc_Info) is
+      Info   : in out Doc_Info;
+      Level  : Natural;
+      Indent : Natural) is
+      pragma Unreferenced (Indent);
    begin
       Format_File
         (B,
@@ -1484,7 +1510,9 @@ package body Docgen.Html_Output is
          Info.Doc_Info_Options.Link_All,
          True,
          Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+         Info,
+         Level,
+         Get_Indent (B.all));
    end Doc_HTML_Body;
 
    --------------------------
