@@ -49,6 +49,9 @@
   * [Manu] Parsing switches: see if we can reuse the front-end
   * [Manu] Create proper handlers for "destroy"
   * [Manu] Should we have -gnatt (ASIS tree ?)
+  * [Manu] Add entry for -mwindows (at least on Windows machines)
+  * [Manu] Add profiling switches ?
+  * [Manu] Switch for storing intermediate files (.s, ...)
 
 ---------------------
 -- Variable editor --
