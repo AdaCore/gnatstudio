@@ -2638,7 +2638,8 @@ package body Src_Editor_Module is
                      if Comment then
                         Append (Lines, Comment_Line (Lang, Line));
                      else
-                        Append (Lines, Uncomment_Line (Lang, Line));
+                        Append (Lines,
+                                Comment_Line (Lang, Line, Comment => False));
                      end if;
                   end if;
                end;
