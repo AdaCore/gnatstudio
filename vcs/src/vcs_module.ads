@@ -52,4 +52,8 @@ package VCS_Module is
 
    procedure Hide_VCS_Explorer;
    --  Call this subprogram when the VCS Explorer is about to be removed
+
+   function Explorer_Is_Open return Boolean;
+   --  Return whether the Explorer is open.
+
 end VCS_Module;

@@ -1089,4 +1089,16 @@ package body VCS_Module is
       end if;
    end Hide_VCS_Explorer;
 
+   ----------------------
+   -- Explorer_Is_Open --
+   ----------------------
+
+   function Explorer_Is_Open return Boolean is
+      M : constant VCS_Module_ID_Access :=
+            VCS_Module_ID_Access (VCS_Module_ID);
+   begin
+      return M.Explorer /= null
+        and then M.Explorer_Child /= null;
+   end Explorer_Is_Open;
+
 end VCS_Module;
