@@ -584,4 +584,14 @@ package body Glide_Kernel is
       return Handle.Tooltips;
    end Get_Tooltips;
 
+   -----------------
+   -- Get_Toolbar --
+   -----------------
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar is
+   begin
+      return Glide_Window (Handle.Main_Window).Toolbar;
+   end Get_Toolbar;
+
 end Glide_Kernel;

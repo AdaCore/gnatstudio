@@ -27,7 +27,9 @@ with Glib.Object;
 with Gtk.Handlers;
 with Gtk.Accel_Group;
 with Gtk.Menu;
+with Gtk.Toolbar;
 with Gtk.Tooltips;
+with Gtk.Widget;
 with Gtk.Window;
 with Gtkada.MDI;
 with Prj.Tree;
@@ -123,19 +125,23 @@ package Glide_Kernel is
    --  Reload a saved desktop.
    --  Return False if no desktop could be loaded.
 
-   function Get_MDI (Handle : access Kernel_Handle_Record)
-      return Gtkada.MDI.MDI_Window;
+   function Get_MDI
+     (Handle : access Kernel_Handle_Record) return Gtkada.MDI.MDI_Window;
    --  Return the MDI associated with Handle
 
-   function Get_Main_Window (Handle : access Kernel_Handle_Record)
-      return Gtk.Window.Gtk_Window;
+   function Get_Main_Window
+     (Handle : access Kernel_Handle_Record) return Gtk.Window.Gtk_Window;
    --  Return the main window associated with the kernel.
    --  The main usage for this function should be to display the dialogs
    --  centered with regards to this window.
 
-   function Get_Tooltips (Handle : access Kernel_Handle_Record)
-      return Gtk.Tooltips.Gtk_Tooltips;
+   function Get_Tooltips
+     (Handle : access Kernel_Handle_Record) return Gtk.Tooltips.Gtk_Tooltips;
    --  Return the widget used to register tooltips for the graphical interface.
+
+   function Get_Toolbar
+     (Handle : access Kernel_Handle_Record) return Gtk.Toolbar.Gtk_Toolbar;
+   --  Return the main toolbar associated with the kernel.
 
    --------------
    -- Contexts --
@@ -356,6 +362,12 @@ private
       --  The last context emitted by the explorer.
       --  This implies knowledge of the explorer (at least to check the module
       --  ID, but there is no way around that).
+
+      HTML_Widget : Gtk.Widget.Gtk_Widget;
+      --  The HTML renderer used to display help pages.
+
+      Current_Help_File : GNAT.OS_Lib.String_Access;
+      --  The current help file displayed. Used to find relative (hyper) links.
    end record;
 
 end Glide_Kernel;
