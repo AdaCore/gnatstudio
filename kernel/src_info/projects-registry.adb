@@ -1499,7 +1499,6 @@ package body Projects.Registry is
    procedure Pretty_Print
      (Project                            : Project_Type;
       Increment                          : Positive      := 3;
-      Eliminate_Empty_Case_Constructions : Boolean       := False;
       Minimize_Empty_Lines               : Boolean       := False;
       W_Char                             : Prj.PP.Write_Char_Ap := null;
       W_Eol                              : Prj.PP.Write_Eol_Ap  := null;
@@ -1508,7 +1507,7 @@ package body Projects.Registry is
       Pretty_Print
         (Project.Node,
          Increment,
-         Eliminate_Empty_Case_Constructions,
+         False,
          Minimize_Empty_Lines,
          W_Char, W_Eol, W_Str,
          Backward_Compatibility => Project_Backward_Compatibility);

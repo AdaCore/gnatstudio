@@ -177,7 +177,6 @@ package Projects.Registry is
    procedure Pretty_Print
      (Project                            : Project_Type;
       Increment                          : Positive      := 3;
-      Eliminate_Empty_Case_Constructions : Boolean       := False;
       Minimize_Empty_Lines               : Boolean       := False;
       W_Char                             : Prj.PP.Write_Char_Ap := null;
       W_Eol                              : Prj.PP.Write_Eol_Ap  := null;
