@@ -48,11 +48,6 @@ package body Ada_Module is
      Glib.Generic_Properties.Generic_Enumeration_Property
      ("Casing_Type", Language.Casing_Type);
 
-   --  The following constants are defined to avoid allocating dynamic memory
-   --  in Gtk_New. This should eventually be integrated in the kernel.
-   --  The comments are there so that the script to handle internationalization
-   --  properly finds the constants.
-
    procedure On_Preferences_Changed
      (Kernel : access GObject_Record'Class; K : Kernel_Handle);
    --  Called when the preferences have changed
