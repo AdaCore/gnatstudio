@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- DA19-018 Casing not preserved for object and exec directories
+  Problem:    In the project view (and in the result of current_context() in
+              scripting languages), the object and exec directory names are
+              converted to lower-cases on case-insensitive file systems
+  Workaround: None for the project view, but in shell you can do a "cd" to
+              that directory and getcwd() to read with the right casing
+
 - DA15-003 XML files: action not found when defined outside of theme
   Problem:    If a theme defines a menu which references an action defined
               outside of <theme>, the action is reported as not found
