@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -144,7 +144,9 @@ package body Language.Ada is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access Ada_Language; Str : String) return Boolean is
+     (Lang : access Ada_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return Str = "boolean"
         or else Str = "integer"
@@ -158,7 +160,9 @@ package body Language.Ada is
    ----------------------
 
    function Dereference_Name
-     (Lang : access Ada_Language; Name : String) return String is
+     (Lang : access Ada_Language; Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Name & ".all";
    end Dereference_Name;
@@ -170,7 +174,9 @@ package body Language.Ada is
    function Array_Item_Name
      (Lang  : access Ada_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
 
@@ -190,7 +196,9 @@ package body Language.Ada is
    function Record_Field_Name
      (Lang  : access Ada_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       --  Simplify the expression by getting rid of unnecessary ".all"
 
@@ -208,7 +216,9 @@ package body Language.Ada is
    ----------------------
 
    function Explorer_Regexps
-     (Lang : access Ada_Language) return Explorer_Categories is
+     (Lang : access Ada_Language) return Explorer_Categories
+   is
+      pragma Unreferenced (Lang);
    begin
       return Ada_Explorer_Categories;
    end Explorer_Regexps;
@@ -279,7 +289,9 @@ package body Language.Ada is
    function Make_Entry_Package
      (Str      : String;
       Matched  : Match_Array;
-      Category : access Category_Index) return String is
+      Category : access Category_Index) return String
+   is
+      pragma Unreferenced (Category);
    begin
       return Str (Matched (3).First .. Matched (3).Last);
    end Make_Entry_Package;
@@ -291,7 +303,9 @@ package body Language.Ada is
    function Make_Entry_Type
      (Str      : String;
       Matched  : Match_Array;
-      Category : access Category_Index) return String is
+      Category : access Category_Index) return String
+   is
+      pragma Unreferenced (Category);
    begin
       return Str (Matched (2).First .. Matched (2).Last);
    end Make_Entry_Type;
@@ -305,6 +319,7 @@ package body Language.Ada is
       Matched  : Match_Array;
       Category : access Category_Index) return String
    is
+      pragma Unreferenced (Category);
       First, Last : Natural;
    begin
       First := Matched (2).First;
@@ -327,6 +342,7 @@ package body Language.Ada is
       Matched  : Match_Array;
       Category : access Category_Index) return String
    is
+      pragma Unreferenced (Category);
       First, Last : Natural;
    begin
       First := Matched (2).First;
@@ -348,6 +364,7 @@ package body Language.Ada is
      (Lang : access Ada_Language;
       File_Name : String) return Boolean
    is
+      pragma Unreferenced (Lang);
       Name : constant String := Base_File_Name (File_Name);
    begin
       return
@@ -368,7 +385,9 @@ package body Language.Ada is
    --------------
 
    function Keywords
-     (Lang : access Ada_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Ada_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords_List;
    end Keywords;
@@ -378,7 +397,9 @@ package body Language.Ada is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Ada_Language) return Language_Context is
+     (Lang : access Ada_Language) return Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return (Comment_Start_Length          => 0,
               Comment_End_Length            => 0,
@@ -403,6 +424,7 @@ package body Language.Ada is
       Ident_Casing     : Casing_Type       := Mixed;
       Format_Operators : Boolean           := True)
    is
+      pragma Unreferenced (Lang);
       New_Buffer : Extended_Line_Buffer;
       Ignore     : Natural;
 
@@ -431,6 +453,7 @@ package body Language.Ada is
       Next_Indent     : out Natural;
       Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
    is
+      pragma Unreferenced (Lang);
       New_Buffer : Extended_Line_Buffer;
       Constructs : aliased Construct_List;
 
@@ -458,6 +481,7 @@ package body Language.Ada is
       Buffer_Length : Natural;
       Callback      : Entity_Callback)
    is
+      pragma Unreferenced (Lang);
       New_Buffer : Extended_Line_Buffer;
       Ignore     : Natural;
    begin
@@ -485,6 +509,7 @@ package body Language.Ada is
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
+      pragma Unreferenced (Lang);
       New_Buffer : Extended_Line_Buffer;
    begin
       Analyze_Ada_Source

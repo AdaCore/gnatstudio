@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -20,10 +20,6 @@
 
 with Glib;          use Glib;
 with Gdk.Cursor;    use Gdk.Cursor;
---  ??? needed with GtkAda 1.2 but not GtkAda 2.0
-pragma Warnings (Off);
-with Gdk.Types;     use Gdk.Types;
-pragma Warnings (On);
 with Gdk.Event;     use Gdk.Event;
 with Gdk.Window;    use Gdk.Window;
 with Gtk.Clist;     use Gtk.Clist;

@@ -161,7 +161,9 @@ package body Language is
 
    function Can_Tooltip_On_Entity
      (Lang   : access Language_Root;
-      Entity : String) return Boolean is
+      Entity : String) return Boolean
+   is
+      pragma Unreferenced (Lang, Entity);
    begin
       return True;
    end Can_Tooltip_On_Entity;
@@ -173,6 +175,7 @@ package body Language is
    function Explorer_Regexps
      (Lang : access Language_Root) return Explorer_Categories
    is
+      pragma Unreferenced (Lang);
       E : Explorer_Categories (1 .. 0);
    begin
       return E;
@@ -237,7 +240,9 @@ package body Language is
 
    function Is_System_File
      (Lang      : access Language_Root;
-      File_Name : String) return Boolean is
+      File_Name : String) return Boolean
+   is
+      pragma Unreferenced (Lang, File_Name);
    begin
       return False;
    end Is_System_File;
@@ -436,7 +441,10 @@ package body Language is
       Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
       Reserved_Casing  : Casing_Type       := Lower;
       Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True) is
+      Format_Operators : Boolean           := True)
+   is
+      pragma Unreferenced (Lang, Indent_Params, Reserved_Casing,
+                           Ident_Casing, Format_Operators);
    begin
       Put (Buffer);
    end Format_Source;
@@ -452,7 +460,9 @@ package body Language is
       Result        : out Construct_List;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters) is
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
+   is
+      pragma Unreferenced (Lang, Buffer, Buffer_Length, Indent_Params);
    begin
       Indent := 0;
       Next_Indent := 0;
@@ -467,7 +477,9 @@ package body Language is
      (Lang          : access Language_Root;
       Buffer        : Interfaces.C.Strings.chars_ptr;
       Buffer_Length : Natural;
-      Callback      : Entity_Callback) is
+      Callback      : Entity_Callback)
+   is
+      pragma Unreferenced (Lang, Buffer, Buffer_Length, Callback);
    begin
       null;
    end Parse_Entities;
@@ -484,13 +496,13 @@ package body Language is
       Next_Indent   : out Natural;
       Indent_Params : Indent_Parameters := Default_Indent_Parameters)
    is
+      pragma Unreferenced (Lang, Indent_Params);
       function To_Unchecked_String_Access is new Ada.Unchecked_Conversion
         (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
 
       S      : Unchecked_String_Access := To_Unchecked_String_Access (Buffer);
       Index  : Natural := Buffer_Length - 1;
       Blanks : Natural;
-
    begin
       while Index > 1 and then S (Index - 1) /= ASCII.LF loop
          Index := Index - 1;

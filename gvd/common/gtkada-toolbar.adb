@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --          GtkAda - Ada95 binding for the Gimp Toolkit              --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
@@ -61,6 +61,7 @@ package body Gtkada.Toolbar is
      (Widget  : access Gtk_Widget_Record'Class;
       Toolbar : Gtkada_Toolbar)
    is
+      pragma Unreferenced (Widget);
       List     : Glist;
       Position : Gint := 1;
 
@@ -86,6 +87,7 @@ package body Gtkada.Toolbar is
      (Widget  : access Gtk_Widget_Record'Class;
       Toolbar : Gtkada_Toolbar)
    is
+      pragma Unreferenced (Widget);
       List    : Glist;
    begin
       Set_Orientation (Toolbar, Orientation_Vertical);
@@ -113,7 +115,9 @@ package body Gtkada.Toolbar is
    procedure Gtk_New
      (Toolbar     : out Gtkada_Toolbar;
       Orientation : in Gtk_Orientation;
-      Style       : in Gtk_Toolbar_Style) is
+      Style       : in Gtk_Toolbar_Style)
+   is
+      pragma Unreferenced (Orientation);
    begin
       Gtk_New (Toolbar, Style);
    end Gtk_New;

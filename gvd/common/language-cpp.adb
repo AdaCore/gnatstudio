@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -57,7 +57,9 @@ package body Language.Cpp is
    function Make_Entry_Class
      (Str      : String;
       Matched  : Match_Array;
-      Category : access Category_Index) return String is
+      Category : access Category_Index) return String
+   is
+      pragma Unreferenced (Category);
    begin
       return Str (Matched (1).First .. Matched (1).Last)
         & " " & Str (Matched (2).First .. Matched (2).Last);
@@ -79,7 +81,9 @@ package body Language.Cpp is
    --------------
 
    function Keywords
-     (Lang : access Cpp_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Cpp_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords_List;
    end Keywords;
@@ -89,7 +93,9 @@ package body Language.Cpp is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Cpp_Language) return Language_Context is
+     (Lang : access Cpp_Language) return Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return (Comment_Start_Length          => 2,
               Comment_End_Length            => 2,

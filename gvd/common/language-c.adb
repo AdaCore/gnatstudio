@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -59,7 +59,9 @@ package body Language.C is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access C_Language; Str : String) return Boolean is
+     (Lang : access C_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang);
    begin
       return    Str = "int"
         or else Str = "char"
@@ -89,7 +91,9 @@ package body Language.C is
 
    function Dereference_Name
      (Lang : access C_Language;
-      Name : String) return String is
+      Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return "(*" & Name & ")";
    end Dereference_Name;
@@ -101,7 +105,9 @@ package body Language.C is
    function Array_Item_Name
      (Lang  : access C_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Name & '[' & Index & ']';
    end Array_Item_Name;
@@ -113,7 +119,9 @@ package body Language.C is
    function Record_Field_Name
      (Lang  : access C_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       if Index (Name, "*") = 0 then
          return Name & '.' & Field;
@@ -128,7 +136,9 @@ package body Language.C is
    ----------------------
 
    function Explorer_Regexps
-     (Lang : access C_Language) return Explorer_Categories is
+     (Lang : access C_Language) return Explorer_Categories
+   is
+      pragma Unreferenced (Lang);
    begin
       return C_Explorer_Categories;
    end Explorer_Regexps;
@@ -140,7 +150,9 @@ package body Language.C is
    function Make_Entry_Subprogram
      (Str     : String;
       Matched : Match_Array;
-      Category : access Category_Index) return String is
+      Category : access Category_Index) return String
+   is
+      pragma Unreferenced (Category);
    begin
       return Str (Matched (4).First .. Matched (4).Last);
    end Make_Entry_Subprogram;
@@ -150,7 +162,9 @@ package body Language.C is
    --------------
 
    function Keywords
-     (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Keywords_List;
    end Keywords;
@@ -160,7 +174,9 @@ package body Language.C is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access C_Language) return Language_Context is
+     (Lang : access C_Language) return Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return
         (Comment_Start_Length          => 2,

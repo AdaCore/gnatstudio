@@ -26,7 +26,9 @@ package body Language.Java is
    --------------------
 
    function Is_Simple_Type
-     (Lang : access Java_Language; Str : String) return Boolean is
+     (Lang : access Java_Language; Str : String) return Boolean
+   is
+      pragma Unreferenced (Lang, Str);
    begin
       return False;
    end Is_Simple_Type;
@@ -37,7 +39,9 @@ package body Language.Java is
 
    function Dereference_Name
      (Lang : access Java_Language;
-      Name : String) return String is
+      Name : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Name;
       --  This notion does not exist in Java, since all types
@@ -51,7 +55,9 @@ package body Language.Java is
    function Array_Item_Name
      (Lang  : access Java_Language;
       Name  : String;
-      Index : String) return String is
+      Index : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Name & '[' & Index & ']';
    end Array_Item_Name;
@@ -63,7 +69,9 @@ package body Language.Java is
    function Record_Field_Name
      (Lang  : access Java_Language;
       Name  : String;
-      Field : String) return String is
+      Field : String) return String
+   is
+      pragma Unreferenced (Lang);
    begin
       return Name & '.' & Field;
    end Record_Field_Name;
@@ -73,7 +81,9 @@ package body Language.Java is
    --------------
 
    function Keywords
-     (Lang : access Java_Language) return GNAT.Regpat.Pattern_Matcher is
+     (Lang : access Java_Language) return GNAT.Regpat.Pattern_Matcher
+   is
+      pragma Unreferenced (Lang);
    begin
       return Compile ("^@@@@$");
    end Keywords;
@@ -83,7 +93,9 @@ package body Language.Java is
    --------------------------
 
    function Get_Language_Context
-     (Lang : access Java_Language) return Language_Context is
+     (Lang : access Java_Language) return Language_Context
+   is
+      pragma Unreferenced (Lang);
    begin
       return (Comment_Start_Length          => 2,
               Comment_End_Length            => 2,
