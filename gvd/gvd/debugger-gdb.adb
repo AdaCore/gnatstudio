@@ -1263,7 +1263,9 @@ package body Debugger.Gdb is
                Index := Index + 1;
             end loop;
 
-            if Index <= S'Last then
+            if Index <= S'Last
+              and then S (Start .. Index - 1) /= "<bad string table offset>"
+            then
                Result (Num) := new String' (S (Start .. Index - 1));
                Num := Num + 1;
                Index := Index + 1;
