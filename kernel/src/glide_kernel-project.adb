@@ -42,7 +42,6 @@ with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 with Project_Hash;       use Project_Hash;
 
-with Traces;  use Traces;
 with Glide_Intl; use Glide_Intl;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
@@ -51,8 +50,6 @@ with Language_Handlers.Glide; use Language_Handlers.Glide;
 package body Glide_Kernel.Project is
 
    use Project_Hash.Project_Htable;
-
-   Me : constant Debug_Handle := Create ("glide_kernel.project");
 
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class);
@@ -284,7 +281,6 @@ package body Glide_Kernel.Project is
          Kernel.Project := New_Project;
          Kernel.Project_Is_Default := False;
       else
-         Trace (Me, "Couldn't load or parse the project " & Project);
          Console.Insert (Kernel, -"Couldn't parse the project " & Project);
          Console.Insert (Kernel, -"Using default project instead");
          Kernel.Project := Create_Default_Project ("default", Get_Current_Dir);
