@@ -1111,7 +1111,11 @@ package body Entities is
          end if;
       end if;
 
-      return S.File;
+      if S = null then
+         return null;
+      else
+         return S.File;
+      end if;
    end Internal_Get_Or_Create;
 
    -------------------
