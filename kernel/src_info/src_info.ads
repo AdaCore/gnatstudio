@@ -29,11 +29,6 @@ with Ada.Calendar;
 
 package Src_Info is
 
-   No_Time : constant Ada.Calendar.Time := Ada.Calendar.Time_Of
-     (Ada.Calendar.Year_Number'First,
-      Ada.Calendar.Month_Number'First,
-      Ada.Calendar.Day_Number'First);
-
    -------------------------------
    -- Library Information files --
    -------------------------------
