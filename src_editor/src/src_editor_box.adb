@@ -1579,7 +1579,7 @@ package body Src_Editor_Box is
       end if;
 
       Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
-      Scroll_To_Cursor_Location (Editor.Source_View);
+      Scroll_To_Cursor_Location (Editor.Source_View, True);
    end Set_Cursor_Location;
 
    -------------------------
