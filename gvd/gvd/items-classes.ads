@@ -68,6 +68,12 @@ package Items.Classes is
    function Get_Num_Ancestors (Item : Class_Type) return Natural;
    --  Return the number of ancestors.
 
+   procedure Draw_Border
+     (Item : access Class_Type;
+      Draw : Boolean := True);
+   --  If Draw is True (the default for new items), a border is drawn around
+   --  the item when it is displayed on the screen.
+
    procedure Propagate_Width
      (Item  : in out Class_Type;
       Width : Glib.Gint);
@@ -79,6 +85,7 @@ private
    type Class_Type (Num_Ancestors : Natural) is new Generic_Type with record
      Ancestors : Class_Type_Array (1 .. Num_Ancestors) := (others => null);
      Child     : Items.Records.Record_Type_Access;
+     Border_Spacing : Glib.Gint := Items.Border_Spacing;
    end record;
    procedure Print (Value : Class_Type; Indent : Natural := 0);
    procedure Free

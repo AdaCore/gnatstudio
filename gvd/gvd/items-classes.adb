@@ -57,6 +57,7 @@ package body Items.Classes is
       end if;
 
       Item.Ancestors (Num) := Ancestor;
+      Draw_Border (Ancestor, False);
       Item.Valid := True;
       Item.Ancestors (Num).Valid := True;
    end Add_Ancestor;
@@ -76,6 +77,7 @@ package body Items.Classes is
       end if;
 
       Item.Child := Child;
+      Draw_Border (Child, False);
    end Set_Child;
 
    ---------------
@@ -191,7 +193,7 @@ package body Items.Classes is
       then
          Display_Pixmap
            (Context.Pixmap, Context.GC, Unknown_Pixmap,
-            Unknown_Mask, X + Left_Border, Y + Border_Spacing);
+            Unknown_Mask, X + Left_Border, Y + Item.Border_Spacing);
          return;
       end if;
 
@@ -219,17 +221,49 @@ package body Items.Classes is
          --  Draw the ancestor if it isn't a null record.
 
          if Item.Ancestors (A) /= null
-           and then Item.Ancestors (A).Height /= 0
+           and then Item.Ancestors (A).Height > 0
          then
             --  Do not add Left_Border to X, since each of the ancestor is
             --  itself a Class_Type and will already draw it.
-            Paint (Item.Ancestors (A).all, Context, X, Current_Y);
-            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
+            Paint (Item.Ancestors (A).all, Context, X + Item.Border_Spacing,
+                   Current_Y);
+            Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing
+              + 3;
+
+            if Item.Ancestors (A).Child /= null
+              and then Num_Fields (Item.Ancestors (A).Child.all) > 0
+            then
+               Set_Line_Attributes
+                 (Context.GC, Line_Width => 0, Line_Style => Line_On_Off_Dash,
+                  Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
+               Draw_Line (Context.Pixmap, Context.GC,
+                          X + Item.Border_Spacing,
+                          Current_Y - 2,
+                          X + Item.Width - Item.Border_Spacing,
+                          Current_Y - 2);
+               Set_Line_Attributes
+                 (Context.GC, Line_Width => 0, Line_Style => Line_Solid,
+                  Cap_Style => Cap_Not_Last, Join_Style => Join_Miter);
+            end if;
+
          end if;
       end loop;
 
-      if Get_Height (Item.Child.all) /= 0 then
-         Paint (Item.Child.all, Context, X + Left_Border, Current_Y);
+      if Get_Height (Item.Child.all) > 2 * Item.Border_Spacing then
+         Paint (Item.Child.all, Context, X + Left_Border
+                + Item.Border_Spacing, Current_Y);
+      end if;
+
+      --  Draw a border
+      if Item.Border_Spacing /= 0 then
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => False,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width - 1,
+            Height => Item.Height - 1);
       end if;
 
       if Item.Selected then
@@ -260,9 +294,10 @@ package body Items.Classes is
                Size_Request (Item.Ancestors (A).all, Context, Hide_Big_Items);
 
                --  If we don't have an null record
+               --  3 is for the size reserved for the separation line.
                if Item.Ancestors (A).Height /= 0 then
                   Total_Height := Total_Height + Item.Ancestors (A).Height +
-                    Line_Spacing;
+                    Line_Spacing + 3;
                end if;
 
                Total_Width := Gint'Max (Total_Width, Item.Ancestors (A).Width);
@@ -277,8 +312,9 @@ package body Items.Classes is
 
          --  Dont print an extra border around, since each ancestors and child
          --  are records and already have their own borders.
-         Item.Width  := Total_Width;
-         Item.Height := Total_Height + Get_Height (Item.Child.all);
+         Item.Width  := Total_Width + 2 * Item.Border_Spacing;
+         Item.Height := Total_Height + Get_Height (Item.Child.all)
+           + 2 * Item.Border_Spacing;
 
          if Hide_Big_Items and then Item.Height > Big_Item_Height then
             Item.Visible := False;
@@ -286,8 +322,8 @@ package body Items.Classes is
       end if;
 
       if not Item.Visible then
-         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
-         Item.Height := 2 * Border_Spacing + Hidden_Height;
+         Item.Width := Left_Border + 2 * Item.Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Item.Border_Spacing + Hidden_Height;
       end if;
    end Size_Request;
 
@@ -396,9 +432,11 @@ package body Items.Classes is
 
       if Item.Visible then
          for A in Item.Ancestors'Range loop
-            Propagate_Width (Item.Ancestors (A).all, Width);
+            Propagate_Width
+              (Item.Ancestors (A).all, Width - 2 * Item.Border_Spacing);
          end loop;
-         Propagate_Width (Item.Child.all, Width - Left_Border);
+         Propagate_Width
+           (Item.Child.all, Width - Left_Border - 2 * Item.Border_Spacing);
       end if;
    end Propagate_Width;
 
@@ -448,5 +486,20 @@ package body Items.Classes is
          return Generic_Type_Access (Iter.Item.Child);
       end if;
    end Data;
+
+   -----------------
+   -- Draw_Border --
+   -----------------
+
+   procedure Draw_Border
+     (Item : access Class_Type;
+      Draw : Boolean := True) is
+   begin
+      if Draw then
+         Item.Border_Spacing := Border_Spacing;
+      else
+         Item.Border_Spacing := 0;
+      end if;
+   end Draw_Border;
 
 end Items.Classes;

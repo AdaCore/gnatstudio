@@ -381,9 +381,9 @@ package body Items.Records is
       Context : Drawing_Context;
       X, Y    : Gint := 0)
    is
-      Current_Y : Gint := Y + Border_Spacing;
+      Current_Y : Gint := Y + Item.Border_Spacing;
       Arrow_Pos : constant Gint :=
-        X + Left_Border + Border_Spacing + Item.Gui_Fields_Width -
+        X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
         Text_Width (Context.Font, String'(" => "));
    begin
       Item.X := X;
@@ -428,7 +428,7 @@ package body Items.Records is
            (Context.Pixmap,
             Font => Context.Type_Font,
             GC   => Context.GC,
-            X    => X + Left_Border + Border_Spacing,
+            X    => X + Left_Border + Item.Border_Spacing,
             Y    => Current_Y + Get_Ascent (Context.Type_Font),
             Text => Get_Type_Name (Item'Access, Context));
          Current_Y := Current_Y +
@@ -441,7 +441,7 @@ package body Items.Records is
            (Context.Pixmap,
             Font => Context.Font,
             GC   => Context.GC,
-            X    => X + Left_Border + Border_Spacing,
+            X    => X + Left_Border + Item.Border_Spacing,
             Y    => Current_Y + Get_Ascent (Context.Font),
             Text => Item.Fields (F).Name.all);
          Draw_Text
@@ -455,9 +455,10 @@ package body Items.Records is
          --  not a variant part ?
 
          if Item.Fields (F).Value /= null then
-            Paint (Item.Fields (F).Value.all, Context,
-                   X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
-                   Current_Y);
+            Paint
+              (Item.Fields (F).Value.all, Context,
+               X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width,
+               Current_Y);
             Current_Y :=
               Current_Y + Item.Fields (F).Value.Height + Line_Spacing;
          end if;
@@ -466,9 +467,11 @@ package body Items.Records is
 
          if Item.Fields (F).Variant_Part /= null then
             for V in Item.Fields (F).Variant_Part'Range loop
-               Paint (Item.Fields (F).Variant_Part (V).all, Context,
-                      X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
-                      Current_Y);
+               Paint
+                 (Item.Fields (F).Variant_Part (V).all, Context,
+                  X + Left_Border + Item.Border_Spacing
+                  + Item.Gui_Fields_Width,
+                  Current_Y);
                Current_Y := Current_Y +
                  Item.Fields (F).Variant_Part (V).Height + Line_Spacing;
             end loop;
@@ -476,14 +479,16 @@ package body Items.Records is
       end loop;
 
       --  Draw a border
-      Draw_Rectangle
-        (Context.Pixmap,
-         Context.GC,
-         Filled => False,
-         X      => X,
-         Y      => Y,
-         Width  => Item.Width - 1,
-         Height => Item.Height - 1);
+      if Item.Border_Spacing /= 0 then
+         Draw_Rectangle
+           (Context.Pixmap,
+            Context.GC,
+            Filled => False,
+            X      => X,
+            Y      => Y,
+            Width  => Item.Width - 1,
+            Height => Item.Height - 1);
+      end if;
 
       if Item.Selected then
          Set_Function (Context.GC, Copy);
@@ -588,9 +593,9 @@ package body Items.Records is
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)
-         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border +
-           2 * Border_Spacing;
-         Item.Height := Total_Height + 2 * Border_Spacing;
+         Item.Width  := Total_Width + Item.Gui_Fields_Width + Left_Border
+           + 2 * Item.Border_Spacing;
+         Item.Height := Total_Height + 2 * Item.Border_Spacing;
 
          if Hide_Big_Items and then Item.Height > Big_Item_Height then
             Item.Visible := False;
@@ -599,8 +604,8 @@ package body Items.Records is
 
       if not Item.Visible then
          Item.Gui_Fields_Width := 0;
-         Item.Width := Left_Border + 2 * Border_Spacing + Hidden_Width;
-         Item.Height := 2 * Border_Spacing + Hidden_Height;
+         Item.Width := Left_Border + 2 * Item.Border_Spacing + Hidden_Width;
+         Item.Height := 2 * Item.Border_Spacing + Hidden_Height;
       end if;
    end Size_Request;
 
@@ -612,10 +617,9 @@ package body Items.Records is
      (Item  : in out Record_Type;
       Width : Glib.Gint)
    is
-      W : constant Gint := Width - Item.Gui_Fields_Width - 2 * Border_Spacing -
-        Left_Border;
-      Iter : Generic_Iterator'Class :=
-        Start (Item'Unrestricted_Access);
+      W : constant Gint := Width - Item.Gui_Fields_Width - Left_Border
+        - 2 * Item.Border_Spacing;
+      Iter : Generic_Iterator'Class := Start (Item'Unrestricted_Access);
       It   : Generic_Type_Access;
    begin
       Item.Width := Width;
@@ -643,9 +647,9 @@ package body Items.Records is
       Name : String;
       X, Y : Glib.Gint) return String
    is
-      Total_Height : Gint := Border_Spacing + Item.Type_Height;
+      Total_Height : Gint := Item.Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Name_Start : constant Gint := Left_Border + Item.Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
    begin
       if not Item.Visible then
@@ -719,9 +723,9 @@ package body Items.Records is
    function Get_Component
      (Item : access Record_Type; X, Y : Glib.Gint) return Generic_Type_Access
    is
-      Total_Height : Gint := Border_Spacing + Item.Type_Height;
+      Total_Height : Gint := Item.Border_Spacing + Item.Type_Height;
       Tmp_Height   : Gint;
-      Field_Name_Start : constant Gint := Left_Border + Border_Spacing;
+      Field_Name_Start : constant Gint := Left_Border + Item.Border_Spacing;
       Field_Start  : constant Gint := Field_Name_Start + Item.Gui_Fields_Width;
       Iter         : Generic_Iterator'Class := Start (Item);
       It           : Generic_Type_Access;
@@ -861,5 +865,20 @@ package body Items.Records is
            (Iter.Item.Fields (Iter.Field).Variant_Part (Iter.Variant));
       end if;
    end Data;
+
+   -----------------
+   -- Draw_Border --
+   -----------------
+
+   procedure Draw_Border
+     (Item : access Record_Type;
+      Draw : Boolean := True) is
+   begin
+      if Draw then
+         Item.Border_Spacing := Border_Spacing;
+      else
+         Item.Border_Spacing := 0;
+      end if;
+   end Draw_Border;
 
 end Items.Records;

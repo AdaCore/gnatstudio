@@ -105,6 +105,12 @@ package Items.Records is
      (Item  : in out Record_Type;
       Width : Glib.Gint);
 
+   procedure Draw_Border
+     (Item : access Record_Type;
+      Draw : Boolean := True);
+   --  If Draw is True (the default for new items), a border is drawn around
+   --  the item when it is displayed on the screen.
+
    ------------
    -- Unions --
    ------------
@@ -145,6 +151,10 @@ private
 
       Type_Height : Glib.Gint := 0;
       --  Height of the first line used to display the type of the item.
+
+      Border_Spacing : Glib.Gint := Items.Border_Spacing;
+      --  Size to leave on each size between the border and the actual
+      --  display of the item. If this is set to 0, then no border is drawn.
    end record;
    --  Num_Fields can be 0 in case of a 'null record'. Thus, it has to be
    --  a Natural.
