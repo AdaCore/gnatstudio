@@ -387,6 +387,10 @@ package body Browsers.Call_Graph is
          Directory_Information (C) & File_Information (C),
          Line   => Line_Information (C),
          Column => Column_Information (C));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Edit_Source_From_Contextual;
 
    --------------------------------------------
