@@ -762,6 +762,7 @@ package body Odd.Process is
       --  graph (print|display) `command`
       --  graph enable display display_num [display_num ...]
       --  graph disable display display_num [display_num ...]
+      --  graph undisplay display_num
 
       Match (Graph_Cmd_Format, Cmd, Matched);
 
