@@ -81,6 +81,11 @@ package body Task_Manager is
          Manager.Running_Active := False;
          return False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Active_Incremental;
 
    -------------------------
@@ -105,6 +110,11 @@ package body Task_Manager is
          Manager.Running_Passive := False;
          return False;
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Passive_Incremental;
 
    -------------------------
@@ -255,11 +265,6 @@ package body Task_Manager is
 
          return True;
       end if;
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
    end Execute_Incremental;
 
    ---------
