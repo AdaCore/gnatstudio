@@ -207,6 +207,8 @@ package body Shell_Script is
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : Integer);
    procedure Set_Return_Value
+     (Data   : in out Shell_Callback_Data; Value : Boolean);
+   procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : String);
    procedure Set_Return_Value
      (Data   : in out Shell_Callback_Data; Value : System.Address);
@@ -259,7 +261,7 @@ package body Shell_Script is
 
    function Commands_As_List
      (Prefix : String;
-      Kernel : access Glib.Object.GObject_Record'Class)
+      Kernel : Glib.Object.GObject)
       return String_List_Utils.String_List.List;
    --  Return the list of commands. The list must be freed by the caller.
 
@@ -390,7 +392,7 @@ package body Shell_Script is
 
    function Commands_As_List
      (Prefix : String;
-      Kernel : access Glib.Object.GObject_Record'Class)
+      Kernel : Glib.Object.GObject)
       return String_List_Utils.String_List.List
    is
       pragma Unreferenced (Kernel);
@@ -712,7 +714,7 @@ package body Shell_Script is
          if Number_Of_Arguments (Data) = 0 then
             Insert (-"The following commands are defined:");
 
-            L := Commands_As_List ("", Kernel);
+            L := Commands_As_List ("", GObject (Kernel));
             String_List_Utils.Sort (L);
 
             L2 := First (L);
@@ -1290,6 +1292,20 @@ package body Shell_Script is
       end if;
 
       Set_Return_Value (Data, Integer'Image (Value));
+   end Set_Return_Value;
+
+   ----------------------
+   -- Set_Return_Value --
+   ----------------------
+
+   procedure Set_Return_Value
+     (Data   : in out Shell_Callback_Data; Value : Boolean) is
+   begin
+      if not Data.Return_As_List then
+         Free (Data.Return_Value);
+      end if;
+
+      Set_Return_Value (Data, Boolean'Image (Value));
    end Set_Return_Value;
 
    ----------------------
