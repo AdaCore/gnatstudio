@@ -284,8 +284,9 @@ package body Diff_Utils is
    -----------
    -- Diff3 --
    -----------
-   function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-                   File1, File2, File3 : String) return Diff_Pair
+   function Diff3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1, File2, File3 : String) return Diff_Pair
    is
       Result : Diff_Pair;
    begin

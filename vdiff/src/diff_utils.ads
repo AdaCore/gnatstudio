@@ -80,9 +80,10 @@ package Diff_Utils is
    --  If Revert is False, create New_File from Orig_File and Diff_File.
    --  If Revert is True, create Orig_File from New_File and Diff_File.
 
-   function Diff3 (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-                   File1, File2, File3 : String) return Diff_Pair;
-   --  Execute diff on File1,File2 and File3 and return a list of differences.
+   function Diff3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      File1, File2, File3 : String) return Diff_Pair;
+   --  Execute diff on File1, File2 and File3 and return a list of differences.
 
    procedure Free (Link : in out Diff_Occurrence_Link);
 
