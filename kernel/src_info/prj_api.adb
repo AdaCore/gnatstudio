@@ -43,8 +43,13 @@ pragma Elaborate_All (Csets);
 with Stringt;       use Stringt;
 with Ada.Text_IO;   use Ada.Text_IO;
 with GNAT.OS_Lib;   use GNAT.OS_Lib;
+with String_Utils;  use String_Utils;
+
+with Traces; use Traces;
 
 package body Prj_API is
+
+   Me : Debug_Handle := Create ("Prj_API");
 
    function Internal_Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
@@ -1452,6 +1457,86 @@ package body Prj_API is
       For_Each_Scenario_Case_Item
         (Project, Pkg, Add_Or_Replace'Unrestricted_Access);
    end Update_Attribute_Value_In_Scenario;
+
+   ---------------------------------
+   -- Get_Unit_Part_From_Filename --
+   ---------------------------------
+
+   function Get_Unit_Part_From_Filename
+     (Filename : String;
+      Project  : Prj.Project_Id) return Unit_Part
+   is
+      Arr : Array_Element_Id;
+   begin
+      Arr := Projects.Table (Project).Naming.Specification_Suffix;
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         if Suffix_Matches
+           (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
+         then
+            Trace (Me, "Unit part for " & Filename & " is Unit_Spec");
+            return Unit_Spec;
+         end if;
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+      Arr := Projects.Table (Project).Naming.Implementation_Suffix;
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         if Suffix_Matches
+           (Filename, Get_String (Array_Elements.Table (Arr).Value.Value))
+         then
+            Trace (Me, "Unit part for " & Filename & " is Unit_Body");
+            return Unit_Body;
+         end if;
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+            Trace (Me, "Unit part for " & Filename & " is unknown");
+      return Unit_Separate;
+   end Get_Unit_Part_From_Filename;
+
+   ------------------------
+   -- Delete_File_Suffix --
+   ------------------------
+
+   function Delete_File_Suffix
+     (Filename : String;
+      Project  : Prj.Project_Id)
+      return Natural
+   is
+      Arr : Array_Element_Id;
+   begin
+      Arr := Projects.Table (Project).Naming.Specification_Suffix;
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         declare
+            Suff : constant String :=
+              Get_String (Array_Elements.Table (Arr).Value.Value);
+         begin
+            if Suffix_Matches (Filename, Suff) then
+               return Filename'Last - Suff'Last;
+            end if;
+         end;
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+      Arr := Projects.Table (Project).Naming.Implementation_Suffix;
+      while Arr /= No_Array_Element loop
+         pragma Assert (Array_Elements.Table (Arr).Value.Kind = Prj.Single);
+         declare
+            Suff : constant String :=
+              Get_String (Array_Elements.Table (Arr).Value.Value);
+         begin
+            if Suffix_Matches (Filename, Suff) then
+               return Filename'Last - Suff'Last;
+            end if;
+         end;
+         Arr := Array_Elements.Table (Arr).Next;
+      end loop;
+
+      return Filename'Last;
+   end Delete_File_Suffix;
 
 begin
    Namet.Initialize;

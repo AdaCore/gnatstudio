@@ -40,6 +40,7 @@ with Unchecked_Deallocation;
 with GNAT.OS_Lib;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
+with Src_Info;   use Src_Info;
 
 package Prj_API is
 
@@ -245,6 +246,31 @@ package Prj_API is
       Value           : String;
       Attribute_Index : Types.String_Id := Types.No_String);
    --  Same as above, but for an attribute that contains a single value.
+
+   -----------
+   -- Files --
+   -----------
+
+   function Get_Unit_Part_From_Filename
+     (Filename : String;
+      Project  : Prj.Project_Id)
+      return Src_Info.Unit_Part;
+   --  Return the type of File. As opposed to Src_Info.Get_Unit_Part, this one
+   --  doesn't require that the LI file has been parsed before.
+   --  This function doesn't assume any knowledge of the language, and will
+   --  check in all the languages known to the project.
+   --  Note also that it doesn't take into account the exceptions to the naming
+   --  schemes, just the file suffixes.
+   --  Unit_Separate is returned if the file is neither a spec nor a body.
+
+   function Delete_File_Suffix
+     (Filename : String;
+      Project  : Prj.Project_Id)
+      return Natural;
+   --  Return the last index in Filename before the beginning of the file
+   --  suffix. Suffixes are searched independently from the language.
+   --  If not matching suffix is found in project, the returned value will
+   --  simply be Filename'Last.
 
    -----------------
    -- Expressions --
