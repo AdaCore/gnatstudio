@@ -433,6 +433,7 @@ Command used to establish a remote connection
 Command used to copy files remotely
 (see @ref{Using GVD with a Remote Debugger}).
 @item HTML Browser.
+@anchor{HTML browser}
 Command used to browse HTML files, in particular the HTML version of this
 help file.
 @end itemize
@@ -545,9 +546,11 @@ Clear the debugger console window.
 @end itemize
 
 @subsection Help
-Online help is currently not available within GVD.
-
 @itemize @bullet
+   @item GVD Manual...
+Open this documentation in an HTML browser (as specified in the
+@ref{HTML browser}).
+
    @item About...
 Open a simple information box about GVD.
 @end itemize
