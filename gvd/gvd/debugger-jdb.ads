@@ -76,8 +76,9 @@ package Debugger.Jdb is
       Mode       : Command_Type := Internal);
 
    procedure Run
-     (Debugger : access Jdb_Debugger;
-      Mode     : Command_Type := Hidden);
+     (Debugger  : access Jdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden);
 
    procedure Start
      (Debugger : access Jdb_Debugger;

@@ -102,8 +102,9 @@ package Debugger.Gdb is
       Mode       : Command_Type := Internal);
 
    procedure Run
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden);
+     (Debugger  : access Gdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden);
 
    procedure Start
      (Debugger : access Gdb_Debugger;

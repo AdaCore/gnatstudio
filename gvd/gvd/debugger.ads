@@ -312,9 +312,11 @@ package Debugger is
    --  history is not updated.
 
    procedure Run
-     (Debugger : access Debugger_Root;
-      Mode     : Command_Type := Hidden) is abstract;
+     (Debugger  : access Debugger_Root;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden) is abstract;
    --  Start the execution of the executable.
+   --  Arguments is a string passed on the command line to run
    --  The arguments must have been set by a call to Set_Arguments.
    --  Note that this command does not wait for the prompt, and returns
    --  immediately.

@@ -259,8 +259,11 @@ package body Debugger.Jdb is
    -- Run --
    ---------
 
-   procedure Run (Debugger : access Jdb_Debugger;
-                  Mode     : Command_Type := Hidden) is
+   procedure Run
+     (Debugger  : access Jdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden)
+   is
    begin
       if Debugger.Main_Class /= null then
          Send (Debugger, "run " & Debugger.Main_Class.all, Mode => Mode);
@@ -280,7 +283,7 @@ package body Debugger.Jdb is
    begin
       Send (Debugger, "stop in " & Debugger.Main_Class.all & '.' &
          Debugger.Main_Class.all, Mode => Mode);
-      Run (Debugger, Mode);
+      Run (Debugger, "", Mode);
    end Start;
 
    ---------------

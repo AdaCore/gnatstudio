@@ -622,10 +622,11 @@ package body Debugger.Gdb is
    ---------
 
    procedure Run
-     (Debugger : access Gdb_Debugger;
-      Mode     : Command_Type := Hidden) is
+     (Debugger  : access Gdb_Debugger;
+      Arguments : String := "";
+      Mode      : Command_Type := Hidden) is
    begin
-      Send (Debugger, "run", Mode => Mode);
+      Send (Debugger, "run " & Arguments, Mode => Mode);
       Set_Is_Started (Debugger, True);
    end Run;
 
