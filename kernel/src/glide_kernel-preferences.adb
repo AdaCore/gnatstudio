@@ -530,13 +530,39 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Message_Highlight), -"Messages");
 
-      Message_Src_Highlight := Param_Spec_Color (Gnew_Color
-        (Name    => "Messages-Src-Highlight-Color",
+      Error_Src_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Errors-Src-Highlight-Color",
          Nick    => -"Errors highlighting",
          Blurb   => -"Color used to highlight errors in the source editors",
-         Default => "#FFA0A0"));
+         Default => "#FF6D6D"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Message_Src_Highlight), -"Messages");
+        (Kernel.Preferences, Param_Spec (Error_Src_Highlight), -"Messages");
+
+      Warning_Src_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Warnings-Src-Highlight-Color",
+         Nick    => -"Warnings highlighting",
+         Blurb   => -"Color used to highlight warningss in the source editors",
+         Default => "#FFB46D"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Warning_Src_Highlight), -"Messages");
+
+      Style_Src_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Style-Src-Highlight-Color",
+         Nick    => -"Style errors highlighting",
+         Blurb   =>
+           -"Color used to highlight style errors in the source editors",
+         Default => "#EEFF6D"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Style_Src_Highlight), -"Messages");
+
+      Search_Src_Highlight := Param_Spec_Color (Gnew_Color
+        (Name    => "Search-Src-Highlight-Color",
+         Nick    => -"Search highlighting",
+         Blurb   =>
+             -"Color used to highlight search results in the source editors",
+         Default => "#A2B6FF"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Search_Src_Highlight), -"Messages");
 
       Show_Build_Progress := Param_Spec_Boolean
         (Gnew_Boolean
@@ -550,11 +576,11 @@ package body Glide_Kernel.Preferences is
 
       File_Pattern := Param_Spec_String
         (Gnew_String
-           (Name  => "Messages-File-Pattern",
+           (Name  => "Extended-Messages-File-Pattern",
             Nick  => -"File pattern",
             Blurb =>
               -"Pattern used to detect file locations (e.g error messages)",
-            Default => "^([^:]+):(\d+):(\d+)?"));
+            Default => "^([^:]+):(\d+):(\d+): (warning)?(\(style)?"));
       Register_Property
         (Kernel.Preferences, Param_Spec (File_Pattern), -"Messages");
 
@@ -587,6 +613,26 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Column index"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Column_Pattern_Index), -"Messages");
+
+      Warning_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Warning-Pattern-Index",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 4,
+         Blurb   => -"Index of warning indication in the pattern, 0 if none",
+         Nick    => -"Warning index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Warning_Pattern_Index), -"Messages");
+
+      Style_Pattern_Index := Param_Spec_Int (Gnew_Int
+        (Name    => "Messages-Style-Pattern-Index",
+         Minimum => 0,
+         Maximum => 9,
+         Default => 5,
+         Blurb   => -"Index of style indication in the pattern, 0 if none",
+         Nick    => -"Style index"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Style_Pattern_Index), -"Messages");
 
       -- Project Editor --
 
