@@ -863,12 +863,16 @@ package body Odd.Source_Editors is
 
    procedure File_Not_Found
      (Editor    : access Source_Editor_Record;
-      File_Name : String) is
+      File_Name : String)
+   is
+      use Gtk.Widget.Widget_List;
    begin
       --  Clear the old file
       Delete_Text (Get_Child (Editor));
       Hide_Current_Line_Button (Editor);
       Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
+      Free (Editor.Breakpoint_Buttons);
+      Editor.Breakpoint_Buttons := Null_List;
 
       --  Print a warning message
       Insert (Editor, Chars => File_Name & (-": File not found"));
