@@ -110,6 +110,13 @@ package GVD.Preferences is
       --  Color to use to highlight the assembly code for the current line
       --  (default is red).
 
+      Assembly_Range_Size : String_Access := new String' ("50");
+      --  Size of the range to display when initially displaying the
+      --  assembly window.
+      --  If this size is "0", then the whole function is displayed, but this
+      --  can potentially take a very long time on slow machines or big
+      --  functions.
+
       -----------------
       -- Data Window --
       -----------------
