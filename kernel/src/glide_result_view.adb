@@ -483,7 +483,6 @@ package body Glide_Result_View is
               Find_MDI_Child_By_Tag (MDI, Result_View_Record'Tag);
          begin
             if Child /= null then
-               Grab_Focus (Child);
                Raise_Child (Child);
             end if;
          end;
