@@ -18,11 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Odd_Intl;     use Odd_Intl;
 with GNAT.Regpat;  use GNAT.Regpat;
 with GVD.Pixmaps;  use GVD.Pixmaps;
 
-package body Language.Debugger.C is
+package body Language.C is
 
    Keywords_List : Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp & ")\W");
@@ -48,7 +47,7 @@ package body Language.Debugger.C is
         Multiple_Lines);
 
    C_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String' (-"Functions"),
+     (1 => (Name           => new String' ("Functions"),
             Regexp         => Subprogram_RE'Access,
             Position_Index => 4,
             Icon           => subprogram_xpm'Access,
@@ -178,4 +177,4 @@ package body Language.Debugger.C is
               Constant_Character            => ''');
    end Get_Language_Context;
 
-end Language.Debugger.C;
+end Language.C;

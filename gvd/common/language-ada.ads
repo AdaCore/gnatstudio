@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 --  This is the general Ada (non debugger specific) support package.
---  See language.ads and language-debugger.ads for a complete spec.
+--  See language.ads for a complete spec.
 
-package Language.Debugger.Ada is
+package Language.Ada is
 
-   type Ada_Language is new Language_Debugger with private;
+   type Ada_Language is new Language_Root with private;
 
    Ada_Lang : constant Language_Access;
    --  Class constant for the Ada language.
@@ -70,7 +70,7 @@ package Language.Debugger.Ada is
       Field : String) return String;
 
 private
-   type Ada_Language is new Language_Debugger with null record;
+   type Ada_Language is new Language_Root with null record;
 
    Ada_Lang : constant Language_Access := new Ada_Language;
-end Language.Debugger.Ada;
+end Language.Ada;

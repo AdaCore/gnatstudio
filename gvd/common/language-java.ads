@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 --  This is the general Java (non debugger specific) support package.
---  See language.ads and language-debugger.ads for a complete spec.
+--  See language.ads for a complete spec.
 
-package Language.Debugger.Java is
+package Language.Java is
 
-   type Java_Language is new Language_Debugger with private;
+   type Java_Language is new Language_Root with private;
 
    Java_Lang : constant Language_Access;
    --  Class constant for the Java language.
@@ -53,7 +53,7 @@ package Language.Debugger.Java is
       Field : String) return String;
 
 private
-   type Java_Language is new Language_Debugger with null record;
+   type Java_Language is new Language_Root with null record;
 
    Java_Lang : constant Language_Access := new Java_Language;
-end Language.Debugger.Java;
+end Language.Java;

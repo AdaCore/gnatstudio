@@ -20,7 +20,7 @@
 
 with GNAT.Regpat;  use GNAT.Regpat;
 
-package body Language.Debugger.Java is
+package body Language.Java is
 
    --------------------
    -- Is_Simple_Type --
@@ -97,5 +97,4 @@ package body Language.Debugger.Java is
               Constant_Character            => ''');
    end Get_Language_Context;
 
-
-end Language.Debugger.Java;
+end Language.Java;

@@ -19,13 +19,13 @@
 -----------------------------------------------------------------------
 
 --  This is the general C++ (non debugger specific) support package.
---  See language.ads and language-debugger.ads for a complete spec.
+--  See language.ads for a complete spec.
 
-with Language.Debugger.C;
+with Language.C;
 
-package Language.Debugger.Cpp is
+package Language.Cpp is
 
-   type Cpp_Language is new Language.Debugger.C.C_Language with private;
+   type Cpp_Language is new Language.C.C_Language with private;
 
    Cpp_Lang : constant Language_Access;
    --  Class constant for the C++ language.
@@ -48,7 +48,7 @@ package Language.Debugger.Cpp is
      (Lang : access Cpp_Language) return Explorer_Categories;
 
 private
-   type Cpp_Language is new Language.Debugger.C.C_Language with null record;
+   type Cpp_Language is new Language.C.C_Language with null record;
 
    Cpp_Lang : constant Language_Access := new Cpp_Language;
-end Language.Debugger.Cpp;
+end Language.Cpp;

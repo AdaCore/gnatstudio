@@ -18,12 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Odd_Intl;     use Odd_Intl;
-with GNAT.Regpat;  use GNAT.Regpat;
-with GVD.Pixmaps;  use GVD.Pixmaps;
-with Language.Debugger.C; use Language.Debugger.C;
+with GNAT.Regpat; use GNAT.Regpat;
+with GVD.Pixmaps; use GVD.Pixmaps;
+with Language.C;  use Language.C;
 
-package body Language.Debugger.Cpp is
+package body Language.Cpp is
 
    Keywords_List : Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp &
@@ -38,13 +37,14 @@ package body Language.Debugger.Cpp is
      Compile ("^\s*(class|struct)\s+([\w_]+)\s*(:[^{]+)?\{", Multiple_Lines);
 
    function Make_Entry_Class
-     (Str : String; Matched : Match_Array;
+     (Str      : String;
+      Matched  : Match_Array;
       Category : access Category_Index) return String;
    --  Function used to create an entry in the explorer, for classes.
    --  See the description of Explorer_Categories for more information.
 
    Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String' (-"Classes"),
+     (1 => (Name           => new String' ("Classes"),
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
             Icon           => package_xpm'Access,
@@ -57,8 +57,7 @@ package body Language.Debugger.Cpp is
    function Make_Entry_Class
      (Str      : String;
       Matched  : Match_Array;
-      Category : access Category_Index) return String
-   is
+      Category : access Category_Index) return String is
    begin
       return Str (Matched (1).First .. Matched (1).Last)
         & " " & Str (Matched (2).First .. Matched (2).Last);
@@ -103,4 +102,4 @@ package body Language.Debugger.Cpp is
               Constant_Character            => ''');
    end Get_Language_Context;
 
-end Language.Debugger.Cpp;
+end Language.Cpp;

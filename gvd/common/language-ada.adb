@@ -18,12 +18,11 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Odd_Intl;     use Odd_Intl;
 with GNAT.Regpat;  use GNAT.Regpat;
 with GVD.Pixmaps;  use GVD.Pixmaps;
 with GVD.Strings;  use GVD.Strings;
 
-package body Language.Debugger.Ada is
+package body Language.Ada is
 
    Keywords_List : Pattern_Matcher (1292);
    --  The size is hard-coded to save a little bit on the compilation time
@@ -90,41 +89,39 @@ package body Language.Debugger.Ada is
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
    --  distinguishes between the two cases.
-   --  ??? Note that calling gettext ("-") here is too early since we have
-   --  not called Set_Domain yet.
 
    Ada_Explorer_Categories : constant Explorer_Categories :=
-     ((Name           => new String' (-"Subprograms"),
+     ((Name           => new String' ("Subprograms"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
        Icon           => subprogram_xpm'Access,
        Make_Entry     => Make_Entry_Subprogram'Access),
 
-      (Name           => new String' (-"Specs"),
+      (Name           => new String' ("Specs"),
        Regexp         => Subprogram_RE'Access,
        Position_Index => 2,
        Icon           => subprogram_xpm'Access,
        Make_Entry     => null),
 
-      (Name           => new String' (-"Packages"),
+      (Name           => new String' ("Packages"),
        Regexp         => Package_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Package'Access),
 
-      (Name           => new String' (-"Types"),
+      (Name           => new String' ("Types"),
        Regexp         => Type_Def_RE'Access,
        Position_Index => 2,
        Icon           => var_xpm'Access,
        Make_Entry     => Make_Entry_Type'Access),
 
-      (Name           => new String' (-"Tasks"),
+      (Name           => new String' ("Tasks"),
        Regexp         => Task_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
        Make_Entry     => Make_Entry_Task'Access),
 
-      (Name           => new String' (-"Protected"),
+      (Name           => new String' ("Protected"),
        Regexp         => Protected_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
@@ -356,4 +353,4 @@ begin
             & "(a(gged|sk)|erminate|hen|ype)|u(ntil|se)|w(h(en|ile)|ith)|"
             & "xor)\b",
             Case_Insensitive);
-end Language.Debugger.Ada;
+end Language.Ada;

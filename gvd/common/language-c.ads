@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 --  This is the general C (non debugger specific) support package.
---  See language.ads and language-debugger.ads for a complete spec.
+--  See language.ads for a complete spec.
 
-package Language.Debugger.C is
+package Language.C is
 
-   type C_Language is new Language_Debugger with private;
+   type C_Language is new Language_Root with private;
 
    C_Lang : constant Language_Access;
    --  Class constant for the C language.
@@ -39,8 +39,8 @@ package Language.Debugger.C is
    -- Highlighting --
    ------------------
 
-   function Keywords (Lang : access C_Language)
-                     return GNAT.Regpat.Pattern_Matcher;
+   function Keywords
+     (Lang : access C_Language) return GNAT.Regpat.Pattern_Matcher;
 
    function Get_Language_Context
      (Lang : access C_Language) return Language_Context;
@@ -78,7 +78,7 @@ package Language.Debugger.C is
       Field : String) return String;
 
 private
-   type C_Language is new Language_Debugger with null record;
+   type C_Language is new Language_Root with null record;
 
    C_Lang : constant Language_Access := new C_Language;
-end Language.Debugger.C;
+end Language.C;
