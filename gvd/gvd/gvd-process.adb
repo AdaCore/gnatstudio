@@ -29,6 +29,9 @@ with Gtk.Main;     use Gtk.Main;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
+with Gdk.Cursor;   use Gdk.Cursor;
+with Gdk.Window;   use Gdk.Window;
+with Gdk.Types; use Gdk.Types;
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Text_IO;     use Ada.Text_IO;
@@ -83,9 +86,8 @@ package body Odd.Process is
    Editor_Show_Line_Nums : constant Boolean := True;
    --  Whether line numbers should be shown in the code editor
 
-   --------------------
-   -- Local Packages --
-   --------------------
+   Align_Items_On_Grid : constant Boolean := True;
+   --  Should items be aligned on the grid.
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
@@ -321,6 +323,20 @@ package body Odd.Process is
       Process.Window := Window.all'Access;
       Initialize (Process);
 
+      --  Allocate the colors for highlighting. This needs to be done before
+      --  Initializing the debugger, since some file name might be output at
+      --  that time.
+
+      Process.Debugger_Text_Highlight_Color :=
+        Parse (Debugger_Highlight_Color);
+
+      Alloc (Get_System, Process.Debugger_Text_Highlight_Color);
+
+      Process.Debugger_Text_Font :=
+        Get_Gdkfont (Debugger_Font, Debugger_Font_Size);
+
+      Align_On_Grid (Process.Data_Canvas, Align_Items_On_Grid);
+
       --  Spawn the debugger
 
       case Kind is
@@ -362,17 +378,6 @@ package body Odd.Process is
       Set_Page (Window.Process_Notebook, -1);
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
-      --  Allocate the colors for highlighting. This needs to be done before
-      --  Initializing the debugger, since some file name might be output at
-      --  that time.
-
-      Process.Debugger_Text_Highlight_Color :=
-        Parse (Debugger_Highlight_Color);
-      Alloc (Get_System, Process.Debugger_Text_Highlight_Color);
-
-      Process.Debugger_Text_Font :=
-        Get_Gdkfont (Debugger_Font, Debugger_Font_Size);
-
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
       --  debugger outputs a file name that should be displayed in the editor.
@@ -402,7 +407,6 @@ package body Odd.Process is
 
       --  Initialize the debugger, and possibly get the name of the initial
       --  file.
-
       Initialize (Process.Debugger);
 
       return Process;
@@ -447,7 +451,9 @@ package body Odd.Process is
                   Variable_Name => Command (First + 14 .. Command2'Last),
                   Debugger      => Debugger,
                   Auto_Refresh  => True);
-         Put (Debugger.Data_Canvas, Item);
+         if Item /= null then
+            Put (Debugger.Data_Canvas, Item);
+         end if;
          Display_Prompt (Debugger.Debugger);
 
       elsif First + 10 <= Command2'Length
@@ -457,7 +463,9 @@ package body Odd.Process is
                   Variable_Name => Command (First + 12 .. Command2'Last),
                   Debugger      => Debugger,
                   Auto_Refresh  => False);
-         Put (Debugger.Data_Canvas, Item);
+         if Item /= null then
+            Put (Debugger.Data_Canvas, Item);
+         end if;
          Display_Prompt (Debugger.Debugger);
 
       --  ??? An internal debugging macro, to be deleted
@@ -468,10 +476,15 @@ package body Odd.Process is
          Wait_Prompt (Debugger.Debugger);
          Send (Get_Process (Debugger.Debugger), "run");
          Wait_Prompt (Debugger.Debugger);
+         Process_User_Command (Debugger, "graph print Parse::A");
+         Text_Output_Handler (Debugger, "" & ASCII.LF);
          Process_User_Command (Debugger, "graph print A");
-         Process_User_Command (Debugger, "graph print S");
-         Process_User_Command (Debugger, "graph print V");
-         Process_User_Command (Debugger, "graph print Act");
+         Text_Output_Handler (Debugger, "" & ASCII.LF);
+         Process_User_Command (Debugger, "graph print Parse::S");
+         Text_Output_Handler (Debugger, "" & ASCII.LF);
+         Process_User_Command (Debugger, "graph print Parse::V");
+         Text_Output_Handler (Debugger, "" & ASCII.LF);
+         Process_User_Command (Debugger, "graph print Parse::Act");
 
       elsif Command2 = "quit" then
          Main_Quit;

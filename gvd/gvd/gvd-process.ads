@@ -26,6 +26,7 @@ with GNAT.Expect; use GNAT.Expect;
 with Gtk.Object; use Gtk.Object;
 with Gdk.Color;
 with Gdk.Font;
+with Gtkada.Canvas;
 
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
@@ -62,7 +63,11 @@ package Odd.Process is
       --  Color used for highlighting in the debugger window.
 
       Debugger_Text_Font : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
-      --  Font used in the debugger window.
+       --  Font used in the debugger window.
+
+      Selected_Item : Gtkada.Canvas.Canvas_Item := null;
+       --  The currently selected item.
+
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
