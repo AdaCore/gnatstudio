@@ -253,8 +253,8 @@ __gnat_expect_poll (fd, num_fd, timeout, is_set)
 #elif defined (unix)
 
 #include <string.h> /* for bzero on BSD systems */
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifndef NO_FD_SET
