@@ -170,7 +170,15 @@ Known Problems fixed in GPS 3.0.0
               a graphical item in the data window will freeze GPS.
   Workaround: Interrupt the debugger before closing the item
 
+- CA15-003 Menu not closed when switching applications under Windows
+  Problem:    When a menu is enabled and then a Windows application is
+              selected from e.g. the toolbar (such as Windows Explorer), the
+              menu stays displayed in front of the selected application.
+  Workaround: Close the menu (e.g. using the ESC key) before switching to
+              another application.
+
 - C331-004 Cannot set key binding on Debug->Initialize menu items
   Problem:    It is not possible to associate a key binding with the menu
               items under Debug->Initialize
   Workaround: Open the menu bar instead, using either the mouse of the keyboard
+
