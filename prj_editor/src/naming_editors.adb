@@ -119,6 +119,7 @@ package body Naming_Editors is
                   else
                      Show (Get_Window (Editor.Pages (P).Foreign_Naming));
                   end if;
+                  Editor.Pages (P).Is_Visible := True;
 
                   exit;
                end if;
@@ -173,6 +174,8 @@ package body Naming_Editors is
                  (Editor.Pages (Last).Foreign_Naming, Project_View, True);
             end if;
          end if;
+
+         Editor.Pages (Last).Is_Visible := True;
       end Create_Page;
 
    begin
@@ -183,6 +186,7 @@ package body Naming_Editors is
             else
                Hide (Get_Window (Editor.Pages (P).Foreign_Naming));
             end if;
+            Editor.Pages (P).Is_Visible := False;
          end loop;
       end if;
 
@@ -214,13 +218,13 @@ package body Naming_Editors is
 
       for P in Editor.Pages'Range loop
          if Editor.Pages (P).Ada_Naming /= null
-           and then Visible_Is_Set (Editor.Pages (P).Ada_Naming)
+           and then Editor.Pages (P).Is_Visible
          then
             Changed := Changed or Create_Project_Entry
               (Editor.Pages (P).Ada_Naming,
                Project, Project_View, Scenario_Variables);
          elsif Editor.Pages (P).Foreign_Naming /= null
-           and then Visible_Is_Set (Editor.Pages (P).Foreign_Naming)
+           and then Editor.Pages (P).Is_Visible
          then
             Changed := Changed or Create_Project_Entry
               (Editor.Pages (P).Foreign_Naming, Project,

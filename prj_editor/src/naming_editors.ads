@@ -82,6 +82,7 @@ private
       --  ??? Should have a common ancestor for all naming editors, registered
       --  in Language_Handlers.Glide. However, the latter must be independent
       --  of GtkAda...
+      Is_Visible     : Boolean;
    end record;
 
    type Language_Naming_Array is array (Natural range <>) of Language_Naming;
