@@ -79,18 +79,29 @@ package body Gtkada.Code_Editors is
    is
    begin
       Set_Upper (Get_Vadjustment (Editor.Buttons),
-                 Get_Upper (Get_Vadj (Editor.Text)));
+                 Gfloat'Max (Get_Upper (Get_Vadj (Editor.Text)),
+                             Get_Value (Get_Vadj (Editor.Text))));
       Set_Lower (Get_Vadjustment (Editor.Buttons),
                  Get_Lower (Get_Vadj (Editor.Text)));
+      Set_Page_Size (Get_Vadjustment (Editor.Buttons),
+                     Get_Page_Size (Get_Vadj (Editor.Text)));
 
       --  Also set the value, since "value_changed" is not changed when the
       --  Gtk_Text is resized, and thus the Gtk_Layout is temporarily
-      --  desynchronized.
+      --  desynchronized. This should not be done if the two values are
+      --  already equal, do nothing to prevent loops.
+      --
+      --  To work around a bug in gtk+ (when adjusting the value of the
+      --  adjustment when we are resing the code editor beyond the last line),
+      --  we first hide it, and then show it again.
+
       if Get_Value (Get_Vadjustment (Editor.Buttons))
         /= Get_Value (Get_Vadj (Editor.Text))
       then
+         Hide (Editor.Buttons);
          Set_Value (Get_Vadjustment (Editor.Buttons),
                     Get_Value (Get_Vadj (Editor.Text)));
+         Show (Editor.Buttons);
       end if;
    end Scroll_Layout_Changed;
 
@@ -140,7 +151,7 @@ package body Gtkada.Code_Editors is
       --  Note that this widget is resized vertically dynamically if needed,
       --  so we can just set a size of 0.
       Gtk_New (Editor.Buttons);
-      Set_Usize (Editor.Buttons, Layout_Width, 0);
+      Set_UsIze (Editor.Buttons, Layout_Width, 0);
 
       Editor_Cb.Object_Connect
         (Get_Vadj (Editor.Text), "value_changed",
@@ -487,7 +498,7 @@ package body Gtkada.Code_Editors is
       --  Scroll the code editor to make sure the line is visible on screen.
 
       Clamp_Page (Get_Vadj (Editor.Text),
-                  Lower => Gfloat (Y),
+                  Lower => Gfloat (Y - Line_Height),
                   Upper => Gfloat (Y + 4 * Line_Height));
 
    end Set_Line;

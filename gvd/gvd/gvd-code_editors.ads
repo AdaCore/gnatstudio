@@ -24,8 +24,6 @@
 --  to display icons at the beginning of each line where a function
 --  returns True.
 
---  ??? Should have an function to print line numbers on the side.
-
 with Glib;
 with Gtk.Text;
 with Gtk.Layout;
