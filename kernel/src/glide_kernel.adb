@@ -71,12 +71,6 @@ package body Glide_Kernel is
    package Object_Callback is new Gtk.Handlers.Callback
      (Glib.Object.GObject_Record);
 
-   procedure Create_Default_Project
-     (Kernel : access Kernel_Handle_Record'Class);
-   --  Create a default project file.
-   --  ??? This should actually be read from an external file when we have a
-   --  ??? full installation procedure for Glide
-
    function Get_Home_Directory return String;
    --  Return the home directory in which glide's user files should be stored
    --  (preferences, log, ...)
@@ -85,34 +79,6 @@ package body Glide_Kernel is
      (Handle : access Kernel_Handle_Record'Class);
    --  Re-initialize the Source Info structure.
    --  ??? Needs more comments.
-
-   ----------------------------
-   -- Create_Default_Project --
-   ----------------------------
-
-   procedure Create_Default_Project
-     (Kernel : access Kernel_Handle_Record'Class)
-   is
-      Values : Argument_List (1 .. 1);
-   begin
-      Kernel.Project_Is_Default := True;
-      Kernel.Project := Create_Project ("default", Get_Current_Dir);
-
-      Values := (1 => new String' ("."));
-      Update_Attribute_Value_In_Scenario
-        (Kernel.Project,
-         Scenario_Variables => Scenario_Variables (Kernel),
-         Attribute_Name     => "source_dirs",
-         Values             => Values);
-      Free (Values (1));
-
-      Update_Attribute_Value_In_Scenario
-        (Kernel.Project,
-         Scenario_Variables => Scenario_Variables (Kernel),
-         Attribute_Name     => "object_dir",
-         Value              => ".");
-      Recompute_View (Kernel);
-   end Create_Default_Project;
 
    ------------------------
    -- Get_Home_Directory --
@@ -168,7 +134,9 @@ package body Glide_Kernel is
       Initialize_Class_Record
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
-      Create_Default_Project (Handle);
+      Handle.Project := Create_Default_Project ("default", Get_Current_Dir);
+      Handle.Project_Is_Default := True;
+      Recompute_View (Handle);
       Reset_Source_Info_List (Handle);
 
       Set_Predefined_Source_Path
