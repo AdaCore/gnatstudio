@@ -46,8 +46,8 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step isn't needed on Linux nor Solaris 8
-# It is needed under Solaris 2.5.1, HP-UX and Tru64 5.1
+# This step isn't needed on Linux
+# It is needed under Solaris, HP-UX and IRIX
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
@@ -146,7 +146,7 @@ cd glib-2.0.6
 # Under IRIX, apply the following patch:
 # patch -p0 < .../glib-2.0.6-irix-6.5.diff
 
-# on Linux, Solaris 8 and Tru64:
+# on Linux and Tru64:
 ./configure --prefix=$prefix --enable-debug=minimum
 
 # on IRIX, where we use SGI C compiler, cc does not use C_INCLUDE_PATH
