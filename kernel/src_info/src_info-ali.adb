@@ -238,12 +238,13 @@ package body Src_Info.ALI is
    --  Save the Xref information in the New_LI_File structure.
 
    procedure Create_New_ALI
-     (Handler      : ALI_Handler;
-      New_LI_File  : out LI_File_Ptr;
-      New_ALI      : ALIs_Record;
-      Project      : Prj.Project_Id;
-      Source_Path  : String;
-      List         : in out LI_File_List);
+     (Handler           : ALI_Handler;
+      New_LI_File       : out LI_File_Ptr;
+      New_ALI           : ALIs_Record;
+      Project           : Prj.Project_Id;
+      Full_ALI_Filename : String;
+      Source_Path       : String;
+      List              : in out LI_File_List);
    --  Create a new LI_File_Ptr from the given ALIs_Record. This LI_File_Ptr
    --  is left unconnected to the LI_File_List.
 
@@ -1248,7 +1249,7 @@ package body Src_Info.ALI is
       end if;
 
       Decl.Location :=
-        (File   => Sfile,
+        (File   => Copy (Sfile),
          Line   => Positive (Xref_Ent.Line),
          Column => Col);
       Decl.Kind := Char_To_E_Kind (Xref_Ent.Etype);
@@ -1295,8 +1296,8 @@ package body Src_Info.ALI is
                         Decl.Rename :=
                           (Line  => Positive (Xref_Entity.Table (Entity).Line),
                            Column => Natural (Xref_Entity.Table (Entity).Col),
-                           File =>
-                             Sfiles (Xref_Section.Table (Sect).File_Num));
+                           File => Copy
+                             (Sfiles (Xref_Section.Table (Sect).File_Num)));
                         exit Sect_Loop;
                      end if;
                   end loop;
@@ -1442,17 +1443,17 @@ package body Src_Info.ALI is
    --------------------
 
    procedure Create_New_ALI
-     (Handler      : ALI_Handler;
-      New_LI_File  : out LI_File_Ptr;
-      New_ALI      : ALIs_Record;
-      Project      : Prj.Project_Id;
-      Source_Path  : String;
-      List         : in out LI_File_List)
+     (Handler           : ALI_Handler;
+      New_LI_File       : out LI_File_Ptr;
+      New_ALI           : ALIs_Record;
+      Project           : Prj.Project_Id;
+      Full_ALI_Filename : String;
+      Source_Path       : String;
+      List              : in out LI_File_List)
    is
       Sfiles         : Sdep_To_Sfile_Table
         (New_ALI.First_Sdep ..  New_ALI.Last_Sdep) :=
           (others => No_Source_File);
-      ALI_Filename   : constant String := Get_String (New_ALI.Afile);
 
       LI_File_Is_New : constant Boolean := New_LI_File = null;
       LI_File_Copy   : LI_File_Constrained;
@@ -1462,7 +1463,7 @@ package body Src_Info.ALI is
          Create_LI_File
            (File        => New_LI_File,
             List        => List,
-            LI_Filename => Base_Name (ALI_Filename),
+            LI_Filename => Base_Name (Full_ALI_Filename),
             Handler     => LI_Handler (Handler));
          if New_LI_File = null then
             raise ALI_Internal_Error;
@@ -1470,6 +1471,7 @@ package body Src_Info.ALI is
 
          Convert_To_Parsed
            (New_LI_File,
+            Full_LI_Name       => Full_ALI_Filename,
             Update_Timestamp   => True,
             Compilation_Errors => New_ALI.Compile_Errors);
 
@@ -1484,12 +1486,12 @@ package body Src_Info.ALI is
            (Handler                  => LI_Handler (Handler),
             Parsed                   => True,
             LI_Filename              => new String'
-              (Base_Name (ALI_Filename)),
+              (Base_Name (Full_ALI_Filename)),
             Spec_Info                => null,
             Body_Info                => null,
             Separate_Info            => null,
             LI_Timestamp             => To_Timestamp
-              (File_Time_Stamp (Get_String (New_ALI.Afile))),
+              (File_Time_Stamp (Full_ALI_Filename)),
             Compilation_Errors_Found => New_ALI.Compile_Errors,
             Dependencies_Info        => null);
       end if;
@@ -1627,7 +1629,7 @@ package body Src_Info.ALI is
 
       Create_New_ALI
         (Handler, Unit, ALIs.Table (New_ALI_Id), Project,
-         Predefined_Source_Path, List);
+         Full_ALI_Filename, Predefined_Source_Path, List);
       Success := True;
 
    exception
@@ -1862,8 +1864,8 @@ package body Src_Info.ALI is
            (Handler                => Handler,
             File                   => File,
             Full_Ali_File          => Find_File
-              (File.LI.LI_Filename.all, Object_Path (Project, True),
-               Predefined_Object_Path),
+              (File.LI.LI_Filename.all,
+               Object_Path (Project, True), Predefined_Object_Path),
             List                   => List,
             Project                => Project,
             Predefined_Source_Path => Predefined_Source_Path);
@@ -1937,8 +1939,14 @@ package body Src_Info.ALI is
       Success : Boolean := True;
    begin
       if Full_Ali_File /= "" then
-         if File = No_LI_File then
-            Trace (Me, "Creating LI file: " & Full_Ali_File);
+         if File = No_LI_File
+           or else Is_Incomplete (File)
+           or else To_Timestamp (File_Time_Stamp (Full_Ali_File)) >
+             File.LI.LI_Timestamp
+         then
+            Trace (Me, "Creating/Updating LI file: " & Full_Ali_File
+                   & To_Timestamp (File_Time_Stamp (Full_Ali_File))'Img);
+
             Parse_ALI_File
               (ALI_Handler (Handler), Full_Ali_File, Project,
                Predefined_Source_Path, List, File, Success);
@@ -1946,21 +1954,13 @@ package body Src_Info.ALI is
             if not Success then
                File := No_LI_File;
             end if;
-
-         else
-            if Is_Incomplete (File)
-              or else To_Timestamp (File_Time_Stamp (Full_Ali_File)) >
-              File.LI.LI_Timestamp
-            then
-               Parse_ALI_File
-                 (ALI_Handler (Handler), Full_Ali_File, Project,
-                  Predefined_Source_Path, List, File, Success);
-
-               if not Success then
-                  File := No_LI_File;
-               end if;
-            end if;
          end if;
+      end if;
+
+      if File /= No_LI_File
+        and then not File.LI.Parsed
+      then
+         File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
 
