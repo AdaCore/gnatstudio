@@ -31,6 +31,7 @@ with System.Assertions;         use System.Assertions;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with Glide_Intl;                use Glide_Intl;
 with Projects;                  use Projects;
 
@@ -135,26 +136,29 @@ package body Custom_Module is
       begin
          if Node.Tag.all = "filter" then
             declare
-               Lang   : constant String  := Get_Attribute (Node, "language");
-               Action : constant String  := Get_Attribute (Node, "action");
-               Context : constant String := Get_Attribute (Node, "context");
-               C       : Action_Context;
+               Lang    : constant String  := Get_Attribute (Node, "language");
+               Shell   : constant String  := Get_Attribute (Node, "shell_cmd");
+               Shell_Lang : constant String :=
+                 Get_Attribute (Node, "shell_lang", GPS_Shell_Name);
+               Id      : constant String := Get_Attribute (Node, "id");
             begin
-               if Context /= "" then
-                  C := Lookup_Context (Kernel, Context);
-                  if C = null then
+               if Id /= "" then
+                  Filter := Lookup_Filter (Kernel, Id);
+                  if Filter = null then
                      Insert
                        (Kernel,
-                          -"Unknown action context " & Context,
+                          -"Unknown action filter " & Id,
                         Mode => Error);
                      raise Assert_Failure;
                   end if;
+               else
+                  Filter := Action_Filter
+                    (Create
+                       (Language   => Lang,
+                        Shell      => Shell,
+                        Shell_Lang => Shell_Lang));
+                  Set_Error_Message (Filter, Get_Attribute (Node, "error"));
                end if;
-
-               Filter := Create
-                 (Language => Lang,
-                  Action   => Action,
-                  Context  => C);
             end;
 
          else
@@ -169,18 +173,18 @@ package body Custom_Module is
                   if Filter = null then
                      Filter := Filter_Tmp;
                   elsif Node.Tag.all = "filter_and" then
-                     Filter := Filter and Filter_Tmp;
+                     Filter := Action_Filter (Filter and Filter_Tmp);
                   elsif Node.Tag.all = "filter_or" then
-                     Filter := Filter or Filter_Tmp;
+                     Filter := Action_Filter (Filter or Filter_Tmp);
                   end if;
                end if;
 
                Child := Child.Next;
             end loop;
 
+            Set_Error_Message (Filter, Get_Attribute (Node, "error"));
          end if;
 
-         Set_Error_Message (Filter, Get_Attribute (Node, "error"));
          return Filter;
       end Parse_Filter_Node;
 
@@ -217,8 +221,8 @@ package body Custom_Module is
               or else Child.Tag.all = "filter_or"
             then
                if Filter_A /= null then
-                  Filter_A := Filter_A
-                    or Parse_Filter_Node (Child);
+                  Filter_A :=
+                    Action_Filter (Filter_A or Parse_Filter_Node (Child));
                else
                   Filter_A := Parse_Filter_Node (Child);
                end if;
@@ -455,6 +459,27 @@ package body Custom_Module is
 
          elsif To_Lower (Current_Node.Tag.all) = "action" then
             Parse_Action_Node (Current_Node);
+
+         elsif To_Lower (Current_Node.Tag.all) = "filter"
+           or else To_Lower (Current_Node.Tag.all) = "filter_and"
+           or else To_Lower (Current_Node.Tag.all) = "filter_or"
+         then
+            declare
+               Name   : constant String :=
+                 Get_Attribute (Current_Node, "name");
+               Filter : Action_Filter;
+            begin
+               if Name = "" then
+                  Insert
+                    (Kernel,
+                     -("<filter>, <filter_and> and <filter_or> tags must have"
+                       & " a name attribute when defined outside of <action>"),
+                     Mode => Error);
+               else
+                  Filter := Parse_Filter_Node (Current_Node);
+                  Register_Filter (Kernel, Filter, Name);
+               end if;
+            end;
 
          elsif To_Lower (Current_Node.Tag.all) = "button" then
             Parse_Button_Node (Current_Node);
