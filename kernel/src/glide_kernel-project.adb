@@ -432,7 +432,15 @@ package body Glide_Kernel.Project is
                end if;
             end;
 
-            Add_Foreign_Source_Files (Current (Iter));
+            declare
+               Error : constant String :=
+                 Add_Foreign_Source_Files (Current (Iter));
+            begin
+               if Error'Length /= 0 then
+                  Insert (Handle, Error);
+               end if;
+            end;
+
             Next (Iter);
          end loop;
       end;
