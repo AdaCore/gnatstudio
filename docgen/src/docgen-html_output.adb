@@ -24,9 +24,14 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with String_Utils;              use String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
+--  with Traces;                    use Traces;
+with Basic_Types;
 with Docgen;
 
+
 package body Docgen.Html_Output is
+
+   --  Me : constant Debug_Handle := Create ("Docgen-html_output");
 
    procedure Doc_HTML_Open
      (File   : Ada.Text_IO.File_Type;
@@ -40,25 +45,52 @@ package body Docgen.Html_Output is
 
    procedure Doc_HTML_Subtitle
      (File   : Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add a subtitle for the entity type to the documentation
+   --  Level : level of the current package.
+   --  Indent : number of space by step of indentation. This value is defined
+   --  in docgen.ads (attribute Indent of the type Backend).
 
    procedure Doc_HTML_Entry
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
-   --  Add aa entry or entry family to the documentation
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
+   --  Add an entry or entry family to the documentation
+
+   procedure Doc_References_HTML
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Ada.Text_IO.File_Type;
+      Info             : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
+   --  Add the callgraph of the subprogram Info.
+   --  Use the following subprogram.
+
+   procedure Print_Ref_List_HTML
+     (Kernel      : access Kernel_Handle_Record'Class;
+      File        : in Ada.Text_IO.File_Type;
+      Local_List  : Type_Reference_List.List;
+      Called_Subp : Boolean;
+      Level       : Natural;
+      Indent      : Natural);
+   --  For the current entity which is a subprogram, print the list
+   --  of called subprograms (if Called_Sub = True) or the list of
+   --  subprograms which call it (if Called_Sub = False).
 
    procedure Doc_HTML_Subprogram
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add a subprogram to the documentation
 
    procedure Doc_HTML_Pack_Desc
@@ -70,46 +102,59 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add the renamed and instantiated package to the documentation
+   --  For an inner package, it adds its header (package ... is) and its
+   --  footer (end ...;)
 
    procedure Doc_HTML_With
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Indent : Natural);
    --  Add the dependencies to the documentation
 
    procedure Doc_HTML_Var
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add a constant or named number to the documentation
 
    procedure Doc_HTML_Exception
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add an exception to the documentation
 
    procedure Doc_HTML_Type
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info);
+      Info             : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
    --  Add a type to the documentation
+
+   procedure Doc_Family_HTML
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
+   --  Add the lists of parents and children for a tagged type
 
    procedure Doc_HTML_Header
      (Kernel : access Kernel_Handle_Record'Class;
@@ -120,7 +165,10 @@ package body Docgen.Html_Output is
    procedure Doc_HTML_Header_Private
      (Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info);
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
+   --  Add the title "Private"
 
    procedure Doc_HTML_Footer
      (File   : in Ada.Text_IO.File_Type;
@@ -182,11 +230,17 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info : in out Doc_Info);
    --  Format the body by calling Format_HTML for the whole body file
    --  and write it to the doc file
+
+   procedure Doc_HTML_Description
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural);
+   --  Add the description given for the source code
 
    procedure Replace_HTML_Tags
      (Input_Text : String;
@@ -202,73 +256,88 @@ package body Docgen.Html_Output is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
-      Doc_Suffix       : String) is
+      Doc_Suffix       : String;
+      Level            : Natural) is
    begin
       case Info.Info_Type is
          when Open_Info             => Doc_HTML_Open (File, Info);
          when Close_Info            => Doc_HTML_Close (File, Info);
          when Header_Info           => Doc_HTML_Header (Kernel, File, Info);
          when Header_Private_Info   =>
-            Doc_HTML_Header_Private (Kernel, File, Info);
+            Doc_HTML_Header_Private
+              (Kernel, File, Info, Level, Get_Indent (B.all));
          when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
-         when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
+         when Subtitle_Info         =>
+            Doc_HTML_Subtitle (File, Info, Level, Get_Indent (B.all));
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
          when With_Info             =>
             Doc_HTML_With
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File,
+               List_Ref_In_File, Info, Get_Indent (B.all));
+         when Package_Info_Open_Close =>
+            Doc_HTML_Package
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Package_Info          =>
             Doc_HTML_Package
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Var_Info              =>
             Doc_HTML_Var
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Entry_Info            =>
             Doc_HTML_Entry
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
+         when References_Info       =>
+            Doc_References_HTML
+              (Kernel, File, Info, Level,
+               Get_Indent (B.all));
          when Subprogram_Info       =>
             Doc_HTML_Subprogram
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
          when Type_Info             =>
             Doc_HTML_Type
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
-
+              (B, Kernel, File,
+               List_Ref_In_File, Info, Level, Get_Indent (B.all));
+         when Tagged_Type_Info      =>
+            Doc_Family_HTML
+              (File, Info, Level, Get_Indent (B.all));
          when Exception_Info        =>
             Doc_HTML_Exception
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+              (B, Kernel, File, List_Ref_In_File, Info, Level,
+               Get_Indent (B.all));
+         when Description_Info     =>
+            Doc_HTML_Description (File, Info, Level, Get_Indent (B.all));
 
+            --  For the index
          when Unit_Index_Info       =>
             Doc_HTML_Unit_Index_Header
               (File, Info, Doc_Directory, Doc_Suffix);
-
          when Subprogram_Index_Info =>
-            Doc_HTML_Sub_Index_Header  (File, Info);
-
+            Doc_HTML_Sub_Index_Header (File, Info);
          when Type_Index_Info       =>
             Doc_HTML_Type_Index_Header (File, Info);
-
          when Tagged_Type_Index_Info =>
             Doc_HTML_Tagged_Type_Index_Header (File, Info);
-
          when Index_Tagged_Type_Item =>
             Doc_HTML_Tagged_Type_Item (File, Info);
-         when Private_Index_Info =>
+         when Private_Index_Info     =>
             Doc_HTML_Private_Index (File, Info);
-         when Public_Index_Info =>
+         when Public_Index_Info      =>
             Doc_HTML_Public_Index (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
+
+            --  For the body file
          when Body_Line_Info        =>
             Doc_HTML_Body
-              (B, Kernel, File, Entity_List, List_Ref_In_File, Info);
+              (B, Kernel, File, List_Ref_In_File, Info);
       end case;
    end Doc_HTML_Create;
 
@@ -306,13 +375,34 @@ package body Docgen.Html_Output is
    -----------------------
 
    procedure Doc_HTML_Subtitle
-     (File : Ada.Text_IO.File_Type; Info : Doc_Info) is
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural) is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
-      Put_Line (File, "<BR>");
-      Put_Line (File, "<TABLE  bgcolor=""#9999FF"" width=""100%""><TR><TD> ");
-      Put_Line (File, "<H3> " & Info.Subtitle_Name.all & " </H3>");
-      Put_Line (File, "</TD></TR></TABLE>");
-      New_Line (File);
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+      Put_Line (File,
+                "<TABLE WIDTH=""1%"" "
+                & "CELLPADDING=""0"" CELLSPACING=""0"">"
+                & "<TR><TD><PRE>"
+                & Space.all
+                & "</PRE></TD>"
+                & "<TD bgcolor=""#9999FF""><PRE>"
+                & "<H" & Image (Level) & "><B>"
+                & Info.Subtitle_Name.all
+                & "</B></H" & Image (Level) & ">"
+                & "</PRE></TD></TR></TABLE>");
+      Free (Space);
    end Doc_HTML_Subtitle;
 
    ------------------------
@@ -325,7 +415,6 @@ package body Docgen.Html_Output is
       Put_Line
         (File,
          "<H4><PRE>" & Info.Package_Desc_Description.all & " </PRE></H4>");
-      Put_Line (File, "<HR> ");
    end Doc_HTML_Pack_Desc;
 
    ----------------------
@@ -336,37 +425,91 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
-      Put_Line
-        (File, "  <A NAME="""
-         & Image (Get_Declaration_Line_Of (Info.Package_Entity.Entity))
-         & """></A>  <BR>");
-      Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
 
-      Format_File
-        (B,
-         Kernel,
-         File,
-         Entity_List,
-         List_Ref_In_File,
-         Info.Doc_LI_Unit,
-         Info.Package_Header.all,
-         Get_Declaration_File_Of (Info.Package_Entity.Entity),
-         Get_Declaration_Line_Of (Info.Package_Entity.Entity),
-         No_Body_Line_Needed,
-         Info.Doc_File_List,
-         Info.Doc_Info_Options.Link_All,
-         False,
-         Info.Doc_Info_Options.Process_Body_Files,
-         Info);
+      if Info.Info_Type = Package_Info then
+         --  This package doesn't contain any declaration. Its header is
+         --  simply printed.
+         Put_Line
+           (File, "  <A NAME="""
+            & Image (Get_Declaration_Line_Of (Info.Package_Entity.Entity))
+            & """></A>  <BR>");
+         Put_Line
+           (File,
+            "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+            & "CELLPADDING=""0"" CELLSPACING=""0"">"
+            & "<TR><TD><PRE>"
+            & Space.all
+            & "</PRE></TD>"
+            & "<TD bgcolor=""#DDDDDD""><PRE>");
+
+         Format_File
+           (B,
+            Kernel,
+            File,
+            List_Ref_In_File,
+            Info.Doc_LI_Unit,
+            Info.Package_Header.all,
+            Get_Declaration_File_Of (Info.Package_Entity.Entity),
+            Get_Declaration_Line_Of (Info.Package_Entity.Entity),
+            No_Body_Line_Needed,
+            Info.Doc_File_List,
+            Info.Doc_Info_Options.Link_All,
+            False,
+            Info.Doc_Info_Options.Process_Body_Files,
+            Info);
+      else
+         --  This package contains declarations.
+         --  Here we print either the header (package ... is)
+         --  or the footer (end ...;)
+         Put_Line
+           (File, "  <A NAME="""
+            & Image (Get_Declaration_Line_Of
+                       (Info.Package_Open_Close_Entity.Entity))
+            & """></A>  <BR>");
+         Put_Line
+           (File,
+            "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+            & "CELLPADDING=""0"" CELLSPACING=""0"">"
+            & "<TR><TD><PRE>"
+            & Space.all
+            & "</PRE></TD>"
+            & "<TD bgcolor=""#DDDDDD""><PRE>");
+         Format_File
+           (B,
+            Kernel,
+            File,
+            List_Ref_In_File,
+            Info.Doc_LI_Unit,
+            Info.Package_Open_Close_Header.all,
+            Get_Declaration_File_Of (Info.Package_Open_Close_Entity.Entity),
+            Get_Declaration_Line_Of (Info.Package_Open_Close_Entity.Entity),
+            No_Body_Line_Needed,
+            Info.Doc_File_List,
+            Info.Doc_Info_Options.Link_All,
+            False,
+            Info.Doc_Info_Options.Process_Body_Files,
+            Info);
+      end if;
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, Info.Package_Description.all);
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Package;
 
    -------------------
@@ -377,18 +520,36 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.With_Header.all,
@@ -402,7 +563,7 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_With;
 
    ------------------
@@ -413,23 +574,41 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Var_Entity.Entity))
          & """></A>  <BR>");
-
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Var_Header.all,
@@ -443,8 +622,7 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, Info.Var_Description.all);
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Var;
 
    ------------------------
@@ -455,23 +633,41 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Exception_Entity.Entity))
          & """></A>  <BR>");
-
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Exception_Header.all,
@@ -485,8 +681,7 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, Info.Exception_Description.all);
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Exception;
 
    -------------------
@@ -497,23 +692,42 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info             : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Type_Entity.Entity))
          & """></A>  <BR>");
-
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
+         --  Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Type_Header.all,
@@ -527,9 +741,205 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, Info.Type_Description.all);
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Type;
+
+   -----------------------
+   --  Doc_Family_HTML  --
+   -----------------------
+
+   procedure Doc_Family_HTML
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      use Type_List_Tagged_Element;
+      use List_Entity_Handle;
+      Parent_Node   : List_Entity_Handle.List_Node;
+      Child_Node    : List_Entity_Handle.List_Node;
+      Item_Doc_File : String_Access;
+      Space         : GNAT.OS_Lib.String_Access;
+      Temp          : GNAT.OS_Lib.String_Access;
+   begin
+      Put_Line
+        (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
+      --  Print parents
+      if Info.Tagged_Entity.Number_Of_Parents > 0 then
+         --  There is at least one parent
+         Put_Line (File, "<TR><TD><PRE>"
+                   & Space.all
+                   & "<B>Parents</B>"
+                   & "</PRE></TD></TR>");
+
+         Parent_Node := List_Entity_Handle.First
+           (Info.Tagged_Entity.My_Parents);
+
+         while Parent_Node /= List_Entity_Handle.Null_Node loop
+            if List_Entity_Handle.Data (Parent_Node) /= null then
+               if Source_File_In_List
+                 (Info.Tagged_Source_File_List,
+                  Get_Declaration_File_Of
+                    (List_Entity_Handle.Data (Parent_Node).all))
+               then
+                  --  Linkage is possible
+                  Item_Doc_File := new String'
+                    (Base_Name (Get_Doc_File_Name
+                                  (Get_Declaration_File_Of
+                                     (List_Entity_Handle.Data
+                                        (Parent_Node).all),
+                                   Info.Tagged_Directory.all,
+                                   Info.Tagged_Suffix.all)));
+                  Put_Line
+                    (File, "<TR><TD><PRE>"
+                     & Space.all
+                     & "<A HREF="""
+                     & Item_Doc_File.all
+                     & "#" & Image (Get_Declaration_Line_Of
+                                      (List_Entity_Handle.Data
+                                         (Parent_Node).all))
+                     & """ TARGET=""main"">"
+                     & Get_Name (List_Entity_Handle.Data (Parent_Node).all)
+                     & "</A> at&nbsp;"
+                     & Base_Name
+                       (Get_Declaration_File_Of
+                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & "&nbsp;"
+                     & Image (Get_Declaration_Line_Of
+                                (List_Entity_Handle.Data (Parent_Node).all))
+                     & ":"
+                     & Image
+                       (Get_Declaration_Column_Of
+                          (List_Entity_Handle.Data (Parent_Node).all))
+                     & "</PRE></TD><TR>");
+                  Free (Item_Doc_File);
+               else
+                  --  No link for this parent
+                  Put_Line (File, "<TR><TD><PRE>"
+                            & Space.all
+                            & Get_Name (List_Entity_Handle.Data
+                                          (Parent_Node).all)
+                            & " at&nbsp;"
+                            & Base_Name
+                              (Get_Declaration_File_Of
+                                 (List_Entity_Handle.Data (Parent_Node).all))
+                            & "&nbsp;"
+                            & Image
+                              (Get_Declaration_Line_Of
+                                 (List_Entity_Handle.Data (Parent_Node).all))
+                            & ":"
+                            & Image
+                              (Get_Declaration_Column_Of
+                                 (List_Entity_Handle.Data (Parent_Node).all))
+                            & "</PRE></TD><TR>");
+               end if;
+            end if;
+
+            Parent_Node
+              := List_Entity_Handle.Next (Parent_Node);
+         end loop;
+
+      else
+         --  There's no parent
+         Put_Line (File, "<TR><TD><PRE>"
+                   & Space.all
+                   & "<B>No parent</B>"
+                   & "</PRE></TD></TR>");
+      end if;
+
+      --  Print chidren
+      if Info.Tagged_Entity.Number_Of_Children > 0 then
+         --  There is at least one child
+         Put_Line (File, "<TR><TD><PRE>"
+                   & Space.all
+                   & "<B>Children</B>"
+                   & "</PRE></TD></TR>");
+
+         Child_Node := List_Entity_Handle.First
+           (Info.Tagged_Entity.My_Children);
+
+         while Child_Node /= List_Entity_Handle.Null_Node loop
+            if List_Entity_Handle.Data (Child_Node) /= null then
+               if Source_File_In_List
+                 (Info.Tagged_Source_File_List, Get_Declaration_File_Of
+                    (List_Entity_Handle.Data (Child_Node).all))
+               then
+                  --  Linkage is possible
+                  Item_Doc_File := new String'
+                    (Base_Name (Get_Doc_File_Name
+                                  (Get_Declaration_File_Of
+                                     (List_Entity_Handle.Data
+                                        (Child_Node).all),
+                                   Info.Tagged_Directory.all,
+                                   Info.Tagged_Suffix.all)));
+                  Put_Line
+                    (File, "<TR><TD><PRE>"
+                     & Space.all
+                     & "<A HREF="""
+                     & Item_Doc_File.all
+                     & "#" & Image (Get_Declaration_Line_Of
+                                      (List_Entity_Handle.Data
+                                         (Child_Node).all))
+                     & """ TARGET=""main"">"
+                     & Get_Name (List_Entity_Handle.Data (Child_Node).all)
+                     & "</A> at&nbsp;"
+                     & Base_Name
+                       (Get_Declaration_File_Of
+                          (List_Entity_Handle.Data (Child_Node).all))
+                     & "&nbsp;"
+                     & Image (Get_Declaration_Line_Of
+                                (List_Entity_Handle.Data (Child_Node).all))
+                     & ":"
+                     & Image
+                       (Get_Declaration_Column_Of
+                          (List_Entity_Handle.Data (Child_Node).all))
+                     & "</PRE></TD><TR>");
+                  Free (Item_Doc_File);
+               else
+                  --  No link for this child
+                  Put_Line (File, "<TR><TD><PRE>"
+                            & Space.all
+                            & "<B>Child object : </B>"
+                            & Get_Name (List_Entity_Handle.Data
+                                          (Child_Node).all)
+                            & " at&nbsp;"
+                            & Base_Name
+                              (Get_Declaration_File_Of
+                                 (List_Entity_Handle.Data (Child_Node).all))
+                            & "&nbsp;"
+                            & Image
+                              (Get_Declaration_Line_Of
+                                 (List_Entity_Handle.Data (Child_Node).all))
+                            & ":"
+                            & Image
+                              (Get_Declaration_Column_Of
+                                 (List_Entity_Handle.Data (Child_Node).all))
+                            & "</PRE></TD><TR>");
+               end if;
+            end if;
+            Child_Node
+              := List_Entity_Handle.Next (Child_Node);
+         end loop;
+      else
+         --  There's no child
+         Put_Line (File, "<TR><TD><PRE>"
+                   & Space.all
+                   & "<B>No child</B>"
+                   & "</PRE></TD></TR>");
+      end if;
+      Free (Space);
+      Put_Line (File, "</TD></TR></TABLE>");
+   end Doc_Family_HTML;
 
    --------------------
    -- Doc_HTML_Entry --
@@ -539,23 +949,42 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
       Put_Line
         (File,
          "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Entry_Entity.Entity))
          & """></A>  <BR>");
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Entry_Header.all,
@@ -569,9 +998,134 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Put_Line (File, Info.Entry_Description.all);
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Entry;
+
+   -------------------------
+   -- Doc_References_HTML --
+   -------------------------
+
+   procedure Doc_References_HTML
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural) is
+   begin
+      Put_Line
+        (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
+      Print_Ref_List_HTML
+        (Kernel, File, Info.References_Entity.Called_List, True,
+         Level, Indent);
+      Print_Ref_List_HTML
+        (Kernel, File, Info.References_Entity.Calls_List, False,
+         Level, Indent);
+      Put_Line (File, "</TD></TR></TABLE>");
+   end Doc_References_HTML;
+
+   ---------------------------
+   --  Print_Ref_List_HTML  --
+   ---------------------------
+
+   procedure Print_Ref_List_HTML
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Local_List  : Type_Reference_List.List;
+      Called_Subp : Boolean;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      use Type_Reference_List;
+      use type Basic_Types.String_Access;
+      Node   : Type_Reference_List.List_Node;
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
+   begin
+      if not Type_Reference_List.Is_Empty (Local_List) then
+
+         Space := new String'("");
+         if Indent /= 0 then
+            for j in 1 .. (Level * Indent) loop
+               Temp := new String'(" " & Space.all);
+               Free (Space);
+               Space := new String'(Temp.all);
+               Free (Temp);
+            end loop;
+         end if;
+
+         if Called_Subp then
+            Put_Line (File, "<TR><TD><PRE>"
+                      & Space.all
+                      & "<B>Subprogram is called by: </B>"
+                      & "</PRE></TD><TR>");
+         else
+            Put_Line (File, "<TR><TD><PRE>"
+                      & Space.all
+                      & "<B>Subprogram calls: </B>"
+                      & "</PRE></TD><TR>");
+         end if;
+
+         Node := Type_Reference_List.First (Local_List);
+
+         --  For every reference found write the information to doc file
+         while Node /= Type_Reference_List.Null_Node loop
+            --  Check if the creating of a link is possible
+            if Type_Reference_List.Data (Node).Set_Link then
+               --  If a called subprogram => link to spec
+               Put_Line
+                 (File,
+                  "<TR><TD><PRE>"
+                  & Space.all
+                  & "<A HREF="""
+                  & Get_Html_File_Name
+                    (Kernel,
+                     Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "#"
+                  & Image
+                    (Get_Declaration_Line_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                     & """>"
+                     & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & "</A> at&nbsp;"
+                  & Base_Name
+                    (Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "&nbsp;"
+                  & Image (Get_Declaration_Line_Of
+                             (Type_Reference_List.Data (Node).Entity))
+                  & ":"
+                  & Image
+                    (Get_Declaration_Column_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</PRE></TD><TR>");
+
+            else
+               --  No link at all
+               Put_Line
+                 (File,
+                  "<TR><TD><PRE>"
+                  & Space.all
+                  & Get_Name (Type_Reference_List.Data (Node).Entity)
+                  & " at&nbsp;"
+                  & Base_Name
+                    (Get_Declaration_File_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "&nbsp;"
+                  & Image
+                    (Get_Declaration_Line_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & ":"
+                  & Image
+                    (Get_Declaration_Column_Of
+                       (Type_Reference_List.Data (Node).Entity))
+                  & "</PRE></TD></TR>");
+            end if;
+            Node := Type_Reference_List.Next (Node);
+         end loop;
+         Free (Space);
+      end if;
+   end Print_Ref_List_HTML;
 
    -------------------------
    -- Doc_HTML_Subprogram --
@@ -581,22 +1135,41 @@ package body Docgen.Html_Output is
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
+   is
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity))
          & """></A>  <BR> ");
       Put_Line
-        (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
+        (File,
+         "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#DDDDDD""><PRE>");
 
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Subprogram_Header.all,
@@ -610,18 +1183,7 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-
-      --  Write the description to doc file
-
-      Put_Line (File, Info.Subprogram_Description.all);
-      Put_Line (File, " <BR>  ");
-
-      Print_Ref_List_HTML
-        (Kernel, File, null, Info.Subprogram_Entity.Called_List, True);
-      Print_Ref_List_HTML
-        (Kernel, File, null, Info.Subprogram_Entity.Calls_List, False);
-
-      Put_Line (File, "<HR> ");
+      Free (Space);
    end Doc_HTML_Subprogram;
 
    ---------------------
@@ -652,22 +1214,41 @@ package body Docgen.Html_Output is
       end if;
       Put_Line (File, "</TD></TR></TABLE>");
       Put_Line (File, "<PRE>");
-      Put_Line (File, "<HR>");
    end Doc_HTML_Header;
 
-   -------------------------------
-   --  Doc_HTML_Header_Private  --
-   -------------------------------
+   -----------------------------
+   -- Doc_HTML_Header_Private --
+   -----------------------------
 
    procedure Doc_HTML_Header_Private
      (Kernel : access Kernel_Handle_Record'Class;
       File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info) is
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural) is
       pragma Unreferenced (Kernel);
+      Space : GNAT.OS_Lib.String_Access;
+      Temp : GNAT.OS_Lib.String_Access;
    begin
-      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
-      Put_Line (File, " <H1> " & Info.Header_Title.all & "</H1>");
-      Put_Line (File, "</TD></TR></TABLE>");
+      Put_Line (File,
+                "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD><PRE>");
+
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
+         end loop;
+      end if;
+
+      Put_Line (File, "<H" & Image (Level) &"><B>"
+                & Space.all
+                & Info.Header_Title.all
+                & "</B></H" & Image (Level) & ">");
+      Free (Space);
+      Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Header_Private;
 
    ---------------------
@@ -964,9 +1545,9 @@ package body Docgen.Html_Output is
       New_Line (File);
    end Doc_HTML_Index_Item;
 
-   ------------------------------
-   --  Doc_HTML_Private_Index  --
-   ------------------------------
+   ----------------------------
+   -- Doc_HTML_Private_Index --
+   ----------------------------
 
    procedure Doc_HTML_Private_Index
      (File   : Ada.Text_IO.File_Type;
@@ -977,9 +1558,9 @@ package body Docgen.Html_Output is
       Put_Line (File, "</TD></TR></TABLE>");
    end Doc_HTML_Private_Index;
 
-   ------------------------------
-   --  Doc_HTML_Public_Index  --
-   ------------------------------
+   ---------------------------
+   -- Doc_HTML_Public_Index --
+   ---------------------------
 
    procedure Doc_HTML_Public_Index
      (File   : Ada.Text_IO.File_Type;
@@ -1012,16 +1593,14 @@ package body Docgen.Html_Output is
    procedure Doc_HTML_Body
      (B      : access Backend_HTML;
       Kernel : access Kernel_Handle_Record'Class;
-      File : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
+      File   : in Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info : in out Doc_Info) is
+      Info   : in out Doc_Info) is
    begin
       Format_File
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info.Doc_LI_Unit,
          Info.Body_Text.all,
@@ -1035,101 +1614,49 @@ package body Docgen.Html_Output is
          Info);
    end Doc_HTML_Body;
 
-   ---------------------------
-   --  Print_Ref_List_HTML  --
-   ---------------------------
+   --------------------------
+   -- Doc_HTML_Description --
+   --------------------------
 
-   procedure Print_Ref_List_HTML
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Name_Entity : Basic_Types.String_Access;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean)
+   procedure Doc_HTML_Description
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info;
+      Level  : Natural;
+      Indent : Natural)
    is
-      use Type_Reference_List;
-      use type Basic_Types.String_Access;
-      Node      : Type_Reference_List.List_Node;
+      Space  : GNAT.OS_Lib.String_Access;
+      Temp   : GNAT.OS_Lib.String_Access;
    begin
-      if not Type_Reference_List.Is_Empty (Local_List) then
-         if Name_Entity = null then
-            if Called_Subp then
-               Put_Line (File, "<H5> Subprogram is called by: </H5>");
-            else
-               Put_Line (File, "<H5> Subprogram calls: </H5>");
-            end if;
-            Put_Line (File, "<TABLE>");
-         else
-            Put_Line (File, "<TABLE>");
-            if Called_Subp then
-               Put_Line (File, "<TR><TD><H3> Subprogram <I>"
-                         & Name_Entity.all
-                         & "</I>  is called by: </H3></TD></TR>");
-            else
-               Put_Line (File, "<TR><TD><H3> Subprogram  <I>"
-                         & Name_Entity.all & "</I>  calls: </H3></TD></TR>");
-            end if;
-
-         end if;
-
-         Node := Type_Reference_List.First (Local_List);
-
-         --  For every reference found write the information to doc file
-         while Node /= Type_Reference_List.Null_Node loop
-            --  Check if the creating of a link is possible
-            if Type_Reference_List.Data (Node).Set_Link then
-               --  If a called subprogram => link to spec
-               Put_Line
-                 (File,
-                  "<TR><TD><A HREF="""
-                  & Get_Html_File_Name
-                    (Kernel,
-                     Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "#"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                     & """>"
-                     & Get_Name (Type_Reference_List.Data (Node).Entity)
-                  & "</A></TD><TD> at &nbsp;<I>"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</I></TD><TD>:"
-                  & Image (Get_Declaration_Line_Of
-                             (Type_Reference_List.Data (Node).Entity))
-                  & "</TD><TD>:"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</TD><TR>");
-
-            else
-               --  No link at all
-               Put_Line
-                 (File,
-                  "<TR><TD>"
-                  & Get_Name (Type_Reference_List.Data (Node).Entity)
-                  & "</TD><TD> at &nbsp;<I>"
-                  & Base_Name
-                    (Get_Declaration_File_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</I></TD><TD>:"
-                  & Image
-                    (Get_Declaration_Line_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                     & "</TD><TD>:"
-                  & Image
-                    (Get_Declaration_Column_Of
-                       (Type_Reference_List.Data (Node).Entity))
-                  & "</TD></TR>");
-            end if;
-            Node := Type_Reference_List.Next (Node);
+      Space := new String'("");
+      if Indent /= 0 then
+         for j in 1 .. (Level * Indent) loop
+            Temp := new String'(" " & Space.all);
+            Free (Space);
+            Space := new String'(Temp.all);
+            Free (Temp);
          end loop;
-
-         Put_Line (File, "</TABLE>");
       end if;
-   end Print_Ref_List_HTML;
+
+      Put_Line
+        (File,
+         "<TABLE BGCOLOR=""white"" WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD><PRE>"
+         & "<B>Description</B>"
+         & "</PRE></TD></TR>"
+         & "<TR><TD><PRE>"
+         & Space.all
+         & "</PRE></TD>"
+         & "<TD><PRE>"
+         & Info.Description.all
+         & "</PRE></TD></TR>"
+         & "</TABLE>");
+
+      Free (Space);
+   end Doc_HTML_Description;
 
    ------------------------
    -- Get_Html_File_Name --
@@ -1143,7 +1670,6 @@ package body Docgen.Html_Output is
       Ext  : constant String := File_Extension (File);
       Temp : constant String := Base_Name (File, Ext) & '_'
         & Ext (Ext'First + 1 .. Ext'Last) & ".htm";
-
    begin
       return Temp;
    end Get_Html_File_Name;
@@ -1196,7 +1722,6 @@ package body Docgen.Html_Output is
             File,
             Text (Get_Last_Index (B.all) .. Start_Index - 1),
             Entity_Line);
-
       else
          Put (File, Text (Get_Last_Index (B.all) .. Start_Index - 1));
       end if;
@@ -1205,7 +1730,6 @@ package body Docgen.Html_Output is
          Put (File, Prefix);
          Replace_HTML_Tags (Text (Start_Index .. End_Index), File);
          Put (File, Suffix);
-
       else
          Put (File,
               Prefix & Text (Start_Index .. End_Index) & Suffix);
@@ -1243,7 +1767,6 @@ package body Docgen.Html_Output is
             Last_Written := J;
          end if;
       end loop;
-
       Put (File, Input_Text (Last_Written + 1 .. Input_Text'Last));
    end Set_Name_Tags;
 
