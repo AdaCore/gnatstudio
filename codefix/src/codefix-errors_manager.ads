@@ -51,10 +51,8 @@ package Codefix.Errors_Manager is
    --  Is true where all the messages are got fron Get_Message.
 
    ----------------------------------------------------------------------------
-   --  type Correction_Manager
+   --  type Error_Id
    ----------------------------------------------------------------------------
-
-   type Correction_Manager is private;
 
    type Error_Id is private;
 
@@ -69,6 +67,12 @@ package Codefix.Errors_Manager is
 
    function Get_Error_Message (This : Error_Id) return Error_Message;
    --  Return the error message associated to the id.
+
+   ----------------------------------------------------------------------------
+   --  type Correction_Manager
+   ----------------------------------------------------------------------------
+
+   type Correction_Manager is private;
 
    type Error_Callback is access procedure
      (Message      : Error_Message; --  ??? Remove this parameter ?
@@ -92,6 +96,14 @@ package Codefix.Errors_Manager is
      (This         : in out Correction_Manager;
       Error        : Error_Id;
       Choice       : Natural;
+      Later_Update : Boolean := True);
+   --  Specify a choice between the differents correction'possibilities
+   --  of a message;
+
+   procedure Validate
+     (This         : in out Correction_Manager;
+      Error        : Error_Id;
+      Choice       : Extract;
       Later_Update : Boolean := True);
    --  Specify a choice between the differents correction'possibilities
    --  of a message;
