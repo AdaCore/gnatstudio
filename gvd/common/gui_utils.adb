@@ -33,6 +33,7 @@ with Glib.Convert;             use Glib.Convert;
 with Glib.Object;              use Glib.Object;
 with Glib.Values;              use Glib.Values;
 with Glib;                     use Glib;
+with Gtk.Bin;                  use Gtk.Bin;
 with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
@@ -588,8 +589,18 @@ package body GUI_Utils is
       while Children /= Null_List loop
          N := Children;
          Children := Next (Children);
+
+         --  Small workaround for a gtk+ bug: a Menu_Item containing an
+         --  accel_label would never be destroyed because the label holds a
+         --  reference to the menu item, and the latter holds a reference to
+         --  the label (see gtk_accel_label_set_accel_widget).
+
+         Destroy (Get_Child (Gtk_Bin (Widget_List.Get_Data (N))));
+
          Remove (Container, Widget_List.Get_Data (N));
       end loop;
+
+      Widget_List.Free (Children);
    end Remove_All_Children;
 
    ----------------------------
