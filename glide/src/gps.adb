@@ -259,7 +259,7 @@ begin
         String_Utils.Name_As_Directory (GPS.Home_Dir.all) & "debugger.log";
    begin
       GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Hidden;
+      GPS.Log_Level  := GVD.Types.Internal;
       GPS.Log_File   := Create_File (Log, Fmode => Text);
    end;
 
@@ -345,6 +345,9 @@ begin
         (GPS.Kernel, Tools & (-"Memory Analyzer")), False);
       Set_Sensitive (Find_Menu_Item
         (GPS.Kernel, Tools & (-"Generate API doc")), False);
+
+      Set_Sensitive (Find_Menu_Item
+        (GPS.Kernel, File & (-"New View")), False);
    end;
 
    loop
