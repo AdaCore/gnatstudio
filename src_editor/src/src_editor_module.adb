@@ -433,12 +433,16 @@ package body Src_Editor_Module is
    function Console_Has_Focus
      (Kernel : access Kernel_Handle_Record'Class) return Boolean
    is
-      Child : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Child  : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+      Widget : Gtk_Widget;
    begin
       if Child = null then
          return False;
       else
-         return Get_Widget (Child).all in Interactive_Console_Record'Class;
+         Widget := Get_Widget (Child);
+
+         return Widget.all in Interactive_Console_Record'Class
+           and then Is_Editable (Interactive_Console (Widget));
       end if;
    end Console_Has_Focus;
 
@@ -1737,7 +1741,6 @@ package body Src_Editor_Module is
                Set_Focus_Child (Child);
             end if;
 
-            Trace (Me, "Editor for " & File & " already exists");
             return Source_Box (Get_Widget (Child));
          end if;
       end if;
