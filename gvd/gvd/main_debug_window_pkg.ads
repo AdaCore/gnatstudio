@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
@@ -29,80 +28,11 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Notebook; use Gtk.Notebook;
 with GVD.Status_Bar; use GVD.Status_Bar;
-with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
-with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
-with Open_Session_Pkg; use Open_Session_Pkg;
-with GVD.Dialogs; use GVD.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Basic_Types;
-with GVD.Types;
-with GVD.Histories;
-pragma Elaborate_All (GVD.Histories);
-with GVD.Memory_View;
 
 package Main_Debug_Window_Pkg is
 
-   type History_Data is record
-      Mode         : GVD.Types.Command_Type;
-      Debugger_Num : Natural;
-      Command      : String_Access;
-   end record;
-
-   type Debugger_List_Node;
-   type Debugger_List_Link is access Debugger_List_Node;
-
-   type Debugger_List_Node is record
-      Debugger : Gtk_Widget;
-      Next     : Debugger_List_Link;
-   end record;
-
-   package String_History is new GVD.Histories (History_Data);
-   use String_History;
-
    type Main_Debug_Window_Record is new Gtk_Window_Record with record
-      -----------------------
-      -- Additional fields --
-      -----------------------
-
-      Memory_View         : GVD.Memory_View.GVD_Memory_View;
-      GVD_Preferences     : GVD_Preferences_Access;
-      Open_Program        : GVD_Open_Program;
-      Open_Session        : Open_Session_Access;
-      History_Dialog      : History_Dialog_Access;
-      Thread_Dialog       : Thread_Dialog_Access;
-      Task_Dialog         : Task_Dialog_Access;
-      Breakpoints_Editor  : Gtk.Window.Gtk_Window;
-      Log_File            : File_Descriptor := Standerr;
-      TTY_Mode            : Boolean := False;
-      Debug_Mode          : Boolean := False;
-      Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
-      External_Editor     : String_Access;
-      Prefix_Directory    : String_Access;
-      External_XID        : Glib.Guint32 := 0;
-
-      File_Caches         : Basic_Types.File_Cache_List;
-      --  List of data cached for each of the file of the application
-      --  This field is handled in GVD.Files
-
-      Command_History : String_History.History_List;
-      --  The history of commands for the current session.
-
-      Sessions_Dir        : String_Access;
-      --  The directory containing session files.
-
-      Gvd_Home_Dir        : String_Access;
-      --  The location of the ~/.gvd directory.
-      --  The preferences file is found in Gvd_Home_Dir/"preferences"
-
-      First_Debugger      : Debugger_List_Link;
-      --  The pointer to the list of debuggers.
-
-      Locked              : Boolean := False;
-      --  Boolean used to handle global locking between debugger pages.
-
-      -------------------------
-
       Vbox1 : Gtk_Vbox;
       Menubar1 : Gtk_Menu_Bar;
       File1 : Gtk_Menu_Item;
@@ -207,26 +137,5 @@ package Main_Debug_Window_Pkg is
    procedure Gtk_New (Main_Debug_Window : out Main_Debug_Window_Access);
    procedure Initialize
      (Main_Debug_Window : access Main_Debug_Window_Record'Class);
-
-   procedure Update_External_Dialogs
-     (Window : access Main_Debug_Window_Record'Class;
-      Debugger : Gtk.Widget.Gtk_Widget := null);
-   --  Update the contents of all the dialogs associated with the window
-   --  (backtrace, threads, ...) if they are visible.
-   --  Their contents is updated based on the current debugger, unless
-   --  Debugger is not null.
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction);
-   --  Moves in the history in the given direction until it finds a non-hidden
-   --  command which was sent to the debugger with number Num.
-   --  No_Such_Item is raised if no matching command is found.
-
-   procedure Preferences_Changed
-     (Window : access Main_Debug_Window_Record'Class);
-   --  Emit the "preferences_changed" signal, which indicates a change in
-   --  the preferences. The exact change is not accessible as a parameter.
 
 end Main_Debug_Window_Pkg;

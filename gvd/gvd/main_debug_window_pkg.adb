@@ -21,36 +21,18 @@
 with Gdk.Types;       use Gdk.Types;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
 with Gtk; use Gtk;
-with Gtk.Object;    use Gtk.Object;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtk.Accel_Group; use Gtk.Accel_Group;
 with Gtk.Pixmap;      use Gtk.Pixmap;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Gtkada.Types;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
-with Pixmaps_IDE; use Pixmaps_IDE;
-with GVD.Types;   use GVD.Types;
-with GVD.Dialogs; use GVD.Dialogs;
 with GVD.Preferences; use GVD.Preferences;
-with GVD.Process; use GVD.Process;
-with GVD.Memory_View; use GVD.Memory_View;
-
-with Language.Ada; use Language.Ada;
-with Language.C;   use Language.C;
-with Language.Cpp; use Language.Cpp;
-with Language;     use Language;
-
-with System;       use System;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
+with Pixmaps_IDE; use Pixmaps_IDE;
 
 package body Main_Debug_Window_Pkg is
-
-   Signals : constant Gtkada.Types.Chars_Ptr_Array :=
-     (1 => New_String ("preferences_changed"));
-   Class_Record : System.Address := System.Null_Address;
 
 procedure Gtk_New (Main_Debug_Window : out Main_Debug_Window_Access) is
 begin
@@ -64,7 +46,6 @@ procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class)
 
 begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
-   Initialize_Class_Record (Main_Debug_Window, Signals, Class_Record);
    Set_Title (Main_Debug_Window, -"The GNU Visual Debugger");
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
@@ -741,91 +722,8 @@ begin
 
    Gtk_New (Main_Debug_Window.Statusbar1);
    Pack_Start (Main_Debug_Window.Vbox1, Main_Debug_Window.Statusbar1, False, False, 0);
-
-   Gtk_New (Main_Debug_Window.Task_Dialog, Gtk_Window (Main_Debug_Window));
-   Gtk_New (Main_Debug_Window.Thread_Dialog, Gtk_Window (Main_Debug_Window));
-   Gtk_New (Main_Debug_Window.History_Dialog, Gtk_Window (Main_Debug_Window));
-   Gtk_New (Main_Debug_Window.Memory_View, Gtk_Widget (Main_Debug_Window));
    Lock (The_Accel_Group);
-   Lock (Gtk.Accel_Group.Get_Default);
-   Reset_File_Extensions;
-   Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
-   Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
-   Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
+
 end Initialize;
-
-   -----------------------------
-   -- Update_External_Dialogs --
-   -----------------------------
-
-   procedure Update_External_Dialogs
-     (Window   : access Main_Debug_Window_Record'Class;
-      Debugger : Gtk.Widget.Gtk_Widget := null)
-   is
-      Tab : Debugger_Process_Tab := Debugger_Process_Tab (Debugger);
-   begin
-      if Debugger = null then
-         Tab := Get_Current_Process (Window);
-      end if;
-
-      if Tab /= null then
-         Update_Call_Stack (Tab);
-         Update (Window.Task_Dialog, Tab);
-         Update (Window.History_Dialog, Tab);
-      end if;
-   end Update_External_Dialogs;
-
-   ----------------
-   -- Find_Match --
-   ----------------
-
-   procedure Find_Match
-     (H   : in out History_List;
-      Num : in Natural;
-      D   : in Direction)
-   is
-      Data    : GNAT.OS_Lib.String_Access;
-      Current : History_Data;
-   begin
-      begin
-         Data := Get_Current (H).Command;
-      exception
-         when No_Such_Item =>
-            Data := null;
-      end;
-
-      loop
-         if D = Backward then
-            Move_To_Previous (H);
-         else
-            Move_To_Next (H);
-         end if;
-         Current := Get_Current (H);
-         exit when Current.Debugger_Num = Num
-           and then Current.Mode /= Hidden
-           and then (Data = null
-                     or else Current.Command.all /= Data.all);
-      end loop;
-   end Find_Match;
-
-   -------------------------
-   -- Preferences_Changed --
-   -------------------------
-
-   procedure Preferences_Changed
-     (Window : access Main_Debug_Window_Record'Class) is
-   begin
-      Widget_Callback.Emit_By_Name
-        (Gtk_Widget (Window), "preferences_changed");
-
-      if Get_Active (Window.Call_Stack) /= Get_Pref (Show_Stack) then
-         Set_Active (Window.Call_Stack, Get_Pref (Show_Stack));
-      end if;
-
-      Reset_File_Extensions;
-      Add_File_Extensions (Ada_Lang, Get_Pref (Ada_Extensions));
-      Add_File_Extensions (C_Lang,   Get_Pref (C_Extensions));
-      Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
-   end Preferences_Changed;
 
 end Main_Debug_Window_Pkg;

@@ -26,7 +26,6 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
-with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
 with Gtkada.Canvas;       use Gtkada.Canvas;
@@ -52,7 +51,11 @@ with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Files;           use GVD.Files;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
+with GVD.Main_Window;     use GVD.Main_Window;
 with GVD.Memory_View;     use GVD.Memory_View;
+with GVD.Preferences_Dialog;  use GVD.Preferences_Dialog;
+with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
+with Open_Session_Pkg;    use Open_Session_Pkg;
 with Basic_Types;         use Basic_Types;
 with List_Select_Pkg;     use List_Select_Pkg;
 with Dock_Paned;          use Dock_Paned;
@@ -69,46 +72,6 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
-   procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
-   --  Close all the debuggers associated with a given main debug window
-   --  by looking at all the pages of the main notebook.
-
-   -----------------------
-   -- Cleanup_Debuggers --
-   -----------------------
-
-   procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access) is
-      Tab      : Debugger_Process_Tab;
-      Page     : Gtk_Widget;
-
-   begin
-      --  First switch to the last page (to prevent automatic page
-      --  switching when the other pages are deleted, which would fail)
-      Set_Page (Top.Process_Notebook, -1);
-
-      loop
-         Page := Get_Nth_Page (Top.Process_Notebook, 0);
-         exit when Page = null;
-
-         Tab := Process_User_Data.Get (Page);
-         Tab.Exiting := True;
-
-         begin
-            Close (Tab.Debugger);
-         exception
-            when others =>
-               --  ??? Would be nice to handle more specific errors, but
-               --  since we are exiting, ignore any exception instead of
-               --  generating unfriendly bug boxes
-               null;
-         end;
-
-         Remove_Page (Top.Process_Notebook, 0);
-      end loop;
-
-      Free (Top.Command_History);
-   end Cleanup_Debuggers;
-
    ---------------------------------------
    -- On_Main_Debug_Window_Delete_Event --
    ---------------------------------------
@@ -123,9 +86,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Ref (Object);
       Save_Window_Settings
-        (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all &
+        (GVD_Main_Window (Object).Gvd_Home_Dir.all &
          Directory_Separator & "window_settings", Gtk_Widget (Object));
-      Cleanup_Debuggers (Main_Debug_Window_Access (Object));
+      Cleanup_Debuggers (GVD_Main_Window (Object));
       Main_Quit;
 
       return False;
@@ -160,14 +123,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Set_Executable (Tab.Debugger, S, Mode => Hidden);
          else
             Output_Error
-              (Main_Debug_Window_Access (Get_Toplevel (Object)),
+              (GVD_Main_Window (Get_Toplevel (Object)),
                (-" Could not find file: ") & S);
          end if;
 
       exception
          when Executable_Not_Found =>
             Output_Error
-              (Main_Debug_Window_Access (Get_Toplevel (Object)),
+              (GVD_Main_Window (Get_Toplevel (Object)),
                (-" Could not find file: ") & S);
       end;
    end On_Open_Program1_Activate;
@@ -182,8 +145,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Program : Program_Descriptor;
       List    : Argument_List (1 .. 0);
       Process : Debugger_Process_Tab;
-      Top     : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab     : constant Debugger_Process_Tab := Get_Current_Process (Object);
 
    begin
@@ -204,7 +166,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Process :=
         Create_Debugger
-          (Main_Debug_Window_Access (Object),
+          (Top,
            Program.Debugger,
            Program.Program.all,
            List, "",
@@ -243,7 +205,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
             Load_Core_File (Tab.Debugger, S, Mode => Hidden);
          else
             Output_Error
-              (Main_Debug_Window_Access (Get_Toplevel (Object)),
+              (GVD_Main_Window (Get_Toplevel (Object)),
                -(" Could not find core file: ") & S);
          end if;
       end;
@@ -295,14 +257,14 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Host_File : constant String :=
         To_Host_Pathname (Get_Current_File (Tab.Editor_Text));
       Editor : constant String := Substitute
-        (Main_Debug_Window_Access (Tab.Window).External_Editor.all,
+        (GVD_Main_Window (Tab.Window).External_Editor.all,
          Host_File, Get_Line (Tab.Editor_Text));
       Args   : Argument_List_Access;
       Pid    : GNAT.OS_Lib.Process_Id;
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Output_Info (Main_Debug_Window_Access (Tab.Window), Editor);
+      Output_Info (GVD_Main_Window (Tab.Window), Editor);
 
       Args := Argument_String_To_List (Editor);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
@@ -344,8 +306,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Reload_Sources1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
       Editor : constant Code_Editor :=
         Get_Current_Process (Object).Editor_Text;
    begin
@@ -360,8 +321,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Open_Session1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Open_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
    end On_Open_Session1_Activate;
@@ -373,8 +333,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Save_Session_As1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Save_Session (Top, Top.Open_Session, Top.Sessions_Dir.all);
    end On_Save_Session_As1_Activate;
@@ -482,10 +441,10 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
-      Save_Window_Settings (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all
+      Save_Window_Settings (GVD_Main_Window (Object).Gvd_Home_Dir.all
                             & Directory_Separator & "window_settings",
                             Gtk_Widget (Object));
-      Cleanup_Debuggers (Main_Debug_Window_Access (Object));
+      Cleanup_Debuggers (GVD_Main_Window (Object));
       Main_Quit;
    end On_Exit1_Activate;
 
@@ -573,8 +532,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Preferences1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       if Top.GVD_Preferences = null then
          Gtk_New (Top.GVD_Preferences, Top);
@@ -791,8 +749,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Command_History1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top  : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Get_Toplevel (Object));
+      Top  : constant GVD_Main_Window :=
+        GVD_Main_Window (Get_Toplevel (Object));
       Page : Gtk_Widget :=
         Get_Nth_Page
           (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
@@ -813,8 +771,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Clear_Window1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Get_Toplevel (Object));
+      Top : constant GVD_Main_Window :=
+        GVD_Main_Window (Get_Toplevel (Object));
       Page : constant Gtk_Widget :=
         Get_Nth_Page
           (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
@@ -856,8 +814,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Call_Stack_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top       : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top       : constant GVD_Main_Window :=
+        GVD_Main_Window (Object);
       Process   : Debugger_Process_Tab;
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
@@ -893,9 +851,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Threads1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top      : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
 
    begin
       if Tab /= null then
@@ -912,9 +869,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Tasks1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top      : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
-      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
 
    begin
       if Tab /= null then
@@ -942,9 +898,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Edit_Breakpoints1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+
    begin
       if Process /= null then
          Breakpoint_Editor
@@ -970,8 +926,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Examine_Memory1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
-      Top : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
    begin
       Show_All (Top.Memory_View);
       Gdk_Raise (Get_Window (Top.Memory_View));
@@ -1150,7 +1105,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Browse : constant String :=
         Get_Pref (HTML_Browser) & " " &
-          Main_Debug_Window_Access (Object).Prefix_Directory.all &
+          GVD_Main_Window (Object).Prefix_Directory.all &
           Directory_Separator & "doc" & Directory_Separator & "gvd" &
           Directory_Separator & "gvd.html";
       Args   : Argument_List_Access;
@@ -1158,7 +1113,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Prog   : GNAT.OS_Lib.String_Access;
 
    begin
-      Output_Info (Main_Debug_Window_Access (Object), Browse);
+      Output_Info (GVD_Main_Window (Object), Browse);
 
       Args := Argument_String_To_List (Browse);
       Prog := Locate_Exec_On_Path (Args (Args'First).all);
@@ -1272,9 +1227,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Number of the page that will be displayed
 
       Page    : constant Gtk_Widget := Get_Nth_Page
-        (Main_Debug_Window_Access (Object).Process_Notebook, Gint (Arg2));
-      Main    : constant Main_Debug_Window_Access :=
-        Main_Debug_Window_Access (Object);
+        (GVD_Main_Window (Object).Process_Notebook, Gint (Arg2));
+      Main    : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process : Debugger_Process_Tab;
 
    begin
