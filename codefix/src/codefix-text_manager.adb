@@ -28,6 +28,21 @@ with String_Utils; use String_Utils;
 package body Codefix.Text_Manager is
 
    ----------------------------------------------------------------------------
+   --  type Text_Cursor
+   ----------------------------------------------------------------------------
+
+   function "<" (Left, Right : Text_Cursor) return Boolean is
+   begin
+      return Left.Line < Right.Line or else Left.Col < Right.Col;
+   end "<";
+
+   function ">" (Left, Right : Text_Cursor) return Boolean is
+   begin
+      return not (Left < Right) and then Left /= Right;
+   end ">";
+
+
+   ----------------------------------------------------------------------------
    --  type Text_Navigator
    ----------------------------------------------------------------------------
 
@@ -252,6 +267,26 @@ package body Codefix.Text_Manager is
       end loop;
    end Update;
 
+   -------------------
+   -- Search_String --
+   -------------------
+
+   function Search_String
+     (This         : Text_Navigator_Abstr'Class;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class is
+   begin
+      return Search_String
+        (Get_File (This, Cursor.File_Name.all).all,
+         File_Cursor (Cursor),
+         Searched,
+         Step,
+         Jump_String);
+   end Search_String;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -318,10 +353,12 @@ package body Codefix.Text_Manager is
       Spec         : Construct_Information) return Construct_Information
    is
       function Normalize (Str : String_Access) return String;
-      --  ???
+      --  Change the string in order to make comparaisons between lists of
+      --  parameters.
 
       procedure Seeker (Stop : Source_Location);
-      --  ???
+      --  Recursivly scan a token list in order to found the declaration what
+      --  correpond with a body. Stop is the beginning of the current block.
 
       Current_Info : Construct_Access;
       Found        : Boolean := False;
@@ -419,6 +456,21 @@ package body Codefix.Text_Manager is
    begin
       return Get_Line (This, Cursor)'Length;
    end Line_Length;
+
+
+   function Search_String
+     (This         : Text_Interface'Class;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+     return File_Cursor'Class is
+   begin
+      --  Soon programmed
+      return Null_File_Cursor;
+   end Search_String;
+   --  Search a string in the text and returns a cursor at the beginning. If
+   --  noting is found, then the cursor is Null_Cursor.
 
    ----------------------------------------------------------------------------
    --  type Text_Cursor
@@ -537,6 +589,76 @@ package body Codefix.Text_Manager is
       return New_Line;
    end Clone;
 
+   ---------------------
+   -- Get_Word_Length --
+   ---------------------
+
+   function Get_Word_Length
+     (This   : Extract_Line;
+      Col    : Natural;
+      Format : String) return Natural
+   is
+      Matches    : Match_Array (1 .. 1);
+      Matcher    : constant Pattern_Matcher := Compile (Format);
+      Str_Parsed : String :=  This.Content.all;
+
+   begin
+      Match (Matcher, Str_Parsed (Col .. Str_Parsed'Length), Matches);
+
+      if Matches (1) = No_Match then
+         Raise_Exception (Text_Manager_Error'Identity, "pattern '" & Format &
+                          "' from col" & Integer'Image (Col) & " in '" &
+                          Str_Parsed & "' can't be found");
+
+      else
+         return Matches (1).Last - Col + 1;
+      end if;
+   end Get_Word_Length;
+
+   -------------------
+   -- Search_String --
+   -------------------
+
+   function Search_String
+     (This     : Extract_Line;
+      Cursor   : File_Cursor'Class;
+      Searched : String;
+      Step     : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+   return File_Cursor'Class is
+
+      Result : File_Cursor := File_Cursor (Cursor);
+
+   begin
+      if Result.Col = 0 then Result.Col := This.Content.all'Length; end if;
+
+      case Step is
+         when Normal_Step =>
+            for J in Result.Col .. This.Content.all'Length -
+              Searched'Length + 1
+            loop
+               if This.Content.all (J .. J + Searched'Length - 1) =
+                 Searched
+               then
+                  Result.Col := J;
+                  return Result;
+               end if;
+            end loop;
+         when Reverse_Step =>
+            for J in reverse 1 .. Result.Col - Searched'Length + 1 loop
+               if This.Content.all (J .. J + Searched'Length - 1) =
+                 Searched
+               then
+                  Result.Col := J;
+                  return Result;
+               end if;
+            end loop;
+      end case;
+
+      return Null_File_Cursor;
+
+   end Search_String;
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
@@ -627,7 +749,7 @@ package body Codefix.Text_Manager is
          Current_Extract := Current_Extract.Next;
       end loop;
 
-      Affect (Current_Extract.Content, Value);
+      Assign (Current_Extract.Content, Value);
    end Set_String;
 
    ------------
@@ -826,10 +948,10 @@ package body Codefix.Text_Manager is
 
    begin
       Current_Line := Get_Line (This, Cursor);
-      Affect (Old_String, Current_Line.Content);
+      Assign (Old_String, Current_Line.Content);
       Word_Length := Get_Word_Length (Current_Line.all, Cursor.Col, Format);
 
-      Affect (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
+      Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
               New_String &
               Old_String (Cursor.Col + Word_Length .. Old_String'Length));
 
@@ -848,53 +970,12 @@ package body Codefix.Text_Manager is
       Current_Line : Ptr_Extract_Line := Get_Line (This, Cursor);
       Old_String   : Dynamic_String;
    begin
-      Affect (Old_String, Current_Line.Content);
-      Affect (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
+      Assign (Old_String, Current_Line.Content);
+      Assign (Current_Line.Content, Old_String (1 .. Cursor.Col - 1) &
               Word &
               Old_String (Cursor.Col .. Old_String.all'Length));
       Free (Old_String);
    end Add_Word;
-
-   ---------------------
-   -- Get_Word_Length --
-   ---------------------
-
-   function Get_Word_Length
-     (This   : Extract;
-      Cursor : File_Cursor'Class;
-      Format : String) return Natural is
-   begin
-      return Get_Word_Length
-        (Get_Line (This, Cursor).all,
-         Cursor.Col,
-         Format);
-   end Get_Word_Length;
-
-   ---------------------
-   -- Get_Word_Length --
-   ---------------------
-
-   function Get_Word_Length
-     (This   : Extract_Line;
-      Col    : Natural;
-      Format : String) return Natural
-   is
-      Matches    : Match_Array (1 .. 1);
-      Matcher    : constant Pattern_Matcher := Compile (Format);
-      Str_Parsed : String :=  This.Content.all;
-
-   begin
-      Match (Matcher, Str_Parsed (Col .. Str_Parsed'Length), Matches);
-
-      if Matches (1) = No_Match then
-         Raise_Exception (Text_Manager_Error'Identity, "pattern '" & Format &
-                          "' from col" & Integer'Image (Col) & " in '" &
-                          Str_Parsed & "' can't be found");
-
-      else
-         return Matches (1).Last - Col + 1;
-      end if;
-   end Get_Word_Length;
 
    ----------------------
    -- Get_Number_Lines --
@@ -1002,5 +1083,81 @@ package body Codefix.Text_Manager is
          Add_Element (This.First, null, Element, This);
       end if;
    end Add_Element;
+
+   ---------------------
+   -- Get_Word_Length --
+   ---------------------
+
+   function Get_Word_Length
+     (This   : Extract;
+      Cursor : File_Cursor'Class;
+      Format : String) return Natural is
+   begin
+      return Get_Word_Length
+        (Get_Line (This, Cursor).all,
+         Cursor.Col,
+         Format);
+   end Get_Word_Length;
+
+   -------------------
+   -- Search_String --
+   -------------------
+
+   function Search_String
+     (This         : Extract;
+      Cursor       : File_Cursor'Class;
+      Searched     : String;
+      Step         : Step_Way := Normal_Step;
+      Jump_String  : Boolean := True)
+     return File_Cursor'Class is
+
+      Current : Ptr_Extract_Line;
+      Result  : File_Cursor := Null_File_Cursor;
+
+   begin
+
+      Current := Get_Line (This, Cursor);
+
+      while Result = Null_File_Cursor and then Current /= null loop
+         Result := File_Cursor (Search_String
+                                  (Current.all,
+                                   Result,
+                                   Searched,
+                                   Step,
+                                   Jump_String));
+         case Step is
+            when Normal_Step =>
+               Current := Current.Next;
+               Result.Col := 1;
+            when Reverse_Step =>
+               Current := Previous (This, Current);
+               Result.Col := 0;
+         end case;
+      end loop;
+
+      return Result;
+
+   end Search_String;
+
+   --------------
+   -- Previous --
+   --------------
+
+   function Previous (Container : Extract; Node : Ptr_Extract_Line)
+     return Ptr_Extract_Line is
+
+      Current : Ptr_Extract_Line := Container.First;
+
+   begin
+      while Current.Next /= Node loop
+         Current := Current.Next;
+         if Current = null then
+            Raise_Exception
+              (Codefix_Panic'Identity,
+               "Line unknowm in the specified extract");
+         end if;
+      end loop;
+      return Current;
+   end Previous;
 
 end Codefix.Text_Manager;
