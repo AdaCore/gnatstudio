@@ -578,11 +578,11 @@ package body Glide_Menu is
          --  This is the default internal project
 
          Args := Argument_String_To_List ("gnatmake -d " & Title);
-         Console.Insert (Top.Kernel, "gnatmake " & Title & ASCII.LF, False);
+         Console.Insert (Top.Kernel, "gnatmake " & Title, False);
 
       else
          Args := Argument_String_To_List (Cmd & " -d");
-         Console.Insert (Top.Kernel, Cmd & ASCII.LF, False);
+         Console.Insert (Top.Kernel, Cmd, False);
       end if;
 
       Non_Blocking_Spawn
@@ -607,7 +607,7 @@ package body Glide_Menu is
             Match (Matcher, S, Matched);
 
             if Matched (0) = No_Match then
-               Console.Insert (Top.Kernel, S);
+               Console.Insert (Top.Kernel, S, Add_LF => False);
             else
                Print_Message (Top.Statusbar, Help, S (S'First + 1 .. S'Last));
             end if;
@@ -616,7 +616,7 @@ package body Glide_Menu is
 
    exception
       when Process_Died =>
-         Console.Insert (Top.Kernel, Expect_Out (Fd));
+         Console.Insert (Top.Kernel, Expect_Out (Fd), Add_LF => False);
          Print_Message (Top.Statusbar, Help, -"completed.");
          Close (Fd);
    end On_Build;
@@ -1082,6 +1082,8 @@ package body Glide_Menu is
                   On_Open_Project'Access),
          Gtk_New (-"/_Project/Edit...", "",
                   Stock_Properties, On_Edit_Project'Access),
+         Gtk_New (-"/_Project/Add Directory...", "",
+                  Stock_Add, On_Edit_Project'Access),
          Gtk_New (-"/_Project/sep1", Item_Type => Separator),
          Gtk_New (-"/_Project/Generate API doc", "", Stock_Execute, null),
          Gtk_New (-"/_Project/sep2", Item_Type => Separator),
