@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -329,6 +329,7 @@ package Language is
 
       Cat_Class,
       Cat_Structure,
+      Cat_Union,
       Cat_Type,
       Cat_Subtype,
       Cat_Variable,
@@ -396,6 +397,13 @@ package Language is
       Sloc_Start      : Source_Location;
       --  Location of beginning of the construct
 
+      Sloc_Entity     : Source_Location;
+      --  Location of beginning of the name of the entity. Only relevant if
+      --  Name is non null. This is different from Sloc_Start since Sloc_Start
+      --  is the beginning of the construct itself, e.g for
+      --  "procedure Foo;", Sloc_Start will point to the first character, while
+      --  Sloc_Entity will point to the 11th character.
+
       Sloc_End        : Source_Location;
       --  Location of end of the construct
 
@@ -452,10 +460,13 @@ package Language is
    --  in the buffer and for the next line.
 
    type Entity_Callback is access function
-     (Entity     : Language_Entity;
-      Sloc_Start : Source_Location;
-      Sloc_End   : Source_Location) return Boolean;
+     (Entity         : Language_Entity;
+      Sloc_Start     : Source_Location;
+      Sloc_End       : Source_Location;
+      Partial_Entity : Boolean) return Boolean;
    --  Callback during parsing of entities.
+   --  Partial_Entity is True if parsing is at the end of the string with a
+   --  non terminated entity (e.g String or Comment).
    --  If Callback returns True, the parsing should be stopped.
 
    procedure Parse_Entities
@@ -463,7 +474,7 @@ package Language is
       Buffer        : Interfaces.C.Strings.chars_ptr;
       Buffer_Length : Natural;
       Callback      : Entity_Callback);
-   --  Parse entities (as defined by Source_Entity_Kind) contained in buffer.
+   --  Parse entities (as defined by Language_Entity) contained in buffer.
    --  For each match, call Callback. Stops at the end of Buffer or when
    --  callback returns True.
 
