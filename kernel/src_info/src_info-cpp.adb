@@ -953,7 +953,8 @@ package body Src_Info.CPP is
 
       --  check timestamps for the parsed file
       if File /= No_LI_File and then File.LI.Parsed then
-         if To_Timestamp (File_Time_Stamp (File.LI.LI_Filename.all)) <=
+         if not Is_Incomplete (File)
+           and then To_Timestamp (File_Time_Stamp (File.LI.LI_Filename.all)) <=
             File.LI.LI_Timestamp
          then
             return;
@@ -1589,11 +1590,9 @@ package body Src_Info.CPP is
    ---------
 
    procedure Add
-     (HT      : in out LI_File_List;
-      LIFP    : LI_File_Ptr;
-      Success : out Boolean) is
+     (HT : in out LI_File_List; LIFP : LI_File_Ptr) is
    begin
-      Add (HT.Table, LIFP, Success);
+      Add (HT.Table, LIFP);
    end Add;
 
    ----------------------

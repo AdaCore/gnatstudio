@@ -110,9 +110,7 @@ package Src_Info.CPP is
    --  pool.
 
    procedure Add
-     (HT      : in out LI_File_List;
-      LIFP    : LI_File_Ptr;
-      Success : out Boolean);
+     (HT : in out LI_File_List; LIFP : LI_File_Ptr);
    --  Just wrapper for internal Add to support extended testing
 
    function Get_DB_Dir (Handler : access CPP_LI_Handler_Record) return String;
