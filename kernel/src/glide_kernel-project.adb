@@ -197,7 +197,7 @@ package body Glide_Kernel.Project is
 
    procedure Recompute_View (Handle : access Kernel_Handle_Record'Class) is
       procedure Report_Error (S : String);
-      --  ???
+      --  Handler called when the project parser finds an error.
 
       ------------------
       -- Report_Error --
@@ -205,9 +205,9 @@ package body Glide_Kernel.Project is
 
       procedure Report_Error (S : String) is
       begin
-         --  ??? Errors should be reported in the Glide console, rather than
-         --  ??? simply printed on the standard output.
-         Put_Line ("Error: " & S);
+         --  ??? Errors should be reported in the Glide console or better,
+         --  handled interactively.
+         null;
       end Report_Error;
 
       Scenario_Variables : constant Project_Node_Array :=
