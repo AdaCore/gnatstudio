@@ -2321,11 +2321,15 @@ When you want to quit the debugger without quitting GPS, go to the menu
 @end menu
 
 GPS offers the possibility for multiple developers to work on the same project,
-through the intergration of version control systems (VCS). Each project can be
-associated to a VCS, through the ``VCS'' tab in the Project property
+through the integration of version control systems (VCS). Each project can be
+associated to a VCS, through the @code{VCS} tab in the Project property
 editor. @xref{The project properties editor}.
 
 The systems that are currently supported in GPS are CVS and ClearCase.
+It is recommended that you first get familiar with the version control
+system that you inted to use in GPS first, since many concepts used in GPS
+assume basic knowledge of the underlying system.
+
 Associating a VCS to a project enables the use of basic VCS features on the
 source files contained in the project. Those basic features typically include
 the checking in and out of files, the querying of file status, file revision
@@ -2348,7 +2352,7 @@ contextual menu @file{Version Control->Query Status} on files,
 directories and projects in the file and project views, and on file
 editors. @xref{The Version Control Contextual Menu}.
 
-The VCS Explorer contains the following columns :
+The VCS Explorer contains the following columns:
 
 @table @b
 @item Status
@@ -2358,11 +2362,10 @@ the header. The different possible status for files are the following:
 @table @file
 @item Unknown
 The status is not yet determined or the VCS repository is not able to
-give this information (for example if it is unavailable, or locked,
-and so on).
+give this information (for example if it is unavailable, or locked).
 
 @item Not_Registered
-The file is unknown of the VCS repository.
+The file is not known to the VCS repository.
 
 @item Up_To_Date
 The file corresponds to the latest version in the corresponding branch
@@ -2421,7 +2424,7 @@ Control Contextual Menu}.
 @c @xref{The Version Control Contextual Menu}.
 
 Basic VCS operations can be accessed through the VCS menu. Most of
-these functions act on the current selection, ie on the selected items
+these functions act on the current selection, i.e. on the selected items
 in the VCS Explorer if it is present, or on the currently selected
 file editor, or on the currently selected item in the Project/File
 View. In most cases, the VCS contextual menu offers more control on
@@ -2472,7 +2475,7 @@ file in the repository and the most recent version of that file.
 
 @item Annotate
 @anchor{Annotate}
-Display the annotations for the file, ie the information for each
+Display the annotations for the file, i.e. the information for each
 line of the file showing the revision corresponding to that file, and
 additional information depending on the VCS system.
 
@@ -3113,19 +3116,6 @@ Otherwise, all dependencies, even implicit, are displayed.
 
 @end table
 
-@item VCS
-@cindex version control
-@table @i
-@item Hide up-to-date files
-Whether up-to-date files should be hidden by default in the VCS Explorer.
-@xref{Hide up-to-date files}.
-
-@item Hide non registered files
-Whether non registered files should be hidden by default in the VCS
-Explorer. @xref{Hide non registered files}.
-
-@end table
-
 @item Debugger
 @cindex debugger
 @table @i
@@ -3333,10 +3323,11 @@ and @file{custom menu number 2}. The first one contains a menu item named
 
 Note for Windows users: like under UNIX, dos scripts can be called
 from custom menu. In order to do that, you must write your script in a
-@file{.bat} file, and call this file using @file{cmd /C}. Thus, the
-@file{Action} tag would look like:
+@file{.bat} or @file{.cmd} file, and call this file using @file{cmd /c}.
+Thus, the @file{Action} tag would look like:
+
 @smallexample
-<Action>cmd /C c:\.gps\my_scripts\my_command.bat</Action>
+<Action>cmd /c c:\.gps\my_scripts\my_command.bat</Action>
 @end smallexample
 
 @cindex shell
