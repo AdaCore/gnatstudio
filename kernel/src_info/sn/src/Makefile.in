@@ -1,14 +1,14 @@
 CC       = @CC@
 
-INCLUDES = -I../include
-LIBS = -L../lib
+SNAV = ../snsrc
+INCLUDES = -I../include \
+	   -I$(SNAV)/snavigator/hyper \
+	   -I$(SNAV)/snavigator/parsers/toolbox \
+	   -I$(SNAV)/db/include
+LIBS = -L$(SNAV)/db/PORT
 
 DEVALL=
 DEVCLEAN=
-
--include Makefile.dev
-
-.PHONY: all clean distclean
 
 all : ../lib/db_capi.o $(DEVALL)
 
@@ -20,4 +20,29 @@ clean :
 
 distclean : clean
 	$(RM) Makefile
+
+# Developers settings
+
+# Testsuite executables
+CSF_TEST = csf_test
+FIND_TEST = find_test
+TESTS = $(CSF_TEST)
+
+DEVCLEAN = $(TESTS)
+
+test: $(TESTS)
+	@./$(CSF_TEST)          \
+	&& ./$(SV_TEST)         \
+	&& echo "Test PASSED"   \
+	|| echo "Test FAILED"
+
+$(CSF_TEST): csf_test.o
+	$(CC) $(LIBS) $< -o $@ -ldb
+
+csf_test.o: csf_test.c
+	$(CC) $(INCLUDES) -c $<
+
+# End of developers settings
+
+.PHONY: all clean distclean test gen sn_use
 
