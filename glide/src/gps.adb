@@ -30,6 +30,7 @@ with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -229,6 +230,7 @@ begin
    end;
 
    Glide_Page.Gtk_New (Page, GPS);
+   Initialize_Console (GPS.Kernel);
 
    --  Register all modules
 
