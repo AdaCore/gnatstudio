@@ -10284,6 +10284,11 @@ Contains all the key bindings for the actions defined in GPS or in the
 custom files. This only contains the key bindings overridden through the
 key shortcuts editor (see @ref{The Key Manager Dialog}).
 
+   @item $HOME/.gps/actions.xml
+Contains the definition of all the actions that were defined through the
+graphical interface. This is loaded last, and overrides all actions defined
+elsewhere.
+
    @item $HOME/.gps/debugger.log
 @cindex log
 @cindex debugger
