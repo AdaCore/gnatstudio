@@ -18,7 +18,7 @@ package Glide_Kernel.Semantic_Server is
       Line   : Natural;
       Column : Natural;
    end record;
-   --  Information returned by various earch routines in this package.
+   --  Information returned by various search routines in this package.
    --  A null string, or a Natural value of 0 means that the field has not
    --  been set.
 
