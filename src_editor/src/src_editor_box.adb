@@ -1414,6 +1414,11 @@ package body Src_Editor_Box is
 
             Get_Iter_At_Line_Offset
               (Editor.Source_Buffer, Start_Iter, Line, Column);
+            Set_File_Information
+              (Context,
+               File      => Filename,
+               Line      => Integer (To_Box_Line (Line)),
+               Column    => Integer (To_Box_Column (Column)));
 
          else
             --  Check whether there is a selection
@@ -1487,6 +1492,12 @@ package body Src_Editor_Box is
                To_Box_Column (Entity_Column));
          end if;
 
+         Set_File_Information
+           (Context,
+            File      => Filename,
+            Line      => Integer (To_Box_Line (Line)),
+            Column    => Integer (To_Box_Column (Column)));
+
          if Menu /= null then
             --  Move the cursor at the correct location. The cursor is grabbed
             --  automatically by the kernel when displaying the menu, and this
@@ -1509,7 +1520,11 @@ package body Src_Editor_Box is
                      Slot_Object => Editor,
                      After       => True);
 
-                  Gtk_New (Item, -"Goto body of " & Name);
+                  if Is_Subprogram (Get_Entity (Context)) then
+                     Gtk_New (Item, -"Goto body of " & Name);
+                  else
+                     Gtk_New (Item, -"Goto full declaration of " & Name);
+                  end if;
                   Add (Menu, Item);
                   Context_Callback.Object_Connect
                     (Item, "activate",
@@ -1535,12 +1550,6 @@ package body Src_Editor_Box is
             Set_Sensitive (Item, False);
          end if;
       end if;
-
-      Set_File_Information
-        (Context,
-         File      => Filename,
-         Line      => Integer (To_Box_Line (Line)),
-         Column    => Integer (To_Box_Column (Column)));
 
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
