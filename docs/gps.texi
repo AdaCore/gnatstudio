@@ -5999,7 +5999,7 @@ before an opening parenthesis;
 after a closing parenthesis, comma, semicolon;
 around all Ada operators (e.g. @code{<=}, @code{:=}, @code{=>}, @dots{})
 
-@item Align declarations on colons
+@item Align colons in declarations
 Whether the editor should automatically align colons in declarations and
 parameter lists. Note that the alignment is computed by taking into account
 the current buffer up to the current line (or end of the current selection),
@@ -6010,9 +6010,23 @@ the declarations lines and hit the reformat key.
 Whether the editor should automatically align arrows in associations
 (e.g. aggregates or function calls). See also previous preference.
 
-@item Align declarations on colon
-Whether the editor should align variable declarations based on the colon
-character.
+@item Align declarations after colon
+Whether the editor should align continuation lines in variable declarations
+based on the colon character.
+
+Consider the following code:
+
+@smallexample
+Variable : constant String :=
+  "a string";
+@end smallexample
+
+If this preference is enabled, it will be indented as follows:
+
+@smallexample
+Variable : constant String :=
+             "a string";
+@end smallexample
 
 @end table
 
