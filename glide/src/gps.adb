@@ -53,7 +53,7 @@ with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
 with Gtkada.Intl;                 use Gtkada.Intl;
 with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GVD.Types;
+with GVD;                         use GVD;
 with OS_Utils;                    use OS_Utils;
 with Projects.Editor;             use Projects.Editor;
 with Projects.Registry;           use Projects;
@@ -564,7 +564,6 @@ procedure GPS is
       DDE.Register_DDE_Server (GPS.Kernel);
 
       GPS.Debug_Mode := True;
-      GPS.Log_Level  := GVD.Types.Hidden;
 
       Parse_Switches;
       Display_Splash_Screen;
@@ -590,7 +589,7 @@ procedure GPS is
       loop
          case Getopt ("-version -help P: -log-level= " &
                       "-debug? -debugger= -target= -load= -eval= " &
-                      "-traceoff= -traceon= -tracefile=")
+                      "-traceoff= -traceon= -tracefile= -tracelist")
          is
             -- long option names --
             when '-' =>
@@ -622,24 +621,7 @@ procedure GPS is
 
                   -- --log-level --
                   when 'l' =>
-                     if Full_Switch = "-log-level" then
-                        begin
-                           GPS.Log_Level := GVD.Types.Command_Type'Val
-                             (GVD.Types.Command_Type'Pos
-                              (GVD.Types.Command_Type'Last) + 1 -
-                              Integer'Value (Parameter));
-
-                        exception
-                           when Constraint_Error =>
-                              if GVD.Can_Output then
-                                 Put_Line ("Invalid parameter to --log-level");
-                              end if;
-
-                              Help;
-                              OS_Exit (1);
-                        end;
-
-                     elsif Full_Switch = "-load" then
+                     if Full_Switch = "-load" then
                         --  --load
                         Free (Batch_File);
                         Batch_File := new String'(Parameter);
@@ -698,7 +680,12 @@ procedure GPS is
                         Set_Active (Create (Parameter), False);
 
                      elsif Full_Switch = "-tracefile" then
-                        Traces.Parse_Config_File (Parameter);
+                        Traces.Parse_Config_File (Filename => Parameter);
+
+                     elsif Full_Switch = "-tracelist" then
+                        Traces.Show_Configuration
+                          (Ada.Text_IO.Put_Line'Access);
+                        OS_Exit (0);
                      end if;
 
                   when others =>
@@ -746,9 +733,6 @@ procedure GPS is
    procedure Help is
       use ASCII;
    begin
-      --  We do not document the --log-level flag, since it will be replaced
-      --  by the regular Traces mechanism.
-
       if GVD.Can_Output then
          Put_Line (GPS_Name (GPS) & " " & GVD.Version &
                    " (" & GVD.Source_Date & ")" &
@@ -774,6 +758,12 @@ procedure GPS is
            (-"   --eval=lang:cmd     Execute a command written in the");
          Put_Line (-"                        language lang. This is executed");
          Put_Line (-"                        before the --load command");
+         Put_Line ("     --traceon=stream   Activate traces for a specific");
+         Put_Line ("                        debug stream");
+         Put_Line ("     --traceoff=stream  Activate traces for a specific");
+         Put_Line ("                        debug stream");
+         Put_Line
+           ("     --tracefile=file   Load traces configuration from file");
 
       else
          Button := Message_Dialog
@@ -886,8 +876,6 @@ procedure GPS is
    ------------------
 
    function Finish_Setup (Data : Process_Data) return Boolean is
-      Log               : constant String :=
-        Get_Home_Dir (GPS.Kernel) & "debugger.log";
       Key               : constant String :=
         Get_Home_Dir (GPS.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
@@ -965,10 +953,6 @@ procedure GPS is
          Trace (Me, "Loading key bindings from " & Key);
          Gtk.Accel_Map.Load (Key);
       end if;
-
-      --  ??? Should have a cleaner way of initializing Log_File
-
-      GPS.Log_File := Create_File (Log, Fmode => Text);
 
       --  Register this module first, in case someone needs to print a message
       --  in the console right away
