@@ -8,7 +8,7 @@ project GVD is
    for Object_Dir use "obj";
 
    package Builder is
-      for Default_Switches ("Ada") use ("-m");
+      for Default_Switches ("Ada") use ("-a", "-m");
    end Builder;
 
    package Compiler is
