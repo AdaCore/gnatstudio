@@ -13,6 +13,7 @@ with "../builder/builder";
 with "../navigation/navigation";
 with "../custom/custom";
 with "../shared";
+with "../help/help";
 
 project GPS is
 
