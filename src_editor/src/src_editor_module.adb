@@ -2395,7 +2395,7 @@ package body Src_Editor_Module is
                        Extra_Information => Gtk_Widget (Selector),
                        Id                => Src_Editor_Module_Id,
                        Mask              => All_Options
-                       and not Supports_Replace));
+                         and not Supports_Replace));
          Register_Search_Function
            (Kernel => Kernel,
             Data   => (Length            => Name2'Length,
@@ -2404,7 +2404,7 @@ package body Src_Editor_Module is
                        Extra_Information => Gtk_Widget (Selector),
                        Id                => null,
                        Mask              => All_Options
-                       and not Search_Backward and not Supports_Replace));
+                         and not Search_Backward and not Supports_Replace));
          Register_Search_Function
            (Kernel => Kernel,
             Data   => (Length            => Name3'Length,
@@ -2413,7 +2413,7 @@ package body Src_Editor_Module is
                        Extra_Information => Gtk_Widget (Extra),
                        Id                => null,
                        Mask              => All_Options
-                       and not Search_Backward and not Supports_Replace));
+                         and not Search_Backward and not Supports_Replace));
       end;
    end Register_Module;
 
