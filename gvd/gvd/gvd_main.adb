@@ -66,7 +66,7 @@ procedure GVD_Main is
    Debug_Type        : GVD.Types.Debugger_Type := GVD.Types.Gdb_Type;
    Button            : Message_Dialog_Buttons;
    Editor            : String_Access;
-   Root              : String_Access;
+   Prefix            : String_Access;
    Home              : String_Access;
    Dir               : String_Access;
    Remote_Host       : String_Access := new String' ("");
@@ -98,20 +98,21 @@ procedure GVD_Main is
    procedure Init is
       Dir_Created : Boolean := False;
    begin
-      Root := Getenv ("GVD_ROOT");
+      Prefix := Getenv ("GVD_ROOT");
       Home := Getenv ("GVD_HOME");
 
       if Home.all = "" then
+         Free (Home);
          Home := Getenv ("HOME");
       end if;
 
-      if Root.all /= "" then
-         Bind_Text_Domain ("gvd", Root.all & Directory_Separator & "share" &
-           Directory_Separator & "locale");
-      else
-         Bind_Text_Domain ("gvd", GVD.Prefix & Directory_Separator & "share" &
-           Directory_Separator & "locale");
+      if Prefix.all = "" then
+         Free (Prefix);
+         Prefix := new String' (GVD.Prefix);
       end if;
+
+      Bind_Text_Domain ("gvd", Prefix.all & Directory_Separator & "share" &
+        Directory_Separator & "locale");
 
       if Home.all /= "" then
          if Home (Home'Last) = '/'
@@ -124,7 +125,8 @@ procedure GVD_Main is
          end if;
 
       else
-         Dir := new String'(Directory_Separator & ".gvd"); -- ??? Is this right
+         --  Default to /
+         Dir := new String'(Directory_Separator & ".gvd");
       end if;
 
       begin
@@ -325,7 +327,8 @@ begin
          Gtk_Widget (Main_Debug_Window));
    end if;
 
-   Main_Debug_Window.Gvd_Home_Dir := new String' (Dir.all);
+   Main_Debug_Window.Gvd_Home_Dir := Dir;
+   Main_Debug_Window.Prefix_Directory := Prefix;
 
    --  ??? Should have a cleaner way of initializing Log_File
 
