@@ -374,8 +374,8 @@ package body Creation_Wizard is
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class) is
       Name : constant String := File_Selection_Dialog
         (-"Select project file location",
-         Default_Dir => Get_Text (Prj_Wizard (W).Project_Location)
-         & Directory_Separator,
+         Default_Dir => Name_As_Directory
+         (Get_Text (Prj_Wizard (W).Project_Location)),
          Dir_Only => True);
    begin
       if Name /= "" then
