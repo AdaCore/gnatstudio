@@ -39,7 +39,6 @@ with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Traces;                   use Traces;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Ada.Text_IO;              use Ada.Text_IO;
 with Commands;                 use Commands;
 
 
@@ -700,7 +699,6 @@ package body Vdiff2_Module.Utils is
       Args : Argument_List (1 .. 1);
    begin
       Curr_Node := First (Item.List);
-      Put_Line ("pas encore dans le while");
       while Curr_Node /= Diff_Chunk_List.Null_Node
       loop
          Curr_Chunk := Data (Curr_Node);
@@ -725,7 +723,6 @@ package body Vdiff2_Module.Utils is
               (Kernel, "remove_blank_lines", Args);
             Free (Curr_Chunk.Range3.Blank_Lines);
          end if;
-         Put_Line ("vas y");
          Curr_Node := Next (Curr_Node);
       end loop;
 
