@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -61,6 +61,8 @@ with Src_Editor_Module;          use Src_Editor_Module;
 with Src_Info;                   use Src_Info;
 with Src_Info.Queries;           use Src_Info.Queries;
 with Traces;                     use Traces;
+with GVD.Dialogs;                use GVD.Dialogs;
+--  ??? Use for Simple_Entry_Dialog. Should move this procedure in GUI_Utils
 
 package body Src_Editor_Box is
 
@@ -150,6 +152,11 @@ package body Src_Editor_Box is
    package CMenu is new GUI_Utils.User_Contextual_Menus
      (User_Data => Source_Editor_Box);
    --  Used to register contextual menus with a user data.
+
+   procedure On_Goto_Line
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Goto Line" contextual menu
 
    procedure On_Goto_Declaration
      (Widget  : access GObject_Record'Class;
@@ -405,6 +412,82 @@ package body Src_Editor_Box is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
+   --------------------------
+   -- Get_Declaration_Info --
+   --------------------------
+
+   procedure Get_Declaration_Info
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Natural;
+      Column      : Natural;
+      File_Decl   : out String_Access;
+      Line_Decl   : out Natural;
+      Column_Decl : out Natural)
+   is
+      Source_Info    : LI_File_Ptr;
+      Entity_Start   : Gtk_Text_Iter;
+      Entity_End     : Gtk_Text_Iter;
+      Status         : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
+      Entity         : Entity_Information;
+      Entity_Success : Boolean;
+      Filename       : constant String := Get_Filename (Editor);
+
+   begin
+      if Filename = "" then
+         return;
+      end if;
+
+      Push_State (Editor.Kernel, Busy);
+      Entity_At_Cursor
+        (Editor, Line, Column, Entity_Start, Entity_End, Entity_Success);
+
+      if not Entity_Success then
+         Pop_State (Editor.Kernel);
+         return;
+      end if;
+
+      Source_Info := Locate_From_Source_And_Complete (Editor.Kernel, Filename);
+
+      --  Exit if we could not locate the associated Source_Info.
+
+      if Source_Info = No_LI_File then
+         Pop_State (Editor.Kernel);
+         return;
+      end if;
+
+      declare
+         Entity_Name : constant String := Get_Text (Entity_Start, Entity_End);
+      begin
+         Src_Info.Queries.Find_Declaration
+           (Lib_Info           => Source_Info,
+            File_Name          => Base_Name (Filename),
+            Entity_Name        => Entity_Name,
+            Line               => To_Box_Line (Get_Line (Entity_Start)),
+            Column             =>
+              To_Box_Column (Get_Line_Offset (Entity_Start)),
+            Entity             => Entity,
+            Status             => Status);
+
+         if Status = Success then
+            Line_Decl   := Get_Declaration_Line_Of (Entity);
+            Column_Decl := Get_Declaration_Column_Of (Entity);
+            File_Decl   := new String' (Get_Declaration_File_Of (Entity));
+            Destroy (Entity);
+         end if;
+      end;
+
+      Pop_State (Editor.Kernel);
+
+   exception
+      when Unsupported_Language =>
+         Pop_State (Editor.Kernel);
+         null;
+
+      when E : others =>
+         Pop_State (Editor.Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Get_Declaration_Info;
+
    ------------------
    -- Draw_Tooltip --
    ------------------
@@ -416,12 +499,17 @@ package body Src_Editor_Box is
       Width, Height : out Glib.Gint;
       Area          : out Gdk_Rectangle)
    is
-      Line, Col    : Gint;
-      Win_X, Win_Y : Gint;
-      Start_Iter   : Gtk_Text_Iter;
-      End_Iter     : Gtk_Text_Iter;
-      Mask         : Gdk.Types.Gdk_Modifier_Type;
-      Win          : Gdk.Gdk_Window;
+      Line, Col        : Gint;
+      L, C             : Natural;
+      Mouse_X, Mouse_Y : Gint;
+      Win_X, Win_Y     : Gint;
+      Start_Iter       : Gtk_Text_Iter;
+      End_Iter         : Gtk_Text_Iter;
+      Mask             : Gdk.Types.Gdk_Modifier_Type;
+      Win              : Gdk.Gdk_Window;
+      Context          : aliased Entity_Selection_Context;
+      Location         : Gdk_Rectangle;
+      File             : String_Access;
 
    begin
       Width  := 0;
@@ -429,9 +517,13 @@ package body Src_Editor_Box is
       Pixmap := null;
       Area   := (0, 0, 0, 0);
 
+      if not Get_Pref (Data.Box.Kernel, Display_Tooltip) then
+         return;
+      end if;
+
       Get_Pointer
-        (Get_Window (Widget, Text_Window_Text), Win_X, Win_Y, Mask, Win);
-      Window_To_Buffer_Coords (Widget, Win_X, Win_Y, Line, Col);
+        (Get_Window (Widget, Text_Window_Text), Mouse_X, Mouse_Y, Mask, Win);
+      Window_To_Buffer_Coords (Widget, Mouse_X, Mouse_Y, Line, Col);
 
       if Line = -1 or else Col = -1 then
          --  Invalid position: the cursor is outside the text, do not
@@ -446,13 +538,64 @@ package body Src_Editor_Box is
            (Data.Box.Source_Buffer, Start_Iter, End_Iter);
       end if;
 
+      --  Compute the area surrounding the entity, relative to the pointer
+      --  coordinates
+
+      Get_Iter_Location (Widget, Start_Iter, Location);
+      Buffer_To_Window_Coords
+        (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
+      Area.X := Win_X - Mouse_X;
+      Area.Y := Win_Y - Mouse_Y;
+      Get_Iter_Location (Widget, End_Iter, Location);
+      Buffer_To_Window_Coords
+        (Widget, Text_Window_Text, Location.X, Location.Y, Win_X, Win_Y);
+      Area.Width  := Win_X - Mouse_X - Area.X + Location.Width;
+      Area.Height := Win_Y - Mouse_Y - Area.Y + Location.Height;
+
       declare
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
       begin
+         if Entity_Name = "" then
+            return;
+         end if;
+
          Trace (Me, "Tooltip on " & Entity_Name);
+         Set_Context_Information
+           (Context'Unchecked_Access, Data.Box.Kernel, Src_Editor_Module_Id);
+         Set_File_Information
+           (Context      => Context'Unchecked_Access,
+            Directory    => Dir_Name (Data.Box.Filename.all),
+            File_Name    => Base_Name (Data.Box.Filename.all));
+         Set_Entity_Information
+           (Context     => Context'Unchecked_Access,
+            Entity_Name => Entity_Name,
+            Line        => To_Box_Line (Line),
+            Column      => To_Box_Column (Col));
+         Glide_Kernel.Modules.Compute_Tooltip
+           (Data.Box.Kernel, Context'Unchecked_Access, Pixmap, Width, Height);
+         Destroy (Context);
+
+         if Pixmap /= null then
+            return;
+         end if;
+
+         --  No module wants to handle this tooltip. Default to built-in
+         --  tooltip, based on cross references.
+
+         Get_Declaration_Info
+           (Data.Box, Natural (To_Box_Line (Line)),
+            Natural (To_Box_Line (Col)), File, L, C);
+
+         if File = null then
+            return;
+         end if;
+
+         Trace (Me, "Tooltip: " & File.all & ':' & Image (L));
       end;
 
-      return;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Draw_Tooltip;
 
    -----------------
@@ -803,6 +946,7 @@ package body Src_Editor_Box is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
       Context    : Entity_Selection_Context_Access;
+      Result     : Boolean;
 
    begin
       Context := new Entity_Selection_Context;
@@ -829,11 +973,11 @@ package body Src_Editor_Box is
          if Menu /= null then
             Gtk_New (Item, -"Goto line...");
             Add (Menu, Item);
-            Set_Sensitive (Item, False);
-
-            Gtk_New (Item, -"Goto previous location");
-            Add (Menu, Item);
-            Set_Sensitive (Item, False);
+            Context_Callback.Object_Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (On_Goto_Line'Access),
+               User_Data   => Selection_Context_Access (Context),
+               Slot_Object => Editor);
 
             Gtk_New (Item, -"Goto file spec/body");
             Add (Menu, Item);
@@ -874,10 +1018,25 @@ package body Src_Editor_Box is
                  (Context, Line => Integer (Get_Line (Start_Iter)) + 1);
             end if;
          else
-            Get_Iter_At_Line_Offset
-              (Editor.Source_Buffer, Start_Iter,
-               To_Buffer_Line (L), To_Buffer_Column (C));
-            Search_Entity_Bounds (Editor.Source_Buffer, Start_Iter, End_Iter);
+            --  Check whether there is a selection
+
+            Get_Selection_Bounds
+              (Editor.Source_Buffer, Start_Iter, End_Iter, Result);
+
+            if not Result
+              or else Get_Line (Start_Iter) /= Get_Line (End_Iter)
+            then
+               --  No selection, or multi-line selection: get the entity under
+               --  the cursor instead.
+
+               Get_Iter_At_Line_Offset
+                 (Editor.Source_Buffer, Start_Iter,
+                  To_Buffer_Line (L), To_Buffer_Column (C));
+
+               Search_Entity_Bounds
+                 (Editor.Source_Buffer, Start_Iter, End_Iter);
+            end if;
+
             Set_Entity_Information
               (Context, Get_Text (Start_Iter, End_Iter),
                Integer (Get_Line (Start_Iter)) + 1,
@@ -886,14 +1045,12 @@ package body Src_Editor_Box is
             --  Get the focus now. If we let the contextual menu handler in the
             --  kernel do the grab focus, then the source window will be
             --  scrolled up.
+
             Grab_Focus (Editor.Source_View);
             Place_Cursor (Editor.Source_Buffer, Start_Iter);
          end if;
 
          if Menu /= null then
-            Gtk_New (Item, -"Goto previous location");
-            Add (Menu, Item);
-
             if Has_Entity_Name_Information (Context) then
                Gtk_New (Item, -"Goto declaration of "
                           & Entity_Name_Information (Context));
@@ -970,6 +1127,40 @@ package body Src_Editor_Box is
          Pop_State (Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Other_File;
+
+   ------------------
+   -- On_Goto_Line --
+   ------------------
+
+   procedure On_Goto_Line
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Source : constant Source_Editor_Box := Source_Editor_Box (Widget);
+
+   begin
+      declare
+         Str : constant String := Simple_Entry_Dialog
+           (Get_Main_Window (Kernel), -"Goto Line...", -"Enter line number:",
+            Win_Pos_Mouse, "Goto_Line");
+
+      begin
+         if Str = "" or else Str (Str'First) = ASCII.NUL then
+            return;
+         end if;
+
+         Set_Cursor_Location (Source, Positive'Value (Str));
+
+      exception
+         when Constraint_Error =>
+            Console.Insert (Kernel, -"Invalid line number: " & Str);
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Goto_Line;
 
    -------------------------
    -- On_Goto_Declaration --
@@ -1392,41 +1583,6 @@ package body Src_Editor_Box is
    begin
       return Get_Selection (Editor.Source_Buffer);
    end Get_Selection;
-
-   ------------
-   -- Search --
-   ------------
-
-   procedure Search
-     (Editor             : access Source_Editor_Box_Record;
-      Pattern            : String;
-      Case_Sensitive     : Boolean := True;
-      Whole_Word         : Boolean := False;
-      Search_Forward     : Boolean := True;
-      From_Line          : Positive := 1;
-      From_Column        : Positive := 1;
-      Found              : out Boolean;
-      Match_Start_Line   : out Positive;
-      Match_Start_Column : out Positive;
-      Match_End_Line     : out Positive;
-      Match_End_Column   : out Positive)
-   is
-      Match_Start_L : Gint;
-      Match_Start_C : Gint;
-      Match_End_L   : Gint;
-      Match_End_C   : Gint;
-   begin
-      Search (Editor.Source_Buffer,
-              Pattern,
-              Case_Sensitive, Whole_Word, Search_Forward,
-              To_Buffer_Line (From_Line), To_Buffer_Column (From_Column),
-              Found,
-              Match_Start_L, Match_Start_C, Match_End_L, Match_End_C);
-      Match_Start_Line   := To_Box_Line (Match_Start_L);
-      Match_Start_Column := To_Box_Column (Match_Start_C);
-      Match_End_Line     := To_Box_Line (Match_End_L);
-      Match_End_Column   := To_Box_Column (Match_End_C);
-   end Search;
 
    ---------------
    -- Get_Slice --

@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -211,27 +211,6 @@ package Src_Editor_Box is
    --  sequence because it does not work with (line, column) locations but
    --  directly with buffer iterators.
 
-   procedure Search
-     (Editor             : access Source_Editor_Box_Record;
-      Pattern            : String;
-      Case_Sensitive     : Boolean := True;
-      Whole_Word         : Boolean := False;
-      Search_Forward     : Boolean := True;
-      From_Line          : Positive := 1;
-      From_Column        : Positive := 1;
-      Found              : out Boolean;
-      Match_Start_Line   : out Positive;
-      Match_Start_Column : out Positive;
-      Match_End_Line     : out Positive;
-      Match_End_Column   : out Positive);
-   --  Search function. Regular expressions for Pattern are not supported.
-   --  If the pattern is found, then Found is set to True and the positions
-   --  of the begining and of the end of the matching portion are returned.
-   --
-   --  The validity of the start position must be verified before invoking
-   --  this function. An incorrect position will cause an Assertion_Failure
-   --  when compiled with assertion checks, or an undefined behavior otherwise.
-
    function Get_Slice
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : Positive;
@@ -367,6 +346,20 @@ package Src_Editor_Box is
    --  If either Line or Column is null, then the position of the insert cursor
    --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).
+
+   procedure Get_Declaration_Info
+     (Editor      : access Source_Editor_Box_Record;
+      Line        : Natural;
+      Column      : Natural;
+      File_Decl   : out String_Access;
+      Line_Decl   : out Natural;
+      Column_Decl : out Natural);
+   --  Perform a cross-reference to the declaration of the entity located at
+   --  (Line, Column) in Editor. Fail silently when no declaration or no
+   --  entity can be located, and set File_Decl to null.
+   --  On success, File_Decl, Line_Decl and Column_Decl are set to the location
+   --  of the declaration of the entity. It is the responsibility of the
+   --  caller to free the memory associated with File_Decl.
 
    ----------------------------------
    -- Source_View related services --
