@@ -56,17 +56,24 @@ package GPS.Main_Window is
 
    type GPS_Window_Record is new Gtk_Window_Record with record
       Kernel           : GPS.Kernel.Kernel_Handle;
-      MDI              : Gtkada.MDI.MDI_Window;
       Main_Accel_Group : Gtk_Accel_Group;
       --  The default accelerators for the window.
 
+      Menu_Box         : Gtk.Box.Gtk_Hbox;
+      Menu_Bar         : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      Toolbar_Box      : Gtk_Vbox;
       Toolbar          : Gtk_Toolbar;
+      MDI              : Gtkada.MDI.MDI_Window;
+      Statusbar        : Gtk.Box.Gtk_Hbox;
+
       Animation_Frame  : Gtk_Frame;
       Static_Image     : Gdk_Pixbuf;
       Animation        : Gdk_Pixbuf_Animation;
       Animation_Iter   : Gdk_Pixbuf_Animation_Iter;
       Animation_Image  : Gtk_Image;
+
       Timeout_Id       : Gtk.Main.Timeout_Handler_Id;
+
       State_Level      : Integer := 0;
       Busy_Level       : Integer := 0;
       Desktop_Loaded   : Boolean := False;
@@ -75,15 +82,10 @@ package GPS.Main_Window is
       Home_Dir         : String_Access;
       --  The location of the configuration (e.g ~/.gps) directory.
 
-      --  Fields previousely in GVD_Main_Window_Record
-
-      Toolbar_Box         : Gtk_Vbox;
-      Statusbar           : Gtk.Box.Gtk_Hbox;
-      Menu_Box            : Gtk.Box.Gtk_Hbox;
-      Menu_Bar            : Gtk.Menu_Bar.Gtk_Menu_Bar;
+      --  ??? The following fields should be moved to the gvd module
 
       First_Debugger      : Debugger_List_Link;
-      --  The pointer to the list of debuggers.
+      --  Points to the list of debuggers.
 
       Current_Debugger    : Glib.Object.GObject;
       --  The current visual debugger.
