@@ -133,7 +133,10 @@ package Src_Info.Queries is
    procedure Free (Tree : in out Scope_Tree);
    --  Free the memory occupied by Tree.
 
-   procedure Trace_Dump (Handler : Traces.Debug_Handle; Tree : Scope_Tree);
+   procedure Trace_Dump
+     (Handler              : Traces.Debug_Handle;
+      Tree                 : Scope_Tree;
+      Subprograms_Pkg_Only : Boolean := True);
    --  Dump the contentns of the tree to standard_output.
 
    function Find_Entity_Declaration

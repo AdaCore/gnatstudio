@@ -77,7 +77,10 @@ package body Src_Info.Queries is
    --  Deallocates the memory associated with the given Dependency record.
 
    procedure Trace_Dump
-     (Handler : Debug_Handle; Scope : Scope_List; Prefix : String);
+     (Handler : Debug_Handle;
+      Scope : Scope_List;
+      Prefix : String;
+      Subprograms_Pkg_Only : Boolean);
    --  Dump Scope to Handler, printing Prefix at the beginning of each line
 
    function Dump (L : Scope_List) return String;
@@ -470,21 +473,23 @@ package body Src_Info.Queries is
    ----------------
 
    procedure Trace_Dump
-     (Handler : Debug_Handle; Scope : Scope_List; Prefix : String)
+     (Handler : Debug_Handle;
+      Scope : Scope_List;
+      Prefix : String;
+      Subprograms_Pkg_Only : Boolean)
    is
       L : Scope_List := Scope;
    begin
       while L /= null loop
-         if L.Decl.Kind = Generic_Function_Or_Operator
+         if (not Subprograms_Pkg_Only
+             or else Is_Subprogram (Scope_Tree_Node (L)))
            or else L.Decl.Kind = Generic_Package
-           or else L.Decl.Kind = Generic_Procedure
-           or else L.Decl.Kind = Non_Generic_Function_Or_Operator
            or else L.Decl.Kind = Non_Generic_Package
-           or else L.Decl.Kind = Non_Generic_Procedure
          then
-            Trace (Me, Prefix & Dump (L));
+            Trace (Handler, Prefix & Dump (L));
             if L.Typ = Declaration then
-               Trace_Dump (Handler, L.Contents, Prefix & "  ");
+               Trace_Dump
+                 (Handler, L.Contents, Prefix & "  ", Subprograms_Pkg_Only);
             end if;
          end if;
          L := L.Sibling;
@@ -495,11 +500,14 @@ package body Src_Info.Queries is
    -- Trace_Dump --
    ----------------
 
-   procedure Trace_Dump (Handler : Traces.Debug_Handle; Tree : Scope_Tree) is
+   procedure Trace_Dump
+     (Handler : Traces.Debug_Handle;
+      Tree : Scope_Tree;
+      Subprograms_Pkg_Only : Boolean := True) is
    begin
       if Tree /= Null_Scope_Tree then
          Trace (Handler, "Scope tree for " & Tree.LI_Filename.all);
-         Trace_Dump (Handler, Tree.Body_Tree, "");
+         Trace_Dump (Handler, Tree.Body_Tree, "", Subprograms_Pkg_Only);
       else
          Trace (Handler, "Null scope tree");
       end if;
