@@ -30,4 +30,43 @@ package body Language.Debugger.Java is
       return False;
    end Is_Simple_Type;
 
+   ----------------------
+   -- Dereference_Name --
+   ----------------------
+
+   function Dereference_Name (Lang : access Java_Language;
+                              Name : String)
+                             return String
+   is
+   begin
+      return Name; --  This notion does not exist in Java, since all types
+                   --  are references.
+   end Dereference_Name;
+
+   ---------------------
+   -- Array_Item_Name --
+   ---------------------
+
+   function Array_Item_Name (Lang  : access Java_Language;
+                             Name  : String;
+                             Index : String)
+                            return String
+   is
+   begin
+      return Name & '[' & Index & ']';
+   end Array_Item_Name;
+
+   -----------------------
+   -- Record_Field_Name --
+   -----------------------
+
+   function Record_Field_Name (Lang  : access Java_Language;
+                               Name  : String;
+                               Field : String)
+                              return String
+   is
+   begin
+      return Name & '.' & Field;
+   end Record_Field_Name;
+
 end Language.Debugger.Java;

@@ -26,6 +26,20 @@ package Language.Debugger.Java is
      (Lang : access Java_Language;
       Str : String) return Boolean;
 
+   function Dereference_Name (Lang : access Java_Language;
+                              Name : String)
+                             return String;
+
+   function Array_Item_Name (Lang  : access Java_Language;
+                             Name  : String;
+                             Index : String)
+                            return String;
+
+   function Record_Field_Name (Lang  : access Java_Language;
+                               Name  : String;
+                               Field : String)
+                              return String;
+
 private
 
    type Java_Language is abstract new Language_Debugger with null record;
