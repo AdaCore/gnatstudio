@@ -1,7 +1,7 @@
 Known Problems fixed in GPS 1.2.0
 
-- Crash when opening multiple new files. (C130-023)
-  Problem:    When when opening new files using the menu File->New or the
+- C130-023 Crash when opening multiple new files
+  Problem:    When opening new files using the menu File->New or the
               toolbar icon, opening multiple new files when the line numbers
               are displayed causes GPS to crash.
   Workaround: In the preferences dialog, disable the "Display line numbers"
@@ -18,7 +18,7 @@ Known Problems fixed in GPS 1.2.0
               nodes are duplicated, and the exec directories disappear
   Workaround: Reload the project through Project->Recent instead
 
-- BC04-009 Annoying scrolling when switching tabs.
+- BC04-009 Annoying scrolling when switching tabs
   Problem:    When switching from an editor to another, the editors scroll
               back to the place where their cursor is set, not to the point
               that was viewed the most recently.
