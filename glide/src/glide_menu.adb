@@ -18,49 +18,49 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Main;              use Gtk.Main;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.File_Selection; use Gtkada.File_Selection;
+with Glib;                    use Glib;
+with Gtk.Label;               use Gtk.Label;
+with Gtk.Main;                use Gtk.Main;
+with Gtk.Stock;               use Gtk.Stock;
+with Gtkada.Dialogs;          use Gtkada.Dialogs;
+with Gtkada.File_Selection;   use Gtkada.File_Selection;
 
-with Creation_Wizard;       use Creation_Wizard;
-with Glide_Intl;            use Glide_Intl;
+with Creation_Wizard;         use Creation_Wizard;
+with Glide_Intl;              use Glide_Intl;
 
-with GVD.Menu;              use GVD.Menu;
-with GVD.Status_Bar;        use GVD.Status_Bar;
-with GVD.Process;           use GVD.Process;
-with GVD.Types;             use GVD.Types;
-with Debugger;              use Debugger;
+with GVD.Menu;                use GVD.Menu;
+with GVD.Status_Bar;          use GVD.Status_Bar;
+with GVD.Process;             use GVD.Process;
+with GVD.Types;               use GVD.Types;
+with Debugger;                use Debugger;
 
-with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Console;  use Glide_Kernel.Console;
-with Glide_Kernel.Editor;   use Glide_Kernel.Editor;
-with Glide_Kernel.Project;  use Glide_Kernel.Project;
+with Glide_Kernel;            use Glide_Kernel;
+with Glide_Kernel.Console;    use Glide_Kernel.Console;
+with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
+with Glide_Kernel.Project;    use Glide_Kernel.Project;
 
-with Glide_Main_Window;     use Glide_Main_Window;
-with Glide_Page;            use Glide_Page;
+with Glide_Main_Window;       use Glide_Main_Window;
+with Glide_Page;              use Glide_Page;
 
-with Hyper_Grep;            use Hyper_Grep;
-with Vdiff_Pkg;             use Vdiff_Pkg;
-with Vdiff_Utils;           use Vdiff_Utils;
-with Diff_Utils;            use Diff_Utils;
+with Hyper_Grep;              use Hyper_Grep;
+with Vdiff_Pkg;               use Vdiff_Pkg;
+with Vdiff_Utils;             use Vdiff_Utils;
+with Diff_Utils;              use Diff_Utils;
 
-with Prj_Editor_Window;     use Prj_Editor_Window;
+with Prj_Editor_Window;       use Prj_Editor_Window;
 
-with GVD.Dialogs;           use GVD.Dialogs;
+with GVD.Dialogs;             use GVD.Dialogs;
 
-with GNAT.Expect;           use GNAT.Expect;
-with GNAT.Regpat;           use GNAT.Regpat;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.Expect;             use GNAT.Expect;
+with GNAT.Regpat;             use GNAT.Regpat;
+with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
-with Factory_Data;          use Factory_Data;
+with Factory_Data;            use Factory_Data;
 
 --  AUnit components
 with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
-with Make_Test_Window_Pkg; use Make_Test_Window_Pkg;
-with Make_Suite_Window_Pkg; use Make_Suite_Window_Pkg;
+with Make_Test_Window_Pkg;    use Make_Test_Window_Pkg;
+with Make_Suite_Window_Pkg;   use Make_Suite_Window_Pkg;
 
 package body Glide_Menu is
 
@@ -1066,9 +1066,9 @@ package body Glide_Menu is
          Gtk_New (-"/_Build/Make", "", Stock_Refresh, On_Build'Access),
          Gtk_New (-"/_Build/Build Library", "", null),
          Gtk_New (-"/_Build/sep1", Item_Type => Separator),
-         Gtk_New (-"/_Build/Stop Build", "", Stock_Stop, null),
-         Gtk_New (-"/_Build/sep2", Item_Type => Separator),
          Gtk_New (-"/_Build/Execute...", "", Stock_Execute, On_Run'Access),
+         Gtk_New (-"/_Build/sep2", Item_Type => Separator),
+         Gtk_New (-"/_Build/Stop Build", "", Stock_Stop, null),
 
          Gtk_New (-"/_Debug", Item_Type => Branch),
          Gtk_New (-"/_Debug/Start", "", On_Run'Access),
