@@ -33,10 +33,10 @@ Known Problems fixed in GPS 1.3.0
               executing because it cannot found the project
   Workaround: run gnat stub directly in a shell window
 
-- C312-002 Code correction error
-  Problem:    When using automatic code correction, sometimes the correction is
-              wrong.
-  Workaround: Save the files in "UNIX" mode.
+- C312-002 Code correction error with CR/LF files
+  Problem:    When using automatic code correction with files containing CR/LF
+              line terminators, the correction is wrong.
+  Workaround: Save the files in "unix" mode
 
 - Infinite loop in search dialog
   Problem:    In some cases, it might happen that looking for a constant string
