@@ -360,10 +360,6 @@ package body Codefix.Graphics is
 --            exit;
 --         end if;
 --
---         Reduce
---           (Extended_Extract,
---            Display_Lines_Before,
-         --            Display_Lines_After);
 
          if Current_Vdiff /= Vdiff_Lists.Null_Node then
             Modify_Tab;
@@ -376,8 +372,7 @@ package body Codefix.Graphics is
          String_List.Append
            (New_Popdown_Str, Get_Caption (Data (Current_Sol)));
 
-         Reduce (Extended_Extract, 0, 0);
---         Set_Data (Current_Sol, Extended_Extract);
+         Free (Extended_Extract);
 
          Current_Sol := Next (Current_Sol);
       end loop;
