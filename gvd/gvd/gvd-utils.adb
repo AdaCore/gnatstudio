@@ -19,7 +19,10 @@
 -----------------------------------------------------------------------
 
 with Gdk.Cursor;    use Gdk.Cursor;
+--  ??? needed with GtkAda 11.2 but not GtkAda 2.0
+pragma Warnings (Off);
 with Gdk.Types;     use Gdk.Types;
+pragma Warnings (On);
 with Gdk.Window;    use Gdk.Window;
 with Gtk.Combo;     use Gtk.Combo;
 with Gtk.Label;     use Gtk.Label;
@@ -86,9 +89,9 @@ package body GVD.Utils is
       Cursor     : Gdk_Cursor;
    begin
       if Busy then
-         Gdk_New (Cursor, Gdk.Types.Watch);
+         Gdk_New (Cursor, Watch);
       else
-         Gdk_New (Cursor, Gdk.Types.Left_Ptr);
+         Gdk_New (Cursor, Left_Ptr);
       end if;
 
       Set_Cursor (Window, Cursor);

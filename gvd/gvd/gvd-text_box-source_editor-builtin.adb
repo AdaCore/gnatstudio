@@ -595,7 +595,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
       --  Editor specific items
 
       Gtk_New (Check, Label => -"Display Line Numbers");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Line_Nums (Source.Editor));
       Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
@@ -604,7 +603,6 @@ package body GVD.Text_Box.Source_Editor.Builtin is
          Source.Editor);
 
       Gtk_New (Check, Label => -"Show Lines with Code");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, Get_Show_Lines_With_Code (Source.Editor));
       Append (Source.Editor.Contextual_Menu, Check);
       Check_Editor_Handler.Connect
@@ -1554,7 +1552,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                (1 + Value'Length / Chars_Per_Line) * Height + 2);
          else
             Width := Gint'Min
-              (Max_Tooltip_Width, Text_Width (Context.Font, Value.all) + 4);
+              (Max_Tooltip_Width, String_Width (Context.Font, Value.all) + 4);
          end if;
       end if;
 
@@ -1596,7 +1594,7 @@ package body GVD.Text_Box.Source_Editor.Builtin is
                   + Get_Ascent (Context.Font),
                   Value (Index .. Max));
                W := Gint'Max
-                 (W, Text_Width (Context.Font, Value (Index .. Max)));
+                 (W, String_Width (Context.Font, Value (Index .. Max)));
                Index := Max + 1;
                Line := Line + 1;
             end loop;

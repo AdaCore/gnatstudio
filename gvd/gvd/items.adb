@@ -396,12 +396,15 @@ package body Items is
    -- GVD_Text_Width --
    --------------------
 
-   function GVD_Text_Width (F : Gdk.Font.Gdk_Font; Str : String) return Gint is
+   function GVD_Text_Width
+     (F : Gdk.Font.Gdk_Font; Str : String) return Gint
+   is
+      use Gdk;
    begin
       if F = null then
          return 0;
       else
-         return Text_Width (F, Str);
+         return String_Width (F, Str);
       end if;
    end GVD_Text_Width;
 
@@ -410,6 +413,7 @@ package body Items is
    ---------------------
 
    function GVD_Font_Height (F : Gdk.Font.Gdk_Font) return Gint is
+      use Gdk;
    begin
       if F = null then
          return 1;

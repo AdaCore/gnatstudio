@@ -21,6 +21,10 @@
 with Glib;                use Glib;
 with Gdk.Color;           use Gdk.Color;
 with Gdk.Event;           use Gdk.Event;
+--  ??? Needed by GtkAda 1.2 but not GtkAda 2.0
+pragma Warnings (Off);
+with Gdk.Types;           use Gdk.Types;
+pragma Warnings (On);
 with Gdk.Types;           use Gdk.Types;
 with Gdk.Window;          use Gdk.Window;
 with Gtk.Box;
@@ -866,6 +870,9 @@ package body GVD.Text_Box is
       Font_Size    : Glib.Gint)
    is
       F : Gdk_Font;
+
+      use Gdk;
+
    begin
       F := Get_Gdkfont (Ps_Font_Name, Font_Size);
 

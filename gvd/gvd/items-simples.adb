@@ -23,9 +23,13 @@ with GNAT.IO;         use GNAT.IO;
 with Glib;            use Glib;
 with Gdk.Font;        use Gdk.Font;
 with Gdk.Drawable;    use Gdk.Drawable;
+
+--  ??? Needed with GtkAda 1.2 but not GtkAda 2.0
+pragma Warnings (Off);
 with Gdk.Window;      use Gdk.Window;
-with Gdk.GC;          use Gdk.GC;
 with Gdk.Types;       use Gdk.Types;
+pragma Warnings (On);
+with Gdk.GC;          use Gdk.GC;
 with Language;        use Language;
 
 with Basic_Types;     use Basic_Types;
@@ -125,6 +129,9 @@ package body Items.Simples is
    is
       Text_GC : Gdk_GC := Context.GC;
       Y2      : Gint := Y;
+
+      use Gdk;
+
    begin
       Item.X := X;
       Item.Y := Y2;
@@ -379,6 +386,8 @@ package body Items.Simples is
       Text_GC : Gdk_GC := Context.Xref_GC;
       Y2      : Gint := Y;
 
+      use Gdk;
+
    begin
       Item.X := X;
       Item.Y := Y2;
@@ -552,6 +561,8 @@ package body Items.Simples is
       Text_GC    : Gdk_GC;
       Line       : Gint := Y;
       Line_Start : Positive;
+
+      use Gdk;
 
    begin
       Item.X := X;

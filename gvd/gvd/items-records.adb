@@ -24,9 +24,10 @@ with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
-with Gdk.Types;    use Gdk.Types;
+pragma Warnings (Off);
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+pragma Warnings (On);
 
 with Language;        use Language;
 with Basic_Types;     use Basic_Types;
@@ -401,6 +402,7 @@ package body Items.Records is
       ----------------------
 
       procedure Print_Field_Name (F : Integer) is
+         use Gdk;
       begin
          if Context.Font /= null then
             Draw_Text

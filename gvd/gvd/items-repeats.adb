@@ -24,8 +24,10 @@ with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
+pragma Warnings (Off);
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+pragma Warnings (On);
 with Language;     use Language;
 
 package body Items.Repeats is
@@ -141,6 +143,9 @@ package body Items.Repeats is
       X, Y    : Gint := 0)
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
+
+      use Gdk;
+
    begin
       Item.X := X;
       Item.Y := Y;

@@ -25,8 +25,10 @@ with Glib;         use Glib;
 with Gdk.Font;     use Gdk.Font;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
+pragma Warnings (Off);
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+pragma Warnings (On);
 with Language;     use Language;
 
 with Basic_Types;     use Basic_Types;
@@ -566,6 +568,9 @@ package body Items.Arrays is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
         Left_Border - GVD_Text_Width (Context.Font, String' (" => "));
+
+      use Gdk;
+
    begin
       Item.X := X;
       Item.Y := Y;

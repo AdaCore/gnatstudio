@@ -27,6 +27,9 @@ with GNAT.OS_Lib;
 with Glib;             use Glib;
 
 with Gdk.Color;        use Gdk.Color;
+pragma Warnings (Off);
+with Gdk.Drawable;     use Gdk.Drawable;
+pragma Warnings (On);
 with Gdk.Font;         use Gdk.Font;
 with Gdk.Window;       use Gdk.Window;
 

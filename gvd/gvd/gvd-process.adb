@@ -231,7 +231,6 @@ package body GVD.Process is
 
       Gtk_New (Process.Call_Stack_Contextual_Menu);
       Gtk_New (Check, Label => -"Frame Number");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, (Process.Backtrace_Mask and Frame_Num) /= 0);
       Append (Process.Call_Stack_Contextual_Menu, Check);
       Call_Stack_Cb.Connect
@@ -240,7 +239,6 @@ package body GVD.Process is
          (Debugger_Process_Tab (Process), Frame_Num));
 
       Gtk_New (Check, Label => -"Program Counter");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, (Process.Backtrace_Mask and Program_Counter) /= 0);
       Append (Process.Call_Stack_Contextual_Menu, Check);
       Call_Stack_Cb.Connect
@@ -249,7 +247,6 @@ package body GVD.Process is
          (Debugger_Process_Tab (Process), Program_Counter));
 
       Gtk_New (Check, Label => -"Subprogram Name");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, (Process.Backtrace_Mask and Subprog_Name) /= 0);
       Append (Process.Call_Stack_Contextual_Menu, Check);
       Call_Stack_Cb.Connect
@@ -258,7 +255,6 @@ package body GVD.Process is
          (Debugger_Process_Tab (Process), Subprog_Name));
 
       Gtk_New (Check, Label => -"Parameters");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, (Process.Backtrace_Mask and Params) /= 0);
       Append (Process.Call_Stack_Contextual_Menu, Check);
       Call_Stack_Cb.Connect
@@ -267,7 +263,6 @@ package body GVD.Process is
          (Debugger_Process_Tab (Process), Params));
 
       Gtk_New (Check, Label => -"File Location");
-      Set_Always_Show_Toggle (Check, True);
       Set_Active (Check, (Process.Backtrace_Mask and File_Location) /= 0);
       Append (Process.Call_Stack_Contextual_Menu, Check);
       Call_Stack_Cb.Connect
@@ -858,9 +853,9 @@ package body GVD.Process is
          else
             Set_Position
               (Process.Process_Paned,
-               Geometry_Info.Data_Height
-               + Geometry_Info.Editor_Height
-               + Gint (Get_Gutter_Size (Process.Data_Editor_Paned)));
+               Geometry_Info.Data_Height +
+               Geometry_Info.Editor_Height +
+               Gint (Get_Gutter_Size (Process.Data_Editor_Paned)));
          end if;
 
          if Get_Active (Window.Call_Stack) then
@@ -1456,10 +1451,14 @@ package body GVD.Process is
       Tab       : Debugger_Process_Tab;
       Buffer    : String (1 .. 8192);
       Len       : Natural;
+
       use String_History;
+
    begin
       Tab := Process_User_Data.Get
-        (Get_Child (Get_Cur_Page (Debugger.Process_Notebook)));
+        (Get_Nth_Page
+          (Debugger.Process_Notebook,
+           Get_Current_Page (Debugger.Process_Notebook)));
 
       --  If we are already processing a command, just wait until
       --  the debugger is available
@@ -1596,13 +1595,15 @@ package body GVD.Process is
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Debugger_Process_Tab
    is
-      Page : Gtk.Gtk_Notebook_Page := Get_Cur_Page
-        (GVD_Main_Window (Main_Window).Process_Notebook);
+      Process : constant Gtk_Notebook :=
+        GVD_Main_Window (Main_Window).Process_Notebook;
+      Page    : constant Gint := Get_Current_Page (Process);
+
    begin
-      if Page = null then
+      if Page = -1 then
          return null;
       else
-         return Process_User_Data.Get (Get_Child (Page));
+         return Process_User_Data.Get (Get_Nth_Page (Process, Page));
       end if;
    end Get_Current_Process;
 
@@ -1641,6 +1642,7 @@ package body GVD.Process is
       C       : constant Gdk_Color := Get_Pref (Debugger_Highlight_Color);
       Parent  : Gtk_Container;
 
+      use Gdk;
    begin
       if F /= Process.Debugger_Text_Font
         or else Process.Debugger_Text_Highlight_Color /= C

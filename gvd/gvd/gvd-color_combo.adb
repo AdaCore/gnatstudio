@@ -80,7 +80,6 @@ package body GVD.Color_Combo is
       Gtk.Extra.Combo_Box.Initialize (Combo);
 
       Gtk_New (Combo.Selection);
-      Set_Opacity (Combo.Selection, False);
       Add (Get_Frame (Combo), Combo.Selection);
       Color_Cb.Object_Connect
         (Combo.Selection,

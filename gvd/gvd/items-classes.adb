@@ -24,8 +24,10 @@ with Glib;         use Glib;
 with Gdk.Drawable; use Gdk.Drawable;
 with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
+pragma Warnings (Off);
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+pragma Warnings (On);
 
 with Items.Records;  use Items.Records;
 with GVD.Preferences; use GVD.Preferences;

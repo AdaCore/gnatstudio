@@ -473,7 +473,6 @@ package body GVD.Dialogs is
       Pack_Start (Dialog.Hbox1, Dialog.Hbuttonbox1, True, True, 0);
       Set_Spacing (Dialog.Hbuttonbox1, 10);
       Set_Child_Size (Dialog.Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (Dialog.Hbuttonbox1, 7, 0);
       Set_Layout (Dialog.Hbuttonbox1, Buttonbox_Spread);
 
       Gtk_New (Dialog.Close_Button, -"Close");
@@ -629,7 +628,6 @@ package body GVD.Dialogs is
       Set_Spacing (History_Dialog.Hbuttonbox1, 30);
       Set_Layout (History_Dialog.Hbuttonbox1, Buttonbox_Spread);
       Set_Child_Size (History_Dialog.Hbuttonbox1, 85, 27);
-      Set_Child_Ipadding (History_Dialog.Hbuttonbox1, 7, 0);
 
       Gtk_New (History_Dialog.Replay_Selection, -"Replay selection");
       Set_Flags (History_Dialog.Replay_Selection, Can_Default);
