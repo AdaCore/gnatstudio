@@ -856,8 +856,9 @@ private
    -- Source_Buffer_Record --
    --------------------------
 
-   type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
-   record
+   type Source_Buffer_Record is
+     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record
+   with record
       Kernel        : Glide_Kernel.Kernel_Handle;
       Filename      : VFS.Virtual_File;
       File_Identifier : VFS.Virtual_File;
@@ -1015,6 +1016,16 @@ private
       --  Set to True when we are currently modifying the range of the real
       --  lines (ie when we are folding/unfolding text or adding/removing
       --  blank lines.
+
+      --  The following information are used for idle buffer highlighting.
+
+      First_Highlight_Mark : Gtk.Text_Mark.Gtk_Text_Mark;
+      Last_Highlight_Mark  : Gtk.Text_Mark.Gtk_Text_Mark;
+      --  Those marks indicate the minimum area that need to be highlighted.
+      --  They must be valid marks at all times.
+
+      Highlight_Needed : Boolean := False;
+      --  Whether the text should be re-highlighted.
    end record;
 
 end Src_Editor_Buffer;
