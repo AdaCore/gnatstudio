@@ -367,6 +367,9 @@ package body Creation_Wizard is
       end if;
 
       Gtk_New (Wiz.Naming, Languages (Languages'First .. L));
+      Show_Project_Settings
+        (Wiz.Naming, Get_Project_View (Wiz.Kernel), False);
+
       Free (Languages);
       return Gtk_Widget (Wiz.Naming);
    end Fifth_Page;
