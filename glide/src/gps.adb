@@ -243,6 +243,11 @@ procedure GPS is
       Log_Level  : Log_Level_Flags;
       Message    : String) is
    begin
+      if Log_Domain = "" then
+         --  Ignore this message, to avoid generating too much noise.
+         return;
+      end if;
+
       if (Log_Level and Log_Level_Critical) /= 0 then
          Trace (Gtk_Trace, Log_Domain & "-CRITICAL: " & Message);
       elsif (Log_Level and Log_Level_Warning) /= 0 then
