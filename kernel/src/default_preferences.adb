@@ -988,8 +988,22 @@ package body Default_Preferences is
       end if;
    exception
       when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
+         Set_Text
+           (Gtk_Entry (Ent),
+            Name
+              (Get_Value
+                 (Enumeration (Param_Spec_Enum (Data.Param)),
+                  Default (Param_Spec_Enum (Data.Param)))));
+         Trace
+           (Exception_Handle,
+            "An inconsistency has been found in your preference file." &
+            ASCII.LF &
+            """" & Pspec_Name (Data.Param) & """ has been set to its " &
+            "default value." & ASCII.LF &
+            Exception_Information (E));
+         --  ??? It would be nice to have this message displayed on the
+         --  GPS console but not doable with the current organization which
+         --  would lead to circular dependencies.
    end Update_Entry;
 
    ----------------
@@ -1612,7 +1626,6 @@ package body Default_Preferences is
       Parent       : access Gtk.Window.Gtk_Window_Record'Class;
       On_Changed   : Action_Callback;
       Custom_Pages : Preferences_Page_Array)
-
    is
       Model             : Gtk_Tree_Store;
       Main_Table        : Gtk_Table;
