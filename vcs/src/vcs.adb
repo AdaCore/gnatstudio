@@ -54,8 +54,7 @@ package body VCS is
    -- Get_VCS_From_Id --
    ---------------------
 
-   function Get_VCS_From_Id (Id : String) return VCS_Access
-   is
+   function Get_VCS_From_Id (Id : String) return VCS_Access is
       Result : VCS_Access := null;
       Temp   : Identifiers.List := Identifiers_List;
    begin
@@ -76,18 +75,13 @@ package body VCS is
    -- Set_Error --
    ---------------
 
-   procedure Set_Error
-     (Rep     : access VCS_Record;
-      Message : String) is
+   procedure Set_Error (Rep : access VCS_Record; Message : String) is
    begin
       if Rep.Kernel = null then
          return;
       end if;
 
-      Insert (Rep.Kernel,
-              Message,
-              Highlight_Sloc => False,
-              Mode => Error);
+      Insert (Rep.Kernel, Message, Highlight_Sloc => False, Mode => Error);
    end Set_Error;
 
    ----------
