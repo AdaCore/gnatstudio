@@ -85,7 +85,7 @@ package body Debugger.Gdb is
 
    File_Name_Pattern : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
-              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)", Multiple_Lines);
+              & "(.+):(\d+):\d+:[^:]+:(0x[0-9a-f]+)$", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
    File_Name_Pattern2 : constant Pattern_Matcher :=
@@ -105,7 +105,7 @@ package body Debugger.Gdb is
 
    Breakpoint_Pattern : constant Pattern_Matcher := Compile
      ("^(\d+)\s+(breakpoint|\w+? watchpoint)\s+(keep|dis|del)\s+([yn])"
-      & "\s+((0x0*)?(\S+))\s+(.*)",
+      & "\s+((0x0*)?(\S+))\s+(.*)$",
       Multiple_Lines);
    --  Pattern to match a single line in "info breakpoint"
 
@@ -122,7 +122,7 @@ package body Debugger.Gdb is
    --  How to detect subprogram names in the info given by "info breakpoint"
 
    Question_Filter_Pattern1 : constant Pattern_Matcher :=
-     Compile ("^\[0\] ", Multiple_Lines);
+     Compile ("^\[0\] .*> ", Multiple_Lines + Single_Line);
 
    Question_Filter_Pattern2 : constant Pattern_Matcher :=
      Compile ("^(.*\?) \(y or n\) ", Multiple_Lines);
@@ -133,16 +133,22 @@ package body Debugger.Gdb is
    --  How to get the range of addresses for a given line
 
    procedure Language_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Window     : System.Address);
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
    --  Filter used to detect a change in the current language.
 
-   procedure Question_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Window     : System.Address);
+   procedure Question_Filter1
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
    --  Filter used to detect questions from gdb.
+
+   procedure Question_Filter2
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array);
+   --  Filter used to detect y/n questions from gdb.
 
    procedure Parse_Backtrace_Info
      (S     : String;
@@ -162,161 +168,136 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Language_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Window     : System.Address)
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
    is
-      Matched    : GNAT.Regpat.Match_Array (0 .. 3);
-      Debugger   : Debugger_Access;
+      Debugger   : constant Debugger_Access := Process.Debugger;
       Language   : Language_Access;
 
    begin
-      Match (Language_Pattern, Str, Matched);
+      declare
+         Lang : constant String := Str (Matched (3).First .. Matched (3).Last);
+      begin
+         if Lang = "ada" then
+            Language := new Gdb_Ada_Language;
+         elsif Lang = "c" then
+            Language := new Gdb_C_Language;
+         else
+            pragma Assert (False, "Language not currently supported");
+            raise Program_Error;
+         end if;
 
-      if Matched (3) /= No_Match then
-         Debugger := Convert
-           (To_Main_Debug_Window (Window), Descriptor).Debugger;
-         declare
-            Lang : String := Str (Matched (3).First .. Matched (3).Last);
-         begin
-            if Lang = "ada" then
-               Language := new Gdb_Ada_Language;
-            elsif Lang = "c" then
-               Language := new Gdb_C_Language;
-            else
-               pragma Assert (False, "Language not currently supported");
-               raise Program_Error;
-            end if;
-
-            Set_Language (Debugger, Language);
-            Set_Debugger (Language_Debugger_Access (Language),
-                          Debugger.all'Access);
-         end;
-      end if;
+         Set_Language (Debugger, Language);
+         Set_Debugger
+           (Language_Debugger_Access (Language), Debugger.all'Access);
+      end;
    end Language_Filter;
 
    ---------------------
    -- Question_Filter --
    ---------------------
 
-   procedure Question_Filter
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Window     : System.Address)
+   procedure Question_Filter1
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
    is
-      function To_Window is new
-        Unchecked_Conversion (System.Address, Gtk_Window);
+      Dialog   : Question_Dialog_Access;
+      Index    : Natural;
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Choices  : Question_Array (1 .. 1000);
+      --  ??? This is an arbitrary hard-coded limit, that should
+      --  be enough. Might be nice to remove it though.
 
-      Dialog         : Question_Dialog_Access;
-      Index          : Natural;
-      Question_Start : Natural;
-      Debugger       : Debugger_Access :=
-        Convert (To_Main_Debug_Window (Window), Descriptor).Debugger;
+      Num      : Natural := 0;
+      First    : Positive;
+      Last     : Positive := Matched (0).First;
 
    begin
-      --  Do we have a question ?
+      --  If we are processing an internal command, we cancel any question
+      --  dialog we might have, and silently fail
+      --  ??? For some reason, we can not use Interrupt here, and we have
+      --  to rely on the fact that "Cancel" is the first choice.
 
-      Question_Start := Match (Question_Filter_Pattern1, Str);
+      if Get_Command_Mode (Get_Process (Debugger)) = Internal then
+         Send (Debugger, "0",
+               Mode => Internal,
+               Empty_Buffer => False,
+               Wait_For_Prompt => False);
+         return;
+      end if;
 
-      if Question_Start >= Str'First then
+      --  Index is positioned to the last LF character
 
-         --  If we are processing an internal command, we cancel any question
-         --  dialog we might have, and silently fail
-         --  ??? For some reason, we can not use Interrupt here, and we have
-         --  to rely on the fact that "Cancel" is the first choice.
+      Index := Matched (0).Last - 3;
 
-         if Get_Command_Mode (Get_Process (Debugger)) = Internal then
-            Send (Debugger, "0",
-                  Mode => Internal,
-                  Empty_Buffer => False,
-                  Wait_For_Prompt => False);
-            return;
-         end if;
+      while Last < Index loop
+         --  Skips the choice number ("[n] ")
+         Last := Last + 4;
+         First := Last;
 
-         Index := Question_Start;
-
-         while Index < Str'Last loop
-            if Str (Index) = ASCII.LF
-              and then Str (Index + 1) = '>'
-            then
-               declare
-                  Choices : Question_Array (1 .. 1000);
-                  --  ??? This is an arbitrary hard-coded limit, that should
-                  --  be enough. Might be nice to remove it though.
-
-                  Num     : Natural := 0;
-                  First   : Positive;
-                  Last    : Positive := Question_Start;
-
-               begin
-                  while Last < Index loop
-                     --  Skips the choice number ("[n] ")
-                     Last := Last + 4;
-                     First := Last;
-
-                     while Last < Index and then Str (Last) /= ASCII.LF loop
-                        Last := Last + 1;
-                     end loop;
-
-                     Num := Num + 1;
-                     Choices (Num).Choice :=
-                       new String' (Natural'Image (Num - 1));
-                     Choices (Num).Description :=
-                       new String'(Str (First .. Last - 1));
-
-                     Last := Last + 1;
-                  end loop;
-
-                  Gtk_New
-                    (Dialog,
-                     To_Window (Window),
-                     Debugger,
-                     True,
-                     Choices (1 .. Num));
-                  Show_All (Dialog);
-
-                  for J in 1 .. Num loop
-                     Free (Choices (Num).Choice);
-                     Free (Choices (Num).Description);
-                  end loop;
-               end;
-
-               return;
-            end if;
-
-            Index := Index + 1;
+         while Last < Index and then Str (Last) /= ASCII.LF loop
+            Last := Last + 1;
          end loop;
-      end if;
 
-      Question_Start := Match (Question_Filter_Pattern2, Str);
+         Num := Num + 1;
+         Choices (Num).Choice :=
+           new String' (Natural'Image (Num - 1));
+         Choices (Num).Description :=
+           new String'(Str (First .. Last - 1));
 
-      if Question_Start >= Str'First then
-         declare
-            Choices : Question_Array (1 .. 2);
-         begin
-            Choices (1).Choice := new String' ("n");
-            Choices (1).Description := new String' ("No");
+         Last := Last + 1;
+      end loop;
 
-            Choices (2).Choice := new String' ("y");
-            Choices (2).Description := new String' ("Yes");
+      Gtk_New
+        (Dialog,
+         Gtk_Window (Process.Window),
+         Debugger,
+         True,
+         Choices (1 .. Num));
+      Show_All (Dialog);
 
-            Gtk_New
-              (Dialog,
-               To_Window (Window),
-               Debugger,
-               False,
-               Choices (1 .. 2),
-               Str (Question_Start .. Str'Last));
-            Show_All (Dialog);
+      for J in 1 .. Num loop
+         Free (Choices (Num).Choice);
+         Free (Choices (Num).Description);
+      end loop;
+   end Question_Filter1;
 
-            Free (Choices (1).Choice);
-            Free (Choices (1).Description);
-            Free (Choices (2).Choice);
-            Free (Choices (2).Description);
-            return;
-         end;
-      end if;
-   end Question_Filter;
+   ----------------------
+   -- Question_Filter2 --
+   ----------------------
+
+   procedure Question_Filter2
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Str     : String;
+      Matched : Match_Array)
+   is
+      Dialog   : Question_Dialog_Access;
+      Debugger : constant Debugger_Access := Process.Debugger;
+      Choices  : Question_Array (1 .. 2);
+
+   begin
+      Choices (1).Choice := new String' ("n");
+      Choices (1).Description := new String' ("No");
+
+      Choices (2).Choice := new String' ("y");
+      Choices (2).Description := new String' ("Yes");
+
+      Gtk_New
+        (Dialog,
+         Gtk_Window (Process.Window),
+         Debugger,
+         False,
+         Choices (1 .. 2),
+         Str (Matched (0).First .. Matched (0).Last));
+      Show_All (Dialog);
+
+      Free (Choices (1).Choice);
+      Free (Choices (1).Description);
+      Free (Choices (2).Choice);
+      Free (Choices (2).Description);
+   end Question_Filter2;
 
    ----------
    -- Send --
@@ -505,18 +486,20 @@ package body Debugger.Gdb is
       --  access the main_debug_window.
 
       if Window /= null then
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Language_Filter'Access, Output,
-            Window.all'Address);
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Language_Filter'Access, Language_Pattern);
 
          --  Set another filter to detect the cases when gdb asks questions,
          --  so that we can display dialogs.
 
-         Add_Filter
-           (Get_Descriptor (Debugger.Process).all,
-            Question_Filter'Access, Output,
-            Window.all'Address);
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Question_Filter1'Access, Question_Filter_Pattern1);
+
+         Add_Regexp_Filter
+           (Convert (Window, Debugger),
+            Question_Filter2'Access, Question_Filter_Pattern2);
 
          --  ??? Should avoid the duplication of this code between debugger-*
 
