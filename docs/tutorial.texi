@@ -182,8 +182,8 @@ line.
 
 Note that on some window managers or desktop environments,
 @key{Ctrl-Tab} is already defined. If this is the case, you can change this
-shortcut from the preferences dialog (menu @code{Edit->Preferences},
-@code{Editor} tab).
+shortcut from the key shortcuts dialog (menu @code{Edit->Key shortcuts},
+@code{Source editor} section, @code{Format selection} item).
 
 You can then fix all the remaining errors by selecting the whole block
 (from line 28 to line 40) and pressing @key{Ctrl-Tab}. To select a block,
