@@ -688,8 +688,9 @@ package body Browsers.Dependency_Items is
          return False;
       else
          Dep := Get (Data.Iter.all);
-         if Filter
-           (Get_Kernel (Data.Browser), Is_Explicit (Data.Iter.all), Dep)
+         if Dep /= null
+           and then Filter
+             (Get_Kernel (Data.Browser), Is_Explicit (Data.Iter.all), Dep)
          then
             declare
                File : constant Virtual_File := Get_Filename (Dep);
