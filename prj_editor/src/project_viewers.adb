@@ -2473,7 +2473,7 @@ package body Project_Viewers is
                   Switch  : constant String := Get_Attribute (N, "switch");
                   Tip     : constant String := Get_Attribute (N, "tip");
                begin
-                  if Label = "" or else Switch = "" then
+                  if Label = "" then
                      Insert
                        (Kernel,
                           -("Invalid <radio-entry> node in custom file,"
