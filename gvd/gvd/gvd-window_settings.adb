@@ -195,17 +195,22 @@ package body GVD.Window_Settings is
                      & Image (Image'First + 1 .. Image'Last)),
                     Gint (Get_Allocation_Width (Process.Data_Canvas)),
                     True);
-               Set (String_Gint
-                    ("Command_Height"
-                     & Image (Image'First + 1 .. Image'Last)),
-                    Gint (Get_Allocation_Height
-                           (Process.Command_Scrolledwindow)),
-                    True);
-               Set (String_Gint
-                    ("Editor_Height"
-                     & Image (Image'First + 1 .. Image'Last)),
-                    Gint (Get_Allocation_Height (Process.Editor_Vbox)),
-                    True);
+
+               if not Top.TTY_Mode then
+                  Set (String_Gint
+                       ("Command_Height"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Height
+                             (Process.Command_Scrolledwindow)),
+                       True);
+
+                  Set (String_Gint
+                       ("Editor_Height"
+                        & Image (Image'First + 1 .. Image'Last)),
+                       Gint (Get_Allocation_Height (Process.Editor_Vbox)),
+                       True);
+               end if;
+
                if Get_Active (Top.Call_Stack) then
                   Set (String_Gint
                        ("Stack_Width"
