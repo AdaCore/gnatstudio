@@ -372,6 +372,8 @@ package body Python_Module is
            (Kernel, Console,
             Focus_Widget        => Gtk_Widget (View),
             Module              => Python_Module_Id,
+            Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
             Desktop_Independent => True);
          Set_Focus_Child (Child);
          Set_Title (Child, -"Python");
