@@ -35,9 +35,9 @@ package SN.Xref_Pools is
    Xref_Suffix : constant String := ".xref";
    --  This suffix is used for generating xref file names.
    --  In fact generated names are constructed in this way:
-   --  F(Source_Filename) & Xref_Suffix, where F is a functions that
+   --  F(Source_Filename) & Xref_Suffix, where F is a function that
    --  generates some unique name from source file name.
-   --  Thus, "*." & Xref_Suffix is a mask to search all xref files.
+   --  Thus, "*" & Xref_Suffix is a mask to search all xref files.
 
    procedure Init (Pool : out Xref_Pool);
    --  Creates new empty pool.
@@ -58,12 +58,12 @@ package SN.Xref_Pools is
      (Source_Filename : String;
       Directory       : String;
       Pool            : Xref_Pool) return GNAT.OS_Lib.String_Access;
-   --  Returns unique xref file name associated with specified source file
+   --  Return unique xref file name associated with specified source file
    --  name. It does the following steps:
    --
    --  1. Generates some xref file name based on specified source file name.
    --  2. Checks if file with that name already exists in specified
-   --  directory. If not, generated name is stored in hashtabe using
+   --  directory. If not, generated name is stored in hashtable using
    --  source file name as the key. Also it creates that file in specified
    --  directory and returns its name.
    --  3. If generated file already exists, it makes modification to
