@@ -49,6 +49,7 @@ with Histories;
 with Projects.Registry;
 with Task_Manager;
 with Commands.Interactive;
+with VFS;
 
 package Glide_Kernel is
 
@@ -172,6 +173,31 @@ package Glide_Kernel is
    --  Return a string containing the GNAT version number.
    --  The string has the form "3.16w (20020610)"
 
+   -----------
+   -- Files --
+   -----------
+   --  The following subprograms are provided in addition to the ones provided
+   --  in vfs.ads.
+
+   function Create
+     (Name : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record;
+      Use_Source_Path : Boolean := True;
+      Use_Object_Path : Boolean := True) return VFS.Virtual_File;
+   --  Create a new file. This will automatically try to solve Name to an
+   --  absolute path if it currently is a base name.
+   --
+   --  If Name contains a relative path, the editor will open it as is. It
+   --  thus depends on the current directory, and should only be used for files
+   --  opened from the command line. As a result, Name might be found even
+   --  if it doesn't directly belong to a project.
+
+   function Create_Html
+     (Name   : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File;
+   --  Filename can be a full name or a base name, and can include ancors (e.g
+   --  "foo.html#anchor").
+
    -------------
    -- Queries --
    -------------
@@ -185,25 +211,24 @@ package Glide_Kernel is
 
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
-      Source_Filename : String) return Src_Info.LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File) return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
    --  null is returned if the LI file couldn't be parsed. It is guaranteed
    --  that the returned LI file has been fully parsed.
 
    function Other_File_Name
      (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Full_Name       : Boolean := True) return String;
-   --  Return the full path name (or base name if Full_Name is False) to the
-   --  other file associated with Source_Filename (the spec if Source_Filename
-   --  is a body or separate, the body if Source_Filename is the spec).
+      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the other file associated with Source_Filename (the spec if
+   --  Source_Filename is a body or separate, the body if Source_Filename is
+   --  the spec).
    --  The empty string is returned if the file wasn't found (and error
    --  messages are printed to the console appropriately).
 
    procedure Find_Declaration_Or_Overloaded
      (Kernel        : access Kernel_Handle_Record;
       Lib_Info      : Src_Info.LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : VFS.Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -218,7 +243,7 @@ package Glide_Kernel is
    procedure Find_Next_Body
      (Kernel      : access Kernel_Handle_Record;
       Lib_Info    : Src_Info.LI_File_Ptr;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Entity_Name : String;
       Line        : Positive;
       Column      : Positive;
@@ -252,7 +277,7 @@ package Glide_Kernel is
 
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
-      Filename : String) return Boolean;
+      Filename : VFS.Virtual_File) return Boolean;
    --  Whether Filename is currently opened in an editor.
 
    function Open_Files
@@ -618,7 +643,7 @@ package Glide_Kernel is
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record;
-      File   : String) return Gtkada.MDI.MDI_Child;
+      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child;
    --  Return the first MDI child associated to an editor for File.
    --  Return null if no such editor was found.
 
@@ -682,9 +707,9 @@ package Glide_Kernel is
    package Object_Idle is new Gtk.Main.Idle (Glib.Object.GObject);
    --  General Idle loop for a GObject.
 
-   type File_Project_Record (Length : Natural) is record
+   type File_Project_Record is record
       Project : Projects.Project_Type;
-      File    : String (1 .. Length);
+      File    : VFS.Virtual_File;
    end record;
 
    package File_Project_Cb is new Gtk.Handlers.User_Callback
@@ -712,27 +737,27 @@ package Glide_Kernel is
 
    procedure File_Edited
      (Handle  : access Kernel_Handle_Record;
-      File    : String);
+      File    : VFS.Virtual_File);
    --  Emits the "file_edited" signal.
 
    procedure File_Saved
      (Handle  : access Kernel_Handle_Record;
-      File    : String);
+      File    : VFS.Virtual_File);
    --  Emits the "file_saved" signal
 
    procedure File_Closed
      (Handle  : access Kernel_Handle_Record;
-      File    : String);
+      File    : VFS.Virtual_File);
    --  Emits the "file_closed" signal
 
    procedure File_Changed_On_Disk
      (Handle  : access Kernel_Handle_Record;
-      File    : String);
+      File    : VFS.Virtual_File);
    --  Emits the "file_changed_on_disk" signal
 
    procedure Compilation_Finished
      (Handle  : access Kernel_Handle_Record;
-      File    : String);
+      File    : VFS.Virtual_File);
    --  Emits the "compilation_finished" signal
 
    procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
@@ -807,13 +832,13 @@ package Glide_Kernel is
    --
    --  - "file_closed"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : String);
+   --                       File   : Virtual_File);
    --
    --    Emitted when the last editor for File has been closed.
    --
    --  - "file_changed_on_disk"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : String);
+   --                       File   : Virtual_File);
    --    Emitted when an external action has changed the contents of a
    --    file on the disk, such as VCS operations for example.
    --    File can be the absolute name of a file, or a directory, ending
@@ -840,7 +865,7 @@ package Glide_Kernel is
    --
    --  - "compilation_finished"
    --    procedure Handler (Handle : access Kernel_Handle_Record'Class;
-   --                       File   : String);
+   --                       File   : Virtual_File);
    --    Emitted when a compile operation has finished.
    --    File indicates the file that has just been compiled, in the case
    --    when only one file is compiled.

@@ -20,6 +20,7 @@
 
 with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
 with Glib.Properties;           use Glib.Properties;
 with Gdk.Window;                use Gdk.Window;
@@ -68,6 +69,7 @@ with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
 with Histories;                 use Histories;
 with Commands;                  use Commands;
+with VFS;                       use VFS;
 
 with Projects.Registry;         use Projects, Projects.Registry;
 
@@ -81,6 +83,7 @@ with Traces;                    use Traces;
 
 with Ada.Exceptions;            use Ada.Exceptions;
 with Ada.Text_IO;               use Ada.Text_IO;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
@@ -325,7 +328,7 @@ package body Glide_Kernel is
 
    function Get_File_Editor
      (Handle : access Kernel_Handle_Record;
-      File   : String) return Gtkada.MDI.MDI_Child
+      File   : VFS.Virtual_File) return Gtkada.MDI.MDI_Child
    is
       MDI : constant MDI_Window := Get_MDI (Handle);
    begin
@@ -336,7 +339,7 @@ package body Glide_Kernel is
       --  against that of the source editor module. The ID for that module
       --  needs to be moved to glide_kernel.ads.
 
-      return Find_MDI_Child_By_Name (MDI, File);
+      return Find_MDI_Child_By_Name (MDI, Full_Name (File));
    end Get_File_Editor;
 
    ---------------------------
@@ -440,20 +443,19 @@ package body Glide_Kernel is
 
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
-      Source_Filename : String) return Src_Info.LI_File_Ptr
+      Source_Filename : VFS.Virtual_File) return Src_Info.LI_File_Ptr
    is
       File : LI_File_Ptr;
       Project : constant Project_Type := Get_Project_From_File
         (Handle.Registry.all, Source_Filename);
       Handler : constant LI_Handler := Get_LI_Handler_From_File
-        (Glide_Language_Handler (Handle.Lang_Handler),
-         Source_Filename);
+        (Glide_Language_Handler (Handle.Lang_Handler), Source_Filename);
 
    begin
       if Handler = null then
          Trace (Me,
                 "Locate_From_Source_And_Complete: Unsupported_Language for "
-                & Source_Filename);
+                & Base_Name (Source_Filename));
          return No_LI_File;
 
       else
@@ -558,7 +560,7 @@ package body Glide_Kernel is
 
    procedure File_Edited
      (Handle : access Kernel_Handle_Record;
-      File   : String)
+      File   : VFS.Virtual_File)
    is
       procedure Internal
         (Handle : System.Address;
@@ -570,10 +572,11 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Edited_Signal & ASCII.NUL,
-         File & ASCII.NUL);
+         Full_Name (File) & ASCII.NUL);
 
       if not Is_Open (Handle, File) then
-         String_List_Utils.String_List.Append (Handle.Open_Files, File);
+         String_List_Utils.String_List.Append
+           (Handle.Open_Files, Full_Name (File));
       end if;
    end File_Edited;
 
@@ -583,7 +586,7 @@ package body Glide_Kernel is
 
    procedure File_Saved
      (Handle  : access Kernel_Handle_Record;
-      File    : String)
+      File    : VFS.Virtual_File)
    is
       procedure Internal
         (Handle : System.Address;
@@ -595,7 +598,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Saved_Signal & ASCII.NUL,
-         File & ASCII.NUL);
+         Full_Name (File) & ASCII.NUL);
    end File_Saved;
 
    -----------------
@@ -604,7 +607,7 @@ package body Glide_Kernel is
 
    procedure File_Closed
      (Handle  : access Kernel_Handle_Record;
-      File    : String)
+      File    : VFS.Virtual_File)
    is
       procedure Internal
         (Handle : System.Address;
@@ -618,9 +621,9 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Closed_Signal & ASCII.NUL,
-         File & ASCII.NUL);
+         Full_Name (File) & ASCII.NUL);
 
-      Remove_From_List (Handle.Open_Files, File);
+      Remove_From_List (Handle.Open_Files, Full_Name (File));
    end File_Closed;
 
    --------------------------
@@ -629,7 +632,7 @@ package body Glide_Kernel is
 
    procedure File_Changed_On_Disk
      (Handle  : access Kernel_Handle_Record;
-      File    : String)
+      File    : VFS.Virtual_File)
    is
       procedure Internal
         (Handle : System.Address;
@@ -640,7 +643,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          File_Changed_On_Disk_Signal & ASCII.NUL,
-         File & ASCII.NUL);
+         Full_Name (File) & ASCII.NUL);
    end File_Changed_On_Disk;
 
    --------------------------
@@ -649,7 +652,7 @@ package body Glide_Kernel is
 
    procedure Compilation_Finished
      (Handle  : access Kernel_Handle_Record;
-      File    : String)
+      File    : VFS.Virtual_File)
    is
       procedure Internal
         (Handle : System.Address;
@@ -661,7 +664,7 @@ package body Glide_Kernel is
       Internal
         (Get_Object (Handle),
          Compilation_Finished_Signal & ASCII.NUL,
-         File & ASCII.NUL);
+         Full_Name (File) & ASCII.NUL);
    end Compilation_Finished;
 
    -------------
@@ -670,16 +673,17 @@ package body Glide_Kernel is
 
    function Is_Open
      (Kernel   : access Kernel_Handle_Record;
-      Filename : String) return Boolean
+      Filename : VFS.Virtual_File) return Boolean
    is
       use String_List_Utils.String_List;
 
       Node : List_Node;
+      Full : constant String := Full_Name (Filename);
    begin
       Node := First (Kernel.Open_Files);
 
       while Node /= Null_Node loop
-         if Data (Node) = Filename then
+         if Data (Node) = Full then
             return True;
          end if;
 
@@ -1314,7 +1318,7 @@ package body Glide_Kernel is
    procedure Find_Next_Body
      (Kernel      : access Kernel_Handle_Record;
       Lib_Info    : LI_File_Ptr;
-      File_Name   : String;
+      File_Name   : VFS.Virtual_File;
       Entity_Name : String;
       Line        : Positive;
       Column      : Positive;
@@ -1482,7 +1486,7 @@ package body Glide_Kernel is
 
          Append (Model, It, Null_Iter);
          Set (Get_Object (Model), It'Address,
-              0, Get_Declaration_File_Of (Candidate) & ASCII.NUL,
+              0, Full_Name (Get_Declaration_File_Of (Candidate)) & ASCII.NUL,
               1, Gint (Get_Declaration_Line_Of (Candidate)),
               2, Gint (Get_Declaration_Column_Of (Candidate)),
               3, Entity_Name & ASCII.NUL,
@@ -1541,7 +1545,7 @@ package body Glide_Kernel is
    procedure Find_Declaration_Or_Overloaded
      (Kernel        : access Kernel_Handle_Record;
       Lib_Info      : Src_Info.LI_File_Ptr;
-      File_Name     : String;
+      File_Name     : VFS.Virtual_File;
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
@@ -1686,7 +1690,8 @@ package body Glide_Kernel is
 
       if Lib_Info = No_LI_File then
          Insert (Kernel,
-                 -"LI file not found for " & Get_Declaration_File_Of (Entity));
+                 -"LI file not found for "
+                 & Full_Name (Get_Declaration_File_Of (Entity)));
          Tree := Null_Scope_Tree;
          Node := Null_Scope_Tree_Node;
          return;
@@ -1696,7 +1701,7 @@ package body Glide_Kernel is
 
       if Tree = Null_Scope_Tree then
          Trace (Me, "Couldn't create scope tree for "
-                & Get_LI_Filename (Lib_Info));
+                & Base_Name (Get_LI_Filename (Lib_Info)));
          Node := Null_Scope_Tree_Node;
          return;
       end if;
@@ -1708,7 +1713,7 @@ package body Glide_Kernel is
                  -"Couldn't find the scope tree for " & Get_Name (Entity));
          Trace (Me, "Couldn't find entity "
                 & Get_Name (Entity) & " in "
-                & Get_LI_Filename (Lib_Info)
+                & Base_Name (Get_LI_Filename (Lib_Info))
                 & " at line" & Get_Declaration_Line_Of (Entity)'Img
                 & " column"  & Get_Declaration_Column_Of (Entity)'Img);
          Free (Tree);
@@ -1722,22 +1727,12 @@ package body Glide_Kernel is
 
    function Other_File_Name
      (Kernel          : access Kernel_Handle_Record;
-      Source_Filename : String;
-      Full_Name       : Boolean := True) return String
+      Source_Filename : VFS.Virtual_File) return VFS.Virtual_File
    is
       Project : constant Project_Type := Get_Project_From_File
         (Kernel.Registry.all, Source_Filename);
-      Other : constant String := Other_File_Name (Project, Source_Filename);
    begin
-      if Full_Name then
-         return Get_Full_Path_From_File
-           (Registry        => Get_Registry (Kernel),
-            Filename        => Other,
-            Use_Source_Path => True,
-            Use_Object_Path => False);
-      else
-         return Other;
-      end if;
+      return Other_File_Name (Project, Source_Filename);
    end Other_File_Name;
 
    ----------------------
@@ -2047,5 +2042,85 @@ package body Glide_Kernel is
            Get_Name (Context),
            Action_Context (Context));
    end Register_Context;
+
+   -----------------
+   -- Create_Html --
+   -----------------
+
+   function Create_Html
+     (Name   : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record) return VFS.Virtual_File
+   is
+      Top  : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
+      Full : GNAT.OS_Lib.String_Access;
+      Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Anchor : Natural := Index (Name, "#");
+   begin
+      if Is_Absolute_Path (Name) then
+         return Create (Full_Filename => Name);
+      end if;
+
+      if Anchor = 0 then
+         Anchor := Name'Last + 1;
+      end if;
+
+      if Path = null or else Path.all = "" then
+         Free (Path);
+         Path := new String'(Top.Prefix_Directory.all & "/doc/gps/html/");
+      end if;
+
+      Full := Locate_Regular_File
+        (Locale_From_UTF8 (Name (Name'First .. Anchor - 1)), Path.all);
+      Free (Path);
+
+      if Full = null then
+         return VFS.No_File;
+      else
+         declare
+            F : constant String := Locale_To_UTF8 (Full.all);
+         begin
+            Free (Full);
+            if Anchor <= Name'Last then
+               return Create (Full_Filename => F & Name (Anchor .. Name'Last));
+            else
+               return Create (Full_Filename => F);
+            end if;
+         end;
+      end if;
+   end Create_Html;
+
+   ------------
+   -- Create --
+   ------------
+
+   function Create
+     (Name : Glib.UTF8_String;
+      Kernel : access Kernel_Handle_Record;
+      Use_Source_Path : Boolean := True;
+      Use_Object_Path : Boolean := True) return VFS.Virtual_File is
+   begin
+      if Is_Absolute_Path (Name) then
+         return Create (Full_Filename => Name);
+
+      else
+         declare
+            Full : constant String := Get_Full_Path_From_File
+              (Registry        => Get_Registry (Kernel),
+               Filename        => Name,
+               Use_Source_Path => Use_Source_Path,
+               Use_Object_Path => Use_Object_Path);
+         begin
+            if Full /= "" then
+               return Create (Full_Filename => Full);
+            end if;
+         end;
+
+         --  Else just open the relative paths. This is mostly intended
+         --  for files opened from the command line.
+         return Create
+           (Full_Filename => Locale_To_UTF8
+              (Normalize_Pathname (Locale_From_UTF8 (Name))));
+      end if;
+   end Create;
 
 end Glide_Kernel;
