@@ -43,6 +43,7 @@ with Ada.Unchecked_Deallocation;
 with Commands;    use Commands;
 with Glide_Kernel;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
+with Generic_List;
 with Src_Info;
 
 with String_List_Utils;
@@ -565,35 +566,15 @@ package Src_Editor_Buffer is
 
    type Block_Record is record
       Indentation_Level : Integer := 0;
-      --  Represent the block-indentation level of the current line.
-      --  Lines that start a block have a positive indentation level,
-      --  Lines that end a block have a negative indentation level.
-      --  Lines that don't modifiy the block indentation have a null
-      --  indentation level.
-      --  The absolute value represents the number of blocks started/ended.
-      --
-      --  Example of indentation levels :
-      --
-      --  void main (void)            0
-      --  {                          +1
-      --      int a,b;                0
-      --                              0
-      --      if (a)                  0
-      --      {                      +1
-      --         if (a) {  }          0
-      --         if (a) {            +1
-      --         }}                  -2
-      --  }                          -1
+      --  Represent the indentation level of the block.
 
       Offset            : Integer := 0;
       --  The indentation offset, of the block (ie typically the column of the
       --  starting entity).
 
-      Other_Line        : Integer := 0;
-      --  Indicates the other line that corresponds to the beginning/end of
-      --  the block. For example, if the current block is a line end, indicates
-      --  the starting line of the corresponding block.
-      --  Only valid if Indentation_Level /= 0.
+      First_Line        : Integer := 0;
+      Last_Line         : Integer := 0;
+      --  Indicate the lines that bound the block.
 
       Block_Type        : Language.Language_Category := Language.Cat_Unknown;
       --  Indicates the type of the block, if Indentation_Level /= 0.
@@ -614,6 +595,12 @@ package Src_Editor_Buffer is
 
    --  <signals>
    --  The following new signals are defined for this widget:
+   --
+   --  - "cursor_position_changed"
+   --    procedure Handler (Buffer : Gtk_Object_Record'Class;
+   --                       Line   : Gint;
+   --                       Column : Gint);
+   --    Emitted when the cursor position changes.
    --
    --  - "side_column_changed"
    --    procedure Handler (Buffer : Gtk_Object_Record'Class);
@@ -641,13 +628,21 @@ private
    -- Line highlighting --
    -----------------------
 
+   type Block_Access is access Block_Record;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Block_Record, Block_Access);
+
+   package Block_List is new Generic_List
+     (Block_Access, Free => Unchecked_Free);
+
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Boolean_Array, Boolean_Array_Access);
 
-   New_Block : constant Block_Record := (0, 0, 0, Language.Cat_Unknown, null);
+   New_Block : constant Block_Record :=
+     (0, 0, 0, 0, Language.Cat_Unknown, null);
 
    type Line_Data_Record is record
       --  The following corresponds to line highlighting.
@@ -660,14 +655,12 @@ private
       --  For simplicity, the range of this array should match the range of
       --  the array of categories in the cache.
 
-      Block              : Block_Record;
-      --  Data relative to possible block start/end.
-
-      Collapsed          : Boolean := False;
-      --  Whether the line is currently collapsed.
+      Block              : Block_Access;
+      --  Points to the corresponding block, or null if the line doesn't belong
+      --  to a block.
    end record;
 
-   New_Line_Data : constant Line_Data_Record := (null, null, New_Block, False);
+   New_Line_Data : constant Line_Data_Record := (null, null, null);
 
    type Line_Data_Array is array (Natural range <>) of Line_Data_Record;
    type Line_Data_Array_Access is access Line_Data_Array;
@@ -829,6 +822,9 @@ private
 
       Parse_Blocks : Boolean := False;
       --  Whether the block information should be parsed.
+
+      Blocks       : Block_List.List;
+      --  A cache structure containing all the blocks in the buffer.
    end record;
 
 end Src_Editor_Buffer;
