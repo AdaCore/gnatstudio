@@ -379,30 +379,19 @@ package body Docgen.Html_Output is
       Info   : Doc_Info;
       Level  : Natural;
       Indent : Natural) is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-      Put_Line (File,
-                "<TABLE WIDTH=""1%"" "
-                & "CELLPADDING=""0"" CELLSPACING=""0"">"
-                & "<TR><TD><PRE>"
-                & Space.all
-                & "</PRE></TD>"
-                & "<TD bgcolor=""#9999FF""><PRE>"
-                & "<H" & Image (Level) & "><B>"
-                & Info.Subtitle_Name.all
-                & "</B></H" & Image (Level) & ">"
-                & "</PRE></TD></TR></TABLE>");
-      Free (Space);
+      Put_Line
+        (File,
+         "<TABLE WIDTH=""1%"" "
+         & "CELLPADDING=""0"" CELLSPACING=""0"">"
+         & "<TR><TD><PRE>"
+         & (1 .. Level * Indent => ' ')
+         & "</PRE></TD>"
+         & "<TD bgcolor=""#9999FF""><PRE>"
+         & "<H" & Image (Level) & "><B>"
+         & Info.Subtitle_Name.all
+         & "</B></H" & Image (Level) & ">"
+         & "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Subtitle;
 
    ------------------------
@@ -430,18 +419,9 @@ package body Docgen.Html_Output is
       Level  : Natural;
       Indent : Natural)
    is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Space : GNAT.OS_Lib.String_Access;
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
+      Space := new String'(1 .. Level * Indent => ' ');
 
       if Info.Info_Type = Package_Info then
          --  This package doesn't contain any declaration. Its header is
@@ -522,27 +502,14 @@ package body Docgen.Html_Output is
       File   : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info   : Doc_Info;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Indent : Natural) is
    begin
-
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
       Put_Line
         (File,
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -563,7 +530,6 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_With;
 
    ------------------
@@ -571,27 +537,14 @@ package body Docgen.Html_Output is
    ------------------
 
    procedure Doc_HTML_Var
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
+     (B                : access Backend_HTML;
+      Kernel           : access Kernel_Handle_Record'Class;
+      File             : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Info             : Doc_Info;
+      Level            : Natural;
+      Indent           : Natural) is
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Var_Entity.Entity))
@@ -601,7 +554,7 @@ package body Docgen.Html_Output is
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Level * Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -620,9 +573,7 @@ package body Docgen.Html_Output is
          False,
          Info.Doc_Info_Options.Process_Body_Files,
          Info);
-
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_Var;
 
    ------------------------
@@ -636,21 +587,8 @@ package body Docgen.Html_Output is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info   : Doc_Info;
       Level  : Natural;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Indent : Natural) is
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Exception_Entity.Entity))
@@ -660,7 +598,7 @@ package body Docgen.Html_Output is
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Level * Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -679,9 +617,7 @@ package body Docgen.Html_Output is
          False,
          Info.Doc_Info_Options.Process_Body_Files,
          Info);
-
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_Exception;
 
    -------------------
@@ -689,27 +625,14 @@ package body Docgen.Html_Output is
    -------------------
 
    procedure Doc_HTML_Type
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
+     (B                : access Backend_HTML;
+      Kernel           : access Kernel_Handle_Record'Class;
+      File             : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Level            : Natural;
+      Indent           : Natural) is
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Type_Entity.Entity))
@@ -719,7 +642,7 @@ package body Docgen.Html_Output is
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Level * Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -739,9 +662,7 @@ package body Docgen.Html_Output is
          False,
          Info.Doc_Info_Options.Process_Body_Files,
          Info);
-
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_Type;
 
    -----------------------
@@ -760,19 +681,10 @@ package body Docgen.Html_Output is
       Child_Node    : List_Entity_Handle.List_Node;
       Item_Doc_File : String_Access;
       Space         : GNAT.OS_Lib.String_Access;
-      Temp          : GNAT.OS_Lib.String_Access;
    begin
       Put_Line
         (File, "<TABLE BGCOLOR=""white"" WIDTH=""100%""><TR><TD>");
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
+      Space := new String'(1 .. Level * Indent => ' ');
 
       --  Print parents
       if Info.Tagged_Entity.Number_Of_Parents > 0 then
@@ -927,6 +839,7 @@ package body Docgen.Html_Output is
                             & "</PRE></TD><TR>");
                end if;
             end if;
+
             Child_Node
               := List_Entity_Handle.Next (Child_Node);
          end loop;
@@ -937,6 +850,7 @@ package body Docgen.Html_Output is
                    & "<B>No child</B>"
                    & "</PRE></TD></TR>");
       end if;
+
       Free (Space);
       Put_Line (File, "</TD></TR></TABLE>");
    end Doc_Family_HTML;
@@ -946,27 +860,14 @@ package body Docgen.Html_Output is
    --------------------
 
    procedure Doc_HTML_Entry
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : Ada.Text_IO.File_Type;
+     (B                : access Backend_HTML;
+      Kernel           : access Kernel_Handle_Record'Class;
+      File             : Ada.Text_IO.File_Type;
       List_Ref_In_File : in out List_Reference_In_File.List;
-      Info   : Doc_Info;
-      Level  : Natural;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Info             : Doc_Info;
+      Level            : Natural;
+      Indent           : Natural) is
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
       Put_Line
         (File,
          "  <A NAME="""
@@ -977,7 +878,7 @@ package body Docgen.Html_Output is
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Level * Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -998,7 +899,6 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_Entry;
 
    -------------------------
@@ -1039,19 +939,9 @@ package body Docgen.Html_Output is
       use type Basic_Types.String_Access;
       Node   : Type_Reference_List.List_Node;
       Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
    begin
       if not Type_Reference_List.Is_Empty (Local_List) then
-
-         Space := new String'("");
-         if Indent /= 0 then
-            for j in 1 .. (Level * Indent) loop
-               Temp := new String'(" " & Space.all);
-               Free (Space);
-               Space := new String'(Temp.all);
-               Free (Temp);
-            end loop;
-         end if;
+         Space := new String'(1 .. Level * Indent => ' ');
 
          if Called_Subp then
             Put_Line (File, "<TR><TD><PRE>"
@@ -1121,8 +1011,10 @@ package body Docgen.Html_Output is
                        (Type_Reference_List.Data (Node).Entity))
                   & "</PRE></TD></TR>");
             end if;
+
             Node := Type_Reference_List.Next (Node);
          end loop;
+
          Free (Space);
       end if;
    end Print_Ref_List_HTML;
@@ -1138,21 +1030,8 @@ package body Docgen.Html_Output is
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info   : Doc_Info;
       Level  : Natural;
-      Indent : Natural)
-   is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Indent : Natural) is
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
       Put_Line
         (File, "  <A NAME="""
          & Image (Get_Declaration_Line_Of (Info.Subprogram_Entity.Entity))
@@ -1162,7 +1041,7 @@ package body Docgen.Html_Output is
          "<TABLE BGCOLOR=""WHITE"" WIDTH=""1%"" "
          & "CELLPADDING=""0"" CELLSPACING=""0"">"
          & "<TR><TD><PRE>"
-         & Space.all
+         & (1 .. Level * Indent => ' ')
          & "</PRE></TD>"
          & "<TD bgcolor=""#DDDDDD""><PRE>");
 
@@ -1183,7 +1062,6 @@ package body Docgen.Html_Output is
          Info);
 
       Put_Line (File, "</PRE></TD></TR></TABLE>");
-      Free (Space);
    end Doc_HTML_Subprogram;
 
    ---------------------
@@ -1225,29 +1103,18 @@ package body Docgen.Html_Output is
       File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info;
       Level  : Natural;
-      Indent : Natural) is
+      Indent : Natural)
+   is
       pragma Unreferenced (Kernel);
-      Space : GNAT.OS_Lib.String_Access;
-      Temp : GNAT.OS_Lib.String_Access;
    begin
-      Put_Line (File,
-                "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD><PRE>");
-
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
+      Put_Line
+        (File,
+         "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD><PRE>");
 
       Put_Line (File, "<H" & Image (Level) &"><B>"
-                & Space.all
+                & (1 .. Level * Indent => ' ')
                 & Info.Header_Title.all
                 & "</B></H" & Image (Level) & ">");
-      Free (Space);
       Put_Line (File, "</PRE></TD></TR></TABLE>");
    end Doc_HTML_Header_Private;
 
@@ -1316,10 +1183,12 @@ package body Docgen.Html_Output is
       Put_Line (File, "</PRE></TD></TR></TABLE>");
       Put_Line (File, "<H4> <A HREF=""index_sub.htm"" " &
                 "TARGET=""index""> Subprogram Index </A> <BR>");
+
       if Info.Doc_Info_Options.Tagged_Types then
          Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
                    "TARGET=""index""> Tagged Type Index </A> <BR>");
       end if;
+
       Put_Line (File, " <A HREF=""index_type.htm"" " &
                 "TARGET=""index""> Type Index </A> </H4><BR>");
       Put_Line (File, "<HR> <BR>");
@@ -1349,11 +1218,13 @@ package body Docgen.Html_Output is
       Put_Line (File, "<H4> <A HREF=""index_unit.htm""  " &
                 "target=""index""> Unit Index </A> <BR>");
       New_Line (File);
+
       if Info.Doc_Info_Options.Tagged_Types then
          Put_Line (File, "<A HREF=""index_tagged_type.htm""  " &
                 "TARGET=""index""> Tagged Type Index </A> <BR>");
          New_Line (File);
       end if;
+
       Put_Line (File, " <A HREF=""index_type.htm"" " &
                 "TARGET=""index""> Type Index </A> </H4><BR>");
       New_Line (File);
@@ -1388,11 +1259,13 @@ package body Docgen.Html_Output is
       Put_Line (File, "<H4> <A HREF=""index_unit.htm"" " &
                 "TARGET=""index""> Unit Index </A> <BR>");
       New_Line (File);
+
       if Info.Doc_Info_Options.Tagged_Types then
          Put_Line (File, "<A HREF=""index_tagged_type.htm"" " &
                    "TARGET=""index""> Tagged Type Index </A> <BR>");
          New_Line (File);
       end if;
+
       Put_Line (File, " <A HREF=""index_sub.htm"" " &
                 "TARGET=""index""> Subprogram Index </A></H4> <BR>");
       New_Line (File);
@@ -1446,7 +1319,7 @@ package body Docgen.Html_Output is
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info)
    is
-      Item_Doc_File      : String_Access;
+      Item_Doc_File : String_Access;
    begin
       case Info.Doc_Family is
          when Main =>
@@ -1624,19 +1497,9 @@ package body Docgen.Html_Output is
       Level  : Natural;
       Indent : Natural)
    is
-      Space  : GNAT.OS_Lib.String_Access;
-      Temp   : GNAT.OS_Lib.String_Access;
+      Space : GNAT.OS_Lib.String_Access;
    begin
-      Space := new String'("");
-      if Indent /= 0 then
-         for j in 1 .. (Level * Indent) loop
-            Temp := new String'(" " & Space.all);
-            Free (Space);
-            Space := new String'(Temp.all);
-            Free (Temp);
-         end loop;
-      end if;
-
+      Space := new String'(1 .. Level * Indent => ' ');
       Put_Line
         (File,
          "<TABLE BGCOLOR=""white"" WIDTH=""1%"" "
@@ -1654,7 +1517,6 @@ package body Docgen.Html_Output is
          & Info.Description.all
          & "</PRE></TD></TR>"
          & "</TABLE>");
-
       Free (Space);
    end Doc_HTML_Description;
 
