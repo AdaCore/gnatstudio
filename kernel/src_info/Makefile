@@ -18,6 +18,7 @@ distrib:
 	$(CP) ../../common/src/sdefault.adb common
 	$(CP) ../../common/src/file_utils.ad? common
 	$(CP) ../../common/src/file-utils.c common
+	$(CP) ../../common/src/glide_intl.ad? common
 	$(CP) ../../gvd/common/htables.ad? common
 	$(CP) ../../gvd/common/string_hash.ad? common
 	$(CP) ../../gvd/common/traces.ad? common
@@ -40,3 +41,5 @@ distrib:
 
 clean:
 	@for i in standalone_obj/* ; do [ -f $$i ] && rm -f $$i || true; done
+force:
+
