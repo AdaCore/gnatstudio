@@ -158,7 +158,7 @@ package body Src_Info.CPP is
    is
       pragma Unreferenced (Handler);
       pragma Unreferenced (List);
-      pragma Unreferenced (Project);
+      pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
       SN_Table : SN_Table_Array;
       SN_Dir   : String := Prj_API.Object_Path
