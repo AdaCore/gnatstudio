@@ -174,7 +174,11 @@ package body Glide_Main_Window is
       Gtk.Rc.Parse_String
         ("gtk-font-name=""" &
          To_String (Get_Pref (Kernel, Default_Font)) &
-           '"' & ASCII.LF & "gtk-key-theme-name=""" &
+         '"' & ASCII.LF &
+         "gtk-can-change-accels=" &
+         Integer'Image (Boolean'Pos
+           (Get_Pref (Kernel, Can_Change_Accels))) & ASCII.LF &
+         "gtk-key-theme-name=""" &
          Get_Pref (Kernel, Key_Theme_Name) & '"');
 
       if Get_Pref (Kernel, Toolbar_Show_Text) then
