@@ -37,7 +37,8 @@ package body Task_Manager is
    function Get_Or_Create_Task_Queue
      (Manager  : Task_Manager_Access;
       Queue_Id : String;
-      Active   : Boolean) return Integer;
+      Active   : Boolean;
+      Show_Bar : Boolean) return Integer;
    --  Return an index in Manager.Queues corresponding to Queue_Id;
 
    function Active_Incremental
@@ -373,11 +374,13 @@ package body Task_Manager is
    function Get_Or_Create_Task_Queue
      (Manager  : Task_Manager_Access;
       Queue_Id : String;
-      Active   : Boolean) return Integer is
+      Active   : Boolean;
+      Show_Bar : Boolean) return Integer is
    begin
       if Manager.Queues = null then
          Manager.Queues := new Task_Queue_Array (1 .. 1);
          Manager.Queues (1).Id := new String'(Queue_Id);
+         Manager.Queues (1).Show_Bar := Show_Bar;
 
          if Active then
             Manager.Passive_Index := 2;
@@ -412,6 +415,8 @@ package body Task_Manager is
                  Manager.Queues.all;
                New_Queues (New_Queues'First).Id := new String'(Queue_Id);
 
+               New_Queues (New_Queues'First).Show_Bar := Show_Bar;
+
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
 
@@ -423,6 +428,8 @@ package body Task_Manager is
                  (Manager.Queues'First .. Manager.Queues'Last) :=
                  Manager.Queues.all;
                New_Queues (New_Queues'Last).Id := new String'(Queue_Id);
+
+               New_Queues (New_Queues'Last).Show_Bar := Show_Bar;
 
                Unchecked_Free (Manager.Queues);
                Manager.Queues := new Task_Queue_Array'(New_Queues);
@@ -441,10 +448,11 @@ package body Task_Manager is
      (Manager  : Task_Manager_Access;
       Command  : Command_Access;
       Active   : Boolean;
+      Show_Bar : Boolean;
       Queue_Id : String := "")
    is
       Task_Queue : constant Integer :=
-        Get_Or_Create_Task_Queue (Manager, Queue_Id, Active);
+        Get_Or_Create_Task_Queue (Manager, Queue_Id, Active, Show_Bar);
    begin
       Command_Queues.Append (Manager.Queues (Task_Queue).Queue, Command);
 
