@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -280,8 +280,8 @@ package body SN.Xref_Pools is
       Directory       : String;
       Pool            : Xref_Pool) return VFS.Virtual_File
    is
-      Data  : Xref_Elmt_Ptr;
-      N     : Integer := 0;
+      Data   : Xref_Elmt_Ptr;
+      N      : Integer := 0;
       Source : String_Access := new String'(Full_Name (Source_Filename).all);
 
    begin
@@ -302,7 +302,7 @@ package body SN.Xref_Pools is
          declare
             Full_Name : constant Virtual_File :=
               Generate_Filename (Source_Filename, Directory, N);
-            FD          : File_Descriptor;
+            FD        : File_Descriptor;
          begin
             if not Is_Directory (Directory) then
                Make_Dir (Directory);

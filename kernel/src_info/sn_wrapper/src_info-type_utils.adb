@@ -687,9 +687,9 @@ package body Src_Info.Type_Utils is
    -------------------
 
    function Cmp_Arg_Types
-     (Buffer_A, Buffer_B     : Buffer_String;
-      Args_A, Args_B         : Segment;
-      Strict                 : Boolean := False)
+     (Buffer_A, Buffer_B : Buffer_String;
+      Args_A, Args_B     : Segment;
+      Strict             : Boolean := False)
       return Boolean
    is
    begin
