@@ -27,13 +27,14 @@ with Gtk.Combo;           use Gtk.Combo;
 with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.GEntry;          use Gtk.GEntry;
 with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Label;           use Gtk.Label;
 with Gtk.List;            use Gtk.List;
 with Gtk.Notebook;        use Gtk.Notebook;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
 with Gtk.Spin_Button;     use Gtk.Spin_Button;
 with Gtk.Stock;           use Gtk.Stock;
-with Gtk.Table;           use Gtk.Table;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtkada.Handlers;     use Gtkada.Handlers;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
@@ -61,6 +62,10 @@ with Traces;               use Traces;
 package body Switches_Editors is
 
    Me : constant Debug_Handle := Create ("Switches_Editors");
+
+   Conversion_Data_String : constant String := "gps_switches_to_window";
+
+   package Object_User_Data is new Glib.Object.User_Data (GObject);
 
    procedure Filter_Switches
      (Editor   : access Switches_Edit_Record'Class;
@@ -91,23 +96,22 @@ package body Switches_Editors is
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Prj.Project_Id;
-      File_Name : String);
-   --  Fill the editor with the switches information for File_Name (or the
-   --  default switches if File_Name is the empty string.
+      Files     : Argument_List);
+   --  Fill the editor with the switches information for Files (or the
+   --  default switches if Files is empty).
 
    procedure Close_Switch_Editor
-     (Switches  : access Gtk_Widget_Record'Class;
-      Context   : Selection_Context_Access;
-      File_Name : String);
+     (Switches  : access Switches_Edit_Record'Class;
+      Project   : Project_Node_Id;
+      Project_View : Project_Id;
+      Files     : Argument_List);
    --  Called when the user has closed a switch editor for a specific file.
    --  This modifies the edited project to reflect the changes done in the
    --  dialog.
    --  File_Name is the name of the file whose switches we are changing, or ""
    --  if we are changing the default switches.
 
-   procedure Revert_To_Default
-     (Switches : access GObject_Record'Class;
-      Context  : Selection_Context_Access);
+   procedure Revert_To_Default (Switches : access Gtk_Widget_Record'Class);
    --  Revert to the default switches in the editor
    --  ??? Should this be specific to a page
 
@@ -120,6 +124,54 @@ package body Switches_Editors is
    --  the memory for the array that was passed as a parameter (we either
    --  return it directly, or reuse the strings from it for the output).
 
+   procedure Set_Visible_Pages
+     (Editor : access Switches_Edit_Record'Class; Pages : Page_Filter);
+   --  Only the pages described in Pages will be visible. All others pages are
+   --  shown
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class);
+   --  Called when the editor is destroyed.
+
+   function Get_Pages
+     (Editor : access Switches_Edit_Record'Class) return Page_Filter;
+   --  Return the list of pages that are visible in the switches editor.
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Editor : access Gtk_Widget_Record'Class) is
+      Ed : Switches_Edit := Switches_Edit (Editor);
+   begin
+      if (Ed.Pages and Gnatmake_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Make_Switches));
+      end if;
+
+      if (Ed.Pages and Ada_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Ada_Switches));
+      end if;
+
+      if (Ed.Pages and C_Page) = 0 then
+         Unref (Gtk_Widget (Ed.C_Switches));
+      end if;
+
+      if (Ed.Pages and Cpp_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Cpp_Switches));
+      end if;
+
+      if (Ed.Pages and Pretty_Printer_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Pp_Switches));
+      end if;
+
+      if (Ed.Pages and Binder_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Binder_Switches));
+      end if;
+
+      if (Ed.Pages and Linker_Page) = 0 then
+         Unref (Gtk_Widget (Ed.Linker_Switches));
+      end if;
+   end On_Destroy;
+
    -------------
    -- Gtk_New --
    -------------
@@ -128,73 +180,98 @@ package body Switches_Editors is
    begin
       Editor := new Switches_Edit_Record;
       Switches_Editor_Pkg.Initialize (Editor);
+
+      Widget_Callback.Connect
+        (Editor, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
    end Gtk_New;
 
-   -------------------
-   -- Destroy_Pages --
-   -------------------
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
 
-   procedure Destroy_Pages
-     (Editor : access Switches_Edit_Record; Pages : Page_Filter) is
+   procedure Set_Visible_Pages
+     (Editor : access Switches_Edit_Record'Class; Pages : Page_Filter)
+   is
+      procedure Hide_Or_Show
+        (Page   : Page_Filter;
+         Label  : Gtk_Label;
+         Widget : access Gtk_Widget_Record'Class;
+         Num    : Gint);
+      --  Hide or show a page
+
+      ------------------
+      -- Hide_Or_Show --
+      ------------------
+
+      procedure Hide_Or_Show
+        (Page   : Page_Filter;
+         Label  : Gtk_Label;
+         Widget : access Gtk_Widget_Record'Class;
+         Num    : Gint) is
+      begin
+         if (Editor.Pages and Page) /= (Pages and Page) then
+            if (Pages and Page) = 0 then
+               Ref (Widget);
+               Ref (Label);
+               Remove_Page (Editor.Notebook,
+                            Page_Num (Editor.Notebook, Widget));
+            else
+               Insert_Page (Editor.Notebook, Widget, Label, Num);
+               Show_All (Widget);
+               Unref (Widget);
+               Unref (Label);
+            end if;
+         end if;
+      end Hide_Or_Show;
+
    begin
-      Editor.Pages := Editor.Pages and not Pages;
+      Hide_Or_Show (Gnatmake_Page, Editor.Make_Label, Editor.Make_Switches, 0);
+      Hide_Or_Show (Ada_Page, Editor.Ada_Label, Editor.Ada_Switches, 1);
+      Hide_Or_Show (C_Page, Editor.C_Label, Editor.C_Switches, 2);
+      Hide_Or_Show (Cpp_Page, Editor.Cpp_Label, Editor.Cpp_Switches, 3);
+      Hide_Or_Show
+        (Pretty_Printer_Page, Editor.Pp_Label, Editor.Pp_Switches, 4);
+      Hide_Or_Show
+        (Binder_Page, Editor.Binder_Label, Editor.Binder_Switches, 5);
+      Hide_Or_Show
+        (Linker_Page, Editor.Linker_Label, Editor.Linker_Switches, 5);
+      Editor.Pages := Pages;
+   end Set_Visible_Pages;
 
-      if Editor.Make_Switches /= null
-        and then (Pages and Gnatmake_Page) /= 0
-      then
-         Destroy (Editor.Make_Switches);
-         Editor.Make_Switches := null;
-      end if;
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
 
-      if Editor.Ada_Switches /= null
-        and then (Pages and Ada_Page) /= 0
-      then
-         Destroy (Editor.Ada_Switches);
-         Editor.Ada_Switches := null;
-      end if;
+   procedure Set_Visible_Pages
+     (Editor : access Switches_Edit_Record; Languages : Argument_List)
+   is
+      Pages : Page_Filter := Gnatmake_Page or Binder_Page or Linker_Page;
+   begin
+      for J in Languages'Range loop
+         declare
+            Lang : String := Languages (J).all;
+         begin
+            Lower_Case (Lang);
 
-      if Editor.C_Switches /= null
-        and then (Pages and C_Page) /= 0
-      then
-         Destroy (Editor.C_Switches);
-         Editor.C_Switches := null;
-      end if;
-
-      if Editor.Cpp_Switches /= null
-        and then (Pages and Cpp_Page) /= 0
-      then
-         Destroy (Editor.Cpp_Switches);
-         Editor.Cpp_Switches := null;
-      end if;
-
-      if Editor.Pp_Switches /= null
-        and then (Pages and Pretty_Printer_Page) /= 0
-      then
-         Destroy (Editor.Pp_Switches);
-         Editor.Pp_Switches := null;
-      end if;
-
-      if Editor.Binder_Switches /= null
-        and then (Pages and Binder_Page) /= 0
-      then
-         Destroy (Editor.Binder_Switches);
-         Editor.Binder_Switches := null;
-      end if;
-
-      if Editor.Linker_Switches /= null
-        and then (Pages and Linker_Page) /= 0
-      then
-         Destroy (Editor.Linker_Switches);
-         Editor.Linker_Switches := null;
-      end if;
-   end Destroy_Pages;
+            if Lang = "ada" then
+               Pages := Pages or Ada_Page or Pretty_Printer_Page;
+            elsif Lang = "c" then
+               Pages := Pages or C_Page;
+            elsif Lang = "c++" then
+               Pages := Pages or Cpp_Page;
+            end if;
+         end;
+      end loop;
+      Set_Visible_Pages (Editor, Pages);
+   end Set_Visible_Pages;
 
    ---------------
    -- Get_Pages --
    ---------------
 
    function Get_Pages
-     (Editor : access Switches_Edit_Record) return Page_Filter is
+     (Editor : access Switches_Edit_Record'Class) return Page_Filter is
    begin
       return Editor.Pages;
    end Get_Pages;
@@ -209,9 +286,23 @@ package body Switches_Editors is
       if Get_Parent (Editor.Vbox2) = Gtk_Widget (Editor) then
          Ref (Editor.Vbox2);
          Unparent (Editor.Vbox2);
+         Object_User_Data.Set
+           (Editor.Vbox2, GObject (Editor), Conversion_Data_String);
       end if;
       return Gtk_Widget (Editor.Vbox2);
    end Get_Window;
+
+   -----------------
+   -- From_Window --
+   -----------------
+
+   function From_Window
+     (Window : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Switches_Edit is
+   begin
+      return Switches_Edit
+        (Object_User_Data.Get (Window, Conversion_Data_String));
+   end From_Window;
 
    ---------------------------------
    -- Normalize_Compiler_Switches --
@@ -1167,161 +1258,217 @@ package body Switches_Editors is
    -----------------------
 
    procedure Revert_To_Default
-     (Switches : access GObject_Record'Class;
-      Context  : Selection_Context_Access) is
+     (Switches : access Gtk_Widget_Record'Class) is
    begin
       Fill_Editor
         (Switches_Edit (Switches),
-         Project_Information (File_Selection_Context_Access (Context)),
-         "");
+         Switches_Edit (Switches).Project_View,
+         (1 .. 0 => null));
    end Revert_To_Default;
+
+   ----------------------
+   -- Generate_Project --
+   ----------------------
+
+   function Generate_Project
+     (Switches     : access Switches_Edit_Record'Class;
+      Kernel       : access Kernel_Handle_Record'Class;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
+      Files        : Argument_List) return Boolean
+   is
+      function Change_Switches
+        (Tool      : Tool_Names;
+         Pkg_Name  : String;
+         Language  : Name_Id;
+         File_Name : String) return Boolean;
+      --  Changes the switches for a specific package and tool.
+
+      function Process_File (File_Name : String) return Boolean;
+      --  Generate the switches for a specific file (or the default switches if
+      --  File_Name is the empty string). Return True if the project was
+      --  changed.
+
+      ---------------------
+      -- Change_Switches --
+      ---------------------
+
+      function Change_Switches
+        (Tool : Tool_Names;
+         Pkg_Name : String;
+         Language : Name_Id;
+         File_Name : String) return Boolean
+      is
+         Args     : Argument_List := Get_Switches (Switches, Tool);
+         Value    : Variable_Value;
+         Is_Default_Value : Boolean;
+      begin
+         if Project_View = No_Project then
+            Is_Default_Value := False;
+
+         else
+            Get_Switches
+              (Project          => Project_View,
+               In_Pkg           => Pkg_Name,
+               File             => File_Name,
+               Language         => Language,
+               Value            => Value,
+               Is_Default_Value => Is_Default_Value);
+
+            --  Check if we in fact have the initial value
+            declare
+               Default_Args : Argument_List :=
+                 Normalize_Compiler_Switches (Tool, To_Argument_List (Value));
+            begin
+               Is_Default_Value := Is_Equal (Default_Args, Args);
+               Free (Default_Args);
+            end;
+         end if;
+
+         if not Is_Default_Value then
+            if File_Name /= "" then
+               if Args'Length /= 0 then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Pkg_Name           => Pkg_Name,
+                     Scenario_Variables =>
+                       Scenario_Variables (Kernel),
+                     Attribute_Name     => Get_Name_String (Name_Switches),
+                     Values             => Args,
+                     Attribute_Index    => File_Name,
+                     Prepend            => False);
+               else
+                  Delete_Attribute
+                    (Project            => Project,
+                     Pkg_Name           => Pkg_Name,
+                     Scenario_Variables =>
+                       Scenario_Variables (Kernel),
+                     Attribute_Name     => Get_Name_String (Name_Switches),
+                     Attribute_Index    => File_Name);
+               end if;
+
+            elsif Args'Length /= 0 then
+               Update_Attribute_Value_In_Scenario
+                 (Project           => Project,
+                  Pkg_Name          => Pkg_Name,
+                  Scenario_Variables =>
+                    Scenario_Variables (Kernel),
+                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
+                  Values            => Args,
+                  Attribute_Index   => Get_Name_String (Language),
+                  Prepend           => False);
+
+            else
+               Delete_Attribute
+                 (Project           => Project,
+                  Pkg_Name          => Pkg_Name,
+                  Scenario_Variables =>
+                    Scenario_Variables (Kernel),
+                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
+                  Attribute_Index   => Get_Name_String (Language));
+            end if;
+         end if;
+         Free (Args);
+
+         return not Is_Default_Value;
+      end Change_Switches;
+
+      ------------------
+      -- Process_File --
+      ------------------
+
+      function Process_File (File_Name : String) return Boolean is
+         Changed : Boolean := False;
+      begin
+         if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
+            --  ??? Currently, we only edit the default switches for Ada
+            Changed := Changed or Change_Switches
+              (Gnatmake, "builder", Snames.Name_Ada, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and Ada_Page) /= 0 then
+            Changed := Changed or Change_Switches
+              (Ada_Compiler, "compiler", Snames.Name_Ada, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and C_Page) /= 0 then
+            Changed := Changed or Change_Switches
+              (C_Compiler, "compiler", Snames.Name_C, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and Cpp_Page) /= 0 then
+            Changed := Changed or Change_Switches
+              (Cpp_Compiler, "compiler", Name_C_Plus_Plus, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
+            --  ??? Currently, we only edit the default switches for Ada
+            Changed := Changed or Change_Switches
+              (Pretty_Printer, "pretty_printer", Snames.Name_Ada, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and Binder_Page) /= 0 then
+            --  ??? Currently, we only edit the default switches for Ada
+            Changed := Changed or Change_Switches
+              (Binder, "binder", Snames.Name_Ada, File_Name);
+         end if;
+
+         if (Get_Pages (Switches) and Linker_Page) /= 0 then
+            --  ??? Currently, we only edit the default switches for Ada
+            Changed := Changed or Change_Switches
+              (Linker, "linker", Snames.Name_Ada, File_Name);
+         end if;
+         return Changed;
+      end Process_File;
+
+      Changed : Boolean := False;
+   begin
+      pragma Assert (Project /= Empty_Node);
+
+      if Files'Length = 0 then
+         Changed := Process_File ("");
+      else
+         for F in Files'Range loop
+            Changed := Changed or Process_File (Files (F).all);
+         end loop;
+      end if;
+      return Changed;
+   end Generate_Project;
 
    -------------------------
    -- Close_Switch_Editor --
    -------------------------
 
    procedure Close_Switch_Editor
-     (Switches  : access Gtk_Widget_Record'Class;
-      Context   : Selection_Context_Access;
-      File_Name : String)
-   is
-      File    : constant File_Selection_Context_Access :=
-        File_Selection_Context_Access (Context);
-      S       : constant Switches_Edit   := Switches_Edit (Switches);
-      Project : constant Project_Node_Id := Get_Project_From_View
-        (Project_Information (File));
-
-      procedure Change_Switches
-        (Tool : Tool_Names; Pkg_Name : String; Language : Name_Id);
-      --  Changes the switches for a specific package and tool.
-
-      ---------------------
-      -- Change_Switches --
-      ---------------------
-
-      procedure Change_Switches
-        (Tool : Tool_Names; Pkg_Name : String; Language : Name_Id)
-      is
-         Args     : Argument_List := Get_Switches (S, Tool);
-         Args_Tmp : Argument_List := Args;
-         Value    : Variable_Value;
-         Is_Default_Value : Boolean;
-      begin
-         Get_Switches
-           (Project          => Project_Information (File),
-            In_Pkg           => Pkg_Name,
-            File             => File_Name,
-            Language         => Language,
-            Value            => Value,
-            Is_Default_Value => Is_Default_Value);
-
-         --  Check if we in fact have the initial value
-
-         declare
-            Default_Args : Argument_List :=
-              Normalize_Compiler_Switches (Tool, To_Argument_List (Value));
-         begin
-            for K in Default_Args'Range loop
-               for J in Args_Tmp'Range loop
-                  if Args_Tmp (J) /= null
-                    and then Default_Args (K).all = Args_Tmp (J).all
-                  then
-                     Free (Default_Args (K));
-                     Args_Tmp (J) := null;
-                     exit;
-                  end if;
-               end loop;
-            end loop;
-
-            Is_Default_Value := True;
-            for J in Args_Tmp'Range loop
-               if Args_Tmp (J) /= null then
-                  Is_Default_Value := False;
-                  exit;
-               end if;
-            end loop;
-
-            for K in Default_Args'Range loop
-               if Default_Args (K) /= null then
-                  Is_Default_Value := False;
-                  exit;
-               end if;
-            end loop;
-
-            Free (Default_Args);
-         end;
-
-         if not Is_Default_Value then
-            if File_Name /= "" then
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Pkg_Name,
-                  Scenario_Variables => Scenario_Variables (S.Kernel),
-                  Attribute_Name     => Get_Name_String (Name_Switches),
-                  Values             => Args,
-                  Attribute_Index    => File_Name,
-                  Prepend            => False);
-
-            else
-               Update_Attribute_Value_In_Scenario
-                 (Project            => Project,
-                  Pkg_Name           => Pkg_Name,
-                  Scenario_Variables => Scenario_Variables (S.Kernel),
-                  Attribute_Name    => Get_Name_String (Name_Default_Switches),
-                  Values             => Args,
-                  Attribute_Index    => Get_Name_String (Language),
-                  Prepend            => False);
-            end if;
-         end if;
-         Free (Args);
-      end Change_Switches;
-
+     (Switches     : access Switches_Edit_Record'Class;
+      Project      : Project_Node_Id;
+      Project_View : Project_Id;
+      Files        : Argument_List) is
    begin
-      pragma Assert (Project /= Empty_Node);
-
-      --  Normalize the subproject we are currently working on, since we only
-      --  know how to modify normalized subprojects.
-
       if not Has_Been_Normalized (Project) then
          Normalize (Project, Recurse => False);
       end if;
 
-      if (Get_Pages (S) and Gnatmake_Page) /= 0 then
-         --  ??? Currently, we only edit the default switches for Ada
-         Change_Switches (Gnatmake, "builder", Snames.Name_Ada);
+      if Generate_Project
+        (Switches     => Switches,
+         Kernel       => Switches.Kernel,
+         Project      => Project,
+         Project_View => Project_View,
+         Files        => Files)
+      then
+         Recompute_View (Switches.Kernel);
       end if;
-
-      if (Get_Pages (S) and Ada_Page) /= 0 then
-         Change_Switches (Ada_Compiler, "compiler", Snames.Name_Ada);
-      end if;
-
-      if (Get_Pages (S) and C_Page) /= 0 then
-         Change_Switches (C_Compiler, "compiler", Snames.Name_C);
-      end if;
-
-      if (Get_Pages (S) and Cpp_Page) /= 0 then
-         Change_Switches (Cpp_Compiler, "compiler", Name_C_Plus_Plus);
-      end if;
-
-      --  ??? Enable when the project file supports the pretty printer
-      --  if (Get_Pages (S) and Pretty_Printer_Page) /= 0 then
-      --     --  ??? Currently, we only edit the default switches for Ada
-      --     Change_Switches
-      --       (Pretty_Printer, "pretty_printer", Snames.Name_Ada);
-      --  end if;
-
-      if (Get_Pages (S) and Binder_Page) /= 0 then
-         --  ??? Currently, we only edit the default switches for Ada
-         Change_Switches (Binder, "binder", Snames.Name_Ada);
-      end if;
-
-      if (Get_Pages (S) and Linker_Page) /= 0 then
-         --  ??? Currently, we only edit the default switches for Ada
-         Change_Switches (Linker, "linker", Snames.Name_Ada);
-      end if;
-
-      Recompute_View (S.Kernel);
    end Close_Switch_Editor;
+
+   ------------------
+   -- Set_Switches --
+   ------------------
+
+   procedure Set_Switches
+     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id) is
+   begin
+      Fill_Editor (Editor, Project_View, Files => (1 .. 0 => null));
+   end Set_Switches;
 
    -----------------
    -- Fill_Editor --
@@ -1330,70 +1477,77 @@ package body Switches_Editors is
    procedure Fill_Editor
      (Switches  : access Switches_Edit_Record'Class;
       Project   : Prj.Project_Id;
-      File_Name : String)
+      Files     : Argument_List)
    is
-      Value      : Variable_Value;
-      Is_Default : Boolean;
+      function Get_Switches (Pkg_Name : String; Language : Name_Id)
+         return Argument_List;
+      --  Return the list of switches for Files, found in the package Pkg_Name,
+      --  for a specific language. The returned array must be freed by the
+      --  caller.
+
+      ------------------
+      -- Get_Switches --
+      ------------------
+
+      function Get_Switches (Pkg_Name : String; Language : Name_Id)
+         return Argument_List
+      is
+         Value      : Variable_Value;
+         Is_Default : Boolean;
+      begin
+         if Files'Length = 0 then
+            Get_Switches (Project, Pkg_Name, "",
+                          Language, Value, Is_Default);
+         else
+            --  ??? Should we merge all the switches ?
+            Get_Switches (Project, Pkg_Name, Files (Files'First).all,
+                          Language, Value, Is_Default);
+         end if;
+         return To_Argument_List (Value);
+      end Get_Switches;
+
+      Pages      : Page_Filter;
    begin
       --  ??? Would be nice to handle the language in a more generic and
       --  flexible way.
 
-      if File_Name = "" then
+      Switches.Project_View := Project;
+
+      if Files'Length = 0 then
          declare
             Langs : Argument_List := Get_Languages (Project);
-            Pages : Page_Filter :=
-              Ada_Page or C_Page or Cpp_Page or Pretty_Printer_Page;
-
          begin
-            for J in Langs'Range loop
-               declare
-                  Lang : String := Langs (J).all;
-               begin
-                  Lower_Case (Lang);
-
-                  if Lang = "ada" then
-                     Pages := Pages and not (Ada_Page or Pretty_Printer_Page);
-                  elsif Lang = "c" then
-                     Pages := Pages and not C_Page;
-                  elsif Lang = "c++" then
-                     Pages := Pages and not Cpp_Page;
-                  end if;
-               end;
-            end loop;
-
+            Set_Visible_Pages (Switches, Langs);
             Free (Langs);
-            Destroy_Pages (Switches, Pages);
          end;
 
       else
-         Destroy_Pages (Switches, Gnatmake_Page or Binder_Page or Linker_Page);
+         Pages := 0;
 
-         declare
-            Lang : String := Get_Language_From_File
-              (Get_Language_Handler (Switches.Kernel), File_Name);
+         for F in Files'Range loop
+            declare
+               Lang : String := Get_Language_From_File
+                 (Get_Language_Handler (Switches.Kernel), Files (F).all);
+            begin
+               Lower_Case (Lang);
 
-         begin
-            Lower_Case (Lang);
+               if Lang = "ada" then
+                  Pages := Pages or Ada_Page or Pretty_Printer_Page;
+               elsif Lang = "c" then
+                  Pages := Pages or C_Page;
+               elsif Lang = "c++" then
+                  Pages := Pages or Cpp_Page;
+               end if;
+            end;
+         end loop;
 
-            if Lang = "ada" then
-               Destroy_Pages (Switches, C_Page or Cpp_Page);
-            elsif Lang = "c" then
-               Destroy_Pages
-                 (Switches, Ada_Page or Cpp_Page or Pretty_Printer_Page);
-            elsif Lang = "c++" then
-               Destroy_Pages
-                 (Switches, Ada_Page or C_Page or Pretty_Printer_Page);
-            end if;
-         end;
+         Set_Visible_Pages (Switches, Pages);
       end if;
 
       --  Set the switches for all the pages
       if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
-         --  ??? This will only show Ada switches
-         Get_Switches (Project, "builder", File_Name,
-                       Snames.Name_Ada, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Get_Switches ("builder", Snames.Name_Ada);
          begin
             Set_Switches (Switches, Gnatmake, List);
             Free (List);
@@ -1401,22 +1555,19 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Ada_Page) /= 0 then
-         Get_Switches (Project, "compiler", File_Name,
-                       Snames.Name_Ada, Value, Is_Default);
          declare
-            List : Argument_List := Normalize_Compiler_Switches
-              (Ada_Compiler, To_Argument_List (Value));
+            List : Argument_List := Get_Switches ("compiler", Snames.Name_Ada);
+            L2   : Argument_List := Normalize_Compiler_Switches
+              (Ada_Compiler, List);
          begin
-            Set_Switches (Switches, Ada_Compiler, List);
-            Free (List);
+            Set_Switches (Switches, Ada_Compiler, L2);
+            Free (L2);
          end;
       end if;
 
       if (Get_Pages (Switches) and C_Page) /= 0 then
-         Get_Switches (Project, "compiler", File_Name,
-                       Snames.Name_C, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Get_Switches ("compiler", Snames.Name_C);
          begin
             Set_Switches (Switches, C_Compiler, List);
             Free (List);
@@ -1424,10 +1575,9 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Cpp_Page) /= 0 then
-         Get_Switches (Project, "compiler", File_Name,
-                       Name_C_Plus_Plus, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Get_Switches
+              ("compiler", Name_C_Plus_Plus);
          begin
             Set_Switches (Switches, Cpp_Compiler, List);
             Free (List);
@@ -1435,16 +1585,18 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
-         --  ??? Enable when the project file knows about the pretty printer
-         null;
+         declare
+            List : Argument_List := Get_Switches
+              ("pretty_printer", Snames.Name_Ada);
+         begin
+            Set_Switches (Switches, Pretty_Printer, List);
+            Free (List);
+         end;
       end if;
 
       if (Get_Pages (Switches) and Binder_Page) /= 0 then
-         --  ??? This will only show Ada switches
-         Get_Switches (Project, "binder", File_Name,
-                       Snames.Name_Ada, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Get_Switches ("binder", Snames.Name_Ada);
          begin
             Set_Switches (Switches, Binder, List);
             Free (List);
@@ -1452,11 +1604,8 @@ package body Switches_Editors is
       end if;
 
       if (Get_Pages (Switches) and Linker_Page) /= 0 then
-         --  ??? This will only show Ada switches
-         Get_Switches (Project, "linker", File_Name,
-                       Snames.Name_Ada, Value, Is_Default);
          declare
-            List : Argument_List := To_Argument_List (Value);
+            List : Argument_List := Get_Switches ("linker", Snames.Name_Ada);
          begin
             Set_Switches (Switches, Linker, List);
             Free (List);
@@ -1478,70 +1627,25 @@ package body Switches_Editors is
    is
       File      : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
-      Switches  : Switches_Edit;
-      Dialog    : Gtk_Dialog;
-      Button    : Gtk_Widget;
-      B         : Gtk_Button;
       File_Name : GNAT.OS_Lib.String_Access;
-
    begin
       pragma Assert (Has_Project_Information (File));
 
       if not Force_Default and then Has_File_Information (File) then
          File_Name := new String' (File_Information (File));
-      else
-         File_Name := new String' ("");
-      end if;
-
-      if File_Name.all /= "" then
-         Gtk_New (Dialog,
-                  Title  => (-"Editing switches for ") & File_Name.all,
-                  Parent => Get_Main_Window (Get_Kernel (Context)),
-                  Flags  => Modal or Destroy_With_Parent);
-      else
-         Gtk_New (Dialog,
-                  Title  => (-"Editing default switches for project ")
-                    & Project_Name (Project_Information (File)),
-                  Parent => Get_Main_Window (Get_Kernel (Context)),
-                  Flags  => Modal or Destroy_With_Parent);
-      end if;
-
-      Gtk_New (Switches);
-      Switches.Kernel := Kernel_Handle (Get_Kernel (Context));
-      Pack_Start (Get_Vbox (Dialog),
-                  Get_Window (Switches), Fill => True, Expand => True);
-
-      Fill_Editor (Switches, Project_Information (File), File_Name.all);
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-
-      if File_Name.all /= "" then
-         Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
-         Pack_Start (Get_Action_Area (Dialog), B);
-         Context_Callback.Object_Connect
-           (B, "clicked",
-            Context_Callback.To_Marshaller (Revert_To_Default'Access),
-            Slot_Object => Switches, User_Data => Context);
-      end if;
-
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_All (Dialog);
-
-      --  Note: if the dialog is no longer modal, then we need to create a copy
-      --  of the context for storing in the callback, since the current context
-      --  will be automatically freed by the kernel at some point in the life
-      --  of this dialog.
-
-      if Run (Dialog) = Gtk_Response_OK then
-         Set_Project_Modified
+         Edit_Switches_For_Files
            (Get_Kernel (Context),
-            Get_Project_From_View (Project_Information (File)), True);
-         Close_Switch_Editor (Switches, Context, File_Name.all);
+            Get_Project_From_View (Project_Information (File)),
+            Project_Information (File),
+            (1 => File_Name));
+         Free (File_Name);
+      else
+         Edit_Switches_For_Files
+           (Get_Kernel (Context),
+            Get_Project_From_View (Project_Information (File)),
+            Project_Information (File),
+            (1 .. 0 => null));
       end if;
-
-      Free (File_Name);
-      Destroy (Dialog);
    end Edit_Switches_For_Context;
 
    -------------------
@@ -1557,17 +1661,68 @@ package body Switches_Editors is
       Edit_Switches_For_Context (Context, False);
    end Edit_Switches;
 
-   ---------------------------
-   -- Edit_Default_Switches --
-   ---------------------------
+   -----------------------------
+   -- Edit_Switches_For_Files --
+   -----------------------------
 
-   procedure Edit_Default_Switches
-     (Item : access GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access)
+   procedure Edit_Switches_For_Files
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
+      Files : GNAT.OS_Lib.Argument_List)
    is
-      pragma Unreferenced (Item);
+      Switches  : Switches_Edit;
+      Dialog    : Gtk_Dialog;
+      Button    : Gtk_Widget;
+      B         : Gtk_Button;
+
    begin
-      Edit_Switches_For_Context (Context, True);
-   end Edit_Default_Switches;
+      if Files'Length /= 0 then
+         Gtk_New (Dialog,
+                  Title  => -"Editing switches for specific file",
+                  Parent => Get_Main_Window (Kernel),
+                  Flags  => Modal or Destroy_With_Parent);
+      else
+         Gtk_New (Dialog,
+                  Title  => (-"Editing default switches for project ")
+                    & Project_Name (Project_View),
+                  Parent => Get_Main_Window (Kernel),
+                  Flags  => Modal or Destroy_With_Parent);
+      end if;
+
+      Gtk_New (Switches);
+      Switches.Kernel := Kernel_Handle (Kernel);
+      Pack_Start (Get_Vbox (Dialog),
+                  Get_Window (Switches), Fill => True, Expand => True);
+
+      Fill_Editor (Switches, Project_View, Files);
+
+      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
+
+      if Files'Length /= 0 then
+         Gtk_New_From_Stock (B, Stock_Revert_To_Saved);
+         Pack_Start (Get_Action_Area (Dialog), B);
+         Widget_Callback.Object_Connect
+           (B, "clicked",
+            Widget_Callback.To_Marshaller (Revert_To_Default'Access),
+            Slot_Object => Switches);
+      end if;
+
+      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+
+      Show_All (Dialog);
+
+      --  Note: if the dialog is no longer modal, then we need to create a copy
+      --  of the context for storing in the callback, since the current context
+      --  will be automatically freed by the kernel at some point in the life
+      --  of this dialog.
+
+      if Run (Dialog) = Gtk_Response_OK then
+         Set_Project_Modified (Kernel, Project, True);
+         Close_Switch_Editor (Switches, Project, Project_View, Files);
+      end if;
+
+      Destroy (Dialog);
+   end Edit_Switches_For_Files;
 
 end Switches_Editors;

@@ -34,23 +34,13 @@ with GNAT.OS_Lib;
 with Glib.Object;
 with Glide_Kernel;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
+with Prj;
+with Prj.Tree;
 
 package Switches_Editors is
 
    type Switches_Edit_Record is new Switches_Editor_Record with private;
    type Switches_Edit is access all Switches_Edit_Record'Class;
-
-   type Page_Filter is mod 2 ** 32;
-   Gnatmake_Page       : constant Page_Filter := 2 ** 0;
-   Ada_Page            : constant Page_Filter := 2 ** 1;
-   C_Page              : constant Page_Filter := 2 ** 2;
-   Cpp_Page            : constant Page_Filter := 2 ** 3;
-   Pretty_Printer_Page : constant Page_Filter := 2 ** 4;
-   Binder_Page         : constant Page_Filter := 2 ** 5;
-   Linker_Page         : constant Page_Filter := 2 ** 6;
-   All_Pages           : constant Page_Filter :=
-     Gnatmake_Page or Ada_Page or C_Page or Cpp_Page or
-     Pretty_Printer_Page or Binder_Page or Linker_Page;
 
    type Tool_Names is
      (Gnatmake, Ada_Compiler, C_Compiler, Cpp_Compiler,
@@ -59,15 +49,10 @@ package Switches_Editors is
    procedure Gtk_New (Editor : out Switches_Edit);
    --  Create a new switches editor
 
-   procedure Destroy_Pages
-     (Editor : access Switches_Edit_Record; Pages : Page_Filter);
-   --  Destroy specific pages in the editor, and remove them from the display.
-   --  The pages are completely removed from memory, but it isn't possible
-   --  to recreate them later on.
-
-   function Get_Pages
-     (Editor : access Switches_Edit_Record) return Page_Filter;
-   --  Return the list of pages that are visible in the switches editor.
+   procedure Set_Visible_Pages
+     (Editor : access Switches_Edit_Record;
+      Languages : GNAT.OS_Lib.Argument_List);
+   --  Set the visible pages based on the specific languages
 
    function Get_Window
      (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget;
@@ -78,6 +63,11 @@ package Switches_Editors is
    --  put the editor back in Editor.
    --  Likewise, you shouldn't call Show_All on the editor itself, but rather
    --  on the window.
+
+   function From_Window
+     (Window : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Switches_Edit;
+   --  Return the switches editor from the window.
 
    procedure Set_Page
      (Editor : access Switches_Edit_Record; Tool : Tool_Names);
@@ -98,6 +88,23 @@ package Switches_Editors is
       Tool     : Tool_Names;
       Switches : GNAT.OS_Lib.Argument_List);
    --  Set the initial value for the switches, for a specific tool
+
+   procedure Set_Switches
+     (Editor : access Switches_Edit_Record; Project_View : Prj.Project_Id);
+   --  Set the initial value for the switches, based on the contents
+   --  of Project_View. If a page doesn't exist in Editor, it will not be
+   --  automatically created.
+
+   function Generate_Project
+     (Switches     : access Switches_Edit_Record'Class;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
+      Files        : GNAT.OS_Lib.Argument_List) return Boolean;
+   --  Generate the information in Project to represent the status of Switches.
+   --  True is returned if the project was modified.
+   --  Project_View can be No_Project, in which case the return value will
+   --  always be True, after modification of the project.
 
    ---------------------------
    -- Callbacks for the GUI --
@@ -131,21 +138,37 @@ package Switches_Editors is
    --  empty string, then the default switches for the project are edited,
    --  otherwise the switches for the specific file are edited.
 
-   procedure Edit_Default_Switches
-     (Item    : access Glib.Object.GObject_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access);
-   --  Same as Edit_Switches, but always edit the default switches for the
-   --  project, even if there is a file information in Context.
-
    procedure Edit_Switches_For_Context
      (Context       : Glide_Kernel.Selection_Context_Access;
       Force_Default : Boolean := False);
    --  Same as Edit_Switches, but if Force_Default is True it always edit the
    --  default switches, even if there is a file information in Context.
 
+   procedure Edit_Switches_For_Files
+     (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project      : Prj.Tree.Project_Node_Id;
+      Project_View : Prj.Project_Id;
+      Files        : GNAT.OS_Lib.Argument_List);
+   --  Edit the switches for a list of files. All the files will be assigned
+   --  the same switches.
+   --  If there are no files in Files, the default switches are edited.
+
 private
+   type Page_Filter is mod 2 ** 32;
+   Gnatmake_Page       : constant Page_Filter := 2 ** 0;
+   Ada_Page            : constant Page_Filter := 2 ** 1;
+   C_Page              : constant Page_Filter := 2 ** 2;
+   Cpp_Page            : constant Page_Filter := 2 ** 3;
+   Pretty_Printer_Page : constant Page_Filter := 2 ** 4;
+   Binder_Page         : constant Page_Filter := 2 ** 5;
+   Linker_Page         : constant Page_Filter := 2 ** 6;
+   All_Pages           : constant Page_Filter :=
+     Gnatmake_Page or Ada_Page or C_Page or Cpp_Page or
+     Pretty_Printer_Page or Binder_Page or Linker_Page;
+
    type Switches_Edit_Record is new Switches_Editor_Record with record
       Kernel          : Glide_Kernel.Kernel_Handle;
+      Project_View    : Prj.Project_Id;
       Pages           : Page_Filter := All_Pages;
 
       Block_Refresh   : Boolean := False;
