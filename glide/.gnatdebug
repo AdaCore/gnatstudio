@@ -9,7 +9,7 @@ DEBUG.ENCLOSING_ENTITY=no
 
 --  List of all the handles defined in the application
 AUNIT_MODULE=yes
-BROWSERS.MODULE=yes
+BROWSERS.DEPENDENCY=yes
 GLIDE_KERNEL.MODULES=yes
 GLIDE_KERNEL.PROJECT=yes
 GLIDE_KERNEL.HELP=yes
