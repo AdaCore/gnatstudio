@@ -32,7 +32,7 @@ with GVD.Types;             use GVD.Types;
 
 package body Process_Proxies is
 
-   Expect_Timeout : constant := 50;
+   Timeout_Ms : constant := 50;
    --  Timeout in milliseconds for the low level calls to expect
 
    procedure Free (Post_Processes : in out Post_Process_Access);
@@ -207,7 +207,7 @@ package body Process_Proxies is
       Matched : out GNAT.Regpat.Match_Array;
       Timeout : Integer := 20)
    is
-      Num        : Integer := 1;
+      Num : Integer := 1;
    begin
       --  Reset the interrupted flag before processing.
 
@@ -234,9 +234,15 @@ package body Process_Proxies is
             exit;
          end if;
 
-         Expect
-           (Proxy.Descriptor.all, Result, Pattern, Matched,
-            Timeout => Integer'Min (Expect_Timeout, Timeout));
+         if Timeout = -1 then
+            Expect
+              (Proxy.Descriptor.all, Result, Pattern, Matched,
+               Timeout => Timeout_Ms);
+         else
+            Expect
+              (Proxy.Descriptor.all, Result, Pattern, Matched,
+               Timeout => Integer'Min (Timeout_Ms, Timeout));
+         end if;
 
          case Result is
             when Expect_Full_Buffer =>
@@ -250,12 +256,6 @@ package body Process_Proxies is
                --  We do not use Gtk.Main.Main_Iteration since this would also
                --  process Gdk_Input events, and thus would recurse (since
                --  Main_Iteration would detect input, which would call Wait,..)
-               --  Instead, we handle the events ourselves.
-               --  Note that we simply drop the input events, since we are
-               --  already processing the input anyway.
-               --  We limit the number of events processed so as to preserve
-               --  efficiency.
-
                Gdk.Main.Flush;
 
                exit when Timeout = 0 or else Num = Timeout;
