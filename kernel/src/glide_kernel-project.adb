@@ -645,29 +645,29 @@ package body Glide_Kernel.Project is
       if Langs'Length > 1
         or else Langs (Langs'First).all /= "ada"
       then
-         Args (1) := new String'("-R");
+         if Project_Modified (Kernel.Projects_Data, Project) then
+            Save_Project (Project, Kernel.Projects_Data, False);
+            Args (1) := new String'("-R");
 
-         declare
-            Name : constant String := Get_String
-              (Prj.Tree.Path_Name_Of (Project));
-         begin
-            if not Is_Regular_File (Name)
-              or else (Project_Modified (Kernel.Projects_Data, Project)
-                       and then Is_Writable_File (Name))
-            then
-               Save_Project (Project, Kernel.Projects_Data, False);
+            declare
+               Name : constant String := Get_String
+                 (Prj.Tree.Path_Name_Of (Project));
+            begin
+               if not Is_Regular_File (Name)
+                 or else Is_Writable_File (Name)
+               then
+                  --  call gpr2make -R Name
 
-               --  call gpr2make -R Name
+                  Free (Args (2));
+                  Args (2) := new String'(Name);
+                  Launch_Process
+                    (Kernel_Handle (Kernel), "gpr2make",
+                     Args, null, null, "", Success);
+               end if;
+            end;
 
-               Free (Args (2));
-               Args (2) := new String'(Name);
-               Launch_Process
-                 (Kernel_Handle (Kernel), "gpr2make",
-                  Args, null, null, "", Success);
-            end if;
-         end;
-
-         Basic_Types.Free (Args);
+            Basic_Types.Free (Args);
+         end if;
 
       else
          Save_Project (Project, Kernel.Projects_Data, Recursive => False);
