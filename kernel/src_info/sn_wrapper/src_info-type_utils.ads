@@ -71,31 +71,6 @@ package Src_Info.Type_Utils is
    --  Is_Typedef is True if type is declared via typedef clause, False
    --  otherwise.
 
-   type Type_To_Object_Array is array (E_Kind) of E_Kind;
-   --  type for array that maps E_Kind type entities into
-   --  object entities
-
-   Type_To_Object : constant Type_To_Object_Array :=
-     (Access_Type               => Access_Object,
-      Array_Type                => Array_Object,
-      Boolean_Type              => Boolean_Object,
-      Class_Wide_Type           => Class_Wide_Object,
-      Decimal_Fixed_Point_Type  => Decimal_Fixed_Point_Object,
-      Enumeration_Type          => Enumeration_Object,
-      Modular_Integer_Type      => Modular_Integer_Object,
-      Protected_Type            => Protected_Object,
-      Record_Type               => Record_Object,
-      Ordinary_Fixed_Point_Type => Ordinary_Fixed_Point_Object,
-      Signed_Integer_Type       => Signed_Integer_Object,
-      String_Type               => String_Object,
-      Task_Type                 => Task_Object,
-      Private_Type              => Private_Type,      -- ??? what kind
-      Unresolved_Entity         => Unresolved_Entity, -- ??? for object?
-      Generic_Class             => Record_Object,
-      others                    => Overloaded_Entity);
-   --  This array establishes relation between E_Kind type entities
-   --  and object entities
-
    type SN_Table_Array is array (Table_Type) of DB_File;
 
    procedure Builtin_Type_To_Kind
