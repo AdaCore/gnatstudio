@@ -26,7 +26,8 @@ with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Test_Utils;                use Test_Utils;
-with Prj;                       use Prj.Tree;
+with Prj;                       use Prj;
+with Prj.Tree;                  use Prj.Tree;
 with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Language_Handlers;         use Language_Handlers;
@@ -460,6 +461,7 @@ package body Work_on_File is
          --  find all positions where the procedure is called
          if File_Name (Entity_Node.File_Name.all) =
            File_Name (Source_Filename)
+         and Options.References
          then
             Find_All_References (Project_Tree,
                                  Handler,
