@@ -31,6 +31,10 @@ with Odd.Preferences;
 with Odd.Types;
 with Odd.Explorer;
 with Odd.Text_Boxes;
+with Odd.Tooltips;
+with Items;
+with Gtk.Text;
+
 
 package Odd.Source_Editors is
 
@@ -145,6 +149,20 @@ package Odd.Source_Editors is
    --  This delete the currently displayed file, and display a warning message.
 
 private
+   type Editor_Tooltip_Data is record
+      Box  : Source_Editor;
+      Mode : Items.Display_Mode := Items.Value;
+      Lang : Language.Language_Access;
+   end record;
+
+   procedure Draw_Tooltip (Widget :
+                             access Gtk.Text.Gtk_Text_Record'Class;
+                           Data   : in Editor_Tooltip_Data;
+                           Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+                           Width, Height : out Glib.Gint);
+
+   package Editor_Tooltips is new Odd.Tooltips
+     (Editor_Tooltip_Data, Gtk.Text.Gtk_Text_Record, Draw_Tooltip);
 
    type Color_Array is array (Language.Language_Entity'Range) of
      Gdk.Color.Gdk_Color;
@@ -181,6 +199,10 @@ private
 
       Current_File_Cache : Odd.Types.File_Cache_Access;
       --  Cached data for the file currently displayed
+
+      Tooltip : Editor_Tooltips.Tooltips;
+      --  Those tooltips display the value of variables pointed to by the
+      --  mouse.
    end record;
 
 end Odd.Source_Editors;

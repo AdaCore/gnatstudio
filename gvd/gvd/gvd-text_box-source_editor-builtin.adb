@@ -53,6 +53,10 @@ with Odd.Strings;           use Odd.Strings;
 with Odd.Text_Boxes;        use Odd.Text_Boxes;
 with Odd.Types;             use Odd.Types;
 with Odd_Intl;              use Odd_Intl;
+with Display_Items;         use Display_Items;
+with Items;                 use Items;
+
+with Gdk.Drawable; use Gdk.Drawable;
 
 package body Odd.Source_Editors is
 
@@ -176,13 +180,22 @@ package body Odd.Source_Editors is
 
    procedure Initialize
      (Editor  : access Source_Editor_Record'Class;
-      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Data : Editor_Tooltip_Data;
    begin
       Odd.Text_Boxes.Initialize (Editor);
       Editor.Process := Gtk_Widget (Process);
       Editor_Cb.Connect
         (Editor, "destroy", Editor_Cb.To_Marshaller (Destroy_Cb'Access));
       Show_All (Editor);
+
+      if Tooltips_In_Source /= None then
+         Data.Lang := Editor.Lang;
+         Data.Box  := Source_Editor (Editor);
+         Editor_Tooltips.New_Tooltip
+           (Get_Child (Editor), Data, Editor.Tooltip);
+      end if;
    end Initialize;
 
    -------------------
@@ -1119,5 +1132,90 @@ package body Odd.Source_Editors is
       Gdk.Pixmap.Unref (Editor.Default_Pixmap);
       Gdk.Bitmap.Unref (Editor.Default_Mask);
    end Destroy_Cb;
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
+
+   procedure Draw_Tooltip (Widget : access Gtk_Text_Record'Class;
+                           Data : in Editor_Tooltip_Data;
+                           Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+                           Width, Height : out Glib.Gint)
+   is
+      use type Items.Generic_Type_Access;
+      Entity        : Items.Generic_Type_Access;
+      Value_Found   : Boolean;
+      Variable_Name : String := Get_Entity (Data.Box);
+
+      Debugger : Debugger_Process_Tab :=
+        Debugger_Process_Tab (Data.Box.Process);
+
+      Context : Items.Drawing_Context;
+   begin
+
+      if Tooltips_In_Source = None then
+         return;
+      end if;
+
+      Width := 0;
+      Height := 0;
+
+      if Variable_Name = "" then
+         return;
+      end if;
+
+      Entity := Parse_Type (Debugger.Debugger, Variable_Name);
+
+      if Entity = null then
+         return;
+      else
+         Parse_Value (Debugger.Debugger, Variable_Name, Entity, Value_Found);
+      end if;
+
+      if Value_Found then
+         Set_Valid (Entity);
+         Size_Request (Entity.all, Create_Drawing_Context (Pixmap));
+
+         Width := Get_Width (Entity.all) + 4;
+         Height := Get_Height (Entity.all) + 4;
+
+         Propagate_Width (Entity.all, Width - 4);
+
+         if Width /= 0
+           and then Height /= 0
+         then
+
+            Gdk.Pixmap.Gdk_New
+              (Pixmap,
+               Get_Window (Debugger.Window),
+               Width,
+               Height);
+            Context := Create_Drawing_Context (Pixmap);
+
+            Draw_Rectangle
+              (Pixmap,
+               Context.Thaw_Bg_Gc,
+               Filled => True,
+               X      => 0,
+               Y      => 0,
+               Width  => Width - 1,
+               Height => Height - 1);
+
+            Draw_Rectangle
+              (Pixmap,
+               Context.GC,
+               Filled => False,
+               X      => 0,
+               Y      => 0,
+               Width  => Width - 1,
+               Height => Height - 1);
+
+            Items.Paint (Entity.all, Context, X => 2, Y => 2);
+         end if;
+      end if;
+
+   exception
+      when Language.Unexpected_Type | Constraint_Error => null;
+   end Draw_Tooltip;
 
 end Odd.Source_Editors;
