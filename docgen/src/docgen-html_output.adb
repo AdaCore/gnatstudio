@@ -151,18 +151,19 @@ package body Docgen.Html_Output is
          Ada.Text_IO.Put_Line (File, "<i> private: </i>" & ASCII.LF);
       end if;
 
-      Format_HTML (File,
-                   Info.Doc_LI_Unit,
-                   Info.Package_Header.all,
-                   Info.Package_Entity.File_Name.all,
-                   Info.Package_Entity.Short_Name.all,
-                   Info.Package_Entity.Line,
-                   No_Body_Line_Needed,
-                   Info.Doc_File_List,
-                   Info.Doc_Info_Options.Link_All,
-                   False,
-                   Info.Doc_Info_Options.Process_Body_Files,
-                   True);
+      Format_HTML
+        (File,
+         Info.Doc_LI_Unit,
+         Info.Package_Header.all,
+         Info.Package_Entity.File_Name.all,
+         Info.Package_Entity.Short_Name.all,
+         Info.Package_Entity.Line,
+         No_Body_Line_Needed,
+         Info.Doc_File_List,
+         Info.Doc_Info_Options.Link_All,
+         False,
+         Info.Doc_Info_Options.Process_Body_Files,
+         True);
 
       Ada.Text_IO.Put_Line (File, "</PRE></TD></TR></TABLE>");
       Ada.Text_IO.Put_Line (File, Info.Package_Description.all);
