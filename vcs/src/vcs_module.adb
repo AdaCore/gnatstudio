@@ -514,9 +514,10 @@ package body VCS_Module is
       Context      : Selection_Context_Access :=
         To_Selection_Context_Access (To_Address (Args, 1));
       File         : File_Selection_Context_Access;
+      Status       : File_Status_List.List;
+      Dirs         : String_List.List;
 
       Ref          : VCS_Access := Get_Current_Ref (Get_Kernel (Context));
-      Explorer     : VCS_View_Access := VCS_View_Access (Object);
    begin
       if Context = null then
          return;
@@ -525,9 +526,16 @@ package body VCS_Module is
       if Context.all in File_Selection_Context'Class then
          File := File_Selection_Context_Access (Context);
          if Has_Directory_Information (File) then
-            Show_Files (Explorer, Directory_Information (File), Ref);
+            String_List.Append (Dirs, Directory_Information (File));
+            Status :=  Local_Get_Status (Ref, Dirs);
+            String_List.Free (Dirs);
+
+            Display_File_Status (Get_Kernel (Context), Status);
+
+            File_Status_List.Free (Status);
          end if;
       end if;
+
    end On_Context_Changed;
 
    ---------------------------------
@@ -617,13 +625,22 @@ package body VCS_Module is
       Child    : MDI_Child;
       Ref      : VCS_Access := Get_Current_Ref (Kernel);
 
+      Dirs     : String_List.List;
+      Status   : File_Status_List.List;
+
    begin
       if Explorer = null then
          Gtk_New (Explorer, Kernel, Ref);
          Set_Size_Request (Explorer, 400, 400);
          Child := Put (MDI, Explorer);
          Set_Title (Child, -"VCS Explorer");
-         Show_Files (Explorer, Get_Current_Dir (Kernel), Ref);
+
+         String_List.Append (Dirs, Get_Current_Dir (Kernel));
+         Status :=  Local_Get_Status (Ref, Dirs);
+         String_List.Free (Dirs);
+
+         Display_File_Status (Kernel, Status);
+         File_Status_List.Free (Status);
 
          Widget_Callback.Object_Connect
            (Kernel,
@@ -677,7 +694,7 @@ package body VCS_Module is
      (Message  : String;
       Kernel   : GObject) is
    begin
-      Push_Message (null, Kernel_Handle (Kernel),
+      Push_Message (Kernel_Handle (Kernel),
                     Glide_Kernel.Console.Error, Message);
    end Handle_VCS_Error;
 
