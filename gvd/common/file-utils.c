@@ -21,10 +21,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdio.h>
-#include <pwd.h>
 #include <string.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <lmcons.h>
+#else
+#include <pwd.h>
 #endif
 
 int
@@ -122,13 +124,19 @@ __gps_ensure_valid_output (void)
  **********************************************************/
 
 char* user_login_name () {
-   struct passwd* pw;
-   char* result;
+#ifdef _WIN32
+  DWORD size = UNLEN;
+  char *str = alloca (UNLEN + 1);
+  BOOL res;
+#else
+  struct passwd* pw;
+#endif
+  char* result;
 
-   result = (char*) getenv ("LOGNAME");
-   if (result) {
-      return strdup (result);
-   }
+  result = (char*) getenv ("LOGNAME");
+  if (result) {
+    return strdup (result);
+  }
 
   result = (char*) getenv ("USERNAME");  /* mostly windows users */
   if (result) {
@@ -140,9 +148,14 @@ char* user_login_name () {
      return strdup (result);
   }
 
+#ifdef _WIN32
+  res = GetUserName (str, &size);
+  result = strdup ((res == TRUE) ? str : "unknown");
+#else
   pw = (struct passwd*) getpwuid (geteuid());
   result = strdup (pw ? pw->pw_name : "unknown");
   free (pw);
+#endif
 
   return result;
 }
