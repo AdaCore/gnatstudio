@@ -7945,11 +7945,11 @@ This tag accepts the following attributes:
 </progress_action>
 @end smallexample
 
-   @item progress-current (optional, mandatory if you have progress-regexp)
+   @item progress-current (optional, default is 1)
    This is the opening parenthesis count index in @code{progress-regexp}
    that contains the current step.
 
-   @item progress-final   (optional, mandatory if you have progress-regexp)
+   @item progress-final   (optional, default is 2)
    This is the opening parenthesis count index in @code{progress-regexp}
    that contains the current last step. This last index can grow as
    needed. For example, gnatmake will output the number of
@@ -7957,7 +7957,7 @@ This tag accepts the following attributes:
    examined. However, that last number may grow up, since parsing a new file
    might generate a list of additional files to parse later on.
 
-   @item progress-hide    (optional)
+   @item progress-hide    (optional, default is true)
    If this attribute is set to the value "true", then all the lines that
    match @code{progress-regexp} and are used to compute the progress will
    not be displayed in the output console. For any other value of this
