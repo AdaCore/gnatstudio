@@ -425,6 +425,9 @@ procedure GPS is
          Recompute_View (GPS.Kernel);
       end if;
 
+      --  Do the Show_All before loading the desktop, in case some of the
+      --  widgets automatically loaded have something to hide
+      Show_All (GPS);
       Glide_Page.Load_Desktop (GPS);
 
       --  Then load all the source files given on the command line.
@@ -460,8 +463,6 @@ procedure GPS is
             (-"the GNAT Programming System") & ASCII.LF &
             "(c) 2001-2002 ACT-Europe");
       end if;
-
-      Show_All (GPS);
 
       if Splash /= null then
          Destroy (Splash);
