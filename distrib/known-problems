@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- C326-002 GPS crashes changing Unit size in Memory View
+  Problem:    When using the GPS memory view, switching the Unit Size might
+              cause GPS to crash.
+  Workaround: Inspect the memory using the "x" command of gdb.
+
 - C312-005 Reloading current project kills all open windows
   Problem:    If you reopen (Project->Open or Project->Recent) the currently
               loaded projects, GPS asks for saving the windows, and then closes
