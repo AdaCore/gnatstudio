@@ -134,6 +134,13 @@ package body Builder_Module is
    --  (gnatmake / make), given a Project and File name.
    --  It is the responsibility of the caller to free the returned object.
 
+   procedure Parse_Compiler_Output
+     (Kernel : Kernel_Handle;
+      Output : String);
+   --  Parse the output of build engine and insert the result
+   --    - in the GPS results view if it corresponds to a file location
+   --    - in the GPS console if it is a general message.
+
    --------------------
    -- Menu Callbacks --
    --------------------
@@ -182,6 +189,73 @@ package body Builder_Module is
      (Kernel : Kernel_Handle;
       File   : String);
    --  Launch a compilation command for File.
+
+   ---------------------------
+   -- Parse_Compiler_Output --
+   ---------------------------
+
+   procedure Parse_Compiler_Output
+     (Kernel : Kernel_Handle;
+      Output : String)
+   is
+      File_Location : constant Pattern_Matcher :=
+        Compile (Get_Pref (Kernel, File_Pattern), Multiple_Lines);
+      Matched   : Match_Array (0 .. 3);
+      Start     : Natural := Output'First;
+      Last      : Natural;
+      Real_Last : Natural;
+
+      Line      : Natural := 1;
+      Column    : Natural := 1;
+   begin
+      while Start <= Output'Last loop
+         while Start < Output'Last
+           and then Output (Start) = ASCII.LF
+         loop
+            Start := Start + 1;
+         end loop;
+
+         Match (File_Location, Output (Start .. Output'Last),
+                Matched);
+         exit when Matched (0) = No_Match;
+
+         if Matched (2) /= No_Match then
+            Line := Integer'Value
+              (Output (Matched (2).First .. Matched (2).Last));
+         end if;
+
+         if Matched (3) = No_Match then
+            Last := Matched (2).Last;
+         else
+            Last := Matched (3).Last;
+            Column := Integer'Value
+              (Output (Matched (3).First .. Matched (3).Last));
+         end if;
+
+         --  Strip the last ASCII.LF if needed.
+         Real_Last := Last;
+
+         while Real_Last < Output'Last
+           and then Output (Real_Last + 1) /= ASCII.LF
+         loop
+            Real_Last := Real_Last + 1;
+         end loop;
+
+         Insert_Result
+           (Kernel,
+            -"Builder Results",
+            Output (Matched (1).First .. Matched (1).Last),
+            Output (Last + 1 .. Real_Last),
+            Line, Column, 0);
+
+         Start := Real_Last + 1;
+      end loop;
+
+      if Start <= Output'Last then
+         Insert (Kernel, Output (Start .. Output'Last));
+      end if;
+
+   end Parse_Compiler_Output;
 
    -----------------------
    -- Compute_Arguments --
@@ -393,6 +467,7 @@ package body Builder_Module is
       end if;
 
       Console.Clear (K);
+      Remove_Result_Category (K, -"Builder Results");
 
       Push_State (K, Processing);
       State_Pushed := True;
@@ -407,17 +482,13 @@ package body Builder_Module is
             Cmd := new String'("make");
       end case;
 
-      Console.Insert (K, Cmd.all, Highlight_Sloc => False, Add_LF => False);
+      Console.Insert (K, Cmd.all, Add_LF => False);
 
       for J in Args'First .. Args'Last - 1 loop
-         Console.Insert
-           (K, " " & Args (J).all,
-            Highlight_Sloc => False, Add_LF => False);
+         Console.Insert (K, " " & Args (J).all, Add_LF => False);
       end loop;
 
-      Console.Insert
-        (K, " " & Args (Args'Last).all,
-         Highlight_Sloc => False, Add_LF => True);
+      Console.Insert (K, " " & Args (Args'Last).all);
 
       Set_Sensitive_Menus (K, False);
 
@@ -432,7 +503,7 @@ package body Builder_Module is
 
    exception
       when Invalid_Process =>
-         Console.Insert (K, -"Invalid command", False, Mode => Error);
+         Console.Insert (K, -"Invalid command", Mode => Error);
          Pop_State (K);
          Set_Sensitive_Menus (K, True);
          Free (Cmd);
@@ -463,7 +534,8 @@ package body Builder_Module is
         or else not (Context.all in File_Selection_Context'Class)
       then
          Console.Insert
-           (Kernel, -"No file selected, cannot check syntax", Mode => Error);
+           (Kernel, -"No file selected, cannot check syntax",
+            Mode => Error);
          return;
       end if;
 
@@ -485,7 +557,8 @@ package body Builder_Module is
       begin
          if File = "" then
             Console.Insert
-              (Kernel, -"No file name, cannot check syntax", Mode => Error);
+              (Kernel, -"No file name, cannot check syntax",
+               Mode => Error);
             return;
          end if;
 
@@ -507,9 +580,10 @@ package body Builder_Module is
          Trace (Me, "On_Check_Syntax: " & Cmd);
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
+         Remove_Result_Category (Kernel, -"Builder Results");
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
-         Console.Insert (Kernel, Cmd, False);
+         Console.Insert (Kernel, Cmd);
          Top.Interrupted := False;
          Fd := new Process_Descriptor;
          Non_Blocking_Spawn
@@ -521,7 +595,7 @@ package body Builder_Module is
 
       exception
          when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Args);
@@ -558,7 +632,8 @@ package body Builder_Module is
    begin
       if File = "" then
          Console.Insert
-           (Kernel, -"No file name, cannot compile", Mode => Error);
+           (Kernel, -"No file name, cannot compile",
+            Mode => Error);
       end if;
 
       To_Lower (Lang);
@@ -575,6 +650,7 @@ package body Builder_Module is
 
       Push_State (Kernel, Processing);
       Console.Clear (Kernel);
+      Remove_Result_Category (Kernel, -"Builder Results");
       Set_Sensitive_Menus (Kernel, False);
 
       if Project = "" then
@@ -582,7 +658,7 @@ package body Builder_Module is
             Full_Cmd : constant String := Cmd & File;
          begin
             Args := Argument_String_To_List (Full_Cmd);
-            Console.Insert (Kernel, Full_Cmd, False);
+            Console.Insert (Kernel, Full_Cmd);
          end;
 
       else
@@ -595,7 +671,7 @@ package body Builder_Module is
          begin
             Trace (Me, "On_Compile: " & Full_Cmd);
             Args := Argument_String_To_List (Full_Cmd);
-            Console.Insert (Kernel, Full_Cmd, False);
+            Console.Insert (Kernel, Full_Cmd);
          end;
       end if;
 
@@ -610,7 +686,7 @@ package body Builder_Module is
 
    exception
       when Invalid_Process =>
-         Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
+         Console.Insert (Kernel, -"Invalid command", Mode => Error);
          Pop_State (Kernel);
          Set_Sensitive_Menus (Kernel, True);
          Free (Args);
@@ -705,9 +781,10 @@ package body Builder_Module is
 
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
+         Remove_Result_Category (Kernel, -"Builder Results");
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
-         Console.Insert (Kernel, Cmd, False);
+         Console.Insert (Kernel, Cmd);
          Top.Interrupted := False;
          Fd := new Process_Descriptor;
          Non_Blocking_Spawn
@@ -719,7 +796,7 @@ package body Builder_Module is
 
       exception
          when Invalid_Process =>
-            Console.Insert (Kernel, -"Invalid command", False, Mode => Error);
+            Console.Insert (Kernel, -"Invalid command", Mode => Error);
             Pop_State (Kernel);
             Set_Sensitive_Menus (Kernel, True);
             Free (Args);
@@ -901,9 +978,8 @@ package body Builder_Module is
       end loop;
 
       if Buffer_Pos /= Buffer'First then
-         Console.Insert
-           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1), Add_LF => False,
-            Location_Id => -"Builder");
+         Parse_Compiler_Output
+           (Kernel, Buffer (Buffer'First .. Buffer_Pos - 1));
       end if;
 
       Free (Buffer);
@@ -913,19 +989,15 @@ package body Builder_Module is
    exception
       when Process_Died =>
          if Buffer_Pos /= Buffer'First then
-            Console.Insert
+            Parse_Compiler_Output
               (Kernel,
-               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all),
-               Add_LF => False,
-               Location_Id => -"Builder");
+               Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd.all));
          end if;
 
          Free (Buffer);
          Set_Fraction (Top.Statusbar, 0.0);
          Set_Progress_Text (Top.Statusbar, "");
-         Console.Insert
-           (Kernel, Expect_Out (Fd.all), Add_LF => True,
-            Location_Id => -"Builder");
+         Parse_Compiler_Output (Kernel, Expect_Out (Fd.all));
          Close (Fd.all, Status);
 
          if Status = 0 then
