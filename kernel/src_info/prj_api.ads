@@ -208,6 +208,9 @@ package Prj_API is
    -- Creating nodes --
    --------------------
 
+   function Is_Valid_Project_Name (Name : String) return Boolean;
+   --  Return True if Name is a valid project name
+
    function Create_Project (Name, Path : String) return Project_Node_Id;
    --  Create a new empty project and its declaration.
    --  The project is also registered, so that it can be retrieved from one of
