@@ -26,6 +26,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Debugger.Gdb is
 
@@ -201,7 +202,14 @@ package body Debugger.Gdb is
    -----------
 
    procedure Close (Debugger : in out Gdb_Debugger) is
+      Result : Expect_Match;
    begin
+      Send (Debugger.Process.all, "quit");
+
+      --  Ensure that gdb is terminated before close the pipes and trying to
+      --  kill it abruptly.
+
+      Expect (Debugger.Process.all, Result, ".*", Timeout => 100);
       Close (Debugger.Process.all);
       Free (Debugger.Process);
    end Close;
@@ -321,5 +329,27 @@ package body Debugger.Gdb is
       Send (Debugger.Process.all, "finish");
       Wait_Prompt (Debugger);
    end Finish;
+
+   ------------------------
+   -- Line_Contains_Code --
+   ------------------------
+
+   function Line_Contains_Code
+     (Debugger : Gdb_Debugger;
+      File     : String;
+      Line     : Positive) return Boolean
+   is
+      Result : Expect_Match;
+   begin
+      --  Empty the buffer.
+      Expect (Debugger.Process.all, Result, ".*", Timeout => 0);
+ 
+      Send (Debugger.Process.all, "info line " & File & ':' &
+        Positive'Image (Line));
+      Wait_Prompt (Debugger);
+
+      return Index
+        (Expect_Out (Debugger.Process.all), "but contains no code") = 0;
+   end Line_Contains_Code;
 
 end Debugger.Gdb;
