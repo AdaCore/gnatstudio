@@ -95,7 +95,8 @@ package body Codefix.Graphics is
       Free (Graphic_Codefix.Errors_Found.all);
       Free (Graphic_Codefix.Vdiff_List);
       Destroy (Graphic_Codefix);
-      --  Free_Parsers;  ??? Do I need to free parsers a then of the program ?
+      --  Free_Parsers;  ??? Do I need to free parsers at the end of
+      --  the program ?
    end Free;
 
    ----------
@@ -247,9 +248,9 @@ package body Codefix.Graphics is
          Set_Text (Proposition.Label1, "Old text");
          Set_Text (Proposition.Label2, "Fixed text");
          Set_Text
-           (Proposition.File_Label1, Get_Files_Names (Extended_Extract));
+           (Proposition.File_Label1, Get_Files_Names (Extended_Extract, 50));
          Set_Text
-           (Proposition.File_Label2, Get_Files_Names (Extended_Extract));
+           (Proposition.File_Label2, Get_Files_Names (Extended_Extract, 50));
 
          Free (Previous_File);
       end Display_Sol;
@@ -340,6 +341,7 @@ package body Codefix.Graphics is
            (Data (Current_Sol),
             Graphic_Codefix.Current_Text.all,
             Extended_Extract);
+
          Extend_Before
            (Extended_Extract,
             Graphic_Codefix.Current_Text.all,
@@ -348,6 +350,7 @@ package body Codefix.Graphics is
            (Extended_Extract,
             Graphic_Codefix.Current_Text.all,
             Display_Lines_After);
+
 --         Update_Changes
 --           (Graphic_Codefix.Corrector,
 --            Graphic_Codefix.Current_Text,
