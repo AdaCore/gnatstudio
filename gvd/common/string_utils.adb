@@ -20,6 +20,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
+with Odd.Preferences;         use Odd.Preferences;
 
 package body Odd.Strings is
 
@@ -481,5 +482,62 @@ package body Odd.Strings is
 
       return Result;
    end To_Unix_Pathname;
+
+   ----------------------
+   -- Do_Tab_Expansion --
+   ----------------------
+
+   function Do_Tab_Expansion (Text : String) return String is
+      Num_Tabs   : Natural := 0;
+      Col        : Integer := 1;
+   begin
+      --  Count the number of tabs in the string
+
+      for K in Text'Range loop
+         if Text (K) = ASCII.HT then
+            Num_Tabs := Num_Tabs + 1;
+         end if;
+      end loop;
+
+      if Num_Tabs = 0 then
+         return Text;
+
+      else
+         declare
+            S : String (1 .. Num_Tabs * Tab_Size + Text'Length);
+            S_Index : Integer := 1;
+            Bound   : Integer;
+         begin
+            for K in Text'Range loop
+               case Text (K) is
+                  when ASCII.LF =>
+                     S (S_Index) := Text (K);
+                     S_Index := S_Index + 1;
+                     Col := 1;
+
+                  when ASCII.HT =>
+                     if Col mod Tab_Size /= 0 then
+                        Bound := (1 + Col / Tab_Size) * Tab_Size - Col;
+                        S (S_Index .. S_Index + Bound - 1) := (others => ' ');
+                        S_Index := S_Index + Bound;
+                        Col := Col + Bound;
+
+                     else
+                        S (S_Index) := ' ';
+                        S_Index := S_Index + 1;
+                        Col := Col + 1;
+                     end if;
+
+                  when others =>
+                     S (S_Index) := Text (K);
+                     S_Index := S_Index + 1;
+                     Col := Col + 1;
+               end case;
+            end loop;
+
+            return S (S'First .. S_Index - 1);
+         end;
+      end if;
+   end Do_Tab_Expansion;
 
 end Odd.Strings;
