@@ -277,7 +277,7 @@ package body VCS.CVS is
             end loop;
 
             for J in Args_Length + 1 .. Args_Length + Filenames_Length loop
-               Args (J) := new String'(Base_File_Name (Head (Filenames_Temp)));
+               Args (J) := new String'(Base_Name (Head (Filenames_Temp)));
                Filenames_Temp := Next (Filenames_Temp);
             end loop;
             Output := Command (Rep, "cvs", Args, Output_To_Message);
@@ -403,7 +403,7 @@ package body VCS.CVS is
             Args (1) := new String'("status");
 
             for J in 2 .. Filenames_Length + 1 loop
-               Args (J) := new String'(Base_File_Name (Head (Files)));
+               Args (J) := new String'(Base_Name (Head (Files)));
                Files := Next (Files);
             end loop;
 
@@ -897,7 +897,7 @@ package body VCS.CVS is
             Change_Dir (New_Dir);
             Args (1) := new String' ("diff");
             Args (2) := new String' ("-c");
-            Args (3) := new String' (Base_File_Name (File));
+            Args (3) := new String' (Base_Name (File));
 
             Result := Command (Rep, "cvs", Args);
 
@@ -930,7 +930,7 @@ package body VCS.CVS is
    begin
       Change_Dir (New_Dir);
       Args (1) := new String' ("log");
-      Args (2) := new String' (Base_File_Name (File));
+      Args (2) := new String' (Base_Name (File));
 
       Result := Command (Rep, "cvs", Args);
 
@@ -964,7 +964,7 @@ package body VCS.CVS is
    begin
       Change_Dir (New_Dir);
       Args (1) := new String' ("annotate");
-      Args (2) := new String' (Base_File_Name (File));
+      Args (2) := new String' (Base_Name (File));
 
       Result := Command (Rep, "cvs", Args);
 

@@ -25,7 +25,6 @@ with Gtk.Rc;
 with Glide_Page;
 with Glide_Menu;
 with Glide_Main_Window;
-with String_Utils; use String_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel;         use Glide_Kernel;
@@ -188,7 +187,7 @@ begin
    Initialize_All_Modules (Glide.Kernel);
 
    for J in 1 .. Argument_Count loop
-      if String_Utils.File_Extension (Argument (J)) = "gpr" then
+      if File_Extension (Argument (J)) = ".gpr" then
          Load_Project (Glide.Kernel, Argument (J));
          Project_Loaded := True;
       else
@@ -207,7 +206,7 @@ begin
 
          exit when Last = 0;
 
-         if String_Utils.File_Extension (Str (1 .. Last)) = "gpr" then
+         if File_Extension (Str (1 .. Last)) = ".gpr" then
             Load_Project (Glide.Kernel, Str (1 .. Last));
             exit;
          end if;

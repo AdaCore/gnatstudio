@@ -29,7 +29,6 @@ with Prj.Com;
 with Prj.Env;
 with Src_Info.ALI_Maps;         use Src_Info.ALI_Maps;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
-with String_Utils;              use String_Utils;
 with Types;                     use Types;
 with Traces;                    use Traces;
 
@@ -399,8 +398,7 @@ package body Src_Info.ALI is
       Max_Len : Natural := Maximum_Filename_Length) return String
    is
       Flen    : constant Natural := Filename'Length;
-      Fext    : constant String :=
-        '.' & String_Utils.File_Extension (Filename);
+      Fext    : constant String := File_Extension (Filename);
       Rlen    : Natural;
       Result  : String (1 .. Flen) := Filename;
       --  Result'First must be equal to 1 because of Krunch.Krunch.
@@ -733,7 +731,7 @@ package body Src_Info.ALI is
       if File.LI = null then
          File.LI := new LI_File_Constrained'
            (LI => (Parsed        => False,
-                   LI_Filename   => new String'(Base_File_Name (ALI_Filename)),
+                   LI_Filename   => new String'(Base_Name (ALI_Filename)),
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -914,7 +912,7 @@ package body Src_Info.ALI is
       if File.LI = null then
          File.LI := new LI_File_Constrained'
            (LI => (Parsed        => False,
-                   LI_Filename   => new String'(Base_File_Name (ALI_Filename)),
+                   LI_Filename   => new String'(Base_Name (ALI_Filename)),
                    Spec_Info     => null,
                    Body_Info     => null,
                    Separate_Info => null));
@@ -1617,7 +1615,7 @@ package body Src_Info.ALI is
       --  Store the ALI Filename and the Compile_Errors Flag
 
       Tmp.LI.LI_Filename := new String'
-        (Base_File_Name (Get_Name_String (New_ALI.Afile)));
+        (Base_Name (Get_Name_String (New_ALI.Afile)));
       Tmp.LI.Compilation_Errors_Found := New_ALI.Compile_Errors;
 
       --  Build the rest of the structure
@@ -1764,7 +1762,7 @@ package body Src_Info.ALI is
       Prj_Data       : Project_Data renames Prj.Projects.Table (Project);
       Naming         : Naming_Data renames Prj_Data.Naming;
 
-      Short_Source_Name : constant String := Base_File_Name (Source_Filename);
+      Short_Source_Name : constant String := Base_Name (Source_Filename);
       Source_Name_Id : File_Name_Type;
       Body_Id        : Array_Element_Id;
       Spec_Id        : Array_Element_Id;

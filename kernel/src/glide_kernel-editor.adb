@@ -23,6 +23,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Main_Window;    use Glide_Main_Window;
 with Glide_Page;           use Glide_Page;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Gtk.Box;              use Gtk.Box;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Widget;           use Gtk.Widget;
@@ -32,7 +33,6 @@ with Src_Info;             use Src_Info;
 with Src_Info.ALI;         use Src_Info.ALI;
 with Src_Info.Queries;     use Src_Info.Queries;
 with GVD.Process;          use GVD.Process;
-with String_Utils;         use String_Utils;
 
 package body Glide_Kernel.Editor is
 
@@ -231,7 +231,7 @@ package body Glide_Kernel.Editor is
          Attach (Editor, Box);
          Child := Put (MDI, Box);
          --  ??? Should compute the right number.
-         Set_Title (Child, Base_File_Name (Title) & " <2>");
+         Set_Title (Child, Base_Name (Title) & " <2>");
       end if;
    end New_View;
 
@@ -247,7 +247,7 @@ package body Glide_Kernel.Editor is
       Top         : constant Glide_Window := Glide_Window (Kernel.Main_Window);
       MDI         : constant MDI_Window :=
         Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Short_File  : String := Base_File_Name (File);
+      Short_File  : String := Base_Name (File);
       Success     : Boolean;
       Editor      : Source_Editor_Box;
       Box         : Source_Box;

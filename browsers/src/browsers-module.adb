@@ -26,7 +26,6 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Intl;                use Glide_Intl;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Src_Info;                  use Src_Info;
-with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Prj_API;                   use Prj_API;
 
@@ -38,7 +37,8 @@ with Gtkada.File_Selector; use Gtkada.File_Selector;
 with Gtkada.MDI;           use Gtkada.MDI;
 with Gtk.Widget;           use Gtk.Widget;
 
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Browsers.Module is
 
@@ -151,7 +151,7 @@ package body Browsers.Module is
       In_Browser   : access Glide_Browser_Record'Class;
       File         : String)
    is
-      F             : constant String := Base_File_Name (File);
+      F             : constant String := Base_Name (File);
       Item, Initial : File_Item;
       Link          : Dependency_Link;
       Dep, List     : Dependency_List;

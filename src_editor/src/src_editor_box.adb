@@ -49,6 +49,7 @@ with Gtk.Text_Iter;              use Gtk.Text_Iter;
 with Gtk.Widget;                 use Gtk.Widget;
 with GUI_Utils;                  use GUI_Utils;
 with Glide_Intl;                 use Glide_Intl;
+with GNAT.Directory_Operations;  use GNAT.Directory_Operations;
 
 with Language;                   use Language;
 with String_Utils;               use String_Utils;
@@ -1075,7 +1076,7 @@ package body Src_Editor_Box is
          Entity_Name : constant String := Get_Text (Start_Iter, End_Iter);
       begin
          Src_Info.Queries.Find_Declaration_Or_Body
-           (Lib_Info, Base_File_Name (Editor.Filename.all),
+           (Lib_Info, Base_Name (Editor.Filename.all),
             Entity_Name, Tmp_Line, Tmp_Col,
             Filename, Start_Line, Start_Column, End_Line, End_Column, Status);
       end;

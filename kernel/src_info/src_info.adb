@@ -18,9 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with String_Utils;       use String_Utils;
 with Src_Info.ALI;       use Src_Info.ALI;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
 
 package body Src_Info is
@@ -111,7 +111,7 @@ package body Src_Info is
       Source_Filename : String)
       return LI_File_Ptr
    is
-      Short_Filename : constant String := Base_File_Name (Source_Filename);
+      Short_Filename : constant String := Base_Name (Source_Filename);
       Current_LI     : LI_File_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table;
@@ -281,7 +281,7 @@ package body Src_Info is
    function Get
      (HT : LI_File_HTable.HTable; LI_Filename : String) return LI_File_Ptr
    is
-      Name : aliased String := Base_File_Name (LI_Filename);
+      Name : aliased String := Base_Name (LI_Filename);
       Node : constant LI_File_Node_Ptr :=
         LI_File_HTable.Get (HT, Name'Unchecked_Access);
    begin
