@@ -96,6 +96,10 @@ package VCS.Generic_VCS is
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File);
 
+   procedure Diff_Working
+     (Rep  : access Generic_VCS_Record;
+      File : VFS.Virtual_File);
+
    procedure Log
      (Rep  : access Generic_VCS_Record;
       File : VFS.Virtual_File;

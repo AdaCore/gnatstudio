@@ -91,6 +91,10 @@ package VCS.ClearCase is
      (Rep  : access ClearCase_Record;
       File : VFS.Virtual_File);
 
+   procedure Diff_Working
+     (Rep  : access ClearCase_Record;
+      File : VFS.Virtual_File);
+
    procedure Log
      (Rep  : access ClearCase_Record;
       File : VFS.Virtual_File;
