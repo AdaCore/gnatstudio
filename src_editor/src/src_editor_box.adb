@@ -1053,6 +1053,7 @@ package body Src_Editor_Box is
       --  Increment the reference counter before detaching the Root_Container
       --  from the parent widget, to make sure it is not automatically
       --  destroyed by gtk.
+
       Ref (Box.Root_Container);
       Remove (Parent, Box.Root_Container);
    end Detach;
@@ -1079,6 +1080,7 @@ package body Src_Editor_Box is
       if Editor.Filename = null then
          return "";
       end if;
+
       return Editor.Filename.all;
    end Get_Filename;
 
