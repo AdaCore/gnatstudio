@@ -77,8 +77,7 @@ package body Src_Editor_Module is
 
    package Reopen_User_Data is new Glib.Object.User_Data (Reopen_Record);
 
-   Reopen_User_Data_Id : constant String
-     := Src_Editor_Module_Name & "/Reopen";
+   Reopen_User_Data_Id : constant String := Src_Editor_Module_Name & "/Reopen";
 
    function Generate_Body_Timeout (Data : Process_Data) return Boolean;
    --  Callback for Process_Timeout, to handle gnatstub execution
@@ -611,13 +610,15 @@ package body Src_Editor_Module is
 
          --  Update and save the "Reopen" menu state.
          declare
-            The_Data    : Reopen_Record;
-            Reopen_File_Name : String
-              := Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
-            Reopen_File : File_Type;
             use String_List_Utils.String_List;
-            Node        : List_Node;
-            Counter     : Integer := 0;
+
+            The_Data         : Reopen_Record;
+            Reopen_File_Name : constant String :=
+              Format_Pathname (Get_Home_Dir (Kernel) & "/recent_files");
+            Reopen_File      : File_Type;
+            Counter          : Integer := 0;
+            Node             : List_Node;
+
          begin
             The_Data := Reopen_User_Data.Get (Kernel, Reopen_User_Data_Id);
             Node :=  First (The_Data.List);
@@ -642,9 +643,7 @@ package body Src_Editor_Module is
                   Next (The_Data.List);
                end if;
 
-               Reopen_User_Data.Set (Kernel,
-                                     The_Data,
-                                     Reopen_User_Data_Id);
+               Reopen_User_Data.Set (Kernel, The_Data, Reopen_User_Data_Id);
                Open (Reopen_File, Out_File, Reopen_File_Name);
                Node :=  First (The_Data.List);
 
@@ -660,8 +659,9 @@ package body Src_Editor_Module is
 
       else
          Console.Insert
-           (Kernel, "Can not open file '" & File & "'",
-            Highlight_Sloc => False);
+           (Kernel, (-"Cannot open file ") & "'" & File & "'",
+            Highlight_Sloc => False,
+            Mode           => Error);
       end if;
 
       return Editor;
