@@ -5352,8 +5352,9 @@ menu, provide a way to display graphically differences between two files,
 or two different versions of the same file.
 
 This tool is based on the standard text command @command{diff}, available
-on all Unix systems. Under Windows, you need to provide a proper equivalent,
-by e.g. installing a set of Unix tools such as cygwin
+on all Unix systems. Under Windows, a default implementation is provided
+with GPS, called @command{gnudiff.exe}. You may want to provide an alternate
+implementation by e.g. installing a set of Unix tools such as cygwin
 (@url{http://www.cygwin.com}).
 
 The dialog is composed of two main areas: on the left side, the reference
@@ -6264,9 +6265,11 @@ Otherwise, all dependencies, even implicit, are displayed.
 Note that in order to perform visual comparison between files, GPS
 needs to call external tool (not distributed with GPS) such as @command{diff}
 or @command{patch}. These tools are usually found on most unix systems, and
-may not be available by default on other OSes. In particular under Windows,
-it is recommanded that you install these tools if needed from one of the
-unix toolsets available, such as msys (@url{http://www.mingw.org/msys.shtml}) or
+may not be available by default on other OSes. Under Windows, default
+implementations are provided by the @command{gnudiff.exe} and
+@command{gnupatch.exe} executables. Alternatively, you may want to
+install these tools from one of the unix toolsets available,
+such as msys (@url{http://www.mingw.org/msys.shtml}) or
 cygwin (@url{http://www.cygwin.com}).
 
 @table @i
