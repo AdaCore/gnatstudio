@@ -142,6 +142,8 @@ package Glide_Kernel.Standard_Hooks is
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
       Focus             : Boolean := True;
+      Position          : Gtkada.MDI.Child_Position
+        := Gtkada.MDI.Position_Default;
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left
@@ -162,7 +164,7 @@ package Glide_Kernel.Standard_Hooks is
    --  internal editor or an external editor.
 
    procedure Open_File_Editor
-     (Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class;
+     (Kernel            : access Kernel_Handle_Record'Class;
       Filename          : VFS.Virtual_File;
       Line              : Natural := 1;
       Column            : Natural := 1;
@@ -170,7 +172,9 @@ package Glide_Kernel.Standard_Hooks is
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
-      Focus             : Boolean := True);
+      Focus             : Boolean := True;
+      Position          : Gtkada.MDI.Child_Position :=
+        Gtkada.MDI.Position_Default);
    --  Calls Open_File_Action_Hook.
 
    procedure Clear_Highlighting
