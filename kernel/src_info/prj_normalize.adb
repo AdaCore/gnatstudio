@@ -534,6 +534,18 @@ package body Prj_Normalize is
       end Find;
 
    begin
+      --  If there are no scenario variables, we simply add at the end of the
+      --  project or the package
+
+      if Scenario_Variables'Length = 0 then
+         if Pkg = Empty_Node then
+            return Project_Declaration_Of (Project);
+         else
+            return Pkg;
+         end if;
+      end if;
+
+
       if Pkg = Empty_Node then
          Decl_Item := First_Declarative_Item_Of
            (Project_Declaration_Of (Project));
@@ -577,7 +589,7 @@ package body Prj_Normalize is
          Var_Values (J) := Prj.Ext.Value_Of (Name_Find);
       end loop;
 
-      --  Find the appropriate case item
+      --  Find the appropriate case item.
 
       pragma Assert (Nested_Case /= Empty_Node);
 
