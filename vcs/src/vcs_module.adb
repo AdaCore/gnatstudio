@@ -324,8 +324,12 @@ package body VCS_Module is
       Changed  : Boolean := False;
 
    begin
-      if Project_View = No_Project or else
-        (Get_Label (Selector.Selected) /= Get_Vcs_Kind (Project_View)
+      if (Project_View = No_Project
+          and then Get_Label (Selector.Selected) /= -Auto_Detect)
+        or else
+        (Project_View /= No_Project
+         and then To_Lower (Get_Label (Selector.Selected)) /=
+           To_Lower (Get_Vcs_Kind (Project_View))
          and then (Get_Vcs_Kind (Project_View) /= ""
                    or else Get_Label (Selector.Selected) /= -Auto_Detect))
       then
