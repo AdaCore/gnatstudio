@@ -2,11 +2,9 @@
 --                                                                          --
 --                         GNAT LIBRARY COMPONENTS                          --
 --                                                                          --
---                          G N A T . R E G P A T                           --
+--                      G N A T . E X P E C T . T T Y                       --
 --                                                                          --
 --                                 S p e c                                  --
---                                                                          --
---                            $Revision$
 --                                                                          --
 --           Copyright (C) 2000-2002 Ada Core Technologies, Inc.            --
 --                                                                          --
@@ -32,7 +30,11 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+pragma Warnings (Off);
+with GNAT.TTY;
+pragma Warnings (On);
 with GNAT.Expect; use GNAT.Expect;
+
 with System;
 
 package GNAT.Expect.TTY is
@@ -44,6 +46,22 @@ package GNAT.Expect.TTY is
    type TTY_Process_Descriptor is new Process_Descriptor with private;
    --  Similar, but the parent is set up as a full terminal (Unix sense, see
    --  tty(4)).
+
+   procedure Pseudo_Descriptor
+     (Descriptor  : out TTY_Process_Descriptor'Class;
+      TTY         : GNAT.TTY.TTY_Handle;
+      Buffer_Size : Natural := 4096);
+   --  Given a terminal descriptor (TTY), create a pseudo process descriptor
+   --  to be used with GNAT.Expect.
+   --  Note that it is invalid to call Close, Interrupt, Send_Signal on the
+   --  resulting descriptor. To deallocate memory associated with Process,
+   --  call Close_Pseudo_Descriptor instead.
+
+   procedure Close_Pseudo_Descriptor
+     (Descriptor : in out TTY_Process_Descriptor);
+   --  Free memory and ressources associated with Descriptor.
+   --  Do *not* close the associated TTY, it is the caller's responsibility
+   --  to call GNAT.TTY.Close_TTY.
 
 private
 

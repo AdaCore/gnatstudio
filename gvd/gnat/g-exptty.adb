@@ -2,11 +2,9 @@
 --                                                                          --
 --                         GNAT LIBRARY COMPONENTS                          --
 --                                                                          --
---                          G N A T . R E G P A T                           --
+--                      G N A T . E X P E C T . T T Y                       --
 --                                                                          --
 --                                 S p e c                                  --
---                                                                          --
---                            $Revision$
 --                                                                          --
 --           Copyright (C) 2000-2002 Ada Core Technologies, Inc.            --
 --                                                                          --
@@ -66,6 +64,17 @@ package body GNAT.Expect.TTY is
       Status := Waitpid (Descriptor.Process);
    end Close;
 
+   -----------------------------
+   -- Close_Pseudo_Descriptor --
+   -----------------------------
+
+   procedure Close_Pseudo_Descriptor
+     (Descriptor : in out TTY_Process_Descriptor) is
+   begin
+      Descriptor.Buffer_Size := 0;
+      GNAT.OS_Lib.Free (Descriptor.Buffer);
+   end Close_Pseudo_Descriptor;
+
    ---------------
    -- Interrupt --
    ---------------
@@ -77,6 +86,27 @@ package body GNAT.Expect.TTY is
    begin
       Internal (Descriptor.Process);
    end Interrupt;
+
+   -----------------------
+   -- Pseudo_Descriptor --
+   -----------------------
+
+   procedure Pseudo_Descriptor
+     (Descriptor  : out TTY_Process_Descriptor'Class;
+      TTY         : GNAT.TTY.TTY_Handle;
+      Buffer_Size : Natural := 4096) is
+   begin
+      Descriptor.Input_Fd  := GNAT.TTY.TTY_Descriptor (TTY);
+      Descriptor.Output_Fd := Descriptor.Input_Fd;
+
+      --  Create the buffer
+
+      Descriptor.Buffer_Size := Buffer_Size;
+
+      if Buffer_Size /= 0 then
+         Descriptor.Buffer := new String (1 .. Positive (Buffer_Size));
+      end if;
+   end Pseudo_Descriptor;
 
    ---------------------------
    -- Set_Up_Communications --
