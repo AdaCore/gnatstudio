@@ -353,7 +353,10 @@ package body Display_Items is
             --  Do we have an existing item that matches this ? (same address
             --  as in the current access type itself)
 
-            Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+            if Get_Detect_Aliases (Debugger.Data_Canvas) then
+               Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+            end if;
+
             Put (Debugger.Data_Canvas, Item);
 
             if Alias_Item /= null then
@@ -728,11 +731,15 @@ package body Display_Items is
            and then Display_Item (Item).Auto_Refresh
            and then Display_Item (Item).Id.all = Id
            and then
-           ((Name = "" and then Display_Item (Item).Is_Alias_Of = null)
+           (Name = ""
             or else (Display_Item (Item).Name /= null
                      and then Display_Item (Item).Name.all = Name))
          then
-            Alias_Item := Display_Item (Item);
+            if Display_Item (Item).Is_Alias_Of /= null then
+               Alias_Item := Display_Item (Item).Is_Alias_Of;
+            else
+               Alias_Item := Display_Item (Item);
+            end if;
             return False;
          end if;
 
