@@ -45,25 +45,25 @@ package Codefix is
    ----------------------------------------------------------------------------
 
    --  All the functions of affectation (Affect and Get_Line) destroy the
-   --  precedent element in the Dynamic_String. If you don't want to delete
-   --  the precedent string, you have to initialize the Dynamic_String with
+   --  previous element in the Dynamic_String. If you don't want to delete
+   --  the previous string, you have to initialize the Dynamic_String with
    --  the value null before calling these functions.
 
    type Dynamic_String is access all String;
 
    procedure Assign (This : in out Dynamic_String; Value : String);
-   --  Delete the precedent string, and create a new initialized with Value.
+   --  Delete the previous string, and create a new initialized with Value.
 
    procedure Assign (This : in out Dynamic_String; Value : Dynamic_String);
-   --  Delete the precedent string This, and create a new initialized with a
+   --  Delete the previous string This, and create a new initialized with a
    --  copy of Value.
 
    procedure Get_Line (This : in out Dynamic_String);
-   --  Delete the precedent string, and create a new initialized with the line
+   --  Delete the previous string, and create a new initialized with the line
    --  red on the standart input.
 
    procedure Get_Line (File : File_Type; This : in out Dynamic_String);
-   --  Delete the precedent string, and create a new initialized with the line
+   --  Delete the previous string, and create a new initialized with the line
    --  red File.
 
    procedure Put_Line (This : Dynamic_String);
