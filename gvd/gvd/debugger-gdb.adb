@@ -734,8 +734,6 @@ package body Debugger.Gdb is
       --  because gdb does not seem to take into account this variable at all.
 
    begin
-      Set_Is_Started (Debugger, False);
-
       if Debugger.Remote_Target /= null then
          if Match
            (No_Such_File_Regexp,
@@ -750,6 +748,12 @@ package body Debugger.Gdb is
          then
             raise Executable_Not_Found;
          end if;
+      end if;
+
+      Set_Is_Started (Debugger, False);
+
+      if Debugger.Executable = null then
+         Debugger.Executable := new String' (Executable);
       end if;
 
       --  Report a change in the executable. This has to be done before we
@@ -982,7 +986,9 @@ package body Debugger.Gdb is
       Arguments : String := "";
       Mode      : Command_Type := Hidden) is
    begin
-      if Arguments = "" and then Debugger.Remote_Target /= null then
+      if Arguments = "" and then Debugger.Remote_Target /= null
+        and then Debugger.Executable /= null
+      then
          Send
            (Debugger,
             Start (Language_Debugger_Access (Get_Language (Debugger))) &
