@@ -20,7 +20,6 @@
 
 with Gtk.Main; use Gtk.Main;
 with Gtkada.File_Selection; use Gtkada.File_Selection;
-with String_Utils; use String_Utils;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 
 package body Open_Program_Pkg.Callbacks is
@@ -44,7 +43,7 @@ package body Open_Program_Pkg.Callbacks is
    procedure On_Open_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      S : constant String := To_Unix_Pathname (File_Selection_Dialog);
+      S : constant String := File_Selection_Dialog;
    begin
       if S /= "" then
          Set_Text
