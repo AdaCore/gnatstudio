@@ -42,6 +42,15 @@ with Unchecked_Deallocation;
 
 package body Prj_API is
 
+   function Internal_Get_Or_Create_Attribute
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Array_Index : String_Id := No_String;
+      Kind : Variable_Kind := List)
+      return Project_Node_Id;
+   --  Internal version for Get_Or_Create_Attribute. If Array_Index is not
+   --  No_String, then the variable is defined for a specific index.
+
    --------------------
    -- Create_Project --
    --------------------
@@ -82,13 +91,14 @@ package body Prj_API is
       return Decl;
    end Get_Or_Create_Declaration;
 
-   ----------------------------
-   -- Get_Or_Create_Variable --
-   ----------------------------
+   --------------------------------------
+   -- Internal_Get_Or_Create_Attribute --
+   --------------------------------------
 
-   function Get_Or_Create_Variable
+   function Internal_Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
+      Array_Index : String_Id := No_String;
       Kind : Variable_Kind := List)
       return Project_Node_Id
    is
@@ -157,11 +167,12 @@ package body Prj_API is
       --  Create the variable
 
       Project_Nodes.Append
-        (Default_Project_Node (N_Variable_Declaration, Kind));
+        (Default_Project_Node (N_Attribute_Declaration, Kind));
       Var := Project_Nodes.Last;
       Project_Nodes.Table (Decl_Item).Field1 := Var;
 
       Project_Nodes.Table (Var).Name := N;
+      Project_Nodes.Table (Var).Value := Array_Index;
 
       if Kind = Prj.List then
          Project_Nodes.Append
@@ -169,7 +180,38 @@ package body Prj_API is
          Project_Nodes.Table (Var).Field1 := Project_Nodes.Last;
       end if;
       return Var;
-   end Get_Or_Create_Variable;
+   end Internal_Get_Or_Create_Attribute;
+
+   -----------------------------
+   -- Get_Or_Create_Attribute --
+   -----------------------------
+
+   function Get_Or_Create_Attribute
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Kind : Variable_Kind := List)
+      return Project_Node_Id is
+   begin
+      return Internal_Get_Or_Create_Attribute
+        (Prj_Or_Pkg, Name, No_String, Kind);
+   end Get_Or_Create_Attribute;
+
+   -----------------------------
+   -- Get_Or_Create_Attribute --
+   -----------------------------
+
+   function Get_Or_Create_Attribute
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Index_Name : String;
+      Kind : Variable_Kind := List)
+     return Project_Node_Id is
+   begin
+      Start_String;
+      Store_String_Chars (Index_Name);
+      return Internal_Get_Or_Create_Attribute
+        (Prj_Or_Pkg, Name, End_String, Kind);
+   end Get_Or_Create_Attribute;
 
    ---------------------------
    -- Get_Or_Create_Package --

@@ -47,18 +47,28 @@ package Prj_API is
    --  Create (or get) the declaration associated with project
    --  This returns a N_Project_Declaration
 
-   function Get_Or_Create_Variable
+   function Get_Or_Create_Attribute
      (Prj_Or_Pkg : Project_Node_Id;
       Name : String;
       Kind : Variable_Kind := List)
       return Project_Node_Id;
-   --  Create (or get an existing) variable by Name.
+   --  Create (or get an existing) variable by Name. This should be used
+   --  only for the standard variables (for Var_Name use ...)
    --  The new variable will be added either to the project (global variable)
    --  or in one of its packages, both are specified in Prj_Or_Pkg.
    --
    --  The variable is added before the others in the list of declarations.
    --  If the variable is a list, it also creates the associated
    --  N_Literal_String_List node.
+
+   function Get_Or_Create_Attribute
+     (Prj_Or_Pkg : Project_Node_Id;
+      Name : String;
+      Index_Name : String;
+      Kind : Variable_Kind := List)
+      return Project_Node_Id;
+   --  Create an attribute ("Var_Name (Index_Name) :=...") either in the
+   --  project or in the package Prj_Or_Pkg.
 
    procedure Append_To_List (Var : Project_Node_Id; Value : String);
    --  Append a simple string to Var.
