@@ -28,6 +28,7 @@ with Glide_Intl;           use Glide_Intl;
 
 with Basic_Types;          use Basic_Types;
 with Projects;             use Projects;
+with Projects.Registry;    use Projects.Registry;
 with String_Utils;         use String_Utils;
 with VFS;                  use VFS;
 
@@ -100,22 +101,39 @@ package body Commands.Custom is
 
       function Project_From_Param (Param : String) return Project_Type is
          File : File_Selection_Context_Access;
+         Project : Project_Type := No_Project;
       begin
          if Param (Param'First) = 'P' then
-            return Get_Project (Command.Kernel);
+            Project := Get_Project (Command.Kernel);
+
          elsif Context /= null
            and then Context.all in File_Selection_Context'Class
            and then Has_Project_Information
              (File_Selection_Context_Access (Context))
          then
             File := File_Selection_Context_Access (Context);
-            return Project_Information (File);
-         else
+            Project := Project_Information (File);
+
+         elsif Context /= null
+           and then Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+             (File_Selection_Context_Access (Context))
+         then
+            --  Since the editor doesn't provide the project, we emulate it
+            --  here
+            Project := Get_Project_From_File
+              (Project_Registry (Get_Registry (Get_Kernel (Context))),
+               File_Information (File_Selection_Context_Access (Context)),
+               Root_If_Not_Found => True);
+         end if;
+
+         if Project = No_Project then
             Insert (Command.Kernel,
                     -"Command not executed: it requires a project",
                     Mode => Error);
-            return No_Project;
          end if;
+
+         return Project;
       end Project_From_Param;
 
       ------------------
