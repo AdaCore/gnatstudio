@@ -915,7 +915,12 @@ package body Debugger.Gdb is
         or else (Command'Length >= 4
           and then Command (Command'First .. Command'First + 3) = "core")
         or else (Command'Length >= 6
-          and then Command (Command'First .. Command'First + 5) = "attach");
+          and then Command (Command'First .. Command'First + 5) = "attach")
+        or else (Command'Length >= 15
+          and then Command (Command'First .. Command'First + 14) =
+            "add-symbol-file")
+        or else (Command'Length >= 4
+          and then Command (Command'First .. Command'First + 3) = "load");
    end Is_Context_Command;
 
    --------------------------
