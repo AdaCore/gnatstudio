@@ -73,11 +73,13 @@ install:
 	$(MKDIR) $(docdir)/ps
 	$(MKDIR) $(docdir)/txt
 	-$(INSTALL_DATA) glide-welcome.html $(docdir)/html
-	-$(INSTALL_DATA) glide2_*.html $(docdir)/html
+	-for file in glide2.html $(wildcard glide2_*.html); do \
+	  $(INSTALL_DATA) $$file $(docdir)/html; \
+	done
 	-$(INSTALL_DATA) glide2.info $(docdir)/info
 	-$(INSTALL_DATA) glide2.ps  $(docdir)/ps
 	-$(INSTALL_DATA) glide2.txt  $(docdir)/txt
-	for img in $(IMAGES); do \
+	-for img in $(IMAGES); do \
 	  $(INSTALL_DATA) $$img $(docdir)/html; \
 	done
 	-$(INSTALL_DATA) glide-animation.gif $(sharedir)
