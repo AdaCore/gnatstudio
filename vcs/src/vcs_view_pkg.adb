@@ -528,6 +528,7 @@ package body VCS_View_Pkg is
       Found         : Boolean := False;
       Page          : VCS_Page_Access;
       Log           : Boolean;
+      Sort_Id       : Gint;
 
       use type File_Status_List.List_Node;
    begin
@@ -584,6 +585,7 @@ package body VCS_View_Pkg is
                         Page_Num (Explorer.Notebook, Page));
 
       Push_State (Kernel, Busy);
+      Sort_Id := Freeze_Sort (Page.Model);
 
       while Status_Temp /= File_Status_List.Null_Node loop
          Cache_Temp := First (Page.Cached_Status);
@@ -690,6 +692,7 @@ package body VCS_View_Pkg is
          Status_Temp := File_Status_List.Next (Status_Temp);
       end loop;
 
+      Thaw_Sort (Page.Model, Sort_Id);
       Pop_State (Kernel);
    end Display_File_Status;
 
