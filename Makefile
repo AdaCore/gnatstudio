@@ -1,3 +1,4 @@
+include Makefile.gnat
 
 # Dependencies:
 #   common    :
@@ -29,7 +30,7 @@ prj_editor \
 src_editor \
 glide
 
-all: ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
+all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
 
 clean: ${DEPENDENCIES:%=%_clean}
 
