@@ -203,7 +203,7 @@ package body Refactoring.Performers is
                   Line   => Get_Line (Get_Location (Ref)),
                   Column => Get_Column (Get_Location (Ref))));
 
-         --  If we have duplicates, they will always come one after the.
+         --  If we have duplicates, they will always come one after the
          --  other. So we just have to check the previous one.
          elsif Data.Stale_LI_List_Index = Data.Stale_LI_List'First
            or else Get_LI_Filename (Get_LI (Data.Iter.all)) /=
