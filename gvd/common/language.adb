@@ -129,10 +129,6 @@ package body Language is
       Looking_At (Lang, Buffer, Entity, Next_Char, Line, Column);
    end Looking_At;
 
-   ----------------
-   -- Looking_At --
-   ----------------
-
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
@@ -144,12 +140,13 @@ package body Language is
       Matched : Match_Array (0 .. 1);
       Context : constant Language_Context :=
         Get_Language_Context (Language_Access (Lang));
-      Keys : constant Pattern_Matcher := Keywords (Language_Access (Lang));
-      Comm1, Comm2 : Character;
-      C : Gunichar;
+      Keys    : constant Pattern_Matcher := Keywords (Language_Access (Lang));
+      Comm1   : Character;
+      Comm2   : Character;
+      C       : Gunichar;
 
    begin
-      Line := 1;
+      Line   := 1;
       Column := 1;
 
       if Buffer (Buffer'First) = ASCII.LF then
@@ -221,28 +218,29 @@ package body Language is
          Entity := String_Text;
          Next_Char := Buffer'First;
 
-         loop
-            Next_Char := Next_Char + 1;
+         if Next_Char < Buffer'Last
+           and then Buffer (Next_Char + 1) /= ASCII.LF
+         then
+            loop
+               Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
+               Column := Column + 1;
+
+               exit when Next_Char >= Buffer'Last
+                 or else Buffer (Next_Char + 1) = ASCII.LF
+                 or else
+                   (Buffer (Next_Char) = Context.String_Delimiter
+                      and then
+                        (Context.Quote_Character = ASCII.NUL
+                         or else
+                           Buffer (Next_Char - 1) /= Context.Quote_Character));
+            end loop;
+         end if;
+
+         if Next_Char <= Buffer'Last then
+            Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
             Column := Column + 1;
+         end if;
 
-            exit when Next_Char >= Buffer'Last
-              or else Buffer (Next_Char) = ASCII.LF
-              or else
-                (Buffer (Next_Char) = Context.String_Delimiter
-                   and then
-                     (Context.Quote_Character = ASCII.NUL
-                        or else
-                          Buffer (Next_Char - 1) /= Context.Quote_Character));
-         end loop;
-
-         --  ??? why is this code commented out
-         --  if Buffer (Next_Char) = ASCII.LF then
-         --     Line := Line + 1;
-         --     Column := 0;
-         --  end if;
-
-         --  Next_Char := UTF8_Find_Next_Char (Buffer, Next_Char);
-         --  Column    := Column + 1;
          return;
       end if;
 
@@ -512,12 +510,15 @@ package body Language is
       Buffer   : String;
       Callback : Entity_Callback)
    is
-      Index     : Natural := Buffer'First;
-      Next_Char : Natural;
-      End_Char  : Natural;
-      Entity    : Language_Entity;
-      Line, Line_Inc : Natural;
-      Column, Column_Inc : Natural;
+      Index      : Natural := Buffer'First;
+      Next_Char  : Natural;
+      End_Char   : Natural;
+      Entity     : Language_Entity;
+      Line       : Natural;
+      Line_Inc   : Natural;
+      Col        : Natural;
+      Column     : Natural;
+      Column_Inc : Natural;
 
    begin
       Line := 1;
@@ -542,10 +543,22 @@ package body Language is
             Column_Inc := Column + Column_Inc - 1;
          end if;
 
+         --  Looking_At goes always one character beyond characters and
+         --  strings, otherwise next call to Looking_At would start on
+         --  a string or character delimiter.
+
+         if Column_Inc > 1
+           and then (Entity = String_Text or else Entity = Character_Text)
+         then
+            Col := Column_Inc - 1;
+         else
+            Col := Column_Inc;
+         end if;
+
          exit when Callback
            (Entity,
             (Line, Column, Index),
-            (Line + Line_Inc - 1, Column_Inc, End_Char),
+            (Line + Line_Inc - 1, Col, End_Char),
             Entity = Comment_Text and then Next_Char > Buffer'Last);
 
          Line := Line + Line_Inc - 1;
