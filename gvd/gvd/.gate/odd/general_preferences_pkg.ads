@@ -14,9 +14,9 @@ with Gtk.Spin_Button; use Gtk.Spin_Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Object; use Gtk.Object;
-package Odd_Preferences_Pkg is
+package General_Preferences_Pkg is
 
-   type Odd_Preferences_Record is new Gtk_Window_Record with record
+   type General_Preferences_Record is new Gtk_Window_Record with record
       Vbox2 : Gtk_Vbox;
       Notebook1 : Gtk_Notebook;
       Frame1 : Gtk_Frame;
@@ -117,11 +117,11 @@ package Odd_Preferences_Pkg is
       Reset_Button : Gtk_Button;
       Help_Button : Gtk_Button;
    end record;
-   type Odd_Preferences_Access is access all Odd_Preferences_Record'Class;
+   type General_Preferences_Access is access all General_Preferences_Record'Class;
 
-   procedure Gtk_New (Odd_Preferences : out Odd_Preferences_Access);
-   procedure Initialize (Odd_Preferences : access Odd_Preferences_Record'Class);
+   procedure Gtk_New (General_Preferences : out General_Preferences_Access);
+   procedure Initialize (General_Preferences : access General_Preferences_Record'Class);
 
-   Odd_Preferences : Odd_Preferences_Access;
+   General_Preferences : General_Preferences_Access;
 
-end Odd_Preferences_Pkg;
+end General_Preferences_Pkg;

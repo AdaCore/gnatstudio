@@ -57,6 +57,7 @@ begin
    Set_Right_Justify (Main_Debug_Window.Open_Program1, False);
 
    Gtk_New (Main_Debug_Window.Open_Debugger1, -"New Debugger...");
+   Set_Sensitive (Main_Debug_Window.Open_Debugger1, True);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Debugger1, "activate",
       Widget_Callback.To_Marshaller (On_Open_Debugger1_Activate'Access), Main_Debug_Window);
@@ -255,6 +256,7 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator7, False);
 
    Gtk_New (Main_Debug_Window.Preferences1, -"Preferences...");
+   Set_Sensitive (Main_Debug_Window.Preferences1, False);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Preferences1, "activate",
       Widget_Callback.To_Marshaller (On_Preferences1_Activate'Access), Main_Debug_Window);
