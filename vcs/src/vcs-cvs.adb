@@ -229,7 +229,7 @@ package body VCS.CVS is
                       New_Command : in out Command_Record)
    is
       R  : String_List_And_Handler_Access := new String_List_And_Handler;
-      Id : Idle_Handler_Id;
+      Id : Timeout_Handler_Id;
    begin
       if Rep.Command_In_Progress then
          Command_List.Append (Rep.Command_Queue, New_Command);
@@ -267,6 +267,9 @@ package body VCS.CVS is
             Free (Args (J));
          end loop;
 
+         Temp_Args := New_Command.Args;
+         Free (Temp_Args);
+
          Change_Dir (Old_Dir);
 
       exception
@@ -274,7 +277,7 @@ package body VCS.CVS is
             Set_Error (Rep, "Directory error : cannot access " & New_Dir);
       end;
 
-      Id := String_List_Idle.Add (Atomic_Command'Access, R);
+      Id := String_List_Idle.Add (50, Atomic_Command'Access, R);
    end Command;
 
    -------------
@@ -448,7 +451,7 @@ package body VCS.CVS is
       Head   : String_List.List;
       List   : String_List.List)
    is
-      Result         : File_Status_List.List;
+      Result         : File_Status_List.List := File_Status_List.Null_List;
       Output         : String_List.List := List;
       Blank_Status   : File_Status_Record;
       Current_Status : File_Status_Record := Blank_Status;
@@ -467,9 +470,11 @@ package body VCS.CVS is
               and then Line (Line'First .. Line'First + 3) = "===="
             then
                --  Upon encounter of "====", append the status to the result.
+
                if Current_Status /= Blank_Status then
                   File_Status_List.Append (Result, Current_Status);
                end if;
+
                Current_Status := Blank_Status;
 
             elsif Line'Length > 5
@@ -499,6 +504,7 @@ package body VCS.CVS is
                  and then Line (Index .. Index + 14) = "Locally Removed"
                then
                   Current_Status.Status := Not_Registered;
+
                   declare
                      S : String := String_List.Head (Current_Status.File_Name);
                   begin
@@ -538,33 +544,38 @@ package body VCS.CVS is
             then
                Index := Line'First + 10;
                Skip_To_Char (Line, Index, ASCII.HT);
+
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
                   Skip_Blanks (Line (Index .. Line'Last), Index);
                   Next_Index := Index + 1;
                   Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
+
                   if Next_Index > Line'Last then
                      Next_Index := Line'Last;
                   end if;
+
                   Append (Current_Status.Working_Revision,
                           Line (Index .. Next_Index));
                end if;
-
             elsif Line'Length > 15
               and then Line (Line'First .. Line'First + 14) = "   Repository r"
             then
                Index := Line'First + 10;
                Skip_To_Char (Line, Index, ASCII.HT);
+
                if Current_Status.Status /= Unknown
                  and then Current_Status.Status /= Not_Registered
                then
                   Skip_Blanks (Line (Index .. Line'Last), Index);
                   Next_Index := Index + 1;
                   Skip_To_Blank (Line (Index .. Line'Last), Next_Index);
+
                   if Next_Index > Line'Last then
                      Next_Index := Line'Last;
                   end if;
+
                   Append (Current_Status.Repository_Revision,
                           Line (Index .. Next_Index));
                end if;
@@ -575,9 +586,12 @@ package body VCS.CVS is
       end loop;
 
       --  Append the last status.
-      File_Status_List.Append (Result, Current_Status);
 
-      Display_File_Status (Kernel, Result);
+      if not Is_Empty (Current_Status.File_Name) then
+         File_Status_List.Append (Result, Current_Status);
+      end if;
+
+      Display_File_Status (Kernel, Result, True);
    end Status_Output_Handler;
 
    ---------------------
@@ -858,6 +872,7 @@ package body VCS.CVS is
       Arguments : String_List.List;
    begin
       String_List.Append (Arguments, "update");
+      String_List.Append (Arguments, "-d");
 
       Simple_Action (Rep, Filenames, Arguments, True);
    end Update;
@@ -1160,7 +1175,6 @@ package body VCS.CVS is
       D_Copy : Command_Record := D;
    begin
       String_List.Free (D_Copy.Command);
-      String_List.Free (D_Copy.Args);
       String_List.Free (D_Copy.Dir);
 
       --  We deliberately do not free D.Head here, since this list
