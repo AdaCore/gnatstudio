@@ -1,26 +1,14 @@
 Prototype AUnit integration into Glide.
 
-EF 23-Jan-01
-
-I basically adapted Nicolas' work to get it integrated into Glide.
-
-Status:
-
-1.  Everything builds, and we can create all the AUnit artifacts from an user project.
-
-
 Wish List:
 
 1.  Incremental addition to a suite without having to completely rebuild it.
 2.  Path handling - that is, adding the paths needed at the harness level for all the tests and suites involved into the Glide project.
-
+3.  Have only one executable instead of three.
 
 Build:
 
-1. Create a "utils" link to the gvd/gvd source directory, e.g:
-   ln -s $HOME/gvd-src/gvd utils
-
-2. type 'make'
+1. type "make -C src"
 
 Installation:
 
