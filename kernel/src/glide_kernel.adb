@@ -1673,7 +1673,8 @@ package body Glide_Kernel is
      (Kernel : access Kernel_Handle_Record;
       Entity : Entity_Information;
       Tree   : out Src_Info.Queries.Scope_Tree;
-      Node   : out Src_Info.Queries.Scope_Tree_Node)
+      Node   : out Src_Info.Queries.Scope_Tree_Node;
+      Declarations_Only : Boolean := False)
    is
       Lib_Info : LI_File_Ptr;
       Location : File_Location;
@@ -1711,7 +1712,7 @@ package body Glide_Kernel is
          return;
       end if;
 
-      Tree := Create_Tree (Lib_Info);
+      Tree := Create_Tree (Lib_Info, Declarations_Only);
 
       if Tree = Null_Scope_Tree then
          Trace (Me, "Couldn't create scope tree for "

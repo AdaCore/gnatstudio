@@ -243,8 +243,10 @@ package Glide_Kernel is
      (Kernel : access Kernel_Handle_Record;
       Entity : Src_Info.Queries.Entity_Information;
       Tree   : out Src_Info.Queries.Scope_Tree;
-      Node   : out Src_Info.Queries.Scope_Tree_Node);
-   --  Create the scope tree for the entity.
+      Node   : out Src_Info.Queries.Scope_Tree_Node;
+      Declarations_Only : Boolean := False);
+   --  Create the scope tree for the entity, and set node to point to the node
+   --  for Entity.
    --  The returned Tree must be freed by the caller, if not Null_Scope_Tree.
 
    function Scope_To_String (Scope : Src_Info.E_Scope) return String;
