@@ -44,7 +44,6 @@ with System;                   use System;
 with Traces;                   use Traces;
 with Basic_Types;              use Basic_Types;
 with OS_Utils;                 use OS_Utils;
-with String_Utils;             use String_Utils;
 
 package body Shell_Script is
 
@@ -956,15 +955,20 @@ package body Shell_Script is
    is
       Err  : aliased Boolean;
       Args : Argument_List := (1 => new String'(Filename));
-      S    : constant String := Execute_GPS_Shell_Command
-        (Script.Kernel, "load", Args, Err'Unchecked_Access);
    begin
-      Errors := Err;
-      if Display_In_Console and then Script.Console /= null then
-         Insert (Script.Console, S);
-      end if;
+      Trace (Me, "Execute_File: load " & Filename);
 
-      Free (Args);
+      declare
+         S    : constant String := Execute_GPS_Shell_Command
+           (Script.Kernel, "load", Args, Err'Unchecked_Access);
+      begin
+         Errors := Err;
+         if Display_In_Console and then Script.Console /= null then
+            Insert (Script.Console, S);
+         end if;
+
+         Free (Args);
+      end;
    end Execute_File;
 
    --------------
@@ -1036,10 +1040,6 @@ package body Shell_Script is
          Errors.all := True;
          return -"Shell module not initialized";
       end if;
-
-      Trace (Me, "Launching interactive command: "
-             & Command & ' '
-             & Argument_List_To_String (Args));
 
       Command_Node := Command_List.First (Shell_Module_Id.Commands_List);
       while Command_Node /= Command_List.Null_Node loop
@@ -1170,6 +1170,7 @@ package body Shell_Script is
       Args         : Argument_List_Access;
       First, Last  : Integer;
       Tmp          : GNAT.OS_Lib.String_Access;
+      Quoted       : Boolean;
    begin
       if Command /= "" then
          First := Command'First;
@@ -1186,14 +1187,22 @@ package body Shell_Script is
             end if;
 
             Last := First;
+            Quoted := False;
 
-            --  ??? This doesn't allow any embedded semicolon or newline in the
-            --  commands. Probably not major at this point, better use python
-            --  for real scripts.
-            while Last <= Command'Last
-              and then Command (Last) /= ';'
-              and then Command (Last) /= ASCII.LF
-            loop
+            while Last <= Command'Last loop
+               exit when not Quoted
+                 and then (Command (Last) = ';'
+                           or else Command (Last) = ASCII.LF);
+
+               if Command (Last) = '"' then
+                  Quoted := not Quoted;
+
+               elsif Command (Last) = '\'
+                 and then Last < Command'Last
+               then
+                  Last := Last + 1;
+               end if;
+
                Last := Last + 1;
             end loop;
 
@@ -1210,6 +1219,8 @@ package body Shell_Script is
                end if;
             end loop;
 
+            Trace (Me, "Executing command "
+                   & Command (First .. Last - 1));
             declare
                R : constant String := Execute_GPS_Shell_Command
                  (Kernel,
