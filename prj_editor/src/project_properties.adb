@@ -347,7 +347,7 @@ package body Project_Properties is
               (Project_View, Gnatlist_Attribute, Ide_Package)
             then
                Update_Attribute_Value_In_Scenario
-                 (Project            => Get_Project_From_View (Project_View),
+                 (Project            => Project,
                   Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables (Kernel),
                   Attribute_Name     => Gnatlist_Attribute,
@@ -359,7 +359,7 @@ package body Project_Properties is
               (Project_View, Debugger_Command_Attribute, Ide_Package)
             then
                Update_Attribute_Value_In_Scenario
-                 (Project            => Get_Project_From_View (Project_View),
+                 (Project            => Project,
                   Pkg_Name           => Ide_Package,
                   Scenario_Variables => Scenario_Variables (Kernel),
                   Attribute_Name     => Debugger_Command_Attribute,
@@ -386,7 +386,7 @@ package body Project_Properties is
                         Index => Languages (J).all) /= Get_Text (Ent)
                      then
                         Update_Attribute_Value_In_Scenario
-                          (Project  => Get_Project_From_View (Project_View),
+                          (Project  => Project,
                            Pkg_Name => Ide_Package,
                            Scenario_Variables => Scenario_Variables (Kernel),
                            Attribute_Name => Compiler_Command_Attribute,
@@ -414,7 +414,7 @@ package body Project_Properties is
 
                if Changed then
                   Update_Attribute_Value_In_Scenario
-                    (Project           => Get_Project_From_View (Project_View),
+                    (Project           => Project,
                      Pkg_Name          => "",
                      Scenario_Variables => Scenario_Variables (Kernel),
                      Attribute_Name     => Languages_Attribute,
@@ -425,6 +425,7 @@ package body Project_Properties is
          end;
 
          if Changed then
+            Set_Project_Modified (Kernel, Project, True);
             Recompute_View (Kernel);
          end if;
       end if;
