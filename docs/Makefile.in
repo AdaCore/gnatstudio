@@ -27,7 +27,7 @@ cp_gvd:
 
 stamp-eps: $(IMAGES)
 	@-for img in [^g]*.gif; do \
-	  $(CONVERT) -compress rle $${img} `basename $${img} .gif`.eps; \
+	  $(CONVERT) $${img} `basename $${img} .gif`.eps; \
 	done
 	touch stamp-eps
 
