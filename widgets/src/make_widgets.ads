@@ -21,6 +21,7 @@
 pragma Warnings (Off);
 with Gtkada.File_Selector;
 with Gtkada.File_Selector.Filters;
+with Csc_HTML;
 pragma Warnings (On);
 
 package Make_Widgets is
