@@ -108,7 +108,7 @@ package body Debugger is
       Entity   : String) return Items.Generic_Type_Access
    is
       Result   : Generic_Type_Access;
-      Type_Str : String  := Type_Of (Debugger, Entity);
+      Type_Str : constant String  := Type_Of (Debugger, Entity);
       Index    : Natural := Type_Str'First;
 
    begin
