@@ -409,6 +409,10 @@ package Codefix.Text_Manager is
    --  Free the memory associated to an Extract_Line, and if this line is in
    --  a list of line, free recursivly the whole list.
 
+   procedure Free_Data (This : in out Extract_Line);
+   --  Free the memory associated to an Extract line but do not free the lines
+   --  that can be connected to.
+
    function Clone
      (This      : Extract_Line;
       Recursive : Boolean) return Extract_Line;
