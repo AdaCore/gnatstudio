@@ -36,6 +36,7 @@ typedef struct DB_File_struct {
     char *key_p;		/* key pattern */
     int exact_match;		/* 1/0, if exact key match needed/not needed */
     int pos;			/* starting cursor position */
+    int dbi;			/* index of current database handler */
 } DB_File;
 
 
@@ -166,14 +167,17 @@ DB_File *ada_db_open(const int num_of_files, const char **file_names)
     }
 
     file->dbc = num_of_files;
+    file->dbi = -1;
+
     for (i = 0; i < num_of_files; i++) {
 	file->db[i] = dbopen(file_names[i], O_RDONLY, 0644, DB_BTREE, 0);
-	file->last_errno = 0;
-	file->key_p = 0;
-	file->fname[i] = strdup(file_names[i]);
 	if (file->db == 0) {
 	    file->last_errno = errno;
+	    return 0;
 	}
+	file->fname[i] = strdup(file_names[i]);
+	file->last_errno = 0;
+	file->key_p = 0;
     }
 
     return file;
@@ -221,17 +225,23 @@ void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
 		       int exact_match)
 {
     file->last_errno = 0;
+#ifdef RESTRICTED_CURSOR
+    if (file->dbi >= 0) {
+	file->last_errno = EINPROGRESS;
+    }
+#endif
     if (pos == POS_BY_KEY) {
-        if (file->key_p) { /* key pattern was already set, free it before */
+	if (file->key_p) { /* key pattern was already set, free it before */
 #ifdef RESTRICTED_CURSOR
             file->last_errno = EINPROGRESS;
 #endif
             free(file->key_p);
-    }
-        file->key_p = strdup(key_p);
-        file->exact_match = exact_match;
+	}
+	file->key_p = strdup(key_p);
+	file->exact_match = exact_match;
     }
     file->pos = pos;
+    file->dbi = 0;
 }
 
 void ada_db_free_cursor(DB_File * file)
@@ -240,6 +250,7 @@ void ada_db_free_cursor(DB_File * file)
         free(file->key_p);
         file->key_p = 0;
     }
+    file->dbi = -1;
 }
 
 DB_Pair *ada_db_get_pair(DB_File * file, int move)
@@ -289,7 +300,7 @@ DB_Pair *ada_db_get_pair(DB_File * file, int move)
     }
 
     file->pos = move;
-    result = file->db[0]->seq(file->db[0], &key, &data, flag);
+    result = file->db[file->dbi]->seq(file->db[file->dbi], &key, &data, flag);
     if (result == 1) {		/* no more key/data pairs */
 	return 0;
     } else if (result == -1) {	/* error, errno is set    */
