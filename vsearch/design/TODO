@@ -12,6 +12,8 @@
   * [Yeti] Set case sensitivity of Files_Combo and Directory_Combo accordingly
     with the underlying OS
 
+  * [Yeti] Update sensitivity of "Files" and "Directory" labels
+
 ------------------
 -- Improvements --
 ------------------
@@ -36,6 +38,12 @@
 
   * [Yeti] Add a callback reporting failures (opening error, ...)
 
+  * [Yeti] Add a Match_Array parameter to the callback
+
+  * [Yeti] When no initial directory, use no explicit one.
+
+  * [Yeti] Whole_Word option unuseful when Regexp ???
+
 -----------
 -- Speed --
 -----------
@@ -45,6 +53,11 @@
     indentation levels.
 
   * [Yeti] Caching Language_Context
+
+  * [Yeti] Use Boyer-Moore algorithm instead of Index
+
+  * [Yeti] When Whole_Word without Regexp, search for literal text and then
+    verify it's a whole one
 
 ----------
 -- Bugs --
