@@ -419,8 +419,7 @@ package Projects is
    --  Move to the next imported project.
 
    function Find_All_Projects_Importing
-     (Root_Project : Project_Type;
-      Project      : Project_Type;
+     (Project      : Project_Type;
       Include_Self : Boolean := False;
       Direct_Only  : Boolean := False) return Imported_Project_Iterator;
    --  Return the list of all the projects that import Project, either directly

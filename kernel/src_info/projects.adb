@@ -1513,11 +1513,12 @@ package body Projects is
    ---------------------------------
 
    function Find_All_Projects_Importing
-     (Root_Project : Project_Type;
-      Project      : Project_Type;
+     (Project      : Project_Type;
       Include_Self : Boolean := False;
       Direct_Only  : Boolean := False) return Imported_Project_Iterator
    is
+      Root_Project : constant Project_Type := Get_Root_Project
+        (Project_Registry (Get_Registry (Project)));
       Iter : Imported_Project_Iterator;
    begin
       if Project = No_Project then
