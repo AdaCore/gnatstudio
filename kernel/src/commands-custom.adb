@@ -1533,7 +1533,12 @@ package body Commands.Custom is
       else
          if Context.Dir /= null then
             Old_Dir := new String'(Get_Current_Dir);
-            Change_Dir (Context.Dir.all);
+            begin
+               Change_Dir (Context.Dir.all);
+            exception
+               when Directory_Error =>
+                  return Terminate_Command;
+            end;
          end if;
 
          Command.Execution := new Custom_Command_Execution_Record;
