@@ -21,14 +21,38 @@
 --  Builder module.
 
 with Glide_Kernel;
+with Gtk.Menu;
+with Gtk.Menu_Item;
+with String_List_Utils;
 
 package Builder_Module is
 
    Builder_Module_ID   : Glide_Kernel.Module_ID;
+
+   type Builder_Module_ID_Record is new Glide_Kernel.Module_ID_Record
+   with record
+      Make_Menu  : Gtk.Menu.Gtk_Menu;
+      Run_Menu   : Gtk.Menu.Gtk_Menu;
+      Build_Item : Gtk.Menu_Item.Gtk_Menu_Item;
+      --  The build menu, updated automatically every time the list of main
+      --  units changes.
+
+      Output     : String_List_Utils.String_List.List;
+      --  The last build output.
+   end record;
+   --  Data stored with the module id.
+
+   type Builder_Module_ID_Access is access all Builder_Module_ID_Record;
+
    Builder_Module_Name : constant String := "Builder";
 
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
+
+   procedure Set_Sensitive_Menus
+     (Kernel    : Glide_Kernel.Kernel_Handle;
+      Sensitive : Boolean);
+   --  Change the sensitive aspect of the build menu items.
 
 end Builder_Module;
