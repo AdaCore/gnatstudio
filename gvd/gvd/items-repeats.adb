@@ -155,7 +155,7 @@ package body Items.Repeats is
       if Item.Selected then
          Draw_Rectangle
            (Context.Pixmap,
-            Context.GC,
+            Context.Selection_GC,
             Filled => True,
             X      => X,
             Y      => Y,
