@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -779,10 +779,12 @@ package body Project_Viewers is
       Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Wiz : Creation_Wizard.Prj_Wizard;
+
+      Wiz               : Creation_Wizard.Prj_Wizard;
       Load_Project_Page : Gtk_Alignment;
-      Frame : Gtk_Frame;
-      Load_Project : Gtk_Check_Button;
+      Frame             : Gtk_Frame;
+      Load_Project      : Gtk_Check_Button;
+
    begin
       Gtk_New (Load_Project_Page, 0.0, 0.5, 1.0, 0.0);
       Set_Border_Width (Load_Project_Page, 5);
@@ -796,12 +798,14 @@ package body Project_Viewers is
       Add (Frame, Load_Project);
 
       Gtk_New (Wiz, Kernel);
-      Add_Page (Wiz, Load_Project_Page, "Loading the project", "Load project");
+      Add_Page
+        (Wiz, Load_Project_Page, -"Loading the project", -"Load project");
 
       declare
          Name : constant String := Run (Wiz);
       begin
          --  Load the project if needed
+
          if Name /= ""
            and then Get_Active (Load_Project)
          then
@@ -925,6 +929,7 @@ package body Project_Viewers is
    begin
       if Has_Project_Information (File) then
          Gtk_New (Wiz, Get_Kernel (Context));
+
          declare
             Name : constant String := Run (Wiz);
          begin
@@ -936,6 +941,7 @@ package body Project_Viewers is
             when E : Project_Warning | Project_Error =>
                Console.Insert (Get_Kernel (Context), Exception_Message (E));
          end;
+
          Destroy (Wiz);
          Recompute_View (Get_Kernel (Context));
       end if;
