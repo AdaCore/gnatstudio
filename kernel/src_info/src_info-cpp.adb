@@ -371,7 +371,6 @@ package body Src_Info.CPP is
      (Type_Name          : String;
       Type_Decl          : Point;
       File               : in out LI_File_Ptr;
-      Reference_Filename : String;
       Reference_Point    : Point;
       Kind               : Reference_Kind := Reference);
    --  Adds reference object into Handler.File if
@@ -915,11 +914,9 @@ package body Src_Info.CPP is
      (Type_Name          : String;
       Type_Decl          : Point;
       File               : in out LI_File_Ptr;
-      Reference_Filename : String;
       Reference_Point    : Point;
       Kind               : Reference_Kind := Reference)
    is
-      pragma Unreferenced (Reference_Filename);
       Type_Decl_Info     : E_Declaration_Info_List;
    begin
       Type_Decl_Info := Find_Declaration
@@ -2838,7 +2835,6 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Sym.Start_Position,
                Instantiation_Reference);
          else
@@ -2847,7 +2843,6 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Sym.Start_Position);
          end if;
 
@@ -3459,7 +3454,6 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Sym.Start_Position,
                Instantiation_Reference);
          else
@@ -3468,7 +3462,6 @@ package body Src_Info.CPP is
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
                Desc.Parent_Point,
                File,
-               Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
                Sym.Start_Position);
          end if;
       end if;
@@ -3617,7 +3610,6 @@ package body Src_Info.CPP is
               (Inst_Var.Value_Type.First .. Inst_Var.Value_Type.Last),
             Desc.Parent_Point,
             File,
-            Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
             Sym.Start_Position);
       end if;
 
