@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
+with Glide_Result_View;          use Glide_Result_View;
 
 package Glide_Kernel.Console is
 
@@ -42,11 +43,14 @@ package Glide_Kernel.Console is
       Text           : String;
       Highlight_Sloc : Boolean := True;
       Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info);
+      Mode           : Message_Type := Info;
+      Location_Id    : String := "");
    --  Insert Text in the GPS's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
+   --  Location_Id is the category that will be filled if the text contains
+   --  source locations.
 
    procedure Clear (Kernel : access Kernel_Handle_Record'Class);
    --  Clear all the text in the Console.
@@ -55,5 +59,10 @@ package Glide_Kernel.Console is
      (Kernel : access Kernel_Handle_Record'Class)
       return Glide_Interactive_Console;
    --  Return the interactive console associated with the kernel.
+
+   function Get_Result_View
+     (Kernel : access Kernel_Handle_Record'Class)
+      return Result_View;
+   --  Return the results view widget.
 
 end Glide_Kernel.Console;
