@@ -20,7 +20,6 @@
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Doc_Types;             use Doc_Types;
-with Language;              use Language;
 
 package Html_Output is
 
@@ -133,18 +132,6 @@ private
     Info   : in out Doc_Info);
    --  write one line of the body file, after formatting it, in the doc file
 
-   function HTML_Body_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean;
-   --  the callback function for the parser used
-   --  to format one (!) line from the body file
-
-   function Replace_HTML_Tags
-     (Input_Line : String) return String;
-   --  replaces all "<" in the line by "&lt;" which are NOT in a comment
-
    function Chars_Before
      (Line    : String;
       Line_Nr : Natural) return Natural;
@@ -155,13 +142,5 @@ private
    (File : String) return String;
    --  creates a .htm file from the full path of the source file
    --  from util/src/docgen.adb the name docgen_adb.htm is created
-
-   function HTML_Spec_Callback
-     (Entity         : Language_Entity;
-      Sloc_Start     : Source_Location;
-      Sloc_End       : Source_Location;
-      Partial_Entity : Boolean) return Boolean;
-   --  here for each entity found in the line,
-   --  the New_Line string will be formatted
 
 end Html_Output;
