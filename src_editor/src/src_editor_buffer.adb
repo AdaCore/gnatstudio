@@ -63,6 +63,7 @@ with Ada.Calendar;              use Ada.Calendar;
 with String_Utils;              use String_Utils;
 with Traces;                    use Traces;
 with Src_Editor_View;           use Src_Editor_View;
+with Casing_Exceptions;         use Casing_Exceptions;
 
 with Pango.Font;                use Pango.Font;
 
@@ -4378,10 +4379,12 @@ package body Src_Editor_Buffer is
          if Indent_Style = Simple then
             Format_Buffer
               (Language_Root (Lang.all)'Access,
-               Buffer, Replace, From, To, Indent_Params);
+               Buffer, Replace, From, To,
+               Indent_Params, Get_Case_Exceptions);
          else
             Format_Buffer
-              (Lang, Buffer, Replace, From, To, Indent_Params);
+              (Lang, Buffer, Replace, From, To,
+               Indent_Params, Get_Case_Exceptions);
          end if;
       end Local_Format_Buffer;
 
