@@ -1,4 +1,4 @@
-Known Problems fixed in GVD 1.3.0
+Known Problems fixed in GVD 1.2.1
 
 - File extensions not properly recognized
   Problem:    When opening a file with the last extension defined in

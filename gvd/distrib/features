@@ -1,3 +1,9 @@
+New features in GVD 1.2.1
+
+- In addition to GVD_ROOT, the path where gvd is launched is used to retrieve
+  dynamically the prefix. The manual can thus be found more easily on Windows
+  systems.
+
 New features in GVD 1.2.0
 
 - Under Windows, the special pathnames //cygdrive/x/ and //x/ are now
