@@ -47,6 +47,7 @@ with Prj_API;            use Prj_API;
 with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with Prj_Normalize;      use Prj_Normalize;
 with Project_Hash;       use Project_Hash;
+with String_Utils;       use String_Utils;
 with Basic_Types;
 
 with Glide_Intl;               use Glide_Intl;
@@ -255,7 +256,8 @@ package body Glide_Kernel.Project is
             Expect (Fd, Result, "\n", Timeout => -1);
 
             declare
-               S : constant String := Trim (Expect_Out (Fd), Ada.Strings.Left);
+               S : constant String :=
+                 Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
             begin
                if S = "Object Search Path:" & ASCII.LF then
                   Source_Path := False;
