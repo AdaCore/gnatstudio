@@ -21,7 +21,6 @@
 
 with Glib;                 use Glib;
 with Glib.Object;          use Glib.Object;
-with Glib.Values;          use Glib.Values;
 
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
@@ -51,9 +50,8 @@ package Vdiff2_Module.Callback is
    --  Callback for Tools->VDiff->Merge Tree Files...
 
    procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Data    : Glide_Kernel.Hooks.Hooks_Data'Class);
    --  Callback for the "file_closed" signal.
 
    procedure Diff_Command_Handler

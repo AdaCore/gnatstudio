@@ -20,7 +20,6 @@
 
 with Glib;                              use Glib;
 with Glib.Object;                       use Glib.Object;
-with Glib.Values;                       use Glib.Values;
 
 with Gtkada.File_Selector;              use Gtkada.File_Selector;
 with Gtkada.Dialogs;                    use Gtkada.Dialogs;
@@ -351,23 +350,20 @@ package body Vdiff2_Module.Callback is
    --------------------
 
    procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
    is
+      D : constant File_Hooks_Args := File_Hooks_Args (Data);
       Diff     : Diff_Head_Access := new Diff_Head;
-      File     : constant Virtual_File :=
-        Create (Full_Filename => Get_String (Nth (Args, 1)));
       Curr_Node : Diff_Head_List.List_Node :=
         First (VDiff2_Module (Vdiff_Module_ID).List_Diff.all);
-      pragma Unreferenced (Widget);
 
    begin
       while Curr_Node /= Diff_Head_List.Null_Node loop
-         Diff.all := Data (Curr_Node);
-         exit when Diff.File1 = File
-           or else Diff.File2 = File
-           or else Diff.File3 = File;
+         Diff.all := Diff_Head_List.Data (Curr_Node);
+         exit when Diff.File1 = D.File
+           or else Diff.File2 = D.File
+           or else Diff.File3 = D.File;
          Curr_Node := Next (Curr_Node);
       end loop;
 

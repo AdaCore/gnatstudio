@@ -71,7 +71,6 @@ private
       Command_Next     : Diff_Command_Access;
       Command_First    : Diff_Command_Access;
       Command_Last     : Diff_Command_Access;
-      File_Closed_Id   : Handler_Id := No_Handler;
       Enable_Fine_Diff : Boolean := True;
    end record;
 

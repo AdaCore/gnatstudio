@@ -76,12 +76,8 @@ package body Vdiff2_Module is
       VDiff2_Module (Vdiff_Module_ID).Kernel := Kernel_Handle (Kernel);
       VDiff2_Module (Vdiff_Module_ID).List_Diff :=
         new Diff_Head_List.List;
-      VDiff2_Module (Vdiff_Module_ID).File_Closed_Id :=
-        Kernel_Callback.Connect
-          (Kernel,
-           File_Closed_Signal,
-           File_Closed_Cb'Access,
-           Kernel_Handle (Kernel));
+
+      Add_Hook (Kernel, File_Closed_Hook, File_Closed_Cb'Access);
 
       Create (VDiff2_Module (Vdiff_Module_ID).Command_Last,
                 VDiff2_Module (Vdiff_Module_ID).Kernel,
@@ -352,7 +348,7 @@ package body Vdiff2_Module is
       PixMap  : Gdk_Pixmap;
 
    begin
-      VDiff2_Module (Vdiff_Module_ID).Is_Active := true;
+      VDiff2_Module (Vdiff_Module_ID).Is_Active := True;
 
       Append_Space (Toolbar);
 
