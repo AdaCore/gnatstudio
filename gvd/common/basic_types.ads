@@ -19,13 +19,13 @@
 -----------------------------------------------------------------------
 
 with System;
-with Gtkada.Types;
+with Interfaces.C.Strings;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
 
 package Basic_Types is
 
-   subtype Pixmap_Array is Gtkada.Types.Chars_Ptr_Array (0 .. 0);
+   subtype Pixmap_Array is Interfaces.C.Strings.chars_ptr_array (0 .. 0);
    type Pixmap_Access is access all Pixmap_Array;
 
    type String_Access is access all String;
@@ -45,7 +45,7 @@ package Basic_Types is
      (System.Address, Unchecked_String_Access);
 
    function To_Unchecked_String is new Ada.Unchecked_Conversion
-     (Gtkada.Types.Chars_Ptr, Unchecked_String_Access);
+     (Interfaces.C.Strings.chars_ptr, Unchecked_String_Access);
 
    type Position_Type is new Natural;
    --  Indicates the position in a file.
