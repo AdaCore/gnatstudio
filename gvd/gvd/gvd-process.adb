@@ -730,6 +730,10 @@ package body GVD.Process is
       Widget        : Gtk_Widget;
 
    begin
+      --  Process.Window needs to be set before calling Initialize which
+      --  might need to reference it.
+
+      Process.Window := Window.all'Access;
       Process_Tab_Pkg.Initialize (Process);
       Initialize_Class_Record
         (Process, Signals, Class_Record,
@@ -738,7 +742,6 @@ package body GVD.Process is
       Menu_Item := Gtk_Menu_Item (Get_Widget (Window.Factory, -"/Window"));
       Set_Submenu (Menu_Item, Create_Menu (Process.Process_Mdi));
 
-      Process.Window := Window.all'Access;
       Set_Process (GVD_Canvas (Process.Data_Canvas), Process);
 
       Widget_Callback.Object_Connect
@@ -790,11 +793,13 @@ package body GVD.Process is
            (GVD.Canvas.Preferences_Changed'Access),
          Process.Data_Canvas);
 
-      Widget_Callback.Object_Connect
-        (Process.Window, "preferences_changed",
-         Widget_Callback.To_Marshaller
-           (GVD.Explorer.Preferences_Changed'Access),
-         Get_Explorer (Process.Editor_Text));
+      if Process.Window.Standalone then
+         Widget_Callback.Object_Connect
+           (Process.Window, "preferences_changed",
+            Widget_Callback.To_Marshaller
+              (GVD.Explorer.Preferences_Changed'Access),
+            Get_Explorer (Process.Editor_Text));
+      end if;
 
       --  Set up the command window for the contextual menus
 
