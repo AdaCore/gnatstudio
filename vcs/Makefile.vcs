@@ -24,7 +24,7 @@ VCS_OBJ_DIR = $(VCS_BASE_DIR)/obj
 OBJ_DIR = $(VCS_OBJ_DIR)
 
 CFLAGS = -g -O2
-ADA_SOURCES = test_vcs_explorer.adb
+ADA_SOURCES = test_vcs.adb
 
 PROJECT_FILE = vcs
 LIBS := $(VCS_OBJ_DIR)/libvcs$(AR_EXT) $(LIBS)
