@@ -1140,7 +1140,9 @@ package body Src_Editor_Buffer is
 
       --  If we are removing folded lines, stop the propagation of the handler.
 
-      if not Lines_Are_Real (Buffer) then
+      if not Lines_Are_Real (Buffer)
+        and then not Buffer.Inserting
+      then
          declare
             Editable_Line_Start : Editable_Line_Type;
             Editable_Line_End   : Editable_Line_Type;
