@@ -26,7 +26,6 @@ with Language;
 with Language_Handlers;
 with VFS;
 with Ada.Calendar;
---  with Ada.Unchecked_Deallocation;
 
 package Src_Info is
 
@@ -264,11 +263,6 @@ package Src_Info is
 
    type E_Reference is private;
    No_Reference : constant E_Reference;
-
---     type E_Reference_Array is array (Natural range <>) of E_Reference;
---     type E_Reference_Array_Access is access E_Reference_Array;
---     procedure Unchecked_Free is new Ada.Unchecked_Deallocation
---       (E_Reference_Array, E_Reference_Array_Access);
 
    type File_Location is private;
    Null_File_Location : constant File_Location;
