@@ -1334,6 +1334,7 @@ package body Ada_Analyzer is
                         null;
 
                      when Tok_Task | Tok_Protected =>
+                        Subprogram_Decl := False;
                         Top_Token.Declaration := True;
 
                      when others =>
