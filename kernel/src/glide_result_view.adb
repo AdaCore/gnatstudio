@@ -300,7 +300,7 @@ package body Glide_Result_View is
          3 => new String'(Image (Column)),
          4 => new String'(Image (Length)));
       Result : constant String :=
-        Execute_GPS_Shell_Command (Kernel, "create_mark", Args);
+        Execute_GPS_Shell_Command (Kernel, "Editor.create_mark", Args);
    begin
       Basic_Types.Free (Args);
       return Result;
@@ -329,12 +329,12 @@ package body Glide_Result_View is
    begin
       if Highlight then
          if Length = 0 then
-            Command := new String'("highlight");
+            Command := new String'("Editor.highlight");
          else
-            Command := new String'("highlight_range");
+            Command := new String'("Editor.highlight_range");
          end if;
       else
-         Command := new String'("unhighlight");
+         Command := new String'("Editor.unhighlight");
       end if;
 
       if Line = 0 then
@@ -391,7 +391,7 @@ package body Glide_Result_View is
          Args : GNAT.OS_Lib.Argument_List := (1 => new String'(Mark));
       begin
          if Mark /= "" then
-            Execute_GPS_Shell_Command (View.Kernel, "goto_mark", Args);
+            Execute_GPS_Shell_Command (View.Kernel, "Editor.goto_mark", Args);
          end if;
          Free (Args);
       end;
@@ -455,7 +455,8 @@ package body Glide_Result_View is
 
             begin
                if Mark /= "" then
-                  Execute_GPS_Shell_Command (View.Kernel, "delete_mark", Args);
+                  Execute_GPS_Shell_Command
+                    (View.Kernel, "Editor.delete_mark", Args);
                end if;
             end;
 
@@ -1516,10 +1517,12 @@ package body Glide_Result_View is
    -----------------------
 
    procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Locations_Class : constant Class_Type := New_Class
+        (Kernel, "Locations", -"General interface to the locations window");
    begin
       Register_Command
         (Kernel,
-         Command      => "locations_parse",
+         Command      => "parse",
          Params       =>
            Parameter_Names_To_Usage (Parse_Location_Parameters, 7),
          Description  =>
@@ -1538,10 +1541,12 @@ package body Glide_Result_View is
              & " specific category."),
          Minimum_Args => 2,
          Maximum_Args => 9,
-         Handler      => Default_Command_Handler'Access);
+         Class         => Locations_Class,
+         Static_Method => True,
+         Handler       => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "locations_add",
+         Command      => "add",
          Params       =>
            Parameter_Names_To_Usage (Locations_Add_Parameters, 1),
          Description  =>
@@ -1552,16 +1557,20 @@ package body Glide_Result_View is
            & " register_highlighting for more information)"),
          Minimum_Args => Locations_Add_Parameters'Length - 1,
          Maximum_Args => Locations_Add_Parameters'Length,
+         Class         => Locations_Class,
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
       Register_Command
         (Kernel,
-         Command      => "locations_remove_category",
+         Command      => "remove_category",
          Params       => Parameter_Names_To_Usage (Remove_Category_Parameters),
          Description  =>
            -("Remove a category from the location window. This removes all"
              & " associated files"),
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class         => Locations_Class,
+         Static_Method => True,
          Handler      => Default_Command_Handler'Access);
    end Register_Commands;
 
@@ -1572,7 +1581,7 @@ package body Glide_Result_View is
    procedure Default_Command_Handler
      (Data : in out Callback_Data'Class; Command : String) is
    begin
-      if Command = "locations_parse" then
+      if Command = "parse" then
          Name_Parameters (Data, Parse_Location_Parameters);
          Parse_File_Locations
            (Get_Kernel (Data),
@@ -1585,13 +1594,13 @@ package body Glide_Result_View is
             Style_Index_In_Regexp   => Nth_Arg (Data, 7, -1),
             Warning_Index_In_Regexp => Nth_Arg (Data, 8, -1));
 
-      elsif Command = "locations_remove_category" then
+      elsif Command = "remove_category" then
          Name_Parameters (Data, Remove_Category_Parameters);
          Remove_Result_Category
            (Get_Kernel (Data),
             Category => Nth_Arg (Data, 1));
 
-      elsif Command = "locations_add" then
+      elsif Command = "add" then
          Name_Parameters (Data, Locations_Add_Parameters);
          declare
             Highlight : constant String := Nth_Arg (Data, 6, "");
