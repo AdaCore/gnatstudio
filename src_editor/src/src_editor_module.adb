@@ -1286,7 +1286,7 @@ package body Src_Editor_Module is
 
          if Lang /= "ada" then
             Console.Insert
-              (Kernel, -"Pretty printing of non Ada file not yet supported.",
+              (Kernel, -"Body generation of non Ada file not yet supported.",
                Mode => Error);
             return;
          end if;
