@@ -1147,9 +1147,10 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, Gotom, -"Goto Declaration", Stock_Home,
                      On_Goto_Declaration'Access,
                      Ref_Item => -"Goto Line...");
-      Register_Menu (Kernel, Gotom, -"Goto Body", Stock_Home,
+      Register_Menu (Kernel, Gotom, -"Goto Body", "",
                      On_Goto_Body'Access,
-                     Ref_Item => -"Goto Declaration");
+                     Ref_Item => -"Goto Declaration",
+                     Add_Before => False);
 
       --  Toolbar buttons
 
