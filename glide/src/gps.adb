@@ -514,7 +514,7 @@ procedure GPS is
          -"Welcome to GPS " & GVD.Version & " (" & GVD.Source_Date &
          (-") hosted on ") & GVD.Target & ASCII.LF &
          (-"the GNAT Programming System") & ASCII.LF &
-         "(c) 2001-2002 ACT-Europe");
+         "(c) 2001-2003 ACT-Europe");
 
       --  We now make sure we have a project loaded, so that opening editors
       --  will work correctly.
