@@ -1104,6 +1104,7 @@ package body Builder_Module is
          if Status = 0 then
             Console.Insert
               (Kernel, ASCII.LF & (-"successful compilation/build"));
+            Compilation_Finished (Kernel, "");
          else
             Console.Insert
               (Kernel,
