@@ -30,7 +30,7 @@ with Gtk.Window;       use Gtk.Window;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Text_IO; use Text_IO;
+--  with Text_IO; use Text_IO;
 
 package body Gtkada.MDI is
 
@@ -224,13 +224,13 @@ package body Gtkada.MDI is
 
    procedure Destroy_MDI (MDI : access Gtk_Widget_Record'Class) is
       use Widget_List;
-      Tmp : Widget_List.Glist := First (MDI_Window (MDI).Embedded_Items);
+      Tmp : Widget_List.Glist := First (MDI_Window (MDI).Invisible_Items);
    begin
       while Tmp /= Null_List loop
          Destroy (Get_Data (Tmp));
          Tmp := Next (Tmp);
       end loop;
-      Free (MDI_Window (MDI).Embedded_Items);
+      Free (MDI_Window (MDI).Invisible_Items);
    end Destroy_MDI;
 
    -------------------
@@ -896,7 +896,7 @@ package body Gtkada.MDI is
    begin
       Forall (MDI, Action'Unrestricted_Access);
       if Found = null then
-         Tmp := First (MDI.Embedded_Items);
+         Tmp := First (MDI.Invisible_Items);
          while Tmp /= Null_List loop
             if MDI_Child (Get_Data (Tmp)).Initial = Gtk_Widget (Widget)
               or else MDI_Child (Get_Data (Tmp)).Initial_Child =
@@ -1099,6 +1099,7 @@ package body Gtkada.MDI is
    begin
       if Child.State /= Floating and then Float then
          Minimize_Child (Child, False);
+         Child.State := Floating;
          Dock_Child (Child, False);
          if Child.Initial.all in Gtk_Window_Record'Class then
             Reparent (Child.Initial_Child, Gtk_Window (Child.Initial));
@@ -1115,10 +1116,16 @@ package body Gtkada.MDI is
               (Win, "delete_event",
                Return_Callback.To_Marshaller (Delete_Child'Access), Child);
          end if;
-         Hide (Child);
-         Child.State := Floating;
+
+         Ref (Child);
+         Widget_List.Prepend (Child.MDI.Invisible_Items, Gtk_Widget (Child));
+         Remove (Child.MDI, Child);
 
       elsif Child.State = Floating and then not Float then
+         --  Remove the widget from the list of embedded children
+         Widget_List.Remove (Child.MDI.Invisible_Items, Gtk_Widget (Child));
+         Unref (Child);
+
          Win := Gtk_Window (Get_Parent (Child.Initial_Child));
          Reparent (Child.Initial_Child, Gtk_Box (Get_Child (Child)));
          if Gtk_Widget (Child.Initial) = Gtk_Widget (Win) then
@@ -1126,6 +1133,7 @@ package body Gtkada.MDI is
          else
             Destroy (Win);
          end if;
+
          Show_All (Child);
          Child.State := Normal;
       end if;
@@ -1267,7 +1275,7 @@ package body Gtkada.MDI is
          --  Remove the child from the MDI, but keep it in a list so that we
          --  can restore it in exactly the same state.
          Ref (Child);
-         Widget_List.Prepend (MDI.Embedded_Items, Gtk_Widget (Child));
+         Widget_List.Prepend (MDI.Invisible_Items, Gtk_Widget (Child));
          Remove (MDI, Child);
 
          --  The size of the notebook will be reinitialized based on its new
@@ -1294,7 +1302,7 @@ package body Gtkada.MDI is
          Show_All (Child);
 
          --  Remove the widget from the list of embedded children
-         Widget_List.Remove (MDI.Embedded_Items, Gtk_Widget (Child));
+         Widget_List.Remove (MDI.Invisible_Items, Gtk_Widget (Child));
          Unref (Child);
 
          Activate_Child (MDI, Child);

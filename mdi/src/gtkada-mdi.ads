@@ -277,8 +277,11 @@ private
       --  The docks on each side of the MDI, where items can be docked.
       --  Note that these are also inserted into the list of children of MDI.
 
-      Embedded_Items : Gtk.Widget.Widget_List.Glist;
-      --  The widgets that are embedded in one of the dock items
+      Invisible_Items : Gtk.Widget.Widget_List.Glist;
+      --  The widgets that are embedded in one of the dock items, or that
+      --  are floating. In both cases, the child of the item is already
+      --  visible elsewhere, and we want to be sure that the MDI_Child is never
+      --  shown on the canvas.
    end record;
 
    pragma Inline (Get_Window);
