@@ -77,15 +77,17 @@ package body Vdiff2_Module.Utils.Shell_Command is
    is
       Args_Edit           : Argument_List :=
         (1 => new String'(Full_Name (File).all),
-         2 => new String'("false"));
+         2 => new String'("0"),
+         3 => new String'("0"),
+         4 => new String'("false"));
 
    begin
-      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit (1 .. 1));
+      Execute_GPS_Shell_Command (Kernel, "Editor.edit", Args_Edit (1 .. 3));
 
       if not Writable then
          Execute_GPS_Shell_Command
            (Kernel, "Editor.set_writable",
-            Args_Edit (1 .. 2));
+            Args_Edit (1 .. 1) & Args_Edit (4 .. 4));
       end if;
 
       Basic_Types.Free (Args_Edit);
