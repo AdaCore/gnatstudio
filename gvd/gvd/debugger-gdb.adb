@@ -58,7 +58,7 @@ package body Debugger.Gdb is
 
    File_Name_Pattern : constant Pattern_Matcher :=
      Compile (ASCII.SUB & ASCII.SUB
-              & "([^:]+):(\d+):\d+:beg:", Multiple_Lines);
+              & "([^:]+):(\d+):\d+:beg:0x[0-9a-f]+", Multiple_Lines);
    --  Matches a file name/line indication in gdb's output.
 
    Language_Pattern : constant Pattern_Matcher := Compile
@@ -584,15 +584,19 @@ package body Debugger.Gdb is
    ---------------------
 
    procedure Found_File_Name
-     (Debugger   : access Gdb_Debugger;
-      Str        : String;
-      Name_First : out Natural;
-      Name_Last  : out Positive;
-      Line       : out Natural)
+     (Debugger    : access Gdb_Debugger;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural)
    is
       Matched : Match_Array (0 .. 2);
    begin
       Match (File_Name_Pattern, Str, Matched);
+
+      First := Matched (0).First;
+      Last  := Matched (0).Last;
 
       if Matched (0) = No_Match then
          Name_First := 0;

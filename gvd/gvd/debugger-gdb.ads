@@ -52,11 +52,12 @@ package Debugger.Gdb is
    procedure Display_Prompt (Debugger : access Gdb_Debugger);
 
    procedure Found_File_Name
-     (Debugger   : access Gdb_Debugger;
-      Str        : String;
-      Name_First : out Natural;
-      Name_Last  : out Positive;
-      Line       : out Natural);
+     (Debugger    : access Gdb_Debugger;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural);
 
    function Type_Of
      (Debugger : access Gdb_Debugger;
