@@ -1004,84 +1004,28 @@
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>overview1</name>
-	    <sensitive>False</sensitive>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_overview1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:46:14 GMT</last_modification_time>
-	    </signal>
-	    <label>Overview...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>on_item1</name>
-	    <sensitive>False</sensitive>
+	    <name>manual</name>
 	    <accelerator>
-	      <modifiers>GDK_SHIFT_MASK</modifiers>
+	      <modifiers>0</modifiers>
 	      <key>GDK_F1</key>
 	      <signal>activate</signal>
 	    </accelerator>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_on_item1_activate</handler>
+	      <handler>on_manual_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:46:28 GMT</last_modification_time>
 	    </signal>
-	    <label>On Item...</label>
+	    <label>GVD Manual...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
-	    <name>separator29</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>what_now_1</name>
-	    <sensitive>False</sensitive>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_F1</key>
-	      <signal>activate</signal>
-	    </accelerator>
+	    <name>about_gvd</name>
 	    <signal>
 	      <name>activate</name>
-	      <handler>on_what_now_1_activate</handler>
-	      <last_modification_time>Tue, 18 Apr 2000 21:19:47 GMT</last_modification_time>
-	    </signal>
-	    <label>What Now ... ?</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>tip_of_the_day1</name>
-	    <sensitive>False</sensitive>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_tip_of_the_day1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:47:21 GMT</last_modification_time>
-	    </signal>
-	    <label>Tip Of The Day...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator30</name>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>about_odd1</name>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_about_odd1_activate</handler>
+	      <handler>on_about_gvd_activate</handler>
 	      <last_modification_time>Sun, 23 Apr 2000 23:50:31 GMT</last_modification_time>
 	    </signal>
 	    <label>About GVD...</label>
@@ -1328,7 +1272,7 @@
   <name>general_preferences</name>
   <signal>
     <name>delete_event</name>
-    <handler>on_odd_preferences_delete_event</handler>
+    <handler>on_gvd_preferences_delete_event</handler>
     <last_modification_time>Sun, 23 Apr 2000 19:34:12 GMT</last_modification_time>
   </signal>
   <title>Preferences</title>
@@ -3353,7 +3297,7 @@
 	<widget>
 	  <class>GtkTable</class>
 	  <name>table6</name>
-	  <rows>4</rows>
+	  <rows>5</rows>
 	  <columns>2</columns>
 	  <homogeneous>False</homogeneous>
 	  <row_spacing>2</row_spacing>
@@ -3551,6 +3495,56 @@
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>False</yfill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkLabel</class>
+	    <name>label211</name>
+	    <label>HTML Browser</label>
+	    <justify>GTK_JUSTIFY_CENTER</justify>
+	    <wrap>False</wrap>
+	    <xalign>7.45058e-09</xalign>
+	    <yalign>0.5</yalign>
+	    <xpad>3</xpad>
+	    <ypad>0</ypad>
+	    <child>
+	      <left_attach>0</left_attach>
+	      <right_attach>1</right_attach>
+	      <top_attach>4</top_attach>
+	      <bottom_attach>5</bottom_attach>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>False</yfill>
+	    </child>
+	  </widget>
+
+	  <widget>
+	    <class>GtkEntry</class>
+	    <name>HTML_Entry</name>
+	    <can_focus>True</can_focus>
+	    <editable>True</editable>
+	    <text_visible>True</text_visible>
+	    <text_max_length>0</text_max_length>
+	    <text></text>
+	    <child>
+	      <left_attach>1</left_attach>
+	      <right_attach>2</right_attach>
+	      <top_attach>4</top_attach>
+	      <bottom_attach>5</bottom_attach>
+	      <xpad>3</xpad>
+	      <ypad>0</ypad>
+	      <xexpand>True</xexpand>
 	      <yexpand>False</yexpand>
 	      <xshrink>False</xshrink>
 	      <yshrink>False</yshrink>
@@ -5850,19 +5844,6 @@ remote
 	</signal>
 	<label>Cancel</label>
       </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>help_button</name>
-	<can_default>True</can_default>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_help_open_clicked</handler>
-	  <last_modification_time>Sat, 27 May 2000 16:05:56 GMT</last_modification_time>
-	</signal>
-	<label>Help</label>
-      </widget>
     </widget>
   </widget>
 </widget>
@@ -6145,19 +6126,6 @@ remote
 	  <last_modification_time>Tue, 22 Aug 2000 20:41:31 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>Help_Button</name>
-	<can_default>True</can_default>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_Help_Button_clicked</handler>
-	  <last_modification_time>Tue, 22 Aug 2000 20:41:37 GMT</last_modification_time>
-	</signal>
-	<label>Help</label>
       </widget>
     </widget>
   </widget>
@@ -6708,19 +6676,6 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:43 GMT</last_modification_time>
 	</signal>
 	<label>Close</label>
-      </widget>
-
-      <widget>
-	<class>GtkButton</class>
-	<name>help</name>
-	<can_default>True</can_default>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>clicked</name>
-	  <handler>on_help_clicked</handler>
-	  <last_modification_time>Thu, 21 Sep 2000 12:54:59 GMT</last_modification_time>
-	</signal>
-	<label>Help</label>
       </widget>
     </widget>
 
