@@ -286,7 +286,7 @@ package body Generic_List is
    -- Free --
    ----------
 
-   procedure Free (L : in out List) is
+   procedure Free (L : in out List; Free_Data : Boolean := True) is
       Current : List_Node;
       Tmp     : List_Node;
 
@@ -303,7 +303,7 @@ package body Generic_List is
          Tmp := Current;
          Current := Current.Next;
 
-         if Tmp.Element /= null then
+         if Free_Data and then Tmp.Element /= null then
             Free (Tmp.Element.all);
          end if;
 
