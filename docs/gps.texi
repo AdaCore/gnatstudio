@@ -2774,6 +2774,20 @@ libraries can be installed, like XML/Ada for instance.
 Project files contain all the information that describe the
 organization of your source files, object files and executables.
 
+@cindex project comments
+A project file can contain comments, which have the same format as in Ada,
+that is they start by "--" and extend to the end of the line.
+You can add comments when you edit the project file manually. GPS will
+attempt to preserve them when you save the project through the menu, but this
+will not always be possible. It helps if the comments are put at the end of
+the line, as in
+
+@smallexample
+project Default is
+    for Source_Dirs use ();  --  No source in this project
+end Default;
+@end smallexample
+
 @cindex sub project
 Generally, one project file will not be enough to describe a complex
 organization. In this case, you will create and use a project hierarchy,
