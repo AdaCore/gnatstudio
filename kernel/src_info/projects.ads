@@ -386,9 +386,10 @@ package Projects is
    --  at the package level.
    --  File can be the empty string if you want to find the default switches to
    --  use for all files in the project. In that case, this procedure returns
-   --  the switches to use for Language
+   --  the switches to use for Language.
    --
-   --  ??? Shouldn't use Variable_Value
+   --  Use Glide_Kernel.Project.Get_Switches instead, which provides support
+   --  for initial switches as specified by the user.
 
    -----------------------
    -- Imported projects --
