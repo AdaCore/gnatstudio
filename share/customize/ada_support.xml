@@ -217,10 +217,7 @@
          <check label="Store call stack in exceptions" switch="-E"
                 tip="Store tracebacks in exception occurrences when the target supports it" />
          <check label="List possible restrictions" switch="-r" />
-         <radio>
-             <radio-entry label="Static GNAT run time" switch="-static" />
-             <radio-entry label="Shared GNAT run time" switch="-shared" />
-         </radio>
+         <check label="Shared GNAT run time" switch="-shared" />
       </switches>
    </tool>
 
