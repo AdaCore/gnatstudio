@@ -746,4 +746,38 @@ package body Glide_Kernel is
       return Handle.Search;
    end Get_Search_Module;
 
+   ------------------
+   -- Get_Home_Dir --
+   ------------------
+
+   function Get_Home_Dir
+     (Handle : access Kernel_Handle_Record) return String is
+   begin
+      return Handle.Home_Dir.all;
+   end Get_Home_Dir;
+
+   ---------------------
+   -- Get_Logs_Mapper --
+   ---------------------
+
+   function Get_Logs_Mapper
+     (Handle : access Kernel_Handle_Record)
+     return Basic_Mapper.File_Mapper_Access
+   is
+   begin
+      return Handle.Logs_Mapper;
+   end Get_Logs_Mapper;
+
+   ---------------------
+   -- Set_Logs_Mapper --
+   ---------------------
+
+   procedure Set_Logs_Mapper
+     (Handle : access Kernel_Handle_Record;
+      Mapper : Basic_Mapper.File_Mapper_Access)
+   is
+   begin
+      Handle.Logs_Mapper := Mapper;
+   end Set_Logs_Mapper;
+
 end Glide_Kernel;
