@@ -63,10 +63,8 @@ with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
---  with Gdk.Event; use Gdk.Event;
-
 with String_List_Utils;         use String_List_Utils;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body Src_Editor_Buffer is
 
@@ -3278,9 +3276,9 @@ package body Src_Editor_Buffer is
    is
       Width : Integer;
 
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Line_Info_Width_Array, Line_Info_Width_Array_Access);
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Line_Info_Display_Record, Line_Info_Display_Access);
 
       Line_Info  : Line_Info_Display_Array_Access
@@ -3412,7 +3410,7 @@ package body Src_Editor_Buffer is
    ----------
 
    procedure Free (X : in out Line_Info_Width) is
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Line_Information_Record, Line_Information_Access);
    begin
       if X.Info /= null then
