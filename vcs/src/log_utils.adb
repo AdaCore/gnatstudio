@@ -495,13 +495,20 @@ package body Log_Utils is
                                             and then CL (P1 - 2) = ASCII.LF));
                            end loop;
 
-                           P1 := P1 + 1;
+                           --  Now we have either an HT or 8 spaces
 
-                           --  Skip spaces at the start of the line
-
-                           while CL (P1) = ' ' and then P1 < Last loop
+                           if CL (P1) = ASCII.HT then
                               P1 := P1 + 1;
-                           end loop;
+
+                           else
+                              --  Skip at most 8 spaces at the start of the
+                              --  line.
+
+                              for K in 1 .. 8 loop
+                                 exit when CL (P1) /= ' ' or else P1 = Last;
+                                 P1 := P1 + 1;
+                              end loop;
+                           end if;
 
                            P2 := P1;
 
