@@ -98,6 +98,7 @@ procedure GPS is
    Str            : String (1 .. 1024);
    Last           : Natural;
    Project_Name   : String_Access;
+   Prj            : String_Access;
    Button         : Message_Dialog_Buttons;
    Home           : String_Access;
    Prefix         : String_Access;
@@ -460,6 +461,14 @@ procedure GPS is
          Destroy (Screen);
 
       else
+         if not Is_Regular_File (Project_Name.all)
+           and then Is_Regular_File (Project_Name.all & Project_File_Extension)
+         then
+            Prj := Project_Name;
+            Project_Name := new String'(Prj.all & Project_File_Extension);
+            Free (Prj);
+         end if;
+
          Load_Project (GPS.Kernel, Project_Name.all);
          Project_Viewers.Add_To_Reopen
            (GPS.Kernel, Normalize_Pathname
