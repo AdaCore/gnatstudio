@@ -1731,7 +1731,7 @@ package body Switches_Editors is
    function Generate_Project
      (Switches           : access Switches_Edit_Record'Class;
       Project            : Project_Type;
-      Languages    : Argument_List;
+      Languages          : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Files              : File_Array) return Boolean
    is
