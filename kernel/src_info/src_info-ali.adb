@@ -968,6 +968,7 @@ package body Src_Info.ALI is
       FD := Open_Read (ALI_Filename & ASCII.NUL, Fmode => Text);
 
       if FD = Invalid_FD then
+         Trace (Me, "Couldn't open " & ALI_Filename);
          return No_ALI_Id;
       end if;
 
@@ -980,6 +981,7 @@ package body Src_Info.ALI is
             --  so this is not a big deal for now not to support such
             --  monstruous files. Just close the FD and return a failure.
             Close (FD);
+            Trace (Me, "CE while reading length of " & ALI_Filename);
             return No_ALI_Id;
       end;
 
@@ -993,6 +995,7 @@ package body Src_Info.ALI is
 
          --  check that we read the entire file, or else report a failure
          if Text_Ptr (Chars_Read) /= File_Length then
+            Trace (Me, "Couldn't read the whole file for " & ALI_Filename);
             return No_ALI_Id;
          end if;
 
@@ -1698,9 +1701,7 @@ package body Src_Info.ALI is
       Result := Load_And_Scan_ALI (Dir.all);
 
       if Result = No_ALI_Id then
-         if Debug_Mode then
-            Trace (Me, "Failed to scan " & Dir.all);
-         end if;
+         Trace (Me, "Failed to scan " & Dir.all);
       end if;
 
       Free (Dir);
@@ -1914,7 +1915,7 @@ package body Src_Info.ALI is
 
       --  If not found, find the ALI file and parse it.
 
-      if Lib_Info = No_LI_File then
+      if Lib_Info = No_LI_File or else Is_Incomplete (Lib_Info) then
          declare
             Ali_File : constant String := ALI_Filename_From_Source
               (Source_Filename, Project, Predefined_Source_Path);
@@ -1928,9 +1929,7 @@ package body Src_Info.ALI is
                List, Lib_Info, Success);
 
             if not Success then
-               if Debug_Mode then
-                  Trace (Me, "Couldn't parse LI file for " & Source_Filename);
-               end if;
+               Trace (Me, "Couldn't parse LI file for " & Source_Filename);
                Lib_Info := No_LI_File;
             end if;
          end;
