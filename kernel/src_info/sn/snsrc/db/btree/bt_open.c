@@ -410,7 +410,7 @@ tmp()
 	char path[MAXPATHLEN];
 
 	envtmp = getenv("TMPDIR");
-	(void)snprintf(path,
+	(void)_snprintf(path,
 	    sizeof(path), "%s\\bt.XXXXXX", envtmp ? envtmp : "c:\\tmp");
 
 #ifdef CYGWIN32
