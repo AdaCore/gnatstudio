@@ -607,9 +607,10 @@ package Glide_Kernel.Modules is
    Mime_Html_File : constant String := "gps/html";
    --  Request to display a html file
    --  There are multiple data associated with this type:
-   --     first  : full name of the html file to open (use Get_String)
+   --     first  : full name of the html file to open (use Get_String),
    --     second : True if the location should be stored for navigation
    --              with Back/Forward.
+   --     third  : anchor name
 
    Mime_Diff_File : constant String := "application/diff";
    --  There are multiple data associated with this type:
@@ -686,6 +687,16 @@ package Glide_Kernel.Modules is
    --  Open, or create, an html viewer for Filename (Mime_Html_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
+   --  Filename can be a full name or a base name, and can include ancors (e.g
+   --  "foo.html#anchor").
+
+   function Locate_Html_File
+     (Kernel       : access Kernel_Handle_Record'Class;
+      HTML_File    : String) return String;
+   --  Return the full path for an html file, or the empty string if the file
+   --  was not found.
+   --  This function correctly handles anchor references in HTML_File (e.g
+   --  "foo.html#anchor")
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;

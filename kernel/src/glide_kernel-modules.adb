@@ -55,6 +55,7 @@ with Glide_Intl;        use Glide_Intl;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Ada.Exceptions;    use Ada.Exceptions;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Unchecked_Deallocation;
 
 package body Glide_Kernel.Modules is
@@ -1604,6 +1605,54 @@ package body Glide_Kernel.Modules is
       end loop;
    end Close_File_Editors;
 
+   ----------------------
+   -- Locate_Html_File --
+   ----------------------
+
+   function Locate_Html_File
+     (Kernel       : access Kernel_Handle_Record'Class;
+      HTML_File    : String) return String
+   is
+      Top  : constant Glide_Window := Glide_Window
+        (Get_Main_Window (Kernel));
+      Full : GNAT.OS_Lib.String_Access;
+      Path : GNAT.OS_Lib.String_Access := Getenv ("GPS_DOC_PATH");
+      Anchor : Natural := Index (HTML_File, "#");
+   begin
+      if Is_Absolute_Path (HTML_File) then
+         return HTML_File;
+      end if;
+
+      if Anchor = 0 then
+         Anchor := HTML_File'Last + 1;
+      end if;
+
+      if Path = null then
+         Full := Locate_Regular_File
+           (HTML_File (HTML_File'First .. Anchor - 1),
+            Top.Prefix_Directory.all & "/doc/gps/html/");
+      else
+         Full := Locate_Regular_File
+           (HTML_File (HTML_File'First .. Anchor - 1), Path.all);
+         Free (Path);
+      end if;
+
+      if Full = null then
+         return "";
+      else
+         declare
+            F : constant String := Full.all;
+         begin
+            Free (Full);
+            if Anchor <= HTML_File'Last then
+               return F & HTML_File (Anchor .. HTML_File'Last);
+            else
+               return F;
+            end if;
+         end;
+      end if;
+   end Locate_Html_File;
+
    ---------------
    -- Open_Html --
    ---------------
@@ -1613,13 +1662,37 @@ package body Glide_Kernel.Modules is
       Filename          : String;
       Enable_Navigation : Boolean := True)
    is
-      Value : GValue_Array (1 .. 2);
+      Value  : GValue_Array (1 .. 3);
+      Anchor : Natural := Index (Filename, "#");
    begin
+      if Anchor = 0 then
+         Anchor := Filename'Last + 1;
+      end if;
+
       Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Filename);
+
+      declare
+         F : constant String := Locate_Html_File
+           (Kernel, Filename (Filename'First .. Anchor - 1));
+      begin
+         if F = "" then
+            --  File not found, nothing to do
+            return;
+         end if;
+
+         Set_String (Value (1), F);
+      end;
 
       Init (Value (2), Glib.GType_Boolean);
       Set_Boolean (Value (2), Enable_Navigation);
+
+      Init (Value (3), Glib.GType_String);
+
+      if Anchor >= Filename'Last then
+         Set_String (Value (3), "");
+      else
+         Set_String (Value (3), Filename (Anchor + 1 .. Filename'Last));
+      end if;
 
       if not Mime_Action (Kernel, Mime_Html_File, Value) then
          Trace (Me, "No html viewer was registered");
