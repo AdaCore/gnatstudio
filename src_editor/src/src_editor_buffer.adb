@@ -133,7 +133,6 @@ package body Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record'Class;
       Params : Glib.Values.GValues);
    --  First handler connected to the "insert_text" signal.
-   --  This handler will handle automatic indentation of Text.
 
    procedure Delete_Range_Cb
      (Buffer : access Source_Buffer_Record'Class;
@@ -381,7 +380,6 @@ package body Src_Editor_Buffer is
       Text        : constant String :=
         Get_String (Nth (Params, 2), Length => Length);
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
-      Indented    : Boolean := False;
 
    begin
       if Buffer.Inserting then
@@ -390,167 +388,21 @@ package body Src_Editor_Buffer is
 
       Get_Text_Iter (Nth (Params, 1), Pos);
 
-      if Get_Pref (Buffer.Kernel, Automatic_Indentation)
-        and then Buffer.Lang /= null
-      then
-         declare
-            Indent       : Natural;
-            Next_Indent  : Natural;
-            Line, Col    : Gint;
-            Offset       : Integer;
-            --  Offset between cursor and end of line
-
-            Blanks       : Natural;
-            C_Str        : Gtkada.Types.Chars_Ptr := Gtkada.Types.Null_Ptr;
-            Iter         : Gtk_Text_Iter;
-            Line_Ends    : Boolean := True;
-            Result       : Boolean;
-            Slice_Length : Natural;
-            Slice        : Unchecked_String_Access;
-            pragma Suppress (Access_Check, Slice);
-            Index        : Integer;
-            Replace_Cmd  : Editor_Replace_Slice;
-
-         begin
-            if Length = 1
-              and then Text (1) = ASCII.LF
-
-            --  If the current insertion is due to a selection-drag, do not
-            --  do any automatic indentation.
-              and then not (Get_Name (Buffer.Insert_Mark) = "gtk_drag_target")
-            then
-               Copy (Pos, Iter);
-
-               --  Go to last char of the line pointed by Pos
-
-               if not Ends_Line (Iter) then
-                  Forward_To_Line_End (Iter, Line_Ends);
-               end if;
-
-               Line   := Get_Line (Iter);
-               Col    := Get_Line_Offset (Iter);
-               Offset := Natural (Col - Get_Line_Offset (Pos));
-
-               --  We're spending most of our time getting this string.
-               --  Consider saving the current line, indentation level and
-               --  the stacks used by Next_Indentation to avoid parsing
-               --  the buffer from scratch each time.
-
-               C_Str := Get_Slice (Buffer, 0, 0, Line, Col);
-               Slice := To_Unchecked_String (C_Str);
-               Slice_Length := Natural (Strlen (C_Str));
-
-               Index  := Slice_Length;
-               Blanks := Slice_Length - Offset + 1;
-
-               if Line_Ends then
-                  Slice_Length := Slice_Length + 1;
-                  Slice (Slice_Length) := ASCII.LF;
-               end if;
-
-               while Blanks <= Slice_Length
-                 and then (Slice (Blanks) = ' '
-                           or else Slice (Blanks) = ASCII.HT)
-               loop
-                  Blanks := Blanks + 1;
-               end loop;
-
-               Next_Indentation
-                 (Buffer.Lang, Slice (1 .. Slice_Length),
-                  Result, Indent, Next_Indent);
-
-               if Result then
-                  --  Stop propagation of this signal, since we will completely
-                  --  replace the current line in the call to Replace_Slice
-                  --  below.
-
-                  Emit_Stop_By_Name (Buffer, "insert_text");
-                  Skip_To_Char (Slice.all, Index, ASCII.LF, -1);
-
-                  if Index < Slice'First then
-                     Index := Slice'First;
-                  else
-                     Index := Index + 1;
-                  end if;
-
-                  while Index <= Slice_Length
-                    and then (Slice (Index) = ' '
-                              or else Slice (Index) = ASCII.HT)
-                  loop
-                     Index := Index + 1;
-                  end loop;
-
-                  --  Prevent recursion
-                  Buffer.Inserting := True;
-
-                  --  Replace everything at once, important for efficiency
-                  --  and also because otherwise, some marks will no longer be
-                  --  valid.
-
-                  if Line_Ends then
-                     Slice_Length := Slice_Length - 1;
-                  end if;
-
-                  Create
-                    (Replace_Cmd,
-                     Source_Buffer (Buffer),
-                     Integer (Line), 0,
-                     Integer (Line), Integer (Col),
-                     (1 .. Indent => ' ') &
-                     Slice (Index .. Slice_Length - Offset) & ASCII.LF &
-                     (1 .. Next_Indent => ' ') &
-                     Slice (Blanks .. Slice_Length));
-                  Enqueue (Buffer.Queue, Replace_Cmd);
-
-                  Indented := True;
-
-                  --  Need to recompute iter, since the slice replacement that
-                  --  we just did has invalidated iter.
-
-                  Get_Iter_At_Line_Offset (Buffer, Pos, Line + 1, 0);
-                  Forward_Chars (Pos, Gint (Next_Indent), Result);
-                  Place_Cursor (Buffer, Pos);
-                  Forward_Chars
-                    (Pos, Gint (Slice_Length - Blanks + 1), Result);
-
-                  Buffer.Inserting := False;
-                  g_free (C_Str);
-                  C_Str := Gtkada.Types.Null_Ptr;
-               end if;
-            end if;
-
-         exception
-            when others =>
-               --  Stop propagation of exception, since doing nothing
-               --  in this callback is harmless.
-
-               if C_Str /= Gtkada.Types.Null_Ptr then
-                  g_free (C_Str);
-               end if;
-         end;
-      end if;
-
       if Is_Null_Command (Command) then
-         --  If indentation has just been done, the text has already been
-         --  taken into account.
+         Create
+           (Command,
+            Insertion,
+            Source_Buffer (Buffer),
+            False,
+            Natural (Get_Line (Pos)),
+            Natural (Get_Line_Offset (Pos)));
 
-         if not Indented then
-            Create
-              (Command,
-               Insertion,
-               Source_Buffer (Buffer),
-               False,
-               Natural (Get_Line (Pos)),
-               Natural (Get_Line_Offset (Pos)));
+         Buffer.Inserting := True;
+         Enqueue (Buffer.Queue, Command);
+         Buffer.Inserting := False;
 
-            Buffer.Inserting := True;
-            Enqueue (Buffer.Queue, Command);
-            Buffer.Inserting := False;
-
-            Add_Text (Command, Text);
-            Buffer.Current_Command := Command_Access (Command);
-
-         end if;
+         Add_Text (Command, Text);
+         Buffer.Current_Command := Command_Access (Command);
 
       elsif Get_Mode (Command) = Insertion then
          if Length = 1
