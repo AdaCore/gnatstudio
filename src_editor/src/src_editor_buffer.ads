@@ -230,7 +230,7 @@ package Src_Editor_Buffer is
    --  Replace the text between the start and end positions by Text.
    --
    --  The validity of the given positions must be verified before invoking
-   --  this procedure. An incorrect position  will cause an Assertion_Failure
+   --  this procedure. An incorrect position will cause an Assertion_Failure
    --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Delete_Slice
