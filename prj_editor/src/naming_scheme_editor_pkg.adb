@@ -45,7 +45,7 @@ procedure Initialize (Naming_Scheme_Editor : access Naming_Scheme_Editor_Record'
 begin
    Gtk.Window.Initialize (Naming_Scheme_Editor, Window_Toplevel);
    Set_Title (Naming_Scheme_Editor, -"Naming scheme");
-   Set_Policy (Naming_Scheme_Editor, False, True, False);
+   Set_Policy (Naming_Scheme_Editor, False, True, True);
    Set_Position (Naming_Scheme_Editor, Win_Pos_None);
    Set_Modal (Naming_Scheme_Editor, False);
 
@@ -320,7 +320,6 @@ begin
      (Naming_Scheme_Editor.Body_Filename_Entry, "key_press_event", On_Body_Filename_Entry_Key_Press_Event'Access, Naming_Scheme_Editor);
 
    Gtk_New (Naming_Scheme_Editor.Update, -"Update");
-   Set_Relief (Naming_Scheme_Editor.Update, Relief_Normal);
    Pack_Start (Naming_Scheme_Editor.Hbox3, Naming_Scheme_Editor.Update, False, False, 0);
    Widget_Callback.Object_Connect
      (Naming_Scheme_Editor.Update, "clicked",

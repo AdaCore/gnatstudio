@@ -40,7 +40,7 @@ procedure Initialize (Foreign_Naming_Scheme_Editor : access Foreign_Naming_Schem
 begin
    Gtk.Window.Initialize (Foreign_Naming_Scheme_Editor, Window_Toplevel);
    Set_Title (Foreign_Naming_Scheme_Editor, -"Naming schem");
-   Set_Policy (Foreign_Naming_Scheme_Editor, False, True, False);
+   Set_Policy (Foreign_Naming_Scheme_Editor, False, True, True);
    Set_Position (Foreign_Naming_Scheme_Editor, Win_Pos_None);
    Set_Modal (Foreign_Naming_Scheme_Editor, False);
 
@@ -168,7 +168,6 @@ begin
      (Foreign_Naming_Scheme_Editor.Filename_Entry, "key_press_event", On_Filename_Entry_Key_Press_Event'Access, Foreign_Naming_Scheme_Editor);
 
    Gtk_New (Foreign_Naming_Scheme_Editor.Update, -"Update");
-   Set_Relief (Foreign_Naming_Scheme_Editor.Update, Relief_Normal);
    Pack_Start (Foreign_Naming_Scheme_Editor.Hbox10, Foreign_Naming_Scheme_Editor.Update, False, False, 0);
    Widget_Callback.Object_Connect
      (Foreign_Naming_Scheme_Editor.Update, "clicked",

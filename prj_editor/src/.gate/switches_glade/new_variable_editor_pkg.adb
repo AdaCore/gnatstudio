@@ -22,7 +22,7 @@ procedure Initialize (New_Variable_Editor : access New_Variable_Editor_Record'Cl
 begin
    Gtk.Dialog.Initialize (New_Variable_Editor);
    Set_Title (New_Variable_Editor, -"Creating a variable");
-   Set_Policy (New_Variable_Editor, True, True, False);
+   Set_Policy (New_Variable_Editor, False, True, True);
    Set_Position (New_Variable_Editor, Win_Pos_None);
    Set_Modal (New_Variable_Editor, False);
    Set_Default_Size (New_Variable_Editor, 600, 400);
@@ -112,17 +112,14 @@ begin
    Pack_Start (New_Variable_Editor.Vbox54, New_Variable_Editor.Hbuttonbox4, False, False, 0);
 
    Gtk_New (New_Variable_Editor.Delete_Variable, -"Delete");
-   Set_Relief (New_Variable_Editor.Delete_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.Delete_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Delete_Variable);
 
    Gtk_New (New_Variable_Editor.New_Variable, -"New");
-   Set_Relief (New_Variable_Editor.New_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.New_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.New_Variable);
 
    Gtk_New (New_Variable_Editor.Rename_Variable, -"Rename");
-   Set_Relief (New_Variable_Editor.Rename_Variable, Relief_Normal);
    Set_Flags (New_Variable_Editor.Rename_Variable, Can_Default);
    Add (New_Variable_Editor.Hbuttonbox4, New_Variable_Editor.Rename_Variable);
 
