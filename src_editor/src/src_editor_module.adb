@@ -259,16 +259,14 @@ package body Src_Editor_Module is
    function Find_Current_Editor
      (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box
    is
-      Iter : Child_Iterator := First_Child (Get_MDI (Kernel));
+      Child : MDI_Child := Find_MDI_Child_By_Tag
+        (Get_MDI (Kernel), Source_Box_Record'Tag);
    begin
-      while Get (Iter) /= null loop
-         if Get_Widget (Get (Iter)).all in Source_Box_Record'Class then
-            return Source_Box (Get_Widget (Get (Iter))).Editor;
-         end if;
-
-         Next (Iter);
-      end loop;
-      return null;
+      if Child = null then
+         return null;
+      else
+         return Source_Box (Get_Widget (Child)).Editor;
+      end if;
    end Find_Current_Editor;
 
    -------------
