@@ -50,6 +50,7 @@ package body Debugger.Gdb is
 
    Gdb_Options   : constant String := "-nw -q -fullname";
    --  Options always passed to gdb.
+   --  Note that we assume that only one blank is put between each option.
 
    Highlight_Pattern : constant Pattern_Matcher :=
      Compile ("^\(gdb\) ", Multiple_Lines);
