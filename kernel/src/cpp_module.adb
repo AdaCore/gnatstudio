@@ -27,14 +27,18 @@ with Language.C;              use Language.C;
 with Language.Cpp;            use Language.Cpp;
 with Src_Info;                use Src_Info;
 with Src_Info.CPP;            use Src_Info.CPP;
-with Unchecked_Deallocation;
+with Traces;                  use Traces;
+with Ada.Exceptions;          use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body Cpp_Module is
+
+   Me : constant Debug_Handle := Create ("Cpp_Module");
 
    CPP_LI_Handler_Name : constant String := "c/c++";
    --  The name the source navigator is registered under.
 
-   procedure Unchecked_Free is new Unchecked_Deallocation
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (CPP_LI_Handler_Record'Class, CPP_LI_Handler);
 
    procedure Project_View_Changed
@@ -57,6 +61,10 @@ package body Cpp_Module is
         (CPP_LI_Handler
            (Get_LI_Handler_By_Name (Handler, CPP_LI_Handler_Name)),
          Get_Project_View (Kernel));
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Project_View_Changed;
 
    ---------------------
