@@ -11,8 +11,15 @@ with Gtkada.Handlers;    use Gtkada.Handlers;
 with Gtk.Event_Box;      use Gtk.Event_Box;
 with Gtk.Notebook;       use Gtk.Notebook;
 with Glib;               use Glib;
+with Gtk.Pixmap;         use Gtk.Pixmap;
 
 package body Wizards is
+
+   Min_Toc_Width : constant Gint := 100;
+   --  Minimal width, in pixels, for the TOC area, when it is displayed.
+
+   Highlight_Color : constant String := "yellow";
+   --  Color to use to highlight strings in the TOC.
 
    procedure Free is new Unchecked_Deallocation
      (Widget_Array, Widget_Array_Access);
@@ -37,17 +44,19 @@ package body Wizards is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Wiz : out Wizard; Title : String) is
+   procedure Gtk_New
+     (Wiz : out Wizard; Title : String; Bg : String) is
    begin
       Wiz := new Wizard_Record;
-      Wizards.Initialize (Wiz, Title);
+      Wizards.Initialize (Wiz, Title, Bg);
    end Gtk_New;
 
    ----------------
    -- Initialize --
    ----------------
 
-   procedure Initialize (Wiz : access Wizard_Record'Class; Title : String) is
+   procedure Initialize
+     (Wiz : access Wizard_Record'Class; Title : String; Bg : String) is
       Color : Gdk_Color;
       Style : Gtk_Style;
    begin
@@ -77,12 +86,12 @@ package body Wizards is
       Set_Foreground
         (Wiz.Normal_Style, State_Normal, White (Get_Default_Colormap));
 
-      Color := Parse ("yellow");
+      Color := Parse (Highlight_Color);
       Alloc (Get_Default_Colormap, Color);
       Wiz.Highlight_Style := Copy (Get_Style (Wiz));
       Set_Foreground (Wiz.Highlight_Style, State_Normal, Color);
 
-      Color := Parse ("blue");
+      Color := Parse (Bg);
       Alloc (Get_Default_Colormap, Color);
       Style := Copy (Get_Style (Wiz.Eventbox1));
       Set_Background (Style, State_Normal, Color);
@@ -127,13 +136,29 @@ package body Wizards is
          Set_Style (Wiz.Toc (Max_Page), Wiz.Normal_Style);
 
          Size_Request (Wiz.Toc (Max_Page), Req);
-         if Req.Width < 100 then
-            Set_USize (Wiz.Toc (Max_Page), 100, Req.Height);
+         if Req.Width < Min_Toc_Width then
+            Set_USize (Wiz.Toc (Max_Page), Min_Toc_Width, Req.Height);
          end if;
 
          Wiz.Has_Toc := True;
       end if;
    end Add_Page;
+
+   --------------
+   -- Add_Logo --
+   --------------
+
+   procedure Add_Logo
+     (Wiz    : access Wizard_Record;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap)
+   is
+      Pix : Gtk_Pixmap;
+   begin
+      Gtk_New (Pix, Pixmap, Mask);
+      Pack_End (Wiz.Toc_Box, Pix, Expand => False, Fill => False);
+      Show (Pix);
+   end Add_Logo;
 
    --------------
    -- Set_Page --

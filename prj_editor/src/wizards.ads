@@ -63,6 +63,8 @@ with Wizard_Window_Pkg;
 with Gtk.Button;
 with Gtk.Widget;
 with Gtk.Style;
+with Gdk.Pixmap;
+with Gdk.Bitmap;
 
 package Wizards is
 
@@ -70,10 +72,12 @@ package Wizards is
      with private;
    type Wizard is access all Wizard_Record'Class;
 
-   procedure Gtk_New (Wiz : out Wizard; Title : String);
-   --  Create a new wizard
+   procedure Gtk_New (Wiz : out Wizard; Title : String; Bg : String);
+   --  Create a new wizard.
+   --  Bg is the color to use for the background of the table of contents.
 
-   procedure Initialize (Wiz : access Wizard_Record'Class; Title : String);
+   procedure Initialize
+     (Wiz : access Wizard_Record'Class; Title : String; Bg : String);
    --  Internal function used to create the new widget
 
    procedure Add_Page
@@ -87,6 +91,12 @@ package Wizards is
    --  Level is the level of indentation for this new entry. 1 is the
    --  top-level, 2 is indented by one, ...
    --  Sub-levels can be hidden later on.
+
+   procedure Add_Logo
+     (Wiz    : access Wizard_Record;
+      Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Mask   : Gdk.Bitmap.Gdk_Bitmap);
+   --  Add a pixmap in the lower-left corner of the wizard
 
    procedure Set_Page (Wiz : access Wizard_Record; Num : Natural);
    --  Change the page currently displayed.
