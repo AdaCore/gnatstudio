@@ -125,9 +125,9 @@ package Open_Session_Pkg is
 private
 
    type Button_Node is record
-      Next       : Button_Link;
-      Button     : Gtk_Check_Button;
-      Label      : String_Access;
+      Next   : Button_Link;
+      Button : Gtk_Check_Button;
+      Label  : String_Access;
    end record;
 
 end Open_Session_Pkg;

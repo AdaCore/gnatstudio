@@ -104,6 +104,4 @@ package Breakpoints_Pkg is
    procedure Gtk_New (Breakpoints : out Breakpoints_Access);
    procedure Initialize (Breakpoints : access Breakpoints_Record'Class);
 
-   Breakpoints : Breakpoints_Access;
-
 end Breakpoints_Pkg;

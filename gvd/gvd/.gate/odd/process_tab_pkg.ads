@@ -38,6 +38,4 @@ package Process_Tab_Pkg is
    procedure Gtk_New (Process_Tab : out Process_Tab_Access);
    procedure Initialize (Process_Tab : access Process_Tab_Record'Class);
 
-   Process_Tab : Process_Tab_Access;
-
 end Process_Tab_Pkg;

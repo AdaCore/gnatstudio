@@ -49,6 +49,4 @@ package Open_Program_Pkg is
    procedure Gtk_New (Open_Program : out Open_Program_Access);
    procedure Initialize (Open_Program : access Open_Program_Record'Class);
 
-   Open_Program : Open_Program_Access;
-
 end Open_Program_Pkg;

@@ -63,6 +63,4 @@ package Memory_View_Pkg is
    procedure Gtk_New (Memory_View : out Memory_View_Access);
    procedure Initialize (Memory_View : access Memory_View_Record'Class);
 
-   Memory_View : Memory_View_Access;
-
 end Memory_View_Pkg;

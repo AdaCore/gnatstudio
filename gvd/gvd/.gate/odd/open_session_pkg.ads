@@ -40,6 +40,4 @@ package Open_Session_Pkg is
    procedure Gtk_New (Open_Session : out Open_Session_Access);
    procedure Initialize (Open_Session : access Open_Session_Record'Class);
 
-   Open_Session : Open_Session_Access;
-
 end Open_Session_Pkg;

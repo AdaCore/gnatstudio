@@ -147,6 +147,4 @@ package General_Preferences_Pkg is
    procedure Gtk_New (General_Preferences : out General_Preferences_Access);
    procedure Initialize (General_Preferences : access General_Preferences_Record'Class);
 
-   General_Preferences : General_Preferences_Access;
-
 end General_Preferences_Pkg;

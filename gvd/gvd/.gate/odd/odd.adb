@@ -11,6 +11,15 @@ with Open_Session_Pkg; use Open_Session_Pkg;
 with Memory_View_Pkg; use Memory_View_Pkg;
 
 procedure Odd is
+   Main_Debug_Window : Main_Debug_Window_Access;
+   General_Preferences : General_Preferences_Access;
+   Process_Tab : Process_Tab_Access;
+   Breakpoints : Breakpoints_Access;
+   Advanced_Breakpoint : Advanced_Breakpoint_Access;
+   Open_Program : Open_Program_Access;
+   Open_Session : Open_Session_Access;
+   Memory_View : Memory_View_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;

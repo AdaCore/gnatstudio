@@ -120,6 +120,4 @@ package Main_Debug_Window_Pkg is
    procedure Gtk_New (Main_Debug_Window : out Main_Debug_Window_Access);
    procedure Initialize (Main_Debug_Window : access Main_Debug_Window_Record'Class);
 
-   Main_Debug_Window : Main_Debug_Window_Access;
-
 end Main_Debug_Window_Pkg;

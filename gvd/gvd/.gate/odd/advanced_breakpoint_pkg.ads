@@ -38,6 +38,4 @@ package Advanced_Breakpoint_Pkg is
    procedure Gtk_New (Advanced_Breakpoint : out Advanced_Breakpoint_Access);
    procedure Initialize (Advanced_Breakpoint : access Advanced_Breakpoint_Record'Class);
 
-   Advanced_Breakpoint : Advanced_Breakpoint_Access;
-
 end Advanced_Breakpoint_Pkg;
