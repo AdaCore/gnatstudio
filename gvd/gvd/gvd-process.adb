@@ -367,12 +367,14 @@ package body GVD.Process is
       Object : access GObject_Record'Class) return String
    is
       Top : constant Visual_Debugger := Visual_Debugger (Object);
+      NL  : aliased Character := ASCII.LF;
       N   : Integer;
       pragma Unreferenced (N);
 
    begin
       N := Write
         (TTY_Descriptor (Top.Debuggee_TTY), Input'Address, Input'Length);
+      N := Write (TTY_Descriptor (Top.Debuggee_TTY), NL'Address, 1);
       return "";
    end Debuggee_Console_Handler;
 
