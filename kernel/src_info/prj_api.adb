@@ -898,6 +898,20 @@ package body Prj_API is
       end if;
    end External_Reference_Of;
 
+   --------------------------------
+   -- Get_Project_View_From_Name --
+   --------------------------------
+
+   function Get_Project_View_From_Name (Name : Name_Id) return Project_Id is
+   begin
+      for J in Projects.Table'First .. Projects.Last loop
+         if Projects.Table (J).Name = Name then
+            return J;
+         end if;
+      end loop;
+      return No_Project;
+   end Get_Project_View_From_Name;
+
 begin
    Namet.Initialize;
    Csets.Initialize;

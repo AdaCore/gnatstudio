@@ -41,6 +41,12 @@ package Prj_API is
    --  Create a new empty project.
    --  You must have called "Project_Nodes.Set_Last (Empty_Node)" first.
 
+   function Get_Project_View_From_Name
+     (Name : Types.Name_Id) return Project_Id;
+   --  Return the project whose name is Name.
+   --  Note that this returns an entry in the processed project, not in the
+   --  tree itself.
+
    function Get_Or_Create_Declaration (Project : Project_Node_Id)
       return Project_Node_Id;
    --  Create (or get) the declaration associated with project
