@@ -453,7 +453,6 @@ package body Glide_Kernel.Help is
         (Kernel                  => Kernel,
          Module_Name             => Help_Module_Name,
          Priority                => Default_Priority,
-         Initializer             => null,
          Contextual_Menu_Handler => null,
          Mime_Handler            => Mime_Action'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions

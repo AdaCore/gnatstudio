@@ -22,6 +22,7 @@ with Glib;                     use Glib;
 with Gdk.Color;                use Gdk.Color;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Text;                 use Gtk.Text;
 with Gtk.Widget;               use Gtk.Widget;
@@ -41,10 +42,6 @@ with GNAT.OS_Lib;              use GNAT.OS_Lib;
 package body Glide_Consoles is
 
    Me : Debug_Handle := Create (Console_Module_Name);
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Initialize Console module.
 
    function On_Button_Release
      (Widget : access Gtk_Widget_Record'Class) return Boolean;
@@ -294,41 +291,36 @@ package body Glide_Consoles is
       return null;
    end Save_Desktop;
 
-   -----------------------
-   -- Initialize_Module --
-   -----------------------
-
-   procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Console : constant String := '/' & (-"File") & '/' & (-"Console");
-
-   begin
-      Register_Menu
-        (Kernel, Console, Ref_Item => -"Save Desktop");
-      Register_Menu
-        (Kernel, Console, -"Save As...", "", null);
-      --             On_Save_Console_As'Access);
-      Register_Menu
-        (Kernel, Console, -"Load Contents...", "", null);
-      --             On_Load_To_Console'Access);
-   end Initialize_Module;
-
    ---------------------
    -- Register_Module --
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   is
+      Console : constant String := '/' & (-"File") & '/' & (-"Console");
    begin
       Console_Module_Id := Register_Module
         (Kernel       => Kernel,
          Module_Name  => Console_Module_Name,
-         Priority     => Default_Priority,
-         Initializer  => Initialize_Module'Access);
+         Priority     => Default_Priority);
+
+      Register_Menu
+        (Kernel, Console, Ref_Item => -"Save Desktop");
+      Register_Menu
+        (Kernel, Console, -"Save As...", "", null);
+      --             On_Save_Console_As'Access);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Console & '/' & (-"Save As...")), False);
+      Register_Menu
+        (Kernel, Console, -"Load Contents...", "", null);
+      --             On_Load_To_Console'Access);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Console & '/' & (-"Load Contents...")),
+         False);
+
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
    end Register_Module;
 
-begin
-   Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
-     (Save_Desktop'Access, Load_Desktop'Access);
 end Glide_Consoles;
