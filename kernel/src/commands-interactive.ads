@@ -197,7 +197,6 @@ package Commands.Interactive is
    --  This acts as a proxy for Interactive_Command, so that they can be called
    --  with an event. This should be used when one need to execute a procedure
    --  that expects a Root_Command.
-   --  The command is freed when the proxy is freed
 
    function Create_Proxy
      (Command : access Interactive_Command'Class;
