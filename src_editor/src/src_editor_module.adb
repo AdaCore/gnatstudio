@@ -3525,7 +3525,8 @@ package body Src_Editor_Module is
          declare
             Lang   : Language_Access;
             File   : constant Virtual_File := File_Information (File_Context);
-            Lines  : List;
+            Block  : GNAT.OS_Lib.String_Access := new String'("");
+            Tmp    : GNAT.OS_Lib.String_Access;
             Length : Integer := 0;
 
          begin
@@ -3548,8 +3549,7 @@ package body Src_Editor_Module is
             Lang := Get_Language_From_File
               (Get_Language_Handler (Kernel), File);
 
-            --  Create a list of lines, in order to perform the replace
-            --  as a block.
+            --  Create a String representing the selected block
 
             for J in Start_Line .. End_Line loop
                declare
@@ -3563,53 +3563,33 @@ package body Src_Editor_Module is
                   Free (Args);
                   Length := Length + Line'Length;
 
-                  if Line = "" then
-                     Append (Lines, "");
-                  else
-                     if Comment then
-                        Append (Lines, Comment_Line (Lang, Line));
-                     else
-                        Append (Lines,
-                                Comment_Line (Lang, Line, Comment => False));
-                     end if;
-                  end if;
+                  Tmp := Block;
+                  Block := new String'(Block.all & Line);
+                  Free (Tmp);
                end;
             end loop;
+
+            --  Comment/Uncomment the block
+
+            Tmp := Block;
+            Block := new String'(Comment_Block (Lang, Block.all, Comment));
+            Free (Tmp);
 
             --  Create a String containing the modified lines.
 
             declare
-               L : Integer := 0;
-               N : List_Node := First (Lines);
+               Args : Argument_List :=
+                 (1 => new String'(Full_Name (File).all),
+                  2 => new String'(Image (Start_Line)),
+                  3 => new String'("1"), --  column
+                  4 => Block,
+                  5 => new String'("0"), --  before
+                  6 => new String'(Image (Length - 1))); --  after
             begin
-               while N /= Null_Node loop
-                  L := L + Data (N)'Length;
-                  N := Next (N);
-               end loop;
-
-               declare
-                  S    : String (1 .. L);
-                  Args : Argument_List (1 .. 6);
-               begin
-                  N := First (Lines);
-                  L := 1;
-
-                  while N /= Null_Node loop
-                     S (L .. L + Data (N)'Length - 1) := Data (N);
-                     L := L + Data (N)'Length;
-                     N := Next (N);
-                  end loop;
-
-                  Args := (1 => new String'(Full_Name (File).all),
-                           2 => new String'(Image (Start_Line)),
-                           3 => new String'("1"), --  column
-                           4 => new String'(S),
-                           5 => new String'("0"), --  before
-                           6 => new String'(Image (Length))); --  after
-                  Execute_GPS_Shell_Command
+               Execute_GPS_Shell_Command
                     (Kernel, "Editor.replace_text", Args);
-                  Free (Args);
-               end;
+               Free (Args);
+               Free (Block);
             end;
          end;
       end if;
