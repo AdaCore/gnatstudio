@@ -111,9 +111,6 @@ package body Glide_Kernel.Scripts is
 
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Gtk_Widget);
-   procedure On_Destroy_Widget (Value : System.Address);
-   pragma Convention (C, On_Destroy_Widget);
-
    procedure On_Widget_Destroyed
      (Data : System.Address; Widget : System.Address);
    pragma Convention (C, On_Widget_Destroyed);
@@ -1500,8 +1497,19 @@ package body Glide_Kernel.Scripts is
          Handler => GUI_Command_Handler'Access);
       Register_Command
         (Kernel, "set_sensitive",
-         Minimum_Args => 0,
          Maximum_Args => 1,
+         Class        => Get_GUI_Class (Kernel),
+         Handler      => GUI_Command_Handler'Access);
+      Register_Command
+        (Kernel, "destroy",
+         Class        => Get_GUI_Class (Kernel),
+         Handler      => GUI_Command_Handler'Access);
+      Register_Command
+        (Kernel, "hide",
+         Class        => Get_GUI_Class (Kernel),
+         Handler      => GUI_Command_Handler'Access);
+      Register_Command
+        (Kernel, "show",
          Class        => Get_GUI_Class (Kernel),
          Handler      => GUI_Command_Handler'Access);
    end Register_Default_Script_Commands;
@@ -2272,15 +2280,21 @@ package body Glide_Kernel.Scripts is
         (Script, Get_Class (Instance), Get_GUI_Class (Get_Kernel (Script)))
       then
          raise Invalid_Data;
-      else
-         Ref (Widget);
+      elsif Widget /= null then
+         Ref (Instance);
+
+         --  Nothing to do when the instance is destroyed. The instance is
+         --  destroyed only when the widget itself has already been destroyed,
+         --  since the latter keeps a ref to the widget.
          Set_Data
            (Instance,
             Value      => Widget.all'Address,
-            On_Destroy => On_Destroy_Widget'Access);
+            On_Destroy => null);
          Widget_User_Data.Set
            (Widget, Instance, "GPS-script-instance");
          Weak_Ref (Widget, Notify => On_Widget_Destroyed'Access);
+      else
+         Set_Data (Instance, Value => System.Null_Address);
       end if;
    end Set_Data;
 
@@ -2297,7 +2311,8 @@ package body Glide_Kernel.Scripts is
         Get_Instance (Gtk_Widget (Get_User_Data (Widget, Stub)));
    begin
       if Inst /= null then
-         Set_Data (Inst, System.Null_Address);
+         Set_Data (Inst, Widget => null);
+         Free (Inst);
       end if;
    end On_Widget_Destroyed;
 
@@ -2314,16 +2329,6 @@ package body Glide_Kernel.Scripts is
       when Gtkada.Types.Data_Error =>
          return null;
    end Get_Instance;
-
-   -----------------------
-   -- On_Destroy_Widget --
-   -----------------------
-
-   procedure On_Destroy_Widget (Value : System.Address) is
-      W : constant Gtk_Widget := Convert (Value);
-   begin
-      Unref (W);
-   end On_Destroy_Widget;
 
    -------------------------
    -- GUI_Command_Handler --
@@ -2347,6 +2352,15 @@ package body Glide_Kernel.Scripts is
          begin
             Set_Sensitive (W, Value);
          end;
+
+      elsif Command = "destroy" then
+         Destroy (Get_Data (Inst));
+
+      elsif Command = "hide" then
+         Hide (Get_Data (Inst));
+
+      elsif Command = "show" then
+         Show (Get_Data (Inst));
       end if;
 
       Free (Inst);
