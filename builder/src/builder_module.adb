@@ -83,6 +83,9 @@ package body Builder_Module is
       Build_Item : Gtk_Menu_Item;
       --  The build menu, updated automatically every time the list of main
       --  units changes.
+
+      Output     : String_List_Utils.String_List.List;
+      --  The last build output.
    end record;
    --  Data stored with the module id.
 
@@ -190,6 +193,21 @@ package body Builder_Module is
       File   : String);
    --  Launch a compilation command for File.
 
+   procedure Clear_Compilation_Output (Kernel : Kernel_Handle);
+   --  Clear the compiler output, the console, and the result view.
+
+   ------------------------------
+   -- Clear_Compilation_Output --
+   ------------------------------
+
+   procedure Clear_Compilation_Output (Kernel : Kernel_Handle) is
+   begin
+      Console.Clear (Kernel);
+      Remove_Result_Category (Kernel, -"Builder Results");
+      String_List_Utils.String_List.Free
+        (Builder_Module_ID_Access (Builder_Module_ID).Output);
+   end Clear_Compilation_Output;
+
    ---------------------------
    -- Parse_Compiler_Output --
    ---------------------------
@@ -209,6 +227,9 @@ package body Builder_Module is
       Column    : Natural := 1;
    begin
       Insert (Kernel, Output, Add_LF => False);
+      String_List_Utils.String_List.Append
+        (Builder_Module_ID_Access (Builder_Module_ID).Output,
+         Output);
 
       while Start <= Output'Last loop
          while Start < Output'Last
@@ -471,8 +492,7 @@ package body Builder_Module is
          return;
       end if;
 
-      Console.Clear (K);
-      Remove_Result_Category (K, -"Builder Results");
+      Clear_Compilation_Output (K);
 
       Push_State (K, Processing);
       State_Pushed := True;
@@ -585,8 +605,9 @@ package body Builder_Module is
 
          Trace (Me, "On_Check_Syntax: " & Cmd);
          Push_State (Kernel, Processing);
-         Console.Clear (Kernel);
-         Remove_Result_Category (Kernel, -"Builder Results");
+
+         Clear_Compilation_Output (Kernel);
+
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
          Console.Insert (Kernel, Cmd);
@@ -658,8 +679,9 @@ package body Builder_Module is
       end if;
 
       Push_State (Kernel, Processing);
-      Console.Clear (Kernel);
-      Remove_Result_Category (Kernel, -"Builder Results");
+
+      Clear_Compilation_Output (Kernel);
+
       Set_Sensitive_Menus (Kernel, False);
 
       if Project = "" then
@@ -723,6 +745,39 @@ package body Builder_Module is
 
             Node := Next (Node);
          end loop;
+      elsif Command = "get_build_output" then
+         declare
+            L : Integer := 0;
+         begin
+            Node := First
+              (Builder_Module_ID_Access (Builder_Module_ID).Output);
+
+            while Node /= Null_Node loop
+               L := L + Data (Node)'Length;
+               Node := Next (Node);
+            end loop;
+
+            if L /= 0 then
+               declare
+                  S      : String (1 .. L);
+                  Length : Natural;
+               begin
+                  L := 1;
+                  Node := First
+                    (Builder_Module_ID_Access (Builder_Module_ID).Output);
+
+                  while Node /= Null_Node loop
+                     Length := Data (Node)'Length;
+                     S (L .. L + Length - 1) := Data (Node);
+                     L := L + Length;
+
+                     Node := Next (Node);
+                  end loop;
+
+                  return S;
+               end;
+            end if;
+         end;
       end if;
 
       return "";
@@ -792,8 +847,7 @@ package body Builder_Module is
          end if;
 
          Push_State (Kernel, Processing);
-         Console.Clear (Kernel);
-         Remove_Result_Category (Kernel, -"Builder Results");
+         Clear_Compilation_Output (Kernel);
          Set_Sensitive_Menus (Kernel, False);
          Args := Argument_String_To_List (Cmd);
 
@@ -1351,6 +1405,13 @@ package body Builder_Module is
          "compile",
          "Usage:  compile file1 [file2] ..." & ASCII.LF
          & "  compiles a list of files from the project.",
+         Compile_Command'Access);
+
+      Register_Command
+        (Kernel,
+         "get_build_output",
+         "Usage:  get_build_output" & ASCII.LF
+         & "  returns the last compilation results.",
          Compile_Command'Access);
 
    end Register_Module;
