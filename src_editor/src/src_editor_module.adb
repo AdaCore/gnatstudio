@@ -1604,21 +1604,22 @@ package body Src_Editor_Module is
       Dummy : Boolean;
       pragma Unreferenced (Dummy);
    begin
-      if D.File = VFS.No_File then
-         return;
-      end if;
-
       loop
          Child := Get (Iter);
 
          exit when Child = null;
 
-         if D.File = Get_Filename (Child) then
+         if Get_Widget (Child).all in Source_Box_Record'Class then
             Box := Source_Box (Get_Widget (Child));
-            Dummy := Check_Timestamp_And_Reload
-              (Get_Buffer (Box.Editor),
-               Interactive   => False,
-               Always_Reload => False);
+
+            if D.File = VFS.No_File
+              or else D.File = Get_Filename (Box.Editor)
+            then
+               Dummy := Check_Timestamp_And_Reload
+                 (Get_Buffer (Box.Editor),
+                  Interactive   => False,
+                  Always_Reload => False);
+            end if;
          end if;
 
          Next (Iter);
