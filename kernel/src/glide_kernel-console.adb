@@ -22,7 +22,7 @@ with Glide_Main_Window; use Glide_Main_Window;
 with Glide_Page;        use Glide_Page;
 with Glide_Consoles;    use Glide_Consoles;
 with GVD.Process;       use GVD.Process;
-with Ada.Text_IO;       use Ada.Text_IO;
+with GNAT.IO;           use GNAT.IO;
 
 package body Glide_Kernel.Console is
 
