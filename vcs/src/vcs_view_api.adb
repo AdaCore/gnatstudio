@@ -1004,7 +1004,7 @@ package body VCS_View_API is
          --  Must get the current directory (that depends on what module
          --  currently has the focus) before we insert a new child in the MDI.
 
-         String_List.Append (Dirs, Get_Current_Dir (Kernel));
+         String_List.Append (Dirs, Get_Current_Dir (Context));
 
          Gtk_New (Explorer, Kernel);
          Set_Size_Request (Explorer, 400, 400);
