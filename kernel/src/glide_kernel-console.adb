@@ -144,8 +144,12 @@ package body Glide_Kernel.Console is
 
          Gtk_New (Results, Kernel_Handle (Kernel),
                   Module_ID (Console_Module_Id));
-         Child := Put (Kernel, Results, Module => Console_Module_Id,
-                       Desktop_Independent => True);
+         Child := Put
+           (Kernel, Results,
+            Module              => Console_Module_Id,
+            Default_Width       => Get_Pref (Kernel, Default_Widget_Width),
+            Default_Height      => Get_Pref (Kernel, Default_Widget_Height),
+            Desktop_Independent => True);
          Set_Focus_Child (Child);
 
          Set_Title (Child, -"Locations");
