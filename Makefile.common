@@ -50,7 +50,7 @@ NO_STYLE_FILES+=${wildcard *_pkg.adb}
 CFLAGS+=-g
 GNATBIND_FLAGS+=-bargs -E
 GNATLINK_FLAGS+=
-GNATMAKE_FLAGS=-gnataQ -i -m ${CFLAGS}
+GNATMAKE_FLAGS=-gnataQ -m ${CFLAGS}
 STYLE_FLAGS=-gnaty -gnatwu
 
 all: ${MAIN}
