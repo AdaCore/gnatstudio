@@ -197,16 +197,22 @@ package Glide_Kernel is
    --  Src_Info.Queries. They should be used instead of the other ones so that
    --  the list of parsed LI files can be kept in the kernel
 
+   procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record);
+   --  Reset the LI files currently in memory, and free associated memory
+
    function Get_LI_File_List (Handle : access Kernel_Handle_Record)
       return Src_Info.LI_File_List;
    --  Return the list of all LI file parsed so far.
 
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File) return Src_Info.LI_File_Ptr;
+      Source_Filename : VFS.Virtual_File;
+      Check_Timestamp : Boolean := True) return Src_Info.LI_File_Ptr;
    --  Find the ALI file for Source_Filename, and return a handle to it.
    --  null is returned if the LI file couldn't be parsed. It is guaranteed
    --  that the returned LI file has been fully parsed.
+   --  If Check_Timestamp is False, and there is already a version of this
+   --  LI file in memory, that version is not updated, and just returned as is.
 
    function Other_File_Name
      (Kernel          : access Kernel_Handle_Record;

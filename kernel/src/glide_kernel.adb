@@ -605,7 +605,8 @@ package body Glide_Kernel is
 
    function Locate_From_Source_And_Complete
      (Handle          : access Kernel_Handle_Record;
-      Source_Filename : VFS.Virtual_File) return Src_Info.LI_File_Ptr
+      Source_Filename : VFS.Virtual_File;
+      Check_Timestamp : Boolean := True) return Src_Info.LI_File_Ptr
    is
       File : LI_File_Ptr;
       Project : constant Project_Type := Get_Project_From_File
@@ -626,7 +627,8 @@ package body Glide_Kernel is
             File            => File,
             Source_Filename => Source_Filename,
             List            => Handle.Source_Info_List,
-            Project         => Project);
+            Project         => Project,
+            Check_Timestamp => Check_Timestamp);
          return File;
       end if;
    end Locate_From_Source_And_Complete;
@@ -2548,5 +2550,13 @@ package body Glide_Kernel is
       return Result;
    end Filter_Matches;
 
+   ------------------------
+   -- Reset_LI_File_List --
+   ------------------------
+
+   procedure Reset_LI_File_List (Handle : access Kernel_Handle_Record) is
+   begin
+      Reset (Handle.Source_Info_List);
+   end Reset_LI_File_List;
 
 end Glide_Kernel;
