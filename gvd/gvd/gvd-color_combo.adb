@@ -141,9 +141,9 @@ package body GVD.Color_Combo is
    begin
       Get_Color (Combo.Selection, Components);
       Set_Rgb (Color,
-               Gushort (Components (Red) * Gdouble (Gushort'Last)),
-               Gushort (Components (Green) * Gdouble (Gushort'Last)),
-               Gushort (Components (Blue) * Gdouble (Gushort'Last)));
+               Gcolor_Int (Components (Red) * Gdouble (Guint16'Last)),
+               Gcolor_Int (Components (Green) * Gdouble (Guint16'Last)),
+               Gcolor_Int (Components (Blue) * Gdouble (Guint16'Last)));
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
       Combo.Color := Color;
       Display_Button (Combo);
