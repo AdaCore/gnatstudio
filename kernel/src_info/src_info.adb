@@ -99,16 +99,8 @@ package body Src_Info is
    -----------
 
    procedure Reset (LIFL : in out LI_File_List) is
-      Node : LI_File_Node_Ptr;
    begin
-      if LIFL.Table /= null then
-         LI_File_HTable.Get_First (LIFL.Table.all, Node);
-         while Node /= null loop
-            Destroy (Node.Value);
-            LI_File_HTable.Get_Next (LIFL.Table.all, Node);
-         end loop;
-         Reset (LIFL.Table.all);
-      else
+      if LIFL.Table = null then
          LIFL.Table := new LI_File_HTable.HTable;
       end if;
 
