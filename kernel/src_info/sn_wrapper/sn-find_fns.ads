@@ -156,9 +156,9 @@ package SN.Find_Fns is
 
       --  Find functions for Include table
       function Find (DB : DB_File;
-            Included_file : String := Invalid_String;
+            Included_File : String := Invalid_String;
             Start_Position : Point := Invalid_Point;
-            Include_from_file : String := Invalid_String)
+            Include_From_File : String := Invalid_String)
       return IU_Table;
 
       --  Find functions for Instance variables table
@@ -205,7 +205,7 @@ package SN.Find_Fns is
             Filename : String := Invalid_String;
             Position : Point := Invalid_Point;
             Class : String := Invalid_String;
-            Method_or_function : String := Invalid_String)
+            Method_Or_Function : String := Invalid_String)
       return REM_Table;
 
       --  Find functions for Subroutines table
