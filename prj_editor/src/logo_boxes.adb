@@ -25,7 +25,6 @@ with Gtk.Box;       use Gtk.Box;
 with Gtk.Dialog;    use Gtk.Dialog;
 with Gtk.Enums;     use Gtk.Enums;
 with Gtk.Event_Box; use Gtk.Event_Box;
-with Gtk.Frame;     use Gtk.Frame;
 with Gtk.Label;     use Gtk.Label;
 with Gtk.Pixmap;    use Gtk.Pixmap;
 with Gtk.Style;     use Gtk.Style;
@@ -42,13 +41,14 @@ package body Logo_Boxes is
    -------------
 
    procedure Gtk_New
-     (Win : out Logo_Box;
-      Title  : String;
-      Parent : Gtk.Window.Gtk_Window := null;
+     (Win        : out Logo_Box;
+      Title      : String;
+      Parent     : Gtk.Window.Gtk_Window := null;
+      Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description := null) is
    begin
       Win := new Logo_Box_Record;
-      Logo_Boxes.Initialize (Win, Title, Parent, Title_Font);
+      Logo_Boxes.Initialize (Win, Title, Parent, Show_Toc, Title_Font);
    end Gtk_New;
 
    ----------------
@@ -56,25 +56,31 @@ package body Logo_Boxes is
    ----------------
 
    procedure Initialize
-     (Win    : access Logo_Box_Record'Class;
-      Title  : String;
-      Parent : Gtk.Window.Gtk_Window;
+     (Win        : access Logo_Box_Record'Class;
+      Title      : String;
+      Parent     : Gtk.Window.Gtk_Window;
+      Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description)
    is
-      Color : Gdk_Color;
-      Style : Gtk_Style;
+      Color       : Gdk_Color;
+      Style       : Gtk_Style;
       Box, Vbox   : Gtk_Box;
-      Event : Gtk_Event_Box;
-      Pix : Gdk_Pixmap;
-      Mask : Gdk_Bitmap;
-      Gpix : Gtk_Pixmap;
-      Frame : Gtk_Frame;
+      Event       : Gtk_Event_Box;
+      Pix         : Gdk_Pixmap;
+      Mask        : Gdk_Bitmap;
+      Gpix        : Gtk_Pixmap;
+      Error_Style : Gtk_Style;
    begin
       Gtk.Dialog.Initialize
         (Dialog  => Win,
          Title   => Title,
          Parent  => Parent,
          Flags   => Modal or Destroy_With_Parent);
+
+      Color := Parse ("#FF0000");
+      Alloc (Get_Default_Colormap, Color);
+      Error_Style := Copy (Get_Style (Win));
+      Set_Foreground (Error_Style, State_Normal, Color);
 
       Color := Parse (Bg_Color);
       Alloc (Get_Default_Colormap, Color);
@@ -84,6 +90,8 @@ package body Logo_Boxes is
 
       Gtk_New_Hbox (Box, False, 0);
       Pack_Start (Get_Vbox (Win), Box, True, True, 0);
+
+      --  Side box
 
       Gtk_New (Event);
       Set_Style (Event, Style);
@@ -98,13 +106,20 @@ package body Logo_Boxes is
       Gtk_New (Gpix, Pix, Mask);
       Pack_Start (Win.Side_Box, Gpix, Expand => False, Padding => 10);
 
+      if not Show_Toc then
+         Set_Size_Request (Event, 0, 0);
+         Hide_All (Event);
+         Set_Child_Visible (Event, False);
+      end if;
+
+      --  Title box
+
       Gtk_New_Vbox (Vbox, False, 0);
       Pack_Start (Box, Vbox, True, True, 0);
 
       Gtk_New (Event);
       Set_Style (Event, Style);
       Pack_Start (Vbox, Event, False);
-
       Gtk_New (Win.Title, Title);
       Set_Alignment (Win.Title, 0.5, 0.5);
       Set_Padding (Win.Title, 0, 10);
@@ -113,13 +128,39 @@ package body Logo_Boxes is
       Set_Style (Win.Title, Style);
       Add (Event, Win.Title);
 
-      Gtk_New (Frame);
-      Set_Shadow_Type (Frame, Shadow_In);
-      Pack_Start (Vbox, Frame, True, True, 0);
+      --  Error box
+
+      Gtk_New (Win.Error, Title);
+      Pack_Start (Vbox, Win.Error, False);
+      Set_Alignment (Win.Error, 0.0, 0.5);
+      Set_Justify (Win.Error, Justify_Left);
+      Set_Line_Wrap (Win.Error, False);
+      Set_Style (Win.Error, Error_Style);
+      Hide_All (Win.Error);
+      Set_Child_Visible (Win.Error, False);
+
+      --  Main content
 
       Gtk_New_Hbox (Win.Content, Homogeneous => True);
-      Add (Frame, Win.Content);
+      Pack_Start (Vbox, Win.Content, True, True, 0);
    end Initialize;
+
+   -------------------
+   -- Display_Error --
+   -------------------
+
+   procedure Display_Error
+     (Win : access Logo_Box_Record; Error_Msg : String) is
+   begin
+      if Error_Msg = "" then
+         Hide_All (Win.Error);
+         Set_Child_Visible (Win.Error, False);
+      else
+         Set_Text (Win.Error, Error_Msg);
+         Set_Child_Visible (Win.Error, True);
+         Show_All (Win.Error);
+      end if;
+   end Display_Error;
 
    ------------------
    -- Get_Side_Box --

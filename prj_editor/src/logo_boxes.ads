@@ -23,7 +23,7 @@
 --    ___________________________________________________
 --    |                                                 |
 --    | Logo               Title                        |
---    |      ___________________________________________|
+--    |      ________Error String_______________________|
 --    |      |                                          |
 --    | Side |                                          |
 --    |      |            Contents                      |
@@ -48,11 +48,13 @@ package Logo_Boxes is
      (Win    : out Logo_Box;
       Title  : String;
       Parent : Gtk.Window.Gtk_Window := null;
+      Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description := null);
    procedure Initialize
      (Win : access Logo_Box_Record'Class;
       Title  : String;
       Parent : Gtk.Window.Gtk_Window;
+      Show_Toc   : Boolean := True;
       Title_Font : Pango.Font.Pango_Font_Description);
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project)
@@ -70,11 +72,16 @@ package Logo_Boxes is
    --  Return the box that contains the actual contents of the window. It is
    --  empty initially
 
+   procedure Display_Error
+     (Win : access Logo_Box_Record; Error_Msg : String);
+   --  Display an error message (or hide it if Error_Msg is the empty string)
+
 private
    type Logo_Box_Record is new Gtk.Dialog.Gtk_Dialog_Record with record
       Side_Box : Gtk.Box.Gtk_Box;
       Title    : Gtk.Label.Gtk_Label;
       Content  : Gtk.Box.Gtk_Box;
+      Error    : Gtk.Label.Gtk_Label;
    end record;
 
 end Logo_Boxes;
