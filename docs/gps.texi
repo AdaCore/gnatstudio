@@ -73,7 +73,9 @@ unmodified in any copy.
 * Working in a Cross Environment::
 * Customizing and Extending GPS::
 * Environment::
-@c * Python Commands::
+@ifset python
+* Python Commands::
+@end ifset
 
 @detailmenu
 
@@ -86,8 +88,12 @@ Description of the main windows
 * The Work Space::
 * The Project Explorer::
 * The Messages Window::
-@c * The Shell and Python Windows::
+@ifset python
+* The Shell and Python Windows::
+@end ifset
+@ifclear python
 * The Shell Window::
+@end ifclear
 * The Locations Tree::
 * The Status Line::
 * The Task Manager::
@@ -5150,7 +5156,12 @@ The list of active items includes:
 @item Shell Console
 @cindex shell
 Open a shell console at the bottom are of GPS.
+@ifset python
+@xref{The Shell and Python Windows}.
+@end ifset
+@ifclear python
 @xref{The Shell Window}.
+@end ifclear
 
 @item Call Graph
 @xref{Call Graph}.
