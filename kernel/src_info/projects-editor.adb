@@ -2845,19 +2845,14 @@ package body Projects.Editor is
       With_Clause : Project_Node_Id :=
         First_With_Clause_Of (Project.Node, Tree);
       Next : Project_Node_Id;
-      Name : Name_Id;
    begin
       --  ??? When the project is no longer found in the hierarchy, it should
       --  also be removed from the htable in Prj.Tree, so that another
       --  project by that name can be loaded.
 
-      --  Cleanup the name
-
-      Name := Get_String
-        (Base_Name (Project_Name (Imported_Project), Project_File_Extension));
-
       if With_Clause /= Empty_Node
-        and then Prj.Tree.Name_Of (With_Clause, Tree) = Name
+        and then Prj.Tree.Name_Of (With_Clause, Tree) =
+        Prj.Tree.Name_Of (Imported_Project.Node, Tree)
       then
          Set_First_With_Clause_Of
            (Project.Node, Tree, Next_With_Clause_Of (With_Clause, Tree));
@@ -2866,7 +2861,9 @@ package body Projects.Editor is
             Next := Next_With_Clause_Of (With_Clause, Tree);
             exit when Next = Empty_Node;
 
-            if Prj.Tree.Name_Of (Next, Tree) = Name then
+            if Prj.Tree.Name_Of (Next, Tree) =
+              Prj.Tree.Name_Of (Imported_Project.Node, Tree)
+            then
                Set_Next_With_Clause_Of
                  (With_Clause, Tree, Next_With_Clause_Of (Next, Tree));
             end if;
@@ -3028,7 +3025,6 @@ package body Projects.Editor is
          Next (Iter);
       end loop;
 
-      --  Reset_Cache (Project, Imported_By => False);
       Reset_Cache
         (Get_Project_From_Name
            (Project_Registry'Class (Get_Registry (Project)),
