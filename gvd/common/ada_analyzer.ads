@@ -43,6 +43,9 @@ package Source_Analyzer is
       First, Current, Last : Construct_Access;
    end record;
 
+   procedure Free (List : in out Construct_List);
+   --  Free the contents of List.
+
    procedure Format_Ada
      (Buffer           : String;
       Indent_Level     : Natural     := 3;
@@ -59,17 +62,21 @@ package Source_Analyzer is
    --  operators (e.g a space after commas, before left paren, etc...).
 
    procedure Parse_Ada_Constructs
-     (Buffer : String;
-      Result : out Construct_List);
+     (Buffer          : String;
+      Result          : out Construct_List;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Level    : Natural := 3;
+      Indent_Continue : Natural := 2);
    --  Parse the constructs contained in Buffer and store all the Ada
    --  constructs with their source location in Result.
 
    procedure Next_Ada_Indentation
-     (Buffer           : String;
-      Indent_Level     : Natural := 3;
-      Indent_Continue  : Natural := 2;
-      Indent           : out Natural;
-      Indent_Next_Line : out Natural);
+     (Buffer          : String;
+      Indent          : out Natural;
+      Next_Indent     : out Natural;
+      Indent_Level    : Natural := 3;
+      Indent_Continue : Natural := 2);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
 
