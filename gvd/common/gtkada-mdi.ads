@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Tags;
 with Glib;
 with Gint_Xml;
 with Gdk.GC;
@@ -186,6 +187,7 @@ package Gtkada.MDI is
    --  you change the fact that Child can or cannot be docked. You need to get
    --  a new instance of the menu in that case.
 
+   --  Return the first child matching Tag
    -----------------------------------------
    -- MDI_Child and encapsulated children --
    -----------------------------------------
@@ -209,6 +211,12 @@ package Gtkada.MDI is
       Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return MDI_Child;
    --  Return the MDI_Child that encapsulates Widget.
    --  Widget must be the exact same one you gave in argument to Put.
+
+   function Find_MDI_Child_By_Tag
+     (MDI    : access MDI_Window_Record;
+      Tag    : Ada.Tags.Tag)
+     return MDI_Child;
+   --  Return the first child matching Tag
 
    type Child_Iterator is private;
 

@@ -26,6 +26,7 @@
 -- executable file  might be covered by the  GNU Public License.     --
 -----------------------------------------------------------------------
 
+with Ada.Tags;         use Ada.Tags;
 with Glib;             use Glib;
 with Gint_Xml;         use Gint_Xml;
 with Gdk;              use Gdk;
@@ -2082,6 +2083,29 @@ package body Gtkada.MDI is
 
       return null;
    end Find_MDI_Child;
+
+   ---------------------------
+   -- Find_MDI_Child_By_Tag --
+   ---------------------------
+
+   function Find_MDI_Child_By_Tag
+     (MDI    : access MDI_Window_Record;
+      Tag    : Ada.Tags.Tag)
+     return MDI_Child
+   is
+      Child : MDI_Child;
+      Iter  : Child_Iterator := First_Child (MDI);
+   begin
+      loop
+         Child := Get (Iter);
+         exit when Child = null
+           or else Child.Initial'Tag = Tag
+           or else Child.Initial_Child'Tag = Tag;
+         Next (Iter);
+      end loop;
+
+      return Get (Iter);
+   end Find_MDI_Child_By_Tag;
 
    -----------------
    -- Raise_Child --
