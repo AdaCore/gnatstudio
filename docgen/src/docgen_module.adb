@@ -767,9 +767,10 @@ package body Docgen_Module is
             Tips   : Gtk_Tooltips;
             B_Des  : Output_Description_Access;
             pragma Unreferenced (Button);
+
          begin
             Gtk_New
-              (Dialog, "Select formats...",
+              (Dialog, -"Select formats",
                Get_Main_Window (Kernel), Modal or Destroy_With_Parent);
 
             Gtk_New (Label, -"Supported documentation format.");
