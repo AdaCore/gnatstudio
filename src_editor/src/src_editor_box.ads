@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -338,13 +338,15 @@ package Src_Editor_Box is
    --  syntax) are preserved.
 
    procedure Goto_Declaration_Or_Body
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Editor : Source_Editor_Box := null;
-      Line   : Natural := 0;
-      Column : Natural := 0);
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      To_Body : Boolean;
+      Editor  : Source_Editor_Box := null;
+      Line    : Natural := 0;
+      Column  : Natural := 0);
    --  Perform a Declaration-or-Body cross-reference for the entity
    --  located at (Line, Column) in Editor, or in the current editor if
-   --  Editor is null.
+   --  Editor is null. If To_Body is True, then display the next body of the
+   --  entity, otherwise display its declaration.
    --  If either Line or Column is null, then the position of the insert cursor
    --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).

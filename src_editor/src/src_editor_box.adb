@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -152,10 +152,15 @@ package body Src_Editor_Box is
      (User_Data => Source_Editor_Box);
    --  Used to register contextual menus with a user data.
 
-   procedure On_Goto_Declaration_Or_Body
+   procedure On_Goto_Declaration
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-   --  Callback for the "Goto Declaration<->Body" contextual menu
+   --  Callback for the "Goto Declaration" contextual menu
+
+   procedure On_Goto_Next_Body
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Goto Body" contextual menu
 
    procedure On_Goto_Other_File
      (Widget  : access GObject_Record'Class;
@@ -218,6 +223,7 @@ package body Src_Editor_Box is
 
    procedure Goto_Declaration_Or_Body
      (Kernel : access Kernel_Handle_Record'Class;
+      To_Body : Boolean;
       Editor : Source_Editor_Box := null;
       Line   : Natural := 0;
       Column : Natural := 0)
@@ -233,6 +239,8 @@ package body Src_Editor_Box is
       L, C           : Natural;
 
    begin
+      Push_State (Kernel_Handle (Kernel), Busy);
+
       if Source = null then
          Source := Find_Current_Editor (Kernel);
       end if;
@@ -241,6 +249,7 @@ package body Src_Editor_Box is
          Console.Insert
            (Kernel, -"Cross-references not possible on unamed files!",
             Highlight_Sloc => False);
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
@@ -252,6 +261,7 @@ package body Src_Editor_Box is
            (Kernel,
             -"Failed to find an entity for file " & Get_Filename (Source),
             Highlight_Sloc => False);
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
@@ -268,33 +278,47 @@ package body Src_Editor_Box is
            (Kernel,
             -"Failed to find or parse ALI file " & Get_Filename (Source),
             Highlight_Sloc => False);
+         Pop_State (Kernel_Handle (Kernel));
          return;
       end if;
 
       declare
          Entity_Name : constant String := Get_Text (Entity_Start, Entity_End);
       begin
-         Src_Info.Queries.Find_Declaration_Or_Body
-           (Lib_Info           => Source_Info,
-            File_Name          => Base_Name (Source.Filename.all),
-            Entity_Name        => Entity_Name,
-            Line               => To_Box_Line (Get_Line (Entity_Start)),
-            Column             =>
-              To_Box_Column (Get_Line_Offset (Entity_Start)),
-            Entity             => Entity,
-            Location           => Location,
-            Status             => Status);
-         Destroy (Entity);
+         if To_Body then
+            Find_Next_Body
+              (Kernel             => Kernel,
+               Lib_Info           => Source_Info,
+               File_Name          => Base_Name (Get_Filename (Source)),
+               Entity_Name        => Entity_Name,
+               Line               => To_Box_Line (Get_Line (Entity_Start)),
+               Column             =>
+                 To_Box_Column (Get_Line_Offset (Entity_Start)),
+               Location           => Location,
+               Status             => Status);
+         else
+            Src_Info.Queries.Find_Declaration
+              (Lib_Info           => Source_Info,
+               File_Name          => Base_Name (Get_Filename (Source)),
+               Entity_Name        => Entity_Name,
+               Line               => To_Box_Line (Get_Line (Entity_Start)),
+               Column             =>
+                 To_Box_Column (Get_Line_Offset (Entity_Start)),
+               Entity             => Entity,
+               Status             => Status);
+         end if;
 
          case Status is
             when Entity_Not_Found =>
                Console.Insert
                  (Kernel, -"Cross-reference failed.", Highlight_Sloc => False);
+               Pop_State (Kernel_Handle (Kernel));
                return;
             when Internal_Error =>
                Console.Insert
                  (Kernel, -"Cross-reference internal error detected.",
                   Highlight_Sloc => False);
+               Pop_State (Kernel_Handle (Kernel));
                return;
             when No_Body_Entity_Found =>
                Console.Insert
@@ -302,23 +326,43 @@ package body Src_Editor_Box is
                   (-"This entity does not have an associated ")
                   & (-"declaration or body."),
                   Highlight_Sloc => False);
+               Pop_State (Kernel_Handle (Kernel));
                return;
             when Success =>
                null; --  No error message to print
          end case;
 
-         --  Open the file, and reset Source to the new editor in order to
-         --  highlight the region returned by the Xref query.
+         if To_Body then
+            --  Open the file, and reset Source to the new editor in order to
+            --  highlight the region returned by the Xref query.
 
-         L := Get_Line (Location);
-         C := Get_Column (Location);
+            L := Get_Line (Location);
+            C := Get_Column (Location);
 
-         Open_File_Editor
-           (Kernel,
-            Find_Source_File
-              (Kernel, Get_File (Location),
-               Use_Predefined_Source_Path => True),
-            L, C, False);
+            Open_File_Editor
+              (Kernel,
+               Find_Source_File
+                 (Kernel, Get_File (Location),
+                  Use_Predefined_Source_Path => True),
+               L, C, False);
+
+
+         else
+            --  Open the file, and reset Source to the new editor in order to
+            --  highlight the region returned by the Xref query.
+
+            L := Get_Declaration_Line_Of (Entity);
+            C := Get_Declaration_Column_Of (Entity);
+
+            Open_File_Editor
+              (Kernel,
+               Find_Source_File
+                 (Kernel, Get_Declaration_File_Of (Entity),
+                  Use_Predefined_Source_Path => True),
+               L, C, False);
+
+            Destroy (Entity);
+         end if;
 
          Source := Find_Current_Editor (Kernel);
 
@@ -349,10 +393,16 @@ package body Src_Editor_Box is
          end if;
       end;
 
+      Pop_State (Kernel_Handle (Kernel));
+
    exception
       when E : Unsupported_Language =>
          Insert (Kernel, Exception_Message (E),
                  Mode => Glide_Kernel.Console.Error);
+
+      when E : others =>
+         Pop_State (Kernel_Handle (Kernel));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Goto_Declaration_Or_Body;
 
    ------------------
@@ -855,13 +905,13 @@ package body Src_Editor_Box is
             Add (Menu, Item);
 
             if Has_Entity_Name_Information (Context) then
-               Gtk_New (Item, -"Go to declaration/body of "
+               Gtk_New (Item, -"Go to declaration of "
                           & Entity_Name_Information (Context));
                Add (Menu, Item);
                Context_Callback.Object_Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                    (On_Goto_Declaration_Or_Body'Access),
+                    (On_Goto_Declaration'Access),
                   User_Data   => Selection_Context_Access (Context),
                   Slot_Object => Editor,
                   After       => True);
@@ -869,7 +919,13 @@ package body Src_Editor_Box is
                Gtk_New (Item, -"Go to body of "
                           & Entity_Name_Information (Context));
                Add (Menu, Item);
-               Set_Sensitive (Item, False);
+               Context_Callback.Object_Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Goto_Next_Body'Access),
+                  User_Data   => Selection_Context_Access (Context),
+                  Slot_Object => Editor,
+                  After       => True);
             end if;
 
             Gtk_New (Item, -"Go to file spec/body");
@@ -925,32 +981,45 @@ package body Src_Editor_Box is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Other_File;
 
-   ---------------------------------
-   -- On_Goto_Declaration_Or_Body --
-   ---------------------------------
+   -------------------------
+   -- On_Goto_Declaration --
+   -------------------------
 
-   procedure On_Goto_Declaration_Or_Body
+   procedure On_Goto_Declaration
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
       C      : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Kernel : constant Kernel_Handle := Get_Kernel (Context);
-
    begin
-      Push_State (Kernel, Busy);
       Goto_Declaration_Or_Body
-        (Get_Kernel (Context),
-         Source_Editor_Box (Widget),
-         Line_Information (C),
-         Column_Information (C));
-      Pop_State (Kernel);
+        (Kernel,
+         To_Body => False,
+         Editor  => Source_Editor_Box (Widget),
+         Line    => Line_Information (C),
+         Column  => Column_Information (C));
+   end On_Goto_Declaration;
 
-   exception
-      when E : others =>
-         Pop_State (Kernel);
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Declaration_Or_Body;
+   -----------------------
+   -- On_Goto_Next_Body --
+   -----------------------
+
+   procedure On_Goto_Next_Body
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+   begin
+      Goto_Declaration_Or_Body
+        (Kernel,
+         To_Body => True,
+         Editor  => Source_Editor_Box (Widget),
+         Line    => Line_Information (C),
+         Column  => Column_Information (C));
+   end On_Goto_Next_Body;
 
    -------------
    -- Gtk_New --
