@@ -27,7 +27,6 @@ with File_Utils;
 with Templates_Parser;          use Templates_Parser;
 
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Entities;                  use Entities;
 with Entities.Queries;          use Entities.Queries;
 
 package body Docgen.Backend.Text is
@@ -35,6 +34,9 @@ package body Docgen.Backend.Text is
    --------------------
    -- Template Files --
    --------------------
+
+   Cache : constant Boolean := False;
+   --  Control the templates parser cache option
 
    --  Here we give the description of all template files used by the text
    --  backend. To compute the final template file it is just needed to add the
@@ -196,7 +198,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse (Get_Template_File_Name (B, Kernel, File_Header_Kind),
-                   (1 => Assoc ("TITLE", Open_Title)))));
+                   (1 => Assoc ("TITLE", Open_Title)), Cache)));
    end Doc_Open;
 
    ---------------
@@ -211,7 +213,8 @@ package body Docgen.Backend.Text is
       Append
         (Result,
          Unbounded_String'
-           (Parse (Get_Template_File_Name (B, Kernel, File_Footer_Kind))));
+           (Parse (Get_Template_File_Name (B, Kernel, File_Footer_Kind),
+                   Cached => Cache)));
    end Doc_Close;
 
    ------------------
@@ -232,7 +235,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Subtitle_Kind),
                (Assoc ("LEVEL", Level),
                 Assoc ("SUBTITLE", Subtitle_Name),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Subtitle;
 
    ----------------------
@@ -252,7 +256,7 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse (Get_Template_File_Name (B, Kernel, Package_Desc_Kind),
-                   (1 => Assoc ("DESCRIPTION", Description)))));
+                   (1 => Assoc ("DESCRIPTION", Description)), Cache)));
    end Doc_Package_Desc;
 
    -----------------
@@ -275,9 +279,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Package_Header,
          Get_Filename
@@ -297,7 +299,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Package_Kind),
                (Assoc ("NAME", Name),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Package;
 
    ----------------------------
@@ -324,9 +327,7 @@ package body Docgen.Backend.Text is
       --  or the footer (end ...;)
 
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -342,7 +343,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Package_Kind),
                (Assoc ("NAME", Name),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Package_Open_Close;
 
    --------------
@@ -365,9 +367,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          With_Header,
          With_File,
@@ -381,7 +381,8 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, With_Kind),
                (Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_With;
 
    -------------
@@ -404,9 +405,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -425,7 +424,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Variable_Kind),
                (Assoc ("LINE", Line),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Var;
 
    -------------------
@@ -448,9 +448,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -466,7 +464,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Exception_Kind),
                (Assoc ("LINE", Line),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Exception;
 
    --------------
@@ -489,9 +488,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -507,7 +504,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Type_Kind),
                (Assoc ("LINE", Line),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Type;
 
    ---------------------
@@ -616,7 +614,7 @@ package body Docgen.Backend.Text is
                 Assoc ("C_DECL_FILE", C_Entities.Decl_File),
                 Assoc ("C_DECL_LINE", C_Entities.Decl_Line),
                 Assoc ("C_DECL_COLUMN", C_Entities.Decl_Column),
-                Assoc ("INDENT", Space)))));
+                Assoc ("INDENT", Space)), Cache)));
    end Doc_Tagged_Type;
 
    ---------------
@@ -639,9 +637,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity))),
@@ -657,7 +653,8 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Type_Kind),
                (Assoc ("LINE", Line),
                 Assoc ("BLOCK", Block),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Entry;
 
    ---------------------------
@@ -691,7 +688,7 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, Caller_References_Kind),
                (Assoc ("BLOCK", Block),
-                Assoc ("INDENT", Space)))));
+                Assoc ("INDENT", Space)), Cache)));
    end Doc_Caller_References;
 
    --------------------------
@@ -725,7 +722,7 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, Calls_References_Kind),
                (Assoc ("BLOCK", Block),
-                Assoc ("INDENT", Space)))));
+                Assoc ("INDENT", Space)), Cache)));
    end Doc_Calls_References;
 
    -------------------
@@ -768,21 +765,23 @@ package body Docgen.Backend.Text is
       end if;
 
       Insert (T_Set, Assoc ("NAME", Get_Name (Entity).all));
-      Insert (T_Set, Assoc ("FILE", Base_Name (F)));
+      Insert (T_Set, Assoc ("DECL_FILE", Base_Name (F)));
       Insert (T_Set, Assoc ("INDENT", Space));
       Insert
         (T_Set,
-         Assoc ("LINE", Image (Get_Line (Get_Declaration_Of (Entity)))));
+         Assoc ("DECL_LINE",
+                Image (Get_Line (Get_Declaration_Of (Entity)))));
       Insert
         (T_Set,
-         Assoc ("COLUMN", Image (Get_Column (Get_Declaration_Of (Entity)))));
+         Assoc ("DECL_COLUMN",
+                Image (Get_Column (Get_Declaration_Of (Entity)))));
 
       Append
         (Result,
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Entity_Kind),
-               T_Set)));
+               T_Set, Cache)));
    end Output_Entity;
 
    --------------------
@@ -803,9 +802,7 @@ package body Docgen.Backend.Text is
       Block : Unbounded_String;
    begin
       Format_Code
-        (B,
-         Kernel,
-         Block,
+        (B, Kernel, Block,
          List_Ref_In_File,
          Header,
          Get_Filename (Get_File (Get_Declaration_Of (Entity.Entity))),
@@ -822,7 +819,8 @@ package body Docgen.Backend.Text is
                (Assoc ("BLOCK", Block),
                 Assoc ("LINE", Image
                          (Get_Line (Get_Declaration_Of (Entity.Entity)))),
-                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))))));
+                Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' '))),
+               Cache)));
    end Doc_Subprogram;
 
    ----------------
@@ -865,7 +863,7 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Header_Kind),
                (Assoc ("FIRST_FILE_LINE", First_File_Line),
                 Assoc ("LINE", Header_Line),
-                Assoc ("HEADER_PACKAGE", Header_Package)))));
+                Assoc ("HEADER_PACKAGE", Header_Package)), Cache)));
    end Doc_Header;
 
    ------------------------
@@ -886,7 +884,7 @@ package body Docgen.Backend.Text is
               (Get_Template_File_Name (B, Kernel, Header_Private_Kind),
                (Assoc ("LEVEL", Level),
                 Assoc ("INDENT", (1 .. Level * Get_Indent (B.all) => ' ')),
-                Assoc ("HEADER_TITLE", Header_Title)))));
+                Assoc ("HEADER_TITLE", Header_Title)), Cache)));
    end Doc_Header_Private;
 
    ----------------
@@ -901,7 +899,8 @@ package body Docgen.Backend.Text is
       Append
         (Result,
          Unbounded_String'
-           (Parse (Get_Template_File_Name (B, Kernel, Footer_Kind))));
+           (Parse (Get_Template_File_Name (B, Kernel, Footer_Kind),
+                   Cached => Cache)));
    end Doc_Footer;
 
    --------------------
@@ -929,6 +928,7 @@ package body Docgen.Backend.Text is
       FInfo := Type_Source_File_Table.Get (Source_File_List, Get_Key (Node));
 
       --  Create the main frame file
+
       Frame_File := Create_File (Doc_Directory & "index.html", Binary);
 
       Put_Line
@@ -946,7 +946,8 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Unit_Index_Kind),
-               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)))));
+               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
+               Cache)));
    end Doc_Unit_Index;
 
    --------------------------
@@ -964,7 +965,8 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Subprogram_Index_Kind),
-               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)))));
+               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
+               Cache)));
    end Doc_Subprogram_Index;
 
    --------------------
@@ -982,7 +984,8 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Type_Index_Kind),
-               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)))));
+               (1 => Assoc ("TAGGED_TYPE_INDEX", Options.Tagged_Types)),
+               Cache)));
    end Doc_Type_Index;
 
    ---------------------------
@@ -998,7 +1001,8 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, Tagged_Type_Index_Kind))));
+              (Get_Template_File_Name (B, Kernel, Tagged_Type_Index_Kind),
+               Cached => Cache)));
    end Doc_Tagged_Type_Index;
 
    ---------------------------
@@ -1043,7 +1047,7 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Index_Tagged_Type_Kind),
-               T_Set)));
+               T_Set, Cache)));
    end Doc_Index_Tagged_Type;
 
    --------------------
@@ -1064,10 +1068,11 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Index_Item_Kind),
-               (Assoc ("DOC_FILE", Doc_File),
-                Assoc ("LINE", Line),
+               (Assoc ("REF_FILE", Doc_File),
+                Assoc ("DECL_LINE", Line),
                 Assoc ("NAME", Name),
-                Assoc ("DECL_FILE", Base_Name (Get_Filename (Item_File)))))));
+                Assoc ("DECL_FILE", Base_Name (Get_Filename (Item_File)))),
+               Cache)));
    end Doc_Index_Item;
 
    -----------------------
@@ -1085,7 +1090,7 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Private_Index_Kind),
-               (1 => Assoc ("TITLE", Title)))));
+               (1 => Assoc ("TITLE", Title)), Cache)));
    end Doc_Private_Index;
 
    ----------------------
@@ -1103,7 +1108,7 @@ package body Docgen.Backend.Text is
          Unbounded_String'
            (Parse
               (Get_Template_File_Name (B, Kernel, Public_Index_Kind),
-               (1 => Assoc ("TITLE", Title)))));
+               (1 => Assoc ("TITLE", Title)), Cache)));
    end Doc_Public_Index;
 
    ----------------------
@@ -1119,7 +1124,8 @@ package body Docgen.Backend.Text is
         (Result,
          Unbounded_String'
            (Parse
-              (Get_Template_File_Name (B, Kernel, End_Index_Kind))));
+              (Get_Template_File_Name (B, Kernel, End_Index_Kind),
+               Cached => Cache)));
    end Doc_End_Of_Index;
 
    -------------------
@@ -1138,9 +1144,7 @@ package body Docgen.Backend.Text is
       Body_Text        : String) is
    begin
       Format_Code
-        (B,
-         Kernel,
-         Result,
+        (B, Kernel, Result,
          List_Ref_In_File,
          Body_Text,
          Body_File,
@@ -1169,7 +1173,7 @@ package body Docgen.Backend.Text is
            (Parse
               (Get_Template_File_Name (B, Kernel, Description_Kind),
                (Assoc ("DESCRIPTION", Description),
-                Assoc ("INDENT", Space)))));
+                Assoc ("INDENT", Space)), Cache)));
    end Doc_Description;
 
    ------------------------
@@ -1292,7 +1296,8 @@ package body Docgen.Backend.Text is
                     (Get_Template_File_Name (B, Kernel, Block_Kind),
                      (Assoc ("LINE",
                              Image (Get_Last_Line (B.all) + Entity_Line - 1)),
-                      Assoc ("TEXT", Input_Text (Last_Written + 1 .. J))))));
+                      Assoc ("BLOCK", Input_Text (Last_Written + 1 .. J))),
+                     Cache)));
             Last_Written := J;
          end if;
       end loop;
@@ -1376,9 +1381,7 @@ package body Docgen.Backend.Text is
       Entity_Line : Natural) is
    begin
       Callback_Output
-        (B,
-         Kernel,
-         Result,
+        (B, Kernel, Result,
          Text,
          Start_Index,
          Start_line,
@@ -1404,9 +1407,7 @@ package body Docgen.Backend.Text is
       Entity_Line : Natural) is
    begin
       Callback_Output
-        (B,
-         Kernel,
-         Result,
+        (B, Kernel, Result,
          Text,
          Start_Index,
          Start_line,
@@ -1451,9 +1452,7 @@ package body Docgen.Backend.Text is
       --  in Format_All_Link (whose body contains the call to Format_Link.
 
       Format_All_Link
-        (B,
-         Kernel,
-         Result,
+        (B, Kernel, Result,
          List_Ref_In_File,
          Start_Index,
          Start_Line,
@@ -1527,9 +1526,7 @@ package body Docgen.Backend.Text is
       begin
          if Start_Line > Get_Last_Line (B.all) then
             Set_Name_Tags
-              (B,
-               Kernel,
-               Result,
+              (B, Kernel, Result,
                Text (Get_Last_Index (B.all) .. Loc_Start - 1),
                Entity_Line);
          else
@@ -1541,7 +1538,7 @@ package body Docgen.Backend.Text is
             Unbounded_String'
               (Parse
                  (Get_Template_File_Name (B, Kernel, Link_Kind),
-                  (Assoc ("REF",
+                  (Assoc ("REF_FILE",
                           Get_Text_File_Name
                             (B, Kernel,
                              Other_File_Base_Name
@@ -1550,7 +1547,8 @@ package body Docgen.Backend.Text is
                                      (Get_Registry (Kernel).all), Decl_File),
                                 Decl_File))),
                    Assoc ("LINE", Image (Line_In_Body)),
-                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))))));
+                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))),
+                  Cache)));
          Set_Last_Index (B.all, Loc_End + 1);
       end Create_Special_Link_To_Body;
 
@@ -1563,9 +1561,7 @@ package body Docgen.Backend.Text is
       begin
          if Start_Line > Get_Last_Line (B.all) then
             Set_Name_Tags
-              (B,
-               Kernel,
-               Result,
+              (B, Kernel, Result,
                Text (Get_Last_Index (B.all) .. Loc_Start - 1),
                Entity_Line);
          else
@@ -1580,14 +1576,15 @@ package body Docgen.Backend.Text is
               (Parse
                  (Get_Template_File_Name (B, Kernel, Link_Kind),
                   (Assoc
-                     ("REF",
+                     ("REF_FILE",
                       Get_Text_File_Name
                         (B, Kernel, Full_Name
                            (Get_Filename
                               (Get_File
                                  (Get_Declaration_Of (Entity_Info)))).all)),
                    Assoc ("LINE", Image (Line_To_Use)),
-                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))))));
+                   Assoc ("VALUE", Text (Loc_Start .. Loc_End))),
+                  Cache)));
          Set_Last_Index (B.all, Loc_End + 1);
       end Create_Regular_Link;
 
