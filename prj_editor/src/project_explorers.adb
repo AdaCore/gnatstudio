@@ -1,37 +1,30 @@
 -----------------------------------------------------------------------
+--                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001                            --
---                          ACT-Europe                               --
+--                        Copyright (C) 2001                         --
+--                            ACT-Europe                             --
 --                                                                   --
--- This library is free software; you can redistribute it and/or     --
--- modify it under the terms of the GNU General Public               --
--- License as published by the Free Software Foundation; either      --
--- version 2 of the License, or (at your option) any later version.  --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
 --                                                                   --
--- This library is distributed in the hope that it will be useful,   --
--- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
--- General Public License for more details.                          --
---                                                                   --
--- You should have received a copy of the GNU General Public         --
--- License along with this library; if not, write to the             --
--- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
--- Boston, MA 02111-1307, USA.                                       --
---                                                                   --
--- As a special exception, if other files instantiate generics from  --
--- this unit, or you link this unit with other files to produce an   --
--- executable, this  unit  does not  by itself cause  the resulting  --
--- executable to be covered by the GNU General Public License. This  --
--- exception does not however invalidate any other reasons why the   --
--- executable file  might be covered by the  GNU Public License.     --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
 with Gint_Xml;            use Gint_Xml;
-with Glib;                use Glib;
 with Glide_Kernel;        use Glide_Kernel;
 with Project_Trees;       use Project_Trees;
 with Scenario_Views;      use Scenario_Views;
+with Vsearch_Ext;         use Vsearch_Ext;
 with Gtk.Box;             use Gtk.Box;
+with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
 
@@ -71,12 +64,19 @@ package body Project_Explorers is
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
 
+      Gtk_New (Explorer.Search, Kernel_Handle (Kernel));
+      Ref (Explorer.Search.Search_Frame);
+      Remove (Explorer.Search, Explorer.Search.Search_Frame);
+      Pack_Start
+        (Explorer, Explorer.Search.Search_Frame,
+         Fill => True, Expand => False);
+      Unref (Explorer.Search.Search_Frame);
+
       Gtk_New (Explorer.Scenario, Kernel);
       Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
 
       Gtk_New (Explorer.Tree, Kernel);
       Gtk_New (Scrolled);
-      Set_Size_Request (Scrolled, 300, -1);
       Pack_Start (Explorer, Scrolled, Fill => True, Expand => True);
       Add (Scrolled, Explorer.Tree);
    end Initialize;
