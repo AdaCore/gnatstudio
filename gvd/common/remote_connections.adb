@@ -77,6 +77,9 @@ package body Remote_Connections is
    Open_Connections : Connection_List;
    --  ??? Should be stored in a module somewhere
 
+   Longest_Protocol : Natural := 0;
+   --  Length of the longest registered protocol
+
    ----------------
    -- Do_Nothing --
    ----------------
@@ -166,9 +169,14 @@ package body Remote_Connections is
    -----------------------
 
    procedure Register_Protocol
-     (Protocol : access Remote_Connection_Record'Class) is
+     (Protocol : access Remote_Connection_Record'Class)
+   is
+      Prot : constant String := Get_Protocol (Protocol);
    begin
-      Set (Factories, Get_Protocol (Protocol), Remote_Connection (Protocol));
+      Set (Factories, Prot, Remote_Connection (Protocol));
+      if Prot'Length > Longest_Protocol then
+         Longest_Protocol := Prot'Length;
+      end if;
    end Register_Protocol;
 
    -----------
@@ -275,8 +283,10 @@ package body Remote_Connections is
       Index   : Natural := URL'First;
       Protocol_End : Natural;
       At_Sign : Natural;
+      Max : constant Natural :=
+        Integer'Min (URL'Last, URL'First + Longest_Protocol);
    begin
-      while Index <= URL'Last
+      while Index <= Max
         and then URL (Index) /= ':'
       loop
          Index := Index + 1;
