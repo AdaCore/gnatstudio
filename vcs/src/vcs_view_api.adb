@@ -946,10 +946,17 @@ package body VCS_View_API is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+      use String_List;
+
 
       Files        : String_List.List;
+      Files_Temp   : String_List.List_Node;
       File_Context : File_Selection_Context_Access;
+      Blank_Status : File_Status_Record;
+      Current_Status : File_Status_Record;
 
+      Status       : File_Status_List.List;
+      Kernel       : Kernel_Handle := Get_Kernel (Context);
    begin
       Open_Explorer (Get_Kernel (Context));
       Clear (Get_Explorer (Get_Kernel (Context)));
@@ -959,8 +966,23 @@ package body VCS_View_API is
 
          if Has_Project_Information (File_Context) then
             Files := Get_Files_In_Project
-              (Get_Project_From_View (Project_Information (File_Context)));
-            Get_Status (Get_Current_Ref (Get_Kernel (Context)), Files);
+              (Get_Project_From_View (Project_Information
+                                      (File_Context)));
+
+            Files_Temp := String_List.First (Files);
+
+            while Files_Temp /= String_List.Null_Node loop
+               Current_Status := Blank_Status;
+               Append (Current_Status.File_Name,
+                       String_List.Data (Files_Temp));
+               Files_Temp := String_List.Next (Files_Temp);
+               File_Status_List.Append (Status, Current_Status);
+            end loop;
+
+            Display_File_Status (Kernel, Status, False, True);
+            File_Status_List.Free (Status);
+
+            Get_Status (Get_Current_Ref (Kernel), Files);
          end if;
       end if;
    end On_Menu_Get_Status_Project;
