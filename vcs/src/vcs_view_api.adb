@@ -998,12 +998,13 @@ package body VCS_View_API is
    is
       File     : File_Selection_Context_Access;
       Explorer : VCS_View_Access;
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
+      Kernel   : Kernel_Handle;
 
    begin
       if Context /= null
         and then Get_Creator (Context) = VCS_Module_ID
       then
+         Kernel := Get_Kernel (Context);
          Explorer := Get_Explorer (Kernel);
          return Get_Current_Ref (Explorer);
 
