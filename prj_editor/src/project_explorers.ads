@@ -82,5 +82,11 @@ private
       Close_Pixmaps : Pixmap_Array;
       Open_Masks    : Mask_Array;
       Close_Masks   : Mask_Array;
+
+      Old_Selection : Gtk.Ctree.Gtk_Ctree_Node;
+      --  Memorizes the node that was selected at the beginning of a
+      --  refresh. It is used to restore the selection at the end of the
+      --  refresh. It needs to be stored in this record, so that if this node
+      --  is removed then we simply do not try to restore the selection
    end record;
 end Project_Explorers;

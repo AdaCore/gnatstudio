@@ -524,11 +524,12 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      Context     : Selection_Context_Access := new File_Selection_Context;
-      T           : Project_Explorer := Project_Explorer (Object);
-      Row, Column : Gint;
-      Is_Valid    : Boolean;
-      Node        : Gtk_Ctree_Node;
+      Context      : Selection_Context_Access := new File_Selection_Context;
+      T            : Project_Explorer := Project_Explorer (Object);
+      Row, Column  : Gint;
+      Is_Valid     : Boolean;
+      Node, Parent : Gtk_Ctree_Node;
+      Importing_Project : Project_Id := No_Project;
 
    begin
       Get_Selection_Info
@@ -542,11 +543,17 @@ package body Project_Explorers is
       Node := Node_Nth (T.Tree, Guint (Row));
       Gtk_Select (T.Tree, Node);
 
+      Parent := Row_Get_Parent (Node_Get_Row (Node));
+      if Parent /= null then
+         Importing_Project := Get_Project_From_Node (T, Parent);
+      end if;
+
       Set_File_Information
         (Context      => File_Selection_Context_Access (Context),
          Project_View => Get_Project_From_Node (T, Node),
          Directory    => Get_Directory_From_Node (T, Node),
-         File_Name    => Base_File_Name (Get_File_From_Node (T, Node)));
+         File_Name    => Base_File_Name (Get_File_From_Node (T, Node)),
+         Importing_Project => Importing_Project);
 
       return Context;
    end Explorer_Context_Factory;
@@ -1348,154 +1355,181 @@ package body Project_Explorers is
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
-      Count : Natural := 0;
-      Count_Import : Natural := 0;
-      Src   : String_List_Id;
+      type Project_Id_Array is array (Positive range <>) of Project_Id;
+
+      function Source_Dirs (Prj : Project_Id) return String_Id_Array;
+      --  Return the list of source directories for Prj, as an array
+
+      function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
+      --  Return the list of imported projects, as an array
+
+      -----------------
+      -- Source_Dirs --
+      -----------------
+
+      function Source_Dirs (Prj : Project_Id) return String_Id_Array is
+         Src   : String_List_Id := Projects.Table (Prj).Source_Dirs;
+         Count : Natural := 0;
+      begin
+         while Src /= Nil_String loop
+            Count := Count + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         declare
+            Sources : String_Id_Array (1 .. Count);
+         begin
+            --  Store the directories
+            Count := Sources'First;
+            Src := Projects.Table (Prj).Source_Dirs;
+            while Src /= Nil_String loop
+               Sources (Count) := String_Elements.Table (Src).Value;
+               Count := Count + 1;
+               Src := String_Elements.Table (Src).Next;
+            end loop;
+            return Sources;
+         end;
+      end Source_Dirs;
+
+      -----------------------
+      -- Imported_Projects --
+      -----------------------
+
+      function Imported_Projects (Prj : Project_Id) return Project_Id_Array is
+         Count : Natural := 0;
+         Import : Project_List := Projects.Table (Prj).Imported_Projects;
+      begin
+         while Import /= Empty_Project_List loop
+            Count := Count + 1;
+            Import := Project_Lists.Table (Import).Next;
+         end loop;
+
+         declare
+            Imported : Project_Id_Array (1 .. Count);
+         begin
+            Count := Imported'First;
+            Import := Projects.Table (Prj).Imported_Projects;
+            while Import /= Empty_Project_List loop
+               Imported (Count) := Project_Lists.Table (Import).Project;
+               Count := Count + 1;
+               Import := Project_Lists.Table (Import).Next;
+            end loop;
+            return Imported;
+         end;
+      end Imported_Projects;
+
       Index : Natural;
       N, N2, Tmp : Gtk_Ctree_Node;
       Current_Dir : constant String := String (Get_Current_Dir);
-      Import : Project_List;
+      Project : constant Project_Id := Get_Project_From_Node (Explorer, Node);
+      Sources : String_Id_Array := Source_Dirs (Project);
+      Imported : Project_Id_Array := Imported_Projects (Project);
+
    begin
       --  The goal here is to keep the directories if their current state
       --  (expanded or not), while doing the update.
 
-      --  Count the number of subdirectories
+      --  Remove from the tree all the directories that are no longer in the
+      --  project
 
-      Src := Projects.Table (Get_Project_View (Explorer.Kernel)).Source_Dirs;
-      while Src /= Nil_String loop
-         Count := Count + 1;
-         Src := String_Elements.Table (Src).Next;
-      end loop;
+      N := Row_Get_Children (Node_Get_Row (Node));
+      while N /= null loop
+         N2 := Row_Get_Sibling (Node_Get_Row (N));
 
-      Import :=
-        Projects.Table (Get_Project_View (Explorer.Kernel)).Imported_Projects;
-      while Import /= Empty_Project_List loop
-         Count_Import := Count_Import + 1;
-         Import := Project_Lists.Table (Import).Next;
-      end loop;
+         declare
+            User : constant User_Data :=
+              Node_Get_Row_Data (Explorer.Tree, N);
+            Prj  : Project_Id;
+         begin
+            case User.Node_Type is
+               when Directory_Node =>
+                  Index := Sources'First;
+                  while Index <= Sources'Last loop
+                     if Sources (Index) /= No_String
+                       and then String_Equal (Sources (Index), User.Directory)
+                     then
+                        Sources (Index) := No_String;
+                        exit;
+                     end if;
+                     Index := Index + 1;
+                  end loop;
 
-      declare
-         Sources : String_Id_Array (1 .. Count);
-         Imported : array (1 .. Count_Import) of Project_Id;
-      begin
-         --  Store the directories
-         Index := Sources'First;
-         Src := Projects.Table
-           (Get_Project_View (Explorer.Kernel)).Source_Dirs;
-         while Src /= Nil_String loop
-            Sources (Index) := String_Elements.Table (Src).Value;
-            Index := Index + 1;
-            Src := String_Elements.Table (Src).Next;
-         end loop;
+                  if Index > Sources'Last then
+                     Remove_Node (Explorer.Tree, N);
+                  else
+                     Update_Node (Explorer, N);
+                  end if;
 
-         --  Store the imported projects
-         Count_Import := 1;
-         Import := Projects.Table
-           (Get_Project_View (Explorer.Kernel)).Imported_Projects;
-         while Import /= Empty_Project_List loop
-            Imported (Count_Import) := Project_Lists.Table (Import).Project;
-            Count_Import := Count_Import + 1;
-            Import := Project_Lists.Table (Import).Next;
-         end loop;
+               when Obj_Directory_Node =>
+                  Prj := Get_Project_From_Node (Explorer, N);
+                  Remove_Node (Explorer.Tree, N);
+                  Tmp := Add_Directory_Node
+                    (Explorer,
+                     Directory   => Get_Name_String
+                     (Projects.Table (Prj).Object_Directory),
+                     Parent_Node => Node,
+                     Current_Dir => Current_Dir,
+                     Object_Directory => True);
 
-         --  Remove from the tree all the directories that are no longer in the
-         --  project
-
-         N := Row_Get_Children (Node_Get_Row (Node));
-         while N /= null loop
-            N2 := Row_Get_Sibling (Node_Get_Row (N));
-
-            declare
-               User : constant User_Data :=
-                 Node_Get_Row_Data (Explorer.Tree, N);
-               Prj  : Project_Id;
-            begin
-               case User.Node_Type is
-                  when Directory_Node =>
-                     Index := Sources'First;
-                     while Index <= Sources'Last loop
-                        if Sources (Index) /= No_String
-                          and then String_Equal
-                             (Sources (Index), User.Directory)
+               when Project_Node =>
+                  --  The list of imported project files cannot change with
+                  --  the scenario, so there is nothing to be done here
+                  declare
+                     Prj_Name : constant String := Get_Name_String (User.Name);
+                  begin
+                     Index := Imported'First;
+                     while Index <= Imported'Last loop
+                        if Imported (Index) /= No_Project
+                          and then Project_Name (Imported (Index)) = Prj_Name
                         then
-                           Sources (Index) := No_String;
+                           Imported (Index) := No_Project;
                            exit;
                         end if;
                         Index := Index + 1;
                      end loop;
 
-                     if Index > Sources'Last then
-                        Remove_Node (Explorer.Tree, N);
-                     else
-                        Update_Node (Explorer, N);
-                     end if;
-
-                  when Obj_Directory_Node =>
-                     Prj := Get_Project_From_Node (Explorer, N);
-                     Remove_Node (Explorer.Tree, N);
-                     Tmp := Add_Directory_Node
-                       (Explorer,
-                        Directory   => Get_Name_String
-                        (Projects.Table (Prj).Object_Directory),
-                        Parent_Node => Node,
-                        Current_Dir => Current_Dir,
-                        Object_Directory => True);
-
-                  when Project_Node =>
-                     --  The list of imported project files cannot change with
-                     --  the scenario, so there is nothing to be done here
-                     declare
-                        Prj_Name : constant String :=
-                          Get_Name_String (User.Name);
-                     begin
-                        Index := Imported'First;
-                        while Index <= Imported'Last loop
-                           if Imported (Index) /= No_Project
-                             and then Project_Name (Imported (Index)) =
-                             Prj_Name
-                           then
-                              Imported (Index) := No_Project;
-                              exit;
-                           end if;
-                           Index := Index + 1;
-                        end loop;
-
-                        if Index > Imported'Last then
-                           Remove_Node (Explorer.Tree, N);
+                     if Index > Imported'Last then
+                        if Explorer.Old_Selection = N then
+                           Explorer.Old_Selection := Row_Get_Parent
+                             (Node_Get_Row (Explorer.Old_Selection));
                         end if;
-                     end;
+                        Remove_Node (Explorer.Tree, N);
 
-                  when others =>
-                     --  No other node type is possible
-                     null;
-               end case;
-            end;
-            N := N2;
-         end loop;
+                     elsif Row_Get_Expanded (Node_Get_Row (N)) then
+                        Update_Project_Node (Explorer, N);
+                     end if;
+                  end;
 
-         --  Then add all imported projects
-         for J in Imported'Range loop
-            if Imported (J) /= No_Project then
-               N := Add_Project_Node
-                 (Explorer, Project => Imported (J),  Parent_Node => Node);
-            end if;
-         end loop;
+               when others =>
+                  --  No other node type is possible
+                  null;
+            end case;
+         end;
+         N := N2;
+      end loop;
 
-         --  Then add all the new directories
+      --  Then add all imported projects
+      for J in Imported'Range loop
+         if Imported (J) /= No_Project then
+            N := Add_Project_Node
+              (Explorer, Project => Imported (J),  Parent_Node => Node);
+         end if;
+      end loop;
 
-         for J in Sources'Range loop
-            if Sources (J) /= No_String then
-               String_To_Name_Buffer (Sources (J));
-               N := Add_Directory_Node
-                 (Explorer         => Explorer,
-                  Directory        => Name_Buffer (1 .. Name_Len),
-                  Parent_Node      => Node,
-                  Current_Dir      => Current_Dir,
-                  Directory_String => Sources (J),
-                  Object_Directory => False);
-            end if;
-         end loop;
-      end;
+      --  Then add all the new directories
+
+      for J in Sources'Range loop
+         if Sources (J) /= No_String then
+            String_To_Name_Buffer (Sources (J));
+            N := Add_Directory_Node
+              (Explorer         => Explorer,
+               Directory        => Name_Buffer (1 .. Name_Len),
+               Parent_Node      => Node,
+               Current_Dir      => Current_Dir,
+               Directory_String => Sources (J),
+               Object_Directory => False);
+         end if;
+      end loop;
    end Update_Project_Node;
 
    ---------------------------
@@ -1641,9 +1675,10 @@ package body Project_Explorers is
      (Kernel : access GObject_Record'Class; Explorer : GObject)
    is
       T : Project_Explorer := Project_Explorer (Explorer);
-      Selected_P   : Gtk_Ctree_Node := null;
       Selected_Dir : String_Access := null;
    begin
+      T.Old_Selection := null;
+
       --  No project view => Clean up the tree
       if Get_Project_View (T.Kernel) = No_Project then
          Remove_Node (T.Tree, null);
@@ -1665,8 +1700,8 @@ package body Project_Explorers is
 
       else
          --  Save the selection, so that we can restore it later
-         Selected_P := Get_Selected_Project_Node (T);
-         if Selected_P /= null then
+         T.Old_Selection := Get_Selected_Project_Node (T);
+         if T.Old_Selection /= null then
             declare
                U : User_Data := Node_Get_Row_Data
                  (T.Tree, Node_List.Get_Data (Get_Selection (T.Tree)));
@@ -1685,12 +1720,12 @@ package body Project_Explorers is
          --  Restore the selection. Note that this also resets the project
          --  view clist, with the contents of all the files.
 
-         if Selected_P /= null then
+         if T.Old_Selection /= null then
             if Selected_Dir /= null then
-               Select_Directory (T, Selected_P, Selected_Dir.all);
+               Select_Directory (T, T.Old_Selection, Selected_Dir.all);
                Free (Selected_Dir);
             else
-               Select_Directory (T, Selected_P);
+               Select_Directory (T, T.Old_Selection);
             end if;
          end if;
       end if;
