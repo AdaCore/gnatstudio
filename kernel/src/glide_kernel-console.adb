@@ -393,9 +393,9 @@ package body Glide_Kernel.Console is
             Allow_Duplicates (Get_History (Kernel).all, History, True, True);
 
             Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
-            Raise_Child (Child);
             Set_Dock_Side (Child, Bottom);
             Dock_Child (Child);
+            Raise_Child (Child);
             Set_Title (Child, Title, Title);
             Set_Focus_Child (Child);
          else
