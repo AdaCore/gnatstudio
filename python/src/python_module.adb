@@ -43,6 +43,7 @@ with String_Utils;             use String_Utils;
 with Projects;                 use Projects;
 with Src_Info.Queries;         use Src_Info.Queries;
 with HTables;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 package body Python_Module is
 
@@ -82,20 +83,21 @@ package body Python_Module is
    Python_Module_Id : Python_Module_Record_Access;
 
    procedure Register_Command
-     (Script       : access Python_Scripting_Record;
-      Command      : String;
-      Params       : String := "";
-      Return_Value : String := "";
-      Description  : String := "";
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class);
+     (Script        : access Python_Scripting_Record;
+      Command       : String;
+      Params        : String := "";
+      Return_Value  : String := "";
+      Description   : String := "";
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False);
    procedure Register_Class
      (Script        : access Python_Scripting_Record;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False);
+      Base          : Class_Type := No_Class);
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
       Command            : String;
@@ -304,6 +306,8 @@ package body Python_Module is
      (Data : in out Callback_Data'Class; Command : String);
    procedure Python_Entity_Command_Handler
      (Data : in out Callback_Data'Class; Command : String);
+   procedure Python_Location_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String);
    --  Handler for the commands related to the various classes
 
    ----------------
@@ -486,7 +490,7 @@ package body Python_Module is
         (Python_Module_Id.Script,
          Command      => "__hash__",
          Return_Value => "integer",
-         Handler      => Python_Entity_Command_Handler'Access,
+         Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
@@ -494,7 +498,7 @@ package body Python_Module is
          Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler      => Python_Entity_Command_Handler'Access,
+         Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel));
 
       Register_Command
@@ -513,7 +517,7 @@ package body Python_Module is
         (Python_Module_Id.Script,
          Command      => "__hash__",
          Return_Value => "integer",
-         Handler      => Python_Entity_Command_Handler'Access,
+         Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
@@ -521,7 +525,7 @@ package body Python_Module is
          Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
-         Handler      => Python_Entity_Command_Handler'Access,
+         Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel));
 
       Register_Command
@@ -550,6 +554,33 @@ package body Python_Module is
          Maximum_Args => 1,
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel));
+
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__str__",
+         Return_Value => "string",
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__repr__",
+         Return_Value => "string",
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__hash__",
+         Return_Value => "integer",
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel));
+      Register_Command
+        (Python_Module_Id.Script,
+         Command      => "__cmp__",
+         Return_Value => "integer",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Python_Location_Command_Handler'Access,
+         Class        => Get_File_Location_Class (Kernel));
    end Register_Module;
 
    ---------------------------------
@@ -587,6 +618,15 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Integer (Hash (Get_Name (Info))));
       end if;
+
+   exception
+      when Invalid_Parameter =>
+         if Command = "__cmp__" then
+            --  We are comparing a File with something else
+            Set_Return_Value (Data, -1);
+         else
+            raise;
+         end if;
    end Python_File_Command_Handler;
 
    ------------------------------------
@@ -627,6 +667,15 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value (Data, Integer (Hash (Project_Path (Project))));
       end if;
+
+   exception
+      when Invalid_Parameter =>
+         if Command = "__cmp__" then
+            --  We are comparing a Project with something else
+            Set_Return_Value (Data, -1);
+         else
+            raise;
+         end if;
    end Python_Project_Command_Handler;
 
    -----------------------------------
@@ -653,9 +702,9 @@ package body Python_Module is
       elsif Command = "__hash__" then
          Set_Return_Value
            (Data, Integer
-            (Hash (Get_Name (Entity) & ':'
-                   & Get_Declaration_File_Of (Entity) & ':'
-                   & Image (Get_Declaration_Line_Of (Entity)) & ':'
+            (Hash (Get_Name (Entity)
+                   & Get_Declaration_File_Of (Entity)
+                   & Image (Get_Declaration_Line_Of (Entity))
                    & Image (Get_Declaration_Column_Of (Entity)))));
 
       elsif Command = "__cmp__" then
@@ -664,53 +713,135 @@ package body Python_Module is
               Nth_Arg (Data, 2, Get_Entity_Class (Kernel));
             Entity2 : constant Entity_Information := Get_Data (Inst2);
             Line1, Line2 : Integer;
+            Name1 : constant String := Get_Name (Entity);
+            Name2 : constant String := Get_Name (Entity2);
          begin
-            if Is_Equal (Entity, Entity2) then
-               Set_Return_Value (Data, 0);
-            else
+            if Name1 < Name2 then
+               Set_Return_Value (Data, -1);
+            elsif Name1 = Name2 then
                declare
-                  Name1 : constant String := Get_Name (Entity);
-                  Name2 : constant String := Get_Name (Entity2);
+                  File1 : constant String :=
+                    Get_Declaration_File_Of (Entity);
+                  File2 : constant String :=
+                    Get_Declaration_File_Of (Entity2);
                begin
-                  if Name1 < Name2 then
+                  if File1 < File2 then
                      Set_Return_Value (Data, -1);
-                  elsif Name1 = Name2 then
-                     declare
-                        File1 : constant String :=
-                          Get_Declaration_File_Of (Entity);
-                        File2 : constant String :=
-                          Get_Declaration_File_Of (Entity2);
-                     begin
-                        if File1 < File2 then
+                  elsif File1 = File2 then
+                     Line1 := Get_Declaration_Line_Of (Entity);
+                     Line2 := Get_Declaration_Line_Of (Entity2);
+                     if Line1 < Line2 then
+                        Set_Return_Value (Data, -1);
+                     elsif Line1 = Line2 then
+                        Line1 := Get_Declaration_Column_Of (Entity);
+                        Line2 := Get_Declaration_Column_Of (Entity2);
+                        if Line1 < Line2 then
                            Set_Return_Value (Data, -1);
-                        elsif File1 = File2 then
-                           Line1 := Get_Declaration_Line_Of (Entity);
-                           Line2 := Get_Declaration_Line_Of (Entity2);
-                           if Line1 < Line2 then
-                              Set_Return_Value (Data, -1);
-                           elsif Line1 = Line2 then
-                              Line1 := Get_Declaration_Column_Of (Entity);
-                              Line2 := Get_Declaration_Column_Of (Entity2);
-                              if Line1 < Line2 then
-                                 Set_Return_Value (Data, -1);
-                              else
-                                 Set_Return_Value (Data, 1);
-                              end if;
-                           else
-                              Set_Return_Value (Data, 1);
-                           end if;
+                        elsif Line1 = Line2 then
+                           Set_Return_Value (Data, 0);
                         else
                            Set_Return_Value (Data, 1);
                         end if;
-                     end;
+                     else
+                        Set_Return_Value (Data, 1);
+                     end if;
                   else
                      Set_Return_Value (Data, 1);
                   end if;
                end;
+            else
+               Set_Return_Value (Data, 1);
             end if;
          end;
       end if;
+
+   exception
+      when Invalid_Parameter =>
+         if Command = "__cmp__" then
+            --  We are comparing an Entity with something else
+            Set_Return_Value (Data, -1);
+         else
+            raise;
+         end if;
    end Python_Entity_Command_Handler;
+
+   -------------------------------------
+   -- Python_Location_Command_Handler --
+   -------------------------------------
+
+   procedure Python_Location_Command_Handler
+     (Data : in out Callback_Data'Class; Command : String)
+   is
+      Kernel   : constant Kernel_Handle  := Get_Kernel (Data);
+      Instance : constant Class_Instance :=
+        Nth_Arg (Data, 1, Get_File_Location_Class (Kernel));
+      Info     : constant File_Location_Info := Get_Data (Instance);
+      Fileinfo : constant File_Info := Get_Data (Get_File (Info));
+   begin
+      if Command = "__str__"
+        or else Command = "__repr__"
+      then
+         Set_Return_Value (Data,
+                           Base_Name (Get_Name (Fileinfo)) & ':'
+                           & Image (Get_Line (Info)) & ':'
+                           & Image (Get_Column (Info)));
+
+      elsif Command = "__hash__" then
+         Set_Return_Value
+           (Data, Integer
+            (Hash (Get_Name (Fileinfo)
+                   & Image (Get_Line (Info))
+                   & Image (Get_Column (Info)))));
+
+      elsif Command = "__cmp__" then
+         declare
+            Inst2 : constant Class_Instance :=
+              Nth_Arg (Data, 2, Get_File_Location_Class (Kernel));
+            Info2 : constant File_Location_Info := Get_Data (Inst2);
+            Fileinfo2 : constant File_Info := Get_Data (Get_File (Info2));
+            Line1, Line2 : Integer;
+            Name1 : constant String := Get_Name (Fileinfo);
+            Name2 : constant String := Get_Name (Fileinfo2);
+         begin
+            if Name1 < Name2 then
+               Set_Return_Value (Data, -1);
+            elsif Name1 = Name2 then
+               Line1 := Get_Line (Info);
+               Line2 := Get_Line (Info2);
+
+               if Line1 < Line2 then
+                  Set_Return_Value (Data, -1);
+
+               elsif Line1 = Line2 then
+                  Line1 := Get_Column (Info);
+                  Line2 := Get_Column (Info2);
+
+                  if Line1 < Line2 then
+                     Set_Return_Value (Data, -1);
+                  elsif Line1 = Line2 then
+                     Set_Return_Value (Data, 0);
+                  else
+                     Set_Return_Value (Data, 1);
+                  end if;
+
+               else
+                  Set_Return_Value (Data, 1);
+               end if;
+            else
+               Set_Return_Value (Data, 1);
+            end if;
+         end;
+      end if;
+
+   exception
+      when Invalid_Parameter =>
+         if Command = "__cmp__" then
+            --  We are comparing a File_Location with something else
+            Set_Return_Value (Data, -1);
+         else
+            raise;
+         end if;
+   end Python_Location_Command_Handler;
 
    -------------------------
    -- Open_Python_Console --
@@ -832,15 +963,16 @@ package body Python_Module is
    ----------------------
 
    procedure Register_Command
-     (Script       : access Python_Scripting_Record;
-      Command      : String;
-      Params       : String := "";
-      Return_Value : String := "";
-      Description  : String := "";
-      Minimum_Args : Natural := 0;
-      Maximum_Args : Natural := 0;
-      Handler      : Module_Command_Function;
-      Class        : Class_Type := No_Class)
+     (Script        : access Python_Scripting_Record;
+      Command       : String;
+      Params        : String := "";
+      Return_Value  : String := "";
+      Description   : String := "";
+      Minimum_Args  : Natural := 0;
+      Maximum_Args  : Natural := 0;
+      Handler       : Module_Command_Function;
+      Class         : Class_Type := No_Class;
+      Static_Method : Boolean := False)
    is
       function Profile return String;
       --  Return a printable version of the profile
@@ -866,7 +998,7 @@ package body Python_Module is
          Command      => Command,
          Handler      => Handler,
          Script       => Python_Scripting (Script),
-         Is_Method    => Class /= No_Class,
+         Is_Method    => Class /= No_Class and then not Static_Method,
          Minimum_Args => Minimum_Args,
          Maximum_Args => Maximum_Args);
       User_Data : constant PyObject := PyCObject_FromVoidPtr
@@ -883,8 +1015,6 @@ package body Python_Module is
             Self   => User_Data);
 
       else
-         Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
-
          if Command = Constructor_Method then
             Def := Create_Method_Def
               ("__init__", First_Level'Access,
@@ -898,7 +1028,13 @@ package body Python_Module is
          end if;
 
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
-         Add_Method (Class => Klass, Func  => Def, Self   => User_Data);
+
+         if Static_Method then
+            Add_Static_Method
+              (Class => Klass, Func  => Def, Self   => User_Data);
+         else
+            Add_Method (Class => Klass, Func  => Def, Self   => User_Data);
+         end if;
       end if;
    end Register_Command;
 
@@ -910,20 +1046,26 @@ package body Python_Module is
      (Script        : access Python_Scripting_Record;
       Name          : String;
       Description   : String := "";
-      As_Dictionary : Boolean := False)
+      Base          : Class_Type := No_Class)
    is
       Dict  : constant PyDictObject := PyDict_New;
       Class : PyClassObject;
       Ignored : Integer;
-      pragma Unreferenced (As_Dictionary, Ignored);
+      Bases   : PyObject := null;
+      pragma Unreferenced (Ignored);
    begin
       PyDict_SetItemString
         (Dict, "__doc__", PyString_FromString (Description));
       PyDict_SetItemString
         (Dict, "__module__", PyString_FromString (GPS_Module_Name));
 
+      if Base /= No_Class then
+         Bases := Create_Tuple
+           ((1 => Lookup_Class_Object (Script.GPS_Module, Get_Name (Base))));
+      end if;
+
       Class := PyClass_New
-        (Bases => null,
+        (Bases => Bases,
          Dict  => Dict,
          Name  => PyString_FromString (Name));
       Ignored := PyModule_AddObject
@@ -953,11 +1095,10 @@ package body Python_Module is
       Display_In_Console : Boolean := True)
    is
       Cmd : constant String := "execfile (""" & Filename & """)";
-      Child : MDI_Child;
-      pragma Unreferenced (Child);
    begin
-      Child := Create_Python_Console (Script, Get_Kernel (Script));
-      Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
+      if Get_Console (Script.Interpreter) /= null then
+         Insert_Text (Script.Interpreter, Cmd & ASCII.LF);
+      end if;
       Execute_Command (Script, Cmd, Display_In_Console);
    end Execute_File;
 
@@ -1212,7 +1353,7 @@ package body Python_Module is
       Item_Class : PyObject;
    begin
       if not PyInstance_Check (Item) then
-         Trace (Me, "Nth_Arg: Item is null or not an instance");
+         Trace (Me, "Nth_Arg: Item is not an instance");
          raise Invalid_Parameter;
       end if;
 
