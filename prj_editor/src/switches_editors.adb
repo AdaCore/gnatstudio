@@ -36,7 +36,6 @@ with Gtk.Table;           use Gtk.Table;
 with Gtk.Widget;          use Gtk.Widget;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
-with Ada.Unchecked_Deallocation;
 
 with Prj_API;              use Prj_API;
 with Prj_Normalize;        use Prj_Normalize;
@@ -45,6 +44,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with String_Utils;         use String_Utils;
 with Switches_Editor_Pkg;  use Switches_Editor_Pkg;
+with Basic_Types;          use Basic_Types;
 
 with Namet;               use Namet;
 with Types;               use Types;
@@ -100,11 +100,6 @@ package body Switches_Editors is
       Context  : Selection_Context_Access);
    --  Revert to the default switches in the editor
    --  ??? Should this be specific to a page
-
-   procedure Internal_Free is new Ada.Unchecked_Deallocation
-     (Argument_List, Argument_List_Access);
-   --  Free the memory occupied by the parameter array, but not the strings
-   --  themselves.
 
    -------------
    -- Gtk_New --
@@ -231,7 +226,7 @@ package body Switches_Editors is
                              new String' (Arr (J).all);
                         end loop;
 
-                        Internal_Free (List);
+                        Unchecked_Free (List);
                         List := Tmp;
                      end if;
                   end;
@@ -241,7 +236,7 @@ package body Switches_Editors is
             declare
                Ret : Argument_List := List.all;
             begin
-               Internal_Free (List);
+               Unchecked_Free (List);
                return Ret;
             end;
          end if;
@@ -946,27 +941,6 @@ package body Switches_Editors is
       end;
    end Update_Gui_From_Cmdline;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Switches : in out Argument_List) is
-   begin
-      for J in Switches'Range loop
-         Free (Switches (J));
-      end loop;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Switches : in out GNAT.OS_Lib.Argument_List_Access) is
-   begin
-      Free (Switches.all);
-      Internal_Free (Switches);
-   end Free;
-
    --------------
    -- Set_Page --
    --------------
@@ -1240,7 +1214,7 @@ package body Switches_Editors is
       Dialog : Gtk_Dialog;
       Button : Gtk_Widget;
       B      : Gtk_Button;
-      File_Name : String_Access;
+      File_Name : GNAT.OS_Lib.String_Access;
 
    begin
       pragma Assert (Has_Project_Information (File));

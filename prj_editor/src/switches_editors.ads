@@ -91,10 +91,6 @@ package Switches_Editors is
    --  Return the switches set in the editor for one of the specific tools.
    --  It is your responsability to free the strings (see Free below).
 
-   procedure Free (Switches : in out GNAT.OS_Lib.Argument_List);
-   procedure Free (Switches : in out GNAT.OS_Lib.Argument_List_Access);
-   --  Free all the strings in Switches, and Switches itself when applicable.
-
    procedure Set_Switches
      (Editor   : access Switches_Edit_Record;
       Tool     : Tool_Names;
