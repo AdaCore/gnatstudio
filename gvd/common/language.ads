@@ -233,11 +233,14 @@ package Language is
    --  non-comment line is seen.
 
    procedure Skip_To_Current_Comment_Block_End
-     (Context : Language_Context;
-      Buffer  : String;
-      Index   : in out Natural);
+     (Context            : Language_Context;
+      Buffer             : String;
+      Index              : in out Natural;
+      Ignore_Blank_Lines : Boolean := False);
    --  Same as Skip_To_Current_Comment_Block_Start, except we move forward
    --  to the beginning of the last line of comments in the block.
+   --  If Ignore_Blank_Lines is set to True, blocks separated from one another
+   --  with blank lines are considered as a single one.
 
    procedure Skip_To_Next_Comment_Start
      (Context : Language_Context;
