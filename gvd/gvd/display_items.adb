@@ -1531,7 +1531,7 @@ package body Display_Items is
    is
    begin
       Item.Mode := Mode;
-      Update_Resize_Display (Item);
+      Update_Resize_Display (Item, Get_Visibility (Item.Entity.all));
    end Set_Display_Mode;
 
    ----------------------
