@@ -38,26 +38,6 @@ package body Memory_View_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   ---------------------------------
-   -- On_Memory_View_Delete_Event --
-   ---------------------------------
-
-   function On_Memory_View_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean
-   is
-      pragma Unreferenced (Params);
-   begin
-      Hide (Get_Toplevel (Object));
-      return True;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end On_Memory_View_Delete_Event;
-
    ----------------------------------
    -- On_Memory_View_Size_Allocate --
    ----------------------------------
@@ -348,9 +328,7 @@ package body Memory_View_Pkg.Callbacks is
    -- On_Submit_Clicked --
    -----------------------
 
-   procedure On_Submit_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Submit_Clicked (Object : access Gtk_Button_Record'Class) is
       View : constant GVD_Memory_View :=
         GVD_Memory_View (Get_Toplevel (Object));
    begin
@@ -362,20 +340,18 @@ package body Memory_View_Pkg.Callbacks is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Submit_Clicked;
 
-   -----------------------
-   -- On_Cancel_Clicked --
-   -----------------------
+   ----------------------
+   -- On_Close_Clicked --
+   ----------------------
 
-   procedure On_Cancel_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Close_Clicked (Object : access Gtk_Button_Record'Class) is
    begin
-      Hide (Get_Toplevel (Object));
+      Destroy (Get_Toplevel (Object));
 
    exception
       when E : others =>
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
-   end On_Cancel_Clicked;
+   end On_Close_Clicked;
 
 end Memory_View_Pkg.Callbacks;

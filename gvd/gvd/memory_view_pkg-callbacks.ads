@@ -24,9 +24,6 @@ with Glib.Values; use Glib.Values;
 with Gtk.Widget; use Gtk.Widget;
 
 package Memory_View_Pkg.Callbacks is
-   function On_Memory_View_Delete_Event
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
    procedure On_Memory_View_Size_Allocate
      (Object : access Gtk_Window_Record'Class;
@@ -71,7 +68,7 @@ package Memory_View_Pkg.Callbacks is
    procedure On_Submit_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-   procedure On_Cancel_Clicked
+   procedure On_Close_Clicked
      (Object : access Gtk_Button_Record'Class);
 
 end Memory_View_Pkg.Callbacks;
