@@ -45,9 +45,9 @@ package Src_Info.Type_Utils is
 
    type CType_Description is record
       Kind              : E_Kind;
-      IsVolatile        : Boolean := False;
-      IsConst           : Boolean := False;
-      IsTemplate        : Boolean := False;
+      Is_Volatile       : Boolean := False;
+      Is_Const          : Boolean := False;
+      Is_Template       : Boolean := False;
       Parent_Point      : Point   := Invalid_Point;
       Parent_Filename   : GNAT.OS_Lib.String_Access;
       Ancestor_Point    : Point   := Invalid_Point;

@@ -161,7 +161,7 @@ package body Src_Info.Type_Utils is
             Module_Typedefs,
             Desc,
             Success);
-         Desc.IsVolatile := True;
+         Desc.Is_Volatile := True;
          return;
       end if;
 
@@ -177,7 +177,7 @@ package body Src_Info.Type_Utils is
             Module_Typedefs,
             Desc,
             Success);
-         Desc.IsConst := True;
+         Desc.Is_Const := True;
          return;
       end if;
 
@@ -383,7 +383,7 @@ package body Src_Info.Type_Utils is
       if Matches (0) /= No_Match then
          Class_Def := Find (SN_Table (CL), Type_Name
             (Matches (1).First .. Matches (1).Last));
-         Desc.IsTemplate := True;
+         Desc.Is_Template := True;
       else
          Class_Def := Find (SN_Table (CL), Type_Name);
       end if;
@@ -425,7 +425,7 @@ package body Src_Info.Type_Utils is
       if Matches (0) /= No_Match then
          Union_Def := Find (SN_Table (UN), Type_Name
             (Matches (1).First .. Matches (1).Last));
-         Desc.IsTemplate := True;
+         Desc.Is_Template := True;
       else
          Union_Def := Find (SN_Table (UN), Type_Name);
       end if;
@@ -466,7 +466,7 @@ package body Src_Info.Type_Utils is
       if Matches (0) /= No_Match then
          Enum_Def := Find (SN_Table (E), Type_Name
             (Matches (1).First .. Matches (1).Last));
-         Desc.IsTemplate := True;
+         Desc.Is_Template := True;
       else
          Enum_Def := Find (SN_Table (E), Type_Name);
       end if;

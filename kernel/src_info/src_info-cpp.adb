@@ -3238,7 +3238,7 @@ package body Src_Info.CPP is
             Declaration_Info  => Decl_Info);
 
             --  add reference to the type of this variable
-         if Desc.IsTemplate then
+         if Desc.Is_Template then
             --  template specialization
             Refer_Type
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
@@ -3881,7 +3881,7 @@ package body Src_Info.CPP is
             Declaration_Info  => Decl_Info);
 
          --  add reference to the type of this variable
-         if Desc.IsTemplate then
+         if Desc.Is_Template then
             --  template specialization
             Refer_Type
               (Var.Buffer (Var.Value_Type.First .. Var.Value_Type.Last),
@@ -3999,8 +3999,8 @@ package body Src_Info.CPP is
          --  TODO Here we should parse class template arguments and
          --  locate the type in question. Not implemented yet
          Desc.Kind           := Private_Type;
-         Desc.IsVolatile     := False;
-         Desc.IsConst        := False;
+         Desc.Is_Volatile     := False;
+         Desc.Is_Const        := False;
          Desc.Parent_Point   := Invalid_Point;
          Desc.Ancestor_Point := Invalid_Point;
          Desc.Builtin_Name   := null;
@@ -4560,7 +4560,7 @@ package body Src_Info.CPP is
                      Declaration_Info  => Decl_Info);
 
                   --  add reference to the type of this variable
-                  if Desc.IsTemplate then
+                  if Desc.Is_Template then
                      --  template specialization
                      Refer_Type
                        (Var.Buffer
