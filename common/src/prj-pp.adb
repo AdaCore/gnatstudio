@@ -374,6 +374,12 @@ package body Prj.PP is
                   Write_Char (''');
                   Output_Name (Name_Of (Node));
 
+                  if Associative_Array_Index_Of (Node) /= No_String then
+                     Write_Str (" (");
+                     Output_String (Associative_Array_Index_Of (Node));
+                     Write_Str (")");
+                  end if;
+
                when N_Case_Construction =>
                   declare
                      Case_Item : Project_Node_Id := First_Case_Item_Of (Node);
