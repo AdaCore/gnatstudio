@@ -1312,11 +1312,25 @@ package body Src_Editor_Buffer.Line_Information is
       Editable_Lines : Editable_Line_Array_Access renames
         Buffer.Editable_Lines;
       Number : constant Buffer_Line_Type := End_Line - Start_Line;
-      EN     : constant Editable_Line_Type := Editable_Line_Type (Number);
+      EN     : Editable_Line_Type := Editable_Line_Type (Number);
 
    begin
       if End_Line <= Start_Line then
          return;
+      end if;
+
+      --  If the lines are not real, then the number of editable lines
+      --  actually removed is dependent on folded or hidden lines.
+
+      if not Lines_Are_Real (Buffer) then
+         EN := Buffer_Lines (End_Line).Editable_Line -
+           Buffer_Lines (Start_Line).Editable_Line;
+
+         for J in Start_Line .. End_Line loop
+            if Buffer_Lines (J).Editable_Line = 0 then
+               EN := EN - 1;
+            end if;
+         end loop;
       end if;
 
       for J in Start_Line .. Buffer_Lines'Last - Number - 1 loop
@@ -1428,8 +1442,7 @@ package body Src_Editor_Buffer.Line_Information is
       end loop;
 
       if Buffer.Modifying_Editable_Lines then
-         Buffer.Last_Editable_Line := Buffer.Last_Editable_Line -
-           Editable_Line_Type (End_Line - Start_Line);
+         Buffer.Last_Editable_Line := Buffer.Last_Editable_Line - EN;
       end if;
    end Remove_Lines;
 
