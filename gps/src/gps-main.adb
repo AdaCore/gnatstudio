@@ -163,6 +163,8 @@ procedure GPS.Main is
    CPP_Trace : constant Debug_Handle := Create ("MODULE.CPP", On);
    Outline_View_Trace : constant Debug_Handle := Create ("MODULE.OUTLINE", On);
 
+   GPS_Started_Hook : constant String := "gps_started";
+
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
@@ -221,6 +223,9 @@ procedure GPS.Main is
 
    function Finish_Setup (Data : Process_Data) return Boolean;
    --  Finish the set up of GPS, while the main loop is running.
+
+   function On_GPS_Started return Boolean;
+   --  Called when GPS is started and visible on the screen
 
    procedure Help;
    --  Display help on the standard output
@@ -835,6 +840,7 @@ procedure GPS.Main is
       Script   : Scripting_Language;
       Errors   : Boolean;
    begin
+      Trace (Me, "Execute_Batch: " & Batch);
       for J in Batch'Range loop
          if Batch (J) = ':' then
             Script := Lookup_Scripting_Language
@@ -891,6 +897,16 @@ procedure GPS.Main is
                 "Exception was " & Exception_Information (E));
    end Execute_Batch;
 
+   --------------------
+   -- On_GPS_Started --
+   --------------------
+
+   function On_GPS_Started return Boolean is
+   begin
+      Run_Hook (GPS_Main.Kernel, GPS_Started_Hook);
+      return False;
+   end On_GPS_Started;
+
    ------------------
    -- Finish_Setup --
    ------------------
@@ -900,9 +916,10 @@ procedure GPS.Main is
         Get_Home_Dir (GPS_Main.Kernel) & "custom_key";
       Auto_Load_Project : Boolean := True;
       File_Opened       : Boolean := False;
+      Idle_Id           : Idle_Handler_Id;
       Project           : Projects.Project_Type;
       Screen            : Welcome_Screen;
-      pragma Unreferenced (Data);
+      pragma Unreferenced (Data, Idle_Id);
 
       procedure Setup_Debug;
       --  Load appropriate debugger project and set up debugger-related
@@ -1335,6 +1352,16 @@ procedure GPS.Main is
 
       Load_Preferences (GPS_Main.Kernel);
 
+      --  Create a hook for when GPS is started
+
+      Register_Hook
+        (GPS_Main.Kernel, GPS_Started_Hook,
+         -("Hook called when GPS has started, and its main window has been"
+           & " fully displayed on the screen. It isn't recommended to do any"
+           & " direct graphical action before this hook has been called, so it"
+           & " is recommended that in most cases your start scripts connect to"
+           & " this hook"));
+
       --  Load the customization files before loading the actual projects,
       --  so that the usual hooks are taken into account right from the
       --  beginning
@@ -1395,6 +1422,10 @@ procedure GPS.Main is
          Destroy (Splash);
       end if;
 
+      --  Execute the startup scripts now, even though it is recommended that
+      --  they connect to the GPS_Started_Hook if they have graphical actions
+      --  to do
+
       if Batch_Script /= null then
          Execute_Batch (Batch_Script.all, As_File => False);
       end if;
@@ -1427,6 +1458,7 @@ procedure GPS.Main is
       Set_Main_Title
         (GPS_Main.Kernel, Get_Focus_Child (Get_MDI (GPS_Main.Kernel)));
 
+      Idle_Id := Idle_Add (On_GPS_Started'Unrestricted_Access);
       return False;
    end Finish_Setup;
 
