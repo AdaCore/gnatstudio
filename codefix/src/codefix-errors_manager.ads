@@ -125,38 +125,19 @@ package Codefix.Errors_Manager is
    --  is not null, then each time a correctible error is found the function
    --  is call.
 
-   procedure Validate
-     (This   : in out Correction_Manager;
-      Error  : Error_Id;
-      Choice : Natural);
-   --  Specify a choice between the differents correction'possibilities
-   --  of a message. Warning : each modifications on lines already validate
-   --  are erased.
-
-   procedure Validate
-     (This   : in out Correction_Manager;
-      Error  : Error_Id;
-      Choice : Text_Command'Class);
-   --  Specify a choice between the differents correction'possibilities
-   --  of a message. Warning : each modifications on lines already validate
-   --  are erased.
-
    procedure Validate_And_Commit
      (This         : in out Correction_Manager;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error        : Error_Id;
       Choice       : Natural);
+   --  Execute Choice and commit it to the Current_Text.
 
    procedure Validate_And_Commit
      (This         : in out Correction_Manager;
       Current_Text : in out Text_Navigator_Abstr'Class;
       Error        : Error_Id;
       Choice       : Text_Command'Class);
-
-   procedure Commit
-     (This         : in out Correction_Manager;
-      Current_Text : in out Text_Navigator_Abstr'Class);
-   --  Commit modifications made in the current_text.
+   --  Execute Choice and commit it to the Current_Text.
 
    procedure Free (This : in out Correction_Manager);
    --  Free the memory associated to a Correction_Manager.
@@ -225,7 +206,6 @@ private
 
    type Correction_Manager is record
       Potential_Corrections : Memorized_Corrections.List;
-      Fix_List              : Solution_List;
       Offset_Line           : Integer := 0;
       Error_Cb              : Execute_Corrupted;
    end record;
