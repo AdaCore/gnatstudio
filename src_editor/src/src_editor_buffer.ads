@@ -94,14 +94,26 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Language.Language_Access;
    --  Get the current language. Return null if the language is not set.
 
+   function Is_Valid_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : Gint;
+      Column : Gint := 0) return Boolean;
+   --  Return True if the given cursor position is valid. If Column is
+   --  set to 0, then this function just verifies the given line number
+   --  (column 0 of a given line always exists).
+   --
+   --  Note that Get_Line_Count (inherited from Gtk_Text_Buffer) is also
+   --  available when only the Line number needs to be checked.
+
    procedure Set_Cursor_Position
      (Buffer  : access Source_Buffer_Record;
       Line    : Gint;
-      Column  : Gint;
-      Success : out Boolean);
-   --  Move the insert cursor to the given position. If the (Line, Column)
-   --  position is not valid, the cursor is not moved and Success is set
-   --  to False.
+      Column  : Gint);
+   --  Move the insert cursor to the given position.
+   --
+   --  The validity of the cursor position must be verified before invoking
+   --  this procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Get_Cursor_Position
      (Buffer : access Source_Buffer_Record;
@@ -109,38 +121,169 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Return the current cursor position
 
-   procedure Highlight_Line
+   procedure Get_Selection_Bounds
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : out Gint;
+      Start_Column : out Gint;
+      End_Line     : out Gint;
+      End_Column   : out Gint;
+      Found        : out Boolean);
+   --  If a portion of the buffer is currently selected, then return the
+   --  position of the beginning and the end of the selection. Otherwise,
+   --  Found is set to False and the positions returned both point to the
+   --  begining of the buffer.
+
+   function Get_Selection (Buffer : access Source_Buffer_Record) return String;
+   --  If a portion of the buffer is currently selected, then return this
+   --  portion. Otherwise, return the empty string.
+   --
+   --  This procedure is faster than the Get_Selection_Bounds + Get_Slice
+   --  sequence because it does not work with (line, column) positions but
+   --  directly with buffer iterators.
+
+   procedure Search
+     (Buffer             : access Source_Buffer_Record;
+      Pattern            : String;
+      Case_Sensitive     : Boolean := True;
+      Whole_Word         : Boolean := False;
+      Search_Forward     : Boolean := True;
+      From_Line          : Gint := 0;
+      From_Column        : Gint := 0;
+      Found              : out Boolean;
+      Match_Start_Line   : out Gint;
+      Match_Start_Column : out Gint;
+      Match_End_Line     : out Gint;
+      Match_End_Column   : out Gint);
+   --  Search function. Regular expressions for Pattern are not supported.
+   --  If the pattern is found, then Found is set to True and the positions
+   --  of the begining and of the end of the matching portion are returned.
+   --
+   --  The validity of the start position must be verified before invoking
+   --  this function. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   function Get_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint) return String;
+   --  Return the text located between (Start_Line, Start_Column) and
+   --  (End_Line, End_Column).
+   --
+   --  The validity of both start and end positions must be verified before
+   --  invoking this function. An incorrect position will cause an
+   --  Assertion_Failure when compiled with assertion checks, or an undefined
+   --  behavior otherwise.
+
+   procedure Insert
      (Buffer  : access Source_Buffer_Record;
       Line    : Gint;
-      Success : out Boolean);
+      Column  : Gint;
+      Text    : String);
+   --  Insert the given text in at the specified position.
+   --
+   --  The validity of the given position must be verified before invoking this
+   --  procedure. An incorrect position  will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Replace_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint;
+      Text         : String);
+   --  Replace the text between the start and end positions by Text.
+   --
+   --  The validity of the given positions must be verified before invoking
+   --  this procedure. An incorrect position  will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Delete_Slice
+     (Buffer       : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint);
+   --  Replace the text between the start and end positions by Text.
+   --
+   --  The validity of the given positions must be verified before invoking
+   --  this procedure. An incorrect position  will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Select_All (Buffer : access Source_Buffer_Record);
+   --  Set the selection bounds from the begining to the end of the buffer.
+
+   procedure Highlight_Line
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint);
    --  Highlight the given line number. If another line was previously
    --  highlighted, then restore this line unhighlighted.
    --
-   --  If Line exceeds the number of lines in the buffer, no action is
-   --  performed and Success is set to False.
+   --  The validity of the line number must be verified before invoking this
+   --  procedure. An incorrect line number will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Unhighlight_Line
      (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Success : out Boolean);
-   --  Restore the given line unhighlighted. If line exceeds the number
-   --  of lines in the buffer, no action is performed and Success is set
-   --  to False.
+      Line    : Gint);
+   --  Restore the given line unhighlighted.
+   --
+   --  The validity of the line number must be verified before invoking this
+   --  procedure. An incorrect line number will cause an Assertion_Failure when
+   --  compiled with assertion checks, or an undefined behavior otherwise.
 
    procedure Cancel_Highlight_Line
      (Buffer : access Source_Buffer_Record);
    --  If a line in the given buffer is highlighted (from using
    --  Highlight_Line), then restores this line un-highlighted.
 
+   procedure Highlight_Region
+     (Buffer : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint);
+   --  Highlight the given region. The color used in this case is different
+   --  from the color used for highlighting lines.
+   --
+   --  Both start and end positions must be verified before calling this
+   --  procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Unhighlight_Region
+     (Buffer : access Source_Buffer_Record;
+      Start_Line   : Gint;
+      Start_Column : Gint;
+      End_Line     : Gint;
+      End_Column   : Gint);
+   --  Restore the given region unhighlighted.
+   --
+   --  Both start and end positions must be verified before calling this
+   --  procedure. An incorrect position will cause an Assertion_Failure
+   --  when compiled with assertion checks, or an undefined behavior otherwise.
+
+   procedure Unhighlight_All (Buffer : access Source_Buffer_Record);
+   --  Restore all highlighted regions to unhighlighted. Only the region
+   --  highlighting is canceled, the other potential highlightings (line,
+   --  syntax) are preserved.
+
 private
 
-   type Source_Buffer_Record is
-     new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
+   type Source_Buffer_Record is new Gtk.Text_Buffer.Gtk_Text_Buffer_Record with
    record
       Lang          : Language.Language_Access;
       Syntax_Tags   : Src_Highlighting.Highlighting_Tags;
-      Highlight_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      HL_Line_Tag   : Gtk.Text_Tag.Gtk_Text_Tag;
+      HL_Region_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
    end record;
+   --  HL_Line_Tag   : A tag used when highlighting lines
+   --  HL_Region_Tag : A tag used when highlighting regions
+   --  Insert_Mark   : This is a copy of the "insert" mark. This could be
+   --                  easily looked-up when needed, but having a copy is
+   --                  helping performance-wise, since a lot of subprograms
+   --                  use it.
 
 end Src_Editor_Buffer;
