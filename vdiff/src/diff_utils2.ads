@@ -151,5 +151,3 @@ private
    --  Execute diff on File1 and File2 and return a list of differences.
 
 end Diff_Utils2;
-
-
