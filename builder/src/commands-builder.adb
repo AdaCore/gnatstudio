@@ -85,8 +85,12 @@ package body Commands.Builder is
 
       if Quiet then
          Item.Main_Error_Category := new String'(-Shadow_Category);
+         Item.Style_Category      := new String'(-Shadow_Category);
+         Item.Warning_Category    := new String'(-Shadow_Category);
       else
          Item.Main_Error_Category := new String'(-Error_Category);
+         Item.Style_Category      := new String'(-Style_Category);
+         Item.Warning_Category    := new String'(-Warning_Category);
       end if;
    end Create;
 
@@ -156,6 +160,8 @@ package body Commands.Builder is
       end if;
 
       Free (D.Main_Error_Category);
+      Free (D.Warning_Category);
+      Free (D.Style_Category);
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -245,8 +251,8 @@ package body Commands.Builder is
          Parse_Compiler_Output
            (Kernel,
             Command.Main_Error_Category.all,
-            -Warning_Category,
-            -Style_Category,
+            Command.Warning_Category.all,
+            Command.Style_Category.all,
             Buffer (Buffer'First .. Buffer_Pos - 1),
             Command.Quiet);
       end if;
@@ -261,8 +267,8 @@ package body Commands.Builder is
             Parse_Compiler_Output
               (Kernel,
                Command.Main_Error_Category.all,
-               -Warning_Category,
-               -Style_Category,
+               Command.Warning_Category.all,
+               Command.Style_Category.all,
                Buffer (Buffer'First .. Buffer_Pos - 1) & Expect_Out (Fd),
                Command.Quiet);
          end if;
@@ -271,8 +277,8 @@ package body Commands.Builder is
          Parse_Compiler_Output
            (Kernel,
             Command.Main_Error_Category.all,
-            -Warning_Category,
-            -Style_Category,
+            Command.Warning_Category.all,
+            Command.Style_Category.all,
             Expect_Out (Fd),
             Command.Quiet);
          Close (Fd, Status);
