@@ -18,54 +18,43 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This is the implementation of Debugger for the GNU Debugger (Gdb).
+--  See debugger.ads for complete documentation on this package.
+
 with Debugger;
 with Generic_Values;
 
 package Debugger.Gdb is
 
-   --  Note: the parser functions should be put in a child package instead.
-
-   --  Also, they should be dispatching on the language, if we create such
-   --  a tagged type, instead of making explicit checks.
-
-   --  The Gdb_Debugger class should directly know how to communicate with the
-   --  external process, so that it can make the requests itself.
-
    type Gdb_Debugger is new Debugger.Debugger_Root with private;
 
    procedure Initialize (Debugger : access Gdb_Debugger);
-   --  Spawn the external process, and initializes gdb.
 
    procedure Close (Debugger : in out Gdb_Debugger);
-   --  Terminates the external process.
 
    function Parse_Type
      (Debugger  : Gdb_Debugger;
       Entity    : String) return Generic_Values.Generic_Type_Access;
-   --  Parse the definition of type for Entity.
 
    procedure Parse_Value
      (Debugger  : Gdb_Debugger;
       Entity    : String;
       Value     : in out Generic_Values.Generic_Type_Access);
-   --  Parse the value for Entity.
 
    procedure Wait_Prompt (Debugger : Gdb_Debugger);
 
-   function Type_Of (Debugger : Gdb_Debugger;
-                     Entity : String)
-                    return String;
-   --  Return the type of Entity in the current context.
+   function Type_Of
+     (Debugger : Gdb_Debugger;
+      Entity : String) return String;
 
-   function Value_Of (Debugger : Gdb_Debugger;
-                      Entity   : String;
-                      Format   : Value_Format := Decimal)
-                     return String;
-   --  Print the value of the entity.
+   function Value_Of
+     (Debugger : Gdb_Debugger;
+      Entity   : String;
+      Format   : Value_Format := Decimal) return String;
 
-   procedure Set_Executable (Debugger : Gdb_Debugger;
-                             Executable : String);
-   --  Load the executable.
+   procedure Set_Executable
+     (Debugger : Gdb_Debugger;
+      Executable : String);
 
    procedure Run (Debugger : Gdb_Debugger);
 
@@ -75,16 +64,23 @@ package Debugger.Gdb is
 
    procedure Step_Over (Debugger : Gdb_Debugger);
 
-   procedure Break_Exception (Debugger  : Gdb_Debugger;
-                              Name      : String  := "";
-                              Unhandled : Boolean := False);
+   procedure Break_Exception
+     (Debugger  : Gdb_Debugger;
+      Name      : String  := "";
+      Unhandled : Boolean := False);
 
-   procedure Break_Subprogram (Debugger : Gdb_Debugger;
-                               Name     : String);
+   procedure Break_Subprogram
+     (Debugger : Gdb_Debugger;
+      Name     : String);
 
    procedure Finish (Debugger : Gdb_Debugger);
 
    function Backtrace (Debugger : Gdb_Debugger) return String;
+
+   function Line_Contains_Code
+     (Debugger : Gdb_Debugger;
+      File     : String;
+      Line     : Positive) return Boolean;
 
 private
    type Gdb_Debugger is new Debugger.Debugger_Root with null record;
