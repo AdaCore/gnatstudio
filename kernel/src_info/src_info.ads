@@ -27,7 +27,7 @@ package Src_Info is
      (List : LI_File_List;
       LI_Filename : String)
       return LI_File_Ptr;
-   --  Return a pointer to the LI_File which filename is LI_Filename.
+   --  Return a pointer to the LI_File whose filename is LI_Filename.
    --  Return No_LI_File if no such LI_File is found.
 
    function Locate_From_Source
