@@ -41,7 +41,7 @@ typedef struct DB_File_struct {
   int dbi;		      /* index of current database handler */
 } DB_File;
 
-#define CSF_MAX_FIELDS 15	/* maximum of fields in csf */
+#define CSF_MAX_FIELDS 10	/* maximum of fields in csf (TO table.key) */
 
 /* C presentation of Ada type CSF,
  * CSF stands for "Character Separated Fields".
@@ -68,22 +68,23 @@ typedef struct DB_Pair_struct {
  ** csf_init
  *************************************************************************/
 
-void csf_init (char* v, CSF* csf) {
+void csf_init (char* v, CSF* csf, int max_parse) {
   char *p;
-  int cf;
+  int * cf;
 
   if (v != 0) {
-    cf = 0;
-    csf->fields[cf++] = 0;
+    cf = csf->fields;
+    *cf++ = 0;
 
     for (p = v; *p; p++)
       if (*p == DB_FLDSEP_CHR) {
-	if (cf < CSF_MAX_FIELDS)
-	  csf->fields[cf++] = p + 1 - v;
+	*cf++ = p + 1 - v;
+	if (cf - csf->fields > max_parse)
+	  break;
       }
 
-    csf->fields[cf] = p + 1 - v;
-    csf->num_of_fields = cf;
+    *cf = p + 1 - v;
+    csf->num_of_fields = cf - csf->fields;
   }
 }
 
