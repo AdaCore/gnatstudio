@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,7 @@ with Interfaces.C.Strings;     use Interfaces.C.Strings;
 with Language_Handlers;        use Language_Handlers;
 with Projects;                 use Projects;
 with String_Utils;             use String_Utils;
+with Case_Handling;            use Case_Handling;
 
 package body Languages_Lists is
 

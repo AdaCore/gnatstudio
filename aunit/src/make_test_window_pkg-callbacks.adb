@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -26,6 +26,7 @@ with Gtk.Widget;              use Gtk.Widget;
 with Gtk.Main;                use Gtk.Main;
 with File_Utils;              use File_Utils;
 with String_Utils;            use String_Utils;
+with Case_Handling;           use Case_Handling;
 
 with Gtkada.Dialogs;          use Gtkada.Dialogs;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;

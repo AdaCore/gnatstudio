@@ -64,7 +64,6 @@ with GVD.Color_Combo;          use GVD.Color_Combo;
 with Pango.Font;               use Pango.Font;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Unchecked_Deallocation;
-with String_Utils;             use String_Utils;
 with GUI_Utils;                use GUI_Utils;
 with Odd_Intl;                 use Odd_Intl;
 with Pango.Layout;             use Pango.Layout;
@@ -74,6 +73,7 @@ with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with Case_Handling;            use Case_Handling;
 
 package body Default_Preferences is
 

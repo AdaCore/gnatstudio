@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -32,6 +32,7 @@ with Projects;                use Projects;
 with String_Utils;            use String_Utils;
 with Ada.Unchecked_Deallocation;
 with Project_Viewers;         use Project_Viewers;
+with Case_Handling;           use Case_Handling;
 
 package body Naming_Editors is
 
