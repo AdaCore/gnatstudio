@@ -21,6 +21,7 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Glib;                      use Glib;
+with Glib.Unicode;              use Glib.Unicode;
 with Gtkada.MDI;                use Gtkada.MDI;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Combo;                 use Gtk.Combo;
@@ -1128,6 +1129,7 @@ package body Src_Contexts is
    is
       Child   : constant MDI_Child := Find_Current_Editor (Kernel);
       Editor  : Source_Editor_Box;
+      Current_Matches : Boolean;
 
    begin
       if Child = null then
@@ -1146,18 +1148,31 @@ package body Src_Contexts is
 
       if Context.Begin_Line > 0
         and then Context.Begin_Column > 0
-        and then Get_Slice
-          (Editor,
-           Context.Begin_Line, Context.Begin_Column,
-           Context.End_Line, Context.End_Column) = Context_As_String (Context)
       then
-         Replace_Slice
-           (Editor,
-            Context.Begin_Line,
-            Context.Begin_Column,
-            Context.End_Line,
-            Context.End_Column,
-            Replace_String);
+         if Get_Options (Context).Case_Sensitive then
+            Current_Matches := Get_Slice
+              (Editor,
+               Context.Begin_Line, Context.Begin_Column,
+               Context.End_Line, Context.End_Column) =
+              Context_As_String (Context);
+         else
+            Current_Matches := UTF8_Strdown
+              (Get_Slice
+                 (Editor,
+                  Context.Begin_Line, Context.Begin_Column,
+                  Context.End_Line, Context.End_Column)) =
+              UTF8_Strdown (Context_As_String (Context));
+         end if;
+
+         if Current_Matches then
+            Replace_Slice
+              (Editor,
+               Context.Begin_Line,
+               Context.Begin_Column,
+               Context.End_Line,
+               Context.End_Column,
+               Replace_String);
+         end if;
       end if;
 
       --  Search for next replaceable entity.
