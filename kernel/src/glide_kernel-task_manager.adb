@@ -134,7 +134,7 @@ package body Glide_Kernel.Task_Manager is
          Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New
-        (Label, -"The following tasks are running, do you want to quit GPS ?" &
+        (Label, -"The following tasks are running, do you want to quit GPS?" &
          ASCII.LF & (-"Warning: Quitting will kill all running tasks"));
 
       Set_Alignment (Label, 0.0, 0.0);
@@ -147,7 +147,7 @@ package body Glide_Kernel.Task_Manager is
       Grab_Default (Button);
       Button := Add_Button (Dialog, -"Don't Quit", Gtk_Response_Cancel);
 
-      Set_Size_Request (Interface, 400, 200);
+      Set_Default_Size (Dialog, 400, 300);
       Show_All (Dialog);
       Response := Run (Dialog);
 
