@@ -399,7 +399,7 @@ package body Expect_Interface is
       end Get_Process_For_Id;
 
    begin
-      if Command = "Process.spawn" then
+      if Command = "spawn" then
          declare
             Command_Line  : constant String := Nth_Arg (Data, 1);
             Regexp        : constant String := Nth_Arg (Data, 2);
@@ -485,7 +485,7 @@ package body Expect_Interface is
 
          end;
 
-      elsif Command = "Process.send" then
+      elsif Command = "send" then
          declare
             Id           : constant Integer := Nth_Arg (Data, 1);
             Command_Line : constant String  := Nth_Arg (Data, 2);
@@ -501,7 +501,7 @@ package body Expect_Interface is
             Send (D.Fd.all, Command_Line, Add_LF);
          end;
 
-      elsif Command = "Process.interrupt" or else Command = "Process.kill" then
+      elsif Command = "interrupt" or else Command = "kill" then
          declare
             Id : constant Integer := Nth_Arg (Data, 1);
             D  : Custom_Action_Access;
@@ -513,14 +513,14 @@ package body Expect_Interface is
                return;
             end if;
 
-            if Command = "Process.kill" then
+            if Command = "kill" then
                Close (D.Fd.all, S);
             else
                Interrupt (D.Fd.all);
             end if;
          end;
 
-      elsif Command = "Process.expect" then
+      elsif Command = "expect" then
          declare
             Id     : constant Integer := Nth_Arg (Data, 1);
             Regexp : constant String  := Nth_Arg (Data, 2);
