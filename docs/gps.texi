@@ -7043,7 +7043,7 @@ automatically created if you have activated the dynamic key bindings feature
    @item $HOME/.gps/keys.xml
 Contains all the key bindings for the actions defined in GPS or in the
 custom files. This only contains the key bindings overriden through the
-key shortcuts editor (@xref{The Key Manager Dialog}).
+key shortcuts editor (see @ref{The Key Manager Dialog}).
 
    @item $HOME/.gps/debugger.log
 @cindex log
