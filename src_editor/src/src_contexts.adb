@@ -553,6 +553,7 @@ package body Src_Contexts is
 
          --  Start from the beginning if necessary
          if Result = null then
+            Raise_Console (Kernel);
             Insert (Kernel, -"No more matches, starting from beginning");
             Scan_Buffer
               (Get_Slice (Editor, 1, 1), Context,
@@ -563,7 +564,7 @@ package body Src_Contexts is
                Result.End_Column := Result.End_Column + Current_Column - 1;
             end if;
 
-            Result.Line       := Result.Line + Current_Line - 1;
+            Result.Line := Result.Line + Current_Line - 1;
          end if;
       end if;
 
