@@ -771,12 +771,34 @@ package body Browsers.Call_Graph is
 
       C : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
+      Location : Src_Info.File_Location;
+      Status   : Src_Info.Queries.Find_Decl_Or_Body_Query_Status;
    begin
-      Open_File_Editor
+      Find_Next_Body
         (Get_Kernel (Context),
-         Directory_Information (C) & File_Information (C),
-         Line   => Line_Information (C),
-         Column => Column_Information (C));
+         Lib_Info    => Locate_From_Source_And_Complete
+           (Get_Kernel (C), Source_Filename => File_Information (C)),
+         File_Name   => File_Information (C),
+         Entity_Name => Entity_Name_Information (C),
+         Line        => Line_Information (C),
+         Column      => Column_Information (C),
+         Location    => Location,
+         Status      => Status);
+
+      --  If the body wasn't found then display the specs
+      if Status /= Success then
+         Open_File_Editor
+           (Get_Kernel (Context),
+            Directory_Information (C) & File_Information (C),
+            Line   => Line_Information (C),
+            Column => Column_Information (C));
+      else
+         Open_File_Editor
+           (Get_Kernel (Context),
+            Filename => Get_File (Location),
+            Line     => Get_Line (Location),
+            Column   => Get_Column (Location));
+      end if;
 
    exception
       when E : others =>
