@@ -50,6 +50,7 @@ with GVD.Source_Editors;    use GVD.Source_Editors;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
+with Gvd.Files;             use Gvd.Files;
 
 package body GVD.Explorer is
 
@@ -455,67 +456,47 @@ package body GVD.Explorer is
 
          --  Read the size of the file
          declare
-            F         : File_Descriptor;
-            Length    : Positive;
             Tab       : Debugger_Process_Tab := Convert (Explorer);
             Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
-            Name      : aliased String := Full_Name & ASCII.NUL;
+            S         : Gvd.Types.String_Access;
+            Error_Msg : Gvd.Types.String_Access;
+            Lang      : Language_Access;
 
          begin
-            F := Open_Read (Name'Address, Binary);
+            Gvd.Files.Load_File
+              (S, Error_Msg, Find_In_Cache (Tab.Window, Full_Name),
+               Tab.Descriptor.Remote_Host);
 
-            if F /= Invalid_FD then
-               Length := Positive (File_Length (F));
+            if S = null then
+               Node := Insert_Node
+                 (Explorer,
+                  Parent        => Node,
+                  Sibling       => null,
+                  Text          => Null_Array + Error_Msg.all,
+                  Spacing       => 5,
+                  Pixmap_Closed => Null_Pixmap,
+                  Mask_Closed   => Null_Bitmap,
+                  Pixmap_Opened => Null_Pixmap,
+                  Mask_Opened   => Null_Bitmap,
+                  Is_Leaf       => True,
+                  Expanded      => False);
+               Node_Set_Selectable (Explorer, Node, False);
+               Free (Error_Msg);
+               return;
+            end if;
 
-               --  Allocate the buffer
-               --  and strip the ^Ms from the string
-               declare
-                  S    : String (1 .. Length);
-                  Lang : Language_Access;
-               begin
-                  --  Should use GVD.Files.Load_File instead to take
-                  --  advantage of caches and remote capabilities ???
+            --  Need to read the file independently from the
+            --  code_editor.
+            Lang := Get_Language_From_File (Full_Name);
 
-                  Length := Read (F, S'Address, Length);
-
-                  --  Need to read the file independently from the
-                  --  code_editor.
-                  Lang := Get_Language_From_File (Full_Name);
-
-                  if Lang /= null then
-                     if Explorer.CR_Stripped then
-                        Explore
-                          (Explorer, Node, Explorer,
-                           Strip_CR (S), Lang, Full_Name);
-                     else
-                        Explore (Explorer, Node, Explorer, S, Lang, Full_Name);
-                     end if;
-
-                  else
-                     Node := Insert_Node
-                       (Explorer,
-                        Parent        => Node,
-                        Sibling       => null,
-                        Text          => Null_Array + (-"Unknown Language"),
-                        Spacing       => 5,
-                        Pixmap_Closed => Null_Pixmap,
-                        Mask_Closed   => Null_Bitmap,
-                        Pixmap_Opened => Null_Pixmap,
-                        Mask_Opened   => Null_Bitmap,
-                        Is_Leaf       => True,
-                        Expanded      => False);
-                     Node_Set_Selectable (Explorer, Node, False);
-                  end if;
-               end;
-               Close (F);
-
-            --  File not found
+            if Lang /= null then
+               Explore (Explorer, Node, Explorer, S.all, Lang, Full_Name);
             else
                Node := Insert_Node
                  (Explorer,
                   Parent        => Node,
                   Sibling       => null,
-                  Text          => Null_Array + (-"<file not found>"),
+                  Text          => Null_Array + (-"Unknown Language"),
                   Spacing       => 5,
                   Pixmap_Closed => Null_Pixmap,
                   Mask_Closed   => Null_Bitmap,
@@ -525,6 +506,7 @@ package body GVD.Explorer is
                   Expanded      => False);
                Node_Set_Selectable (Explorer, Node, False);
             end if;
+            Free (S);
          end;
 
          Show_All (Explorer);
