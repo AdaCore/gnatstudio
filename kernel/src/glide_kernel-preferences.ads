@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                      Copyright (C) 2001 - 2002                    --
+--                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -40,9 +40,12 @@ package Glide_Kernel.Preferences is
    --  saved.
 
    procedure Set_Default_Preferences
-     (Kernel    : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Reset the preferences to their default value.
 
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Glib.Properties.Property_Int) return Glib.Gint;
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Uint) return Glib.Guint;
@@ -68,6 +71,52 @@ package Glide_Kernel.Preferences is
    --  The type of the constant gives the type of the value associated with the
    --  preference.
 
+   -------------
+   -- General --
+   -------------
+
+   Default_Widget_Width : constant Glib.Properties.Property_Int :=
+     Register_Property ("General:Default_Widget_Width", 400);
+   --  Default width for the widgets put in the MDI
+
+   Default_Widget_Height : constant Glib.Properties.Property_Int :=
+     Register_Property ("General:Default_Widget_Height", 400);
+   --  Default height for the widgets put in the MDI
+
+   Animated_Image : constant Glib.Properties.Property_String :=
+     Register_Property ("General:Animated_Image", "glide-animation.gif");
+   --  Animated image used to inform the user about a command in process.
+
+   Tmp_Dir : constant Glib.Properties.Property_String :=
+     Register_Property ("General:Tmp_Dir", "/tmp");
+   --  Directory used to create temporary files
+
+   -------------
+   -- Console --
+   -------------
+
+   Highlight_File : constant Property_Color :=
+     Register_Property ("Console:Highlight_File", "#FF0000");
+   --  Color used to highlight a file in the console
+
+   Highlight_Error : constant Property_Color :=
+     Register_Property ("Console:Highlight_Error", "#FF0000");
+   --  Color used to highlight an error in the console
+
+   ----------------
+   -- Diff_Utils --
+   ----------------
+
+   Diff_Cmd : constant Glib.Properties.Property_String :=
+     Register_Property ("Diff_Utils:Diff", "diff");
+   --  Command used to compute differences between two files.
+   --  ??? not used
+
+   Patch_Cmd : constant Glib.Properties.Property_String :=
+     Register_Property ("Diff_Utils:Patch", "patch");
+   --  Command used to apply a patch.
+   --  ??? not used
+
    --------------
    -- Explorer --
    --------------
@@ -84,17 +133,46 @@ package Glide_Kernel.Preferences is
    --  projects are shown.
 
    Ada_Extensions : constant Glib.Properties.Property_String :=
-     Register_Property ("File_Extensions::Ada", ".ads;.adb;.ada;.a;.dg");
+     Register_Property ("File_Extensions:Ada", ".ads;.adb;.ada;.a;.dg");
    C_Extensions : constant Glib.Properties.Property_String :=
-     Register_Property ("File_Extensions::C", ".c;.h");
+     Register_Property ("File_Extensions:C", ".c;.h");
    Cpp_Extensions : constant Glib.Properties.Property_String :=
-     Register_Property ("File_Extensions::Cpp", ".cc;.cpp;.C;.hh;.H");
+     Register_Property ("File_Extensions:Cpp", ".cc;.cpp;.C;.hh;.H");
    --  The file extensions that are recognized for each language.
    --  Each possible extension should be separated from the others by a
    --  semicolon.
 
+   -------------------
+   -- Source Editor --
+   -------------------
+
+   Default_Keyword_Color : constant Property_Color :=
+     Register_Property ("Src_Editor:Default_Keyword_Color", "");
+   --  Default color for highlighting keywords
+   --  ??? not used
+
+   Default_Comment_Color : constant Property_Color :=
+     Register_Property ("Src_Editor:Default_Comment_Color", "blue");
+   --  Default color for highlighting comments
+   --  ??? not used
+
+   Default_String_Color : constant Property_Color :=
+     Register_Property ("Src_Editor:Default_String_Color", "brown");
+   --  Default color for highlighting strings
+   --  ??? not used
+
+   Default_Character_Color : constant Property_Color :=
+     Register_Property ("Src_Editor:Default_Character_Color", "brown");
+   --  Default color for highlighting characters
+   --  ??? not used
+
+   Automatic_Indentation : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Src_Editor:Automatic_Indentation", True);
+   --  Whether the editor should indent automatically the source
+   --  ??? not used
+
    --------------------
-   -- Project editor --
+   -- Project Editor --
    --------------------
 
    Timestamp_Picture : constant Glib.Properties.Property_String :=
@@ -143,6 +221,24 @@ package Glide_Kernel.Preferences is
      Register_Property ("Browsers:Link_Color", "#0000FF");
    --  Color used to draw the links in the items
 
+   Selected_Link_Color : constant Property_Color :=
+     Register_Property ("Browsers:Selected_Link_Color", "#FF0000");
+   --  Color to use links whose ends are selected.
+
+   Selected_Item_Color : constant Property_Color :=
+     Register_Property ("Browsers:Selected_Item_Color", "#888888");
+   --  Color to use to draw the selected item.
+
+   Parent_Linked_Item_Color : constant Property_Color :=
+     Register_Property ("Browsers:Linked_Item_Color", "#AAAAAA");
+   Child_Linked_Item_Color : constant Property_Color :=
+     Register_Property ("Browsers:Child_Linked_Item_Color", "#DDDDDD");
+   --  Color to use to draw the items that are linked to the selected item.
+
+   Browsers_Vertical_Layout : constant Glib.Properties.Property_Boolean :=
+     Register_Property ("Browsers:Vertical_Layout", True);
+   --  Whether the layout of the graph should be vertical or horizontal
+
    ---------
    -- VCS --
    ---------
@@ -156,5 +252,13 @@ package Glide_Kernel.Preferences is
      Register_Property ("VCS:Commit_Log_Check", "");
    --  A script that will be called with one log file as argument before
    --  VCS Commit operations.
+
+   ---------
+   -- CVS --
+   ---------
+
+   CVS_Command : constant Glib.Properties.Property_String :=
+     Register_Property ("CVS:Command", "cvs");
+   --  General CVS command
 
 end Glide_Kernel.Preferences;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -61,7 +61,11 @@ package body Glide_Kernel.Preferences is
      (Kernel    : access Kernel_Handle_Record'Class;
       File_Name : String) is
    begin
-      Print (Kernel.Preferences, File_Name => File_Name);
+      if Kernel.Preferences = null then
+         Print (Get_Default_Preferences, File_Name => File_Name);
+      else
+         Print (Kernel.Preferences, File_Name => File_Name);
+      end if;
    end Save_Preferences;
 
    -----------------------------
@@ -69,7 +73,7 @@ package body Glide_Kernel.Preferences is
    -----------------------------
 
    procedure Set_Default_Preferences
-     (Kernel    : access Kernel_Handle_Record'Class) is
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       if Kernel.Preferences /= null then
          Free (Kernel.Preferences);
@@ -108,6 +112,16 @@ package body Glide_Kernel.Preferences is
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Glib.Properties.Property_Int) return Glib.Gint is
+   begin
+      return Gint'Value (Get_Node (Kernel, Property (Pref)).Value.all);
+   exception
+      when Constraint_Error =>
+         return 0;
+   end Get_Pref;
+
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_Uint) return Glib.Guint is
    begin
       return Guint'Value (Get_Node (Kernel, Property (Pref)).Value.all);
@@ -115,10 +129,6 @@ package body Glide_Kernel.Preferences is
       when Constraint_Error =>
          return 0;
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
@@ -130,20 +140,12 @@ package body Glide_Kernel.Preferences is
          return False;
    end Get_Pref;
 
-   --------------
-   -- Get_Pref --
-   --------------
-
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Glib.Properties.Property_String) return String is
    begin
       return Get_Node (Kernel, Property (Pref)).Value.all;
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
@@ -155,10 +157,6 @@ package body Glide_Kernel.Preferences is
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
       return Color;
    end Get_Pref;
-
-   --------------
-   -- Get_Pref --
-   --------------
 
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
