@@ -25,8 +25,7 @@ with GNAT.OS_Lib;
 with SN;
 with SN.Xref_Pools; use SN.Xref_Pools;
 with Src_Info.Type_Utils;
-with Prj;
-with Prj_API;
+with Projects;
 
 package Src_Info.CPP is
 
@@ -48,7 +47,7 @@ package Src_Info.CPP is
 
    procedure Reset
      (Handler : access CPP_LI_Handler_Record'Class;
-      Project : Prj.Project_Id);
+      Project : Projects.Project_Type);
    --  Reset the internal fields for this handler.
    --  This function should be called every time the project view changes, but
    --  it won't do anything if the object directory of Project hasn't changed.
@@ -58,7 +57,7 @@ package Src_Info.CPP is
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
    --  See comment in src_info.ads
@@ -72,7 +71,7 @@ package Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       List                   : in out LI_File_List;
       In_Directory           : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
    --  Does nothing for now.
@@ -80,7 +79,7 @@ package Src_Info.CPP is
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String) return String;
    --  See comment in src_info.ads.
    --  For C/C++, this function returns the name of the xref filename to
@@ -88,15 +87,15 @@ package Src_Info.CPP is
 
    function Generate_LI_For_Source
      (Handler       : access CPP_LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      File_Project  : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      File_Project  : Projects.Project_Type;
       Full_Filename : String) return LI_Handler_Iterator'Class;
    --  Generate the LI information for a specific file
 
    function Generate_LI_For_Project
      (Handler       : access CPP_LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      Project       : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      Project       : Projects.Project_Type;
       Recursive     : Boolean := False) return LI_Handler_Iterator'Class;
    --  See comment in src_info.ads
 
@@ -112,7 +111,7 @@ package Src_Info.CPP is
    procedure Add (HT : in out LI_File_List; LIFP : LI_File_Ptr);
    --  Just wrapper for internal Add to support extended testing
 
-   function Get_DB_Dir (Project : Prj.Project_Id) return String;
+   function Get_DB_Dir (Project : Projects.Project_Type) return String;
    pragma Inline (Get_DB_Dir);
    --  Return the directory that contains the source navigator files
    --  for specified project
@@ -177,7 +176,7 @@ package Src_Info.CPP is
 
    function Get_Root_Project
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-      return Prj.Project_Id;
+      return Projects.Project_Type;
    pragma Inline (Get_Root_Project);
    --  Returns root project for given Handler. This functions is used
    --  outside Src_Info.CPP package to get Root_Project field.
@@ -200,24 +199,21 @@ private
       CBrowser_Path : GNAT.OS_Lib.String_Access := null;
       --  full path to CBrowser (found in PATH) or null, if CBrowser is not in
       --  PATH
-      Root_Project  : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
       --  root projects for lookups of includes (see Sym_IU_Handler)
    end record;
    --  The fields above are always initialized after calling Reset.
 
-   type Imp_Prj_Iterator_Access is
-     access all Prj_API.Imported_Project_Iterator;
-
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
       State           : Iterator_State_Type := Done;
-      Root_Project    : Prj.Project_Id;
-      Project         : Prj.Project_Id;
+      Root_Project    : Projects.Project_Type;
+      Project         : Projects.Project_Type;
       Handler         : CPP_LI_Handler;
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       List_Filename   : GNAT.OS_Lib.String_Access;
       Process_Running : Boolean := False;
       PD              : GNAT.Expect.TTY.TTY_Process_Descriptor;
-      Prj_Iterator    : Imp_Prj_Iterator_Access;
+      Prj_Iterator    : Projects.Imported_Project_Iterator;
    end record;
    --  State is an internal state of iterator, it can be inconsistant with
    --  the real iterator state, because real iterator state depends also on

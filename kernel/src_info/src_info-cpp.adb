@@ -23,8 +23,8 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Ada.Text_IO;               use Ada.Text_IO;
 
-with Prj;                  use Prj;
-with Prj_API;              use Prj_API;
+with Projects;             use Projects;
+with Projects.Registry;    use Projects.Registry;
 with Src_Info;             use Src_Info;
 with Src_Info.LI_Utils;    use Src_Info.LI_Utils;
 with Src_Info.Prj_Utils;   use Src_Info.Prj_Utils;
@@ -40,7 +40,6 @@ with SN.Xref_Pools;     use SN.Xref_Pools;
 
 with Traces;  use Traces;
 with String_Utils; use String_Utils;
-with Prj_API;
 with Snames; use Snames;
 with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -66,7 +65,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Sym_Default_Handler
@@ -74,98 +73,98 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_GV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CON_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_FU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_E_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_EC_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_T_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_CL_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_UN_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IV_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_IU_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MA_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Sym_MD_Handler
      (Sym              : FIL_Table;
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    ---------------------
@@ -198,7 +197,7 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    procedure Fu_To_Gv_Handler
@@ -206,77 +205,77 @@ package body Src_Info.CPP is
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Fu_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Con_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_E_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ec_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Iv_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Ma_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Mi_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Cl_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_T_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    procedure Fu_To_Un_Handler
      (Ref     : TO_Table;
       Handler : access CPP_LI_Handler_Record'Class;
       File    : in out LI_File_Ptr;
       List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
 
    -----------------
@@ -343,7 +342,7 @@ package body Src_Info.CPP is
    --  Close all DB files.
 
    procedure Browse_Project
-     (Project    : Prj.Project_Id;
+     (Project    : Project_Type;
       Iterator   : in out CPP_LI_Handler_Iterator);
    --  Runs cbrowser for the single (!) given project
    --  Fills Iterator with temporary file name (that holds the list
@@ -356,7 +355,7 @@ package body Src_Info.CPP is
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Attempts to find class declaration among this Handler.File declarations
    --  and dependency declarations. If not found, creates it.
@@ -367,7 +366,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
-      Project_View  : Prj.Project_Id;
+      Project  : Project_Type;
       List_Of_Files : in out LI_File_List);
    --  Process the SN databases to create the LI structure for
    --  Source_Filename. Source_Filename is the name of the file as it appears
@@ -382,7 +381,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Process local variables and arguments for specified function/method
    --  body in FU_Tab. Symbol is either FU or MI.
@@ -408,7 +407,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Finds arguments for the template specified by (Scope, Template_Args,
    --  File_Name). Here Scope is the name of either class/struct/union or
@@ -441,7 +440,7 @@ package body Src_Info.CPP is
 
    pragma Inline (Info, Warn, Fail);
 
-   function Get_SN_Dirs (Project : Prj.Project_Id)
+   function Get_SN_Dirs (Project : Project_Type)
       return GNAT.OS_Lib.String_List_Access;
    pragma Inline (Get_SN_Dirs);
    --  Return the names of the directories that contain the source navigator
@@ -471,7 +470,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List);
    --  Generates list of dependency declarations for the method
    --  with given name
@@ -480,7 +479,7 @@ package body Src_Info.CPP is
      (Name             : String;
       Filename         : String;
       Handler          : access CPP_LI_Handler_Record'Class;
-      Project          : Prj.Project_Id;
+      Project          : Project_Type;
       File             : out LI_File_Ptr;
       List             : out LI_File_List);
    --  Generates list of dependency declarations for the function
@@ -517,7 +516,7 @@ package body Src_Info.CPP is
       Handler      : access CPP_LI_Handler_Record'Class;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
-      Project_View : Prj.Project_Id;
+      Project : Project_Type;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False);
@@ -533,7 +532,7 @@ package body Src_Info.CPP is
       Return_Type  : in Segment;
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
-      Project_View : Prj.Project_Id;
+      Project : Project_Type;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
@@ -573,8 +572,8 @@ package body Src_Info.CPP is
 
    function Generate_LI_For_Source
      (Handler       : access CPP_LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      File_Project  : Prj.Project_Id;
+      Root_Project  : Project_Type;
+      File_Project  : Project_Type;
       Full_Filename : String) return LI_Handler_Iterator'Class
    is
       pragma Unreferenced (Root_Project);
@@ -597,7 +596,7 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Browse_Project
-     (Project    : Prj.Project_Id;
+     (Project    : Project_Type;
       Iterator   : in out CPP_LI_Handler_Iterator)
    is
       DB_Dir           : constant String := Get_DB_Dir (Project);
@@ -720,22 +719,21 @@ package body Src_Info.CPP is
 
    function Generate_LI_For_Project
      (Handler       : access CPP_LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      Project       : Prj.Project_Id;
+      Root_Project  : Project_Type;
+      Project       : Project_Type;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
       HI : CPP_LI_Handler_Iterator;
    begin
       HI.Handler       := CPP_LI_Handler (Handler);
-      HI.Prj_Iterator  := new Imported_Project_Iterator'
-        (Prj_API.Start (Get_Project_From_View (Project), Recursive));
+      HI.Prj_Iterator  := Start (Project, Recursive);
       HI.Project       := Project;
       HI.Root_Project  := Root_Project;
       HI.List_Filename := null;
 
-      if Prj_API.Current (HI.Prj_Iterator.all) /= Prj.No_Project then
-         Browse_Project (Prj_API.Current (HI.Prj_Iterator.all), HI);
+      if Current (HI.Prj_Iterator) /= No_Project then
+         Browse_Project (Current (HI.Prj_Iterator), HI);
       else
          HI.State := Done;
       end if;
@@ -755,9 +753,6 @@ package body Src_Info.CPP is
       Success        : Boolean;
       DB_Dirs        : GNAT.OS_Lib.String_List_Access;
 
-      procedure Free is new Ada.Unchecked_Deallocation
-        (Imported_Project_Iterator, Imp_Prj_Iterator_Access);
-
       procedure Next_Project;
       --  Promotes iterator to the next project and runs Browse_Project
       --  for it. When no more projects is available, iterator's state
@@ -767,11 +762,9 @@ package body Src_Info.CPP is
          DB_Dirs : GNAT.OS_Lib.String_List_Access;
       begin
          --  Proceed with cparser on next project directories
-         Prj_API.Next (Iterator.Prj_Iterator.all);
+         Next (Iterator.Prj_Iterator);
 
-         if Prj_API.Current (Iterator.Prj_Iterator.all)
-           = Prj.No_Project
-         then
+         if Current (Iterator.Prj_Iterator) = No_Project then
             --  iterations finished
 
             Iterator.State := Done;
@@ -787,9 +780,7 @@ package body Src_Info.CPP is
          else
             --  go on with other projects
 
-            Browse_Project
-              (Prj_API.Current (Iterator.Prj_Iterator.all),
-               Iterator);
+            Browse_Project (Current (Iterator.Prj_Iterator), Iterator);
          end if;
       end Next_Project;
 
@@ -825,8 +816,7 @@ package body Src_Info.CPP is
 
             Iterator.State := Process_Xrefs;
 
-            DB_Dirs := Get_SN_Dirs
-              (Prj_API.Current (Iterator.Prj_Iterator.all));
+            DB_Dirs := Get_SN_Dirs (Current (Iterator.Prj_Iterator));
 
             if DB_Dirs = null then
                Iterator.State := Done;
@@ -861,7 +851,6 @@ package body Src_Info.CPP is
 
       if Iterator.State = Done then
          Trace (Info_Stream, "Processing is finished");
-         Free (Iterator.Prj_Iterator);
          Finished := True;
       end if;
    end Continue;
@@ -876,10 +865,9 @@ package body Src_Info.CPP is
       if Iterator.Handler.Prj_HTable /= Empty_SN_Prj_HTable then
          declare
             Iter : Imported_Project_Iterator := Start
-              (Get_Project_From_View (Iterator.Root_Project),
-               Recursive => True);
+              (Iterator.Root_Project, Recursive => True);
          begin
-            while Current (Iter) /= Prj.No_Project loop
+            while Current (Iter) /= No_Project loop
                declare
                   DB_Dir : constant String := Get_DB_Dir (Current (Iter));
                begin
@@ -945,11 +933,11 @@ package body Src_Info.CPP is
    -----------------
 
    function Get_SN_Dirs
-     (Project : Prj.Project_Id) return GNAT.OS_Lib.String_List_Access
+     (Project : Project_Type) return GNAT.OS_Lib.String_List_Access
    is
       N        : Integer := 0;
       Dirs     : GNAT.OS_Lib.String_List_Access;
-      Path     : constant String := Prj_API.Object_Path (Project, True);
+      Path     : constant String := Object_Path (Project, True);
       Main_Dir : constant String := Get_DB_Dir (Project);
       J        : Integer := Path'First;
       K        : Integer;
@@ -1057,7 +1045,7 @@ package body Src_Info.CPP is
      (Full_Filename : String;
       Handler       : access CPP_LI_Handler_Record'Class;
       File          : in out LI_File_Ptr;
-      Project_View  : Prj.Project_Id;
+      Project  : Project_Type;
       List_Of_Files : in out LI_File_List)
    is
       P               : Pair_Ptr;
@@ -1087,7 +1075,7 @@ package body Src_Info.CPP is
             --  apply corresponding symbol handler
 
             Symbol_Handlers (Sym.Symbol)
-              (Sym, Handler, File, List_Of_Files, Project_View,
+              (Sym, Handler, File, List_Of_Files, Project,
                Module_Typedefs);
             Free (Sym);
 
@@ -1158,9 +1146,9 @@ package body Src_Info.CPP is
 
    procedure Reset
      (Handler : access CPP_LI_Handler_Record'Class;
-      Project : Prj.Project_Id)
+      Project : Project_Type)
    is
-      use type Prj.Project_Id;
+      use type Project_Type;
    begin
       Handler.Root_Project := Project;
       Handler.DB_Dirs := Get_SN_Dirs (Project);
@@ -1208,7 +1196,7 @@ package body Src_Info.CPP is
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
@@ -1241,6 +1229,7 @@ package body Src_Info.CPP is
          Handler       => Handler,
          DB_Dir        => DB_Dir,
          List          => List,
+         Project       => Project,
          Full_Filename => Full_Filename);
 
       --  check timestamps for the parsed file
@@ -1284,7 +1273,7 @@ package body Src_Info.CPP is
      (Handler                : access CPP_LI_Handler_Record;
       List                   : in out LI_File_List;
       In_Directory           : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String)
    is
@@ -1317,7 +1306,7 @@ package body Src_Info.CPP is
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Prj.Project_Id;
+      Project                : Project_Type;
       Predefined_Source_Path : String) return String
    is
       pragma Unreferenced (Predefined_Source_Path);
@@ -1432,7 +1421,7 @@ package body Src_Info.CPP is
       Decl_Info       : out E_Declaration_Info_List;
       File            : in out LI_File_Ptr;
       List            : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Sym        : FIL_Table;
@@ -1454,7 +1443,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := CL_Tab.Start_Position;
             Sym.Identifier     := CL_Tab.Name;
             Sym_CL_Handler
-              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
+              (Sym, Handler, File, List, Project, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File         => File,
@@ -1492,6 +1481,7 @@ package body Src_Info.CPP is
                  (CL_Tab.File_Name.First .. CL_Tab.File_Name.Last),
                Location           => CL_Tab.Start_Position,
                Kind               => Class_Kind,
+               Project            => Project,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
             Set_End_Of_Scope
@@ -1577,7 +1567,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List;
       Decl_Info        : out E_Declaration_Info_List;
       Strict           : Boolean := False)
@@ -1707,7 +1697,7 @@ package body Src_Info.CPP is
                   Decl_Info,
                   File,
                   List,
-                  Project_View,
+                  Project,
                   Module_Type_Defs);
                Free (CL_Tab);
             exception
@@ -1724,6 +1714,7 @@ package body Src_Info.CPP is
                Referred_Filename  => MD_Tab.Buffer
                   (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last),
                Location           => First_MD_Pos,
+               Project            => Project,
                Kind               => Get_Method_Kind
                  (Handler,
                   Buffer (Class_Name.First .. Class_Name.Last),
@@ -1750,13 +1741,12 @@ package body Src_Info.CPP is
       Return_Type  : in Segment;
       Arg_Types    : in Segment;
       Handler      : access CPP_LI_Handler_Record'Class;
-      Project_View : Prj.Project_Id;
+      Project : Project_Type;
       File         : in out LI_File_Ptr;
       List         : in out LI_File_List;
       Decl_Info    : out E_Declaration_Info_List;
       Strict       : Boolean := False)
    is
-      pragma Unreferenced (Project_View);
       P            : Pair_Ptr;
       FD_Tab       : FD_Table;
       FD_Tab_Tmp   : FD_Table;
@@ -1890,6 +1880,7 @@ package body Src_Info.CPP is
                Location           => First_FD_Pos,
                Kind               => Target_Kind,
                Scope              => Global_Scope,
+               Project            => Project,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -1918,11 +1909,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Class_Desc : CType_Description;
       Class_Def  : CL_Table;
       Success    : Boolean;
@@ -1978,6 +1968,7 @@ package body Src_Info.CPP is
                Location           => Class_Def.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
+               Project            => Project,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2000,6 +1991,7 @@ package body Src_Info.CPP is
                Location           => Class_Def.Start_Position,
                Kind               => Class_Kind,
                Scope              => Global_Scope,
+               Project            => Project,
                Declaration_Info   => Decl_Info);
          end if;
       end if;
@@ -2022,7 +2014,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -2065,7 +2057,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
             Sym_CON_Handler
-              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
+              (Sym, Handler, File, List, Project, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -2123,6 +2115,7 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -2140,6 +2133,7 @@ package body Src_Info.CPP is
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename.all,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             end if;
 
@@ -2176,11 +2170,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Ref_Id     : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Enum_Desc  : CType_Description;
@@ -2231,6 +2224,7 @@ package body Src_Info.CPP is
                Location           => Enum_Def.Start_Position,
                Kind               =>
                  (Enumeration_Kind, Is_Type => True, Is_Generic => False),
+               Project            => Project,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -2253,6 +2247,7 @@ package body Src_Info.CPP is
                Symbol_Name        => Enum_Def.Buffer
                  (Enum_Def.Name.First .. Enum_Def.Name.Last),
                Location           => Enum_Def.Start_Position,
+               Project            => Project,
                Kind               =>
                  (Enumeration_Kind, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
@@ -2278,11 +2273,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Decl_Info  : E_Declaration_Info_List;
       Enum_Const : EC_Table;
       Ref_Id     : constant String := Ref.Buffer
@@ -2314,6 +2308,7 @@ package body Src_Info.CPP is
                Symbol_Name       => Ref_Id,
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False),
+               Project           => Project,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
          end if;
@@ -2337,6 +2332,7 @@ package body Src_Info.CPP is
                Location          => Enum_Const.Start_Position,
                Kind              => (Enumeration_Literal, False, False),
                Scope             => Global_Scope,
+               Project           => Project,
                Referred_Filename => Enum_Const.Buffer
                  (Enum_Const.File_Name.First .. Enum_Const.File_Name.Last),
                Declaration_Info  => Decl_Info);
@@ -2366,7 +2362,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : out LI_File_Ptr;
       List             : out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       P              : Pair_Ptr;
@@ -2401,7 +2397,7 @@ package body Src_Info.CPP is
                   Handler,
                   File,
                   List,
-                  Project_View,
+                  Project,
                   Module_Type_Defs,
                   Decl_Info);
             end if;
@@ -2441,7 +2437,7 @@ package body Src_Info.CPP is
                   Handler,
                   File,
                   List,
-                  Project_View,
+                  Project,
                   Module_Type_Defs,
                   Decl_Info);
 
@@ -2463,6 +2459,7 @@ package body Src_Info.CPP is
                         DB_Dir        => Get_DB_Dir
                           (Handler.DB_Dirs, MBody.DBI),
                         List          => List,
+                        Project       => Project,
                         Full_Filename => MBody.Buffer
                            (MBody.File_Name.First .. MBody.File_Name.Last));
                   end if;
@@ -2491,7 +2488,7 @@ package body Src_Info.CPP is
      (Name     : String;
       Filename : String;
       Handler  : access CPP_LI_Handler_Record'Class;
-      Project  : Prj.Project_Id;
+      Project  : Project_Type;
       File     : out LI_File_Ptr;
       List     : out LI_File_List)
    is
@@ -2582,6 +2579,7 @@ package body Src_Info.CPP is
                      Kind               => Target_Kind,
                      Scope              => Global_Scope,
                      End_Of_Scope_Location => Fn.End_Position,
+                     Project            => Project,
                      Declaration_Info   => Decl_Info);
 
                else -- add end of scope and body entity references
@@ -2596,6 +2594,7 @@ package body Src_Info.CPP is
                         DB_Dir        => Get_DB_Dir
                           (Handler.DB_Dirs, Fn.DBI),
                         List          => List,
+                        Project       => Project,
                         Full_Filename => Fn.Buffer
                            (Fn.File_Name.First .. Fn.File_Name.Last));
                   end if;
@@ -2625,7 +2624,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -2768,7 +2767,7 @@ package body Src_Info.CPP is
                FDecl.Return_Type,
                FDecl.Arg_Types,
                Handler,
-               Project_View,
+               Project,
                File,
                List,
                Decl_Info,
@@ -2793,6 +2792,7 @@ package body Src_Info.CPP is
                Location           => Ref.Position,
                Kind               => Kind,
                Scope              => Global_Scope,
+               Project            => Project,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -2807,7 +2807,7 @@ package body Src_Info.CPP is
            (Ref_Id,
             Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last),
             Handler,
-            Project_View,
+            Project,
             File,
             List);
 
@@ -2854,7 +2854,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -2890,7 +2890,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
             Sym_GV_Handler
-              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
+              (Sym, Handler, File, List, Project, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -2946,6 +2946,7 @@ package body Src_Info.CPP is
                   Scope             => Scope,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             else
                Insert_Dependency_Declaration
@@ -2963,6 +2964,7 @@ package body Src_Info.CPP is
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename.all,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -2995,7 +2997,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Ref_Kind     : Reference_Kind;
@@ -3040,7 +3042,7 @@ package body Src_Info.CPP is
             Sym.Start_Position := Var.Start_Position;
             Sym.File_Name      := Var.File_Name;
             Sym_IV_Handler
-              (Sym, Handler, File, List, Project_View, Module_Type_Defs);
+              (Sym, Handler, File, List, Project, Module_Type_Defs);
 
             Decl_Info := Find_Declaration
               (File                    => File,
@@ -3103,7 +3105,7 @@ package body Src_Info.CPP is
                Decl_Info,
                File,
                List,
-               Project_View,
+               Project,
                Module_Type_Defs);
 
             Free (Class_Def);
@@ -3132,6 +3134,7 @@ package body Src_Info.CPP is
                   Location          => Var.Start_Position,
                   Kind              => Type_To_Object (Desc.Kind),
                   Scope             => Local_Scope,
+                  Project           => Project,
                   Referred_Filename =>
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                   Declaration_Info  => Decl_Info);
@@ -3150,6 +3153,7 @@ package body Src_Info.CPP is
                     Var.Buffer (Var.File_Name.First .. Var.File_Name.Last),
                   Parent_Location   => Desc.Parent_Point,
                   Parent_Filename   => Desc.Parent_Filename.all,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             end if;
             Free (Desc);
@@ -3183,11 +3187,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Macro  : MA_Table;
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -3223,6 +3226,7 @@ package body Src_Info.CPP is
                Location           => Macro.Start_Position,
                Kind               => Unresolved_Entity_Kind,
                Scope              => Global_Scope,
+               Project            => Project,
                Declaration_Info   => Decl_Info);
          end if;
 
@@ -3246,6 +3250,7 @@ package body Src_Info.CPP is
                Location          => Macro.Start_Position,
                Kind              => Unresolved_Entity_Kind,
                Scope             => Global_Scope,
+               Project           => Project,
                Referred_Filename => Macro.Buffer
                  (Macro.File_Name.First .. Macro.File_Name.Last),
                Declaration_Info  => Decl_Info);
@@ -3274,7 +3279,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       P             : Pair_Ptr;
@@ -3391,7 +3396,7 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Project_View,
+            Project,
             Module_Type_Defs,
             Decl_Info,
             Strict => True);
@@ -3407,6 +3412,7 @@ package body Src_Info.CPP is
                Symbol_Name        => Ref_Id,
                Location           => Ref.Position,
                Kind               => Kind,
+               Project            => Project,
                Scope              => Global_Scope,
                Declaration_Info   => Decl_Info);
          end if;
@@ -3420,7 +3426,7 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Project_View,
+            Project,
             Module_Type_Defs);
 
          declare
@@ -3489,10 +3495,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
       Typedef   : T_Table;
       Ref_Id    : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
@@ -3546,6 +3551,7 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             elsif Desc.Ancestor_Point = Predefined_Point then
                --  typedef for builtin type
@@ -3559,6 +3565,7 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             else
                --  parent type found
@@ -3573,6 +3580,7 @@ package body Src_Info.CPP is
                   Parent_Filename   => Desc.Ancestor_Filename.all,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Declaration_Info  => Decl_Info);
             end if;
          end if;
@@ -3613,6 +3621,7 @@ package body Src_Info.CPP is
                   Location          => Typedef.Start_Position,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
                   Declaration_Info  => Decl_Info);
@@ -3629,6 +3638,7 @@ package body Src_Info.CPP is
                   Parent_Location   => Predefined_Point,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
                   Declaration_Info  => Decl_Info);
@@ -3646,6 +3656,7 @@ package body Src_Info.CPP is
                   Parent_Filename   => Desc.Ancestor_Filename.all,
                   Kind              => Desc.Kind,
                   Scope             => Global_Scope,
+                  Project           => Project,
                   Referred_Filename => Typedef.Buffer
                     (Typedef.File_Name.First .. Typedef.File_Name.Last),
                   Declaration_Info  => Decl_Info);
@@ -3676,11 +3687,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Ref_Id : constant String := Ref.Buffer
         (Ref.Referred_Symbol_Name.First .. Ref.Referred_Symbol_Name.Last);
       Union_Desc : CType_Description;
@@ -3728,6 +3738,7 @@ package body Src_Info.CPP is
                Referred_Filename  => Union_Def.Buffer
                  (Union_Def.File_Name.First .. Union_Def.File_Name.Last),
                Location           => Union_Def.Start_Position,
+               Project            => Project,
                Kind               =>
                  (Class, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
@@ -3752,6 +3763,7 @@ package body Src_Info.CPP is
                Symbol_Name        => Union_Def.Buffer
                  (Union_Def.Name.First .. Union_Def.Name.Last),
                Location           => Union_Def.Start_Position,
+               Project            => Project,
                Kind               =>
                (Class, Is_Type => True, Is_Generic => False),
                Scope              => Global_Scope,
@@ -3778,7 +3790,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info      : E_Declaration_Info_List;
@@ -3817,6 +3829,7 @@ package body Src_Info.CPP is
          Location              => Sym.Start_Position,
          Kind                  => Desc.Kind,
          Scope                 => Global_Scope,
+         Project               => Project,
          End_Of_Scope_Location => Class_Def.End_Position,
          Declaration_Info      => Decl_Info);
 
@@ -3831,7 +3844,7 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Project_View,
+            Project,
             Module_Type_Defs);
       end if;
 
@@ -3870,6 +3883,7 @@ package body Src_Info.CPP is
                      DB_Dir  => Get_DB_Dir
                        (Handler.DB_Dirs, Super_Def.DBI),
                      List => List,
+                     Project => Project,
                      Parent_Filename => Super_Def.Buffer
                        (Super_Def.File_Name.First .. Super_Def.File_Name.Last),
                      Parent_Location => Super_Def.Start_Position);
@@ -3903,10 +3917,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
       Desc              : CType_Description;
       Var               : GV_Table;
       Success           : Boolean;
@@ -3956,6 +3969,7 @@ package body Src_Info.CPP is
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
+            Project           => Project,
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
       else
@@ -3968,6 +3982,7 @@ package body Src_Info.CPP is
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
+            Project           => Project,
             Scope             => Scope,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
@@ -4013,11 +4028,11 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced
-        (Sym, Handler, File, List, Project_View, Module_Type_Defs);
+        (Sym, Handler, File, List, Project, Module_Type_Defs);
    begin
       --  Info ("Sym_Default_Hanlder: """
       --        & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)
@@ -4034,10 +4049,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View, Module_Type_Defs);
+      pragma Unreferenced (Module_Type_Defs);
       Decl_Info : E_Declaration_Info_List;
       E_Id      : constant String := Sym.Buffer
         (Sym.Identifier.First .. Sym.Identifier.Last);
@@ -4052,6 +4067,7 @@ package body Src_Info.CPP is
            (Handler.DB_Dirs, Sym.DBI),
          Symbol_Name       => E_Id,
          Location          => Sym.Start_Position,
+         Project           => Project,
          Kind              =>
            (Enumeration_Kind, Is_Type => True, Is_Generic => False),
          Scope             => Global_Scope,
@@ -4067,11 +4083,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
 
       Decl_Info : E_Declaration_Info_List;
       Ec_Id     : constant String := Sym.Buffer
@@ -4117,6 +4132,7 @@ package body Src_Info.CPP is
             Kind              => (Enumeration_Literal, False, False),
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
+            Project           => Project,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       else
@@ -4129,6 +4145,7 @@ package body Src_Info.CPP is
             Symbol_Name       => Ec_Id,
             Location          => Sym.Start_Position,
             Kind              => (Enumeration_Literal, False, False),
+            Project           => Project,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       end if;
@@ -4143,11 +4160,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
 
       Target_Kind  : E_Kind;
       Decl_Info    : E_Declaration_Info_List;
@@ -4248,6 +4264,7 @@ package body Src_Info.CPP is
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_FD_Pos,
             Kind              => Target_Kind,
+            Project           => Project,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       end if;
@@ -4310,6 +4327,7 @@ package body Src_Info.CPP is
                   DB_Dir             => Get_DB_Dir
                     (Handler.DB_Dirs, FU_Tab.DBI),
                   List          => List,
+                  Project       => Project,
                   Full_Filename => FU_Tab.Buffer
                      (FU_Tab.File_Name.First .. FU_Tab.File_Name.Last));
             end if;
@@ -4344,7 +4362,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Decl_Info       : E_Declaration_Info_List := null;
@@ -4394,7 +4412,7 @@ package body Src_Info.CPP is
                    Class_Decl_Info,
                    File,
                    List,
-                   Project_View,
+                   Project,
                    Module_Type_Defs);
 
                if not (Class_Def.Start_Position < Sym.Start_Position
@@ -4462,7 +4480,7 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Project_View,
+            Project,
             Module_Type_Defs,
             Decl_Info,
             Strict => True);
@@ -4479,7 +4497,7 @@ package body Src_Info.CPP is
             FU_Tab.Return_Type,
             FU_Tab.Arg_Types,
             Handler,
-            Project_View,
+            Project,
             File,
             List,
             Decl_Info,
@@ -4499,6 +4517,7 @@ package body Src_Info.CPP is
             Location              => Start_Position,
             Kind                  => Target_Kind,
             Scope                 => Global_Scope,
+            Project               => Project,
             End_Of_Scope_Location => End_Position,
             Declaration_Info      => Decl_Info);
       else
@@ -4521,7 +4540,7 @@ package body Src_Info.CPP is
             Handler,
             File,
             List,
-            Project_View,
+            Project,
             Module_Type_Defs);
       end if;
 
@@ -4559,7 +4578,7 @@ package body Src_Info.CPP is
                   Ref.Buffer (Ref.File_Name.First .. Ref.File_Name.Last)
                then
                   Fu_To_Handlers (Ref.Referred_Symbol)
-                    (Ref, Handler, File, List, Project_View, Module_Type_Defs);
+                    (Ref, Handler, File, List, Project, Module_Type_Defs);
                end if;
             end if;
 
@@ -4580,7 +4599,7 @@ package body Src_Info.CPP is
       Release_Cursor (Handler.SN_Table (TO));
 
       Process_Local_Variables
-        (FU_Tab, Sym.Symbol, Handler, File, List, Project_View,
+        (FU_Tab, Sym.Symbol, Handler, File, List, Project,
          Module_Type_Defs);
 
       Free (FU_Tab);
@@ -4599,11 +4618,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
-
       Desc      : CType_Description;
       Var       : GV_Table;
       Success   : Boolean;
@@ -4653,6 +4670,7 @@ package body Src_Info.CPP is
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
+            Project           => Project,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
             Declaration_Info  => Decl_Info);
@@ -4667,6 +4685,7 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Scope,
+            Project           => Project,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
             Declaration_Info  => Decl_Info);
@@ -4708,7 +4727,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
@@ -4717,7 +4736,7 @@ package body Src_Info.CPP is
       --  recognize directories in the name.
       Full_Included : constant String := Find_File
         (Base_Name (Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last)),
-         Include_Path (Project_View, Recursive => True),
+         Include_Path (Project, Recursive => True),
          Predefined_Path => "");
 
    begin
@@ -4739,20 +4758,22 @@ package body Src_Info.CPP is
                DB_Dir            => DB_Dir,
                File              => File,
                List              => List,
+               Project           => Project,
                Referred_Filename => Sym.Buffer
                  (Sym.Identifier.First .. Sym.Identifier.Last));
          end;
       else
          declare
-            Prj_For_IU : constant Prj.Project_Id :=
-               Get_Project_From_File (Handler.Root_Project, Full_Included);
+            Prj_For_IU : constant Project_Type := Get_Project_From_File
+              (Project_Registry (Get_Registry (Project)), Full_Included);
          begin
-            if Prj_For_IU /= Prj.No_Project then
+            if Prj_For_IU /= No_Project then
                Insert_Dependency
                  (Handler           => Handler,
                   DB_Dir            => Get_DB_Dir (Prj_For_IU),
                   File              => File,
                   List              => List,
+                  Project           => Project,
                   Referred_Filename => Full_Included);
             end if;
          end;
@@ -4768,11 +4789,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
-
       Inst_Var  : IV_Table;
       Decl_Info : E_Declaration_Info_List;
       Success   : Boolean;
@@ -4863,6 +4882,7 @@ package body Src_Info.CPP is
             Symbol_Name       =>
               Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => Sym.Start_Position,
+            Project           => Project,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
             Declaration_Info  => Decl_Info);
@@ -4877,6 +4897,7 @@ package body Src_Info.CPP is
             Location          => Sym.Start_Position,
             Kind              => Type_To_Object (Desc.Kind),
             Scope             => Local_Scope,
+            Project           => Project,
             Parent_Location   => Desc.Parent_Point,
             Parent_Filename   => Desc.Parent_Filename.all,
             Declaration_Info  => Decl_Info);
@@ -4903,14 +4924,14 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_MA_Handler
-     (Sym     : FIL_Table;
-      Handler : access CPP_LI_Handler_Record'Class;
-      File    : in out LI_File_Ptr;
-      List    : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+     (Sym              : FIL_Table;
+      Handler          : access CPP_LI_Handler_Record'Class;
+      File             : in out LI_File_Ptr;
+      List             : in out LI_File_List;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View, Module_Type_Defs);
+      pragma Unreferenced (Module_Type_Defs);
       tmp_ptr    : E_Declaration_Info_List;
    begin
       --  Info ("Sym_MA_Handler: """
@@ -4926,6 +4947,7 @@ package body Src_Info.CPP is
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Location          => Sym.Start_Position,
          Kind              => Unresolved_Entity_Kind,
+         Project           => Project,
          Scope             => Global_Scope,
          Declaration_Info  => tmp_ptr);
    end Sym_MA_Handler;
@@ -4939,7 +4961,7 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       Target_Kind  : E_Kind;
@@ -5025,7 +5047,7 @@ package body Src_Info.CPP is
            (Handler,
             Class_Def,
             Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
-            Class_Decl_Info, File, List, Project_View, Module_Type_Defs);
+            Class_Decl_Info, File, List, Project, Module_Type_Defs);
 
          if Class_Decl_Info /= null then
             Insert_Reference
@@ -5058,6 +5080,7 @@ package body Src_Info.CPP is
                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
             Location          => First_MD_Pos,
             Kind              => Target_Kind,
+            Project           => Project,
             Scope             => Global_Scope,
             Declaration_Info  => Decl_Info);
       end if;
@@ -5123,6 +5146,7 @@ package body Src_Info.CPP is
                   DB_Dir        => Get_DB_Dir
                     (Handler.DB_Dirs, MI_Tab.DBI),
                   List          => List,
+                  Project       => Project,
                   Full_Filename => MI_Tab.Buffer
                      (MI_Tab.File_Name.First .. MI_Tab.File_Name.Last));
             end if;
@@ -5162,10 +5186,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project          : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
       Decl_Info  : E_Declaration_Info_List;
       Desc       : CType_Description;
       Success    : Boolean;
@@ -5204,6 +5227,7 @@ package body Src_Info.CPP is
                Location          => Sym.Start_Position,
                Kind              => Desc.Kind,
                Scope             => Global_Scope,
+               Project           => Project,
                Declaration_Info  => Decl_Info);
 
          elsif Desc.Ancestor_Point = Predefined_Point then
@@ -5219,6 +5243,7 @@ package body Src_Info.CPP is
                Location          => Sym.Start_Position,
                Parent_Location   => Predefined_Point,
                Kind              => Desc.Kind,
+               Project           => Project,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
 
@@ -5234,6 +5259,7 @@ package body Src_Info.CPP is
                Parent_Filename   => Desc.Ancestor_Filename.all,
                Parent_Location   => Desc.Ancestor_Point,
                Kind              => Desc.Kind,
+               Project           => Project,
                Scope             => Global_Scope,
                Declaration_Info  => Decl_Info);
 
@@ -5256,11 +5282,10 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
       pragma Unreferenced (Module_Type_Defs);
-      pragma Unreferenced (Project_View);
       Decl_Info : E_Declaration_Info_List;
       Desc      : CType_Description;
       Union_Def : UN_Table;
@@ -5289,6 +5314,7 @@ package body Src_Info.CPP is
             Location              => Sym.Start_Position,
             Kind                  => Desc.Kind,
             Scope                 => Global_Scope,
+            Project               => Project,
             End_Of_Scope_Location => Union_Def.End_Position,
             Declaration_Info      => Decl_Info);
 
@@ -5307,8 +5333,8 @@ package body Src_Info.CPP is
    -- Get_DB_Dir --
    ----------------
 
-   function Get_DB_Dir (Project : Prj.Project_Id) return String is
-      Obj_Dir : constant String := Prj_API.Object_Path (Project, False);
+   function Get_DB_Dir (Project : Project_Type) return String is
+      Obj_Dir : constant String := Object_Path (Project, False);
    begin
       if Obj_Dir = "" then
          return "";
@@ -5328,10 +5354,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
       P           : Pair_Ptr;
       Var         : LV_Table;
       Decl_Info   : E_Declaration_Info_List;
@@ -5457,6 +5482,7 @@ package body Src_Info.CPP is
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
+                     Project           => Project,
                      Declaration_Info  => Decl_Info);
                else
                   Insert_Declaration
@@ -5469,6 +5495,7 @@ package body Src_Info.CPP is
                      Location          => Var.Start_Position,
                      Kind              => Type_To_Object (Desc.Kind),
                      Scope             => Scope,
+                     Project           => Project,
                      Parent_Location   => Desc.Parent_Point,
                      Parent_Filename   => Desc.Parent_Filename.all,
                      Declaration_Info  => Decl_Info);
@@ -5676,10 +5703,9 @@ package body Src_Info.CPP is
       Handler          : access CPP_LI_Handler_Record'Class;
       File             : in out LI_File_Ptr;
       List             : in out LI_File_List;
-      Project_View     : Prj.Project_Id;
+      Project     : Project_Type;
       Module_Type_Defs : Module_Typedefs_List)
    is
-      pragma Unreferenced (Project_View);
       Arg              : TA_Table;
       P                : Pair_Ptr;
       Decl_Info        : E_Declaration_Info_List;
@@ -5749,6 +5775,7 @@ package body Src_Info.CPP is
                      Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                   Location         => Arg.Start_Position,
                   Kind             => (Private_Type, False, False),
+                  Project          => Project,
                   Scope            => Local_Scope,
                   Declaration_Info => Decl_Info);
 
@@ -5778,6 +5805,7 @@ package body Src_Info.CPP is
                         Arg.Buffer (Arg.Name.First .. Arg.Name.Last),
                      Location         => Arg.Start_Position,
                      Kind             => Type_To_Object (Desc.Kind),
+                     Project          => Project,
                      Scope            => Local_Scope,
                      Declaration_Info => Decl_Info);
                else
@@ -5791,6 +5819,7 @@ package body Src_Info.CPP is
                      Location         => Arg.Start_Position,
                      Kind             => Type_To_Object (Desc.Kind),
                      Scope            => Local_Scope,
+                     Project          => Project,
                      Parent_Location  => Desc.Parent_Point,
                      Parent_Filename  => Desc.Parent_Filename.all,
                      Declaration_Info => Decl_Info);
@@ -6021,7 +6050,7 @@ package body Src_Info.CPP is
 
    function Get_Root_Project
      (Handler : access Src_Info.CPP.CPP_LI_Handler_Record'Class)
-      return Prj.Project_Id is
+      return Project_Type is
    begin
       return Handler.Root_Project;
    end Get_Root_Project;
