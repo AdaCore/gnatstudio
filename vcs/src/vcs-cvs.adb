@@ -1532,9 +1532,9 @@ package body VCS.CVS is
 
       Actions :=
         (None         => null,
-         Status       => new String'(-"Query status"),
+         Status_Files => new String'(-"Query status"),
          Status_Dir   => null,
-         Local_Status => null,
+         Local_Status_Files => null,
          Local_Status_Dir => null,
          Open         => new String'(-"Start editing"),
          Update       => new String'(-"Update"),
