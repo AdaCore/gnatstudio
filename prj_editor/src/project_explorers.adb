@@ -1162,6 +1162,10 @@ package body Project_Explorers is
 
    begin
       for S in Src'Range loop
+         --  Note: We have to use a system call below. Two files with the same
+         --  name can appear in the hiearchy, for instance when using extending
+         --  projects, and Get_Full_Path_From_File would only return the first
+         --  instance of the file
          declare
             F : constant String := Dir & Get_String (Src (S));
          begin
