@@ -50,10 +50,13 @@ package body Commands.Custom is
       File    : File_Selection_Context_Access;
       Success : Boolean;
       No_Args : String_List (1 .. 0);
+      New_Args : Argument_List_Access;
    begin
       --  Perform arguments substitutions for the command.
 
       if Command.Args /= null then
+         New_Args := new String_List (Command.Args'Range);
+
          for J in Command.Args'Range loop
             if Context /= null
               and then Context.all in File_Selection_Context'Class
@@ -62,11 +65,9 @@ package body Commands.Custom is
 
                if Has_File_Information (File) then
                   if Command.Args (J).all = "%f" then
-                     Free (Command.Args (J));
-                     Command.Args (J) := new String' (File_Information (File));
+                     New_Args (J) := new String' (File_Information (File));
                   elsif Command.Args (J).all = "%F" then
-                     Free (Command.Args (J));
-                     Command.Args (J) := new String'
+                     New_Args (J) := new String'
                        (Directory_Information (File)
                           & File_Information (File));
                   end if;
@@ -84,10 +85,17 @@ package body Commands.Custom is
          Launch_Process
            (Command.Kernel,
             Command.Command.all,
-            Command.Args.all,
+            New_Args.all,
             null,
             "",
             Success);
+
+         for J in New_Args'Range loop
+            Free (New_Args (J));
+         end loop;
+
+         Free (New_Args);
+
       else
          Launch_Process
            (Command.Kernel,
