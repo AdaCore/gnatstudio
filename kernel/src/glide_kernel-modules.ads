@@ -322,7 +322,8 @@ package Glide_Kernel.Modules is
       Line              : Natural := 0;
       Column            : Natural := 0;
       Highlight_Line    : Boolean := True;
-      Enable_Navigation : Boolean := True);
+      Enable_Navigation : Boolean := True;
+      New_File          : Boolean := True);
    --  Open, or create, an editor that edits Filename (Mime_Source_File type)
    --  If Enable_Navigation is True, then the location visited will be
    --  stored in the history for Back/Forward navigation.
@@ -332,7 +333,7 @@ package Glide_Kernel.Modules is
    --  opened from the command line. As a result, Filenamemight be found even
    --  if it doesn't directly belong to a project.
    --
-   --  If not found, a new file is edited.
+   --  If not found and New_File is True, a new file is edited.
 
    procedure Open_Html
      (Kernel         : access Kernel_Handle_Record'Class;
@@ -356,203 +357,263 @@ package Glide_Kernel.Modules is
       Associated_Command : Command_Access := null;
    end record;
 
-   procedure Free (X : in out Line_Information_Record);
-   --  Free memory associated with X.
+   procedu***************
+*** 440,449 ****
+     is
+        pragma Unreferenced (Lang, Indent_Params);
 
-   type Line_Information_Array is array (Natural range <>)
-     of Line_Information_Record;
+!       Index  : Natural := Buffer'Last - 1;
+        Blanks : Natural;
 
-   type Line_Information_Data is access Line_Information_Array;
-   for Line_Information_Data'Size use Standard'Address_Size;
+     begin
+        while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
+           Index := Index - 1;
+        end loop;
+--- 440,457 ----
+     is
+        pragma Unreferenced (Lang, Indent_Params);
 
-   function To_Line_Information is new Unchecked_Conversion
-     (System.Address, Line_Information_Data);
-   function To_Address is new Unchecked_Conversion
-     (Line_Information_Data, System.Address);
+!       Index  : Natural;
+        Blanks : Natural;
 
-   procedure Add_Line_Information
-     (Kernel         : access Kernel_Handle_Record'Class;
-      File           : String;
-      Identifier     : String;
-      Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True);
+     begin
++       if Buffer'Length = 0 then
++          Indent := 0;
++          Next_Indent := 0;
++          return;
++       end if;
++
++       Index := Buffer'Last - 1;
++
+        while Index > 1 and then Buffer (Index - 1) /= ASCII.LF loop
+           Index := Index - 1;
+        end loop;
+Index: gvd/design/TODO
+===================================================================
+RCS file: /paris.a/cvs/Dev/gvd/design/TODO,v
+retrieving revision 1.230
+diff -c -r1.230 TODO
+*** gvd/design/TODO	2002/01/14 16:32:22	1.230
+--- gvd/design/TODO	2002/03/18 11:44:30
+***************
+*** 251,261 ****
+      Ie pressing these buttons once keeps executing "step" or "next" until
+      interrupted by the user. The delay between each should be configurable
 
-   ------------------------
-   -- File_Name contexts --
-   ------------------------
+! 7 * [Nico] Hide/Show system files in explorer   OB Glide
+      - Would be nice to hide system files by default and have the menu flip
+        between hide and show system files.
 
-   type File_Selection_Context is new Selection_Context with private;
-   type File_Selection_Context_Access is access all
-     File_Selection_Context'Class;
+! 7 * [Arno] Code editor   OB Glide
+      Should display a warning when the source file is more recent than the
+      executable, since the information displayed might be wrong (lines with
+      code, current line, ...)
+--- 251,261 ----
+      Ie pressing these buttons once keeps executing "step" or "next" until
+      interrupted by the user. The delay between each should be configurable
 
-   procedure Set_File_Information
-     (Context           : access File_Selection_Context;
-      Directory         : String := "";
-      File_Name         : String := "";
-      Project_View      : Prj.Project_Id := Prj.No_Project;
-      Importing_Project : Prj.Project_Id := Prj.No_Project);
-   --  Set the information in this context.
+! 7 * [Nico] Hide/Show system files in explorer   OB GPS
+      - Would be nice to hide system files by default and have the menu flip
+        between hide and show system files.
 
-   function Has_Directory_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected directory.
+! 7 * [Arno] Code editor   OB GPS
+      Should display a warning when the source file is more recent than the
+      executable, since the information displayed might be wrong (lines with
+      code, current line, ...)
+***************
+*** 321,327 ****
+      wrong. We should either not display any "=>", or display the real enum
+      values (might be costly)
 
-   function Directory_Information
-     (Context : access File_Selection_Context) return String;
-   --  Return the information about the selected project. This is only relevant
-   --  if Has_Directory_Information is True.
-   --  This directory name always ends with a '/'
+! 8 * [Joel] Select next entry on Breakpoint List after deleting one.
+      After removing a breakpoint from the list in the Breakpoint Editor,
+      the next entry should automatically be selected. This will ease the
+      deletion of several breakpoints in a row.
+--- 321,327 ----
+      wrong. We should either not display any "=>", or display the real enum
+      values (might be costly)
 
-   function Has_File_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context has information about a selected file.
+! 7 * [Joel] Select next entry on Breakpoint List after deleting one.
+      After removing a breakpoint from the list in the Breakpoint Editor,
+      the next entry should automatically be selected. This will ease the
+      deletion of several breakpoints in a row.
+***************
+*** 346,352 ****
+      again after a few next, then there is a local variable with a different
+      type, which should not be detected as an alias.
 
-   function File_Information
-     (Context : access File_Selection_Context) return String;
-   --  Return the information about the selected project. This is only relevant
-   --  if Has_File_Information is True.
-   --  This is the base file name for the file
+! 7 * [Arno] Language is sometimes incorrectly detected
+      Try the following scenario: "gvd ../tests/parse", "run", "break exception",
+      "run", "up", "up", "up", "up": the file opened is still in C mode,
+      although this is an Ada file.
+--- 346,352 ----
+      again after a few next, then there is a local variable with a different
+      type, which should not be detected as an alias.
 
-   function Has_Project_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the creator of the context provided information about the
-   --  project.
+! 7 * [Arno] Language is sometimes incorrectly detected   OB GPS
+      Try the following scenario: "gvd ../tests/parse", "run", "break exception",
+      "run", "up", "up", "up", "up": the file opened is still in C mode,
+      although this is an Ada file.
+Index: gvd/glide/gvd_module.adb
+===================================================================
+RCS file: /paris.a/cvs/Dev/gvd/glide/gvd_module.adb,v
+retrieving revision 1.20
+diff -c -r1.20 gvd_module.adb
+*** gvd/glide/gvd_module.adb	2002/03/15 14:57:41	1.20
+--- gvd/glide/gvd_module.adb	2002/03/18 11:44:30
+***************
+*** 776,791 ****
+        use Debugger;
 
-   function Project_Information
-     (Context : access File_Selection_Context) return Prj.Project_Id;
-   --  Return the id of the project to which the file belongs. Note that this
-   --  is computed automatically and cached otherwise.
-   --  This function will return No_Project if the file stored in the context
-   --  doesn't belong to any project.
+     begin
+        --  Initial the debugger if necessary
+        if Page.Debugger = null then
+-          Push_State (K, Busy);
+           Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
+           Set_Sensitive (K, True);
+           Page.Destroy_Id := Widget_Callback.Object_Connect
+             (Top, "destroy",
+              Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
+              Page);
+-          Pop_State (K);
+        end if;
 
-   function Has_Importing_Project_Information
-     (Context : access File_Selection_Context) return Boolean;
-   --  True if the context contains the name of the project importing the
-   --  current one.
+        --  Load a file if necessary
+--- 776,791 ----
+        use Debugger;
 
-   function Importing_Project_Information
-     (Context : access File_Selection_Context) return Prj.Project_Id;
-   --  Return the project that imports the one returned by Project_Information.
-   --  This is never computed automatically, and unless provided by the creator
-   --  of the project, this will be left empty.
+     begin
++       Push_State (K, Busy);
++
+        --  Initial the debugger if necessary
+        if Page.Debugger = null then
+           Configure (Page, Gdb_Type, "", (1 .. 0 => null), "");
+           Set_Sensitive (K, True);
+           Page.Destroy_Id := Widget_Callback.Object_Connect
+             (Top, "destroy",
+              Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
+              Page);
+        end if;
 
-   procedure Destroy (Context : in out File_Selection_Context);
-   --  Free the memory associated with the context
+        --  Load a file if necessary
+***************
+*** 799,804 ****
+--- 799,806 ----
+                 Insert (K, "File not found: " & Full & Data.File);
+           end;
+        end if;
++
++       Pop_State (K);
 
-   ------------------------
-   -- File_Area contexts --
-   ------------------------
+     exception
+        when E : others =>
+Index: gvd/gvd/debugger-gdb-ada.adb
+===================================================================
+RCS file: /paris.a/cvs/Dev/gvd/gvd/debugger-gdb-ada.adb,v
+retrieving revision 1.51
+diff -c -r1.51 debugger-gdb-ada.adb
+*** gvd/gvd/debugger-gdb-ada.adb	2002/03/14 15:03:23	1.51
+--- gvd/gvd/debugger-gdb-ada.adb	2002/03/18 11:44:30
+***************
+*** 234,240 ****
+     begin
+        case Type_Str (Index) is
+           when '<' =>
+-
+              --  A union type
 
-   type File_Area_Context is new File_Selection_Context with private;
-   type File_Area_Context_Access is access all File_Area_Context'Class;
+              if Looking_At (Type_Str, Index, "<union ") then
+--- 234,239 ----
+***************
+*** 262,268 ****
+              end if;
 
-   procedure Set_Area_Information
-     (Context    : access File_Area_Context;
-      Start_Line : Integer := 0;
-      End_Line   : Integer := 0);
-   --  Set the area information in Context.
+           when 'a' =>
+-
+              --  Arrays, as in "array (1 .. 4, 3 .. 5) of character"
 
-   procedure Get_Area
-     (Context    : access File_Area_Context;
-      Start_Line : out Integer;
-      End_Line   : out Integer);
-   --  Return the area information in Context.
+              if Looking_At (Type_Str, Index, "array ") then
+--- 261,266 ----
+***************
+*** 285,291 ****
+              end if;
 
-   procedure Destroy (Context : in out File_Area_Context);
-   --  Free the memory associated with the context
+           when 'd' =>
+-
+              --  A delta type, as for "Duration" types (delta 1e-09)
 
-   ---------------------
-   -- Entity Contexts --
-   ---------------------
+              if Looking_At (Type_Str, Index, "delta ") then
+--- 283,288 ----
+***************
+*** 297,303 ****
+              end if;
 
-   type Entity_Selection_Context is new File_Selection_Context
-     with private;
-   type Entity_Selection_Context_Access is access all Entity_Selection_Context;
+           when 'm' =>
+-
+              --  Modular types
 
-   procedure Set_Entity_Information
-     (Context     : access Entity_Selection_Context;
-      Entity_Name : String := "";
-      Line        : Integer := 0;
-      Column      : Integer := 0;
-      Category    : Language.Language_Category := Language.Cat_Unknown);
-   --  Set the information in the context
+              if Looking_At (Type_Str, Index, "mod ") then
+--- 294,299 ----
+***************
+*** 315,321 ****
+              end if;
 
-   function Has_Entity_Name_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Entity_Name_Information
-     (Context : access Entity_Selection_Context) return String;
-   --  Check whether there is some entity information, and return it.
+           when 'n' =>
+-
+              --  A tagged record type, as in
+              --  new tagged_type with record c : float; end record;
 
-   function Has_Line_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Line_Information
-     (Context : access Entity_Selection_Context) return Integer;
-   --  Check whether there is some line information, and return it.
+--- 311,316 ----
+***************
+*** 366,372 ****
+              end if;
 
-   function Has_Column_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Column_Information
-     (Context : access Entity_Selection_Context) return Integer;
-   --  Check whether there is some column information, and return it.
+           when 'r' =>
+-
+              --  A record type, as in 'record field1: integer; end record'
 
-   function Has_Category_Information
-     (Context : access Entity_Selection_Context) return Boolean;
-   function Category_Information
-     (Context : access Entity_Selection_Context)
-      return Language.Language_Category;
-   --  Return the category for the entity
+              if Looking_At (Type_Str, Index, "record") then
+--- 361,366 ----
+***************
+*** 395,402 ****
+                 raise Unexpected_Type;
+              end if;
 
-   function Get_Entity
-     (Context : access Entity_Selection_Context)
-      return Src_Info.Queries.Entity_Information;
-   --  Return the location of the declaration for the entity in Context.
-   --  This information is automatically cached in the context, in case several
-   --  modules need to compute it;
-   --  No_Entity_Information is returned if the information could not be found.
-   --  No also that in most cases you should set the busy cursor before calling
-   --  this function, since it might take some time.
-   --  You do not need to free the memory, since it will automatically be freed
-   --  when the context is destroyed.
+!          when 't' =>
 
-   procedure Destroy (Context : in out Entity_Selection_Context);
-   --  Destroy the memory associated with the entity
+              --  A tagged type
 
-private
+              if Looking_At (Type_Str, Index, "tagged record") then
+--- 389,398 ----
+                 raise Unexpected_Type;
+              end if;
 
-   type File_Selection_Context is new Selection_Context with record
-      Directory         : GNAT.OS_Lib.String_Access := null;
-      File_Name         : GNAT.OS_Lib.String_Access := null;
-      Project_View      : Prj.Project_Id            := Prj.No_Project;
-      Importing_Project : Prj.Project_Id            := Prj.No_Project;
+!          --  ??? We could handle "string" as well as a standard type
+!          --  when 's' =>
 
-      Creator_Provided_Project : Boolean := False;
-      --  Set to True if the project_view was given by the creator, instead of
-      --  being computed automatically
-   end record;
++          when 't' =>
+              --  A tagged type
 
-   type File_Area_Context is new File_Selection_Context with record
-      Start_Line : Integer;
-      End_Line   : Integer;
-   end record;
+              if Looking_At (Type_Str, Index, "tagged record") then
+***************
+*** 418,425 ****
+              end if;
 
-   type Entity_Selection_Context is new File_Selection_Context with record
-      Category      : Language.Language_Category := Language.Cat_Unknown;
-      Entity_Name   : GNAT.OS_Lib.String_Access := null;
-      Line, Column  : Integer := 0;
-      Entity        : Src_Info.Queries.Entity_Information :=
-        Src_Info.Queries.No_Entity_Information;
-   end record;
+           when '(' =>
+-
+              --  Enumeration type
+              Skip_To_Char (Type_Str, Index, ')');
+              Result := New_Enum_Type;
 
-   pragma Inline (Has_Project_Information);
-   pragma Inline (Has_Directory_Information);
-   pragma Inline (Has_Importing_Project_Information);
-   pragma Inline (Importing_Project_Information);
-   pragma Inline (Project_Information);
-   pragma Inline (Has_File_Information);
-   pragma Inline (Has_Entity_Name_Information);
-   pragma Inline (Entity_Name_Information);
-   pragma Inline (Has_Line_Information);
-   pragma Inline (Line_Information);
-   pragma Inline (Has_Column_Information);
-   pragma Inline (Column_Information);
-end Glide_Kernel.Modules;
+--- 414,421 ----
+              end if;
+
+           when '(' =>
+              --  Enumeration type
++
+              Skip_To_Char (Type_Str, Index, ')');
+              Result := New_Enum_Type;
+
+Index: gvd/gvd/gvd-process.adb
+===================================================================
+RCS file: /paris.a/cvs/Dev/gvd/gvd/gvd-process.a
