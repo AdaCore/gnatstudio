@@ -35,8 +35,8 @@ package Glide_Kernel.Preferences is
 
    procedure Register_Global_Preferences
      (Kernel : access Kernel_Handle_Record'Class);
-   --  Register all the preferences defined below. This must be caleld only
-   --  after gtk+ has been initialized.
+   --  Register all the preferences defined below.
+   --  This must be calld only after Gtk+ has been initialized.
    --  Note that as much as possible, the preferences should be registered in
    --  the modules themselves.
 
@@ -78,7 +78,6 @@ package Glide_Kernel.Preferences is
    --  Below is the list of all the preference settings that can be set.
    --  The type of the constant gives the type of the value associated with the
    --  preference.
-
 
    -- General --
    Default_Widget_Width  : Param_Spec_Int;
@@ -135,8 +134,8 @@ package Glide_Kernel.Preferences is
 
    -- VCS --
    VCS_Commit_File_Check : Param_Spec_String;
-   VCS_Commit_Log_Check : Param_Spec_String;
-   CVS_Command : Param_Spec_String;
+   VCS_Commit_Log_Check  : Param_Spec_String;
+   CVS_Command           : Param_Spec_String;
 
    --  Debugger preferences are registered in GVD.Preferences
 
