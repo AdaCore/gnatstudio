@@ -61,6 +61,27 @@ package body Commands is
       end if;
    end Free_Queue;
 
+   -----------------
+   -- Empty_Queue --
+   -----------------
+
+   procedure Empty_Queue (Q : Command_Queue) is
+      Node  : List_Node;
+   begin
+      Free (Q.Undo_Queue);
+      Free (Q.Redo_Queue);
+      Free (Q.The_Queue);
+
+      --  Execute the queue change hooks.
+
+      Node := First (Q.Queue_Change_Hook);
+
+      while Node /= Null_Node loop
+         Execute (Data (Node));
+         Node := Next (Node);
+      end loop;
+   end Empty_Queue;
+
    -------------
    -- Destroy --
    -------------

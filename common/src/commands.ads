@@ -75,6 +75,9 @@ package Commands is
    procedure Free_Queue (Q : in out Command_Queue);
    --  Free memory associated with Q.
 
+   procedure Empty_Queue (Q : Command_Queue);
+   --  Free all done, undone and pending actions in Q.
+
    procedure Enqueue
      (Queue         : Command_Queue;
       Action        : access Root_Command;
