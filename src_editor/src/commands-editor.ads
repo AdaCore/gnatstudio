@@ -31,6 +31,11 @@ package Commands.Editor is
    type Editor_Replace_Slice_Type is new Root_Command with private;
    type Editor_Replace_Slice is access all Editor_Replace_Slice_Type;
 
+   type Direction_Type is (Backward, Forward);
+   --  Forward direction indicates a normal command (ie the text is
+   --  inserted/deleted before the cursor), and Backward direction indicates
+   --  that the text is inserted/deleted after the cursor.
+
    procedure Create
      (Item         : out Editor_Replace_Slice;
       Buffer       : Source_Buffer;
@@ -58,7 +63,8 @@ package Commands.Editor is
       Buffer        : Source_Buffer;
       User_Executed : Boolean;
       Line          : Integer;
-      Column        : Integer);
+      Column        : Integer;
+      Direction     : Direction_Type := Forward);
    --  Create a new Editor_Command.
    --  Set User_Executed to True if the command is being interactively entered
    --  by the user.
@@ -87,6 +93,7 @@ private
       User_Executed             : Boolean;
       Line                      : Integer;
       Column                    : Integer;
+      Direction                 : Direction_Type;
    end record;
 
    type Editor_Replace_Slice_Type is new Root_Command with record
