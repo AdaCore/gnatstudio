@@ -112,7 +112,7 @@ package body Src_Info.Debug is
          Put ("<null file location, kind="
               & Kind.Kind'Img & ">");
       else
-         Put (Base_Name (Get_File (FL)).all & ":");
+         Put (Base_Name (Get_File (FL)) & ":");
          if Display_Kind then
             Put (Image (FL.Line) & Output_E_Kind (Kind) & Image (FL.Column));
          else
@@ -204,7 +204,7 @@ package body Src_Info.Debug is
 
    procedure Dump_Source_File (SF : Source_File) is
    begin
-      Put (Base_Name (Get_Source_Filename (SF)).all);
+      Put (Base_Name (Get_Source_Filename (SF)));
    exception
       when E : others =>
          Print_Exception_Info (E, "Dump_Source_File");
@@ -493,7 +493,7 @@ package body Src_Info.Debug is
       --  print at this stage.
       if not LIF.Parsed then
          Put_Line ("Unit_Name: "
-                   & Base_Name (LIF.LI_Filename).all & "<not parsed!>");
+                   & Base_Name (LIF.LI_Filename) & "<not parsed!>");
          return;
       end if;
 
