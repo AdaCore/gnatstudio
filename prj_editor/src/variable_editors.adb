@@ -370,6 +370,17 @@ package body Variable_Editors is
                   Parent  => Gtk_Window (Editor));
                return False;
             end if;
+
+            if New_Name (N) = '_'
+              and then New_Name (N - 1) = '_'
+            then
+               Message := Message_Dialog
+                 (Msg     => -("Name cannot contain two underscore characters"
+                               & " next to each other"),
+                  Buttons => Button_OK,
+                  Parent  => Gtk_Window (Editor));
+               return False;
+            end if;
          end loop;
       end if;
 
