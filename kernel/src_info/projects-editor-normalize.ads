@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                   Copyright (C) 2001-2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -163,6 +163,7 @@ private package Projects.Editor.Normalize is
    procedure For_Each_Matching_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Case_Construct : in out Prj.Tree.Project_Node_Id;
       Values  : External_Variable_Value_Array;
       Action  : Matching_Item_Callback);
    --  Execute Action for all the case items in Project or Pkg that match
@@ -175,6 +176,9 @@ private package Projects.Editor.Normalize is
    --  If a variable is referenced in Values, but doesn't have an associated
    --  case construction, a new case construction is added at the lowest level.
    --
+   --  Case_Construct is a pointer to the case statement inside Pkg. It should
+   --  be the result of Find_Or_Create_Case_Statement.
+   --
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
    --
@@ -185,6 +189,7 @@ private package Projects.Editor.Normalize is
    procedure For_Each_Scenario_Case_Item
      (Project            : Prj.Tree.Project_Node_Id;
       Pkg                : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Case_Construct     : in out Prj.Tree.Project_Node_Id;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Action             : Matching_Item_Callback);
    --  Same above, but it works directly for the current scenario (ie its gets
@@ -194,9 +199,22 @@ private package Projects.Editor.Normalize is
    --  Important: Project must have been normalized first, and it is
    --  recommended to call Check_Case_Construction before
    --
+   --  Case_Construct is a pointer to the case statement inside Pkg. It should
+   --  be the result of Find_Or_Create_Case_Statement.
+   --
    --  Action can be null, in which case a side effect of this subprogram is to
    --  create the nested case for all the scenario variables. All case items
    --  are empty.
+
+   function Find_Or_Create_Case_Statement
+     (Project : Prj.Tree.Project_Node_Id;
+      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
+      return Project_Node_Id;
+   --  Return the first case statement in Project/Pkg.
+   --  Create the case statement if none exists currently.
+   --  In a normalized project, this returns the only case statement that
+   --  exists in a package or project.
+   --  Only the first value in Scenario_Variables is relevant.
 
 private
 

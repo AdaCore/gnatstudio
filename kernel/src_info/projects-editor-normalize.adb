@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                   Copyright (C) 2001-2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -53,12 +53,6 @@ package body Projects.Editor.Normalize is
                         V    : External_Variable_Value);
    --  Add V to the array To. To is reallocated as necessary.
    --  Last is the index of the last item that was set in To.
-
-   function Find_Case_Statement (Decl_List : Project_Node_Id)
-      return Project_Node_Id;
-   --  Return the first case statement in Decl_List, or Empty_Node if none.
-   --  In a normalized project, this returns the only case statement that
-   --  exists in a package or project.
 
    function Create_Case_Construction
      (Project       : Project_Node_Id;
@@ -186,8 +180,8 @@ package body Projects.Editor.Normalize is
    ---------------
 
    procedure Normalize
-     (Root_Project : Project_Type;
-      Recurse      : Boolean := False)
+     (Root_Project       : Project_Type;
+      Recurse            : Boolean := False)
    is
       Values       : External_Variable_Value_Array_Access := null;
       Last_Values  : Natural;
@@ -200,16 +194,16 @@ package body Projects.Editor.Normalize is
       --  On exit of the case construction, the entries for the variable are
       --  removed from this list.
 
-      Project_Norm : Project_Node_Id;
-      Current_Pkg  : Project_Node_Id;
+      Project_Norm   : Project_Node_Id;
+      Current_Pkg    : Project_Node_Id;
+      Case_Construct : Project_Node_Id;
 
       Decl      : Project_Node_Id;
-      Case_Stmt : Project_Node_Id;
       Iter      : Imported_Project_Iterator := Start (Root_Project, Recurse);
       Project   : Project_Node_Id;
 
       procedure Process_Declarative_List
-        (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id);
+        (From, To : Project_Node_Id);
       --  Process a declarative list (a project, a package, a case item,...).
       --  From is the first N_Declarative_Item in the list. To is the node to
       --  which the normalized declarative items are added.
@@ -225,9 +219,7 @@ package body Projects.Editor.Normalize is
       -- Process_Declarative_List --
       ------------------------------
 
-      procedure Process_Declarative_List
-        (From, To : Project_Node_Id; Case_Stmt : in out Project_Node_Id)
-      is
+      procedure Process_Declarative_List (From, To : Project_Node_Id) is
          Decl_Item, Current : Project_Node_Id := From;
          Next_Item, Choice : Project_Node_Id;
          Name      : Name_Id;
@@ -336,8 +328,7 @@ package body Projects.Editor.Normalize is
                         --  Process the declarative list of items
 
                         Process_Declarative_List
-                          (First_Declarative_Item_Of (Case_Item),
-                           To, Case_Stmt);
+                          (First_Declarative_Item_Of (Case_Item), To);
 
                         --  Negate all the values
 
@@ -387,7 +378,7 @@ package body Projects.Editor.Normalize is
                            Add_Before_First_Case_Or_Pkg => True);
                      else
                         For_Each_Matching_Case_Item
-                          (Project_Norm, Current_Pkg,
+                          (Project_Norm, Current_Pkg, Case_Construct,
                            Values (Values'First .. Last_Values),
                            Add_Decl_Item'Unrestricted_Access);
                      end if;
@@ -401,7 +392,7 @@ package body Projects.Editor.Normalize is
 
                when others =>
                   For_Each_Matching_Case_Item
-                    (Project_Norm, Current_Pkg,
+                    (Project_Norm, Current_Pkg, Case_Construct,
                      Values (Values'First .. Last_Values),
                      Add_Decl_Item'Unrestricted_Access);
             end case;
@@ -413,9 +404,9 @@ package body Projects.Editor.Normalize is
    begin
       while Current (Iter) /= Projects.No_Project loop
          if not Is_Normalized (Current (Iter)) then
-            Trace (Me, "Normalize: " & Project_Name (Root_Project)
-                   & ' ' & Recurse'Img);
             Project := Current (Iter).Node;
+            Trace (Me, "Normalize: " & Project_Name (Current (Iter))
+                   & ' ' & Recurse'Img);
 
             --  ??? Why this hard-coded limit ?
             Values := new External_Variable_Value_Array (1 .. 50);
@@ -423,17 +414,15 @@ package body Projects.Editor.Normalize is
 
             Project_Norm := Clone_Project (Project);
             Current_Pkg := Empty_Node;
+            Case_Construct := Empty_Node;
 
             Set_Is_Normalized (Current (Iter), True);
 
             --  The top-level part of the project
-            Case_Stmt := Empty_Node;
-
             Process_Declarative_List
               (From => First_Declarative_Item_Of
                (Project_Declaration_Of (Project)),
-               To   => Project_Declaration_Of (Project_Norm),
-               Case_Stmt => Case_Stmt);
+               To   => Project_Declaration_Of (Project_Norm));
 
             if Last_Values /= Values'First - 1 then
                Free (Values);
@@ -450,11 +439,12 @@ package body Projects.Editor.Normalize is
                Decl := First_Declarative_Item_Of (Current_Pkg);
                Set_First_Declarative_Item_Of (Current_Pkg, Empty_Node);
 
-               Case_Stmt := Empty_Node;
+               Case_Construct := Find_Or_Create_Case_Statement
+                 (Project_Norm, Current_Pkg);
+
                Process_Declarative_List
                  (From      => Decl,
-                  To        => Current_Pkg,
-                  Case_Stmt => Case_Stmt);
+                  To        => Current_Pkg);
 
                if Last_Values /= Values'First - 1 then
                   Free (Values);
@@ -478,6 +468,7 @@ package body Projects.Editor.Normalize is
 
             Tree_Private_Part.Project_Nodes.Table (Project) :=
               Tree_Private_Part.Project_Nodes.Table (Project_Norm);
+            Trace (Me, "Done normalizing " & Project_Name (Current (Iter)));
          end if;
 
          Next (Iter);
@@ -505,6 +496,7 @@ package body Projects.Editor.Normalize is
    procedure For_Each_Scenario_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Case_Construct : in out Prj.Tree.Project_Node_Id;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Action  : Matching_Item_Callback)
    is
@@ -519,26 +511,42 @@ package body Projects.Editor.Normalize is
             Variable_Value => Prj.Ext.Value_Of (Scenario_Variables (J).Name),
             Negated        => False);
       end loop;
-      For_Each_Matching_Case_Item (Project, Pkg, Values, Action);
+      For_Each_Matching_Case_Item
+        (Project, Pkg, Case_Construct, Values, Action);
    end For_Each_Scenario_Case_Item;
 
-   -------------------------
-   -- Find_Case_Statement --
-   -------------------------
+   -----------------------------------
+   -- Find_Or_Create_Case_Statement --
+   -----------------------------------
 
-   function Find_Case_Statement (Decl_List : Project_Node_Id)
+   function Find_Or_Create_Case_Statement
+     (Project : Prj.Tree.Project_Node_Id;
+      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
       return Project_Node_Id
    is
-      Decl_Item : Project_Node_Id := Decl_List;
+      Top       : Project_Node_Id;
+      Decl_Item : Project_Node_Id;
+      Case_Construct : Project_Node_Id := Empty_Node;
    begin
+      if Pkg /= Empty_Node then
+         Top := Pkg;
+      else
+         Top := Project_Declaration_Of (Project);
+      end if;
+
+      Decl_Item := First_Declarative_Item_Of (Top);
       while Decl_Item /= Empty_Node loop
-         if Kind_Of (Current_Item_Node (Decl_Item)) = N_Case_Construction then
-            return Current_Item_Node (Decl_Item);
+         if Kind_Of (Current_Item_Node (Decl_Item)) =
+           N_Case_Construction
+         then
+            Case_Construct := Current_Item_Node (Decl_Item);
+            exit;
          end if;
          Decl_Item := Next_Declarative_Item (Decl_Item);
       end loop;
-      return Empty_Node;
-   end Find_Case_Statement;
+
+      return Case_Construct;
+   end Find_Or_Create_Case_Statement;
 
    --------------------
    -- Values_Matches --
@@ -584,6 +592,7 @@ package body Projects.Editor.Normalize is
    procedure For_Each_Matching_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
       Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Case_Construct : in out Prj.Tree.Project_Node_Id;
       Values  : External_Variable_Value_Array;
       Action  : Matching_Item_Callback)
    is
@@ -609,7 +618,6 @@ package body Projects.Editor.Normalize is
 
       function Create_Case_If_Necessary return Project_Node_Id is
          Match    : Boolean;
-         New_Case : Project_Node_Id;
       begin
          for J in Values'Range loop
             Match := False;
@@ -621,9 +629,8 @@ package body Projects.Editor.Normalize is
             end loop;
 
             if not Match then
-               New_Case := Create_Case_Construction
+               return Create_Case_Construction
                  (Project, Values (J).Variable_Name, Values (J).Variable_Type);
-               return New_Case;
             end if;
          end loop;
          return Empty_Node;
@@ -704,7 +711,6 @@ package body Projects.Editor.Normalize is
          Last_Var_Seen := Last_Var_Seen - 1;
       end Process_Case_Recursive;
 
-      Case_Construct : Project_Node_Id;
       Top : Project_Node_Id;
    begin
       if Pkg /= Empty_Node then
@@ -713,7 +719,6 @@ package body Projects.Editor.Normalize is
          Top := Project_Declaration_Of (Project);
       end if;
 
-      Case_Construct := Find_Case_Statement (First_Declarative_Item_Of (Top));
       if Case_Construct = Empty_Node then
          Case_Construct := Create_Case_If_Necessary;
          if Case_Construct /= Empty_Node then
