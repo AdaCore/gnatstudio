@@ -76,6 +76,7 @@ package SN.DB_Structures is
 
       End_Position        : Point;
       Attributes          : SN_Attributes;
+--  ??? Why are these fields commented out
 --      Template_Parameters : Segment;
 --      Comments        : Segment;
 --      Data                : Buffer_String;
