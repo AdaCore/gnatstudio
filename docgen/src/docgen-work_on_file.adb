@@ -178,31 +178,31 @@ package body Docgen.Work_On_File is
                    Full_Name (TSFL.Data (Source_File_Node).File_Name).all
                    & " create documentation to: " & File_Name);
             Create (Doc_File, Out_File, File_Name);
-         --  Find the next and the previous package name (used for TexInfo)
+
+            --  Find the next and the previous package name (used for TexInfo)
 
             Next_Package := new String'(Find_Next_Package (J));
             Prev_Package := new String'(Find_Prev_Package (J));
 
             Process_One_File
-             (Doc_File,
-              Kernel,
-              TSFL.Data (Source_File_Node).File_Name,
-              TSFL.Data (Source_File_Node).Package_Name.all,
-              Next_Package,
-              Prev_Package,
-              Source_File_List,
-              Options,
-              Options.Process_Body_Files and then
-              TSFL.Data (Source_File_Node).Other_File_Found,
-              Subprogram_Index_List,
-              Type_Index_List,
-              Converter,
-              Doc_Directory,
-              Doc_Suffix);
+              (Doc_File,
+               Kernel,
+               TSFL.Data (Source_File_Node).File_Name,
+               TSFL.Data (Source_File_Node).Package_Name.all,
+               Next_Package,
+               Prev_Package,
+               Source_File_List,
+               Options,
+               Options.Process_Body_Files and then
+               TSFL.Data (Source_File_Node).Other_File_Found,
+               Subprogram_Index_List,
+               Type_Index_List,
+               Converter,
+               Doc_Directory,
+               Doc_Suffix);
 
             Source_File_Node := TSFL.Next (Source_File_Node);
 
-            --  close the doc file
             Close (Doc_File);
 
             Free (Next_Package);
