@@ -1203,10 +1203,10 @@ procedure GPS is
          Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
-      --  Take into account the preferences loaded when creating the kernel.
+      --  Load the preferences set when creating the kernel.
       --  This needs to be done after all the graphical elements have been
       --  created, to be sure they are realized and will take the preferences
-      --  into acocunt.
+      --  into account.
 
       Run_Hook (GPS.Kernel, Preferences_Changed_Hook);
 
