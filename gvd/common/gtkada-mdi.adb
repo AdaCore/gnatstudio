@@ -386,6 +386,7 @@ package body Gtkada.MDI is
          Type_Name    => "GtkAdaMDI");
 
       Gtk_New (MDI.Layout);
+      Set_Has_Window (MDI.Layout, True);
       Gtk.Object.Initialize_Class_Record
         (MDI.Layout,
          Signals      => No_Signals,
