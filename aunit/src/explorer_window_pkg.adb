@@ -34,7 +34,7 @@ with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Aunit_Make_Harness; use Callbacks_Aunit_Make_Harness;
 with Aunit_Make_Harness_Intl; use Aunit_Make_Harness_Intl;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
+with String_Utils; use String_Utils;
 with Ada.Text_IO; use Ada.Text_IO;
 with Gtkada.Types; use Gtkada.Types;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -127,17 +127,17 @@ package body Explorer_Window_Pkg is
    -- Fill --
    ----------
 
-   procedure Fill
-     (Explorer_Window : Explorer_Window_Access)
-   is
+   procedure Fill (Explorer_Window : Explorer_Window_Access) is
       --  Fill window list with relevant files.  Annotate entries displayed
       --  in the explorer window with their AUnit kind (test_suite or
       --  test_case)
 
-      Directory    : Dir_Type;
-      Buffer       : String (1 .. 256);
-      Last         : Natural;
-      Dummy        : Gint;
+      Directory : Dir_Type;
+      Buffer    : String (1 .. 256);
+      Last      : Natural;
+      Dummy     : Gint;
+      Harness   : Make_Harness_Window_Access :=
+        Make_Harness_Window_Access (Explorer_Window.Harness_Window);
 
    begin
 
@@ -169,7 +169,7 @@ package body Explorer_Window_Pkg is
                   Index_End : Integer;
                   Line      : String (1 .. 256);
                   Line_Last : Integer;
-                  Current_Name : String_Utils.String_Access;
+                  Current_Name : GNAT.OS_Lib.String_Access;
                   Row_Num   : Gint;
                begin
                   Ada.Text_IO.Open (File,
@@ -181,10 +181,12 @@ package body Explorer_Window_Pkg is
                      Get_Line (File, Line, Line_Last);
                      Index := 1;
                      Skip_To_String (To_Lower (Line), Index, "function");
+
                      if Index < Line_Last - 8 then
                         Index_End := Index;
                         Skip_To_String
                           (To_Lower (Line), Index_End, "access_test_suite");
+
                         if Index_End < Line_Last - 15 then
                            Index := 1;
                            Skip_To_String
@@ -199,13 +201,13 @@ package body Explorer_Window_Pkg is
                                      + ("(suite) "
                                         & Line
                                         (Index + 9 .. Index_End - 1)));
-                           if Make_Harness_Window.Suite_Name /= null then
-                              Free (Make_Harness_Window.Suite_Name);
+
+                           if Harness.Suite_Name /= null then
+                              Free (Harness.Suite_Name);
                            end if;
 
-                           Make_Harness_Window.Suite_Name := new String'
+                           Harness.Suite_Name := new String'
                              (Line (Index + 9 .. Index_End - 1));
-
                         end if;
                      end if;
                   end loop;
@@ -222,7 +224,6 @@ package body Explorer_Window_Pkg is
    exception
       when Directory_Error =>
          null;
-
    end Fill;
 
 end Explorer_Window_Pkg;

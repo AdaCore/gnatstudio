@@ -64,8 +64,8 @@ package body Explorer_Window_Pkg.Callbacks is
                          New_Dir : String) return String;
       --  Assemble directory path string
 
-      Win  : Explorer_Window_Access
-        := Explorer_Window_Access (Get_Toplevel (Object));
+      Win  : Explorer_Window_Access :=
+        Explorer_Window_Access (Get_Toplevel (Object));
       Arg1 : Gint := To_Gint (Params, 1);
       Arg2 : Gint := To_Gint (Params, 2);
 
@@ -110,8 +110,7 @@ package body Explorer_Window_Pkg.Callbacks is
          begin
             if Is_Directory (Dir_Name (Old_Dir, Name)) then
                Free (Win.Directory);
-               Win.Directory := new String'
-                 (Dir_Name (Old_Dir, Name));
+               Win.Directory := new String' (Dir_Name (Old_Dir, Name));
                Fill (Win);
             end if;
          end;
@@ -126,15 +125,18 @@ package body Explorer_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       --  Close explorer window
-      Win : Explorer_Window_Access
-        := Explorer_Window_Access (Get_Toplevel (Object));
+      Win : Explorer_Window_Access :=
+        Explorer_Window_Access (Get_Toplevel (Object));
       use Gtk.Enums.Gint_List;
+
       List : Glist := Get_Selection (Win.Clist);
+
    begin
-      Set_Text (Make_Harness_Window.File_Name_Entry,
-                Win.Directory.all
-                & Directory_Separator
-                & Get_Text (Win.Clist, Get_Data (List), 0));
+      Set_Text
+        (Make_Harness_Window_Access (Win.Harness_Window).File_Name_Entry,
+         Win.Directory.all &
+           Directory_Separator &
+           Get_Text (Win.Clist, Get_Data (List), 0));
       Hide_All (Get_Toplevel (Object));
    end On_Ok_Clicked;
 

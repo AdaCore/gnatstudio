@@ -31,8 +31,8 @@ with String_Utils; use String_Utils;
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
-with Gtkada.Dialogs;          use Gtkada.Dialogs;
-with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with Gtkada.Dialogs; use Gtkada.Dialogs;
+with String_Utils;   use String_Utils;
 
 package body Make_Harness_Window_Pkg.Callbacks is
    --  Callbacks for main "AUnit_Make_Harness" window.  Template
@@ -88,13 +88,22 @@ package body Make_Harness_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
       --  Open explorer window to select suite
+      Top : Make_Harness_Window_Access :=
+        Make_Harness_Window_Access (Get_Toplevel (Object));
+
    begin
-      if Explorer_Window.Directory /= null then
-         Free (Explorer_Window.Directory);
+      if Top.Explorer = null then
+         Gtk_New (Top.Explorer);
+         Top.Explorer.Harness_Window := Gtk_Window (Top);
       end if;
-      Explorer_Window.Directory := new String' (".");
-      Explorer_Window_Pkg.Fill (Explorer_Window);
-      Show_All (Explorer_Window);
+
+      if Top.Explorer.Directory /= null then
+         Free (Top.Explorer.Directory);
+      end if;
+
+      Top.Explorer.Directory := new String' (".");
+      Fill (Top.Explorer);
+      Show_All (Top.Explorer);
    end On_Browse_Clicked;
 
    -------------------
@@ -107,21 +116,21 @@ package body Make_Harness_Window_Pkg.Callbacks is
       --  Generate harness body source file.  Exit program if
       --  successful
 
-      Win : Make_Harness_Window_Access
-        := Make_Harness_Window_Access (Get_Toplevel (Object));
+      Top : Make_Harness_Window_Access :=
+        Make_Harness_Window_Access (Get_Toplevel (Object));
       File : File_Type;
-      Procedure_Name : String := Get_Text (Win.Procedure_Entry);
-      File_Name : String := Get_Text (Win.File_Name_Entry);
+      Procedure_Name : String := Get_Text (Top.Procedure_Entry);
+      File_Name : String := Get_Text (Top.File_Name_Entry);
    begin
       if Procedure_Name /= ""
         and then File_Name /= ""
 
       then
-         Ada_Case (Procedure_Name);
-         Ada_Case (File_Name);
+         Mixed_Case (Procedure_Name);
+         Mixed_Case (File_Name);
 
-         if Make_Harness_Window.Suite_Name = null then
-            Make_Harness_Window.Suite_Name := new String' ("");
+         if Top.Suite_Name = null then
+            Top.Suite_Name := new String' ("");
          end if;
 
          if Is_Regular_File (To_File_Name (Procedure_Name) & ".adb") then
@@ -144,13 +153,13 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Put_Line (File,
                    "with AUnit.Test_Runner;" & ASCII.LF
                    & "with " &
-                   Make_Harness_Window.Suite_Name.all & ";"
+                   Top.Suite_Name.all & ";"
                    & ASCII.LF
                    & ASCII.LF
                    & "procedure " & Procedure_Name & " is" & ASCII.LF
                    & ASCII.LF
                    & "   procedure Run is new AUnit.Test_Runner ("
-                   & Make_Harness_Window.Suite_Name.all
+                   & Top.Suite_Name.all
                    & ");"
                    & ASCII.LF
                    & ASCII.LF
@@ -161,6 +170,8 @@ package body Make_Harness_Window_Pkg.Callbacks is
          Close (File);
          Put (To_Lower (Procedure_Name));
       end if;
+
+      Destroy (Top);
       Main_Quit;
    end On_Ok_Clicked;
 
@@ -172,6 +183,7 @@ package body Make_Harness_Window_Pkg.Callbacks is
      (Object : access Gtk_Button_Record'Class)
    is
    begin
+      Destroy (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
 
