@@ -1606,6 +1606,7 @@ package body Src_Editor_Buffer.Line_Information is
       pragma Unreferenced (Result);
 
       Cursor_Move : constant Boolean := Buffer.Do_Not_Move_Cursor;
+      Line        : Editable_Line_Type;
    begin
       if Buffer.Block_Highlighting_Column = -1 then
          return;
@@ -1613,7 +1614,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       Buffer.Do_Not_Move_Cursor := True;
 
-      for Line in reverse 1 .. Buffer.Last_Editable_Line loop
+      Line := 1;
+
+      loop
+         exit when Line > Buffer.Last_Editable_Line;
          if Buffer.Editable_Lines (Line).Side_Info_Data /= null
            and then Buffer.Editable_Lines
              (Line).Side_Info_Data
@@ -1626,6 +1630,7 @@ package body Src_Editor_Buffer.Line_Information is
             if Command /= null
               and then Command.all in Unhide_Editable_Lines_Type'Class
             then
+               Line := Unhide_Editable_Lines_Type (Command.all).Last_Line;
                Result := Execute (Command);
 
                --  Set the field Blocks_Need_Parsing to False to indicate
@@ -1634,6 +1639,8 @@ package body Src_Editor_Buffer.Line_Information is
                Buffer.Blocks_Need_Parsing := False;
             end if;
          end if;
+
+         Line := Line + 1;
       end loop;
 
       Buffer.Do_Not_Move_Cursor := Cursor_Move;
