@@ -157,17 +157,26 @@ package body Switches_Editors is
          Index  : in out Natural)
       is
          use Widget_List;
-
          List  : Gtk_List := Get_List (Combo);
-         Value : Gint := Child_Position
-           (List, Get_Data (Get_Selection (List)));
-         Level : constant String := Gint'Image (Value);
+         Value : Gint;
 
       begin
-         if Value /= 0 then
-            Arr (Index) := new String'
-              (Switch & Level (Level'First + 1 .. Level'Last));
-            Index := Index + 1;
+         --  Check whether there is an actual selection. With gtk+2.0, the entry
+         --  emits the "changed" signal more often, even in some cases where
+         --  there is no actual selection in the list. However, the callback is
+         --  called again later on.
+         if Get_Selection (List) /= Null_List then
+            Value := Child_Position
+              (List, Get_Data (Get_Selection (List)));
+            declare
+               Level : constant String := Gint'Image (Value);
+            begin
+               if Value /= 0 then
+                  Arr (Index) := new String'
+                    (Switch & Level (Level'First + 1 .. Level'Last));
+                  Index := Index + 1;
+               end if;
+            end;
          end if;
       end Check_Combo;
 
