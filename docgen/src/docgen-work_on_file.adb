@@ -823,7 +823,7 @@ package body Docgen.Work_On_File is
 
       Process_One_File_Commands.Create
         (C,
-         -"Documenting",
+         -"Generating Doc",
          (Kernel                        => Kernel_Handle (Kernel),
           Backend                       => Backend.Backend_Handle (B),
           Options                       => Options,
@@ -840,8 +840,7 @@ package body Docgen.Work_On_File is
          Process_One_File_Iterate'Access);
 
       Launch_Background_Command
-        (Kernel, Command_Access (C), True, True, "Documenting");
-
+        (Kernel, Command_Access (C), True, True, "Generating Doc");
    end Process_Files;
 
    ----------------------
