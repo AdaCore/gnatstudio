@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Arguments;             use Gtk.Arguments;
@@ -555,7 +554,7 @@ package body VCS_View_API is
                Context_Callback.Connect
                  (Item, "activate",
                   Context_Callback.To_Marshaller
-                  (On_Menu_Edit_Log'Access),
+                  (On_Menu_Commit'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item);
@@ -1020,8 +1019,12 @@ package body VCS_View_API is
    is
       pragma Unreferenced (Widget);
 
-      Kernel   : constant Kernel_Handle := Get_Kernel (Context);
-      Files    : String_List.List;
+      Kernel         : constant Kernel_Handle := Get_Kernel (Context);
+      Files          : String_List.List;
+      Files_Temp     : String_List.List_Node;
+      All_Logs_Exist : Boolean := True;
+
+      use type String_List.List_Node;
    begin
       Files := Get_Selected_Files (Context);
 
@@ -1029,7 +1032,27 @@ package body VCS_View_API is
          return;
       end if;
 
-      Commit_Files (Kernel, Get_Current_Ref (Context), Files);
+      Files_Temp := String_List.First (Files);
+
+      --  Open log editors for files that don't have a log.
+      while Files_Temp /= String_List.Null_Node loop
+         if Get_Log_From_File
+           (Kernel, String_List.Data (Files_Temp), False) = ""
+         then
+            All_Logs_Exist := False;
+            Open_File_Editor
+              (Kernel,
+               Get_Log_From_File (Kernel, String_List.Data (Files_Temp)));
+         end if;
+
+         Files_Temp := String_List.Next (Files_Temp);
+      end loop;
+
+      --  If All files have a log, commit the whole lot.
+      if All_Logs_Exist then
+         Commit_Files (Kernel, Get_Current_Ref (Context), Files);
+      end if;
+
       String_List.Free (Files);
 
    exception
