@@ -168,6 +168,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Revert
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Annotate
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -443,13 +447,9 @@ package body VCS_View_API is
 
    procedure Revert
      (Widget : access GObject_Record'Class;
-      Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget, Kernel);
+      Kernel : Kernel_Handle) is
    begin
-      --  ??? Not implemented yet.
-      --  On_Menu_Revert (Widget, Get_Current_Context (Kernel));
-      null;
+      On_Menu_Revert (Widget, Get_Current_Context (Kernel));
    end Revert;
 
    ------------
@@ -792,6 +792,14 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Remove'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label => -"Revert to repository revision");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Revert'Access),
                   Selection_Context_Access (Context));
             end if;
          end;
@@ -1562,6 +1570,35 @@ package body VCS_View_API is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_Add;
+
+   --------------------
+   -- On_Menu_Revert --
+   --------------------
+
+   procedure On_Menu_Revert
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      pragma Unreferenced (Widget);
+      Files : String_List.List;
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         Console.Insert
+           (Get_Kernel (Context), -"VCS: No file selected, cannot remove file",
+            Mode => Error);
+         return;
+      end if;
+
+      Revert (Get_Current_Ref (Context), Files);
+      Get_Status (Get_Current_Ref (Context), Files);
+
+      String_List.Free (Files);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Revert;
 
    --------------------
    -- On_Menu_Remove --
