@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1384,7 +1384,7 @@ package body Python_Module is
       Errors             : out Boolean) is
    begin
       Execute_Command
-        (Script, "execfile (""" & Filename & """)",
+        (Script, "execfile (r'" & Filename & "')",
          Console, Hide_Output, True, Errors);
    end Execute_File;
 
