@@ -20,6 +20,7 @@
 
 with Src_Editor_Box;
 with Glide_Kernel;
+with Gtkada.MDI;
 
 package Src_Editor_Module is
 
@@ -36,5 +37,10 @@ package Src_Editor_Module is
    --  Return the source editor that has currently the focus in the MDI.
    --  If the focus in the MDI is not set on a source editor, then the top most
    --  editor is returned.
+
+   function Get_Source_Box_From_MDI
+     (Child : Gtkada.MDI.MDI_Child) return Src_Editor_Box.Source_Editor_Box;
+   --  Return the source editor contained in a MDI_Child. Constraint_Error if
+   --  Child doesn't contain an editor. null is returned Child is null.
 
 end Src_Editor_Module;

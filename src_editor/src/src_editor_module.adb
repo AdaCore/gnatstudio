@@ -463,20 +463,28 @@ package body Src_Editor_Module is
       return null;
    end Save_Desktop;
 
-   -------------------------
-   -- Find_Current_Editor --
-   -------------------------
+   -----------------------------
+   -- Get_Source_Box_From_MDI --
+   -----------------------------
 
-   function Find_Current_Editor
-     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box
-   is
-      Child : constant MDI_Child := Find_Current_Editor (Kernel);
+   function Get_Source_Box_From_MDI
+     (Child : Gtkada.MDI.MDI_Child) return Source_Editor_Box is
    begin
       if Child = null then
          return null;
       else
          return Source_Box (Get_Widget (Child)).Editor;
       end if;
+   end Get_Source_Box_From_MDI;
+
+   -------------------------
+   -- Find_Current_Editor --
+   -------------------------
+
+   function Find_Current_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return Source_Editor_Box is
+   begin
+      return Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
    end Find_Current_Editor;
 
    -------------------------
