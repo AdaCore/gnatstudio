@@ -24,7 +24,6 @@ with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtkada.Types;        use Gtkada.Types;
 with Odd.Canvas;          use Odd.Canvas;
-with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Widget;          use Gtk.Widget;
