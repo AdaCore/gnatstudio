@@ -75,11 +75,10 @@ package body GVD.Code_Editors is
    ------------------
 
    procedure Gtk_New_Hbox
-     (Editor      : out Code_Editor;
-      Process     : access Gtk.Widget.Gtk_Widget_Record'Class) is
+     (Editor  : out Code_Editor;
+      Process : access Gtk.Widget.Gtk_Widget_Record'Class) is
    begin
       Editor := new Code_Editor_Record;
-
       Initialize (Editor, Process);
    end Gtk_New_Hbox;
 
@@ -142,25 +141,23 @@ package body GVD.Code_Editors is
 
    begin
       Editor.Source_Line := Line;
-
       Set_Line (Editor.Source, Line, Set_Current, Process);
 
       if Set_Current then
-         --  If the assembly code is displayed, highlight the code for the
-         --  current line
-
-         if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-            Highlight_Address_Range (Editor.Asm, Line);
-         end if;
-
          if Top.Standalone then
             Set_Current_Line (Editor.Explorer, Line);
          end if;
 
          --  Highlight the background of the current source line
          Highlight_Current_Line (Editor.Source);
-      end if;
 
+         --  If the assembly code is displayed, highlight the code for the
+         --  current line
+
+         if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
+            Highlight_Address_Range (Editor.Asm, Line);
+         end if;
+      end if;
    end Set_Line;
 
    --------------
@@ -171,6 +168,15 @@ package body GVD.Code_Editors is
    begin
       return Get_Line (Editor.Source);
    end Get_Line;
+
+   --------------
+   -- Set_Mode --
+   --------------
+
+   procedure Set_Mode (Editor : access Code_Editor_Record; Mode : View_Mode) is
+   begin
+      Editor.Mode := Mode;
+   end Set_Mode;
 
    --------------
    -- Get_Mode --
@@ -234,6 +240,20 @@ package body GVD.Code_Editors is
    begin
       return Editor.Asm;
    end Get_Asm;
+
+   ---------------------
+   -- Get_Asm_Address --
+   ---------------------
+
+   function Get_Asm_Address
+     (Editor : access Code_Editor_Record'Class) return String is
+   begin
+      if Editor.Asm_Address = null then
+         return "";
+      else
+         return Editor.Asm_Address.all;
+      end if;
+   end Get_Asm_Address;
 
    ------------------
    -- Show_Message --
@@ -410,7 +430,6 @@ package body GVD.Code_Editors is
       Gtk_New (Mitem, Label => -"Show...");
       Append (Menu, Mitem);
       Set_Submenu (Mitem, Show_Submenu);
-
    end Append_To_Contextual_Menu;
 
    ----------------

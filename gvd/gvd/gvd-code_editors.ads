@@ -137,6 +137,9 @@ package GVD.Code_Editors is
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
 
+   procedure Set_Mode (Editor : access Code_Editor_Record; Mode : View_Mode);
+   --  Set the current view mode of Editor.
+
    function Get_Mode (Editor : access Code_Editor_Record) return View_Mode;
    --  Return the current view mode of Editor.
 
@@ -163,6 +166,11 @@ package GVD.Code_Editors is
      (Editor : access Code_Editor_Record'Class)
       return GVD.Text_Box.Asm_Editor.Asm_Editor;
    --  Return the widget used to display the asm code
+
+   function Get_Asm_Address
+     (Editor : access Code_Editor_Record'Class) return String;
+   --  Return the current address (program counter) associated with the
+   --  assembly window.
 
    function Get_Current_File
      (Editor : access Code_Editor_Record) return String;
