@@ -97,7 +97,7 @@ package body Cpp_Module is
       Add_Language_Info
         (Handler, "c++",
          LI                  => LI_Handler (LI),
-         Default_Spec_Suffix => ".h",
+         Default_Spec_Suffix => ".hh",
          Default_Body_Suffix => ".cc");
    end Register_Module;
 
