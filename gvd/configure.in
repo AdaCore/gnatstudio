@@ -1,10 +1,13 @@
 AC_REVISION($Revision$)
-AC_INIT(gvd/gvd.ads)
+AC_INIT(gvd/gvd.ads.in)
 
-ODD_MAJOR_VERSION=0
-ODD_MINOR_VERSION=6
-ODD_MICRO_VERSION=0
-ODD_VERSION=$ODD_MAJOR_VERSION.$ODD_MINOR_VERSION.$ODD_MICRO_VERSION
+GVD_MAJOR_VERSION=0
+GVD_MINOR_VERSION=7
+GVD_MICRO_VERSION=0
+GVD_VERSION=$GVD_MAJOR_VERSION.$GVD_MINOR_VERSION.$GVD_MICRO_VERSION
+
+STRIP_CR=False
+ASYNC_COMMANDS=True
 
 AC_CANONICAL_SYSTEM
 
@@ -13,9 +16,11 @@ AC_CANONICAL_SYSTEM
 AC_ARG_WITH(ptys,
 [  --without-ptys          don't use ptys to communicate with the debuggers],
 [if test "$withval" = yes; then
-   AC_DEFINE(GVD_USE_PTYS)
-fi],
-AC_DEFINE(GVD_USE_PTYS))
+   USE_PTYS=True
+ else
+   USE_PTYS=False
+ fi],
+USE_PTYS=True)
 
 
 ######## checking for local tools ###
@@ -50,6 +55,13 @@ case "${host}" in
   ;;
   mips-sgi-irix6* )
     machine=iris4d opsys=irix6-0
+  ;;
+
+  ## Windows
+  *-mingw32msv* )
+    machine=intel386 opsys=windows
+    STRIP_CR=True
+    ASYNC_COMMANDS=False
   ;;
 
   ## IBM, AIX machines
@@ -146,8 +158,7 @@ case "${host}" in
      exit;;
 esac
 
-
-machfile="'\"m/${machine}.h\"'"
+machfile="'\"machine/${machine}.h\"'"
 opsysfile="'\"system/${opsys}.h\"'"
 
 AC_SUBST(opsysfile)
@@ -165,11 +176,14 @@ esac
 AM_PATH_GTK(1.2.9,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
 
 # Set the version number of Odd
-AC_SUBST(ODD_VERSION)
+AC_SUBST(STRIP_CR)
+AC_SUBST(USE_PTYS)
+AC_SUBST(ASYNC_COMMANDS)
+AC_SUBST(GVD_VERSION)
 AC_SUBST(TARGET_CFLAGS)
 AC_SUBST(TARGET_LFLAGS)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 
-AC_OUTPUT(gvd/Makefile tests/Makefile gnat/Makefile)
+AC_OUTPUT(gvd/Makefile gvd/gvd.ads tests/Makefile gnat/Makefile)
