@@ -160,6 +160,13 @@ package Codefix.Formal_Errors is
    --  Move all use and with clauses to the body, if needed. Otherwise, their
    --  are just deleted.
 
+   function Make_Conformant
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Body_Cursor  : File_Cursor'Class;
+      Spec_Cursor  : File_Cursor'Class) return Solution_List;
+   --  Propose to make the body profile conformant with the spec one, or
+   --  the spec profile conformant with the body one.
+
 private
 
    type Error_Message is new File_Cursor with record

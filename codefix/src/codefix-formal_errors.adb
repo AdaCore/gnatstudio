@@ -760,4 +760,28 @@ package body Codefix.Formal_Errors is
 
    end Move_With_To_Body;
 
+   ---------------------
+   -- Make_Conformant --
+   ---------------------
+
+   function Make_Conformant
+     (Current_Text : Text_Navigator_Abstr'Class;
+      Body_Cursor  : File_Cursor'Class;
+      Spec_Cursor  : File_Cursor'Class) return Solution_List
+   is
+      Result : Solution_List;
+      Command1, Command2 : Paste_Profile_Cmd;
+   begin
+      Initialize (Command1, Current_Text, Body_Cursor, Spec_Cursor);
+      Initialize (Command2, Current_Text, Spec_Cursor, Body_Cursor);
+
+      Set_Caption (Command1, "Change the body to be conformant with the spec");
+      Set_Caption (Command2, "Change the spec to be conformant with the body");
+
+      Append (Result, Command1);
+      Append (Result, Command2);
+
+      return Result;
+   end Make_Conformant;
+
 end Codefix.Formal_Errors;
