@@ -15,8 +15,8 @@ with Gtk.Button; use Gtk.Button;
 package Vdiff_Pkg is
 
    type Vdiff_Record is new Gtk_Window_Record with record
-      Vbox1 : Gtk_Vbox;
-      Toolbar1 : Gtk_Toolbar;
+      Main_Box : Gtk_Vbox;
+      Toolbar : Gtk_Toolbar;
       Button1 : Gtk_Widget;
       Button2 : Gtk_Widget;
       Button3 : Gtk_Widget;
@@ -54,7 +54,7 @@ package Vdiff_Pkg is
       Clist2 : Gtk_Clist;
       Label10 : Gtk_Label;
       Label11 : Gtk_Label;
-      Statusbar1 : Gtk_Statusbar;
+      Statusbar : Gtk_Statusbar;
    end record;
    type Vdiff_Access is access all Vdiff_Record'Class;
 

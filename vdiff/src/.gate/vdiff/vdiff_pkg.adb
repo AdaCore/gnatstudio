@@ -26,48 +26,48 @@ begin
    Set_Position (Vdiff, Win_Pos_None);
    Set_Modal (Vdiff, False);
 
-   Gtk_New_Vbox (Vdiff.Vbox1, False, 5);
-   Add (Vdiff, Vdiff.Vbox1);
+   Gtk_New_Vbox (Vdiff.Main_Box, False, 5);
+   Add (Vdiff, Vdiff.Main_Box);
 
-   Gtk_New (Vdiff.Toolbar1, Orientation_Horizontal, Toolbar_Icons);
-   Set_Border_Width (Vdiff.Toolbar1, 4);
-   Set_Space_Size (Vdiff.Toolbar1, 5);
-   Set_Space_Style (Vdiff.Toolbar1, Toolbar_Space_Empty);
-   Set_Tooltips (Vdiff.Toolbar1, True);
-   Set_Button_Relief (Vdiff.Toolbar1, Relief_Normal);
+   Gtk_New (Vdiff.Toolbar, Orientation_Horizontal, Toolbar_Icons);
+   Set_Border_Width (Vdiff.Toolbar, 4);
+   Set_Space_Size (Vdiff.Toolbar, 5);
+   Set_Space_Style (Vdiff.Toolbar, Toolbar_Space_Empty);
+   Set_Tooltips (Vdiff.Toolbar, True);
+   Set_Button_Relief (Vdiff.Toolbar, Relief_Normal);
    Vdiff.Button1 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button2 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button3 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button4 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button5 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button6 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button7 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
    Vdiff.Button8 := Append_Element
-     (Toolbar => Vdiff.Toolbar1,
+     (Toolbar => Vdiff.Toolbar,
       The_Type => Toolbar_Child_Button,
       Text => -"button1");
-   Pack_Start (Vdiff.Vbox1, Vdiff.Toolbar1, False, False, 0);
+   Pack_Start (Vdiff.Main_Box, Vdiff.Toolbar, False, False, 0);
 
    Gtk_New (Vdiff.Search_Combo);
    Set_Case_Sensitive (Vdiff.Search_Combo, False);
@@ -76,7 +76,7 @@ begin
    String_List.Append (Search_Combo_Items, -"");
    Combo.Set_Popdown_Strings (Vdiff.Search_Combo, Search_Combo_Items);
    Free_String_List (Search_Combo_Items);
-   Append_Widget (Vdiff.Toolbar1, Vdiff.Search_Combo);
+   Append_Widget (Vdiff.Toolbar, Vdiff.Search_Combo);
 
    Vdiff.Combo_Entry1 := Get_Entry (Vdiff.Search_Combo);
    Set_Editable (Vdiff.Combo_Entry1, True);
@@ -86,7 +86,7 @@ begin
 
    Gtk_New (Vdiff.Main_Frame);
    Set_Shadow_Type (Vdiff.Main_Frame, Shadow_Etched_In);
-   Pack_Start (Vdiff.Vbox1, Vdiff.Main_Frame, True, True, 0);
+   Pack_Start (Vdiff.Main_Box, Vdiff.Main_Frame, True, True, 0);
 
    Gtk_New_Hbox (Vdiff.Hbox2, False, 0);
    Add (Vdiff.Main_Frame, Vdiff.Hbox2);
@@ -216,8 +216,8 @@ begin
    Set_Line_Wrap (Vdiff.Label11, False);
    Set_Column_Widget (Vdiff.Clist2, 1, Vdiff.Label11);
 
-   Gtk_New (Vdiff.Statusbar1);
-   Pack_Start (Vdiff.Vbox1, Vdiff.Statusbar1, False, False, 0);
+   Gtk_New (Vdiff.Statusbar);
+   Pack_Start (Vdiff.Main_Box, Vdiff.Statusbar, False, False, 0);
 
 end Initialize;
 
