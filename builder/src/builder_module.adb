@@ -1975,21 +1975,24 @@ package body Builder_Module is
         (1 => new String'(-Error_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Error_Src_Highlight))));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.register_highlighting", Args);
       Free (Args);
 
       Args :=
         (1 => new String'(-Style_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Style_Src_Highlight))));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.register_highlighting", Args);
       Free (Args);
 
       Args :=
         (1 => new String'(-Warning_Category),
          2 => new String'
            (To_String (Get_Pref (Kernel, Warning_Src_Highlight))));
-      Execute_GPS_Shell_Command (Kernel, "register_highlighting", Args);
+      Execute_GPS_Shell_Command
+        (Kernel, "Editor.register_highlighting", Args);
       Free (Args);
    end Preferences_Changed;
 
