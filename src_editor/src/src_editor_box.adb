@@ -365,10 +365,25 @@ package body Src_Editor_Box is
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
       Lang_Autodetect : Boolean := True;
-      Success         : out Boolean) is
+      Success         : out Boolean)
+   is
+      Ignored : Boolean;
    begin
       Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
+      Set_Cursor_Location (Editor, 1, 1, Ignored);
    end Load_File;
+
+   ------------------
+   -- Save_To_File --
+   ------------------
+
+   procedure Save_To_File
+     (Editor   : access Source_Editor_Box_Record;
+      Filename : String;
+      Success  : out Boolean) is
+   begin
+      Save_To_File (Editor.Source_Buffer, Filename, Success);
+   end Save_To_File;
 
    ------------------
    -- Set_Language --
