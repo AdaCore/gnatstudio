@@ -1849,7 +1849,7 @@ package body Src_Editor_Buffer is
          Base_Name (Buffer.Filename.all));
       Set_Area_Information (Context, Start_Line, End_Line);
       Glide_Kernel.Source_Lines_Revealed (Buffer.Kernel, Context);
-      --  ??? When is this context destroyed ?
+      Free (Selection_Context_Access (Context));
    end Source_Lines_Revealed;
 
    ---------------------
