@@ -374,7 +374,8 @@ package body Help_Module is
 
       while Tmp /= null loop
          if Tmp.Tag.all = "shell_doc"
-           and then Get_Attribute (Tmp, "name", "") = Full_Name
+           and then (Get_Attribute (Tmp, "name", "") = Full_Name
+                     or else Get_Attribute (Tmp, "real_name", "") = Full_Name)
          then
             Child := Tmp.Child;
             while Child /= null loop
