@@ -2696,6 +2696,13 @@ package body Src_Editor_Buffer is
    begin
       if not Internal then
          if Name_Changed then
+            --  If we are saving to a real name an Untitled editor, emit
+            --  a "closed" signal for this editor.
+
+            if Buffer.Filename = VFS.No_File then
+               File_Closed (Buffer.Kernel, Buffer.File_Identifier);
+            end if;
+
             Buffer.Filename := Filename;
          end if;
 
