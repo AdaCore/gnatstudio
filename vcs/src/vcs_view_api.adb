@@ -625,6 +625,7 @@ package body VCS_View_API is
       File_Context : File_Selection_Context_Access;
    begin
       Open_Explorer (Get_Kernel (Context));
+      Clear (Get_Explorer (Get_Kernel (Context)));
 
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
