@@ -22,7 +22,10 @@ with Glib;                      use Glib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Image;                 use Gtk.Image;
+with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Handlers;              use Gtk.Handlers;
+with Glib.Object;               use Glib.Object;
 
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
@@ -32,6 +35,7 @@ with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;                use Glide_Intl;
 with Projects;                  use Projects;
 
@@ -47,11 +51,107 @@ with Commands.Custom;           use Commands.Custom;
 
 package body Custom_Module is
 
+   type Contextual_Menu_Record;
+   type Contextual_Menu_Access is access all Contextual_Menu_Record;
+   type Contextual_Menu_Record is record
+      Title  : String_Access;
+      Action : Action_Record;
+      Next   : Contextual_Menu_Access;
+   end record;
+
+   type Custom_Module_ID_Record is new Module_ID_Record with record
+      Contextual : Contextual_Menu_Access;
+   end record;
+   type Custom_Module_ID_Access is access all Custom_Module_ID_Record'Class;
+
+   Custom_Module_ID   : Custom_Module_ID_Access;
+
+   package Action_Callback is new Gtk.Handlers.User_Callback
+     (Glib.Object.GObject_Record, Action_Record);
+
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when a new customization in parsed
+
+   procedure Contextual_Handler
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
+   --  Handles requests to display contextual menus
+
+   procedure Register_Contextual_Menu
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Menu_Title : String;
+      Action     : Action_Record);
+   --  Register a new contextual menu
+
+   procedure Contextual_Action
+     (Kernel : access GObject_Record'Class; Action : Action_Record);
+   --  Execute action
+
+   -----------------------
+   -- Contextual_Action --
+   -----------------------
+
+   procedure Contextual_Action
+     (Kernel : access GObject_Record'Class; Action : Action_Record) is
+   begin
+      Launch_Background_Command
+        (Kernel          => Kernel_Handle (Kernel),
+         Command         => Action.Command,
+         Active          => True,
+         Destroy_On_Exit => False);
+   end Contextual_Action;
+
+   ------------------------------
+   -- Register_Contextual_Menu --
+   ------------------------------
+
+   procedure Register_Contextual_Menu
+     (Kernel     : access Kernel_Handle_Record'Class;
+      Menu_Title : String;
+      Action     : Action_Record)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      Custom_Module_ID.Contextual := new Contextual_Menu_Record'
+        (Title  => new String'(Menu_Title),
+         Action => Action,
+         Next   => Custom_Module_ID.Contextual);
+   end Register_Contextual_Menu;
+
+   ------------------------
+   -- Contextual_Handler --
+   ------------------------
+
+   procedure Contextual_Handler
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
+   is
+      pragma Unreferenced (Object);
+      Contextual : Contextual_Menu_Access := Custom_Module_ID.Contextual;
+      Item       : Gtk_Menu_Item;
+   begin
+      while Contextual /= null loop
+         if Filter_Matches
+           (Contextual.Action.Filter, Selection_Context_Access (Context),
+            Get_Kernel (Context))
+         then
+            Gtk_New (Item, Contextual.Title.all);
+            Append (Menu, Item);
+            Action_Callback.Object_Connect
+              (Item, "activate",
+               Action_Callback.To_Marshaller (Contextual_Action'Access),
+               User_Data   => Contextual.Action,
+               Slot_Object => Get_Kernel (Context));
+         end if;
+
+         Contextual := Contextual.Next;
+      end loop;
+   end Contextual_Handler;
 
    ---------------
    -- Customize --
@@ -74,11 +174,67 @@ package body Custom_Module is
       --  what Current_Node contains.
 
       procedure Parse_Action_Node (Node : Node_Ptr);
+      procedure Parse_Contextual_Node (Node : Node_Ptr);
       procedure Parse_Button_Node (Node : Node_Ptr);
       procedure Parse_Tool_Node (Node : Node_Ptr);
       procedure Parse_Menu_Node (Node : Node_Ptr; Parent_Path : UTF8_String);
       function Parse_Filter_Node (Node : Node_Ptr) return Action_Filter;
       --  Parse the various nodes: <action>, <shell>, ...
+
+      ---------------------------
+      -- Parse_Contextual_Node --
+      ---------------------------
+
+      procedure Parse_Contextual_Node (Node : Node_Ptr) is
+         Action  : constant String := Get_Attribute (Node, "action");
+         Child   : Node_Ptr;
+         Title   : String_Access;
+         Command : Action_Record;
+      begin
+         if Action = "" then
+            Insert (Kernel,
+                    -"<contextual> nodes must have an action attribute",
+                    Mode => Error);
+            raise Assert_Failure;
+         end if;
+
+         Title := new String'(Action);
+
+         Child := Node.Child;
+         while Child /= null loop
+            if To_Lower (Child.Tag.all) = "title" then
+               Free (Title);
+               Title := new String'(Child.Value.all);
+
+            else
+               Insert
+                 (Kernel,
+                  -"Invalid child node for <contextual>: " & Child.Tag.all,
+                  Mode => Error);
+               Free (Title);
+               raise Assert_Failure;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         Command := Lookup_Action (Kernel, Action);
+         if Command.Command = null then
+            Insert (Kernel,
+                    -"Command not found when creating contextual menu: "
+                    & Action,
+                    Mode => Error);
+            Free (Title);
+            raise Assert_Failure;
+         end if;
+
+         Register_Contextual_Menu
+           (Kernel,
+            Menu_Title => Title.all,
+            Action     => Command);
+
+         Free (Title);
+      end Parse_Contextual_Node;
 
       ---------------------
       -- Parse_Tool_Node --
@@ -140,6 +296,7 @@ package body Custom_Module is
                Shell   : constant String  := Get_Attribute (Node, "shell_cmd");
                Shell_Lang : constant String :=
                  Get_Attribute (Node, "shell_lang", GPS_Shell_Name);
+               Module  : constant String := Get_Attribute (Node, "module");
                Id      : constant String := Get_Attribute (Node, "id");
             begin
                if Id /= "" then
@@ -156,7 +313,8 @@ package body Custom_Module is
                     (Create
                        (Language   => Lang,
                         Shell      => Shell,
-                        Shell_Lang => Shell_Lang));
+                        Shell_Lang => Shell_Lang,
+                        Module     => Module));
                   Set_Error_Message (Filter, Get_Attribute (Node, "error"));
                end if;
             end;
@@ -198,6 +356,7 @@ package body Custom_Module is
          Command : Custom_Command_Access;
          Description : String_Access := new String'("");
          Filter_A    : Action_Filter;
+         Implicit_Filter : Action_Filter;
       begin
          if Name = "" then
             Insert
@@ -244,6 +403,21 @@ package body Custom_Module is
          Create (Command, Kernel_Handle (Kernel), Node.Child,
                  Default_Output => Get_Attribute
                    (Node, "output", Console_Output));
+
+         Implicit_Filter := Create_Filter (Node.Child);
+
+         if Implicit_Filter /= null then
+            if Filter_A /= null then
+               declare
+                  Error : constant String := Get_Error_Message (Filter_A);
+               begin
+                  Filter_A := Action_Filter (Filter_A and Implicit_Filter);
+                  Set_Error_Message (Filter_A, Error);
+               end;
+            else
+               Filter_A := Implicit_Filter;
+            end if;
+         end if;
 
          Register_Action
            (Kernel,
@@ -460,6 +634,9 @@ package body Custom_Module is
          elsif To_Lower (Current_Node.Tag.all) = "action" then
             Parse_Action_Node (Current_Node);
 
+         elsif To_Lower (Current_Node.Tag.all) = "contextual" then
+            Parse_Contextual_Node (Current_Node);
+
          elsif To_Lower (Current_Node.Tag.all) = "filter"
            or else To_Lower (Current_Node.Tag.all) = "filter_and"
            or else To_Lower (Current_Node.Tag.all) = "filter_or"
@@ -503,14 +680,14 @@ package body Custom_Module is
    ---------------------
 
    procedure Register_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Custom_Module_ID   : Glide_Kernel.Module_ID;
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
+      Custom_Module_ID := new Custom_Module_ID_Record;
       Register_Module
-        (Module                  => Custom_Module_ID,
+        (Module                  => Module_ID (Custom_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => "Custom",
+         Contextual_Menu_Handler => Contextual_Handler'Access,
          Priority                => Low_Priority,
          Customization_Handler   => Customize'Access);
    end Register_Module;
