@@ -64,7 +64,7 @@ package body Browsers.Call_Graph is
    type Entity_Idle_Data is record
       Kernel : Kernel_Handle;
       Iter   : Entity_Reference_Iterator_Access;
-      Decl   : E_Declaration_Info;
+      Entity : Entity_Information;
    end record;
    package Entity_Iterator_Idle is new Gtk.Main.Idle (Entity_Idle_Data);
 
@@ -147,6 +147,9 @@ package body Browsers.Call_Graph is
    --  Add a new entity to the browser, if not already there.
 
    procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data);
+   --  Called when the idle loop is destroyed.
+
+   procedure Destroy_Idle (Data : in out Entity_Idle_Data);
    --  Called when the idle loop is destroyed.
 
    procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
@@ -660,24 +663,21 @@ package body Browsers.Call_Graph is
       Entity      : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Lib_Info    : LI_File_Ptr;
-      Decl        : E_Declaration_Info;
       Node_Entity : Entity_Information;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
-      Decl := Get_Declaration (Entity);
+      Node_Entity := Get_Entity (Entity);
 
-      if Decl /= No_Declaration_Info then
+      if Node_Entity /= No_Entity_Information then
          --  ??? Should check that Decl.Kind is a subprogram
 
          Lib_Info := Locate_From_Source_And_Complete
-           (Get_Kernel (Entity), Get_File (Get_Location (Decl)));
+           (Get_Kernel (Entity), Get_Declaration_File_Of (Node_Entity));
 
          if Lib_Info /= No_LI_File then
-            Node_Entity := Get_Entity (Decl);
             Examine_Entity_Call_Graph
               (Get_Kernel (Entity), Lib_Info, Node_Entity);
-            Destroy (Node_Entity);
          end if;
 
       else
@@ -710,16 +710,14 @@ package body Browsers.Call_Graph is
 
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Decl     : E_Declaration_Info;
       Info : Entity_Information;
 
    begin
       Push_State (Get_Kernel (Entity), Busy);
-      Decl := Get_Declaration (Entity);
-
-      Info := Get_Entity (Decl);
-      Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
-      Destroy (Info);
+      Info := Get_Entity (Entity);
+      if Info /= No_Entity_Information then
+         Examine_Ancestors_Call_Graph (Get_Kernel (Entity), Info);
+      end if;
 
       Pop_State (Get_Kernel (Entity));
 
@@ -730,23 +728,28 @@ package body Browsers.Call_Graph is
                  & Entity_Name_Information (Entity),
                  Mode => Error);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         Destroy (Info);
          Pop_State (Get_Kernel (Entity));
    end Edit_Ancestors_Call_Graph_From_Contextual;
+
+   ------------------
+   -- Destroy_Idle --
+   ------------------
+
+   procedure Destroy_Idle (Data : in out Entity_Idle_Data) is
+   begin
+      Destroy (Data.Iter);
+      Destroy (Data.Entity);
+      Pop_State (Data.Kernel);
+   end Destroy_Idle;
 
    -------------------------
    -- Find_Next_Reference --
    -------------------------
 
    function Find_Next_Reference (D : Entity_Idle_Data)
-      return Boolean
-   is
-      It : Entity_Reference_Iterator_Access;
+      return Boolean is
    begin
       if Get (D.Iter.all) = No_Reference then
-         It := D.Iter;
-         Destroy (It);
-         Pop_State (D.Kernel);
          return False;
 
       else
@@ -757,7 +760,7 @@ package body Browsers.Call_Graph is
                  & ':'
                  & Image (Get_Column (Get_Location (Get (D.Iter.all))))
                  & ' '
-                 & Get_Entity_Name (D.Decl));
+                 & Get_Name (D.Entity));
          Next (D.Kernel, D.Iter.all);
          return True;
       end if;
@@ -774,35 +777,35 @@ package body Browsers.Call_Graph is
       pragma Unreferenced (Widget);
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
-      Decl     : E_Declaration_Info;
       Data     : Entity_Idle_Data;
       Info     : Entity_Information;
       Idle_Id  : Idle_Handler_Id;
    begin
       Push_State (Get_Kernel (Entity), Busy);
-      Decl := Get_Declaration (Entity);
+      Info := Get_Entity (Entity);
 
-      if Decl /= No_Declaration_Info then
+      if Info /= No_Entity_Information then
          begin
             Insert (Get_Kernel (Entity),
-                    Get_File (Get_Location (Decl))
+                    Get_Declaration_File_Of (Info)
                     & ':'
-                    & Image (Get_Line (Get_Location (Decl)))
+                    & Image (Get_Declaration_Line_Of (Info))
                     & ':'
-                    & Image (Get_Column (Get_Location (Decl)))
+                    & Image (Get_Declaration_Column_Of (Info))
                     & ' '
-                    & Get_Entity_Name (Decl));
+                    & Get_Name (Info));
 
             Data := (Kernel => Get_Kernel (Entity),
                      Iter   => new Entity_Reference_Iterator,
-                     Decl   => Decl);
+                     Entity => Copy (Info));
 
-            Info := Get_Entity (Decl);
             Find_All_References (Get_Kernel (Entity), Info, Data.Iter.all);
-            Destroy (Info);
 
             Idle_Id := Entity_Iterator_Idle.Add
-              (Find_Next_Reference'Access, Data, Priority_Low_Idle);
+              (Cb       => Find_Next_Reference'Access,
+               D        => Data,
+               Priority => Priority_Low_Idle,
+               Destroy  => Destroy_Idle'Access);
          exception
             when others =>
                Destroy (Data.Iter);
