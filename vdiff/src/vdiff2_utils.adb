@@ -20,20 +20,24 @@
 
 with Ada.Unchecked_Deallocation;
 
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
-with Glide_Intl;           use Glide_Intl;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
+with Glide_Intl;               use Glide_Intl;
 
-with String_Utils;         use String_Utils;
+with String_Utils;             use String_Utils;
 with Basic_Types;
-with GNAT.OS_Lib;          use GNAT.OS_Lib;
-with Gtkada.Dialogs;       use Gtkada.Dialogs;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 
-with Vdiff2_Module;        use Vdiff2_Module;
-with Gdk.Color; use Gdk.Color;
+with Vdiff2_Module;            use Vdiff2_Module;
+with Gdk.Color;                use Gdk.Color;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 
 package body Vdiff2_Utils is
+
+   Me : constant Debug_Handle := Create ("VDiff2_Utils");
 
    use Diff_Head_List;
    use Diff_Chunk_List;
@@ -147,21 +151,22 @@ package body Vdiff2_Utils is
    is
       List      : constant Diff_List := Item.List;
       Curr_Node  : Diff_List_Node := First (List);
-      Curr_Chunk : Diff_Chunk_Access := Data (Curr_Node);
+      Curr_Chunk : Diff_Chunk_Access;
       Offset1   : Natural;
       Offset2   : Natural;
       Args_edit : Argument_List := (1 => new String'(Item.File1.all));
 
    begin
 
-      Register_Highlighting (Kernel);
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
       Args_edit := (1 => new String'(Item.File2.all));
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
+      Register_Highlighting (Kernel);
 
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
+         Curr_Chunk := Data (Curr_Node);
          case Curr_Chunk.Range2.Action is
             when Append =>
                Curr_Chunk.Range1.Mark := new String'
@@ -220,7 +225,6 @@ package body Vdiff2_Utils is
          end case;
 
          Curr_Node := Next (Curr_Node);
-         Curr_Chunk := Data (Curr_Node);
       end loop;
 
    end Show_Differences;
@@ -245,10 +249,6 @@ package body Vdiff2_Utils is
          return;
       end if;
 
-      Res := Simplify (Item.List, Item.Ref_File);
-      Curr_Node := First (Res);
-      Register_Highlighting (Kernel);
-
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
@@ -260,6 +260,10 @@ package body Vdiff2_Utils is
       Execute_GPS_Shell_Command (Kernel, "edit", Args_edit);
       Basic_Types.Free (Args_edit);
 
+      Register_Highlighting (Kernel);
+      Res := Simplify (Item.List, Item.Ref_File);
+      Curr_Node := First (Res);
+
       while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
          Show_Diff_Chunk (Kernel, Item, Curr_Chunk);
@@ -267,6 +271,10 @@ package body Vdiff2_Utils is
       end loop;
 
       Free_List (Res);
+      Free (Res);
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Show_Differences3;
 
    -------------
