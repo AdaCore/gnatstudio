@@ -838,7 +838,7 @@ package body Src_Contexts is
       Child    : MDI_Child;
       Editor   : Source_Editor_Box;
       Context  : Current_File_Context_Access;
-      Context2 : Files_Project_Context_Access := new Files_Project_Context;
+      Context2 : Files_Project_Context_Access;
 
    begin
       --  If we are looking for all the occurrences, we simply reuse another
@@ -850,6 +850,7 @@ package body Src_Contexts is
          end if;
          Editor := Get_Source_Box_From_MDI (Child);
 
+         Context2 := new Files_Project_Context;
          Context2.Scope := Search_Scope'Val (Get_Index_In_List (Scope.Combo));
          Context2.All_Occurrences := True;
          Set_File_List
