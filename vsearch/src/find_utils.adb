@@ -434,7 +434,7 @@ package body Find_Utils is
          Char_Delim    : Character renames Context.Constant_Character;
 
          Called   : Boolean := False; --  Was callback called on this line ?
-         Continue : Boolean := True;  --  really necessary ???
+         Continue : Boolean := True;
 
       begin
          Reached := Line'First;
@@ -524,13 +524,10 @@ package body Find_Utils is
                Continue := Callback
                              (True, Name, Line_Nr, Line,
                               Search.Sub_Matches.all);
-               Called := True;
 
                exit Whole_Line_Loop when not Continue;
 
-               --  ??? improve by 'exit when not Callback'
-               --  ??? OK since Search.Lexical_State doesn't need to be updated
-               --  ??? and is no longer called.
+               Called := True;
             end if;
 
             --  Skip the processed text
