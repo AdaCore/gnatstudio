@@ -75,8 +75,6 @@ package body Directory_Tree is
    --  Dir is the absolute path to the directory. If the node is not already
    --  in the tree, it is added if Add_If_Necessary is True.
 
-   procedure Realized (Tree : access Gtk_Widget_Record'Class);
-
    function Add_Directory_Node
      (Tree       : access Dir_Tree_Record'Class;
       Parent_Dir : String;
@@ -201,20 +199,7 @@ package body Directory_Tree is
       --  ctree is put in a scrolled window, and if this is not called, the
       --  scrollbar does not allow us to scroll as far right as possible...
       Set_Column_Auto_Resize (Tree, 0, True);
-
-      Widget_Callback.Connect
-        (Tree, "realize", Widget_Callback.To_Marshaller (Realized'Access));
    end Initialize;
-
-   --------------
-   -- Realized --
-   --------------
-
-   procedure Realized (Tree : access Gtk_Widget_Record'Class) is
-      T : Dir_Tree := Dir_Tree (Tree);
-   begin
-      Show_Directory (T, Get_Current_Dir);
-   end Realized;
 
    ---------------
    -- Directory --
