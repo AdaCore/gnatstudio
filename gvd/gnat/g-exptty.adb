@@ -87,6 +87,14 @@ package body GNAT.Expect.TTY is
       Internal (Descriptor.Process);
    end Interrupt;
 
+   procedure Interrupt (Pid : Integer) is
+      procedure Internal (Pid : Integer);
+      pragma Import (C, Internal, "gvd_interrupt_pid");
+
+   begin
+      Internal (Pid);
+   end Interrupt;
+
    -----------------------
    -- Pseudo_Descriptor --
    -----------------------

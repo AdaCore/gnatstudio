@@ -63,6 +63,9 @@ package GNAT.Expect.TTY is
    --  Do *not* close the associated TTY, it is the caller's responsibility
    --  to call GNAT.TTY.Close_TTY.
 
+   procedure Interrupt (Pid : Integer);
+   --  Interrupt a process given its pid.
+
 private
 
    procedure Close
