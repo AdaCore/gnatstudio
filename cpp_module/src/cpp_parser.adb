@@ -2348,7 +2348,7 @@ package body CPP_Parser is
       if Source = null then
          if File_Has_No_LI_Report /= null then
             Entities.Error
-              (File_Has_No_LI_Report.all, Source_Filename);
+              (File_Has_No_LI_Report.all, Source);
          end if;
 
          Trace (Me, "Couldn't create Source_File for "

@@ -1390,7 +1390,7 @@ package body ALI_Parser is
            and then File_Has_No_LI_Report /= null
          then
             Entities.Error
-              (File_Has_No_LI_Report.all, Source_Filename);
+              (File_Has_No_LI_Report.all, Source);
          end if;
 
          return Source;
@@ -1406,7 +1406,7 @@ package body ALI_Parser is
          Trace (Me, "No LI found for " & Full_Name (Source_Filename).all);
 
          if File_Has_No_LI_Report /= null then
-            Entities.Error (File_Has_No_LI_Report.all, Source_Filename);
+            Entities.Error (File_Has_No_LI_Report.all, Source);
          end if;
 
          return Source;
@@ -1428,7 +1428,7 @@ package body ALI_Parser is
           or else not Check_LI_And_Source (LI, Source_Filename))
         and then File_Has_No_LI_Report /= null
       then
-         Entities.Error (File_Has_No_LI_Report.all, Source_Filename);
+         Entities.Error (File_Has_No_LI_Report.all, Source);
          LI := null;
       end if;
 
