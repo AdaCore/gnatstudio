@@ -10,8 +10,6 @@ root=`dirname $0`
 
 root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
-PANGO_RC_FILE=$root/etc/gps/pangorc
-GTK_IM_MODULE_FILE=$root/etc/gps/gtk.immodules
 GTK_DATA_PREFIX=$root
 MAKE_ROOT=$root
 
@@ -22,7 +20,6 @@ else
 fi
 export GPS_DOC_PATH
 
-export LD_LIBRARY_PATH PANGO_RC_FILE GTK_DATA_PREFIX
-export GTK_IM_MODULE_FILE MAKE_ROOT
+export LD_LIBRARY_PATH GTK_DATA_PREFIX MAKE_ROOT
 GDK_USE_XFT=False
 exec $root/bin/${prog}_exe "$@"
