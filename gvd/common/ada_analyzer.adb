@@ -1,3 +1,4 @@
+
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
@@ -1654,9 +1655,9 @@ package body Ada_Analyzer is
                Skip_Blank_Lines;
 
                exit when not Skip_Comments
-                 or else P = Buffer_Length
+                 or else P >= Buffer_Length
                  or else Is_Entity_Letter
-                   (Utf8_Get_Char (Buffer (P .. Buffer'Last)));
+                   (Utf8_Get_Char (Buffer (P .. Buffer_Length)));
 
                P := Next_Char (P);
             end loop;
@@ -1665,7 +1666,7 @@ package body Ada_Analyzer is
                return;
             end if;
 
-            exit when P = Buffer_Length
+            exit when P >= Buffer_Length
               or else Is_Entity_Letter
                 (Utf8_Get_Char (Buffer (P .. Buffer'Last)));
 
