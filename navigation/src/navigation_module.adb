@@ -29,15 +29,21 @@ with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
 with Gtk.Widget;                use Gtk.Widget;
 
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 
 with Commands;                  use Commands;
 with Commands.Locations;        use Commands.Locations;
+with Traces;                    use Traces;
+
+with Ada.Exceptions;            use Ada.Exceptions;
 
 package body Navigation_Module is
 
    Navigation_Module_Name : constant String := "Navigation";
+
+   Me : Debug_Handle := Create ("Navigation");
 
    type Navigation_Info is record
       --  Fields related to back/forward navigation.
@@ -100,6 +106,11 @@ package body Navigation_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean;
    --  Process, if possible, the data sent by the kernel
+
+   procedure On_Other_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Open the spec if a body or separate is currently selected, and the spec
+   --  otherwise.
 
    -----------------
    -- Mime_Action --
@@ -197,7 +208,7 @@ package body Navigation_Module is
 
       Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To, null);
       Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
-                     Stock_Convert, null);
+                     Stock_Convert, On_Other_File'Access);
       Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
       Register_Menu (Kernel, Navigate, -"Goto Previous Location",
                      Stock_Go_Back, null);
@@ -278,6 +289,45 @@ package body Navigation_Module is
       Redo (Data.Locations_Queue);
       Refresh_Location_Buttons (Kernel);
    end On_Forward;
+
+   -------------------
+   -- On_Other_File --
+   -------------------
+
+   procedure On_Other_File
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Context : Selection_Context_Access := Get_Current_Context (Kernel);
+      File : File_Name_Selection_Context_Access;
+   begin
+      Push_State (Kernel, Busy);
+
+      if Context /= null
+        and then Context.all in File_Name_Selection_Context'Class
+        and then Has_File_Information
+          (File_Name_Selection_Context_Access (Context))
+      then
+         File := File_Name_Selection_Context_Access (Context);
+         declare
+            Other_File : constant String := Get_Other_File_Of
+              (Kernel, File_Information (File));
+         begin
+            if Other_File /= "" then
+               Open_File_Editor (Kernel, Other_File);
+            end if;
+         end;
+      else
+         Insert (Kernel, "There is no selected file", Mode => Error);
+      end if;
+
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Pop_State (Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Other_File;
 
    --------------------------------
    -- Navigation_Contextual_Menu --
