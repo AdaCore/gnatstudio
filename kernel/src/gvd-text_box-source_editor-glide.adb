@@ -219,9 +219,10 @@ package body GVD.Text_Box.Source_Editor.Glide is
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
-            (Line => Line_Information_Record'(Text  => null,
-                                              Image => Current_Line_Pixbuf,
-                                              Associated_Command => null)));
+              (Line => Line_Information_Record'
+                (Text  => null,
+                 Image => Current_Line_Pixbuf,
+                 Associated_Command => null)));
 
          Set_Current_Source_Location (Tab, Editor.Current_File.all, Line);
       end if;

@@ -3568,12 +3568,12 @@ package body Project_Explorers is
       begin
          Register_Search_Function
            (Kernel            => Kernel,
-            Data => (Length           => Name'Length,
-                     Label            => Name,
+            Data => (Length            => Name'Length,
+                     Label             => Name,
                      Factory           => Explorer_Search_Factory'Access,
                      Extra_Information => Widget,
                      Mask              => All_Options and not Supports_Replace
-                     and not Search_Backward and not All_Occurences));
+                       and not Search_Backward and not All_Occurences));
       end;
    end Register_Module;
 
