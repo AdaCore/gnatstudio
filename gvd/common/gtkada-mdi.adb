@@ -213,6 +213,9 @@ package body Gtkada.MDI is
    --  Called when the user has pressed the mouse while in the MDI, in
    --  particular in one of the handles
 
+   procedure Close_Child (Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Internal version of Close, for a MDI_Child
+
    function Leave_Child
      (Child : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean;
@@ -249,6 +252,7 @@ package body Gtkada.MDI is
 
    procedure Destroy_Child (Child : access Gtk_Widget_Record'Class);
    procedure Destroy_Initial_Child (Child : access Gtk_Widget_Record'Class);
+   procedure Destroy_Initial_Window (Child : access Gtk_Widget_Record'Class);
    --  Called when either the child itself, or the widget we initially put
    --  in it, are destroyed. Remove the child from the MDI properly.
 
@@ -281,11 +285,6 @@ package body Gtkada.MDI is
    --  Called when the current page in Docked_Child has changed.
    --  This is used to refresh the notebook so that is reflects the selected
    --  widget.
-
-   procedure Close_Child (Child : access Gtk_Widget_Record'Class);
-   --  A child should be destroyed.
-   --  As opposed to a direct call to Destroy, this also checks whether the
-   --  child can be closed at that time, through a call to delete_event.
 
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle);
@@ -1116,6 +1115,21 @@ package body Gtkada.MDI is
       Minimize_Child (C, not (C.State = Iconified));
    end Iconify_Child;
 
+   -----------
+   -- Close --
+   -----------
+
+   procedure Close
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      C : MDI_Child := Find_MDI_Child (MDI, Child);
+   begin
+      if C /= null then
+         Close_Child (C);
+      end if;
+   end Close;
+
    -----------------
    -- Close_Child --
    -----------------
@@ -1197,7 +1211,9 @@ package body Gtkada.MDI is
       end if;
 
       --  Destroy the toplevel Child is associated with
-      if C.Initial /= C.Initial_Child then
+      if C.Initial /= C.Initial_Child
+        and then not Gtk.Object.Destroyed_Is_Set (C.Initial)
+      then
          Destroy (C.Initial);
       end if;
 
@@ -1211,7 +1227,6 @@ package body Gtkada.MDI is
 
    procedure Destroy_Initial_Child (Child : access Gtk_Widget_Record'Class) is
    begin
-      --  The initial child has already been unparented
       pragma Assert (Get_Parent (MDI_Child (Child).Initial_Child) = null);
 
       if MDI_Child (Child).Initial = MDI_Child (Child).Initial_Child then
@@ -1226,6 +1241,18 @@ package body Gtkada.MDI is
          Destroy (Child);
       end if;
    end Destroy_Initial_Child;
+
+   ----------------------------
+   -- Destroy_Initial_Window --
+   ----------------------------
+
+   procedure Destroy_Initial_Window (Child : access Gtk_Widget_Record'Class) is
+      C : MDI_Child := MDI_Child (Child);
+   begin
+      if not Gtk.Object.Destroyed_Is_Set (C) then
+         Destroy (C);
+      end if;
+   end Destroy_Initial_Window;
 
    ----------------
    -- Draw_Child --
@@ -1914,16 +1941,19 @@ package body Gtkada.MDI is
          pragma Assert (Get_Child (Gtk_Window (Widget)) /= null);
          Child.Initial_Child := Get_Child (Gtk_Window (Widget));
          Reparent (Child.Initial_Child, Box);
-
+         Widget_Callback.Object_Connect
+           (Widget, "destroy",
+            Widget_Callback.To_Marshaller (Destroy_Initial_Window'Access),
+            Child);
       else
          Child.Initial_Child := Gtk_Widget (Widget);
          Pack_Start
            (Box, Widget, Expand => True, Fill => True, Padding => 0);
       end if;
-
       Widget_Callback.Object_Connect
         (Child.Initial_Child, "destroy",
-         Widget_Callback.To_Marshaller (Destroy_Initial_Child'Access), Child);
+         Widget_Callback.To_Marshaller (Destroy_Initial_Child'Access),
+         Child);
    end Initialize;
 
    ---------

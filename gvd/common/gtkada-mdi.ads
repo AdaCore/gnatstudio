@@ -128,6 +128,13 @@ package Gtkada.MDI is
    --
    --  If Child is a MDI_Child, its location is recomputed automatically.
 
+   procedure Close
+     (MDI : access MDI_Window_Record;
+      Child : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Close the child, and remove its window from the MDI.
+   --  This first checks through a delete_event callback whether the child
+   --  accepts to be closed.
+
    procedure Set_Title (Child : access MDI_Child_Record; Title : String);
    --  Set the title for a child.
    --  If you have put a Gtk_Window in the MDI, then the default title is the
