@@ -2089,7 +2089,8 @@ package body Src_Info.ALI is
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class
    is
-      pragma Unreferenced (Handler, Root_Project, Project, Recursive);
+      pragma Unreferenced
+        (Handler, Root_Project, Project, Recursive);
       Iterator : ALI_Handler_Iterator;
    begin
       return Iterator;
