@@ -741,68 +741,40 @@ procedure GPS is
 
    procedure Help is
       use ASCII;
+      Help_String : constant String :=
+        GPS_Name (GPS) & " " & GVD.Version & " (" & GVD.Source_Date & ")" &
+        (-", the GNAT Programming System.") & LF
+        & (-"Usage:") & LF
+        & (-"   gps [options] [-Pproject-file] [source1] [source2] ...") & LF
+        & ("source1, source2,...") & LF
+        & (-"    Name of files to load. Start with '=' to load from") & LF
+        & (-"    project") & LF
+        & (-"Options:") & LF
+        & (-"   --help              Show this help message and exit") & LF
+        & (-"   --version           Show the GPS version and exit") & LF
+        & (-"   --debug[=program]   Start a debug session") & LF
+        & (-"   --debugger debugger Specify the debugger's command line") & LF
+        & (-"   --host=tools_host   Use tools_host to launch tools (e.g. gdb)")
+        & LF
+        & (-("   --target=TARG:PRO   Load program on machine TARG using"
+             & " protocol PRO")) & LF
+        & (-"   --load=lang:file    Execute an external file written") & LF
+        & (-"                       in the language lang") & Lf
+        & (-"   --eval=lang:cmd     Execute a command written in the") & LF
+        & (-"                       language lang. This is executed") & LF
+        & (-"                       before the --load command") & LF
+        & ("    --traceon=stream    Activate traces for a specific") & LF
+        & ("                        debug stream") & LF
+        & ("    --traceoff=stream   Activate traces for a specific") & LF
+        & ("                        debug stream") & LF
+        & ("    --tracefile=file    Load traces configuration from file");
+
    begin
       if GVD.Can_Output then
-         Put_Line (GPS_Name (GPS) & " " & GVD.Version &
-                   " (" & GVD.Source_Date & ")" &
-                   (-", the GNAT Programming System."));
-         Put_Line (-"Usage:");
-         Put_Line
-           (-"   gps [options] [-Pproject-file] [source1] [source2] ...");
-         Put_Line ("source1, source2,...");
-         Put_Line ("    Name of files to load. Start with '=' to load from");
-         Put_Line ("    project");
-         Put_Line (-"Options:");
-         Put_Line (-"   --help              Show this help message and exit");
-         Put_Line (-"   --version           Show the GPS version and exit");
-         Put_Line (-"   --debug[=program]   Start a debug session");
-         Put_Line
-           (-"   --debugger debugger Specify the debugger's command line");
-         Put_Line ((-"   --host=tools_host  ") &
-                     (-"Use tools_host to launch tools (e.g. gdb)"));
-         Put_Line ((-"   --target=TARG:PRO   ") &
-                     (-"Load program on machine TARG using protocol PRO"));
-         Put_Line
-           (-"   --load=lang:file    Execute an external file written");
-         Put_Line (-"                        in the language lang");
-         Put_Line
-           (-"   --eval=lang:cmd     Execute a command written in the");
-         Put_Line (-"                        language lang. This is executed");
-         Put_Line (-"                        before the --load command");
-         Put_Line ("     --traceon=stream   Activate traces for a specific");
-         Put_Line ("                        debug stream");
-         Put_Line ("     --traceoff=stream  Activate traces for a specific");
-         Put_Line ("                        debug stream");
-         Put_Line
-           ("     --tracefile=file   Load traces configuration from file");
-
+         Put_Line (Help_String);
       else
          Button := Message_Dialog
-           (GPS_Name (GPS) & " " & GVD.Version & " (" & GVD.Source_Date & ")" &
-            (-", the GNAT Programming System.") & LF &
-            (-"Usage:") & LF &
-            (-"   gps [options] [-Pproject-file] [source1] [source2] ...")
-            & LF & "source1, source2,..."
-            & LF & "    Name of files to load. Start with '=' to load from"
-            & LF & "    project"
-            & LF & (-"Options:") & LF &
-            (-"   --help              Show this help message and exit.") & LF &
-            (-"   --version           Show the GPS version and exit.") & LF &
-            (-"   --load=lang:file    Execute an external file written")
-            & LF &
-            (-"                        in the language lang") & LF &
-            (-"   --eval=lang:cmd     Execute a command written in the")
-            & LF &
-            (-"                        language lang. This is executed") & LF &
-            (-"                        before the --load command") & LF &
-            (-"   --debug[=program]   Start a debug session") & LF &
-            (-"   --debugger debugger Specify the debugger's command line") &
-            LF &
-            (-"   --host=tools_host   ") &
-            (-"Use tools_host to launch tools (e.g. gdb)") &
-            LF &
-            (-"   --target=TARG:PRO   ") &
-            (-"Load program on machine TARG using protocol PRO"),
+           (Help_String,
             Information, Button_OK,
             Title         => -"Help",
             Justification => Justify_Left);
