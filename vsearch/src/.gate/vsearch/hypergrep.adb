@@ -4,6 +4,8 @@ with Gtk.Widget; use Gtk.Widget;
 with Hyper_Grep_Base_Pkg; use Hyper_Grep_Base_Pkg;
 
 procedure Hypergrep is
+   Hyper_Grep_Base : Hyper_Grep_Base_Access;
+
 begin
    Gtk.Main.Set_Locale;
    Gtk.Main.Init;

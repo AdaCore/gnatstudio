@@ -52,6 +52,4 @@ package Hyper_Grep_Base_Pkg is
    procedure Gtk_New (Hyper_Grep_Base : out Hyper_Grep_Base_Access);
    procedure Initialize (Hyper_Grep_Base : access Hyper_Grep_Base_Record'Class);
 
-   Hyper_Grep_Base : Hyper_Grep_Base_Access;
-
 end Hyper_Grep_Base_Pkg;
