@@ -18,7 +18,7 @@ GLIDE_BASE_DIR := $(BASE_DIR)
 BASE_DIR=$(GLIDE_BASE_DIR)/../gtkada
 include $(BASE_DIR)/Makefile.gtkada
 BASE_DIR=$(GLIDE_BASE_DIR)/../gvd
-include $(BASE_DIR)/Makefile.gvd_glide
+include $(BASE_DIR)/Makefile.gvd
 BASE_DIR=$(GLIDE_BASE_DIR)/../kernel
 include $(BASE_DIR)/Makefile.kernel
 BASE_DIR=$(GLIDE_BASE_DIR)/../vsearch
@@ -105,7 +105,7 @@ ifeq ($(GLIDE_ROOT),True)
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
    gvd: force
-	gnatmake -q -c -P../gvd/gvd $(ADAFLAGS)
+	gnatmake -u -c -P../gvd/gvd $(ADAFLAGS)
 
    gpslink: force
 	cd $(GLIDE_OBJ_DIR); gnatmake -q -a ../src/gpslink
