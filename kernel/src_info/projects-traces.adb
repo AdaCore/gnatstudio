@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,11 +18,13 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Prj.PP;   use Prj.PP;
-with Projects.Registry; use Projects, Projects.Registry;
+with Projects.Registry;
 with Traces;   use Traces;
 
 package body Projects.Traces is
+
+   use Projects;
+   use Projects.Registry;
 
    ------------------------
    -- Trace_Pretty_Print --
@@ -75,7 +77,6 @@ package body Projects.Traces is
          Pretty_Print
            (Project                          => Project,
             Increment                        => 3,
-            Eliminate_Empty_Case_Constructions => False,
             Minimize_Empty_Lines             => True,
             W_Char                           => Write_Char'Unrestricted_Access,
             W_Eol                            => Write_Eol'Unrestricted_Access,
