@@ -114,7 +114,7 @@ Editing Files
 * Saving Files::
 
 Source Navigation
-* Support for Cross References::
+* Support for Cross-References::
 * The Navigate Menu::
 * Source Navigation Contextual Menus::
 
@@ -1513,10 +1513,10 @@ display about the word.
 The type of information displayed depends on the current state of GPS.
 
 In normal mode, the entity kind and the location of declaration is
-displayed when this information is available. That is, when the cross
-reference information about the current file has been generated. If
-there is no relevant information, no tooltip is displayed.  See
-@ref{Support for Cross References} for more information.
+displayed when this information is available. That is, when the
+cross-reference information about the current file has been
+generated. If there is no relevant information, no tooltip is displayed.
+See @ref{Support for Cross-References} for more information.
 
 In debugging mode, the value of the variable under the mouse is displayed in
 the pop up window if the variable is known to the debugger, the variable
@@ -2294,22 +2294,22 @@ GPS with unsaved files.
 @c --------------------------------------------------------------------
 
 @menu
-* Support for Cross References::
+* Support for Cross-References::
 * The Navigate Menu::
 * Source Navigation Contextual Menus::
 @end menu
 
 @c --------------------------------------------------------------------
-@node Support for Cross References
-@section Support for Cross References
-@cindex cross references
+@node Support for Cross-References
+@section Support for Cross-References
+@cindex cross-references
 @c --------------------------------------------------------------------
 
 @noindent
 GPS provides cross-references for entities, such as types, procedures,
 functions, variables, @dots{}, defined in your application. In addition
 GPS has advanced visual browsers like call graphs and entity graphs.  To
-support cross references GPS needs help from external language-specific
+support cross-references GPS needs help from external language-specific
 tools.
 
 @table @b
@@ -2357,17 +2357,17 @@ To enable the navigation features for C and C++ source files, you need
 to first generate a database of symbol references, by going through the
 menu Build->Recompute C/C++ Xref info. Messages in the console window
 will indicate the state of the processing. Due to the nature of these
-languages, in order to provide accurate cross references, GPS needs to
+languages, in order to provide accurate cross-references, GPS needs to
 generate the database in two phases: a first pass parses all the files
 that have been modified since the previous parsing, and a second pass
-generates global cross references by analyzing the complete database.
+generates global cross-references by analyzing the complete database.
 It is thus expected that for large projects, this phase can take a
 significant amount of CPU to proceed.
 
 @cindex overloaded
 @cindex #ifdef
 In some cases, GPS won't be able to determine the exact function involved
-in a cross reference. This will typically occur for overloaded functions,
+in a cross-reference. This will typically occur for overloaded functions,
 or if multiple functions with the same name, but under different
 @code{#ifdef} sections, are defined. In this case, GPS will display a
 dialog listing the possible choices to resolve the ambiguity.
@@ -2413,13 +2413,13 @@ Find previous occurrence of the current search.
 Go to the declaration/spec of the current entity. The current entity is
 determined by the word located around the cursor.
 This item is also accessible through the editor's contextual menu directly.
-This capability requires support for cross references.
+This capability requires support for cross-references.
 
 @item Goto Body
 @cindex goto body
 Go to the body/implementation of the current entity.
 This item is also accessible through the editor's contextual menu directly.
-This capability requires support for cross references.
+This capability requires support for cross-references.
 
 @item Goto Line...
 @cindex goto line
@@ -2445,7 +2445,7 @@ is based on the semantic information extracted from the sources, this is not
 a simple text search. The result of the search is displayed in the location
 window, see @ref{The Locations Tree}.
 
-This capability requires support for cross references.
+This capability requires support for cross-references.
 This item is also accessible through the editor's contextual menu
 
 @c @item Start Of Statement
@@ -2484,12 +2484,12 @@ menu will apply to this selection or entity.
 Go to the declaration/spec of @i{entity}. The current entity is
 determined by the word located around the cursor or by the current selection
 if any.
-This capability requires support for cross references.
+This capability requires support for cross-references.
 
 @item Goto body of @i{entity}
 @cindex goto body
 Go to the body/implementation of @i{entity}.
-This capability requires support for cross references.
+This capability requires support for cross-references.
 
 @item Goto file spec/body
 @cindex goto file spec/body
@@ -2515,10 +2515,10 @@ the functions called by @i{entity}. @xref{Call Graph}.
 Open or raise the call graph browser on the specified entity and display all
 the functions calling @i{entity}. @xref{Call Graph}.
 
-Note that this capability requires a global look up in the project cross
-references, which may take a significant amount of time the first time.
-After a global look up, information is cached in memory, so that further
-global queries will be faster.
+Note that this capability requires a global look up in the project
+cross-references, which may take a significant amount of time the first
+time.  After a global look up, information is cached in memory, so that
+further global queries will be faster.
 
 @item Find all references to @i{entity}
 @cindex find all references
@@ -2745,9 +2745,9 @@ Each project contains the following information, among other things
    know what tools should be used to compile or otherwise work with a
    source file.
 
-@item @b{Embedded targets and Cross-environments}:
+@item @b{Embedded targets and cross environments}:
 @cindex cross environment
-   GPS fully supports cross-environment work: GPS itself can run on a
+   GPS fully supports cross environment work: GPS itself can run on a
    machine and start all the compilation, run and debugger on a remote
    host.
 
@@ -3836,8 +3836,8 @@ This option is currently only supported for Ada files.
 @item Recompute C/C++ Xref info
 @cindex C
 @cindex C++
-Recompute the cross reference information for C and C++ source files.
-@xref{Support for Cross References}.
+Recompute the cross-reference information for C and C++ source files.
+@xref{Support for Cross-References}.
 
 @item Run
    @table @i
