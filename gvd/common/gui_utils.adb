@@ -834,10 +834,23 @@ package body GUI_Utils is
             end if;
          end loop;
 
-      elsif Inside_Word (Start_Iter) then
-         Backward_Word_Start (Start_Iter, Ignored);
-         Forward_Word_End (End_Iter, Ignored);
+      else
+         while not Is_End (End_Iter) loop
+            exit when not Is_Entity_Letter (Get_Char (End_Iter));
+            Forward_Char (End_Iter, Ignored);
+         end loop;
+
+         --  And search backward the begining of the entity...
+         while not Is_Start (Start_Iter) loop
+            Backward_Char (Start_Iter, Ignored);
+
+            if not Is_Entity_Letter (Get_Char (Start_Iter)) then
+               Forward_Char (Start_Iter, Ignored);
+               exit;
+            end if;
+         end loop;
       end if;
    end Search_Entity_Bounds;
+
 
 end GUI_Utils;
