@@ -319,7 +319,9 @@ package body Src_Editor_View is
    is
       pragma Unreferenced (Params, Buffer);
    begin
-      Redraw_Columns (User);
+      if Realized_Is_Set (User) then
+         Redraw_Columns (User);
+      end if;
    end Side_Columns_Change_Handler;
 
    --------------------
