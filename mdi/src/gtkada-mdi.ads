@@ -13,6 +13,8 @@ with GNAT.OS_Lib;
 --  - Provide automatic initial placement of widgets
 --  - Saving and restoring sessions (window location,...)
 --  - When in a scrolled window, shouldn't constrain the possible coordinates
+--  - When a toplevel window is destroyed, we must remove the child from
+--    the MDI
 --
 --  From GNOME MDI documentation:
 --  - GnomeMDI also provides means to create global menus and toolbar that
@@ -39,10 +41,21 @@ package Gtkada.MDI is
                   Child : access Gtk.Widget.Gtk_Widget_Record'Class;
                   Name : String);
    --  Add a new child to the MDI window.
-   --  You shouldn't access Child directly afterwards if it was a Gtk_Window,
-   --  but should manipulate its child instead. However, as a special
-   --  exception, you can still pass Child as a parameter to the subprograms
-   --  in this package to manipulate it (for instance in Raise_Child,...)
+   --  Note that there is a small difference between adding a toplevel
+   --  Gtk_Window and a standard widget.
+   --  In the former case, only the child of the window is inserted into MDI.
+   --  However, every time the child is set as floating (ie in its own
+   --  toplevel window), we reuse the window you give in parameter to Put.
+   --  Likewise, before the child is destroyed, a "delete_event" is emitted
+   --  on the window you give in parameter to Put).
+   --
+   --  In that case, you shouldn't access Child directly afterwards, but should
+   --  manipulate its child instead. However, as a special exception, you can
+   --  still pass Child as a parameter to the subprograms in this package to
+   --  manipulate it (for instance in Raise_Child,...)
+   --
+   --  On the other hand, if you insert any other widget, toplevel windows
+   --  are created on the fly when needed, and destroyed automatically.
 
    procedure Raise_Child
      (MDI : access MDI_Window_Record;

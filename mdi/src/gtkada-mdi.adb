@@ -29,8 +29,6 @@ with Gtkada.Handlers;  use Gtkada.Handlers;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Gtkada.MDI is
 
    Title_Bar_Focus_Color : constant String := "#000088";
@@ -99,6 +97,11 @@ package body Gtkada.MDI is
    --  Return the cursor to use depending on the coordinates (X, Y) inside
    --  child.
 
+   function Delete_Child
+     (Child : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean;
+   --  Forwards a delete_event from the toplevel window to the child.
+
    procedure Destroy_Child (Child : access Gtk_Widget_Record'Class);
    --  A child is destroyed, and memory should be freed
 
@@ -107,6 +110,9 @@ package body Gtkada.MDI is
 
    procedure Close_Child (Child : access Gtk_Widget_Record'Class);
    --  A child should be destroyed (we first check with the application)
+
+   procedure Remove_Child (C : access Gtk_Widget_Record'Class);
+   --  Remove C from its MDI window, and destroy it.
 
    procedure Draw_Child
      (Child : access MDI_Child_Record'Class; Area : Gdk_Rectangle);
@@ -246,7 +252,6 @@ package body Gtkada.MDI is
    -----------------
 
    procedure Close_Child (Child : access Gtk_Widget_Record'Class) is
-      MDI : MDI_Window := MDI_Window (Get_Parent (Child));
       C : MDI_Child := MDI_Child (Child);
       Event : Gdk_Event;
    begin
@@ -259,7 +264,7 @@ package body Gtkada.MDI is
          if not Return_Callback.Emit_By_Name
            (C.Initial, "delete_event", Event)
          then
-            Remove (MDI, C);
+            Destroy (C);  --  Automatically removes C from MDI
          else
             Reparent (C.Initial_Child, Gtk_Box (Get_Child (C)));
          end if;
@@ -267,7 +272,7 @@ package body Gtkada.MDI is
          if not Return_Callback.Emit_By_Name
            (C.Initial, "delete_event", Event)
          then
-            Remove (MDI, C);
+            Destroy (C);  --  Automatically removes C from MDI
          end if;
       end if;
       Free (Event);
@@ -781,6 +786,10 @@ package body Gtkada.MDI is
          Pack_Start
            (Box, Widget, Expand => True, Fill => True, Padding => 0);
       end if;
+
+      Widget_Callback.Object_Connect
+        (Child.Initial_Child, "destroy",
+         Widget_Callback.To_Marshaller (Remove_Child'Access), Child);
    end Initialize;
 
    ---------
@@ -949,6 +958,32 @@ package body Gtkada.MDI is
       Queue_Resize (MDI);
    end Tile_Vertically;
 
+   ------------------
+   -- Delete_Child --
+   ------------------
+
+   function Delete_Child
+     (Child : access Gtk_Widget_Record'Class;
+      Event : Gdk_Event) return Boolean is
+   begin
+      --  Gtk_Window children are handled differently (see Float_Child)
+      pragma Assert
+        (not (MDI_Child (Child).Initial.all in Gtk_Window_Record'Class));
+      return Return_Callback.Emit_By_Name
+        (MDI_Child (Child).Initial, "delete_event", Event);
+   end Delete_Child;
+
+   ------------------
+   -- Remove_Child --
+   ------------------
+
+   procedure Remove_Child (C : access Gtk_Widget_Record'Class) is
+   begin
+      if Get_Parent (C) /= null then
+         Remove (MDI_Window (Get_Parent (C)), C);
+      end if;
+   end Remove_Child;
+
    -----------------
    -- Float_Child --
    -----------------
@@ -970,6 +1005,12 @@ package body Gtkada.MDI is
             Gtk_New (Win, Window_Toplevel);
             Reparent (C.Initial_Child, Win);
             Show_All (Win);
+
+            --  Delete_Event should be forwarded to the child, not to the
+            --  toplevel window
+            Return_Callback.Object_Connect
+              (Win, "delete_event",
+               Return_Callback.To_Marshaller (Delete_Child'Access), C);
          end if;
          Hide (C);
          C.State := Floating;
