@@ -655,7 +655,7 @@ begin
       Tooltip_Text => -"Start the debugged program",
       Icon => Gtk_Widget (Create_Pixmap (run_xpm, Main_Debug_Window)));
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Button49, "clicked", Widget_Callback.To_Marshaller (On_Run1_Activate'Access), Main_Debug_Window);
+     (Main_Debug_Window.Button49, "clicked", On_Run1_Toolbar_Activate'Access, Main_Debug_Window);
    Main_Debug_Window.Button50 := Append_Element
      (Toolbar => Main_Debug_Window.Toolbar2,
       The_Type => Toolbar_Child_Button,

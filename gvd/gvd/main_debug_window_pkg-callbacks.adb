@@ -1049,6 +1049,27 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Title => -"About...");
    end On_About_Odd1_Activate;
 
+   ------------------------------
+   -- On_Run1_Toolbar_Activate --
+   ------------------------------
+
+   procedure On_Run1_Toolbar_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+   begin
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
+      Set_Busy_Cursor (Tab, True);
+      Run (Tab.Debugger, Mode => User);
+      Set_Busy_Cursor (Tab, False);
+   end On_Run1_Toolbar_Activate;
+
    ------------------------
    -- On_Start1_Activate --
    ------------------------

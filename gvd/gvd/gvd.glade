@@ -1107,7 +1107,7 @@
 	<tooltip>Start the debugged program</tooltip>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_run1_activate</handler>
+	  <handler>on_run1_toolbar_activate</handler>
 	  <object>main_debug_window</object>
 	  <last_modification_time>Tue, 23 May 2000 15:10:48 GMT</last_modification_time>
 	</signal>

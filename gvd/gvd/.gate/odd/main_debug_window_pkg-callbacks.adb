@@ -619,6 +619,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
       null;
    end On_About_Odd1_Activate;
 
+   ------------------------------
+   -- On_Run1_Toolbar_Activate --
+   ------------------------------
+
+   procedure On_Run1_Toolbar_Activate
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+   begin
+      null;
+   end On_Run1_Toolbar_Activate;
+
    ------------------------
    -- On_Start1_Activate --
    ------------------------
