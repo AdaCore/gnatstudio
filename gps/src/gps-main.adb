@@ -114,6 +114,7 @@ with Refactoring_Module;
 with Action_Editor;
 with Outline_View;
 with Socket_Module;
+with Scenario_Views;
 
 procedure GPS.Main is
    use GPS.Main_Window;
@@ -153,6 +154,8 @@ procedure GPS.Main is
    Help_Trace    : constant Debug_Handle := Create ("MODULE.Help", On);
    SSH_Trace     : constant Debug_Handle := Create ("MODULE.SSH", On);
    HTTP_Trace    : constant Debug_Handle := Create ("MODULE.HTTP", On);
+   Scenario_View_Trace : constant Debug_Handle :=
+     Create ("MODULE.SCENARIO", On);
    Project_Viewer_Trace : constant Debug_Handle :=
      Create ("MODULE.Project_Viewer", On);
    Project_Properties_Trace : constant Debug_Handle :=
@@ -1223,6 +1226,10 @@ procedure GPS.Main is
 
       if Active (Project_Viewer_Trace) then
          Project_Viewers.Register_Module (GPS_Main.Kernel);
+      end if;
+
+      if Active (Scenario_View_Trace) then
+         Scenario_Views.Register_Module (GPS_Main.Kernel);
       end if;
 
       if Active (Project_Properties_Trace) then
