@@ -50,7 +50,7 @@ with GVD.Source_Editors;    use GVD.Source_Editors;
 with GVD.Strings;           use GVD.Strings;
 with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
-with Gvd.Files;             use Gvd.Files;
+with GVD.Files;             use GVD.Files;
 
 package body GVD.Explorer is
 
@@ -458,12 +458,12 @@ package body GVD.Explorer is
          declare
             Tab       : Debugger_Process_Tab := Convert (Explorer);
             Full_Name : String := Find_File (Tab.Debugger, Data.Extension);
-            S         : Gvd.Types.String_Access;
-            Error_Msg : Gvd.Types.String_Access;
+            S         : GVD.Types.String_Access;
+            Error_Msg : GVD.Types.String_Access;
             Lang      : Language_Access;
 
          begin
-            Gvd.Files.Load_File
+            GVD.Files.Load_File
               (S, Error_Msg, Find_In_Cache (Tab.Window, Full_Name),
                Tab.Descriptor.Remote_Host);
 
