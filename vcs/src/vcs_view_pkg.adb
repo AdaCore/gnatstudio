@@ -77,6 +77,7 @@ with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
 with GUI_Utils;                 use GUI_Utils;
+with File_Utils;                use File_Utils;
 with Histories;                 use Histories;
 
 package body VCS_View_Pkg is
@@ -1701,7 +1702,11 @@ package body VCS_View_Pkg is
 
    function Hash (F : Virtual_File) return Header_Num is
    begin
-      return Hash (Full_Name (F).all);
+      if Filenames_Are_Case_Sensitive then
+         return Hash (Full_Name (F).all);
+      else
+         return Hash (To_Lower (Full_Name (F).all));
+      end if;
    end Hash;
 
    -----------
