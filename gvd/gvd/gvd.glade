@@ -79,6 +79,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>open_debugger1</name>
+	    <sensitive>True</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_debugger1_activate</handler>
@@ -439,6 +440,7 @@
 	  <widget>
 	    <class>GtkMenuItem</class>
 	    <name>preferences1</name>
+	    <sensitive>False</sensitive>
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_preferences1_activate</handler>
@@ -1313,7 +1315,7 @@
 
 <widget>
   <class>GtkWindow</class>
-  <name>odd_preferences</name>
+  <name>general_preferences</name>
   <signal>
     <name>delete_event</name>
     <handler>on_odd_preferences_delete_event</handler>
