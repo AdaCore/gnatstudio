@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -97,6 +97,10 @@ package GVD.Text_Box.Source_Editor.Glide is
    procedure Free_Debug_Info (Editor : access GEdit_Record);
    --  Free dynamic memory associated to Editor, relative to debugger
    --  information.
+
+   procedure Apply_Mode
+     (Editor : access GEdit_Record; Mode : View_Mode);
+   --  See GVD.Text_Boxes.Source_Editor for more information.
 
 private
 
