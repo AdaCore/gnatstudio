@@ -218,7 +218,8 @@ package body Docgen.Work_On_File is
       Sort_List_Name (Subprogram_Index_List);
       Sort_List_Name (Type_Index_List);
 
-      --  create the index doc files for the packages
+      --  Create the index doc files for the packages
+
       Process_Unit_Index
         (B, Kernel, Source_File_List,
          Unused_Bis, Unused, Options, Converter,
@@ -737,6 +738,7 @@ package body Docgen.Work_On_File is
          end if;
 
          --  If body files are not being processed, free directly here
+
          if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
