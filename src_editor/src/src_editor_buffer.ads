@@ -607,18 +607,9 @@ package Src_Editor_Buffer is
       Line   : Buffer_Line_Type) return Boolean;
    --  Return True if Line needs to be refreshed.
 
-   function Get_Side_Info
-     (Buffer : access Source_Buffer_Record;
-      Line   : Buffer_Line_Type) return Line_Info_Width_Array_Access;
-   --  Return the side information corresponding to Line in the
-   --  Side window.
-   --  User must call Unchecked_Free on the result.
-
-   function Get_Columns_Info
-     (Buffer : access Source_Buffer_Record)
-      return Line_Info_Display_Array_Access;
-   --  Return the columns configuration information.
-   --  User must call Unchecked_Free on the result.
+   function Get_Total_Column_Width
+     (Buffer : access Source_Buffer_Record) return Natural;
+   --  Return the size of the total column width, in pixels.
 
    procedure Add_Line_Highlighting
      (Editor : access Source_Buffer_Record;
