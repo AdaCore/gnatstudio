@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,8 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Box; use Gtk.Box;
+with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Frame; use Gtk.Frame;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Combo; use Gtk.Combo;
@@ -32,9 +32,11 @@ with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
+with Gtk.Dialog; use Gtk.Dialog;
 package Advanced_Breakpoint_Pkg is
 
    type Advanced_Breakpoint_Record is new Gtk_Window_Record with record
+      Vbox34 : Gtk_Vbox;
       Main_Notebook : Gtk_Notebook;
       Condition_Box : Gtk_Vbox;
       Condition_Frame : Gtk_Frame;
@@ -47,7 +49,7 @@ package Advanced_Breakpoint_Pkg is
       Label105 : Gtk_Label;
       Ignore_Count_Combo : Gtk_Spin_Button;
       Command_Frame : Gtk_Frame;
-      Vbox34 : Gtk_Vbox;
+      Vbox35 : Gtk_Vbox;
       Label106 : Gtk_Label;
       Scrolledwindow12 : Gtk_Scrolled_Window;
       Command_Descr : Gtk_Text;
@@ -68,6 +70,10 @@ package Advanced_Breakpoint_Pkg is
       Action_All : Gtk_Radio_Button;
       Set_Default : Gtk_Check_Button;
       Scope : Gtk_Label;
+      Hbuttonbox13 : Gtk_Hbutton_Box;
+      Apply : Gtk_Button;
+      Close : Gtk_Button;
+      Response_Action : Gtk_Response_Type;
    end record;
    type Advanced_Breakpoint_Access is access all Advanced_Breakpoint_Record'Class;
 

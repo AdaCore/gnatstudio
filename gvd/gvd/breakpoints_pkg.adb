@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -250,23 +250,6 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Location_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox2, Breakpoints.Add_Location);
 
-   Gtk_New_From_Stock (Breakpoints.Update_Location, Stock_Apply);
-   Set_Relief (Breakpoints.Update_Location, Relief_Normal);
-   Set_Sensitive (Breakpoints.Update_Location, False);
-   Set_Flags (Breakpoints.Update_Location, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Update_Location, "clicked",
-      Widget_Callback.To_Marshaller (On_Update_Location_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox2, Breakpoints.Update_Location);
-
-   Gtk_New (Breakpoints.Advanced_Location, -"Advanced >>");
-   Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
-   Set_Flags (Breakpoints.Advanced_Location, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Advanced_Location, "clicked",
-      Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox2, Breakpoints.Advanced_Location);
-
    Gtk_New (Breakpoints.Location, -("Location"));
    Set_Alignment (Breakpoints.Location, 0.5, 0.5);
    Set_Padding (Breakpoints.Location, 0, 0);
@@ -335,23 +318,6 @@ begin
      (Breakpoints.Add_Watchpoint, "clicked",
       Widget_Callback.To_Marshaller (On_Add_Watchpoint_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox3, Breakpoints.Add_Watchpoint);
-
-   Gtk_New_From_Stock (Breakpoints.Update_Watchpoint, Stock_Apply);
-   Set_Relief (Breakpoints.Update_Watchpoint, Relief_Normal);
-   Set_Sensitive (Breakpoints.Update_Watchpoint, False);
-   Set_Flags (Breakpoints.Update_Watchpoint, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Update_Watchpoint, "clicked",
-      Widget_Callback.To_Marshaller (On_Update_Watchpoint_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox3, Breakpoints.Update_Watchpoint);
-
-   Gtk_New (Breakpoints.Advanced_Watchpoint, -"Advanced >>");
-   Set_Relief (Breakpoints.Advanced_Watchpoint, Relief_Normal);
-   Set_Flags (Breakpoints.Advanced_Watchpoint, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Advanced_Watchpoint, "clicked",
-      Widget_Callback.To_Marshaller (On_Advanced_Watchpoint_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox3, Breakpoints.Advanced_Watchpoint);
 
    Gtk_New (Breakpoints.Watchpoint, -("Variable"));
    Set_Alignment (Breakpoints.Watchpoint, 0.5, 0.5);
@@ -438,23 +404,6 @@ begin
       Widget_Callback.To_Marshaller (On_Add_Exception_Clicked'Access), Breakpoints);
    Add (Breakpoints.Vbuttonbox4, Breakpoints.Add_Exception);
 
-   Gtk_New_From_Stock (Breakpoints.Update_Exception, Stock_Apply);
-   Set_Relief (Breakpoints.Update_Exception, Relief_Normal);
-   Set_Sensitive (Breakpoints.Update_Exception, False);
-   Set_Flags (Breakpoints.Update_Exception, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Update_Exception, "clicked",
-      Widget_Callback.To_Marshaller (On_Update_Exception_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox4, Breakpoints.Update_Exception);
-
-   Gtk_New (Breakpoints.Advanced_Exception, -"Advanced >>");
-   Set_Relief (Breakpoints.Advanced_Exception, Relief_Normal);
-   Set_Flags (Breakpoints.Advanced_Exception, Can_Default);
-   Widget_Callback.Object_Connect
-     (Breakpoints.Advanced_Exception, "clicked",
-      Widget_Callback.To_Marshaller (On_Advanced_Exception_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Vbuttonbox4, Breakpoints.Advanced_Exception);
-
    Gtk_New (Breakpoints.Except, -("Exception"));
    Set_Alignment (Breakpoints.Except, 0.5, 0.5);
    Set_Padding (Breakpoints.Except, 0, 0);
@@ -533,19 +482,21 @@ begin
       Widget_Callback.To_Marshaller (On_View_Clicked'Access), Breakpoints);
    Add (Breakpoints.Hbuttonbox8, Breakpoints.View);
 
-   Gtk_New (Breakpoints.Hbuttonbox4);
-   Set_Spacing (Breakpoints.Hbuttonbox4, 30);
-   Set_Layout (Breakpoints.Hbuttonbox4, Buttonbox_Spread);
-   Set_Child_Size (Breakpoints.Hbuttonbox4, 85, 27);
-   Set_Child_Ipadding (Breakpoints.Hbuttonbox4, 7, 0);
-   Pack_Start (Breakpoints.Vbox1, Breakpoints.Hbuttonbox4, False, False, 0);
+   Gtk_New (Breakpoints.Advanced_Location, -"Advanced");
+   Set_Relief (Breakpoints.Advanced_Location, Relief_Normal);
+   Set_Flags (Breakpoints.Advanced_Location, Can_Default);
+   Widget_Callback.Object_Connect
+     (Breakpoints.Advanced_Location, "clicked",
+      Widget_Callback.To_Marshaller (On_Advanced_Location_Clicked'Access), Breakpoints);
+   Add (Breakpoints.Hbuttonbox8, Breakpoints.Advanced_Location);
 
    Gtk_New_From_Stock (Breakpoints.Ok_Button, Stock_Close);
    Set_Flags (Breakpoints.Ok_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Breakpoints.Ok_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Ok_Bp_Clicked'Access), Breakpoints);
-   Add (Breakpoints.Hbuttonbox4, Breakpoints.Ok_Button);
+   Add (Breakpoints.Hbuttonbox8, Breakpoints.Ok_Button);
+
 end Initialize;
 
 end Breakpoints_Pkg;

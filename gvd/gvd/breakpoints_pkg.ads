@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -70,8 +70,6 @@ package Breakpoints_Pkg is
       Vseparator1 : Gtk_Vseparator;
       Vbuttonbox2 : Gtk_Vbutton_Box;
       Add_Location : Gtk_Button;
-      Update_Location : Gtk_Button;
-      Advanced_Location : Gtk_Button;
       Location : Gtk_Label;
       Hbox3 : Gtk_Hbox;
       Vbox7 : Gtk_Vbox;
@@ -83,8 +81,6 @@ package Breakpoints_Pkg is
       Vseparator2 : Gtk_Vseparator;
       Vbuttonbox3 : Gtk_Vbutton_Box;
       Add_Watchpoint : Gtk_Button;
-      Update_Watchpoint : Gtk_Button;
-      Advanced_Watchpoint : Gtk_Button;
       Watchpoint : Gtk_Label;
       Hbox4 : Gtk_Hbox;
       Vbox8 : Gtk_Vbox;
@@ -101,8 +97,6 @@ package Breakpoints_Pkg is
       Vseparator3 : Gtk_Vseparator;
       Vbuttonbox4 : Gtk_Vbutton_Box;
       Add_Exception : Gtk_Button;
-      Update_Exception : Gtk_Button;
-      Advanced_Exception : Gtk_Button;
       Except : Gtk_Label;
       Frame11 : Gtk_Frame;
       Vbox16 : Gtk_Vbox;
@@ -114,7 +108,7 @@ package Breakpoints_Pkg is
       Hbuttonbox8 : Gtk_Hbutton_Box;
       Remove : Gtk_Button;
       View : Gtk_Button;
-      Hbuttonbox4 : Gtk_Hbutton_Box;
+      Advanced_Location : Gtk_Button;
       Ok_Button : Gtk_Button;
    end record;
    type Breakpoints_Access is access all Breakpoints_Record'Class;

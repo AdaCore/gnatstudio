@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -30,9 +30,6 @@ package Breakpoints_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args) return Boolean;
 
-   procedure On_Breakpoints_Show
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Location_Selected_Toggled
      (Object : access Gtk_Widget_Record'Class);
 
@@ -48,19 +45,7 @@ package Breakpoints_Pkg.Callbacks is
    procedure On_Add_Location_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Update_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Location_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Add_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Update_Watchpoint_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Watchpoint_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Load_Exception_List_Clicked
@@ -69,16 +54,13 @@ package Breakpoints_Pkg.Callbacks is
    procedure On_Add_Exception_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
-   procedure On_Update_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
-   procedure On_Advanced_Exception_Clicked
-     (Object : access Gtk_Widget_Record'Class);
-
    procedure On_Remove_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_View_Clicked
+     (Object : access Gtk_Widget_Record'Class);
+
+   procedure On_Advanced_Location_Clicked
      (Object : access Gtk_Widget_Record'Class);
 
    procedure On_Ok_Bp_Clicked

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -19,8 +19,10 @@
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
+with Gtk.Stock; use Gtk.Stock;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Enums;       use Gtk.Enums;
+with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Adjustment; use Gtk.Adjustment;
 with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
@@ -48,6 +50,9 @@ begin
    Set_Position (Advanced_Breakpoint, Win_Pos_Center);
    Set_Modal (Advanced_Breakpoint, True);
 
+   Gtk_New_Vbox (Advanced_Breakpoint.Vbox34, False, 0);
+   Add (Advanced_Breakpoint, Advanced_Breakpoint.Vbox34);
+
    Gtk_New (Advanced_Breakpoint.Main_Notebook);
    Set_Scrollable (Advanced_Breakpoint.Main_Notebook, False);
    Set_Show_Border (Advanced_Breakpoint.Main_Notebook, True);
@@ -55,7 +60,7 @@ begin
    Set_Tab_Hborder (Advanced_Breakpoint.Main_Notebook, 2);
    Set_Tab_Vborder (Advanced_Breakpoint.Main_Notebook, 2);
    Set_Tab_Pos (Advanced_Breakpoint.Main_Notebook, Pos_Top);
-   Add (Advanced_Breakpoint, Advanced_Breakpoint.Main_Notebook);
+   Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Main_Notebook, True, True, 0);
 
    Gtk_New_Vbox (Advanced_Breakpoint.Condition_Box, False, 0);
    Add (Advanced_Breakpoint.Main_Notebook, Advanced_Breakpoint.Condition_Box);
@@ -118,20 +123,20 @@ begin
    Set_Shadow_Type (Advanced_Breakpoint.Command_Frame, Shadow_Etched_In);
    Pack_Start (Advanced_Breakpoint.Condition_Box, Advanced_Breakpoint.Command_Frame, False, True, 0);
 
-   Gtk_New_Vbox (Advanced_Breakpoint.Vbox34, False, 0);
-   Set_Border_Width (Advanced_Breakpoint.Vbox34, 7);
-   Add (Advanced_Breakpoint.Command_Frame, Advanced_Breakpoint.Vbox34);
+   Gtk_New_Vbox (Advanced_Breakpoint.Vbox35, False, 0);
+   Set_Border_Width (Advanced_Breakpoint.Vbox35, 7);
+   Add (Advanced_Breakpoint.Command_Frame, Advanced_Breakpoint.Vbox35);
 
    Gtk_New (Advanced_Breakpoint.Label106, -("Enter commands to execute when program stops:"));
    Set_Alignment (Advanced_Breakpoint.Label106, 0.0, 0.5);
    Set_Padding (Advanced_Breakpoint.Label106, 0, 0);
    Set_Justify (Advanced_Breakpoint.Label106, Justify_Left);
    Set_Line_Wrap (Advanced_Breakpoint.Label106, False);
-   Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Label106, False, False, 0);
+   Pack_Start (Advanced_Breakpoint.Vbox35, Advanced_Breakpoint.Label106, False, False, 0);
 
    Gtk_New (Advanced_Breakpoint.Scrolledwindow12);
    Set_Policy (Advanced_Breakpoint.Scrolledwindow12, Policy_Never, Policy_Always);
-   Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Scrolledwindow12, False, False, 0);
+   Pack_Start (Advanced_Breakpoint.Vbox35, Advanced_Breakpoint.Scrolledwindow12, False, False, 0);
 
    Gtk_New (Advanced_Breakpoint.Command_Descr);
    Set_Editable (Advanced_Breakpoint.Command_Descr, True);
@@ -142,7 +147,7 @@ begin
    Set_Layout (Advanced_Breakpoint.Hbuttonbox12, Buttonbox_Spread);
    Set_Child_Size (Advanced_Breakpoint.Hbuttonbox12, 85, 27);
    Set_Child_Ipadding (Advanced_Breakpoint.Hbuttonbox12, 7, 0);
-   Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Hbuttonbox12, False, False, 0);
+   Pack_Start (Advanced_Breakpoint.Vbox35, Advanced_Breakpoint.Hbuttonbox12, False, False, 0);
 
    Gtk_New (Advanced_Breakpoint.Record_Button, -"Record");
    Set_Relief (Advanced_Breakpoint.Record_Button, Relief_Normal);
@@ -160,7 +165,7 @@ begin
       Button_Callback.To_Marshaller (On_Stop_Record_Clicked'Access));
    Add (Advanced_Breakpoint.Hbuttonbox12, Advanced_Breakpoint.End_Button);
 
-   Gtk_New (Advanced_Breakpoint.Label102, -("Condition"));
+   Gtk_New (Advanced_Breakpoint.Label102, -("Conditions"));
    Set_Alignment (Advanced_Breakpoint.Label102, 0.5, 0.5);
    Set_Padding (Advanced_Breakpoint.Label102, 0, 0);
    Set_Justify (Advanced_Breakpoint.Label102, Justify_Center);
@@ -229,5 +234,29 @@ begin
    Set_Line_Wrap (Advanced_Breakpoint.Scope, False);
    Set_Tab (Advanced_Breakpoint.Main_Notebook, 1, Advanced_Breakpoint.Scope);
 
+   Gtk_New (Advanced_Breakpoint.Hbuttonbox13);
+   Set_Spacing (Advanced_Breakpoint.Hbuttonbox13, 30);
+   Set_Layout (Advanced_Breakpoint.Hbuttonbox13, Buttonbox_Spread);
+   Set_Child_Size (Advanced_Breakpoint.Hbuttonbox13, 85, 27);
+   Set_Child_Ipadding (Advanced_Breakpoint.Hbuttonbox13, 7, 0);
+   Pack_Start (Advanced_Breakpoint.Vbox34, Advanced_Breakpoint.Hbuttonbox13, True, True, 0);
+
+   Gtk_New_From_Stock (Advanced_Breakpoint.Apply, Stock_Apply);
+   Set_Relief (Advanced_Breakpoint.Apply, Relief_Normal);
+   Set_Flags (Advanced_Breakpoint.Apply, Can_Default);
+   Widget_Callback.Object_Connect
+     (Advanced_Breakpoint.Apply, "clicked",
+      Widget_Callback.To_Marshaller (On_Apply_Clicked'Access), Advanced_Breakpoint);
+   Add (Advanced_Breakpoint.Hbuttonbox13, Advanced_Breakpoint.Apply);
+
+   Gtk_New_From_Stock (Advanced_Breakpoint.Close, Stock_Close);
+   Set_Relief (Advanced_Breakpoint.Close, Relief_Normal);
+   Set_Flags (Advanced_Breakpoint.Close, Can_Default);
+   Widget_Callback.Object_Connect
+     (Advanced_Breakpoint.Close, "clicked",
+      Widget_Callback.To_Marshaller (On_Close_Clicked'Access), Advanced_Breakpoint);
+   Add (Advanced_Breakpoint.Hbuttonbox13, Advanced_Breakpoint.Close);
+
 end Initialize;
+
 end Advanced_Breakpoint_Pkg;
