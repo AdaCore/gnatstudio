@@ -42,6 +42,7 @@ with Odd.Pixmaps;     use Odd.Pixmaps;
 with Display_Items;   use Display_Items;
 with Generic_Values;  use Generic_Values;
 with Debugger.Gdb;    use Debugger.Gdb;
+with Debugger.Jdb;    use Debugger.Jdb;
 with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
 
@@ -170,6 +171,7 @@ package body Odd.Process is
       --  ??? Params should be passed on to the debugger
 
       Process.Debugger := new Gdb_Debugger;
+      --  Process.Debugger := new Jdb_Debugger;
 
       Spawn (Process.Debugger.all, Params, new Gui_Process_Proxy, "");
 
