@@ -520,8 +520,13 @@ package body Vdiff_Utils is
          end if;
          Texts (1) := ICS.New_String (Line);
          Row := Append (List, Texts);
-         Set_Cell_Style (List, Row, 0, Style);
-         Set_Cell_Style (List, Row, 1, Style);
+         if Current_Line.Color_Enabled then
+            Set_Cell_Style (List, Row, 0, Style);
+            Set_Cell_Style (List, Row, 1, Style);
+         else
+            Set_Cell_Style (List, Row, 0, Default_Style);
+            Set_Cell_Style (List, Row, 1, Default_Style);
+         end if;
          ICS.Free (Texts (0));
          ICS.Free (Texts (1));
       end Add_Line;
