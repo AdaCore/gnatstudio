@@ -68,19 +68,14 @@ begin
    Set_Handle_Size (Process_Tab.Data_Editor_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Editor_Paned, 6);
    Set_Position (Process_Tab.Data_Editor_Paned, 200);
+   --  Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
 
    Gtk_New_Hpaned (Process_Tab.Data_Paned);
    Set_Handle_Size (Process_Tab.Data_Paned, 10);
    Set_Gutter_Size (Process_Tab.Data_Paned, 6);
    Set_Position (Process_Tab.Data_Paned, 200);
-
-   if Separate_Data_Window then
-      Add (Process_Tab, Process_Tab.Data_Paned);
-      Ref (Process_Tab.Data_Editor_Paned);
-   else
-      Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
-      Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
-   end if;
+   --  Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Paned);
+   Ref (Process_Tab.Data_Paned);
 
    Gtk_New (Process_Tab.Stack_Scrolledwindow);
    Set_Policy (Process_Tab.Stack_Scrolledwindow, Policy_Automatic, Policy_Automatic);
@@ -141,7 +136,16 @@ begin
 
    Gtk_New (Process_Tab.Data_Scrolledwindow);
    Set_Policy (Process_Tab.Data_Scrolledwindow, Policy_Automatic, Policy_Automatic);
-   Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
+   --  Add (Process_Tab.Data_Paned, Process_Tab.Data_Scrolledwindow);
+
+   if Separate_Data_Window then
+      Add (Process_Tab, Process_Tab.Data_Scrolledwindow);
+      Ref (Process_Tab.Data_Editor_Paned);
+   else
+      Add (Process_Tab.Process_Paned, Process_Tab.Data_Editor_Paned);
+      Add (Process_Tab.Data_Editor_Paned, Process_Tab.Data_Scrolledwindow);
+   end if;
+
 
    Gtk_New (GVD_Canvas (Process_Tab.Data_Canvas));
    Set_Shadow_Type (Process_Tab.Data_Canvas, Shadow_In);
