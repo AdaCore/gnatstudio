@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- E104-006 Theme activation status improperly restored
+  Problem:    When editing the list of themes that are loaded by GPS from the
+              preferences dialog, the status is incorrectly shown the next
+              time the dialog is open
+  Workaround: Relaunch GPS after modifying the list of themes you are loading
+
 - DC30-003 Completion in File/Open From Project is always case sensitive
   Problem:    On windows, if you use the dialog Open From Project, you must
               type the file name with exactly the same casing as on the file
