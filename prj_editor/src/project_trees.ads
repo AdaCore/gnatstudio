@@ -1,15 +1,48 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
 
+--  <description>
+--
 --  This package provides a tree widget that lists a project and all its
---  dependencies (and the dependencies thereof...)
+--  dependencies (and the dependencies thereof...). It also includes the
+--  directories of the project.
+--
+--  </description>
 
 with Glib;
 with Gtk.Ctree;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 
---  GNAT sources
 with Types;
-with Prj.Tree;
+with Prj;
+
+with Prj_Manager;
 
 package Project_Trees is
 
@@ -20,24 +53,15 @@ package Project_Trees is
 
    procedure Gtk_New
      (Tree        : out Project_Tree;
+      Manager     : access Prj_Manager.Project_Manager_Record'Class;
       Columns     : Glib.Gint;
       Tree_Column : Glib.Gint := 0);
-   --  Create a new tree
-
-   procedure Load
-     (Tree         : access Project_Tree_Record;
-      Project      : Prj.Tree.Project_Node_Id;
-      Project_View : Prj.Project_Id);
-   --  Load a new project and its dependencies in the tree.
-   --  The project previously loaded is removed from the tree.
-   --  Prj_Tree is the project parsed in a tree form, whereas Project should
-   --  be the currently evaluated form, depending on the scenario
-   --  variables.
-   --  if Project is the same that was already loaded, and since the list of
-   --  withed projects can not changed, the open/close status of all the
-   --  project nodes is kept.
-   --  !!WARNING: this assumes that the hierarchy of projects can not change
-   --  when the project_view is changed.
+   --  Create a new tree.
+   --  This tree displays the current view of Manager, and is refreshed
+   --  automatically every time this view is updated.
+   --
+   --  On each update, and since the list of withed projects can not changed,
+   --  the open/close status of all the project nodes is kept.
 
    ---------------
    -- Selection --
@@ -73,9 +97,7 @@ package Project_Trees is
 
 private
    type Project_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
-      Project : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
-      Current_View : Prj.Project_Id;
-
+      Manager            : Prj_Manager.Project_Manager;
       Folder_Open_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
       Folder_Open_Mask   : Gdk.Bitmap.Gdk_Bitmap;
       Folder_Pixmap      : Gdk.Pixmap.Gdk_Pixmap;

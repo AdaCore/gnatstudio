@@ -1,9 +1,35 @@
---  Runtime dependencies
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
---  Dependencies on GtkAda
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
 with Gdk.Pixmap;           use Gdk.Pixmap;
@@ -15,14 +41,13 @@ with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
 
---  Dependencies on GNAT sources
 with Prj;                  use Prj;
 with Namet;                use Namet;
 with Stringt;              use Stringt;
-with Prj.Tree;             use Prj.Tree;
 with Types;                use Types;
 
 with Prj_API;              use Prj_API;
+with Prj_Manager;          use Prj_Manager;
 
 package body Project_Trees is
 
@@ -43,7 +68,7 @@ package body Project_Trees is
    mini_folder_xpm   : aliased Chars_Ptr_Array (0 .. 0);
    mini_ofolder_xpm  : aliased Chars_Ptr_Array (0 .. 0);
 
-   pragma Import (C, mini_folder_xpm, "mini_folder_xpm");
+   pragma Import (C, mini_folder_xpm,  "mini_folder_xpm");
    pragma Import (C, mini_ofolder_xpm, "mini_ofolder_xpm");
 
    type Node_Types is (Project_Node, Directory_Node);
@@ -125,7 +150,7 @@ package body Project_Trees is
    --  is directly associated with a projet, we return the importing project,
    --  note the one associated with Node.
 
-   function Get_Selected_Project_Node (Tree : access Project_Tree_Record)
+   function Get_Selected_Project_Node (Tree : access Project_Tree_Record'Class)
       return Gtk_Ctree_Node;
    --  Return the node that contains the selected directory (or, if the user
    --  selected a project directly, it returns the node of that project itself)
@@ -144,14 +169,18 @@ package body Project_Trees is
    --  Select a specific project, and (if not "") a specific directory
    --  in that project
 
+   procedure Refresh (Tree : access Gtk_Widget_Record'Class);
+   --  Refresh the contents of the tree after the project view has changed.
+
    -------------
    -- Gtk_New --
    -------------
 
    procedure Gtk_New
      (Tree        : out Project_Tree;
-      Columns     : in     Gint;
-      Tree_Column : in     Gint := 0) is
+      Manager     : access Prj_Manager.Project_Manager_Record'Class;
+      Columns     : Gint;
+      Tree_Column : Gint := 0) is
    begin
       Tree := new Project_Tree_Record;
       Gtk.Ctree.Initialize (Tree, Number_Of_Columns, Tree_Column);
@@ -180,6 +209,11 @@ package body Project_Trees is
 
       --  So that the horizontal scrollbars work correctly.
       Set_Column_Auto_Resize (Tree, 0, True);
+
+      Tree.Manager := Project_Manager (Manager);
+      Widget_Callback.Object_Connect
+        (Manager, "project_view_changed",
+         Widget_Callback.To_Marshaller (Refresh'Access), Tree);
    end Gtk_New;
 
    --------------------
@@ -456,74 +490,61 @@ package body Project_Trees is
       end if;
    end Add_Node_Contents;
 
-   ----------
-   -- Load --
-   ----------
+   -------------
+   -- Refresh --
+   -------------
 
-   procedure Load
-     (Tree         : access Project_Tree_Record;
-      Project      : Project_Node_Id;
-      Project_View : Project_Id)
-   is
+   procedure Refresh (Tree : access Gtk_Widget_Record'Class) is
+      T : Project_Tree := Project_Tree (Tree);
       Selected_P   : Gtk_Ctree_Node := null;
-      Selected_Dir : String_Id := No_String;
+      Selected_Dir : String_Access := null;
    begin
-      pragma Assert
-        (Project /= Empty_Node and then Project_View /= No_Project);
-      Tree.Current_View := Project_View;
+      Freeze (T);
 
-      Freeze (Tree);
+      --  If the tree is empty, this simply means we never created it, so we
+      --  need to do it now
+
+      if Node_Nth (T, 0) = null then
+         Expand (T, Add_Project_Node (T, Get_Project_View (T.Manager)));
+
 
       --  If we are displaying a new view of the tree that was there before, we
       --  want to keep the project nodes, and most important their open/close
       --  status, so as to minimize the changes the user sees.
 
-      if Tree.Project = Project then
-
+      else
          --  Save the selection, so that we can restore it later
-         Selected_P := Get_Selected_Project_Node (Tree);
+         Selected_P := Get_Selected_Project_Node (T);
          if Selected_P /= null then
             declare
                U : User_Data := Node_Get_Row_Data
-                 (Tree, Node_List.Get_Data (Get_Selection (Tree)));
+                 (T, Node_List.Get_Data (Get_Selection (T)));
             begin
                if U.Node_Type = Directory_Node then
-                  Selected_Dir := U.Directory;
+                  String_To_Name_Buffer (U.Directory);
+                  Selected_Dir := new String'
+                    (Name_Buffer (Name_Buffer'First .. Name_Len));
                end if;
             end;
          end if;
 
-         if Selected_Dir /= No_String then
-            String_To_Name_Buffer (Selected_Dir);
-            declare
-               D : constant String :=
-                 Name_Buffer (Name_Buffer'First .. Name_Len);
-            begin
-               Update_Node (Tree, Node_Nth (Tree, 0));
+         Update_Node (T, Node_Nth (T, 0));
 
-               --  Restore the selection. Note that this also resets the
-               --  project view clist, with the contents of all the files.
+         --  Restore the selection. Note that this also resets the project
+         --  view clist, with the contents of all the files.
 
-               if Selected_P /= null then
-                  Select_Directory (Tree, Selected_P, D);
-               end if;
-            end;
-         else
-            Update_Node (Tree, Node_Nth (Tree, 0));
-            if Selected_P /= null then
-               Select_Directory (Tree, Selected_P);
+         if Selected_P /= null then
+            if Selected_Dir /= null then
+               Select_Directory (T, Selected_P, Selected_Dir.all);
+               Free (Selected_Dir);
+            else
+               Select_Directory (T, Selected_P);
             end if;
          end if;
-
-      else
-         Clear (Tree);
-         Tree.Project := Project;
-         Expand
-           (Tree, Add_Project_Node (Tree, Project_View, Parent_Node => null));
       end if;
 
-      Thaw (Tree);
-   end Load;
+      Thaw (T);
+   end Refresh;
 
    ----------------------
    -- Create_Line_Text --
@@ -559,7 +580,7 @@ package body Project_Trees is
    -- Get_Selected_Project_Node --
    -------------------------------
 
-   function Get_Selected_Project_Node (Tree : access Project_Tree_Record)
+   function Get_Selected_Project_Node (Tree : access Project_Tree_Record'Class)
       return Gtk_Ctree_Node
    is
       use type Node_List.Glist;
