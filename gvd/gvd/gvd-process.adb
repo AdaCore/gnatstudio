@@ -1097,6 +1097,10 @@ package body GVD.Process is
       Gtk_New (Label, -"Location");
       Set_Column_Widget (Process.Stack_List, 4, Label);
 
+      --  ??? The following may be too costly, but is the only way to get
+      --  proper horizontal scrolling working. Will be fixed when switching
+      --  to TreeView
+
       for Column in Gint range 0 .. 4 loop
          Set_Column_Auto_Resize (Process.Stack_List, Column, True);
       end loop;
@@ -1174,6 +1178,7 @@ package body GVD.Process is
       History : Histories.History)
    is
       Child : MDI_Child;
+      use type Histories.History;
    begin
       Gtk_New
         (Process.Debugger_Text,
@@ -1184,8 +1189,11 @@ package body GVD.Process is
          History_List => History,
          Key          => "gvd_console",
          Empty_Equals_Repeat => True);
-      Histories.Set_Max_Length (History.all, 100, "gvd_console");
-      Histories.Allow_Duplicates (History.all, "gvd_console", True, True);
+
+      if History /= null then
+         Histories.Set_Max_Length (History.all, 100, "gvd_console");
+         Histories.Allow_Duplicates (History.all, "gvd_console", True, True);
+      end if;
 
       Set_Highlight_Color
         (Process.Debugger_Text,
