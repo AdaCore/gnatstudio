@@ -65,7 +65,6 @@ with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with Odd_Intl;                   use Odd_Intl;
 with Display_Items;              use Display_Items;
 with Debugger.Gdb;               use Debugger.Gdb;
-with Debugger.Jdb;               use Debugger.Jdb;
 with Process_Proxies;            use Process_Proxies;
 with Items.Simples;              use Items.Simples;
 with Breakpoints_Editor;         use Breakpoints_Editor;
@@ -1237,8 +1236,6 @@ package body GVD.Process is
       case Kind is
          when Gdb_Type =>
             Process.Debugger := new Gdb_Debugger;
-         when Jdb_Type =>
-            Process.Debugger := new Jdb_Debugger;
          when others =>
             Set_Busy (Process, False);
             raise Debugger_Not_Supported;
