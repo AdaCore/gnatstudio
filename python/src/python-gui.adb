@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Calendar;      use Ada.Calendar;
+with Ada.Exceptions;    use Ada.Exceptions;
 with Gtk.Box;           use Gtk.Box;
 with Gtk.Dialog;        use Gtk.Dialog;
 with Gtk.GEntry;        use Gtk.GEntry;
@@ -48,12 +50,14 @@ with System;
 with Python.Ada;      use Python.Ada;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
+with Traces;          use Traces;
 
 package body Python.GUI is
 
-   Trace_Threshold : constant Natural := 40_000;
-   --  How many traces event should we wait before checking the queue of gdk
-   --  events ?
+   Me : constant Debug_Handle := Create ("Python.GUI");
+
+   Timeout_Threshold : constant Duration := 0.2;   --  in seconds
+   --  Timeout between two checks of the gtk+ event queue
 
    Python_Key : constant History_Key := "python_console";
 
@@ -99,14 +103,19 @@ package body Python.GUI is
       Text        : String);
    --  Insert some text in the interpreter console, and scroll as necessary
 
-   procedure Process_Gtk_Events;
+   procedure Process_Gtk_Events
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Force       : Boolean := False);
    --  Process all pending gtk+ events
 
    ------------------------
    -- Process_Gtk_Events --
    ------------------------
 
-   procedure Process_Gtk_Events is
+   procedure Process_Gtk_Events
+     (Interpreter : access Python_Interpreter_Record'Class;
+      Force       : Boolean := False)
+   is
       Dead   : Boolean;
       pragma Unreferenced (Dead);
    begin
@@ -117,9 +126,14 @@ package body Python.GUI is
       --  be sent to the python console, thus avoiding recursive loops inside
       --  GPS.
 
-      while Gtk.Main.Events_Pending loop
-         Dead := Gtk.Main.Main_Iteration;
-      end loop;
+      if Force
+        or else Clock - Interpreter.Refresh_Timeout > Timeout_Threshold
+      then
+         while Gtk.Main.Events_Pending loop
+            Dead := Gtk.Main.Main_Iteration;
+         end loop;
+         Interpreter.Refresh_Timeout := Clock;
+      end if;
    end Process_Gtk_Events;
 
    -----------------
@@ -132,14 +146,17 @@ package body Python.GUI is
    is
       Buffer : constant Gtk_Text_Buffer := Get_Buffer (Interpreter.Console);
       Iter   : Gtk_Text_Iter;
-      Dead   : Boolean;
-      pragma Unreferenced (Dead);
    begin
       Get_End_Iter (Buffer, Iter);
       Insert (Buffer, Iter, Text);
-      Dead := Scroll_To_Iter
-        (Interpreter.Console, Iter, 0.0,
-         Use_Align => False, Xalign => 0.0, Yalign => 0.0);
+
+      if Interpreter.Scroll_Mark = null then
+         Interpreter.Scroll_Mark := Create_Mark (Buffer, Where => Iter);
+      else
+         Move_Mark (Buffer, Interpreter.Scroll_Mark, Iter);
+      end if;
+
+      Scroll_To_Mark (Interpreter.Console, Interpreter.Scroll_Mark);
    end Insert_Text;
 
    -----------
@@ -164,7 +181,7 @@ package body Python.GUI is
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
 
       Insert_Text (Interpreter, Value (S));
-      Process_Gtk_Events;
+      Process_Gtk_Events (Interpreter);
 
       Py_INCREF (Py_None);
       return Py_None;
@@ -205,6 +222,8 @@ package body Python.GUI is
 
       Data := PyObject_GetAttrString (File, "gpsdata");
       Interpreter := Convert (PyCObject_AsVoidPtr (Data));
+
+      Process_Gtk_Events (Interpreter, Force => True);
 
       Gtk_New (Dialog,
                Title  => -"Python input",
@@ -311,8 +330,11 @@ package body Python.GUI is
       Add_Method (Stdout, Create_Method_Def ("read",     Read_Line'Access));
       Add_Method (Stdout, Create_Method_Def ("readline", Read_Line'Access));
 
+      --  Note: we also set __stdout__,..., so that the user can restore them
+      --  after temporarily modifying sys.stdout in their own programs
       if not PyRun_SimpleString
-        ("sys.stdout=sys.stdin=sys.stderr=GPSStdout ()" & ASCII.LF)
+        ("sys.stdout=sys.stdin=sys.stderr=GPSStdout ()" & ASCII.LF
+         & "sys.__stdout__=sys.__stdin__=sys.__stderr__=sys.stdout" & ASCII.LF)
       then
          raise Interpreter_Error;
       end if;
@@ -383,14 +405,10 @@ package body Python.GUI is
       Obj      : PyObject) return Integer
    is
       pragma Unreferenced (Obj, Frame, Why);
-      Interpreter : Python_Interpreter := Convert
+      Interpreter : constant Python_Interpreter := Convert
         (PyCObject_AsVoidPtr (User_Arg));
    begin
-      Interpreter.Trace_Count := Interpreter.Trace_Count + 1;
-      if Interpreter.Trace_Count = Trace_Threshold then
-         Process_Gtk_Events;
-         Interpreter.Trace_Count := 0;
-      end if;
+      Process_Gtk_Events (Interpreter);
       return 0;
    end Trace;
 
@@ -420,6 +438,8 @@ package body Python.GUI is
          end if;
          return;
       end if;
+
+      Trace (Me, "Running command: " & Command);
 
       Code := Py_CompileString (Cmd, "<stdin>", Py_Single_Input);
 
@@ -471,11 +491,30 @@ package body Python.GUI is
                Typ, Occurrence, Traceback : PyObject;
                S : PyObject;
             begin
-               PyErr_Fetch (Typ, Occurrence, Traceback);
-               S := PyTuple_GetItem (Occurrence, 0);
-               Interpreter.Use_Secondary_Prompt :=
-                 PyString_AsString (S) = "unexpected EOF while parsing";
-               PyErr_Clear;
+               if PyErr_Occurred /= null then
+                  PyErr_Fetch (Typ, Occurrence, Traceback);
+                  PyErr_NormalizeException (Typ, Occurrence, Traceback);
+
+                  if PyTuple_Check (Occurrence) then
+                     --  Old style exceptions
+                     S := PyTuple_GetItem (Occurrence, 0);
+                  else
+                     --  New style: occurrence is an instance
+                     --  S is null if the exception is not a syntax_error
+                     S := PyObject_GetAttrString (Occurrence, "msg");
+                  end if;
+
+                  Interpreter.Use_Secondary_Prompt :=
+                    S /= null and then PyString_AsString (S) =
+                    "unexpected EOF while parsing";
+
+                  if not Interpreter.Use_Secondary_Prompt then
+                     PyErr_Restore (Typ, Occurrence, Traceback);
+                     PyErr_Print;
+                  else
+                     PyErr_Clear;
+                  end if;
+               end if;
             end;
          end if;
 
@@ -488,11 +527,18 @@ package body Python.GUI is
             Free (Interpreter.Buffer);
             Interpreter.Buffer := new String'("");
          end if;
+      else
+         PyErr_Clear;
       end if;
 
       if not Hide_Output then
          Display_Prompt (Interpreter);
       end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception "
+                & Exception_Information (E));
    end Run_Command;
 
    --------------------
