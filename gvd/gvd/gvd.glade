@@ -3254,6 +3254,7 @@
 	<signal>
 	  <name>clicked</name>
 	  <handler>on_ok_button_clicked</handler>
+	  <object>General_Preferences</object>
 	  <last_modification_time>Tue, 02 May 2000 10:31:49 GMT</last_modification_time>
 	</signal>
 	<label>OK</label>
