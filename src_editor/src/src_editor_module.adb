@@ -126,9 +126,11 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
       Create_New : Boolean := True;
-      Add_To_MDI : Boolean := True) return Source_Box;
+      Add_To_MDI : Boolean := True;
+      Focus      : Boolean := True) return Source_Box;
    --  Open a file and return the handle associated with it.
    --  If Add_To_MDI is set to True, the box will be added to the MDI window.
+   --  If Focus is True, the box will be raised if it is in the MDI.
    --  See Create_File_Exitor.
 
    function Create_File_Editor
@@ -771,7 +773,8 @@ package body Src_Editor_Module is
      (Kernel     : access Kernel_Handle_Record'Class;
       File       : String := "";
       Create_New : Boolean := True;
-      Add_To_MDI : Boolean := True) return Source_Box
+      Add_To_MDI : Boolean := True;
+      Focus      : Boolean := True) return Source_Box
    is
       MDI        : constant MDI_Window := Get_MDI (Kernel);
       Short_File : constant String := Base_Name (File);
@@ -790,8 +793,11 @@ package body Src_Editor_Module is
          end loop;
 
          if Child /= null then
-            Raise_Child (Child);
-            Set_Focus_Child (Child);
+            if Focus then
+               Raise_Child (Child);
+               Set_Focus_Child (Child);
+            end if;
+
             return Source_Box (Get_Widget (Child));
          end if;
       end if;
@@ -1625,6 +1631,8 @@ package body Src_Editor_Module is
             Iter       : Child_Iterator := First_Child (MDI);
             Child      : MDI_Child;
 
+            No_Location : Boolean := False;
+
          begin
             if Line = -1 then
                loop
@@ -1646,14 +1654,21 @@ package body Src_Editor_Module is
                   Idle_Remove (The_Data.Location_Open_Id);
                end if;
 
-               Source := Open_File (Kernel, File, Create_New => New_File);
+               if Line = 0 and then Column = 0 then
+                  No_Location := True;
+               end if;
+
+               Source := Open_File
+                 (Kernel, File,
+                  Create_New => New_File,
+                  Focus      => not No_Location);
 
                if Source /= null then
                   Edit := Source.Editor;
                end if;
 
                if Edit /= null
-                 and then (Line /= 0 or else Column /= 0)
+                 and then not No_Location
                then
                   --  For some reason, we can not directly call
                   --  Set_Cursor_Location, since the source editor won't be
@@ -1675,6 +1690,12 @@ package body Src_Editor_Module is
                   if Highlight then
                      Highlight_Line (Edit, Natural (Line));
                   end if;
+               end if;
+
+               if Edit /= null
+                 and then not Highlight
+               then
+                  Cancel_Highlight_Line (Edit);
                end if;
 
                return Edit /= null;
