@@ -209,6 +209,10 @@ package Python.Ada is
    --  Create a new instance of Class, passing (Args, Keywords) as parameters
    --  to the constructor.
 
+   function PyInstance_NewRaw
+     (Class : PyObject; Dict : PyObject := null) return PyObject;
+   --  Create a new instance of Class, but doesn't call the constructor
+
    function PyClass_IsSubclass
      (Class : PyObject; Base : PyObject) return Boolean;
    --  True if Class is a subclass of Base (or Base itself)
@@ -297,4 +301,5 @@ private
    pragma Import (C, PyCObject_AsVoidPtr, "PyCObject_AsVoidPtr");
    pragma Import (C, PyCObject_GetDesc, "PyCObject_GetDesc");
    pragma Import (C, PyInstance_New, "PyInstance_New");
+   pragma Import (C, PyInstance_NewRaw, "PyInstance_NewRaw");
 end Python.Ada;
