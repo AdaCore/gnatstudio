@@ -287,7 +287,10 @@ package body Docgen_Backend_HTML is
    begin
       Put_Line (File, "<PRE>");
       --  This tag is closed in Call_Graph_Packages_Header
-      --  ??? Look the wrong way around
+      --  For inner package, it's necessary to print the callgraph lists
+      --  outside the tag <PRE></PRE> in order to have a suitable output.
+      --  This solution must be temporary because the process way of inner
+      --  package will be changed soon.
    end Call_Graph_Packages_Footer;
 
    -----------------
