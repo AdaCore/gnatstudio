@@ -637,6 +637,7 @@ package body Glide_Kernel.Console is
       File     : constant String := '/' & (-"File");
       Console  : constant String := File & '/' & (-"_Messages");
       Mitem    : Gtk_Menu_Item;
+      N        : Node_Ptr;
 
    begin
       Console_Module_Id := new Console_Module_Id_Record;
@@ -648,6 +649,18 @@ package body Glide_Kernel.Console is
          Mime_Handler => Mime_Handler'Access);
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
+
+      --  Add Messages to the default desktop, so that we can enforce its
+      --  being on top.
+      N     := new Node;
+      N.Tag := new String'("Message_Window");
+      Add_Default_Desktop_Item
+        (Kernel, N,
+         10, 10,
+         400, 100,
+         -"Messages", -"Messages",
+         Docked, Bottom,
+         Focus => True, Raised => True);
 
       Initialize_Console (Kernel);
 
