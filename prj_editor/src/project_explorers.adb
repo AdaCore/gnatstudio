@@ -50,6 +50,7 @@ with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Widget;               use Gtk.Widget;
+with Gtk.Window;               use Gtk.Window;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.Notebook;             use Gtk.Notebook;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
@@ -1231,10 +1232,12 @@ package body Project_Explorers is
         (Node_Type : Node_Types; Open, Close : Chars_Ptr_Array) is
       begin
          Create_From_Xpm_D
-           (Explorer.Open_Pixmaps (Node_Type), null, Get_System,
+           (Explorer.Open_Pixmaps (Node_Type),
+            Get_Window (Get_Main_Window (Kernel)),
             Explorer.Open_Masks (Node_Type), Null_Color, Open);
          Create_From_Xpm_D
-           (Explorer.Close_Pixmaps (Node_Type), null, Get_System,
+           (Explorer.Close_Pixmaps (Node_Type),
+            Get_Window (Get_Main_Window (Kernel)),
             Explorer.Close_Masks (Node_Type), Null_Color, Close);
 
          Explorer.Open_Pixbufs (Node_Type) := Gdk_New_From_Xpm_Data (Open);
