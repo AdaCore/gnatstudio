@@ -1011,7 +1011,7 @@
 	<widget>
 	  <class>GtkTable</class>
 	  <name>table3</name>
-	  <rows>12</rows>
+	  <rows>8</rows>
 	  <columns>4</columns>
 	  <homogeneous>False</homogeneous>
 	  <row_spacing>2</row_spacing>
@@ -1053,31 +1053,8 @@
 	    <child>
 	      <left_attach>0</left_attach>
 	      <right_attach>4</right_attach>
-	      <top_attach>8</top_attach>
-	      <bottom_attach>9</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>True</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Align_Grid_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>Auto-Align Displays on Nearest Grid Point</label>
-	    <active>True</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>0</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>10</top_attach>
-	      <bottom_attach>11</bottom_attach>
+	      <top_attach>7</top_attach>
+	      <bottom_attach>8</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>True</xexpand>
@@ -1206,8 +1183,8 @@
 	    <child>
 	      <left_attach>0</left_attach>
 	      <right_attach>1</right_attach>
-	      <top_attach>4</top_attach>
-	      <bottom_attach>5</bottom_attach>
+	      <top_attach>3</top_attach>
+	      <bottom_attach>4</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
@@ -1232,8 +1209,8 @@
 	    <child>
 	      <left_attach>0</left_attach>
 	      <right_attach>1</right_attach>
-	      <top_attach>5</top_attach>
-	      <bottom_attach>6</bottom_attach>
+	      <top_attach>4</top_attach>
+	      <bottom_attach>5</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
@@ -1258,8 +1235,8 @@
 	    <child>
 	      <left_attach>0</left_attach>
 	      <right_attach>1</right_attach>
-	      <top_attach>6</top_attach>
-	      <bottom_attach>7</bottom_attach>
+	      <top_attach>5</top_attach>
+	      <bottom_attach>6</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
@@ -1281,8 +1258,8 @@
 	    <child>
 	      <left_attach>0</left_attach>
 	      <right_attach>2</right_attach>
-	      <top_attach>7</top_attach>
-	      <bottom_attach>8</bottom_attach>
+	      <top_attach>6</top_attach>
+	      <bottom_attach>7</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>True</xexpand>
@@ -1307,8 +1284,8 @@
 	    <child>
 	      <left_attach>2</left_attach>
 	      <right_attach>3</right_attach>
-	      <top_attach>7</top_attach>
-	      <bottom_attach>8</bottom_attach>
+	      <top_attach>6</top_attach>
+	      <bottom_attach>7</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
@@ -1339,31 +1316,8 @@
 	    <child>
 	      <left_attach>3</left_attach>
 	      <right_attach>4</right_attach>
-	      <top_attach>7</top_attach>
-	      <bottom_attach>8</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>True</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Display_Grid_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>Display Grid Points</label>
-	    <active>True</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>0</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>9</top_attach>
-	      <bottom_attach>10</bottom_attach>
+	      <top_attach>6</top_attach>
+	      <bottom_attach>7</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>True</xexpand>
@@ -1378,6 +1332,35 @@
 	  <widget>
 	    <class>GtkToolbar</class>
 	    <name>Title_Font_Combo</name>
+	    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
+	    <type>GTK_TOOLBAR_BOTH</type>
+	    <space_size>5</space_size>
+	    <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
+	    <relief>GTK_RELIEF_NORMAL</relief>
+	    <tooltips>True</tooltips>
+	    <child>
+	      <left_attach>1</left_attach>
+	      <right_attach>4</right_attach>
+	      <top_attach>3</top_attach>
+	      <bottom_attach>4</bottom_attach>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	      <xexpand>False</xexpand>
+	      <yexpand>False</yexpand>
+	      <xshrink>False</xshrink>
+	      <yshrink>False</yshrink>
+	      <xfill>True</xfill>
+	      <yfill>False</yfill>
+	    </child>
+
+	    <widget>
+	      <class>Placeholder</class>
+	    </widget>
+	  </widget>
+
+	  <widget>
+	    <class>GtkToolbar</class>
+	    <name>Value_Font_Combo</name>
 	    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
 	    <type>GTK_TOOLBAR_BOTH</type>
 	    <space_size>5</space_size>
@@ -1406,7 +1389,7 @@
 
 	  <widget>
 	    <class>GtkToolbar</class>
-	    <name>Value_Font_Combo</name>
+	    <name>Type_Font_Combo</name>
 	    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
 	    <type>GTK_TOOLBAR_BOTH</type>
 	    <space_size>5</space_size>
@@ -1418,35 +1401,6 @@
 	      <right_attach>4</right_attach>
 	      <top_attach>5</top_attach>
 	      <bottom_attach>6</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>False</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-
-	    <widget>
-	      <class>Placeholder</class>
-	    </widget>
-	  </widget>
-
-	  <widget>
-	    <class>GtkToolbar</class>
-	    <name>Type_Font_Combo</name>
-	    <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
-	    <type>GTK_TOOLBAR_BOTH</type>
-	    <space_size>5</space_size>
-	    <space_style>GTK_TOOLBAR_SPACE_EMPTY</space_style>
-	    <relief>GTK_RELIEF_NORMAL</relief>
-	    <tooltips>True</tooltips>
-	    <child>
-	      <left_attach>1</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>6</top_attach>
-	      <bottom_attach>7</bottom_attach>
 	      <xpad>0</xpad>
 	      <ypad>0</ypad>
 	      <xexpand>False</xexpand>
@@ -1640,75 +1594,6 @@
 	      <text_max_length>0</text_max_length>
 	      <text></text>
 	    </widget>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Show_Stack_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>Show Call Stack</label>
-	    <active>False</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>0</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>11</top_attach>
-	      <bottom_attach>12</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>False</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Look_3D_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>3D Look</label>
-	    <active>False</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>2</left_attach>
-	      <right_attach>4</right_attach>
-	      <top_attach>3</top_attach>
-	      <bottom_attach>4</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>False</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
-	  </widget>
-
-	  <widget>
-	    <class>GtkCheckButton</class>
-	    <name>Separate_Data_Check</name>
-	    <can_focus>True</can_focus>
-	    <label>Separate Window</label>
-	    <active>False</active>
-	    <draw_indicator>True</draw_indicator>
-	    <child>
-	      <left_attach>0</left_attach>
-	      <right_attach>2</right_attach>
-	      <top_attach>3</top_attach>
-	      <bottom_attach>4</bottom_attach>
-	      <xpad>0</xpad>
-	      <ypad>0</ypad>
-	      <xexpand>False</xexpand>
-	      <yexpand>False</yexpand>
-	      <xshrink>False</xshrink>
-	      <yshrink>False</yshrink>
-	      <xfill>True</xfill>
-	      <yfill>False</yfill>
-	    </child>
 	  </widget>
 	</widget>
       </widget>
@@ -2575,149 +2460,6 @@
     <spacing>0</spacing>
 
     <widget>
-      <class>GtkHPaned</class>
-      <name>data_paned</name>
-      <signal>
-	<name>delete_event</name>
-	<handler>on_data_paned_delete_event</handler>
-	<object>Process_Tab</object>
-	<last_modification_time>Tue, 26 Jun 2001 14:01:32 GMT</last_modification_time>
-      </signal>
-      <handle_size>10</handle_size>
-      <gutter_size>6</gutter_size>
-      <position>200</position>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkScrolledWindow</class>
-	<name>stack_scrolledwindow</name>
-	<hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
-	<vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
-	<hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-	<vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-	<child>
-	  <shrink>True</shrink>
-	  <resize>False</resize>
-	</child>
-
-	<widget>
-	  <class>GtkCList</class>
-	  <name>stack_list</name>
-	  <can_focus>True</can_focus>
-	  <events>GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</events>
-	  <signal>
-	    <name>select_row</name>
-	    <handler>on_stack_list_select_row</handler>
-	    <last_modification_time>Wed, 11 Oct 2000 10:48:46 GMT</last_modification_time>
-	  </signal>
-	  <signal>
-	    <name>button_press_event</name>
-	    <handler>on_stack_list_button_press_event</handler>
-	    <object>Process_Tab</object>
-	    <last_modification_time>Tue, 31 Oct 2000 22:18:19 GMT</last_modification_time>
-	  </signal>
-	  <columns>5</columns>
-	  <column_widths>80,80,80,80,80</column_widths>
-	  <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
-	  <show_titles>True</show_titles>
-	  <shadow_type>GTK_SHADOW_IN</shadow_type>
-
-	  <widget>
-	    <class>GtkLabel</class>
-	    <child_name>CList:title</child_name>
-	    <name>label101</name>
-	    <label>Num</label>
-	    <justify>GTK_JUSTIFY_CENTER</justify>
-	    <wrap>False</wrap>
-	    <xalign>0.5</xalign>
-	    <yalign>0.5</yalign>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	  </widget>
-
-	  <widget>
-	    <class>GtkLabel</class>
-	    <child_name>CList:title</child_name>
-	    <name>label201</name>
-	    <label>PC</label>
-	    <justify>GTK_JUSTIFY_CENTER</justify>
-	    <wrap>False</wrap>
-	    <xalign>0.5</xalign>
-	    <yalign>0.5</yalign>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	  </widget>
-
-	  <widget>
-	    <class>GtkLabel</class>
-	    <child_name>CList:title</child_name>
-	    <name>label202</name>
-	    <label>Subprogram</label>
-	    <justify>GTK_JUSTIFY_CENTER</justify>
-	    <wrap>False</wrap>
-	    <xalign>0.5</xalign>
-	    <yalign>0.5</yalign>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	  </widget>
-
-	  <widget>
-	    <class>GtkLabel</class>
-	    <child_name>CList:title</child_name>
-	    <name>label203</name>
-	    <label>Parameters</label>
-	    <justify>GTK_JUSTIFY_CENTER</justify>
-	    <wrap>False</wrap>
-	    <xalign>0.5</xalign>
-	    <yalign>0.5</yalign>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	  </widget>
-
-	  <widget>
-	    <class>GtkLabel</class>
-	    <child_name>CList:title</child_name>
-	    <name>label204</name>
-	    <label>Location</label>
-	    <justify>GTK_JUSTIFY_CENTER</justify>
-	    <wrap>False</wrap>
-	    <xalign>0.5</xalign>
-	    <yalign>0.5</yalign>
-	    <xpad>0</xpad>
-	    <ypad>0</ypad>
-	  </widget>
-	</widget>
-      </widget>
-
-      <widget>
-	<class>GtkScrolledWindow</class>
-	<name>data_scrolledwindow</name>
-	<hscrollbar_policy>GTK_POLICY_AUTOMATIC</hscrollbar_policy>
-	<vscrollbar_policy>GTK_POLICY_AUTOMATIC</vscrollbar_policy>
-	<hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-	<vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-	<child>
-	  <shrink>True</shrink>
-	  <resize>True</resize>
-	</child>
-
-	<widget>
-	  <class>GtkViewport</class>
-	  <name>data_canvas</name>
-	  <shadow_type>GTK_SHADOW_IN</shadow_type>
-
-	  <widget>
-	    <class>Placeholder</class>
-	  </widget>
-	</widget>
-      </widget>
-    </widget>
-
-    <widget>
       <class>GtkHBox</class>
       <name>editor_text</name>
       <signal>
@@ -2737,62 +2479,6 @@
       <widget>
 	<class>Placeholder</class>
       </widget>
-    </widget>
-
-    <widget>
-      <class>GtkScrolledWindow</class>
-      <name>command_scrolledwindow</name>
-      <signal>
-	<name>delete_event</name>
-	<handler>on_command_scrolledwindow_delete_event</handler>
-	<object>Process_Tab</object>
-	<last_modification_time>Tue, 26 Jun 2001 14:00:57 GMT</last_modification_time>
-      </signal>
-      <hscrollbar_policy>GTK_POLICY_NEVER</hscrollbar_policy>
-      <vscrollbar_policy>GTK_POLICY_ALWAYS</vscrollbar_policy>
-      <hupdate_policy>GTK_UPDATE_CONTINUOUS</hupdate_policy>
-      <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
-      <child>
-	<padding>0</padding>
-	<expand>True</expand>
-	<fill>True</fill>
-      </child>
-
-      <widget>
-	<class>GtkText</class>
-	<name>debugger_text</name>
-	<can_focus>True</can_focus>
-	<signal>
-	  <name>insert_text</name>
-	  <handler>on_debugger_text_insert_text</handler>
-	  <object>process_tab</object>
-	  <last_modification_time>Tue, 18 Apr 2000 21:38:14 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>delete_text</name>
-	  <handler>on_debugger_text_delete_text</handler>
-	  <object>process_tab</object>
-	  <last_modification_time>Tue, 18 Apr 2000 21:38:25 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>key_press_event</name>
-	  <handler>on_debugger_text_key_press_event</handler>
-	  <object>process_tab</object>
-	  <last_modification_time>Tue, 30 May 2000 15:32:58 GMT</last_modification_time>
-	</signal>
-	<signal>
-	  <name>grab_focus</name>
-	  <handler>on_debugger_text_grab_focus</handler>
-	  <object>process_tab</object>
-	  <last_modification_time>Tue, 03 Oct 2000 14:51:11 GMT</last_modification_time>
-	</signal>
-	<editable>True</editable>
-	<text></text>
-      </widget>
-    </widget>
-
-    <widget>
-      <class>Placeholder</class>
     </widget>
   </widget>
 </widget>
