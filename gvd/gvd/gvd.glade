@@ -21,6 +21,7 @@
   <handler_header_file>callbacks.h</handler_header_file>
   <support_source_file>support.c</support_source_file>
   <support_header_file>support.h</support_header_file>
+  <translatable_strings_file></translatable_strings_file>
 </project>
 
 <widget>
@@ -284,6 +285,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_exit1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:17:25 GMT</last_modification_time>
 	    </signal>
 	    <label>Exit</label>
@@ -641,6 +643,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_run1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:30:57 GMT</last_modification_time>
 	    </signal>
 	    <label>Run...</label>
@@ -670,6 +673,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_start1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:31:48 GMT</last_modification_time>
 	    </signal>
 	    <label>Start</label>
@@ -2049,6 +2053,12 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button49</name>
 	<tooltip>Start the debugged program</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_run1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Tue, 23 May 2000 15:10:48 GMT</last_modification_time>
+	</signal>
 	<label></label>
 	<icon>run.xpm</icon>
       </widget>
@@ -2058,6 +2068,12 @@
 	<child_name>Toolbar:button</child_name>
 	<name>button50</name>
 	<tooltip>Start the debugged program, stopping at the beginning of the main procedure</tooltip>
+	<signal>
+	  <name>clicked</name>
+	  <handler>on_start1_activate</handler>
+	  <object>main_debug_window</object>
+	  <last_modification_time>Tue, 23 May 2000 15:11:18 GMT</last_modification_time>
+	</signal>
 	<label></label>
 	<icon>start.xpm</icon>
       </widget>
@@ -5315,6 +5331,12 @@
   <widget>
     <class>GtkVPaned</class>
     <name>process_paned</name>
+    <signal>
+      <name>delete_event</name>
+      <handler>on_process_paned_delete_event</handler>
+      <object>process_tab</object>
+      <last_modification_time>Tue, 23 May 2000 11:11:22 GMT</last_modification_time>
+    </signal>
     <handle_size>10</handle_size>
     <gutter_size>6</gutter_size>
     <position>0</position>
@@ -5355,7 +5377,7 @@
 
       <widget>
 	<class>GtkNotebook</class>
-	<name>notebook3</name>
+	<name>thread_notebook</name>
 	<can_focus>True</can_focus>
 	<show_tabs>True</show_tabs>
 	<show_border>True</show_border>
@@ -5378,11 +5400,27 @@
 	  <vupdate_policy>GTK_UPDATE_CONTINUOUS</vupdate_policy>
 
 	  <widget>
-	    <class>GtkText</class>
+	    <class>GtkCList</class>
 	    <name>editor_text</name>
 	    <can_focus>True</can_focus>
-	    <editable>False</editable>
-	    <text></text>
+	    <columns>1</columns>
+	    <column_widths>80</column_widths>
+	    <selection_mode>GTK_SELECTION_SINGLE</selection_mode>
+	    <show_titles>False</show_titles>
+	    <shadow_type>GTK_SHADOW_IN</shadow_type>
+
+	    <widget>
+	      <class>GtkLabel</class>
+	      <child_name>CList:title</child_name>
+	      <name>label54</name>
+	      <label>label54</label>
+	      <justify>GTK_JUSTIFY_CENTER</justify>
+	      <wrap>False</wrap>
+	      <xalign>0.5</xalign>
+	      <yalign>0.5</yalign>
+	      <xpad>0</xpad>
+	      <ypad>0</ypad>
+	    </widget>
 	  </widget>
 	</widget>
 
