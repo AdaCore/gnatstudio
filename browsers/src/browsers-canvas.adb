@@ -217,7 +217,7 @@ package body Browsers.Canvas is
 
       --  Else, a general browser selection
       else
-         Unlock (Gtk.Accel_Group.Get_Default);
+         Unlock (Get_Default_Accelerators (Kernel));
 
          Context := new Selection_Context;
 
@@ -246,7 +246,7 @@ package body Browsers.Canvas is
             Widget_Callback.To_Marshaller (Zoom_In'Access), B);
          Add_Accelerator
            (Mitem, "activate",
-            Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+            Get_Default_Accelerators (Kernel), GDK_equal, 0, Accel_Visible);
 
          Gtk_New (Mitem, Label => "Zoom out");
          Append (Menu, Mitem);
@@ -255,7 +255,7 @@ package body Browsers.Canvas is
             Widget_Callback.To_Marshaller (Zoom_Out'Access), B);
          Add_Accelerator
            (Mitem, "activate",
-            Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+            Get_Default_Accelerators (Kernel), GDK_minus, 0, Accel_Visible);
 
          Gtk_New (Zooms_Menu);
 
@@ -273,7 +273,7 @@ package body Browsers.Canvas is
          Append (Menu, Mitem);
          Set_Submenu (Mitem, Zooms_Menu);
 
-         Lock (Gtk.Accel_Group.Get_Default);
+         Lock (Get_Default_Accelerators (Kernel));
       end if;
 
       return Context;
