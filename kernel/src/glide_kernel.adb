@@ -683,6 +683,17 @@ package body Glide_Kernel is
       return False;
    end Is_Open;
 
+   ----------------
+   -- Open_Files --
+   ----------------
+
+   function Open_Files
+     (Kernel : access Kernel_Handle_Record)
+      return String_List_Utils.String_List.List is
+   begin
+      return Copy_String_List (Kernel.Open_Files);
+   end Open_Files;
+
    ---------------------
    -- Context_Changed --
    ---------------------

@@ -252,6 +252,12 @@ package Glide_Kernel is
       Filename : String) return Boolean;
    --  Whether Filename is currently opened in an editor.
 
+   function Open_Files
+     (Kernel : access Kernel_Handle_Record)
+      return String_List_Utils.String_List.List;
+   --  Return a list of currently open files.
+   --  User must free the result.
+
    ---------------
    -- Module ID --
    ---------------
