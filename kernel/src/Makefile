@@ -1,6 +1,6 @@
 
 MAIN=kernel
-MODULES=gnat gtkada common gvd src_editor prj_editor browsers
+MODULES=gnat gtkada common gvd src_editor vsearch prj_editor browsers
 MODULE_INCLUDE+=-aI../../kernel/src
 # This forces compilation of all files separately, without compiling the
 # dependencies, which is just what we want.
