@@ -137,16 +137,13 @@ package Items is
    --------------------------------
 
    procedure Free (Item : access Generic_Type;
-                   Only_Value : Boolean := False) is abstract;
+                   Only_Value : Boolean := False);
    --  Free the memory occupied by Item and its components.
    --  if Only_Value is True, then only clear the value fields, but keep alive
    --  the structure that describes the type.
 
-   function Clone (Item : Generic_Type) return Generic_Type_Access is abstract;
-   --  Deep copy Item, and return a newly allocated record.
-   --  Only the type-related fields are cloned, the value fields are reset to
-   --  Null.
-
+   function Clone (Item : Generic_Type'Class) return Generic_Type_Access;
+   --  return a deep copy of Item.
 
    function Get_Width (Item : Generic_Type) return Glib.Gint;
    --  Return the width that Item needs to display itself on the screen.
@@ -273,6 +270,14 @@ package Items is
    Unknown_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    Unknown_Height : Glib.Gint;
    Unknown_Width  : Glib.Gint;
+
+
+   procedure Clone_Dispatching
+     (Item  : Generic_Type;
+      Clone : out Generic_Type_Access);
+   --  Deep copy of the contents of Item into Clone.
+   --  Clone must have been allocated first, and you should rather use the
+   --  subprogram Clone above.
 
 private
 

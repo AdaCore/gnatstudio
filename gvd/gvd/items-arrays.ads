@@ -157,7 +157,9 @@ private
    procedure Print (Value : Array_Type; Indent : Natural := 0);
    procedure Free (Item : access Array_Type;
                    Only_Value : Boolean := False);
-   function Clone (Value : Array_Type) return Generic_Type_Access;
+   procedure Clone_Dispatching
+     (Item  : Array_Type;
+      Clone : out Generic_Type_Access);
    procedure Paint (Item    : in out Array_Type;
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);

@@ -105,33 +105,31 @@ package body Items.Repeats is
    procedure Free (Item : access Repeat_Type;
                    Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if Item.Value /= null then
          --  Keep the structure of the item that is repeated, if required.
          Free (Item.Value, Only_Value);
       end if;
-      if not Only_Value then
-         Free_Internal (I);
-      end if;
+      Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Repeat_Type)
-                  return Generic_Type_Access
+   procedure Clone_Dispatching
+     (Item  : Repeat_Type;
+      Clone : out Generic_Type_Access)
    is
-      R : Repeat_Type_Access := new Repeat_Type'(Value);
    begin
+      Clone_Dispatching (Generic_Type (Item), Clone);
+
       --  duplicate the type of the repeated item.
       --  The value itself is in fact not duplicated, since the leafs of the
       --  type tree is a simple_type (or one of its children), that does not
       --  clone the value.
-      R.Value := Clone (Value.Value.all);
-      return Generic_Type_Access (R);
-   end Clone;
+      Repeat_Type_Access (Clone).Value := Items.Clone (Item.Value.all);
+   end Clone_Dispatching;
 
    -----------
    -- Paint --

@@ -92,29 +92,26 @@ package body Items.Simples is
    procedure Free (Item : access Simple_Type;
                    Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       Free (Item.Value);
-      if not Only_Value then
-         Free (Item.Type_Name);
-         Free_Internal (I);
-      end if;
+      Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Simple_Type)
-                  return Generic_Type_Access
+   procedure Clone_Dispatching
+     (Item  : Simple_Type;
+      Clone : out Generic_Type_Access)
    is
-      R : Generic_Type_Access := new Simple_Type'(Value);
    begin
-      if Value.Value /= null then
-         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      Clone_Dispatching (Generic_Type (Item), Clone);
+
+      if Item.Value /= null then
+         Simple_Type_Access (Clone).Value := new String'(Item.Value.all);
       end if;
-      return R;
-   end Clone;
+   end Clone_Dispatching;
 
    -----------
    -- Paint --
@@ -265,36 +262,6 @@ package body Items.Simples is
    end Reset_Recursive;
 
    -----------
-   -- Clone --
-   -----------
-
-   function Clone (Value : Access_Type)
-                  return Generic_Type_Access
-   is
-      R : Generic_Type_Access := new Access_Type'(Value);
-   begin
-      if Value.Value /= null then
-         Simple_Type_Access (R).Value := new String'(Value.Value.all);
-      end if;
-      return R;
-   end Clone;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (Value : Enum_Type)
-                  return Generic_Type_Access
-   is
-      R : Generic_Type_Access := new Enum_Type'(Value);
-   begin
-      if Value.Value /= null then
-         Simple_Type_Access (R).Value := new String'(Value.Value.all);
-      end if;
-      return R;
-   end Clone;
-
-   -----------
    -- Print --
    -----------
 
@@ -388,36 +355,6 @@ package body Items.Simples is
          Put (Value.Value.all & "}");
       end if;
    end Print;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (Value : Range_Type)
-                  return Generic_Type_Access
-   is
-      R : Generic_Type_Access := new Range_Type'(Value);
-   begin
-      if Value.Value /= null then
-         Simple_Type_Access (R).Value := new String'(Value.Value.all);
-      end if;
-      return R;
-   end Clone;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (Value : Mod_Type)
-                  return Generic_Type_Access
-   is
-      R : Generic_Type_Access := new Mod_Type'(Value);
-   begin
-      if Value.Value /= null then
-         Simple_Type_Access (R).Value := new String'(Value.Value.all);
-      end if;
-      return R;
-   end Clone;
 
    -----------
    -- Paint --
@@ -517,19 +454,19 @@ package body Items.Simples is
       end if;
    end Print;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Debugger_Output_Type) return Generic_Type_Access is
-      R : Debugger_Output_Type_Access := new Debugger_Output_Type'(Value);
+   procedure Clone_Dispatching
+     (Item  : Debugger_Output_Type;
+      Clone : out Generic_Type_Access)
+   is
    begin
-      if Value.Value /= null then
-         R.Value := new String'(Value.Value.all);
-      end if;
-      R.Refresh_Cmd := new String'(Value.Refresh_Cmd.all);
-      return Generic_Type_Access (R);
-   end Clone;
+      Clone_Dispatching (Simple_Type (Item), Clone);
+      Debugger_Output_Type_Access (Clone).Refresh_Cmd :=
+        new String'(Item.Refresh_Cmd.all);
+   end Clone_Dispatching;
 
    ----------
    -- Free --
@@ -539,14 +476,11 @@ package body Items.Simples is
      (Item       : access Debugger_Output_Type;
       Only_Value : Boolean := False)
    is
-      A_Type : Generic_Type_Access := Generic_Type_Access (Item);
    begin
-      Free (Item.Value);
       if not Only_Value then
          Free (Item.Refresh_Cmd);
-         Free (Item.Type_Name);
-         Free_Internal (A_Type);
       end if;
+      Free (Simple_Type (Item.all)'Access, Only_Value);
    end Free;
 
    ------------------

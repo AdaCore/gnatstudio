@@ -217,4 +217,44 @@ package body Items is
       return Mode = Type_Only or else Mode = Type_Value;
    end Show_Type;
 
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
+
+   procedure Clone_Dispatching
+     (Item : Generic_Type;
+      Clone : out Generic_Type_Access)
+   is
+   begin
+      if Item.Type_Name /= null then
+         Clone.Type_Name := new String'(Item.Type_Name.all);
+      end if;
+   end Clone_Dispatching;
+
+   -----------
+   -- Clone --
+   -----------
+
+   function Clone (Item : Generic_Type'Class) return Generic_Type_Access is
+      R : Generic_Type_Access := new Generic_Type'Class'(Item);
+   begin
+      Clone_Dispatching (Item, R);
+      return R;
+   end Clone;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Item : access Generic_Type;
+                   Only_Value : Boolean := False)
+   is
+      I : Generic_Type_Access := Generic_Type_Access (Item);
+   begin
+      if not Only_Value then
+         Free (Item.Type_Name);
+         Free_Internal (I);
+      end if;
+   end Free;
+
 end Items;

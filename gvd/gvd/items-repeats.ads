@@ -61,7 +61,9 @@ private
    procedure Print (Value : Repeat_Type; Indent : Natural := 0);
    procedure Free (Item : access Repeat_Type;
                    Only_Value : Boolean := False);
-   function Clone (Value : Repeat_Type) return Generic_Type_Access;
+   procedure Clone_Dispatching
+     (Item  : Repeat_Type;
+      Clone : out Generic_Type_Access);
 
    procedure Paint (Item    : in out Repeat_Type;
                     Context : Drawing_Context;

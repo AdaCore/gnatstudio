@@ -26,6 +26,7 @@ with Gdk.GC;       use Gdk.GC;
 with Language;     use Language;
 with Gdk.Types;    use Gdk.Types;
 
+with Items.Simples; use Items.Simples;
 with Items.Records; use Items.Records;
 
 package body Items.Classes is
@@ -139,32 +140,31 @@ package body Items.Classes is
    procedure Free (Item : access Class_Type;
                    Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       for A in Item.Ancestors'Range loop
          Free (Item.Ancestors (A), Only_Value);
       end loop;
       Free (Item.Child, Only_Value);
-      if not Only_Value then
-         Free_Internal (I);
-      end if;
+      Free (Simple_Type (Item.all)'Access, Only_Value);
    end Free;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Class_Type) return Generic_Type_Access
+   procedure Clone_Dispatching
+     (Item  : Class_Type;
+      Clone : out Generic_Type_Access)
    is
-      R : Class_Type_Access := new Class_Type (Value.Num_Ancestors);
+      R : Class_Type_Access := Class_Type_Access (Clone);
    begin
-      for A in Value.Ancestors'Range loop
+      Clone_Dispatching (Simple_Type (Item), Clone);
+      for A in Item.Ancestors'Range loop
          R.Ancestors (A) :=
-           Class_Type_Access (Clone (Value.Ancestors (A).all));
+           Class_Type_Access (Items.Clone (Item.Ancestors (A).all));
       end loop;
-      R.Child := Record_Type_Access (Clone (Value.Child.all));
-      return Generic_Type_Access (R);
-   end Clone;
+      R.Child := Record_Type_Access (Items.Clone (Item.Child.all));
+   end Clone_Dispatching;
 
    -----------
    -- Paint --

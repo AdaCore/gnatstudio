@@ -496,7 +496,6 @@ package body Items.Arrays is
    procedure Free (Item : access Array_Type;
                    Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       if Item.Values /= null then
          --  Free the whole memory for the items, since the type is in fact
@@ -508,24 +507,26 @@ package body Items.Arrays is
       end if;
       if not Only_Value then
          Free (Item.Item_Type, Only_Value);
-         Free_Internal (I);
       end if;
+      Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Array_Type)
-                  return Generic_Type_Access
+   procedure Clone_Dispatching
+     (Item  : Array_Type;
+      Clone : out Generic_Type_Access)
    is
-      R : Array_Type_Access := new Array_Type'(Value);
+      R : Array_Type_Access := Array_Type_Access (Clone);
    begin
+      Clone_Dispatching (Generic_Type (Item), Clone);
+
       --  ??? Should duplicate the values as well....
       R.Values := null;
-      R.Item_Type := Clone (Value.Item_Type.all);
-      return Generic_Type_Access (R);
-   end Clone;
+      R.Item_Type := Items.Clone (Item.Item_Type.all);
+   end Clone_Dispatching;
 
    -----------
    -- Paint --

@@ -126,7 +126,9 @@ private
    procedure Print (Value : Simple_Type; Indent : Natural := 0);
    procedure Free (Item : access Simple_Type;
                    Only_Value : Boolean := False);
-   function Clone (Value : Simple_Type) return Generic_Type_Access;
+   procedure Clone_Dispatching
+     (Item  : Simple_Type;
+      Clone : out Generic_Type_Access);
    procedure Paint (Item    : in out Simple_Type;
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);
@@ -152,19 +154,16 @@ private
       Min, Max : Long_Integer;
    end record;
    procedure Print (Value : Range_Type; Indent : Natural := 0);
-   function Clone (Value : Range_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
 
    type Mod_Type is new Simple_Type with record
       Modulo : Long_Integer;
    end record;
    procedure Print (Value : Mod_Type; Indent : Natural := 0);
-   function Clone (Value : Mod_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
 
    type Access_Type is new Simple_Type with null record;
    procedure Print (Value : Access_Type; Indent : Natural := 0);
-   function Clone (Value : Access_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
    procedure Paint (Item    : in out Access_Type;
                     Context : Drawing_Context;
@@ -172,7 +171,6 @@ private
 
    type Enum_Type is new Simple_Type with null record;
    procedure Print (Value : Enum_Type; Indent : Natural := 0);
-   function Clone (Value : Enum_Type) return Generic_Type_Access;
    --  Free is inherited from Simple_Type.
 
    type Debugger_Output_Type is new Simple_Type with record
@@ -184,7 +182,9 @@ private
    --  line should be highlighted or not.
 
    procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0);
-   function Clone (Value : Debugger_Output_Type) return Generic_Type_Access;
+   procedure Clone_Dispatching
+     (Item  : Debugger_Output_Type;
+      Clone : out Generic_Type_Access);
    procedure Free (Item : access Debugger_Output_Type;
                    Only_Value : Boolean := False);
    procedure Size_Request

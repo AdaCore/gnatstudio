@@ -81,7 +81,9 @@ private
    procedure Print (Value : Class_Type; Indent : Natural := 0);
    procedure Free (Item : access Class_Type;
                    Only_Value : Boolean := False);
-   function Clone (Value : Class_Type) return Generic_Type_Access;
+   procedure Clone_Dispatching
+     (Item  : Class_Type;
+      Clone : out Generic_Type_Access);
    procedure Paint (Item    : in out Class_Type;
                     Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0);

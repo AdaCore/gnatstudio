@@ -333,7 +333,6 @@ package body Items.Records is
    procedure Free (Item : access Record_Type;
                    Only_Value : Boolean := False)
    is
-      I : Generic_Type_Access := Generic_Type_Access (Item);
    begin
       for J in Item.Fields'Range loop
          if Item.Fields (J).Value /= null then
@@ -349,52 +348,35 @@ package body Items.Records is
             end if;
          end if;
       end loop;
-      if not Only_Value then
-         Free (I.Type_Name);
-         Free_Internal (I);
-      end if;
+      Free (Generic_Type (Item.all)'Access, Only_Value);
    end Free;
 
-   -----------
-   -- Clone --
-   -----------
+   -----------------------
+   -- Clone_Dispatching --
+   -----------------------
 
-   function Clone (Value : Record_Type)
-                  return Generic_Type_Access
+   procedure Clone_Dispatching
+     (Item  : Record_Type;
+      Clone : out Generic_Type_Access)
    is
-      R : Record_Type_Access := new Record_Type'(Value);
+      R : Record_Type_Access := Record_Type_Access (Clone);
    begin
+      Clone_Dispatching (Generic_Type (Item), Clone);
+
       for J in R.Fields'Range loop
-         R.Fields (J).Name := new String'(Value.Fields (J).Name.all);
+         R.Fields (J).Name := new String'(Item.Fields (J).Name.all);
          --  Duplicate the type structure, but not the value itself.
-         R.Fields (J).Value := Clone (Value.Fields (J).Value.all);
-         if Value.Fields (J).Variant_Part /= null then
+         R.Fields (J).Value := Items.Clone (Item.Fields (J).Value.all);
+         if Item.Fields (J).Variant_Part /= null then
             R.Fields (J).Variant_Part :=
-              new Record_Type_Array'(Value.Fields (J).Variant_Part.all);
+              new Record_Type_Array'(Item.Fields (J).Variant_Part.all);
             for V in R.Fields (J).Variant_Part'Range loop
                R.Fields (J).Variant_Part (V) := Record_Type_Access
-                 (Clone (Value.Fields (J).Variant_Part (V).all));
+                 (Items.Clone (Item.Fields (J).Variant_Part (V).all));
             end loop;
          end if;
       end loop;
-      return Generic_Type_Access (R);
-   end Clone;
-
-   -----------
-   -- Clone --
-   -----------
-
-   function Clone (Value : Union_Type)
-                  return Generic_Type_Access
-   is
-      R : Union_Type_Access := new Union_Type'(Value);
-   begin
-      for J in R.Fields'Range loop
-         R.Fields (J).Name := new String'(R.Fields (J).Name.all);
-         R.Fields (J).Value := Clone (R.Fields (J).Value.all);
-      end loop;
-      return Generic_Type_Access (R);
-   end Clone;
+   end Clone_Dispatching;
 
    -----------
    -- Paint --
