@@ -291,7 +291,7 @@ package body Glide_Menu is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        (-"GPS" & ASCII.LF & ASCII.LF & "(c) 2001 ACT-Europe",
+        (-"GPS" & ASCII.LF & ASCII.LF & "(c) 2001-2002 ACT-Europe",
          Help_Msg =>
            (-"This is the About information box.") & ASCII.LF & ASCII.LF &
            (-"Click on the OK button to close this window."),
