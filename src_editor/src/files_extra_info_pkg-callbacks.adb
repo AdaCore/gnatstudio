@@ -43,7 +43,9 @@ package body Files_Extra_Info_Pkg.Callbacks is
    is
       Extra : constant Files_Extra_Info_Access :=
         Files_Extra_Info_Access (Object);
-      S     : constant String := Select_Directory (-"Select a directory");
+      S     : constant String := Select_Directory
+        (-"Select a directory",
+         History => null);  --  ??? No history
 
    begin
       if S /= "" then
