@@ -455,6 +455,7 @@ package body Vdiff2_Module.Callback is
       Selected_File : Virtual_File;
       Cmd           : Diff_Command_Access;
       Diff          : Diff_Head;
+      Ref_File      : constant T_Loc := Diff.Ref_File;
    begin
       Create
         (Cmd,
@@ -477,8 +478,11 @@ package body Vdiff2_Module.Callback is
          Diff.Ref_File := 3;
       end if;
 
-      Set_Data (Node, Diff);
-      Unchecked_Execute (Cmd, Node);
+      if Diff.Ref_File /= Ref_File then
+         Set_Data (Node, Diff);
+         Unchecked_Execute (Cmd, Node);
+      end if;
+
       Free (Root_Command (Cmd.all));
    end On_Ref_Change;
 
@@ -563,7 +567,6 @@ package body Vdiff2_Module.Callback is
          VDiff2_Module (Vdiff_Module_ID).Kernel,
          VDiff2_Module (Vdiff_Module_ID).List_Diff,
          Close_Difference'Access);
-
       Selected_File :=
          File_Information (File_Selection_Context_Access (Context));
 
