@@ -24,7 +24,7 @@ begin
    Gtk.Main.Init;
 
    Gtk_New (Glide, "<glide>", Glide_Menu.Glide_Menu_Items.all);
-   Set_Title (Glide, "Glide - New Generation");
+   Set_Title (Glide, "Glide - Next Generation");
    Maximize (Glide);
    Glide.Gvd_Home_Dir := new String' ("");
    Glide.Prefix_Directory := new String' ("");
