@@ -294,8 +294,9 @@ package Src_Info is
 
    function Is_Read_Reference  (Ref : E_Reference) return Boolean;
    function Is_Write_Reference (Ref : E_Reference) return Boolean;
-   --  Return true if this is a read-only or write reference to an entity. It
-   --  is possible that known of the two return True for some special entities.
+   --  Return true if this is a read-only or write reference to an entity.
+   --  It is possible that none of the two return True for some special
+   --  entities.
 
    ------------
    -- E_Kind --
