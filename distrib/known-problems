@@ -16,6 +16,11 @@ Known Problems fixed in GPS 2.1.0
               not be the exact same result the regular expression would
               have returned.
 
+- D707-017 Unexpected paste operation under Windows
+  Problem:    Under Windows, when scrolling using some mouse wheels, extra
+              paste operations are sometimes performed during the scroll.
+  Workaround: Scroll using the pg-up/down keys or the scrollbar.
+
 - D701-001 Can't edit file-specific switches
   Problem:    If you select the menu "Edit switches for <file>", the project
               file is not modified
