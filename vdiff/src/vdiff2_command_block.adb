@@ -89,7 +89,7 @@ package body Vdiff2_Command_Block is
    is
       pragma Unreferenced (Event);
    begin
-      Trace (Me, "File1: "& Full_Name (Command.Last_Active_Diff.File1));
+      Trace (Me, "File1: "& Full_Name (Command.Last_Active_Diff.File1).all);
       return Execute (Command);
    end Execute;
 
@@ -277,13 +277,13 @@ package body Vdiff2_Command_Block is
      (Kernel : Kernel_Handle;
       Diff   : in out Diff_Head)
    is
-      Args1 : Argument_List := (1 => new String'(Full_Name (Diff.File1)));
-      Args2 : Argument_List := (1 => new String'(Full_Name (Diff.File2)));
+      Args1 : Argument_List := (1 => new String'(Full_Name (Diff.File1).all));
+      Args2 : Argument_List := (1 => new String'(Full_Name (Diff.File2).all));
       Args3 : Argument_List (1 .. 1);
    begin
 
       if Diff.File3 /= VFS.No_File then
-         Args3 := (1 => new String'(Full_Name (Diff.File3)));
+         Args3 := (1 => new String'(Full_Name (Diff.File3).all));
          --  After this call all memory associated with the Diff is Free
          Execute_GPS_Shell_Command (Kernel, "close", Args3);
       end if;
