@@ -1601,6 +1601,7 @@ package body Src_Editor_Module is
       Containing_Box : constant Source_Box := Source_Box (Child);
       Box            : constant Source_Editor_Box := Containing_Box.Editor;
       Button         : Message_Dialog_Buttons;
+
    begin
       if Force then
          if Needs_To_Be_Saved (Box) then
@@ -1853,6 +1854,7 @@ package body Src_Editor_Module is
 
    begin
       if Child = null then
+         Success := False;
          return;
       end if;
 
