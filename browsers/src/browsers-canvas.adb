@@ -186,7 +186,7 @@ package body Browsers.Canvas is
    --------------
 
    procedure Realized (Browser : access Gtk_Widget_Record'Class) is
-      use type Gdk.Gdk_GC;
+      use type Gdk_GC;
 
       B      : Glide_Browser := Glide_Browser (Browser);
       Color  : Gdk_Color;
@@ -194,10 +194,8 @@ package body Browsers.Canvas is
       Kernel : constant Kernel_Handle := Get_Kernel (B);
 
    begin
-      if B.Selected_Link_GC = null then
-         Gdk_New (B.Selected_Link_GC, Get_Window (B.Canvas));
-         Color := Get_Pref (Kernel, Selected_Link_Color);
-         Set_Foreground (B.Selected_Link_GC, Color);
+      if B.Selected_Item_GC = null then
+         B.Selected_Link_Color := Get_Pref (Kernel, Selected_Link_Color);
 
          Gdk_New (B.Selected_Item_GC, Get_Window (B.Canvas));
          Color := Get_Pref (Kernel, Selected_Item_Color);
@@ -668,10 +666,11 @@ package body Browsers.Canvas is
               (Canvas, Canvas_Link_Access (Link), Window,
                Invert_Mode, GC, Edge_Number);
          else
+            Set_Foreground (GC, Browser.Selected_Link_Color);
             Draw_Link
               (Canvas, Canvas_Link_Access (Link),
-               Window, Invert_Mode, Browser.Selected_Link_GC,
-               Edge_Number);
+               Window, Invert_Mode, GC, Edge_Number);
+            Set_Foreground (GC, Black (Get_Default_Colormap));
          end if;
       end if;
    end Draw_Link;
