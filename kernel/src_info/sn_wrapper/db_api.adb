@@ -36,16 +36,9 @@ package body DB_API is
    use type CStrings.chars_ptr;
    use type System.Address;
 
-   -------------------
-   -- Internal_Free --
-   -------------------
-
    procedure Internal_Free (DB : DB_File);
    pragma Import (C, Internal_Free, "free");
 
-   ----------------
-   -- Last_ErrNo --
-   ----------------
    function Last_ErrNo (DB : DB_File) return C.int;
    pragma Import (C, Last_ErrNo, "ada_get_last_errno");
 
@@ -228,7 +221,7 @@ package body DB_API is
       else
          I_Get_Pair (DB, Movement, Result);
 
-         if Result.Key = null then
+         if Result.DBI = -1 then
             if Last_ErrNo (DB) /= 0 then -- error occurred
                Raise_Exception (DB_Error'Identity,
                  Error_Message (DB));
@@ -239,32 +232,15 @@ package body DB_API is
       end if;
    end Get_Pair;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (The_Pair : in out Pair) is
-      procedure I_CSF_Free (The_CSF : CSF);
-      pragma Import (C, I_CSF_Free, "csf_free");
-   begin
-      if The_Pair.Key /= null then
-         I_CSF_Free (The_Pair.Key);
-      end if;
-
-      if The_Pair.Data /= null then
-         I_CSF_Free (The_Pair.Data);
-      end if;
-   end Free;
-
    ---------------------
    -- Get_Field_Count --
    ---------------------
 
    function Get_Field_Count (The_CSF : CSF) return Natural is
-      function I_Get_Field_Count (The_CSF : CSF) return C.int;
+      function I_Get_Field_Count (The_CSF : System.Address) return C.int;
       pragma Import (C, I_Get_Field_Count, "csf_get_field_count");
    begin
-      return Natural (I_Get_Field_Count (The_CSF));
+      return Natural (I_Get_Field_Count (The_CSF'Address));
    end Get_Field_Count;
 
    ---------------
@@ -278,13 +254,13 @@ package body DB_API is
       Len     : Natural)
    is
       function I_Get_Field
-        (The_CSF : CSF; Index : C.int) return CStrings.chars_ptr;
+        (The_CSF : System.Address; Index : C.int) return CStrings.chars_ptr;
       pragma Import (C, I_Get_Field, "csf_get_field");
 
       R : CStrings.chars_ptr;
    begin
       if Len /= 0 then
-         R := I_Get_Field (The_CSF, C.int (Index));
+         R := I_Get_Field (The_CSF'Address, C.int (Index));
          if R = CStrings.Null_Ptr then
             raise Index_Out_Of_Range;
          else
@@ -303,11 +279,11 @@ package body DB_API is
      (The_CSF : CSF; Index : Positive) return Integer
    is
       function I_Get_Field_Length
-        (The_CSF : CSF; Index : C.int) return C.int;
+        (The_CSF : System.Address; Index : C.int) return C.int;
       pragma Import (C, I_Get_Field_Length, "csf_get_field_length");
 
    begin
-      return Integer (I_Get_Field_Length (The_CSF, C.int (Index)));
+      return Integer (I_Get_Field_Length (The_CSF'Address, C.int (Index)));
    end Get_Field_Length;
 
    ---------

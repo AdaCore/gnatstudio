@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Interfaces.C;
+with Interfaces.C.Strings;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package DB_API is
@@ -48,8 +48,8 @@ package DB_API is
    --  ("data base thang" in terms of SN team).
 
    type Pair is record
-      Key    : CSF;
-      Data   : CSF;
+      Key    : Interfaces.C.Strings.chars_ptr;
+      Data   : Interfaces.C.Strings.chars_ptr;
       DBI    : Integer;
    end record;
    --  Type for key/data pair retrieved from database by Get_Pair
@@ -119,8 +119,9 @@ package DB_API is
    --  with Position = By_Key then Get_Pair returns null;
    --  Throws DB_Error if DB was not opened or error occurred.
 
-   procedure Free (The_Pair : in out Pair);
-   --  Releases specified pair and key/data values.
+   procedure CSF_Init (Str : Interfaces.C.Strings.chars_ptr; Result : out CSF);
+   --  Parses the string Str for later analysis through Get_Field
+
 
    function Get_Field_Count (The_CSF : CSF) return Natural;
    pragma Inline (Get_Field_Count);
@@ -147,7 +148,6 @@ package DB_API is
    Index_Out_Of_Range   : exception;
 
 private
-
    type DB_File_Record is null record;
    type DB_File is access DB_File_Record;
    pragma Convention (C, DB_File);
@@ -155,12 +155,17 @@ private
    function Error_Message (DB : DB_File) return String;
    --  Return string describing the last error for given DB
 
-   type CSF_Record is null record;
-   type CSF is access CSF_Record;
-   pragma Convention (C, CSF);
+   type CSF is record
+      Num_Of_Fields : Integer;
+      Fields        : Interfaces.C.Strings.chars_ptr_array (0 .. 15);
+   end record;
 
+   pragma Convention (C, CSF);
    pragma Convention (C, Pair);
 
-   No_Pair : constant Pair := (null, null, -1);
+   No_Pair : constant Pair := (Interfaces.C.Strings.Null_Ptr,
+                               Interfaces.C.Strings.Null_Ptr,
+                               -1);
 
+   pragma Import (C, CSF_Init, "csf_init");
 end DB_API;
