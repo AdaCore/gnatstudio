@@ -160,11 +160,12 @@ package Debugger is
    --  "graph print", to indicate that the command has finished executing.
 
    procedure Found_File_Name
-     (Debugger   : access Debugger_Root;
-      Str        : String;
-      Name_First : out Natural;
-      Name_Last  : out Positive;
-      Line       : out Natural);
+     (Debugger    : access Debugger_Root;
+      Str         : String;
+      Name_First  : out Natural;
+      Name_Last   : out Positive;
+      First, Last : out Natural;
+      Line        : out Natural);
    --  Search for a file name indication in Str.
    --  Str is a string output by the debugger, that might contain a reference
    --  to a specific file and line, that we want to display in the code editor
@@ -173,6 +174,8 @@ package Debugger is
    --  the line is Line.
    --  Set Name_First to 0 if no file name was found, and set Line to 0 if
    --  no line was found.
+   --  First and Last point to the slice of Str that should be stripped from
+   --  the output. They are reset to zero when no slice should be stripped.
    --  Note that the last reference to a file or a line should be used, in case
    --  multiple references are found in Str.
    --
