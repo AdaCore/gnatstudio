@@ -185,6 +185,14 @@ package body Generic_List is
       F1 : List_Node_Access := L2.First;
       F2 : List_Node_Access := L2.Last;
    begin
+      if L1.Last = null then
+         L1.Last := new List_Node' (Null_Node);
+      end if;
+
+      if L1.First = null then
+         L1.First := new List_Node' (Null_Node);
+      end if;
+
       if Is_Empty (L1) then
          L1.First.all := L2.First.all;
          L1.Last.all  := L2.Last.all;
