@@ -204,9 +204,14 @@ package body Browsers.Call_Graph is
 
       Font := Get_Text_Font (Browser);
 
-      Width  := String_Width (Font, Get_Name (Entity)) + 4 * Margin
+      Width  := Gint'Max
+        (String_Width (Font, Get_Name (Entity)),
+         String_Width (Font, Get_Declaration_File_Of (Entity)
+                       & ':' & Image (Get_Declaration_Line_Of (Entity))));
+      Width := Width + 4 * Margin
         + Get_Width (B.Left_Arrow) + Get_Width (B.Right_Arrow);
-      Height := (Get_Ascent (Font) + Get_Descent (Font));
+
+      Height := 2 * (Get_Ascent (Font) + Get_Descent (Font));
       Height := Gint'Max (Height, Get_Height (B.Left_Arrow));
       Height := Height + 2 * Margin;
 
@@ -246,6 +251,14 @@ package body Browsers.Call_Graph is
          X     => Margin + Get_Width (B.Left_Arrow),
          Y     => Margin + Get_Ascent (Font),
          Text  => Get_Name (Item.Entity));
+      Draw_Text
+        (Pixmap (Item),
+         Font  => Font,
+         GC    => Get_Text_GC (Browser),
+         X     => Margin + Get_Width (B.Left_Arrow),
+         Y     => Margin + 2 * Get_Ascent (Font) + Get_Descent (Font),
+         Text  => Get_Declaration_File_Of (Item.Entity)
+           & ':' & Image (Get_Declaration_Line_Of (Item.Entity)));
 
       if not Item.From_Parsed then
          Render_To_Drawable_Alpha
