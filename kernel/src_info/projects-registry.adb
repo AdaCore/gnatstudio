@@ -86,7 +86,7 @@ package body Projects.Registry is
    --  The way a directory belongs to the project: either as a direct
    --  dependency, or because one of its subdirs belong to the project, or
    --  doesn't belong at all
-`
+
    procedure Do_Nothing (Dep : in out Directory_Dependency);
 
    package Directory_Htable is new String_Hash
