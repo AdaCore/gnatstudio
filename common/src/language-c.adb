@@ -21,7 +21,7 @@
 with GNAT.Regpat;           use GNAT.Regpat;
 with Pixmaps_IDE;           use Pixmaps_IDE;
 with Ada.Strings.Fixed;     use Ada.Strings.Fixed;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+--  with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with String_Utils;          use String_Utils;
 with C_Analyzer;            use C_Analyzer;
 
@@ -268,10 +268,6 @@ package body Language.C is
       Index_Start : Natural;
       Index_Last  : Natural;
    begin
-      if Line = "" then
-         return "";
-      end if;
-
       if Comment then
          --  Append "/* " at the beginning and " */" before the line end.
 
@@ -332,13 +328,7 @@ package body Language.C is
                   return Line (Line'First .. Index - 1)
                     & Line (Index + 3 .. Line'Last);
                else
-                  if Clean then
-                     Index_Start := Index + 2;
-                     Skip_Blanks (Line, Index_Start);
-                     return Line (Index_Start .. Line'Last);
-                  end if;
-                  return Line (Line'First .. Index - 1)
-                    & Line (Index + 2 .. Line'Last);
+                  return Line (Index + 2 .. Line'Last);
                end if;
             elsif Line (Index .. Index + 1) = "/*" then
                Index_Last := Index;
@@ -347,27 +337,68 @@ package body Language.C is
                if Index_Last < Line'Last
                  and then Line (Index_Last .. Index_Last + 1) = "*/"
                then
-                  Index_Last := Index_Last - 1;
-               end if;
+                  --  The line contains "*/".
+                  if Clean then
+                     Index_Start := Index + 2;
+                     Skip_Blanks (Line, Index_Start);
+                     return Line (Index_Start .. Index_Last - 1);
+                  end if;
 
-               if Clean then
+                  if Index_Last + 1 < Line'Last then
+                     return Line (Line'First .. Index - 1)
+                       & Line (Index + 3 .. Index_Last - 1)
+                       & Line (Index_Last + 2 .. Line'Last);
+                  else
+                     return Line (Line'First .. Index - 1)
+                       & Line (Index + 3 .. Index_Last - 1);
+                  end if;
+               else
+                  --  There is no "*/" in the line
                   Index_Start := Index + 2;
-                  Skip_Blanks (Line, Index_Start);
-                  return Line (Index_Start .. Index_Last);
+                  if Clean then
+                     Skip_Blanks (Line, Index_Start);
+                  end if;
+
+                  if Index_Start >= Line'Last then
+                     --  There is only blanks after "/*". We keep them
+                     --  in order to avoid missing end-of-line characters.
+                     return Line (Index + 2 .. Line'Last);
+                  else
+                     return Line (Index_Start .. Line'Last);
+                  end if;
                end if;
-               return Line (Line'First .. Index - 1)
-                 & Line (Index + 3 .. Index_Last);
+            elsif Line (Index .. Index + 1) = "*/" then
+               return Line (Index + 2 .. Line'Last);
             end if;
 
             exit when not (Line (Index) = ' ' or else Line (Index) = ASCII.HT);
          end loop;
 
+         --  No mark of a comment start has been found.
+
          Index_Last := Line'First;
          Skip_To_String (Line, Index_Last, "*/");
+
          if Index_Last < Line'Last
            and then Line (Index_Last .. Index_Last + 1) = "*/"
          then
-            Index_Last := Index_Last - 1;
+            --  We are on a line ending a multi line comment:
+            --     "     some_code   */   "
+            --  Remove "*/" from the string.
+
+            Index_Start := Line'First;
+            if Clean then
+               Skip_Blanks (Line, Index_Start);
+            end if;
+
+            if Index_Last + 1 < Line'Last then
+               --  There are still characters after "*/" and they should be
+               --  kept (ACSII.LF, ASCII.CR,...).
+               return Line (Index_Start .. Index_Last - 1)
+                 & Line (Index_Last + 2 .. Line'Last);
+            else
+               return Line (Index_Start .. Index_Last - 1);
+            end if;
          end if;
 
          Index_Start := Line'First;
@@ -375,48 +406,9 @@ package body Language.C is
             Skip_Blanks (Line, Index_Start);
          end if;
 
-         return Line (Index_Start .. Index_Last);
+         return Line (Index_Start .. Line'Last);
       end if;
    end Comment_Line;
-
-   -------------------
-   -- Comment_Block --
-   -------------------
-
-   function Comment_Block
-     (Lang    : access C_Language;
-      Block   : String;
-      Comment : Boolean := True;
-      Clean   : Boolean := False) return String
-   is
-      Start_Of_Line : Natural := Block'First;
-      End_Of_Line   : Natural := Line_End (Block, Start_Of_Line);
-
-      New_Block     : Unbounded_String := To_Unbounded_String
-        (Comment_Line
-           (Lang,
-            Block (Start_Of_Line .. End_Of_Line),
-            Comment,
-            Clean));
-
-   begin
-      loop
-         Start_Of_Line := Next_Line (Block, Start_Of_Line);
-         exit when Start_Of_Line = Block'Last;
-         End_Of_Line := Line_End (Block, Start_Of_Line);
-
-         Append (New_Block, ASCII.LF);
-         Append
-           (New_Block,
-            Comment_Line
-              (Lang,
-               Block (Start_Of_Line .. End_Of_Line),
-               Comment,
-               Clean));
-      end loop;
-
-      return To_String (New_Block);
-   end Comment_Block;
 
    ------------------------
    -- Get_Project_Fields --
