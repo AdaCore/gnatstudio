@@ -1,6 +1,8 @@
 New features in GPS 1.0.1
 
-- The editor now supports automatic completion.
+- Windows port
+
+- Automatic word completion implemented in the source editor
 
 - The search dialog is now a popup dialog by default, and will automatically
   select the appropriate context when you open it.
@@ -10,7 +12,7 @@ New features in GPS 1.0.1
 
 - Several small user interface improvements
 
-- The Multiple Document Interface (MDI) has been improved and can now be
+- The Multiple Document Interface (MDI) has been improved and can also be
   customized
 
 - Windows can be drag-and-dropped to reorganize the main window
@@ -19,23 +21,21 @@ New features in GPS 1.0.1
 
 - When opening a file, the focus is automatically set on the editor
 
-- The menus File->Open & File->Save As... now remember the last directory
+- The menus File->Open & File->Save As... remember the last directory
   selected
 
-- It is now possible to configure the configuration pragma files (aka gnat.adc)
-  in the project editor.
+- Ability to specify the configuration pragma files (aka gnat.adc) in the
+  project editor.
 
-- The auto-indentation key in the editor can now be configured
+- The auto-indentation key in the editor can be configured
 
-- Quitting GPS will now ask whether the desktop should be saved
+- Quitting GPS will ask whether the desktop should be saved
 
 - Files will be searched in the object directory as well when clicking on
   error message or selecting File->Open From Path. This allows automatically
   generated files such as b~* or *.dg files to be found
 
-- Matching parenthesis are now highlighted in the editor
-
-- The font "tahoma" is used under Windows by default
+- Matching parenthesis are highlighted in the editor
 
 - The call graph now automatically computes whether a subprogram calls any
   other subprogram.
