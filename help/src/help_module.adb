@@ -523,21 +523,24 @@ package body Help_Module is
       Stream : constant Csc_HTML_Stream :=
         Csc_HTML_Stream (Get_Proxy (Nth (Params, 2)));
       Buffer : GNAT.OS_Lib.String_Access;
+      Url_File : Virtual_File;
 
    begin
       Trace (Me, "url requested: " & Url);
 
-      if Is_Absolute_Path (Url) then
-         Buffer := Read_File (Url);
+      if Is_Absolute_Path_Or_URL (Url) then
+         Url_File := Create (Full_Filename => Url);
       else
          declare
             Base_Dir : constant String :=
               Dir_Name (Html.Current_Help_File).all;
          begin
-            Buffer := Read_File (Create (Full_Filename => Base_Dir & Url));
-            Trace (Me, "url normalized: " & Base_Dir & Url);
+            Url_File := Create (Full_Filename => Base_Dir & Url);
          end;
       end if;
+
+      Buffer := Read_File (Url_File);
+      Trace (Me, "url normalized: " & Full_Name (Url_File).all);
 
       if Buffer /= null then
          Stream_Write (Stream, Buffer.all);
@@ -566,7 +569,7 @@ package body Help_Module is
    begin
       Trace (Me, "Link_Clicked: " & Url);
 
-      if Is_Absolute_Path (Url) then
+      if Is_Absolute_Path_Or_URL (Url) then
          Open_Html (Kernel, Create_Html (Url, Kernel));
 
       elsif Url (Url'First) = '#' then
