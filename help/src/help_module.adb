@@ -681,7 +681,7 @@ package body Help_Module is
    is
       Result   : Boolean;
       Args     : Argument_List_Access;
-      Cmd      : GNAT.OS_Lib.String_Access;
+      File     : GNAT.OS_Lib.String_Access;
 
    begin
       if not Is_Regular_File (Help_File) then
@@ -691,20 +691,17 @@ package body Help_Module is
       end if;
 
       Args := Argument_String_To_List
-        (Get_Pref (Kernel, GVD.Preferences.Execute_Command));
-
-      Cmd  := new String'
-        (Get_Pref (Kernel, GVD.Preferences.Html_Browser)
-         & ' ' & Full_Name (Help_File).all);
+        (Get_Pref (Kernel, GVD.Preferences.Html_Browser));
+      File := new String'(Full_Name (Help_File).all);
 
       Launch_Process
         (Kernel_Handle (Kernel),
          Command   => Args (Args'First).all,
-         Arguments => Args (Args'First + 1 .. Args'Last) & (1 => Cmd),
+         Arguments => Args (Args'First + 1 .. Args'Last) & (1 => File),
          Success   => Result);
 
       Free (Args);
-      Free (Cmd);
+      Free (File);
    end Display_Help;
 
    ------------------
