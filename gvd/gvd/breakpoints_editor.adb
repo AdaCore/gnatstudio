@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -48,7 +48,6 @@ with Odd_Intl; use Odd_Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
 with Pixmaps_IDE;      use Pixmaps_IDE;
 with GVD.Code_Editors; use GVD.Code_Editors;
-with String_Utils;     use String_Utils;
 with GVD.Process;      use GVD.Process;
 with GVD.Types;        use GVD.Types;
 with GUI_Utils;        use GUI_Utils;
@@ -590,7 +589,7 @@ package body Breakpoints_Editor is
       --  Reinitialize the contents of the file combo boxes
       Set_Text
         (Get_Entry (Editor.File_Combo),
-         Base_File_Name (Get_Current_File (Process.Editor_Text)));
+         Base_Name (Get_Current_File (Process.Editor_Text)));
 
       --  Clear the contents of the exceptions combo (its contents is in fact
       --  cached in gdb, so it is fast enough to call "info exceptions" again)
