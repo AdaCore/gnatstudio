@@ -21,6 +21,7 @@ TARGET_LFLAGS = @TARGET_LFLAGS@
 ALL_CFLAGS = $(CFLAGS) -gnata -gnatwuwe $(GTK_CFLAGS) $(TARGET_CFLAGS) -I../gnat
 LINK_FLAGS = $(C_OBJECTS) $(TARGET_LFLAGS) $(GTK_LIBS)
 ADALIB = $(strip $(shell gnatls -v | grep adalib))
+GNATMAKE_FLAGS =
 
 MAIN = gvd_main
 EXEC = gvd
@@ -40,11 +41,15 @@ ${PKG_FILES}: force
 	$(CC) -c $(ALL_CFLAGS) $@
 
 $(EXEC): gvd-proc_utils-builtin.adb force
-	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
-	  -largs $(LINK_FLAGS)
+	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) $(GNATMAKE_FLAGS) \
+	  -bargs -static -E -largs $(LINK_FLAGS)
 
 static:
 	make GTK_LIBS="$(GTK_STATIC_LIBS)" $(EXEC)
+
+elim: $(EXEC)
+	make GNATMAKE_FLAGS="-f -c -gnatt $(GNATMAKE_FLAGS)" $(EXEC)
+	gnatelim $(ALL_CFLAGS) $(MAIN) > gnat.adc
 
 gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
 	$(CP) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
@@ -53,8 +58,8 @@ gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
 libgvd:
 	rm -f $(EXEC)
 	$(CC) -c $(ALL_CFLAGS) gvd-api.adb
-	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E -n \
-	  -largs --LINK=true
+	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) $(GNATMAKE_FLAGS) \
+	  -bargs -E -n -largs --LINK=true
 	ar cr libgvd.a $(C_OBJECTS) b~$(MAIN).o gvd-api.o \
 	  `grep '   --   ' b~$(MAIN).adb | grep '\.o$$' | sed 's/   --   //'`
 
@@ -72,6 +77,7 @@ install-nocheck: force
 install: $(EXEC) install-nocheck
 
 clean:
+	-$(RM) *.adt
 	-$(RM) *.o
 	-$(RM) *.ali
 	-$(RM) *~
