@@ -75,6 +75,7 @@ package Project_Viewers is
       Project       : Projects.Project_Type;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       Widget        : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Languages     : GNAT.OS_Lib.Argument_List;
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Ref_Project   : Projects.Project_Type) return Boolean is abstract;
    --  Modifies Project given the data in Widget. Widget is the same that was

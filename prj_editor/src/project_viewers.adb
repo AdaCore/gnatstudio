@@ -435,6 +435,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean;
@@ -451,6 +452,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type) return Boolean;
 
@@ -474,6 +476,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean;
@@ -491,6 +494,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean;
@@ -515,6 +519,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type) return Boolean;
    procedure Refresh
@@ -1956,11 +1961,12 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Languages);
       Editor       : constant Executables_Editor :=
         Executables_Editor (Widget);
       Num_Children : constant Gint := N_Children (Editor.Executables);
@@ -2144,10 +2150,11 @@ package body Project_Viewers is
       Project            : Project_Type;
       Kernel             : access Kernel_Handle_Record'Class;
       Widget             : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project        : Project_Type) return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Languages);
       Dirs     : Argument_List := Get_Multiple_Selection
         (Directory_Selector (Widget));
       Equal    : Boolean := False;
@@ -2348,11 +2355,12 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
    is
-      pragma Unreferenced (Page);
+      pragma Unreferenced (Page, Languages);
       Obj_Dir : constant Object_Editor_Widget := Object_Editor_Widget (Widget);
       New_Dir, Exec_Dir : GNAT.OS_Lib.String_Access;
       Changed : Boolean := False;
@@ -2513,6 +2521,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
@@ -2522,6 +2531,7 @@ package body Project_Viewers is
       return Generate_Project
         (Switches           => Switches_Edit (Widget),
          Project            => Project,
+         Languages          => Languages,
          Scenario_Variables => Scenario_Variables,
          Files              => (1 .. 0 => VFS.No_File));
 
@@ -2588,6 +2598,7 @@ package body Project_Viewers is
       Project      : Project_Type;
       Kernel       : access Kernel_Handle_Record'Class;
       Widget       : access Gtk_Widget_Record'Class;
+      Languages    : Argument_List;
       Scenario_Variables : Scenario_Variable_Array;
       Ref_Project  : Project_Type)
       return Boolean
@@ -2597,6 +2608,7 @@ package body Project_Viewers is
       return Create_Project_Entry
         (Naming_Editor (Widget),
          Project            => Project,
+         Languages          => Languages,
          Scenario_Variables => Scenario_Variables);
 
    exception
