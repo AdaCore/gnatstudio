@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.1
 
+- D524-004 Confusion on some preference tooltip
+  Problem:    The tooltip displayed to describe some preferences use the
+              words True/False while the preference dialog displays
+              Enabled/Disabled which can be confusing.
+  Workaround: Enabled always means True. Disabled always means False.
+
 - D516-001 Bad handling of executable name with spaces when debugging
   Problem:    When loading an executable containing spaces in its pathname,
               the executable is not loaded properly.
