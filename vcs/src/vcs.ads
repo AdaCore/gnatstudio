@@ -334,10 +334,10 @@ package VCS is
 
 private
 
-   Command_Line_Limit : constant Natural := 15;
+   Command_Line_Limit : constant Natural := 64;
    --  The maximum number of files transmitted to a command.
    --  This is used to avoid breaking the command-line limit on some systems.
-   --  ??? Maybe this should be a (hidden) preference.
+   --  Should this be a (hidden) preference ???
 
    --------------------------
    -- Standard file status --
