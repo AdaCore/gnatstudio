@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1698,7 +1698,6 @@ package body VCS_View_API is
            (Kernel        => Get_Kernel (Context),
             File          => File,
             Identifier    => Annotation_Id,
-            Stick_To_Data => True,
             Every_Line    => False);
 
          Annotate (Get_Current_Ref (Context), File);
