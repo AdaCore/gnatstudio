@@ -122,6 +122,17 @@ package body Commands is
       return Command.Progress;
    end Progress;
 
+   ------------------
+   -- Set_Progress --
+   ------------------
+
+   procedure Set_Progress
+     (Command  : access Root_Command;
+      Progress : Progress_Record) is
+   begin
+      Command.Progress := Progress;
+   end Set_Progress;
+
    ----------
    -- Undo --
    ----------
@@ -433,40 +444,14 @@ package body Commands is
       return Is_Empty (Queue.Redo_Queue);
    end Redo_Queue_Empty;
 
-   ---------------
-   -- Interrupt --
-   ---------------
-
-   function Interrupt (Command : access Root_Command) return Boolean is
-      pragma Unreferenced (Command);
-   begin
-      return False;
-   end Interrupt;
-
-   --------------
-   -- Continue --
-   --------------
-
-   function Continue (Command : access Root_Command) return Boolean is
-      pragma Unreferenced (Command);
-   begin
-      return False;
-   end Continue;
-
    -----------------------------
    -- Get_Consequence_Actions --
    -----------------------------
 
    function Get_Consequence_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List
-   is
-      Result : constant Command_Queues.List := Item.Next_Commands;
-      Empty  : Command_Queues.List;
+     (Item : access Root_Command'Class) return Command_Queues.List is
    begin
-      Item.Next_Commands := Empty;
-      Free (Item.Alternate_Commands, Free_Data => True);
-
-      return Result;
+      return Item.Next_Commands;
    end Get_Consequence_Actions;
 
    ---------------------------
@@ -474,22 +459,53 @@ package body Commands is
    ---------------------------
 
    function Get_Alternate_Actions
-     (Item : access Root_Command'Class) return Command_Queues.List
-   is
-      Result : constant Command_Queues.List := Item.Alternate_Commands;
-      Empty  : Command_Queues.List;
+     (Item : access Root_Command'Class) return Command_Queues.List is
    begin
-      Free (Item.Next_Commands, Free_Data => True);
-      Item.Alternate_Commands := Empty;
-
-      return Result;
+      return Item.Alternate_Commands;
    end Get_Alternate_Actions;
+
+   ------------------------------
+   -- Free_Consequence_Actions --
+   ------------------------------
+
+   procedure Free_Consequence_Actions
+     (Item      : access Root_Command'Class;
+      Free_Data : Boolean)
+   is
+      Empty : Command_Queues.List;
+   begin
+      if Free_Data then
+         Command_Queues.Free (Item.Next_Commands);
+      else
+         Item.Next_Commands := Empty;
+      end if;
+   end Free_Consequence_Actions;
+
+   ----------------------------
+   -- Free_Alternate_Actions --
+   ----------------------------
+
+   procedure Free_Alternate_Actions
+     (Item      : access Root_Command'Class;
+      Free_Data : Boolean)
+   is
+      Empty : Command_Queues.List;
+   begin
+      if Free_Data then
+         Command_Queues.Free (Item.Alternate_Commands);
+      else
+         Item.Alternate_Commands := Empty;
+      end if;
+   end Free_Alternate_Actions;
 
    ------------------------
    -- Launch_Synchronous --
    ------------------------
 
-   procedure Launch_Synchronous (Command : Command_Access) is
+   procedure Launch_Synchronous
+     (Command : Command_Access;
+      Wait    : Duration := 0.0)
+   is
       Next_Actions : List;
       Result       : Command_Return_Type;
    begin
@@ -497,6 +513,10 @@ package body Commands is
          Result := Execute (Command);
 
          exit when Result = Success or else Result = Failure;
+
+         if Wait /= 0.0 then
+            delay (Wait);
+         end if;
       end loop;
 
       if Result = Success then
@@ -507,7 +527,7 @@ package body Commands is
       end if;
 
       while not Is_Empty (Next_Actions) loop
-         Launch_Synchronous (Head (Next_Actions));
+         Launch_Synchronous (Head (Next_Actions), Wait);
          Next (Next_Actions);
       end loop;
    end Launch_Synchronous;

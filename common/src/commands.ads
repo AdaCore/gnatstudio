@@ -65,6 +65,11 @@ package Commands is
    function Progress (Command : access Root_Command) return Progress_Record;
    --  Return the current progress of the command.
 
+   procedure Set_Progress
+     (Command  : access Root_Command;
+      Progress : Progress_Record);
+   --  Set the progress of Command.
+
    type Command_Return_Type is
      (Success,
       --  The command terminated with success.
@@ -166,16 +171,23 @@ package Commands is
    function Get_Consequence_Actions
      (Item : access Root_Command'Class) return Command_Queues.List;
    --  Get the consequence actions for Item.
-   --  Result must be freed by the user.
-   --  Calling this function removes the consequences and alternate actions
-   --  previously associated with Item.
+   --  Result must not be freed by the user.
 
    function Get_Alternate_Actions
      (Item : access Root_Command'Class) return Command_Queues.List;
    --  Get the alternate actions for Item.
-   --  Result must be freed by the user.
-   --  Calling this function removes the consequences and alternate actions
-   --  previously associated with Item.
+   --  Result must not be freed by the user.
+
+   procedure Free_Consequence_Actions
+     (Item      : access Root_Command'Class;
+      Free_Data : Boolean);
+   procedure Free_Alternate_Actions
+     (Item      : access Root_Command'Class;
+      Free_Data : Boolean);
+   --  Free memory associated to the consequence/alternate commands of Item.
+   --  If Free_Data is False, the command will be marked as having no
+   --  consequence/alternate actions, but the actual commands will not be
+   --  freed.
 
    procedure Add_Queue_Change_Hook
      (Queue      : Command_Queue;
@@ -189,19 +201,13 @@ package Commands is
    --  The caller is responsible for freeing Command when it is no longer
    --  used.
 
-   function Interrupt (Command : access Root_Command) return Boolean;
-   --  Interrupts the execution of Command. Return True if command could be
-   --  successfully interrupted.
-   --  By default this function does nothing and returns false.
-
-   function Continue (Command : access Root_Command) return Boolean;
-   --  Continues the execution of an interrupted Command. Return True if
-   --  Command could be successfully interrupted.
-   --  By default this function does nothing and returns false.
-
-   procedure Launch_Synchronous (Command : Command_Access);
+   procedure Launch_Synchronous
+     (Command : Command_Access;
+      Wait    : Duration := 0.0);
    --  Launch Command and all the consequent/alternate actions recursively,
    --  then return.
+   --  If Wait is non-null, delay Wait milliseconds between each execution.
+   --  Launching a command this way does not free memory associated to Command.
 
 private
 
