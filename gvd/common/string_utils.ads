@@ -24,9 +24,12 @@
 package Odd.Strings is
 
    procedure Skip_Blanks (Type_Str : String;
-                          Index    : in out Natural);
+                          Index    : in out Natural;
+                          Step     : Integer := 1);
    --  Skip all the blank characters starting from Index.
    --  Index is modified to point to the first non-blank character.
+   --  Step should be either 1 or -1, depending on whether you want to search
+   --  forward or backward.
 
    procedure Skip_Hexa_Digit (Type_Str : String;
                               Index    : in out Natural);
@@ -36,7 +39,8 @@ package Odd.Strings is
 
    procedure Skip_To_Char (Type_Str : String;
                            Index    : in out Natural;
-                           Char     : Character);
+                           Char     : Character;
+                           Step     : Integer := 1);
    --  Skip every character up to the first occurence of Char in the string.
 
    procedure Skip_To_String (Type_Str  : String;

@@ -27,16 +27,17 @@ package body Odd.Strings is
    -----------------
 
    procedure Skip_Blanks (Type_Str : String;
-                          Index    : in out Natural)
+                          Index    : in out Natural;
+                          Step     : Integer := 1)
    is
    begin
-      while Index <= Type_Str'Last
+      while (Index <= Type_Str'Last and then Index >= Type_Str'First)
         and then (Type_Str (Index) = ' '
                   or else Type_Str (Index) = ASCII.HT
                   or else Type_Str (Index) = ASCII.LF
                   or else Type_Str (Index) = ASCII.CR)
       loop
-         Index := Index + 1;
+         Index := Index + Step;
       end loop;
    end Skip_Blanks;
 
@@ -69,13 +70,15 @@ package body Odd.Strings is
 
    procedure Skip_To_Char (Type_Str : String;
                            Index    : in out Natural;
-                           Char     : Character)
+                           Char     : Character;
+                           Step     : Integer := 1)
    is
    begin
       while Index <= Type_Str'Last
+        and then Index >= Type_Str'First
         and then Type_Str (Index) /= Char
       loop
-         Index := Index + 1;
+         Index := Index + Step;
       end loop;
    end Skip_To_Char;
 
