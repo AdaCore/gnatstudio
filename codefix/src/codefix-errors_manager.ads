@@ -81,6 +81,9 @@ package Codefix.Errors_Manager is
    function Get_Error_Message (This : Error_Id) return Error_Message;
    --  Return the error message associated to the id.
 
+   function Get_Category (This : Error_Id) return String;
+   --  Return the category of the error.
+
    ----------------------------------------------------------------------------
    --  type Correction_Manager
    ----------------------------------------------------------------------------
@@ -159,6 +162,23 @@ package Codefix.Errors_Manager is
    --  modifications made in Object are already made in the correction manager,
    --  then Already_Fixed is True, otherwise it is False.
 
+   ----------------------------------------------------------------------------
+   --  type Error_State
+   ----------------------------------------------------------------------------
+
+   type Error_State is (Enabled, Disabled, Unknown);
+   --  The two states possible for an error.
+
+   type State_List is private;
+
+   procedure Set_Error_State
+     (List : in out State_List; Error : String; State : Error_State);
+   --  Modify the current error state.
+
+   function Get_Error_State
+     (List : State_List; Error : String) return Error_State;
+   --  Return the current error state.
+
 private
 
    type Errors_Interface is abstract tagged record
@@ -168,6 +188,7 @@ private
    type Error_Id_Record is record
       Message   : Error_Message := Invalid_Error_Message;
       Solutions : Solution_List := Command_List.Null_List;
+      Category  : Dynamic_String;
    end record;
 
    procedure Free (This : in out Error_Id_Record);
@@ -190,6 +211,19 @@ private
      (This      : in out Correction_Manager;
       Message   : Error_Message;
       Solutions : Solution_List;
+      Category  : String;
       New_Error : out Error_Id);
+
+   type State_Node is record
+      Error : Dynamic_String;
+      State : Error_State := Unknown;
+   end record;
+
+   procedure Free (This : in out State_Node);
+
+   package State_Lists is new Generic_List (State_Node);
+   use State_Lists;
+
+   type State_List is new State_Lists.List;
 
 end Codefix.Errors_Manager;
