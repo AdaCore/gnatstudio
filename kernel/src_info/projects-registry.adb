@@ -732,16 +732,29 @@ package body Projects.Registry is
 
                Unit := Prj.Com.Files_Htable.Get (Current_Source);
 
-               if Unit /= Prj.Com.No_Unit_Project then
-                  for S in Prj.Com.Spec_Or_Body'Range loop
-                     if Units.Table (Unit.Unit).File_Names (S).Name =
-                       Current_Source
-                     then
-                        Directory :=
-                          Units.Table (Unit.Unit).File_Names (S).Display_Path;
-                        exit;
-                     end if;
-                  end loop;
+               --  If we are in the fast-project loading mode, then no symbolic
+               --  link is resolved, and files are seend through links. We get
+               --  in the project explorer the directories as mentioned in the
+               --  project file, and any link in these is properly displayed.
+               --
+               --  However, if not in this mode, symbolic links are resolved.
+               --  This means that if we have sub6 in the project, which
+               --  contains a link to sub4/d.adb, then the latter's directory,
+               --  which is not part of the project, will prevent the file from
+               --  being seen in the explorer.
+
+               if Registry.Data.Trusted_Mode then
+                  if Unit /= Prj.Com.No_Unit_Project then
+                     for S in Prj.Com.Spec_Or_Body'Range loop
+                        if Units.Table (Unit.Unit).File_Names (S).Name =
+                          Current_Source
+                        then
+                           Directory := Units.Table
+                             (Unit.Unit).File_Names (S).Display_Path;
+                           exit;
+                        end if;
+                     end loop;
+                  end if;
                end if;
 
                Set (Registry.Data.Sources,
