@@ -980,6 +980,7 @@ package body Project_Viewers is
       pragma Unreferenced (Widget);
       Context : constant Selection_Context_Access :=
         Get_Current_Context (Kernel);
+      Project : Project_Id;
 
    begin
       if Context /= null
@@ -987,13 +988,13 @@ package body Project_Viewers is
         and then Has_Project_Information
           (File_Selection_Context_Access (Context))
       then
-         Edit_Properties
-           (Project_Information (File_Selection_Context_Access (Context)),
-            Kernel);
+         Project := Project_Information
+           (File_Selection_Context_Access (Context));
       else
-         Console.Insert (Kernel, -"No project selected",
-                         Mode => Console.Error);
+         Project := Get_Project_View (Kernel);
       end if;
+
+      Edit_Properties (Project, Kernel);
 
    exception
       when E : others =>
