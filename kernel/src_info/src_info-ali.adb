@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -475,10 +475,15 @@ package body Src_Info.ALI is
       --  The ALI file associated with the separate is the one we are currently
       --  parsing, so this case is much simpler.
 
-      Prj := Get_Project_From_File
-        (Project, Get_Name_String (Source_Filename));
-
       if Subunit_Name = No_Name then
+         Prj := Get_Project_From_File
+           (Project, Get_Name_String (Source_Filename));
+
+         if Prj = No_Project then
+            --  ??? We have a file that doesn't belong the an project.
+            Prj := Project;
+         end if;
+
          Get_Unit_Source_File
            (Handler, List, Source_Filename, Prj, Source_Path, File);
       else
@@ -1204,13 +1209,14 @@ package body Src_Info.ALI is
       Sep : File_Info_Ptr_List := New_LI_File.LI.Separate_Info;
    begin
       while Sep /= null loop
-         exit when Sep.Value.Unit_Name.all = Source_Filename;
+         exit when Sep.Value.Source_Filename.all = Source_Filename;
          Sep := Sep.Next;
       end loop;
 
       if Sep = null then
          --  Failed to find the separate, this is a bug
-         Trace (Me, "Chain_Declaration_For_Separate: Unit_Name not found");
+         Trace (Me, "Chain_Declaration_For_Separate: "
+                  & Source_Filename & " not found");
          raise ALI_Internal_Error;
       end if;
 
@@ -1945,7 +1951,6 @@ package body Src_Info.ALI is
          File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
-
 
    ---------------------------
    -- Create_Or_Complete_LI --
