@@ -40,6 +40,7 @@ with Pango.Enums;
 with Language;               use Language;
 with Src_Highlighting;       use Src_Highlighting;
 
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 with Interfaces.C.Strings;   use Interfaces.C.Strings;
 with System;
 
@@ -60,6 +61,10 @@ package body Src_Editor_Buffer is
    Default_String_Font_Attr   : constant Font_Attributes :=
      To_Font_Attributes;
    --  ??? Just as for the colors, these will eventually move away.
+
+   Default_Highlight_Color : constant String := "green";
+   --  ??? As soon as a uniform GLIDE handling of defaults/preferences
+   --  ??? is put in place, move this constant there.
 
    Class_Record : GObject_Class := Uninitialized_Class;
    --  A pointer to the 'class record'.
@@ -223,7 +228,7 @@ package body Src_Editor_Buffer is
       Entity_Kind : Language_Entity;
       Ignored     : Boolean;
 
-      Tags : Highlighting_Tags renames Buffer.Highlight_Tags;
+      Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
    begin
       --  Set the Start_Iter to the begining of the inserted text,
       --  and set the End_Iter.
@@ -389,7 +394,7 @@ package body Src_Editor_Buffer is
       Entity_End          : Gtk_Text_Iter;
       An_Iter             : Gtk_Text_Iter;
       Ignored             : Boolean;
-      Tags                : Highlighting_Tags renames Buffer.Highlight_Tags;
+      Tags                : Highlighting_Tags renames Buffer.Syntax_Tags;
 
       procedure Local_Highlight (From : Gtk_Text_Iter; To : Gtk_Text_Iter);
       --  Highlight the region exactly located between From and To.
@@ -534,7 +539,7 @@ package body Src_Editor_Buffer is
       To     : Gtk_Text_Iter) is
    begin
       for Entity_Kind in Standout_Language_Entity loop
-         Remove_Tag (Buffer, Buffer.Highlight_Tags (Entity_Kind), From, To);
+         Remove_Tag (Buffer, Buffer.Syntax_Tags (Entity_Kind), From, To);
       end loop;
    end Kill_Highlighting;
 
@@ -579,8 +584,8 @@ package body Src_Editor_Buffer is
 
       Buffer.Lang := Lang;
 
-      Buffer.Highlight_Tags :=
-        Create_Tags
+      Buffer.Syntax_Tags :=
+        Create_Syntax_Tags
           (Keyword_Color     => Default_Keyword_Color,
            Keyword_Font_Attr => Default_Keyword_Font_Attr,
            Comment_Color     => Default_Comment_Color,
@@ -595,12 +600,15 @@ package body Src_Editor_Buffer is
       Tags := Get_Tag_Table (Buffer);
 
       for Entity_Kind in Standout_Language_Entity'Range loop
-         Text_Tag_Table.Add (Tags, Buffer.Highlight_Tags (Entity_Kind));
+         Text_Tag_Table.Add (Tags, Buffer.Syntax_Tags (Entity_Kind));
       end loop;
+
+      --  Create a Highlight Tag and save it into the source buffer tag table.
+      Create_Highlight_Tag (Buffer.Highlight_Tag, Default_Highlight_Color);
+      Text_Tag_Table.Add (Tags, Buffer.Highlight_Tag);
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
-
       Buffer.Insert_Mark := Get_Insert (Buffer);
 
       --  And finally, connect ourselves to the interestings signals
@@ -618,6 +626,71 @@ package body Src_Editor_Buffer is
          Cb => Delete_Range_Handler'Access,
          After => True);
    end Initialize;
+
+   ---------------
+   -- Load_File --
+   ---------------
+
+   procedure Load_File
+     (Buffer          : access Source_Buffer_Record;
+      Filename        : String;
+      Lang_Autodetect : Boolean := True;
+      Success         : out Boolean)
+   is
+      FD : File_Descriptor := Invalid_FD;
+      File_Buffer_Length : constant := 1_024;
+      File_Buffer : String (1 .. File_Buffer_Length);
+      Characters_Read : Natural;
+   begin
+      Success := True;
+
+      FD := Open_Read (Filename & ASCII.NUL, Fmode => Text);
+      if FD = Invalid_FD then
+         Success := False;
+         return;
+      end if;
+
+      Clear (Buffer);
+
+      if Lang_Autodetect then
+         Set_Language (Buffer, Get_Language_From_File (Filename));
+      end if;
+
+      Characters_Read := File_Buffer_Length;
+      while Characters_Read = File_Buffer_Length loop
+         Characters_Read := Read (FD, File_Buffer'Address, File_Buffer_Length);
+         if Characters_Read > 0 then
+            Insert_At_Cursor (Buffer, File_Buffer (1 ..  Characters_Read));
+         end if;
+      end loop;
+
+      Close (FD);
+
+   exception
+      when others =>
+         --  To avoid consuming up all File Descriptors, we catch all
+         --  exceptions here, and close the current file descriptor before
+         --  reraising the exception.
+         if FD /= Invalid_FD then
+            Close (FD);
+         end if;
+         raise;
+   end Load_File;
+
+   -----------
+   -- Clear --
+   -----------
+
+   procedure Clear (Buffer : access Source_Buffer_Record)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+   begin
+      if Get_Char_Count (Buffer) > 0 then
+         Get_Bounds (Buffer, Start_Iter, End_Iter);
+         Delete (Buffer, Start_Iter, End_Iter);
+      end if;
+   end Clear;
 
    ------------------
    -- Set_Language --
@@ -652,6 +725,46 @@ package body Src_Editor_Buffer is
    end Get_Language;
 
    -------------------------
+   -- Set_Cursor_Position --
+   -------------------------
+
+   procedure Set_Cursor_Position
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Column  : Gint;
+      Success : out Boolean)
+   is
+      Iter          : Gtk_Text_Iter;
+   begin
+
+      --  First check that Line does not exceed the number of lines
+      --  in the buffer.
+      if Line >= Get_Line_Count (Buffer) then
+         Success := False;
+         return;
+      end if;
+
+      --  Get a text iterator at the begining of the line number Line.
+      --  Then, move it to the end of the line to get the number of
+      --  characters in this line.
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, 0);
+      Forward_To_Line_End (Iter);
+
+      --  Check that Column does not exceed the number of character in
+      --  in the current line.
+      if Column > Get_Line_Offset (Iter) then
+         Success := False;
+         return;
+      end if;
+
+      --  At this point, we know that the (Line, Column) position is
+      --  valid, so we can safely get the iterator at this position.
+      Get_Iter_At_Line_Offset (Buffer, Iter, Line, Column);
+      Place_Cursor (Buffer, Iter);
+      Success := True;
+   end Set_Cursor_Position;
+
+   -------------------------
    -- Get_Cursor_Position --
    -------------------------
 
@@ -667,19 +780,91 @@ package body Src_Editor_Buffer is
       Column := Get_Line_Offset (Insert_Iter);
    end Get_Cursor_Position;
 
-   -----------
-   -- Clear --
-   -----------
+   --------------------
+   -- Highlight_Line --
+   --------------------
 
-   procedure Clear (Buffer : access Source_Buffer_Record)
+   procedure Highlight_Line
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Success : out Boolean)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Found      : Boolean := True;
+   begin
+      if Line >= Get_Line_Count (Buffer) then
+         Success := False;
+         return;
+      end if;
+
+      --  Search for a highlighte line, if any, and unhighlight it.
+
+      Get_Start_Iter (Buffer, Start_Iter);
+      if not Begins_Tag (Start_Iter, Buffer.Highlight_Tag) then
+         Forward_To_Tag_Toggle (Start_Iter, Buffer.Highlight_Tag, Found);
+      end if;
+      if Found then
+         Copy (Source => Start_Iter, Dest => End_Iter);
+         Forward_To_Line_End (End_Iter);
+         Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
+      end if;
+
+      --  And finally highlight the given line
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
+      Copy (Source => Start_Iter, Dest => End_Iter);
+      Forward_To_Line_End (End_Iter);
+      Apply_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
+
+      Success := True;
+   end Highlight_Line;
+
+   ----------------------
+   -- Unhighlight_Line --
+   ----------------------
+
+   procedure Unhighlight_Line
+     (Buffer  : access Source_Buffer_Record;
+      Line    : Gint;
+      Success : out Boolean)
    is
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
    begin
-      if Get_Char_Count (Buffer) > 0 then
-         Get_Bounds (Buffer, Start_Iter, End_Iter);
-         Delete (Buffer, Start_Iter, End_Iter);
+      if Line >= Get_Line_Count (Buffer) then
+         Success := False;
+         return;
       end if;
-   end Clear;
+
+      Get_Iter_At_Line_Offset (Buffer, Start_Iter, Line, 0);
+      Copy (Source => Start_Iter, Dest => End_Iter);
+      Forward_To_Line_End (End_Iter);
+      Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
+
+      Success := True;
+   end Unhighlight_Line;
+
+   ---------------------------
+   -- Cancel_Highlight_Line --
+   ---------------------------
+
+   procedure Cancel_Highlight_Line
+     (Buffer : access Source_Buffer_Record)
+   is
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+      Found      : Boolean := True;
+   begin
+      Get_Start_Iter (Buffer, Start_Iter);
+      if not Begins_Tag (Start_Iter, Buffer.Highlight_Tag) then
+         Forward_To_Tag_Toggle (Start_Iter, Buffer.Highlight_Tag, Found);
+      end if;
+      if Found then
+         Copy (Source => Start_Iter, Dest => End_Iter);
+         Forward_To_Line_End (End_Iter);
+         Remove_Tag (Buffer, Buffer.Highlight_Tag, Start_Iter, End_Iter);
+      end if;
+   end Cancel_Highlight_Line;
 
 end Src_Editor_Buffer;
