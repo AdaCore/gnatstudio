@@ -626,7 +626,8 @@ package body Project_Trees is
       if Construct.Is_Declaration then
          if Construct.Profile /= null then
             Text := Create_Line_Text
-              (Construct.Name.all & " (spec) " & Reduce (Construct.Profile.all));
+              (Construct.Name.all & " (spec) " &
+               Reduce (Construct.Profile.all));
          else
             Text := Create_Line_Text (Construct.Name.all & " (spec)");
          end if;
