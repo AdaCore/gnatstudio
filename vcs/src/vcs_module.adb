@@ -546,7 +546,8 @@ package body VCS_Module is
          File,
          VCS_Module_Name,
          Stick_To_Data => False,
-         Every_Line    => False);
+         Every_Line    => False,
+         Normalize     => False);
 
       Append (Files, File);
       Ref    := Get_Current_Ref
