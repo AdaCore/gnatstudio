@@ -46,13 +46,6 @@ package body Prj_Normalize is
 
    type Literal_String_Array is array (Positive range <>) of String_Id;
 
-   type Matching_Item_Callback is access
-     function (Item : Project_Node_Id) return Boolean;
-   --  A callback function called for each case item that matches a specific
-   --  set of values (see For_Each_Matching_Item).
-   --  If the callback returns False, we stop searching for other matches
-
-
    type Value_Status is (Never_Seen, In_Process, Processed);
    type Variable_Value is record
       Value  : String_Id;
@@ -94,15 +87,6 @@ package body Prj_Normalize is
    --  The new project is not independent of the old one, since most of the
    --  nodes are shared between the two for efficiency reasons.
 
-   procedure For_Each_Matching_Item
-     (In_Case    : Project_Node_Id;
-      Var_Values : Literal_String_Array;
-      Action     : Matching_Item_Callback);
-   --  Iterates other all the possible nested case items in In_Case, and for
-   --  each that matches Var_Values, calls Action.
-   --  A No_String value in Var_Values matches any possible value for the
-   --  variable
-
    function Duplicate_Decl_Item_List (Decl : Project_Node_Id)
       return Project_Node_Id;
    --  Return a duplicate of the declarative items list in Decl.
@@ -117,6 +101,18 @@ package body Prj_Normalize is
    --  level for the first variable in Value.
    --  The list of declarative items in Child is added to each of the items
    --  in the case construction.
+
+   procedure For_Each_Case_Stmt
+     (Values    : Variable_Values := null;
+      Project   : Project_Node_Id;
+      Case_Stmt : in out Project_Node_Id;
+      Action    : Matching_Item_Callback);
+   --  Calls Action for each of the nested case items that match Values.
+   --  Values must not be null if Case_Stmt hasn't been created yet.
+   --  Case_Stmt is created if it doesn't exist yet.
+   --  This is the internal version of For_Each_Scenario_Case_Item.
+   --  Project is the project that should be used to retrieve the name of the
+   --  environment variables referenced by the variables.
 
    ----------
    -- Free --
@@ -162,55 +158,6 @@ package body Prj_Normalize is
       return Project2;
    end Clone_Project;
 
-   ----------------------------
-   -- For_Each_Matching_Item --
-   ----------------------------
-
-   procedure For_Each_Matching_Item
-     (In_Case    : Project_Node_Id;
-      Var_Values : Literal_String_Array;
-      Action     : Matching_Item_Callback)
-   is
-      type Case_Item_Array is array (Var_Values'Range) of Project_Node_Id;
-      Case_Items : Case_Item_Array := (others => Empty_Node);
-      J : Natural := Case_Items'First;
-   begin
-      Case_Items (Case_Items'First) := First_Case_Item_Of (In_Case);
-
-      while Case_Items (Case_Items'First) /= Empty_Node loop
-
-         if Var_Values (J) = No_String
-           or else String_Equal
-           (String_Value_Of (First_Choice_Of (Case_Items (J))), Var_Values (J))
-         then
-            if J = Var_Values'Last then
-               if not Action (Case_Items (J)) then
-                  return;
-               end if;
-               Case_Items (J) := Next_Case_Item (Case_Items (J));
-
-            else
-               --  Go down to the deeper case statement
-               Case_Items (J + 1) := First_Case_Item_Of
-                 (Current_Item_Node
-                  (First_Declarative_Item_Of (Case_Items (J))));
-               J := J + 1;
-            end if;
-         else
-            Case_Items (J) := Next_Case_Item (Case_Items (J));
-         end if;
-
-         --  We have already moved to the next case item in the current case.
-         --  However, if we have reached the end, we need to go up one level.
-         loop
-            exit when J = Case_Items'First
-              or else Case_Items (J) /= Empty_Node;
-            J := J - 1;
-            Case_Items (J) := Next_Case_Item (Case_Items (J));
-         end loop;
-      end loop;
-   end For_Each_Matching_Item;
-
    ------------------------------
    -- Duplicate_Decl_Item_List --
    ------------------------------
@@ -248,8 +195,18 @@ package body Prj_Normalize is
    is
       Construct, Str, S, Item : Project_Node_Id;
    begin
+      pragma Assert
+        (Kind_Of (Value.Variable) = N_Variable_Reference
+         or else Kind_Of (Value.Variable) = N_Typed_Variable_Declaration);
+
       Construct := Default_Project_Node (N_Case_Construction);
-      Set_Case_Variable_Reference_Of (Construct, Value.Variable);
+
+      if Kind_Of (Value.Variable) = N_Variable_Reference then
+         Set_Case_Variable_Reference_Of (Construct, Value.Variable);
+      else
+         Set_Case_Variable_Reference_Of
+           (Construct, Create_Variable_Reference (Value.Variable));
+      end if;
 
       Str := First_Literal_String (String_Type_Of (Value.Variable));
       while Str /= Empty_Node loop
@@ -272,6 +229,136 @@ package body Prj_Normalize is
       return Construct;
    end Create_Case_Construction;
 
+   ------------------------
+   -- For_Each_Case_Stmt --
+   ------------------------
+
+   procedure For_Each_Case_Stmt
+     (Values    : Variable_Values := null;
+      Project   : Project_Node_Id;
+      Case_Stmt : in out Project_Node_Id;
+      Action    : Matching_Item_Callback)
+   is
+      procedure Process_Case_Recursive (Case_Stmt : Project_Node_Id);
+
+      ----------------------------
+      -- Process_Case_Recursive --
+      ----------------------------
+
+      procedure Process_Case_Recursive (Case_Stmt : Project_Node_Id) is
+         --  ??? Case_Variable_Reference_Of might not be the most efficient
+         Name : constant String_Id := External_Variable_Name
+           (Project, Case_Variable_Reference_Of (Case_Stmt));
+         Choice : String_Id;
+         Current_Item, New_Case : Project_Node_Id;
+         V : Variable_Values;
+         Found : Boolean;
+         Match : Variable_Values;
+
+      begin
+         pragma Assert (Name /= No_String);
+
+         --  For each item in the case (ie all possible values of the
+         --  variable).
+
+         Current_Item := First_Case_Item_Of (Case_Stmt);
+         while Current_Item /= Empty_Node loop
+
+            --  Note: since we created the case internally, there is only
+            --  one choice, we don't need to check several of them.
+
+            Choice := String_Value_Of (First_Choice_Of (Current_Item));
+
+            --  Do we have a matching reference in the current scenario
+            --  * The variable is not in values (default "when others")
+            --  * The choice in the case item is in the list of values
+            --    for the variable
+
+            V := Values;
+            Found := False;
+            Match := null;
+
+            while Match = null and then V /= null loop
+               if String_Equal (V.Name, Name) then
+                  Found := True;
+                  V.Seen := True;
+
+                  for C in V.Values'Range loop
+                     if V.Values (C).Status = In_Process
+                       and then String_Equal (Choice, V.Values (C).Value)
+                     then
+                        Match := V;
+                        exit;
+                     end if;
+                  end loop;
+
+                  exit;
+               end if;
+
+               V := V.Next;
+            end loop;
+
+            if Match /= null or else not Found then
+               New_Case := First_Declarative_Item_Of (Current_Item);
+
+               --  If we have a nested case statement, we need to choose the
+               --  right branches there as well.
+               if New_Case /= Empty_Node
+                 and then Kind_Of (New_Case) = N_Case_Construction
+               then
+                  Process_Case_Recursive (New_Case);
+
+                  --  Else, check if we need to create a nested case.
+                  --  This nested case replaces the current declarative item,
+                  --  which is then assigned to each of the branches of the
+                  --  nested case.
+               else
+                  V := Values;
+                  while V /= null loop
+                     if not V.Seen then
+                        New_Case := Create_Case_Construction (V, New_Case);
+                        Process_Case_Recursive (New_Case);
+                        Set_First_Declarative_Item_Of
+                          (Current_Item, New_Case);
+                        exit;
+                     end if;
+                     V := V.Next;
+                  end loop;
+
+                  --  All variables have been seen => Add the new
+                  --  declarative item at the end of the current list.
+                  if V = null then
+                     Action (Current_Item);
+                  end if;
+               end if;
+
+               if Match /= null then
+                  Match.Seen := False;
+               end if;
+            end if;
+
+            Current_Item := Next_Case_Item (Current_Item);
+         end loop;
+      end Process_Case_Recursive;
+
+      V : Variable_Values := Values;
+   begin
+      pragma Assert (Values /= null or else Case_Stmt /= Empty_Node);
+
+      --  Reset the variables
+      V := Values;
+      while V /= null loop
+         V.Seen := False;
+         V := V.Next;
+      end loop;
+
+      if Case_Stmt = Empty_Node then
+         Case_Stmt := Create_Case_Construction (Values, Empty_Node);
+      end if;
+
+      Process_Case_Recursive (Case_Stmt);
+   end For_Each_Case_Stmt;
+
    -----------------------
    -- Normalize_Project --
    -----------------------
@@ -293,139 +380,6 @@ package body Prj_Normalize is
       --  represent the case where there was a case statement before in the
       --  project file, the second one represents the first case statement).
 
-      procedure Add_To_Case_Stmt
-        (Case_Stmt  : in out Project_Node_Id;
-         Decl_Item  : Project_Node_Id);
-      --  Add Decl_Item to the appropriate nested case items in Case_Stmt,
-      --  depending on the current setup of Values.
-
-      ----------------------
-      -- Add_To_Case_Stmt --
-      ----------------------
-
-      procedure Add_To_Case_Stmt
-        (Case_Stmt  : in out Project_Node_Id;
-         Decl_Item  : Project_Node_Id)
-      is
-         procedure Add_To_Case_Recursive (Case_Stmt : Project_Node_Id);
-
-         ---------------------------
-         -- Add_To_Case_Recursive --
-         ---------------------------
-
-         procedure Add_To_Case_Recursive (Case_Stmt : Project_Node_Id) is
-            --  ??? Case_Variable_Reference_Of might not be the most efficient
-            Name : constant String_Id := External_Variable_Name
-              (Project_Norm, Case_Variable_Reference_Of (Case_Stmt));
-            Choice : String_Id;
-            Current_Item, New_Case : Project_Node_Id;
-            V : Variable_Values;
-            Found : Boolean;
-            Match : Variable_Values;
-
-         begin
-            pragma Assert (Name /= No_String);
-
-            --  For each item in the case (ie all possible values of the
-            --  variable).
-
-            Current_Item := First_Case_Item_Of (Case_Stmt);
-            while Current_Item /= Empty_Node loop
-
-               --  Note: since we created the case internally, there is only
-               --  one choice, we don't need to check several of them.
-
-               Choice := String_Value_Of (First_Choice_Of (Current_Item));
-
-               --  Do we have a matching reference in the current scenario
-               --  * The variable is not in values (default "when others")
-               --  * The choice in the case item is in the list of values
-               --    for the variable
-
-               V := Values;
-               Found := False;
-               Match := null;
-
-               while Match = null and then V /= null loop
-                  if String_Equal (V.Name, Name) then
-                     Found := True;
-                     V.Seen := True;
-
-                     for C in V.Values'Range loop
-                        if V.Values (C).Status = In_Process
-                          and then String_Equal (Choice, V.Values (C).Value)
-                        then
-                           Match := V;
-                           exit;
-                        end if;
-                     end loop;
-
-                     exit;
-                  end if;
-
-                  V := V.Next;
-               end loop;
-
-               if Match /= null or else not Found then
-                  New_Case := First_Declarative_Item_Of (Current_Item);
-
-                  --  If we have a nested case statement, we need to choose the
-                  --  right branches there as well.
-                  if New_Case /= Empty_Node
-                    and then Kind_Of (New_Case) = N_Case_Construction
-                  then
-                     Add_To_Case_Recursive (New_Case);
-
-                  --  Else, check if we need to create a nested case.
-                  --  This nested case replaces the current declarative item,
-                  --  which is then assigned to each of the branches of the
-                  --  nested case.
-                  else
-                     V := Values;
-                     while V /= null loop
-                        if not V.Seen then
-                           New_Case := Create_Case_Construction (V, New_Case);
-                           Add_To_Case_Recursive (New_Case);
-                           Set_First_Declarative_Item_Of
-                             (Current_Item, New_Case);
-                           exit;
-                        end if;
-                        V := V.Next;
-                     end loop;
-
-                     --  All variables have been seen => Add the new
-                     --  declarative item at the end of the current list.
-                     if V = null then
-                        Add_At_End (Current_Item, Decl_Item);
-                     end if;
-                  end if;
-
-                  if Match /= null then
-                     Match.Seen := False;
-                  end if;
-               end if;
-
-               Current_Item := Next_Case_Item (Current_Item);
-            end loop;
-         end Add_To_Case_Recursive;
-
-         V : Variable_Values := Values;
-      begin
-
-         --  Reset the variables
-         V := Values;
-         while V /= null loop
-            V.Seen := False;
-            V := V.Next;
-         end loop;
-
-         if Case_Stmt = Empty_Node then
-            Case_Stmt := Create_Case_Construction (Values, Empty_Node);
-         end if;
-
-         Add_To_Case_Recursive (Case_Stmt);
-      end Add_To_Case_Stmt;
-
       ------------------------------
       -- Process_Declarative_List --
       ------------------------------
@@ -439,6 +393,15 @@ package body Prj_Normalize is
          Name      : Name_Id;
          Case_Item : Project_Node_Id;
          Num_Values : Natural;
+
+         procedure Add_Decl_Item (To_Case_Item : Project_Node_Id);
+         --  Add Decl_Item to To_Case_Item.
+
+         procedure Add_Decl_Item (To_Case_Item : Project_Node_Id) is
+         begin
+            Add_At_End (To_Case_Item, Decl_Item);
+         end Add_Decl_Item;
+
       begin
          pragma Assert (Kind_Of (Decl_Item) = N_Declarative_Item);
 
@@ -599,11 +562,15 @@ package body Prj_Normalize is
                when others =>
                   --  If we already had a case statement before, add to it
                   if Case_Stmt /= Empty_Node then
-                     Add_To_Case_Stmt (Case_Stmt, Decl_Item);
+                     For_Each_Case_Stmt
+                       (Values, Project_Norm, Case_Stmt,
+                        Add_Decl_Item'Unrestricted_Access);
 
                   --  Else create the case statement
                   elsif Values /= null then
-                     Add_To_Case_Stmt (Case_Stmt, Decl_Item);
+                     For_Each_Case_Stmt
+                       (Values, Project_Norm, Case_Stmt,
+                        Add_Decl_Item'Unrestricted_Access);
                      Add_At_End (To, Case_Stmt);
 
                   else
@@ -655,105 +622,78 @@ package body Prj_Normalize is
         Tree_Private_Part.Project_Nodes.Table (Project_Norm);
    end Normalize_Project;
 
-   --------------------------------
-   -- Current_Scenario_Case_Item --
-   --------------------------------
+   ---------------------------------
+   -- For_Each_Scenario_Case_Item --
+   ---------------------------------
 
-   function Current_Scenario_Case_Item
+   procedure For_Each_Scenario_Case_Item
      (Project : Prj.Tree.Project_Node_Id;
-      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node)
-      return Project_Node_Id
+      Pkg     : Prj.Tree.Project_Node_Id := Prj.Tree.Empty_Node;
+      Action  : Matching_Item_Callback)
    is
-      Matching_Case : Project_Node_Id := Empty_Node;
-      Decl_Item : Project_Node_Id;
-      Previous_Decl : Project_Node_Id := Empty_Node;
-      Nested_Case : Project_Node_Id := Empty_Node;
-
-      Scenario_Variables : constant Project_Node_Array :=
-        Find_Scenario_Variables (Project, Parse_Imported => False);
-      Var_Values : Literal_String_Array (Scenario_Variables'Range) :=
-        (others => No_String);
-
-      function Find (Item : Project_Node_Id) return Boolean;
-      --  Saves the id of the case item that matches the current value for the
-      --  environment variables.
-
-      ----------
-      -- Find --
-      ----------
-
-      function Find (Item : Project_Node_Id) return Boolean is
-      begin
-         Matching_Case := Item;
-
-         --  Stop search, since we have found what we wanted.
-         return False;
-      end Find;
-
+      Values         : Variable_Values := null;
+      Decl_Item, Top : Project_Node_Id;
+      Nested_Case    : Project_Node_Id := Empty_Node;
    begin
-      --  If there are no scenario variables, we simply add at the end of the
-      --  project or the package
+      --  ??? This information should be transmitted through the kernel by the
+      --  ??? scenario editor. In fact, we could even cache the current case
+      --  ??? item there
 
-      if Scenario_Variables'Length = 0 then
-         if Pkg = Empty_Node then
-            return Project_Declaration_Of (Project);
-         else
-            return Pkg;
-         end if;
-      end if;
+      declare
+         Scenario_Variables : constant Project_Node_Array :=
+           Find_Scenario_Variables (Project, Parse_Imported => False);
+      begin
+         for J in Scenario_Variables'Range loop
+            String_To_Name_Buffer
+              (External_Reference_Of (Scenario_Variables (J)));
+            Values := new Variable_Values_Record'
+              (Variable => Scenario_Variables (J),
+               Name     => External_Reference_Of (Scenario_Variables (J)),
+               Values   => new Value_Array'
+                 (1 => (Prj.Ext.Value_Of (Name_Find), In_Process)),
+               Seen     => False,
+               Next     => Values);
+         end loop;
+      end;
 
+      --  Find the top-level item to which we will add
 
       if Pkg = Empty_Node then
-         Decl_Item := First_Declarative_Item_Of
-           (Project_Declaration_Of (Project));
+         Top := Project_Declaration_Of (Project);
       else
-         Decl_Item := First_Declarative_Item_Of (Pkg);
+         Top := Pkg;
       end if;
 
-      --  First, look for the beginning of the nested case statement.
+      --  No scenario variable ? This also means there is no nested case at
+      --  all, so we can simply process the top once
 
-      while Decl_Item /= Empty_Node loop
-         case Kind_Of (Current_Item_Node (Decl_Item)) is
-            when N_Case_Construction =>
+      if Values = null then
+         Action (Top);
+
+      else
+         Decl_Item := First_Declarative_Item_Of (Top);
+
+         --  Find the case statement to which we should add. There is only such
+         --  case construction per package or normalized project, so we stop as
+         --  soon as we find it.
+
+         while Decl_Item /= Empty_Node loop
+            if Kind_Of (Current_Item_Node (Decl_Item))
+              = N_Case_Construction
+            then
                Nested_Case := Current_Item_Node (Decl_Item);
-               exit;
+               For_Each_Case_Stmt (Values, Project, Nested_Case, Action);
+               return;
+            end if;
+            Decl_Item := Next_Declarative_Item (Decl_Item);
+         end loop;
 
-            when others =>
-               null;
-         end case;
-         Previous_Decl := Decl_Item;
-         Decl_Item := Next_Declarative_Item (Decl_Item);
-      end loop;
+         --  Create a case construction, since none was found
 
-      --  If there is no nested case statement, created one
-
-      --  if Nested_Case = Empty_Node then
-      --     Nested_Case := Create_Nested_Case (Scenario_Variables);
-      --     if Pkg = Empty_Node then
-      --        Decl_Item := Project_Declaration_Of (Project);
-      --     else
-      --        Decl_Item := Pkg;
-      --     end if;
-      --     Add_At_End (Decl_Item, Nested_Case);
-      --  end if;
-
-      --  Get the current value of all the variables
-
-      for J in Scenario_Variables'Range loop
-         String_To_Name_Buffer
-           (External_Reference_Of (Scenario_Variables (J)));
-
-         Var_Values (J) := Prj.Ext.Value_Of (Name_Find);
-      end loop;
-
-      --  Find the appropriate case item.
-
-      pragma Assert (Nested_Case /= Empty_Node);
-
-      For_Each_Matching_Item
-        (Nested_Case, Var_Values, Find'Unrestricted_Access);
-      return Matching_Case;
-   end Current_Scenario_Case_Item;
+         For_Each_Case_Stmt (Values, Project, Nested_Case, Action);
+         Add_At_End (Top, Nested_Case);
+      end if;
+   end For_Each_Scenario_Case_Item;
 
 end Prj_Normalize;
 
