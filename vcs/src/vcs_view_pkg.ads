@@ -83,6 +83,8 @@ package VCS_View_Pkg is
    --  If Clear_Logs is True, then the log files corresponding
    --  to the files that have an "Up_To_Date" status will be deleted,
    --  as well as the corresponding file/log mapping for those files.
+   --  If Display is False, do not display the status but only refresh the
+   --  cache.
 
    function Get_Selected_Files
      (Explorer : VCS_View_Access) return String_List.List;
