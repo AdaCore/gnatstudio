@@ -28,21 +28,21 @@ package body Codefix is
    -- Affect --
    ------------
 
-   procedure Affect (This : in out Dynamic_String; Value : String) is
+   procedure Assign (This : in out Dynamic_String; Value : String) is
    begin
       Free (This);
       This := new String'(Value);
-   end Affect;
+   end Assign;
 
    ------------
    -- Affect --
    ------------
 
-   procedure Affect (This : in out Dynamic_String; Value : Dynamic_String) is
+   procedure Assign (This : in out Dynamic_String; Value : Dynamic_String) is
    begin
       Free (This);
       This := new String'(Value.all);
-   end Affect;
+   end Assign;
 
    --------------
    -- Get_Line --

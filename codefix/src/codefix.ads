@@ -22,10 +22,10 @@ package Codefix is
 
    type Dynamic_String is access all String;
 
-   procedure Affect (This : in out Dynamic_String; Value : String);
+   procedure Assign (This : in out Dynamic_String; Value : String);
    --  Delete the precedent string, and create a new initialized with Value.
 
-   procedure Affect (This : in out Dynamic_String; Value : Dynamic_String);
+   procedure Assign (This : in out Dynamic_String; Value : Dynamic_String);
    --  Delete the precedent string This, and create a new initialized with a
    --  copy of Value.
 

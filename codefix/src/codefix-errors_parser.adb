@@ -584,7 +584,7 @@ package body Codefix.Errors_Parser is
 
       Declaration_Cursor.Line := Declaration_Line;
       Declaration_Cursor.Col := 1;
-      Affect (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
+      Assign (Line_Red, Get_Line (Current_Text, Declaration_Cursor));
 
       Match (This.Col_Matcher.all, Line_Red.all, Col_Matches);
 
@@ -593,7 +593,7 @@ package body Codefix.Errors_Parser is
          Declaration_Line,
          Col_Matches (1).Last + 1);
 
-      Affect (New_Message.File_Name, Message.File_Name);
+      Assign (New_Message.File_Name, Message.File_Name);
 
       Append (Solutions, Expected (Current_Text, New_Message, "all"));
 
@@ -891,7 +891,7 @@ package body Codefix.Errors_Parser is
       Word_Read           : Dynamic_String;
       Unallowed_Character : String (1 .. 1);
    begin
-      Affect
+      Assign
         (Word_Read,
          Get_Message (Message) (Matches (1).First .. Matches (1).Last));
 
@@ -900,7 +900,7 @@ package body Codefix.Errors_Parser is
       elsif Word_Read.all = "vertical tab" then
          Unallowed_Character := (1 => ASCII.HT);
       elsif Word_Read.all = "trailing spaces" then
-         Unallowed_Character := (1 => ' ');  --  ??? Try ASCII.EOT
+         Unallowed_Character := (1 => ' ');  --  NB : Try ASCII.EOT
       elsif Word_Read.all = "space" then
          Unallowed_Character := " ";
       end if;
@@ -1062,9 +1062,9 @@ package body Codefix.Errors_Parser is
          Bad_Casing (Current_Text, Message, "", Lower));
    end Fix;
 
-   -------------------------
-   -- Func_Not_Referenced --
-   -------------------------
+   ---------------------------
+   -- Object_Not_Referenced --
+   ---------------------------
 
    procedure Initialize (This : in out Object_Not_Referenced) is
    begin

@@ -45,7 +45,7 @@ package body Codefix.Errors_Manager is
 
       Cursor_Line := File_Cursor (Current);
       Cursor_Line.Col := 1;
-      Affect (Current_Line, Get_Line (Current_Text, Cursor_Line));
+      Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
 
       Logic_Pos := 1;
       File_Pos := 1;
@@ -96,9 +96,9 @@ package body Codefix.Errors_Manager is
                   Source_Text,
                   This);
             end if;
-       end if;
+         end if;
 
-      Free (Current_Message);
+         Free (Current_Message);
       end loop;
    end Analyze;
 
@@ -178,10 +178,11 @@ package body Codefix.Errors_Manager is
    is
       function Delete_And_Next
         (Node : Extract_List.List_Node) return Extract_List.List_Node;
-      --  ???
+      --  Delete the current node after having got the next one.
 
       function Conflict (Extract_1, Extract_2 : Extract) return Boolean;
-      --  ???
+      --  Is True when Extract_1 and Extract_2 have at least one line in
+      --  common.
 
       Node_I, Node_J     : Extract_List.List_Node;
       Delete_I, Delete_J : Boolean;
