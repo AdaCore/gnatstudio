@@ -54,13 +54,6 @@ package body Glide_Kernel.Console is
 
    Me : constant Debug_Handle := Create (Console_Module_Name);
 
-   function Get_Or_Create_Result_View
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Allow_Creation : Boolean := True)
-      return Result_View;
-   --  Return the results view widget. Create it if it doesn't exist and
-   --  Allow_Creation is true.
-
    procedure Console_Destroyed
      (Console : access Glib.Object.GObject_Record'Class;
       Kernel  : Kernel_Handle);
@@ -82,14 +75,6 @@ package body Glide_Kernel.Console is
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Load Contents... menu.
-
-   procedure On_Next_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Next Result menu.
-
-   procedure On_Previous_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Callback for File->Messages->Previous Result menu.
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -129,9 +114,9 @@ package body Glide_Kernel.Console is
    -------------------------------
 
    function Get_Or_Create_Result_View
-     (Kernel : access Kernel_Handle_Record'Class;
+     (Kernel         : access Kernel_Handle_Record'Class;
       Allow_Creation : Boolean := True)
-     return Result_View
+      return Result_View
    is
       Child   : MDI_Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Result_View_Record'Tag);
@@ -355,44 +340,6 @@ package body Glide_Kernel.Console is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Load_To_Console;
 
-   --------------------
-   -- On_Next_Result --
-   --------------------
-
-   procedure On_Next_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Results : constant Result_View
-        := Get_Or_Create_Result_View (Kernel, False);
-   begin
-      Next_Item (Results);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Next_Result;
-
-   ------------------------
-   -- On_Previous_Result --
-   ------------------------
-
-   procedure On_Previous_Result
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
-      Results : constant Result_View
-        := Get_Or_Create_Result_View (Kernel, False);
-   begin
-      Next_Item (Results, Backwards => True);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Previous_Result;
-
    ----------------------
    -- On_Clear_Console --
    ----------------------
@@ -492,9 +439,9 @@ package body Glide_Kernel.Console is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      File    : constant String := '/' & (-"File");
-      Console : constant String := File & '/' & (-"_Messages");
-      Mitem   : Gtk_Menu_Item;
+      File     : constant String := '/' & (-"File");
+      Console  : constant String := File & '/' & (-"_Messages");
+      Mitem    : Gtk_Menu_Item;
 
    begin
       Console_Module_Id := new Console_Module_Id_Record;
@@ -513,10 +460,6 @@ package body Glide_Kernel.Console is
         (Kernel, Console, -"_Save As...", "", On_Save_Console_As'Access);
       Register_Menu
         (Kernel, Console, -"_Load Contents...", "", On_Load_To_Console'Access);
-      Register_Menu
-        (Kernel, Console, -"_Previous Result", "", On_Previous_Result'Access);
-      Register_Menu
-        (Kernel, Console, -"_Next Result", "", On_Next_Result'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Close");
    end Register_Module;
