@@ -368,17 +368,6 @@ package body Projects.Registry is
          return;
       end if;
 
-      if Registry.Data /= null
-        and then Project_Path (Get_Root_Project (Registry)) = Path
-      then
-         Trace (Me, "Load: " & Path & " already loaded");
-         if Errors /= null then
-            Errors (Root_Project_Path & (-" already loaded"));
-         end if;
-         New_Project_Loaded := False;
-         return;
-      end if;
-
       New_Project_Loaded := True;
 
       --  Use the full path name so that the messages are sent to the result
