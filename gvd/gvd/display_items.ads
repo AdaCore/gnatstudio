@@ -34,6 +34,9 @@ package Display_Items is
      Gtkada.Canvas.Canvas_Item_Record with private;
    type Display_Item is access all Display_Item_Record'Class;
 
+   type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with private;
+   type Odd_Link is access all Odd_Link_Record'Class;
+
    procedure Gtk_New
      (Item           : out Display_Item;
       Win            : Gdk.Window.Gdk_Window;
@@ -50,6 +53,18 @@ package Display_Items is
    --  or value of the variable.
    --  Default_Entity can be used to initialize the entity associated with the
    --  item. This will be used instead of Variable_Name if not null.
+
+   procedure Gtk_New_And_Put
+     (Item           : out Display_Item;
+      Win            : Gdk.Window.Gdk_Window;
+      Variable_Name  : String;
+      Debugger       : Odd.Process.Debugger_Process_Tab;
+      Auto_Refresh   : Boolean := True;
+      Link_From      : access Display_Item_Record'Class;
+      Link_Name      : String := "";
+      Default_Entity : Items.Generic_Type_Access := null);
+   --  Same as above, but also create a link from Link_From to the new item.
+   --  Link_Name is the label used for the link between the two items.
 
    procedure Free (Item : access Display_Item_Record);
    --  Remove the item from the canvas and free the memory occupied by it,
@@ -73,6 +88,11 @@ package Display_Items is
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Called when the process associated with the Debugger_Process_Tab Object
    --  stops to update the display items.
+
+   procedure Recompute_All_Aliases
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class);
+   --  Recompute all the aliases, and reparse the values for all the
+   --  displayed items.
 
    function Update_On_Auto_Refresh
      (Canvas : access Gtkada.Canvas.Interactive_Canvas_Record'Class;
@@ -117,11 +137,23 @@ private
 
          Is_Alias_Of  : Display_Item := null;
          --  Item for which we are an alias.
-         --  This is used so that the current item is moved at the same time
-         --  as the other one.
 
          Is_Dereference : Boolean := False;
          --  True if the item was created as a result of a derefence of an
-         --  access type.
+         --  access type. Such items can be hidden as a result of aliases
+         --  detection, whereas items explicitly displayed by the user are
+         --  never hidden.
+
+         Was_Alias      : Boolean := False;
+         --  Memorize whether the item was an alias in the previous display, so
+         --  that we can compute a new position for it.
       end record;
+
+   type Odd_Link_Record is new Gtkada.Canvas.Canvas_Link_Record with record
+      Alias_Link : Boolean := False;
+      --  True if this Link was created as a result of an aliasing operation.
+      --  Such links are always deleted before each update, and recreated
+      --  whenever an aliasing is detected.
+   end record;
+
 end Display_Items;

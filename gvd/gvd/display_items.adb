@@ -28,7 +28,6 @@ with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Window;       use Gdk.Window;
-with Gdk.Rectangle;    use Gdk.Rectangle;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 with Odd.Process;      use Odd.Process;
 with Process_Proxies;  use Process_Proxies;
@@ -124,6 +123,39 @@ package body Display_Items is
    Auto_Display_Pixmap : Gdk_Pixmap;
    Auto_Display_Mask   : Gdk_Bitmap;
 
+
+   --  Aliases detection
+   --  ==================
+   --
+   --  This package provides a complete aliases detection, ie when some items
+   --  are found at the same location in memory. Each item has a uniq id,
+   --  which most often is an address in memory, but can also be different for
+   --  instance on the Java Virtual Machine.
+   --  Every time a new item is inserted in the canvas, either as a result of
+   --  a "graph print" or "graph display" command, or when the user clicks on
+   --  an access type to dereference it, this package will test that there is
+   --  not already an item on the canvas with the same Id.
+   --  In every case, the new item is created (with possibly a link to it if it
+   --  was a dereference). However, if there was already an item with the same
+   --  id then the new item is set to be hidden (ie will not be displayed,
+   --  nor any link to or from it).
+   --  The links to and from an alias (hidden item) are automatically
+   --  duplicated to reference the visible item, so that they are correctly
+   --  visible and moved on the canvas. These temporary links have a special
+   --  attribute Alias_Link set.
+   --
+   --  Just before the next update of the canvas, all these temporary links are
+   --  removed, all aliases are cancelled and all items are made visible. Then
+   --  we recompute the list of aliases before redrawing the canvas. It is
+   --  worth nothing that when we have an hidden item, we do not waste time
+   --  reparsing its value.
+   --
+   --  Note also that for simplicity we do not create chains of aliases, ie
+   --  an item is an alias to a second, which in turn in an alias to a third.
+   --  Instead, both the first and the second will refer the same third. It is
+   --  thus much easier to deal with aliases.
+
+
    procedure Initialize
      (Item          : access Display_Item_Record'Class;
       Win           : Gdk.Window.Gdk_Window;
@@ -162,13 +194,19 @@ package body Display_Items is
 
    function Search_Item
      (Canvas : access Odd_Canvas_Record'Class;
-      Id     : String) return Display_Item;
+      Id     : String;
+      Name   : String := "")
+     return Display_Item;
    --  Search for an item whose Id is Id in the canvas.
+   --  If Name is not "", then the item returned must also have the same name
+   --  as Name.
 
    procedure Create_Link
-     (Canvas : access Odd_Canvas_Record'Class;
-      From, To : access Display_Item_Record'Class;
-      Name : String);
+     (Canvas     : access Interactive_Canvas_Record'Class;
+      From, To   : access Canvas_Item_Record'Class;
+      Name       : String;
+      Arrow      : Arrow_Type := End_Arrow;
+      Alias_Link : Boolean := False);
    --  Add a new link between two items.
    --  The link is not created if there is already a similar one.
 
@@ -177,6 +215,14 @@ package body Display_Items is
       Item   : access Canvas_Item_Record'Class) return Boolean;
    --  Recompute the address of the item, and make it an alias of other
    --  items if required.
+
+   procedure Duplicate_Links
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class);
+   --  Create a temporary version of all the links to and from Item, and
+   --  insert the copies in the canvas. Any reference to Item is replaced
+   --  by a reference to Item.Is_Alias_Of (so that the temporary links
+   --  point to the alias)
 
    -------------
    -- Gtk_New --
@@ -250,6 +296,60 @@ package body Display_Items is
       Display_Items.Initialize (Item, Win, Variable_Name, Auto_Refresh);
    end Gtk_New;
 
+   ---------------------
+   -- Gtk_New_And_Put --
+   ---------------------
+
+   procedure Gtk_New_And_Put
+     (Item           : out Display_Item;
+      Win            : Gdk.Window.Gdk_Window;
+      Variable_Name  : String;
+      Debugger       : Debugger_Process_Tab;
+      Auto_Refresh   : Boolean := True;
+      Link_From      : access Display_Item_Record'Class;
+      Link_Name      : String := "";
+      Default_Entity : Items.Generic_Type_Access := null)
+   is
+      Id : String := Get_Uniq_Id (Debugger.Debugger, Variable_Name);
+      Alias_Item : Display_Item;
+   begin
+
+      --  Is the item already on the canvas ? If yes, do not display it
+      --  again
+      Alias_Item := Search_Item (Debugger.Data_Canvas, Id, Variable_Name);
+
+      if Alias_Item = null then
+         Gtk_New (Item,
+                  Get_Window (Debugger.Data_Canvas),
+                  Variable_Name => Variable_Name,
+                  Debugger      => Debugger,
+                  Auto_Refresh  => Auto_Refresh);
+
+         if Item /= null then
+            Create_Link (Debugger.Data_Canvas, Link_From, Item, Link_Name);
+
+            --  Do we have an existing item that matches this ? (same address as
+            --  in the current access type itself)
+
+            Alias_Item := Search_Item (Debugger.Data_Canvas, Id);
+            Put (Debugger.Data_Canvas, Item);
+
+            if Alias_Item /= null then
+               --  Hide the item so as not to interfer with another one.
+               Set_Visibility (Item, False);
+
+               Item.Is_Alias_Of := Alias_Item;
+               Duplicate_Links (Debugger.Data_Canvas, Item);
+            end if;
+         end if;
+
+      --  There was already such an item
+      else
+         Create_Link (Debugger.Data_Canvas, Link_From, Alias_Item, Link_Name);
+         Refresh_Canvas (Debugger.Data_Canvas);
+      end if;
+   end Gtk_New_And_Put;
+
    ----------------
    -- Initialize --
    ----------------
@@ -268,6 +368,7 @@ package body Display_Items is
    begin
       Item.Name         := new String'(Variable_Name);
       Item.Auto_Refresh := Auto_Refresh;
+      Item.Is_Dereference := False;
 
       if not Is_Visible (Item) then
          return;
@@ -518,8 +619,10 @@ package body Display_Items is
    -----------------
 
    function Search_Item
-     (Canvas : access Odd_Canvas_Record'Class;
-      Id     : String) return Display_Item
+     (Canvas    : access Odd_Canvas_Record'Class;
+      Id        : String;
+      Name      : String := "")
+     return Display_Item
    is
       Alias_Item : Display_Item := null;
 
@@ -539,9 +642,15 @@ package body Display_Items is
       is
          pragma Warnings (Off, Canvas);
       begin
+         --  Do not detect aliases with what are already aliases, so as to
+         --  avoid chains of aliases.
          if Display_Item (Item).Id /= null
            and then Display_Item (Item).Auto_Refresh
            and then Display_Item (Item).Id.all = Id
+           and then
+           ((Name = "" and then Display_Item (Item).Is_Alias_Of = null)
+            or else (Display_Item (Item).Name /= null
+                     and then Display_Item (Item).Name.all = Name))
          then
             Alias_Item := Display_Item (Item);
             return False;
@@ -551,7 +660,9 @@ package body Display_Items is
       end Alias_Found;
 
    begin
-      if Get_Detect_Aliases (Canvas) then
+      --  Always search if we have a special name to look for, so as to avoid
+      --  creating the same item multiple times
+      if Name = "" or else Get_Detect_Aliases (Canvas) then
          For_Each_Item (Canvas, Alias_Found'Unrestricted_Access);
       end if;
       return Alias_Item;
@@ -653,12 +764,19 @@ package body Display_Items is
    -----------------
 
    procedure Create_Link
-     (Canvas : access Odd_Canvas_Record'Class;
-      From, To : access Display_Item_Record'Class;
-      Name : String) is
+     (Canvas     : access Interactive_Canvas_Record'Class;
+      From, To   : access Canvas_Item_Record'Class;
+      Name       : String;
+      Arrow      : Arrow_Type := End_Arrow;
+      Alias_Link : Boolean := False)
+   is
+      L : Odd_Link;
    begin
       if not Has_Link (Canvas, From, To, Name) then
-         Add_Link (Canvas, From, To, End_Arrow, Name);
+         L := new Odd_Link_Record;
+         Configure (L, From, To, Arrow, Name);
+         L.Alias_Link := Alias_Link;
+         Add_Link (Canvas, L);
       end if;
    end Create_Link;
 
@@ -671,57 +789,43 @@ package body Display_Items is
       X    : Gint;
       Y    : Gint)
    is
+      use String_History;
       Name : constant String := Get_Component_Name
         (Item.Entity,
          Get_Language (Item.Debugger.Debugger),
          Item.Name.all,
          X, Y);
-      Component : constant Generic_Type_Access := Get_Component
-        (Item.Entity, X, Y);
-      New_Name : constant String := Dereference_Name
-        (Get_Language (Item.Debugger.Debugger), Name);
       Link_Name : constant String := Dereference_Name
         (Get_Language (Item.Debugger.Debugger),
          Get_Component_Name
            (Item.Entity,
             Get_Language (Item.Debugger.Debugger), "@", X, Y));
-      Alias_Item : Display_Item;
+      New_Name : constant String := Dereference_Name
+        (Get_Language (Item.Debugger.Debugger), Name);
+
+      --  ??? For "dependent on", we should use a display number rather than
+      --  a name, so as to be sure of which exact display we are speaking
+      Cmd : String := "graph display " & New_Name & " dependent on "
+        & Item.Name.all & " link_name " & Link_Name;
       New_Item : Display_Item;
-
    begin
+      Text_Output_Handler (Item.Debugger, Cmd & ASCII.LF, Is_Command => True);
 
-      Gtk_New (New_Item,
-               Get_Window (Item.Debugger.Data_Canvas),
-               Variable_Name => New_Name,
-               Debugger      => Item.Debugger,
-               Auto_Refresh  => Item.Auto_Refresh);
-      Create_Link (Item.Debugger.Data_Canvas, Item, New_Item, Link_Name);
-      New_Item.Is_Dereference := True;
+      --  Do not call Process_User_Command, so as to be sure we use the
+      --  correct item.
+      Append (Item.Debugger.Command_History, Cmd);
 
-      --  Do we have an existing item that matches this ? (same address as
-      --  in the current access type itself)
-
-      Alias_Item := Search_Item
-        (Item.Debugger.Data_Canvas,
-         Get_Value (Access_Type (Component.all)).all);
-
-      if Alias_Item = null then
-         Put (Item.Debugger.Data_Canvas, New_Item);
-      else
-         --  Resize and move the item, so that the links are correctly
-         --  displayed.
-         Put (Item.Debugger.Data_Canvas, New_Item,
-              Get_Coord (Alias_Item).X, Get_Coord (Alias_Item).Y);
-         Gtkada.Canvas.Initialize
-           (New_Item, Get_Window (Item.Debugger.Data_Canvas),
-            Gint (Get_Coord (Alias_Item).Width),
-            Gint (Get_Coord (Alias_Item).Height));
-
-         --  Hide the item so as not to interfer with another one.
-         Set_Visibility (New_Item, False);
-
-         New_Item.Is_Alias_Of := Alias_Item;
+      Gtk_New_And_Put
+        (New_Item, Get_Window (Item.Debugger.Data_Canvas),
+         Variable_Name => New_Name,
+         Debugger      => Item.Debugger,
+         Auto_Refresh  => True,
+         Link_From     => Display_Item (Item),
+         Link_Name     => Link_Name);
+      if New_Item /= null then
+         New_Item.Is_Dereference := True;
       end if;
+      Display_Prompt (Item.Debugger.Debugger);
    end Dereference_Item;
 
    -----------------
@@ -1026,7 +1130,10 @@ package body Display_Items is
          end if;
 
          --  Do we have an alias ?
+         --  Do not detect aliases with items that are aliases themselves,
+         --  so as to avoid chains of aliases
          if It2.Id /= null
+           and then It2.Is_Alias_Of = null
            and then It.Id /= null
            and then It2.Id.all = It.Id.all
          then
@@ -1035,7 +1142,7 @@ package body Display_Items is
             --   - if only one is the result of a dereference, keep the other
             --   - otherwise keep the one with the shortest name
 
-            if It2.Is_Dereference and then not It2.Is_Dereference then
+            if It2.Is_Dereference and then not It.Is_Dereference then
                It2.Is_Alias_Of := It;
                return False;
 
@@ -1053,19 +1160,26 @@ package body Display_Items is
                   It2.Is_Alias_Of := It;
                end if;
                return False;
+
+            --  They both were explicitly displayed by the user. Print a
+            --  special link to reflect that fact.
+            else
+               Create_Link
+                 (Canvas, It, It2, "  =  ", Both_Arrow, Alias_Link => True);
             end if;
          end if;
 
          return True;
       end Has_Alias;
 
-      Was_Alias : Display_Item := It.Is_Alias_Of;
    begin
-      It.Is_Alias_Of := null;
-      Set_Visibility (It, True);
+      --  If this is not an item associated with a variable, ignore it.
+      if It.Name = null then
+         return True;
+      end if;
 
+      --  Else recompute the id for the item
       Free (It.Id);
-
       declare
          Id : String := Get_Uniq_Id (It.Debugger.Debugger, It.Name.all);
       begin
@@ -1074,17 +1188,68 @@ package body Display_Items is
          end if;
       end;
 
+      --  Search if there is an alias related to this new item
       For_Each_Item (Canvas, Has_Alias'Unrestricted_Access);
 
-      --  If we broke the alias, move the item back to some new coordinates
-      if It.Is_Alias_Of = null
-        and then Was_Alias /= null
-      then
-         Move_To (Canvas, It);
-      end if;
-
+      --  Keep processing the next items.
       return True;
    end Recompute_Address;
+
+   ---------------------
+   -- Duplicate_Links --
+   ---------------------
+
+   procedure Duplicate_Links
+     (Canvas : access Interactive_Canvas_Record'Class;
+      Item   : access Canvas_Item_Record'Class)
+   is
+      function Duplicate
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean;
+      --  Duplicate Link if it is bound to Item and is not a temporary link
+
+      ---------------
+      -- Duplicate --
+      ---------------
+
+      function Duplicate
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class)
+        return Boolean
+      is
+         Src, Dest : Canvas_Item;
+         Replace : Boolean;
+      begin
+         if not Odd_Link (Link).Alias_Link then
+
+            Src := Get_Src (Link);
+            Dest := Get_Dest (Link);
+            Replace := False;
+
+            if Get_Src (Link) = Canvas_Item (Item) then
+               Src := Canvas_Item (Display_Item (Item).Is_Alias_Of);
+               Replace := True;
+            end if;
+
+            if Get_Dest (Link) = Canvas_Item (Item) then
+               Dest := Canvas_Item (Display_Item (Item).Is_Alias_Of);
+               Replace := True;
+            end if;
+
+            if Replace then
+               Create_Link
+                 (Canvas, Src, Dest, Get_Descr (Link), Alias_Link => True);
+            end if;
+         end if;
+         return True;
+      end Duplicate;
+
+   begin
+      if Display_Item (Item).Is_Alias_Of /= null then
+         For_Each_Link (Canvas, Duplicate'Unrestricted_Access);
+      end if;
+   end Duplicate_Links;
 
    -------------------------------
    -- On_Canvas_Process_Stopped --
@@ -1094,12 +1259,64 @@ package body Display_Items is
      (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Canvas : Odd_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+   begin
+      Recompute_All_Aliases (Canvas);
+   end On_Canvas_Process_Stopped;
 
+   ---------------------------
+   -- Recompute_All_Aliases --
+   ---------------------------
+
+   procedure Recompute_All_Aliases
+     (Canvas : access Odd.Canvas.Odd_Canvas_Record'Class)
+   is
       function Recompute_Sizes
         (Canvas : access Interactive_Canvas_Record'Class;
          Item   : access Canvas_Item_Record'Class) return Boolean;
       --  Recomput the sizes and positions for all the items that are aliases
       --  of other items.
+
+      function Remove_Aliases
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean;
+      --  Remove all the aliases currently set up
+
+      function Remove_Temporary
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean;
+      --  Remove all temporary links from the canvas
+
+      --------------------
+      -- Remove_Aliases --
+      --------------------
+
+      function Remove_Aliases
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
+      is
+         It : Display_Item := Display_Item (Item);
+      begin
+         It.Was_Alias := It.Is_Alias_Of /= null;
+         It.Is_Alias_Of := null;
+         Set_Visibility (It, True);
+         return True;
+      end Remove_Aliases;
+
+      ----------------------
+      -- Remove_Temporary --
+      ----------------------
+
+      function Remove_Temporary
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Link   : access Canvas_Link_Record'Class) return Boolean
+      is
+      begin
+         if Odd_Link (Link).Alias_Link then
+            Remove_Link (Canvas, Link);
+            Destroy (Link);
+         end if;
+         return True;
+      end Remove_Temporary;
 
       ---------------------
       -- Recompute_Sizes --
@@ -1110,22 +1327,29 @@ package body Display_Items is
          Item   : access Canvas_Item_Record'Class) return Boolean
       is
          It : Display_Item := Display_Item (Item);
-         Coord : Gdk_Rectangle;
       begin
          if It.Is_Alias_Of /= null then
-            Coord := Get_Coord (It.Is_Alias_Of);
-            Gtkada.Canvas.Initialize
-              (It, Get_Window (It.Debugger.Data_Canvas),
-               Gint (Coord.Width), Gint (Coord.Height));
-            Move_To (Canvas, It, Coord.X, Coord.Y);
             Set_Visibility (It, False);
+
+            --  Duplicate the links if required
+            Duplicate_Links (Canvas, Item);
+
+         --  If we broke the alias, move the item back to some new coordinates
+         elsif It.Was_Alias then
+            Move_To (Canvas, It);
          end if;
          return True;
       end Recompute_Sizes;
 
    begin
-      --  First: Recompile all the addresses, and merge the aliases.
-      For_Each_Item (Canvas, Recompute_Address'Access);
+      --  Remove all the temporary links and aliases
+      For_Each_Link (Canvas, Remove_Temporary'Unrestricted_Access);
+      For_Each_Item (Canvas, Remove_Aliases'Unrestricted_Access);
+
+      --  First: Recompile all the addresses, and detect the aliases.
+      if Get_Detect_Aliases (Canvas) then
+         For_Each_Item (Canvas, Recompute_Address'Access);
+      end if;
 
       --  Then re-parse the value of each item and display them again.
       For_Each_Item (Canvas, Update_On_Auto_Refresh'Access);
@@ -1133,7 +1357,7 @@ package body Display_Items is
       --  Now that everything has been redimensionned, we can finish to
       --  manipulate the aliases
       For_Each_Item (Canvas, Recompute_Sizes'Unrestricted_Access);
-   end On_Canvas_Process_Stopped;
+   end Recompute_All_Aliases;
 
    ---------------------
    -- Reset_Recursive --
