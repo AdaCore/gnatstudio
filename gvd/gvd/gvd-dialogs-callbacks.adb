@@ -141,16 +141,13 @@ package body GVD.Dialogs.Callbacks is
          return;
       end if;
 
+      --  The dialog will be unregistered by Send.
+
       Send (Dialog.Debugger,
             To_String (S),
             Mode => GVD.Types.Visible,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
-
-      --  This dialog is destroyed, not simply hidden, since it has to
-      --  be recreated from scratch every time anyway.
-
-      Unregister_Dialog (Convert (Dialog.Main_Window, Dialog.Debugger));
    end On_Question_OK_Clicked;
 
    -------------------------------
