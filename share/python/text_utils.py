@@ -206,7 +206,7 @@ def end_of_line(file, line):
       if str [len (str) - 1] == '\n':
          GPS.Editor.cursor_set_position (file, line, len (str))
       else:
-         GPS.Editor.cursor_set_position (file, line, len (str))
+         GPS.Editor.cursor_set_position (file, line, len (str) + 1)
 
 def goto_end_of_line():
    """   Goto the end of line. """
