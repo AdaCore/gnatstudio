@@ -466,7 +466,8 @@ package body Odd.Dialogs is
       Gtk.Window.Initialize (History_Dialog, Window_Toplevel);
       Set_Title (History_Dialog, -"Command History");
       Set_Policy (History_Dialog, False, True, False);
-      Set_Position (History_Dialog, Win_Pos_None);
+      Set_Position (History_Dialog, Win_Pos_Center);
+      Set_Default_Size (History_Dialog, 0, 200);
       Set_Modal (History_Dialog, False);
 
       Gtk_New_Vbox (History_Dialog.Vbox1, False, 0);
