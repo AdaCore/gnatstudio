@@ -225,7 +225,7 @@ package body Projects is
 
    function Project_Directory (Project : Project_Type) return String is
    begin
-      if Project = No_Project or else Is_Default (Project) then
+      if Project = No_Project then
          return "";
       else
          return Name_As_Directory (Get_String (Directory_Of (Project.Node)));

@@ -102,8 +102,7 @@ package Projects is
 
    function Project_Directory (Project : Project_Type) return String;
    --  Return the directory that contains the project file.
-   --  The empty string is returned if the project is the default project or
-   --  No_Project.
+   --  The empty string is returned if the project is No_Project.
    --  The directory always ends up with a directory separator.
 
    function Parent_Project (Project : Project_Type) return Project_Type;
