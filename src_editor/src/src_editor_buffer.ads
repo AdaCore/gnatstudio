@@ -34,7 +34,6 @@ with Gtk.Text_Tag;
 with Gtkada.Types;
 
 with Language;
-with Language_Handlers;
 with Src_Highlighting;
 
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
@@ -65,7 +64,6 @@ package Src_Editor_Buffer is
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
       Filename        : String;
-      Lang_Handler    : access Language_Handlers.Language_Handler_Record'Class;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean);
    --  Load the file into the buffer. If Lang_Autodetect is set to True, then

@@ -44,11 +44,13 @@ with OS_Utils;                  use OS_Utils;
 with Src_Info;                  use Src_Info;
 with Glide_Intl;                use Glide_Intl;
 
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Commands.Editor;           use Commands.Editor;
 with Src_Editor_Module;         use Src_Editor_Module;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Exceptions;            use Ada.Exceptions;
 with Traces;                    use Traces;
 
@@ -869,7 +871,6 @@ package body Src_Editor_Buffer is
    procedure Load_File
      (Buffer          : access Source_Buffer_Record;
       Filename        : String;
-      Lang_Handler    : access Language_Handlers.Language_Handler_Record'Class;
       Lang_Autodetect : Boolean := True;
       Success         : out Boolean)
    is
@@ -892,7 +893,8 @@ package body Src_Editor_Buffer is
 
       if Lang_Autodetect then
          Set_Language
-           (Buffer, Get_Language_From_File (Lang_Handler, Filename));
+           (Buffer, Get_Language_From_File
+            (Get_Language_Handler (Buffer.Kernel), Filename));
       end if;
 
       UTF8 := Glib.Convert.Convert
@@ -935,6 +937,7 @@ package body Src_Editor_Buffer is
       FD         : File_Descriptor := Invalid_FD;
       Start_Iter : Gtk_Text_Iter;
       End_Iter   : Gtk_Text_Iter;
+      Name_Changed : Boolean;
 
    begin
       Success := True;
@@ -1009,10 +1012,28 @@ package body Src_Editor_Buffer is
       Set_Modified (Buffer, False);
       Close (FD);
 
-      Free (Buffer.Filename);
-      Buffer.Filename := new String' (Filename);
+      Name_Changed := Buffer.Filename = null
+        or else Buffer.Filename.all /= Filename;
+
+      if Name_Changed then
+         Free (Buffer.Filename);
+         Buffer.Filename := new String' (Filename);
+      end if;
+
       Buffer.Timestamp := To_Timestamp
         (File_Time_Stamp (Get_Filename (Buffer)));
+
+      if Name_Changed then
+         Set_Language
+           (Buffer, Get_Language_From_File
+            (Glide_Language_Handler (Get_Language_Handler (Buffer.Kernel)),
+             Buffer.Filename.all));
+
+         --  ??? The following is expensive, it would be nice to have a
+         --  simpler way to report a possible change in the list of sources
+         --  of a project.
+         Recompute_View (Buffer.Kernel);
+      end if;
 
    exception
       when E : others =>
