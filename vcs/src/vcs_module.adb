@@ -760,7 +760,7 @@ package body VCS_Module is
       Create (Command, Kernel_Handle (Kernel), On_Menu_Add'Access);
       Register_Action
         (Kernel,
-         "Open",
+         "Add",
          Command,
          -"Add the current file to repository",
          VCS_Action_Context);
@@ -890,7 +890,7 @@ package body VCS_Module is
       Create (Command, Kernel_Handle (Kernel), On_Menu_Update_Project'Access);
       Register_Action
         (Kernel,
-         "Update dir",
+         "Update project",
          Command,
          -"Update the current project",
          VCS_Action_Context);
