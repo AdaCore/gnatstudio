@@ -1149,6 +1149,10 @@ package body GVD_Module is
          Hide (Top.Breakpoints_Editor);
       end if;
 
+      if Page.Breakpoints /= null then
+         Free (Page.Breakpoints);
+      end if;
+
       Remove_Debugger_Columns (Kernel, "");
       Free_Debug_Info (GEdit (Get_Source
         (Debugger_Process_Tab (Get_Current_Process (Top)).Editor_Text)));
@@ -1397,9 +1401,10 @@ package body GVD_Module is
       C          : Set_Breakpoint_Command_Access;
       File_Line  : File_Line_Record;
       Timeout_Id : Timeout_Handler_Id;
-      Debugger   : constant Debugger_Access :=
+      Tab        : constant Debugger_Process_Tab :=
         Get_Current_Process
-          (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel)).Debugger;
+          (Get_Main_Window (GVD_Module (GVD_Module_ID).Kernel));
+      Debugger   : constant Debugger_Access := Tab.Debugger;
       --  ??? Should attach the right debugger with GVD_Module_Id.
 
    begin
@@ -1434,18 +1439,38 @@ package body GVD_Module is
       --  ??? we could make smart use of the case Kind = No_More_Code
       --  Clear the list and return False.
       declare
-         L : constant Integer := File_Line.Line;
-         A : Line_Information_Array (L .. L);
+         L          : constant Integer := File_Line.Line;
+         A          : Line_Information_Array (L .. L);
+         Mode       : Breakpoint_Command_Mode := Set;
+         Identifier : Breakpoint_Identifier := 0;
       begin
          if Kind = Have_Code then
+            A (L).Image := Line_Has_Code_Pixbuf;
+
+            --  Check whether a breakpoint is set at this location, if so,
+            --  set the mode accordingly.
+
+            for J in Tab.Breakpoints'Range loop
+               if Tab.Breakpoints (J).Line = File_Line.Line
+                 and then Tab.Breakpoints (J).File /= null
+                 and then Tab.Breakpoints (J).File.all = File_Line.File.all
+               then
+                  Mode := Unset;
+                  A (L).Image := Line_Has_Breakpoint_Pixbuf;
+                  Identifier := Tab.Breakpoints (J).Num;
+                  exit;
+               end if;
+            end loop;
+
             Create
               (C,
                GVD_Module (GVD_Module_ID).Kernel,
                Debugger,
-               Set,
+               Mode,
                File_Line.File.all,
-               File_Line.Line);
-            A (L).Image := Line_Has_Code_Pixbuf;
+               File_Line.Line,
+               Identifier);
+
             A (L).Associated_Command := Command_Access (C);
          end if;
 
