@@ -457,6 +457,12 @@ project node in the @code{Project View}, or directly mimicking their
 physical organization on the disk (including Windows drives) in the
 @code{File View}.
 
+@cindex Show absolute paths
+In the @code{Project View}, you can chose whether you want to see the
+absolute path names for the directories or paths relative to the
+location of the project. This is done through the @code{Show absolute
+paths} contextual menu.
+
 Special nodes are created for object and executables directories. No
 files are shown for these.
 
@@ -774,7 +780,7 @@ menu item will be disabled.
 
 The environment variable @code{GPS_DOC_PATH} can either be set by each
 user in his own environment, or can be set system-wide by modifying
-the small wrapper script @file{gps} itself.
+the small wrapper script @file{gps} itself on Unix systems.
 
 The specific list of files shown in the menus is set by reading the
 index files in each of the directories in @code{GPS_DOC_PATH}. These
@@ -821,7 +827,9 @@ documentation files.
 This is the full path to the menu. It behaves like a UNIX path, except
 it reference the various menus, starting from the menu bar itself. The
 first character of this path must be @code{"/"}. The last part of the
-path is the name of the new menu item
+path is the name of the new menu item. If not set, no menu is
+displayed for this file, although it will still appear in the
+@code{Help->Contents} menu
 
 @end table
 
@@ -3161,6 +3169,12 @@ executables.
 To add main units click on the @code{Add} button. This opens a file
 selection dialog. No check is currently done that the selected file
 belongs to the project, but GPS will complain later if it doesn't.
+
+When compiled, each main unit will generate an executable, whose name
+is visible in the second column in this page. If you are using a
+recent enough version of GNAT (3.16 or more recent), you can change
+the name of this executable by clicking in the second column and
+changing the name interactively.
 
 @c ------------------------------------------------------------------
 @subsection Switches
