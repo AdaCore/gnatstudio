@@ -494,8 +494,10 @@ package body GVD.Asm_Editors is
      (Editor    : access Asm_Editor_Record;
       Br        : GVD.Types.Breakpoint_Array)
    is
+      use Gtk.Widget.Widget_List;
       Line  : Natural;
       Pix   : Gtk_Pixmap;
+      Tmp : Glist := Children (Get_Buttons (Editor));
 
    begin
       if Get_Buffer (Editor) = null then
@@ -503,10 +505,14 @@ package body GVD.Asm_Editors is
       end if;
 
       Freeze (Get_Buttons (Editor));
-      Hide_Current_Line_Button (Editor);
 
       --  Remove all existing breakpoints
-      Forall (Get_Buttons (Editor), Gtk.Widget.Destroy_Cb'Access);
+      while Tmp /= Null_List loop
+         if Get_Data (Tmp) /= Gtk_Widget (Current_Line_Button (Editor)) then
+            Destroy (Get_Data (Tmp));
+         end if;
+         Tmp := Next (Tmp);
+      end loop;
 
       --  Add the new ones
       for B in Br'Range loop
@@ -520,7 +526,6 @@ package body GVD.Asm_Editors is
          end if;
       end loop;
 
-      Set_Line (Editor, Get_Line (Editor), Set_Current => True);
       Show_All (Get_Buttons (Editor));
       Thaw (Get_Buttons (Editor));
    end Update_Breakpoints;
