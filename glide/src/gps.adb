@@ -387,20 +387,26 @@ procedure GPS is
 
    procedure Execute_Batch (Batch : String; As_File : Boolean) is
       Executed : Boolean := False;
+      Script   : Scripting_Language;
    begin
       for J in Batch'Range loop
          if Batch (J) = ':' then
+            Script := Lookup_Scripting_Language
+              (GPS.Kernel, Batch (Batch'First .. J - 1));
+
+            if Script = null then
+               exit;
+            end if;
+
             if As_File then
                Execute_File
-                 (Script => Lookup_Scripting_Language
-                  (GPS.Kernel, Batch (Batch'First .. J - 1)),
-                  Filename => Batch (J + 1 .. Batch'Last),
+                 (Script             => Script,
+                  Filename           => Batch (J + 1 .. Batch'Last),
                   Display_In_Console => True);
             else
                Execute_Command
-                 (Script => Lookup_Scripting_Language
-                  (GPS.Kernel, Batch (Batch'First .. J - 1)),
-                  Command => Batch (J + 1 .. Batch'Last),
+                 (Script             => Script,
+                  Command            => Batch (J + 1 .. Batch'Last),
                   Display_In_Console => True);
             end if;
 
@@ -422,7 +428,7 @@ procedure GPS is
       end if;
 
    exception
-      when others =>
+      when E : others =>
          if As_File then
             Insert (GPS.Kernel,
                     -"Error when executing the script for -batch switch",
@@ -432,6 +438,7 @@ procedure GPS is
                     -"Error when executing the script for --script switch",
                     Mode => Error);
          end if;
+         Trace (Me, "Exception was " & Exception_Information (E));
    end Execute_Batch;
 
    ------------------
