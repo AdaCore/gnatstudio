@@ -100,6 +100,7 @@ package body Glide_Page is
       Top         : constant Glide_Window :=
         Glide_Window (Get_Toplevel (Widget));
       --  ??? not always the top level window
+      Ignored     : Boolean;
 
    begin
       if Contents'Length = 0 then
@@ -132,7 +133,7 @@ package body Glide_Page is
          if Matched (1).First < Matched (1).Last then
             Go_To (Top.Kernel,
                    Contents (Matched (1).First .. Matched (1).Last),
-                   Line, Column);
+                   Line, Column, Success => Ignored);
          end if;
       end if;
 
