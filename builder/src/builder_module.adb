@@ -410,9 +410,6 @@ package body Builder_Module is
                   To_Lower (Lang);
 
                   if Lang = "ada" then
-                     --  ??? Should set these values also if Ada is part of the
-                     --  supported languages.
-
                      if File = VFS.No_File then
                         if Unique_Project then
                            Result := new Argument_List'
@@ -443,6 +440,8 @@ package body Builder_Module is
                           (List &
                            new String'("build") &
                            new String'("MAIN_OBJECT=" & Base_Object) &
+                           new String'("MAIN=" & Lang) &
+                           new String'("ADAFLAGS=-d") &
                            new String'("EXEC=" &
                                        Get_Executable_Name (Project, Base)));
                      end if;
