@@ -1201,18 +1201,6 @@ package body GVD_Module is
       --  Remove all existing menus
       Remove_All_Children (Menu);
 
-      --  Specific entry to start the debugger without any main program
-      Gtk_New (Mitem, -"<none>");
-      Append (Menu, Mitem);
-      File_Project_Cb.Object_Connect
-        (Mitem, "activate",
-         File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
-         Slot_Object => Kernel,
-         User_Data => File_Project_Record'
-           (Length  => 0,
-            Project => Get_Project_View (Kernel),
-            File    => ""));
-
       --  Add all the main units from all the imported projects.
       while Current (Iter) /= No_Project loop
          declare
@@ -1241,6 +1229,18 @@ package body GVD_Module is
 
          Next (Iter);
       end loop;
+
+      --  Specific entry to start the debugger without any main program
+      Gtk_New (Mitem, -"<no main file>");
+      Append (Menu, Mitem);
+      File_Project_Cb.Object_Connect
+        (Mitem, "activate",
+         File_Project_Cb.To_Marshaller (On_Debug_Init'Access),
+         Slot_Object => Kernel,
+         User_Data => File_Project_Record'
+           (Length  => 0,
+            Project => Get_Project_View (Kernel),
+            File    => ""));
 
       Show_All (Menu);
 
