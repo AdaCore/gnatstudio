@@ -188,26 +188,12 @@ package body Odd.Process is
       Process    : constant Debugger_Process_Tab :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
 
-      Editor     : Code_Editor;
-      Page       : Gint;
       File_First : Natural;
       File_Last  : Positive;
       Line       : Natural;
       Initial_Internal_Command : Boolean := True;
 
    begin
-      Page := Get_Current_Page (Process.Thread_Notebook);
-
-      --  ??? Apparently Gtk isn't able to handle -1 values in Get_Nth_Page.
-
-      if Page = -1 then
-         Page := 0;
-      end if;
-
-      Editor :=
-        Code_Editor
-          (Get_Child (Gtk_Bin (Get_Nth_Page (Process.Thread_Notebook, Page))));
-
       --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
          Text_Output_Handler (Process, Str);
@@ -232,13 +218,13 @@ package body Odd.Process is
          --  Since the text file has been given by the debugger, the language
          --  to use is the one currently defined by the debugger.
          Set_Current_Language
-           (Editor, Get_Language (Process.Debugger));
+           (Process.Editor_Text, Get_Language (Process.Debugger));
 
          --  Display the file
 
          Set_Internal_Command (Get_Process (Process.Debugger), True);
          Load_File
-           (Editor,
+           (Process.Editor_Text,
             Str (File_First .. File_Last),
             Process.Debugger);
 
@@ -252,7 +238,7 @@ package body Odd.Process is
       end if;
 
       if Line /= 0 then
-         Set_Line (Editor, Line);
+         Set_Line (Process.Editor_Text, Line);
       end if;
    end Text_Output_Handler;
 
@@ -300,7 +286,6 @@ package body Odd.Process is
       Process : Debugger_Process_Tab;
       Id      : Gint;
       Label   : Gtk_Label;
-      Editor  : Code_Editor;
 
    begin
       Process := new Debugger_Process_Tab_Record;
@@ -368,9 +353,7 @@ package body Odd.Process is
       --  The language of the editor will automatically be set by the output
       --  filter.
 
-      Editor := Code_Editor (Get_Child (Gtk_Bin (Get_Nth_Page
-        (Process.Thread_Notebook, 0))));
-      Configure (Editor, Editor_Font, Editor_Font_Size,
+      Configure (Process.Editor_Text, Editor_Font, Editor_Font_Size,
                  dot_xpm, arrow_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
