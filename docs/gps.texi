@@ -6776,10 +6776,10 @@ e.g. procedures, loops, if statements, @dots{}
 @cindex block folding
 Whether the editor should provide the ability to fold/unfold blocks.
 
-@item Automatic syntax check
-@cindex automatic syntax
-Whether GPS should automatically check syntax in background for the source
-files that are being edited.
+@c @item Automatic syntax check
+@c @cindex automatic syntax
+@c Whether GPS should automatically check syntax in background for the source
+@c files that are being edited.
 
 @item Speed Column Policy
 @cindex speed column policy
