@@ -53,7 +53,7 @@ use Src_Editor_Buffer.Line_Information;
 with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GVD;
+with GVD;                         use GVD;
 with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
@@ -1697,6 +1697,17 @@ package body Src_Editor_View is
             Set_Focus_Child (Get_MDI (View.Kernel), View);
             On_Click (Buffer, Line, Button_X);
          end;
+
+      elsif Get_Event_Type (Event) = Button_Press
+        and then Get_Button (Event) = 2
+      then
+         --  Short-circuit the textview handler to disable clipboard paste
+         --  under Windows: this is not a standard mechanism on this platform,
+         --  and it causes unwanted paste operations with some mouse wheels.
+
+         if Host = Windows then
+            return True;
+         end if;
 
       elsif Window /= Left_Window
         and then Get_Event_Type (Event) = Gdk_2button_Press
