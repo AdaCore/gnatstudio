@@ -711,12 +711,18 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Directory_Information (File_Name)
       then
-         Gtk_New (Menu_Item, Label => -"Directory");
-         Append (Menu, Menu_Item);
-         Gtk_New (Submenu);
-         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+         if Has_Project_Information (File_Name)
+           or else Has_File_Information (File_Name)
+         then
+            Gtk_New (Menu_Item, Label => -"Directory");
+            Append (Menu, Menu_Item);
+            Gtk_New (Submenu);
+            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+         else
+            Submenu := Gtk_Menu (Menu);
+         end if;
 
-         Gtk_New (Item, Label => -"Query status");
+         Gtk_New (Item, Label => -"Query status for directory");
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
@@ -724,7 +730,7 @@ package body VCS_View_API is
             (On_Menu_Get_Status_Dir'Access),
             Selection_Context_Access (File_Name));
 
-         Gtk_New (Item, Label => -"Update");
+         Gtk_New (Item, Label => -"Update directory");
          Append (Submenu, Item);
          Context_Callback.Connect
            (Item, "activate",
@@ -744,10 +750,16 @@ package body VCS_View_API is
       if File_Name /= null
         and then Has_Project_Information (File_Name)
       then
-         Gtk_New (Menu_Item, Label => -"Project");
-         Append (Menu, Menu_Item);
-         Gtk_New (Submenu);
-         Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+         if Has_Directory_Information (File_Name)
+           or else Has_File_Information (File_Name)
+         then
+            Gtk_New (Menu_Item, Label => -"Project");
+            Append (Menu, Menu_Item);
+            Gtk_New (Submenu);
+            Set_Submenu (Menu_Item, Gtk_Widget (Submenu));
+         else
+            Submenu := Gtk_Menu (Menu);
+         end if;
 
          Gtk_New (Item, Label => -"List all files in project");
          Append (Submenu, Item);
