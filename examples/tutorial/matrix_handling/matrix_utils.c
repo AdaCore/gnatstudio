@@ -8,6 +8,7 @@ char * matrixPrint (Matrix *m)
   char * result;
 
   result = (char *) malloc (1024 * sizeof (char));
+
   if (m == NULL)
     {
       printf("NULL\n");
@@ -19,7 +20,7 @@ char * matrixPrint (Matrix *m)
 	  column = m->columns;
 	  while (--column >= 0)
 	    {
-	      sprintf (result, "%s%f   ", result,
+	      sprintf (result, "%s%d   ", result,
 	       matrixGet (m, m->rows - row - 1, m->columns - column - 1));
 	    }
 
