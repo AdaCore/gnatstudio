@@ -1687,7 +1687,7 @@ package body GPS.Kernel is
      (Language   : String := "";
       Shell      : String := "";
       Shell_Lang : String := "Shell";
-      Module     : String := "") return Base_Action_Filter
+      Module     : String := "") return Action_Filter
    is
       F : constant Base_Action_Filter :=
         new Base_Action_Filter_Record (Standard_Filter);
@@ -1705,7 +1705,7 @@ package body GPS.Kernel is
          F.Module := new String'(Module);
       end if;
 
-      return F;
+      return Action_Filter (F);
    end Create;
 
    -----------
@@ -1714,7 +1714,7 @@ package body GPS.Kernel is
 
    function "and"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Base_Action_Filter is
+      return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_And, Error_Msg => null, Name => null,
@@ -1727,7 +1727,7 @@ package body GPS.Kernel is
 
    function "or"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Base_Action_Filter is
+      return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Or, Error_Msg => null, Name => null,
@@ -1740,7 +1740,7 @@ package body GPS.Kernel is
 
    function "not"
      (Filter : access Action_Filter_Record'Class)
-      return Base_Action_Filter is
+      return Action_Filter is
    begin
       return new Base_Action_Filter_Record'
         (Kind => Filter_Not, Error_Msg => null, Name => null,

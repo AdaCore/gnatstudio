@@ -467,7 +467,7 @@ package GPS.Kernel is
      (Language   : String := "";
       Shell      : String := "";
       Shell_Lang : String := "Shell";
-      Module     : String := "") return Base_Action_Filter;
+      Module     : String := "") return Action_Filter;
    --  Create a new filter.
    --  It does a logical AND for all its attributes specified as parameters.
    --  The default values for the parameters indicate that no special filter
@@ -475,13 +475,13 @@ package GPS.Kernel is
 
    function "and"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Base_Action_Filter;
+      return Action_Filter;
    function "or"
      (Filter1, Filter2 : access Action_Filter_Record'Class)
-      return Base_Action_Filter;
+      return Action_Filter;
    function "not"
      (Filter : access Action_Filter_Record'Class)
-      return Base_Action_Filter;
+      return Action_Filter;
    --  Execute logical operations between filters
 
    procedure Set_Error_Message (Filter : Action_Filter; Msg : String);
