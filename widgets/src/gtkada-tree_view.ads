@@ -33,27 +33,27 @@
 
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Tree_Store; use Gtk.Tree_Store;
-with Glib;           use Glib;
+with Glib;
 
 package Gtkada.Tree_View is
 
    type Tree_View_Record is new Gtk_Tree_View_Record with record
-      Model                 : Gtk_Tree_Store;
+      Model : Gtk_Tree_Store;
       --  The data model.
 
-      Expanded_State_Column : Gint;
+      Expanded_State_Column : Glib.Gint;
       --  The column memorizing the collapsed/expanded states of rows.
    end record;
    type Tree_View is access all Tree_View_Record'Class;
 
    procedure Gtk_New
      (Widget       : out Tree_View;
-      Column_Types : GType_Array);
-   --  Create a new Smart_Tree with column types given by Column_Types.
+      Column_Types : Glib.GType_Array);
+   --  Create a new Tree_View with column types given by Column_Types.
 
    procedure Initialize
      (Widget       : access Tree_View_Record'Class;
-      Column_Types : GType_Array);
+      Column_Types : Glib.GType_Array);
    --  Internal initialization function.
 
 end Gtkada.Tree_View;
