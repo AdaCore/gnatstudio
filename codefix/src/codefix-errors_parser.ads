@@ -28,6 +28,7 @@ with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
 
 use Codefix.Formal_Errors.Extract_List;
+use Codefix.Formal_Errors.Cursor_Lists;
 
 package Codefix.Errors_Parser is
 
@@ -348,20 +349,6 @@ package Codefix.Errors_Parser is
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Fix error messages where a keyword is expected at a position.
-
-   type Missing_Begin is new Error_Parser (Keyword_Missing, 2) with
-     null record;
-
-   procedure Initialize (This : in out Missing_Begin);
-
-   procedure Fix
-     (This         : Missing_Begin;
-      Errors_List  : in out Errors_Interface'Class;
-      Current_Text : Text_Navigator_Abstr'Class;
-      Message      : Error_Message;
-      Solutions    : out Solution_List;
-      Matches      : Match_Array);
-   --  Fix 'missing "begin" '.
 
    type Missing_Kw is new Error_Parser (Keyword_Missing, 1) with null record;
 
@@ -701,6 +688,8 @@ package Codefix.Errors_Parser is
 
    type Possible_Interpretation is new Error_Parser (Ambiguous_Expression, 1)
    with record
+      Local_Matcher : Ptr_Matcher := new Pattern_Matcher'
+        (Compile ("possible interpretation at line ([\d]+)"));
       Source_Matcher : Ptr_Matcher := new Pattern_Matcher'
         (Compile ("possible interpretation at ([^:]+):([\d]+)"));
    end record;
@@ -755,7 +744,7 @@ package Codefix.Errors_Parser is
       Matches      : Match_Array);
    --  Fix problem 'useless conversion'
 
-   type Missplaced_With is new Error_Parser (Movable_With_Clause, 1)
+   type Missplaced_With is new Error_Parser (Movable_With_Clause, 2)
      with null record;
 
    procedure Initialize (This : in out Missplaced_With);
