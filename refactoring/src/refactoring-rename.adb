@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003                            --
+--                     Copyright (C) 2003-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,28 +18,29 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;        use Ada.Exceptions;
+with Ada.Exceptions;         use Ada.Exceptions;
+with GNAT.OS_Lib;            use GNAT.OS_Lib;
 
-with Glide_Kernel;          use Glide_Kernel;
-with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
-with Glide_Kernel.Scripts;  use Glide_Kernel.Scripts;
-with Glide_Intl;            use Glide_Intl;
-with Src_Info;              use Src_Info;
-with Src_Info.Queries;      use Src_Info.Queries;
-with Traces;                use Traces;
-with VFS;                   use VFS;
+with Glide_Kernel;           use Glide_Kernel;
+with Glide_Kernel.Contexts;  use Glide_Kernel.Contexts;
+with Glide_Kernel.Scripts;   use Glide_Kernel.Scripts;
+with Glide_Intl;             use Glide_Intl;
+with Src_Info;               use Src_Info;
+with Src_Info.Queries;       use Src_Info.Queries;
+with Traces;                 use Traces;
+with VFS;                    use VFS;
 with Refactoring.Performers; use Refactoring.Performers;
-with Histories;             use Histories;
+with Histories;              use Histories;
 
-with Glib;                  use Glib;
-with Glib.Object;           use Glib.Object;
-with Gtk.Box;               use Gtk.Box;
-with Gtk.Check_Button;      use Gtk.Check_Button;
-with Gtk.Dialog;            use Gtk.Dialog;
-with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Label;             use Gtk.Label;
-with Gtk.Stock;             use Gtk.Stock;
-with Gtk.Widget;            use Gtk.Widget;
+with Glib;                   use Glib;
+with Glib.Object;            use Glib.Object;
+with Gtk.Box;                use Gtk.Box;
+with Gtk.Check_Button;       use Gtk.Check_Button;
+with Gtk.Dialog;             use Gtk.Dialog;
+with Gtk.GEntry;             use Gtk.GEntry;
+with Gtk.Label;              use Gtk.Label;
+with Gtk.Stock;              use Gtk.Stock;
+with Gtk.Widget;             use Gtk.Widget;
 
 package body Refactoring.Rename is
 
@@ -166,14 +167,20 @@ package body Refactoring.Rename is
       --  Replace first the last occurrences since we are about to modify
       --  the file, and the locations would become invalid
       for L in reverse Location_Arrays.First .. Last (Refs) loop
-         Execute_GPS_Shell_Command
-           (Kernel  => Kernel,
-            Command => "Editor.replace_text "
-              & Full_Name (Refs.Table (L).File).all
-              & Integer'Image (Refs.Table (L).Line)
-              & Integer'Image (Refs.Table (L).Column)
-              & ' ' & Factory.New_Name
-              & " 0 " & Integer'Image (Name'Length));
+         declare
+            Args : Argument_List_Access :=
+              new Argument_List'
+                (new String'(Full_Name (Refs.Table (L).File).all),
+                 new String'(Integer'Image (Refs.Table (L).Line)),
+                 new String'(Integer'Image (Refs.Table (L).Column)),
+                 new String'(Factory.New_Name),
+                 new String'("0"),
+                 new String'(Integer'Image (Name'Length)));
+         begin
+            Execute_GPS_Shell_Command
+              (Kernel, "Editor.replace_text", Args.all);
+            Free (Args);
+         end;
 
          if Factory.Auto_Save
            and then (L = Location_Arrays.First
