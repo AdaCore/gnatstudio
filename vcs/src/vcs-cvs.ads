@@ -30,6 +30,8 @@ package VCS.CVS is
 
    type CVS_Access is access all CVS_Record'Class;
 
+   function Name (Ref : access CVS_Record) return String;
+
    procedure Free (Ref : access CVS_Record);
 
    procedure Get_Status
