@@ -598,13 +598,13 @@ package body Src_Editor_Box is
          --  Don't use Find_Declaration_Or_Overloaded, since we don't want to
          --  ask the user interactively for the tooltips.
          Find_Declaration
-           (Lib_Info           => Source_Info,
-            File_Name          => Filename,
-            Entity_Name        => Entity_Name_Information (Context),
-            Line               => Modules.Line_Information (Context),
-            Column             => Entity_Column_Information (Context),
-            Entity             => Entity,
-            Status             => Status);
+           (Lib_Info    => Source_Info,
+            File_Name   => Filename,
+            Entity_Name => Entity_Name_Information (Context),
+            Line        => Modules.Line_Information (Context),
+            Column      => Entity_Column_Information (Context),
+            Entity      => Entity,
+            Status      => Status);
 
          if Status /= Success and then Status /= Fuzzy_Match then
             Destroy (Entity);
