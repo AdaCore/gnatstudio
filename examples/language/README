@@ -3,7 +3,7 @@ to implement the custom language functions, as described in the documentation.
 
 - language_custom.ads is the Ada spec file
 - language_custom.h is the C spec file
-- gpr_custom.ad{s,b} is an example file showing a possible Ada implementation
+- gpr_custom.ad{s,b} are example files showing a possible Ada implementation
   of the functions Comment_Line and Uncomment_Line for the GPS project files
   (.gpr files), or any other Ada-like language.
 - gprcustom.c is the C version of gpr_custom.adb
