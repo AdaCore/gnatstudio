@@ -881,19 +881,23 @@ package body Shell_Script is
    is
       Args         : Argument_List_Access;
    begin
-      Trace (Me, "Launching interactive command: " & Command);
+      if Command /= "" then
+         Trace (Me, "Launching interactive command: " & Command);
 
-      Args := Argument_String_To_List (Command);
+         Args := Argument_String_To_List (Command);
 
-      declare
-         R : constant String := Execute_GPS_Shell_Command
-           (Kernel,
-            Command => Args (Args'First).all,
-            Args    => Args (Args'First + 1 .. Args'Last));
-      begin
-         Free (Args);
-         return R;
-      end;
+         declare
+            R : constant String := Execute_GPS_Shell_Command
+              (Kernel,
+               Command => Args (Args'First).all,
+               Args    => Args (Args'First + 1 .. Args'Last));
+         begin
+            Free (Args);
+            return R;
+         end;
+      else
+         return "";
+      end if;
    end Execute_GPS_Shell_Command;
 
    ----------------
