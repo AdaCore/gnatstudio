@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Label; use Gtk.Label;
@@ -10,8 +30,8 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Object; use Gtk.Object;
 package Codefix_Window_Pkg is
 
-   type Codefix_Window_Record is new Gtk_Window_Record with record
-      Hbox1 : Gtk_Hbox;
+   type Codefix_Window_Record is new Gtk_Hbox_Record with record
+--      Hbox1 : Gtk_Hbox;
       Vbox6 : Gtk_Vbox;
       Error_Caption : Gtk_Label;
       Choices_Proposed : Gtk_Notebook;
