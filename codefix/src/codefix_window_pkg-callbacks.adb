@@ -60,6 +60,7 @@ package body Codefix_Window_Pkg.Callbacks is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end On_Codefix_Window_Delete_Event;
 
    --------------------------
