@@ -691,6 +691,29 @@ package body Src_Info is
       return No_Source_File;
    end Find_Source_File;
 
+   -------------------
+   -- Get_Unit_Part --
+   -------------------
+
+   function Get_Unit_Part
+     (Source_Info_List : LI_File_List; File : String) return Unit_Part
+   is
+      LI : LI_File_Ptr := Locate_From_Source (Source_Info_List, File);
+   begin
+      if LI.LI.Spec_Info /= null
+        and then LI.LI.Spec_Info.Source_Filename.all = File
+      then
+         return Unit_Spec;
+
+      elsif LI.LI.Body_Info /= null
+        and then LI.LI.Body_Info.Source_Filename.all = File
+      then
+         return Unit_Body;
+      end if;
+
+      return Unit_Separate;
+   end Get_Unit_Part;
+
    ---------------------
    -- Get_LI_Filename --
    ---------------------
