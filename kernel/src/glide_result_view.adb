@@ -20,7 +20,6 @@
 
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
 
 with Gdk.Pixbuf;               use Gdk.Pixbuf;
 with Gdk.Event;                use Gdk.Event;
@@ -146,25 +145,6 @@ package body Glide_Result_View is
    procedure Remove_Category (Object   : access Gtk_Widget_Record'Class);
    --  Remove the selected category in the Result_View.
 
-   procedure File_Opened
-     (View : Result_View;
-      File : String);
-   --  Check if File is in the list of unopened files, if so
-   --  remove File from the list of unopened files and create the appropriate
-   --  marks.
-
-   procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for the "file_closed" kernel signal.
-
-   procedure File_Opened_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle);
-   --  Callback for the "file_opened" kernel signal.
-
    procedure On_Destroy (View : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal
 
@@ -175,136 +155,6 @@ package body Glide_Result_View is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu) return Selection_Context_Access;
    --  Default context factory.
-
-   --------------------
-   -- File_Closed_Cb --
-   --------------------
-
-   procedure File_Closed_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
-   is
-      pragma Unreferenced (Kernel);
-      View  : constant Result_View := Result_View (Widget);
-      File  : constant String := Get_String (Nth (Args, 1));
-
-      Category  : Gtk_Tree_Iter;
-      File_Iter : Gtk_Tree_Iter;
-      Location  : Gtk_Tree_Iter;
-
-      Added : Boolean := False;
-   begin
-      --  Browse through the tree, invalidate all iters contained in File,
-      --  and if such an iter is found, add File to the list of unopened files.
-
-      Category := Get_Iter_First (View.Model);
-
-      while Category /= Null_Iter loop
-         File_Iter := Children (View.Model, Category);
-
-         while File_Iter /= Null_Iter loop
-            Location := Children (View.Model, File_Iter);
-
-            while Location /= Null_Iter loop
-               if File =
-                 Get_String (View.Model, Location, Absolute_Name_Column)
-               then
-                  Set (View.Model, Location, Mark_Column, "");
-
-                  if not Added then
-                     Append (View.Unopened_Files, File);
-                     Added := True;
-                  end if;
-               end if;
-
-               Next (View.Model, Location);
-            end loop;
-
-            Next (View.Model, File_Iter);
-         end loop;
-
-         Next (View.Model, Category);
-      end loop;
-
-   exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
-   end File_Closed_Cb;
-
-   --------------------
-   -- File_Opened_Cb --
-   --------------------
-
-   procedure File_Opened_Cb
-     (Widget  : access Glib.Object.GObject_Record'Class;
-      Args    : GValues;
-      Kernel  : Kernel_Handle)
-   is
-      View  : constant Result_View := Result_View (Widget);
-      File  : constant String := Get_String (Nth (Args, 1));
-      pragma Unreferenced (Kernel);
-   begin
-      File_Opened (View, File);
-   exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
-   end File_Opened_Cb;
-
-   -----------------
-   -- File_Opened --
-   -----------------
-
-   procedure File_Opened
-     (View : Result_View;
-      File : String)
-   is
-      Category  : Gtk_Tree_Iter;
-      File_Iter : Gtk_Tree_Iter;
-      Location  : Gtk_Tree_Iter;
-   begin
-      if Is_In_List (View.Unopened_Files, File) then
-         Remove_From_List (View.Unopened_Files, File);
-
-         --  Browse the list of potential marks to be created.
-
-         Category := Get_Iter_First (View.Model);
-
-         while Category /= Null_Iter loop
-            File_Iter := Children (View.Model, Category);
-
-            while File_Iter /= Null_Iter loop
-               Location := Children (View.Model, File_Iter);
-
-               while Location /= Null_Iter loop
-                  if File =
-                    Get_String (View.Model, Location, Absolute_Name_Column)
-                  then
-                     Set
-                       (View.Model, Location, Mark_Column,
-                        Interpret_Command
-                          (View.Kernel,
-                           "create_mark -l "
-                             & Get_String (View.Model, Location, Line_Column)
-                           & " -c "
-                             & Get_String
-                               (View.Model, Location, Column_Column)
-                           & " -L "
-                             & Get_String
-                               (View.Model, Location, Length_Column)
-                           & " " & File));
-                  end if;
-
-                  Next (View.Model, Location);
-               end loop;
-
-               Next (View.Model, File_Iter);
-            end loop;
-
-            Next (View.Model, Category);
-         end loop;
-      end if;
-   end File_Opened;
 
    -------------------
    -- Goto_Location --
@@ -336,35 +186,6 @@ package body Glide_Result_View is
       if Iter = Null_Iter then
          return;
       end if;
-
-      --  If the file is not open, open it and fill all the marks.
-
-      declare
-         File : constant String :=
-           Get_String (Model, Iter, Absolute_Name_Column);
-      begin
-         if File /= "" then
-            if not Is_Open (View.Kernel, File) then
-               declare
-                  Line   :  constant Positive := Positive'Value
-                    (Get_String (Model, Iter, Line_Column));
-                  Column :  constant Positive := Positive'Value
-                    (Get_String (Model, Iter, Column_Column));
-                  Length :  constant Natural := Natural'Value
-                    (Get_String (Model, Iter, Length_Column));
-
-               begin
-                  Open_File_Editor
-                    (View.Kernel,
-                     File,
-                     Line,
-                     Column,
-                     Column + Length);
-                  File_Opened (View, File);
-               end;
-            end if;
-         end if;
-      end;
 
       declare
          Mark : constant String := Get_String (Model, Iter, Mark_Column);
@@ -606,28 +427,15 @@ package body Glide_Result_View is
 
       Append (View.Model, Iter, File_Iter);
 
-      --  If File is open, create a mark, otherwise add File to the list
-      --  of unopened files.
-
-      if Is_Open (View.Kernel, File) then
-         declare
-            Output : constant String := Create_Mark
-              (View.Kernel, File, Line, Column, Length);
-         begin
-            Fill_Iter
-              (View, Iter, Image (Line) & ":" & Image (Column),
-               File, Message, Output,
-               Image (Line), Image (Column), Image (Length));
-         end;
-      else
-         if not Is_In_List (View.Unopened_Files, File) then
-            Append (View.Unopened_Files, File);
-         end if;
-
+      declare
+         Output : constant String := Create_Mark
+           (View.Kernel, File, Line, Column, Length);
+      begin
          Fill_Iter
-           (View, Iter, Image (Line) & ":" & Image (Column), File, Message, "",
+           (View, Iter, Image (Line) & ":" & Image (Column),
+            File, Message, Output,
             Image (Line), Image (Column), Image (Length));
-      end if;
+      end;
 
       if Category_Created then
          Path := Get_Path (View.Model, Category_Iter);
@@ -884,18 +692,6 @@ package body Glide_Result_View is
            (Button_Press'Access),
          View,
          After => False);
-
-      Kernel_Callback.Object_Connect
-        (View.Kernel, File_Closed_Signal,
-         File_Closed_Cb'Access,
-         View,
-         View.Kernel);
-
-      Kernel_Callback.Object_Connect
-        (View.Kernel, File_Edited_Signal,
-         File_Opened_Cb'Access,
-         View,
-         View.Kernel);
 
       Register_Contextual_Menu
         (View.Kernel,
