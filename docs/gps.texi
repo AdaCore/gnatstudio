@@ -1495,16 +1495,16 @@ Here is an example for such a file:
   <Submenu>
     <Title>custom menu</Title>
 
-    <Menuitem>
+    <Menu_Item>
     <Title>item 1</Title>
       <Action>shell command 1</Action>
-    </Menuitem>
+    </Menu_Item>
 
     <Submenu>
       <Title>other menu</Title>
-      <Menuitem>
+      <Menu_Item>
         <Title> (etc..)
-      </Menuitem>
+      </Menu_Item>
 
       <Submenu>
         (...)
@@ -1533,14 +1533,14 @@ invoke the @file{help} interactive command and to open the file
 @smallexample
 <Submenu>
    <Title>Edit</Title>
-     <Menuitem>
+     <Menu_Item>
            <Title>List GPS commands</Title>
            <GPS_Action>help</GPS_Action>
-     </Menuitem>
-     <Menuitem>
+     </Menu_Item>
+     <Menu_Item>
            <Title>Edit main.c</Title>
            <GPS_Action>edit main.c</GPS_Action>
-     </Menuitem>
+     </Menu_Item>
 </Submenu>
 @end smallexample
 
@@ -1555,9 +1555,9 @@ menus that already exist. For example, this adds an item named
 @smallexample
 <Submenu>
   <Title>Edit</Title>
-  <Menuitem>
+  <Menu_Item>
     <Title>Robert</Title>
-  </Menuitem>
+  </Menu_Item>
 </Submenu>
 @end smallexample
 
@@ -1568,9 +1568,9 @@ example, this adds a submenu named @file{Olga} containing an item named
 @smallexample
 <Submenu>
   <Title>Edit/Olga</Title>
-  <Menuitem>
+  <Menu_Item>
     <Title>Item</Title>
-  </Menuitem>
+  </Menu_Item>
 </Submenu>
 @end smallexample
 
@@ -1578,10 +1578,10 @@ Adding an item with an empty title or no title at all inserts a
 menu separator.
 
 As an alternative to creating new menu items, you can create new
-buttons on the toolbar, with exactly the same syntax, by using 
-the @file{<Toolbar_Item>} tag in place of the @file{<Menuitem>} tag.
-Within this tag, the tag @file{<Pixmap>} can be used to indicate 
-the location of an image file (of the type @file{jpeg} or @file{png}) 
+buttons on the toolbar, with exactly the same syntax, by using
+the @file{<Toolbar_Item>} tag in place of the @file{<Menu_Item>} tag.
+Within this tag, the tag @file{<Pixmap>} can be used to indicate
+the location of an image file (of the type @file{jpeg} or @file{png})
 to be used as icon for the button. An empty @file{<Toolbar_Item>} tag
 indicates a separator in the toolbar.
 

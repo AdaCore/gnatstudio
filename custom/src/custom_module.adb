@@ -93,10 +93,10 @@ package body Custom_Module is
                end loop;
             end if;
 
-         elsif Current_Node.Tag.all = "Menuitem"
+         elsif Current_Node.Tag.all = "Menu_Item"
            or else Current_Node.Tag.all = "Toolbar_Item"
          then
-            if Current_Node.Tag.all = "Menuitem" then
+            if Current_Node.Tag.all = "Menu_Item" then
                Menuitem := True;
             end if;
 
