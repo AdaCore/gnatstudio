@@ -947,29 +947,27 @@ package body Builder_Module is
          begin
             --  Do nothing if one of the files already exists.
 
-            if Is_Regular_File (Temp_Project)
-              or else Is_Regular_File (Temp_File)
-            then
-               return;
+            if not Is_Regular_File (Temp_Project) then
+               --  Write the temporary project file
+               Writable := Write_File (Temp_Project);
+               Write
+                 (Writable,
+                  "project ext extends """ & Project_Path (Prj) & """ is"
+                  & ASCII.LF & "end ext;",
+                  False);
+               Close (Writable);
             end if;
 
-            --  Write the temporary project file
-            Writable := Write_File (Temp_Project);
-            Write
-              (Writable,
-               "project ext extends """ & Project_Path (Prj) & """ is"
-               & ASCII.LF & "end ext;",
-               False);
-            Close (Writable);
-
-            --  Write the temporary buffer file
-            Writable := Write_File (Temp_File);
-            Write
-              (Writable,
-               Execute_GPS_Shell_Command
-                 (Kernel, "get_buffer " & Full_Name (File).all),
-               True);
-            Close (Writable);
+            if not Is_Regular_File (Temp_File) then
+               --  Write the temporary buffer file
+               Writable := Write_File (Temp_File);
+               Write
+                 (Writable,
+                  Execute_GPS_Shell_Command
+                    (Kernel, "get_buffer " & Full_Name (File).all),
+                  True);
+               Close (Writable);
+            end if;
 
             Local_File := new String'(Locale_Full_Name (Temp_File));
             Shadow_Path := new String'(Full_Name (Temp_Project).all);
