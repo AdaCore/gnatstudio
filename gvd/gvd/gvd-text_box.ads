@@ -159,6 +159,11 @@ package Odd.Text_Boxes is
    --  the text child (which is the default behavior).
    --  It can be overriden if one wants to provide syntax highlighting.
 
+   function Get_Entity (Box : access Odd_Text_Box_Record'Class) return
+     String;
+   --  Return the entity pointed to by the mouse.
+
+
 private
    type Odd_Text_Box_Record is new Gtk.Box.Gtk_Box_Record with record
       Child               : Gtk.Text.Gtk_Text;

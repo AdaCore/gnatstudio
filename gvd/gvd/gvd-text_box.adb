@@ -410,143 +410,25 @@ package body Odd.Text_Boxes is
       Event : Gdk.Event.Gdk_Event) return Boolean
    is
       Menu    : Gtk_Menu;
-      X, Y    : Gint;
       Line    : Natural := 0;
-      Index   : Integer;
-      Current_Line : Natural := 1;
-      Start_Index : Integer;
-      Min : Gint := Gint (Guint'Min (Get_Selection_Start_Pos (Box.Child),
-                                     Get_Selection_End_Pos (Box.Child)));
-      Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Box.Child),
-                                     Get_Selection_End_Pos (Box.Child)));
-
    begin
       case Get_Button (Event) is
          when 3 =>
             if Get_Event_Type (Event) = Button_Press then
 
-               if Box.Buffer /= null then
-                  Index := Box.Buffer'First;
+               Menu := Child_Contextual_Menu
+                 (Box, Line, Get_Entity (Box));
 
-                  --  Take advantage of the fact that all lines and characters
-                  --  have the same size.
-                  Y := Gint (Get_Y (Event))
-                    + Gint (Get_Value (Get_Vadj (Box.Child)));
-                  Line := Line_From_Pixels (Box, Y);
-                  X := Gint (Get_X (Event))
-                    / Char_Width (Box.Font, Character'('m'))
-                    - Invisible_Column_Width (Box) + 1;
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event));
+               --  Stop the event so that the contextual menu is handled
+               --  correctly (ie hidden when the mouse button is
+               --  released, and the selection is not unselected).
 
-                  --  Get the index of the item
-                  if X < 0 then
-                     Index := -1;
-                  else
-                     while Index <= Box.Buffer'Last
-                       and then Current_Line < Line
-                     loop
-                        if Box.Buffer (Index) = ASCII.LF then
-                           Current_Line := Current_Line + 1;
-                        end if;
-
-                        Index := Index + 1;
-                     end loop;
-
-                     --  Go to the right column, but make sure we are still on
-                     --  the current line
-                     Index := Index - Box.Buffer'First;
-                     for J in 1 .. Integer (X) loop
-                        Index := Index + 1;
-                        exit when Box.Buffer'Last < Index
-                          or else Box.Buffer (Index) = ASCII.LF;
-                     end loop;
-                  end if;
-
-                  Start_Index := Index
-                    + Line * Integer (Invisible_Column_Width (Box));
-
-                  --  Only take the selection into account if it is under
-                  --  the cursor.
-                  --  Otherwise, the behavior is somewhat unexpected.
-
-                  if Get_Has_Selection (Box.Child)
-                    and then Min <= Gint (Start_Index)
-                    and then Gint (Start_Index) <= Max
-                  then
-                     --  Keep only the first line of the selection.  This
-                     --  avoids having too long menus, and since the debugger
-                     --  can not handle multiple line commands anyway is not a
-                     --  big problem.
-                     --  We do not use Editor.Buffer directly, so that we
-                     --  don't have to take into account the presence of line
-                     --  numbers.
-
-                     declare
-                        S : String := Get_Chars (Box.Child, Min, Max);
-                     begin
-                        for J in S'Range loop
-                           if S (J) = ASCII.LF then
-                              Max := Gint (J - S'First) + Min;
-                              exit;
-                           end if;
-                        end loop;
-
-                        --  Use the selection...
-                        Menu := Child_Contextual_Menu
-                          (Box, Line, Get_Chars (Box.Child, Min, Max));
-                     end;
-                  else
-                     if Index < 0 or Index > Box.Buffer'Last then
-                        Menu := Child_Contextual_Menu (Box, Line, "");
-                     else
-                        --  Find the beginning of the entity
-                        Start_Index := Index;
-                        while Start_Index >= Box.Buffer'First
-                          and then (Is_Letter (Box.Buffer (Start_Index))
-                                    or else
-                                    Is_Digit (Box.Buffer (Start_Index))
-                                    or else
-                                    Box.Buffer (Start_Index) = '_')
-                        loop
-                           Start_Index := Start_Index - 1;
-                        end loop;
-
-                        --  Find the end of the entity
-                        while Index <= Box.Buffer'Last
-                          and then (Is_Letter (Box.Buffer (Index))
-                                    or else
-                                    Is_Digit (Box.Buffer (Index))
-                                    or else
-                                    Box.Buffer (Index) = '_')
-                        loop
-                           Index := Index + 1;
-                        end loop;
-
-                        Menu := Child_Contextual_Menu
-                          (Box, Line, Box.Buffer
-                           (Start_Index + 1 .. Index - 1));
-                     end if;
-                  end if;
-
-               --   Buffer = null
-               else
-                  Menu := Child_Contextual_Menu (Box, 1, "");
-               end if;
-
-               if Menu /= null then
-                  Popup (Menu,
-                         Button        => Gdk.Event.Get_Button (Event),
-                         Activate_Time => Gdk.Event.Get_Time (Event));
-                  --  Stop the event so that the contextual menu is handled
-                  --  correctly (ie hidden when the mouse button is
-                  --  released, and the selection is not unselected).
-
-                  Emit_Stop_By_Name (Box.Child, "button_press_event");
-               end if;
-
-               return True;
+               Emit_Stop_By_Name (Box.Child, "button_press_event");
             end if;
-            return False;
-
+            return True;
          when 4 =>
             Set_Value (Get_Vadj (Box.Child), Get_Value (Get_Vadj (Box.Child))
                        - Get_Page_Increment (Get_Vadj (Box.Child)));
@@ -681,5 +563,106 @@ package body Odd.Text_Boxes is
    begin
       return Box.Buffer;
    end Get_Buffer;
+
+   ----------------
+   -- Get_Entity --
+   ----------------
+
+   function Get_Entity (Box : access Odd_Text_Box_Record'Class) return String
+   is
+      X, Y    : Gint;
+      Line    : Natural := 0;
+      Index   : Integer;
+      Current_Line : Natural := 1;
+      Start_Index : Integer;
+      Min : Gint := Gint (Guint'Min (Get_Selection_Start_Pos (Box.Child),
+                                     Get_Selection_End_Pos (Box.Child)));
+      Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Box.Child),
+                                     Get_Selection_End_Pos (Box.Child)));
+      Mask : Gdk_Modifier_Type;
+      Window : Gdk_Window;
+   begin
+      Get_Pointer (Get_Window (Box),
+                   X, Y,
+                   Mask,
+                   Window);
+
+      if Box.Buffer /= null then
+         Index := Box.Buffer'First;
+
+         Y := Y - 1
+           + Gint (Get_Value (Get_Vadj (Box.Child)));
+
+         Line := Line_From_Pixels (Box, Y);
+
+         X := (X + 1) / Char_Width (Box.Font, Character' ('m')) - 38;
+         --  ??? This line is obviously wrong.
+         --  ??? Should be able to make clever use of Invisible_Column_Width.
+
+         if X <= 0 then
+            Index := -1;
+         else
+            while Index <= Box.Buffer'Last
+              and then Current_Line < Line
+            loop
+               if Box.Buffer (Index) = ASCII.LF then
+                  Current_Line := Current_Line + 1;
+               end if;
+               Index := Index + 1;
+            end loop;
+            Index := Index + Integer (X) - Box.Buffer'First;
+         end if;
+
+         Start_Index := Index +
+           Line * Integer (Invisible_Column_Width (Box));
+
+         if Get_Has_Selection (Box.Child)
+           and then Min <= Gint (Start_Index)
+           and then Gint (Start_Index) <= Max
+         then
+            declare
+               S : String := Get_Chars (Box.Child, Min, Max);
+            begin
+               for J in S'Range loop
+
+                  if S (J) = ASCII.LF then
+                     Max := Gint (J - S'First) + Min;
+                     exit;
+                  end if;
+               end loop;
+
+               return Get_Chars (Box.Child, Min, Max);
+            end;
+         else
+            if Index < 0 or Index > Box.Buffer'Last then
+               return "";
+            else
+               Start_Index := Index;
+               while Start_Index >= Box.Buffer'First
+                 and then (Is_Letter (Box.Buffer (Start_Index))
+                           or else
+                 Is_Digit (Box.Buffer (Start_Index))
+                 or else
+                 Box.Buffer (Start_Index) = '_')
+               loop
+                  Start_Index := Start_Index - 1;
+               end loop;
+               while Index <= Box.Buffer'Last
+                 and then (Is_Letter (Box.Buffer (Index))
+                           or else
+                 Is_Digit (Box.Buffer (Index))
+                 or else
+                 Box.Buffer (Index) = '_')
+               loop
+                  Index := Index + 1;
+               end loop;
+               return Box.Buffer (Start_Index + 1 .. Index - 1);
+            end if;
+         end if;
+
+      end if;
+      return "";
+
+   end Get_Entity;
 
 end Odd.Text_Boxes;
