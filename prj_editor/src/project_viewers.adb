@@ -269,7 +269,7 @@ package body Project_Viewers is
    --  Add new entries, when needed, to the contextual menus from other
    --  modules.
 
-   procedure Add_Directory_From_Contextual
+   procedure Edit_Source_Dirs_From_Contextual
      (Widget : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the contextual menu item to add some source directories
@@ -872,33 +872,44 @@ package body Project_Viewers is
       Thaw (Viewer.Pages (Current_View));
    end Clear;
 
-   -----------------------------------
-   -- Add_Directory_From_Contextual --
-   -----------------------------------
+   --------------------------------------
+   -- Edit_Source_Dirs_From_Contextual --
+   --------------------------------------
 
-   procedure Add_Directory_From_Contextual
+   procedure Edit_Source_Dirs_From_Contextual
      (Widget : access Gtk_Widget_Record'Class;
       Context : Selection_Context_Access)
    is
-      Dirs : Argument_List :=
-        Multiple_Directories_Selector_Dialog (Get_Current_Dir);
       File_Context : File_Selection_Context_Access :=
         File_Selection_Context_Access (Context);
+      Initial_Dirs_Id : String_Id_Array := Source_Dirs
+        (Project_Information (File_Context));
+      Initial_Dirs : Argument_List (Initial_Dirs_Id'Range);
    begin
-      if Dirs'Length /= 0 then
+      for J in Initial_Dirs_Id'Range loop
+         Initial_Dirs (J) := new String'
+           (Get_String (Initial_Dirs_Id (J)));
+      end loop;
+
+      declare
+         Dirs : Argument_List := Multiple_Directories_Selector_Dialog
+           (Get_Current_Dir, Initial_Dirs);
+      begin
          Update_Attribute_Value_In_Scenario
            (Project            => Get_Project_From_View
               (Project_Information (File_Context)),
             Pkg_Name           => "",
             Scenario_Variables => Scenario_Variables (Get_Kernel (Context)),
-            Attribute_Name     => "source_dirs",
+            Attribute_Name     => Get_Name_String (Name_Source_Dirs),
             Values             => Dirs,
-            Attribute_Index    => "",
-            Prepend            => True);
+               Attribute_Index    => "",
+            Prepend            => False);
          Free (Dirs);
          Recompute_View (Get_Kernel (Context));
-      end if;
-   end Add_Directory_From_Contextual;
+      end;
+
+      Free (Initial_Dirs);
+   end Edit_Source_Dirs_From_Contextual;
 
    ------------------------------------------
    -- Change_Obj_Directory_From_Contextual --
@@ -1142,14 +1153,13 @@ package body Project_Viewers is
             Gtk_New (Item, Label => "");
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => -"Add Directory to "
+            Gtk_New (Item, Label => -"Edit source Directories for "
                      & Project_Name (Project_Information (File_Context)));
-            Set_Sensitive (Item, False);
             Append (Menu, Item);
             Context_Callback.Connect
               (Item, "activate",
                Context_Callback.To_Marshaller
-               (Add_Directory_From_Contextual'Access),
+               (Edit_Source_Dirs_From_Contextual'Access),
                Selection_Context_Access (Context));
 
             Gtk_New (Item, Label => -"Change Object Directory for "
@@ -1218,15 +1228,6 @@ package body Project_Viewers is
                   (Remove_Project_Dependency'Access),
                   Selection_Context_Access (Context));
             end if;
-         end if;
-
-         if Has_Directory_Information (File_Context) then
-            Gtk_New (Item, Label => "");
-            Append (Menu, Item);
-            Gtk_New (Item, Label => -"Remove Directory "
-                     & Directory_Information (File_Context));
-            Set_Sensitive (Item, False);
-            Append (Menu, Item);
          end if;
 
          if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
@@ -1353,11 +1354,6 @@ package body Project_Viewers is
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_Edit_Project'Access),
          Kernel_Handle (Kernel));
-
-      Gtk_New (Menu_Item, -"Add Directory...");
-      Set_Sensitive (Menu_Item, False);
-      Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
-                     Add_Before => False);
 
       Gtk_New (Menu_Item, -"Edit Naming Scheme...");
       Register_Menu (Kernel, Project, Menu_Item, Ref_Item => -"Edit...",
