@@ -1091,6 +1091,11 @@ package body Odd.Process is
             Process_User_Command (Tab, Buffer (1 .. Len));
          end if;
       end if;
+
+   exception
+      --  The history was empty, so there is no command to execute...
+      when No_Such_Item =>
+         null;
    end Input_Available;
 
    ---------------------
