@@ -20,16 +20,25 @@
 
 with GNAT.Expect;
 with GNAT.OS_Lib;
-
-with SN;             use SN;
-with SN.Xref_Pools;  use SN.Xref_Pools;
-
+with SN;
+with SN.Xref_Pools;
+with Src_Info.Type_Utils;
 with Prj;
 
 package Src_Info.CPP is
 
-   type CPP_LI_Handler_Record is new LI_Handler_Record with null record;
+   type CPP_LI_Handler_Record is new LI_Handler_Record with private;
    type CPP_LI_Handler is access all CPP_LI_Handler_Record'Class;
+
+   type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with private;
+   --  An iterator to generate the LI database for a set of source files.
+
+   procedure Reset
+     (Handler : access CPP_LI_Handler_Record'Class;
+      Project : Prj.Project_Id);
+   --  Reset the internal fields for this handler.
+   --  This function should be called every time the project view changes, but
+   --  it won't do anything if the object directory of Project hasn't changed.
 
    procedure Create_Or_Complete_LI
      (Handler                : access CPP_LI_Handler_Record;
@@ -39,14 +48,12 @@ package Src_Info.CPP is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
-   --  Creates or completes Library Information for given source file name
-   --  and LI_File_Ptr.
+   --  See comment in src_info.ads
 
    function Case_Insensitive_Identifiers
      (Handler : access CPP_LI_Handler_Record) return Boolean;
    pragma Inline (Case_Insensitive_Identifiers);
-   --  Is identifiers in given language case insensitive? Always returns
-   --  False since identifiers are case sensitive in C and C++.
+   --  Always returns False since identifiers are case sensitive in C and C++.
 
    procedure Parse_All_LI_Information
      (Handler                : access CPP_LI_Handler_Record;
@@ -55,6 +62,7 @@ package Src_Info.CPP is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String);
+   --  Does nothing for now.
 
    function LI_Filename_From_Source
      (Handler                : access CPP_LI_Handler_Record;
@@ -62,21 +70,9 @@ package Src_Info.CPP is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String)
       return String;
-   --  Converts the given Source Filename into the corresponding LI filename
-   --  using the Project and Predefined Source Path information. Return the
-   --  empty string when the given Source_Filename can not be found in the
-   --  project exception lists and when the extension does not follow the
-   --  project naming scheme.
-   --  ??? In current implementation for C/C++ this function always
-   --  returns Xref_Filename for Source_Filename
-
-   type Iterator_State_Type is
-     (Analyze_Files, -- parsing the files with cbrowser.
-      Process_Xrefs, -- processing xrefs for all files
-      Done);         -- updating done
-
-   type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with private;
-   --  An iterator to generate the LI database for a set of source files.
+   --  See comment in src_info.ads.
+   --  For C/C++, this function returns the name of the xref filename to
+   --  generate.
 
    function Generate_LI_For_Source
      (Handler       : access CPP_LI_Handler_Record;
@@ -92,29 +88,12 @@ package Src_Info.CPP is
       Project       : Prj.Project_Id;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class;
-   --  Generate the LI information for all the source files in Project (and all
-   --  its imported projects if Recursive is True).
-   --  This function should do as few work as possible, and the iterator will
-   --  be called until all the files are processed.
+   --  See comment in src_info.ads
 
    procedure Continue
      (Iterator : in out CPP_LI_Handler_Iterator;
       Finished : out Boolean);
-   --  This function should move to the next source file that has been
-   --  analyzed, providing the previous file is fully parsed.
-   --  If the files are analyzed by external processes, the call to
-   --  Generate_LI_For_Project would for instance start the external process
-   --  for the first file, and when Next is called, it should check that the
-   --  first process as finished executing before processing the next file.
-   --
-   --  If an extra phase needs to be done after parsing all the source files,
-   --  it should also be done as a result of a call to Continue.
-   --
-   --  Nothing needs to be done if the previous source file hasn't been fully
-   --  analyzed yet.
-   --
-   --  Finished should be True if the Iterator has finished regenerating the
-   --  database.
+   --  See comment in src_info.ads
 
    procedure Add
      (HT      : in out LI_File_List;
@@ -123,12 +102,24 @@ package Src_Info.CPP is
    --  Just wrapper for internal Add to support extended testing
 
 private
+
+   type Iterator_State_Type is
+     (Analyze_Files, -- parsing the files with cbrowser.
+      Process_Xrefs, -- processing xrefs for all files
+      Done);         -- updating done
+
+   type CPP_LI_Handler_Record is new LI_Handler_Record with record
+      Xrefs           : SN.Xref_Pools.Xref_Pool;
+      DB_Dir          : GNAT.OS_Lib.String_Access;
+      SN_Table        : Src_Info.Type_Utils.SN_Table_Array;
+   end record;
+   --  The fields above are always initialized after calling Reset.
+
    type CPP_LI_Handler_Iterator is new LI_Handler_Iterator with record
       State           : Iterator_State_Type := Done;
       Root_Project    : Prj.Project_Id;
       Project         : Prj.Project_Id;
-      SN_Dir          : GNAT.OS_Lib.String_Access;
-      Xrefs           : Xref_Pool;
+      Handler         : CPP_LI_Handler;
       Tmp_Filename    : GNAT.OS_Lib.Temp_File_Name;
       List_Filename   : GNAT.OS_Lib.String_Access;
       PD              : GNAT.Expect.Process_Descriptor;
