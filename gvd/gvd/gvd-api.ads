@@ -55,9 +55,9 @@ package GVD.API is
    for Visible_Command'Size use Integer'Size;
    --  typedef enum {visible, user} visible_command;
 
-   type View_Mode is (Source_Only, Asm_Only, Source_Asm);
+   type View_Mode is (Source, Asm, Source_Asm);
    for View_Mode'Size use Integer'Size;
-   --  typedef enum {source_only, asm_only, source_asm} view_mode;
+   --  typedef enum {source, asm, source_asm} view_mode;
 
    -----------------
    -- GVD.Process --
