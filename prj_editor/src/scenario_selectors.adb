@@ -331,18 +331,43 @@ package body Scenario_Selectors is
       Iterator : Imported_Project_Iterator;
    begin
       if Get_Active (Selector.Show_As_Hierarchy) then
-         Iterator := Start (Project, Recursive => True, Direct_Only => True);
+         --  We need to properly handle limited-with statements in the
+         --  project, which effectively create an infinite project tree.
+         --  Thus, we make sure before inserting a node that it isn't already
+         --  present in the current tree path.
 
-         Append (Selector.Model, It, Iter);
-         Project_Set
-           (Selector, It, Project = Selector.Ref_Project, Project);
+         declare
+            Name : constant String := Project_Name (Project);
+            It2 : Gtk_Tree_Iter;
+            Found : Boolean := False;
+         begin
+            Iterator :=
+              Start (Project, Recursive => True, Direct_Only => True);
 
-         while Current (Iterator) /= No_Project loop
-            if Current (Iterator) /= Project then
-               Add_Project_Recursive (Selector, It, Current (Iterator));
+            It2 := Iter;
+            while It2 /= Null_Iter loop
+               if Get_String (Selector.Model, It2, Project_Name_Column) =
+                 Name
+               then
+                  Found := True;
+                  exit;
+               end if;
+               It2 := Parent (Selector.Model, It2);
+            end loop;
+
+            if not Found then
+               Append (Selector.Model, It, Iter);
+               Project_Set
+                 (Selector, It, Project = Selector.Ref_Project, Project);
+
+               while Current (Iterator) /= No_Project loop
+                  if Current (Iterator) /= Project then
+                     Add_Project_Recursive (Selector, It, Current (Iterator));
+                  end if;
+                  Next (Iterator);
+               end loop;
             end if;
-            Next (Iterator);
-         end loop;
+         end;
 
       else
          declare
