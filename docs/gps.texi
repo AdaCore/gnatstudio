@@ -44,10 +44,6 @@ unmodified in any copy.
 @node Top, Introduction, (dir), (dir)
 @top Using the GNAT Programming System
 
-Using the GNAT Programming System
-
-GPS, the GNAT Programming System
-
 Version @value{GPSVersion}
 
 Date: $Date$
