@@ -1446,8 +1446,9 @@ package body GVD_Module is
          return True;
       end if;
 
-      --  ??? we could make smart use of the case Kind = No_More_Code
-      --  Clear the list and return False.
+      --  ??? we could make smart use of the case Kind = No_More_Code:
+      --  clear the list and return False.
+
       declare
          L          : constant Integer := File_Line.Line;
          A          : Line_Information_Array (L .. L);
@@ -1502,6 +1503,11 @@ package body GVD_Module is
       end if;
 
       return True;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return False;
    end Idle_Reveal_Lines;
 
    --------------------
