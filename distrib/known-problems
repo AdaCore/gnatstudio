@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.2.0
 
+- No GPS window when unknown project specified on the command line
+  Problem:    If a non-existing project file is specified on the command line
+              with the -P parameter, the GPS window didn't appear on the screen
+  Workaround: Make sure the file exists when specified on the command line
+
 - OK button not selected in the "Open From Project" dialog the second time
   Problem:    When the dialog File->Open From Project is displayed, pressing
               enter will automatically open the file. However, this no longer
