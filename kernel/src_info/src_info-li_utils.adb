@@ -512,7 +512,10 @@ package body Src_Info.LI_Utils is
    is
       R_Ptr : E_Reference_List;
    begin
-      if Declaration_Info.Value.References = null then
+      if Declaration_Info = null then
+         --  ??? what should we do if Declaration_Info is null?
+         return;
+      elsif Declaration_Info.Value.References = null then
          Declaration_Info.Value.References := new E_Reference_Node;
          Declaration_Info.Value.References.Next := null;
          R_Ptr := Declaration_Info.Value.References;
