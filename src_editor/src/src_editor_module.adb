@@ -390,6 +390,15 @@ package body Src_Editor_Module is
    --  Comment or uncomment the current selection, if any.
    --  Auxiliary procedure for On_Comment_Lines and On_Uncomment_Lines.
 
+   type File_Completion_Factory is new Completions_Factory with record
+      File1, File2 : File_Array_Access;
+   end record;
+   function Completion
+     (Factory : File_Completion_Factory; Index : Positive) return String;
+   function Description
+     (Factory : File_Completion_Factory; Index : Positive) return String;
+   --  See doc from inherited subprogram
+
    type Edit_File_Command is new Interactive_Command with null record;
    function Execute
      (Command : access Edit_File_Command;
@@ -2864,6 +2873,60 @@ package body Src_Editor_Module is
                 "Unexpected exception: " & Exception_Information (E));
    end On_Open_File;
 
+   ----------------
+   -- Completion --
+   ----------------
+
+   function Completion
+     (Factory : File_Completion_Factory; Index : Positive) return String
+   is
+      File : VFS.Virtual_File;
+   begin
+      if Index > Factory.File1'Length then
+         if Index - Factory.File1'Length > Factory.File2'Length then
+            return "";
+         else
+            File := Factory.File2
+              (Factory.File2'First + Index - Factory.File1'Length - 1);
+         end if;
+      else
+         File := Factory.File1 (Factory.File1'First + Index - 1);
+      end if;
+
+      if File = VFS.No_File then
+         return "@$#$";  --  Unlikely string, will not match any suffix
+      else
+         return Base_Name (File);
+      end if;
+   end Completion;
+
+   -----------------
+   -- Description --
+   -----------------
+
+   function Description
+     (Factory : File_Completion_Factory; Index : Positive) return String
+   is
+      File : VFS.Virtual_File;
+   begin
+      if Index > Factory.File1'Length then
+         if Index - Factory.File1'Length > Factory.File2'Length then
+            return "";
+         else
+            File := Factory.File2
+              (Factory.File2'First + Index - Factory.File1'Length - 1);
+         end if;
+      else
+         File := Factory.File1 (Factory.File1'First + Index - 1);
+      end if;
+
+      if File = VFS.No_File then
+         return "";
+      else
+         return Full_Name (File).all;
+      end if;
+   end Description;
+
    -----------------------
    -- On_Open_From_Path --
    -----------------------
@@ -2879,6 +2942,12 @@ package body Src_Editor_Module is
       Open_File_Entry  : Gtkada_Entry;
       Hist             : constant String_List_Access :=
         Get_History (Get_History (Kernel).all, Open_From_Path_History);
+      List1 : File_Array_Access := Get_Source_Files
+        (Project   => Get_Project (Kernel),
+         Recursive => True);
+      List2 : File_Array_Access :=
+        Get_Predefined_Source_Files (Get_Registry (Kernel).all);
+      Compl : File_Completion_Factory;
 
    begin
       Push_State (Kernel,  Busy);
@@ -2915,28 +2984,28 @@ package body Src_Editor_Module is
       Grab_Focus (Get_Entry (Open_File_Entry));
       Show_All (Open_File_Dialog);
 
-      declare
-         List1 : File_Array_Access := Get_Source_Files
-           (Project   => Get_Project (Kernel),
-            Recursive => True);
-         List2 : File_Array_Access :=
-           Get_Predefined_Source_Files (Get_Registry (Kernel).all);
-         Completions : constant String_Array_Access :=
-           new String_Array (List1'First .. List1'Last + List2'Length);
-      begin
+      --  Remove duplicate entries in both arrays
+      for L2 in List2'Range loop
          for L in List1'Range loop
-            Completions (L) := new String'(Base_Name (List1 (L)));
+            if List1 (L) = List2 (L2) then
+               List2 (L2) := VFS.No_File;
+               exit;
+            end if;
          end loop;
+      end loop;
 
-         for L in List2'Range loop
-            Completions (List1'Last + L - List2'First + 1) :=
-              new String'(Base_Name (List2 (L)));
+      for L1 in List1'Range loop
+         for L in List1'First .. L1 - 1 loop
+            if List1 (L) = List1 (L1) then
+               List1 (L1) := VFS.No_File;
+               exit;
+            end if;
          end loop;
+      end loop;
 
-         Set_Completions (Open_File_Entry, Completions);
-         Unchecked_Free (List1);
-         Unchecked_Free (List2);
-      end;
+      Compl.File1 := List1;
+      Compl.File2 := List2;
+      Set_Completions (Open_File_Entry, Compl);
 
       Pop_State (Kernel);
 
@@ -2946,11 +3015,22 @@ package body Src_Editor_Module is
          --  display an error message in the console.
 
          declare
+            Complet : constant Integer :=
+              Current_Completion (Open_File_Entry);
             Text : constant String :=
               Get_Text (Get_Entry (Open_File_Entry));
-            Full : constant Virtual_File :=
-              Create (Text, Kernel, Use_Object_Path => False);
+            Full : Virtual_File;
          begin
+            if Complet /= 0 then
+               if Complet > List1'Length then
+                  Full := List2 (List2'First + Complet - List1'Length - 1);
+               else
+                  Full := List1 (List1'First + Complet - 1);
+               end if;
+            else
+               Full := Create (Text, Kernel, Use_Object_Path => False);
+            end if;
+
             Add_To_History
               (Get_History (Kernel).all, Open_From_Path_History,
                Full_Name (Full).all);
@@ -2974,6 +3054,9 @@ package body Src_Editor_Module is
       end if;
 
       Destroy (Open_File_Dialog);
+
+      Unchecked_Free (List1);
+      Unchecked_Free (List2);
 
    exception
       when E : others =>
