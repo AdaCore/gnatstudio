@@ -451,7 +451,7 @@ package body GVD.Process is
 
       if Set_Position then
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-         Set_Point (Process.Debugger_Text, Process.Edit_Pos);
+         Gtk.Text.Set_Point (Process.Debugger_Text, Process.Edit_Pos);
          Gtk.Text.Set_Position
            (Process.Debugger_Text, Gint (Process.Edit_Pos));
       end if;
