@@ -52,19 +52,20 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
-with Prj_API;              use Prj_API;
-with Creation_Wizard;      use Creation_Wizard;
-with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Console; use Glide_Kernel.Console;
+with Prj_API;                  use Prj_API;
+with Creation_Wizard;          use Creation_Wizard;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Kernel.Project; use Glide_Kernel.Project;
-with Glide_Kernel.Modules; use Glide_Kernel.Modules;
-with Glide_Intl;           use Glide_Intl;
-with Switches_Editors;     use Switches_Editors;
-with Naming_Editors;       use Naming_Editors;
-with Directory_Tree;       use Directory_Tree;
-with Switches_Editors; use Switches_Editors;
-with Traces;               use Traces;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
+with Glide_Intl;               use Glide_Intl;
+with Switches_Editors;         use Switches_Editors;
+with Naming_Editors;           use Naming_Editors;
+with Directory_Tree;           use Directory_Tree;
+with Switches_Editors;         use Switches_Editors;
+with Traces;                   use Traces;
+with Variable_Editors;         use Variable_Editors;
 
 with Prj;           use Prj;
 with Prj.Tree;      use Prj.Tree;
@@ -939,10 +940,6 @@ package body Project_Viewers is
       Project : Project_Id :=
         Project_Information (File_Selection_Context_Access (Context));
    begin
-      Trace
-        (Me, "Changing object directory: "
-         & GNAT.OS_Lib.Normalize_Pathname
-         (Get_Name_String (Prj.Projects.Table (Project).Object_Directory)));
       Gtk_New
         (Selector,
          Initial_Directory => GNAT.OS_Lib.Normalize_Pathname
@@ -1272,13 +1269,11 @@ package body Project_Viewers is
             Append (Menu, Item);
 
             Gtk_New (Item, Label => -"Add Variable");
-            Set_Sensitive (Item, False);
             Append (Menu, Item);
-            --  Context_Callback.Connect
-            --    (Item, "activate",
-            --     Context_Callback.To_Marshaller
-            --     (Add_Variable_Contextual'Access),
-            --     Selection_Context_Access (Context));
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller (On_Add_Variable'Access),
+               Selection_Context_Access (Context));
          end if;
 
          if Has_File_Information (File_Context) then
