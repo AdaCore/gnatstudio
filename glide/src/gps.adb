@@ -496,8 +496,6 @@ procedure GPS is
         ("Gtk", Log_Level_Mask, Gtk_Log'Unrestricted_Access);
 
       declare
-         Sessions : constant String :=
-           File_Utils.Name_As_Directory (Dir.all) & "sessions";
          Customize : constant String :=
            File_Utils.Name_As_Directory (Dir.all) & "customize";
 
@@ -528,16 +526,6 @@ procedure GPS is
             Put_Line (File, "DEBUG.LOCATION=no");
             Put_Line (File, "DEBUG.ENCLOSING_ENTITY=no");
             Close (File);
-         end if;
-
-         if not Is_Directory (Sessions) then
-            Make_Dir (Sessions);
-
-            if not Dir_Created then
-               Button := Message_Dialog
-                 ((-"Created config directory ") & Sessions,
-                  Information, Button_OK, Justification => Justify_Left);
-            end if;
          end if;
 
          if not Is_Directory (Customize) then
