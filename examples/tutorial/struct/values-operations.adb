@@ -1,5 +1,5 @@
 with Except;
-with Output;
+with Screen_Output;
 with Stack;
 
 package body Values.Operations is
@@ -62,7 +62,7 @@ package body Values.Operations is
       --  overflow or a divide by zero.
 
       when Constraint_Error =>
-         Output.Error_Msg ("Operation error. Values popped.");
+         Screen_Output.Error_Msg ("Operation error. Values popped.");
 
    end Process;
 

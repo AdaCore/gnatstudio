@@ -1,6 +1,6 @@
 with Except;
 with Input;
-with Output;
+with Screen_Output;
 
 package body Tokens is
 
@@ -51,7 +51,7 @@ package body Tokens is
 
          exception
             when Except.User_Error =>
-               Output.Syntax_Error ("Input ignored till end of line.");
+               Screen_Output.Syntax_Error ("Input ignored till end of line.");
                Input.Skip_Line;
          end Read_A_Valid_Token;
       end loop;

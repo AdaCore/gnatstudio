@@ -1,5 +1,5 @@
 with Except;
-with Output;
+with Screen_Output;
 with Stack;
 with Values;
 
@@ -40,12 +40,12 @@ package body Instructions is
             Stack.Clear;
 
          when Print =>
-            Output.Msg (" -> ", End_Line => False);
+            Screen_Output.Msg (" -> ", End_Line => False);
 
             if Stack.Empty then
-               Output.Msg ("stack is empty");
+               Screen_Output.Msg ("stack is empty");
             else
-               Output.Msg (Values.To_String (Stack.Top));
+               Screen_Output.Msg (Values.To_String (Stack.Top));
             end if;
 
          when Quit =>

@@ -1,5 +1,5 @@
 with Except;
-with Output; use Output;
+with Screen_Output; use Screen_Output;
 with Stack;
 with Tokens; use Tokens;
 with Ada.Text_IO; use Ada.Text_IO;

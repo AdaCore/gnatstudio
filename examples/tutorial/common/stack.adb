@@ -1,5 +1,5 @@
 with Except;
-with Output;
+with Screen_Output;
 
 package body Stack is
 
@@ -44,7 +44,7 @@ package body Stack is
          raise Overflow;
       end if;
 
-      Output.Debug_Msg ("Pushing -> " & Values.To_String (V));
+      Screen_Output.Debug_Msg ("Pushing -> " & Values.To_String (V));
 
       Last := Last - 1;
       Tab (Last) := V;
@@ -65,7 +65,7 @@ package body Stack is
       V := Tab (Last);
       Last := Last - 1;
 
-      Output.Debug_Msg ("Popping <- " & Values.To_String (V));
+      Screen_Output.Debug_Msg ("Popping <- " & Values.To_String (V));
 
       return V;
    end Pop;
@@ -90,10 +90,10 @@ package body Stack is
    procedure View is
    begin
       for I in Tab'First .. Last loop
-         Output.Msg (Values.To_String (Tab (I)));
+         Screen_Output.Msg (Values.To_String (Tab (I)));
       end loop;
 
-      Output.Msg ("");
+      Screen_Output.Msg ("");
    end View;
 
 end Stack;

@@ -1,6 +1,5 @@
 with Except;
 with Input;  use Input;
-with Output;
 with Stack;
 
 package body Values is
