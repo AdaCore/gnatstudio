@@ -458,9 +458,7 @@ procedure GPS is
               (Project_Name.all, Resolve_Links => False));
       end if;
 
-      --  Do the Show_All before loading the desktop, in case some of the
-      --  widgets automatically loaded have something to hide
-      Show_All (GPS);
+      --  Load_Desktop should call Show_All.
       Glide_Page.Load_Desktop (GPS);
 
       --  Then load all the source files given on the command line.
