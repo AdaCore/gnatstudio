@@ -21,6 +21,7 @@
 with Glib;                      use Glib;
 with Glib.Convert;              use Glib.Convert;
 with Glib.Object;               use Glib.Object;
+with Glib.Properties;           use Glib.Properties;
 with Glib.Values;               use Glib.Values;
 with Gdk.Color;                 use Gdk.Color;
 with Gtk;                       use Gtk;
@@ -31,6 +32,7 @@ with Gtk.Main;                  use Gtk.Main;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
 with Gtk.Text_Mark;             use Gtk.Text_Mark;
+with Gtk.Text_Tag;              use Gtk.Text_Tag;
 with Gtk.Text_Tag_Table;        use Gtk.Text_Tag_Table;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtkada.Dialogs;            use Gtkada.Dialogs;
@@ -1530,6 +1532,10 @@ package body Src_Editor_Buffer is
       Create_Highlight_Region_Tag
         (Buffer.HL_Region_Tag, Get_Pref (Kernel, Default_HL_Region_Color));
       Text_Tag_Table.Add (Tags, Buffer.HL_Region_Tag);
+
+      Gtk_New (Buffer.Non_Editable_Tag);
+      Set_Property (Buffer.Non_Editable_Tag, Editable_Property, False);
+      Add (Tags, Buffer.Non_Editable_Tag);
 
       --  Save the insert mark for fast retrievals, since we will need to
       --  access it very often.
@@ -4046,11 +4052,16 @@ package body Src_Editor_Buffer is
    procedure Add_Blank_Lines
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
+      GC     : Gdk.GC.Gdk_GC;
+      Text   : String;
       Number : Positive)
    is
-      Text        : String (1 .. Natural (Number));
+      pragma Unreferenced (Text);
+      LFs         : String (1 .. Natural (Number));
       Buffer_Line : Buffer_Line_Type;
       Iter        : Gtk_Text_Iter;
+      End_Iter    : Gtk_Text_Iter;
+      Success     : Boolean;
    begin
       Buffer_Line := Get_Buffer_Line (Editor, Line);
 
@@ -4058,30 +4069,49 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Text := (others => ASCII.LF);
+      End_Action (Editor);
+
+      LFs := (others => ASCII.LF);
 
       Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
 
-      Insert (Editor, Iter, Text);
+      Editor.Modifying_Editable_Lines := False;
+      Editor.Inserting := True;
+      Insert (Editor, Iter, LFs);
+      Editor.Inserting := False;
+      Editor.Modifying_Editable_Lines := True;
 
-      --  Shift down existing lines
+      Get_Iter_At_Line (Editor, Iter, Gint (Buffer_Line - 1));
+      Backward_Char (Iter, Success);
+      Get_Iter_At_Line (Editor, End_Iter,
+                        Gint (Buffer_Line - 1) + Gint (Number));
+
+      Apply_Tag (Editor, Editor.Non_Editable_Tag, Iter, End_Iter);
+
+      --  Shift down existing buffer lines
 
       for J in reverse Buffer_Line .. Editor.Line_Data'Last
         - Buffer_Line_Type (Number)
       loop
          Editor.Line_Data (J + Buffer_Line_Type (Number)) :=
            Editor.Line_Data (J);
-
---           if Editor.Line_Data (J).Editable_Line /= 0 then
---              Editor.Line_Data (J).Editable_Line :=
---                Editor.Line_Data (J).Editable_Line - Number;
---           end if;
       end loop;
 
-      --  Reset information for newly inserted lines.
+      --  Shift down editable lines.
+
+      for J in Line .. Editor.Editable_Lines'Last loop
+         if Editor.Editable_Lines (J).Where = In_Buffer then
+            Editor.Editable_Lines (J).Buffer_Line :=
+              Editor.Editable_Lines (J).Buffer_Line
+              + Buffer_Line_Type (Number);
+         end if;
+      end loop;
+
+      --  Reset information for newly inserted buffer lines.
 
       for J in Buffer_Line .. Buffer_Line + Buffer_Line_Type (Number) - 1 loop
          Editor.Line_Data (J).Editable_Line := 0;
+         Editor.Line_Data (J).Current_Highlight := GC;
       end loop;
    end Add_Blank_Lines;
 
