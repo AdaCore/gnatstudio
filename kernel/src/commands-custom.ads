@@ -60,10 +60,12 @@
 
 with Gdk.Event;
 with Glide_Kernel;         use Glide_Kernel;
+with GNAT.Expect;          use GNAT.Expect;
 with GNAT.OS_Lib;          use GNAT.OS_Lib;
 with Glide_Kernel.Scripts; use Glide_Kernel.Scripts;
 with Commands.Interactive; use Commands.Interactive;
 with Glib.Xml_Int;
+with Interactive_Consoles;
 
 package Commands.Custom is
 
@@ -80,6 +82,7 @@ package Commands.Custom is
 
    procedure Create
      (Item         : out Custom_Command_Access;
+      Name         : String;
       Kernel       : Kernel_Handle;
       Command      : String;
       Script       : Glide_Kernel.Scripts.Scripting_Language);
@@ -89,9 +92,11 @@ package Commands.Custom is
    --  Internal command in the specific scripting language.
    --  Filter is the filter that needs to be tested to make sure that all
    --  parameters can be satisfied.
+   --  Name is used in the progress bar while the command is executing
 
    procedure Create
      (Item           : out Custom_Command_Access;
+      Name           : String;
       Kernel         : Kernel_Handle;
       Command        : Glib.Xml_Int.Node_Ptr;
       Default_Output : String := Console_Output;
@@ -105,6 +110,7 @@ package Commands.Custom is
    --  not overriden by any "output" attribute in the XML tree.
    --  If Show_Command is true, then the command itself will be shown along
    --  with its output if the latter is not No_Output.
+   --  Name is used in the progress bar while the command is executing
 
    function Create_Filter
      (Command : Glib.Xml_Int.Node_Ptr) return Action_Filter;
@@ -134,29 +140,25 @@ private
    type Boolean_Array is array (Natural range <>) of Boolean;
    type Boolean_Array_Access is access Boolean_Array;
 
-   type Custom_Command is new Interactive_Command with record
-      Kernel      : Kernel_Handle;
+   function Name (Command : access Custom_Command) return String;
+   --  See doc for inherited subprogram
 
-      Command     : String_Access;
-      Script      : Glide_Kernel.Scripts.Scripting_Language;
-      XML         : Glib.Xml_Int.Node_Ptr;
-      --  Only (Command, Script) or XML is defined, depending on what version
-      --  of Create was used.
-
-      Default_Output_Destination : String_Access;
-      --  The default location for the XML tree
-
-      Default_Show_Command : Boolean;
-      --  True if by default the various commands must be shown along with
-      --  their output. If the output is hidden, the command itself will not
-      --  be shown
-
+   type Custom_Command_Execution_Record is record
       In_Process  : Boolean := False;
       --  True if we are processing the command, but there are some external
       --  process to run before completion
 
       Cmd_Index   : Natural;
       --  The current command we are executing
+
+      Progress_Matcher  : GNAT.Expect.Pattern_Matcher_Access;
+      Current_In_Regexp : Natural;
+      Total_In_Regexp   : Natural;
+      Hide_Progress     : Boolean;
+      --  How to recognize progress indication in the external commands
+
+      External_Process_Console : Interactive_Consoles.Interactive_Console;
+      --  Where the output of the current external command should be sent
 
       External_Process_In_Progress : Boolean;
       Process_Exit_Status : Integer;
@@ -172,7 +174,34 @@ private
       --  Whether we should save the output of the nth-command
 
       Context  : Selection_Context_Access;
-      --  The process we had at the beginning of the executing
+      --  The context we had at the beginning of the executing
+   end record;
+   type Custom_Command_Execution is access Custom_Command_Execution_Record;
+   --  Stores information relevant only while a command is executing, to
+   --  limit the memory footprint when storing a command.
+
+   type Custom_Command is new Interactive_Command with record
+      Kernel      : Kernel_Handle;
+      Command     : String_Access;
+      Script      : Glide_Kernel.Scripts.Scripting_Language;
+      XML         : Glib.Xml_Int.Node_Ptr;
+      --  Only (Command, Script) or XML is defined, depending on what version
+      --  of Create was used.
+
+      Default_Output_Destination : String_Access;
+      --  The default location for the XML tree
+
+      Default_Show_Command : Boolean;
+      --  True if by default the various commands must be shown along with
+      --  their output. If the output is hidden, the command itself will not
+      --  be shown
+
+      Name : GNAT.OS_Lib.String_Access;
+      --  The name of the command to execute
+
+      Execution : Custom_Command_Execution;
+      --  The current context for the execution of the command. If this is
+      --  null, no command is currently executing
    end record;
 
 end Commands.Custom;
