@@ -25,7 +25,6 @@ with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.Expect; use GNAT.Expect;
 
 with Gdk.Color;
-with Gdk.Font;
 with Gtk.Menu;
 with Gtk.Object;          use Gtk.Object;
 pragma Elaborate_All (Gtk.Object);
@@ -35,10 +34,11 @@ pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Main;
 with Gtk.Clist;           use Gtk.Clist;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
-with Gtk.Text;            use Gtk.Text;
 with Gtk.Window;
 with Gtk.Widget;
 with Gtkada.Canvas;       use Gtkada.Canvas;
+
+with Pango.Font;
 
 with Process_Proxies;     use Process_Proxies;
 with Dock_Paned;          use Dock_Paned;
@@ -49,6 +49,8 @@ with Items;
 with GVD.Text_Box.Source_Editor;
 with GVD.Code_Editors;
 with GVD.Types;
+
+with Glide_Interactive_Consoles; use Glide_Interactive_Consoles;
 
 package GVD.Process is
 
@@ -126,18 +128,13 @@ package GVD.Process is
       Data_Scrolledwindow     : Gtk_Scrolled_Window;
       Data_Canvas             : Interactive_Canvas;
 
-      Command_Scrolledwindow  : Gtk_Scrolled_Window;
-      Debugger_Text           : Gtk_Text;
+      Debugger_Text           : Glide_Interactive_Console;
+      Debugger_Text_Font      : Pango.Font.Pango_Font_Description;
+      Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
 
       Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
       --  was inserted. This is used to find what was typed by the user.
-
-      Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
-      --  Color used for highlighting in the debugger window.
-
-      Debugger_Text_Font      : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
-      --  Font used in the debugger window.
 
       Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
       Selected_Component      : Items.Generic_Type_Access := null;
