@@ -486,6 +486,26 @@ package body Debugger.Gdb is
       Wait_Prompt (Debugger);
    end Finish;
 
+   ------------------
+   -- Info_Threads --
+   ------------------
+
+   function Info_Threads
+     (Debugger : access Gdb_Debugger)
+      return Language.Thread_Information_Array is
+   begin
+      Empty_Buffer (Get_Process (Debugger));
+      Send (Get_Process (Debugger), Thread_List (Get_Language (Debugger)));
+      Wait_Prompt (Debugger);
+
+      declare
+         S : String := Expect_Out (Get_Process (Debugger));
+      begin
+         return Parse_Thread_List
+           (Get_Language (Debugger), S (S'First .. S'Last - Prompt_Length));
+      end;
+   end Info_Threads;
+
    ------------------------
    -- Line_Contains_Code --
    ------------------------
