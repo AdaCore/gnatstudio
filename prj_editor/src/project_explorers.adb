@@ -694,6 +694,7 @@ package body Project_Explorers is
 
       if Node_Type = Project_Node
         or else Node_Type = Modified_Project_Node
+        or else Node_Type = Extends_Project_Node
       then
          Set_File_Information
            (Context   => File_Selection_Context_Access (Context),
@@ -782,7 +783,14 @@ package body Project_Explorers is
       end if;
 
       Set (Explorer.Tree.Model, N, Absolute_Name_Column, "");
-      Set (Explorer.Tree.Model, N, Base_Name_Column, Node_Text);
+
+      if Modified_Project then
+         --  ??? We could use a different icon instead
+         Set (Explorer.Tree.Model, N, Base_Name_Column,
+              Node_Text & " (extended)");
+      else
+         Set (Explorer.Tree.Model, N, Base_Name_Column, Node_Text);
+      end if;
 
       Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
 
@@ -914,8 +922,8 @@ package body Project_Explorers is
    -------------------------
 
    procedure Expand_Project_Node
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter)
+     (Explorer               : access Project_Explorer_Record'Class;
+      Node                   : Gtk_Tree_Iter)
    is
       use String_List_Utils.String_List;
       Project     : constant Project_Type :=
@@ -1136,7 +1144,7 @@ package body Project_Explorers is
                Expand_Project_Node (Explorer, Node);
 
             when Extends_Project_Node =>
-               null;
+               Expand_Project_Node (Explorer, Node);
 
             when Directory_Node =>
                Expand_Directory_Node (Explorer, Node);
