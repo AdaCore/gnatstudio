@@ -77,22 +77,30 @@ with String_Utils;             use String_Utils;
 with Traces;                   use Traces;
 with System.Assertions;
 with Glib.Object;              use Glib.Object;
-with Default_Preferences;      use Default_Preferences;
+--  with Default_Preferences;      use Default_Preferences;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Intl;               use Glide_Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
+with Commands;                 use Commands;
 
 package body Aliases_Module is
 
    Me : constant Debug_Handle := Create ("Aliases");
 
-   Alias_Key : Param_Spec_Key;
-
    Special : constant Character := '%';
 
    Highlight_Color : constant String := "#DD0000";
    --  Color used to highlight special entities in the expansion
+
+   type Interactive_Alias_Expansion_Command is new Root_Command with record
+      Kernel : Kernel_Handle;
+   end record;
+   type Interactive_Alias_Expansion_Command_Access is access all
+     Interactive_Alias_Expansion_Command'Class;
+   function Execute
+     (Command : access Interactive_Alias_Expansion_Command)
+      return Command_Return_Type;
 
    type Param_Record;
    type Param_Access is access Param_Record;
@@ -135,10 +143,6 @@ package body Aliases_Module is
    type Aliases_Module_Id_Record is new Module_ID_Record with record
       Aliases : Aliases_Hash.String_Hash_Table.HTable;
       Module_Funcs : Expansion_Function_Array;
-
-      Key      : Gdk_Key_Type;
-      Modifier : Gdk_Modifier_Type;
-      --  Key used to activate the aliases (cached for efficiency)
    end record;
    type Aliases_Module_Id_Access is access all Aliases_Module_Id_Record'Class;
 
@@ -184,9 +188,6 @@ package body Aliases_Module is
    --  Update the contents of the editor, based on the list of currently
    --  defined aliases
 
-   function Key_Handler (Data : Event_Data) return Boolean;
-   --  Handler for key events in the GPS main window
-
    procedure Find_Current_Entity
      (Text : String;
       Current_Pos : Integer;
@@ -204,10 +205,6 @@ package body Aliases_Module is
    --  Return the expanded version of Name.
    --  Cursor is the index in the returnef string for the cursor position.
    --  The empty string is returned if there is no such alias.
-
-   procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle);
-   --  Called when preferences'values change
 
    procedure Load_Aliases
      (Kernel : access Kernel_Handle_Record'Class);
@@ -831,7 +828,7 @@ package body Aliases_Module is
 
             if Dialog = null then
                Gtk_New (Dialog,
-                           Title  => -"Alias Parameter Selection",
+                        Title  => -"Alias Parameter Selection",
                         Parent => Get_Main_Window (Get_Kernel (Data)),
                         Flags  => Destroy_With_Parent);
                Gtk_New (S);
@@ -885,126 +882,125 @@ package body Aliases_Module is
       end if;
    end Expand_Alias;
 
-   -----------------
-   -- Key_Handler --
-   -----------------
+   -------------
+   -- Execute --
+   -------------
 
-   function Key_Handler (Data : Event_Data) return Boolean is
-      Event : constant Gdk_Event := Get_Event (Data);
+   function Execute
+     (Command : access Interactive_Alias_Expansion_Command)
+      return Command_Return_Type
+   is
+      Data  : constant Event_Data := Get_Current_Event_Data
+        (Command.Kernel);
       W : Gtk_Widget;
       Had_Focus : Boolean;
    begin
-      if Get_Event_Type (Event) = Key_Press
-        and then Get_State (Event) = Aliases_Module_Id.Modifier
-        and then Get_Key_Val (Event) = Aliases_Module_Id.Key
-      then
-         W := Get_Widget (Data);
+      W := Get_Widget (Data);
 
-         if W.all in Gtk_Editable_Record'Class then
-            if Get_Editable (Gtk_Editable (W)) then
+      if W.all in Gtk_Editable_Record'Class then
+         if Get_Editable (Gtk_Editable (W)) then
+            declare
+               Text : constant String := Get_Chars (Gtk_Editable (W));
+               First, Last : Integer;
+            begin
+               Find_Current_Entity
+                 (Text, Integer (Get_Position (Gtk_Editable (W))),
+                  First, Last);
+
+               if First > Last then
+                  return Failure;
+               end if;
+
                declare
-                  Text : constant String := Get_Chars (Gtk_Editable (W));
-                  First, Last : Integer;
+                  Cursor : aliased Integer;
+                  Replace : constant String := Expand_Alias
+                    (Data,
+                     Text (First + 1 .. Last - 1),
+                     Cursor'Unchecked_Access, 0);
                begin
-                  Find_Current_Entity
-                    (Text, Integer (Get_Position (Gtk_Editable (W))),
-                     First, Last);
-
-                  if First > Last then
-                     return False;
-                  end if;
-
-                  declare
-                     Cursor : aliased Integer;
-                     Replace : constant String := Expand_Alias
-                       (Data,
-                        Text (First + 1 .. Last - 1),
-                        Cursor'Unchecked_Access, 0);
-                  begin
-                     if Replace /= "" then
-                        Delete_Text
-                          (Gtk_Editable (W), Gint (First), Gint (Last - 1));
-                        Insert_Text (Gtk_Editable (W), Replace, Gint (First));
-                        Set_Position (Gtk_Editable (W),
+                  if Replace /= "" then
+                     Delete_Text
+                       (Gtk_Editable (W), Gint (First), Gint (Last - 1));
+                     Insert_Text (Gtk_Editable (W), Replace, Gint (First));
+                     Set_Position (Gtk_Editable (W),
                                       Gint (First + Cursor - Replace'Length));
-                     end if;
-                  end;
-                  return True;
+                  end if;
                end;
-            end if;
+               return Commands.Success;
+            end;
+         end if;
 
-         elsif W.all in Gtk_Text_View_Record'Class then
-            if Get_Editable (Gtk_Text_View (W)) then
+      elsif W.all in Gtk_Text_View_Record'Class then
+         if Get_Editable (Gtk_Text_View (W)) then
+            declare
+               Buffer : constant Gtk_Text_Buffer := Get_Buffer
+                 (Gtk_Text_View (W));
+               First_Iter, Last_Iter : Gtk_Text_Iter;
+               Success : Boolean := True;
+            begin
+               Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
+               Search_Entity_Bounds (First_Iter, Last_Iter);
+
+               while Success
+                 and then Get
+                   (Aliases_Module_Id.Aliases,
+                    Get_Slice (Buffer, First_Iter, Last_Iter)) = No_Alias
+               loop
+                  Backward_Word_Start (First_Iter, Success);
+               end loop;
+
                declare
-                  Buffer : constant Gtk_Text_Buffer := Get_Buffer
-                    (Gtk_Text_View (W));
-                  First_Iter, Last_Iter : Gtk_Text_Iter;
-                  Success : Boolean := True;
+                  Cursor : aliased Integer;
+                  Column : constant Gint := Get_Line_Offset (First_Iter);
+                  Replace : constant String := Expand_Alias
+                    (Data,
+                     Get_Slice (Buffer, First_Iter, Last_Iter),
+                     Cursor'Unchecked_Access,
+                     Column);
+                  Result : Boolean;
+                  Event : Gdk_Event;
                begin
-                  Get_Iter_At_Mark (Buffer, First_Iter, Get_Insert (Buffer));
-                  Search_Entity_Bounds (First_Iter, Last_Iter);
+                  if Replace /= "" then
+                     Had_Focus := Has_Focus_Is_Set (W);
 
-                  while Success
-                    and then Get
-                    (Aliases_Module_Id.Aliases,
-                     Get_Slice (Buffer, First_Iter, Last_Iter)) = No_Alias
-                  loop
-                     Backward_Word_Start (First_Iter, Success);
-                  end loop;
+                     --  Simulate a focus_in/focus_out event, needed for the
+                     --  GPS source editor, which saves and restores the
+                     --  cursor position when the focus changes (for the
+                     --  handling of multiple views).
+                     if not Had_Focus then
+                        Allocate (Event, Enter_Notify, Get_Window (W));
+                        Result := Return_Callback.Emit_By_Name
+                          (W, "focus_in_event", Event);
+                        Free (Event);
+                     end if;
 
-                  declare
-                     Cursor : aliased Integer;
-                     Column : constant Gint := Get_Line_Offset (First_Iter);
-                     Replace : constant String := Expand_Alias
-                       (Data,
-                        Get_Slice (Buffer, First_Iter, Last_Iter),
-                        Cursor'Unchecked_Access,
-                        Column);
-                     Result : Boolean;
-                     Event : Gdk_Event;
-                  begin
-                     if Replace /= "" then
-                        Had_Focus := Has_Focus_Is_Set (W);
-
-                        --  Simulate a focus_in/focus_out event, needed for the
-                        --  GPS source editor, which saves and restores the
-                        --  cursor position when the focus changes (for the
-                        --  handling of multiple views).
-                        if not Had_Focus then
-                           Allocate (Event, Enter_Notify, Get_Window (W));
-                           Result := Return_Callback.Emit_By_Name
-                             (W, "focus_in_event", Event);
-                           Free (Event);
-                        end if;
-
-                        Delete (Buffer, First_Iter, Last_Iter);
-                        Insert (Buffer, First_Iter, Replace);
-                        Backward_Chars (First_Iter,
+                     Delete (Buffer, First_Iter, Last_Iter);
+                     Insert (Buffer, First_Iter, Replace);
+                     Backward_Chars (First_Iter,
                                         Gint (Replace'Length - Cursor),
                                         Result);
-                        Place_Cursor (Buffer, First_Iter);
+                     Place_Cursor (Buffer, First_Iter);
 
-                        if not Had_Focus then
-                           Allocate (Event, Leave_Notify, Get_Window (W));
-                           Result := Return_Callback.Emit_By_Name
-                             (W, "focus_out_event", Event);
-                           Free (Event);
-                        end if;
+                     if not Had_Focus then
+                        Allocate (Event, Leave_Notify, Get_Window (W));
+                        Result := Return_Callback.Emit_By_Name
+                          (W, "focus_out_event", Event);
+                        Free (Event);
                      end if;
-                  end;
-                  return True;
+                  end if;
                end;
-            end if;
+               return Commands.Success;
+            end;
          end if;
       end if;
 
-      return False;
+      return Failure;
 
    exception
       when E : others =>
          Trace (Me, "Unexception exception: " & Exception_Information (E));
-         return False;
-   end Key_Handler;
+         return Failure;
+   end Execute;
 
    ---------------
    -- Get_Value --
@@ -1217,24 +1213,6 @@ package body Aliases_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Alias_Created;
-
-   ----------------------------
-   -- On_Preferences_Changed --
-   ----------------------------
-
-   procedure On_Preferences_Changed
-     (Kernel : access GObject_Record'Class; K : Kernel_Handle)
-   is
-      pragma Unreferenced (Kernel);
-   begin
-      Get_Pref (K, Alias_Key,
-                Aliases_Module_Id.Modifier,
-                Aliases_Module_Id.Key);
-
-   exception
-      when E : others =>
-         Trace (Me, "Unexpected exception: " & Exception_Information (E));
-   end On_Preferences_Changed;
 
    -----------------------
    -- Param_Env_Changed --
@@ -1979,6 +1957,7 @@ package body Aliases_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Edit : constant String := "/" & (-"Edit");
+      Command : Interactive_Alias_Expansion_Command_Access;
    begin
       Aliases_Module_Id := new Aliases_Module_Id_Record;
       Register_Module
@@ -1987,15 +1966,7 @@ package body Aliases_Module is
          Module_Name             => "Aliases",
          Priority                => Default_Priority);
 
-      Alias_Key := Gnew_Key
-        (Name  => "Aliases-Key",
-         Nick  => -"Aliases key",
-         Blurb => -"Key used for aliases expansion",
-         Default_Modifier => Control_Mask,
-         Default_Key      => GDK_LC_o);
-      Register_Property (Kernel, Param_Spec (Alias_Key), -"General");
-
-      Register_Menu
+         Register_Menu
         (Kernel, Edit, -"_Aliases",
          Ref_Item   => -"Preferences",
          Add_Before => False,
@@ -2003,14 +1974,14 @@ package body Aliases_Module is
 
       Load_Aliases (Kernel);
 
-      Kernel_Callback.Connect
-        (Kernel, "preferences_changed",
-         Kernel_Callback.To_Marshaller (On_Preferences_Changed'Access),
-         Kernel_Handle (Kernel));
-
-      On_Preferences_Changed (Kernel, Kernel_Handle (Kernel));
-
-      Register_Key_Handlers (Kernel, Key_Handler'Access);
+      Command := new Interactive_Alias_Expansion_Command;
+      Command.Kernel := Kernel_Handle (Kernel);
+      Register_Key
+        (Get_Key_Handler (Kernel),
+         Name        => "expand alias",
+         Default_Key => GDK_LC_o,
+         Default_Mod => Control_Mask,
+         Command => Command_Access (Command));
 
       Register_Special_Alias_Entity
         (Kernel, "Current Date", 'D', Special_Entities'Access);
