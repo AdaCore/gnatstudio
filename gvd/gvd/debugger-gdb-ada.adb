@@ -234,7 +234,6 @@ package body Debugger.Gdb.Ada is
    begin
       case Type_Str (Index) is
          when '<' =>
-
             --  A union type
 
             if Looking_At (Type_Str, Index, "<union ") then
@@ -262,7 +261,6 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when 'a' =>
-
             --  Arrays, as in "array (1 .. 4, 3 .. 5) of character"
 
             if Looking_At (Type_Str, Index, "array ") then
@@ -285,7 +283,6 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when 'd' =>
-
             --  A delta type, as for "Duration" types (delta 1e-09)
 
             if Looking_At (Type_Str, Index, "delta ") then
@@ -297,7 +294,6 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when 'm' =>
-
             --  Modular types
 
             if Looking_At (Type_Str, Index, "mod ") then
@@ -315,7 +311,6 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when 'n' =>
-
             --  A tagged record type, as in
             --  new tagged_type with record c : float; end record;
 
@@ -366,7 +361,6 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when 'r' =>
-
             --  A record type, as in 'record field1: integer; end record'
 
             if Looking_At (Type_Str, Index, "record") then
@@ -395,8 +389,10 @@ package body Debugger.Gdb.Ada is
                raise Unexpected_Type;
             end if;
 
-         when 't' =>
+         --  ??? We could handle "string" as well as a standard type
+         --  when 's' =>
 
+         when 't' =>
             --  A tagged type
 
             if Looking_At (Type_Str, Index, "tagged record") then
@@ -418,8 +414,8 @@ package body Debugger.Gdb.Ada is
             end if;
 
          when '(' =>
-
             --  Enumeration type
+
             Skip_To_Char (Type_Str, Index, ')');
             Result := New_Enum_Type;
 
