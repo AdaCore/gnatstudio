@@ -38,8 +38,8 @@ private package Src_Info.LI_Utils is
    --    1. Inserts new declaration into the LI structrure tree
    --    2. Returns pointer to created declaration (Declaration_Info param)
 
-   procedure Insert_Dependency_Declaration (
-      Handler                 : in LI_Handler;
+   procedure Insert_Dependency_Declaration
+     (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -55,8 +55,8 @@ private package Src_Info.LI_Utils is
    --  Inserts new dependency declaration with specified parameters to given
    --  LI structure tree.
 
-   procedure Insert_Reference (
-      Declaration_Info        : in out E_Declaration_Info_List;
+   procedure Insert_Reference
+     (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
       Source_Filename         : in String;
       Location                : in Point;
@@ -64,14 +64,14 @@ private package Src_Info.LI_Utils is
    --  Inserts new reference to declaration. Declaration here is specified
    --  by pointer to appropriate E_Declaration_Info_Node object
 
-   function Find_Declaration (
-      File                    : in LI_File_Ptr;
+   function Find_Declaration
+     (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration in LI tree by it's Name and Location
 
-   function Find_Dependency_Declaration (
-      File                    : in LI_File_Ptr;
+   function Find_Dependency_Declaration
+     (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Filename                : in String;
       Location                : in Point) return E_Declaration_Info_List;

@@ -1,7 +1,7 @@
 package body Src_Info.LI_Utils is
 
-   procedure Insert_Declaration_Internal (
-      D_Ptr                   : in out E_Declaration_Info_List;
+   procedure Insert_Declaration_Internal
+     (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -16,8 +16,8 @@ package body Src_Info.LI_Utils is
    --  Inserts declaration into specified E_Declaration_Info_List
 
 
-   function Find_Declaration_Internal (
-      Declaration_Info_Ptr    : in E_Declaration_Info_List;
+   function Find_Declaration_Internal
+     (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
       Location                : in Point) return E_Declaration_Info_List;
    --  Finds declaration with given attributes in
@@ -32,8 +32,8 @@ package body Src_Info.LI_Utils is
    --  Insert_declaration  --
    --------------------------
 
-   procedure Insert_Declaration (
-      Handler                 : in LI_Handler;
+   procedure Insert_Declaration
+     (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -45,8 +45,8 @@ package body Src_Info.LI_Utils is
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List
-   ) is
+      Declaration_Info        : out E_Declaration_Info_List)
+   is
       D_Ptr : E_Declaration_Info_List;
    begin
       if File = No_LI_File then
@@ -102,8 +102,8 @@ package body Src_Info.LI_Utils is
    --  Insert_Dependency_Declaration  --
    -------------------------------------
 
-   procedure Insert_Dependency_Declaration (
-      Handler                 : in LI_Handler;
+   procedure Insert_Dependency_Declaration
+     (Handler                 : in LI_Handler;
       File                    : in out LI_File_Ptr;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -115,8 +115,8 @@ package body Src_Info.LI_Utils is
       End_Of_Scope_Location   : in Point := Invalid_Point;
       Rename_Filename         : in String := "";
       Rename_Location         : in Point := Invalid_Point;
-      Declaration_Info        : out E_Declaration_Info_List
-   ) is
+      Declaration_Info        : out E_Declaration_Info_List)
+   is
       D_Ptr : E_Declaration_Info_List;
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
@@ -194,8 +194,8 @@ package body Src_Info.LI_Utils is
    --  Insert_Reference  --
    ------------------------
 
-   procedure Insert_Reference (
-      Declaration_Info        : in out E_Declaration_Info_List;
+   procedure Insert_Reference
+     (Declaration_Info        : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
       Source_Filename         : in String;
       Location                : in Point;
@@ -227,8 +227,8 @@ package body Src_Info.LI_Utils is
           Kind => Kind);
    end Insert_Reference;
 
-   function Find_Declaration (
-      File                    : in LI_File_Ptr;
+   function Find_Declaration
+     (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Location                : in Point) return E_Declaration_Info_List is
    begin
@@ -246,8 +246,8 @@ package body Src_Info.LI_Utils is
    --  Find_Dependency_Declaration  --
    -----------------------------------
 
-   function Find_Dependency_Declaration (
-      File                    : in LI_File_Ptr;
+   function Find_Dependency_Declaration
+     (File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Filename                : in String;
       Location                : in Point) return E_Declaration_Info_List
@@ -280,8 +280,8 @@ package body Src_Info.LI_Utils is
    --  Insert_Declaration_Internal  --
    -----------------------------------
 
-   procedure Insert_Declaration_Internal (
-      D_Ptr                   : in out E_Declaration_Info_List;
+   procedure Insert_Declaration_Internal
+     (D_Ptr                   : in out E_Declaration_Info_List;
       File                    : in LI_File_Ptr;
       Symbol_Name             : in String;
       Source_Filename         : in String;
@@ -343,8 +343,8 @@ package body Src_Info.LI_Utils is
    --  Find_Declaration_Internal  --
    -----------------------------------
 
-   function Find_Declaration_Internal (
-      Declaration_Info_Ptr    : in E_Declaration_Info_List;
+   function Find_Declaration_Internal
+     (Declaration_Info_Ptr    : in E_Declaration_Info_List;
       Symbol_Name             : in String;
       Location                : in Point) return E_Declaration_Info_List
    is
