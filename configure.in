@@ -11,7 +11,6 @@ TARGET_LFLAGS=""
 EXEC_COMMAND="sh -c"
 DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
-HTML_BROWSER="mozilla"
 PRINT_CMD="lp"
 OPAQUE_MDI=False
 HOST_TYPE=Unix
@@ -201,7 +200,6 @@ case "${host}" in
 	EXEC_COMMAND="cmd /c start"
 	DEFAULT_PS="winps"
 	DEFAULT_FONT="tahoma 8"
-	HTML_BROWSER="explorer"
 	PRINT_CMD=""
 	DIFF_CMD="windiff"
 	PATCH_CMD="winpatch"
@@ -239,7 +237,6 @@ AC_SUBST(TARGET)
 AC_SUBST(EXEC_COMMAND)
 AC_SUBST(DEFAULT_PS)
 AC_SUBST(DEFAULT_FONT)
-AC_SUBST(HTML_BROWSER)
 AC_SUBST(PRINT_CMD)
 AC_SUBST(DIFF_CMD)
 AC_SUBST(PATCH_CMD)
