@@ -326,11 +326,13 @@ package body Glide_Kernel is
            (Handle.Explorer_Context, Handle, Get_Creator (Context));
 
          File := File_Selection_Context_Access (Context);
-         Set_File_Information
+         Set_File_Name_Information
            (File_Selection_Context_Access (Handle.Explorer_Context),
-            Project_Information (File),
             Directory_Information (File),
             File_Information (File));
+         Set_File_Information
+           (File_Selection_Context_Access (Handle.Explorer_Context),
+            Project_Information (File));
       end if;
 
       Internal
