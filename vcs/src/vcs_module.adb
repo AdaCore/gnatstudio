@@ -20,11 +20,17 @@
 
 with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
+with Gtk.Box;                   use Gtk.Box;
 with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.Event_Box;             use Gtk.Event_Box;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Label;                 use Gtk.Label;
 with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Radio_Button;          use Gtk.Radio_Button;
 with Gtk.Table;                 use Gtk.Table;
+with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
@@ -62,8 +68,10 @@ package body VCS_Module is
    procedure Destroy (Module : in out VCS_Module_ID_Record);
    --  Free the memory occupied by Module.
 
-   type VCS_Selector_Record is new Gtk_Table_Record with record
+   type VCS_Selector_Record is new Gtk_Box_Record with record
       Selected : Gtk_Radio_Button;
+      Log_Checker : Gtk.GEntry.Gtk_Entry;
+      File_Checker : Gtk.GEntry.Gtk_Entry;
    end record;
    type VCS_Selector is access all VCS_Selector_Record'Class;
 
@@ -189,19 +197,33 @@ package body VCS_Module is
    --------------------
 
    function Widget_Factory
-     (Page : access VCS_Editor_Record;
-      Project_View : Project_Id; Kernel : access Kernel_Handle_Record'Class)
+     (Page         : access VCS_Editor_Record;
+      Project_View : Project_Id;
+      Kernel       : access Kernel_Handle_Record'Class)
       return Gtk_Widget
    is
-      pragma Unreferenced (Page, Kernel);
+      pragma Unreferenced (Page);
       Systems : Argument_List := Get_VCS_List (VCS_Module_ID);
       Radio : Gtk_Radio_Button;
       Current : constant String := Get_Vcs_Kind (Project_View);
-      Table : VCS_Selector;
+      Main : VCS_Selector;
+      Frame : Gtk_Frame;
+      Box   : Gtk_Box;
+      Table : Gtk_Table;
+      Label : Gtk_Label;
+      Event : Gtk_Event_Box;
    begin
-      Table := new VCS_Selector_Record;
-      Initialize
-        (Table, Rows => Systems'Length + 1, Columns => 1, Homogeneous => True);
+      Main := new VCS_Selector_Record;
+      Initialize_Vbox (Main, Homogeneous => False);
+
+      --  System frame
+
+      Gtk_New (Frame, -"System");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Main, Frame, Expand => False);
+
+      Gtk_New_Vbox (Box, Homogeneous => True);
+      Add (Frame, Box);
 
       for S in Systems'Range loop
          if Systems (S).all = "" then
@@ -211,21 +233,55 @@ package body VCS_Module is
          end if;
          if To_Lower (Systems (S).all) = To_Lower (Current) then
             Set_Active (Radio, True);
-            Table.Selected := Radio;
+            Main.Selected := Radio;
          end if;
-         Attach (Table, Radio, 0, 1,
-                 Guint (S - Systems'First),
-                 Guint (S - Systems'First + 1),
-                 Xoptions => Fill, Yoptions => 0);
+         Pack_Start (Box, Radio);
 
          Object_User_Callback.Connect
            (Radio, "toggled",
             Object_User_Callback.To_Marshaller (Toggled'Access),
-            User_Data => GObject (Table));
+            User_Data => GObject (Main));
       end loop;
 
-      Show_All (Table);
-      return Gtk_Widget (Table);
+      --  Actions frame
+
+      Gtk_New (Frame, -"Actions");
+      Set_Border_Width (Frame, 5);
+      Pack_Start (Main, Frame, Expand => False);
+
+      Gtk_New (Table, Rows => 2, Columns => 2, Homogeneous => False);
+      Add (Frame, Table);
+
+      Gtk_New (Event);
+      Attach (Table, Event, 0, 1, 0, 1, Xoptions => Fill);
+      Gtk_New (Label, -"Log checker:");
+      Add (Event, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Application run on the log file/revision history just before"
+                 & " commiting a file. If it returns anything other than 0,"
+                 & " the commit will not be performed. The only parameter to"
+                 & " this script is the name of a log file"));
+
+      Gtk_New (Main.Log_Checker);
+      Attach (Table, Main.Log_Checker, 1, 2, 0, 1);
+
+      Gtk_New (Event);
+      Attach (Table, Event, 0, 1, 1, 2, Xoptions => Fill);
+      Gtk_New (Label, -"File checker:");
+      Add (Event, Label);
+      Set_Alignment (Label, 0.0, 0.5);
+      Set_Tip (Get_Tooltips (Kernel), Event,
+               -("Application run on the source file just before"
+                 & " commiting a file. If it returns anything other than 0,"
+                 & " the commit will not be performed. The only parameter to"
+                 & " this script is a file name"));
+
+      Gtk_New (Main.File_Checker);
+      Attach (Table, Main.File_Checker, 1, 2, 1, 2);
+
+      Show_All (Main);
+      return Gtk_Widget (Main);
    end Widget_Factory;
 
    --------------------
@@ -242,6 +298,7 @@ package body VCS_Module is
    is
       pragma Unreferenced (Page);
       Selector : VCS_Selector := VCS_Selector (Widget);
+      Changed : Boolean := False;
    begin
       if Selector.Selected /= null then
          if Project_View = No_Project then
@@ -253,32 +310,94 @@ package body VCS_Module is
                   Attribute_Name     => Vcs_Kind_Attribute,
                   Value              => Get_Label (Selector.Selected));
             end if;
-            return True;
 
-         elsif Get_Label (Selector.Selected) /=
-           Get_Vcs_Kind (Project_View)
-         then
-            if Get_Label (Selector.Selected) /= -Auto_Detect then
+            if Get_Text (Selector.Log_Checker) /= "" then
                Update_Attribute_Value_In_Scenario
-                 (Project           => Project,
-                  Pkg_Name          => Ide_Package,
-                  Scenario_Variables =>
-                    Scenario_Variables (Kernel),
-                  Attribute_Name    => Vcs_Kind_Attribute,
-                  Value             => Get_Label (Selector.Selected));
-
-            else
-               Delete_Attribute
-                 (Project           => Project,
-                  Pkg_Name          => Ide_Package,
-                  Scenario_Variables =>
-                    Scenario_Variables (Kernel),
-                  Attribute_Name    => Vcs_Kind_Attribute);
+                 (Project            => Project,
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Attribute_Name     => Vcs_Log_Check,
+                  Value              => Get_Text (Selector.Log_Checker));
             end if;
-            return True;
+
+            if Get_Text (Selector.File_Checker) /= "" then
+               Update_Attribute_Value_In_Scenario
+                 (Project            => Project,
+                  Pkg_Name           => Ide_Package,
+                  Scenario_Variables => (1 .. 0 => Empty_Node),
+                  Attribute_Name     => Vcs_File_Check,
+                  Value              => Get_Text (Selector.File_Checker));
+            end if;
+
+            Changed := True;
+
+         else
+            if Get_Label (Selector.Selected) /=
+              Get_Vcs_Kind (Project_View)
+            then
+               if Get_Label (Selector.Selected) /= -Auto_Detect then
+                  Update_Attribute_Value_In_Scenario
+                    (Project           => Project,
+                     Pkg_Name          => Ide_Package,
+                     Scenario_Variables =>
+                       Scenario_Variables (Kernel),
+                     Attribute_Name    => Vcs_Kind_Attribute,
+                     Value             => Get_Label (Selector.Selected));
+
+               else
+                  Delete_Attribute
+                    (Project            => Project,
+                     Pkg_Name           => Ide_Package,
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Vcs_Kind_Attribute);
+               end if;
+               Changed := True;
+            end if;
+
+            if Get_Text (Selector.Log_Checker) /=
+              Get_Attribute_Value (Project_View, Vcs_Log_Check, Ide_Package)
+            then
+               if Get_Text (Selector.Log_Checker) /= "" then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Pkg_Name           => Ide_Package,
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Vcs_Log_Check,
+                     Value              => Get_Text (Selector.Log_Checker));
+
+               else
+                  Delete_Attribute
+                    (Project            => Project,
+                     Pkg_Name           => Ide_Package,
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Vcs_Log_Check);
+               end if;
+               Changed := True;
+            end if;
+
+            if Get_Text (Selector.File_Checker) /=
+              Get_Attribute_Value (Project_View, Vcs_File_Check, Ide_Package)
+            then
+               if Get_Text (Selector.File_Checker) /= "" then
+                  Update_Attribute_Value_In_Scenario
+                    (Project            => Project,
+                     Pkg_Name           => Ide_Package,
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Vcs_File_Check,
+                     Value              => Get_Text (Selector.File_Checker));
+
+               else
+                  Delete_Attribute
+                    (Project            => Project,
+                     Pkg_Name           => Ide_Package,
+                     Scenario_Variables => Scenario_Variables (Kernel),
+                     Attribute_Name     => Vcs_File_Check);
+               end if;
+               Changed := True;
+            end if;
          end if;
       end if;
-      return False;
+      return Changed;
    end Project_Editor;
 
    -------------
