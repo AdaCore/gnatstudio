@@ -197,7 +197,6 @@ package body Codefix_Window_Pkg.Callbacks is
         Graphic_Codefix_Access (Object);
    begin
       Cancel_All_Fixes (Graphic_Codefix);
-      Quit (Graphic_Codefix);
 
    exception
       when E : others =>
