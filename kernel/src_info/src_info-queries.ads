@@ -892,7 +892,7 @@ private
    Null_Scope_Tree : constant Scope_Tree :=
      (Lib_Info       => null,
       LI_Filename    => VFS.No_File,
-      Time_Stamp     => No_Time,
+      Time_Stamp     => VFS.No_Time,
       Body_Tree      => null,
       Spec_Tree      => null,
       Separate_Trees => null);

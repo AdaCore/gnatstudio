@@ -1488,7 +1488,7 @@ package body Src_Info.Queries is
 
       T := (Lib_Info    => Lib_Info,
             LI_Filename => Lib_Info.LI.LI_Filename,
-            Time_Stamp  => Src_Info.No_Time,
+            Time_Stamp  => VFS.No_Time,
             Body_Tree   => null,
             Spec_Tree   => null,
             Separate_Trees => new Scope_List_Array (1 .. Num_Separates));

@@ -297,7 +297,7 @@ package body Project_Explorers_Common is
       --  Mark the file information as up-to-date
 
       Set (Model, Node, Timestamp_Column,
-           Gint (File_Time_Stamp (File_Name) - Src_Info.No_Time));
+           Gint (File_Time_Stamp (File_Name) - VFS.No_Time));
 
       --  Remove any previous information for this file.
 
@@ -541,7 +541,7 @@ package body Project_Explorers_Common is
                     Get_String (Model, Node, Absolute_Name_Column));
             begin
                return Duration (Get_Int (Model, Node, Timestamp_Column)) +
-                 Src_Info.No_Time =
+                 VFS.No_Time =
                    File_Time_Stamp (File);
             end;
 
