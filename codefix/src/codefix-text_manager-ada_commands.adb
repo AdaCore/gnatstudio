@@ -196,11 +196,13 @@ package body Codefix.Text_Manager.Ada_Commands is
          while Current_Extract /= Ada_Lists.Null_Node loop
             declare
                Extract_Temp : Ada_List;
+               Test_Cursor  : File_Cursor := File_Cursor (Current_Cursor);
             begin
-               if File_Cursor (Current_Cursor) >=
+               if Test_Cursor >=
                  Get_Start (Data (Current_Extract))
-                 and then File_Cursor (Current_Cursor) <=
-                 File_Cursor (Get_Stop (Data (Current_Extract))) then
+                 and then Test_Cursor <=
+                   Get_Stop (Data (Current_Extract))
+               then
                   Extract_Temp := Clone (Data (Current_Extract));
                   Remove_Elements
                     (Extract_Temp, Current_Cursor.String_Match.all);
@@ -262,31 +264,54 @@ package body Codefix.Text_Manager.Ada_Commands is
    -- Remove_Pkg_Clauses_Cmd --
    ----------------------------
 
-
    procedure Initialize
      (This         : in out Remove_Pkg_Clauses_Cmd;
       Current_Text : Text_Navigator_Abstr'Class;
       Word         : Word_Cursor;
       Destination  : String := "")
    is
-      pragma Unreferenced (Destination);
-
       Use_Info, Pkg_Info     : Construct_Information;
-      Word_Use               : Word_Cursor := Word;
+      Word_Used              : Word_Cursor := Clone (Word);
       Index_Name, Prev_Index : Natural := 0;
    begin
-      Pkg_Info := Search_Unit
-        (Current_Text, Word.File_Name.all, Cat_With, Word.String_Match.all);
+      if Destination /= "" then
+         Assign (This.Destination, Destination);
+      end if;
+
+      if Word.String_Match /= null then
+         Pkg_Info := Search_Unit
+           (Current_Text, Word.File_Name.all, Cat_With, Word.String_Match.all);
+      else
+         Pkg_Info := Get_Unit
+           (Current_Text, Word, Before, Cat_With);
+         Assign (Word_Used.String_Match, Pkg_Info.Name.all);
+      end if;
 
       if Pkg_Info.Category = Cat_Unknown then
          Pkg_Info := Search_Unit
            (Current_Text, Word.File_Name.all,
             Cat_Package,
             Word.String_Match.all);
-         Initialize (This.Instantiation_Pkg, Current_Text, Word);
+
+         Initialize
+           (This.Instantiation_Pkg,
+            Current_Text,
+            Word_Used);
          This.Is_Instantiation := True;
       else
-         Add_To_Remove (This.Clauses_Pkg, Current_Text, Word);
+
+         Add_To_Remove
+           (This.Clauses_Pkg,
+            Current_Text,
+            Word_Used);
+
+         if Destination /= "" then
+            --  ??? Try to found a better position
+            Append
+              (This.Obj_List,
+               new String'("with " & Pkg_Info.Name.all & ";"));
+         end if;
+
          This.Is_Instantiation := False;
       end if;
 
@@ -302,10 +327,22 @@ package body Codefix.Text_Manager.Ada_Commands is
             Pkg_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
 
          if Use_Info.Category /= Cat_Unknown then
-            Word_Use.Col := Use_Info.Sloc_Start.Column;
-            Word_Use.Line := Use_Info.Sloc_Start.Line;
-            Assign (Word_Use.String_Match, Use_Info.Name.all);
-            Add_To_Remove (This.Clauses_Pkg, Current_Text, Word_Use);
+            Word_Used.Col := Use_Info.Sloc_Start.Column;
+            Word_Used.Line := Use_Info.Sloc_Start.Line;
+            Assign (Word_Used.String_Match, Use_Info.Name.all);
+            Add_To_Remove (This.Clauses_Pkg, Current_Text, Word_Used);
+
+            if Destination /= "" then
+               if Use_Info.Category = Cat_Use then
+                  Append
+                   (This.Obj_List,
+                     new String'("use " & Use_Info.Name.all & ";"));
+               elsif Use_Info.Category = Cat_With then
+                  Append
+                   (This.Obj_List,
+                     new String'("with " & Use_Info.Name.all & ";"));
+               end if;
+            end if;
          end if;
 
          Prev_Index := Index_Name;
@@ -320,6 +357,8 @@ package body Codefix.Text_Manager.Ada_Commands is
    is
       Instr_Extract, Clauses_Extract : Extract;
       Success                        : Boolean;
+      Node                           : String_List.List_Node;
+      Line_Cursor                    : File_Cursor;
    begin
       if This.Is_Instantiation then
          Execute (This.Instantiation_Pkg, Current_Text, Instr_Extract);
@@ -340,8 +379,25 @@ package body Codefix.Text_Manager.Ada_Commands is
       else
          Execute (This.Clauses_Pkg, Current_Text, New_Extract);
       end if;
-   end Execute;
 
+      Delete_Empty_Lines (New_Extract);
+
+      if This.Destination /= null then
+
+         Node := First (This.Obj_List);
+
+         Line_Cursor.File_Name := This.Destination;
+         Line_Cursor.Col := 1;
+         Line_Cursor.Line := 0;
+
+         while Node /= String_List.Null_Node loop
+            Add_Line (New_Extract, Line_Cursor, Data (Node).all);
+            Node := Next (Node);
+         end loop;
+
+      end if;
+
+   end Execute;
 
    procedure Free (This : in out Remove_Pkg_Clauses_Cmd) is
    begin
@@ -442,6 +498,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       else
          Unchecked_Assign (New_Extract, Body_Extract);
       end if;
+
    end Execute;
 
    procedure Free (This : in out Remove_Entity_Cmd) is
