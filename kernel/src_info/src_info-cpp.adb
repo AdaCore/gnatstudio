@@ -1204,11 +1204,12 @@ package body Src_Info.CPP is
    -----------------------
    -- Get_Function_Kind --
    -----------------------
+
    function Get_Function_Kind
      (Return_Type             : String;
       Attributes              : SN_Attributes) return E_Kind
    is
-      Is_Template : Boolean := (Attributes and SN_TEMPLATE) /= 0;
+      Is_Template : constant Boolean := (Attributes and SN_TEMPLATE) /= 0;
    begin
       if Return_Type = "void" then
          if Is_Template then
@@ -1228,6 +1229,7 @@ package body Src_Info.CPP is
    ---------------------
    -- Get_Method_Kind --
    ---------------------
+
    function Get_Method_Kind
      (Class_Def               : CL_Table;
       Return_Type             : String;
