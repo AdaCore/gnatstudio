@@ -33,13 +33,14 @@
 
   <widget>
     <class>GtkVBox</class>
-    <name>vbox1</name>
+    <name>vbox</name>
     <homogeneous>False</homogeneous>
     <spacing>0</spacing>
 
     <widget>
       <class>GtkMenuBar</class>
       <name>factory</name>
+      <shadow_type>GTK_SHADOW_OUT</shadow_type>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
@@ -49,7 +50,7 @@
 
     <widget>
       <class>GtkToolbar</class>
-      <name>toolbar2</name>
+      <name>toolbar</name>
       <orientation>GTK_ORIENTATION_HORIZONTAL</orientation>
       <type>GTK_TOOLBAR_ICONS</type>
       <space_size>5</space_size>
@@ -230,7 +231,7 @@
 
     <widget>
       <class>GtkFrame</class>
-      <name>frame7</name>
+      <name>frame</name>
       <label_xalign>0</label_xalign>
       <shadow_type>GTK_SHADOW_ETCHED_IN</shadow_type>
       <child>
@@ -269,7 +270,7 @@
 
     <widget>
       <class>GtkStatusbar</class>
-      <name>statusbar1</name>
+      <name>statusbar</name>
       <child>
 	<padding>0</padding>
 	<expand>False</expand>
