@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -35,8 +35,8 @@ with Gtk.Scrolled_Window;
 
 with GNAT.OS_Lib;
 with Basic_Types;       use Basic_Types;
-with String_List_Utils; use String_List_Utils;
 with Histories;
+with GUI_Utils;
 
 with Pango.Font;
 
@@ -52,15 +52,6 @@ package Interactive_Consoles is
        (Input     : String;
         User_Data : access GObject_Record'Class)
         return String;
-
-   type Completion_Handler is access
-     function
-       (Input     : String;
-        User_Data : access GObject_Record'Class)
-        return String_List.List;
-   --  This function should return a list of adequate elements that all
-   --  begin with Input, or a list containing only Input.
-   --  The list if freed automatically by the interactive console.
 
    procedure Gtk_New
      (Console      : out Interactive_Console;
@@ -120,9 +111,15 @@ package Interactive_Consoles is
      (Console : access Interactive_Console_Record'Class);
    --  Displays the prompt at the end of the current text.
 
+   procedure Set_Prompt
+     (Console : access Interactive_Console_Record;
+      Prompt  : String);
+   --  Dynamically change the prompt. This doesn't impact the currently
+   --  displayed prompt.
+
    procedure Set_Completion_Handler
      (Console : access Interactive_Console_Record'Class;
-      Handler : Completion_Handler);
+      Handler : GUI_Utils.Completion_Handler);
    --  Set Handler as the default completion handler for the console.
    --  User_Data passed to Handler is the same one that is passed to the
    --  Command_Handler.
@@ -153,7 +150,7 @@ private
      Gtk.Scrolled_Window.Gtk_Scrolled_Window_Record
    with record
       Handler    : Command_Handler;
-      Completion : Completion_Handler;
+      Completion : GUI_Utils.Completion_Handler;
       User_Data  : GObject;
 
       Buffer : Gtk.Text_Buffer.Gtk_Text_Buffer;

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -49,6 +49,7 @@ with Pango.Enums;         use Pango.Enums;
 with System;               use System;
 with Histories;            use Histories;
 with String_Utils;         use String_Utils;
+with GUI_Utils;            use GUI_Utils;
 
 with Traces;               use Traces;
 with Ada.Exceptions;       use Ada.Exceptions;
@@ -392,161 +393,67 @@ package body Interactive_Consoles is
 
    begin
       case Key is
-         when GDK_Up =>
-            if Console.History /= null then
-               declare
-                  Hist : constant GNAT.OS_Lib.String_List_Access := Get_History
-                    (Console.History.all, History_Key (Console.Key.all));
-               begin
-                  if Hist /= null
-                    and then Console.Current_Position + Hist'First < Hist'Last
+         when GDK_Up | GDK_Down =>
+            if Console.Input_Blocked then
+               return True;
+            end if;
+
+            declare
+               Hist : constant String_List_Access := Get_History
+                 (Console.History.all, History_Key (Console.Key.all));
+            begin
+               if Hist /= null then
+                  if Key = GDK_Up
+                    and then
+                    Console.Current_Position + Hist'First < Hist'Last
                   then
                      Console.Current_Position := Console.Current_Position + 1;
 
-                     Get_Iter_At_Mark
-                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                     Get_End_Iter (Console.Buffer, Last_Iter);
-                     Delete (Console.Buffer, Prompt_Iter, Last_Iter);
-
-                     Get_Iter_At_Mark
-                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                     Insert
-                       (Console.Buffer,
-                        Prompt_Iter,
-                        Hist (Hist'First + Console.Current_Position).all);
-                     Get_End_Iter (Console.Buffer, Last_Iter);
-                     Place_Cursor (Console.Buffer, Last_Iter);
+                  elsif Key = GDK_Down
+                    and then Console.Current_Position /= -1
+                  then
+                     Console.Current_Position :=
+                       Console.Current_Position - 1;
                   end if;
-               end;
-            end if;
-            return True;
 
-         when GDK_Down =>
-            if Console.History /= null
-              and then Console.Current_Position /= -1
-            then
-               declare
-                  Hist : constant GNAT.OS_Lib.String_List_Access := Get_History
-                    (Console.History.all, History_Key (Console.Key.all));
-               begin
                   Get_Iter_At_Mark
                     (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
                   Get_End_Iter (Console.Buffer, Last_Iter);
                   Delete (Console.Buffer, Prompt_Iter, Last_Iter);
-
-                  Console.Current_Position := Console.Current_Position - 1;
-
                   if Console.Current_Position /= -1 then
-                     Get_Iter_At_Mark
-                       (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
                      Insert
-                       (Console.Buffer,
-                        Prompt_Iter,
+                       (Console.Buffer, Prompt_Iter,
                         Hist (Hist'First + Console.Current_Position).all);
-                     Get_End_Iter (Console.Buffer, Last_Iter);
-                     Place_Cursor (Console.Buffer, Last_Iter);
                   end if;
-               end;
-            end if;
+
+                  Get_End_Iter (Console.Buffer, Prompt_Iter);
+                  Place_Cursor (Console.Buffer, Prompt_Iter);
+                  Success := Scroll_To_Iter
+                    (Console.View,
+                     Iter          => Prompt_Iter,
+                     Within_Margin => 0.0,
+                     Use_Align     => False,
+                     Xalign        => 0.0,
+                     Yalign        => 0.0);
+               end if;
+            end;
             return True;
 
          when GDK_Tab | GDK_KP_Tab =>
             if Console.Completion = null then
                return False;
+            else
+               Do_Completion
+                 (View            => Console.View,
+                  Completion      => Console.Completion,
+                  Prompt_End_Mark => Console.Prompt_Mark,
+                  Uneditable_Tag  => Console.Uneditable_Tag,
+                  User_Data       => Console.User_Data);
+               Console.Internal_Insert := False;
+               return True;
             end if;
 
-            Get_Iter_At_Mark
-              (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-            Get_End_Iter (Console.Buffer, Last_Iter);
-
-            declare
-               use String_List_Utils.String_List;
-               Text        : constant String :=
-                 Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
-               Completions : List :=
-                 Console.Completion (Text, Console.User_Data);
-               Prefix      : constant String := Longest_Prefix (Completions);
-               Node        : List_Node;
-               Line        : Gint;
-               Offset      : Gint;
-               More_Than_One : constant Boolean :=
-                 Completions /= Null_List
-                 and then Next (First (Completions)) /= Null_Node;
-               Success     : Boolean;
-               Prompt_Iter : Gtk_Text_Iter;
-               Prev_Begin  : Gtk_Text_Iter;
-               Prev_Last   : Gtk_Text_Iter;
-               Pos         : Gtk_Text_Iter;
-            begin
-               if More_Than_One then
-                  Node := First (Completions);
-
-                  --  Get the range copy the current line.
-
-                  Get_End_Iter (Console.Buffer, Pos);
-                  Line := Get_Line (Pos);
-
-                  --  Get the offset of the prompt.
-
-                  Get_Iter_At_Mark
-                    (Console.Buffer, Prompt_Iter, Console.Prompt_Mark);
-                  Offset := Get_Line_Offset (Prompt_Iter);
-
-                  Get_End_Iter (Console.Buffer, Pos);
-                  Insert (Console.Buffer, Pos, "" & ASCII.LF);
-
-                  while Node /= Null_Node loop
-                     Get_End_Iter (Console.Buffer, Pos);
-                     Set_Line_Offset (Pos, 0);
-                     Insert (Console.Buffer, Pos, Data (Node) & ASCII.LF);
-                     Node := Next (Node);
-                  end loop;
-
-                  Get_Iter_At_Line_Offset
-                    (Console.Buffer, Prev_Begin, Line, 0);
-                  Copy (Prev_Begin, Prev_Last);
-                  Forward_To_Line_End (Prev_Last, Success);
-
-                  Get_End_Iter (Console.Buffer, Pos);
-                  Insert_Range (Console.Buffer, Pos, Prev_Begin, Prev_Last);
-
-                  Get_End_Iter (Console.Buffer, Pos);
-                  Set_Line_Offset (Pos, 0);
-
-                  Get_Iter_At_Line_Offset
-                    (Console.Buffer, Prev_Begin, Line, 0);
-                  Apply_Tag
-                    (Console.Buffer, Console.Uneditable_Tag, Prev_Begin, Pos);
-
-                  --  Restore the prompt
-
-                  Get_End_Iter (Console.Buffer, Prompt_Iter);
-                  Set_Line_Offset (Prompt_Iter, Offset);
-
-                  Move_Mark (Console.Buffer, Console.Prompt_Mark, Prompt_Iter);
-                  Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
-               end if;
-
-               --  Insert the completion, if any.
-               Get_End_Iter (Console.Buffer, Pos);
-
-               if Prefix'Length > Text'Length then
-                  Insert (Console.Buffer, Pos,
-                          Prefix (Prefix'First + Text'Length .. Prefix'Last));
-               end if;
-
-               if not More_Than_One then
-                  Insert (Console.Buffer, Pos, " ");
-               end if;
-
-               Console.Internal_Insert := False;
-
-               Free (Completions);
-            end;
-
-            return True;
-
-         when GDK_Return =>
+         when GDK_Return | GDK_KP_Enter =>
             if Console.Input_Blocked then
                return True;
             end if;
@@ -1084,6 +991,17 @@ package body Interactive_Consoles is
       Display_Prompt (Console);
       Free (Output);
    end Execute_Command;
+
+   ----------------
+   -- Set_Prompt --
+   ----------------
+
+   procedure Set_Prompt
+     (Console : access Interactive_Console_Record; Prompt  : String) is
+   begin
+      Free (Console.Prompt);
+      Console.Prompt := new String'(Prompt);
+   end Set_Prompt;
 
    --------------
    -- Get_View --
