@@ -382,40 +382,53 @@ package body GVD.Code_Editors is
       Menu   : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
       Mitem : Gtk_Menu_Item;
+      Show_Submenu : Gtk_Menu;
       Radio : Gtk_Radio_Menu_Item;
    begin
-      Gtk_New (Mitem);
-      Append (Menu, Mitem);
+      --  Create the submenu
 
-      Gtk_New (Radio, Widget_SList.Null_List, -"Show Source Code");
+      Gtk_New (Show_Submenu);
+
+      Gtk_New (Radio, Widget_SList.Null_List, -"Source Code");
       Set_Active (Radio, Editor.Mode = Source);
       Editor_Mode_Cb.Connect
         (Radio, "activate",
          Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Source));
-      Append (Menu, Radio);
+      Append (Show_Submenu, Radio);
       Set_Always_Show_Toggle (Radio, True);
 
-      Gtk_New (Radio, Group (Radio), -"Show Asm Code");
+      Gtk_New (Radio, Group (Radio), -"Asm Code");
       Set_Active (Radio, Editor.Mode = Asm);
       Editor_Mode_Cb.Connect
         (Radio, "activate",
          Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Asm));
-      Append (Menu, Radio);
+      Append (Show_Submenu, Radio);
       Set_Always_Show_Toggle (Radio, True);
 
-      Gtk_New (Radio, Group (Radio), -"Show Asm and Source");
+      Gtk_New (Radio, Group (Radio), -"Asm and Source");
       Set_Active (Radio, Editor.Mode = Source_Asm);
       Editor_Mode_Cb.Connect
         (Radio, "activate",
          Editor_Mode_Cb.To_Marshaller (Change_Mode'Access),
          Editor_Mode_Data'(Editor => Code_Editor (Editor),
                            Mode   => Source_Asm));
-      Append (Menu, Radio);
+      Append (Show_Submenu, Radio);
       Set_Always_Show_Toggle (Radio, True);
+
+      --  Insert a separator followed by the submenu at the end
+      --  of the contextual menu
+
+      Gtk_New (Mitem);
+      Append (Menu, Mitem);
+
+      Gtk_New (Mitem, Label => -"Show...");
+      Append (Menu, Mitem);
+      Set_Submenu (Mitem, Show_Submenu);
+
    end Append_To_Contextual_Menu;
 
    ----------------
