@@ -970,55 +970,6 @@ package body Src_Editor_Box is
       Display_Subprogram : constant Boolean :=
         Get_Pref (Box.Kernel, Display_Subprogram_Names);
 
-      function Get_Enclosing_Subprogram return String;
-      --  Return the name of the enclosing subprogram or package. This is
-      --  done by using the block information.
-
-      ------------------------------
-      -- Get_Enclosing_Subprogram --
-      ------------------------------
-
-      function Get_Enclosing_Subprogram return String is
-         L     : Buffer_Line_Type := Buffer_Line_Type (Line);
-         New_L : Buffer_Line_Type;
-         Block : Block_Record;
-      begin
-         Block := Get_Block (Box.Source_Buffer, L, Force_Compute => False);
-
-         if Block.Block_Type = Cat_Unknown
-           and then Block.Indentation_Level = 0
-         then
-            return "";
-         end if;
-
-         while L > 1 loop
-            if Block.Block_Type in Enclosing_Entity_Category then
-               return Block.Name.all;
-            end if;
-
-            if Block.First_Line > 1 then
-               New_L :=
-                 Get_Buffer_Line (Box.Source_Buffer, Block.First_Line - 1);
-
-               --  At this point, we have to check that we are not stuck on
-               --  the same line, this can happen when block information is not
-               --  up-to-date.
-
-               if New_L < L then
-                  L := New_L;
-               else
-                  L := L - 1;
-               end if;
-            else
-               exit;
-            end if;
-
-            Block := Get_Block (Box.Source_Buffer, L, Force_Compute => False);
-         end loop;
-
-         return "";
-      end Get_Enclosing_Subprogram;
-
    begin
       if Has_Focus_Is_Set (Box.Source_View) then
          Show_Cursor_Position
@@ -1027,7 +978,12 @@ package body Src_Editor_Box is
             Column => Values.Get_Int (Values.Nth (Params, 2)));
 
          if Display_Subprogram then
-            Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
+            Show_Which_Function
+              (Box,
+               Get_Subprogram_Name
+                 (Box,
+                  Get_Editable_Line
+                    (Box.Source_Buffer, Buffer_Line_Type (Line))));
          end if;
       end if;
 
@@ -2585,6 +2541,54 @@ package body Src_Editor_Box is
    begin
       return Natural (Block.Indentation_Level);
    end Get_Block_Level;
+
+   -------------------------
+   -- Get_Subprogram_Name --
+   -------------------------
+
+   function Get_Subprogram_Name
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+   is
+      L     : Buffer_Line_Type := Get_Buffer_Line (Editor.Source_Buffer, Line);
+      New_L : Buffer_Line_Type;
+      Block : Block_Record;
+   begin
+      Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
+
+      if Block.Block_Type = Cat_Unknown
+        and then Block.Indentation_Level = 0
+      then
+         return "";
+      end if;
+
+      while L > 1 loop
+         if Block.Block_Type in Enclosing_Entity_Category then
+            return Block.Name.all;
+         end if;
+
+         if Block.First_Line > 1 then
+            New_L :=
+              Get_Buffer_Line (Editor.Source_Buffer, Block.First_Line - 1);
+
+            --  At this point, we have to check that we are not stuck on
+            --  the same line, this can happen when block information is not
+            --  up-to-date.
+
+            if New_L < L then
+               L := New_L;
+            else
+               L := L - 1;
+            end if;
+         else
+            exit;
+         end if;
+
+         Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => False);
+      end loop;
+
+      return "";
+   end Get_Subprogram_Name;
 
    ----------------
    -- Get_Buffer --
