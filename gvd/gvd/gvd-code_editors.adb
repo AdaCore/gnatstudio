@@ -36,6 +36,7 @@ with Gtk.Scrollbar;       use Gtk.Scrollbar;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Text;            use Gtk.Text;
 with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Main;            use Gtk.Main;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtkada.Types;        use Gtkada.Types;
 with Language;            use Language;
@@ -44,16 +45,17 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 
-with Odd.Explorer;        use Odd.Explorer;
-with Odd.Menus;           use Odd.Menus;
-with Odd.Process;         use Odd.Process;
-with Odd_Intl;            use Odd_Intl;
-with Process_Proxies;     use Process_Proxies;
-with Odd.Strings;         use Odd.Strings;
-with Odd.Types;           use Odd.Types;
+with Odd.Explorer;          use Odd.Explorer;
+with Odd.Menus;             use Odd.Menus;
+with Odd.Process;           use Odd.Process;
+with Odd_Intl;              use Odd_Intl;
+with Process_Proxies;       use Process_Proxies;
+with Odd.Strings;           use Odd.Strings;
+with Odd.Types;             use Odd.Types;
 
 with Unchecked_Deallocation;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Main_Debug_Window_Pkg;   use Main_Debug_Window_Pkg;
 
 with Gtk.Handlers; use Gtk.Handlers;
 
@@ -116,6 +118,7 @@ package body Odd.Code_Editors is
      (Gtk_Widget_Record, Breakpoint_Record);
    package Widget_Variable_Handler is new Gtk.Handlers.User_Callback
      (Gtk_Widget_Record, Variable_Record);
+   package Editor_Idle is new Gtk.Main.Idle (Code_Editor);
 
    -----------------------
    -- Local subprograms --
@@ -138,9 +141,13 @@ package body Odd.Code_Editors is
    --  provided, and line numbers may or may not be added.
    --  ??? Need some caching for lines with breakpoints.
 
-   procedure Update_Buttons (Editor : access Code_Editor_Record'Class);
+   procedure Update_Buttons
+     (Editor : access Code_Editor_Record'Class;
+      Reset_Line : Boolean := True);
    --  Update the display of line-breaks buttons.
    --  If this feature is disabled for the editor, then they are all removed.
+   --  If Reset_Line is True, then the editor is scrolled so as to show the
+   --  the current line.
 
    procedure Scroll_Layout (Editor : access Code_Editor_Record'Class);
    --  Synchronize the new position of the buttons layout after the user has
@@ -199,6 +206,17 @@ package body Odd.Code_Editors is
       Num    : out Integer);
    --  Tell if a breakpoint is set at a specific line.
    --  If it is the case, return the number of the breakpoint.
+
+   function Idle_Compute_Lines (Editor : Code_Editor) return Boolean;
+   --  Idle function called to compute the lines with code in the editor
+
+   function Check_Single_Line
+     (Editor     : access Code_Editor_Record'Class;
+      Line       : Natural)
+     return Boolean;
+   --  Check whether Line contains executable code, and put an icon for it
+   --  in the button toolbar if needed.
+   --  Returns False if no line after Line contains code.
 
    -------------------
    -- Is_Breakpoint --
@@ -434,6 +452,8 @@ package body Odd.Code_Editors is
       --     (Get_Vadj (Editor.Text),
       --      Gfloat (Get_Ascent (Editor.Font) + Get_Descent (Editor.Font)));
 
+      Editor.Line_Height :=
+        Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
    end Configure;
 
    --------------------------
@@ -709,7 +729,6 @@ package body Odd.Code_Editors is
 
       Index       : Positive := 1;
       Line        : Positive := 1;
-      Line_Height : Gint;
       Line_Start  : Positive := 1;
       Entity      : Language_Entity;
       Next_Char   : Positive;
@@ -724,9 +743,6 @@ package body Odd.Code_Editors is
       Thaw (Editor.Text);
 
       --  Insert the contents of the buffer in the text area.
-
-      Line_Height := Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
-
       Freeze (Editor.Text);
       Freeze (Editor.Buttons);
 
@@ -812,18 +828,16 @@ package body Odd.Code_Editors is
    -- Update_Buttons --
    --------------------
 
-   procedure Update_Buttons (Editor : access Code_Editor_Record'Class) is
+   procedure Update_Buttons
+     (Editor     : access Code_Editor_Record'Class;
+      Reset_Line : Boolean := True)
+   is
       use Gtk.Widget.Widget_List;
-      Tmp : Glist := Editor.Possible_Breakpoint_Buttons;
-
-      Line_Height : constant Gint :=
-        Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
-      Index : Positive;
-      Line  : Positive := 1;
-      Pix   : Gtk_Pixmap;
-      Debug : Debugger_Access;
-      Kind  : Line_Kind;
-
+      Tmp         : Glist;
+      Pix         : Gtk_Pixmap;
+      Index       : Positive;
+      Num_Lines   : Natural := 0;
+      Value       : Gfloat;
    begin
       if Editor.Buffer = null then
          return;
@@ -833,58 +847,71 @@ package body Odd.Code_Editors is
 
       Freeze (Editor.Buttons);
 
-      Hide_All (Editor.Buttons);
-
       if Get_Parent (Editor.Current_Line_Button) /= null then
          Hide (Editor.Current_Line_Button);
          Remove (Editor.Buttons, Editor.Current_Line_Button);
       end if;
 
+      --  Remove all existing buttons
+      Tmp := Children (Editor.Buttons);
       while Tmp /= Null_List loop
-         Destroy (Get_Data (Tmp));
+         Remove (Editor.Buttons, Get_Data (Tmp));
          Tmp := Next (Tmp);
       end loop;
-      Free (Editor.Possible_Breakpoint_Buttons);
-      Editor.Possible_Breakpoint_Buttons := Null_List;
 
       --  Display the breakpoint icons
 
+      Editor.Current_File_Cache := Find_In_Cache
+        (Convert (Editor).Window, Editor.Current_File.all);
+      if Editor.Idle_Id /= 0 then
+         Idle_Remove (Editor.Idle_Id);
+      end if;
       if Editor.Show_Lines_With_Code then
-         Index := Editor.Buffer'First;
-         Debug := Convert (Editor).Debugger;
+         Editor.Idle_Id := Editor_Idle.Add
+           (Idle_Compute_Lines'Access, Code_Editor (Editor));
 
-         --  Do not emit the debugger output, and do not parse for file
-         --  patterns, so as to avoid scrolling.
-
-         Push_Internal_Command_Status (Get_Process (Debug), True);
-         Set_Parse_File_Name (Get_Process (Debug), False);
-         while Index <= Editor.Buffer'Last loop
-            if Editor.Buffer (Index) = ASCII.LF then
-               Kind := Line_Contains_Code
-                 (Debug, Editor.Current_File.all, Line);
-
-               exit when Kind = No_More_Code;
-
-               if Kind = Have_Code then
+         --  Show the breakpoints we already know about
+         if Editor.Current_File_Cache.Line_Has_Code /= null then
+            for Line in Editor.Current_File_Cache.Line_Has_Code'Range loop
+               if Editor.Current_File_Cache.Line_Has_Code (Line) then
                   Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
                   Put (Editor.Buttons, Pix,
                        X => 0,
-                       Y => Gint (Line - 1) * Line_Height + 3);
-                  Prepend (Editor.Possible_Breakpoint_Buttons,
-                           Gtk_Widget (Pix));
+                       Y => Gint (Line - 1) * Editor.Line_Height + 3);
                end if;
+            end loop;
+         end if;
 
-               Line := Line + 1;
-            end if;
-            Index := Index + 1;
-         end loop;
-         Set_Parse_File_Name (Get_Process (Debug), True);
-         Pop_Internal_Command_Status (Get_Process (Debug));
+         --  Allocate the arrays if required
+         if Editor.Current_File_Cache.Current_Line = 0
+           and then Editor.Current_File_Cache.Line_Has_Code = null
+         then
+            Index := Editor.Buffer'First;
+            while Index <= Editor.Buffer'Last loop
+               if Editor.Buffer (Index) = ASCII.LF then
+                  Num_Lines := Num_Lines + 1;
+               end if;
+               Index := Index + 1;
+            end loop;
+
+            Editor.Current_File_Cache.Line_Has_Code :=
+              new Packed_Boolean_Array (1 .. Num_Lines);
+            Editor.Current_File_Cache.Line_Has_Code.all := (others => False);
+            Editor.Current_File_Cache.Line_Parsed :=
+              new Packed_Boolean_Array (1 .. Num_Lines);
+            Editor.Current_File_Cache.Line_Parsed.all := (others => False);
+         end if;
       end if;
 
+      Value := Get_Value (Get_Vadj (Editor.Text));
       Set_Line (Editor, Editor.Current_Line, Set_Current => False);
-      Show_All (Editor.Buttons);
 
+      if not Reset_Line then
+         Set_Value (Get_Vadj (Editor.Text), Value);
+         Value_Changed (Get_Vadj (Editor.Text));
+      end if;
+
+      Show_All (Editor.Buttons);
       Thaw (Editor.Buttons);
    end Update_Buttons;
 
@@ -964,19 +991,13 @@ package body Odd.Code_Editors is
       end if;
 
       Print_Buffer (Editor);
-      Update_Buttons (Editor);
+      Update_Buttons (Editor, True);
       if Debugger_Process_Tab (Editor.Process).Breakpoints /= null then
          Update_Breakpoints
            (Editor, Debugger_Process_Tab (Editor.Process).Breakpoints.all);
       else
          Update_Breakpoints (Editor, No_Breakpoint);
       end if;
-
-      --  For the buttons to become visible again, we have to hide the layout,
-      --  and then show it again... Don't know why !
-
-      Hide (Editor.Buttons);
-      Show_All (Editor.Buttons);
 
       if not Display_Explorer then
          Hide (Editor.Explorer_Scroll);
@@ -998,11 +1019,9 @@ package body Odd.Code_Editors is
       Line        : Natural;
       Set_Current : Boolean := True)
    is
-      Line_Height : Gint;
       Y : Gint;
    begin
-      Line_Height := Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
-      Y := Gint (Line - 1) * Line_Height + 3;
+      Y := Gint (Line - 1) * Editor.Line_Height + 3;
 
       --  Display the current line icon
       --  Note that we start by hiding everything, and then show everything
@@ -1033,8 +1052,8 @@ package body Odd.Code_Editors is
       --  Scroll the code editor to make sure the line is visible on screen.
 
       Clamp_Page (Get_Vadj (Editor.Text),
-                  Lower => Gfloat (Y - Line_Height),
-                  Upper => Gfloat (Y + 4 * Line_Height));
+                  Lower => Gfloat (Y - Editor.Line_Height),
+                  Upper => Gfloat (Y + 4 * Editor.Line_Height));
 
       Editor.Current_Line := Line;
 
@@ -1107,7 +1126,7 @@ package body Odd.Code_Editors is
    begin
       if Show /= Editor.Show_Lines_With_Code then
          Editor.Show_Lines_With_Code := Show;
-         Update_Buttons (Editor);
+         Update_Buttons (Editor, False);
       end if;
    end Set_Show_Lines_With_Code;
 
@@ -1132,9 +1151,6 @@ package body Odd.Code_Editors is
       use Gtk.Widget.Widget_List;
       Tmp : Glist := Editor.Breakpoint_Buttons;
       Pix : Gtk_Pixmap;
-      Line_Height : constant Gint :=
-        Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
-
    begin
       if Editor.Current_File = null then
          return;
@@ -1164,7 +1180,7 @@ package body Odd.Code_Editors is
                Gtk_New (Pix, Editor.Stop_Pixmap, Editor.Stop_Mask);
                Put (Editor.Buttons, Pix,
                     X => 0,
-                    Y => Gint (Br (B).Line - 1) * Line_Height + 3);
+                    Y => Gint (Br (B).Line - 1) * Editor.Line_Height + 3);
                Prepend (Editor.Breakpoint_Buttons, Gtk_Widget (Pix));
             end if;
          end loop;
@@ -1435,5 +1451,125 @@ package body Odd.Code_Editors is
                    Set_Current => False);
       end if;
    end Show_Current_Line_Menu;
+
+   ------------------------
+   -- Idle_Compute_Lines --
+   ------------------------
+
+   function Idle_Compute_Lines (Editor : Code_Editor) return Boolean
+   is
+      Process  : Debugger_Process_Tab := Convert (Editor);
+      Debug    : Debugger_Access := Process.Debugger;
+      Line     : Integer;
+      Line_Max : Integer;
+      Found    : Boolean := False;
+   begin
+      if Command_In_Process (Get_Process (Debug))
+        or else Editor.Current_File_Cache.Line_Parsed = null
+      then
+         return True;
+      end if;
+
+      --  Priority is given to computing the visible lines on the screen.
+
+      Line := Integer (Get_Value (Get_Vadj (Editor.Text)))
+        / Integer (Editor.Line_Height);
+      if Line <= Editor.Current_File_Cache.Line_Parsed'First then
+         Line := Editor.Current_File_Cache.Line_Parsed'First;
+      end if;
+
+      Line_Max := Line + Integer (Get_Allocation_Height (Editor.Text))
+        / Integer (Editor.Line_Height);
+      while Line <= Line_Max loop
+         if Line > Editor.Current_File_Cache.Line_Parsed'Last then
+            exit;
+         end if;
+
+         if not Editor.Current_File_Cache.Line_Parsed (Line) then
+            Found := True;
+            exit;
+         end if;
+
+         Line := Line + 1;
+      end loop;
+
+      --  Else find the first line we did not parse
+      if not Found then
+         loop
+            Editor.Current_File_Cache.Current_Line :=
+              Editor.Current_File_Cache.Current_Line + 1;
+            if Editor.Current_File_Cache.Current_Line >
+              Editor.Current_File_Cache.Line_Has_Code'Last
+            then
+               Free (Editor.Current_File_Cache.Line_Parsed);
+               Editor.Idle_Id := 0;
+               return False;
+            end if;
+
+            exit when not Editor.Current_File_Cache.Line_Parsed
+              (Editor.Current_File_Cache.Current_Line);
+         end loop;
+         Line := Editor.Current_File_Cache.Current_Line;
+      end if;
+
+      --  Check whether the line contains some code
+
+      if not Check_Single_Line (Editor, Line)
+        and then Line = Editor.Current_File_Cache.Current_Line
+      then
+         Free (Editor.Current_File_Cache.Line_Parsed);
+         Editor.Idle_Id := 0;
+         return False;
+      end if;
+      return True;
+   end Idle_Compute_Lines;
+
+   -----------------------
+   -- Check_Single_Line --
+   -----------------------
+
+   function Check_Single_Line
+     (Editor     : access Code_Editor_Record'Class;
+      Line       : Natural)
+     return Boolean
+   is
+      Kind        : Line_Kind;
+      Pix         : Gtk_Pixmap;
+      Process : Debugger_Process_Tab := Convert (Editor);
+      Debug   : Debugger_Access := Process.Debugger;
+   begin
+      Push_Internal_Command_Status (Get_Process (Debug), True);
+      Set_Parse_File_Name (Get_Process (Debug), False);
+
+      --  Check whether the line contains code
+
+      Kind := Line_Contains_Code (Debug, Editor.Current_File.all, Line);
+      Editor.Current_File_Cache.Line_Parsed (Line) := True;
+
+      Set_Parse_File_Name (Get_Process (Debug), True);
+      Pop_Internal_Command_Status (Get_Process (Debug));
+
+      --  Deactivate the idle callback if we have finished
+      if Kind = No_More_Code then
+         return False;
+      end if;
+
+      if Kind = Have_Code then
+         Freeze (Editor.Buttons);
+         Hide_All (Editor.Buttons);
+
+         Editor.Current_File_Cache.Line_Has_Code (Line) := True;
+         Gtk_New (Pix, Editor.Default_Pixmap, Editor.Default_Mask);
+         Put
+           (Editor.Buttons, Pix,
+            X => 0,
+            Y => Gint (Line - 1) * Editor.Line_Height + 3);
+
+         Show_All (Editor.Buttons);
+         Thaw (Editor.Buttons);
+      end if;
+
+      return True;
+   end Check_Single_Line;
 
 end Odd.Code_Editors;

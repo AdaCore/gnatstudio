@@ -25,6 +25,15 @@
 --  returns True.
 --  It also provides a source explorer that can quickly display and jump
 --  in the various entities in the file (e.g procedures, types, ...).
+--
+--  Caches
+--  =======
+--
+--  Some data is expensive to recompute for each file (e.g the list of lines
+--  that contain code). We have thus implemented a system of caches so that
+--  we don't need to recompute this data every time the file is reloaded.
+--  This information is also computed in a lazy fashion, ie while nothing
+--  else is happening in the application.
 
 with Glib;
 with Gdk.Bitmap;
@@ -33,6 +42,7 @@ with Gdk.Font;
 with Gdk.Pixmap;
 with Gtk.Box;
 with Gtk.Layout;
+with Gtk.Main;
 with Gtk.Pixmap;
 with Gtk.Scrolled_Window;
 with Gtk.Text;
@@ -204,8 +214,16 @@ private
       Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
       --  The pixmaps for each of the breakpoints
 
-      Possible_Breakpoint_Buttons : Gtk.Widget.Widget_List.Glist;
-      --  The pixmaps for each of the possible breakpoints location
+      Idle_Id : Gtk.Main.Idle_Handler_Id := 0;
+      --  Id for the Idle handle that is used to recompute the lines that
+      --  contain some code.
+
+      Line_Height : Gint;
+      --  Height in pixel of a single line in the editor
+
+      Current_File_Cache : Odd.Types.File_Cache_Access;
+      --  Cached data for the file currently displayed
+
    end record;
 
 end Odd.Code_Editors;
