@@ -1225,10 +1225,10 @@ package body Generic_Values is
               Gint'Max (Total_Width, Item.Values (V).Value.Width);
             Total_Height := Total_Height + Item.Values (V).Value.Height;
             Item.Index_Width :=
-              Gint'Max (Item.Index_Width,
-                        Index_String (Item,
-                                      Item.Values (V).Index,
-                                      Item.Num_Dimensions)'Length);
+              Gint'Max (Item.Index_Width, String_Width
+                        (Font,
+                         Index_String (Item, Item.Values (V).Index,
+                                       Item.Num_Dimensions)));
          end loop;
          Total_Height :=
            Total_Height + (Item.Values'Length - 1) * Line_Spacing;
