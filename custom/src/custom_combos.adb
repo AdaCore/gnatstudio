@@ -43,22 +43,19 @@ with Ada.Unchecked_Conversion;
 package body Custom_Combos is
 
    Id_Cst            : aliased constant String := "id";
-   Entry_Cst         : aliased constant String := "entry";
    Label_Cst         : aliased constant String := "label";
    Choice_Cst        : aliased constant String := "choice";
    On_Select         : aliased constant String := "on_selected";
    On_Changed        : aliased constant String := "on_changed";
    Add_Args : constant Cst_Argument_List :=
      (Choice_Cst'Access, On_Select'Access);
-   Create_Args : constant Cst_Argument_List :=
-     (Id_Cst'Access, On_Changed'Access);
    Remove_Args : constant Cst_Argument_List :=
      (1 => Choice_Cst'Access);
    Set_Text_Args : constant Cst_Argument_List :=
      (1 => Choice_Cst'Access);
    Simple_Args : constant Cst_Argument_List := (1 => Id_Cst'Access);
    Append_Args : constant Cst_Argument_List :=
-     (Entry_Cst'Access, Label_Cst'Access);
+     (Id_Cst'Access, Label_Cst'Access, On_Changed'Access);
 
    type Custom_Combo_Record is new Gtk_Combo_Record with record
       Id                   : String_Access;
@@ -86,11 +83,11 @@ package body Custom_Combos is
       Return_Type => Boolean,
       User_Type   => Item_Callback);
 
-   procedure Create_Combo
+   function Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
       On_Changed : Subprogram_Type;
-      Instance   : Class_Instance);
+      Instance   : Class_Instance) return Custom_Combo;
    --  Create a new combo
 
    procedure Add_Combo_Entry
@@ -262,11 +259,11 @@ package body Custom_Combos is
    -- Create_Combo --
    ------------------
 
-   procedure Create_Combo
+   function Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
       On_Changed : Subprogram_Type;
-      Instance   : Class_Instance)
+      Instance   : Class_Instance) return Custom_Combo
    is
       Combo   : Custom_Combo := Lookup_Custom_Combo (Kernel, Id);
    begin
@@ -292,6 +289,7 @@ package body Custom_Combos is
 
          Set_Data (Instance, Convert (Combo));
       end if;
+      return Combo;
    end Create_Combo;
 
    ---------------------
@@ -363,20 +361,23 @@ package body Custom_Combos is
          end if;
 
       elsif Command = "append" then
-         Name_Parameters (Data, Append_Args);
-
          declare
             Title : constant String := Nth_Arg (Data, 3, "");
             Label : Gtk_Label;
          begin
+            Name_Parameters (Data, Append_Args);
+            EntInst := New_Instance (Get_Script (Data), EntClass);
+            Combo := Create_Combo
+              (Kernel, Id => Nth_Arg (Data, 2),
+               On_Changed => Nth_Arg (Data, 4, null),
+               Instance   => EntInst);
+
             if Title /= "" then
                Gtk_New (Label, Title & " ");
                Append_Widget (Get_Toolbar (Kernel), Label, "", "");
                Show_All (Label);
             end if;
 
-            EntInst := Nth_Arg (Data, 2, EntClass);
-            Combo   := Convert (Get_Data (EntInst));
             Append_Widget (Get_Toolbar (Kernel), Combo, Tooltip_Text => Title);
             Free (EntInst);
             Show_All (Combo);
@@ -398,11 +399,9 @@ package body Custom_Combos is
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
    begin
       if Command = Constructor_Method then
-         Name_Parameters (Data, Create_Args);
-         Create_Combo
-           (Kernel, Id => Nth_Arg (Data, 2),
-            On_Changed => Nth_Arg (Data, 3, null),
-            Instance   => Inst);
+         Set_Error_Msg
+           (Data,
+            -"Cannot instantiate GPS.ToolbarEntry, use GPS.Toolbar.append()");
 
       elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
@@ -454,14 +453,12 @@ package body Custom_Combos is
       Register_Command
         (Kernel, "append",
          Minimum_Args  => 2,
-         Maximum_Args  => 2,
+         Maximum_Args  => 3,
          Class         => Toolbar_Class,
          Handler       => Custom_Toolbar_Handler'Access);
 
       Register_Command
         (Kernel, Constructor_Method,
-         Minimum_Args  => 1,
-         Maximum_Args  => 2,
          Class         => Toolbar_Entry_Class,
          Handler       => Custom_Entry_Handler'Access);
       Register_Command
