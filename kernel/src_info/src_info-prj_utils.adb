@@ -135,42 +135,4 @@ package body Src_Info.Prj_Utils is
       return Namet.Name_Find;
    end Get_Unit_Name;
 
-   ---------------
-   -- Find_File --
-   ---------------
-
-   function Find_File
-     (Short_File_Name, Path, Predefined_Path : String) return String
-   is
-      File : String_Access;
-   begin
-      --  First, try on the project object path
-      File := Locate_Regular_File (Short_File_Name, Path);
-
-      if File /= null then
-         declare
-            Full_Path : constant String := Normalize_Pathname (File.all);
-         begin
-            Free (File);
-            return Full_Path;
-         end;
-      end if;
-
-      --  Fallback, try on the Predefined_Object_Path if set
-      if Predefined_Path /= "" then
-         File := Locate_Regular_File (Short_File_Name, Predefined_Path);
-         if File /= null then
-            declare
-               Full_Path : constant String := Normalize_Pathname (File.all);
-            begin
-               Free (File);
-               return Full_Path;
-            end;
-         end if;
-      end if;
-
-      --  Source file not found anywhere, return the empty string
-      return "";
-   end Find_File;
-
 end Src_Info.Prj_Utils;

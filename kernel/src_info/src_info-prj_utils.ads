@@ -48,12 +48,4 @@ package Src_Info.Prj_Utils is
    --  (and will probably never do, since it does not have enough information
    --  to do so).
 
-   function Find_File
-     (Short_File_Name, Path, Predefined_Path : String) return String;
-   --  Try to locate the file on the given path.
-   --  For an object file, Path should be set to the object path for the
-   --  project. If the file is not found there, the file is looked for on the
-   --  Predefined_Path.
-   --  The empty string is returned if the file was not found.
-
 end Src_Info.Prj_Utils;
