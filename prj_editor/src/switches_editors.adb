@@ -995,7 +995,7 @@ package body Switches_Editors is
       --  know how to modify normalized subprojects.
       --  ??? Should check whether the project is already normalized.
 
-      Normalize_Project (Project);
+      Normalize (Project);
 
       if (Get_Pages (S) and Gnatmake_Page) /= 0 then
          --  ??? Currently, we only edit the default switches for Ada
