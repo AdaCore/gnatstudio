@@ -24,9 +24,12 @@ with Projects.Registry;    use Projects.Registry;
 with Projects;             use Projects;
 with Glide_Kernel;         use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
+--  with Traces;               use Traces;
 with File_Utils;
 
 package body Docgen_Backend_HTML is
+
+   --  Me : constant Debug_Handle := Create ("Docgen_backend_html");
 
    ----------------
    -- Initialize --
@@ -46,11 +49,11 @@ package body Docgen_Backend_HTML is
      (B                : access Backend_HTML;
       Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
       File             : in Ada.Text_IO.File_Type;
-      Entity_List      : in out Type_Entity_List.List;
       List_Ref_In_File : in out List_Reference_In_File.List;
       Info             : in out Docgen.Doc_Info;
       Doc_Directory    : String;
-      Doc_Suffix       : String) is
+      Doc_Suffix       : String;
+      Level            : Natural) is
    begin
       --  We call the subprogram responsible for the documentation
       --  process in html: see docgen_html_output.ads
@@ -59,11 +62,11 @@ package body Docgen_Backend_HTML is
         (B,
          Kernel,
          File,
-         Entity_List,
          List_Ref_In_File,
          Info,
          Doc_Directory,
-         Doc_Suffix);
+         Doc_Suffix,
+         Level);
    end Doc_Create;
 
    --------------------
@@ -184,7 +187,6 @@ package body Docgen_Backend_HTML is
 
    procedure Format_Identifier
      (B                   : access Backend_HTML;
-      Entity_List         : in out Type_Entity_List.List;
       List_Ref_In_File    : in out List_Reference_In_File.List;
       Start_Index         : Natural;
       Start_Line          : Natural;
@@ -201,9 +203,7 @@ package body Docgen_Backend_HTML is
       Source_File_List    : Type_Source_File_List.List;
       Link_All            : Boolean;
       Is_Body             : Boolean;
-      Process_Body        : Boolean;
-      Info                : Doc_Info;
-      Call_Graph_Entities : in out Type_Entity_List.List)
+      Process_Body        : Boolean)
    is
       pragma Unreferenced (End_Line);
       Line_Body : Natural := Line_In_Body;
@@ -216,7 +216,6 @@ package body Docgen_Backend_HTML is
 
       Format_All_Link
         (B,
-         Entity_List,
          List_Ref_In_File,
          Start_Index,
          Start_Line,
@@ -232,66 +231,8 @@ package body Docgen_Backend_HTML is
          Source_File_List,
          Link_All,
          Is_Body,
-         Process_Body,
-         Info,
-         Call_Graph_Entities);
+         Process_Body);
    end Format_Identifier;
-
-   ----------------------
-   --  Print_Ref_List  --
-   ----------------------
-
-   procedure Print_Ref_List
-     (B           : access Backend_HTML;
-      Kernel      : access Kernel_Handle_Record'Class;
-      File        : in Ada.Text_IO.File_Type;
-      Name_Entity : String_Access;
-      Local_List  : Type_Reference_List.List;
-      Called_Subp : Boolean)
-   is
-      pragma Unreferenced (B);
-   begin
-      Print_Ref_List_HTML
-        (Kernel, File, Name_Entity, Local_List, Called_Subp);
-   end Print_Ref_List;
-
-   ----------------------------------
-   --  Call_Graph_Packages_Header  --
-   ----------------------------------
-
-   procedure  Call_Graph_Packages_Header
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info)
-   is
-      pragma Unreferenced (B, Kernel);
-   begin
-      Put_Line (File, "</PRE>");
-      Put_Line (File, "<BR><H2> Call Graph for package <I>"
-                & Get_Name (Info.Package_Entity.Entity)
-                & "</I></H2>");
-   end Call_Graph_Packages_Header;
-
-   ----------------------------------
-   --  Call_Graph_Packages_Footer  --
-   ----------------------------------
-
-   procedure  Call_Graph_Packages_Footer
-     (B      : access Backend_HTML;
-      Kernel : access Kernel_Handle_Record'Class;
-      File   : in Ada.Text_IO.File_Type;
-      Info   : Doc_Info)
-   is
-      pragma Unreferenced (B, Kernel, Info);
-   begin
-      Put_Line (File, "<PRE>");
-      --  This tag is closed in Call_Graph_Packages_Header
-      --  For inner package, it's necessary to print the callgraph lists
-      --  outside the tag <PRE></PRE> in order to have a suitable output.
-      --  This solution must be temporary because the process way of inner
-      --  package will be changed soon.
-   end Call_Graph_Packages_Footer;
 
    -----------------
    -- Format_Link --
