@@ -565,7 +565,7 @@ package body VCS_View_API is
                Gtk_New (Item);
                Append (Menu, Item);
 
-               Gtk_New (Item, Label => -"Remove log");
+               Gtk_New (Item, Label => -"Remove changelog");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
