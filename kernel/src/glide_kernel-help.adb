@@ -120,8 +120,10 @@ package body Glide_Kernel.Help is
          Trace (Me, "url normalized: " & Base_Dir & Url);
       end if;
 
-      Stream_Write (Stream, Buffer.all);
-      Free (Buffer);
+      if Buffer /= null then
+         Stream_Write (Stream, Buffer.all);
+         Free (Buffer);
+      end if;
    end Url_Requested;
 
    ------------
