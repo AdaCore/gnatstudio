@@ -113,7 +113,7 @@ package body Src_Info.Debug is
    end Dump_D_Line;
 
    procedure Dump_D_Line (SF : Source_File) is
-      FI : File_Info_Ptr := Get_File_Info (SF);
+      FI : constant File_Info_Ptr := Get_File_Info (SF);
    begin
       Put ("D " & FI.Source_Filename.all);
 
