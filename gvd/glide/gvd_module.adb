@@ -20,6 +20,7 @@
 
 with Glib;                    use Glib;
 with Glib.Object;             use Glib.Object;
+with Glib.Values;             use Glib.Values;
 with Gdk.Drawable;            use Gdk.Drawable;
 with Gdk.Font;                use Gdk.Font;
 with Gdk.Pixmap;              use Gdk.Pixmap;
@@ -29,6 +30,7 @@ with Gtk.Bin;                 use Gtk.Bin;
 with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Label;               use Gtk.Label;
+with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
@@ -63,6 +65,11 @@ with Traces;                  use Traces;
 
 with Ada.Exceptions;          use Ada.Exceptions;
 
+with Generic_List;
+
+with Commands;                use Commands;
+with Commands.Console;        use Commands.Console;
+
 package body GVD_Module is
 
    Me : Debug_Handle := Create ("Debugger");
@@ -70,6 +77,30 @@ package body GVD_Module is
    Max_Tooltip_Width : constant := 400;
    Max_Tooltip_Height : constant := 300;
    --  Maximum size to use for the tooltip windows
+
+   type File_Line_Record is record
+      File : String_Access;
+      Line : Integer;
+   end record;
+
+   procedure Free (X : in out File_Line_Record);
+   --  Free memory associated to X.
+
+   package File_Line_List is new Generic_List (File_Line_Record);
+
+   type GVD_Module_User_Data is record
+      Kernel           : Kernel_Handle;
+      Unexplored_Lines : File_Line_List.List;
+   end record;
+   type GVD_Module_User_Data_Access is access GVD_Module_User_Data;
+
+   package GVD_Module_Kernel_Data is
+      new Glib.Object.User_Data (GVD_Module_User_Data_Access);
+
+   GVD_Module_Kernel_Data_Id : constant String := GVD_Module_Name & "/Data";
+
+   package GVD_Module_Timeout is
+      new Gtk.Main.Timeout (GVD_Module_User_Data_Access);
 
    procedure GVD_Contextual
      (Object  : access GObject_Record'Class;
@@ -304,6 +335,14 @@ package body GVD_Module is
 
    procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal to clean up the debugger.
+
+   procedure Lines_Revealed_Cb
+     (Widget  : access Gtk_Widget_Record'Class;
+      Args    : GValues);
+   --  Callback for the "lines_revealed" signal.
+
+   function Idle_Reveal_Lines (D : GVD_Module_User_Data_Access) return Boolean;
+   --  Idle/Timeout function to query the line information from the debugger.
 
    -------------------------
    -- On_Connect_To_Board --
@@ -980,6 +1019,108 @@ package body GVD_Module is
       Close (Page.Debugger);
    end On_Destroy_Window;
 
+   ------------------------
+   --  Idle_Reveal_Lines --
+   ------------------------
+
+   function Idle_Reveal_Lines (D : GVD_Module_User_Data_Access) return Boolean
+   is
+      Kind         : Line_Kind;
+      A            : Line_Information_Array (1 .. 1);
+      C            : Console_Command_Access;
+
+      File_Line    : File_Line_Record;
+   begin
+      if File_Line_List.Is_Empty (D.Unexplored_Lines) then
+         return False;
+      end if;
+
+      File_Line :=  File_Line_List.Head (D.Unexplored_Lines);
+
+      Kind :=  Line_Contains_Code
+        (Get_Current_Process (Get_Main_Window (D.Kernel)).Debugger,
+         File_Line.File.all, File_Line.Line);
+
+      case Kind is
+         when Have_Code =>
+            Create (C, D.Kernel, "set bp on line " & File_Line.Line'Img);
+
+            A (1).Line := File_Line.Line;
+            A (1).Text := new String' ("< >");
+            A (1).Associated_Command := Command_Access (C);
+
+            Add_Line_Information (D.Kernel,
+                                  File_Line.File.all,
+                                  GVD_Module_Name & "/Line Information",
+                                  20,
+                                  new Line_Information_Array' (A));
+
+         when No_Code =>
+            null;
+
+         when No_More_Code =>
+            null;
+            --  ??? we could make smarter use of this information.
+
+      end case;
+
+      File_Line_List.Next (D.Unexplored_Lines);
+
+      return True;
+   end Idle_Reveal_Lines;
+
+   -----------------------
+   -- Lines_Revealed_Cb --
+   -----------------------
+
+   procedure Lines_Revealed_Cb
+     (Widget  : access Gtk_Widget_Record'Class;
+      Args    : GValues)
+   is
+      pragma Unreferenced (Widget);
+      Context      : Selection_Context_Access :=
+        To_Selection_Context_Access (Get_Address (Nth (Args, 1)));
+      Area_Context : File_Area_Context_Access;
+      Timeout_Id   : Timeout_Handler_Id;
+
+   begin
+      if Get_Current_Process (Get_Main_Window (Get_Kernel (Context))) = null
+        or else Get_Current_Process
+                 (Get_Main_Window (Get_Kernel (Context))).Debugger = null
+      then
+         return;
+      end if;
+
+      if Context.all in File_Area_Context'Class then
+         Area_Context := File_Area_Context_Access (Context);
+
+         declare
+            File : String := Directory_Information (Area_Context) &
+              File_Information (Area_Context);
+            Line1, Line2 : Integer;
+            Data : GVD_Module_User_Data_Access;
+         begin
+            Get_Area (Area_Context, Line1, Line2);
+
+            Data := GVD_Module_Kernel_Data.Get
+              (Get_Kernel (Context), GVD_Module_Kernel_Data_Id);
+
+            if File_Line_List.Is_Empty (Data.Unexplored_Lines) then
+               Timeout_Id := GVD_Module_Timeout.Add
+                 (20, Idle_Reveal_Lines'Access, Data);
+            end if;
+
+            for J in Line1 .. Line2 loop
+               File_Line_List.Append (Data.Unexplored_Lines,
+                                      (new String' (File), J));
+               --  ??? We might want to use a LIFO structure here
+               --  instead of FIFO, so that the lines currently shown
+               --  are displayed first.
+            end loop;
+         end;
+      end if;
+   end Lines_Revealed_Cb;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1135,6 +1276,27 @@ package body GVD_Module is
         (Top.Finish_Button, "clicked",
          Widget_Callback.To_Marshaller (On_Finish'Access), Window);
       Set_Sensitive (Top.Finish_Button, False);
+
+      Widget_Callback.Object_Connect
+        (Kernel,
+         Source_Lines_Revealed_Signal,
+         Lines_Revealed_Cb'Access,
+         Top);
+
+      GVD_Module_Kernel_Data.Set (Kernel,
+                                  new GVD_Module_User_Data'
+                                     (Kernel_Handle (Kernel),
+                                      File_Line_List.Null_List),
+                                  GVD_Module_Kernel_Data_Id);
    end Register_Module;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out File_Line_Record) is
+   begin
+      Free (X.File);
+   end Free;
 
 end GVD_Module;
