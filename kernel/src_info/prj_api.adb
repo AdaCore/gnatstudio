@@ -59,10 +59,6 @@ package body Prj_API is
    --  properly handles standard variables and variables defined through
    --  references to external environment variables.
 
-   function String_As_Expression (Value : String_Id) return Project_Node_Id;
-   --  Return an N_Expression node that represents the static string Value.
-   --  ??? Could be implemented in terms of Concatenate
-
    --------------------
    -- Create_Project --
    --------------------
@@ -116,7 +112,8 @@ package body Prj_API is
    begin
       pragma Assert
         (Kind_Of (Prj_Or_Pkg) = N_Package_Declaration
-         or else Kind_Of (Prj_Or_Pkg) = N_Project);
+         or else Kind_Of (Prj_Or_Pkg) = N_Project
+         or else Kind_Of (Prj_Or_Pkg) = N_Case_Item);
 
       Name_Len := Name'Length;
       Name_Buffer (1 .. Name_Len) := Name;
@@ -130,9 +127,9 @@ package body Prj_API is
             Decl := Get_Or_Create_Declaration (Prj_Or_Pkg);
             Decl_Item := First_Declarative_Item_Of (Decl);
 
-         when N_Package_Declaration =>
+         when N_Package_Declaration | N_Case_Item =>
             Decl := Prj_Or_Pkg;
-            Decl_Item := First_Declarative_Item_Of (Prj_Or_Pkg);
+            Decl_Item := First_Declarative_Item_Of (Decl);
 
          when others =>
             null;
@@ -263,7 +260,9 @@ package body Prj_API is
    -- Add_Possible_Value --
    ------------------------
 
-   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String) is
+   function Add_Possible_Value (Typ : Project_Node_Id; Choice : String)
+      return String_Id
+   is
       Str, S2 : Project_Node_Id;
       S   : String_Id;
    begin
@@ -287,6 +286,7 @@ package body Prj_API is
          end loop;
          Set_Next_Literal_String (Str, S2);
       end if;
+      return S;
    end Add_Possible_Value;
 
    ---------------------------
@@ -825,7 +825,7 @@ package body Prj_API is
 
    function Find_Scenario_Variables
      (Project : Project_Node_Id;
-      Parse_Imported : Boolean := True) return Variable_Decl_Array
+      Parse_Imported : Boolean := True) return Project_Node_Array
    is
       function Count_Vars (In_Project : Project_Node_Id) return Natural;
       --  Return the number of scenario variables in In_Project, its
@@ -889,7 +889,7 @@ package body Prj_API is
       end Count_Vars;
 
 
-      List : Variable_Decl_Array (1 .. Count_Vars (Project));
+      List : Project_Node_Array (1 .. Count_Vars (Project));
       Current : Positive := 1;
 
       ------------------------
@@ -1022,6 +1022,51 @@ package body Prj_API is
       end if;
       return Ref;
    end Create_Variable_Reference;
+
+   ----------------------
+   -- Create_Case_Item --
+   ----------------------
+
+   procedure Create_Case_Item (In_Case : Project_Node_Id; Value : String_Id) is
+      Item, Choice : Project_Node_Id;
+   begin
+      pragma Assert (Kind_Of (In_Case) = N_Case_Construction);
+
+      Item := Default_Project_Node (N_Case_Item);
+      Set_Next_Case_Item (Item, First_Case_Item_Of (In_Case));
+      Set_First_Case_Item_Of (In_Case, Item);
+
+      Choice := Default_Project_Node (N_Literal_String);
+      Set_String_Value_Of (Choice, Value);
+      Set_First_Choice_Of (Item, Choice);
+   end Create_Case_Item;
+
+   ------------------------
+   -- Typed_Values_Count --
+   ------------------------
+
+   function Typed_Values_Count (Var_Or_Attribute : Project_Node_Id)
+      return Positive
+   is
+      Count : Natural := 0;
+      T     : Project_Node_Id;
+   begin
+      if Kind_Of (Var_Or_Attribute) = N_Typed_Variable_Declaration
+        or else (Kind_Of (Var_Or_Attribute) = N_Variable_Reference
+                 and then String_Type_Of (Var_Or_Attribute) /= Empty_Node)
+      then
+         T := String_Type_Of (Var_Or_Attribute);
+         T := First_Literal_String (T);
+         while T /= Empty_Node loop
+            Count := Count + 1;
+            T := Next_Literal_String (T);
+         end loop;
+         return Count;
+
+      else
+         return Positive'Last;
+      end if;
+   end Typed_Values_Count;
 
 begin
    Namet.Initialize;

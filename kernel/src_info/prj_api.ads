@@ -36,10 +36,17 @@
 --  </description>
 
 with Types;
+with Unchecked_Deallocation;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
 
 package Prj_API is
+
+   type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
+   type Project_Node_Array_Access is access Project_Node_Array;
+
+   procedure Free is new Unchecked_Deallocation
+     (Project_Node_Array, Project_Node_Array_Access);
 
    function Create_Project (Name, Path : String) return Project_Node_Id;
    --  Create a new empty project.
@@ -74,7 +81,8 @@ package Prj_API is
    --  Create type. By default, there is no possible value, you
    --  must add some with Add_Possible_Value.
 
-   procedure Add_Possible_Value (Typ : Project_Node_Id; Choice : String);
+   function Add_Possible_Value (Typ : Project_Node_Id; Choice : String)
+      return Types.String_Id;
    --  Add a new choice in the list of possible values for the type Typ.
 
    function Get_Or_Create_Typed_Variable
@@ -109,9 +117,22 @@ package Prj_API is
    --  Create and return a reference to the variable Var.
    --  Var must be a variable declaration
 
+   procedure Create_Case_Item
+     (In_Case : Project_Node_Id; Value : Types.String_Id);
+   --  Create a new case item at the front of the list of items for In_Case.
+   --  This is equivalent to a
+   --        "when " & Value & " => "
+   --  construction.
+   --  The new item can be found by accessing First_Case_Item_Of (In_Case)
+
    ---------------------
    -- Variable values --
    ---------------------
+
+   function String_As_Expression (Value : Types.String_Id)
+      return Project_Node_Id;
+   --  Return an N_Expression node that represents the static string Value.
+   --  ??? Could be implemented in terms of Concatenate.
 
    procedure Append_To_List (Var : Project_Node_Id; Value : String);
    --  Append a simple string to Var.
@@ -137,6 +158,12 @@ package Prj_API is
    --  Return the name of the environment variable associated with
    --  Var_Or_Attribute. No_String is returned in case there is no such
    --  variable.
+
+   function Typed_Values_Count (Var_Or_Attribute : Project_Node_Id)
+      return Positive;
+   --  Return the number of possible values Var_Or_Attribute can take.
+   --  For a typed variable, this is the number of items in the type
+   --  declaration. For other variables or attributes, this is Positive'Last.
 
    procedure Get_Switches
      (Project          : Project_Id;
@@ -213,11 +240,9 @@ package Prj_API is
    -- Variables --
    ---------------
 
-   type Variable_Decl_Array is array (Positive range <>) of Project_Node_Id;
-
    function Find_Scenario_Variables
      (Project : Project_Node_Id;
-      Parse_Imported : Boolean := True) return Variable_Decl_Array;
+      Parse_Imported : Boolean := True) return Project_Node_Array;
    --  Create and return an array that contains the declarations of all the
    --  scenario variables in Project and its packages. It also includes
    --  variables from imported projects if Parse_Imported is True.
