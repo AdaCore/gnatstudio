@@ -738,14 +738,29 @@ package body Codefix_Module is
          Command     => "fix",
          Params      => Parameter_Names_To_Usage (Fix_Cmd_Parameters, 1),
          Description =>
-         -("Fix the error, using one of the possible fixes. The index"
-           & " given in parameter is the index in the list returned by"
-           & " possible_fixes. By default, the first choice is taken. Choices"
-           & " start at index 0."),
+           -("Fix the error, using one of the possible fixes. The index"
+             & " given in parameter is the index in the list returned by "
+             & "possible_fixes. By default, the first choice is taken. Choices"
+             & " start at index 0."),
          Minimum_Args => Fix_Cmd_Parameters'Length - 1,
          Maximum_Args => Fix_Cmd_Parameters'Length,
          Class        => Codefix_Module_ID.Codefix_Error_Class,
          Handler      => Error_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "message",
+         Return_Value => "string",
+         Description  => -"Return the error message, as issues by the tool",
+         Class        => Codefix_Module_ID.Codefix_Error_Class,
+         Handler      => Error_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "location",
+         Return_Value => "FileLocation",
+         Description  => -"Return the location of the error",
+         Class        => Codefix_Module_ID.Codefix_Error_Class,
+         Handler      => Error_Command_Handler'Access);
+
 
    exception
       when E : others =>
@@ -826,6 +841,31 @@ package body Codefix_Module is
                        Error.Error, Command_List.Data (Solution_Node));
             end if;
          end;
+
+      elsif Command = "message" then
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
+         declare
+            Error : constant Codefix_Error_Data := Get_Data (Instance);
+            Msg   : constant Error_Message := Get_Error_Message (Error.Error);
+         begin
+            Set_Return_Value (Data, Get_Message (Msg));
+         end;
+
+      elsif Command = "location" then
+         Instance := Nth_Arg (Data, 1, Codefix_Module_ID.Codefix_Error_Class);
+         declare
+            Error : constant Codefix_Error_Data := Get_Data (Instance);
+            Msg   : constant Error_Message := Get_Error_Message (Error.Error);
+         begin
+            Set_Return_Value
+              (Data,
+               Create_File_Location
+                 (Get_Script (Data),
+                  File   => Create_File (Get_Script (Data), Get_File (Msg)),
+                  Line   => Get_Line (Msg),
+                  Column => Get_Column (Msg)));
+         end;
+
       end if;
    end Error_Command_Handler;
 
