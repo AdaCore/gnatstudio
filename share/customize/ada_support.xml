@@ -64,8 +64,6 @@
          <check label="Full errors" switch="-gnatf" line="2" column="1" 
                 tip="Full Errors. Multiple errors per line, all undefined references" />
          <popup label="Warnings" line="2" column="1">
-            <check label="Biased rounding" switch="-gnatwb"
-                   tip="This warning message alerts you to instances where compile-time rounding and run-time rounding are not equivalent" />
             <check label="Constant conditional" switch="-gnatwc"
                    tip="Activates warnings for conditional expression used in tests that are known to be True or False at compile time" />
             <check label="Implicit dereference" switch="-gnatwd"
