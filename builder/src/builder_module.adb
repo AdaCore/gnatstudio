@@ -905,6 +905,13 @@ package body Builder_Module is
          Compile_File (Get_Kernel (Data), Get_File (Info),
                        Synchronous => True);
 
+      elsif Command = "check_syntax" then
+         Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
+         Info := Get_Data (Instance);
+         Compile_File (Get_Kernel (Data), Get_File (Info),
+                       Synchronous => True,
+                       Syntax_Only => True);
+
       elsif Command = "make" then
          Instance := Nth_Arg (Data, 1, Get_File_Class (Kernel));
          Info := Get_Data (Instance);
@@ -1699,6 +1706,17 @@ package body Builder_Module is
          Description  =>
            -("Compile current file. This call will return only once the"
              & " compilation is completed"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Compile_Command'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "check_syntax",
+         Description  =>
+           -("Check the syntax for current file. This call will return only"
+             & " once the check is completed"),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),
