@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                      Copyright (C) 2003-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -43,7 +43,7 @@ with VFS;                use VFS;
 package body SSH_Protocol is
 
    Me      : constant Debug_Handle := Create ("Remote");
-   Full_Me : constant Debug_Handle := Create ("Remote_Full");
+   Full_Me : constant Debug_Handle := Create ("Remote_Full", Off);
 
    Prompt_String : constant String := "---GPS--#";
    --  The string to print to simulate a prompt. It should match Prompt_Regexp
