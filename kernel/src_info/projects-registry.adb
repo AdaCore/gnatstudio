@@ -1003,6 +1003,8 @@ package body Projects.Registry is
             declare
                UTF8 : constant String := Locale_To_UTF8
                  (Buffer (1 .. Length));
+               Part : Unit_Part;
+               Unit_Name : Name_Id;
             begin
                --  Check if the file is in the list of sources for this,
                --  project, as specified in the project file
@@ -1011,11 +1013,17 @@ package body Projects.Registry is
                if File_In_Sources (UTF8)
                  and then Get_Project_From_File
                    (Registry          => Registry,
-                    Source_Filename   => Create_From_Base (UTF8),
+                    Base_Name         => UTF8,
                     Root_If_Not_Found => False) = No_Project
                then
-                  Lang := Languages_Htable.String_Hash_Table.Get
-                    (Registry.Data.Extensions, File_Extension (UTF8));
+                  --  First check naming scheme in the project, in case the
+                  --  naming scheme overrides GPS's default
+                  Get_Unit_Part_And_Name_From_Filename
+                    (UTF8, Project, Part, Unit_Name, Lang);
+                  if Lang = No_Name then
+                     Lang := Languages_Htable.String_Hash_Table.Get
+                       (Registry.Data.Extensions, File_Extension (UTF8));
+                  end if;
 
                   --  Check if the returned language belongs to the supported
                   --  languages for the project
