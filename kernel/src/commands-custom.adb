@@ -37,8 +37,8 @@ with VFS;                  use VFS;
 with Ada.Exceptions;       use Ada.Exceptions;
 with Ada.Text_IO;          use Ada.Text_IO;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Traces;               use Traces;
-with Ada.Unchecked_Deallocation;
 
 package body Commands.Custom is
 
@@ -204,7 +204,6 @@ package body Commands.Custom is
 
       Context  : constant Selection_Context_Access :=
         Get_Current_Context (Command.Kernel);
-      Recurse  : Boolean;
       Cmd_Index : Natural;
       Success   : Boolean;
 
@@ -222,8 +221,8 @@ package body Commands.Custom is
       --  Execute a single command, and return whether it succeeded.
       --  Index is the number of the current command we are executing
 
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Object => String_List, Name => String_List_Access);
+--        procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+--          (Object => String_List, Name => String_List_Access);
 
       ------------------------
       -- Project_From_Param --
@@ -275,6 +274,8 @@ package body Commands.Custom is
          Project : Project_Type := No_Project;
          Num     : Integer;
          Index   : Integer;
+         Recurse, List_Dirs, List_Sources : Boolean;
+
       begin
          if Param = "f" or else Param = "F" then
             if Context /= null
@@ -336,50 +337,80 @@ package body Commands.Custom is
                   Index := Param'First + 1;
                end if;
 
-               if Index < Param'Last
-                 and then Param (Index + 1) = 'f'
-               then
-                  --  Append the list to a file.
-                  declare
-                     File : File_Type;
-                     Files_List : File_Array_Access;
-                     List : String_Array_Access;
-                  begin
-                     Create (File);
+               if Index <= Param'Last then
+                  List_Dirs    := Param (Index) = 'd';
+                  List_Sources := Param (Index) = 's';
 
-                     if Param (Index) = 's' then
-                        Files_List := Get_Source_Files (Project, Recurse);
-                        if Files_List /= null then
-                           for K in Files_List'Range loop
-                              Put_Line (File, Full_Name (Files_List (K)).all);
-                           end loop;
-                           Unchecked_Free (Files_List);
-                        end if;
-
-                     elsif Param (Index) = 'd' then
-                        List := Source_Dirs (Project, Recurse);
-                        if List /= null then
-                           for K in List'Range loop
-                              Put_Line (File, List (K).all);
-                           end loop;
-                           Free (List);
-                        end if;
-
-                     else
-                        Insert (Command.Kernel,
-                                -"Command not executed: it requires a project",
-                                Mode => Error);
-                        Success := False;
-                        raise Invalid_Substitution;
-                     end if;
-
+                  if Index < Param'Last and then Param (Index + 1) = 'f' then
+                     --  Append the list to a file.
                      declare
-                        N : constant String := Name (File);
+                        File : File_Type;
+                        Files_List : File_Array_Access;
+                        List : String_Array_Access;
                      begin
-                        Close (File);
-                        return N;
+                        Create (File);
+
+                        if List_Dirs then
+                           List := Source_Dirs (Project, Recurse);
+                           if List /= null then
+                              for K in List'Range loop
+                                 Put_Line (File, List (K).all);
+                              end loop;
+                              Free (List);
+                           end if;
+                        end if;
+
+                        if List_Sources then
+                           Files_List := Get_Source_Files (Project, Recurse);
+                           if Files_List /= null then
+                              for K in Files_List'Range loop
+                                 Put_Line
+                                   (File, URL_File_Name (Files_List (K)));
+                              end loop;
+                              Unchecked_Free (Files_List);
+                           end if;
+                        end if;
+
+                        declare
+                           N : constant String := Name (File);
+                        begin
+                           Close (File);
+                           return N;
+                        end;
                      end;
-                  end;
+
+                  else
+                     declare
+                        Result : Unbounded_String;
+                        List : String_Array_Access;
+                        Files_List : File_Array_Access;
+                     begin
+                        if List_Dirs then
+                           List := Source_Dirs (Project, Recurse);
+                           if List /= null then
+                              for K in List'Range loop
+                                 Append (Result, '"' & List (K).all & """ ");
+                              end loop;
+                              Free (List);
+                           end if;
+                        end if;
+
+                        if List_Sources then
+                           Files_List := Get_Source_Files (Project, Recurse);
+                           if Files_List /= null then
+                              for K in Files_List'Range loop
+                                 Append
+                                   (Result,
+                                    '"'
+                                    & URL_File_Name (Files_List (K)) & """ ");
+                              end loop;
+                              Unchecked_Free (Files_List);
+                           end if;
+                        end if;
+
+                        return To_String (Result);
+                     end;
+                  end if;
                end if;
             end if;
 
@@ -391,7 +422,44 @@ package body Commands.Custom is
                if Outputs (Cmd_Index - Num) = null then
                   return "";
                else
-                  return Outputs (Cmd_Index - Num).all;
+                  --  Remove surrounding quotes if any. This is needed so that
+                  --  for instance of the function get_attributes_as_string
+                  --  from Python can be used to call an external tool with
+                  --  switches propertly interpreted.
+
+                  declare
+                     Output : String renames Outputs (Cmd_Index - Num).all;
+                     Last   : Integer;
+                  begin
+                     if Output = "" then
+                        return Output;
+                     end if;
+
+                     Last := Output'Last;
+                     while Last >= Output'First
+                       and then Output (Last) = ASCII.LF
+                     loop
+                        Last := Last - 1;
+                     end loop;
+
+                     Trace (Me, "MANU First, Last, Result="
+                            & Output (Output'First)'Img & ' '
+                            & Output (Last)'Img & ' '
+                            & Output);
+                     if Output (Output'First) = '''
+                       and then Output (Last) = '''
+                     then
+                        return Output (Output'First + 1 .. Last - 1);
+
+                     elsif Output (Output'First) = '"'
+                       and then Output (Output'Last) = '"'
+                     then
+                        return Output (Output'First + 1 .. Last - 1);
+
+                     else
+                        return Output (Output'First .. Last);
+                     end if;
+                  end;
                end if;
             end if;
          end if;
@@ -409,130 +477,47 @@ package body Commands.Custom is
         (Script       : Scripting_Language;
          Command_Line : String) return Boolean
       is
-         Args : String_List_Access := Argument_String_To_List (Command_Line);
-         No_Args  : String_List (1 .. 0);
-         New_Args : Argument_List_Access;
-         Last     : Integer;
-      begin
          --  Perform arguments substitutions for the command.
+         Subst_Cmd_Line : constant String := Substitute
+           (Command_Line,
+            Substitution_Char => '%',
+            Callback          => Substitution'Unrestricted_Access,
+            Recursive         => False);
+         Args : String_List_Access;
 
-         Success := True;
-
-         if Args'Length > 1 then
-            New_Args := new String_List (Args'First + 1 .. Args'Last);
-            Last := New_Args'First;
-
-            for J in New_Args'Range loop
-               --  Special case for %prs, since this is a list of files
-               if Args (J).all = "%prs"
-                 or else Args (J).all = "%Prs"
-               then
-                  declare
-                     Project : constant Project_Type := Project_From_Param
-                       (Args (J) (Args (J)'First + 1 .. Args (J)'Last));
-                     List    : File_Array_Access;
-                  begin
-                     if Project = No_Project then
-                        return False;
-                     end if;
-
-                     List := Get_Source_Files (Project, Recurse);
-
-                     declare
-                        New_New_Args : Argument_List_Access := new String_List
-                          (New_Args'First .. New_Args'Last + List'Length - 1);
-                     begin
-                        New_New_Args (New_Args'First .. Last - 1) :=
-                          New_Args (New_Args'First .. Last - 1);
-
-                        for K in List'Range loop
-                           New_New_Args (Last) :=
-                             new String'(Base_Name (List (K)));
-                           Last := Last + 1;
-                        end loop;
-
-                        Unchecked_Free (List);
-                        Unchecked_Free (New_Args);
-                        New_Args := New_New_Args;
-                     end;
-                  end;
-
-               else
-                  New_Args (Last) := new String'
-                    (Substitute
-                       (Args (J).all,
-                        Substitution_Char => '%',
-                        Callback          => Substitution'Unrestricted_Access,
-                        Recursive         => False));
-               end if;
-
-               Last := Last + 1;
-            end loop;
-
-            --  Arguments have been substituted, launch the command.
-
-            if not Success then
-               null;
-
-            elsif Script /= null then
-               Trace (Me, "Executing internal command " & Command_Line);
-
-               if Save_Output (Cmd_Index) then
-                  Outputs (Cmd_Index) := new String'
-                    (Execute_Command (Script, Args (Args'First).all,
-                                      New_Args.all));
-               else
-                  Execute_Command
-                    (Script,
-                     Args (Args'First).all & ' '
-                     & Argument_List_To_String
-                       (New_Args.all, Protect_Quotes => False),
-                     Display_In_Console => True);
-               end if;
-
-               Success := True;
-            else
-               Trace (Me, "Executing external command " & Command_Line);
-
-               --  ??? Should save output
-               Launch_Process
-                 (Command.Kernel,
-                  Args (Args'First).all,
-                  New_Args.all,
-                  "",
-                  null,
-                  null,
-                  "",
-                  Success);
-            end if;
-
-            Free (New_Args);
+      begin
+         --  If substitution failed
+         if not Success then
+            null;
 
          elsif Script /= null then
-            Trace (Me, "Executing internal command " & Command_Line);
+            Trace (Me, "Executing internal command " & Subst_Cmd_Line);
+
             if Save_Output (Cmd_Index) then
                Outputs (Cmd_Index) := new String'
-                 (Execute_Command (Script, Command_Line, No_Args));
+                 (Execute_Command (Script, Subst_Cmd_Line));
             else
-               Execute_Command (Script, Command_Line,
-                                Display_In_Console => True);
+               Execute_Command
+                 (Script, Subst_Cmd_Line, Display_In_Console => True);
             end if;
-            Success := True;
 
          else
-            --  ??? Should save the output
+            Trace (Me, "Executing external command " & Command_Line);
+
+            Args := Argument_String_To_List (Subst_Cmd_Line);
+            --  ??? Should save output
             Launch_Process
               (Command.Kernel,
                Args (Args'First).all,
-               No_Args,
+               Args (Args'First + 1 .. Args'Last),
                "",
                null,
                null,
                "",
                Success);
+            Free (Args);
          end if;
 
-         Free (Args);
          return Success;
 
       exception
@@ -550,13 +535,14 @@ package body Commands.Custom is
    begin
       Cmd_Index := 1;
       Check_Save_Output (Command, Save_Output);
+      Success := True;
+
       if Command.Command /= null then
          Success := Execute_Simple_Command
            (Command.Script, Command.Command.all);
 
       else
          N := Command.XML;
-         Success := True;
          while Success and then N /= null loop
             if To_Lower (N.Tag.all) = "shell" then
                Success := Execute_Simple_Command
