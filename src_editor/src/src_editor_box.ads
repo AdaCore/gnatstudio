@@ -45,6 +45,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glide_Kernel;
 with Src_Editor_Buffer;
 with Src_Editor_View;
+with Src_Info;
 
 package Src_Editor_Box is
 
@@ -319,6 +320,34 @@ package Src_Editor_Box is
    function Get_Show_Line_Numbers
      (Editor : access Source_Editor_Box_Record) return Boolean;
    --  Returns True if the line numbers are displayed.
+
+   ------------------
+   -- XRef Support --
+   ------------------
+
+   procedure Find_Declaration_Or_Body
+     (Editor       : access Source_Editor_Box_Record;
+      Line         : Natural := 0;
+      Column       : Natural := 0;
+      Lib_Info     : Src_Info.LI_File_Ptr;
+      Filename     : out GNAT.OS_Lib.String_Access;
+      Start_Line   : out Positive;
+      Start_Column : out Positive;
+      End_Line     : out Positive;
+      End_Column   : out Positive);
+   --  Return the location of the declaration of the entity located at the
+   --  given position. If either Line or Column is equal to 0, then the current
+   --  insert cursor position is used instead. If the position is already
+   --  pointing at the declaration, then return the location of the body
+   --  associated to the entity. If no reference to the entity could be found,
+   --  then Filename_Found returned is null, and the values of Start_Line,
+   --  Start_Column, End_Line, End_Column are undefined..
+   --
+   --  The memory allocated for Filename_Found must be deallocated after use.
+   --
+   --  Note that this routine assumes that the given Lib_Info is up-to-date.
+   --  It also assumes that the given cursor position is valid; otherwise, the
+   --  result is undefined.
 
 private
 
