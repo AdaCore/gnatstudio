@@ -18,7 +18,8 @@ Choose a prefix to install GPS:
 
   $ prefix=<prefix>
 
-Then build GtkAda:
+Then build GtkAda (see GtkAda/INSTALL for further instructions, in particular
+under Windows systems):
 
   $ cd gtkada
   $ ./configure --prefix=$prefix
@@ -29,7 +30,9 @@ Then make sure that your PATH and LD_LIBRARY_PATH environment variables point
 to the GtkAda installation
 
 After having configured and installed Gtk+/Gtkada, execute the following
-commands at the top level GPS source directory:
+commands at the top level GPS source directory (under Windows, similar
+changes as explained in GtkAda/INSTALL are needed, as well as applying the
+patch docs/gps-win32.diff):
 
   $ ./configure --prefix=$prefix
   $ make
