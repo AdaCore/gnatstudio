@@ -287,10 +287,10 @@ package body Glide_Kernel.Timeout is
                After => False);
 
             Child := Put (Get_MDI (Kernel), Gtk_Widget (Console));
-            Set_Focus_Child (Child);
             Set_Dock_Side (Child, Bottom);
             Dock_Child (Child);
             Set_Title (Child, Command, Title);
+            Set_Focus_Child (Child);
 
          else
             Console := Get_Console (Kernel);
