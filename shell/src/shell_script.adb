@@ -83,6 +83,10 @@ package body Shell_Script is
      (Script  : access Shell_Scripting_Record;
       Command : String;
       Args    : GNAT.OS_Lib.Argument_List) return String;
+   procedure Execute_File
+     (Script             : access Shell_Scripting_Record;
+      Filename           : String;
+      Display_In_Console : Boolean := True);
    function Get_Name (Script : access Shell_Scripting_Record) return String;
    function Is_Subclass
      (Script : access Shell_Scripting_Record;
@@ -103,8 +107,7 @@ package body Shell_Script is
       Return_As_List : Boolean := False;
    end record;
 
-   function Get_Kernel (Data : Shell_Callback_Data)
-      return Glide_Kernel.Kernel_Handle;
+   function Get_Script (Data : Shell_Callback_Data) return Scripting_Language;
    function Number_Of_Arguments (Data : Shell_Callback_Data) return Natural;
    procedure Name_Parameters
      (Data  : in out Shell_Callback_Data; Names : Cst_Argument_List);
@@ -521,6 +524,15 @@ package body Shell_Script is
 
       Register_Command
         (Script,
+         Command      => "load",
+         Usage        => "(filename) -> None",
+         Description  => -"Load and execute a script file.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Module_Command_Handler'Access);
+
+      Register_Command
+        (Script,
          Command      => "clear_cache",
          Usage        => "() -> None",
          Description  => -"Free the internal cache used for return values.",
@@ -595,18 +607,23 @@ package body Shell_Script is
                end loop;
             end;
          end if;
+         Set_Return_Value (Data, Result.all);
+         Free (Result);
+
+      elsif Command = "load" then
+         --  ??? Should be implemented
+         Set_Error_Msg (Data, -"""load is not implemented yet""");
 
       elsif Command = "echo" then
          for A in 2 .. Number_Of_Arguments (Data) loop
             Insert (Nth_Arg (Data, A));
          end loop;
+         Set_Return_Value (Data, Result.all);
+         Free (Result);
 
       elsif Command = "clear_cache" then
          Free (Shell_Module_Id.Instances, Free_Data => True);
       end if;
-
-      Set_Return_Value (Data, Result.all);
-      Free (Result);
    end Module_Command_Handler;
 
    ----------------------
@@ -722,6 +739,18 @@ package body Shell_Script is
          Insert (Script.Console, S);
       end if;
    end Execute_Command;
+
+   ------------------
+   -- Execute_File --
+   ------------------
+
+   procedure Execute_File
+     (Script             : access Shell_Scripting_Record;
+      Filename           : String;
+      Display_In_Console : Boolean := True) is
+   begin
+      Execute_Command (Script, "load " & Filename, Display_In_Console);
+   end Execute_File;
 
    --------------
    -- Get_Name --
@@ -860,13 +889,14 @@ package body Shell_Script is
    end Execute_GPS_Shell_Command;
 
    ----------------
-   -- Get_Kernel --
+   -- Get_Script --
    ----------------
 
-   function Get_Kernel (Data : Shell_Callback_Data) return Kernel_Handle is
+   function Get_Script (Data : Shell_Callback_Data)
+      return Scripting_Language is
    begin
-      return Data.Script.Kernel;
-   end Get_Kernel;
+      return Scripting_Language (Data.Script);
+   end Get_Script;
 
    ----------------
    -- Get_Kernel --
