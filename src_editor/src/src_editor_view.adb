@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Strings.Maps;            use Ada.Strings.Maps;
+with Ada.Strings.Maps.Constants;  use Ada.Strings.Maps;
 with Ada.Exceptions;              use Ada.Exceptions;
 
 with Glib;                        use Glib;
@@ -1897,6 +1897,8 @@ package body Src_Editor_View is
                  and then
                    not Is_In (Key_Str (Key_Str'First),
                               Word_Character_Set (Get_Language (Buffer)))
+                 and then
+                   not Is_In (Key_Str (Key_Str'First), Constants.Control_Set)
                then
                   Word_Added (Buffer);
                end if;
