@@ -135,6 +135,8 @@ GNAT_SOURCES= \
   switch-m.adb \
   table.ads \
   table.adb \
+  targparm.ads \
+  targparm.adb \
   tempdir.ads \
   tempdir.adb \
   tree_io.ads \
