@@ -1742,7 +1742,7 @@ package body Aliases_Module is
       Clicked (Editor.Alias_Col);
 
       Gtk_New (Editor.Show_Read_Only, -"Show read-only");
-      Create_New_Boolean_If_Necessary
+      Create_New_Boolean_Key_If_Necessary
         (Get_History (Kernel).all, "aliases-show-read-only", True);
       Associate (Get_History (Kernel).all,
                  "aliases-show-read-only",
