@@ -41,6 +41,7 @@ with Ada.Unchecked_Deallocation;
 with System;
 
 package body VFS is
+
    Temporary_Dir : constant String := "/tmp";
    --  Name of the temporary directory
    --  ??? Must be configurable, but we need access either to the kernel
@@ -197,7 +198,7 @@ package body VFS is
    ---------------
 
    function Base_Name
-     (File   : Virtual_File; Suffix : String := "") return Glib.UTF8_String is
+     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String is
    begin
       if File.Value = null then
          return "";
@@ -410,8 +411,8 @@ package body VFS is
    -----------
 
    procedure Write
-     (File : in out Writable_File;
-      Str : UTF8_String;
+     (File    : in out Writable_File;
+      Str     : UTF8_String;
       As_UTF8 : Boolean := True)
    is
       function To_Address is new Ada.Unchecked_Conversion

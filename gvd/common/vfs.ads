@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                   Copyright (C) 2003                              --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -68,7 +68,7 @@ package VFS is
    --  require this.
 
    function Base_Name
-     (File   : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
+     (File : Virtual_File; Suffix : String := "") return Glib.UTF8_String;
    --  Return the base name of the file.
 
    function Full_Name
@@ -150,8 +150,8 @@ package VFS is
    --  Return Invalid_File is the file couldn't be open for writing
 
    procedure Write
-     (File : in out Writable_File;
-      Str : UTF8_String;
+     (File    : in out Writable_File;
+      Str     : UTF8_String;
       As_UTF8 : Boolean := True);
    --  Write a string to File. The required encoding for the string depends
    --  on As_UTF8.
@@ -196,11 +196,11 @@ private
    --  itself, although they do compute some information lazily).
 
    type Contents_Record is record
-      Connection       : Remote_Connections.Remote_Connection;
-      Ref_Count        : Natural := 1;
-      Full_Name        : GNAT.OS_Lib.String_Access;
-      Normalized_Full  : GNAT.OS_Lib.String_Access;
-      Dir_Name         : GNAT.OS_Lib.String_Access;
+      Connection      : Remote_Connections.Remote_Connection;
+      Ref_Count       : Natural := 1;
+      Full_Name       : GNAT.OS_Lib.String_Access;
+      Normalized_Full : GNAT.OS_Lib.String_Access;
+      Dir_Name        : GNAT.OS_Lib.String_Access;
    end record;
    type Contents_Access is access Contents_Record;
 
@@ -212,8 +212,8 @@ private
    procedure Adjust (File : in out Virtual_File);
 
    type Writable_File is record
-      File : Virtual_File;
-      FD   : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
+      File     : Virtual_File;
+      FD       : GNAT.OS_Lib.File_Descriptor := GNAT.OS_Lib.Invalid_FD;
       Filename : GNAT.OS_Lib.String_Access;
    end record;
 

@@ -388,7 +388,7 @@ package body Src_Editor_Box is
       if Get_Filename (Editor) = VFS.No_File then
          Console.Insert
            (Kernel, -"Cross-references not possible on unamed files",
-            Mode           => Error);
+            Mode => Error);
          return;
       end if;
 

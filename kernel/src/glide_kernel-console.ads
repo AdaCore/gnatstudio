@@ -35,25 +35,25 @@ package Glide_Kernel.Console is
    --  Register the console module into the list
 
    procedure Initialize_Console
-     (Kernel         : access Kernel_Handle_Record'Class);
+     (Kernel : access Kernel_Handle_Record'Class);
    --  Initializes the Kernel's console. Note that the main window must have
    --  been created first.
 
    procedure Insert
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Text           : String;
-      Add_LF         : Boolean := True;
-      Mode           : Message_Type := Info);
+     (Kernel : access Kernel_Handle_Record'Class;
+      Text   : String;
+      Add_LF : Boolean := True;
+      Mode   : Message_Type := Info);
    --  Insert Text in the GPS's console.
    --  Highlight parts of Text that match a source location (the color is set
    --  using the preferences) if Highlight_Sloc is True.
    --  If Add_LF is True, automatically add a line separator.
 
    procedure Parse_File_Locations
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Text           : String;
-      Category       : String;
-      Highlight      : Boolean := False);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Text      : String;
+      Category  : String;
+      Highlight : Boolean := False);
    --  Perform a basic parsing on Text, and add any found file locations
    --  to the results view in Category.
    --  If Highlighting is True, attempt to highlight the corresponding
