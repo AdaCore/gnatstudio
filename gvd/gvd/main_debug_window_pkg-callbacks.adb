@@ -30,6 +30,7 @@ with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
 with GVD.Process;         use GVD.Process;
+with GVD.Proc_Utils;      use GVD.Proc_Utils;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
 pragma Warnings (Off);
 with GNAT.Expect;         use GNAT.Expect;
@@ -51,7 +52,7 @@ with GVD.Code_Editors;    use GVD.Code_Editors;
 with GVD.Preferences;     use GVD.Preferences;
 with GVD.Window_Settings; use GVD.Window_Settings;
 with GVD.Memory_View;     use GVD.Memory_View;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with List_Select_Pkg;     use List_Select_Pkg;
@@ -61,12 +62,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
    use GVD;
    use Gtk.Arguments;
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Argument_List, Argument_List_Access);
 
    procedure Cleanup_Debuggers (Top : Main_Debug_Window_Access);
    --  Close all the debuggers associated with a given main debug window
    --  by looking at all the pages of the main notebook.
+
    -----------------------
    -- Cleanup_Debuggers --
    -----------------------
@@ -353,10 +355,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab           : constant Debugger_Process_Tab :=
         Get_Current_Process (Object);
       Process_List  : List_Select_Access;
-      Command_Index : Integer := Exec_Command'First;
-      Args          : Argument_List_Access;
-      P             : Process_Descriptor;
-      Match         : Expect_Match := 0;
+      P             : Process_Handle;
+      Success       : Boolean;
+      Info          : Process_Info;
 
    begin
       if Tab = null
@@ -367,68 +368,21 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Gtk_New (Process_List, Title => -"Process Selection");
 
-      if Tab.Descriptor.Remote_Host = null
-        or else Tab.Descriptor.Remote_Host.all = ""
-      then
-         Skip_To_Char (Exec_Command, Command_Index, ' ');
-         Args := Argument_String_To_List
-           (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
-         declare
-            New_Args : Argument_List (Args'First .. Args'Last + 1);
-         begin
-            New_Args (Args'First .. Args'Last) := Args.all;
-            New_Args (New_Args'Last) :=
-              new String' (Get_Pref (List_Processes));
-
-            GNAT.Expect.Non_Blocking_Spawn
-              (P,
-               Exec_Command (Exec_Command'First .. Command_Index - 1),
-               New_Args);
-            Expect (P, Match, "\n");
-
-            for J in New_Args'Range loop
-               Free (New_Args (J));
-            end loop;
-         end;
+      if Tab.Descriptor.Remote_Host.all = "" then
+         Open_Processes (P);
       else
-         declare
-            New_Args : Argument_List (1 .. 2);
-         begin
-            New_Args (2) := new String' (Get_Pref (List_Processes));
-            New_Args (1) := new String' (Tab.Descriptor.Remote_Host.all);
-            GNAT.Expect.Non_Blocking_Spawn
-              (P,
-               Get_Pref (Remote_Protocol),
-               New_Args);
-            Expect (P, Match, "\n");
-            Free (New_Args (1));
-            Free (New_Args (2));
-         end;
+         Open_Processes (P, Tab.Descriptor.Remote_Host.all);
       end if;
 
-      Free (Args);
+      loop
+         Next_Process (P, Info, Success);
 
-      --  Skip the first line in the output.
-      Expect (P, Match, "\n");
+         exit when not Success;
 
-      while Match = 1 loop
-         declare
-            S     : constant String := Expect_Out (P);
-            Index : Integer := S'First;
-         begin
-            Skip_Blanks (S, Index);
-            Skip_To_Char (S, Index, ' ');
-            Add_Item
-              (Process_List, S (S'First .. Index),
-               Strip_CR (S (Index + 1 .. S'Last - 1)));
-            Expect (P, Match, "\n");
-
-         exception
-            when Process_Died => exit;
-         end;
+         Add_Item (Process_List, Info.Id, Info.Info);
       end loop;
 
-      Close (P);
+      Close_Processes (P);
 
       declare
          Argument : constant String := Show (Process_List);
