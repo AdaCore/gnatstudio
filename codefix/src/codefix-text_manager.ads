@@ -337,11 +337,16 @@ package Codefix.Text_Manager is
    --  Add to the extract size lines after each beginning of paragraph
    --  recorded.
 
+   procedure Set_String
+     (This        : in out Extract_Line;
+      New_String  : String;
+      First, Last : Natural := 0);
+
    ----------------------------------------------------------------------------
    --  type Extract
    ----------------------------------------------------------------------------
 
-   type Extract is private;
+   type Extract is tagged private;
    --  An extract is a temporary object that contains a part of the source
    --  code, modified or not. The modifications made in an extract do not have
    --  any influence in the source code before the call of Update function.
@@ -410,7 +415,7 @@ package Codefix.Text_Manager is
    --  Free the memory associated to an Extract.
 
    function Get_Line
-     (This : Extract; Position : File_Cursor) return Ptr_Extract_Line;
+     (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line;
    --  Returns the line with the number specified in the original text.
 
    function Get_Record
@@ -439,7 +444,7 @@ package Codefix.Text_Manager is
    procedure Get_Entity
      (This : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor : File_Cursor);
+      Cursor : File_Cursor'Class);
    --  Add in the Extract lines of the Entity witch begins at the position
    --  specified by the cursor (if it is a spec, the body is also got).
 
@@ -500,6 +505,10 @@ package Codefix.Text_Manager is
    --  recorded.
 
 private
+
+   function Compare_Pkg (Pkg_1, Pkg_2 : String) return Boolean;
+   --  Compare two package names and determine if their are coherent. For
+   --  example, Direct_IO and Ada.Direct_IO are coherent packages names.
 
    ----------------------------------------------------------------------------
    --  type Text_Navigator
@@ -579,7 +588,7 @@ private
    --  type Extract
    ----------------------------------------------------------------------------
 
-   type Extract is record
+   type Extract is tagged record
       First   : Ptr_Extract_Line;
       Caption : Dynamic_String;
    end record;
