@@ -100,7 +100,7 @@ clean-temp-files:
 
 clean: clean-temp-files
 	-$(RM) gps.info*
-	-$(RM) gps-tutorial*.html gps_*.html gps.ps gps.txt
+	-$(RM) gps-tutorial*.html gps.html gps_*.html gps.ps gps.txt
 
 mostlyclean: clean
 
