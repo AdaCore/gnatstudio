@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -148,7 +148,7 @@ package body Commands.External is
    begin
       --  ??? Must add many checks for empty lists, etc.
 
-      if Command.Dir.all /= "" then
+      if Command.Dir'Length > 0 then
          Change_Dir (Command.Dir.all);
       end if;
 
@@ -156,6 +156,16 @@ package body Commands.External is
          Args (J) := new String'(Data (Temp_Args));
          Temp_Args := Next (Temp_Args);
       end loop;
+
+      if Command.Dir'Length > 0 then
+         Trace (Me, "spawn from " & Command.Dir.all & ": " &
+                Command.Command.all & " " &
+                Argument_List_To_String (Args));
+
+      else
+         Trace (Me, "spawn: " & Command.Command.all & " " &
+                Argument_List_To_String (Args));
+      end if;
 
       Non_Blocking_Spawn
         (Command.Fd,
