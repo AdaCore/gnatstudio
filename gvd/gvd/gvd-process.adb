@@ -81,6 +81,7 @@ with GUI_Utils;                  use GUI_Utils;
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Trace;                  use GVD.Trace;
 with Dock_Paned;                 use Dock_Paned;
+with Language;                   use Language;
 
 with System;
 with Ada.Unchecked_Conversion;
@@ -503,15 +504,17 @@ package body GVD.Process is
 
       if File_First /= 0 then
          --  Override the language currently defined in the editor.
-         --  Since the text file has been given by the debugger, the language
-         --  to use is the one currently defined by the debugger.
 
-         Set_Current_Language
-           (Process.Editor_Text, Get_Language (Process.Debugger));
+         declare
+            File_Name : constant String :=
+              Process.Current_Output (File_First .. File_Last);
+         begin
+            Set_Current_Language
+              (Process.Editor_Text, Get_Language_From_File
+               ("." & File_Extension (File_Name)));
 
-         Load_File
-           (Process.Editor_Text,
-            Process.Current_Output (File_First .. File_Last));
+            Load_File (Process.Editor_Text, File_Name);
+         end;
       end if;
 
       if Line /= 0 then
