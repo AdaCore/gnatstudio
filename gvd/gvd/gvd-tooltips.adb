@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2004                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -44,7 +44,7 @@ package body GVD.Tooltips is
    -- Local functions --
    ---------------------
 
-   function Display_Tooltip (Tooltip : in Tooltips) return Boolean;
+   function Display_Tooltip (Tooltip : Tooltips) return Boolean;
    --  Call the drawing function, then create a window which contains
    --  the pixmap, and display it.
 
@@ -154,14 +154,14 @@ package body GVD.Tooltips is
    -- Display_Tooltip --
    ---------------------
 
-   function Display_Tooltip (Tooltip : in Tooltips) return Boolean is
+   function Display_Tooltip (Tooltip : Tooltips) return Boolean is
       use type Gdk_Window;
-      Pixmap      : Gdk_Pixmap;
-      Window      : Gdk_Window;
-      Mask        : Gdk_Modifier_Type;
-      Pix         : Gtk_Pixmap;
+      Pixmap        : Gdk_Pixmap;
+      Window        : Gdk_Window;
+      Mask          : Gdk_Modifier_Type;
+      Pix           : Gtk_Pixmap;
       Width, Height : Gint;
-      X, Y        : Gint;
+      X, Y          : Gint;
 
    begin
       if not Tooltip.Active then

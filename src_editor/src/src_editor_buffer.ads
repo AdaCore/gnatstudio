@@ -146,9 +146,9 @@ package Src_Editor_Buffer is
    --  available when only the Line number needs to be checked.
 
    procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Editable_Line_Type;
-      Column  : Natural);
+     (Buffer : access Source_Buffer_Record;
+      Line   : Editable_Line_Type;
+      Column : Natural);
    --  Move the insert cursor to the given position.
    --
    --  The validity of the cursor position must be verified before invoking
@@ -351,8 +351,8 @@ package Src_Editor_Buffer is
      (Buffer : access Source_Buffer_Record) return Glide_Kernel.Kernel_Handle;
    --  Return the kernel associated to Buffer.
 
-   function Get_Filename (Buffer : access Source_Buffer_Record)
-                          return VFS.Virtual_File;
+   function Get_Filename
+     (Buffer : access Source_Buffer_Record) return VFS.Virtual_File;
    --  Return the name of the file associated with Buffer.
 
    procedure Set_Filename
@@ -404,13 +404,11 @@ package Src_Editor_Buffer is
    --  to Buffer.
 
    function Get_Ref_Count
-     (Buffer : access Source_Buffer_Record)
-      return Integer;
+     (Buffer : access Source_Buffer_Record) return Integer;
    --  Return the number of times the buffer was referenced.
 
    function Get_Total_Ref_Count
-     (Buffer : access Source_Buffer_Record)
-      return Integer;
+     (Buffer : access Source_Buffer_Record) return Integer;
    --  Return the total number of times the buffer was referenced.
 
    procedure Add_Controls (Buffer : access Source_Buffer_Record);
@@ -692,9 +690,9 @@ package Src_Editor_Buffer is
 private
 
    procedure Set_Cursor_Position
-     (Buffer  : access Source_Buffer_Record;
-      Line    : Gint;
-      Column  : Gint);
+     (Buffer : access Source_Buffer_Record;
+      Line   : Gint;
+      Column : Gint);
    --  Move the insert cursor to the given position.
    --
    --  The validity of the cursor position must be verified before invoking
