@@ -765,8 +765,7 @@ package body Glide_Result_View is
               To_Proxy (View.Non_Leaf_Color'Address));
       else
          Set (Model, Iter, Weight_Column, 600);
-         Set (Model, Iter, Color_Column,
-              To_Proxy (View.Leaf_Color'Address));
+         Set (Model, Iter, Color_Column, C_Proxy'(null));
       end if;
    end Fill_Iter;
 
@@ -1344,8 +1343,6 @@ package body Glide_Result_View is
 
       View.Category_Pixbuf := Gdk_New_From_Xpm_Data (var_xpm);
       View.File_Pixbuf     := Gdk_New_From_Xpm_Data (mini_page_xpm);
-
-      View.Leaf_Color := Black (Get_Default_Colormap);
 
       --  Initialize the tree.
 
