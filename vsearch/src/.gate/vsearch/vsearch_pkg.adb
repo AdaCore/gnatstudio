@@ -132,8 +132,8 @@ begin
    Set_Use_Arrows_Always (Vsearch.Scope_Combo, False);
    String_List.Append (Scope_Combo_Items, -"Whole Text");
    String_List.Append (Scope_Combo_Items, -"Comments Only");
-   String_List.Append (Scope_Combo_Items, -"Strings Only");
    String_List.Append (Scope_Combo_Items, -"Comments + Strings");
+   String_List.Append (Scope_Combo_Items, -"Strings Only");
    String_List.Append (Scope_Combo_Items, -"All but Comments");
    Combo.Set_Popdown_Strings (Vsearch.Scope_Combo, Scope_Combo_Items);
    Free_String_List (Scope_Combo_Items);
