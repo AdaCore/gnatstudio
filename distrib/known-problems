@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- Callgraph missing references with extended projects
+  Problem:    If your project hierarchy is setup so that A extends B, then
+              a callgraph for an entity of A will miss all calls done from
+              source files only in B, and not overriden in A.
+  Workaround: None found.
+
 - Only two desktops can be saved
   Problem:    If there are already two desktops saved, saving a new one
               replaces the oldest of the existing two desktops by the new one.
