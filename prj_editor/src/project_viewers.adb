@@ -1154,7 +1154,6 @@ package body Project_Viewers is
       Remove_Imported_Project
         (Prj, Project_Name (Project_Information (File)));
       Trace (Me, "Removing project dependency");
-      Trace_Pretty_Print (Me, Prj);
       Set_Project_Modified (Get_Kernel (Context), Prj, True);
       Recompute_View (Get_Kernel (Context));
 
