@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2001-2002                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Text_IO;          use Ada.Text_IO;
 with Output;               use Output;
 with Prj;                  use Prj;
@@ -7,17 +27,11 @@ with Prj.Tree;             use Prj.Tree;
 with Prj_API;              use Prj_API;
 with Src_Info;             use Src_Info;
 with Src_Info.ALI;         use Src_Info.ALI;
-with Src_Info.CPP;         use Src_Info.CPP;
 with Language_Handlers;       use Language_Handlers;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with Traces;               use Traces;
 
 package body Docgen.ALI_Utils is
-
-   procedure Process_External_Sources
-     (Project : Project_Node_Id; Project_View : Project_Id);
-   --  Add the source files for languages other than Ada in the project view.
 
    ----------------------------
    -- Predefined_Source_Path --
@@ -36,41 +50,6 @@ package body Docgen.ALI_Utils is
    begin
       return "/usr/local/gnat/lib/gcc-lib/i686-pc-linux-gnu/2.8.1/adalib";
    end Predefined_Object_Path;
-
-   ------------------------------
-   -- Process_External_Sources --
-   ------------------------------
-
-   procedure Process_External_Sources
-     (Project : Project_Node_Id; Project_View : Project_Id)
-   is
-      Iter : Imported_Project_Iterator := Start (Project, True);
-      Gnatls : constant String := Get_Attribute_Value
-        (Project_View, Gnatlist_Attribute, Ide_Package);
-   begin
-      --  Parse the list of source files for languages other than Ada.
-      --  At the same time, check that the gnatls attribute is coherent between
-      --  all projects and subprojects
-      while Current (Iter) /= No_Project loop
-         declare
-            Ls : constant String := Get_Attribute_Value
-              (Current (Iter), Gnatlist_Attribute, Ide_Package);
-         begin
-            if Ls /= "" and then Ls /= Gnatls then
-               Put_Line ("gnatls attribute is not the same in the "
-                         & "subproject """ & Project_Name (Current (Iter))
-                         & """ as in the root project."
-                         & " It will be ignored in the subproject.");
-            end if;
-         end;
-
-         if Add_Foreign_Source_Files (Current (Iter)) /= "" then
-            Put_Line ("Couldn't add foreign source files");
-         end if;
-
-         Next (Iter);
-      end loop;
-   end Process_External_Sources;
 
    ------------------
    -- Load_Project --
@@ -118,12 +97,6 @@ package body Docgen.ALI_Utils is
       end if;
 
       Set_Project_View (Glide_Language_Handler (Handler), Project_View);
-      Process_External_Sources (Project_Tree, Project_View);
-
-      Reset
-        (CPP_LI_Handler (Get_LI_Handler_By_Name
-           (Glide_Language_Handler (Handler), "c/c++")),
-         Project_View);
    end Load_Project;
 
    ------------------
@@ -140,12 +113,12 @@ package body Docgen.ALI_Utils is
       File_Project : Project_Id;
    begin
       --  This code is extracted from Locate_From_Source_And_Complete
+
       LI := Locate_From_Source (Source_Info_List, Source_Filename);
       File_Project := Get_Project_From_File
         (Project_View, Base_Name (Source_Filename));
 
       if File_Project = Prj.No_Project then
-         Put_Line ("*** Couldn't find project for '" & Source_Filename & "'");
          return;
       end if;
 
@@ -159,11 +132,6 @@ package body Docgen.ALI_Utils is
          Project                => File_Project,
          Predefined_Source_Path => Predefined_Source_Path,
          Predefined_Object_Path => Predefined_Object_Path);
-
-      if LI = No_LI_File then
-         Put_Line ("*** Null LI_File_Ptr returned.");
-         return;
-      end if;
    end Load_LI_File;
 
    -------------------------
@@ -177,18 +145,6 @@ package body Docgen.ALI_Utils is
 
       Register_LI_Handler
         (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
-      Register_LI_Handler
-        (Handler, "c/c++", new Src_Info.CPP.CPP_LI_Handler_Record);
-
-      declare
-         Msg : constant String := Set_Executables
-           (CPP_LI_Handler (Get_LI_Handler_By_Name (Handler, "c/c++")));
-      begin
-         if Msg /= "" then
-            Put_Line ("Error: " & Msg);
-         end if;
-      end;
-
 
       Register_Language (Handler, "ada", null);
       Add_Language_Info
@@ -196,23 +152,7 @@ package body Docgen.ALI_Utils is
          LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");
-
-      Register_Language (Handler, "c",   null);
-      Add_Language_Info
-        (Handler, "c",
-         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-         Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".c");
-
-      Register_Language (Handler, "c++", null);
-      Add_Language_Info
-        (Handler, "c++",
-         LI                  => Get_LI_Handler_By_Name (Handler, "c/c++"),
-         Default_Spec_Suffix => ".h",
-         Default_Body_Suffix => ".cc");
       return Language_Handler (Handler);
    end Create_Lang_Handler;
 
-begin
-   Parse_Config_File (".gnatdebug");
 end Docgen.ALI_Utils;
