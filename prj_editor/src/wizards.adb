@@ -154,7 +154,7 @@ package body Wizards is
       Set_Font_Description (Style, Desc);
       Set_Style (Wiz.Title, Style);
 
-      From_Description (Font, Desc);
+      Font := From_Description (Desc);
       Set_Size_Request (Wiz.Title_Box, -1,
                  (Get_Ascent (Font) + Get_Descent (Font)) * 3);
 
