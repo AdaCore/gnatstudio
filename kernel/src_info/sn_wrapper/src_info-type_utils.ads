@@ -1,4 +1,5 @@
 with DB_API; use DB_API;
+with HTables;
 
 with SN; use SN;
 with SN.DB_Structures; use SN.DB_Structures;
@@ -8,6 +9,18 @@ private package Src_Info.Type_Utils is
    --  This package is private because it is using some declarations
    --  which are in the private section of Src_Info. This package is
    --  specific to C and C++ types.
+
+   type Module_Typedefs_List is private;
+   --  Instances of this type are responsible to store hashed
+   --  information about types in one module (file).
+
+   procedure Init (Module_Typedefs : out Module_Typedefs_List);
+   --  Initialzes list.
+
+   procedure Free (Module_Typedefs : in out Module_Typedefs_List);
+   --  Deallocates internal structures needed for resolving original
+   --  type for the chain of typedefs. Must be called after processing
+   --  of each file.
 
    type CType_Description is
       record
@@ -76,19 +89,21 @@ private package Src_Info.Type_Utils is
    --  is a builtin C type. If conversion fails returns False
 
    procedure Type_Name_To_Kind
-     (Type_Name : in String;
-      SN_Table  : in SN_Table_Array;
-      Desc      : out CType_Description;
-      Success   : out Boolean);
+     (Type_Name         : in String;
+      SN_Table          : in SN_Table_Array;
+      Module_Typedefs   : in Module_Typedefs_List;
+      Desc              : out CType_Description;
+      Success           : out Boolean);
    --  Attempts to convert type name into E_Kind.
    --  At the moment searches up for
    --  the name in the class, typedef, enum tables.
 
    procedure Find_Original_Type
-     (Type_Name : in String;
-      SN_Table  : in SN_Table_Array;
-      Desc      : out CType_Description;
-      Success   : out Boolean);
+     (Type_Name         : in String;
+      SN_Table          : in SN_Table_Array;
+      Module_Typedefs   : in Module_Typedefs_List;
+      Desc              : out CType_Description;
+      Success           : out Boolean);
    --  Gets E_Kind of original type for specified typedef type.
    --  Sets Success to True if type found and fills Desc structure
    --  with appropriate information.
@@ -142,9 +157,41 @@ private package Src_Info.Type_Utils is
       return Boolean;
    --  Checks to see if function prototypes are the same.
 
-   procedure Free_Module_Typedefs;
-   --  Deallocates internal structures needed for resolving original
-   --  type for the chain of typedefs. Must be called after processing
-   --  of each file.
+private
+
+   --------------------------------
+   -- Type hash table defintions --
+   --------------------------------
+
+   Type_Table_Size : constant := 113;
+
+   type String_Hash_Table_Range is range 1 .. Type_Table_Size;
+
+   function Type_Hash_Function (Key : SN.String_Access)
+      return String_Hash_Table_Range;
+   --  Hash function for keys
+
+   function Type_Equal_Function (K1, K2 : SN.String_Access) return Boolean;
+   --  Checks the equality of two keys
+
+   type Type_Parse_State is (Incomplete, Complete, Unknown);
+
+   type Typedef_Entry is
+      record
+         Key   : SN.String_Access;
+         State : Type_Parse_State;
+      end record;
+
+   package String_Hash_Table is new HTables.Simple_HTable
+     (Header_Num => String_Hash_Table_Range,
+      Element    => Typedef_Entry,
+      Key        => SN.String_Access,
+      No_Element => (null, Unknown),
+      Hash       => Type_Hash_Function,
+      Equal      => Type_Equal_Function);
+
+   use String_Hash_Table;
+
+   type Module_Typedefs_List is access HTable;
 
 end Src_Info.Type_Utils;

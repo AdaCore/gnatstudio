@@ -1,6 +1,6 @@
 with GNAT.Regpat; use GNAT.Regpat;
 with SN.Find_Fns; use SN.Find_Fns;
-with HTables;
+with Ada.Unchecked_Deallocation;
 
 package body Src_Info.Type_Utils is
 
@@ -15,17 +15,8 @@ package body Src_Info.Type_Utils is
    --  Regexp to find plain class name in the templatized
    --  name.
 
-   --------------------------------
-   -- Type hash table defintions --
-   --------------------------------
-
-   Type_Table_Size : constant := 113;
-
-   type String_Hash_Table_Range is range 1 .. Type_Table_Size;
-
-   function Type_Hash_Function (Key : SN.String_Access)
-      return String_Hash_Table_Range;
-   --  string hash function wrapper
+   procedure Free (HT : in out HTable);
+   --  Frees Module_Typedefs
 
    ------------------------
    -- Type_Hash_Function --
@@ -41,8 +32,9 @@ package body Src_Info.Type_Utils is
       return String_Hash_Function (Key.all);
    end Type_Hash_Function;
 
-   function Type_Equal_Function (K1, K2 : SN.String_Access)
-      return Boolean;
+   -------------------------
+   -- Type_Equal_Function --
+   -------------------------
 
    function Type_Equal_Function (K1, K2 : SN.String_Access)
       return Boolean
@@ -50,32 +42,6 @@ package body Src_Info.Type_Utils is
    begin
       return K1.all = K2.all;
    end Type_Equal_Function;
-
-   type Type_Parse_State is (Incomplete, Complete, Unknown);
-
-   type Typedef_Entry is
-      record
-         Key   : SN.String_Access;
-         State : Type_Parse_State;
-      end record;
-
-   package String_Hash_Table is new HTables.Simple_HTable
-     (Header_Num => String_Hash_Table_Range,
-      Element    => Typedef_Entry,
-      Key        => SN.String_Access,
-      No_Element => (null, Unknown),
-      Hash       => Type_Hash_Function,
-      Equal      => Type_Equal_Function);
-
-   use  String_Hash_Table;
-
-   Module_Typedefs : HTable;
-   --  global table for types defined in the file
-   --  key = type name
-   --  data = whether this type has been successfully identified
-
-   procedure Free (HT : in out HTable);
-   --  Frees Module_Typedefs
 
    ----------
    -- Free --
@@ -149,10 +115,11 @@ package body Src_Info.Type_Utils is
    -----------------------
 
    procedure Type_Name_To_Kind
-     (Type_Name : in String;
-      SN_Table  : in SN_Table_Array;
-      Desc      : out CType_Description;
-      Success   : out Boolean)
+     (Type_Name         : in String;
+      SN_Table          : in SN_Table_Array;
+      Module_Typedefs   : in Module_Typedefs_List;
+      Desc              : out CType_Description;
+      Success           : out Boolean)
    is
       Matches      : Match_Array (0 .. 1);
       Volatile_Str : constant String := "volatile ";
@@ -170,6 +137,7 @@ package body Src_Info.Type_Utils is
            (Type_Name
               (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
             SN_Table,
+            Module_Typedefs,
             Desc,
             Success);
          Desc.IsVolatile := True;
@@ -185,6 +153,7 @@ package body Src_Info.Type_Utils is
            (Type_Name
               (Type_Name'First + Const_Str'Length .. Type_Name'Last),
             SN_Table,
+            Module_Typedefs,
             Desc,
             Success);
          Desc.IsConst := True;
@@ -216,7 +185,10 @@ package body Src_Info.Type_Utils is
          end if;
          Type_Name_To_Kind (
             Type_Name (Matches (1).First ..  Matches (1).Last),
-            SN_Table, Desc, Success);
+            SN_Table,
+            Module_Typedefs,
+            Desc,
+            Success);
          return;
       end if;
 
@@ -228,7 +200,13 @@ package body Src_Info.Type_Utils is
       end if;
 
       --  look in typedefs
-      Find_Original_Type (Type_Name, SN_Table, Desc, Success);
+      Find_Original_Type
+        (Type_Name,
+         SN_Table,
+         Module_Typedefs,
+         Desc,
+         Success);
+
       if Success then -- original type found
          return;
       end if;
@@ -281,10 +259,11 @@ package body Src_Info.Type_Utils is
    ------------------------
 
    procedure Find_Original_Type
-     (Type_Name : in String;
-      SN_Table  : in SN_Table_Array;
-      Desc      : out CType_Description;
-      Success   : out Boolean)
+     (Type_Name         : in String;
+      SN_Table          : in SN_Table_Array;
+      Module_Typedefs   : in Module_Typedefs_List;
+      Desc              : out CType_Description;
+      Success           : out Boolean)
    is
       Typedef   : T_Table;
       HTTypedef : Typedef_Entry;
@@ -302,14 +281,14 @@ package body Src_Info.Type_Utils is
       Typedef   := Find (SN_Table (T), Type_Name);
 
       Key := new String'(Type_Name);
-      Set (Module_Typedefs, Key, (Key, Incomplete));
+      Set (Module_Typedefs.all, Key, (Key, Incomplete));
       --  add this type as an unidentified one
 
       --  lookup left side of the typedef in our type
       --  hash table
       Seek_Key  := new String'
          (Typedef.Buffer (Typedef.Original.First .. Typedef.Original.Last));
-      HTTypedef := Get (Module_Typedefs, Seek_Key);
+      HTTypedef := Get (Module_Typedefs.all, Seek_Key);
       Free (Seek_Key);
 
       if Desc.Is_Typedef = True
@@ -334,9 +313,13 @@ package body Src_Info.Type_Utils is
          return;
       end if;
 
-      Type_Name_To_Kind (Typedef.Buffer (
-              Typedef.Original.First .. Typedef.Original.Last),
-              SN_Table, Desc, Success);
+      Type_Name_To_Kind
+        (Typedef.Buffer (
+           Typedef.Original.First .. Typedef.Original.Last),
+         SN_Table,
+         Module_Typedefs,
+         Desc,
+         Success);
 
       if Success then
          --  parent type found (E_Kind is resolved)
@@ -345,7 +328,7 @@ package body Src_Info.Type_Utils is
                     Typedef.File_Name.First .. Typedef.File_Name.Last));
          Free (Typedef);
          Success := True;
-         Set (Module_Typedefs, Key, (Key, Complete));
+         Set (Module_Typedefs.all, Key, (Key, Complete));
          return;
       end if;
 
@@ -535,13 +518,23 @@ package body Src_Info.Type_Utils is
             = Buffer_B (Ret_Type_B.First .. Ret_Type_B.Last);
    end Cmp_Prototypes;
 
-   ---------------------------
-   -- Free_Modules_Typedefs --
-   ---------------------------
+   ----------
+   -- Free --
+   ----------
 
-   procedure Free_Module_Typedefs is
+   procedure Free (Module_Typedefs : in out Module_Typedefs_List) is
+      procedure Internal_Free is new
+        Ada.Unchecked_Deallocation (HTable, Module_Typedefs_List);
    begin
-      Free (Module_Typedefs);
-   end Free_Module_Typedefs;
+      if Module_Typedefs /= null then
+         Free (Module_Typedefs.all);
+         Internal_Free (Module_Typedefs);
+      end if;
+   end Free;
+
+   procedure Init (Module_Typedefs : out Module_Typedefs_List) is
+   begin
+      Module_Typedefs := new HTable;
+   end Init;
 
 end Src_Info.Type_Utils;
