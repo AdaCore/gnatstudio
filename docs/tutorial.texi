@@ -48,7 +48,7 @@ unmodified in any copy.
 * Editing sources::
 * Building applications::
 * Source Navigation::
-* Search Area::
+* Search Dialog::
 * Project Explorer (entities)::
 * Back to Source Navigation::
 * Run::
@@ -108,8 +108,7 @@ several areas:
 @itemize @bullet
 @item a menu bar at the top
 @item a tool bar under the menu bar
-@item a search area under the tool bar, on the left side
-@item a project explorer located under the search area
+@item a project explorer under the tool bar, on the left side
 @item a working area on the right of the search area and project explorer
 @item a messages window under the working area
 @item a status bar at the bottom left
@@ -183,12 +182,10 @@ If you look at the progress bar, you will notice that while the build is in
 progress the state of the compilation is displayed, giving you
 the current number of files compiled, and the number of remaining files.
 
-The build has generated a number of errors in the messages window, which
-are highlighted in red.
+The build has generated a number of errors in a new window: the @i{Results}
+window, displayed in the bottom area.
 
-Scroll to the first error message by using the scrollbar on the right of
-the messages window, and
-click on the first error message (@i{sdc.adb:28:06: (style) bad indentation})
+Click on the first error message (@i{sdc.adb, 28:6  : (style) bad indentation})
 to jump to the @file{sdc.adb} source editor,
 at the line (28) and column (06) of the error.
 
@@ -206,7 +203,10 @@ shortcut from the preferences dialog (menu @code{Edit->Preferences},
 @code{Editor} tab).
 
 You can then fix all the remaining errors by selecting the whole block
-(from line 28 to line 40) and pressing @key{Ctrl-Tab}.
+(from line 28 to line 40) and pressing @key{Ctrl-Tab}. To select a block,
+you can either click on the left mouse button and select the area while
+holding the button, or using the keyboard by pressing the @key{Shift} key
+and moving the cursor using the @key{Up} or @key{Down} keys.
 
 Press the @key{F4} key to build again. You will be asked to save the file
 @file{sdc.adb} before the build starts. Confirm by clicking on @code{Yes}.
@@ -223,11 +223,13 @@ Now let's try to understand a little bit about how the program is working by
 looking at the @file{sdc.adb} editor: there's a loop, the main processing is
 done by the functions Process and Next (at line 30).
 
-Move the mouse over @code{Process} and let a tooltip appear
-(@file{tokens.ads:19}): this is the location (file and line) of the
-procedure specification.
+Click around line 30, move the mouse over @code{Process} and let a tooltip
+appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
+gives information about the kind of entity and the location (file and line) of
+the declaration of this procedure.
 
-Do the same for @code{Next} (@file{tokens.ads:15}).
+Do the same for @code{Next} (@code{global procedure tokens.next declared at
+tokens.ads:15}).
 
 Keeping the mouse over @code{Next}, display the contextual menu by clicking on
 the right mouse button,
@@ -235,13 +237,14 @@ then click on @code{Goto declaration of Next}: we're now in the package
 @code{Tokens}, in file @file{tokens.ads}; but where is this file in the project?
 
 @c --------------------------------------------------------------------
-@node Search Area
-@chapter Search Area
+@node Search Dialog
+@chapter Search Dialog
 @c --------------------------------------------------------------------
 
 @noindent
 
-Click in the @code{Search for:} text entry. Type @file{tokens.ads}. Then
+Select the menu @code{Navigate->Find...}: this will open a search dialog.
+In the @code{Search for:} text entry type @file{tokens.ads}. Then
 select @code{Project explorer} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
 several contexts including the current file, the project explorer, the help
@@ -249,6 +252,8 @@ window, ...
 
 Now click on @code{Find}. The file @file{tokens.ads}, in directory @code{struct}
 is highlighted.
+
+Close the search dialog by clicking on the @code{Close} button.
 
 @c --------------------------------------------------------------------
 @node Project Explorer (entities)
@@ -324,18 +329,20 @@ now activated.
 Use the menu @code{Debug->Data->Call Stack}: this opens a new area in
 the data window. If you select the contextual menu in the call stack,
 you will notice that various pieces of information can be displayed or
-removed in the call stack.  From this contextual, remove the
-@code{Parameters} info by clicking on it.
+removed in the call stack.  From this contextual menu, add the
+@code{Frame Number} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}, type @code{input.txt} in the
 arguments text entry, click on @code{OK}: the debugger stops on an exception
 (@code{Contraint_Error} in the file @file{stack.adb}, at line 49).
 
-Go up two frames by clicking on the @code{tokens.process} line in the call
-stack. If needed, use the scrollbar on the right.
+Go up in the call stack by clicking on the @code{tokens.process} line
+(frame number 6). If needed, use the scrollbar on the right.
 
 If you move the mouse over the parameter @code{T} at line 64, a tooltip is
-displayed showing the value of @code{T}.
+displayed showing the value of @code{T}. You have probably noticed that
+tooltips, like menus, are contextual: depending on the current session and
+on the entity selected, different information is displayed.
 
 Select the contextual menu @code{Debug->Display T}: this displays in the data
 window a box containing the different fields of @code{T}, each clearly
@@ -346,23 +353,22 @@ On @code{T} data display, select the contextual menu
 value.
 
 Special colors are used in the data display: blue for pointers that can be
-dereferenced by a double-click (double click on @code{T.val}); red for fields that
-have been modified since last step.
+dereferenced by a double-click (double click on @code{T.val}); red for fields
+that have been modified since last step.
 
 In the contextual menu that pops up when you hold the mouse over @code{T}.
-select @code{View memory at &T}: the
-memory view is opened.
-Use the @code{up} and @code{down} arrows to visit memory.
+select @code{View memory at &T}: a memory view is opened.
+Use the @code{up} and @code{down} arrows on the right to visit memory.
 
 Click in the memory dump, and modify it by typing numbers. Notice the
 red color for modified values;
 click on @code{Undo Changes} to cancel the modifications;
 click on @code{Close} to close the memory window.
 
-In the call stack, go back to @code{stack.push} frame.
+In the call stack, go back to @code{stack.push} frame (num 4).
 Fix the current line to @code{Last := Last + 1;}
 
-Save file (@key{Ctrl-S});
+Save the file (@key{Ctrl-S});
 End the debug session: menu @code{Debug->Terminate};
 Rebuild (press @key{F4} key);
 Rerun (menu @code{Build->Run->sdc}): the program now completes as expected.
@@ -420,7 +426,7 @@ Click on @code{Goto Previous Location} (left arrow in the toolbar),
 remove @code{View} spec, Save the file.
 
 Close the @file{stack.ads} and @file{stack.adb} files (menu File->Close,
-or using the shortcut @key{Ctrl-W}).
+or using the shortcut @key{Ctrl-W}), as well as the call graph window.
 Rebuild by pressing the @key{F4} key.
 
 @c "Let's now have a look at all the changes we've done so far, by looking at
@@ -485,10 +491,10 @@ project we've used in this tutorial.
 @section Project Wizard
 @noindent
 
-@b{WARNING}: while in the project wizard, you will not be able to scroll through the
-tutorial if you are reading it within GPS. You may want to resize the window
-now so that the entire section on the wizard is visible, or reopen the tutorial
-in another browser.
+@b{WARNING}: while in the project wizard, you will not be able to scroll
+through the tutorial if you are reading it within GPS. You may want to resize
+the window now so that the entire section on the wizard is visible, or reopen
+the tutorial in another browser.
 
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
@@ -577,10 +583,7 @@ number of different values.
 The @code{Build} variable shows a typical @code{Debug/Production} configuration
 where we've set different switches for the two modes.
 
-Click on the arrow at the right of the @code{Build DEBUG} entry and look at
-the two values defined.
-
-Now click on the button at the left (@code{Edit variable properties}): this
+Click on the button at the left (@code{Edit variable properties}): this
 is the variable editor, where values can be added or renamed.
 Close the variable editor by clicking on the @code{Cancel} button.
 
@@ -590,7 +593,8 @@ Now, let's take a look at the switches set in the project.
 @section Switch editor
 @noindent
 
-Select the menu item @code{Project->Edit switches}: a global
+Click on the @code{sdc} project in the project explorer, then
+select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
 This editor lists the switches associated with each file and
 the gray area shows the default (global) switches; you will also notice
@@ -619,8 +623,9 @@ Double click on the right arrow of @file{tokens.ads} to display the files that
 @noindent
 
 On the @i{sdc} project, select the contextual menu
-@code{Add dependency->From project file...}, then open the @i{sdc} directory and click
-on the @code{projects} subdirectory. Select the file @code{prj1.gpr}.
+@code{Add dependency->From project file...}, then open the @i{tutorial}
+directory and click on the @code{projects} subdirectory. Select the file
+@code{prj1.gpr}.
 
 You can see the new dependencies added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
@@ -634,7 +639,7 @@ project, use the contextual menu
 @code{Examine project hierarchy for sdc}: this will open a project hierarchy
 browser.
 
-In the browser, You can move the project items, and select them to highlight
+In the browser, you can move the project items, and select them to highlight
 the dependencies.
 
 Close the project browser by clicking on the @code{[x]} sign at the top right
