@@ -39,11 +39,9 @@ with Gtk.Container;
 with Gtk.Label;
 with Gtk.Menu;
 with Gtk.Menu_Item;
-with Gtk.Widget;
 
 with Language;
 with Language_Handlers;
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with Glide_Kernel;
 with Glide_Kernel.Modules;
 with Src_Editor_Buffer;
@@ -343,9 +341,8 @@ package Src_Editor_Box is
    procedure Goto_Declaration_Or_Body
      (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
       To_Body : Boolean;
-      Editor  : Source_Editor_Box := null;
-      Line    : Natural := 0;
-      Column  : Natural := 0);
+      Editor  : access Source_Editor_Box_Record'Class;
+      Context : access Glide_Kernel.Modules.Entity_Selection_Context'Class);
    --  Perform a Declaration-or-Body cross-reference for the entity
    --  located at (Line, Column) in Editor, or in the current editor if
    --  Editor is null. If To_Body is True, then display the next body of the
@@ -353,20 +350,6 @@ package Src_Editor_Box is
    --  If either Line or Column is null, then the position of the insert cursor
    --  is used instead. Highlight the entity found, opening a new editor if
    --  needed (this may depend on the user preferences).
-
-   procedure Get_Declaration_Info
-     (Editor      : access Source_Editor_Box_Record;
-      Line        : Natural;
-      Column      : Natural;
-      File_Decl   : out String_Access;
-      Line_Decl   : out Natural;
-      Column_Decl : out Natural);
-   --  Perform a cross-reference to the declaration of the entity located at
-   --  (Line, Column) in Editor. Fail silently when no declaration or no
-   --  entity can be located, and set File_Decl to null.
-   --  On success, File_Decl, Line_Decl and Column_Decl are set to the location
-   --  of the declaration of the entity. It is the responsibility of the
-   --  caller to free the memory associated with File_Decl.
 
    procedure Grab_Focus (Editor : access Source_Editor_Box_Record);
    --  Set the focus on the source view.
@@ -377,7 +360,6 @@ package Src_Editor_Box is
 
    function Get_Contextual_Menu
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
       Object       : access Glib.Object.GObject_Record'Class;
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk.Menu.Gtk_Menu)
