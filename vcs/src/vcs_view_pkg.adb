@@ -126,7 +126,7 @@ package body VCS_View_Pkg is
    --  Convenience function to make a string_list out of a String_Id_Array.
 
    procedure Refresh (Explorer : VCS_View_Access);
-   --  ???
+   --  Redraw the files in the VCS Explorer.
 
    procedure Create_Model (VCS_View : access VCS_View_Record'Class);
    --  Creates the underlying tree model for VCS_View.
@@ -166,9 +166,15 @@ package body VCS_View_Pkg is
 
    function Button_Press
      (View     : access Gtk_Widget_Record'Class;
-       Event   : Gdk_Event)
+      Event    : Gdk_Event)
       return Boolean;
    --  Callback for the "button_press" event.
+
+   function On_Delete
+     (View     : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event)
+     return Boolean;
+   --  Callback for the "delete_event" signal
 
    -----------
    -- Clear --
@@ -182,6 +188,23 @@ package body VCS_View_Pkg is
          File_Status_List.Free (Explorer.Stored_Status);
       end if;
    end Clear;
+
+   ---------------
+   -- On_Delete --
+   ---------------
+
+   function On_Delete
+     (View     : access Gtk_Widget_Record'Class;
+      Event    : Gdk_Event) return Boolean
+   is
+      pragma Unreferenced (Event);
+      The_View : VCS_View_Access := VCS_View_Access (View);
+   begin
+      File_Status_List.Free (The_View.Stored_Status);
+      File_Status_List.Free (The_View.Cached_Status);
+
+      return False;
+   end On_Delete;
 
    -------------
    -- Refresh --
@@ -385,7 +408,7 @@ package body VCS_View_Pkg is
 
       if String_List.Is_Empty (Status_Record.File_Name)
         or else GNAT.OS_Lib.Is_Directory
-                 (String_List.Head (Status_Record.File_Name))
+        (String_List.Head (Status_Record.File_Name))
       then
          Success := False;
          return;
@@ -707,7 +730,7 @@ package body VCS_View_Pkg is
       Check_VCS_View_Handler.Connect
         (Check, "activate",
          Check_VCS_View_Handler.To_Marshaller
-           (Change_Hide_Not_Registered'Access),
+         (Change_Hide_Not_Registered'Access),
          Explorer);
 
       Grab_Focus (Explorer);
@@ -760,6 +783,14 @@ package body VCS_View_Pkg is
          "button_press_event",
          Gtkada.Handlers.Return_Callback.To_Marshaller
            (Button_Press'Access),
+         VCS_View,
+         After => False);
+
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (VCS_View,
+         "delete_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (On_Delete'Access),
          VCS_View,
          After => False);
 
