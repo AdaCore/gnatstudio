@@ -44,9 +44,10 @@ with Gtkada.Canvas;    use Gtkada.Canvas;
 with Debugger;              use Debugger;
 with Memory_View_Pkg;       use Memory_View_Pkg;
 
-with Odd.Strings; use Odd.Strings;
-with Odd.Types;   use Odd.Types;
-with Odd.Process; use Odd.Process;
+with Odd.Strings;     use Odd.Strings;
+with Odd.Types;       use Odd.Types;
+with Odd.Process;     use Odd.Process;
+with Odd.Preferences; use Odd.Preferences;
 
 package body Odd.Memory_View is
 
@@ -207,20 +208,20 @@ package body Odd.Memory_View is
    procedure Init_Graphics (Window : Gdk_Window) is
       Success : Boolean;
    begin
-      View_Font  := Get_Gdkfont ("Courier", 12);
-      View_Color := Parse ("#333399");
+      View_Font  := Get_Gdkfont (Memory_View_Font_Name, Memory_View_Font_Size);
+      View_Color := Parse (Memory_View_Color);
 
       Alloc_Color (Get_System, View_Color, True, True, Success);
 
-      Highlighted := Parse ("#DDDDDD");
+      Highlighted := Parse (Memory_Highlighted_Color);
       Alloc_Color (Get_System, Highlighted, True, True, Success);
 
       White_Color := White (Get_System);
 
-      Selected := Parse ("#00009c");
+      Selected := Parse (Memory_Selected_Color);
       Alloc_Color (Get_System, Selected, True, True, Success);
 
-      Modified_Color := Parse ("#FF0000");
+      Modified_Color := Parse (Memory_Modified_Color);
       Alloc_Color (Get_System, Modified_Color, True, True, Success);
    end Init_Graphics;
 
