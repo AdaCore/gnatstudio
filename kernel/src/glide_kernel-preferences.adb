@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2004                       --
+--                     Copyright (C) 2001-2005                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -40,6 +40,7 @@ with Glide_Kernel.Scripts;     use Glide_Kernel.Scripts;
 with Default_Preferences;      use Default_Preferences;
 with Case_Handling;            use Case_Handling;
 with Traces;                   use Traces;
+with Config;
 
 package body Glide_Kernel.Preferences is
 
@@ -272,7 +273,7 @@ package body Glide_Kernel.Preferences is
 
       Default_Font := Param_Spec_Font (Gnew_Font
         (Name    => "General-Default-Font",
-         Default => GVD.Default_Font,
+         Default => Config.Default_Font,
          Blurb   => -"The default font used in GPS",
          Nick    => -"Default font"));
       Register_Property
@@ -396,7 +397,7 @@ package body Glide_Kernel.Preferences is
 
       MDI_Opaque := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "MDI-Opaque",
-         Default => GVD.Default_Opaque_MDI,
+         Default => Config.Default_Opaque_MDI,
          Blurb   => -("Whether items will be resized or moved opaquely when"
                       & " not maximized"),
          Nick    => -"Opaque"));
@@ -770,7 +771,7 @@ package body Glide_Kernel.Preferences is
          Nick  => -"Diff command",
          Blurb => -("Command used to compute differences between two files."
                     & " Arguments can also be specified"),
-         Default => GVD.Default_Diff_Cmd));
+         Default => Config.Default_Diff_Cmd));
       Register_Property
         (Kernel.Preferences, Param_Spec (Diff_Cmd), -"Visual diff");
 
@@ -779,7 +780,7 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Patch command",
          Blurb   =>
            -"Command used to apply a patch. Arguments can also be specified",
-         Default => GVD.Default_Patch_Cmd));
+         Default => Config.Default_Patch_Cmd));
       Register_Property
         (Kernel.Preferences, Param_Spec (Patch_Cmd), -"Visual diff");
 

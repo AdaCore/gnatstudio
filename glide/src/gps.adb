@@ -55,7 +55,7 @@ with Glide_Kernel.Task_Manager;   use Glide_Kernel.Task_Manager;
 with Gtkada.Intl;                 use Gtkada.Intl;
 with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.MDI;                  use Gtkada.MDI;
-with GVD;                         use GVD;
+with Config;                      use Config;
 with OS_Utils;                    use OS_Utils;
 with Projects.Editor;             use Projects.Editor;
 with Projects.Registry;           use Projects;
@@ -431,7 +431,7 @@ procedure GPS is
 
          if Prefix.all = "" then
             Free (Prefix);
-            Prefix := new String'(GVD.Prefix);
+            Prefix := new String'(Config.Prefix);
          end if;
       end if;
 
@@ -564,8 +564,8 @@ procedure GPS is
 
       Traces.Parse_Config_File
         (Default => File_Utils.Name_As_Directory (Dir.all) & "traces.cfg");
-      Trace (Me, "GPS " & GVD.Version & " (" & GVD.Source_Date &
-             ") hosted on " & GVD.Target);
+      Trace (Me, "GPS " & Config.Version & " (" & Config.Source_Date &
+             ") hosted on " & Config.Target);
 
       Gtk_New
         (GPS, "<gps>", Glide_Menu.Glide_Menu_Items.all, Dir.all, Prefix.all);
@@ -630,15 +630,16 @@ procedure GPS is
                case Full_Switch (Full_Switch'First + 1) is
                   --  --version
                   when 'v' =>
-                     if GVD.Can_Output then
+                     if Config.Can_Output then
                         Put_Line (GPS_Name (GPS) & " version " &
-                                  GVD.Version & " (" &
-                                  GVD.Source_Date & ") hosted on " &
-                                  GVD.Target);
+                                  Config.Version & " (" &
+                                  Config.Source_Date & ") hosted on " &
+                                  Config.Target);
                      else
                         Button := Message_Dialog
-                          (GPS_Name (GPS) & " version " & GVD.Version & " (" &
-                           GVD.Source_Date & ") hosted on " & GVD.Target,
+                          (GPS_Name (GPS) & " version " &
+                           Config.Version & " (" &
+                           Config.Source_Date & ") hosted on " & Config.Target,
                            Information, Button_OK,
                            Title         => -"Version",
                            Justification => Justify_Left);
@@ -771,7 +772,7 @@ procedure GPS is
 
    exception
       when Invalid_Switch | GNAT.Command_Line.Invalid_Parameter =>
-         if GVD.Can_Output then
+         if Config.Can_Output then
             Put_Line ("Invalid command line");
          end if;
 
@@ -786,7 +787,8 @@ procedure GPS is
    procedure Help is
       use ASCII;
       Help_String : constant String :=
-        GPS_Name (GPS) & " " & GVD.Version & " (" & GVD.Source_Date & ")" &
+        GPS_Name (GPS) & " " & Config.Version & " (" &
+        Config.Source_Date & ")" &
         (-", the GNAT Programming System.") & LF
         & (-"Usage:") & LF
         & (-"   gps [options] [-Pproject-file] [source1] [source2] ...") & LF
@@ -817,7 +819,7 @@ procedure GPS is
         & (-"   --tracefile=file    Load traces configuration from file");
 
    begin
-      if GVD.Can_Output then
+      if Config.Can_Output then
          Put_Line (Help_String);
       else
          Button := Message_Dialog
@@ -1371,9 +1373,9 @@ procedure GPS is
 
       Console.Insert
         (GPS.Kernel,
-         -"Welcome to " & GPS_Name (GPS) & " " & GVD.Version &
-         " (" & GVD.Source_Date &
-         (-") hosted on ") & GVD.Target & ASCII.LF &
+         -"Welcome to " & GPS_Name (GPS) & " " & Config.Version &
+         " (" & Config.Source_Date &
+         (-") hosted on ") & Config.Target & ASCII.LF &
          (-"the GNAT Programming System") & ASCII.LF & About_Contents.all &
          "(c) 2001-2004 ACT-Europe" & ASCII.LF);
       Free (About_Contents);

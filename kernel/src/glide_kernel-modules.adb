@@ -22,7 +22,7 @@
 with Gtk.Image_Menu_Item;
 pragma Warnings (Off, Gtk.Image_Menu_Item);
 
-with GVD;               use GVD;
+with Config;            use Config;
 
 with GUI_Utils;         use GUI_Utils;
 with Gdk.Dnd;           use Gdk.Dnd;
