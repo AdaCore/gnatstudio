@@ -49,8 +49,6 @@ package Project_Trees is
    type Project_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with private;
    type Project_Tree is access all Project_Tree_Record'Class;
 
-   type Name_Id_Array is array (Natural range <>) of Types.Name_Id;
-
    procedure Gtk_New
      (Tree        : out Project_Tree;
       Manager     : access Prj_Manager.Project_Manager_Record'Class;
@@ -73,14 +71,14 @@ package Project_Trees is
    --  In case a directory is selected in the tree, this returns the project
    --  this directory belongs to.
 
-   function Get_Selected_Directories
+   function Get_Selected_Directory
      (Tree    : access Project_Tree_Record;
-      Project : Prj.Project_Id) return Name_Id_Array;
-   --  Return the list of selected directories for Project. Note that this
-   --  doesn't include any imported projects.
-   --  This returns an empty array if no directory are selected.
-   --  It is your responsability to provide a correct semantic in your
-   --  application if Project wasn't selected.
+      Project : Prj.Project_Id) return Types.Name_Id;
+   --  Return the name of the selected directory for Project.
+   --  It returns No_String if a project node is selected, and the name of the
+   --  directory containing the file is a File_Node, Category_Node or
+   --  Entity_Node is selected.
+   --  No_String is also returned if the directory is not in Project.
 
    -------------
    -- Signals --
