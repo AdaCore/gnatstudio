@@ -439,6 +439,7 @@ package body Creation_Wizard.Dependencies is
       Pack_Start (Box, Hbox, Expand => True);
 
       Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (Hbox, Scrolled, Expand => True);
       Page.Tree := Create_Tree_View
         (Column_Types      =>
@@ -521,6 +522,7 @@ package body Creation_Wizard.Dependencies is
       Set_Default_Size (Dialog, 500, 600);
 
       Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (Get_Vbox (Dialog), Scrolled, Expand => True, Fill => True);
 
       Tree := Create_Tree_View
