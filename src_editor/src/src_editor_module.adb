@@ -3968,7 +3968,7 @@ package body Src_Editor_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       File               : constant String := '/' & (-"File") & '/';
-      Save               : constant String := File & (-"Save More") & '/';
+      Save               : constant String := File & (-"Save M_ore") & '/';
       Edit               : constant String := '/' & (-"Edit") & '/';
       Navigate           : constant String := '/' & (-"Navigate") & '/';
       Mitem              : Gtk_Menu_Item;
@@ -3993,9 +3993,6 @@ package body Src_Editor_Module is
 
    begin
       Src_Editor_Module_Id := new Source_Editor_Module_Record;
-      Source_Editor_Module (Src_Editor_Module_Id).Kernel :=
-        Kernel_Handle (Kernel);
-
       Register_Filter (Kernel, Src_Action_Context, "Source editor");
 
       Command := new Indentation_Command;
@@ -4263,9 +4260,10 @@ package body Src_Editor_Module is
         (Kernel, Save, -"_All", "",
          On_Save_All'Access,
          Ref_Item => -"Messages");
-      Register_Menu (Kernel, Save, -"Desktop", "", On_Save_Desktop'Access);
+      Register_Menu (Kernel, Save, -"_Desktop", "", On_Save_Desktop'Access);
       Register_Menu
-        (Kernel, Save, -"Default Desktop", "", On_Save_Default_Desktop'Access);
+        (Kernel, Save, -"D_efault Desktop", "",
+         On_Save_Default_Desktop'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, File, Mitem, Ref_Item => -"Messages");
 
@@ -4414,10 +4412,10 @@ package body Src_Editor_Module is
       Gtk_New (Mitem);
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
-      Register_Menu (Kernel, Edit, -"Fold all blocks", "",
+      Register_Menu (Kernel, Edit, -"_Fold all blocks", "",
                      On_Fold_Blocks'Access, null,
                      0, 0, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Unfold all blocks", "",
+      Register_Menu (Kernel, Edit, -"Unfold all _blocks", "",
                      On_Unfold_Blocks'Access, null,
                      0, 0, Ref_Item => -"Preferences");
 
