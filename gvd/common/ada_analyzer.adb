@@ -892,7 +892,10 @@ package body Ada_Analyzer is
                Num_Parens      := 0;
             end if;
 
-            if not In_Generic then
+            if Top_Token.Token = Tok_Type then
+               null;
+
+            elsif not In_Generic then
                if not Top_Token.Declaration
                  and then (Top_Token.Token = Tok_Function
                            or else Top_Token.Token = Tok_Procedure)
@@ -1793,8 +1796,10 @@ package body Ada_Analyzer is
             end if;
 
             if Top_Token.Declaration
-              and then Prev_Token /= Tok_Pragma
-              and then Prev_Token /= Tok_End
+              and then (Prev_Token not in Reserved_Token_Type
+                        or else Prev_Token = Tok_Declare
+                        or else Prev_Token = Tok_Is
+                        or else Prev_Token = Tok_Private)
               and then Num_Parens = 0
             then
                --  This is a variable declaration
