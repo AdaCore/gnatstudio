@@ -18,55 +18,60 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;             use Glide_Kernel;
-with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
-with Glide_Kernel.Console;     use Glide_Kernel.Console;
-with Gdk.Event;                use Gdk.Event;
-with Gdk.Types;                use Gdk.Types;
-with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
-with Glib.Xml_Int;             use Glib.Xml_Int;
-with Commands.Interactive;     use Commands, Commands.Interactive;
-with HTables;                  use HTables;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GUI_Utils;                use GUI_Utils;
-with System;                   use System;
-with System.Assertions;        use System.Assertions;
-with Ada.Exceptions;           use Ada.Exceptions;
-with Gdk.Color;                use Gdk.Color;
-with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
-with Gtk.Dialog;               use Gtk.Dialog;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
-with Gtk.Main;                 use Gtk.Main;
-with Gtk.Menu_Item;            use Gtk.Menu_Item;
-with Gtk.Paned;                use Gtk.Paned;
-with Gtk.Frame;                use Gtk.Frame;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Box;                  use Gtk.Box;
-with Glib;                     use Glib;
-with Glib.Object;              use Glib.Object;
-with Gtk.Vbutton_Box;          use Gtk.Vbutton_Box;
-with Gtk.Button;               use Gtk.Button;
-with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
-with Gtk.Stock;                use Gtk.Stock;
-with Glide_Intl;               use Glide_Intl;
-with Gtkada.Handlers;          use Gtkada.Handlers;
-with Gtk.Widget;               use Gtk.Widget;
-with Gtk.Enums;                use Gtk.Enums;
-with System;                   use System;
-with Gtk.Accel_Map;            use Gtk.Accel_Map;
-with Gtk.Window;               use Gtk.Window;
-with Gtk.Event_Box;            use Gtk.Event_Box;
-with Gtk.Label;                use Gtk.Label;
-with Gtk.Style;                use Gtk.Style;
-with Gtk.Separator;            use Gtk.Separator;
-with Gtkada.Macro;             use Gtkada.Macro;
-with Traces;                   use Traces;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Glib.Xml_Int;              use Glib.Xml_Int;
+with Glib.Convert;              use Glib.Convert;
+with Gdk.Event;                 use Gdk.Event;
+with Gdk.Types;                 use Gdk.Types;
+with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
+with Commands.Interactive;      use Commands, Commands.Interactive;
+with HTables;                   use HTables;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with GUI_Utils;                 use GUI_Utils;
+with System;                    use System;
+with System.Assertions;         use System.Assertions;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Gdk.Color;                 use Gdk.Color;
+with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
+with Gtk.Dialog;                use Gtk.Dialog;
+with Gtk.Tree_View;             use Gtk.Tree_View;
+with Gtk.Tree_Model;            use Gtk.Tree_Model;
+with Gtk.Tree_Selection;        use Gtk.Tree_Selection;
+with Gtk.Tree_Store;            use Gtk.Tree_Store;
+with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
+with Gtk.Paned;                 use Gtk.Paned;
+with Gtk.Frame;                 use Gtk.Frame;
+with Gtk.Text_Buffer;           use Gtk.Text_Buffer;
+with Gtk.Text_View;             use Gtk.Text_View;
+with Gtk.Box;                   use Gtk.Box;
+with Glib;                      use Glib;
+with Glib.Object;               use Glib.Object;
+with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
+with Gtk.Button;                use Gtk.Button;
+with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
+with Gtk.Stock;                 use Gtk.Stock;
+with Glide_Intl;                use Glide_Intl;
+with Gtkada.Handlers;           use Gtkada.Handlers;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Enums;                 use Gtk.Enums;
+with System;                    use System;
+with Gtk.Accel_Map;             use Gtk.Accel_Map;
+with Gtk.Window;                use Gtk.Window;
+with Gtk.Event_Box;             use Gtk.Event_Box;
+with Gtk.Label;                 use Gtk.Label;
+with Gtk.Style;                 use Gtk.Style;
+with Gtk.Separator;             use Gtk.Separator;
+with Gtkada.Macro;              use Gtkada.Macro;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Traces;                    use Traces;
 with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
+with VFS;                       use VFS;
 with Ada.Calendar;              use Ada.Calendar;
 with Ada.Unchecked_Deallocation;
 with Ada.Unchecked_Conversion;
@@ -74,6 +79,13 @@ with Ada.Unchecked_Conversion;
 package body KeyManager_Module is
 
    Me : constant Debug_Handle := Create ("Keymanager");
+
+   File_Cst                  : aliased constant String := "file";
+   Speed_Cst                 : aliased constant String := "speed";
+   Load_Macro_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => File_Cst'Access);
+   Play_Macro_Cmd_Parameters : constant Cst_Argument_List :=
+     (1 => Speed_Cst'Access);
 
    Menu_Context_Name : constant String := "Menus";
    --  -"Menus" will need to be translated
@@ -139,6 +151,29 @@ package body KeyManager_Module is
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
 
+   type Event_Set is record
+      Events           : Macro_Item_Access;
+      --  Set of events recorded.
+
+      Last_Event       : Macro_Item_Access;
+      --  Last event recorded.
+
+      Current_Event    : Macro_Item_Access;
+      --  Current event being replayed.
+
+      Start_Clock       : Ada.Calendar.Time;
+      --  Start time of event replay.
+
+      Time_Spent        : Guint32;
+      --  Virtual time spent so far in events (addition of Events.Time)
+
+      Prev_Time         : Guint32;
+      --  Time of previous event recorded.
+
+      Speed            : Duration := 1.0;
+      --  Speed at which replay is made. 1.0 means normal speed.
+   end record;
+
    type Key_Manager_Record is record
       Kernel           : Kernel_Handle;
       Table            : Key_Htable.HTable;
@@ -153,20 +188,8 @@ package body KeyManager_Module is
       Recording        : Boolean := False;
       --  Whether the key manager is recording key events
 
-      Keys             : Macro_Item_Access;
-      --  Set of keys recorded.
-
-      Last_Key         : Macro_Item_Access;
-      --  Last key recorded.
-
-      Key_Node         : Macro_Item_Access;
-      --  Current key being replayed.
-
-      Start_Clock       : Ada.Calendar.Time;
-      --  Start time of key replay.
-
-      Start_Time       : Guint32;
-      --  Original start time of an event.
+      Events           : Event_Set;
+      --  Handle record and replay of events
    end record;
    type Key_Manager_Access is access all Key_Manager_Record;
 
@@ -182,33 +205,33 @@ package body KeyManager_Module is
    Keymanager_Module : Keymanager_Module_ID;
 
    procedure Bind_Default_Key
-     (Handler        : access Key_Manager_Record;
-      Action         : String;
-      Default_Key    : String);
+     (Handler     : access Key_Manager_Record;
+      Action      : String;
+      Default_Key : String);
    --  Bind Default_Key to Action, see doc in Glide_Kernel.Bind_Default_Key
 
    function Process_Event
-     (Handler  : access Key_Manager_Record;
-      Kernel   : access Kernel_Handle_Record'Class;
-      Event    : Gdk_Event) return Boolean;
+     (Handler : access Key_Manager_Record;
+      Kernel  : access Kernel_Handle_Record'Class;
+      Event   : Gdk_Event) return Boolean;
    --  Process the event and call the appropriate actions if needed
 
    procedure Free (Handler : in out Key_Manager_Record);
    --  Free the memoru occupied by the key manager
 
    procedure Bind_Default_Key_Internal
-     (Table          : in out Key_Htable.HTable;
-      Action         : String;
-      Default_Key    : Gdk.Types.Gdk_Key_Type;
-      Default_Mod    : Gdk.Types.Gdk_Modifier_Type;
-      Changed        : Boolean := False);
+     (Table       : in out Key_Htable.HTable;
+      Action      : String;
+      Default_Key : Gdk.Types.Gdk_Key_Type;
+      Default_Mod : Gdk.Types.Gdk_Modifier_Type;
+      Changed     : Boolean := False);
    --  Internal version that allows setting the Changed attribute.
 
    procedure Bind_Default_Key_Internal
-     (Handler        : access Key_Manager_Record;
-      Action         : String;
-      Default_Key    : String;
-      Changed        : Boolean := False);
+     (Handler     : access Key_Manager_Record;
+      Action      : String;
+      Default_Key : String;
+      Changed     : Boolean := False);
    --  Same as above, except Default_Key can also include secondary keymaps
    --  as in "control-c control-k"
 
@@ -217,13 +240,21 @@ package body KeyManager_Module is
       Manager : access Key_Manager_Record);
    --  Load the customized key bindings
 
+   procedure Macro_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Interactive command handler for the key manager module.
+
    procedure On_Edit_Keys
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Open a GUI to edit the key bindings
 
+   procedure Record_Macro (Kernel : Kernel_Handle);
+   --  Start record of all events.
+
    procedure On_Start_Recording
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Start recording all key events for later re-play.
+   --  Callback for starting record of all events for later re-play.
 
    procedure On_Stop_Recording
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -231,7 +262,21 @@ package body KeyManager_Module is
 
    procedure On_Play_Macro
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Play last set of events recorded.
+   --  Callback for playing current set of events.
+
+   procedure Play_Macro (Kernel : Kernel_Handle; Speed : Duration := 1.0);
+   --  Play current set of events.
+
+   procedure Load_Macro (File : Virtual_File; Success : out Boolean);
+   --  Load macro file.
+
+   procedure On_Load_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Callback for loading set of events to replay.
+
+   procedure On_Save_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Save last set of events recorded.
 
    function Play_Macro_Timer return Boolean;
    --  Timer used by On_Play_Macro
@@ -241,9 +286,8 @@ package body KeyManager_Module is
    --  Handle the "Grab", "Remove" and "Add" buttons
 
    function Grab_Multiple_Key
-     (Widget : access Gtk_Widget_Record'Class;
-      Allow_Multiple : Boolean)
-      return String;
+     (Widget         : access Gtk_Widget_Record'Class;
+      Allow_Multiple : Boolean) return String;
    --  Grab a key binding, with support for multiple keymaps. Returns the
    --  empty string if no key could be grabbed.
 
@@ -251,9 +295,9 @@ package body KeyManager_Module is
    --  Exit the current nest main loop, if any
 
    type Keys_Editor_Record is new Gtk_Dialog_Record with record
-      Kernel  : Kernel_Handle;
-      View    : Gtk_Tree_View;
-      Model   : Gtk_Tree_Store;
+      Kernel      : Kernel_Handle;
+      View        : Gtk_Tree_View;
+      Model       : Gtk_Tree_Store;
       Help        : Gtk_Text_Buffer;
       Action_Name : Gtk_Label;
    end record;
@@ -314,7 +358,6 @@ package body KeyManager_Module is
       Level  : Customization_Level);
    --  Called when new customization files are parsed
 
-
    Action_Column  : constant := 0;
    Key_Column     : constant := 1;
    Changed_Column : constant := 2;
@@ -338,24 +381,93 @@ package body KeyManager_Module is
    procedure General_Event_Handler
      (Event : Gdk_Event; Kernel : System.Address)
    is
-      Item : Macro_Item_Key_Access;
-   begin
-      if Get_Event_Type (Event) = Key_Press
-        or else Get_Event_Type (Event) = Key_Release
-      then
-         if Keymanager_Module.Key_Manager.Recording then
-            Item := Create_Item (Event);
+      Event_Type  : constant Gdk_Event_Type := Get_Event_Type (Event);
+      Key_Item    : Macro_Item_Key_Access;
+      Button_Item : Macro_Item_Mouse_Access;
+      Motion_Item : Macro_Item_Motion_Access;
+      Scroll_Item : Macro_Item_Scroll_Access;
+      Prev_Time   : Guint32 renames
+        Keymanager_Module.Key_Manager.Events.Prev_Time;
 
-            if Item /= null then
-               if Keymanager_Module.Key_Manager.Keys = null then
-                  Keymanager_Module.Key_Manager.Keys := Item.all'Access;
-                  Keymanager_Module.Key_Manager.Last_Key := Item.all'Access;
-               else
-                  Keymanager_Module.Key_Manager.Last_Key.Next :=
-                    Item.all'Access;
-                  Keymanager_Module.Key_Manager.Last_Key := Item.all'Access;
-               end if;
+      procedure Save_Item (Item : Macro_Item_Access);
+      --  Save item in list of current events, if non null
+
+      ---------------
+      -- Save_Item --
+      ---------------
+
+      procedure Save_Item (Item : Macro_Item_Access) is
+      begin
+         if Item /= null then
+            if Keymanager_Module.Key_Manager.Events.Events = null then
+               Keymanager_Module.Key_Manager.Events.Events := Item;
+               Keymanager_Module.Key_Manager.Events.Last_Event := Item;
+
+            else
+               --  Store the relative time, to ease replay.
+
+               Item.Prev := Keymanager_Module.Key_Manager.Events.Last_Event;
+               Keymanager_Module.Key_Manager.Events.Last_Event.Next := Item;
+               Keymanager_Module.Key_Manager.Events.Last_Event := Item;
             end if;
+
+            Prev_Time := Get_Time (Event);
+         end if;
+      end Save_Item;
+
+   begin
+      --  We do not put a global exception handler in this procedure since
+      --  it is called very often, so when using setjmp/longjmp, the cost
+      --  may not be negligible.
+
+      if Keymanager_Module.Key_Manager.Recording then
+         begin
+            case Event_Type is
+               when Key_Press | Key_Release =>
+                  Key_Item := Create_Item (Event, Prev_Time);
+                  Save_Item (Macro_Item_Access (Key_Item));
+
+                  if Process_Event
+                    (Keymanager_Module.Key_Manager, Convert (Kernel), Event)
+                  then
+                     return;
+                  end if;
+
+               when Button_Press | Button_Release
+                    | Gdk_2button_Press
+                    | Gdk_3button_Press
+               =>
+                  Button_Item := Create_Item (Event, Prev_Time);
+                  Save_Item (Macro_Item_Access (Button_Item));
+
+               when Motion_Notify =>
+                  Motion_Item := Create_Item (Event, Prev_Time);
+                  Save_Item (Macro_Item_Access (Motion_Item));
+
+               when Scroll =>
+                  Scroll_Item := Create_Item (Event, Prev_Time);
+                  Save_Item (Macro_Item_Access (Scroll_Item));
+
+               --  Other events should not be needed: they will be generated as
+               --  part the basic events handled above (keyboard/mouse events).
+
+               when others =>
+                  null;
+            end case;
+
+         exception
+            when E : others =>
+               Trace
+                 (Me, "Unexpected exception: " & Exception_Information (E));
+         end;
+
+      elsif Event_Type = Key_Press or else Event_Type = Key_Release then
+         if Keymanager_Module.Key_Manager.Events.Current_Event /= null
+           and then not Get_Send_Event (Event)
+           and then Get_Key_Val (Event) = GDK_Escape
+         then
+            Trace (Me, "Replay cancelled");
+            Keymanager_Module.Key_Manager.Events.Current_Event := null;
          end if;
 
          if Process_Event
@@ -826,6 +938,55 @@ package body KeyManager_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          Insert (Kernel, -"Could not parse " & Filename, Mode => Error);
    end Load_Custom_Keys;
+
+   ---------------------------
+   -- Macro_Command_Handler --
+   ---------------------------
+
+   procedure Macro_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String) is
+   begin
+      if Command = "macro_load" then
+         Name_Parameters (Data, Load_Macro_Cmd_Parameters);
+
+         declare
+            File    : constant String := Nth_Arg (Data, 1);
+            Success : Boolean;
+            Macro   : constant String := '/' & (-"Tools/Macro") & '/';
+
+         begin
+            Load_Macro (Create (File), Success);
+
+            if Success then
+               Set_Sensitive
+                 (Find_Menu_Item (Get_Kernel (Data), Macro & (-"Play")), True);
+            else
+               Set_Error_Msg
+                 (Data, Command & ": " & (-"error while reading file"));
+            end if;
+         end;
+
+      elsif Command = "macro_play" then
+         Name_Parameters (Data, Play_Macro_Cmd_Parameters);
+
+         declare
+            Speed : constant String := Nth_Arg (Data, 1, Default => "1.0");
+         begin
+            Play_Macro (Get_Kernel (Data), Duration'Value (Speed));
+         exception
+            when Constraint_Error =>
+               Set_Error_Msg (Data, Command & ": " & (-"invalid speed value"));
+         end;
+
+      elsif Command = "macro_record" then
+         Record_Macro (Get_Kernel (Data));
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end Macro_Command_Handler;
 
    -----------------
    -- Find_Parent --
@@ -1457,26 +1618,40 @@ package body KeyManager_Module is
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      Macro : constant String := '/' & (-"Tools/Macro") & '/';
    begin
-      if Keymanager_Module.Key_Manager.Keys = null then
-         Set_Sensitive
-           (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
-      end if;
-
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), False);
-      Set_Sensitive
-        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), True);
-
-      Free_List (Keymanager_Module.Key_Manager.Keys);
-      Keymanager_Module.Key_Manager.Last_Key := null;
-      Keymanager_Module.Key_Manager.Recording := True;
+      Record_Macro (Kernel);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Start_Recording;
+
+   ------------------
+   -- Record_Macro --
+   ------------------
+
+   procedure Record_Macro (Kernel : Kernel_Handle) is
+      Macro : constant String := '/' & (-"Tools/Macro") & '/';
+   begin
+      Set_Follow_Events (True);
+
+      --  ??? There's no way to remove Pointer_Motion_Mask afterwards
+      Add_Events (Get_Main_Window (Kernel), Pointer_Motion_Mask);
+
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), False);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), True);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Play")), False);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Save As...")), False);
+
+      Free_List (Keymanager_Module.Key_Manager.Events.Events);
+      Keymanager_Module.Key_Manager.Events.Last_Event := null;
+      Keymanager_Module.Key_Manager.Events.Prev_Time := 0;
+      Keymanager_Module.Key_Manager.Recording := True;
+   end Record_Macro;
 
    -----------------------
    -- On_Stop_Recording --
@@ -1488,11 +1663,16 @@ package body KeyManager_Module is
       pragma Unreferenced (Widget);
       Macro : constant String := '/' & (-"Tools/Macro") & '/';
    begin
+      Set_Follow_Events (False);
       Keymanager_Module.Key_Manager.Recording := False;
       Set_Sensitive
         (Find_Menu_Item (Kernel, Macro & (-"Start Recording")), True);
       Set_Sensitive
         (Find_Menu_Item (Kernel, Macro & (-"Stop Recording")), False);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
+      Set_Sensitive
+        (Find_Menu_Item (Kernel, Macro & (-"Save As...")), True);
 
    exception
       when E : others =>
@@ -1504,31 +1684,38 @@ package body KeyManager_Module is
    ----------------------
 
    function Play_Macro_Timer return Boolean is
-      Keys         : Macro_Item_Access renames
-        Keymanager_Module.Key_Manager.Key_Node;
-      Event        : Gdk_Event;
-      Timeout      : Guint32;
-      Wait         : Duration;
-      Id           : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
+      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
+      Current_Event : Macro_Item_Access renames
+        Keymanager_Module.Key_Manager.Events.Current_Event;
+      Timeout       : Guint32;
+      Wait          : Duration;
+      Success       : Boolean;
+      Id            : Timeout_Handler_Id;
+      pragma Unreferenced (Id, Success);
 
    begin
-      Event := Create_Event (Keys.all);
-
-      if Event /= null then
-         Put (Event);
-         Free (Event);
+      if Current_Event /= null then
+         Success := Play_Event
+           (Current_Event.all,
+            Gtk_Widget
+              (Get_Main_Window (Keymanager_Module.Key_Manager.Kernel)));
+         Current_Event := Current_Event.Next;
       end if;
 
-      Keys := Keys.Next;
-
-      if Keys /= null then
+      if Current_Event = null then
+         Set_Sensitive
+           (Find_Menu_Item
+              (Keymanager_Module.Key_Manager.Kernel, Macro & (-"Play")), True);
+      else
          --  Compute proper timeout value, taking into account the time
          --  spent to handle each event manually.
 
-         Timeout := Keys.Time - Keymanager_Module.Key_Manager.Start_Time;
-         Wait    := Keymanager_Module.Key_Manager.Start_Clock +
-           Duration (Timeout) / 1000.0 - Clock;
+         Keymanager_Module.Key_Manager.Events.Time_Spent :=
+           Keymanager_Module.Key_Manager.Events.Time_Spent +
+             Current_Event.Time;
+         Wait := Keymanager_Module.Key_Manager.Events.Start_Clock - Clock +
+           Duration (Keymanager_Module.Key_Manager.Events.Time_Spent) /
+             Duration (Keymanager_Module.Key_Manager.Events.Speed * 1000.0);
 
          if Wait > 0.0 then
             Timeout := Guint32 (Wait * 1000.0);
@@ -1547,6 +1734,30 @@ package body KeyManager_Module is
          return False;
    end Play_Macro_Timer;
 
+   ----------------
+   -- Play_Macro --
+   ----------------
+
+   procedure Play_Macro (Kernel : Kernel_Handle; Speed : Duration := 1.0) is
+      Macro         : constant String := '/' & (-"Tools/Macro") & '/';
+      Current_Event : Macro_Item_Access renames
+        Keymanager_Module.Key_Manager.Events.Current_Event;
+      Id            : Timeout_Handler_Id;
+      pragma Unreferenced (Id);
+
+   begin
+      Current_Event := Keymanager_Module.Key_Manager.Events.Events;
+
+      if Current_Event /= null then
+         Set_Sensitive
+           (Find_Menu_Item (Kernel, Macro & (-"Play")), False);
+         Keymanager_Module.Key_Manager.Events.Start_Clock := Clock;
+         Keymanager_Module.Key_Manager.Events.Time_Spent  := 0;
+         Keymanager_Module.Key_Manager.Events.Speed       := Speed;
+         Id := Gtk.Main.Timeout_Add (0, Play_Macro_Timer'Access);
+      end if;
+   end Play_Macro;
+
    -------------------
    -- On_Play_Macro --
    -------------------
@@ -1554,25 +1765,114 @@ package body KeyManager_Module is
    procedure On_Play_Macro
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      pragma Unreferenced (Widget, Kernel);
-      Keys  : Macro_Item_Access renames
-        Keymanager_Module.Key_Manager.Key_Node;
-      Id    : Timeout_Handler_Id;
-      pragma Unreferenced (Id);
-
+      pragma Unreferenced (Widget);
    begin
-      Keys := Keymanager_Module.Key_Manager.Keys;
-
-      if Keys /= null then
-         Keymanager_Module.Key_Manager.Start_Clock := Clock;
-         Keymanager_Module.Key_Manager.Start_Time  := Keys.Time;
-         Id := Gtk.Main.Timeout_Add (0, Play_Macro_Timer'Access);
-      end if;
+      Play_Macro (Kernel);
 
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
    end On_Play_Macro;
+
+   -------------------
+   -- On_Load_Macro --
+   -------------------
+
+   procedure On_Load_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Macro : constant String := '/' & (-"Tools/Macro") & '/';
+      pragma Unreferenced (Widget);
+   begin
+      declare
+         Success : Boolean := False;
+         Name    : constant Virtual_File :=
+           Select_File
+             (Title             => -"Load Macro",
+              Parent            => Get_Main_Window (Kernel),
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Open_File,
+              History           => Get_History (Kernel));
+
+      begin
+         if Name = VFS.No_File then
+            return;
+         end if;
+
+         Load_Macro (Name, Success);
+
+         if Success then
+            Set_Sensitive (Find_Menu_Item (Kernel, Macro & (-"Play")), True);
+         else
+            Insert (Kernel, -"Error while loading macro", Mode => Error);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Load_Macro;
+
+   -------------------
+   -- On_Save_Macro --
+   -------------------
+
+   procedure On_Save_Macro
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+      Events : constant Macro_Item_Access :=
+        Keymanager_Module.Key_Manager.Events.Events;
+   begin
+      if Events = null then
+         return;
+      end if;
+
+      declare
+         Success : Boolean;
+         Name    : constant Virtual_File :=
+           Select_File
+             (Title             => -"Save Macro As",
+              Parent            => Get_Main_Window (Kernel),
+              Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
+              Kind              => Save_File,
+              History           => Get_History (Kernel));
+
+      begin
+         if Name = VFS.No_File then
+            return;
+         end if;
+
+         Success :=
+           Save_List (Locale_From_UTF8 (Full_Name (Name).all), Events);
+
+         if not Success then
+            Insert (Kernel, -"Error while saving macro", Mode => Error);
+         end if;
+      end;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
+   end On_Save_Macro;
+
+   ----------------
+   -- Load_Macro --
+   ----------------
+
+   procedure Load_Macro (File : Virtual_File; Success : out Boolean) is
+      Buffer  : String_Access;
+   begin
+      Success := False;
+      Buffer  := Read_File (File);
+
+      if Buffer /= null then
+         Free_List (Keymanager_Module.Key_Manager.Events.Events);
+         Load_List
+           (Buffer.all, Keymanager_Module.Key_Manager.Events.Events, Success);
+         Free (Buffer);
+      end if;
+   end Load_Macro;
 
    ---------------
    -- Customize --
@@ -1643,26 +1943,58 @@ package body KeyManager_Module is
         (Module_ID (Keymanager_Module), Kernel, "keymanager",
          Customization_Handler => Customize'Access);
 
-      --  ??? Should save the previous handler and call it as appropriate.
-      --  Or let the kernel handle the queue.
-      Event_Handler_Set (General_Event_Handler'Access,
-                         Convert (Kernel_Handle (Kernel)));
+      Event_Handler_Set
+        (General_Event_Handler'Access,
+         Convert (Kernel_Handle (Kernel)));
 
       Register_Menu
         (Kernel, Edit_Menu, -"_Key shortcuts",
          Callback => On_Edit_Keys'Access);
-
       Register_Menu
         (Kernel, Macro_Menu, -"_Start Recording",
          Callback => On_Start_Recording'Access);
       Register_Menu
         (Kernel, Macro_Menu, -"S_top Recording",
-         Callback  => On_Stop_Recording'Access,
-         Sensitive => False);
+         Callback   => On_Stop_Recording'Access,
+         Accel_Key  => GDK_Escape,
+         Accel_Mods => Control_Mask,
+         Sensitive  => False);
       Register_Menu
         (Kernel, Macro_Menu, -"_Play",
          Callback  => On_Play_Macro'Access,
          Sensitive => False);
+      Register_Menu
+        (Kernel, Macro_Menu, -"Load...",
+         Callback  => On_Load_Macro'Access);
+      Register_Menu
+        (Kernel, Macro_Menu, -"_Save As...",
+         Callback  => On_Save_Macro'Access,
+         Sensitive => False);
+
+      Register_Command
+        (Kernel,
+         Command      => "macro_play",
+         Params       => Parameter_Names_To_Usage (Play_Macro_Cmd_Parameters),
+         Description  => -"Play current set of events.",
+         Minimum_Args => 0,
+         Maximum_Args => 1,
+         Handler      => Macro_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "macro_record",
+         Description  => -"Start recording set of events.",
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Handler      => Macro_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "macro_load",
+         Params       =>
+           Parameter_Names_To_Usage (Load_Macro_Cmd_Parameters, 1),
+         Description  => -"Load file containing a set of recorded events.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Macro_Command_Handler'Access);
    end Register_Module;
 
 end KeyManager_Module;
