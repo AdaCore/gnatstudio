@@ -81,20 +81,21 @@ package body Glide_Kernel.Custom is
       Directory : String;
       Level     : Customization_Level)
    is
+      Norm_Dir  : constant String := Name_As_Directory (Directory);
       File      : String (1 .. 1024);
       Last      : Natural;
       Dir       : Dir_Type;
       File_Node : Node_Ptr;
 
    begin
-      if Is_Directory (Directory) then
+      if Is_Directory (Norm_Dir) then
          Open (Dir, Directory);
          loop
             Read (Dir, File, Last);
             exit when Last = 0;
 
             declare
-               F : constant String := Directory & File (1 .. Last);
+               F : constant String := Norm_Dir & File (1 .. Last);
             begin
                if Is_Regular_File (F) then
                   Trace (Me, "Loading " & F);
@@ -189,18 +190,16 @@ package body Glide_Kernel.Custom is
       --  be overriden locally by the user
       Parse_Custom_Dir (Kernel, System_Directory, System_Wide);
 
-      if Env_Path /= null then
-         Path := Start (Env_Path.all);
-         while not At_End (Env_Path.all, Path) loop
-            if Current (Env_Path.all, Path) /= "" then
-               Parse_Custom_Dir
-                 (Kernel, Current (Env_Path.all, Path), Project_Wide);
-            end if;
-            Path := Next (Env_Path.all, Path);
-         end loop;
+      Path := Start (Env_Path.all);
+      while not At_End (Env_Path.all, Path) loop
+         if Current (Env_Path.all, Path) /= "" then
+            Parse_Custom_Dir
+              (Kernel, Current (Env_Path.all, Path), Project_Wide);
+         end if;
+         Path := Next (Env_Path.all, Path);
+      end loop;
 
-         Free (Env_Path);
-      end if;
+      Free (Env_Path);
 
       Parse_Custom_Dir (Kernel, User_Directory, User_Specific);
    end Load_All_Custom_Files;
