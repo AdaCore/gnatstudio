@@ -47,7 +47,13 @@ package body Src_Editor_Buffer.Blocks is
       pragma Suppress (Access_Check, Slice);
 
    begin
+      if not Buffer.Parse_Blocks then
+         return;
+      end if;
+
       if Buffer.Lang = null then
+         Buffer.Parse_Blocks := False;
+         Buffer_Information_Changed (Buffer);
          return;
       end if;
 
@@ -58,10 +64,6 @@ package body Src_Editor_Buffer.Blocks is
       for Line in Buffer.Line_Data'Range loop
          Buffer.Line_Data (Line).Block := null;
       end loop;
-
-      if not Buffer.Parse_Blocks then
-         return;
-      end if;
 
       C_Str        := Get_Slice (Buffer, 0, 0);
       Slice        := To_Unchecked_String (C_Str);
