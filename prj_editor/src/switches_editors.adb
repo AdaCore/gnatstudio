@@ -158,6 +158,13 @@ package body Switches_Editors is
          Editor.Cpp_Switches := null;
       end if;
 
+      if Editor.Pp_Switches /= null
+        and then (Pages and Pretty_Printer_Page) /= 0
+      then
+         Destroy (Editor.Pp_Switches);
+         Editor.Pp_Switches := null;
+      end if;
+
       if Editor.Binder_Switches /= null
         and then (Pages and Binder_Page) /= 0
       then
@@ -211,12 +218,13 @@ package body Switches_Editors is
 
    begin
       case Tool is
-         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
-         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
-         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
-         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
-         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
+         when Gnatmake       => Cmd_Line := Editor.Make_Switches_Entry;
+         when Ada_Compiler   => Cmd_Line := Editor.Ada_Switches_Entry;
+         when C_Compiler     => Cmd_Line := Editor.C_Switches_Entry;
+         when Cpp_Compiler   => Cmd_Line := Editor.Cpp_Switches_Entry;
+         when Pretty_Printer => Cmd_Line := Editor.Pp_Switches_Entry;
+         when Binder         => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker         => Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
       declare
@@ -276,31 +284,42 @@ package body Switches_Editors is
       return Argument_List
    is
       procedure Check_Toggle
-        (Button : Gtk_Check_Button;
-         Str    : String;
-         Arr    : in out Argument_List;
-         Index  : in out Natural);
+        (Button   : Gtk_Check_Button;
+         Str      : String;
+         Arr      : in out Argument_List;
+         Index    : in out Natural;
+         Inverted : Boolean := False);
+      --  Handle check buttons, and set parameter Str if Button is checked,
+      --  or if button is unchecked, in case Inverted is True.
 
       procedure Check_Combo
-        (Combo  : Gtk_Combo;
-         Switch : String;
-         Arr    : in out Argument_List;
-         Index  : in out Natural);
-      --  Set the parameter (starting with Switch, followed by a numeric
-      --  argument) to use if Switch is set.
-      --  If the numeric argument is 0, nothing is inserted into Arr.
+        (Combo          : Gtk_Combo;
+         Switch         : String;
+         Switch_Details : String;
+         Arr            : in out Argument_List;
+         Index          : in out Natural);
+      --  Set the parameter (starting with Switch, followed by
+      --  Switch_Details (combo index)) to use if Switch is set.
+      --  If the combo index is 0, nothing is inserted into Arr.
 
       ------------------
       -- Check_Toggle --
       ------------------
 
       procedure Check_Toggle
-        (Button : Gtk_Check_Button;
-         Str    : String;
-         Arr    : in out Argument_List;
-         Index  : in out Natural) is
+        (Button   : Gtk_Check_Button;
+         Str      : String;
+         Arr      : in out Argument_List;
+         Index    : in out Natural;
+         Inverted : Boolean := False)
+      is
+         Check : Boolean := Get_Active (Button);
       begin
-         if Get_Active (Button) then
+         if Inverted then
+            Check := not Check;
+         end if;
+
+         if Check then
             Arr (Index) := new String' (Str);
             Index := Index + 1;
          end if;
@@ -311,14 +330,15 @@ package body Switches_Editors is
       -----------------
 
       procedure Check_Combo
-        (Combo  : Gtk_Combo;
-         Switch : String;
-         Arr    : in out Argument_List;
-         Index  : in out Natural)
+        (Combo          : Gtk_Combo;
+         Switch         : String;
+         Switch_Details : String;
+         Arr            : in out Argument_List;
+         Index          : in out Natural)
       is
          use Widget_List;
-         List  : Gtk_List := Get_List (Combo);
-         Value : Integer;
+         List     : Gtk_List := Get_List (Combo);
+         Position : Integer;
 
       begin
          --  Check whether there is an actual selection. With gtk+2.0, the
@@ -327,11 +347,11 @@ package body Switches_Editors is
          --  callback is called again later on.
 
          if Get_Selection (List) /= Null_List then
-            Value := Integer (Child_Position
-              (List, Get_Data (Get_Selection (List))));
+            Position := Integer (Child_Position
+              (List, Get_Data (Get_Selection (List)))) + 1;
 
-            if Value /= 0 then
-               Arr (Index) := new String' (Switch & Image (Value));
+            if Position /= 1 then
+               Arr (Index) := new String' (Switch & Switch_Details (Position));
                Index := Index + 1;
             end if;
          end if;
@@ -341,18 +361,20 @@ package body Switches_Editors is
 
    begin  --  Get_Switches_From_GUI
       case Tool is
-         when Gnatmake     => Num_Switches :=  7 + 1;  --  +1 is for arg to -j
-         when Ada_Compiler => Num_Switches := 22;
-         when C_Compiler   => Num_Switches := 11;
-         when Cpp_Compiler => Num_Switches := 14;
-         when Binder       => Num_Switches :=  4;
-         when Linker       => Num_Switches :=  3;
+         when Gnatmake       => Num_Switches :=  7 + 1;  --  +1 is for -jx
+         when Ada_Compiler   => Num_Switches := 22;
+         when C_Compiler     => Num_Switches := 11;
+         when Cpp_Compiler   => Num_Switches := 14;
+         when Pretty_Printer => Num_Switches := 13;
+         when Binder         => Num_Switches :=  4;
+         when Linker         => Num_Switches :=  3;
       end case;
 
       declare
          Arr    : Argument_List (1 .. Num_Switches);
          Index  : Natural := Arr'First;
          Active : Boolean;
+         Value  : Integer;
 
       begin
          case Tool is
@@ -396,7 +418,8 @@ package body Switches_Editors is
                end if;
 
             when Ada_Compiler =>
-               Check_Combo (Editor.Ada_Optimization_Level, "-O", Arr, Index);
+               Check_Combo
+                 (Editor.Ada_Optimization_Level, "-O", "0123", Arr, Index);
                Check_Toggle
                  (Editor.Ada_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
@@ -440,7 +463,8 @@ package body Switches_Editors is
                Check_Toggle (Editor.Ada83_Mode, "-gnat83", Arr, Index);
 
             when C_Compiler =>
-               Check_Combo (Editor.C_Optimization_Level, "-O", Arr, Index);
+               Check_Combo
+                 (Editor.C_Optimization_Level, "-O", "0123", Arr, Index);
                Check_Toggle (Editor.C_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
                  (Editor.C_Unroll_Loops, "-funroll-loops", Arr, Index);
@@ -464,7 +488,8 @@ package body Switches_Editors is
                Check_Toggle (Editor.C_Ansi, "-ansi", Arr, Index);
 
             when Cpp_Compiler =>
-               Check_Combo (Editor.Cpp_Optimization_Level, "-O", Arr, Index);
+               Check_Combo
+                 (Editor.Cpp_Optimization_Level, "-O", "0123", Arr, Index);
                Check_Toggle (Editor.Cpp_No_Inline, "-fno-inline", Arr, Index);
                Check_Toggle
                  (Editor.Cpp_Unroll_Loops, "-funroll-loops", Arr, Index);
@@ -495,6 +520,36 @@ package body Switches_Editors is
                Check_Toggle
                  (Editor.Cpp_Overloaded_Virtual, "-Woverloaded-virtual",
                   Arr, Index);
+
+            when Pretty_Printer =>
+               Value := Integer (Get_Value_As_Int (Editor.Indent_Level));
+
+               --  3 is the default value of this switch
+               if Value /= 3 then
+                  Arr (Index) := new String' ("-" & Image (Value));
+                  Index := Index + 1;
+               end if;
+
+               Value := Integer (Get_Value_As_Int (Editor.Max_Line_Length));
+
+               --  79 is the default value of this switch
+               if Value /= 79 then
+                  Arr (Index) := new String' ("-M" & Image (Value));
+                  Index := Index + 1;
+               end if;
+
+               Check_Combo (Editor.Keyword_Casing, "-k", "LU", Arr, Index);
+               Check_Combo (Editor.Attribute_Casing, "-a", "CLU", Arr, Index);
+               Check_Combo (Editor.References_Casing, "-r", "DC", Arr, Index);
+               Check_Combo (Editor.Pragma_Casing, "-p", "CLU", Arr, Index);
+               Check_Combo (Editor.Construct_Layout, "-l", "123", Arr, Index);
+               Check_Combo (Editor.Comments_Layout, "-c", "1234", Arr, Index);
+               Check_Toggle (Editor.Align_Colons, "-A1", Arr, Index);
+               Check_Toggle (Editor.Align_Assign_Decl, "-A2", Arr, Index);
+               Check_Toggle (Editor.Align_Assign_Stmt, "-A3", Arr, Index);
+               Check_Toggle (Editor.Align_Arrow, "-A4", Arr, Index);
+               Check_Toggle
+                 (Editor.Set_Labels, "-e", Arr, Index, Inverted => True);
 
             when Binder =>
                Check_Toggle (Editor.Binder_Tracebacks, "-E", Arr, Index);
@@ -530,9 +585,12 @@ package body Switches_Editors is
       function Is_Set (Switch : String) return Boolean;
       --  True if Switch is set in Switches
 
-      procedure Set_Combo (Combo : Gtk_Combo; Switch : String);
-      --  Check if a switch starts with Switch, and get the numeric argument
-      --  after it (set in the combo box)
+      procedure Set_Combo
+        (Combo          : Gtk_Combo;
+         Switch         : String;
+         Switch_Details : String);
+      --  Check if a switch starts with Switch, and get the argument after it
+      --  (set in the combo box)
 
       ------------
       -- Is_Set --
@@ -555,8 +613,14 @@ package body Switches_Editors is
       -- Set_Combo --
       ---------------
 
-      procedure Set_Combo (Combo : Gtk_Combo; Switch : String) is
-         Level : Gint;
+      procedure Set_Combo
+        (Combo          : Gtk_Combo;
+         Switch         : String;
+         Switch_Details : String)
+      is
+         Index : Gint := 0;
+         Char  : Character;
+
       begin
          for J in Switches'Range loop
             if Switches (J) /= null
@@ -565,28 +629,22 @@ package body Switches_Editors is
                                      .. Switches (J)'First + Switch'Length - 1)
               = Switch
             then
+               Index := 0;
+
                if Switches (J)'Length > Switch'Length then
-                  --  We need to catch the exception here: If the user started
-                  --  with  "-O2 -gnato" and deleted some characters so as to
-                  --  get "-O2-gnato", then we cannot interpret the switches.
-                  begin
-                     Level := Gint'Value
-                       (Switches (J) (Switches (J)'First + Switch'Length
-                                      .. Switches (J)'Last));
-                  exception
-                     when Constraint_Error =>
-                        Level := 0;
-                  end;
-               else
-                  Level := 0;
+                  Char := Switches (J) (Switches (J)'First + Switch'Length);
+
+                  for K in Switch_Details'Range loop
+                     if Switch_Details (K) = Char then
+                        Index := Gint (K - Switch_Details'First);
+                     end if;
+                  end loop;
                end if;
 
-               if Switch = "-O"
-                 and then Switches (J).all = "-O"
-               then
+               if Switch = "-O" and then Switches (J).all = "-O" then
                   Select_Item (Get_List (Combo), 1);
                else
-                  Select_Item (Get_List (Combo), Level);
+                  Select_Item (Get_List (Combo), Index);
                end if;
 
                return;
@@ -597,6 +655,7 @@ package body Switches_Editors is
       end Set_Combo;
 
       Cmd_Line : Gtk_Entry;
+      Second   : Natural;
 
    begin
       pragma Assert
@@ -609,6 +668,9 @@ package body Switches_Editors is
         (Tool /= Cpp_Compiler or else (Editor.Pages and Cpp_Page) /= 0);
       pragma Assert
         (Tool /= Binder or else (Editor.Pages and Binder_Page) /= 0);
+      pragma Assert
+        (Tool /= Pretty_Printer
+         or else (Editor.Pages and Pretty_Printer_Page) /= 0);
       pragma Assert
         (Tool /= Linker or else (Editor.Pages and Linker_Page) /= 0);
 
@@ -634,7 +696,7 @@ package body Switches_Editors is
                         Set_Value
                           (Editor.Num_Processes,
                            Grange_Float'Value (Switches (J)
-                             (Switches (J)'First + 2 .. Switches  (J)'Last)));
+                             (Switches (J)'First + 2 .. Switches (J)'Last)));
 
                      else
                         Set_Value (Editor.Num_Processes, 0.0);
@@ -650,7 +712,7 @@ package body Switches_Editors is
             Cmd_Line := Editor.Make_Switches_Entry;
 
          when Ada_Compiler =>
-            Set_Combo (Editor.Ada_Optimization_Level, "-O");
+            Set_Combo (Editor.Ada_Optimization_Level, "-O", "0123");
             Set_Active (Editor.Ada_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.Ada_Interunit_Inlining, Is_Set ("-gnatN"));
             Set_Active (Editor.Ada_Unroll_Loops, Is_Set ("-funroll-loops"));
@@ -676,7 +738,7 @@ package body Switches_Editors is
             Cmd_Line := Editor.Ada_Switches_Entry;
 
          when C_Compiler =>
-            Set_Combo (Editor.C_Optimization_Level, "-O");
+            Set_Combo (Editor.C_Optimization_Level, "-O", "0123");
             Set_Active (Editor.C_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.C_Unroll_Loops, Is_Set ("-funroll-loops"));
             Set_Active (Editor.C_Pic, Is_Set ("-fPIC"));
@@ -691,7 +753,7 @@ package body Switches_Editors is
             Cmd_Line := Editor.C_Switches_Entry;
 
          when Cpp_Compiler =>
-            Set_Combo (Editor.Cpp_Optimization_Level, "-O");
+            Set_Combo (Editor.Cpp_Optimization_Level, "-O", "0123");
             Set_Active (Editor.Cpp_No_Inline, Is_Set ("-fno-inline"));
             Set_Active (Editor.Cpp_Unroll_Loops, Is_Set ("-funroll-loops"));
             Set_Active (Editor.Cpp_Pic, Is_Set ("-fPIC"));
@@ -710,6 +772,52 @@ package body Switches_Editors is
               (Editor.Cpp_Overloaded_Virtual, Is_Set ("-Woverloaded-virtual"));
 
             Cmd_Line := Editor.Cpp_Switches_Entry;
+
+         when Pretty_Printer =>
+            --  Handle spin buttons first
+
+            for J in Switches'Range loop
+               if Switches (J) /= null then
+                  Second := Switches (J)'First + 1;
+
+                  if Switches (J)'Length = 2
+                    and then Switches (J) (Second) in '0' .. '9'
+                  then
+                     Set_Value
+                       (Editor.Indent_Level,
+                        Grange_Float'Value
+                          (Switches (J) (Second .. Second)));
+
+                  elsif Switches (J)'Length > 2
+                    and then Switches (J) (Second) = 'M'
+                  then
+                     begin
+                        Set_Value
+                          (Editor.Max_Line_Length,
+                           Grange_Float'Value (Switches (J)
+                             (Second + 1 .. Switches (J)'Last)));
+
+                     exception
+                        when Constraint_Error =>
+                           Set_Value (Editor.Max_Line_Length, 79.0);
+                     end;
+                  end if;
+               end if;
+            end loop;
+
+            Set_Combo (Editor.Keyword_Casing, "-k", "LU");
+            Set_Combo (Editor.Attribute_Casing, "-a", "CLU");
+            Set_Combo (Editor.References_Casing, "-r", "DC");
+            Set_Combo (Editor.Pragma_Casing, "-p", "CLU");
+            Set_Combo (Editor.Construct_Layout, "-l", "123");
+            Set_Combo (Editor.Comments_Layout, "-c", "1234");
+            Set_Active (Editor.Align_Colons, Is_Set ("-A1"));
+            Set_Active (Editor.Align_Assign_Decl, Is_Set ("-A2"));
+            Set_Active (Editor.Align_Assign_Stmt, Is_Set ("-A3"));
+            Set_Active (Editor.Align_Arrow, Is_Set ("-A4"));
+            Set_Active (Editor.Set_Labels, not Is_Set ("-e"));
+
+            Cmd_Line := Editor.Pp_Switches_Entry;
 
          when Binder =>
             Set_Active (Editor.Binder_Tracebacks, Is_Set ("-E"));
@@ -858,6 +966,45 @@ package body Switches_Editors is
                end loop;
             end if;
 
+         when Pretty_Printer =>
+            if (Editor.Pages and Pretty_Printer_Page) /= 0 then
+               for J in Switches'Range loop
+                  if Switches (J) /= null and then
+                    ((Switches (J)'Length = 2
+                      and then Switches (J) (Switches (J)'First + 1)
+                        in '0' .. '9')
+                     or else (Switches (J)'Length > 2
+                      and then Switches (J) (Switches (J)'First ..
+                                             Switches (J)'First + 1) = "-M")
+                     or else Switches (J).all = "-A1"
+                     or else Switches (J).all = "-A2"
+                     or else Switches (J).all = "-A3"
+                     or else Switches (J).all = "-A4"
+                     or else Switches (J).all = "-aL"
+                     or else Switches (J).all = "-aU"
+                     or else Switches (J).all = "-aC"
+                     or else Switches (J).all = "-c1"
+                     or else Switches (J).all = "-c2"
+                     or else Switches (J).all = "-c3"
+                     or else Switches (J).all = "-c4"
+                     or else Switches (J).all = "-e"
+                     or else Switches (J).all = "-kL"
+                     or else Switches (J).all = "-kU"
+                     or else Switches (J).all = "-l1"
+                     or else Switches (J).all = "-l2"
+                     or else Switches (J).all = "-l3"
+                     or else Switches (J).all = "-pL"
+                     or else Switches (J).all = "-pU"
+                     or else Switches (J).all = "-pC"
+                     or else Switches (J).all = "-rD"
+                     or else Switches (J).all = "-rC"
+                     or else Switches (J).all = "-e")
+                  then
+                     Free (Switches (J));
+                  end if;
+               end loop;
+            end if;
+
          when Binder =>
             if (Editor.Pages and Binder_Page) /= 0 then
                for J in Switches'Range loop
@@ -906,12 +1053,13 @@ package body Switches_Editors is
       end if;
 
       case Tool is
-         when Gnatmake     => Cmd_Line := Editor.Make_Switches_Entry;
-         when Ada_Compiler => Cmd_Line := Editor.Ada_Switches_Entry;
-         when C_Compiler   => Cmd_Line := Editor.C_Switches_Entry;
-         when Cpp_Compiler => Cmd_Line := Editor.Cpp_Switches_Entry;
-         when Binder       => Cmd_Line := Editor.Binder_Switches_Entry;
-         when Linker       => Cmd_Line := Editor.Linker_Switches_Entry;
+         when Gnatmake       => Cmd_Line := Editor.Make_Switches_Entry;
+         when Ada_Compiler   => Cmd_Line := Editor.Ada_Switches_Entry;
+         when C_Compiler     => Cmd_Line := Editor.C_Switches_Entry;
+         when Cpp_Compiler   => Cmd_Line := Editor.Cpp_Switches_Entry;
+         when Pretty_Printer => Cmd_Line := Editor.Pp_Switches_Entry;
+         when Binder         => Cmd_Line := Editor.Binder_Switches_Entry;
+         when Linker         => Cmd_Line := Editor.Linker_Switches_Entry;
       end case;
 
       declare
@@ -1121,6 +1269,13 @@ package body Switches_Editors is
          Change_Switches (Cpp_Compiler, "compiler", Snames.Name_CPP);
       end if;
 
+      --  ??? Enable when the project file supports the pretty printer
+      --  if (Get_Pages (S) and Pretty_Printer_Page) /= 0 then
+      --     --  ??? Currently, we only edit the default switches for Ada
+      --     Change_Switches
+      --       (Pretty_Printer, "pretty_printer", Snames.Name_Ada);
+      --  end if;
+
       if (Get_Pages (S) and Binder_Page) /= 0 then
          --  ??? Currently, we only edit the default switches for Ada
          Change_Switches (Binder, "binder", Snames.Name_Ada);
@@ -1153,11 +1308,12 @@ package body Switches_Editors is
          declare
             Langs : Argument_List :=
               Get_Attribute_Value (Project, Languages_Attribute);
-            Pages : Page_Filter := Ada_Page or C_Page or Cpp_Page;
+            Pages : Page_Filter :=
+              Ada_Page or C_Page or Cpp_Page or Pretty_Printer_Page;
 
          begin
             if Langs'Length = 0 then
-               Pages := Pages and not Ada_Page;
+               Pages := Pages and not (Ada_Page or Pretty_Printer_Page);
             end if;
 
             for J in Langs'Range loop
@@ -1167,7 +1323,7 @@ package body Switches_Editors is
                   Lower_Case (Lang);
 
                   if Lang = "ada" then
-                     Pages := Pages and not Ada_Page;
+                     Pages := Pages and not (Ada_Page or Pretty_Printer_Page);
                   elsif Lang = "c" then
                      Pages := Pages and not C_Page;
                   elsif Lang = "c++" then
@@ -1194,9 +1350,11 @@ package body Switches_Editors is
             if Lang = "ada" then
                Destroy_Pages (Switches, C_Page or Cpp_Page);
             elsif Lang = "c" then
-               Destroy_Pages (Switches, Ada_Page or Cpp_Page);
+               Destroy_Pages
+                 (Switches, Ada_Page or Cpp_Page or Pretty_Printer_Page);
             elsif Lang = "c++" then
-               Destroy_Pages (Switches, Ada_Page or C_Page);
+               Destroy_Pages
+                 (Switches, Ada_Page or C_Page or Pretty_Printer_Page);
             end if;
          end;
       end if;
@@ -1245,6 +1403,11 @@ package body Switches_Editors is
             Set_Switches (Switches, Cpp_Compiler, List);
             Free (List);
          end;
+      end if;
+
+      if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
+         --  ??? Enable when the project file knows about the pretty printer
+         null;
       end if;
 
       if (Get_Pages (Switches) and Binder_Page) /= 0 then

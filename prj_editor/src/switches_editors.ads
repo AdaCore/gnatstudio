@@ -41,18 +41,20 @@ package Switches_Editors is
    type Switches_Edit is access all Switches_Edit_Record'Class;
 
    type Page_Filter is mod 2 ** 32;
-   Gnatmake_Page : constant Page_Filter := 2 ** 0;
-   Ada_Page      : constant Page_Filter := 2 ** 1;
-   C_Page        : constant Page_Filter := 2 ** 2;
-   Cpp_Page      : constant Page_Filter := 2 ** 3;
-   Binder_Page   : constant Page_Filter := 2 ** 4;
-   Linker_Page   : constant Page_Filter := 2 ** 5;
-   All_Pages     : constant Page_Filter :=
+   Gnatmake_Page       : constant Page_Filter := 2 ** 0;
+   Ada_Page            : constant Page_Filter := 2 ** 1;
+   C_Page              : constant Page_Filter := 2 ** 2;
+   Cpp_Page            : constant Page_Filter := 2 ** 3;
+   Pretty_Printer_Page : constant Page_Filter := 2 ** 4;
+   Binder_Page         : constant Page_Filter := 2 ** 5;
+   Linker_Page         : constant Page_Filter := 2 ** 6;
+   All_Pages           : constant Page_Filter :=
      Gnatmake_Page or Ada_Page or C_Page or Cpp_Page or
-     Binder_Page or Linker_Page;
+     Pretty_Printer_Page or Binder_Page or Linker_Page;
 
    type Tool_Names is
-     (Gnatmake, Ada_Compiler, C_Compiler, Cpp_Compiler, Binder, Linker);
+     (Gnatmake, Ada_Compiler, C_Compiler, Cpp_Compiler,
+      Pretty_Printer, Binder, Linker);
 
    procedure Gtk_New (Editor : out Switches_Edit);
    --  Create a new switches editor
