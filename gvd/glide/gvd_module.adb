@@ -332,10 +332,6 @@ package body GVD_Module is
      Generic_Debug_Command (GVD.Menu.On_Refresh);
    --  Debug->Data->Refresh
 
-   procedure On_Data_Show is new
-     Generic_Debug_Command (GVD.Menu.On_Show);
-   --  Debug->Data->Show
-
    procedure On_Start is new
      Generic_Debug_Command (GVD.Menu.On_Run);
    --  Debug->On_Start menu
@@ -1118,6 +1114,7 @@ package body GVD_Module is
       if Page.Debugger /= null then
          Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
          Push_State (Kernel, Busy);
+         Page.Exiting := True;
          Close (Page.Debugger);
          Page.Debugger := null;
 
@@ -1130,6 +1127,7 @@ package body GVD_Module is
             Close (Page.Process_Mdi, Page.Data_Paned);
          end if;
 
+         Page.Exiting := False;
          Set_Sensitive (Kernel, False);
          Pop_State (Kernel);
       end if;
@@ -1684,8 +1682,6 @@ package body GVD_Module is
       Register_Menu (Kernel, Data_Sub, -"Refresh", Stock_Refresh,
                      On_Data_Refresh'Access, null,
                      GDK_L, Control_Mask);
-      Register_Menu (Kernel, Data_Sub, -"Show", "",
-                     On_Data_Show'Access);
 
       Gtk_New (Mitem);
       Register_Menu (Kernel, Debug, Mitem);
