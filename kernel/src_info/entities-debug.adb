@@ -355,8 +355,6 @@ package body Entities.Debug is
 
          if Get_Name (Entity) = null then
             Put ("<no_name>:");
-         elsif Is_Partial_Entity (Entity) then
-            Put ("<unresolved yet>:");
          else
             Put (Get_Name (Entity).all & ':');
          end if;
