@@ -224,6 +224,7 @@ package body VCS_Module is
             User_Data => GObject (Table));
       end loop;
 
+      Show_All (Table);
       return Gtk_Widget (Table);
    end Widget_Factory;
 
@@ -344,7 +345,7 @@ package body VCS_Module is
          Page  => new VCS_Editor_Record,
          Label => -"VCS",
          Toc   => -"Select VCS",
-         Title => -"Where are the sources ?");
+         Title => -"Version control system configuration");
    end Register_Module;
 
 end VCS_Module;
