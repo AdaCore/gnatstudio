@@ -72,15 +72,15 @@ package body Docgen.Work_On_File is
       Free      => Free);
    --  Handle the one-file processing commands
 
-   procedure Find_Next_Package
+   procedure Find_Next_Unit
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Type_Source_File_Table.HTable;
       Source_File_Node : in out Type_Source_File_Table.Iterator;
       Nb_Skiped        : out Natural;
-      Package_Name     : out GNAT.OS_Lib.String_Access);
-   --  Returns the name of the next package in the list
-   --  (body files with the same package name are ignored)
-   --  If next package doesn't exist, "" is returned.
+      Unit_Name        : out GNAT.OS_Lib.String_Access);
+   --  Returns the name of the next unit in the list
+   --  (body files with the same unit name are ignored)
+   --  If there is no next, Unit_Name is set to "".
 
    procedure Finalize_Files_Processing (Data : in out Process_One_File_Data);
    --  This procedure is in charge of the documentation generation phase
@@ -161,7 +161,7 @@ package body Docgen.Work_On_File is
       Kernel                        : access Kernel_Handle_Record'Class;
       Result                        : in out Unbounded_String;
       Source_Filename               : Source_File;
-      Package_Name                  : String;
+      Unit_Name                     : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;
       Options                       : All_Options;
       Subprogram_Index_List         : in out Type_Entity_List.List;
@@ -349,11 +349,12 @@ package body Docgen.Work_On_File is
                Ref (Entity_Node.Entity);
                Ref (Entity_Node.Entity);
                Entity_Complete := Entity_List_Information'
-                 (Kind              => Type_Entity,
-                  Entity            => Entity_Node.Entity,
-                  Is_Private        => True,
-                  Line_In_Body      => Entity_Node.Line_In_Body,
-                  Public_Declaration => Entity_Node.Entity);
+                 (Kind               => Type_Entity,
+                  Entity             => Entity_Node.Entity,
+                  Is_Private         => True,
+                  Line_In_Body       => Entity_Node.Line_In_Body,
+                  Public_Declaration => Entity_Node.Entity,
+                  Processed          => False);
 
 --  ???
 --             Entity_Complete.all.Entity := Create
@@ -501,7 +502,8 @@ package body Docgen.Work_On_File is
             Entity             => Info,
             Is_Private         => not Get_Attributes (Info)(Global),
             Line_In_Body       => No_File_Location,
-            Public_Declaration => null);
+            Public_Declaration => null,
+            Processed          => False);
          Find_Next_Body (Info, Location => Entity_Node.Line_In_Body);
 
          --  Get the entity specific parameters.
@@ -598,28 +600,28 @@ package body Docgen.Work_On_File is
       end if;
    end Process_Tagged_Types;
 
-   -----------------------
-   -- Find_Next_Package --
-   -----------------------
+   --------------------
+   -- Find_Next_Unit --
+   --------------------
 
-   procedure Find_Next_Package
+   procedure Find_Next_Unit
      (Kernel           : access GPS.Kernel.Kernel_Handle_Record'Class;
       Source_File_List : Type_Source_File_Table.HTable;
       Source_File_Node : in out Type_Source_File_Table.Iterator;
       Nb_Skiped        : out Natural;
-      Package_Name     : out GNAT.OS_Lib.String_Access)
+      Unit_Name        : out GNAT.OS_Lib.String_Access)
    is
       use Type_Source_File_Table;
    begin
       Nb_Skiped := 0;
 
       if Get_Element (Source_File_Node) = No_Source_File_Information then
-         Package_Name := null;
+         Unit_Name := null;
 
       else
          Get_Next (Source_File_List, Source_File_Node);
          if Get_Element (Source_File_Node) = No_Source_File_Information then
-            Package_Name := null;
+            Unit_Name := null;
             return;
          end if;
 
@@ -631,12 +633,12 @@ package body Docgen.Work_On_File is
          end if;
 
          if Get_Element (Source_File_Node) = No_Source_File_Information then
-            Package_Name := null;
+            Unit_Name := null;
          else
-            Package_Name := Get_Element (Source_File_Node).Package_Name;
+            Unit_Name := Get_Element (Source_File_Node).Unit_Name;
          end if;
       end if;
-   end Find_Next_Package;
+   end Find_Next_Unit;
 
    -------------------------------
    -- Finalize_Files_Processing --
@@ -725,25 +727,25 @@ package body Docgen.Work_On_File is
    begin
       if Get_Element (Data.Source_File_Node) /= No_Source_File_Information then
          declare
-            Current_Package : constant GNAT.OS_Lib.String_Access :=
-              Get_Element (Data.Source_File_Node).Package_Name;
-            File            : constant Source_File :=
+            Current_Unit   : constant GNAT.OS_Lib.String_Access :=
+              Get_Element (Data.Source_File_Node).Unit_Name;
+            File           : constant Source_File :=
               Get_Key (Data.Source_File_Node);
-            Doc_File        : constant File_Descriptor := Create_File
+            Doc_File       : constant File_Descriptor := Create_File
               (Doc_Directory &
                Get_Element (Data.Source_File_Node).Doc_File_Name.all,
                Binary);
 
-            Process_Result  : Unbounded_String;
-            Next_Package    : GNAT.OS_Lib.String_Access;
-            Nb_Skiped       : Natural;
+            Process_Result : Unbounded_String;
+            Next_Unit      : GNAT.OS_Lib.String_Access;
+            Nb_Skiped      : Natural;
          begin
             Process_One_File
               (Data.Backend,
                Data.Kernel,
                Process_Result,
                Source_Filename               => File,
-               Package_Name                  => Current_Package.all,
+               Unit_Name                     => Current_Unit.all,
                Source_File_List              => Data.Source_File_List,
                Options                       => Data.Options,
                Subprogram_Index_List         => Data.Subprogram_Index_List,
@@ -760,12 +762,12 @@ package body Docgen.Work_On_File is
             Put_Line (Doc_File, To_String (Process_Result));
             Close (Doc_File);
 
-            Find_Next_Package
+            Find_Next_Unit
               (Data.Kernel,
                Data.Source_File_List,
                Data.Source_File_Node,
                Nb_Skiped,
-               Next_Package);
+               Next_Unit);
 
             Data.Nb_Processed := Data.Nb_Processed + Nb_Skiped;
          end;
@@ -861,7 +863,7 @@ package body Docgen.Work_On_File is
       Kernel                        : access Kernel_Handle_Record'Class;
       Result                        : in out Unbounded_String;
       Source_Filename               : Source_File;
-      Package_Name                  : String;
+      Unit_Name                     : String;
       Source_File_List              : in out Type_Source_File_Table.HTable;
       Options                       : All_Options;
       Subprogram_Index_List         : in out Type_Entity_List.List;
@@ -907,7 +909,7 @@ package body Docgen.Work_On_File is
          Source_File_List,
          Get_Filename (Source_Filename),
          Is_Spec,
-         Package_Name,
+         Unit_Name,
          Entity_List,
          List_Ref_In_File,
          Tagged_Types_List,
