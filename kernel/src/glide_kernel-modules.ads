@@ -370,12 +370,32 @@ package Glide_Kernel.Modules is
    function To_Address is new Unchecked_Conversion
      (Line_Information_Data, System.Address);
 
+   procedure Create_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String;
+      Stick_To_Data  : Boolean := True;
+      Every_Line     : Boolean := True);
+   --  Create a column on the side of editors for File.
+   --  If Stick_To_Data is set to True, then the line information is relative
+   --  to the original data in the file, otherwise it is relative to the lines
+   --  in the view.
+   --  If Every_Line is set to True, then the editor will emit a line_revealed
+   --  signal until all lines for this column are filled.
+   --  If File is empty, then the column will be created for all open files.
+
+   procedure Remove_Line_Information_Column
+     (Kernel         : access Kernel_Handle_Record'Class;
+      File           : String;
+      Identifier     : String);
+   --  Remove the column identified by Identifier for the editors of File.
+   --  If File is empty, then the column will be removed for all open files.
+
    procedure Add_Line_Information
      (Kernel         : access Kernel_Handle_Record'Class;
       File           : String;
       Identifier     : String;
-      Info           : Line_Information_Data;
-      Stick_To_Data  : Boolean := True);
+      Info           : Line_Information_Data);
    --  Add line information to File.
    --  The range of Info must correspond to the range of line numbers
    --  that are to be modified.
