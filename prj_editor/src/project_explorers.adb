@@ -231,10 +231,6 @@ package body Project_Explorers is
    function Has_Entries (Directory : String) return Boolean;
    --  Return True if Directory contains some subdirectories or files.
 
-   function File_In_Directory
-     (Directory : String_Id; File : String_Id) return Boolean;
-   --  Return True if File was found in Directory
-
    procedure Add_Dummy_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node);
    --  Add a dummy, invisible, child to Node. This is used to force Tree to
@@ -902,6 +898,7 @@ package body Project_Explorers is
       Current_Dir : constant String := String (Get_Current_Dir);
 
    begin
+      Freeze (Explorer.Tree);
       --  The modified project, if any, is always first
 
       if Projects.Table (Project).Modifies /= No_Project then
@@ -949,6 +946,8 @@ package body Project_Explorers is
             Directory_String => End_String,
             Object_Directory => True);
       end if;
+
+      Thaw (Explorer.Tree);
    end Expand_Project_Node;
 
    ---------------------------
@@ -961,18 +960,17 @@ package body Project_Explorers is
       Data     : User_Data)
    is
       Project_View : Project_Id := Get_Project_From_Node (Explorer, Node);
-      Src : String_List_Id := Projects.Table (Project_View).Sources;
+      Src : String_List_Id;
       N : Gtk_Ctree_Node;
+      Dir : constant String :=
+        Name_As_Directory (Get_String (Data.Directory));
 
    begin
-      --  Subdirectories
-      --  ???
-
-      --  Files
-
+      Freeze (Explorer.Tree);
+      Src := Projects.Table (Project_View).Sources;
       while Src /= Nil_String loop
-         if File_In_Directory
-           (Data.Directory, String_Elements.Table (Src).Value)
+         if Is_Regular_File
+           (Dir & Get_String (String_Elements.Table (Src).Value))
          then
             N := Add_File_Node
               (Explorer    => Explorer,
@@ -981,6 +979,7 @@ package body Project_Explorers is
          end if;
          Src := String_Elements.Table (Src).Next;
       end loop;
+      Thaw (Explorer.Tree);
    end Expand_Directory_Node;
 
    ----------------------
@@ -1010,6 +1009,8 @@ package body Project_Explorers is
       if F = Invalid_FD then
          return;
       end if;
+
+      Freeze (Explorer.Tree);
 
       Buffer := new String (1 .. Integer (File_Length (F)));
       Length := Read (F, Buffer.all'Address, Buffer'Length);
@@ -1046,6 +1047,7 @@ package body Project_Explorers is
       end if;
 
       Free (Buffer);
+      Thaw (Explorer.Tree);
    end Expand_File_Node;
 
    --------------------
@@ -1127,42 +1129,6 @@ package body Project_Explorers is
          --  The directory couldn't be open, probably because of permissions.
          return False;
    end Has_Entries;
-
-   -----------------------
-   -- File_In_Directory --
-   -----------------------
-
-   function File_In_Directory
-     (Directory : String_Id; File : String_Id) return Boolean
-   is
-      D    : Dir_Type;
-      File_Name : String (1 .. 255);
-      Last : Natural;
-   begin
-      String_To_Name_Buffer (Directory);
-      Open (D, Name_Buffer (1 .. Name_Len));
-      String_To_Name_Buffer (File);
-
-      loop
-         Read (D, File_Name, Last);
-         exit when Last = 0;
-
-         if Last = Name_Len
-           and then File_Name (1 .. Last) = Name_Buffer (1 .. Name_Len)
-         then
-            Close (D);
-            return True;
-         end if;
-      end loop;
-
-      Close (D);
-      return False;
-
-   exception
-      when Directory_Error =>
-         --  The directory couldn't be open, probably because of permissions.
-         return False;
-   end File_In_Directory;
 
    ------------------------
    -- Get_File_From_Node --
