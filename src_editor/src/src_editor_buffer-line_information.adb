@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                        use Glib;
-with Glib.Convert;                use Glib.Convert;
 with Glib.Object;                 use Glib.Object;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
@@ -41,7 +40,6 @@ with Basic_Types;                 use Basic_Types;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 
-with Gtkada.Types;              use Gtkada.Types;
 with Basic_Types;               use Basic_Types;
 with System;
 
@@ -57,7 +55,6 @@ with Gtk.Enums; use Gtk.Enums;
 
 with Commands;        use Commands;
 with Commands.Editor; use Commands.Editor;
-with Interfaces.C.Strings;      use Interfaces.C.Strings;
 
 with Src_Editor_Module.Line_Highlighting;
 use Src_Editor_Module.Line_Highlighting;
@@ -1624,33 +1621,8 @@ package body Src_Editor_Buffer.Line_Information is
                   Mark           => null,
                   Text           => null);
             begin
-               declare
-                  Ignore   : Natural;
-                  UTF8     : constant Gtkada.Types.Chars_Ptr :=
-                    Get_Text (Buffer, Start_Iter, End_Iter, True);
-                  Length   : constant Natural := Integer (Strlen (UTF8));
-                  Bytes    : Natural;
-
-               begin
-                  Line_Data.Text := new String (1 .. Length);
-
-                  Glib.Convert.Convert
-                    (UTF8, Length,
-                     Get_Pref (Buffer.Kernel, Default_Charset), "UTF-8",
-                     Ignore, Bytes, Result => Line_Data.Text.all);
-
-                  if Bytes < Length then
-                     declare
-                        Stripped : constant String :=
-                          Line_Data.Text (1 .. Bytes);
-                     begin
-                        Free (Line_Data.Text);
-                        Line_Data.Text := new String'(Stripped);
-                     end;
-                  end if;
-
-                  g_free (UTF8);
-               end;
+               Line_Data.Text := new String'
+                 (Get_Text (Buffer, Start_Iter, End_Iter, True));
 
                Editable_Lines (L) := Line_Data;
             end;
@@ -1741,18 +1713,7 @@ package body Src_Editor_Buffer.Line_Information is
             Buffer.Inserting := True;
             Buffer.Blocks_Timeout_Registered := True;
 
-            declare
-               Length        : constant Integer :=
-                 Editable_Lines (Line).Text'Length;
-               Result_String : String (1 .. Length * 2 + 1);
-               Ignore, Bytes : Natural;
-            begin
-               Glib.Convert.Convert
-                 (Editable_Lines (Line).Text.all & ASCII.LF,
-                  "UTF-8", Get_Pref (Buffer.Kernel, Default_Charset),
-                  Ignore, Bytes, Result => Result_String);
-               Insert (Buffer, Iter, Result_String (1 .. Bytes));
-            end;
+            Insert (Buffer, Iter, Editable_Lines (Line).Text.all & ASCII.LF);
 
             Buffer.Blocks_Timeout_Registered := False;
             Buffer.Inserting := False;
