@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib; use Glib;
 with Ada_Naming_Editors;      use Ada_Naming_Editors;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Basic_Types;             use Basic_Types;
@@ -64,6 +65,8 @@ package body Naming_Editors is
       Editor := new Naming_Editor_Record;
       Gtk.Notebook.Initialize (Editor);
       Set_Visible_Pages (Editor, Languages, No_Project);
+
+      Set_Current_Page (Editor, 0);
 
       Widget_Callback.Connect
         (Editor, "destroy",
@@ -178,6 +181,7 @@ package body Naming_Editors is
          Editor.Pages (Last).Is_Visible := True;
       end Create_Page;
 
+      Current : constant Gint := Get_Current_Page (Editor);
    begin
       if Editor.Pages /= null then
          for P in Editor.Pages'Range loop
@@ -197,6 +201,13 @@ package body Naming_Editors is
       if Languages'Length = 0 then
          Create_Page (Ada_String);
       end if;
+
+      --  Work around an apparent bug in gtk+: when the contents of a page is
+      --  hidden, and the shown again, it is always displayed on top of the
+      --  current page in the notebook. We thus see the contents of two or more
+      --  pages at the same time...
+      Set_Current_Page (Editor, 1 + Current);
+      Set_Current_Page (Editor, Current);
    end Set_Visible_Pages;
 
    --------------------------
