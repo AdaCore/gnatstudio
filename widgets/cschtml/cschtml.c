@@ -1350,6 +1350,16 @@ csc_html_get_title (CscHTML *html)
 	return html->engine->title->str;
 }
 
+
+const gchar *
+csc_html_get_selection (CscHTML *html)
+{
+	g_return_val_if_fail (html != NULL, NULL);
+	g_return_val_if_fail (GTK_IS_CSCHTML (html), NULL);
+
+	return html_engine_get_selection_string (html->engine);
+}
+
 gboolean
 csc_html_jump_to_anchor (CscHTML *html,
 			 const gchar *anchor)

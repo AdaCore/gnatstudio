@@ -2,7 +2,7 @@
 /*  This file is part of the CscHTML library.
 
     Copyright 1999, 2000 Helix Code, Inc.
-    
+
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
     License as published by the Free Software Foundation; either
@@ -117,7 +117,7 @@ struct _HTMLEmbedded;
 
 struct _CscHTMLClass {
 	GtkLayoutClass parent_class;
-	
+
         void (* title_changed)   (CscHTML *html, const gchar *new_title);
         void (* url_requested)   (CscHTML *html, const gchar *url, CscHTMLStream *handle);
         void (* load_done)       (CscHTML *html);
@@ -193,6 +193,9 @@ gboolean  csc_html_get_editable  (const CscHTML *html);
 
 /* Title.  */
 const gchar *csc_html_get_title  (CscHTML *html);
+
+/* Selection */
+const gchar *csc_html_get_selection  (CscHTML *html);
 
 /* Anchors.  */
 gboolean  csc_html_jump_to_anchor  (CscHTML *html,
