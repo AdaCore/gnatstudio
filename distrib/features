@@ -9,7 +9,7 @@ New features in GPS 2.0.0
   and link all main units in a given project.
 
 - Python interpreter
-  Under Linux and Solaris, GPS now comes with an integrated python
+  Under Linux, Solaris and Windows, GPS now comes with an integrated python
   interpreter, giving the ability to write powerful GPS extensions.
 
 - Speed Column
