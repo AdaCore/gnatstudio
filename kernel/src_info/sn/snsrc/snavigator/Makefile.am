@@ -21,8 +21,5 @@ AUTOMAKE_OPTIONS = cygnus
 
 ## Process this file with automake to create Makefile.in.
 
-SUBDIRS = misc dbutils parsers db install hyper
+SUBDIRS = misc dbutils parsers db
 
-install-exec-local:
-	$(INSTALL) $(top_srcdir)/../COPYING $(prefix)
-	(cd ../tcl8.1; $(MAKE) install)
