@@ -6339,6 +6339,7 @@ items yet.
 * Defining new search patterns::
 * Adding support for new languages::
 * Defining text aliases::
+* Adding casing exceptions::
 @end menu
 
 @noindent
@@ -6439,6 +6440,8 @@ described in later sections. It includes:
   (@pxref{Filtering actions})
 @item <contextual>
   (@pxref{Adding contextual menus})
+@item <case_exceptions>
+  (@pxref{Adding casing exceptions})
 @end table
 
 @c -----------------------------------------------------------------------
@@ -7820,6 +7823,27 @@ Here is an example of an alias file:
 end %(p);</text>
   </alias>
 </Aliases>
+@end smallexample
+
+@c --------------------------------------------------------------------------
+@node Adding casing exceptions
+@subsection Adding casing exceptions
+@cindex case_exceptions
+@cindex <case_exceptions>
+@c --------------------------------------------------------------------------
+
+@noindent
+A set of case exceptions can be declared in this file. Each case
+exception is put inside the tag @code{<word>}. These exceptions are
+used by GPS to set identifiers or keywords case when editing case
+insensitive languages (except if corresponding case is set to
+Unchanged). @pxref{The Preferences Dialog}.
+
+@smallexample
+<case_exceptions>
+   <word>GNAT</word>
+   <word>OS_Lib</word>
+</case_exceptions>
 @end smallexample
 
 @c --------------------------------------------------------------------------
