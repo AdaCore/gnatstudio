@@ -218,6 +218,15 @@ package body Src_Editor_Box is
    function Check_Timestamp_Idle (Box : GObject) return Boolean;
    --  Idle callback to check that the timestamp of a file hasn't changed.
 
+   procedure Go_To_Closest_Match
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Filename       : Virtual_File;
+      Line           : Natural;
+      Column         : Natural;
+      Entity         : Entity_Information);
+   --  Open an editor for Filename. Go to Line, Column, or the nearest
+   --  occurrence of Entity close by.
+
    ----------------------------------
    -- The contextual menu handling --
    ----------------------------------
@@ -240,6 +249,11 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the "Goto Body" contextual menu
+
+   procedure On_Goto_Type
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+   --  Callback for the "Goto type declaration" contextual menu
 
    procedure On_Goto_Other_File
      (Widget  : access GObject_Record'Class;
@@ -379,12 +393,9 @@ package body Src_Editor_Box is
       Editor  : access Source_Editor_Box_Record'Class;
       Context : access Entity_Selection_Context'Class)
    is
-      Source          : Source_Editor_Box;
       Entity          : Entity_Information;
       Location        : File_Location;
       L, C            : Natural;
-      Length          : Natural;
-      File_Up_To_Date : Boolean;
       Filename        : Virtual_File;
 
    begin
@@ -440,11 +451,6 @@ package body Src_Editor_Box is
          Filename := Get_Filename (Get_File (Location));
          Trace (Me, "Goto_Declaration_Or_Body: Opening file "
                 & Full_Name (Filename).all);
-         if Dir_Name (Filename).all = "" then
-            Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename), Mode => Error);
-         end if;
-
       else
          --  Open the file, and reset Source to the new editor in order to
          --  highlight the region returned by the Xref query.
@@ -452,25 +458,48 @@ package body Src_Editor_Box is
          L := Get_Line (Get_Declaration_Of (Entity));
          C := Get_Column (Get_Declaration_Of (Entity));
          Filename := Get_Filename (Get_File (Get_Declaration_Of (Entity)));
-
-         if Dir_Name (Filename).all = "" then
-            Insert (Kernel, -"File not found: "
-                    & Base_Name (Filename), Mode => Error);
-         end if;
       end if;
 
-      Length := Get_Name (Entity).all'Length;
+      Go_To_Closest_Match (Kernel, Filename, L, C, Entity);
+      Pop_State (Kernel_Handle (Kernel));
 
-      if Dir_Name (Filename).all /= "" then
-         Add_Navigation_Location (Editor);
-         Open_File_Editor
-           (Kernel, Filename, L, C, C + Length,
-            Enable_Navigation => True);
-
-      else
+   exception
+      when E : others =>
          Pop_State (Kernel_Handle (Kernel));
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Goto_Declaration_Or_Body;
+
+   -------------------------
+   -- Go_To_Closest_Match --
+   -------------------------
+
+   procedure Go_To_Closest_Match
+     (Kernel         : access Kernel_Handle_Record'Class;
+      Filename       : Virtual_File;
+      Line           : Natural;
+      Column         : Natural;
+      Entity         : Entity_Information)
+   is
+      Length : constant Natural := Get_Name (Entity).all'Length;
+      Source : Source_Editor_Box;
+      File_Up_To_Date : Boolean;
+      L, C : Natural;
+   begin
+      if Dir_Name (Filename).all = "" then
+         Insert (Kernel, -"File not found: "
+                 & Base_Name (Filename), Mode => Error);
          return;
       end if;
+
+      Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+      if Source /= null then
+         Add_Navigation_Location (Source);
+      end if;
+
+      Open_File_Editor
+        (Kernel, Filename, Line, Column, Column + Length,
+         Enable_Navigation => True);
 
       --  Find the correct location for the entity, in case it is in fact
       --  different from what was found in the LI file (ie for instance the LI
@@ -479,19 +508,18 @@ package body Src_Editor_Box is
       Source := Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
 
       if Source /= null then
-
          --  Find the closest match of the entity, in case the LI file wasn't
          --  up-to-date.
 
          File_Up_To_Date := Is_Valid_Position
-             (Source.Source_Buffer, Editable_Line_Type (L), C)
+             (Source.Source_Buffer, Editable_Line_Type (Line), Column)
            and then Is_Valid_Position
-             (Source.Source_Buffer, Editable_Line_Type (L), C + Length)
+             (Source.Source_Buffer, Editable_Line_Type (Line), Column + Length)
            and then Get_Text
              (Source.Source_Buffer,
-              Editable_Line_Type (L), C,
-              Editable_Line_Type (L), C + Length) =
-                Entity_Name_Information (Context);
+              Editable_Line_Type (Line), Column,
+              Editable_Line_Type (Line), Column + Length) =
+                Get_Name (Entity).all;
 
          --  Search for the closest reference to the entity if
          --  necessary. Otherwise, there's nothing to be done, since the region
@@ -501,26 +529,18 @@ package body Src_Editor_Box is
               (Kernel,
                -("The cross-reference information and the destination file do"
                  & " not match, the cursor was set at the closest reference"
-                 & " to ") & Entity_Name_Information (Context));
+                 & " to ") & Get_Name (Entity).all);
 
             --  Search for the closest reference to entity, and highlight the
             --  appropriate region in the editor.
 
-            Find_Closest_Match
-              (Source, L, C, Entity_Name_Information (Context));
-            Open_File_Editor
-              (Kernel, Filename, L, C, C + Length, False);
+            L := Line;
+            C := Column;
+            Find_Closest_Match (Source, L, C, Get_Name (Entity).all);
+            Open_File_Editor (Kernel, Filename, L, C, C + Length, False);
          end if;
       end if;
-
-      Pop_State (Kernel_Handle (Kernel));
-
-   exception
-      when E : others =>
-         Pop_State (Kernel_Handle (Kernel));
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end Goto_Declaration_Or_Body;
+   end Go_To_Closest_Match;
 
    --------------------------
    -- Get_Declaration_Info --
@@ -1573,6 +1593,18 @@ package body Src_Editor_Box is
                            Slot_Object => Editor,
                            After       => True);
                      end if;
+
+                     if Get_Type_Of (Entity) /= null then
+                        Gtk_New (Item, -"Goto type declaration of " & Name);
+                        Add (Menu, Item);
+                        Context_Callback.Object_Connect
+                          (Item, "activate",
+                           Context_Callback.To_Marshaller
+                             (On_Goto_Type'Access),
+                           User_Data   => Selection_Context_Access (Context),
+                           Slot_Object => Editor,
+                           After       => True);
+                     end if;
                   end if;
                end;
 
@@ -1740,6 +1772,55 @@ package body Src_Editor_Box is
          Trace (Exception_Handle,
                 "Unexpected exception: " & Exception_Information (E));
    end On_Goto_Next_Body;
+
+   ------------------
+   -- On_Goto_Type --
+   ------------------
+
+   procedure On_Goto_Type
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      C      : constant Entity_Selection_Context_Access :=
+        Entity_Selection_Context_Access (Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Editor : constant Source_Editor_Box := Source_Editor_Box (Widget);
+      Entity : Entity_Information;
+   begin
+      Push_State (Kernel, Busy);
+
+      Entity := Get_Entity (C);
+
+      if Entity = null then
+         --  Probably means that we either could not locate the ALI file,
+         --  or it could also be that we failed to parse it. Either way,
+         --  a message should have already been printed. So, just abort.
+
+         Console.Insert
+           (Kernel,
+            -"No cross-reference information found for "
+            & Full_Name (Get_Filename (Editor)).all & ASCII.LF
+            & (-("Recompile your file or select Build->Recompute Xref"
+                 & " Information, depending on the language")),
+            Mode           => Error);
+      else
+         Entity := Get_Type_Of (Entity);
+         Go_To_Closest_Match
+           (Kernel,
+            Filename => Get_Filename (Get_File (Get_Declaration_Of (Entity))),
+            Line     => Get_Line (Get_Declaration_Of (Entity)),
+            Column   => Get_Column (Get_Declaration_Of (Entity)),
+            Entity   => Entity);
+      end if;
+
+      Pop_State (Kernel);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         Pop_State (Kernel);
+   end On_Goto_Type;
 
    -------------
    -- Gtk_New --
