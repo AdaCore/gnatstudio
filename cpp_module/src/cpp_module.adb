@@ -113,9 +113,9 @@ package body Cpp_Module is
      (Kernel : access GObject_Record'Class; K : Kernel_Handle)
    is
       pragma Unreferenced (Kernel);
-      Style : constant Indentation_Kind := Indentation_Kind'Val
+      Style  : constant Indentation_Kind := Indentation_Kind'Val
         (Get_Pref (K, C_Automatic_Indentation));
-      Tabs  : constant Boolean := Get_Pref (K, C_Use_Tabs);
+      Tabs   : constant Boolean := Get_Pref (K, C_Use_Tabs);
       Params : constant Indent_Parameters :=
         (Indent_Level      => Integer (Get_Pref (K, C_Indentation_Level)),
          Indent_Continue   => 0,
@@ -125,7 +125,9 @@ package body Cpp_Module is
          Reserved_Casing   => Unchanged,
          Ident_Casing      => Unchanged,
          Format_Operators  => False,
-         Use_Tabs          => Tabs);
+         Use_Tabs          => Tabs,
+         Align_On_Colons   => False,
+         Align_On_Arrows   => False);
 
    begin
       Set_Indentation_Parameters
