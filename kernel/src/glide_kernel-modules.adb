@@ -1174,6 +1174,43 @@ package body Glide_Kernel.Modules is
       end loop;
    end Open_File_Editor;
 
+   ------------------------
+   -- Close_File_Editors --
+   ------------------------
+
+   procedure Close_File_Editors
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Filename : String)
+   is
+      Value : GValue_Array (1 .. 6);
+   begin
+      Init (Value (1), Glib.GType_String);
+      Set_String (Value (1), Filename);
+
+      Init (Value (2), Glib.GType_Int);
+      Set_Int (Value (2), -1);
+
+      Init (Value (3), Glib.GType_Int);
+      Set_Int (Value (3), 0);
+
+      Init (Value (4), Glib.GType_Boolean);
+      Set_Boolean (Value (4), False);
+
+      Init (Value (5), Glib.GType_Boolean);
+      Set_Boolean (Value (5), False);
+
+      Init (Value (6), Glib.GType_Boolean);
+      Set_Boolean (Value (6), False);
+
+      if not Mime_Action (Kernel, Mime_Source_File, Value) then
+         Trace (Me, "No file editor was registered");
+      end if;
+
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
+   end Close_File_Editors;
+
    ---------------
    -- Open_Html --
    ---------------
