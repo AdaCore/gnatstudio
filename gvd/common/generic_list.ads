@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                     Copyright (C) 2001 - 2002                     --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -26,100 +26,128 @@ generic
    type Data_Type (<>) is private;
 
    with procedure Free (Data : in out Data_Type) is <>;
-   --  Free any dynamic memory allocated to Data.
+   --  Free any dynamic memory associated with Data.
 
 package Generic_List is
 
    type List is private;
+   type List_Node is private;
 
    Null_List : constant List;
+   Null_Node : constant List_Node;
 
-   type Comparison is access
-     function (Arg1, Arg2 : Data_Type) return Boolean;
+   List_Empty : exception;
 
    procedure Prepend
      (L    : in out List;
       Item : Data_Type);
    --  Add an item at the beginning of a list. The cost is O(1).
 
+   procedure Prepend
+     (L    : in out List;
+      Node : List_Node;
+      Item : Data_Type);
+   --  Prepend an item before Node in list L. The cost is O(n).
+   --  If Node is null, Item is appended at the end of the list.
+
    procedure Append
      (L    : in out List;
       Item : Data_Type);
    --  Add an item at the end of a list. The cost is O(1).
 
+   procedure Append
+     (L    : in out List;
+      Node : List_Node;
+      Item : Data_Type);
+   --  Add an item after Node in list L. The cost is O(1).
+   --  If Node is null, Item is inserted at the beginning of the list.
+
    function Is_Empty (L : List) return Boolean;
    --  True if L does not contain any element.
-
-   procedure Rev (L : in out List);
-   --  Reverse the order of elements in the list. Cost is O(n).
 
    function Length (L : List) return Natural;
    --  Return the number of elements in L. Cost is O(n).
 
-   procedure Sort
-     (L        : in out List;
-      Inferior : Comparison);
-   --  Sorts a List. The cost is O(n*log(n)).
-   --  Inferior is a Comparison that returns True if Arg1 is strictly
-   --  inferior to Arg2.
-
    procedure Concat
      (L1 : in out List;
       L2 : List);
-   --  Append L2 at the end of L1. Cors is O(1).
+   --  Append L2 at the end of L1. Cost is O(1).
+   --  Note that no deep copy of L2 is done, which means that L1 and L2
+   --  will share the same nodes.
+
+   procedure Insert
+     (L1   : in out List;
+      Node : List_Node;
+      L2   : List);
+   --  Insert L2 after Node in L1. Cost is O(1).
+   --  Note that no deep copy of L2 is done, which means that L1 and L2
+   --  will share the same nodes.
+   --  If Node is Null_Node, L2 is inserted at the beginning of L1.
 
    procedure Free (L : in out List);
    --  Free memory associated to L.
 
-   function Next (L : List) return List;
-   --  Return the list following the first element.
+   function First (L : List) return List_Node;
+   --  Return the first node contained in L.
    --  Raise List_Empty if L is empty.
-   --  Attention : the first element is not freed !!
-   --  If you want to move through a list and free it on
-   --  the fly, use Tail instead.
 
-   procedure Tail (L : in out List);
+   function Prev (L : List; Node : List_Node) return List_Node;
+   --  Return the node before Node in L. The cost is O(n).
+   --  If Node is the first element, return null.
+   --  If Node cannot be found in L, raise List_Empty.
+
+   function Next (Node : List_Node) return List_Node;
+   --  Return the node following Node. The cost is O(1).
+
+   procedure Next (L : in out List);
    --  Return the list following the first element.
    --  Raise List_Empty if L is empty.
-   --  Attention : the first element is freed !!
+   --  The first element is removed from the list and freed.
 
    function Head (L : List) return Data_Type;
-   --  Return the first element contained in the list.
-   --  Raise List_Empty if L is empty;
+   --  Return the first data associated with L.
+   --  Raise List_Empty if L is null.
 
-   procedure Replace_Head
-     (L : List;
-      D : Data_Type);
-   --  Free the element at head of L and replace it by D.
+   function Data (Node : List_Node) return Data_Type;
+   --  Return the data associated with L.
+   --  Raise List_Empty if L is null.
 
-   List_Empty : exception;
+   procedure Set_Data
+     (Node : List_Node;
+      D    : Data_Type);
+   --  Free the data associated with L and replace it by D.
 
 private
 
-   type List_Node;
-   type List_Access is access List_Node;
+   type List_Node_Record;
+   type List_Node is access List_Node_Record;
 
    type List is record
-      First : List_Access;
-      Last  : List_Access;
+      First : List_Node;
+      Last  : List_Node;
    end record;
 
    Null_List : constant List := List' (null, null);
+   Null_Node : constant List_Node := null;
 
    type Data_Access is access Data_Type;
 
-   type List_Node is record
+   type List_Node_Record is record
       Element : Data_Access;
-      Next    : List_Access;
+      Next    : List_Node;
    end record;
 
    procedure Free_Element is new
      Unchecked_Deallocation (Data_Type, Data_Access);
-   procedure Free_Node is new Unchecked_Deallocation (List_Node, List_Access);
 
+   procedure Free_Node is new
+     Unchecked_Deallocation (List_Node_Record, List_Node);
+
+   pragma Inline (First);
    pragma Inline (Prepend);
-   pragma Inline (Head);
-   pragma Inline (Tail);
    pragma Inline (Is_Empty);
+   pragma Inline (Data);
+   pragma Inline (Next);
+   pragma Inline (Head);
 
 end Generic_List;

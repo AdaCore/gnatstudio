@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -20,25 +20,6 @@
 
 package body Generic_List is
 
-   -----------------------
-   -- Local Subprograms --
-   -----------------------
-
-   procedure List_Split (L : in out List_Access; L1, L2 : out List_Access);
-   --  Splits a list into two lists of equal size.
-   --  The cost is O(n) where n = length(L).
-
-   function List_Fuse
-     (L1, L2   : in List_Access;
-      Inferior : Comparison) return List_Access;
-   --  Fuses two sorted lists into a sorted list.
-   --  The cost is O(n) where n = (length(L1), length(L2)).
-
-   procedure Sort
-     (L        : in out List_Access;
-      Inferior : Comparison);
-   --  Sorts L using Inferior as comparison.
-
    -------------
    -- Prepend --
    -------------
@@ -47,14 +28,40 @@ package body Generic_List is
      (L    : in out List;
       Item : Data_Type)
    is
-      L2 : List_Access := L.First;
+      L2 : List_Node := L.First;
    begin
-      L.First := new List_Node'
-        (Element => new Data_Type'(Item),
+      L.First := new List_Node_Record'
+        (Element => new Data_Type' (Item),
          Next    => L2);
 
       if L2 = null then
          L.Last := L.First;
+      end if;
+   end Prepend;
+
+   procedure Prepend
+     (L    : in out List;
+      Node : List_Node;
+      Item : Data_Type)
+   is
+      Current : List_Node := L.First;
+   begin
+      if Node = null then
+         Append (L, Item);
+      elsif Node = L.First then
+         Prepend (L, Item);
+      else
+         while Current /= null and then Current.Next /= Node loop
+            Current := Current.Next;
+         end loop;
+
+         if Current = null then
+            raise List_Empty;
+         end if;
+
+         Current.Next := new List_Node_Record'
+           (Element => new Data_Type' (Item),
+            Next    => Current.Next);
       end if;
    end Prepend;
 
@@ -67,15 +74,32 @@ package body Generic_List is
       Item : Data_Type) is
    begin
       if L.Last = null then
-         L.First := new List_Node'
-           (Element => new Data_Type'(Item),
+         L.First := new List_Node_Record'
+           (Element => new Data_Type' (Item),
             Next    => null);
          L.Last := L.First;
+
       else
-         L.Last.Next := new List_Node'
-           (Element => new Data_Type'(Item),
+         L.Last.Next := new List_Node_Record'
+           (Element => new Data_Type' (Item),
             Next    => null);
          L.Last := L.Last.Next;
+      end if;
+   end Append;
+
+   procedure Append
+     (L    : in out List;
+      Node : List_Node;
+      Item : Data_Type) is
+   begin
+      if Node = null then
+         Prepend (L, Item);
+      elsif Node = L.Last then
+         Append (L, Item);
+      else
+         Node.Next := new List_Node_Record'
+           (Element => new Data_Type' (Item),
+            Next    => Node.Next);
       end if;
    end Append;
 
@@ -88,44 +112,12 @@ package body Generic_List is
       return L.First = null or else L.First.Element = null;
    end Is_Empty;
 
-   ---------
-   -- Rev --
-   ---------
-
-   procedure Rev (L : in out List) is
-      L_Buffer   : List_Access;
-      L_Previous : List_Access;
-      L_Current  : List_Access;
-      L_Next     : List_Access;
-
-   begin
-      if Is_Empty (L) then
-         return;
-      else
-         L_Previous := null;
-         L_Current  := L.First;
-         L_Next     := L.First.Next;
-         L.Last     := L.First;
-
-         while L_Next /= null loop
-            L_Buffer := L_Current.Next;
-            L_Current.Next := L_Previous;
-            L_Previous := L_Current;
-            L_Current := L_Buffer;
-            L_Next := L_Current.Next;
-         end loop;
-
-         L_Current.Next := L_Previous;
-         L.First := L_Current;
-      end if;
-   end Rev;
-
    ------------
    -- Length --
    ------------
 
    function Length (L : List) return Natural is
-      L_Current : List_Access := L.First;
+      L_Current : List_Node := L.First;
       Result    : Natural := 0;
 
    begin
@@ -136,144 +128,6 @@ package body Generic_List is
 
       return Result;
    end Length;
-
-   ----------
-   -- Sort --
-   ----------
-
-   procedure Sort
-     (L        : in out List_Access;
-      Inferior : Comparison)
-   is
-      L1, L2 : List_Access;
-   begin
-      if L /= null and then L.Next /= null then
-         List_Split (L, L1, L2);
-         Sort (L1, Inferior);
-         Sort (L2, Inferior);
-         L := List_Fuse (L1, L2, Inferior);
-      end if;
-   end Sort;
-
-   ----------
-   -- Sort --
-   ----------
-
-   procedure Sort
-     (L        : in out List;
-      Inferior : Comparison) is
-   begin
-      if L.First /= null
-        and then L.First.Next /= null
-      then
-         Sort (L.First, Inferior);
-
-         while L.Last.Next /= null loop
-            L.Last := L.Last.Next;
-         end loop;
-      end if;
-   end Sort;
-
-   ----------------
-   -- List_Split --
-   ----------------
-
-   procedure List_Split (L : in out List_Access; L1, L2 : out List_Access) is
-      Append_To_L1 : Boolean := True;
-      L1_First     : List_Access;
-      L2_First     : List_Access;
-      L1_Last      : List_Access;
-      L2_Last      : List_Access;
-
-   begin
-      if L = null then
-         L1 := null;
-         L2 := null;
-      elsif L.Next = null then
-         L1 := L;
-         L2 := null;
-      else
-         L1_First := L;
-         L2_First := L.Next;
-         L1_Last := L1_First;
-         L2_Last := L2_First;
-         L := L.Next.Next;
-
-         while L /= null loop
-            if Append_To_L1 then
-               L1_Last.Next := L;
-               L1_Last := L1_Last.Next;
-               Append_To_L1 := False;
-            else
-               L2_Last.Next := L;
-               L2_Last := L2_Last.Next;
-               Append_To_L1 := True;
-            end if;
-
-            L := L.Next;
-         end loop;
-
-         L1_Last.Next := null;
-
-         if L2_Last /= null then
-            L2_Last.Next := null;
-         end if;
-
-         L1 := L1_First;
-         L2 := L2_First;
-      end if;
-   end List_Split;
-
-   ---------------
-   -- List_Fuse --
-   ---------------
-
-   function List_Fuse
-     (L1, L2   : in List_Access;
-      Inferior : Comparison) return List_Access
-   is
-      List_First : List_Access;
-      List_Last  : List_Access;
-      LL1        : List_Access := L1;
-      LL2        : List_Access := L2;
-
-   begin
-      if LL1 = null then
-         return LL2;
-      elsif LL2 = null then
-         return LL1;
-      else
-         if Inferior (LL1.Element.all, LL2.Element.all) then
-            List_First := LL1;
-            LL1 := LL1.Next;
-         else
-            List_First := LL2;
-            LL2 := LL2.Next;
-         end if;
-      end if;
-
-      List_Last := List_First;
-
-      while LL1 /= null and then LL2 /= null loop
-         if Inferior (LL1.Element.all, LL2.Element.all) then
-            List_Last.Next := LL1;
-            LL1 := LL1.Next;
-         else
-            List_Last.Next := LL2;
-            LL2 := LL2.Next;
-         end if;
-
-         List_Last := List_Last.Next;
-      end loop;
-
-      if LL1 = null then
-         List_Last.Next := LL2;
-      else
-         List_Last.Next := LL1;
-      end if;
-
-      return List_First;
-   end List_Fuse;
 
    ------------
    -- Concat --
@@ -288,81 +142,112 @@ package body Generic_List is
          L1.Last  := L2.Last;
       else
          L1.Last.Next := L2.First;
-         L1.Last := L2.Last;
+         L1.Last      := L2.Last;
       end if;
    end Concat;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (L1   : in out List;
+      Node : List_Node;
+      L2   : List)
+   is
+   begin
+      if Is_Empty (L1) or else Node = L1.Last then
+         L1.First := L2.First;
+         L1.Last  := L2.Last;
+
+      elsif Node = null then
+         L2.Last.Next := L1.First;
+         L1.First     := L2.First;
+
+      else
+         L2.Last.Next := Node.Next;
+         Node.Next    := L2.First;
+      end if;
+   end Insert;
 
    ----------
    -- Free --
    ----------
 
    procedure Free (L : in out List) is
-      Previous : List_Access;
-      Current  : List_Access;
+      Current : List_Node;
+      Tmp     : List_Node;
 
    begin
-      if L.First = null then
-         return;
-      end if;
-
-      Current := L.First.Next;
-      Previous := L.First;
+      Current := L.First;
 
       while Current /= null loop
-         if Previous /= null then
-            if Previous.Element /= null then
-               Free (Previous.Element.all);
-            end if;
+         Tmp := Current;
+         Current := Current.Next;
 
-            Free_Element (Previous.Element);
+         if Tmp.Element /= null then
+            Free (Tmp.Element.all);
          end if;
 
-         Free_Node (Previous);
-
-         Previous := Current;
-         Current := Current.Next;
+         Free_Element (Tmp.Element);
+         Free_Node (Tmp);
       end loop;
-
-      if Previous.Element /= null then
-         Free (Previous.Element.all);
-      end if;
-
-      Free_Element (Previous.Element);
-      Free_Node (Previous);
 
       L.First := null;
       L.Last  := null;
    end Free;
 
    ----------
+   -- First --
+   ----------
+
+   function First (L : List) return List_Node is
+   begin
+      return L.First;
+   end First;
+
+   ----------
+   -- Prev --
+   ----------
+
+   function Prev (L : List; Node : List_Node) return List_Node is
+      Current : List_Node := L.First;
+   begin
+      if Current = Node then
+         return null;
+      end if;
+
+      while Current /= null and then Current.Next /= Node loop
+         Current := Current.Next;
+      end loop;
+
+      if Current = null then
+         raise List_Empty;
+      else
+         return Current;
+      end if;
+   end Prev;
+
+   ----------
    -- Next --
    ----------
 
-   function Next (L : List) return List is
+   function Next (Node : List_Node) return List_Node is
    begin
-      if L.First = null then
+      if Node = null then
          raise List_Empty;
       else
-         if L.First.Next = null then
-            return Null_List;
-         else
-            return List' (L.First.Next, L.Last);
-         end if;
+         return Node.Next;
       end if;
    end Next;
 
-   ----------
-   -- Tail --
-   ----------
-
-   procedure Tail (L : in out List)
-   is
-      First : List_Access := L.First;
+   procedure Next (L : in out List) is
+      First : List_Node := L.First;
    begin
       if L.First = null then
          raise List_Empty;
       else
-         First := L.First;
+         First   := L.First;
          L.First := L.First.Next;
 
          if L.First = null then
@@ -376,7 +261,7 @@ package body Generic_List is
          Free_Element (First.Element);
          Free_Node (First);
       end if;
-   end Tail;
+   end Next;
 
    ----------
    -- Head --
@@ -384,31 +269,40 @@ package body Generic_List is
 
    function Head (L : List) return Data_Type is
    begin
-      if L.First = null
-        or else L.First.Element = null
-      then
+      if L.First = null or else L.First.Element = null then
          raise List_Empty;
       else
          return L.First.Element.all;
       end if;
    end Head;
 
-   ------------------
-   -- Replace_Head --
-   ------------------
+   ----------
+   -- Data --
+   ----------
 
-   procedure Replace_Head
-     (L : List;
-      D : Data_Type) is
+   function Data (Node : List_Node) return Data_Type is
    begin
-      if L.First = null
-        or else L.First.Element = null
-      then
+      if Node = null or else Node.Element = null then
          raise List_Empty;
       else
-         Free (L.First.Element.all);
-         L.First.Element := new Data_Type' (D);
+         return Node.Element.all;
       end if;
-   end Replace_Head;
+   end Data;
+
+   --------------
+   -- Set_Data --
+   --------------
+
+   procedure Set_Data
+     (Node : List_Node;
+      D    : Data_Type) is
+   begin
+      if Node = null or else Node.Element = null then
+         raise List_Empty;
+      else
+         Free (Node.Element.all);
+         Node.Element := new Data_Type' (D);
+      end if;
+   end Set_Data;
 
 end Generic_List;
