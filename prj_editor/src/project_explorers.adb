@@ -212,8 +212,7 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
-      Object_Directory : Boolean := False;
-      Exec_Directory   : Boolean := False) return Gtk_Tree_Iter;
+      Node_Type        : Directory_Node_Types) return Gtk_Tree_Iter;
    --  Add a new directory node in the tree, for Directory.
    --  Directory is expected to be an absolute path name.
    --  Directory_String should be specified for source directories only, and is
@@ -972,19 +971,11 @@ package body Project_Explorers is
       Directory        : String;
       Parent_Node      : Gtk_Tree_Iter := Null_Iter;
       Project          : Project_Type;
-      Object_Directory : Boolean := False;
-      Exec_Directory   : Boolean := False) return Gtk_Tree_Iter
+      Node_Type        : Directory_Node_Types) return Gtk_Tree_Iter
    is
-      N         : Gtk_Tree_Iter;
-      Node_Type : Node_Types := Directory_Node;
+      N : Gtk_Tree_Iter;
    begin
-      if Object_Directory then
-         Node_Type := Obj_Directory_Node;
-      elsif Exec_Directory then
-         Node_Type := Exec_Directory_Node;
-      end if;
-
-      if Object_Directory then
+      if Node_Type /= Directory_Node then
          --  Append the object directory before the first project.
 
          declare
@@ -1045,7 +1036,6 @@ package body Project_Explorers is
       File_Node       : File_Array (Files'Range);
       File_Node_Index : Integer;
    begin
-      --  ??? Sorting will only work when we are adding all directories
       if Filenames_Are_Case_Sensitive then
          String_List_Utils.Sort (Dirs);
       else
@@ -1059,11 +1049,14 @@ package body Project_Explorers is
            (Explorer    => Explorer,
             Directory   => Data (Dir_Node),
             Project     => Project,
-            Parent_Node => Node);
+            Parent_Node => Node,
+            Node_Type   => Directory_Node);
 
          File_Node_Index := File_Node'First;
          for S in Files'Range loop
-            if File_Equal (Dir_Name (Files (S)).all, Data (Dir_Node)) then
+            if File_Equal
+              (Dir_Name (Files (S)).all, Name_As_Directory (Data (Dir_Node)))
+            then
                File_Node (File_Node_Index) := Files (S);
                File_Node_Index := File_Node_Index + 1;
             end if;
@@ -1294,7 +1287,7 @@ package body Project_Explorers is
             Directory        => Obj,
             Project          => Project,
             Parent_Node      => Node,
-            Object_Directory => True);
+            Node_Type        => Obj_Directory_Node);
       end if;
 
       if Exec /= ""
@@ -1305,7 +1298,7 @@ package body Project_Explorers is
             Directory      => Exec,
             Project        => Project,
             Parent_Node    => Node,
-            Exec_Directory => True);
+            Node_Type      => Exec_Directory_Node);
       end if;
    end Add_Object_Directories;
 
