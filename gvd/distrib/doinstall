@@ -66,14 +66,21 @@ EOF
    else
      echo ""
      echo "  Directory $basedir does not exist."
-     echo "  Do you want to create it [Y/n] ? "
-     echo ""
+     printf "  Do you want to create it [Y/n] ? "
      read x
      if [ " $x" = " n" -o " $x" = " N" ]; then
         echo "Aborting the installation process"
 	exit
      fi
      mkdir -p $basedir
+   fi
+
+   echo ""
+   printf "  Are you now ready to proceed with the installation [Y/n] ? "
+   read x
+   if [ " $x" = " n" -o " $x" = " N" ]; then
+      echo "Aborting the installation process"
+      exit
    fi
 }
 
