@@ -811,7 +811,7 @@ file, using the standard HTML syntax.
 
 @smallexample
   <name>file#anchor</name>
-@smallexample
+@end smallexample
 
 @item descr
 This is the description for this help file. It appears in a tooltip
