@@ -108,6 +108,9 @@ package body Codefix.Graphics is
       Free (Graphic_Codefix.Current_Text);
       Free (Graphic_Codefix.Corrector);
       Free (Graphic_Codefix.Errors_Found);
+      Free (Graphic_Codefix.Vdiff_List);
+      --  Unref (Graphic_Codefix);
+      Destroy (Graphic_Codefix);
       Free_Parsers;
    end Free;
 
@@ -126,7 +129,6 @@ package body Codefix.Graphics is
    ----------
 
    procedure Free (This : in out Vdiff_Access) is
-      pragma Unreferenced (This);
    begin
       null;
    end Free;
@@ -159,16 +161,16 @@ package body Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class)
    is
       procedure Display_Sol;
-      --  ???
+      --  Initialize the variable Proposition with the current solution.
 
       procedure Modify_Tab;
-      --  ???
+      --  Update the data recorded inside the current page of the Notebook.
 
       procedure Add_Tab;
-      --  ???
+      --  Add a page in the Notebook and initialize its data.
 
       procedure Update_Fix_List;
-      --  ???
+      --  Update the visual list of possibles corrections.
 
       Current_Sol     : Extract_List.List_Node;
       Proposition     : Vdiff_Access;
