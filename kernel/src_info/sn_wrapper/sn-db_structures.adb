@@ -20,6 +20,7 @@
 
 with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
+with System;               use System;
 
 package body SN.DB_Structures is
 
@@ -106,14 +107,18 @@ package body SN.DB_Structures is
      (To   : out Buffer_String;
       From : Interfaces.C.Strings.chars_ptr)
    is
-      use Interfaces.C;
       use Interfaces.C.Strings;
-      V   : constant char_array := Value (From);
-      Len : constant Natural    := Natural (Strlen (From));
+
+      procedure strcpy (To : Address; From : Interfaces.C.Strings.chars_ptr);
+      pragma Import (C, strcpy);
+
+      Len : constant Natural := Natural (Strlen (From));
    begin
-      for I in 0 .. Len - 1 loop
-         To (I) := To_Ada (V (size_t (I)));
-      end loop;
+      if Len >= Buffer_String_Size then
+         To (To'First) := ASCII.Nul;
+      else
+         strcpy (To'Address, From);
+      end if;
    end Copy;
 
    ----------------
