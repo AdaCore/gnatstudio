@@ -1,7 +1,28 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Glib;                   use Glib;
 
 with Glide_Kernel;           use Glide_Kernel;
 with Vdiff_Pkg;              use Vdiff_Pkg;
+with Generic_List;
 
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
@@ -22,14 +43,20 @@ package Codefix.Graphics is
    Display_Lines_Before : constant Integer := 3;
    Display_Lines_After  : constant Integer := 3;
 
+   procedure Free (This : in out Vdiff_Access);
+
+   package Vdiff_Lists is new Generic_List (Vdiff_Access);
+   use Vdiff_Lists;
+
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
       Current_Text       : Text_Navigator;
       Corrector          : Correction_Manager;
       Errors_Found       : Errors_File;
-      Successful_Update : Boolean;
+      Successful_Update  : Boolean;
       Nb_Tabs            : Integer := 0;
       Current_Error      : Error_Id := Null_Error_Id;
       Kernel             : Kernel_Handle;
+      Vdiff_List         : Vdiff_Lists.List;
    end record;
 
    type Graphic_Codefix_Access is access all Graphic_Codefix_Record;

@@ -1,3 +1,23 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
 with Ada.Command_Line;         use Ada.Command_Line;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
@@ -18,6 +38,7 @@ with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Window;               use Gtk.Window;
+with Gtk.Clist;                use Gtk.Clist;
 
 with Diff_Utils;               use Diff_Utils;
 with Vdiff_Pkg;                use Vdiff_Pkg;
@@ -33,7 +54,6 @@ use Codefix.Formal_Errors.Extract_List;
 with Codefix.File_Io;          use Codefix.File_Io;
 with Codefix.Text_Navigators;
 
-with Gen_Proposition_Pkg;      use Gen_Proposition_Pkg;
 with Final_Window_Pkg;         use Final_Window_Pkg;
 
 with System.Storage_Elements;
@@ -59,10 +79,6 @@ package body Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
       Current_Id : Error_Id;
       Signal_Parameters : Signal_Parameter_Types (1 .. 0, 1 .. 0);
-
-      --  type size_t is mod 2 ** Standard'Address_Size;
-      --  type chars_ptr is new System.Storage_Elements.Integer_Address;
-      --  type chars_ptr_array is array (size_t range <>) of chars_ptr;
 
       Signals : chars_ptr_array (1 .. 0);
       --  The list of signals defined for this object
@@ -117,6 +133,15 @@ package body Codefix.Graphics is
       Gtk.Main.Main_Quit;
    end Quit;
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Vdiff_Access) is
+   begin
+      null;
+   end Free;
+
    -----------------
    -- Next_Choice --
    -----------------
@@ -154,6 +179,7 @@ package body Codefix.Graphics is
       Proposition     : Vdiff_Access;
       Label           : Gtk_Label;
       Current_Nb_Tabs : Integer;
+      Current_Vdiff   : Vdiff_Lists.List_Node;
 
       -----------------
       -- Display_Sol --
@@ -223,7 +249,6 @@ package body Codefix.Graphics is
 
          end loop;
 
---         Current_Iterator.Next := null;
          Free (Current_Iterator.Next);
 
          Fill_Diff_Lists
@@ -251,32 +276,12 @@ package body Codefix.Graphics is
       ----------------
 
       procedure Modify_Tab is
-         --  Current_Container      : Gtk_Vbox;
-         --  Old_Text, New_Text     : Gtk_Text;
-         --  Old_Scroll, New_Scroll : Gtk_Scrolled_Window;
-
       begin
 
-         null;
-
---         Current_Container := Gtk_Vbox
---           (Get_Nth_Page (Graphic_Codefix.Choices_Proposed,
---                          Gint (Current_Nb_Tabs)));
-
---         Old_Scroll := Gtk_Scrolled_Window (Get_Child (Current_Container, 0))
---         New_Scroll := Gtk_Scrolled_Window (Get_Child (Current_Container, 1))
-
---         Old_Text := Gtk_Text (Gtk.Widget.Widget_List.Get_Data
---                                 (Children (Old_Scroll)));
-
---         New_Text := Gtk_Text (Gtk.Widget.Widget_List.Get_Data
---                                 (Children (New_Scroll)));
-
-
---         Delete_Text (Old_Text);
---         Delete_Text (New_Text);
-
---         Display_Sol (New_Text, Old_Text);
+         Proposition := Data (Current_Vdiff);
+         Clear (Proposition.Clist1);
+         Clear (Proposition.Clist2);
+         Display_Sol;
 
       end Modify_Tab;
 
@@ -301,6 +306,7 @@ package body Codefix.Graphics is
             Label);
 
          Unref (Proposition.Main_Box);
+         Append (Graphic_Codefix.Vdiff_List, Proposition);
       end Add_Tab;
 
       ---------------------
@@ -349,20 +355,15 @@ package body Codefix.Graphics is
       end if;
 
       Current_Sol := First (Get_Solutions (Graphic_Codefix.Current_Error));
+      Current_Vdiff := First (Graphic_Codefix.Vdiff_List);
 
       Current_Nb_Tabs := 0;
 
-      for J in 0 .. Graphic_Codefix.Nb_Tabs - 1 loop
-         Remove_Page
-           (Graphic_Codefix.Choices_Proposed,
-            Gint (Current_Nb_Tabs));
-      end loop;
-
       while Current_Sol /= Extract_List.Null_Node loop
 
-         if Current_Nb_Tabs < Graphic_Codefix.Nb_Tabs then
-            Add_Tab;
---            Modify_Tab;
+         if Current_Vdiff /= Vdiff_Lists.Null_Node then
+            Modify_Tab;
+            Current_Vdiff := Next (Current_Vdiff);
          else
             Add_Tab;
          end if;
@@ -372,11 +373,14 @@ package body Codefix.Graphics is
 
       end loop;
 
---      for J in Current_Nb_Tabs .. Graphic_Codefix.Nb_Tabs - 1 loop
---         Remove_Page
---           (Graphic_Codefix.Choices_Proposed,
---            Gint (Current_Nb_Tabs));
---      end loop;
+      if Current_Vdiff /= Vdiff_Lists.Null_Node then
+         for J in Current_Nb_Tabs .. Graphic_Codefix.Nb_Tabs - 1 loop
+            Remove_Page
+              (Graphic_Codefix.Choices_Proposed,
+               Gint (Current_Nb_Tabs));
+         end loop;
+         Remove_Nodes (Graphic_Codefix.Vdiff_List, Current_Vdiff);
+      end if;
 
       Graphic_Codefix.Nb_Tabs := Current_Nb_Tabs;
       Set_Text
@@ -438,7 +442,6 @@ package body Codefix.Graphics is
       Current_Number  : Gint := 1;
 
    begin
-
       Current_Extract := First (Get_Solutions (Graphic_Codefix.Current_Error));
 
       while Get_Caption (Data (Current_Extract)) /=
