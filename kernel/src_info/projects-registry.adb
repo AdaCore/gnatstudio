@@ -76,22 +76,24 @@ package body Projects.Registry is
    --  entries and several htables
 
    package Project_Htable is new String_Hash
-     (Data_Type => Project_Type,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => No_Project);
+     (Data_Type      => Project_Type,
+      Free_Data      => Do_Nothing,
+      Null_Ptr       => No_Project,
+      Case_Sensitive => False);
    use Project_Htable.String_Hash_Table;
 
    type Directory_Dependency is (Direct, As_Parent, None);
    --  The way a directory belongs to the project: either as a direct
    --  dependency, or because one of its subdirs belong to the project, or
    --  doesn't belong at all
-
+`
    procedure Do_Nothing (Dep : in out Directory_Dependency);
 
    package Directory_Htable is new String_Hash
-     (Data_Type => Directory_Dependency,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => None);
+     (Data_Type      => Directory_Dependency,
+      Free_Data      => Do_Nothing,
+      Null_Ptr       => None,
+      Case_Sensitive => Filenames_Are_Case_Sensitive);
    use Directory_Htable.String_Hash_Table;
 
    type Source_File_Data is record
@@ -108,9 +110,10 @@ package body Projects.Registry is
    procedure Do_Nothing (Data : in out Source_File_Data);
 
    package Source_Htable is new String_Hash
-     (Data_Type => Source_File_Data,
-      Free_Data => Do_Nothing,
-      Null_Ptr  => No_Source_File_Data);
+     (Data_Type      => Source_File_Data,
+      Free_Data      => Do_Nothing,
+      Null_Ptr       => No_Source_File_Data,
+      Case_Sensitive => Filenames_Are_Case_Sensitive);
    use Source_Htable.String_Hash_Table;
 
    procedure Do_Nothing (Name : in out Name_Id);
@@ -1346,6 +1349,8 @@ package body Projects.Registry is
         Get (Registry.Data.Sources, Base_Name);
 
    begin
+      Trace (Me,  "MANU Get_Language_From_File " & Base_Name
+               & " Lang=" & Get_String (S.Lang));
       if S = No_Source_File_Data then
          --  This is most probably one of the runtime files.
          --  For now, we simply consider the standard GNAT extensions, although
