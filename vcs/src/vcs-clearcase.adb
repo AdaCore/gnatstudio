@@ -261,16 +261,18 @@ package body VCS.ClearCase is
             Skip_To_String (S, Index, Error_Pattern);
 
             if Index < S'Last - Error_Pattern'Length then
-               Insert (Kernel,
-                       "ClearCase error :",
-                       Highlight_Sloc => False,
-                       Mode => Error);
+               Console.Insert
+                 (Kernel,
+                  -"ClearCase error:",
+                  Highlight_Sloc => False,
+                  Mode           => Error);
 
                while List_Temp /= Null_Node loop
-                  Insert (Kernel,
-                          "    " & Data (List_Temp),
-                          Highlight_Sloc => False,
-                          Mode => Error);
+                  Console.Insert
+                    (Kernel,
+                     "    " & Data (List_Temp),
+                     Highlight_Sloc => False,
+                     Mode           => Error);
 
                   List_Temp := Next (List_Temp);
                end loop;
