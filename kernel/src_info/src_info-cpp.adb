@@ -394,6 +394,8 @@ package body Src_Info.CPP is
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String;
    pragma Inline (Get_SN_Dir);
+   --  Return the name of the directory that contains the source navigator
+   --  database, or the empty string if this directory couldn't be found.
 
    procedure Refer_Type
      (Type_Name          : String;
@@ -482,7 +484,9 @@ package body Src_Info.CPP is
    procedure Create_DB_Directory
      (Handler : access CPP_LI_Handler_Record'Class) is
    begin
-      if not Is_Directory (Handler.DB_Dir.all) then
+      if Handler.DB_Dir.all /= ""
+        and then not Is_Directory (Handler.DB_Dir.all)
+      then
          Make_Dir (Handler.DB_Dir.all);
       end if;
    end Create_DB_Directory;
@@ -525,13 +529,20 @@ package body Src_Info.CPP is
       Xref_File_Name : String_Access;
       Num_Source_Files : Natural := 0;
    begin
+      HI.Handler := CPP_LI_Handler (Handler);
+
+      --  Do nothing if we couldn't create the database directory
+      if Handler.DB_Dir.all = "" then
+         HI.State := Done;
+         return HI;
+      end if;
+
       --  Prepare the list of files
       Trace (Info_Stream, "Computing the C and C++ sources list");
       Compute_Sources
         (HI, Project, Recursive,
          Languages => (1 => Name_C, 2 => Name_C_Plus_Plus));
 
-      HI.Handler := CPP_LI_Handler (Handler);
       HI.List_Filename := new String' (Handler.DB_Dir.all & "gps_list");
 
       --  If there is at least one source file, make sure the database
@@ -653,7 +664,9 @@ package body Src_Info.CPP is
       if Iterator.State = Done then
          Trace (Info_Stream, "dbimp process is finished");
          Delete_File (Iterator.Tmp_Filename, Success);
-         Delete_File (Iterator.List_Filename.all, Success);
+         if Iterator.List_Filename /= null then
+            Delete_File (Iterator.List_Filename.all, Success);
+         end if;
          Free (Iterator.List_Filename);
          Finished := True;
       end if;
@@ -665,9 +678,11 @@ package body Src_Info.CPP is
 
    procedure Destroy (Iterator : in out CPP_LI_Handler_Iterator) is
    begin
+      if Iterator.Handler.Xrefs /= Empty_Xref_Pool then
+         Save (Iterator.Handler.Xrefs,
+               Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
+      end if;
       Destroy (LI_Handler_Iterator (Iterator));
-      Save (Iterator.Handler.Xrefs,
-            Iterator.Handler.DB_Dir.all & Browse.Xref_Pool_Filename);
    end Destroy;
 
    ----------------
@@ -675,10 +690,15 @@ package body Src_Info.CPP is
    ----------------
 
    function Get_SN_Dir (Project : Prj.Project_Id) return String is
+      Obj : constant String := Prj_API.Object_Path
+        (Project, Recursive => False);
    begin
-      return Name_As_Directory
-        (Prj_API.Object_Path (Project, Recursive => False))
-        & Name_As_Directory (Browse.DB_Dir_Name);
+      if Obj /= "" then
+         return Name_As_Directory (Obj)
+           & Name_As_Directory (Browse.DB_Dir_Name);
+      else
+         return "";
+      end if;
    end Get_SN_Dir;
 
    -------------------
@@ -828,6 +848,14 @@ package body Src_Info.CPP is
    is
       Dir : constant String := Name_As_Directory (Get_SN_Dir (Project));
    begin
+      if Dir = "" then
+         Free (Handler.DB_Dir);
+         Free (Handler.Xrefs);
+         Handler.DB_Dir := new String' ("");
+         Handler.Xrefs := Empty_Xref_Pool;
+         return;
+      end if;
+
       --  Reset the previous contents
       if Handler.DB_Dir = null
         or else Handler.DB_Dir.all /= Dir
@@ -867,6 +895,11 @@ package body Src_Info.CPP is
          Predefined_Path => "");
 
    begin
+      --  Do nothing if we couldn't create the database directory
+      if Handler.DB_Dir.all = "" then
+         return;
+      end if;
+
       if Full_Filename = "" then
          Warn ("File not found: " & Source_Filename);
          return;
