@@ -51,6 +51,10 @@ package Basic_Mapper is
       File_Name   : String);
    --  Load Mapper from file File_Name.
 
+   procedure Free (Mapper : in out File_Mapper_Access);
+   --  Free the memory occupied by Mapper and its components.
+   --  On exit, Mapper is null.
+
 private
 
    No_Element : constant String_Access := null;

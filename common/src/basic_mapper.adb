@@ -20,6 +20,7 @@
 -----------------------------------------------------------------------
 
 with Ada.Text_IO;
+with Unchecked_Deallocation;
 
 package body Basic_Mapper is
 
@@ -142,5 +143,18 @@ package body Basic_Mapper is
 
       Ada.Text_IO.Close (File);
    end Load_Mapper;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Mapper : in out File_Mapper_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (File_Mapper, File_Mapper_Access);
+   begin
+      Double_String_Table.String_Hash_Table.Reset (Mapper.Table_1);
+      Double_String_Table.String_Hash_Table.Reset (Mapper.Table_2);
+      Unchecked_Free (Mapper);
+   end Free;
 
 end Basic_Mapper;
