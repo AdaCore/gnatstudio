@@ -320,13 +320,15 @@ package body Builder_Module is
          Fd      : Process_Descriptor_Access;
          Args    : Argument_List_Access;
          Id      : Timeout_Handler_Id;
+         Tmp     : Boolean;
 
       begin
          if File = "" then
             return;
          end if;
 
-         --  ??? Ask for saving sources/projects before building
+         Tmp := Save_All_MDI_Children (Kernel, Force => False);
+
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
          Set_Sensitive_Menus (Kernel, False);
