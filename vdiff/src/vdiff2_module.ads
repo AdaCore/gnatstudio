@@ -23,7 +23,6 @@
 with Glide_Kernel;
 
 package Vdiff2_Module is
-
    Vdiff_Module_ID   : Glide_Kernel.Module_ID;
    Vdiff_Module_Name : constant String := "Visual_Diff2";
 
