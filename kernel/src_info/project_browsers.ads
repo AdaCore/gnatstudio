@@ -36,23 +36,21 @@ package Project_Browsers is
 
    type Edge_Factory is access function
      (V1, V2 : access Gtkada.Canvas.Canvas_Item_Record'Class)
-     return Gtkada.Canvas.Canvas_Link;
+      return Gtkada.Canvas.Canvas_Link;
    --  This function should return a new edge between the two vertices V1 and
    --  V2.
 
    function Has_Circular_Dependencies
      (Root_Project : Prj.Tree.Project_Node_Id;
       Factory      : Vertex_Factory := null;
-      E_Factory    : Edge_Factory := null)
-      return Boolean;
+      E_Factory    : Edge_Factory := null) return Boolean;
    --  Return True if there is a circular dependency for the with clauses in
    --  Root_Project.
 
    function Dependency_Graph
      (Root_Project : Prj.Tree.Project_Node_Id;
       Factory      : Vertex_Factory := null;
-      E_Factory    : Edge_Factory := null)
-      return Glib.Graphs.Graph;
+      E_Factory    : Edge_Factory := null) return Glib.Graphs.Graph;
    --  Return a graph that represent the dependencies between the projects: the
    --  vertices are the projects themselves, and the links represent a with
    --  clause.

@@ -50,8 +50,8 @@ package Browsers.Projects is
 private
    type Browser_Project_Vertex is new Browsers.Canvas.Glide_Browser_Item_Record
    with record
-        Name    : Types.Name_Id;
-        Browser : Browsers.Canvas.Glide_Browser;
+      Name    : Types.Name_Id;
+      Browser : Browsers.Canvas.Glide_Browser;
    end record;
 
    procedure On_Button_Click
