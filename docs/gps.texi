@@ -282,6 +282,12 @@ Copy to clipboard
 @item Ctrl-v or Ctrl-y
 Paste from clipboard
 
+@item Ctrl-z
+Undo previous insertion/deletion
+
+@item Ctrl-r
+Redo previous insertion/deletion
+
 @item Insert
 Toggle overwrite mode
 @end table
