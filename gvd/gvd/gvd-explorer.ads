@@ -98,6 +98,11 @@ package Odd.Explorer is
    --  Return the name of the file on which the debugger is stopped,
    --  or "" if the current file is not known.
 
+   procedure On_Executable_Changed
+     (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Called when the executable associated with the explorer has changed.
+
+
 private
    type Explorer_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Explorer_Root      : Gtk.Ctree.Gtk_Ctree_Node;

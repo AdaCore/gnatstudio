@@ -90,10 +90,6 @@ package body Odd.Explorer is
    --  Compute the contents of a file if needed. This is not done
    --  systematically, so as to speed things up.
 
-   procedure On_Executable_Changed
-     (Explorer : access Gtk_Widget_Record'Class);
-   --  Called when the executable associated with the explorer has changed.
-
    function Button_Press_Cb
      (Explorer : access Explorer_Record'Class;
       Event  : Gdk.Event.Gdk_Event) return Boolean;
@@ -164,13 +160,6 @@ package body Odd.Explorer is
       Boolean_Tree_Cb.Connect
         (Explorer, "button_press_event",
          Boolean_Tree_Cb.To_Marshaller (Button_Press_Cb'Access));
-
-
-      Widget_Callback.Object_Connect
-        (Get_Process (Odd.Code_Editors.Code_Editor (Code_Editor)),
-         "executable_changed",
-         Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
-         Explorer);
 
       Create_From_Xpm_D
         (Explorer.Folder_Open_Pixmap,
