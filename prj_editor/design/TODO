@@ -29,3 +29,17 @@
 
   * [Manu] Source_Dir selection
     The number of currently selected directories should be displayed somewhere
+
+  * [Manu] Ctrees should be scrolled to show the selected line
+
+  * [Manu] Obj_Dir selection should enable directory creation
+    There should be a contextual menu to create subdirectories
+
+  * [Manu] Parsing switches: see if we can reuse the front-end
+
+  * [Manu] Advanced switches editor: should show list at bottom
+    In red: unrecognized switches
+
+  * [Manu] One entry field per page in switches editor
+
+  * [Manu] The switches editor should always use a notebook with four pages
