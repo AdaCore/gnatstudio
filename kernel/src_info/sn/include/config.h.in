@@ -1,4 +1,4 @@
-/* include/config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* include/config.h.in. */
 
 /* Define to empty if the keyword does not work.  */
 #undef const
@@ -8,6 +8,9 @@
 
 /* Define if you have the strerror function.  */
 #undef HAVE_STRERROR
+
+/* Define if you have the getopt function. */
+#undef HAVE_GETOPT
 
 /* Define if you have the <fcntl.h> header file.  */
 #undef HAVE_FCNTL_H
