@@ -1,55 +1,32 @@
+/* Handling of pseudo-terminals
+   Adapted from process.c in GNU Emacs.
+   Copyright (C) 1985, 86, 87, 88, 93, 94, 95, 96, 1998
+      Free Software Foundation, Inc.
+   Copyright (C) 2000, 2001 ACT-Europe.
 
-/********************************************************************
- **  Handling of pseudo-terminals
- **  This code was copied from Emacs's sources, and adapted to the
- **  context of GNAT.Expect.Tty.
- **
- **  Note that this code is GPL.
- **  Most of this code comes from process.c (function create_process)
- **
- ********************************************************************/
+This file is part of GVD.
 
-/*******************************
- **  These macros and constants are defined for maximum compatibility with
- **  Emacs, so that we can easily compare later on the changes done in Emacs
- **  and the ones in this file
- *******************************/
+GVD is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.
 
-/* Should use ptys or pipes to communicate with the processes ? */
-int Vprocess_connection_type = 1;
+GVD is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-#define NILP(x) ((x) == 0)
-#define Qnil 0
-#define Qt 1
-#define Qrun 2
-#define report_file_error(x, y) fprintf (stderr, "Error: "x"\n");
-#define XPROCESS(x) (x)
-#define XSETINT(x,y) (x)=(y)
-#define XSETFASTINT(x,y) (x)=(y)
-#define BLOCK_INPUT {}
-#define emacs_write(fd,str,len) write(fd,str,len)
-#undef SET_EMACS_PRIORITY
-#define STRING_BYTES(x) strlen(x)
-#define fatal(a, b) fprintf(stderr, a), exit(1)
-#define INTEGERP(x) 1
-#define XINT(x) x
+You should have received a copy of the GNU General Public License
+along with GVD; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
 
-#ifdef WIN32
-#include <windows.h>
-#define pipe __gnat_pipe
-#define HAVE_NTGUI
-#define MAXPATHLEN 1024
-int Vw32_start_process_share_console = 0;
-int Vw32_start_process_inherit_error_mode = 1;
-int Vw32_start_process_show_window = 0;
-int Vw32_quote_process_args = 1;
-int is_cygnus_app = 0;
-#endif /* WIN32 */
+*/
 
 /* Include the system-specific definitions */
 #include SYSTEM_INCLUDE
 
-#define P_(X) ()
+#define P_(X) X
 #define RETSIGTYPE void
 
 #include "systty.h"
@@ -69,7 +46,6 @@ int is_cygnus_app = 0;
 #include <sys/stropts.h>
 #endif
 
-
 #if defined(BSD_SYSTEM) || defined(STRIDE)
 #include <sys/ioctl.h>
 #if !defined (O_NDELAY) && defined (HAVE_PTYS) && !defined(USG5)
@@ -77,13 +53,15 @@ int is_cygnus_app = 0;
 #endif /* HAVE_PTYS and no O_NDELAY */
 #endif /* BSD_SYSTEM || STRIDE */
 
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 #ifdef HAVE_PTYS
 /* The file name of the pty opened by allocate_pty.  */
 
 static char pty_name[24];
 #endif
-
 
 #ifdef AIX
   /* Now define a symbol for the cpu type, if your compiler
@@ -93,11 +71,7 @@ static char pty_name[24];
 #define IBMR2AIX
 #endif
 
-
-
-
-
-struct Lisp_Process {
+struct GVD_Process {
   int infd;      /* descriptor to read from the process */
   int outfd;     /* descriptor by which we write to the process */
   int subtty;    /* descriptor for the tty that the process is using */
@@ -108,17 +82,61 @@ struct Lisp_Process {
 
   sigset_t procmask;
   int forkin, forkout;
+#ifdef WIN32
+  PROCESS_INFORMATION procinfo;
+#endif
 };
 
+#define NILP(x) ((x) == 0)
+#define Qnil 0
+#define Qt 1
+#define Qrun 2
+#define report_file_error(x, y) fprintf (stderr, "Error: "x"\n");
+#define XPROCESS(x) (x)
+#define XSETINT(x,y) (x)=(y)
+#define XFASTINT(a) ((a) + 0)
+#define XSETFASTINT(a, b) ((a) = (b))
+#define BLOCK_INPUT {}
+#define STRING_BYTES(x) strlen(x)
+#define fatal(a, b) fprintf(stderr, a), exit(1)
+#define INTEGERP(x) 1
+#define XINT(x) x
 
+/* Should use ptys or pipes to communicate with the processes ?
+   0 = pipe
+   1 = tty
+ */
+static int Vprocess_connection_type = 1;
 
+#ifdef WIN32
+#define pipe __gnat_pipe
+#define HAVE_NTGUI
+#define MAXPATHLEN 1024
 
-#ifdef _WIN32
+/* Control whether create_child causes the process to inherit GVD'
+   console window, or be given a new one of its own.  The default is
+   0, to allow multiple DOS programs to run on Win95.  Having separate
+   consoles also allows Gvd to cleanly terminate process groups.  */
+static int Vw32_start_process_share_console = 0;
+
+/* Control whether create_child cause the process to inherit GVD'
+   error mode setting.  The default is 1, to minimize the possibility of
+   subprocesses blocking when accessing unmounted drives.  */
+static int Vw32_start_process_inherit_error_mode = 1;
+
+/* Control whether create_child causes the process' window to be
+   hidden.  The default is 0. */
+static int Vw32_start_process_show_window = 0;
+
+/* Control whether spawnve quotes arguments as necessary to ensure
+   correct parsing by child process.  Because not all uses of spawnve
+   are careful about constructing argv arrays, we make this behaviour
+   conditional (on by default). */
+static int Vw32_quote_process_args = 1;
 
 static int
-nt_spawnve (char *exe, char **argv, char *env)
+nt_spawnve (char *exe, char **argv, char *env, PROCESS_INFORMATION *procinfo)
 {
-  PROCESS_INFORMATION   procinfo;  
   STARTUPINFO start;
   SECURITY_ATTRIBUTES sec_attrs;
   SECURITY_DESCRIPTOR sec_desc;
@@ -142,14 +160,6 @@ nt_spawnve (char *exe, char **argv, char *env)
      exactly, so we treat quotes at the beginning and end of arguments
      as embedded quotes.
 
-     The w32 GNU-based library from Cygnus doubles quotes to escape
-     them, while MSVC uses backslash for escaping.  (Actually the MSVC
-     startup code does attempt to recognise doubled quotes and accept
-     them, but gets it wrong and ends up requiring three quotes to get a
-     single embedded quote!)  So by default we decide whether to use
-     quote or backslash as the escape character based on whether the
-     binary is apparently a Cygnus compiled app.
-
      Note that using backslash to escape embedded quotes requires
      additional special handling if an embedded quote is already
      preceeded by backslash, or if an arg requiring quoting ends with
@@ -168,7 +178,7 @@ nt_spawnve (char *exe, char **argv, char *env)
       if (INTEGERP (Vw32_quote_process_args))
 	escape_char = XINT (Vw32_quote_process_args);
       else
-	escape_char = is_cygnus_app ? '"' : '\\';
+	escape_char = '\\';
     }
   
   /* do argv...  */
@@ -245,20 +255,6 @@ nt_spawnve (char *exe, char **argv, char *env)
 	  first = p;
 	  last = p + strlen (p) - 1;
 	  *parg++ = '"';
-#if 0
-	  /* This version does not escape quotes if they occur at the
-	     beginning or end of the arg - this could lead to incorrect
-	     behaviour when the arg itself represents a command line
-	     containing quoted args.  I believe this was originally done
-	     as a hack to make some things work, before
-	     `w32-quote-process-args' was added.  */
-	  while (*p)
-	    {
-	      if (*p == '"' && p > first && p < last)
-		*parg++ = escape_char;	/* escape embedded quotes */
-	      *parg++ = *p++;
-	    }
-#else
 	  for ( ; *p; p++)
 	    {
 	      if (*p == '"')
@@ -285,7 +281,6 @@ nt_spawnve (char *exe, char **argv, char *env)
 	      *parg++ = escape_char;
 	      escape_char_run--;
 	    }
-#endif
 	  *parg++ = '"';
 	}
       else
@@ -297,7 +292,6 @@ nt_spawnve (char *exe, char **argv, char *env)
       targ++;
     }
   *--parg = '\0';
-  
 
   memset (&start, 0, sizeof (start));
   start.cb = sizeof (start);
@@ -323,19 +317,16 @@ nt_spawnve (char *exe, char **argv, char *env)
   sec_attrs.lpSecurityDescriptor = &sec_desc;
   sec_attrs.bInheritHandle = FALSE;
   
-  /*strcpy (dir, process_dir);
-    unixtodos_filename (dir);*/
-
   flags = (!NILP (Vw32_start_process_share_console)
 	   ? CREATE_NEW_PROCESS_GROUP
 	   : CREATE_NEW_CONSOLE);
   if (NILP (Vw32_start_process_inherit_error_mode))
     flags |= CREATE_DEFAULT_ERROR_MODE;
   if (!CreateProcess (exe, cmdline, &sec_attrs, NULL, TRUE,
-		      flags, env, ".", &start, &procinfo))
+		      flags, env, ".", &start, procinfo))
     goto EH_Fail;
 
-  pid = (int) procinfo.dwProcessId;
+  pid = (int) procinfo->dwProcessId;
 
   /* Hack for Windows 95, which assigns large (ie negative) pids */
   if (pid < 0)
@@ -345,12 +336,6 @@ nt_spawnve (char *exe, char **argv, char *env)
 
  EH_Fail:
   return -1;
-}
-
-void 
-register_child (int pid, int fd)
-{
-  /* see w32proc.c in Emacs's sources */
 }
 
 /* The following two routines are used to manipulate stdin, stdout, and
@@ -370,7 +355,7 @@ register_child (int pid, int fd)
      (see reset_standard_handles)
    We assume that the caller closes in, out, and err after calling us.  */
 
-void
+static void
 prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
 {
   HANDLE parent;
@@ -421,7 +406,7 @@ prepare_standard_handles (int in, int out, int err, HANDLE handles[3])
     report_file_error ("Changing stderr handle", Qnil);
 }
 
-void
+static void
 reset_standard_handles (int in, int out, int err, HANDLE handles[3])
 {
   /* close the duplicated handles passed to the child */
@@ -435,15 +420,15 @@ reset_standard_handles (int in, int out, int err, HANDLE handles[3])
   SetStdHandle (STD_ERROR_HANDLE, handles[2]);
 }
 
-#endif /* _WIN32 */
+#endif /* WIN32 */
 
 /******************************************************
- **  emacs_open ()
+ **  gvd_open ()
  **
  ******************************************************/
 
-int
-emacs_open (char* path, int oflag, int mode)
+static int
+gvd_open (char* path, int oflag, int mode)
 {
   register int rtnval;
 
@@ -458,12 +443,12 @@ emacs_open (char* path, int oflag, int mode)
 }
 
 /******************************************************
- **  emacs_close ()
+ **  gvd_close ()
  **
  ******************************************************/
 
-int
-emacs_close (fd)
+static int
+gvd_close (fd)
      int fd;
 {
   int did_retry = 0;
@@ -503,32 +488,32 @@ relocate_fd (fd, minfd)
 	  char *message1 = "Error while setting up child: ";
 	  char *errmessage = strerror (errno);
 	  char *message2 = "\n";
-	  emacs_write (2, message1, strlen (message1));
-	  emacs_write (2, errmessage, strlen (errmessage));
-	  emacs_write (2, message2, strlen (message2));
+	  write (2, message1, strlen (message1));
+	  write (2, errmessage, strlen (errmessage));
+	  write (2, message2, strlen (message2));
 	  _exit (1);
 	}
       /* Note that we hold the original FD open while we recurse,
 	 to guarantee we'll get a new FD if we need it.  */
       new = relocate_fd (new, minfd);
-      emacs_close (fd);
+      gvd_close (fd);
       return new;
     }
 }
 
 
 /********************************************************************
- **  emacs_set_tty ()
+ **  gvd_set_tty ()
  **
  **  Set the parameters of the tty on FD according to the contents of
  **  *SETTINGS.  If FLUSHP is non-zero, we discard input.
  **  Return 0 if all went well, and -1 if anything failed.
  ********************************************************************/
 
-int
-emacs_set_tty (fd, settings, flushp)
+static int
+gvd_set_tty (fd, settings, flushp)
      int fd;
-     struct emacs_tty *settings;
+     struct gvd_tty *settings;
      int flushp;
 {
   /* Set the primary parameters - baud rate, character size, etcetera.  */
@@ -614,17 +599,17 @@ emacs_set_tty (fd, settings, flushp)
 }
 
 /****************************************************************
- **  emacs_get_tty ()
+ **  gvd_get_tty ()
  **
  **  Set *TC to the parameters associated with the terminal FD.
  **  Return zero if all's well, or -1 if we ran into an error we
  **  couldn't deal with.
  ****************************************************************/
 
-int
-emacs_get_tty (fd, settings)
+static int
+gvd_get_tty (fd, settings)
      int fd;
-     struct emacs_tty *settings;
+     struct gvd_tty *settings;
 {
   /* Retrieve the primary parameters - baud rate, character size, etcetera.  */
 #ifdef HAVE_TCATTR
@@ -739,7 +724,7 @@ sys_signal (int signal_number, signal_handler_t action)
 
 #ifdef HAVE_PTYS
 
-void
+static void
 setup_pty (fd)
      int fd;
 {
@@ -777,7 +762,7 @@ setup_pty (fd)
 #ifdef IBMRTAIX
   /* On AIX, the parent gets SIGHUP when a pty attached child dies.  So, we */
   /* ignore SIGHUP once we've started a child on a pty.  Note that this may */
-  /* cause EMACS not to die when it should, i.e., when its own controlling  */
+  /* cause GVD not to die when it should, i.e., when its own controlling  */
   /* tty goes away.  I've complained to the AIX developers, and they may    */
   /* change this behavior, but I'm not going to hold my breath.             */
   signal (SIGHUP, SIG_IGN);
@@ -785,29 +770,6 @@ setup_pty (fd)
 }
 #endif /* HAVE_PTYS */
 
-
-/*********************************************************
- **  close_process_descs ()
- **
- **  Close all descriptors currently in use for communication
- **  with subprocess.  This is used in a newly-forked subprocess
- **  to get rid of irrelevant descriptors.
- *********************************************************/
-
-void
-close_process_descs ()
-{
-  /*  This is in fact an Emacs-specific function, which we don't
-      really care about in gvd's context at this point.
-      In fact, we might need to have something similar, but this
-      could be implemented directly in Ada
-  */
-}
-
-void
-close_load_descs () {
-  /* This is also Emacs specific */
-}
 
 /*********************************************************
  **  allocate_pty ()
@@ -820,7 +782,7 @@ close_load_descs () {
 
 #ifdef HAVE_PTYS
 
-int
+static int
 allocate_pty ()
 {
   struct stat stb;
@@ -852,7 +814,7 @@ allocate_pty ()
 #else /* no PTY_OPEN */
 #ifdef IRIS
 	/* Unusual IRIS code */
- 	*ptyv = emacs_open ("/dev/ptc", O_RDWR | O_NDELAY, 0);
+ 	*ptyv = gvd_open ("/dev/ptc", O_RDWR | O_NDELAY, 0);
  	if (fd < 0)
  	  return -1;
 	if (fstat (fd, &stb) < 0)
@@ -867,9 +829,9 @@ allocate_pty ()
 	else
 	  failed_count = 0;
 #ifdef O_NONBLOCK
-	fd = emacs_open (pty_name, O_RDWR | O_NONBLOCK, 0);
+	fd = gvd_open (pty_name, O_RDWR | O_NONBLOCK, 0);
 #else
-	fd = emacs_open (pty_name, O_RDWR | O_NDELAY, 0);
+	fd = gvd_open (pty_name, O_RDWR | O_NDELAY, 0);
 #endif
 #endif /* not IRIS */
 #endif /* no PTY_OPEN */
@@ -886,7 +848,7 @@ allocate_pty ()
 #ifndef UNIPLUS
 	    if (access (pty_name, 6) != 0)
 	      {
-		emacs_close (fd);
+		gvd_close (fd);
 #if !defined(IRIS) && !defined(__sgi)
 		fprintf (stderr, "Could not access pty_name --%s--\n",
 			 pty_name);
@@ -906,25 +868,24 @@ allocate_pty ()
 #endif /* HAVE_PTYS */
 
 
-
 /**********************************************************
  **  child_setup_tty ()
  **
  **  Set up the terminal at the other end of a pseudo-terminal that
  **  we will be controlling an inferior through.
  **  It should not echo or do line-editing, since that is done
- **  in Emacs.  No padding needed for insertion into an Emacs buffer.
+ **  in GVD. No padding needed for insertion into a buffer.
  **
  ***********************************************************/
 
-void
+static void
 child_setup_tty (out)
      int out;
 {
 #ifndef DOS_NT
-  struct emacs_tty s;
+  struct gvd_tty s;
 
-  EMACS_GET_TTY (out, &s);
+  GVD_GET_TTY (out, &s);
 
 #if defined (HAVE_TERMIO) || defined (HAVE_TERMIOS)
   s.main.c_oflag |= OPOST;	/* Enable output postprocessing */
@@ -1002,7 +963,7 @@ child_setup_tty (out)
 
 #endif /* not HAVE_TERMIO */
 
-  EMACS_SET_TTY (out, &s, 0);
+  GVD_SET_TTY (out, &s, 0);
 
 #ifdef BSD4_1
   if (interrupt_input)
@@ -1016,8 +977,6 @@ child_setup_tty (out)
 #endif /* RTU */
 #endif /* not DOS_NT */
 }
-
-
 
 /************************************************************
  **  child_setup ()
@@ -1035,19 +994,21 @@ child_setup_tty (out)
  **  SET_PGRP is nonzero if we should put the subprocess into a separate
  **  process group.  
  **
- **  CURRENT_DIR is an elisp string giving the path of the current
+ **  CURRENT_DIR is a string giving the path of the current
  **  directory the subprocess should have.  Since we can't really signal
  **  a decent error from within the child, this should be verified as an
  **  executable directory by the parent.
  **
  **************************************************************/
 
-int
-child_setup (in, out, err, new_argv, set_pgrp, current_dir)
+#ifndef VMS /* VMS version is in vmcproc.c */
+static int
+child_setup (in, out, err, new_argv, set_pgrp, current_dir, process)
      int in, out, err;
      register char **new_argv;
      int set_pgrp;
-     char* current_dir;
+     char *current_dir;
+     struct GVD_Process *process;
 {
   char **env;
   char *pwd_var;
@@ -1058,129 +1019,19 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
 
   int pid = getpid ();
 
-#ifdef SET_EMACS_PRIORITY
-  {
-    extern int emacs_priority;
+  /* ??? Original Emacs code had a section to deal with the current directory.
+     This code has been removed completely. */
 
-    if (emacs_priority < 0)
-      nice (- emacs_priority);
-  }
-#endif
-
-#ifdef subprocesses
-  /* Close Emacs's descriptors that this process should not have.  */
-  close_process_descs ();
-#endif
-  /* DOS_NT isn't in a vfork, so if we are in the middle of load-file,
-     we will lose if we call close_load_descs here.  */
-#ifndef DOS_NT
-  close_load_descs ();
-#endif
-
-  /* Note that use of alloca is always safe here.  It's obvious for systems
-     that do not have true vfork or that have true (stack) alloca.
-     If using vfork and C_ALLOCA it is safe because that changes
-     the superior's static variables as if the superior had done alloca
-     and will be cleaned up in the usual way.  */
-#if 0   /* ??? MANU: Do not process the current directory at this point */
-  {
-    register char *temp;
-    register int i;
-
-    i = STRING_BYTES (XSTRING (current_dir));
-    pwd_var = (char *) alloca (i + 6);
-    temp = pwd_var + 4;
-    bcopy ("PWD=", pwd_var, 4);
-    bcopy (XSTRING (current_dir)->data, temp, i);
-    if (!IS_DIRECTORY_SEP (temp[i - 1])) temp[i++] = DIRECTORY_SEP;
-    temp[i] = 0;
-
-#ifndef DOS_NT
-    /* We can't signal an Elisp error here; we're in a vfork.  Since
-       the callers check the current directory before forking, this
-       should only return an error if the directory's permissions
-       are changed between the check and this chdir, but we should
-       at least check.  */
-    if (chdir (temp) < 0)
-      _exit (errno);
-#endif
-
-#ifdef DOS_NT
-    /* Get past the drive letter, so that d:/ is left alone.  */
-    if (i > 2 && IS_DEVICE_SEP (temp[1]) && IS_DIRECTORY_SEP (temp[2]))
-      {
-	temp += 2;
-	i -= 2;
-      }
-#endif
-
-    /* Strip trailing slashes for PWD, but leave "/" and "//" alone.  */
-    while (i > 2 && IS_DIRECTORY_SEP (temp[i - 1]))
-      temp[--i] = 0;
-  }
-#endif /* 0,  MANU */
-  
-  /* Set `env' to a vector of the strings in Vprocess_environment.  */
-#if 0  /*  ???  MANU: don't understand this code */
-  {
-    register Lisp_Object tem;
-    register char **new_env;
-    register int new_length;
-
-    new_length = 0;
-    for (tem = Vprocess_environment;
-	 CONSP (tem) && STRINGP (XCAR (tem));
-	 tem = XCDR (tem))
-      new_length++;
-
-    /* new_length + 2 to include PWD and terminating 0.  */
-    env = new_env = (char **) alloca ((new_length + 2) * sizeof (char *));
-
-    /* If we have a PWD envvar, pass one down,
-       but with corrected value.  */
-    if (getenv ("PWD"))
-      *new_env++ = pwd_var;
-
-    /* Copy the Vprocess_environment strings into new_env.  */
-    for (tem = Vprocess_environment;
-	 CONSP (tem) && STRINGP (XCAR (tem));
-	 tem = XCDR (tem))
-      {
-	char **ep = env;
-	char *string = (char *) XSTRING (XCAR (tem))->data;
-	/* See if this string duplicates any string already in the env.
-	   If so, don't put it in.
-	   When an env var has multiple definitions,
-	   we keep the definition that comes first in process-environment.  */
-	for (; ep != new_env; ep++)
-	  {
-	    char *p = *ep, *q = string;
-	    while (1)
-	      {
-		if (*q == 0)
-		  /* The string is malformed; might as well drop it.  */
-		  goto duplicate;
-		if (*q != *p)
-		  break;
-		if (*q == '=')
-		  goto duplicate;
-		p++, q++;
-	      }
-	  }
-	*new_env++ = string;
-      duplicate: ;
-      }
-    *new_env = 0;
-  }
-#endif  /* 0  MANU */
+  /* ??? Original Emacs code had a section to deal with the setting of
+     `env' to a vector of the strings in Vprocess_environment.
+     This code has been removed completely. */
   
 #ifdef WINDOWSNT
   prepare_standard_handles (in, out, err, handles);
-  /* ??? MANU  set_process_dir (XSTRING (current_dir)->data);*/
   
 #else  /* not WINDOWSNT */
   /* Make sure that in, out, and err are not actually already in
-     descriptors zero, one, or two; this could happen if Emacs is
+     descriptors zero, one, or two; this could happen if GVD is
      started with its standard in, out, or error closed, as might
      happen under X.  */
   {
@@ -1204,16 +1055,16 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
   }
 
 #ifndef MSDOS
-  emacs_close (0);
-  emacs_close (1);
-  emacs_close (2);
+  gvd_close (0);
+  gvd_close (1);
+  gvd_close (2);
 
   dup2 (in, 0);
   dup2 (out, 1);
   dup2 (err, 2);
-  emacs_close (in);
-  emacs_close (out);
-  emacs_close (err);
+  gvd_close (in);
+  gvd_close (out);
+  gvd_close (err);
 #endif /* not MSDOS */
 #endif /* not WINDOWSNT */
 
@@ -1222,12 +1073,13 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
   setpgrp ();			/* No arguments but equivalent in this case */
 #endif
 #else
-#ifdef HAVE_SETPGID     /* ??? MANU */
-  setpgid (pid, pid);   /* ??? MANU: This was setpgrp in Emacs */
+#ifdef HAVE_SETPGID
+  setpgid (pid, pid);
 #endif /* HAVE_SETPGID */
 #endif /* USG */
+
   /* setpgrp_of_tty is incorrect here; it uses input_fd.  */
-  EMACS_SET_TTY_PGRP (0, &pid);
+  GVD_SET_TTY_PGRP (0, &pid);
 
 #ifdef vipc
   something missing here;
@@ -1241,9 +1093,8 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
   return pid;
 #else  /* not MSDOS */
 #ifdef WINDOWSNT
-  /* Spawn the child.  (See ntproc.c:Spawnve).  */
-  /*cpid = spawnve (_P_NOWAIT, new_argv[0], new_argv, NULL);*/
-  cpid = nt_spawnve (new_argv[0], new_argv, NULL);
+  /* Spawn the child. */
+  cpid = nt_spawnve (new_argv[0], new_argv, NULL, &process->procinfo);
   if (cpid == -1)
     /* An error occurred while trying to spawn the process.  */
     report_file_error ("Spawning child process", Qnil);
@@ -1253,26 +1104,26 @@ child_setup (in, out, err, new_argv, set_pgrp, current_dir)
   /* execvp does not accept an environment arg so the only way
      to pass this environment is to set environ.  Our caller
      is responsible for restoring the ambient value of environ.  */
-  /* ??? MANU   environ = env; */
+  /* Disabled env handling in GVD ??? */
   execvp (new_argv[0], new_argv);
 
-  emacs_write (1, "Can't exec program: ", 20);
-  emacs_write (1, new_argv[0], strlen (new_argv[0]));
-  emacs_write (1, "\n", 1);
+  write (1, "Can't exec program: ", 20);
+  write (1, new_argv[0], strlen (new_argv[0]));
+  write (1, "\n", 1);
   _exit (1);
 #endif /* not WINDOWSNT */
 #endif /* not MSDOS */
 }
-
+#endif /* VMS */
 
 /********************************
- **  setupCommunication ()
+ **  gvd_setup_communication ()
  ********************************/
 
 int
-setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
+gvd_setup_communication (struct GVD_Process** process_out) /* output param */
 {
-  struct Lisp_Process* process;
+  struct GVD_Process* process;
   int pid, inchannel, outchannel;
   int sv[2];
 #ifdef POSIX_SIGNALS
@@ -1282,19 +1133,13 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 #ifdef AIX
   struct sigaction sighup_action;
 #endif /* AIX */
-#else /* !POSIX_SIGNALS */
-#if 0
-#ifdef SIGCHLD
-  SIGTYPE (*sigchld)();
-#endif /* SIGCHLD */
-#endif /* 0 */
 #endif /* !POSIX_SIGNALS */
   /* Use volatile to protect variables from being clobbered by longjmp.  */
   volatile int forkin, forkout;
   volatile int pty_flag = 0;
 
 
-  process = (struct Lisp_Process*)malloc (sizeof (struct Lisp_Process));
+  process = (struct GVD_Process*)malloc (sizeof (struct GVD_Process));
   *process_out = process;
 
   inchannel = outchannel = -1;
@@ -1311,9 +1156,9 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 #ifdef O_NOCTTY
       /* Don't let this terminal become our controlling terminal
 	 (in case we don't have one).  */
-      forkout = forkin = emacs_open (pty_name, O_RDWR | O_NOCTTY, 0);
+      forkout = forkin = gvd_open (pty_name, O_RDWR | O_NOCTTY, 0);
 #else  /* O_NOCTTY */
-      forkout = forkin = emacs_open (pty_name, O_RDWR, 0);
+      forkout = forkin = gvd_open (pty_name, O_RDWR, 0);
 #endif /* O_NOCTTY */
       if (forkin < 0)
 	report_file_error ("Opening pty", Qnil);
@@ -1342,20 +1187,14 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
       tem = pipe (sv);
       if (tem < 0)
 	{
-	  emacs_close (inchannel);
-	  emacs_close (forkout);
+	  gvd_close (inchannel);
+	  gvd_close (forkout);
 	  report_file_error ("Can't create pipe", Qnil);
 	}
       outchannel = sv[1];
       forkin = sv[0];
     }
 #endif /* not SKTPAIR */
-
-#if 0
-  /* Replaced by close_process_descs */
-  set_exclusive_use (inchannel);
-  set_exclusive_use (outchannel);
-#endif
 
 /* Stride people say it's a mystery why this is needed
    as well as the O_NDELAY, but that it fails without this.  */
@@ -1377,7 +1216,7 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 #endif /* O_NONBLOCK */
 
   /* Record this as an active process, with its channels.
-     As a result, child_setup will close Emacs's side of the pipes.  */
+     As a result, child_setup will close Gvd's side of the pipes.  */
   XSETINT (XPROCESS (process)->infd, inchannel);
   XSETINT (XPROCESS (process)->outfd, outchannel);
   /* Record the tty descriptor used in the subprocess.  */
@@ -1414,22 +1253,10 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 #else /* not BSD4_1 */
 #if defined (BSD_SYSTEM) || defined (UNIPLUS) || defined (HPUX)
   sigsetmask (sigmask (SIGCHLD));
-#else /* ordinary USG */
-#if 0
-  sigchld_deferred = 0;
-  sigchld = signal (SIGCHLD, create_process_sigchld);
-#endif
 #endif /* ordinary USG */
 #endif /* not BSD4_1 */
 #endif /* SIGCHLD */
 #endif /* !POSIX_SIGNALS */
-
-  /* ??? MANU: This is Emacs specific, right ? 
-     FD_SET (inchannel, &input_wait_mask);
-     FD_SET (inchannel, &non_keyboard_wait_mask);
-     if (inchannel > max_process_desc)
-     max_process_desc = inchannel;
-  */
 
   /* Until we store the proper pid, enable sigchld_handler
      to recognize an unknown pid as standing for this process.
@@ -1450,24 +1277,18 @@ setupCommunication (struct Lisp_Process** process_out)  /* output parameter */
 }
 
 /***************************************************************
- ** setupChildCommunication ()
+ ** gvd_setup_child_communication ()
  **
  ***************************************************************/
 
 int
-setupChildCommunication (struct Lisp_Process* process, char** new_argv)
+gvd_setup_child_communication (struct GVD_Process* process, char** new_argv)
 {
   char* current_dir = ".";
   int pid = 0;
   
   int xforkin = process->forkin;
   int xforkout = process->forkout;
-
-#if 0 /* This was probably a mistake--it duplicates code later on,
-	 but fails to handle all the cases.  */
-  /* Make sure SIGCHLD is not blocked in the child.  */
-  sigsetmask (SIGEMPTYMASK);
-#endif
 
   /* Make the pty be the controlling terminal of the process.  */
 #ifdef HAVE_PTYS
@@ -1500,7 +1321,7 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
       tcgetattr (xforkin, &t);
       t.c_lflag = LDISC1;
       if (tcsetattr (xforkin, TCSANOW, &t) < 0)
-	emacs_write (1, "create_process/tcsetattr LDISC1 failed\n", 39);
+	write (1, "create_process/tcsetattr LDISC1 failed\n", 39);
     }
 #else
 #if defined (NTTYDISC) && defined (TIOCSETD)
@@ -1519,9 +1340,9 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
     {
       /* I wonder: would just ioctl (0, TIOCNOTTY, 0) work here? 
 	 I can't test it since I don't have 4.3.  */
-      int j = emacs_open ("/dev/tty", O_RDWR, 0);
+      int j = gvd_open ("/dev/tty", O_RDWR, 0);
       ioctl (j, TIOCNOTTY, 0);
-      emacs_close (j);
+      gvd_close (j);
 #ifndef USG
       /* In order to get a controlling terminal on some versions
 	 of BSD, it is necessary to put the process in pgrp 0
@@ -1550,17 +1371,17 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
       int pgrp = getpid ();
 #endif
       
-      /* I wonder if emacs_close (emacs_open (pty_name, ...))
+      /* I wonder if gvd_close (gvd_open (pty_name, ...))
 	 would work?  */
       if (xforkin >= 0)
-	emacs_close (xforkin);
-      xforkout = xforkin = emacs_open (pty_name, O_RDWR, 0);
+	gvd_close (xforkin);
+      xforkout = xforkin = gvd_open (pty_name, O_RDWR, 0);
       
       if (xforkin < 0)
 	{
-	  emacs_write (1, "Couldn't open the pty terminal ", 31);
-	  emacs_write (1, pty_name, strlen (pty_name));
-	  emacs_write (1, "\n", 1);
+	  write (1, "Couldn't open the pty terminal ", 31);
+	  write (1, pty_name, strlen (pty_name));
+	  write (1, "\n", 1);
 	  _exit (1);
 	}
       
@@ -1587,7 +1408,7 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
   
   signal (SIGINT, SIG_DFL);
 
-#ifndef WIN32 /* ??? Manu */
+#ifndef WIN32
   signal (SIGQUIT, SIG_DFL);
 #endif /* WIN32 */
   
@@ -1601,10 +1422,6 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
 #else /* not BSD4_1 */
 #if defined (BSD_SYSTEM) || defined (UNIPLUS) || defined (HPUX)
   sigsetmask (SIGEMPTYMASK);
-#else /* ordinary USG */
-#if 0
-  signal (SIGCHLD, sigchld);
-#endif
 #endif /* ordinary USG */
 #endif /* not BSD4_1 */
 #endif /* SIGCHLD */
@@ -1614,10 +1431,10 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
     child_setup_tty (xforkout);
 #ifdef WINDOWSNT
   pid = child_setup (xforkin, xforkout, xforkout,
-		     new_argv, 1, current_dir);
+		     new_argv, 1, current_dir, process);
 #else  /* not WINDOWSNT */	
   child_setup (xforkin, xforkout, xforkout,
-	       new_argv, 1, current_dir);
+	       new_argv, 1, current_dir, process);
 #endif /* not WINDOWSNT */
 
   process->pid=pid;
@@ -1626,13 +1443,13 @@ setupChildCommunication (struct Lisp_Process* process, char** new_argv)
 
 
 /**************************************************************
- **  setupParentCommunication ()
+ **  gvd_setup_parent_communication ()
  **
  **************************************************************/
 
 int
-setupParentCommunication
-   (struct Lisp_Process* process,
+gvd_setup_parent_communication
+   (struct GVD_Process* process,
     int*   in_fd,  /* output */
     int*   out_fd, /* output */
     int*   err_fd, /* output */
@@ -1640,43 +1457,23 @@ setupParentCommunication
 {
   process->pid = *pid_out;
   
-  /* This runs in the Emacs process.  */
+  /* This runs in the Gvd process.  */
   if (process->pid < 0)
     {
       if (process->forkin >= 0)
-	emacs_close (process->forkin);
+	gvd_close (process->forkin);
       if (process->forkin != process->forkout && process->forkout >= 0)
-	emacs_close (process->forkout);
+	gvd_close (process->forkout);
     }
   else
     {
-#ifdef WINDOWSNT
-      register_child (process->pid, 0);
-#endif /* WINDOWSNT */
-
-      /* If the subfork execv fails, and it exits,
+      /* ??? Removed Emacs code that deals with the following situation:
+	 If the subfork execv fails, and it exits,
 	 this close hangs.  I don't know why.
 	 So have an interrupt jar it loose.  */
-      {
-	/*  ??? MANU: this was commented out for now 
-	  struct atimer *timer;
-	EMACS_TIME offset;
-	
-	stop_polling ();
-	EMACS_SET_SECS_USECS (offset, 1, 0);
-	timer = start_atimer (ATIMER_RELATIVE, offset, create_process_1, 0);
-	
-	XPROCESS (process)->subtty = Qnil;
-	if (forkin >= 0)
-	  emacs_close (forkin);
 
-	cancel_atimer (timer);
-	start_polling ();
-	*/
-      }
-      
       if (process->forkin != process->forkout && process->forkout >= 0)
-	emacs_close (process->forkout);
+	gvd_close (process->forkout);
 
       /*
 #ifdef HAVE_PTYS
@@ -1708,14 +1505,6 @@ setupParentCommunication
 #else /* not BSD4_1 */
 #if defined (BSD_SYSTEM) || defined (UNIPLUS) || defined (HPUX)
   sigsetmask (SIGEMPTYMASK);
-#else /* ordinary USG */
-#if 0
-  signal (SIGCHLD, sigchld);
-  /* Now really handle any of these signals
-     that came in during this function.  */
-  if (sigchld_deferred)
-    kill (getpid (), SIGCHLD);
-#endif
 #endif /* ordinary USG */
 #endif /* not BSD4_1 */
 #endif /* SIGCHLD */
@@ -1728,5 +1517,402 @@ setupParentCommunication
   *in_fd = process->outfd;
   *out_fd = process->infd;
   *err_fd = process->infd;
-  free (process);
 }
+
+/* Ctrl-C Handling */
+
+#ifndef WIN32
+
+#ifdef subprocesses
+
+/*
+ *    flush any pending output
+ *      (may flush input as well; it does not matter the way we use it)
+ */
+
+static void
+flush_pending_output (channel)
+     int channel;
+{
+#ifdef HAVE_TERMIOS
+  /* If we try this, we get hit with SIGTTIN, because
+     the child's tty belongs to the child's pgrp. */
+#else
+#ifdef TCFLSH
+  ioctl (channel, TCFLSH, 1);
+#else
+#ifdef TIOCFLUSH
+  int zero = 0;
+  /* 3rd arg should be ignored
+     but some 4.2 kernels actually want the address of an int
+     and nonzero means something different.  */
+  ioctl (channel, TIOCFLUSH, &zero);
+#endif  /* TIOCFLUSH */
+#endif  /* TCFLSH */
+#endif  /* HAVE_TERMIOS */
+}
+
+#endif  /* subprocess */
+
+/* send a signal number SIGNO to PROCESS.
+   If CURRENT_GROUP is t, that means send to the process group
+   that currently owns the terminal being used to communicate with PROCESS.
+   This is used for various commands in shell mode.
+   If CURRENT_GROUP is lambda, that means send to the process group
+   that currently owns the terminal, but only if it is NOT the shell itself.
+
+   If we can, we try to signal PROCESS by sending control characters
+   down the pty.  This allows us to signal inferiors who have changed
+   their uid, for which killpg would return an EPERM error.  */
+
+static void
+process_send_signal (p, signo, current_group)
+     struct GVD_Process* p;
+     int signo;
+     int current_group;
+{
+  int gid;
+  int no_pgrp = 0;
+
+  if (NILP (p->pty_flag))
+    current_group = Qnil;
+
+  /* If we are using pgrps, get a pgrp number and make it negative.  */
+  if (!NILP (current_group))
+    {
+#ifdef SIGNALS_VIA_CHARACTERS
+      /* If possible, send signals to the entire pgrp
+	 by sending an input character to it.  */
+
+      /* TERMIOS is the latest and bestest, and seems most likely to
+         work.  If the system has it, use it.  */
+#ifdef HAVE_TERMIOS
+      struct termios t;
+
+      switch (signo)
+	{
+	case SIGINT:
+	  tcgetattr (XINT (p->infd), &t);
+	  write (p->outfd, &t.c_cc[VINTR], 1);
+	  return;
+
+	case SIGQUIT:
+	  tcgetattr (XINT (p->infd), &t);
+	  write (p->outfd, &t.c_cc[VQUIT], 1);
+  	  return;
+
+  	case SIGTSTP:
+	  tcgetattr (XINT (p->infd), &t);
+#if defined (VSWTCH) && !defined (PREFER_VSUSP)
+	  write (p->outfd, &t.c_cc[VSWTCH], 1);
+#else
+	  write (p->outfd, &t.c_cc[VSUSP], 1);
+#endif
+  	  return;
+	}
+
+#else /* ! HAVE_TERMIOS */
+
+      /* On Berkeley descendants, the following IOCTL's retrieve the
+	 current control characters.  */
+#if defined (TIOCGLTC) && defined (TIOCGETC)
+
+      struct tchars c;
+      struct ltchars lc;
+
+      switch (signo)
+	{
+	case SIGINT:
+	  ioctl (XINT (p->infd), TIOCGETC, &c);
+	  write (p->outfd, &c.t_intrc, 1);
+	  return;
+	case SIGQUIT:
+	  ioctl (XINT (p->infd), TIOCGETC, &c);
+	  write (p->outfd, &c.t_quitc, 1);
+	  return;
+#ifdef SIGTSTP
+	case SIGTSTP:
+	  ioctl (XINT (p->infd), TIOCGLTC, &lc);
+	  write (p->outfd, &lc.t_suspc, 1);
+	  return;
+#endif /* ! defined (SIGTSTP) */
+	}
+
+#else /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
+
+      /* On SYSV descendants, the TCGETA ioctl retrieves the current control
+	 characters.  */
+#ifdef TCGETA
+      struct termio t;
+      switch (signo)
+	{
+	case SIGINT:
+	  ioctl (XINT (p->infd), TCGETA, &t);
+	  write (p->outfd, &t.c_cc[VINTR], 1);
+	  return;
+	case SIGQUIT:
+	  ioctl (XINT (p->infd), TCGETA, &t);
+	  write (p->outfd, &t.c_cc[VQUIT], 1);
+	  return;
+#ifdef SIGTSTP
+	case SIGTSTP:
+	  ioctl (XINT (p->infd), TCGETA, &t);
+	  write (p->outfd, &t.c_cc[VSWTCH], 1);
+	  return;
+#endif /* ! defined (SIGTSTP) */
+	}
+#else /* ! defined (TCGETA) */
+      Your configuration files are messed up.
+      /* If your system configuration files define SIGNALS_VIA_CHARACTERS,
+	 you'd better be using one of the alternatives above!  */
+#endif /* ! defined (TCGETA) */
+#endif /* ! defined (TIOCGLTC) && defined (TIOCGETC) */
+#endif /* ! defined HAVE_TERMIOS */
+#endif /* ! defined (SIGNALS_VIA_CHARACTERS) */
+
+#ifdef TIOCGPGRP 
+      /* Get the pgrp using the tty itself, if we have that.
+	 Otherwise, use the pty to get the pgrp.
+	 On pfa systems, saka@pfu.fujitsu.co.JP writes:
+	 "TIOCGPGRP symbol defined in sys/ioctl.h at E50.
+	 But, TIOCGPGRP does not work on E50 ;-P works fine on E60"
+	 His patch indicates that if TIOCGPGRP returns an error, then
+	 we should just assume that p->pid is also the process group id.  */
+      {
+	int err;
+
+	if (!NILP (p->subtty))
+	  err = ioctl (XFASTINT (p->subtty), TIOCGPGRP, &gid);
+	else
+	  err = ioctl (XINT (p->infd), TIOCGPGRP, &gid);
+
+#ifdef pfa
+	if (err == -1)
+	  gid = - XFASTINT (p->pid);
+#endif /* ! defined (pfa) */
+      }
+      if (gid == -1)
+	no_pgrp = 1;
+      else
+	gid = - gid;
+#else  /* ! defined (TIOCGPGRP ) */
+      /* Can't select pgrps on this system, so we know that
+	 the child itself heads the pgrp.  */
+      gid = - XFASTINT (p->pid);
+#endif /* ! defined (TIOCGPGRP ) */
+
+      /* If current_group is lambda, and the shell owns the terminal,
+	 don't send any signal.  */
+      /* if (EQ (current_group, Qlambda) && gid == - XFASTINT (p->pid))
+	 return;*/
+    }
+  else
+    gid = - XFASTINT (p->pid);
+
+  switch (signo)
+    {
+#ifdef SIGCONT
+    case SIGCONT:
+      /* ??? This signal is not handled properly currently */
+      break;
+#endif /* ! defined (SIGCONT) */
+    case SIGINT:
+#ifdef VMS
+      write (proc->outfd, "\003", 1);   /* ^C */
+      goto whoosh;
+#endif
+    case SIGQUIT:
+#ifdef VMS
+      send_process (proc, "\031", 1, Qnil);	/* ^Y */
+      goto whoosh;
+#endif
+    case SIGKILL:
+#ifdef VMS
+      sys$forcex (&(XFASTINT (p->pid)), 0, 1);
+      whoosh:
+#endif
+      flush_pending_output (XINT (p->infd));
+      break;
+    }
+
+  /* If we don't have process groups, send the signal to the immediate
+     subprocess.  That isn't really right, but it's better than any
+     obvious alternative.  */
+  if (no_pgrp)
+    {
+      kill (XFASTINT (p->pid), signo);
+      return;
+    }
+
+  /* gid may be a pid, or minus a pgrp's number */
+#ifdef TIOCSIGSEND
+  if (!NILP (current_group)) {
+    ioctl (XINT (p->infd), TIOCSIGSEND, signo);
+  }
+  else
+    {
+      gid = - XFASTINT (p->pid);
+      kill (gid, signo);
+    }
+#else /* ! defined (TIOCSIGSEND) */
+  GVD_KILLPG (-gid, signo);
+#endif /* ! defined (TIOCSIGSEND) */
+}
+
+int
+gvd_interrupt_process (struct GVD_Process* p)
+{
+  process_send_signal (p, SIGINT, 1);
+}
+
+#else /* !WIN32 */
+
+typedef struct _child_process
+{
+  HWND                  hwnd;
+  PROCESS_INFORMATION   *procinfo;
+} child_process;
+
+/* The major and minor versions of NT.  */
+static int w32_major_version;
+static int w32_minor_version;
+
+/* Distinguish between Windows NT and Windows 95.  */
+static enum {OS_UNKNOWN, OS_WIN95, OS_NT} os_subtype = OS_UNKNOWN;
+
+/* Cache information describing the NT system for later use.  */
+static void
+cache_system_info (void)
+{
+  union
+    {
+      struct info
+        {
+          char  major;
+          char  minor;
+          short platform;
+        } info;
+      DWORD data;
+    } version;
+
+  /* Cache the version of the operating system.  */
+  version.data = GetVersion ();
+  w32_major_version = version.info.major;
+  w32_minor_version = version.info.minor;
+
+  if (version.info.platform & 0x8000)
+    os_subtype = OS_WIN95;
+  else
+    os_subtype = OS_NT;
+}
+
+static BOOL CALLBACK
+find_child_console (HWND hwnd, child_process * cp)
+{
+  DWORD thread_id;
+  DWORD process_id;
+
+  thread_id = GetWindowThreadProcessId (hwnd, &process_id);
+  if (process_id == cp->procinfo->dwProcessId)
+    {
+      char window_class[32];
+
+      GetClassName (hwnd, window_class, sizeof (window_class));
+      if (strcmp (window_class,
+                  (os_subtype == OS_WIN95)
+                  ? "tty"
+                  : "ConsoleWindowClass") == 0)
+        {
+          cp->hwnd = hwnd;
+          return FALSE;
+        }
+    }
+  /* keep looking */
+  return TRUE;
+}
+
+int
+gvd_interrupt_process (struct GVD_Process* p)
+{
+  volatile child_process cp;
+  HANDLE proc_hand;
+  int rc = 0;
+
+  cp.procinfo = &p->procinfo;
+  proc_hand = cp.procinfo->hProcess;
+
+  if (os_subtype == OS_UNKNOWN)
+    cache_system_info ();
+
+  /* Try to locate console window for process. */
+  EnumWindows ((ENUMWINDOWSPROC) find_child_console, (LPARAM) &cp);
+
+  if (NILP (Vw32_start_process_share_console) && cp.hwnd)
+    {
+      BYTE control_scan_code = (BYTE) MapVirtualKey (VK_CONTROL, 0);
+      /* Retrieve Ctrl-C scancode */
+      BYTE vk_break_code = 'C';
+      BYTE break_scan_code = (BYTE) MapVirtualKey (vk_break_code, 0);
+      HWND foreground_window;
+
+      foreground_window = GetForegroundWindow ();
+      if (foreground_window)
+        {
+          /* NT 5.0, and apparently also Windows 98, will not allow
+             a Window to be set to foreground directly without the
+             user's involvement. The workaround is to attach
+             ourselves to the thread that owns the foreground
+             window, since that is the only thread that can set the
+             foreground window.  */
+          DWORD foreground_thread, child_thread;
+
+          foreground_thread =
+            GetWindowThreadProcessId (foreground_window, NULL);
+          if (foreground_thread == GetCurrentThreadId ()
+              || !AttachThreadInput (GetCurrentThreadId (),
+                                     foreground_thread, TRUE))
+            foreground_thread = 0;
+
+          child_thread = GetWindowThreadProcessId (cp.hwnd, NULL);
+          if (child_thread == GetCurrentThreadId ()
+              || !AttachThreadInput (GetCurrentThreadId (),
+                                     child_thread, TRUE))
+            child_thread = 0;
+
+          /* Set the foreground window to the child.  */
+          if (SetForegroundWindow (cp.hwnd))
+            {
+              /* Generate keystrokes as if user had typed Ctrl-Break or
+                 Ctrl-C.  */
+              keybd_event (VK_CONTROL, control_scan_code, 0, 0);
+              keybd_event (vk_break_code, break_scan_code,
+                (vk_break_code == 'C' ? 0 : KEYEVENTF_EXTENDEDKEY), 0);
+              keybd_event (vk_break_code, break_scan_code,
+                (vk_break_code == 'C' ? 0 : KEYEVENTF_EXTENDEDKEY)
+                 | KEYEVENTF_KEYUP, 0);
+              keybd_event (VK_CONTROL, control_scan_code, KEYEVENTF_KEYUP, 0);
+
+              /* Sleep for a bit to give time for the main frame to respond
+              to focus change events.  */
+              Sleep (100);
+
+              SetForegroundWindow (foreground_window);
+            }
+          /* Detach from the foreground and child threads now that
+             the foreground switching is over.  */
+          if (foreground_thread)
+            AttachThreadInput (GetCurrentThreadId (), foreground_thread, FALSE);          if (child_thread)
+            AttachThreadInput (GetCurrentThreadId (), child_thread, FALSE);
+        }
+    }
+  /* Ctrl-Break is NT equivalent of SIGINT.  */
+  else if (!GenerateConsoleCtrlEvent
+             (CTRL_BREAK_EVENT, cp.procinfo->dwProcessId))
+    {
+      errno = EINVAL;
+      rc = -1;
+    }
+
+  return rc;
+}
+#endif /* !WIN32 */
