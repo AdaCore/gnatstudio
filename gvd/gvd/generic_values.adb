@@ -228,6 +228,9 @@ package body Generic_Values is
    procedure Set_Value (Item : in out Simple_Type; Value : String) is
    begin
       if Item.Value /= null then
+         if Item.Value.all /= Value then
+            Item.Has_Changed := True;
+         end if;
          Free (Item.Value);
       end if;
       Item.Value := new String'(Value);
@@ -250,6 +253,7 @@ package body Generic_Values is
                              Width    => 0,
                              Height   => 0,
                              Valid    => False,
+                             Has_Changed => False,
                              X        => -1,
                              Y        => -1);
    end New_Range_Type;
@@ -267,6 +271,7 @@ package body Generic_Values is
                            Width    => 0,
                            Height   => 0,
                            Valid    => False,
+                           Has_Changed => False,
                            X        => -1,
                            Y        => -1);
    end New_Mod_Type;
@@ -390,64 +395,110 @@ package body Generic_Values is
 
       --  If we are inserting a range, delete all old items that are covered
       --  by this new range.
-      --  Since components are sorted by Index in Item.Values, we can speed
-      --  things up a little bit.
+      --  This means we have to split up existing ranges (possibly transforming
+      --  them to non-repeat values if the repeat_num becomes 1), and delete
+      --  all simple values that are covered by the new range.
+      --  We also need to keep the values sorted in Item.Values
 
       if Repeat_Num > 1
         and then Item.Values /= null
         and then Elem_Index <= Item.Values (Item.Last_Value).Index
       then
          declare
-            Min, Max   : Long_Integer;
+            Min   : constant Long_Integer := Elem_Index;
+            Max   : constant Long_Integer :=
+              Long_Integer (Repeat_Num) + Min - 1;
             Min2, Max2 : Long_Integer;
 
-            --  Since the range can be split in two, keep enough space.
+            --  Since the range can be split into two parts, keep enough space.
             Tmp      : Array_Item_Array (1 .. Item.Values'Last * 2);
             Save     : Array_Item_Array_Access := item.Values;
             Index    : Positive := Tmp'First;
          begin
-            Min := Elem_Index;
-            Max := Long_Integer (Repeat_Num) + Min - 1;
-
             for J in 1 .. Item.Last_Value loop
 
-               --  If we have a repeat type, we might have to split it.
+               --  If we have an old repeat type, we might have to split it.
 
-               if Item.Values (J).Value.all in Repeat_Type'Class then
+               if Item.Values (J).Value /= null
+                 and then Item.Values (J).Value.all in Repeat_Type'Class
+               then
                   Min2 := Item.Values (J).Index;
                   Max2 := Min2 - 1 + Long_Integer
                     (Repeat_Type_Access (Item.Values (J).Value).Repeat_Num);
 
                   --  Old one completly inside the new one => delete it
+                  --      |---- new ---------|
+                  --         |---- old --|
 
                   if Min2 >= Min and then Max2 <= Max then
                      null;
 
+                  --  New one completly inside the old one => Split it
+                  --      |----- new --------|
+                  --   |--------- old ------------|
+
                   elsif Min2 < Min and then Max2 > Max then
                      Tmp (Index).Index := Item.Values (J).Index;
-                     Tmp (Index).Value := Clone (Item.Values (J).Value.all);
-                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
-                       Integer (Min - Min2);
+                     if Min - Min2 > 1 then
+                        Tmp (Index).Value := Clone (Item.Values (J).Value.all);
+                        Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                          Integer (Min - Min2);
+                     else
+                        Tmp (Index).Value := Clone (Repeat_Type
+                           (Item.Values (J).Value.all).Value.all);
+                     end if;
                      Index := Index + 1;
 
-                     Tmp (Index) := Item.Values (J);
                      Tmp (Index).Index := Max + 1;
-                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
-                       Integer (Max2 - Max - 1);
+                     if Max2 - Max - 1 > 1 then
+                        Tmp (Index).Value := Item.Values (J).Value;
+                        Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                          Integer (Max2 - Max - 1);
+                     else
+                        Tmp (Index).Value :=
+                          Repeat_Type (Item.Values (J).Value.all).Value;
+                        Repeat_Type (Item.Values (J).Value.all).Value := null;
+                        Free (Item.Values (J).Value, Only_Value => False);
+                     end if;
                      Index := Index + 1;
+
+                  --  Old one on the "left" ofthe old one => Split it
+                  --       |------- new ---------|
+                  --    |-------- old -------|
 
                   elsif Min2 < Min and then Max2 >= Min then
-                     Tmp (Index) := Item.Values (J);
-                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
-                       Integer (Min - Min2);
+                     Tmp (Index).Index := Item.Values (J).Index;
+                     if Min - Min2 > 1 then
+                        Tmp (Index).Value := Item.Values (J).Value;
+                        Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                          Integer (Min - Min2);
+                     else
+                        Tmp (Index).Value :=
+                          Repeat_Type (Item.Values (J).Value.all).Value;
+                        Repeat_Type (Item.Values (J).Value.all).Value := null;
+                        Free (Item.Values (J).Value, Only_Value => False);
+                     end if;
                      Index := Index + 1;
 
+                  --  Old one on the "right" ofthe old one => Split it
+                  --       |------- new ---------|
+                  --             |-------- old -------|
+
                   elsif Min2 <= Max and then Max2 > Max then
-                     Tmp (Index) := Item.Values (J);
                      Tmp (Index).Index := Max + 1;
-                     Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
-                       Integer (Max2 - Max - 1);
+                     if Max2 - Max - 1 > 1 then
+                        Tmp (Index).Value := Item.Values (J).Value;
+                        Repeat_Type (Tmp (Index).Value.all).Repeat_Num :=
+                          Integer (Max2 - Max - 1);
+                     else
+                        Tmp (Index).Value :=
+                          Repeat_Type (Item.Values (J).Value.all).Value;
+                        Repeat_Type (Item.Values (J).Value.all).Value := null;
+                        Free (Item.Values (J).Value, Only_Value => False);
+                     end if;
                      Index := Index + 1;
+
+                  --  No intersection between the two ranges => Keep it
 
                   else
                      Tmp (Index) := Item.Values (J);
@@ -465,7 +516,7 @@ package body Generic_Values is
             end loop;
 
             if Index = 1 then
-               --  Will be reallocated right below
+               --  Will be reallocated below
                Item.Values := null;
                Item.Last_Value := 0;
             else
@@ -477,19 +528,66 @@ package body Generic_Values is
       end if;
 
       --  Check whether we already have an element with the same Elem_Index.
-      --  No need to handle ranges specially, since this is in fact done by
-      --  the debugger itselft (splitting ranges,...)
+      --  If yes, reuse it.
 
       if Item.Values /= null then
          for J in 1 .. Item.Last_Value loop
-            if Item.Values (J).Index = Elem_Index then
+
+            --  Do we have a range that contains the index ?
+            --  If yes, we have to split the range. This wouldn't be necessary
+            --  since gdb itself provides the remaining values. However, we
+            --  need to do this so as to preserve the old value in case we
+            --  want to highlight the ones that changed.
+
+            if Item.Values (J).Index <= Elem_Index
+              and then Item.Values (J).Value /= null
+              and then Item.Values (J).Value.all in Repeat_Type'Class
+              and then Elem_Index < Item.Values (J).Index
+              + Long_Integer
+              (Repeat_Type_Access (Item.Values (J).Value).Repeat_Num)
+            then
                declare
-                  Was_Visible : Boolean := Item.Values (J).Value.Visible;
+                  Repeat_Num      : constant Integer :=
+                    Repeat_Type_Access (Item.Values (J).Value).Repeat_Num;
+                  Range_Index     : Long_Integer := Item.Values (J).Index;
+                  Tmp             : Generic_Type_Access;
                begin
-                  Free (Item.Values (J).Value, Only_Value => False);
-                  Item.Values (J).Value := To_Insert;
-                  Item.Values (J).Value.Visible := Was_Visible;
+
+                  Tmp := Repeat_Type_Access (Item.Values (J).Value).Value;
+                  if Elem_Index - Range_Index >= 1 then
+                     Repeat_Type_Access (Item.Values (J).Value).Repeat_Num
+                       := Positive (Elem_Index - Range_Index);
+                     Set_Value
+                       (Item,
+                        Elem_Value => Elem_Value,
+                        Elem_Index => Elem_Index,
+                           Repeat_Num => 1);
+                  else
+                     Repeat_Type_Access (Item.Values (J).Value).Value := null;
+                     Free (Item.Values (J).Value, Only_Value => False);
+                     Item.Values (J).Value := Generic_Type_Access (Elem_Value);
+                  end if;
+
+                  if Integer (Range_Index - Elem_Index) + Repeat_Num - 1 > 0
+                  then
+                     Set_Value
+                       (Item,
+                        Elem_Value => Clone (Tmp.all),
+                        Elem_Index => Elem_Index + 1,
+                        Repeat_Num => Integer (Range_Index - Elem_Index)
+                           + Repeat_Num - 1);
+                  end if;
                end;
+
+               --  Nothing else to do, this has been done recursively.
+               return;
+
+
+            elsif Item.Values (J).Index = Elem_Index then
+               if Item.Values (J).Value /= null then
+                  Free (Item.Values (J).Value, Only_Value => False);
+               end if;
+               Item.Values (J).Value := To_Insert;
                return;
             end if;
          end loop;
@@ -539,18 +637,26 @@ package body Generic_Values is
                        Elem_Index : Long_Integer)
                       return Generic_Type_Access
    is
+      Return_Type : Generic_Type_Access;
    begin
-      for J in Item.Values'Range loop
-         if Item.Values (J).Index = Elem_Index then
-            return Item.Values (J).Value;
+      if Item.Values = null then
+         return null;
+      end if;
 
-         elsif Item.Values (J).Value'Tag = Repeat_Type'Tag
-           and then Item.Values (J).Index < Elem_Index
+      for J in Item.Values'Range loop
+         if Item.Values (J).Value /= null
+           and then Item.Values (J).Value'Tag = Repeat_Type'Tag
+           and then Item.Values (J).Index <= Elem_Index
            and then Item.Values (J).Index
            + Long_Integer (Repeat_Type_Access
                            (Item.Values (J).Value).Repeat_Num) > Elem_Index
          then
-            return Repeat_Type_Access (Item.Values (J).Value).Value;
+            return Clone (Repeat_Type (Item.Values (J).Value.all).Value.all);
+
+         elsif Item.Values (J).Index = Elem_Index then
+            Return_Type := Item.Values (J).Value;
+            Item.Values (J).Value := null;
+            return Return_Type;
          end if;
       end loop;
       return null;
@@ -1176,7 +1282,9 @@ package body Generic_Values is
    is
       R : Generic_Type_Access := new Simple_Type'(Value);
    begin
-      Simple_Type_Access (R).Value := null;
+      if Value.Value /= null then
+         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      end if;
       return R;
    end Clone;
 
@@ -1189,7 +1297,9 @@ package body Generic_Values is
    is
       R : Generic_Type_Access := new Range_Type'(Value);
    begin
-      Simple_Type_Access (R).Value := null;
+      if Value.Value /= null then
+         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      end if;
       return R;
    end Clone;
 
@@ -1202,7 +1312,9 @@ package body Generic_Values is
    is
       R : Generic_Type_Access := new Mod_Type'(Value);
    begin
-      Simple_Type_Access (R).Value := null;
+      if Value.Value /= null then
+         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      end if;
       return R;
    end Clone;
 
@@ -1215,7 +1327,9 @@ package body Generic_Values is
    is
       R : Generic_Type_Access := new Access_Type'(Value);
    begin
-      Simple_Type_Access (R).Value := null;
+      if Value.Value /= null then
+         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      end if;
       return R;
    end Clone;
 
@@ -1228,7 +1342,9 @@ package body Generic_Values is
    is
       R : Generic_Type_Access := new Enum_Type'(Value);
    begin
-      Simple_Type_Access (R).Value := null;
+      if Value.Value /= null then
+         Simple_Type_Access (R).Value := new String'(Value.Value.all);
+      end if;
       return R;
    end Clone;
 
@@ -1241,6 +1357,7 @@ package body Generic_Values is
    is
       R : Array_Type_Access := new Array_Type'(Value);
    begin
+      --  ??? Should duplicate the values as well....
       R.Values := null;
       R.Item_Type := Clone (Value.Item_Type.all);
       return Generic_Type_Access (R);
@@ -1343,42 +1460,44 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Simple_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
+      Text_Gc : Gdk_GC := Context.GC;
    begin
       Item.X := X;
       Item.Y := Y;
 
       if not Item.Valid or else Item.Value = null then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
-         Draw_Rectangle (Pixmap,
-                         GC,
+         Draw_Rectangle (Context.Pixmap,
+                         Context.GC,
                          Filled => True,
                          X      => X,
                          Y      => Y,
                          Width  => Item.Width,
                          Height => Item.Height);
-         Set_Function (GC, Copy_Invert);
+         Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      Draw_Text (Pixmap,
-                 Font => Font,
-                 GC   => GC,
+      if Item.Has_Changed then
+         Text_GC := Context.Modified_GC;
+      end if;
+
+      Draw_Text (Context.Pixmap,
+                 Font => Context.Font,
+                 GC   => Text_GC,
                  X    => X,
-                 Y    => Y + Get_Ascent (Font),
+                 Y    => Y + Get_Ascent (Context.Font),
                  Text => Item.Value.all);
 
       if Item.Selected then
-         Set_Function (GC, Copy);
+         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -1387,10 +1506,7 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Access_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0)
    is
    begin
@@ -1398,31 +1514,31 @@ package body Generic_Values is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
                         Filled => True,
                         X      => X,
                         Y      => Y,
                         Width  => Item.Width,
                         Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+        Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      Draw_Text (Pixmap,
-                 Font => Font,
-                 GC   => Xref_Gc,
+      Draw_Text (Context.Pixmap,
+                 Font => Context.Font,
+                 GC   => Context.Xref_Gc,
                  X    => X,
-                 Y    => Y + Get_Ascent (Font),
+                 Y    => Y + Get_Ascent (Context.Font),
                  Text => Item.Value.all);
 
       if Item.Selected then
-        Set_Function (GC, Copy);
+        Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -1431,15 +1547,12 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Array_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width
-        +Left_Border - Text_Width (Font, String'(" => "));
+        +Left_Border - Text_Width (Context.Font, String'(" => "));
    begin
       Item.X := X;
       Item.Y := Y;
@@ -1449,45 +1562,45 @@ package body Generic_Values is
       end if;
 
       if not Item.Valid then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Left_Border, Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
 
       if not Item.Visible then
-         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
-                         X + Left_Border, Current_Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
+                         Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
                         Filled => True,
                         X      => X,
                         Y      => Y,
                         Width  => Item.Width,
                         Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+        Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for V in Item.Values'Range loop
 
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
                     X    => X + Left_Border + Border_Spacing,
-                    Y    => Current_Y + Get_Ascent (Font),
+                    Y    => Current_Y + Get_Ascent (Context.Font),
                     Text => Index_String (Item,
                                           Item.Values (V).Index,
                                           Item.Num_Dimensions));
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
                     X    => Arrow_Pos,
-                    Y    => Current_Y + Get_Ascent (Font),
+                    Y    => Current_Y + Get_Ascent (Context.Font),
                     Text => " => ");
-         Paint (Item.Values (V).Value.all, GC, Xref_Gc, Font, Pixmap,
+         Paint (Item.Values (V).Value.all, Context,
                 X + Left_Border + Border_Spacing + Item.Index_Width,
                 Current_Y);
          Current_Y :=
@@ -1495,8 +1608,8 @@ package body Generic_Values is
       end loop;
 
       --  Draw a border
-      Draw_Rectangle (Pixmap,
-                      GC,
+      Draw_Rectangle (Context.Pixmap,
+                      Context.GC,
                       Filled => False,
                       X      => X,
                       Y      => Y,
@@ -1504,7 +1617,7 @@ package body Generic_Values is
                       Height => Item.Height - 1);
 
       if Item.Selected then
-         Set_Function (GC, Copy);
+         Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -1513,23 +1626,20 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Record_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint :=
         X + Left_Border + Border_Spacing + Item.Gui_Fields_Width -
-        Text_Width (Font, String'(" => "));
+        Text_Width (Context.Font, String'(" => "));
    begin
       Item.X := X;
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Left_Border, Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Left_Border, Y);
          return;
       end if;
 
@@ -1540,41 +1650,41 @@ package body Generic_Values is
       end if;
 
       if not Item.Visible then
-         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
-                         X + Left_Border, Current_Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
+                         Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
                         Filled => True,
                         X      => X,
                         Y      => Y,
                         Width  => Item.Width,
                         Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+        Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for F in Item.Fields'Range loop
 
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
                     X    => X + Left_Border + Border_Spacing,
-                    Y    => Current_Y + Get_Ascent (Font),
+                    Y    => Current_Y + Get_Ascent (Context.Font),
                     Text => Item.Fields (F).Name.all);
-         Draw_Text (Pixmap,
-                    Font => Font,
-                    GC   => GC,
+         Draw_Text (Context.Pixmap,
+                    Font => Context.Font,
+                    GC   => Context.GC,
                     X    => Arrow_Pos,
-                    Y    => Current_Y + Get_Ascent (Font),
+                    Y    => Current_Y + Get_Ascent (Context.Font),
                     Text => " => ");
 
          --  not a variant part ?
 
          if Item.Fields (F).Value /= null then
-            Paint (Item.Fields (F).Value.all, GC, Xref_Gc, Font, Pixmap,
+            Paint (Item.Fields (F).Value.all, Context,
                    X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
                    Current_Y);
             Current_Y :=
@@ -1585,8 +1695,7 @@ package body Generic_Values is
 
          if Item.Fields (F).Variant_Part /= null then
             for V in Item.Fields (F).Variant_Part'Range loop
-               Paint (Item.Fields (F).Variant_Part (V).all, GC, Xref_Gc, Font,
-                      Pixmap,
+               Paint (Item.Fields (F).Variant_Part (V).all, Context,
                       X + Left_Border + Border_Spacing + Item.Gui_Fields_Width,
                       Current_Y);
                Current_Y := Current_Y +
@@ -1596,8 +1705,8 @@ package body Generic_Values is
       end loop;
 
       --  Draw a border
-      Draw_Rectangle (Pixmap,
-                      GC,
+      Draw_Rectangle (Context.Pixmap,
+                      Context.GC,
                       Filled => False,
                       X      => X,
                       Y      => Y,
@@ -1605,7 +1714,7 @@ package body Generic_Values is
                       Height => Item.Height - 1);
 
       if Item.Selected then
-        Set_Function (GC, Copy);
+        Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -1614,10 +1723,7 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Repeat_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Gint := 0)
    is
       Str : String := "<repeat " & Integer'Image (Item.Repeat_Num) & "> ";
@@ -1626,35 +1732,35 @@ package body Generic_Values is
       Item.Y := Y;
 
       if not Item.Valid then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Border_Spacing, Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Border_Spacing, Y);
          return;
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
                         Filled => True,
                         X      => X,
                         Y      => Y,
                         Width  => Item.Width,
                         Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+        Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      Draw_Text (Pixmap,
-                 Font => Font,
-                 GC   => GC,
+      Draw_Text (Context.Pixmap,
+                 Font => Context.Font,
+                 GC   => Context.GC,
                  X    => X + Border_Spacing,
-                 Y    => Y + Border_Spacing + Get_Ascent (Font),
+                 Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
                  Text => Str);
 
-      Paint (Item.Value.all, GC, Xref_Gc, Font, Pixmap,
-             X + Text_Width (Font, Str), Y + Border_Spacing);
+      Paint (Item.Value.all, Context,
+             X + Text_Width (Context.Font, Str), Y + Border_Spacing);
 
       --  Draw a border
-      Draw_Rectangle (Pixmap,
-                      GC,
+      Draw_Rectangle (Context.Pixmap,
+                      Context.GC,
                       Filled => False,
                       X      => X,
                       Y      => Y,
@@ -1662,7 +1768,7 @@ package body Generic_Values is
                       Height => Item.Height - 1);
 
       if Item.Selected then
-        Set_Function (GC, Copy);
+        Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -1671,10 +1777,7 @@ package body Generic_Values is
    -----------
 
    procedure Paint (Item    : in out Class_Type;
-                    GC      : Gdk.GC.Gdk_GC;
-                    Xref_Gc : Gdk.GC.Gdk_GC;
-                    Font    : Gdk.Font.Gdk_Font;
-                    Pixmap  : Gdk.Pixmap.Gdk_Pixmap;
+                    Context : Drawing_Context;
                     X, Y    : Glib.Gint := 0)
    is
       Current_Y : Gint := Y;
@@ -1686,26 +1789,26 @@ package body Generic_Values is
         or else (Item.Ancestors'Length = 0
                  and then not Item.Child.Valid)
       then
-         Display_Pixmap (Pixmap, GC, Unknown_Pixmap, Unknown_Mask,
-                         X + Left_Border, Y + Border_Spacing);
+         Display_Pixmap (Context.Pixmap, Context.GC, Unknown_Pixmap,
+                         Unknown_Mask, X + Left_Border, Y + Border_Spacing);
          return;
       end if;
 
       if not Item.Visible then
-         Display_Pixmap (Pixmap, GC, Hidden_Pixmap, Hidden_Mask,
-                         X + Left_Border, Current_Y);
+         Display_Pixmap (Context.Pixmap, Context.GC, Hidden_Pixmap,
+                         Hidden_Mask, X + Left_Border, Current_Y);
          return;
       end if;
 
       if Item.Selected then
-        Draw_Rectangle (Pixmap,
-                        GC,
+        Draw_Rectangle (Context.Pixmap,
+                        Context.GC,
                         Filled => True,
                         X      => X,
                         Y      => Y,
                         Width  => Item.Width,
                         Height => Item.Height);
-        Set_Function (GC, Copy_Invert);
+        Set_Function (Context.GC, Copy_Invert);
       end if;
 
       for A in Item.Ancestors'Range loop
@@ -1717,19 +1820,17 @@ package body Generic_Values is
          then
             --  Do not add Left_Border to X, since each of the ancestor is
             --  itself a Class_Type and will already draw it.
-            Paint (Item.Ancestors (A).all, GC, Xref_Gc, Font, Pixmap,
-                   X, Current_Y);
+            Paint (Item.Ancestors (A).all, Context, X, Current_Y);
             Current_Y := Current_Y + Item.Ancestors (A).Height + Line_Spacing;
          end if;
       end loop;
 
       if Item.Child.Height /= 0 then
-         Paint (Item.Child.all, GC, Xref_Gc, Font, Pixmap,
-                X + Left_Border, Current_Y);
+         Paint (Item.Child.all, Context, X + Left_Border, Current_Y);
       end if;
 
       if Item.Selected then
-        Set_Function (GC, Copy);
+        Set_Function (Context.GC, Copy);
       end if;
    end Paint;
 
@@ -2512,5 +2613,69 @@ package body Generic_Values is
       end if;
       return null;
    end Replace;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Simple_Type) is
+   begin
+      Item.Has_Changed := False;
+   end Reset_Recursive;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Array_Type) is
+   begin
+      if Item.Values /= null then
+         for V in Item.Values'Range loop
+            Reset_Recursive (Item.Values (V).Value);
+         end loop;
+      end if;
+   end Reset_Recursive;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Repeat_Type) is
+   begin
+      Reset_Recursive (Item.Value);
+   end Reset_Recursive;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Record_Type) is
+   begin
+      for F in Item.Fields'Range loop
+         if Item.Fields (F).Value /= null then
+            Reset_Recursive (Item.Fields (F).Value);
+         end if;
+
+         if Item.Fields (F).Variant_Part /= null then
+            for V in Item.Fields (F).Variant_Part'Range loop
+               Reset_Recursive (Item.Fields (F).Variant_Part (V));
+            end loop;
+         end if;
+      end loop;
+   end Reset_Recursive;
+
+   ---------------------
+   -- Reset_Recursive --
+   ---------------------
+
+   procedure Reset_Recursive (Item : access Class_Type) is
+   begin
+      for A in Item.Ancestors'Range loop
+         Reset_Recursive (Item.Ancestors (A));
+      end loop;
+      if Item.Child /= null then
+         Reset_Recursive (Item.Child);
+      end if;
+   end Reset_Recursive;
 
 end Generic_Values;
