@@ -515,8 +515,7 @@ package body Glide_Kernel.Editor is
          return;
       end if;
 
-      Source_Info :=
-        Locate_From_Source
+      Source_Info := Locate_From_Source
           (Get_Source_Info_List (Kernel), Get_Filename (Source));
       Update_LI_File_If_Necessary
         (Kernel, Source_Info, Get_Filename (Source), Update_Status);
@@ -609,8 +608,8 @@ package body Glide_Kernel.Editor is
          return;
       end if;
 
-      Source_Info :=
-        Locate_From_Source (Get_Source_Info_List (Kernel), Source_Name);
+      Source_Info := Locate_From_Source
+        (Get_Source_Info_List (Kernel), Source_Name);
       Update_LI_File_If_Necessary
         (Kernel, Source_Info, Source_Name, Update_Status);
 
