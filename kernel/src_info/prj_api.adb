@@ -1208,7 +1208,8 @@ package body Prj_API is
 
    procedure Add_Imported_Project
      (Project : Project_Node_Id;
-      Imported_Project_Location : String)
+      Imported_Project_Location : String;
+      Report_Errors  : Output.Output_Proc := null)
    is
       use Prj.Tree.Tree_Private_Part;
       With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
@@ -1221,6 +1222,8 @@ package body Prj_API is
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
    begin
+      Output.Set_Special_Output (Report_Errors);
+
       Name_Len := Basename'Length;
       Name_Buffer (1 .. Name_Len) := Basename;
       Dep_ID := Name_Find;
@@ -1285,6 +1288,13 @@ package body Prj_API is
            (Project_Error'Identity,
             -"Circular dependency detected in the project hierarchy");
       end if;
+
+      Output.Set_Special_Output (null);
+
+   exception
+      when others =>
+         Output.Set_Special_Output (null);
+         raise;
    end Add_Imported_Project;
 
    -----------------------------

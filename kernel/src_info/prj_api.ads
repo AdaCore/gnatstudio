@@ -33,6 +33,7 @@ with GNAT.OS_Lib;
 with Prj;        use Prj;
 with Prj.Tree;   use Prj.Tree;
 with Src_Info;   use Src_Info;
+with Output;
 with Project_Browsers;
 with Basic_Types;
 
@@ -283,8 +284,10 @@ package Prj_API is
 
    procedure Add_Imported_Project
      (Project : Project_Node_Id;
-      Imported_Project_Location : String);
+      Imported_Project_Location : String;
+      Report_Errors  : Output.Output_Proc := null);
    --  Add a new with_statement for Imported_Project.
+   --  Errors while parsing the project file are sent to Report_Errors.
 
    procedure Remove_Imported_Project
      (Project : Project_Node_Id; Imported_Project : String);
