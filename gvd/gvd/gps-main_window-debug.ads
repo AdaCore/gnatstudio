@@ -21,6 +21,8 @@
 --  This package provides routines related to the GPS main window and
 --  the debugger module.
 
+with Glib.Object;
+
 package GPS.Main_Window.Debug is
 
    procedure Update_External_Dialogs

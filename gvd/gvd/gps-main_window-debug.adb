@@ -25,6 +25,7 @@ with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
 
 with Breakpoints_Editor; use Breakpoints_Editor;
+with GVD_Module;         use GVD_Module;
 with GVD.Dialogs;        use GVD.Dialogs;
 with GVD.Process;        use GVD.Process;
 with Debugger;           use Debugger;
@@ -42,7 +43,7 @@ package body GPS.Main_Window.Debug is
      (Window : access GPS_Window_Record'Class)
    is
       Debugger : Visual_Debugger;
-      List     : Debugger_List_Link := Window.First_Debugger;
+      List     : Debugger_List_Link := Get_Debugger_List (Window.Kernel);
    begin
       while List /= null loop
          Debugger := Visual_Debugger (List.Debugger);
@@ -65,13 +66,13 @@ package body GPS.Main_Window.Debug is
      (Window : access GPS_Window_Record'Class)
    is
       Debugger : Visual_Debugger;
-      List     : Debugger_List_Link := Window.First_Debugger;
+      List     : Debugger_List_Link := Get_Debugger_List (Window.Kernel);
 
    begin
       while List /= null loop
          Debugger := Visual_Debugger (List.Debugger);
          Debugger.Exiting := True;
-         Window.Current_Debugger := Glib.Object.GObject (Debugger);
+         Set_Current_Debugger (Window.Kernel, Glib.Object.GObject (Debugger));
 
          if Debugger.Debugger /= null then
             begin
@@ -88,7 +89,7 @@ package body GPS.Main_Window.Debug is
          List := List.Next;
       end loop;
 
-      Window.Current_Debugger := null;
+      Set_Current_Debugger (Window.Kernel, null);
    end Cleanup_Debuggers;
 
    -----------------------------
@@ -155,11 +156,11 @@ package body GPS.Main_Window.Debug is
       use type Glib.Object.GObject;
 
    begin
-      if Window.Current_Debugger = Debugger then
+      if Get_Current_Debugger (Window.Kernel) = Debugger then
          return;
       end if;
 
-      Window.Current_Debugger := Debugger;
+      Set_Current_Debugger (Window.Kernel, Debugger);
 
       if Process.Debugger = null then
          return;

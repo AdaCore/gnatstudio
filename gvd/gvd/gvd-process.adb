@@ -72,6 +72,7 @@ with String_Utils;               use String_Utils;
 with Basic_Types;                use Basic_Types;
 with GUI_Utils;                  use GUI_Utils;
 
+with GVD_Module;                 use GVD_Module;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Code_Editors;           use GVD.Code_Editors;
 with GVD.Dialogs;                use GVD.Dialogs;
@@ -508,7 +509,8 @@ package body GVD.Process is
       return Visual_Debugger
    is
       Process : Visual_Debugger;
-      List    : Debugger_List_Link := Main_Debug_Window.First_Debugger;
+      List    : Debugger_List_Link :=
+        Get_Debugger_List (Main_Debug_Window.Kernel);
 
    begin
       while List /= null loop
@@ -1141,17 +1143,19 @@ package body GVD.Process is
          Get_Pref_Font (GVD_Prefs, Default_Style),
          arrow_xpm, stop_xpm);
 
-      Window.Current_Debugger := GObject (Process);
+      Set_Current_Debugger (Window.Kernel, GObject (Process));
 
-      if Window.First_Debugger = null then
+      if Get_Debugger_List (Window.Kernel) = null then
          Process.Debugger_Num := Debugger_Num;
-         Window.First_Debugger := new Debugger_List_Node'
-           (Next     => null,
-            Debugger => Window.Current_Debugger);
+         Set_First_Debugger
+           (Window.Kernel,
+            new Debugger_List_Node'
+              (Next     => null,
+               Debugger => Get_Current_Debugger (Window.Kernel)));
 
       else
          Debugger_Num := Debugger_Num + 1;
-         Debugger_List := Window.First_Debugger;
+         Debugger_List := Get_Debugger_List (Window.Kernel);
 
          while Debugger_List.Next /= null loop
             Debugger_Num := Debugger_Num + 1;
@@ -1161,7 +1165,7 @@ package body GVD.Process is
          Process.Debugger_Num := Debugger_Num;
          Debugger_List.Next := new Debugger_List_Node'
            (Next     => null,
-            Debugger => Window.Current_Debugger);
+            Debugger => Get_Current_Debugger (Window.Kernel));
       end if;
    end Initialize;
 
@@ -1646,17 +1650,17 @@ package body GVD.Process is
 
       --  Recompute Top.Current_Debugger and Top.First_Debugger:
 
-      List := Top.First_Debugger;
+      List := Get_Debugger_List (Top.Kernel);
 
       if List /= null then
          if Visual_Debugger (List.Debugger) = Debugger then
-            Top.First_Debugger := List.Next;
-            Top.Current_Debugger := Top.First_Debugger.Debugger;
+            Set_First_Debugger (Top.Kernel, List.Next);
+            Set_Current_Debugger (Top.Kernel, List.Next.Debugger);
          else
             while List.Next /= null loop
                if Visual_Debugger (List.Next.Debugger) = Debugger then
                   List.Next := List.Next.Next;
-                  Top.Current_Debugger := List.Debugger;
+                  Set_Current_Debugger (Top.Kernel, List.Debugger);
 
                   exit;
                end if;
@@ -1874,7 +1878,8 @@ package body GVD.Process is
      (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Visual_Debugger is
    begin
-      return Visual_Debugger (GPS_Window (Main_Window).Current_Debugger);
+      return Visual_Debugger
+        (Get_Current_Debugger (GPS_Window (Main_Window).Kernel));
    end Get_Current_Process;
 
    --------------

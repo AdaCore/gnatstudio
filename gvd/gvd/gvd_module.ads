@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                               G P S                               --
 --                                                                   --
---                      Copyright (C) 2001-2003                      --
---                             ACT-Europe                            --
+--                      Copyright (C) 2001-2005                      --
+--                              AdaCore                              --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -20,12 +20,24 @@
 
 --  This package defines the debugger module (called GVD).
 
+with Glib.Object;
 with GPS.Kernel;
+with Ada.Unchecked_Deallocation;
 
 package GVD_Module is
 
-   GVD_Module_ID   : GPS.Kernel.Module_ID;
-   GVD_Module_Name : constant String := "Debugger";
+   type Debugger_List_Node;
+   type Debugger_List_Link is access Debugger_List_Node;
+
+   type Debugger_List_Node is record
+      Debugger : Glib.Object.GObject;
+      --  The real type is a Visual_Debugger
+
+      Next     : Debugger_List_Link;
+   end record;
+
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Debugger_List_Node, Debugger_List_Link);
 
    procedure Register_Module
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class);
@@ -35,5 +47,25 @@ package GVD_Module is
      (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class;
       Args   : String);
    --  Initialize the debugger if needed.
+
+   function Get_Debugger_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Debugger_List_Link;
+   --  Return to the current list of active debuggers
+
+   function Get_Current_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Glib.Object.GObject;
+   --  Return the current visual debugger
+
+   procedure Set_First_Debugger
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : Debugger_List_Link);
+   --  Set the first debugger returned by Get_Debugger_List
+
+   procedure Set_Current_Debugger
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Current : Glib.Object.GObject);
+   --  Set the current active visual debugger
 
 end GVD_Module;

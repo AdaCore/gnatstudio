@@ -198,11 +198,20 @@ package body GVD_Module is
       Finish_Button,
       Up_Button,
       Down_Button                    : Gtk.Widget.Gtk_Widget;
+
+      First_Debugger                 : Debugger_List_Link;
+      --  Points to the list of debuggers
+
+      Current_Debugger               : Glib.Object.GObject;
+      --  The current visual debugger
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger module, and kill the underlying debugger.
+
+   GVD_Module_Name : constant String := "Debugger";
+   GVD_Module_ID   : GVD_Module;
 
    procedure Tooltip_Handler
      (Sel_Context : access Selection_Context'Class;
@@ -298,6 +307,155 @@ package body GVD_Module is
    --  Display the assembly view.
    --  Used e.g. for implementing menu Debug->Data->Assembly
    --  Widget parameter is ignored.
+
+   --------------------
+   -- Menu Callbacks --
+   --------------------
+
+   procedure On_Debug_Init
+     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
+   --  Debug->Initialize
+
+   procedure On_Connect_To_Board
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Connect to Board
+
+   procedure On_Debug_Executable
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Load File
+
+   procedure On_Add_Symbols
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Add Symbols
+
+   procedure On_Load_Core
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Debug Core File
+
+   procedure On_Attach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Attach
+
+   procedure On_Detach
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Detach
+
+   procedure On_Kill
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Debug->Kill
+
+   procedure On_Call_Stack
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Call Stack
+
+   procedure On_Threads
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Threads
+
+   procedure On_Tasks
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Tasks
+
+   procedure On_PD
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Protection Domains
+
+   procedure On_Edit_Breakpoints
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Edit Breakpoints
+
+   procedure On_Examine_Memory
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Examine Memory
+
+   procedure On_Display_Locals
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Display Local Variables
+
+   procedure On_Display_Args
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Display Arguments
+
+   procedure On_Display_Regs
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Display Registers
+
+   procedure On_Display_Expression
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Display Any Expression
+
+   procedure On_Data_Refresh
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Data->Refresh
+
+   procedure On_Start
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Start menu
+
+   procedure On_Step
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Step menu
+
+   procedure On_Step_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Step Instruction menu
+
+   procedure On_Next
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Next menu
+
+   procedure On_Next_Instruction
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Next Instruction menu
+
+   procedure On_Finish
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Finish menu
+
+   procedure On_Continue
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Continue menu
+
+   procedure On_Interrupt
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Interrupt
+
+   procedure On_Debug_Terminate_Current
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Terminate Current
+
+   procedure On_Debug_Terminate
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Debug->Terminate
+
+   -----------------------
+   -- Toolbar Callbacks --
+   -----------------------
+
+   procedure On_Start_Continue (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "start/continue" button
+
+   procedure On_Step (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "step" button
+
+   procedure On_Next (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "next" button
+
+   procedure On_Finish (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "finish" button
+
+   procedure On_Up (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "up" button
+
+   procedure On_Down (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "down" button
+
+   --------------------
+   -- Misc Callbacks --
+   --------------------
+
+   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "executable_changed" signal on the debugger process.
 
    --------------------
    -- GVD_Contextual --
@@ -415,11 +573,11 @@ package body GVD_Module is
 
       Exec := Get_Executable (Debugger.Debugger);
 
-      if Exec = GVD_Module (GVD_Module_ID).Current_Executable_For_Project then
+      if Exec = GVD_Module_ID.Current_Executable_For_Project then
          return;
       end if;
 
-      GVD_Module (GVD_Module_ID).Current_Executable_For_Project := Exec;
+      GVD_Module_ID.Current_Executable_For_Project := Exec;
 
       --  No handling of desktop is done here, we want to leave all windows
       --  as-is.
@@ -622,212 +780,115 @@ package body GVD_Module is
       end if;
    end Set_Busy;
 
-   --------------------
-   -- Menu Callbacks --
-   --------------------
-
-   procedure On_Debug_Init
-     (Kernel : access GObject_Record'Class; Data : File_Project_Record);
-   --  Debug->Initialize
-
-   procedure On_Connect_To_Board
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Connect to Board
-
-   procedure On_Debug_Executable
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Load File
-
-   procedure On_Add_Symbols
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Add Symbols
-
-   procedure On_Load_Core
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Debug Core File
-
-   procedure On_Attach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Attach
-
-   procedure On_Detach
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Detach
-
-   procedure On_Kill
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Debug->Kill
-
-   procedure On_Call_Stack
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Call Stack
-
-   procedure On_Threads
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Threads
-
-   procedure On_Tasks
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Tasks
-
-   procedure On_PD
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Protection Domains
-
-   procedure On_Edit_Breakpoints
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Edit Breakpoints
-
-   procedure On_Examine_Memory
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Examine Memory
-
-   procedure On_Display_Locals
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Display Local Variables
-
-   procedure On_Display_Args
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Display Arguments
-
-   procedure On_Display_Regs
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Display Registers
-
-   procedure On_Display_Expression
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Display Any Expression
-
-   procedure On_Data_Refresh
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Data->Refresh
-
-   procedure On_Start
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Start menu
-
-   procedure On_Step
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Step menu
-
-   procedure On_Step_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Step Instruction menu
-
-   procedure On_Next
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Next menu
-
-   procedure On_Next_Instruction
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Next Instruction menu
-
-   procedure On_Finish
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Finish menu
-
-   procedure On_Continue
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Continue menu
-
-   procedure On_Interrupt
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Interrupt
-
-   procedure On_Debug_Terminate_Current
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Terminate Current
-
-   procedure On_Debug_Terminate
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Debug->Terminate
-
    -----------------------
-   -- Toolbar Callbacks --
+   -- Get_Debugger_List --
    -----------------------
 
-   procedure On_Start_Continue (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "start/continue" button
+   function Get_Debugger_List
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Debugger_List_Link
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return GVD_Module_ID.First_Debugger;
+   end Get_Debugger_List;
 
-   procedure On_Step (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "step" button
+   --------------------------
+   -- Get_Current_Debugger --
+   --------------------------
 
-   procedure On_Next (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "next" button
+   function Get_Current_Debugger
+     (Kernel : access GPS.Kernel.Kernel_Handle_Record'Class)
+      return Glib.Object.GObject
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      return GVD_Module_ID.Current_Debugger;
+   end Get_Current_Debugger;
 
-   procedure On_Finish (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "finish" button
+   ------------------------
+   -- Set_First_Debugger --
+   ------------------------
 
-   procedure On_Up (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "up" button
+   procedure Set_First_Debugger
+     (Kernel   : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Debugger : Debugger_List_Link)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      GVD_Module_ID.First_Debugger := Debugger;
+   end Set_First_Debugger;
 
-   procedure On_Down (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "down" button
+   --------------------------
+   -- Set_Current_Debugger --
+   --------------------------
 
-   --------------------
-   -- Misc Callbacks --
-   --------------------
-
-   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
-   --  Callback for the "executable_changed" signal on the debugger process.
+   procedure Set_Current_Debugger
+     (Kernel  : access GPS.Kernel.Kernel_Handle_Record'Class;
+      Current : Glib.Object.GObject)
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      GVD_Module_ID.Current_Debugger := Current;
+   end Set_Current_Debugger;
 
    -----------------------
    -- Add_Debug_Buttons --
    -----------------------
 
    procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
-      Module   : constant GVD_Module := GVD_Module (GVD_Module_ID);
       Toolbar  : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
       Window   : constant Gtk_Window := Get_Main_Window (Kernel);
       Image    : Gtk_Image;
 
    begin
-      if Module.Cont_Button /= null then
+      if GVD_Module_ID.Cont_Button /= null then
          return;
       end if;
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (run_xpm));
-      Module.Cont_Button := Append_Element
+      GVD_Module_ID.Cont_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Go",
          Tooltip_Text => -"Start/Continue the debugged program",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Cont_Button, "clicked", On_Start_Continue'Access, Window);
+        (GVD_Module_ID.Cont_Button, "clicked",
+         On_Start_Continue'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
-      Module.Step_Button := Append_Element
+      GVD_Module_ID.Step_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Step",
          Tooltip_Text => -"Step",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Step_Button, "clicked", On_Step'Access, Window);
+        (GVD_Module_ID.Step_Button, "clicked", On_Step'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
-      Module.Next_Button := Append_Element
+      GVD_Module_ID.Next_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Next",
          Tooltip_Text => -"Next",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Next_Button, "clicked", On_Next'Access, Window);
+        (GVD_Module_ID.Next_Button, "clicked", On_Next'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
-      Module.Finish_Button := Append_Element
+      GVD_Module_ID.Finish_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Finish",
          Tooltip_Text => -"Execute until selected stack frame returns",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Finish_Button, "clicked", On_Finish'Access, Window);
+        (GVD_Module_ID.Finish_Button, "clicked", On_Finish'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
-      Module.Up_Button := Append_Element
+      GVD_Module_ID.Up_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Up",
@@ -835,17 +896,17 @@ package body GVD_Module is
          -"Select and print stack frame that called this one",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Up_Button, "clicked", On_Up'Access, Window);
+        (GVD_Module_ID.Up_Button, "clicked", On_Up'Access, Window);
 
       Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
-      Module.Down_Button := Append_Element
+      GVD_Module_ID.Down_Button := Append_Element
         (Toolbar      => Toolbar,
          The_Type     => Toolbar_Child_Button,
          Text         => -"Down",
          Tooltip_Text => -"Select and print stack frame called by this one",
          Icon         => Gtk_Widget (Image));
       Widget_Callback.Object_Connect
-        (Module.Down_Button, "clicked", On_Down'Access, Window);
+        (GVD_Module_ID.Down_Button, "clicked", On_Down'Access, Window);
    end Add_Debug_Buttons;
 
    --------------------------
@@ -855,18 +916,17 @@ package body GVD_Module is
    procedure Remove_Debug_Buttons
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Module  : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
 
    begin
-      if Module.Cont_Button /= null then
-         Remove (Toolbar, Module.Cont_Button);
-         Remove (Toolbar, Module.Step_Button);
-         Remove (Toolbar, Module.Next_Button);
-         Remove (Toolbar, Module.Finish_Button);
-         Remove (Toolbar, Module.Up_Button);
-         Remove (Toolbar, Module.Down_Button);
-         Module.Cont_Button := null;
+      if GVD_Module_ID.Cont_Button /= null then
+         Remove (Toolbar, GVD_Module_ID.Cont_Button);
+         Remove (Toolbar, GVD_Module_ID.Step_Button);
+         Remove (Toolbar, GVD_Module_ID.Next_Button);
+         Remove (Toolbar, GVD_Module_ID.Finish_Button);
+         Remove (Toolbar, GVD_Module_ID.Up_Button);
+         Remove (Toolbar, GVD_Module_ID.Down_Button);
+         GVD_Module_ID.Cont_Button := null;
       end if;
    end Remove_Debug_Buttons;
 
@@ -1335,7 +1395,7 @@ package body GVD_Module is
       Process : Visual_Debugger;
       Child   : MDI_Child;
       Button  : Message_Dialog_Buttons;
-      List    : Debugger_List_Link := Top.First_Debugger;
+      List    : Debugger_List_Link := Get_Debugger_List (Kernel);
       pragma Unreferenced (Button);
 
    begin
@@ -1849,17 +1909,17 @@ package body GVD_Module is
      (Widget : access Gtk_Widget_Record'Class) return Boolean
    is
       Data_Sub : constant String := '/' & (-"Debug") & '/' & (-"Data") & '/';
-      Id       : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Editor   : constant Code_Editor := Code_Editor (Widget);
       Asm      : constant Asm_Editor  := Get_Asm (Editor);
 
    begin
       Set_Sensitive
-        (Find_Menu_Item (Get_Kernel (Id.all), Data_Sub & (-"Assembly")), True);
+        (Find_Menu_Item (Get_Kernel (GVD_Module_ID.all),
+         Data_Sub & (-"Assembly")), True);
       Ref (Asm);
       Remove (Gtk_Container (Get_Parent (Asm)), Asm);
       Set_Mode (Editor, Source);
-      Disconnect (Asm, Id.Delete_Id);
+      Disconnect (Asm, GVD_Module_ID.Delete_Id);
 
       return False;
    end Delete_Asm;
@@ -1888,7 +1948,7 @@ package body GVD_Module is
       end if;
 
       Set_Sensitive (Find_Menu_Item (Kernel, Data_Sub & (-"Assembly")), False);
-      GVD_Module (GVD_Module_ID).Delete_Id :=
+      GVD_Module_ID.Delete_Id :=
         Gtkada.Handlers.Return_Callback.Object_Connect
           (Assembly, "delete_event",
            Gtkada.Handlers.Return_Callback.To_Marshaller (Delete_Asm'Access),
@@ -2494,7 +2554,6 @@ package body GVD_Module is
       Blank_Pos      : Natural;
       Proxy          : Process_Proxy_Access;
       Success        : Boolean;
-      Id             : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       First_Debugger : Boolean;
 
       use Debugger;
@@ -2503,7 +2562,7 @@ package body GVD_Module is
    begin
       Push_State (K, Busy);
 
-      First_Debugger := Top.Current_Debugger = null;
+      First_Debugger := Get_Current_Debugger (Kernel) = null;
       Gtk_New (Page, Top);
       Object_Callback.Connect
         (Page, "debugger_closed", On_Debug_Terminate_Single'Access);
@@ -2574,7 +2633,7 @@ package body GVD_Module is
          Free (Module);
 
          if not Success then
-            if Top.Current_Debugger = null then
+            if Get_Current_Debugger (Kernel) = null then
                Debug_Terminate (K);
             end if;
 
@@ -2588,15 +2647,15 @@ package body GVD_Module is
       if First_Debugger then
          --  Add columns information for not currently opened files.
 
-         Id.Lines_Hook := new Lines_Revealed_Hook_Record;
+         GVD_Module_ID.Lines_Hook := new Lines_Revealed_Hook_Record;
          Add_Hook
-           (K, Source_Lines_Revealed_Hook, Id.Lines_Hook,
+           (K, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook,
             Watch => GObject (Top));
 
-         Id.File_Hook := new File_Edited_Hook_Record;
-         Id.File_Hook.Top := Top;
+         GVD_Module_ID.File_Hook := new File_Edited_Hook_Record;
+         GVD_Module_ID.File_Hook.Top := Top;
          Add_Hook
-           (K, GPS.Kernel.File_Edited_Hook, Id.File_Hook,
+           (K, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook,
             Watch => GObject (Top));
 
          --  Add columns for debugging information to all the files that
@@ -2614,7 +2673,7 @@ package body GVD_Module is
       Widget_Callback.Object_Connect
         (Page, "executable_changed", On_Executable_Changed'Access, Top);
 
-      Id.Initialized := True;
+      GVD_Module_ID.Initialized := True;
 
       Run_Hook (K, Debugger_Started);
 
@@ -2649,11 +2708,10 @@ package body GVD_Module is
         GPS_Window (Get_Main_Window (Kernel));
       Debugger_List    : Debugger_List_Link;
       Prev             : Debugger_List_Link;
-      Id               : constant GVD_Module := GVD_Module (GVD_Module_ID);
       Editor           : Code_Editor;
 
    begin
-      Debugger_List := Top.First_Debugger;
+      Debugger_List := Get_Debugger_List (Kernel);
 
       while Debugger_List /= null loop
          exit when Debugger_List.Debugger = GObject (Debugger);
@@ -2712,31 +2770,33 @@ package body GVD_Module is
       Unref (Debugger);
 
       if Prev = null then
-         Top.First_Debugger := Debugger_List.Next;
+         Set_First_Debugger (Kernel, Debugger_List.Next);
 
-         if Top.First_Debugger = null then
-            Top.Current_Debugger := null;
+         if Debugger_List.Next = null then
+            Set_Current_Debugger (Kernel, null);
          else
-            Top.Current_Debugger := Top.First_Debugger.Debugger;
+            Set_Current_Debugger (Kernel, Debugger_List.Next.Debugger);
          end if;
       else
          Prev.Next := Debugger_List.Next;
-         Top.Current_Debugger := Prev.Debugger;
+         Set_Current_Debugger (Kernel, Prev.Debugger);
       end if;
 
       Free (Debugger_List);
 
-      if Top.First_Debugger = null then
-         Id.Initialized := False;
+      if Get_Debugger_List (Kernel) = null then
+         GVD_Module_ID.Initialized := False;
 
-         if Id.Lines_Hook /= null then
-            Remove_Hook (Kernel, Source_Lines_Revealed_Hook, Id.Lines_Hook);
-            Id.Lines_Hook := null;
+         if GVD_Module_ID.Lines_Hook /= null then
+            Remove_Hook
+              (Kernel, Source_Lines_Revealed_Hook, GVD_Module_ID.Lines_Hook);
+            GVD_Module_ID.Lines_Hook := null;
          end if;
 
-         if Id.File_Hook /= null then
-            Remove_Hook (Kernel, GPS.Kernel.File_Edited_Hook, Id.File_Hook);
-            Id.File_Hook := null;
+         if GVD_Module_ID.File_Hook /= null then
+            Remove_Hook
+              (Kernel, GPS.Kernel.File_Edited_Hook, GVD_Module_ID.File_Hook);
+            GVD_Module_ID.File_Hook := null;
          end if;
 
          Set_Pref (Kernel, Show_Call_Stack, Debugger.Stack /= null);
@@ -2773,14 +2833,11 @@ package body GVD_Module is
    ---------------------
 
    procedure Debug_Terminate (Kernel : Kernel_Handle) is
-      Top              : constant GPS_Window :=
-        GPS_Window (Get_Main_Window (Kernel));
       Debugger_List    : Debugger_List_Link;
       Current_Debugger : GPS_Debugger;
-
    begin
       Push_State (Kernel, Busy);
-      Debugger_List := Top.First_Debugger;
+      Debugger_List := Get_Debugger_List (Kernel);
 
       while Debugger_List /= null loop
          Current_Debugger := GPS_Debugger (Debugger_List.Debugger);
@@ -3015,7 +3072,6 @@ package body GVD_Module is
 
       Process      : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (D.Context)));
-      Id           : constant GVD_Module := GVD_Module (GVD_Module_ID);
 
    begin
       if Process = null
@@ -3034,7 +3090,7 @@ package body GVD_Module is
       begin
          Get_Area (Area_Context, Line1, Line2);
 
-         if Id.Show_Lines_With_Code
+         if GVD_Module_ID.Show_Lines_With_Code
            and then Command_In_Process (Get_Process (Process.Debugger))
          then
             return;
@@ -3051,7 +3107,7 @@ package body GVD_Module is
             Lines_Valid : Boolean := False;
 
          begin
-            if Id.Show_Lines_With_Code then
+            if GVD_Module_ID.Show_Lines_With_Code then
                Lines_With_Code (Process.Debugger, File, Lines_Valid, Lines);
             end if;
 
@@ -3115,7 +3171,7 @@ package body GVD_Module is
    procedure On_View_Changed (Kernel : access Kernel_Handle_Record'Class) is
       use GNAT.OS_Lib;
       Mitem : Gtk_Menu_Item;
-      Menu  : Gtk_Menu renames GVD_Module (GVD_Module_ID).Initialize_Menu;
+      Menu  : Gtk_Menu renames GVD_Module_ID.Initialize_Menu;
       Iter  : Imported_Project_Iterator := Start (Get_Project (Kernel));
       Debuggable_Suffix : GNAT.OS_Lib.String_Access := Get_Debuggable_Suffix;
 
@@ -3186,18 +3242,17 @@ package body GVD_Module is
    is
       Window : constant Gtk_Window := Get_Main_Window (Kernel);
       Top    : constant GPS_Window := GPS_Window (Window);
-      Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Prev   : Boolean;
 
    begin
       GPS.Main_Window.Debug.Preferences_Changed (Top);
 
-      if Id.Initialized then
-         Prev   := Id.Show_Lines_With_Code;
-         Id.Show_Lines_With_Code :=
+      if GVD_Module_ID.Initialized then
+         Prev   := GVD_Module_ID.Show_Lines_With_Code;
+         GVD_Module_ID.Show_Lines_With_Code :=
            Get_Pref (GVD_Prefs, Editor_Show_Line_With_Code);
 
-         if Prev /= Id.Show_Lines_With_Code then
+         if Prev /= GVD_Module_ID.Show_Lines_With_Code then
             Remove_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
             Create_Debugger_Columns (Kernel_Handle (Kernel), VFS.No_File);
          end if;
@@ -3212,12 +3267,9 @@ package body GVD_Module is
      (Data    : in out GPS.Kernel.Scripts.Callback_Data'Class;
       Command : String)
    is
-      Kernel : constant Kernel_Handle :=
-        GPS.Kernel.Scripts.Get_Kernel (Data);
-      Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
-
+      Kernel : constant Kernel_Handle := GPS.Kernel.Scripts.Get_Kernel (Data);
    begin
-      if Id.Initialized then
+      if GVD_Module_ID.Initialized then
          if Command = "send" then
             declare
                Process : constant Visual_Debugger :=
@@ -3263,15 +3315,15 @@ package body GVD_Module is
       GVD_Module_ID := new GVD_Module_Record;
       GVD.Preferences.GVD_Prefs := Get_Preferences (Kernel);
       GVD.Preferences.Register_Default_Preferences (GVD.Preferences.GVD_Prefs);
-      GVD_Module (GVD_Module_ID).Show_Lines_With_Code :=
+      GVD_Module_ID.Show_Lines_With_Code :=
         Get_Pref (Kernel, Editor_Show_Line_With_Code);
 
       Register_Module
-        (Module                  => GVD_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => GVD_Module_Name,
-         Priority                => Default_Priority + 20,
-         Tooltip_Handler         => Tooltip_Handler'Access);
+        (Module          => Module_ID (GVD_Module_ID),
+         Kernel          => Kernel,
+         Module_Name     => GVD_Module_Name,
+         Priority        => Default_Priority + 20,
+         Tooltip_Handler => Tooltip_Handler'Access);
 
       Debugger_Filter := new Debugger_Active_Filter;
       Register_Filter (Kernel, Debugger_Filter, "Debugger active");
@@ -3370,7 +3422,7 @@ package body GVD_Module is
                               Ref_Item => -"Data");
       Gtk_New (Menu);
       Set_Submenu (Mitem, Menu);
-      GVD_Module (GVD_Module_ID).Initialize_Menu := Menu;
+      GVD_Module_ID.Initialize_Menu := Menu;
 
       Add_Hook (Kernel, Project_View_Changed_Hook, On_View_Changed'Access);
 
