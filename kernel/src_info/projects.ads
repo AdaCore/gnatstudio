@@ -586,8 +586,6 @@ private
       Lang      : out Types.Name_Id);
    --  Return the unit name and unit part for Filename.
    --  This procedure doesn't fully handle krunched file name.
-   --  It will return No_Name for Lang if the file doesn't belong to any
-   --  language supported by the project.
 
    type Scenario_Variable is record
       Name        : Types.Name_Id;
