@@ -656,6 +656,7 @@ package body CPP_Parser is
             Column       => Predefined_Column,
             Allow_Create => True);
          Set_Kind (Entity, Kind);
+         Set_Attributes (Entity, (Global => True, others => False));
       end if;
 
       return Entity;
@@ -806,6 +807,9 @@ package body CPP_Parser is
                Line   => F.Start_Position.Line,
                Column => F.Start_Position.Column);
             Set_Kind_From_Table_If_Not_Set (Entity, Table_Type);
+            Set_Attributes
+              (Entity, (Global => (F_Tab.Attributes and SN_STATIC) = 0,
+                      others => False));
          end if;
       end Handle_FU_Table;
 
@@ -1740,7 +1744,6 @@ package body CPP_Parser is
             exit when Filename =
               FD_Tab.Key (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last);
 
-
 --                and then Args =
 --               FD_Tab.Data (FD_Tab.Arg_Types.First .. FD_Tab.Arg_Types.Last);
             --  ??? Should compare prototypes. However, we have no garantee
@@ -1755,6 +1758,10 @@ package body CPP_Parser is
                File   => Source,
                Line   => FD_Tab.Start_Position.Line,
                Column => FD_Tab.Start_Position.Column);
+            Set_Kind (Decl, Function_Entity);
+            Set_Attributes
+              (Decl, (Global => (FD_Tab.Attributes and SN_STATIC) = 0,
+                      others => False));
 
             --  ??? The following will add duplicate references in some cases
 --              Add_Reference
@@ -1816,7 +1823,8 @@ package body CPP_Parser is
         (Handler,
          Name     => Sym.Key (Sym.Identifier.First .. Sym.Identifier.Last),
          Filename => Sym.Key (Sym.File_Name.First .. Sym.File_Name.Last),
-         Args     => "",
+         Args     => Sym.Data (Sym.Types_Of_Arguments.First ..
+                                 Sym.Types_Of_Arguments.Last),
          Source   => Source);
    end Parse_FD_Table;
 
