@@ -511,7 +511,9 @@ package body KeyManager_Module is
 
       else
          Binding2 := Binding;
-         while Binding2.Action /= null loop
+         while Binding2 /= null
+            and then Binding2.Action /= null
+         loop
             Binding  := Binding2;  --  Last value where Next /= null
             Binding2 := Next (Binding2);
          end loop;
