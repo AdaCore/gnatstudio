@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -1275,7 +1275,7 @@ package body Glide_Kernel.Modules is
       Init (Value (3),  Glib.GType_Pointer);
       Init (Value (4),  Glib.GType_Boolean);
       Init (Value (5),  Glib.GType_Boolean);
-      Set_String (Value (1), File);
+      Set_String (Value (1), Normalize_Pathname (File));
       Set_String (Value (2), Identifier);
       Set_Address (Value (3), To_Address (Info));
       Set_Boolean (Value (4), Stick_To_Data);
@@ -1393,7 +1393,7 @@ package body Glide_Kernel.Modules is
       Init (Value (7),  Glib.GType_Pointer);
       Set_String (Value (1), Identifier);
       Set_String (Value (2), Category);
-      Set_String (Value (3), File);
+      Set_String (Value (3), Normalize_Pathname (File));
       Set_Int (Value (4), Gint (Line));
       Set_Int (Value (5), Gint (Column));
       Set_String (Value (6), Message);
