@@ -254,6 +254,7 @@ package GPS.Kernel.Preferences is
    Child_Linked_Item_Color   : Param_Spec_Color;
    Browsers_Vertical_Layout  : Param_Spec_Boolean;
    Selected_Item_Color       : Param_Spec_Color;
+   Title_Color               : Param_Spec_Color;
 
    -- VCS --
    Hide_Up_To_Date     : Param_Spec_Boolean;

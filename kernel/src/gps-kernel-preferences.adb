@@ -746,6 +746,14 @@ package body GPS.Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Selected_Item_Color),  -"Browsers");
 
+      Title_Color := Param_Spec_Color (Gnew_Color
+        (Name     => "Browsers-Title-Color",
+         Nick     => -"Title background",
+         Blurb    => -"Color used for the background of the title",
+         Flags    => Param_Readable,
+         Default  => "#BEBEBE"));
+      Register_Property (Prefs, Param_Spec (Title_Color), -"Browsers");
+
       -- Diff_Utils --
 
       Diff_Context_Length := Param_Spec_Int (Gnew_Int
