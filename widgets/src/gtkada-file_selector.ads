@@ -93,6 +93,15 @@ package Gtkada.File_Selector is
    --  directory is invalid, then the dialog will point to the current
    --  directory.
 
+   function Select_Directory
+     (Title          : String := "Select a file";
+      Base_Directory : String := "") return String;
+   --  Create a directory selection dialog, display it, and return the absolute
+   --  name of the selected directory, if any, or return an empty string.
+   --  Base_Directory is the directory on which the dialog starts. If the
+   --  directory is invalid, then the dialog will point to the current
+   --  directory.
+
    type File_State is (Normal, Highlighted, Insensitive, Invisible);
    --  The state of a file :
    --    Normal means the file is shown and selectable.
@@ -114,6 +123,16 @@ package Gtkada.File_Selector is
    --  user cancelled the dialog.
    --  As opposed to the first version of Select_File above, this one gives
    --  the opportunity to register filters before displaying the dialog.
+
+   function Select_Directory (File_Selector : File_Selector_Window_Access)
+      return String;
+   --  Display File_Selector on the screen, and wait until the user selects a
+   --  file. The absolute dir name is returned, or the empty string if the
+   --  user cancelled the dialog.
+   --  As opposed to the first version of Select_Directory above, this one
+   --  gives the opportunity to register filters before displaying the dialog.
+   --
+   --  ??? The filters do not have any effect on directories yet.
 
    function Get_Selection (Dialog : access File_Selector_Window_Record)
       return String;
@@ -192,19 +211,23 @@ package Gtkada.File_Selector is
      (File_Selector_Window : out File_Selector_Window_Access;
       Root                 : String;
       Initial_Directory    : String;
-      Dialog_Title         : String);
+      Dialog_Title         : String;
+      Show_Files           : Boolean := True);
    --  Create a new file selector.
    --  Root is the directory shown in the root node of the tree. The user will
    --  not be able to select directories higher up in the hierarchy.
    --  Initial_Directory is the name of the directory that is selected
    --  initially, or the empty string for the current directory.
    --  Root must be an absolute path, and end with a directory separator.
+   --  If Show_Files is False, then the widget will not display the
+   --  list of files.
 
    procedure Initialize
      (File_Selector_Window : access File_Selector_Window_Record'Class;
       Root                 : String;
       Initial_Directory    : String;
-      Dialog_Title         : String);
+      Dialog_Title         : String;
+      Show_Files           : Boolean := True);
    --  Internal initialization function.
 
 private
