@@ -36,6 +36,7 @@ with Ada.Exceptions;          use Ada.Exceptions;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
+with Glide_Intl;              use Glide_Intl;
 
 with Make_Harness_Window_Pkg; use Make_Harness_Window_Pkg;
 with Make_Suite_Window_Pkg;   use Make_Suite_Window_Pkg;
@@ -174,33 +175,35 @@ package body Aunit_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Menu_Item : Gtk_Menu_Item;
+      Edit : constant String := '/' & (-"Edit") & '/';
+      Unit_Testing : constant String := -"Unit Testing";
    begin
-      Register_Menu (Kernel, "/Edit/Unit Testing",
-                     Ref_Item => "Select All", Add_Before => False);
+      Register_Menu (Kernel, Edit & Unit_Testing,
+                     Ref_Item => -"Select All", Add_Before => False);
 
       Gtk_New (Menu_Item);
-      Register_Menu (Kernel, "/Edit", Menu_Item,
-                     Ref_Item => "Unit Testing", Add_Before => True);
+      Register_Menu (Kernel, Edit, Menu_Item,
+                     Ref_Item => Unit_Testing, Add_Before => True);
 
-      Gtk_New (Menu_Item, "New Test Case");
-      Register_Menu (Kernel, "/Edit/Unit Testing", Menu_Item);
+      Gtk_New (Menu_Item, -"New Test Case");
+      Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Test_Case'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, "Add Routine");
-      Register_Menu (Kernel, "/Edit/Unit Testing", Menu_Item);
+      Gtk_New (Menu_Item, -"Add Routine");
+      Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
 
-      Gtk_New (Menu_Item, "New Test Suite");
-      Register_Menu (Kernel, "/Edit/Unit Testing", Menu_Item);
+      Gtk_New (Menu_Item, -"New Test Suite");
+      Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Test_Suite'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, "New Test Harness");
-      Register_Menu (Kernel, "/Edit/Unit Testing", Menu_Item);
+      Gtk_New (Menu_Item, -"New Test Harness");
+      Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Test_Harness'Access),
