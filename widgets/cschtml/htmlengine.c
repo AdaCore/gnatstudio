@@ -140,13 +140,10 @@ static CscHTMLFontStyle current_font_style(HTMLEngine *e) {
 }
 
 static gchar *current_font_face(HTMLEngine *e) {
-	gchar *face;
-
 	if (html_stack_is_empty(e->font_face_stack))
-		return e->widget->default_font_face;
+		return csc_html_get_default_font_face (e->widget);
 
-	face = html_stack_top(e->font_face_stack);
-	return face;
+	return html_stack_top(e->font_face_stack);
 }
 
 static CscHTMLFontStyle push_font_style(HTMLEngine *e, CscHTMLFontStyle new_attrs) {
