@@ -24,6 +24,8 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    type Ada_Instruction is new Extract with private;
 
+   procedure Free (This : in out Ada_Instruction);
+
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
@@ -45,6 +47,8 @@ package Codefix.Text_Manager.Ada_Extracts is
    --  Return the cursors stands at the end of the instruction.
 
    type Ada_List is new Ada_Instruction with private;
+
+   procedure Free (This : in out Ada_List);
 
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
@@ -113,6 +117,8 @@ private
    end record;
 
    procedure Free (This : in out Token_Record);
+
+   function Clone (This : Token_Record) return Token_Record;
 
    package Tokens_List is new Generic_List (Token_Record);
    use Tokens_List;
