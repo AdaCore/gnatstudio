@@ -981,20 +981,28 @@ package body Default_Preferences is
      (Ent  : access GObject_Record'Class;
       Data : Pref_Description_Access) return Boolean
    is
-      E : constant Gtk_Entry := Gtk_Entry (Ent);
+      E     : constant Gtk_Entry := Gtk_Entry (Ent);
+      Value : String_Access;
    begin
-      Free (Data.Value);
       Data.Descr := null;
 
+      --  Cannot free Data.Value yet, since it will be used in the
+      --  test below to know whether a previous value has been set.
+
       if Value_Type (Data.Param) = Pango.Font.Get_Type then
+         Free (Data.Value);
          Data.Value := new String'(Get_Text (E));
 
       elsif Data.Value /= null then
+         Value := Data.Value;
          Data.Value := new String'
               (To_String (Font => Get_Text (E),
                           Fg   => Style_Token (Data.Value.all, 2),
                           Bg   => Style_Token (Data.Value.all, 3)));
+         Free (Value);
+
       else
+         Free (Data.Value);
          Data.Value := new String'
            (To_String (Font => Get_Text (E),
                        Fg   => Style_Token
