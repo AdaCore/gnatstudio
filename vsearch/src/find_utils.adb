@@ -462,7 +462,7 @@ package body Find_Utils is
       Pos           : Positive := 1;
       Line_Start    : Positive;
       Line          : Natural := 1;
-      Column        : Natural := 0;
+      Column        : Natural := 1;
       Last_Index    : Positive := 1;
       Section_End   : Integer;
       Lexical_State : Recognized_Lexical_States := Statements;
