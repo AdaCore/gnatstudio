@@ -101,12 +101,14 @@ package body Src_Editor_Buffer.Text_Handling is
             Forward_To_Line_End (Iter, Result);
          end if;
 
-         Forward_Char (Iter, Result);
-         if Result then
-            Line_End := Line_End + 1;
-         end if;
-
          Column_End := Natural (Get_Line_Offset (Iter)) + 1;
+
+         Forward_Char (Iter, Result);
+
+         if Result and then Line_End < Buffer.Last_Editable_Line then
+            Line_End   := Line_End + 1;
+            Column_End := 1;
+         end if;
 
       else
          for J in 1 .. After loop
@@ -214,9 +216,9 @@ package body Src_Editor_Buffer.Text_Handling is
    is
       Line_Begin, Line_End     : Editable_Line_Type;
       Column_Begin, Column_End : Natural;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter;
-      Has_Selection : Boolean;
+      Start_Iter               : Gtk_Text_Iter;
+      End_Iter                 : Gtk_Text_Iter;
+      Has_Selection            : Boolean;
    begin
       if Line = 0 then
          Get_Selection_Bounds (Buffer, Start_Iter, End_Iter, Has_Selection);
