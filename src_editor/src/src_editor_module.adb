@@ -521,7 +521,7 @@ package body Src_Editor_Module is
          Node := Node + 1;
          if Node > Args'Last then
             Error_Message := new String'
-              (Command & ": " & (-"option " & Arg & " requires a value"));
+              (Command & ": " & (-"option ") & Arg & (-" requires a value"));
             return 0;
          end if;
 
@@ -530,11 +530,12 @@ package body Src_Editor_Module is
          when others =>
             Error_Message := new String'
               (Command
-               & ": " & (-"option " & Arg & " requires a numerical value"));
+               & ": " & (-"option ") & Arg & (-" requires a numerical value"));
             return 0;
       end Parse_Argument;
 
    begin
+      Trace (Me, "Handler=" & Command & "--");
       if Command = "edit" or else Command = "create_mark" then
          Node := Args'First;
 
@@ -3213,7 +3214,7 @@ package body Src_Editor_Module is
         (Kernel,
          Command      => "replace_text",
          Usage        => "replace_text {mark_identifier | -l line -c col} "
-                         & "[-b before] [-a after] ""text""",
+                         & "[-b before] [-a after] file ""text""",
          Description  =>
            -("Replace the characters around a certain mark or position."
              & ASCII.LF
@@ -3224,7 +3225,7 @@ package body Src_Editor_Module is
              & ASCII.LF
              & "at the beginning and/or the end of the line."),
          Minimum_Args => 2,
-         Maximum_Args => 9,
+         Maximum_Args => 10,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
