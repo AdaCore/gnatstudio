@@ -30,6 +30,10 @@ with Process_Tab_Pkg.Callbacks; use Process_Tab_Pkg.Callbacks;
 
 package body Process_Tab_Pkg is
 
+pragma Suppress (All_Checks);
+--  Checks are expensive (in code size) in this unit, and not needed,
+--  since the following code is generated automatically.
+
 procedure Gtk_New (Process_Tab : out Process_Tab_Access) is
 begin
    Process_Tab := new Process_Tab_Record;

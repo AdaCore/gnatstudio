@@ -25,11 +25,14 @@ with Gdk.Color; use Gdk.Color;
 with Gdk.Font;  use Gdk.Font;
 with Gtk.Text;  use Gtk.Text;
 with Gtk.Main;  use Gtk.Main;
-with Ada.Text_IO; use Ada.Text_IO;
+
+with Ada.Text_IO;     use Ada.Text_IO;
 with Process_Tab_Pkg; use Process_Tab_Pkg;
-with Gtkada.Canvas; use Gtkada.Canvas;
-with Display_Items; use Display_Items;
-with Debugger.Gdb;  use Debugger.Gdb;
+with Gtkada.Canvas;   use Gtkada.Canvas;
+with Display_Items;   use Display_Items;
+with Generic_Values;  use Generic_Values;
+with Debugger.Gdb;    use Debugger.Gdb;
+
 with Unchecked_Conversion;
 
 package body Odd.Process is
@@ -121,27 +124,33 @@ package body Odd.Process is
    procedure Send_Command (Debugger : Debugger_Descriptor; Command : String) is
       Win    : Process_Tab_Access :=
         Process_Tab_Access (Debugger.Window);
+      The_Type : Generic_Type_Access;
       --  Item   : Display_Item;
+
    begin
       if Command'Length > 6
         and then Command (Command'First .. Command'First + 5) = "graph "
       then
          --  Handle "graph" commands (print, display)
 
-         Send (Get_Process (Debugger.Debugger).all,
-           Command (Command'First + 6 .. Command'Last));
-
          if Command'Length > 11
            and then Command (Command'First + 6 .. Command'First + 10) = "print"
          then
-            --  N := Read (Debugger.Output_Channel,
-            --             Buffer'Address, Buffer'Length);
-            --  Gtk_New (Item, Get_Window (Win.Data_Canvas),
-            --           Command (Command'First + 12 .. Command 'Last),
-            --           Buffer (1 .. N));
-            --  Put (Win.Data_Canvas, Item, 10, 10);
-            --  ???
-            null;
+            declare
+               Var : String := Command (Command'First + 12 .. Command'Last);
+            begin
+               The_Type := Parse_Type (Debugger.Debugger, Var);
+
+               if The_Type /= null then
+                  Parse_Value (Debugger.Debugger, Var, The_Type);
+                  --  Gtk_New (Item, Get_Window (Win.Data_Canvas), Var,
+                  --           ???);
+                  --  Put (Win.Data_Canvas, Item, 10, 10);
+               end if;
+            end;
+         else
+            Send (Get_Process (Debugger.Debugger).all,
+              Command (Command'First + 6 .. Command'Last));
          end if;
 
       else

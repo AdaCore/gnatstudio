@@ -30,6 +30,10 @@ with Odd_Preferences_Pkg.Callbacks; use Odd_Preferences_Pkg.Callbacks;
 
 package body Odd_Preferences_Pkg is
 
+pragma Suppress (All_Checks);
+--  Checks are expensive (in code size) in this unit, and not needed,
+--  since the following code is generated automatically.
+
 procedure Gtk_New (Odd_Preferences : out Odd_Preferences_Access) is
 begin
    Odd_Preferences := new Odd_Preferences_Record;

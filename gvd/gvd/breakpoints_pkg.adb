@@ -29,6 +29,10 @@ with Odd_Intl; use Odd_Intl;
 
 package body Breakpoints_Pkg is
 
+pragma Suppress (All_Checks);
+--  Checks are expensive (in code size) in this unit, and not needed,
+--  since the following code is generated automatically.
+
 procedure Gtk_New (Breakpoints : out Breakpoints_Access) is
 begin
    Breakpoints := new Breakpoints_Record;

@@ -29,6 +29,10 @@ with Odd_Intl; use Odd_Intl;
 
 package body Advanced_Breakpoint_Pkg is
 
+pragma Suppress (All_Checks);
+--  Checks are expensive (in code size) in this unit, and not needed,
+--  since the following code is generated automatically.
+
 procedure Gtk_New (Advanced_Breakpoint : out Advanced_Breakpoint_Access) is
 begin
    Advanced_Breakpoint := new Advanced_Breakpoint_Record;

@@ -34,6 +34,10 @@ with Odd.Pixmaps; use Odd.Pixmaps;
 
 package body Main_Debug_Window_Pkg is
 
+pragma Suppress (All_Checks);
+--  Checks are expensive (in code size) in this unit, and not needed,
+--  since the following code is generated automatically.
+
 procedure Gtk_New (Main_Debug_Window : out Main_Debug_Window_Access) is
 begin
    Main_Debug_Window := new Main_Debug_Window_Record;
