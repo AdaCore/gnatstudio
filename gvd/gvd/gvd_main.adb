@@ -347,7 +347,8 @@ begin
                      declare
                         Param  : constant String := Clean_Parameter;
                         Column : constant Natural :=
-                          Ada.Strings.Fixed.Index (Param, ":");
+                          Ada.Strings.Fixed.Index
+                            (Param, ":", Ada.Strings.Backward);
 
                      begin
                         --  Param should be of the form target:protocol
