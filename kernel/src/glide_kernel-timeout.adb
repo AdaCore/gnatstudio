@@ -147,7 +147,7 @@ package body Glide_Kernel.Timeout is
          Unref (Data);
 
          if Data.Interactive then
-            Destroy (Data.Console);
+            Enable_Prompt_Display (Data.Console, False);
          end if;
 
          return False;
