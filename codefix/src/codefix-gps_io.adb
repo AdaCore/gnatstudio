@@ -165,6 +165,7 @@ package body Codefix.GPS_Io is
       Garbage : Dynamic_String;
    begin
       This.File_Modified.all := True; --  ??? To be deleted with the callback
+      Text_Has_Changed (This);
 
       if Cursor.Line /= 0 then
          Garbage := new String'
@@ -209,6 +210,7 @@ package body Codefix.GPS_Io is
       Insert_Position : Text_Cursor := Text_Cursor (Cursor);
    begin
       This.File_Modified.all := True; --  ??? To be deleted with the callback
+      Text_Has_Changed (This);
 
       Insert_Position.Col := 1;
 
@@ -233,6 +235,7 @@ package body Codefix.GPS_Io is
       Garbage : Dynamic_String;
    begin
       This.File_Modified.all := True; --  ??? To be deleted with the callback
+      Text_Has_Changed (This);
 
       Garbage := new String'
         (Interpret_Command
