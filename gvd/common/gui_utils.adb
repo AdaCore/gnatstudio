@@ -652,6 +652,7 @@ package body GUI_Utils is
              Menu_Destroy => Menu_Destroy,
              User         => User));
       end Register_Contextual_Menu;
+
    end User_Contextual_Menus;
 
    -------------------------
@@ -766,10 +767,10 @@ package body GUI_Utils is
       Params : Glib.Values.GValues;
       Data   : Glib.Gint)
    is
-      M             : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
-      Iter          : Gtk_Tree_Iter;
-      Path_String   : constant String := Get_String (Nth (Params, 1));
-      Text_Value    : constant GValue := Nth (Params, 2);
+      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      Iter        : Gtk_Tree_Iter;
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Text_Value  : constant GValue := Nth (Params, 2);
    begin
       Iter := Get_Iter_From_String (M, Path_String);
       Set_Value (M, Iter, Data, Text_Value);
@@ -785,17 +786,17 @@ package body GUI_Utils is
    -----------------------------
 
    procedure Create_Pixmap_From_Text
-     (Text     : String;
-      Font     : Pango.Font.Pango_Font_Description;
-      Bg_Color : Gdk.Color.Gdk_Color;
-      Widget   : access Gtk_Widget_Record'Class;
-      Pixmap   : out Gdk.Gdk_Pixmap;
-      Width    : out Glib.Gint;
-      Height   : out Glib.Gint;
+     (Text       : String;
+      Font       : Pango.Font.Pango_Font_Description;
+      Bg_Color   : Gdk.Color.Gdk_Color;
+      Widget     : access Gtk_Widget_Record'Class;
+      Pixmap     : out Gdk.Gdk_Pixmap;
+      Width      : out Glib.Gint;
+      Height     : out Glib.Gint;
       Wrap_Width : Glib.Gint := -1)
    is
       Margin : constant := 2;
-      GC : Gdk_GC;
+      GC     : Gdk_GC;
       Layout : Pango_Layout;
    begin
       Gdk_New (GC, Get_Window (Widget));
@@ -1398,13 +1399,13 @@ package body GUI_Utils is
       Ref_Item     : String  := "";
       Add_Before   : Boolean := True) return Gtk_Menu_Item
    is
-      First           : Natural := Path'First;
-      Last            : Natural;
-      Parent          : Gtk_Menu := Menu;
-      Menu_Item       : Gtk_Menu_Item;
-      Pred            : Gtk_Menu_Item;
-      M               : Gtk_Menu;
-      Index           : Gint;
+      First     : Natural := Path'First;
+      Last      : Natural;
+      Parent    : Gtk_Menu := Menu;
+      Menu_Item : Gtk_Menu_Item;
+      Pred      : Gtk_Menu_Item;
+      M         : Gtk_Menu;
+      Index     : Gint;
    begin
       if Path (First) = '/' then
          First := First + 1;
@@ -1499,9 +1500,9 @@ package body GUI_Utils is
    ---------------
 
    function Find_Node
-     (Model   : Gtk_Tree_Store;
-      Name    : String;
-      Column  : Gint) return Gtk_Tree_Iter
+     (Model  : Gtk_Tree_Store;
+      Name   : String;
+      Column : Gint) return Gtk_Tree_Iter
    is
       Parent : Gtk_Tree_Iter := Get_Iter_First (Model);
    begin

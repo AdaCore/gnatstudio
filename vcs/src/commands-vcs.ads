@@ -45,7 +45,7 @@ package Commands.VCS is
      (Item      : out Generic_Kernel_Command_Access;
       Kernel    : Kernel_Handle;
       Callback  : Context_Callback.Marshallers.Void_Marshaller.Handler);
-   --  Create a new Generic_Kernel_Command.
+   --  Create a new Generic_Kernel_Command
 
    procedure Create
      (Item      : out Log_Action_Command_Access;

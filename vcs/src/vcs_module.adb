@@ -199,8 +199,7 @@ package body VCS_Module is
       Gtk_New_With_Mnemonic (Item, -"_Explorer");
       Kernel_Callback.Connect
         (Item, "activate",
-         Kernel_Callback.To_Marshaller
-           (On_Open_Interface'Access),
+         Kernel_Callback.To_Marshaller (On_Open_Interface'Access),
          Kernel_Handle (Kernel));
       Append (Menu, Item);
 
@@ -209,16 +208,14 @@ package body VCS_Module is
       Gtk_New_With_Mnemonic (Item, -"Update all _projects");
       Kernel_Callback.Connect
         (Item, "activate",
-         Kernel_Callback.To_Marshaller
-           (Update_All'Access),
+         Kernel_Callback.To_Marshaller (Update_All'Access),
          Kernel_Handle (Kernel));
       Append (Menu, Item);
 
       Gtk_New_With_Mnemonic (Item, -"_Query status for all projects");
       Kernel_Callback.Connect
         (Item, "activate",
-         Kernel_Callback.To_Marshaller
-           (Query_Status_For_Project'Access),
+         Kernel_Callback.To_Marshaller (Query_Status_For_Project'Access),
          Kernel_Handle (Kernel));
       Append (Menu, Item);
 
@@ -319,7 +316,7 @@ package body VCS_Module is
 
    function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+      return Node_Ptr
    is
       N : Node_Ptr;
    begin
