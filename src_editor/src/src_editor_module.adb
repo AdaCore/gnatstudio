@@ -2350,7 +2350,7 @@ package body Src_Editor_Module is
 
          Args (1) := new String'("stub");
          Args (2) := new String'
-           ("-P" & Project_Name
+           ("-P" & Project_Path
             (Get_Project_From_File (Get_Registry (Kernel), File)));
          Args (3) := new String'(File);
          Args (4) := new String'(Dir_Name (File));
@@ -2366,6 +2366,9 @@ package body Src_Editor_Module is
             Free (Args);
             Free (Scenar);
          end;
+
+         --  ??? Should remove the message when gnatstub has finished
+         --  executing, and automatically load the file
 
          if Success then
             Print_Message
