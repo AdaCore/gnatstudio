@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.4.0
 
+- C916-010 Internal error when generating new testsuite
+  Problem:     When you use the Edit->Unit Testing menu and attempt to add
+               a new testsuite, GPS crashes
+  Workaround:  None known
+
 - C912-003 Removing dependency for a project other than the root project fails
   Problem:    If you remove a dependency between two projects when none of them
               is the root project, GPS will fail.
