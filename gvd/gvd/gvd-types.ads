@@ -76,8 +76,12 @@ package GVD.Types is
    type Breakpoint_Disposition is (Delete, Disable, Keep);
    --  What to do with a breakpoint when it is reached.
 
+   type Breakpoint_Identifier is new Natural;
+   --  How breakpoints are identified. Currently, the debuggers supported
+   --  by gvd all associate numbers with breakpoints.
+
    type Breakpoint_Data is record
-      Num         : Natural;
+      Num         : Breakpoint_Identifier;
       --  breakpoint number (internal to the debugger)
 
       The_Type    : Breakpoint_Type;
@@ -110,6 +114,15 @@ package GVD.Types is
 
       Info        : String_Access;
       --  Additionnal information
+
+      Ignore      : Natural := 0;
+      --  Number of hits that will be ignored before actually stoping
+
+      Condition   : String_Access;
+      --  Condition on which this breakpoint is activated
+
+      Commands    : String_Access;
+      --  Commands to execute when the debugger stops at this breakpoint
    end record;
    --  Information for a specific breakpoint
 

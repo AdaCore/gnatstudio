@@ -44,6 +44,9 @@ package body GVD.Types is
       Free (Br.Except);
       Free (Br.File);
       Free (Br.Info);
+      Free (Br.Subprogram);
+      Free (Br.Condition);
+      Free (Br.Commands);
    end Free;
 
    ----------
