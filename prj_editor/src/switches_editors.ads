@@ -53,19 +53,22 @@ package Switches_Editors is
    type Switches_Editor_Page is access all Switches_Editor_Page_Record'Class;
 
    procedure Gtk_New
-     (Page            : out Switches_Editor_Page;
-      Title           : String;
-      Project_Package : String;
-      Language        : String;
-      Lines, Cols     : Glib.Guint;
-      Tips            : access Gtk.Tooltips.Gtk_Tooltips_Record'Class);
+     (Page             : out Switches_Editor_Page;
+      Title            : String;
+      Project_Package  : String;
+      Language_Filter  : String := "";
+      Attribute_Index  : String := "";
+      Lines, Cols      : Glib.Guint;
+      Tips             : access Gtk.Tooltips.Gtk_Tooltips_Record'Class);
    --  Create a new page, that should be displayed when a file with the given
-   --  language is displayed. The page is setup as a table of (Line + 1) x
-   --  Cols, the last line being automatically created for the command line.
+   --  language is displayed, or all the time if Language_Filter is the empty
+   --  string. The page is setup as a table of (Line + 1) x Cols, the last line
+   --  being automatically created for the command line.
    --  Title is displayed in the notebook tab of the switches editor.
    --
    --  Project_Package is the name of the package, in the project files, where
-   --  the switches are stored.
+   --  the switches are stored. Attribute_Index is the index of the attribute
+   --  to be created in Project_Package.
 
    procedure Create_Check
      (Page   : access Switches_Editor_Page_Record;
@@ -84,9 +87,10 @@ package Switches_Editors is
       Label             : String;
       Switch            : String;
       Min, Max, Default : Integer;
-      Tip               : String := "");
+      Tip               : String := "";
+      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null);
    --  Create a new spin button for a switch with multiple levels.
-   --  The actual switch on the command line is "-" & Switch & Leve, as in
+   --  The actual switch on the command line is "-" & Switch & Level, as in
    --  "-j2".
    --  If Default is selected, then no switch is needed on the command line.
 
@@ -147,10 +151,11 @@ package Switches_Editors is
    --  additional switches.
 
    procedure Add_Dependency
-     (Master_Page    : Switches_Editor_Page;
+     (Page           : access Switches_Editor_Page_Record;
+      Master_Page    : String;
       Master_Switch  : String;
       Master_Status  : Boolean;
-      Slave_Page     : access Switches_Editor_Page_Record'Class;
+      Slave_Page     : String;
       Slave_Switch   : String;
       Slave_Activate : Boolean := True);
    --  Add dependency between two switches: if Master switch's status becomes
@@ -177,7 +182,7 @@ package Switches_Editors is
    --  then "-gnatya" and "-gnatyl" are collapsed into "-gnatyal").
    --  Default_As_String is the switch that Switch by itself on the command
    --  line is equal to (e.g. -gnaty = -gnaty3abcefhiklmnprst). In case the
-   --  result of coalescing switches comes done to Default_As_String, then only
+   --  result of coalescing switches comes down to Default_As_String, then only
    --  Switch will be put on the command line
    --
    --  See also Add_Custom_Expansion below.
@@ -296,8 +301,24 @@ private
      GNAT.OS_Lib.Argument_List_Access;
    type String_List_Array_Access is access all String_List_Array;
 
+   type Dependency_Description;
+   type Dependency_Description_Access is access Dependency_Description;
+   type Dependency_Description is record
+      Master_Page, Slave_Page     : GNAT.OS_Lib.String_Access;
+      Master_Switch, Slave_Switch : GNAT.OS_Lib.String_Access;
+      Master_Status, Slave_Status : Boolean;
+      Next                        : Dependency_Description_Access;
+   end record;
+   --  Description of a dependency (see Add_Dependency). This is needed because
+   --  the dependencies can only be fully setup once all pages have been
+   --  created.
+
    type Switches_Editor_Page_Record is new Gtk_Table_Record with record
-      Lang     : GNAT.OS_Lib.String_Access;
+      Lang_Filter : GNAT.OS_Lib.String_Access;
+
+      Dependencies : Dependency_Description_Access;
+
+      Attribute_Index : GNAT.OS_Lib.String_Access;
       Title    : GNAT.OS_Lib.String_Access;
       Pkg      : GNAT.OS_Lib.String_Access;
       Switches : Widget_Array_Access;

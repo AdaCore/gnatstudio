@@ -221,6 +221,11 @@ package body Switches_Editors is
    --  the memory for the array that was passed as a parameter (we either
    --  return it directly, or reuse the strings from it for the output).
 
+   procedure Activate_Dependencies
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Editor : access Switches_Edit_Record'Class);
+   --  Activate all the dependencies defined for page
+
    procedure Refresh_Page (Page : access Gtk_Widget_Record'Class);
    --  Recompute the value of the command line after a switch has been changed
    --  through the GUI
@@ -671,7 +676,9 @@ package body Switches_Editors is
          --  the splitting of composite switches like "-gnatwue" into
          --  "-gnatwu -gnatwe"
 
-         if Page.Lang.all = Ada_String then
+         if Page.Lang_Filter /= null
+           and then Page.Lang_Filter.all = Ada_String
+         then
             declare
                Arr : constant Argument_List :=
                  Normalize_Compiler_Switches (Switches (Index).all);
@@ -776,7 +783,8 @@ package body Switches_Editors is
       Label             : String;
       Switch            : String;
       Min, Max, Default : Integer;
-      Tip               : String := "")
+      Tip               : String := "";
+      Label_Size_Group : Gtk.Size_Group.Gtk_Size_Group := null)
    is
       Hbox  : Gtk_Box;
       Adj   : Gtk_Adjustment;
@@ -791,6 +799,10 @@ package body Switches_Editors is
 
       Gtk_New (L, Label);
       Pack_Start (Hbox, L, False, False, 0);
+
+      if Label_Size_Group /= null then
+         Add_Widget (Label_Size_Group, L);
+      end if;
 
       Gtk_New (Adj, Gdouble (Default), Gdouble (Min), Gdouble (Max),
                1.0, 10.0, 10.0);
@@ -1062,32 +1074,62 @@ package body Switches_Editors is
    --------------------
 
    procedure Add_Dependency
-     (Master_Page    : Switches_Editor_Page;
+     (Page           : access Switches_Editor_Page_Record;
+      Master_Page    : String;
       Master_Switch  : String;
       Master_Status  : Boolean;
-      Slave_Page     : access Switches_Editor_Page_Record'Class;
+      Slave_Page     : String;
       Slave_Switch   : String;
-      Slave_Activate : Boolean := True)
-   is
-      S1, S2  : Switch_Basic_Widget;
+      Slave_Activate : Boolean := True) is
    begin
-      if Master_Page /= null then
-         S1 :=  Get_Switch_Widget (Master_Page, Master_Switch);
-         S2 := Get_Switch_Widget (Slave_Page, Slave_Switch);
-         Assert (Me, S1 /= null
-                 and then S2 /= null
-                 and then S1.all in Switch_Check_Widget'Class
-                 and then S2.all in Switch_Check_Widget'Class,
-                 "Can only add dependencies between check button switches "
-                 & Master_Page.Title.all & ' ' & Master_Switch
-                 & ' ' & Slave_Page.Title.all & ' ' & Slave_Switch);
-
-         Dependency_Callback.Connect
-           (Switch_Check_Widget_Access (S1).Check, "toggled",
-            Dependency_Callback.To_Marshaller (Check_Dependency'Access),
-            (Master_Status, Switch_Check_Widget_Access (S2), Slave_Activate));
-      end if;
+      Page.Dependencies := new Dependency_Description'
+        (Next          => Page.Dependencies,
+         Master_Page   => new String'(Master_Page),
+         Master_Switch => new String'(Master_Switch),
+         Master_Status => Master_Status,
+         Slave_Page    => new String'(Slave_Page),
+         Slave_Switch  => new String'(Slave_Switch),
+         Slave_Status  => Slave_Activate);
    end Add_Dependency;
+
+   ---------------------------
+   -- Activate_Dependencies --
+   ---------------------------
+
+   procedure Activate_Dependencies
+     (Page   : access Switches_Editor_Page_Record'Class;
+      Editor : access Switches_Edit_Record'Class)
+   is
+      Master_Page, Slave_Page : Switches_Editor_Page;
+      S1, S2  : Switch_Basic_Widget;
+      Dep : Dependency_Description_Access := Page.Dependencies;
+   begin
+      while Dep /= null loop
+         Master_Page := Get_Page (Editor, Dep.Master_Page.all);
+         Slave_Page  := Get_Page (Editor, Dep.Slave_Page.all);
+
+         if Master_Page /= null and then Slave_Page /= null then
+            S1 := Get_Switch_Widget (Master_Page, Dep.Master_Switch.all);
+            S2 := Get_Switch_Widget (Slave_Page, Dep.Slave_Switch.all);
+            Assert (Me, S1 /= null
+                    and then S2 /= null
+                    and then S1.all in Switch_Check_Widget'Class
+                    and then S2.all in Switch_Check_Widget'Class,
+                    "Can only add dependencies between check button switches "
+                    & Master_Page.Title.all & ' ' & Dep.Master_Switch.all
+                    & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all);
+
+            Dependency_Callback.Connect
+              (Switch_Check_Widget_Access (S1).Check, "toggled",
+               Dependency_Callback.To_Marshaller (Check_Dependency'Access),
+               (Dep.Master_Status,
+                Switch_Check_Widget_Access (S2),
+                Dep.Slave_Status));
+         end if;
+
+         Dep := Dep.Next;
+      end loop;
+   end Activate_Dependencies;
 
    -------------------------
    -- Add_Coalesce_Switch --
@@ -1137,7 +1179,8 @@ package body Switches_Editors is
      (Page            : out Switches_Editor_Page;
       Title           : String;
       Project_Package : String;
-      Language        : String;
+      Language_Filter : String := "";
+      Attribute_Index : String := "";
       Lines, Cols     : Glib.Guint;
       Tips            : access Gtk.Tooltips.Gtk_Tooltips_Record'Class) is
    begin
@@ -1146,10 +1189,16 @@ package body Switches_Editors is
       Set_Row_Spacings (Page, 0);
       Set_Col_Spacings (Page, 0);
 
-      Page.Lang  := new String'(Language);
-      To_Lower (Page.Lang.all);
+      if Language_Filter /= "" then
+         Page.Lang_Filter  := new String'(Language_Filter);
+         To_Lower (Page.Lang_Filter.all);
+      else
+         Page.Lang_Filter := null;
+      end if;
+
+      Page.Attribute_Index := new String'(To_Lower (Attribute_Index));
       Page.Title := new String'(Title);
-      Page.Pkg   := new String'(Project_Package);
+      Page.Pkg   := new String'(To_Lower (Project_Package));
       Page.Coalesce_Switches  := new GNAT.OS_Lib.String_List (1 .. 0);
       Page.Coalesce_Switches_Default := new GNAT.OS_Lib.String_List (1 .. 0);
       Page.Expansion_Switches := new String_List_Array (1 .. 0);
@@ -1181,7 +1230,7 @@ package body Switches_Editors is
       Editor.Pages := new Pages_Array (1 .. Switches_Page_Count (Kernel));
 
       for P in Editor.Pages'Range loop
-         Editor.Pages (P) := Get_Nth_Switches_Page (Kernel, Editor, P);
+         Editor.Pages (P) := Get_Nth_Switches_Page (Kernel, P);
 
          Widget_Callback.Connect
            (Editor.Pages (P), "destroy",
@@ -1189,6 +1238,11 @@ package body Switches_Editors is
 
          Gtk_New (Tab, Editor.Pages (P).Title.all);
          Append_Page (Editor, Editor.Pages (P), Tab);
+      end loop;
+
+      --  Then once all the pages have been created, setup the dependencies
+      for P in Editor.Pages'Range loop
+         Activate_Dependencies (Editor.Pages (P), Editor);
       end loop;
 
       Set_Current_Page (Editor, 0);
@@ -1205,7 +1259,8 @@ package body Switches_Editors is
    procedure Page_Destroyed (Page : access Gtk_Widget_Record'Class) is
       P : Switches_Editor_Page := Switches_Editor_Page (Page);
    begin
-      Free (P.Lang);
+      Free (P.Lang_Filter);
+      Free (P.Attribute_Index);
       Free (P.Title);
       Free (P.Pkg);
       Free (P.Coalesce_Switches);
@@ -1254,7 +1309,10 @@ package body Switches_Editors is
          Visible := False;
 
          for L in Languages'Range loop
-            if To_Lower (Languages (L).all) = Editor.Pages (P).Lang.all then
+            if Editor.Pages (P).Lang_Filter = null
+              or else To_Lower (Languages (L).all) =
+                Editor.Pages (P).Lang_Filter.all
+            then
                Visible := True;
                exit;
             end if;
@@ -1291,7 +1349,7 @@ package body Switches_Editors is
             List : Argument_List := Get_Switches
               (S,
                S.Pages (P).Pkg.all,
-               Get_String (S.Pages (P).Lang.all),
+               Get_String (S.Pages (P).Attribute_Index.all),
                Files => (1 .. 0 => VFS.No_File));
          begin
             Set_Text (S.Pages (P).Cmd_Line,
@@ -1335,7 +1393,7 @@ package body Switches_Editors is
         (Page      : access Switches_Editor_Page_Record'Class;
          File_Name : Virtual_File)
       is
-         Language : constant Name_Id := Get_String (Page.Lang.all);
+         Language : constant Name_Id := Get_String (Page.Attribute_Index.all);
          Args     : Argument_List := Get_Switches (Page, Normalize => False);
          Value    : Prj.Variable_Value;
          Is_Default_Value : Boolean;
@@ -1391,7 +1449,7 @@ package body Switches_Editors is
                   Attribute          =>
                     Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
                   Values             => Args,
-                  Attribute_Index    => Get_String (Language),
+                  Attribute_Index    => Page.Attribute_Index.all,
                   Prepend            => False);
 
             else
@@ -1400,7 +1458,7 @@ package body Switches_Editors is
                   Scenario_Variables => Scenario_Variables,
                   Attribute          =>
                     Build (Page.Pkg.all, Get_String (Name_Default_Switches)),
-                  Attribute_Index    => Get_String (Language));
+                  Attribute_Index    => Page.Attribute_Index.all);
             end if;
 
             Changed := True;
@@ -1557,7 +1615,7 @@ package body Switches_Editors is
                   Set_Visible_Pages
                     (Editor    => Switches,
                      Languages => (1 => Lang'Unchecked_Access),
-                  Show_Only => F /= Files'First);
+                     Show_Only => F /= Files'First);
                end;
             end loop;
          end if;
@@ -1570,12 +1628,20 @@ package body Switches_Editors is
             List : Argument_List := Get_Switches
               (Switches,
                Switches.Pages (P).Pkg.all,
-               Get_String (Switches.Pages (P).Lang.all),
+               Get_String (Switches.Pages (P).Attribute_Index.all),
                Files);
          begin
+            --  Force a space, so that at least some text is inserted, and thus
+            --  we correctly initialize the widgets.
             Set_Text (Switches.Pages (P).Cmd_Line,
-                      Argument_List_To_String (List));
+                      ' ' & Argument_List_To_String (List));
             Free (List);
+
+            --  Now that the default widget values have been set, recompute
+            --  the command line to find out the status of the switches that
+            --  haven't been initialize yet, for instance a radio button with
+            --  no correspondance on the command line.
+            Refresh_Page (Switches.Pages (P));
          end;
       end loop;
 
