@@ -9,7 +9,7 @@
       <filter language="ada"
               error="Pretty printing of non Ada files not supported yet" />
 
-      <shell>save_windows</shell>
+      <shell>save_all</shell>
       <shell>scenario_variables_cmd_line -X</shell>
       <external output="" >gnat pretty -rf %pps %1 %F</external>
       <shell>edit %F 0 0 0 true</shell>
