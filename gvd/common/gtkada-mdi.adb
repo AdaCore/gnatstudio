@@ -361,8 +361,8 @@ package body Gtkada.MDI is
             if MDI_Child (Child) /= C and then C.State /= Docked then
                Union_With_Rect (R, R,
                                 (C.X, C.Y,
-                                 Guint (C.Uniconified_Width),
-                                 Guint (C.Uniconified_Height)));
+                                 GRectangle_Length (C.Uniconified_Width),
+                                 GRectangle_Length (C.Uniconified_Height)));
             end if;
 
             Tmp := Next (Tmp);
@@ -385,10 +385,11 @@ package body Gtkada.MDI is
 
             while X < Child.MDI.MDI_Width loop
                Overlap := Rect_In
-                 (R, (X, Y, Guint (Child.Uniconified_Width),
-                      Guint (Child.Uniconified_Height)));
+                 (R, (X, Y, GRectangle_Length (Child.Uniconified_Width),
+                      GRectangle_Length (Child.Uniconified_Height)));
 
                --  Perfect, it doesn't overlap anything
+
                if Overlap = Overlap_Rectangle_Out then
                   Child.X := X;
                   Child.Y := Y;
@@ -468,8 +469,8 @@ package body Gtkada.MDI is
             Union_With_Rect
               (Region, Region,
                (Child.X, Child.Y,
-                Guint (Child.Uniconified_Width),
-                Guint (Child.Uniconified_Height)));
+                GRectangle_Length (Child.Uniconified_Width),
+                GRectangle_Length (Child.Uniconified_Height)));
          end if;
 
          Tmp := Next (Tmp);
