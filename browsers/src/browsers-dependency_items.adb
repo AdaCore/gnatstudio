@@ -506,6 +506,7 @@ package body Browsers.Dependency_Items is
       Child   : MDI_Child;
       Browser : Dependency_Browser;
       Hook    : Project_Changed_Hook;
+      Title   : constant String := -"Dependency Browser";
    begin
       Child := Find_MDI_Child_By_Tag
         (Get_MDI (Kernel), Dependency_Browser_Record'Tag);
@@ -521,7 +522,7 @@ package body Browsers.Dependency_Items is
             Default_Height => Get_Pref (Kernel, Default_Widget_Height),
             Module => Dependency_Browser_Module_ID);
          Set_Focus_Child (Child);
-         Set_Title (Child, -"Dependency Browser");
+         Set_Title (Child, Title);
 
          Hook := new Project_Changed_Hook_Record'
            (Hook_No_Args_Record with
@@ -530,6 +531,8 @@ package body Browsers.Dependency_Items is
            (Kernel, GPS.Kernel.Project_Changed_Hook,
             Hook, Watch => GObject (Browser));
       end if;
+
+      Add_Navigation_Location (Kernel, Title);
 
       return Child;
    end Open_Dependency_Browser;
