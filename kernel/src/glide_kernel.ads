@@ -424,6 +424,9 @@ package Glide_Kernel is
    --
    --  Since only one module will handle the tooltip, putting proper priorities
    --  when registering the modules is very important.
+   --
+   --  See the function GUI_Utils.Create_Pixmap_From_Text for an easy way to
+   --  create a tooltip that only contains text
 
    ------------
    -- Saving --
