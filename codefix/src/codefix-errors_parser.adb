@@ -1254,6 +1254,30 @@ package body Codefix.Errors_Parser is
       Append (Solutions, First_Line_Pragma (Current_Text, Message));
    end Fix;
 
+   -----------------------
+   -- Constant_Expected --
+   -----------------------
+
+   procedure Initialize (This : in out Constant_Expected) is
+   begin
+      This.Matcher := (1 => new Pattern_Matcher'
+         (Compile ("""([\w]+)"" is not modified, could be declared const")));
+   end Initialize;
+
+   procedure Fix
+     (This         : Constant_Expected;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array) is
+   begin
+      Append (Solutions, Not_Modified
+                (Current_Text,
+                 Message,
+                 Get_Message (Message)
+                   (Matches (1).First .. Matches (1).Last)));
+   end Fix;
+
 begin
 
    Add_Parser (new Agregate_Misspelling);
@@ -1291,6 +1315,7 @@ begin
    Add_Parser (new Object_Not_Referenced);
    Add_Parser (new Pkg_Not_Referenced);
    Add_Parser (new Pragma_Missplaced);
+   Add_Parser (new Constant_Expected);
 
    Initialize_Parsers;
 end Codefix.Errors_Parser;
