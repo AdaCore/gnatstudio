@@ -34,12 +34,15 @@ package Task_Manager.GUI is
 
    procedure Gtk_New
      (View    : out Task_Manager_Interface;
-      Manager : Task_Manager_Access);
-   --  Create a new Task_Manager_Interface;
+      Manager : Task_Manager_Access;
+      Dialog  : Gtk_Widget := null);
+   --  Create a new Task_Manager_Interface. If Dialog is non-null, then it
+   --  will be destroyed when there are no more running tasks.
 
    procedure Initialize
      (View    : access Task_Manager_Interface_Record'Class;
-      Manager : Task_Manager_Access);
+      Manager : Task_Manager_Access;
+      Dialog  : Gtk_Widget := null);
    --  Internal initialization procedure.
 
    procedure Refresh (Manager : Task_Manager_Access);
@@ -58,6 +61,8 @@ private
       Manager : Task_Manager_Access;
 
       Lines   : Iter_Array_Access;
+
+      Dialog  : Gtk_Widget := null;
    end record;
 
 end Task_Manager.GUI;
