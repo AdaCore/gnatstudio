@@ -540,7 +540,7 @@ package body VCS_Module is
                      -"Compare working _against head rev.", "",
                      View_Work_Head_Diff'Access);
       Register_Menu (Kernel, VCS,
-                     -"Compare against _specific rev.", "",
+                     -"Compare against _revision...", "",
                      View_Specific_Diff'Access);
       Gtk_New (Menu_Item);
 
