@@ -27,7 +27,11 @@ with Odd.Process; use Odd.Process;
 with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
 with Gdk.Event;   use Gdk.Event;
 with Odd.Histories;
+with Odd_Intl; use Odd_Intl;
+with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
+with Debugger; use Debugger;
 
+with Ada.Tags; use Ada.Tags;
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Process_Tab_Pkg.Callbacks is
@@ -55,8 +59,46 @@ package body Process_Tab_Pkg.Callbacks is
    is
       Arg1 : Address := To_Address (Params, 1);
       Arg2 : Guint := To_Guint (Params, 2);
+
+      function To_Notebook_Page is new
+        Unchecked_Conversion (Address, Gtk_Notebook_Page);
+
+      Notebook      : Gtk_Notebook;
+      Process       : Debugger_Process_Tab;
+      Notebook_Page : constant Gtk_Notebook_Page := To_Notebook_Page (Arg1);
+      Thread        : Natural;
+      Widget        : Gtk_Widget := Get_Toplevel (Object);
+
    begin
-      null;
+      if Widget'Tag /= Main_Debug_Window_Record'Tag then
+         --  This means that we are still creating the notebook.
+         return;
+      end if;
+
+      Notebook := Main_Debug_Window_Access (Widget).Process_Notebook;
+      Process  := Process_User_Data.Get (Get_Nth_Page
+        (Notebook, Get_Current_Page (Notebook)));
+
+      if Arg2 = 0 then
+         --  Need to find the current thread ???
+         return;
+      end if;
+
+      declare
+         Label : constant String :=
+           Get (Gtk_Label (Get_Tab_Label (Notebook_Page)));
+         Thread_String : constant String := -"Thread";
+
+      begin
+         Thread := Natural'Value
+           (Label (Label'First + Thread_String'Length .. Label'Last));
+      end;
+
+      Reparent (Process.Editor_Text, Get_Child (Notebook_Page));
+      Handler_Block (Object, Process.Notebook_Handler_Id);
+      Set_Page (Process.Thread_Notebook, Gint (Arg2));
+      Thread_Switch (Process.Debugger, Thread);
+      Handler_Unblock (Object, Process.Notebook_Handler_Id);
    end On_Thread_Notebook_Switch_Page;
 
    ----------------------------------
