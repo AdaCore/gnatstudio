@@ -1355,41 +1355,8 @@ package body Project_Explorers is
    procedure Update_Project_Node
      (Explorer : access Project_Explorer_Record'Class; Node : Gtk_Ctree_Node)
    is
-      type Project_Id_Array is array (Positive range <>) of Project_Id;
-
-      function Source_Dirs (Prj : Project_Id) return String_Id_Array;
-      --  Return the list of source directories for Prj, as an array
-
       function Imported_Projects (Prj : Project_Id) return Project_Id_Array;
       --  Return the list of imported projects, as an array
-
-      -----------------
-      -- Source_Dirs --
-      -----------------
-
-      function Source_Dirs (Prj : Project_Id) return String_Id_Array is
-         Src   : String_List_Id := Projects.Table (Prj).Source_Dirs;
-         Count : Natural := 0;
-      begin
-         while Src /= Nil_String loop
-            Count := Count + 1;
-            Src := String_Elements.Table (Src).Next;
-         end loop;
-
-         declare
-            Sources : String_Id_Array (1 .. Count);
-         begin
-            --  Store the directories
-            Count := Sources'First;
-            Src := Projects.Table (Prj).Source_Dirs;
-            while Src /= Nil_String loop
-               Sources (Count) := String_Elements.Table (Src).Value;
-               Count := Count + 1;
-               Src := String_Elements.Table (Src).Next;
-            end loop;
-            return Sources;
-         end;
-      end Source_Dirs;
 
       -----------------------
       -- Imported_Projects --
