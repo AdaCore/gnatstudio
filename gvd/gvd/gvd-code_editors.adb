@@ -47,8 +47,14 @@ package body Gtkada.Code_Editors is
    Do_Color_Highlighting : constant Boolean := True;
    --  Indicate whether the editor should provide color highlighting.
 
-   Layout_Width : constant := 10;
+   Layout_Width : constant := 20;
    --  Width for the area reserved for the buttons.
+
+   Line_Numbers_Width : constant Positive := 5;
+   --  Number of characters reserved on the left for line numbers.
+
+   subtype Line_Number is String (1 .. Line_Numbers_Width);
+   --  Type of strings used to display line numbers.
 
    package Editor_Cb is new Callback (Code_Editor_Record);
 
@@ -162,12 +168,17 @@ package body Gtkada.Code_Editors is
                         Ps_Font_Name   : String;
                         Font_Size      : Gint;
                         Default_Icon   : chars_ptr_array;
+                        Current_Line_Icon : chars_ptr_array;
                         Comments_Color : String;
                         Strings_Color  : String;
-                        Keywords_Color : String)
+                        Keywords_Color : String;
+                        Show_Line_Numbers : Boolean := False)
    is
+      Current_Line_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
+      Current_Line_Mask   : Gdk.Bitmap.Gdk_Bitmap;
    begin
       Editor.Font := Get_Gdkfont (Ps_Font_Name, Font_Size);
+      Editor.Show_Line_Nums := Show_Line_Numbers;
 
       Realize (Editor.Text);
       Create_From_Xpm_D (Editor.Default_Pixmap,
@@ -175,6 +186,17 @@ package body Gtkada.Code_Editors is
                          Editor.Default_Mask,
                          White (Get_System),
                          Default_Icon);
+      Create_From_Xpm_D (Current_Line_Pixmap,
+                         Get_Window (Editor.Text),
+                         Current_Line_Mask,
+                         White (Get_System),
+                         Current_Line_Icon);
+
+      --  Create the current line icon, and make sure it is never destroyed.
+      Gtk_New (Editor.Current_Line_Button,
+               Current_Line_Pixmap, Current_Line_Mask);
+      Ref (Editor.Current_Line_Button);
+
       Editor.Colors (Comment_Text) := Parse (Comments_Color);
       Alloc (Get_System, Editor.Colors (Comment_Text));
       Editor.Colors (String_Text)  := Parse (Strings_Color);
@@ -249,6 +271,21 @@ package body Gtkada.Code_Editors is
       Pixmap    : Gdk.Pixmap.Gdk_Pixmap;
       Mask      : Gdk.Bitmap.Gdk_Bitmap)
    is
+
+      function Line_Number_String (Line : Positive) return String;
+      --  Return a string that contains the line number.
+      --  The number is aligned to the right, and the string as a length of
+      --  Line_Numbers_Width.
+
+      function Line_Number_String (Line : Positive) return String is
+         S : String        := Positive'Image (Line);
+         N : Line_Number   := (others => ' ');
+         Length : Positive := Positive'Min (S'Length - 1, N'Length);
+      begin
+         N (N'Last - Length + 1 .. N'Last) := S (2 .. Length + 1);
+         return N & " ";
+      end Line_Number_String;
+
       package Char_Direct_IO is new Ada.Direct_IO (Character);
       F : Char_Direct_IO.File_Type;
       Length : Char_Direct_IO.Count;
@@ -277,6 +314,9 @@ package body Gtkada.Code_Editors is
 
       --  Clear the old file and the old icons.
       Freeze (Editor.Buttons);
+      if Get_Parent (Editor.Current_Line_Button) /= null then
+         Remove (Editor.Buttons, Editor.Current_Line_Button);
+      end if;
       Forall (Editor.Buttons, Gtk.Widget.Destroy_Cb'Access);
       Thaw (Editor.Buttons);
 
@@ -309,6 +349,10 @@ package body Gtkada.Code_Editors is
       Freeze (Editor.Text);
       Freeze (Editor.Buttons);
 
+      if Editor.Show_Line_Nums then
+         Insert (Editor.Text, Editor.Font, Chars => Line_Number_String (1));
+      end if;
+
       while Index <= Buffer'Last loop
 
          case Buffer (Index) is
@@ -340,6 +384,11 @@ package body Gtkada.Code_Editors is
                Index := Index + 1;
                Line_Start := Index;
 
+               if Editor.Show_Line_Nums then
+                  Insert (Editor.Text, Editor.Font,
+                          Chars => Line_Number_String (Line));
+               end if;
+
             when others =>
                if Do_Color_Highlighting then
                   if Editor.Lang /= null then
@@ -349,16 +398,34 @@ package body Gtkada.Code_Editors is
                      Next_Char := Index + 1;
                      Entity := Normal_Text;
                   end if;
-                  Insert (Editor.Text, Editor.Font, Editor.Colors (Entity),
-                          Null_Color, Buffer (Index .. Next_Char - 1));
 
-                  --  Count the number of lines
-                  for J in Index .. Next_Char - 1 loop
-                     if Buffer (J) = ASCII.LF then
-                        Line := Line + 1;
-                     end if;
-                  end loop;
+                  --  Print every line separately, so that we can add line
+                  --  numbers as well.
 
+                  declare
+                     J          : Positive := Index;
+                     Line_Start : Positive := Index;
+                  begin
+                     while J < Next_Char loop
+                        if Buffer (J) = ASCII.LF then
+                           Insert (Editor.Text, Editor.Font,
+                                   Editor.Colors (Entity),
+                                   Null_Color,
+                                   Buffer (Line_Start .. J));
+                           Line := Line + 1;
+                           if Editor.Show_Line_Nums then
+                              Insert (Editor.Text, Editor.Font,
+                                      Chars => Line_Number_String (Line));
+                           end if;
+                           Line_Start := J + 1;
+                        end if;
+                        J := J + 1;
+                     end loop;
+                     Insert (Editor.Text, Editor.Font,
+                             Editor.Colors (Entity),
+                             Null_Color,
+                             Buffer (Line_Start .. Next_Char - 1));
+                  end;
                   Index := Next_Char;
                else
                   Index := Index + 1;
@@ -383,4 +450,46 @@ package body Gtkada.Code_Editors is
       when Name_Error =>
          Put_Line (Standard_Error, "WARNING: File not found: " & File_Name);
    end Load_File;
+
+   --------------
+   -- Set_Line --
+   --------------
+
+   procedure Set_Line
+     (Editor    : access Code_Editor_Record;
+      Line      : Natural)
+   is
+      Line_Height : Gint;
+      Y : Gint;
+   begin
+      Line_Height := Get_Ascent (Editor.Font) + Get_Descent (Editor.Font);
+      Y := Gint (Line - 1) * Line_Height + 3;
+
+      --  Display the current line icon
+      --  ??? Would be nice if it was replacing (or at least displayed above)
+      --  the breakpoint icon.
+      --  Note that we start by hiding everything, and then show everything
+      --  at the end, so that the layout is correctly refreshed. This is not
+      --  done otherwise.
+
+      Freeze (Editor.Buttons);
+      Hide_All (Editor.Buttons);
+      if Get_Parent (Editor.Current_Line_Button) /= null then
+         Move (Editor.Buttons, Editor.Current_Line_Button,
+               X => 10, Y => Y);
+      else
+         Put (Editor.Buttons, Editor.Current_Line_Button,
+              X => 10, Y => Y);
+      end if;
+      Show_All (Editor.Buttons);
+      Thaw (Editor.Buttons);
+
+      --  Scroll the code editor to make sure the line is visible on screen.
+
+      Clamp_Page (Get_Vadj (Editor.Text),
+                  Lower => Gfloat (Y),
+                  Upper => Gfloat (Y + 4 * Line_Height));
+
+   end Set_Line;
+
 end Gtkada.Code_Editors;

@@ -24,8 +24,6 @@
 --  to display icons at the beginning of each line where a function
 --  returns True.
 
---  ??? Should have an function to set the current line (and display an icon
---  one the side).
 --  ??? Should have an function to print line numbers on the side.
 
 with Glib;
@@ -39,9 +37,9 @@ with Language;
 with Gtkada.Types;
 with Debugger;
 with Gdk.Color;
+with Gtk.Pixmap;
 
 package Gtkada.Code_Editors is
-
 
    type Code_Editor_Record is new Gtk.Box.Gtk_Box_Record with private;
    type Code_Editor is access all Code_Editor_Record'Class;
@@ -62,12 +60,14 @@ package Gtkada.Code_Editors is
 
    procedure Configure
      (Editor : access Code_Editor_Record;
-      Ps_Font_Name   : String;
-      Font_Size      : Glib.Gint;
-      Default_Icon   : Gtkada.Types.chars_ptr_array;
-      Comments_Color : String;
-      Strings_Color  : String;
-      Keywords_Color : String);
+      Ps_Font_Name      : String;
+      Font_Size         : Glib.Gint;
+      Default_Icon      : Gtkada.Types.chars_ptr_array;
+      Current_Line_Icon : Gtkada.Types.chars_ptr_array;
+      Comments_Color    : String;
+      Strings_Color     : String;
+      Keywords_Color    : String;
+      Show_Line_Numbers : Boolean := False);
    --  Ps_Font_Name is the name of the postscript font that will be used to
    --  display the text. It should be a fixed-width font, which is nice for
    --  source code.
@@ -109,6 +109,11 @@ package Gtkada.Code_Editors is
    --  More general version of Load_File above, where you can choose your own
    --  pixmap and decide where to put it.
 
+   procedure Set_Line
+     (Editor    : access Code_Editor_Record;
+      Line      : Natural);
+   --  Set the current line (and draw the button on the side).
+
 private
 
    type Color_Array is array (Language.Language_Entity'Range) of
@@ -127,6 +132,9 @@ private
       Default_Pixmap : Gdk.Pixmap.Gdk_Pixmap := Gdk.Pixmap.Null_Pixmap;
       Default_Mask   : Gdk.Bitmap.Gdk_Bitmap := Gdk.Bitmap.Null_Bitmap;
       Colors         : Color_Array := (others => Gdk.Color.Null_Color);
+
+      Current_Line_Button : Gtk.Pixmap.Gtk_Pixmap;
+      Show_Line_Nums : Boolean := False;
    end record;
 
 end Gtkada.Code_Editors;
