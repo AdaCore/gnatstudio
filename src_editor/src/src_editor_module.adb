@@ -2899,8 +2899,7 @@ package body Src_Editor_Module is
 
       Success          : Boolean;
       Child            : constant MDI_Child := Find_Current_Editor (Kernel);
-      Source           : constant Source_Editor_Box :=
-        Get_Source_Box_From_MDI (Child);
+      Source           : Source_Editor_Box;
       Print_Helper     : constant String := Get_Pref (Kernel, Print_Command);
       Source_Font      : constant Pango_Font_Description :=
         Get_Pref_Font (Kernel, Default_Style);
@@ -2908,6 +2907,13 @@ package body Src_Editor_Module is
       Source_Font_Size : constant Gint := To_Pixels (Get_Size (Source_Font));
 
    begin
+      if Get_Focus_Child (Get_MDI (Kernel)) /= Child then
+         Console.Insert (Kernel, "No source file selected", Mode => Error);
+         return;
+      end if;
+
+      Source := Get_Source_Box_From_MDI (Child);
+
       if Source = null then
          return;
       end if;
