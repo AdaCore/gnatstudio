@@ -24,7 +24,7 @@ with Ada.Unchecked_Deallocation;
 with Commands;              use Commands;
 with GPS.Kernel;          use GPS.Kernel;
 with GPS.Kernel.Task_Manager; use GPS.Kernel.Task_Manager;
-with Glide_Intl;            use Glide_Intl;
+with GPS.Intl;            use GPS.Intl;
 with Entities;              use Entities;
 with Entities.Queries;      use Entities.Queries;
 with Traces;                use Traces;

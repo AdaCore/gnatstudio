@@ -23,7 +23,7 @@ with Projects.Editor;   use Projects, Projects.Editor;
 with Projects.Registry; use Projects.Registry;
 with Traces;            use Traces;
 with String_Utils;      use String_Utils;
-with Glide_Intl;        use Glide_Intl;
+with GPS.Intl;        use GPS.Intl;
 with GNAT.Case_Util;    use GNAT.Case_Util;
 
 with Prj;      use Prj;

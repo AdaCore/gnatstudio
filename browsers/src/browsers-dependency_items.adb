@@ -38,7 +38,7 @@ with Gtkada.MDI;           use Gtkada.MDI;
 with Pango.Layout;         use Pango.Layout;
 
 with Browsers.Canvas;           use Browsers.Canvas;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;

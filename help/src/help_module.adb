@@ -39,7 +39,7 @@ with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 with Gtk.Widget;                   use Gtk.Widget;
-with Glide_Intl;                   use Glide_Intl;
+with GPS.Intl;                   use GPS.Intl;
 with Traces;                       use Traces;
 with OS_Utils;                     use OS_Utils;
 with Ada.Exceptions;               use Ada.Exceptions;

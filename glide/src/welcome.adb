@@ -40,7 +40,7 @@ with Config;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GPS.Kernel.Project;      use GPS.Kernel.Project;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Logo_Boxes;                use Logo_Boxes;
 with Histories;                 use Histories;
 with Creation_Wizard.Selector;  use Creation_Wizard.Selector;

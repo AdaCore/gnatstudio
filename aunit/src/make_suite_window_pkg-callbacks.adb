@@ -42,7 +42,7 @@ with Gtkada.Types;            use Gtkada.Types;
 with Row_Data;                use Row_Data;
 with VFS;                     use VFS;
 
-with Glide_Intl;              use Glide_Intl;
+with GPS.Intl;              use GPS.Intl;
 with Gdk.Pixbuf;              use Gdk.Pixbuf;
 
 package body Make_Suite_Window_Pkg.Callbacks is

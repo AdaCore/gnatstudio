@@ -80,7 +80,7 @@ with System.Assertions;
 with Glib.Object;              use Glib.Object;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
 with GPS.Kernel.Actions;     use GPS.Kernel.Actions;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with GUI_Utils;                use GUI_Utils;
 with Histories;                use Histories;
 with Commands.Interactive;     use Commands, Commands.Interactive;

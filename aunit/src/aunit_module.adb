@@ -28,7 +28,7 @@ with Ada.Exceptions;              use Ada.Exceptions;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 
 with Make_Harness_Window_Pkg;     use Make_Harness_Window_Pkg;
 with Make_Suite_Window_Pkg;       use Make_Suite_Window_Pkg;

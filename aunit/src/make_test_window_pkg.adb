@@ -28,7 +28,7 @@ with Gtk.Stock;           use Gtk.Stock;
 
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with Glide_Intl;          use Glide_Intl;
+with GPS.Intl;          use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
 
 with Make_Test_Window_Pkg.Callbacks; use Make_Test_Window_Pkg.Callbacks;

@@ -31,7 +31,7 @@ with Aunit_Filters;   use Aunit_Filters;
 with Gtkada.Handlers; use Gtkada.Handlers;
 
 with Gdk.Pixbuf;      use Gdk.Pixbuf;
-with Glide_Intl;      use Glide_Intl;
+with GPS.Intl;      use GPS.Intl;
 with VFS;             use VFS;
 
 package body Make_Harness_Window_Pkg.Callbacks is

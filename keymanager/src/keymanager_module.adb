@@ -59,7 +59,7 @@ with Gtk.Vbutton_Box;           use Gtk.Vbutton_Box;
 with Gtk.Button;                use Gtk.Button;
 with Gtk.Scrolled_Window;       use Gtk.Scrolled_Window;
 with Gtk.Stock;                 use Gtk.Stock;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtk.Widget;                use Gtk.Widget;
 with Gtk.Enums;                 use Gtk.Enums;

@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -54,7 +54,7 @@ with Gtk.Window;                use Gtk.Window;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GUI_Utils;                 use GUI_Utils;
 with String_Utils;              use String_Utils;
 with String_List_Utils;         use String_List_Utils;
@@ -687,17 +687,17 @@ package body Directory_Tree is
          Set_Cursor (Selector.Directory.File_Tree, Path, null, False);
 
          Gtk_New (Menu);
-         Gtk_New (Item, -"Add directory recursive");
+         Gtk_New (Item, "Add directory recursive");
          Widget_Callback.Object_Connect
            (Item, "activate", Add_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
-         Gtk_New (Item, -"Add directory");
+         Gtk_New (Item, "Add directory");
          Widget_Callback.Object_Connect
            (Item, "activate", Add_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
-         Gtk_New (Item, -"Create new subdirectory");
+         Gtk_New (Item, "Create new subdirectory");
          Append (Menu, Item);
          Widget_Callback.Object_Connect
            (Item, "activate", Create_Directory_Cb'Access, Selector);
@@ -751,12 +751,12 @@ package body Directory_Tree is
          end if;
 
          Gtk_New (Menu);
-         Gtk_New (Item, -"Remove directory recursive");
+         Gtk_New (Item, "Remove directory recursive");
          Widget_Callback.Object_Connect
            (Item, "activate", Remove_Directory_Cb'Access, Selector);
          Append (Menu, Item);
 
-         Gtk_New (Item, -"Remove directory");
+         Gtk_New (Item, "Remove directory");
          Widget_Callback.Object_Connect
            (Item, "activate", Remove_Single_Directory_Cb'Access, Selector);
          Append (Menu, Item);
@@ -782,11 +782,11 @@ package body Directory_Tree is
 
    begin
       Gtk_New (Dialog,
-               Title  => -"Create directory",
+               Title  => "Create directory",
                Parent => Gtk_Window (Get_Toplevel (W)),
                Flags  => Modal or Destroy_With_Parent);
 
-      Gtk_New (Label, -"Directory Name:");
+      Gtk_New (Label, "Directory Name:");
       Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Fill => True);
 
       Gtk_New (Ent, Max => 1024);
@@ -794,8 +794,8 @@ package body Directory_Tree is
       Set_Text (Ent, Current_Dir);
       Pack_Start (Get_Vbox (Dialog), Ent, Expand => True, Fill => True);
 
-      Widget := Add_Button (Dialog, -"Create", Gtk_Response_OK);
-      Widget := Add_Button (Dialog, -"Cancel", Gtk_Response_Cancel);
+      Widget := Add_Button (Dialog, "Create", Gtk_Response_OK);
+      Widget := Add_Button (Dialog, "Cancel", Gtk_Response_Cancel);
 
       Show_All (Dialog);
 
@@ -847,7 +847,7 @@ package body Directory_Tree is
       Item : Gtk_Menu_Item;
    begin
       Gtk_New (Menu);
-      Gtk_New (Item, -"Create new subdirectory");
+      Gtk_New (Item, "Create new subdirectory");
       Append (Menu, Item);
       Widget_Callback.Object_Connect
         (Item, "activate", Create_Directory_Cb'Access, Selector);

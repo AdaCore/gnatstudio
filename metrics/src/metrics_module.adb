@@ -22,7 +22,7 @@ with Gtk.Menu_Item;           use Gtk.Menu_Item;
 
 with GPS.Kernel;            use GPS.Kernel;
 with GPS.Kernel.Modules;    use GPS.Kernel.Modules;
-with Glide_Intl;              use Glide_Intl;
+with GPS.Intl;              use GPS.Intl;
 
 package body Metrics_Module is
 

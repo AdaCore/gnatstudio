@@ -36,7 +36,7 @@ with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with GPS.Location_View;           use GPS.Location_View;
-with Glide_Intl;                  use Glide_Intl;
+with GPS.Intl;                  use GPS.Intl;
 
 with Commands;                    use Commands;
 with Commands.Locations;          use Commands.Locations;

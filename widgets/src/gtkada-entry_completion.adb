@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2002-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -39,7 +39,6 @@ with Gtk.Widget;             use Gtk.Widget;
 with Gtk.Window;             use Gtk.Window;
 with Gtkada.Handlers;        use Gtkada.Handlers;
 with Gtkada.Handlers;        use Gtkada.Handlers;
-with Glide_Intl;             use Glide_Intl;
 with String_Utils;           use String_Utils;
 
 package body Gtkada.Entry_Completion is
@@ -129,7 +128,7 @@ package body Gtkada.Entry_Completion is
       Gtk_New (Renderer);
 
       Gtk_New (Col);
-      Set_Title (Col, -"Completions");
+      Set_Title (Col, "Completions");
       Set_Sort_Column_Id (Col, 0);
 
       Num := Append_Column (The_Entry.View, Col);

@@ -20,7 +20,7 @@
 
 with Basic_Types;                      use Basic_Types;
 with GNAT.OS_Lib;                      use GNAT.OS_Lib;
-with Glide_Intl;                       use Glide_Intl;
+with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Frame;                        use Gtk.Frame;

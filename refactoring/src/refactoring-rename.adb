@@ -25,7 +25,7 @@ with GPS.Kernel;           use GPS.Kernel;
 with GPS.Kernel.Contexts;  use GPS.Kernel.Contexts;
 with GPS.Kernel.MDI;       use GPS.Kernel.MDI;
 with GPS.Kernel.Scripts;   use GPS.Kernel.Scripts;
-with Glide_Intl;             use Glide_Intl;
+with GPS.Intl;             use GPS.Intl;
 with Entities;               use Entities;
 with Entities.Queries;       use Entities.Queries;
 with Traces;                 use Traces;

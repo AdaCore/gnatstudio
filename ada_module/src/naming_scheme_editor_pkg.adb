@@ -23,7 +23,7 @@ pragma Style_Checks (Off);
 with Gtk; use Gtk;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
-with Glide_Intl; use Glide_Intl;
+with GPS.Intl; use GPS.Intl;
 with Naming_Scheme_Editor_Pkg.Callbacks; use Naming_Scheme_Editor_Pkg.Callbacks;
 with Gtk.Tree_View; use Gtk.Tree_View;
 with Gtk.Tree_Model; use Gtk.Tree_Model;

@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Intl;                       use Glide_Intl;
+with GPS.Intl;                       use GPS.Intl;
 with GPS.Kernel.Project;             use GPS.Kernel.Project;
 with Gtk.Box;                          use Gtk.Box;
 with Gtk.Combo;                        use Gtk.Combo;

@@ -31,7 +31,7 @@ with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 with Browsers.Canvas;      use Browsers.Canvas;
 with Traces;               use Traces;
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 with GPS.Kernel.Scripts; use GPS.Kernel.Scripts;
 
 with Glib;          use Glib;

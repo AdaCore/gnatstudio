@@ -30,7 +30,7 @@ with Namet;                   use Namet;
 with Projects.Registry;       use Projects.Registry;
 with File_Utils;              use File_Utils;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Glide_Intl;              use Glide_Intl;
+with GPS.Intl;              use GPS.Intl;
 with GNAT.Calendar.Time_IO;   use GNAT.Calendar.Time_IO;
 with Language;                use Language;
 with String_Utils;            use String_Utils;
@@ -1868,7 +1868,7 @@ package body Entities is
    begin
       --  ??? Would be nice to do it as a primitive subprogram of the
       --  LI_Handlers, unfortunately they currently don't have access to
-      --  Glide_Intl for proper translations.
+      --  GPS.Intl for proper translations.
 
       --  Special comments are put in place so that the script to find
       --  translatable string find these as well

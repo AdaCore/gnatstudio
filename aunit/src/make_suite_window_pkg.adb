@@ -31,7 +31,7 @@ with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with Glide_Intl;          use Glide_Intl;
+with GPS.Intl;          use GPS.Intl;
 with Aunit_Utils;         use Aunit_Utils;
 
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;

@@ -35,7 +35,7 @@ with Traces;                  use Traces;
 with Commands.Socket;         use Commands.Socket;
 with Commands;                use Commands;
 
-with Glide_Intl;              use Glide_Intl;
+with GPS.Intl;              use GPS.Intl;
 
 with Ada.Unchecked_Deallocation;
 

@@ -35,7 +35,7 @@ with GNAT.Case_Util;            use GNAT.Case_Util;
 pragma Warnings (Off);
 with GNAT.Expect.TTY;           use GNAT.Expect, GNAT.Expect.TTY;
 pragma Warnings (On);
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Glib.Convert;              use Glib.Convert;
 with Namet;                     use Namet;
 with Opt;                       use Opt;

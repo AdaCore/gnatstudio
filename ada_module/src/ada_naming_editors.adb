@@ -31,7 +31,7 @@ with Casing;                   use Casing;
 with Prj;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with GUI_Utils;                use GUI_Utils;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Projects;                 use Projects;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Projects.Editor;          use Projects, Projects.Editor;

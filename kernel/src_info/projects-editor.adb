@@ -20,7 +20,7 @@
 
 with Ada.Unchecked_Deallocation;
 with File_Utils;                use File_Utils;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Namet;                     use Namet;

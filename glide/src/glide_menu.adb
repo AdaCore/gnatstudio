@@ -28,7 +28,7 @@ with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Gtkada.MDI;                   use Gtkada.MDI;
 with Gtk.Menu_Item;                use Gtk.Menu_Item;
 
-with Glide_Intl;                   use Glide_Intl;
+with GPS.Intl;                   use GPS.Intl;
 
 with GPS.Kernel;                 use GPS.Kernel;
 with GPS.Kernel.Actions;         use GPS.Kernel.Actions;

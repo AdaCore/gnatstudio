@@ -20,7 +20,7 @@
 
 with Glib;                      use Glib;
 with Gtk.Main;                  use Gtk.Main;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with Traces;                    use Traces;

@@ -30,7 +30,7 @@ with GPS.Kernel.Custom;  use GPS.Kernel.Custom;
 with GPS.Kernel.MDI;     use GPS.Kernel.MDI;
 with GPS.Kernel.Modules; use GPS.Kernel.Modules;
 with Glib.Object;          use Glib.Object;
-with Glide_Intl;           use Glide_Intl;
+with GPS.Intl;           use GPS.Intl;
 with Traces;               use Traces;
 with GUI_Utils;            use GUI_Utils;
 with GNAT.Strings;         use GNAT.Strings;

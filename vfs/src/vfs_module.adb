@@ -27,7 +27,7 @@ with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Contexts;     use GPS.Kernel.Contexts;
 with GPS.Kernel.Modules;      use GPS.Kernel.Modules;
 with Traces;                    use Traces;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
 with VFS;                       use VFS;
 with OS_Utils;

@@ -28,7 +28,7 @@ with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
 with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
 with GPS.Kernel.Project;     use GPS.Kernel.Project;
 with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Widget;               use Gtk.Widget;

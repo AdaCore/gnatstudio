@@ -39,7 +39,7 @@ with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Projects.Registry;         use Projects.Registry;
 with Custom_Naming_Editors;     use Custom_Naming_Editors;
 with GPS.Kernel;              use GPS.Kernel;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Project_Viewers;           use Project_Viewers;
 with Naming_Editors;            use Naming_Editors;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;

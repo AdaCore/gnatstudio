@@ -62,7 +62,7 @@ with GPS.Kernel;              use GPS.Kernel;
 with GPS.Kernel.Hooks;        use GPS.Kernel.Hooks;
 with GPS.Kernel.Preferences;  use GPS.Kernel.Preferences;
 with GVD.Preferences;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with Layouts;                   use Layouts;
 with VFS;                       use VFS;
 with Traces;                    use Traces;

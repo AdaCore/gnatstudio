@@ -28,7 +28,7 @@ with ALI_Parser;               use ALI_Parser;
 with Entities;                 use Entities;
 with Language.Ada;             use Language.Ada;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
-with Glide_Intl;               use Glide_Intl;
+with GPS.Intl;               use GPS.Intl;
 with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;

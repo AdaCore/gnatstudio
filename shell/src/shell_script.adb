@@ -30,7 +30,7 @@ with GNAT.Debug_Utilities;      use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Glib.Object;               use Glib.Object;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 with GPS.Kernel.Actions;      use GPS.Kernel.Actions;
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.MDI;          use GPS.Kernel.MDI;

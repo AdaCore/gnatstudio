@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with GPS.Kernel;           use GPS.Kernel;
-with Glide_Intl;             use Glide_Intl;
+with GPS.Intl;             use GPS.Intl;
 with VFS;                    use VFS;
 with Entities;               use Entities;
 

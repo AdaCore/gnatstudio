@@ -32,7 +32,7 @@ with Gtk.Widget;                use Gtk.Widget;
 
 with GPS.Kernel.Console;      use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;      use GPS.Kernel.Scripts;
-with Glide_Intl;                use Glide_Intl;
+with GPS.Intl;                use GPS.Intl;
 
 with Custom_Module;             use Custom_Module;
 with GUI_Utils;                 use GUI_Utils;

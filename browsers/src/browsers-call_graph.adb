@@ -62,7 +62,7 @@ with GPS.Kernel.Scripts;          use GPS.Kernel.Scripts;
 with VFS;                           use VFS;
 with Commands.Interactive;          use Commands, Commands.Interactive;
 
-with Glide_Intl;       use Glide_Intl;
+with GPS.Intl;       use GPS.Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 
 with Ada.Text_IO;      use Ada.Text_IO;
