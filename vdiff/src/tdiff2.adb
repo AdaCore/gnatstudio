@@ -4,7 +4,7 @@
 --                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS   is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -24,8 +24,13 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 procedure TDiff2 is
    use Diff_Chunk_List;
+
    procedure Print (R : Diff_Range);
    --  Print a given line range on standard output.
+
+   -----------
+   -- Print --
+   -----------
 
    procedure Print (R : Diff_Range) is
    begin
@@ -52,22 +57,24 @@ begin
    Diff_Utils2.Simplify (Result, 2);
 
    Tmp_Node := First (Result);
+
    loop
       exit when Tmp_Node = Null_Node;
       Tmp := Data (Tmp_Node);
+
       if Tmp.Conflict then
-         Put ("Conflit ");
+         Put ("Conflict ");
       end if;
       Put_Line ("======" & T_Loc'Image (Tmp.Location));
-      Put ("    Fichier 1 : ");
+      Put ("    File 1: ");
       Put (Diff_Action'Image (Tmp.Range1.Action));
       Print (Tmp.Range1);
       New_Line;
-      Put ("    Fichier 2 : ");
+      Put ("    File 2: ");
       Put (Diff_Action'Image (Tmp.Range2.Action));
       Print (Tmp.Range2);
       New_Line;
-      Put ("    Fichier 3 : ");
+      Put ("    File 3: ");
       Put (Diff_Action'Image (Tmp.Range3.Action));
       Print (Tmp.Range3);
       New_Line;
