@@ -208,7 +208,7 @@ package body Prj_Normalize is
       Construct, Str, S, Item : Project_Node_Id;
       Ref : String_Id;
    begin
-      --  Makre sure there is a definition for this variable (and its type) at
+      --  Makee sure there is a definition for this variable (and its type) at
       --  the top-level of the project (not in a package nor in another
       --  project).
       --  This is required so that normalized projects might be standalone.
@@ -341,7 +341,7 @@ package body Prj_Normalize is
          Name : constant String_Id := External_Variable_Name
            (Project, Case_Variable_Reference_Of (Case_Stmt));
          Choice : String_Id;
-         Current_Item, New_Case : Project_Node_Id;
+         Current_Item, New_Case, Declarative : Project_Node_Id;
          V : Variable_Values;
          Found : Boolean;
          Match : Variable_Values;
@@ -410,8 +410,13 @@ package body Prj_Normalize is
                         New_Case := Create_Case_Construction
                           (Project, V, New_Case);
                         Process_Case_Recursive (New_Case);
+
+                        Declarative := Default_Project_Node
+                          (N_Declarative_Item, Prj.Single);
+                        Set_Current_Item_Node (Declarative, New_Case);
+
                         Set_First_Declarative_Item_Of
-                          (Current_Item, New_Case);
+                          (Current_Item, Declarative);
                         exit;
                      end if;
                      V := V.Next;
