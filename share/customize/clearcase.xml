@@ -190,7 +190,7 @@
       <commit           action="clearcase_checkin"        label="Check in"/>
       <history          action="clearcase_history"        label="View entire revision history"/>
       <history_revision action="clearcase_history_rev"    label="View specific revision history"/>
-      <annotate         action="clearcase_annotate"       label="Annotate"/>
+      <annotate         action="clearcase_annotate"       label="Annotations"/>
       <add              action="clearcase_add"            label="Add"/>
       <remove           action="clearcase_remove"         label="Remove"/>
       <revert           action="clearcase_uncheckout"     label="Cancel checkout"/>
