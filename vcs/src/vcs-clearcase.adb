@@ -1343,7 +1343,7 @@ package body VCS.ClearCase is
             Free (Args);
             Free (Head);
 
-            --  Add the file
+            --  Remove the file
 
             Append (Args, "rm");
             Append (Args, "-c");
