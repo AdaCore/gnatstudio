@@ -237,15 +237,20 @@ package body Glide_Kernel.Project is
       Had_Project_Desktop : Boolean;
       New_Project_Loaded : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
+      Same_Project : constant Boolean :=
+        Project = Project_Path (Get_Root_Project (Kernel.Registry.all));
 
    begin
-      if not Save_All_MDI_Children (Kernel, Force => False) then
-         return;
-      end if;
+      --  Unless we are reloading the same project
+      if not Same_Project then
+         if not Save_All_MDI_Children (Kernel, Force => False) then
+            return;
+         end if;
 
-      --  Close all children before loading the new projet, in case a new
-      --  editor needs to be loaded to display error messages
-      Close_All_Children (Kernel);
+         --  Close all children before loading the new projet, in case a new
+         --  editor needs to be loaded to display error messages
+         Close_All_Children (Kernel);
+      end if;
 
       if Is_Regular_File (Project) then
          Load (Registry           => Kernel.Registry.all,
@@ -262,10 +267,12 @@ package body Glide_Kernel.Project is
 
          --  Reload the desktop, in case there is a project-specific setup
          --  already
-         Had_Project_Desktop := Load_Desktop (Kernel);
+         if not Same_Project then
+            Had_Project_Desktop := Load_Desktop (Kernel);
+            Reset_Title (Glide_Window (Kernel.Main_Window));
+         end if;
 
-         Reset_Title (Glide_Window (Kernel.Main_Window));
-      else
+      elsif not Same_Project then
          Load_Default_Project (Kernel, Directory => Get_Current_Dir);
       end if;
    end Load_Project;
