@@ -586,6 +586,8 @@ package Src_Editor_Buffer is
    procedure Add_Blank_Lines
      (Editor : access Source_Buffer_Record;
       Line   : Editable_Line_Type;
+      GC     : Gdk.GC.Gdk_GC;
+      Text   : String;
       Number : Positive);
    --  Add Number blank lines at line Line.
    --  Blank lines cannot be edited, and are not saved on disk.
@@ -836,6 +838,9 @@ private
 
       HL_Region_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
       --  A tag used when highlighting regions
+
+      Non_Editable_Tag : Gtk.Text_Tag.Gtk_Text_Tag;
+      --  A tag for text that cannot be interactively deleted.
 
       Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
       --  This is a copy of the "insert" mark or the "gtk_drag_target" mark.
