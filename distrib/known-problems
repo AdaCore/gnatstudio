@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.2.0
 
+- Extended project nodes duplicated in explorer when recomputing view
+  Problem:    If your project hierarchy includes extended project, and you
+              select the menu Project->Recompute View, the extended project
+              nodes are duplicated, and the exec directories disappear
+  Workaround: Reload the project through Project->Recent instead
+
 - Problem:    When switching from an editor to another, the editors scroll
               back to the place where their cursor is set, not to the point
               that was viewed the most recently.
