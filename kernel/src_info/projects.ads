@@ -218,17 +218,6 @@ package Projects is
    --  If Project is No_Project, the default GNAT naming scheme is used (for
    --  runtime files)
 
-   function Find_On_Path
-     (Project   : Project_Type;
-      Filename  : String;
-      Recursive : Boolean := False) return String;
-   --  Return the absolute path name for Filename. It is searched in the
-   --  source path for Project (and its children if Recursive is True).
-   --  A special case is done if Filename is a project file name, which is
-   --  then also searched outside the source path, among the already loaded
-   --  projects.
-   --  Filename is returned if the file wasn't found.
-
    ----------------
    -- Attributes --
    ----------------

@@ -392,7 +392,7 @@ package body Projects is
          exit when P = No_Project;
 
          declare
-            Path : constant String := Include_Path (Project, False);
+            Path : constant String := Include_Path (P, False);
          begin
             View := Get_View (P);
             Src  := Prj.Projects.Table (View).Sources;
@@ -885,65 +885,6 @@ package body Projects is
          end if;
       end;
    end Other_File_Name;
-
-   ------------------
-   -- Find_On_Path --
-   ------------------
-
-   function Find_On_Path
-     (Project   : Project_Type;
-      Filename  : String;
-      Recursive : Boolean := False) return String
-   is
-      F : GNAT.OS_Lib.String_Access;
-      Iterator : Imported_Project_Iterator;
-      P : Project_Type;
-   begin
-      if Is_Absolute_Path (Filename) then
-         return Normalize_Pathname (Filename);
-      else
-         --  If we are editing a project file, check in the loaded tree first
-         --  (in case an old copy is kept somewhere in the source or object
-         --  path)
-
-         if GNAT.Directory_Operations.File_Extension (Filename) =
-           Prj.Project_File_Extension
-         then
-            Iterator := Start (Project);
-            loop
-               P := Current (Iterator);
-               exit when P = No_Project;
-
-               if Project_Name (P) & Project_File_Extension = Filename then
-                  return Project_Path (P);
-               end if;
-
-               Next (Iterator);
-            end loop;
-         end if;
-
-         F := Locate_Regular_File
-           (Filename, Include_Path (Project, Recursive => Recursive));
-
-         --  Check the object directory too, for instance for the
-         --  compiler-generated files (binder files, ...)
-         if F = null then
-            F := Locate_Regular_File
-              (Filename, Object_Path (Project, Recursive => Recursive));
-         end if;
-
-         if F /= null then
-            declare
-               S : constant String := Normalize_Pathname (F.all);
-            begin
-               Free (F);
-               return S;
-            end;
-         end if;
-      end if;
-
-      return Filename;
-   end Find_On_Path;
 
    -------------------------
    -- Get_Attribute_Value --
