@@ -416,15 +416,49 @@ package body GNAT.Expect is
    procedure Expect
      (Pid         : in out Pipes_Id;
       Result      : out Expect_Match;
+      Regexp      : String;
+      Matched     : GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False)
+   is
+   begin
+      pragma Assert (Matched'First = 0);
+      Expect (Pid, Result, Compile (Regexp), Matched, Timeout, Full_Buffer);
+   end Expect;
+
+   ------------
+   -- Expect --
+   ------------
+
+   procedure Expect
+     (Pid         : in out Pipes_Id;
+      Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
       Timeout     : Integer := 10000;
       Full_Buffer : Boolean := False)
    is
-      N       : Expect_Match;
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
+   begin
+      Expect (Pid, Result, Regexp, Matched, Timeout, Full_Buffer);
+   end Expect;
+
+   ------------
+   -- Expect --
+   ------------
+
+   procedure Expect
+     (Pid         : in out Pipes_Id;
+      Result      : out Expect_Match;
+      Regexp      : GNAT.Regpat.Pattern_Matcher;
+      Matched     : GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False)
+   is
+      N       : Expect_Match;
       Pids    : Array_Of_Fd (1 .. 1) := (1 => Pid'Unrestricted_Access);
 
    begin
+      pragma Assert (Matched'First = 0);
       Reinitialize_Buffer (Pid);
 
       loop
@@ -526,6 +560,8 @@ package body GNAT.Expect is
    is
       Patterns : Compiled_Regexp_Array (Regexps'Range);
    begin
+      pragma Assert (Matched'First = 0);
+
       for J in Regexps'Range loop
          Patterns (J) := new Pattern_Matcher'(Compile (Regexps (J).all));
       end loop;
@@ -553,6 +589,8 @@ package body GNAT.Expect is
       Pids    : Array_Of_Fd (1 .. 1) := (1 => Pid'Unrestricted_Access);
 
    begin
+      pragma Assert (Matched'First = 0);
+
       Reinitialize_Buffer (Pid);
 
       loop
@@ -601,6 +639,8 @@ package body GNAT.Expect is
       Pids    : Array_Of_Fd (Regexps'Range);
 
    begin
+      pragma Assert (Matched'First = 0);
+
       for J in Pids'Range loop
          Pids (J) := Regexps (J).Pid;
          Reinitialize_Buffer (Regexps (J).Pid.all);

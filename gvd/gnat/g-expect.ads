@@ -1,4 +1,7 @@
 
+--  Usage
+--  =====
+--
 --  This package provides a set of subprograms similar to what is available
 --  with the standard Tcl Expect tool.
 --  It allows you to easily spawn and communicate with an external process.
@@ -9,7 +12,8 @@
 --
 --      Fd := Non_Blocking_Spawn ("ftp machine@domaine");
 --      Timeout := 10000;  --  10 seconds
---      Expect (Fd, Result, (+"\(user\)", +"\(passwd\)"), Timeout);
+--      Expect (Fd, Result, Regexp_Array'(+"\(user\)", +"\(passwd\)"),
+--              Timeout);
 --      case Result is
 --         when 1 => Send (Fd, "my_name");   --  matched "user"
 --         when 2 => Send (Fd, "my_passwd"); --  matched "passwd"
@@ -17,6 +21,20 @@
 --         when others => null;
 --      end case;
 --      Close (Fd);
+--
+--  You can also combine multiple regular expressions together, and get the
+--  specific string matching a parenthesis pair by doing something like. If you
+--  expect either "lang=optional ada" or "lang=ada" from the external process,
+--  you can group the two together, which is more efficient, and simply get the
+--  name of the language by doing:
+--
+--      declare
+--         Matched : Regexp_Array (0 .. 2);
+--      begin
+--         Expect (Fd, Result, "lang=(optional)? ([a-z]+)", Matched);
+--         Put_Line ("Seen: " &
+--                   Expect_Out (Fd) (Matched (2).First .. Matched (2).Last));
+--      end;
 --
 --  Alternatively, you might choose to use a lower-level interface to the
 --  processes, where you can give your own input and output filters every
@@ -209,6 +227,34 @@ package GNAT.Expect is
    --  expression multiple times, since this package won't need to recompile
    --  the regexp every time.
 
+   procedure Expect
+     (Pid         : in out Pipes_Id;
+      Result      : out Expect_Match;
+      Regexp      : String;
+      Matched     : GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  Same as above, but it is now possible to get the indexes of the
+   --  substrings for the parentheses in the regexp (see the example at the
+   --  top of this package, as well as the documentation in the package
+   --  GNAT.Regpat).
+   --  Matched'First should be 0, and this index will contain the indexes for
+   --  the whole string that was matched. The index 1 will contain the indexes
+   --  for the first parentheses-pair, and so on.
+
+   ------------
+   -- Expect --
+   ------------
+
+   procedure Expect
+     (Pid         : in out Pipes_Id;
+      Result      : out Expect_Match;
+      Regexp      : GNAT.Regpat.Pattern_Matcher;
+      Matched     : GNAT.Regpat.Match_Array;
+      Timeout     : Integer := 10000;
+      Full_Buffer : Boolean := False);
+   --  Same as above, but with a precompiled regular expression.
+
    -------------------------------------------------------------
    -- Working on the output (single process, multiple regexp) --
    -------------------------------------------------------------
@@ -255,7 +301,9 @@ package GNAT.Expect is
    --  Same as above, except that you can also access the parenthesis
    --  groups inside the matching regular expression.
    --  The first index in Matched must be 0, or Constraint_Error will be
-   --  raised.
+   --  raised. The index 0 contains the indexes for the whole string that was
+   --  matched, the index 1 contains the indexes for the first parentheses
+   --  pair, and so on.
 
    procedure Expect
      (Pid         : in out Pipes_Id;
