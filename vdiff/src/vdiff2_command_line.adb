@@ -108,6 +108,7 @@ package body Vdiff2_Command_Line is
       List      : constant Diff_Chunk_List.List := Item.List;
       Curr_Node : Diff_Chunk_List.List_Node := First (List);
       Diff      : Diff_Chunk_Access;
+
    begin
 
       while Curr_Node /= Diff_Chunk_List.Null_Node
@@ -183,6 +184,7 @@ package body Vdiff2_Command_Line is
       if Num_File = Diff.Ref_File or Num_File = 0 then
          return;
       end if;
+
       Move_Block (Kernel, VFile (Num_File).all, VFile (Diff.Ref_File).all,
                   VRange (Num_File), VRange (Diff.Ref_File));
    end Move_On_Ref_File;
