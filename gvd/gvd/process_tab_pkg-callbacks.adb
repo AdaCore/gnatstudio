@@ -428,15 +428,26 @@ package body Process_Tab_Pkg.Callbacks is
                   Output ((1 => ASCII.LF));
 
                   for J in S'Range loop
-                     if (J mod Num) = 0 then
-                        Output ((1 => ASCII.LF));
+                     if Num = 0 then
+                        --  The maximal length is greater than Width, do not
+                        --  attempt to be smart.
+
+                        if J /= S'First then
+                           Output ((1 => ASCII.LF));
+                        end if;
+
+                        Output (S (J).all);
+                     else
+                        if (J mod Num) = 0 then
+                           Output ((1 => ASCII.LF));
+                        end if;
+
+                        Output (S (J).all);
+
+                        for K in S (J)'Length .. Max + 2 loop
+                           Output (" ");
+                        end loop;
                      end if;
-
-                     Output (S (J).all);
-
-                     for K in S (J)'Length .. Max + 2 loop
-                        Output (" ");
-                     end loop;
                   end loop;
 
                   Output ((1 => ASCII.LF));
