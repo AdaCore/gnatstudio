@@ -135,7 +135,7 @@ package body OS_Utils is
       Length : Integer;
 
    begin
-      FD := Open_Read (File, Fmode => Text);
+      FD := Open_Read (File, Fmode => Binary);
 
       if FD = Invalid_FD then
          return null;
