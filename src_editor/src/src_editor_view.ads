@@ -98,6 +98,19 @@ package Src_Editor_View is
    procedure Delete (View : access Source_View_Record);
    --  Free memory associated to View.
 
+   procedure Set_Synchronized_Editor
+     (View  : access Source_View_Record;
+      Other : Source_View);
+   --  Set the synchronized editor.
+   --  In order to synchronize two editors, call
+   --     Set_Synchronized_Editor (A, B);
+   --  and
+   --     Set_Synchronized_Editor (B, A);
+   --  In order to synchronize N editors, it is necessary to synchronize
+   --  them in a loop.
+   --  When one editor is closed, all the other editors that were synchronized
+   --  with it are no longer synchronized between themselves.
+
 private
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record with
@@ -146,6 +159,14 @@ private
       Current_Block       : Src_Editor_Buffer.Block_Record;
       --  Cache used to prevent redrawing the whole buffer when the cursor
       --  doesn't leave the current block.
+
+      Scrolling           : Boolean := False;
+      --  Whether the editor is currently scrolling. Used as a flag to avoid
+      --  loops in circuitries when using synchronized scrolling.
+
+      Synchronized_Editor : Source_View := null;
+      --  An editor which should have a scrolling synchronized with this
+      --  editor.
    end record;
 
 end Src_Editor_View;
