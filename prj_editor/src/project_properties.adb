@@ -832,7 +832,7 @@ package body Project_Properties is
               & ASCII.LF
               & "loaded by GPS. Editing it through the project properties"
               & ASCII.LF
-              & "dialog might result in a lose of data.")));
+              & "dialog might result in a loss of data.")));
       Set_Alignment (L, 0.0, 0.5);
       Pack_Start (Get_Vbox (D), L, Expand => True, Fill => True);
 
