@@ -2198,24 +2198,32 @@ package body Debugger.Gdb is
          & Image (Image'First + 1 .. Image'Last)
          & "bx " & Address, Mode => Internal);
       S_Index      : Integer := S'First + 2;
+      Last_Index   : Integer := S'First + 2;
       Result_Index : Integer := 1;
    begin
       --  Detect "Cannot access memory at ..."
-      Skip_To_String (S, S_Index, Error_String);
+      Skip_To_String (S, Last_Index, Error_String);
 
-      if S_Index <= S'Last - Error_String'Length then
+      if Last_Index <= S'Last - Error_String'Length then
+         while S_Index <= Last_Index loop
+            --  Detect actual data : 0xXX right after an ASCII.HT.
+            if S (S_Index) = '0' then
+               if S (S_Index - 1) = ASCII.HT then
+                  Result (Result_Index .. Result_Index + 1) :=
+                    S (S_Index + 2 .. S_Index + 3);
+                  Result_Index := Result_Index + 2;
+               end if;
+            end if;
+            S_Index := S_Index + 1;
+         end loop;
          while Result_Index <= Result'Last loop
             Result (Result_Index) := '-';
             Result_Index := Result_Index + 1;
          end loop;
-
          return Result;
       end if;
 
-      S_Index := S'First + 2;
-
       while S_Index <= S'Last loop
-
          --  Detect actual data : 0xXX right after an ASCII.HT.
          if S (S_Index) = '0' then
             if S (S_Index - 1) = ASCII.HT then
