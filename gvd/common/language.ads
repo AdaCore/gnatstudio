@@ -151,6 +151,12 @@ package Language is
 
       Constant_Character : Character;
       --  The character that starts and ends constant characters
+
+      Can_Indent         : Boolean;
+      --  Whether indentation is supproted by this language.
+
+      Syntax_Highlighting : Boolean;
+      --  Whether syntax highlighting is relevant to this language.
    end record;
    --  This record describes the syntax of the language (for color
    --  highlighting purposes). All the fields in this record are language
@@ -365,9 +371,6 @@ package Language is
    --  Same as Parse_Constructs, but works on a given file.
    --  Since Parse_File_Constructs calls Parse_Constructs, this function does
    --  not need to be dispatching.
-
-   function Can_Indent (Lang : access Language_Root) return Boolean;
-   --  Return whether the given language supports indentation
 
    procedure Next_Indentation
      (Lang          : access Language_Root;
