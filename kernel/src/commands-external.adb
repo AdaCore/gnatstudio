@@ -191,10 +191,7 @@ package body Commands.External is
       --  ??? This implementation is temporary, a general way of spawning
       --  commands should not be system-dependant
 
-      if Exec_Command = "cmd /c" then
-         --  ??? (should find a better way of finding out whether we are under
-         --  windows.)
-
+      if Host = Windows then
          Exec_Command_Args :=
            GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
          Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
