@@ -10,7 +10,7 @@ root=`dirname $0`
 
 root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
-PANGO_RC_FILE=$root/share/gps/pangorc
+PANGO_RC_FILE=$root/etc/gps/pangorc
 export LD_LIBRARY_PATH PANGO_RC_FILE
 GDK_USE_XFT=False
 exec $root/bin/${prog}_exe "$@"
