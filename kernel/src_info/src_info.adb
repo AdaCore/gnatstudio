@@ -18,34 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
 with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
 with Types;                     use Types;
 with Prj;                       use Prj;
 with Prj.Env;                   use Prj.Env;
-with Namet;                     use Namet;
-with Prj_API;                   use Prj_API;
 with Traces;                    use Traces;
+with Language_Handlers.Glide;   use Language_Handlers.Glide;
 
 package body Src_Info is
 
    Me : Debug_Handle := Create ("Src_Info");
-
-   type LI_Handler_List_Record;
-   type LI_Handler_List is access LI_Handler_List_Record;
-   type LI_Handler_List_Record is record
-      Handler  : LI_Handler;
-      Language : Name_Id;
-      Next     : LI_Handler_List;
-   end record;
-
-   LI_Handlers : LI_Handler_List;
-   --  Global variable to store all the registered handlers. This has to be a
-   --  global variable, since we want to be able to eventually move this
-   --  package to the GNAT sources (thus we can't associated this with the
-   --  kernel).
 
    Base_Year         : constant := 1990;
    --  Year used as year 0 when computing timestamps. This avoids range
@@ -577,12 +561,13 @@ package body Src_Info is
 
    function Make_Source_File
      (Source_Filename        : String;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return Internal_File
    is
       ALI : constant String := LI_Filename_From_Source
-        (Handler                =>
-           Handler_From_Filename (Project, Source_Filename),
+        (Handler                => Get_LI_Handler_From_File
+           (Glide_Language_Handler (Handler), Source_Filename),
          Source_Filename        => Source_Filename,
          Project                => Project,
          Predefined_Source_Path => Predefined_Source_Path);
@@ -789,42 +774,6 @@ package body Src_Info is
 
       return File.Directory_Name.all;
    end Get_Directory_Name;
-
-   ---------------------------
-   -- Handler_From_Filename --
-   ---------------------------
-
-   function Handler_From_Filename
-     (Project : Project_Id; Source_Filename : String) return LI_Handler
-   is
-      Tmp : LI_Handler_List := LI_Handlers;
-      Lang : Name_Id := Get_Language_Of (Project, Base_Name (Source_Filename));
-   begin
-      while Tmp /= null loop
-         if Lang = Tmp.Language then
-            return Tmp.Handler;
-         end if;
-
-         Tmp := Tmp.Next;
-      end loop;
-
-      Trace (Me, "Unsupported language for " & Source_Filename);
-      Raise_Exception (Unsupported_Language'Identity,
-                       "Unsupported language for " & Source_Filename);
-      return null;
-   end Handler_From_Filename;
-
-   -------------------------
-   -- Register_LI_Handler --
-   -------------------------
-
-   procedure Register_LI_Handler (Handler : LI_Handler; Language : String) is
-   begin
-      Name_Len := Language'Length;
-      Name_Buffer (1 .. Name_Len) := Language;
-      LI_Handlers := new LI_Handler_List_Record'
-        (Handler => Handler, Language => Name_Find, Next => LI_Handlers);
-   end Register_LI_Handler;
 
    ------------------
    -- To_Timestamp --

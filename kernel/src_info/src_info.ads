@@ -22,6 +22,7 @@ with HTables;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Prj;
+with Language_Handlers;
 
 package Src_Info is
 
@@ -89,6 +90,7 @@ package Src_Info is
 
    function Make_Source_File
      (Source_Filename        : String;
+      Handler         : access Language_Handlers.Language_Handler_Record'Class;
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
@@ -137,21 +139,6 @@ package Src_Info is
    --  cross-references, and the various queries for the browsers).
    --  Derived types should be created for all the languages supported by
    --  Glide2.
-
-   Unsupported_Language : exception;
-   --  Raised when a file name can not be associated with one of the handlers.
-
-   function Handler_From_Filename
-     (Project : Prj.Project_Id; Source_Filename : String) return LI_Handler;
-   --  Return the handle to use for the given filename.
-   --  Raise Unsupported_Language if not handler was found.
-   --  Project_View should be the project to which Source_Filename belongs.
-
-   procedure Register_LI_Handler
-     (Handler : LI_Handler; Language : String);
-   --  Add Handler to the list of known handlers.
-   --  Language should be a lower-case string that describes the language (in
-   --  the project file) that handler is associated with.
 
    procedure Create_Or_Complete_LI
      (Handler                : access LI_Handler_Record;
