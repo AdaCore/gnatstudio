@@ -40,7 +40,6 @@ with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Enums;            use Gtk.Enums;
 with Gtk.Menu;             use Gtk.Menu;
-with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.Types;         use Gtkada.Types;
@@ -60,7 +59,6 @@ with Basic_Types;              use Basic_Types;
 with String_Utils;             use String_Utils;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
-with Glide_Kernel.Editor;      use Glide_Kernel.Editor;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
@@ -1782,7 +1780,6 @@ package body Project_Explorers is
       File    : constant String_Id := Get_File_From_Node (Explorer, Node);
       N       : Gtk_Ctree_Node := Node;
       User    : constant User_Data := Node_Get_Row_Data (Explorer.Tree, N);
-      Ignored : Boolean;
 
    begin
       case User.Node_Type is
@@ -1794,10 +1791,11 @@ package body Project_Explorers is
                Dir_S  : constant String :=
                  Get_Directory_From_Node (Explorer, N);
             begin
-               Go_To (Explorer.Kernel,
-                      Dir_S & File_S,
-                      User.Sloc_Start.Line, User.Sloc_Start.Column,
-                      Success => Ignored);
+               Open_File_Editor
+                 (Explorer.Kernel,
+                  Dir_S & File_S,
+                  Line   => User.Sloc_Start.Line,
+                  Column => User.Sloc_Start.Column);
             end;
 
          when File_Node =>
@@ -1807,8 +1805,7 @@ package body Project_Explorers is
                Dir_S  : constant String :=
                  Get_Directory_From_Node (Explorer, N);
             begin
-               Open_File (Explorer.Kernel, Dir_S & File_S, Ignored);
-               --  ??? Can the result be ignored here?
+               Open_File_Editor (Explorer.Kernel, Dir_S & File_S);
             end;
 
          when others =>
@@ -1902,9 +1899,7 @@ package body Project_Explorers is
    -----------------------
 
    procedure Initialize_Module
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
-      Mitem    : Gtk_Menu_Item;
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       --  If a desktop was loaded, we do not want to force an explorer if none
       --  was saved. However, in the default case we want to open an explorer.
@@ -1912,12 +1907,8 @@ package body Project_Explorers is
          On_Open_Explorer (Kernel, Kernel_Handle (Kernel));
       end if;
 
-      Gtk_New (Mitem, -"Explorer");
-      Register_Menu (Kernel, '/' & (-"Tools"), Mitem);
-      Kernel_Callback.Connect
-        (Mitem, "activate",
-         Kernel_Callback.To_Marshaller (On_Open_Explorer'Access),
-         Kernel_Handle (Kernel));
+      Register_Menu (Kernel, '/' & (-"Tools"),
+                    -"Explorer", "", On_Open_Explorer'Access);
    end Initialize_Module;
 
    ---------------------
