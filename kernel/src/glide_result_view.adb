@@ -488,11 +488,9 @@ package body Glide_Result_View is
       Dummy         : Gint;
 
    begin
-      Gtk_New (Text_Rend);
       Gtk_New (Pixbuf_Rend);
 
       Set_Rules_Hint (Tree, False);
-
 
       Gtk_New (Col);
       Gtk_New (Pixbuf_Rend);
@@ -500,6 +498,8 @@ package body Glide_Result_View is
       Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Button_Column);
       Dummy := Append_Column (Tree, Col);
 
+      Gtk_New (Text_Rend);
+      Gtk_New (Pixbuf_Rend);
 
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
