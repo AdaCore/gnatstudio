@@ -50,6 +50,7 @@ with GNAT.Command_Line; use GNAT.Command_Line;
 
 with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
+with Language.Debugger.Cpp; use Language.Debugger.Cpp;
 with Language;              use Language;
 with Display_Items;         use Display_Items;
 with GVD.Strings;           use GVD.Strings;
@@ -148,10 +149,17 @@ procedure GVD_Main is
 
       --  ??? This should be moved in a future "preferences" package, so as to
       --  accomodate user's specific extensions
+      --  ??? Pb with .c files, which can be both C or C++. The best would be
+      --  to ask the debugger, since it would also remove the need for
+      --  explicit registration.
+      --  ??? If we want to support modules, we can not register an explicit
+      --  instance. We need to rely on each module for registration.
       Add_File_Extension (new Ada_Language, "\.adb$");
       Add_File_Extension (new Ada_Language, "\.ads$");
       Add_File_Extension (new C_Language, "\.c$");
       Add_File_Extension (new C_Language, "\.h$");
+      Add_File_Extension (new Cpp_Language, "\.cc$");
+      Add_File_Extension (new Cpp_Language, "\.hh$");
    end Init;
 
    function Format (Str : String; Columns : Positive) return String is
