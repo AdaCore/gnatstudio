@@ -14,6 +14,9 @@ the following directories/links:
   The link should point to the src/ada directory in the GNAT sources.
   This tool requires at least GNAT 3.15.
 
+- Put a link called "gtkada" in the directory that contains this README file.
+  The link should point to the top level GtkAda source directory.
+
 IMPORTANT NOTICE: you need to use the same version of GNAT sources and binaries.
 
 All the tools need access to an installed version of GtkAda 2.0 (GtkAda 1.2
@@ -29,7 +32,7 @@ gbuilder/
 glide/
 gnat/
 gnat_src -> /home/my_account/gnat/src/ada
-gtkada-> /home/my_account/gtk/GtkAda
+gtkada -> /home/my_account/gtk/GtkAda
 gvd/
 hypergrep/
 kernel/
