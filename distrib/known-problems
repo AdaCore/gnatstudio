@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 1.0.1
 
+- Incorrect project file set when spawning external Emacs editor
+  Problem:    It might happen that the project file used in the external Emacs
+              editors spawned by GPS is not the same one as in GPS.
+  Workaround: Explicitely load the project file through the menu Project->Load
+              in Emacs.
+
 - Newly created projects sometimes have external variables
   Problem:    If you have loaded a project with external variables in GPS,
               the new projects created through Project->New will inherit
