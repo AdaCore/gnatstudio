@@ -1349,7 +1349,7 @@ layout you want.
 
 All split windows can be resized interactively by dragging the handles that
 separate them, just as is done for docked windows. A preference (menu
-@code{Edit->Preferences} controls whether this resizing is done in opaque
+@code{Edit->Preferences}) controls whether this resizing is done in opaque
 mode or border mode. In the latter case, only the new handle position will
 be displayed while the mouse is dragged.
 
@@ -3114,7 +3114,7 @@ scenarios.
 All the attributes of a project, except its list of imported projects,
 can be chosen based on the value of external variables, whose value is
 generally coming from the host computer environment, or directly set in
-GPS (using the small area on top of the project explorer (@ref{The
+GPS (using the small area on top of the project explorer, @ref{The
 Project Explorer}).
 
 @cindex compile
@@ -3286,7 +3286,7 @@ have a special icon (a red exclamation mark is drawn on top of the
 standard icon). If you would rather save all the modified projects in
 a single step, use the menu bar item @code{Project->Save All}.
 
-@item Edit Project Properties
+@item Edit Project/Properties
 This item will open a new dialog, and give access to all the
 attributes of the project: tool switches, naming schemes, source
 directories, @dots{} @xref{The Project Properties Editor}.
@@ -3298,17 +3298,52 @@ manually edit it. This should be used if you need to access some
 features of the project files that are not accessible graphically
 (renames statements, variables, @dots{})
 
-@item Add Dependency...
-@cindex add dependency
-This menu and its two sub-menus are the primary way to change the
-relationship between projects in the hierarchy. You can either add a
-dependency on an already existing project, or a dependency on a newly
-created project.
+@item Edit Project/Dependencies...
+@cindex project dependency
+This menu gives access to a GPS wizard that allows you to edit dependencies
+between projects.
 
-@item Remove Dependency...
-@cindex remove dependency
-This menu item is the opposite of the previous one, and will remove a
-dependency between two projects
+This relationship between projects is extremely important, since it determines
+that source files the project's sources can depend on. For instance, if you
+are writting an XML application based on XML/Ada, you will need to make
+your project depend on @file{xmlada.gpr}. 
+
+The dependencies also determine in what order your application is build.
+When you compile a project, GPS will always first make sure that the projects
+is depends on are up-to-date, and otherwise recompile them.
+
+You can add or remove dependencies for your project through this wizard. There
+are three pages:
+@itemize @bullet
+@cindex limited with
+@item The first page allows you to define dependencies among the projects
+ currently loaded in GPS. Some special handling is made to avoid circular
+ dependencies in the project tree, and a different form of dependency is used
+ in such a case, a @code{limited with} clause. See the GNAT documentation for
+ more information. Basically, this limited clause allows circular dependencies
+ between projects (not between sources, this is dependent on your programming
+ language). However, it means that a projects that imports another one through
+ this limited clause cannot reference attributes in that other project (and
+ thus for instance can not say "Reuse the same switches as that other project").
+
+@item The second page will look for all the project files it can find in the
+ list of directories specified in your @code{ADA_PROJECT_PATH} environment
+ variable, as well as in the predefined project path set by the compiler.
+ All the projects it has found will be listed on that page, so that you can
+ easily add dependencies to projects like @file{xmlada.gpr} for instance,
+ provided you have installed that library on your system.
+
+@item The third page allows you to create a dependency with any project
+ anywhere on your file system, or even projects that you create on the fly
+ through the standard project wizard.
+@end itemize
+
+Removing a dependency is done by ensuring that the check box next to the
+project's name is unselected. GPS will automatically detect the change and
+remove the project dependency.
+
+If you want a more graphical view of the dependencies between your projects,
+you should check Project Browser (@pxref{The Project Browser});
 
 @item Add Configuration Variable
 @cindex add configuration variable
