@@ -32,6 +32,7 @@ distrib:
 	$(CP) ../../gvd/common/language.ad? gvd
 	$(CP) ../../gvd/common/odd_intl.ad? gvd
 	$(CP) ../../gvd/gnat/g-exptty.ad? gvd
+	$(CP) ../../gvd/gnat/g-tty.ad? gvd
 	$(CP) ../../gvd/gnat/gexpect_tty.c gvd
 	$(CP) ../../gnat/*.ad? gnat
 
