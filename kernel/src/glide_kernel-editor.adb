@@ -194,7 +194,7 @@ package body Glide_Kernel.Editor is
    begin
       Gtk_New (Editor, Top.Kernel);
       Gtk_New (Box, Editor);
-      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
+      Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
       Attach (Editor, Box);
       Child := Put (MDI, Box);
       Show_All (Box);
@@ -282,7 +282,7 @@ package body Glide_Kernel.Editor is
 
       if Editor /= null then
          Gtk_New (Box, Editor);
-         Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
+         Set_Size_Request (Box, Default_Editor_Width, Default_Editor_Height);
          Attach (Editor, Box);
          Child := Put (MDI, Box);
          Set_Title (Child, Short_File);

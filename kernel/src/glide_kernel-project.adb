@@ -312,7 +312,7 @@ package body Glide_Kernel.Project is
       end if;
 
       Gtk_New (Viewer, Handle, Page.Explorer);
-      Set_USize (Viewer, Default_Project_Width, Default_Project_Height);
+      Set_Size_Request (Viewer, Default_Project_Width, Default_Project_Height);
       Child := Put (MDI, Viewer);
       Set_Title (Child, Project_Editor_Window_Name);
    end Open_Project_Editor;
