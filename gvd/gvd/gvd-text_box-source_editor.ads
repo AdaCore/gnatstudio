@@ -47,6 +47,8 @@ package GVD.Text_Box.Source_Editor is
 
    procedure Highlight_Word
      (Editor   : access Source_Editor_Record;
+      Line     : Natural;
+      Column   : Natural;
       Position : GVD.Types.Position_Type) is abstract;
    --  Highlight the word that starts at the given position in the file
    --  associated with the editor (ie ignoring the line numbers that could

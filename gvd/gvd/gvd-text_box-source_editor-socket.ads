@@ -54,6 +54,8 @@ package GVD.Text_Box.Source_Editor.Socket is
 
    procedure Highlight_Word
      (Editor   : access Socket_Record;
+      Line     : Natural;
+      Column   : Natural;
       Position : GVD.Types.Position_Type);
    --  See GVD.Text_Box.Source_Editor for more information.
 

@@ -77,30 +77,27 @@ package GVD.Text_Box.Source_Editor.Builtin is
    procedure Attach
      (Editor : access Builtin_Record;
       Parent : access Gtk.Container.Gtk_Container_Record'Class);
-   --  Attach Editor to the specified parent.
+   --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Detach (Editor : access Builtin_Record);
-   --  Detach Editor from its parent.
+   --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Highlight_Word
      (Editor   : access Builtin_Record;
+      Line     : Natural;
+      Column   : Natural;
       Position : GVD.Types.Position_Type);
-   --  Highlight the word that starts at the given position in the file
-   --  associated with the editor (ie ignoring the line numbers that could
-   --  be displayed).
+   --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Update_Breakpoints
      (Editor : access Builtin_Record;
       Br     : GVD.Types.Breakpoint_Array);
-   --  Change the list of breakpoints to highlight in the editor.
-   --  All the breakpoints that previously existed are removed from the screen,
-   --  and replaced by the new ones.
-   --  The breakpoints that do not apply to the current file are ignored.
+   --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Set_Show_Line_Nums
      (Editor : access Builtin_Record;
       Show   : Boolean := False);
-   --  Indicate whether line numbers should be displayed or not.
+   --  See GVD.Text_Box.Source_Editor for more information.
 
    function Get_Show_Line_Nums
      (Editor : access Builtin_Record) return Boolean;
@@ -119,12 +116,7 @@ package GVD.Text_Box.Source_Editor.Builtin is
      (Editor      : access Builtin_Record;
       File_Name   : String;
       Set_Current : Boolean := True);
-   --  Load and append a file in the editor.
-   --  The contents is highlighted based on the current language.
-   --  Debugger is used to calculate which lines should get icons on the side,
-   --  through calls to Line_Contains_Code.
-   --  If Set_Current is True, then File_Name becomes the current file for the
-   --  debugger (ie the one that contains the current execution line).
+   --  See GVD.Text_Boxes.Source_Editor for more information.
 
    procedure File_Not_Found
      (Editor    : access Builtin_Record;
@@ -134,13 +126,10 @@ package GVD.Text_Box.Source_Editor.Builtin is
    --  message.
 
    procedure Highlight_Current_Line (Editor : access Builtin_Record);
-   --  Highlight the current line in the editor, if required by the user.
-   --  If the edited file is not the one that contains the current line,
-   --  this procedure does nothing.
+   --  See GVD.Text_Boxes.Source_Editor for more information.
 
    procedure Preferences_Changed (Editor : access Builtin_Record);
-   --  Called when the preferences have changed, and the editor should be
-   --  redisplayed with the new setup.
+   --  See GVD.Text_Boxes.Source_Editor for more information.
 
    procedure Set_Line
      (Editor      : access Builtin_Record;
