@@ -280,14 +280,8 @@ package body HTables is
       ------------
 
       procedure Remove (Hash_Table : in out HTable; K : Key) is
---         Tmp : Elmt_Ptr;
       begin
---           Tmp := Get (Hash_Table.Table, K);
---
---           if Tmp /= null then
          Remove (Hash_Table.Table, K);
---              Free (Tmp);
---           end if;
       end Remove;
 
       -----------
@@ -295,19 +289,7 @@ package body HTables is
       -----------
 
       procedure Reset (Hash_Table : in out HTable) is
---           E1 : Iterator;
---           E : Elmt_Ptr;
       begin
---           Get_First (Hash_Table, E1);
---
---           loop
---              E := Get_Element (E1.Iter);
---              exit when E = null;
---
---              Get_Next (Hash_Table, E1);
---              Free (E);
---           end loop;
-
          Reset (Hash_Table.Table);
       end Reset;
 
