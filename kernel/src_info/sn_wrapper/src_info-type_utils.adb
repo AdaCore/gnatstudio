@@ -23,6 +23,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with SN.Find_Fns;       use SN.Find_Fns;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
+with VFS;               use VFS;
 
 package body Src_Info.Type_Utils is
 
@@ -67,6 +68,16 @@ package body Src_Info.Type_Utils is
       Is_Type     => True,
       Is_Generic  => False,
       Is_Abstract => False);
+   Floating_Point_Entity : constant E_Kind :=
+     (Floating_Point,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
+   String_Entity : constant E_Kind :=
+     (String_Kind,
+      Is_Type     => True,
+      Is_Generic  => False,
+      Is_Abstract => False);
 
    ----------
    -- Free --
@@ -74,12 +85,6 @@ package body Src_Info.Type_Utils is
 
    procedure Free (Desc : in out CType_Description) is
    begin
-      if Desc.Parent_Point /= Invalid_Point then
-         Free (Desc.Parent_Filename);
-      end if;
-      if Desc.Ancestor_Point /= Invalid_Point then
-         Free (Desc.Ancestor_Filename);
-      end if;
       if Desc.Builtin_Name /= null then
          Free (Desc.Builtin_Name);
       end if;
@@ -95,27 +100,48 @@ package body Src_Info.Type_Utils is
       Success   : out Boolean) is
    begin
       Desc.Parent_Point    := Invalid_Point;
-      Desc.Parent_Filename := null;
+      Desc.Parent_Filename := VFS.No_File;
 
-      if Type_Name = "char"          or Type_Name = "signed char"
-         or Type_Name = "int"        or Type_Name = "signed int"
-         or Type_Name = "long"       or Type_Name = "signed long"
-         or Type_Name = "long long"  or Type_Name = "signed long long"
-         or Type_Name = "short"      or Type_Name = "signed short"
+      if Type_Name = "char"              or else Type_Name = "signed char"
+         or else Type_Name = "int"       or else Type_Name = "signed int"
+         or else Type_Name = "long"      or else Type_Name = "signed long"
+         or else Type_Name = "long long" or else Type_Name = "signed long long"
+         or else Type_Name = "short"     or else Type_Name = "signed short"
       then
-         Desc.Kind := Signed_Integer_Entity;
+         Desc.Kind         := Signed_Integer_Entity;
+         Desc.Parent_Point := Predefined_Point;
          Desc.Builtin_Name := new String'(Type_Name);
          Success := True;
 
       elsif Type_Name = "unsigned char"
-         or Type_Name = "unsigned int"
-         or Type_Name = "unsigned long"
-         or Type_Name = "unsigned long long"
-         or Type_Name = "unsigned short"
+         or else Type_Name = "unsigned int"
+         or else Type_Name = "unsigned long"
+         or else Type_Name = "unsigned long long"
+         or else Type_Name = "unsigned short"
       then
-         Desc.Kind := Modular_Integer_Entity;
+         Desc.Kind         := Modular_Integer_Entity;
+         Desc.Parent_Point := Predefined_Point;
          Desc.Builtin_Name := new String'(Type_Name);
          Success           := True;
+
+      elsif Type_Name = "float"
+        or else Type_Name = "signed float"
+        or else Type_Name = "unsigned float"
+      then
+         Desc.Kind         := Floating_Point_Entity;
+         Desc.Parent_Point := Predefined_Point;
+         Desc.Builtin_Name := new String'(Type_Name);
+         Success := True;
+
+      elsif Type_Name = "char *"
+        or else Type_Name = "signed char *"
+        or else Type_Name = "unsigned char *"
+      then
+         Desc.Kind         := String_Entity;
+         Desc.Parent_Point := Predefined_Point;
+         Desc.Builtin_Name := new String'(Type_Name);
+         Success := True;
+
       else
          Success := False;
       end if;
@@ -339,8 +365,8 @@ package body Src_Info.Type_Utils is
          and then Desc.Ancestor_Point = Invalid_Point
       then -- was not set yet
          Desc.Ancestor_Point    := Typedef.Start_Position;
-         Desc.Ancestor_Filename := new String'(Typedef.Buffer (
-                       Typedef.File_Name.First .. Typedef.File_Name.Last));
+         Desc.Ancestor_Filename := Create
+          (Typedef.Buffer (Typedef.File_Name.First .. Typedef.File_Name.Last));
       end if;
 
       Desc.Is_Typedef := True;
@@ -349,8 +375,9 @@ package body Src_Info.Type_Utils is
          Desc.Kind := Unresolved_Entity_Kind;
          if Desc.Parent_Point = Invalid_Point then
             Desc.Parent_Point    := Typedef.Start_Position;
-            Desc.Parent_Filename := new String'(Typedef.Buffer (
-                       Typedef.File_Name.First .. Typedef.File_Name.Last));
+            Desc.Parent_Filename := Create
+              (Typedef.Buffer
+                 (Typedef.File_Name.First .. Typedef.File_Name.Last));
          end if;
          Success   := True;
          Free (Typedef);
@@ -400,13 +427,10 @@ package body Src_Info.Type_Utils is
       Free (Enclosed_Class);
 
       if Success then
-         --  parent type found (E_Kind is resolved)
-         if Desc.Parent_Point /= Invalid_Point then
-            Free (Desc.Parent_Filename);
-         end if;
          Desc.Parent_Point    := Typedef.Start_Position;
-         Desc.Parent_Filename := new String'(Typedef.Buffer (
-                    Typedef.File_Name.First .. Typedef.File_Name.Last));
+         Desc.Parent_Filename := Create
+           (Typedef.Buffer
+              (Typedef.File_Name.First .. Typedef.File_Name.Last));
          Free (Typedef);
          Success := True;
          Set (Module_Typedefs.all, Type_Name, Complete);
@@ -454,13 +478,15 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Parent_Point    := Class_Def.Start_Position;
-      Desc.Parent_Filename := new String'(Class_Def.Buffer (
-                    Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+      Desc.Parent_Filename := Create
+        (Class_Def.Buffer
+           (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Class_Def.Start_Position;
-         Desc.Ancestor_Filename := new String'(Class_Def.Buffer (
-                       Class_Def.File_Name.First .. Class_Def.File_Name.Last));
+         Desc.Ancestor_Filename := Create
+           (Class_Def.Buffer
+              (Class_Def.File_Name.First .. Class_Def.File_Name.Last));
       end if;
 
       if Is_Template (Class_Def) then
@@ -507,13 +533,15 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Parent_Point    := Union_Def.Start_Position;
-      Desc.Parent_Filename := new String'(Union_Def.Buffer (
-                    Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+      Desc.Parent_Filename := Create
+        (Union_Def.Buffer
+           (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Union_Def.Start_Position;
-         Desc.Ancestor_Filename := new String'(Union_Def.Buffer (
-                       Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+         Desc.Ancestor_Filename := Create
+           (Union_Def.Buffer
+              (Union_Def.File_Name.First .. Union_Def.File_Name.Last));
       end if;
 
       if (Union_Def.Attributes and SN_TEMPLATE) /= 0 then
@@ -561,13 +589,13 @@ package body Src_Info.Type_Utils is
       end if;
 
       Desc.Parent_Point    := Enum_Def.Start_Position;
-      Desc.Parent_Filename := new String'
+      Desc.Parent_Filename := Create
         (Enum_Def.Buffer
           (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
 
       if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
          Desc.Ancestor_Point    := Enum_Def.Start_Position;
-         Desc.Ancestor_Filename := new String'
+         Desc.Ancestor_Filename := Create
            (Enum_Def.Buffer
              (Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
       end if;
@@ -627,12 +655,12 @@ package body Src_Info.Type_Utils is
          then
             Desc.Is_Template     := Arg.Attributes = SN_TA_TEMPLATE;
             Desc.Parent_Point    := Arg.Start_Position;
-            Desc.Parent_Filename := new String'(File_Name);
+            Desc.Parent_Filename := Create (File_Name);
             Desc.Kind            := Private_Kind_Entity;
 
             if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
                Desc.Ancestor_Point    := Arg.Start_Position;
-               Desc.Ancestor_Filename := new String'(File_Name);
+               Desc.Ancestor_Filename := Create (File_Name);
             end if;
 
             Success := True;
