@@ -7980,9 +7980,10 @@ This can be done for your own tools using the shell command
 @code{locations_parse}. This command takes several arguments, so that you
 can specify your own regular expression to find the file name, line number and
 so on in the error message. By default, however, it is configured to work
-seamlessly with error message of the form
+seamlessly with error message of one of the forms
 
 @smallexample
+file:line message
 file:line:column: message
 @end smallexample
 
