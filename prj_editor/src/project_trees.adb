@@ -64,20 +64,12 @@ with String_Utils; use String_Utils;
 with Glide_Kernel; use Glide_Kernel;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Switches_Editors;     use Switches_Editors;
 with Variable_Editors; use Variable_Editors;
 with GUI_Utils;    use GUI_Utils;
 
 package body Project_Trees is
-
-   Absolute_Directories : constant Boolean := False;
-   --  <preference> True if directories should be displayed as absolute names,
-   --  False if they should be relative to the current directory set by the
-   --  user.
-
-   Show_Directories : constant Boolean := True;
-   --  <preference> Whether directories should be displayed in the tree.
-   --  If False, only the projects are shown.
 
    Number_Of_Columns : constant := 1;
    --  Number of columns in the ctree.
@@ -385,6 +377,14 @@ package body Project_Trees is
                   & Get_Name_String (Projects.Table (Prj).Name));
          Set_Sensitive (Item, False);
          Append (T.Contextual_Menu, Item);
+         --  Contextual_Callback.Connect
+         --    (Item, "activate",
+         --     Contextual_Callback.To_Marshaller
+         --     (Add_Directory_From_Contextual'Access),
+         --     (Kernel    => T.Kernel,
+         --      Project   => Prj,
+         --      File_Name => No_String,
+         --      Directory => No_String));
 
          Gtk_New (Item, Label => "Change Object Directory for "
                   & Get_Name_String (Projects.Table (Prj).Name));
@@ -571,7 +571,7 @@ package body Project_Trees is
       N : Gtk_Ctree_Node;
       Is_Leaf : constant Boolean :=
         Projects.Table (Project).Imported_Projects = Empty_Project_List
-        and then (not Show_Directories
+        and then (not Get_Pref (Tree.Kernel, Show_Directories)
                   or else Projects.Table (Project).Source_Dirs = Nil_String);
       Node_Type : Node_Types := Project_Node;
    begin
@@ -638,16 +638,14 @@ package body Project_Trees is
       end if;
 
       --  Compute the absolute directory
-      if not Is_Absolute_Path (Directory) then
+      if not Is_Absolute_Path (Directory)
+        and then Get_Pref (Tree.Kernel, Absolute_Directories)
+      then
          Buffer (1 .. Current_Dir'Length) := Current_Dir;
          Buffer
            (Current_Dir'Length + 1 .. Current_Dir'Length + Directory'Length) :=
            Directory;
          Buffer_Len := Current_Dir'Length + Directory'Length;
-
-         if not Absolute_Directories then
-            Start_Index := Current_Dir'Length + 1;
-         end if;
       else
          Buffer_Len := Directory'Length;
          Buffer (1 .. Buffer_Len) := Directory;
@@ -839,30 +837,32 @@ package body Project_Trees is
          Prj_List := Project_Lists.Table (Prj_List).Next;
       end loop;
 
-      --  Source directories
-      --  ??? Should show only first-level directories
+      if Get_Pref (Tree.Kernel, Show_Directories) then
+         --  Source directories
+         --  ??? Should show only first-level directories
 
-      Dir := Projects.Table (Project).Source_Dirs;
-      while Dir /= Nil_String loop
-         String_To_Name_Buffer (String_Elements.Table (Dir).Value);
+         Dir := Projects.Table (Project).Source_Dirs;
+         while Dir /= Nil_String loop
+            String_To_Name_Buffer (String_Elements.Table (Dir).Value);
+            N := Add_Directory_Node
+              (Tree             => Tree,
+               Directory        => Name_Buffer (1 .. Name_Len),
+               Parent_Node      => Node,
+               Current_Dir      => Current_Dir,
+               Directory_String => String_Elements.Table (Dir).Value);
+            Dir := String_Elements.Table (Dir).Next;
+         end loop;
+
+         --  Object directory
+
          N := Add_Directory_Node
            (Tree             => Tree,
-            Directory        => Name_Buffer (1 .. Name_Len),
+            Directory        =>
+              Get_Name_String (Projects.Table (Project).Object_Directory),
             Parent_Node      => Node,
             Current_Dir      => Current_Dir,
-            Directory_String => String_Elements.Table (Dir).Value);
-         Dir := String_Elements.Table (Dir).Next;
-      end loop;
-
-      --  Object directory
-
-      N := Add_Directory_Node
-        (Tree             => Tree,
-         Directory        =>
-           Get_Name_String (Projects.Table (Project).Object_Directory),
-         Parent_Node      => Node,
-         Current_Dir      => Current_Dir,
-         Object_Directory => True);
+            Object_Directory => True);
+      end if;
    end Expand_Project_Node;
 
    ---------------------------
