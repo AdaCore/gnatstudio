@@ -1,4 +1,6 @@
 GNAT_SOURCES= \
+  a-stunau.ads \
+  a-stunau.adb \
   ali.ads \
   ali.adb \
   alloc.ads \
