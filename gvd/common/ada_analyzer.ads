@@ -166,10 +166,10 @@ package Ada_Analyzer is
    --  Maximum length of an identifier.
 
    type Extended_Token is record
-      Token       : Token_Type := No_Token;
+      Token         : Token_Type := No_Token;
       --  Enclosing token
 
-      Declaration : Boolean := False;
+      Declaration   : Boolean := False;
       --  Are we inside a declarative part ?
 
       Record_Start_New_Line : Boolean := False;
@@ -179,20 +179,28 @@ package Ada_Analyzer is
       Type_Declaration : Boolean := False;
       --  Is it a type declaration ?
 
-      Record_Type : Boolean := False;
+      Record_Type   : Boolean := False;
       --  Is it a record type definition ?
 
-      Tagged_Type : Boolean := False;
+      Tagged_Type   : Boolean := False;
       --  Is it a tagged type definition ?
 
-      Identifier  : String (1 .. Max_Identifier);
+      Identifier    : String (1 .. Max_Identifier);
       --  Name of the enclosing token
       --  The actual name is Identifier (1 .. Ident_Len)
 
-      Ident_Len   : Natural := 0;
+      Ident_Len     : Natural := 0;
       --  Actual length of Indentifier
 
-      Sloc        : Source_Location;
+      Profile_Start : Natural;
+      --  Position in the buffer where the profile of the current subprogram
+      --  starts.
+
+      Profile_End   : Natural;
+      --  Position in the buffer where the profile of the current subprogram
+      --  ends.
+
+      Sloc          : Source_Location;
       --  Source location for this entity
    end record;
    --  Extended information for a token
