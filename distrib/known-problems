@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.1.1
 
+- DC20-008 Crash when viewing HTML files that contain special characters
+  Problem:    When viewing in the GPS Help the Ada95 Reference Manual, or any
+              HTML file that contains special characters, GPS may freeze or
+              crash under Windows.
+  Workaround: Use any standard HTML browser to open the corresponding file
+
 - DC16-004 Removing an entry from a GPS.Combo fails in python
   Problem:    If you try to call GPS.Combo().remove(), you get an internal
               GPS error in the console
