@@ -56,6 +56,9 @@ package body VCS.Generic_VCS is
 
    Me : constant Debug_Handle := Create ("Generic_VCS");
 
+   Max_Matches : constant := 64;
+   --  The number of matches in each parsing loop.
+
    ----------------------------
    -- Local type definitions --
    ----------------------------
@@ -1132,103 +1135,113 @@ package body VCS.Generic_VCS is
      (Command : access Parser_Command_Type) return Command_Return_Type
    is
       S       : String renames Command.Text.all;
-      St      : File_Status_Record;
       Matches : Match_Array (0 .. Command.Parser.Matches_Num);
+
+      Num_Matches : Natural := 0;
    begin
       Command.Prev_Start := Command.Start;
 
-      Match (Command.Parser.Regexp.all, S, Matches, Command.Start, S'Last);
+      while Num_Matches < Max_Matches loop
+         Match (Command.Parser.Regexp.all, S, Matches, Command.Start, S'Last);
 
-      if Matches (0) = No_Match then
-         Display_File_Status
-           (Command.Rep.Kernel,
-            Command.Status,
-            VCS_Access (Command.Rep),
-            Override_Cache => Command.Override_Cache,
-            Force_Display  => True,
-            Clear_Logs     => Command.Clear_Logs,
-            Display        => True);
+         if Matches (0) = No_Match then
+            Display_File_Status
+              (Command.Rep.Kernel,
+               Command.Status,
+               VCS_Access (Command.Rep),
+               Override_Cache => Command.Override_Cache,
+               Force_Display  => True,
+               Clear_Logs     => Command.Clear_Logs,
+               Display        => True);
 
-         return Success;
-      end if;
-
-      if Command.Parser.File_Index /= 0 then
-         if Command.Dir = null
-           or else Command.Dir.all = ""
-         then
-            St.File := Glide_Kernel.Create
-              (S (Matches (Command.Parser.File_Index).First
-                  .. Matches (Command.Parser.File_Index).Last),
-               Command.Rep.Kernel,
-               True, False);
-         else
-            St.File := Create
-              (Command.Dir.all &
-               S (Matches (Command.Parser.File_Index).First
-                  .. Matches (Command.Parser.File_Index).Last));
+            return Success;
          end if;
 
-      elsif not Is_Empty (Command.Rep.Current_Query_Files) then
-         St.File := Glide_Kernel.Create
-           (String_List.Head (Command.Rep.Current_Query_Files),
-            Command.Rep.Kernel,
-            True, False);
-
-         String_List.Next (Command.Rep.Current_Query_Files);
-      else
-         --  ??? There should be an error message here
-         return Failure;
-      end if;
-
-      if Command.Parser.Local_Rev_Index /= 0 then
-         String_List_Utils.String_List.Append
-           (St.Working_Revision,
-            S (Matches (Command.Parser.Local_Rev_Index).First
-               .. Matches (Command.Parser.Local_Rev_Index).Last));
-      end if;
-
-      if Command.Parser.Repository_Rev_Index /= 0 then
-         String_List_Utils.String_List.Append
-           (St.Repository_Revision,
-            S (Matches (Command.Parser.Repository_Rev_Index).First
-               .. Matches (Command.Parser.Repository_Rev_Index).Last));
-      end if;
-
-      if Command.Parser.Status_Index /= 0 then
          declare
-            Status_String : constant String :=
-              S (Matches (Command.Parser.Status_Index).First
-                 .. Matches (Command.Parser.Status_Index).Last);
-            Matches : Match_Array (0 .. 1);
-
-            use Status_Parser;
-
-            Node : Status_Parser.List_Node :=
-                     First (Command.Parser.Status_Identifiers);
+            St : File_Status_Record;
          begin
-            while Node /= Status_Parser.Null_Node loop
-               Match (Data (Node).Regexp.all, Status_String, Matches);
-
-               if Matches (0) /= No_Match then
-                  St.Status := Command.Rep.Status (Data (Node).Index);
-                  exit;
+            if Command.Parser.File_Index /= 0 then
+               if Command.Dir = null
+                 or else Command.Dir.all = ""
+               then
+                  St.File := Glide_Kernel.Create
+                    (S (Matches (Command.Parser.File_Index).First
+                        .. Matches (Command.Parser.File_Index).Last),
+                     Command.Rep.Kernel,
+                     True, False);
+               else
+                  St.File := Create
+                    (Command.Dir.all &
+                     S (Matches (Command.Parser.File_Index).First
+                        .. Matches (Command.Parser.File_Index).Last));
                end if;
 
-               Node := Next (Node);
-            end loop;
+            elsif not Is_Empty (Command.Rep.Current_Query_Files) then
+               St.File := Glide_Kernel.Create
+                 (String_List.Head (Command.Rep.Current_Query_Files),
+                  Command.Rep.Kernel,
+                  True, False);
+
+               String_List.Next (Command.Rep.Current_Query_Files);
+            else
+               --  ??? There should be an error message here
+               return Failure;
+            end if;
+
+            if Command.Parser.Local_Rev_Index /= 0 then
+               String_List_Utils.String_List.Append
+                 (St.Working_Revision,
+                  S (Matches (Command.Parser.Local_Rev_Index).First
+                     .. Matches (Command.Parser.Local_Rev_Index).Last));
+            end if;
+
+            if Command.Parser.Repository_Rev_Index /= 0 then
+               String_List_Utils.String_List.Append
+                 (St.Repository_Revision,
+                  S (Matches (Command.Parser.Repository_Rev_Index).First
+                     .. Matches (Command.Parser.Repository_Rev_Index).Last));
+            end if;
+
+            if Command.Parser.Status_Index /= 0 then
+               declare
+                  Status_String : constant
+                    String :=
+                      S (Matches (Command.Parser.Status_Index).First
+                         .. Matches (Command.Parser.Status_Index).Last);
+                  Matches : Match_Array (0 .. 1);
+
+                  use Status_Parser;
+
+                  Node : Status_Parser.List_Node :=
+                           First (Command.Parser.Status_Identifiers);
+               begin
+                  while Node /= Status_Parser.Null_Node loop
+                     Match (Data (Node).Regexp.all, Status_String, Matches);
+
+                     if Matches (0) /= No_Match then
+                        St.Status := Command.Rep.Status (Data (Node).Index);
+                        exit;
+                     end if;
+
+                     Node := Next (Node);
+                  end loop;
+               end;
+            end if;
+
+            File_Status_List.Append (Command.Status, St);
          end;
-      end if;
 
-      File_Status_List.Append (Command.Status, St);
+         Command.Start := Matches (0).Last + 1;
 
-      Command.Start := Matches (0).Last + 1;
+         --  Prevent infinite loop that could occur if users allow matches
+         --  on empty strings.
 
-      --  Prevent infinite loop that could occur if users allow matches
-      --  on empty strings.
+         if Command.Prev_Start = Command.Start then
+            return Success;
+         end if;
 
-      if Command.Prev_Start = Command.Start then
-         return Success;
-      end if;
+         Num_Matches := Num_Matches + 1;
+      end loop;
 
       return Execute_Again;
    end Execute;
@@ -1264,7 +1277,7 @@ package body VCS.Generic_VCS is
       Command.Dir        := new String'(Dir);
 
       Launch_Background_Command
-        (Rep.Kernel, Command_Access (Command), True, False, "");
+        (Rep.Kernel, Command_Access (Command), False, False, "");
    end Generic_Parse_Status;
 
    ------------------
