@@ -37,7 +37,7 @@ use Test_Lib.Navigator;
 procedure Gnatfix is
 
    procedure Print_Help;
-   --  Print the use mode of codefix.
+   --  Print the use manual of codefix.
 
    procedure Free_Objects;
    --  Free memory associated to object used in Gnatfix
@@ -53,11 +53,14 @@ procedure Gnatfix is
       Put_Line ("gnatfix <error file>");
    end Print_Help;
 
-
    Current_Text       : Text_Navigator;
    Errors_List        : Correction_Manager;
    Errors_Found       : Errors_File;
    Successfull_Update : Boolean;
+
+   ------------------
+   -- Free_Objects --
+   ------------------
 
    procedure Free_Objects is
    begin
