@@ -40,10 +40,14 @@ with Prj.Tree;                 use Prj.Tree;
 with Prj_API;                  use Prj_API;
 with Project_Browsers;         use Project_Browsers;
 with Types;                    use Types;
+with Ada.Exceptions;   use Ada.Exceptions;
+with Traces;           use Traces;
 
 package body Browsers.Projects is
 
    Margin : constant := 2;
+
+   Me : Debug_Handle := Create ("Browsers.Projects");
 
    Project_Browser_Module_ID : Module_ID;
 
@@ -199,6 +203,11 @@ package body Browsers.Projects is
          Get_Project_From_View
          (Project_Information (File_Selection_Context_Access (Context))));
       Pop_State (Get_Kernel (Context));
+
+   exception
+      when E : others =>
+         Pop_State (Get_Kernel (Context));
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Examine_Prj_Hierarchy;
 
    ------------------------
