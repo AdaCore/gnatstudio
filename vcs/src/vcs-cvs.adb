@@ -423,7 +423,7 @@ package body VCS.CVS is
                  Mode => Verbose);
       end if;
 
-      Display_File_Status (Kernel, Result, True);
+      Display_File_Status (Kernel, Result, True, True);
       File_Status_List.Free (Result);
 
       return True;
