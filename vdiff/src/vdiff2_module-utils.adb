@@ -1135,6 +1135,21 @@ package body Vdiff2_Module.Utils is
                Append
                  (Kernel, VRange, VFile,
                   VOffset, VStyle, Ref, Other, Info, Curr_Chunk.Conflict);
+
+               Fine_Diff_Block
+                 (Kernel_Handle (Kernel),
+                  VFile (Ref),
+                  VFile (Other),
+                  VRange (Ref),
+                  VRange (Other));
+
+               Fine_Diff_Block
+                 (Kernel_Handle (Kernel),
+                  VFile (Ref),
+                  VFile (Other2),
+                  VRange (Ref),
+                  VRange (Other2));
+
                Free (VStyle);
             else
                for J in 1 .. 3 loop
@@ -1149,6 +1164,12 @@ package body Vdiff2_Module.Utils is
                      Append (Kernel, VRange, VFile,
                              VOffset, VStyle, Ref,
                              J, Info, Curr_Chunk.Conflict);
+                     Fine_Diff_Block
+                       (Kernel_Handle (Kernel),
+                        VFile (Ref),
+                        VFile (Other2),
+                        VRange (Ref),
+                        VRange (Other2));
                      Free (VStyle);
                      exit;
 
@@ -1159,6 +1180,12 @@ package body Vdiff2_Module.Utils is
                      Append (Kernel, VRange, VFile,
                              VOffset, VStyle, Ref,
                              J, Info, Curr_Chunk.Conflict);
+                     Fine_Diff_Block
+                       (Kernel_Handle (Kernel),
+                        VFile (Ref),
+                        VFile (Other2),
+                        VRange (Ref),
+                        VRange (Other2));
                      Free (VStyle);
                      exit;
                   end if;
@@ -1188,6 +1215,18 @@ package body Vdiff2_Module.Utils is
                Append
                  (Kernel, VRange, VFile,
                   VOffset, VStyle, Ref, Other, Info, Curr_Chunk.Conflict);
+               Fine_Diff_Block
+                 (Kernel_Handle (Kernel),
+                  VFile (Ref),
+                  VFile (Other),
+                  VRange (Ref),
+                  VRange (Other));
+               Fine_Diff_Block
+                 (Kernel_Handle (Kernel),
+                  VFile (Ref),
+                  VFile (Other2),
+                  VRange (Ref),
+                  VRange (Other2));
             end if;
 
             Free (VStyle);
@@ -1215,6 +1254,12 @@ package body Vdiff2_Module.Utils is
             Append (Kernel, VRange, VFile, VOffset,
                     VStyle, Ref, Loc, Info,
                     Curr_Chunk.Conflict);
+            Fine_Diff_Block
+              (Kernel_Handle (Kernel),
+               VFile (Ref),
+               VFile (Loc),
+               VRange (Ref),
+               VRange (Loc));
 
          when Delete =>
             VStyle (Loc)   := new String'(Remove_Style);
