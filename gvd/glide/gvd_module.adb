@@ -34,7 +34,6 @@ with Gtk.Enums;               use Gtk.Enums;
 with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Label;               use Gtk.Label;
-with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
@@ -79,6 +78,7 @@ with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Glide_Kernel.Task_Manager; use Glide_Kernel.Task_Manager;
 with Glide_Intl;                use Glide_Intl;
 with Pixmaps_IDE;               use Pixmaps_IDE;
 with Traces;                    use Traces;
@@ -90,8 +90,11 @@ with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 
 with Generic_List;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
+
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
+
+with Commands.Generic_Asynchronous;
 
 with GVD.Text_Box.Source_Editor; use GVD.Text_Box.Source_Editor;
 with GVD.Text_Box.Source_Editor.Glide;
@@ -151,6 +154,9 @@ package body GVD_Module is
       --  The list of lines which are currently revealed in the editor
       --  but the status of which has not yet been queried from the debugger.
 
+      Total_Unexplored_Lines : Integer := 0;
+      Total_Explored_Lines   : Integer := 0;
+
       Slow_Query       : Boolean := False;
       --  Set to True when the interval between two debugger queries should
       --  be long (for example when the debugger was detected to be busy).
@@ -166,10 +172,24 @@ package body GVD_Module is
       Delete_Id         : Handler_Id := (Null_Signal_Id, null);
       File_Edited_Id    : Handler_Id := (Null_Signal_Id, null);
       Lines_Revealed_Id : Handler_Id := (Null_Signal_Id, null);
-
-      Line_Reveal_Timeout : Timeout_Handler_Id := 0;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
+
+   procedure Free_Line_Information (Id : in out GVD_Module);
+   --  Free the line information in Id.
+
+   procedure Line_Information_Compute
+     (Id      : in out GVD_Module;
+      Command : Command_Access;
+      Result  : out Command_Return_Type);
+   --  Query the line information from the debugger.
+
+   package Reveal_Lines_Commands is new Commands.Generic_Asynchronous
+     (Data_Type   => GVD_Module,
+      Description => -"Querying line information",
+      Free        => Free_Line_Information,
+      Iterate     => Line_Information_Compute);
+   --  Package that handles commands related to line breakpoints query.
 
    procedure Destroy (Id : in out GVD_Module_Record);
    --  Terminate the debugger the module, and kill the underlying debugger.
@@ -494,11 +514,6 @@ package body GVD_Module is
      (Widget  : access Gtk_Widget_Record'Class;
       Args    : GValues);
    --  Callback for the "lines_revealed" signal.
-
-   function Idle_Reveal_Lines return Boolean;
-   --  Idle/Timeout function to query the line information from the debugger.
-   --  ??? Should provide proper user data instead of using a global variable
-   --  to access debugger info.
 
    -------------------------
    -- Initialize_Debugger --
@@ -1311,6 +1326,8 @@ package body GVD_Module is
       Id.Initialized := False;
 
       File_Line_List.Free (Id.Unexplored_Lines);
+      Id.Total_Explored_Lines := 0;
+      Id.Total_Unexplored_Lines := 0;
 
       if Page = null or else Page.Debugger = null then
          return;
@@ -1662,18 +1679,19 @@ package body GVD_Module is
       Close (Get_Current_Process (Object).Debugger);
    end On_Destroy_Window;
 
-   -----------------------
-   -- Idle_Reveal_Lines --
-   -----------------------
+   ------------------------------
+   -- Line_Information_Compute --
+   ------------------------------
 
-   function Idle_Reveal_Lines return Boolean is
+   procedure Line_Information_Compute
+     (Id      : in out GVD_Module;
+      Command : Command_Access;
+      Result  : out Command_Return_Type)
+   is
       Kind       : Line_Kind;
       C          : Set_Breakpoint_Command_Access;
       File_Line  : File_Line_Record;
-      Timeout_Id : Timeout_Handler_Id;
-      pragma Unreferenced (Timeout_Id);
 
-      Id         : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Tab        : constant Visual_Debugger :=
         Get_Current_Process (Get_Main_Window (Id.Kernel));
       Debugger   : constant Debugger_Access := Tab.Debugger;
@@ -1684,28 +1702,31 @@ package body GVD_Module is
         or else Debugger = null
         or else Get_Process (Debugger) = null
       then
-         return False;
+         Result := Success;
+         return;
 
       elsif Command_In_Process (Get_Process (Debugger)) then
          Id.Slow_Query := True;
-         Id.Line_Reveal_Timeout := Timeout_Add (100, Idle_Reveal_Lines'Access);
-         return False;
+         Result := Lower_Priority;
+         return;
 
       elsif Id.Slow_Query then
          Id.Slow_Query := False;
-         Id.Line_Reveal_Timeout := Timeout_Add (1, Idle_Reveal_Lines'Access);
-         return False;
+         Result := Raise_Priority;
+         return;
       end if;
 
-      File_Line := File_Line_List.Head
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+      File_Line := File_Line_List.Head (Id.Unexplored_Lines);
 
       Kind := Line_Contains_Code
         (Debugger, File_Line.File.all, File_Line.Line);
 
+      Id.Total_Explored_Lines := Id.Total_Explored_Lines + 1;
+
       if Id.List_Modified then
          Id.List_Modified := False;
-         return True;
+         Result := Execute_Again;
+         return;
       end if;
 
       declare
@@ -1763,7 +1784,8 @@ package body GVD_Module is
                      Node := First (Id.Unexplored_Lines);
 
                      if Node = Null_Node then
-                        return False;
+                        Result := Success;
+                        return;
                      end if;
                   else
                      Node := Prev_Node;
@@ -1774,7 +1796,8 @@ package body GVD_Module is
             end loop;
 
             if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               return False;
+               Result := Success;
+               return;
             end if;
          end if;
 
@@ -1785,28 +1808,33 @@ package body GVD_Module is
             new Line_Information_Array'(A));
       end;
 
-      File_Line_List.Next (GVD_Module (GVD_Module_ID).Unexplored_Lines);
+      File_Line_List.Next (Id.Unexplored_Lines);
 
-      if File_Line_List.Is_Empty
-        (GVD_Module (GVD_Module_ID).Unexplored_Lines)
-      then
-         return False;
+      if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
+         Result := Success;
+         return;
       end if;
 
-      return True;
+      Set_Progress
+        (Command,
+         (Running, Id.Total_Explored_Lines, Id.Total_Unexplored_Lines));
+
+      Result := Execute_Again;
 
    exception
       when E : GNAT.Expect.Process_Died =>
          Debug_Terminate (Id.Kernel);
          Trace (Me, "Debugger died unexpectedly: "
-                  & Exception_Information (E));
-         return False;
+                & Exception_Information (E));
+
+         Result := Success;
 
       when E : others =>
          Debug_Terminate (Id.Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
-         return False;
-   end Idle_Reveal_Lines;
+
+         Result := Failure;
+   end Line_Information_Compute;
 
    --------------------
    -- File_Edited_Cb --
@@ -1855,17 +1883,20 @@ package body GVD_Module is
       Area_Context := File_Area_Context_Access (Context);
 
       declare
+         Line1, Line2 : Integer;
          File : constant String := Directory_Information (Area_Context) &
            File_Information (Area_Context);
-         Line1, Line2 : Integer;
+         C    : Reveal_Lines_Commands.Generic_Asynchronous_Command_Access;
 
       begin
          Get_Area (Area_Context, Line1, Line2);
 
          if Id.Show_Lines_With_Code then
             if File_Line_List.Is_Empty (Id.Unexplored_Lines) then
-               Id.Line_Reveal_Timeout :=
-                 Gtk.Main.Timeout_Add (1, Idle_Reveal_Lines'Access);
+               Reveal_Lines_Commands.Create (C, Id);
+
+               Launch_Background_Command
+                 (Id.Kernel, Command_Access (C), True, "Debugger");
             else
                Id.List_Modified := True;
                Id.Unexplored_Lines := File_Line_List.Null_List;
@@ -1878,6 +1909,9 @@ package body GVD_Module is
                --  instead of FIFO, so that the lines currently shown
                --  are displayed first.
             end loop;
+
+            Id.Total_Unexplored_Lines := Id.Total_Unexplored_Lines
+              + Line2 - Line1 + 1;
 
             return;
          end if;
@@ -2261,5 +2295,15 @@ package body GVD_Module is
    begin
       Debug_Terminate (Id.Kernel);
    end Destroy;
+
+   ---------------------------
+   -- Free_Line_Information --
+   ---------------------------
+
+   procedure Free_Line_Information (Id : in out GVD_Module) is
+   begin
+      Id.Total_Explored_Lines := 0;
+      Id.Total_Unexplored_Lines := 0;
+   end Free_Line_Information;
 
 end GVD_Module;
