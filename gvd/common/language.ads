@@ -30,6 +30,12 @@ package Language is
    procedure Free (Lang : in out Language_Access);
    --  Free the memory pointed to by Lang and set it to null.
 
+   ------------------------
+   -- Types manipulation --
+   ------------------------
+   --  The following functions are provided to manipulate types and variables
+   --  for each language.
+
    function Is_Simple_Type
      (Lang : access Language_Root; Str : String) return Boolean is abstract;
    --  Return True if Str is a simple type, like integer, ...
@@ -52,12 +58,6 @@ package Language is
    --  Next_Char should be set to the index of the first character after the
    --  entity.
 
-   ------------------------
-   -- Types manipulation --
-   ------------------------
-   --  The following functions are provided to manipulate types and variables
-   --  for each language.
-
    ----------------------------
    -- Generic Thread support --
    ----------------------------
@@ -72,6 +72,13 @@ package Language is
    --  for a particular language/debugger.
    --  This should be used by a debugger in cunjunction with Parse_Thread_List
    --  below.
+
+   function Thread_Switch
+     (Lang   : access Language_Root;
+      Thread : Natural) return String is abstract;
+   --  Return a string that corresponds to the thread switch command
+   --  for a particular language/debugger.
+   --  Thread is a debugger specific thread id.
 
    subtype Thread_Fields is Interfaces.C.size_t range 1 .. 20;
    --  This represents the maximum number of fields in a thread list output.
@@ -92,25 +99,25 @@ package Language is
       Output : String) return Thread_Information_Array is abstract;
    --  Parse the result of a thread list command.
 
-   function Dereference_Name (Lang : access Language_Root;
-                              Name : String)
-                             return String is abstract;
+   function Dereference_Name
+     (Lang : access Language_Root;
+      Name : String) return String is abstract;
    --  Return the name to use to dereference Name (ie in Ada "Name.all", in
    --  C "*Name", ...). Note that Name can be a composite name (Name.Field),
    --  and thus might have to be protected with parentheses.
 
-   function Array_Item_Name (Lang  : access Language_Root;
-                             Name  : String;
-                             Index : String)
-                            return String is abstract;
+   function Array_Item_Name
+     (Lang  : access Language_Root;
+      Name  : String;
+      Index : String) return String is abstract;
    --  Return the name to use to access a specific element of an array.
    --  Index is a comma-separated list of the indexes for all the dimensions,
    --  as in "1,2".
 
-   function Record_Field_Name (Lang  : access Language_Root;
-                               Name  : String;
-                               Field : String)
-                              return String is abstract;
+   function Record_Field_Name
+     (Lang  : access Language_Root;
+      Name  : String;
+      Field : String) return String is abstract;
    --  Return the name to use for a specific field of a record.
 
 private
