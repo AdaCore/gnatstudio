@@ -7268,8 +7268,25 @@ tags. We also insert several items in that new menu
 </test>
 @end smallexample
 
+@cindex menu separator
 Adding an item with an empty title or no title at all inserts a
-menu separator.
+menu separator. For instance, the following example will insert a separator
+followed by a File/Custom menu:
+
+@smallexample
+<?xml version="1.0" ?>
+<menus>
+  <action name="execute my stats" />
+  <submenu>
+     <title>File</title>
+     <menu><title/></menu>
+     <menu action="execute my stats">
+         <title>Custom</title>
+     </menu>
+  </submenu>
+</menus>
+@end smallexample
+
 
 @c ----------------------------------------------------------------------
 @node Adding contextual menus
