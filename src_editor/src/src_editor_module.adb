@@ -1834,6 +1834,8 @@ package body Src_Editor_Module is
          Pack_Start (Get_Vbox (Id.Open_File_Dialog), Label, Expand => False);
 
          Gtk_New (Id.Open_File_Entry);
+         Set_Activates_Default
+           (Get_Entry (Get_Combo (Id.Open_File_Entry)), True);
          Pack_Start (Get_Vbox (Id.Open_File_Dialog), Id.Open_File_Entry,
                      Fill => True, Expand => True);
 
