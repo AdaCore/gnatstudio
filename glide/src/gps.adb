@@ -98,7 +98,8 @@ procedure GPS is
    --  Set to False for a True integration with a pre installed Gtk+ 2.0
    --  environment.
 
-   Me : constant Debug_Handle := Create ("GPS");
+   Me        : constant Debug_Handle := Create ("GPS");
+   Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
 
    subtype String_Access is GNAT.OS_Lib.String_Access;
 
