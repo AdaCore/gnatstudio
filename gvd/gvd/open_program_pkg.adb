@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -27,6 +27,8 @@ with Odd_Intl; use Odd_Intl;
 with Open_Program_Pkg.Callbacks; use Open_Program_Pkg.Callbacks;
 
 package body Open_Program_Pkg is
+
+pragma Style_Checks (Off);
 
 procedure Gtk_New (Open_Program : out Open_Program_Access) is
 begin

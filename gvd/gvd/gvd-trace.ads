@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,9 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Expect;     use GNAT.Expect;
-with GVD.Process;     use GVD.Process;
-with GVD.Types;       use GVD.Types;
+with GNAT.Expect;  use GNAT.Expect;
+with Glide_Kernel; use Glide_Kernel;
+with GVD.Process;  use GVD.Process;
+with GVD.Types;    use GVD.Types;
 with System;
 
 package GVD.Trace is
@@ -30,20 +31,15 @@ package GVD.Trace is
    --  Input_Kind means input strings sent to the debugger.
    --  Output_Kind means output strings received from the debugger.
 
-   type Output_Proc_Record is abstract tagged null record;
-   type Output_Proc is access Output_Proc_Record'Class;
-   procedure Output
-     (Proc : Output_Proc_Record; Str : String; Error : Boolean) is abstract;
-   --  Output the error to the appropriate stream. This is mostly use to
-   --  limit dependency circularities between the kernel and gvd
+   procedure Output_Error
+     (Kernel : access Kernel_Handle_Record'Class;
+      Str    : String);
+   --  Output an error through Glide_Kernel.Console
 
-   Global_Output : Output_Proc;
-
-   procedure Output_Error (Str : String);
-   --  Output an error through Global_Output
-
-   procedure Output_Info (Str : String);
-   --  Output some information through Global_Output
+   procedure Output_Info
+     (Kernel : access Kernel_Handle_Record'Class;
+      Str    : String);
+   --  Output some information through Glide_Kernel.Console
 
    procedure Output_Line (Str : String);
    --  Write on the log file associated with Window.

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                             ACT-Europe                            --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -24,6 +24,7 @@ with Gtk.Window;          use Gtk.Window;
 with Gtkada.Dialogs;      use Gtkada.Dialogs;
 with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.MDI;          use Gtkada.MDI;
+with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Widget;          use Gtk.Widget;
 
 with Odd_Intl;            use Odd_Intl;
@@ -421,7 +422,7 @@ package body GVD.Menu is
    begin
       Show_All (Top.History_Dialog);
       Gdk_Raise (Get_Window (Top.History_Dialog));
-      Update (Top.History_Dialog, Tab);
+      Update (History_Dialog_Access (Top.History_Dialog), Tab);
    end On_Command_History;
 
    ---------------------
@@ -510,6 +511,7 @@ package body GVD.Menu is
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
+      Dialog : Thread_Dialog_Access;
 
    begin
       if Tab /= null then
@@ -524,12 +526,13 @@ package body GVD.Menu is
          end if;
 
          if Top.Thread_Dialog = null then
-            Gtk_New (Top.Thread_Dialog, Gtk_Window (Top));
+            Gtk_New (Dialog, Gtk_Window (Top));
+            Top.Thread_Dialog := Gtk_Dialog (Dialog);
          end if;
 
          Show_All (Top.Thread_Dialog);
          Gdk_Raise (Get_Window (Top.Thread_Dialog));
-         Update (Top.Thread_Dialog, Tab);
+         Update (Dialog, Tab);
       end if;
    end On_Threads;
 
@@ -546,6 +549,7 @@ package body GVD.Menu is
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
+      Dialog : Task_Dialog_Access;
 
    begin
       if Tab /= null then
@@ -560,12 +564,13 @@ package body GVD.Menu is
          end if;
 
          if Top.Task_Dialog = null then
-            Gtk_New (Top.Task_Dialog, Gtk_Window (Top));
+            Gtk_New (Dialog, Gtk_Window (Top));
+            Top.Task_Dialog := Gtk_Dialog (Dialog);
          end if;
 
          Show_All (Top.Task_Dialog);
          Gdk_Raise (Get_Window (Top.Task_Dialog));
-         Update (Top.Task_Dialog, Tab);
+         Update (Dialog, Tab);
       end if;
    end On_Tasks;
 
@@ -582,6 +587,7 @@ package body GVD.Menu is
       Tab    : constant Visual_Debugger := Get_Current_Process (Object);
       Button : Message_Dialog_Buttons;
       pragma Unreferenced (Action, Widget, Button);
+      Dialog : PD_Dialog_Access;
 
    begin
       if Tab /= null then
@@ -597,12 +603,13 @@ package body GVD.Menu is
          end if;
 
          if Top.PD_Dialog = null then
-            Gtk_New (Top.PD_Dialog, Gtk_Window (Top));
+            Gtk_New (Dialog, Gtk_Window (Top));
+            Top.PD_Dialog := Gtk_Dialog (Dialog);
          end if;
 
          Show_All (Top.PD_Dialog);
          Gdk_Raise (Get_Window (Top.PD_Dialog));
-         Update (Top.PD_Dialog, Tab);
+         Update (Dialog, Tab);
       end if;
    end On_PD;
 

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2004                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,13 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GVD.Main_Window; use GVD.Main_Window;
-with GVD.Types;       use GVD.Types;
-with Process_Proxies; use Process_Proxies;
-with Debugger;        use Debugger;
+with GVD.Main_Window;      use GVD.Main_Window;
+with GVD.Types;            use GVD.Types;
+with Process_Proxies;      use Process_Proxies;
+with Debugger;             use Debugger;
 with System;
 with Ada.Unchecked_Conversion;
-with Traces;          use Traces;
+with Traces;               use Traces;
+with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 package body GVD.Trace is
 
@@ -51,12 +53,12 @@ package body GVD.Trace is
    -- Output_Error --
    ------------------
 
-   procedure Output_Error (Str : String) is
+   procedure Output_Error
+     (Kernel : access Kernel_Handle_Record'Class;
+      Str    : String) is
    begin
       Output_Line ("# " & Str);
-      if Global_Output /= null then
-         Output (Global_Output.all, Str, Error => True);
-      end if;
+      Console.Insert (Kernel, Str, Mode => Console.Error);
    end Output_Error;
 
    -----------------
@@ -72,12 +74,12 @@ package body GVD.Trace is
    -- Output_Info --
    -----------------
 
-   procedure Output_Info (Str : String) is
+   procedure Output_Info
+     (Kernel : access Kernel_Handle_Record'Class;
+      Str    : String) is
    begin
       Output_Line ("% " & Str);
-      if Global_Output /= null then
-         Output (Global_Output.all, Str, Error => False);
-      end if;
+      Console.Insert (Kernel, Str, Mode => Console.Info);
    end Output_Info;
 
    --------------------

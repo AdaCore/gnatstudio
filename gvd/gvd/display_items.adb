@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2003                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -18,34 +18,36 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;             use Glib;
-with Gdk.Drawable;     use Gdk.Drawable;
-with Gdk.GC;           use Gdk.GC;
-with Gtk.Widget;       use Gtk.Widget;
-with Gdk.Pixmap;       use Gdk.Pixmap;
-with Gdk.Window;       use Gdk.Window;
-with Gdk.Event;        use Gdk.Event;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.Menu;         use Gtk.Menu;
-with Gtk.Style;        use Gtk.Style;
-with Gtkada.Canvas;    use Gtkada.Canvas;
-with Pango.Layout;     use Pango.Layout;
+with Glib;              use Glib;
+with Gdk.Drawable;      use Gdk.Drawable;
+with Gdk.GC;            use Gdk.GC;
+with Gtk.Widget;        use Gtk.Widget;
+with Gdk.Pixmap;        use Gdk.Pixmap;
+with Gdk.Window;        use Gdk.Window;
+with Gdk.Event;         use Gdk.Event;
+with Gtk.Enums;         use Gtk.Enums;
+with Gtk.Menu;          use Gtk.Menu;
+with Gtk.Style;         use Gtk.Style;
+with Gtkada.Canvas;     use Gtkada.Canvas;
+with Pango.Layout;      use Pango.Layout;
 
-with Debugger;         use Debugger;
-with Language;         use Language;
-with Items;            use Items;
-with Items.Simples;    use Items.Simples;
+with Debugger;          use Debugger;
+with Language;          use Language;
+with Items;             use Items;
+with Items.Simples;     use Items.Simples;
 
-with Odd_Intl;         use Odd_Intl;
-with GVD.Canvas;       use GVD.Canvas;
-with GVD.Preferences;  use GVD.Preferences;
-with GVD.Process;      use GVD.Process;
+with Odd_Intl;          use Odd_Intl;
+with GVD.Canvas;        use GVD.Canvas;
+with GVD.Preferences;   use GVD.Preferences;
+with GVD.Process;       use GVD.Process;
 with GVD.Types;
-with Basic_Types;      use Basic_Types;
-with GVD.Trace;        use GVD.Trace;
-with Process_Proxies;  use Process_Proxies;
-with Ada.Exceptions;   use Ada.Exceptions;
-with Traces;           use Traces;
+with Basic_Types;       use Basic_Types;
+with GVD.Trace;         use GVD.Trace;
+with Process_Proxies;   use Process_Proxies;
+with Ada.Exceptions;    use Ada.Exceptions;
+with Traces;            use Traces;
+with Glide_Kernel;      use Glide_Kernel;
+with Glide_Main_Window; use Glide_Main_Window;
 
 package body Display_Items is
 
@@ -253,8 +255,10 @@ package body Display_Items is
       Entity      : Generic_Type_Access := Default_Entity;
       Value_Found : Boolean := False;
       Alias_Item  : Display_Item;
-      Id : String_Access;
+      Id          : String_Access;
       Is_Parsable_Entity : Boolean := True;
+      Kernel      : constant Kernel_Handle :=
+        Glide_Window (Debugger.Window).Kernel;
 
    begin
       --  We need the information on the type, so that we detect aliases only
@@ -273,7 +277,7 @@ package body Display_Items is
                       "Exception when getting type of entity: "
                       & Exception_Information (E));
                Output_Error
-                 ((-"Could not parse type for ") & Variable_Name);
+                 (Kernel, (-"Could not parse type for ") & Variable_Name);
 
                Entity := New_Debugger_Type
                  (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
@@ -283,7 +287,7 @@ package body Display_Items is
          if Entity = null then
             Trace (Me, "Result of Parse_Type is null");
             Output_Error
-              ((-"Could not get the type of ") & Variable_Name);
+              (Kernel, (-"Could not get the type of ") & Variable_Name);
             Entity := New_Debugger_Type
               (Print_Value_Cmd (Debugger.Debugger, Variable_Name));
             Is_Parsable_Entity := False;
@@ -347,13 +351,14 @@ package body Display_Items is
 
                if not Value_Found then
                   Output_Error
-                    ((-"Could not get the value of ") & Variable_Name);
+                    (Kernel, (-"Could not get the value of ") & Variable_Name);
                end if;
 
             exception
                when Language.Unexpected_Type | Constraint_Error =>
                   Output_Error
-                    ((-"Could not parse the value for ") & Variable_Name);
+                    (Kernel,
+                     (-"Could not parse the value for ") & Variable_Name);
                   Set_Busy (Debugger, False);
                   return;
             end;

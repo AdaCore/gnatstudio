@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                                GPS                                --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -87,6 +87,8 @@ with VFS;                        use VFS;
 with Config;                     use Config;
 
 with String_List_Utils;          use String_List_Utils;
+
+with Glide_Main_Window;          use Glide_Main_Window;
 
 package body GVD.Process is
 
@@ -1265,7 +1267,8 @@ package body GVD.Process is
 
          if Executable /= "" then
             Output_Error
-              ((-" Could not find file: ") & Executable);
+              (Glide_Window (Process.Window).Kernel,
+               (-" Could not find file: ") & Executable);
          end if;
       end if;
 
@@ -1288,14 +1291,8 @@ package body GVD.Process is
          WTX_Version : Natural := 0;
          Widget      : Gtk_Widget;
       begin
-         Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
-
-         if Widget = null then
-            --  This means that GVD is part of GPS
-
-            Widget := Get_Widget
-              (Window.Factory, -"/Debug/Data/Protection Domains");
-         end if;
+         Widget := Get_Widget
+           (Window.Factory, -"/Debug/Data/Protection Domains");
 
          if Widget /= null then
             Info_WTX (Process.Debugger, WTX_Version);
@@ -1627,7 +1624,9 @@ package body GVD.Process is
    exception
       when Constraint_Error =>
          --  Usually because Find_Item returned a null value.
-         Output_Error ((-" Invalid command: ") & Cmd);
+         Output_Error
+           (Glide_Window (Process.Window).Kernel,
+            (-" Invalid command: ") & Cmd);
    end Process_Graph_Cmd;
 
    ----------------------
@@ -1654,7 +1653,9 @@ package body GVD.Process is
 
    exception
       when Constraint_Error =>
-         Output_Error ((-" Invalid command: ") & Cmd);
+         Output_Error
+           (Glide_Window (Process.Window).Kernel,
+            (-" Invalid command: ") & Cmd);
    end Process_View_Cmd;
 
    --------------------

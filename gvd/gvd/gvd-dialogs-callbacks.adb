@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -64,6 +64,7 @@ package body GVD.Dialogs.Callbacks is
       Matched     : Match_Array (0 .. 0);
       Info        : PD_Information_Array (1 .. Max_PD);
       Len         : Natural;
+      PD_Dialog   : PD_Dialog_Access;
 
    begin
       if Process.Debugger = null then
@@ -107,10 +108,11 @@ package body GVD.Dialogs.Callbacks is
          Info_PD (Process.Debugger, Info, Len);
          Freeze (Gtk_Clist (Object));
 
-         Update_PD (Main_Window.PD_Dialog, Info (1 .. Len));
-         Handler_Block (Object, Main_Window.PD_Dialog.Select_Row_Id);
+         PD_Dialog := PD_Dialog_Access (Main_Window.PD_Dialog);
+         Update_PD (PD_Dialog, Info (1 .. Len));
+         Handler_Block (Object, PD_Dialog.Select_Row_Id);
          Select_Row (Gtk_Clist (Object), Index, 0);
-         Handler_Unblock (Object, Main_Window.PD_Dialog.Select_Row_Id);
+         Handler_Unblock (Object, PD_Dialog.Select_Row_Id);
          Thaw (Gtk_Clist (Object));
       else
          raise Program_Error;

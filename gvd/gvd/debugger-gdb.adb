@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -56,6 +56,7 @@ with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
 with VFS;               use VFS;
 with Config;            use Config;
+with Glide_Main_Window; use Glide_Main_Window;
 
 with Ada.Unchecked_Deallocation;
 
@@ -260,7 +261,8 @@ package body Debugger.Gdb is
             return;
          else
             Output_Error
-              ((-"Language unknown, defaulting to C: ") & Lang);
+              (Glide_Window (Process.Window).Kernel,
+               (-"Language unknown, defaulting to C: ") & Lang);
             Language := new Gdb_C_Language;
          end if;
 

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                   GVD - The GNU Visual Debugger                   --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              ACT-Europe                           --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
--- GVD is free  software;  you can redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -360,7 +360,7 @@ package body GVD.Dialogs is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       if Tab.Window.Task_Dialog /= null then
-         Update (Tab.Window.Task_Dialog, Tab);
+         Update (Task_Dialog_Access (Tab.Window.Task_Dialog), Tab);
       end if;
    end On_Task_Process_Stopped;
 
@@ -374,7 +374,7 @@ package body GVD.Dialogs is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       if Tab.Window.Thread_Dialog /= null then
-         Update (Tab.Window.Thread_Dialog, Tab);
+         Update (Thread_Dialog_Access (Tab.Window.Thread_Dialog), Tab);
       end if;
    end On_Thread_Process_Stopped;
 
@@ -388,7 +388,7 @@ package body GVD.Dialogs is
       Tab : constant Visual_Debugger := Visual_Debugger (Widget);
    begin
       if Tab.Window.PD_Dialog /= null then
-         Update (Tab.Window.PD_Dialog, Tab);
+         Update (PD_Dialog_Access (Tab.Window.PD_Dialog), Tab);
       end if;
    end On_PD_Process_Stopped;
 

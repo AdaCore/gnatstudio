@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
---                                GPS                                --
+--                              G P S                                --
 --                                                                   --
---                      Copyright (C) 2000-2005                      --
---                              AdaCore                              --
+--                     Copyright (C) 2000-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -31,6 +31,7 @@ with Gtkada.Types;
 
 with Breakpoints_Editor;    use Breakpoints_Editor;
 with Factory_Data;
+with GVD.Dialogs;           use GVD.Dialogs;
 with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
 with GVD.Process;           use GVD.Process;
@@ -232,19 +233,19 @@ package body GVD.Main_Window is
         and then not Command_In_Process (Get_Process (Tab.Debugger))
       then
          if Window.Thread_Dialog /= null then
-            Update (Window.Thread_Dialog, Tab);
+            Update (Thread_Dialog_Access (Window.Thread_Dialog), Tab);
          end if;
 
          if Window.Task_Dialog /= null then
-            Update (Window.Task_Dialog, Tab);
+            Update (Task_Dialog_Access (Window.Task_Dialog), Tab);
          end if;
 
          if Window.History_Dialog /= null then
-            Update (Window.History_Dialog, Tab);
+            Update (History_Dialog_Access (Window.History_Dialog), Tab);
          end if;
 
          if Window.PD_Dialog /= null then
-            Update (Window.PD_Dialog, Tab);
+            Update (PD_Dialog_Access (Window.PD_Dialog), Tab);
          end if;
       end if;
    end Update_External_Dialogs;
