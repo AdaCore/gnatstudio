@@ -87,6 +87,7 @@ package body Glide_Result_View is
    Length_Column        : constant := 8;
    Weight_Column        : constant := 9;
    Color_Column         : constant := 10;
+   Button_Column        : constant := 11;
 
    -----------------------
    -- Local subprograms --
@@ -101,9 +102,10 @@ package body Glide_Result_View is
       File          : String;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
-      New_Category  : out Boolean);
+      New_Category  : out Boolean;
+      Create        : Boolean := True);
    --  Return the iter corresponding to Category, create it if
-   --  necessary.
+   --  necessary and if Create is True.
    --  If File is "", then the category iter will be returned.
    --  If the category was created, New_Category is set to True.
 
@@ -236,6 +238,7 @@ package body Glide_Result_View is
       Set (View.Model, Iter, Column_Column, Column);
       Set (View.Model, Iter, Length_Column, Length);
       Set (View.Model, Iter, Icon_Column, C_Proxy (Pixbuf));
+      Set (View.Model, Iter, Button_Column, C_Proxy (Pixbuf));
 
       if Line = "" then
          Set (View.Model, Iter, Weight_Column, 400);
@@ -355,7 +358,8 @@ package body Glide_Result_View is
       File          : String;
       Category_Iter : out Gtk_Tree_Iter;
       File_Iter     : out Gtk_Tree_Iter;
-      New_Category  : out Boolean) is
+      New_Category  : out Boolean;
+      Create        : Boolean := True) is
    begin
       Category_Iter := Get_Iter_First (View.Model);
       New_Category := False;
@@ -371,10 +375,14 @@ package body Glide_Result_View is
       end loop;
 
       if Category_Iter = Null_Iter then
-         Append (View.Model, Category_Iter, Null_Iter);
-         Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
-                    View.Category_Pixbuf);
-         New_Category := True;
+         if Create then
+            Append (View.Model, Category_Iter, Null_Iter);
+            Fill_Iter (View, Category_Iter, Category, "", "", "", "", "", "",
+                       View.Category_Pixbuf);
+            New_Category := True;
+         else
+            return;
+         end if;
       end if;
 
       if File = "" then
@@ -395,9 +403,12 @@ package body Glide_Result_View is
 
       --  When we reach this point, we need to create a new sub-category.
 
-      Append (View.Model, File_Iter, Category_Iter);
-      Fill_Iter (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
-                View.File_Pixbuf);
+      if Create then
+         Append (View.Model, File_Iter, Category_Iter);
+         Fill_Iter
+           (View, File_Iter, Base_Name (File), File, "", "", "", "", "",
+            View.File_Pixbuf);
+      end if;
 
       return;
    end Get_Category_File;
@@ -482,6 +493,14 @@ package body Glide_Result_View is
 
       Set_Rules_Hint (Tree, False);
 
+
+      Gtk_New (Col);
+      Gtk_New (Pixbuf_Rend);
+      Pack_Start (Col, Pixbuf_Rend, False);
+      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Button_Column);
+      Dummy := Append_Column (Tree, Col);
+
+
       Gtk_New (Col);
       Pack_Start (Col, Pixbuf_Rend, False);
       Pack_Start (Col, Text_Rend, True);
@@ -515,7 +534,8 @@ package body Glide_Result_View is
          Length_Column             => GType_String,
          Node_Type_Column          => GType_Int,
          Weight_Column             => GType_Int,
-         Color_Column              => Gdk_Color_Type);
+         Color_Column              => Gdk_Color_Type,
+         Button_Column             => Gdk.Pixbuf.Get_Type);
    end Columns_Types;
 
    ----------------
@@ -838,5 +858,51 @@ package body Glide_Result_View is
          Put_Line ("Unexpected exception: " & Exception_Information (E));
          return False;
    end Button_Press;
+
+   ---------------------
+   -- Add_Action_Item --
+   ---------------------
+
+   procedure Add_Action_Item
+     (View          : access Result_View_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Natural;
+      Column        : Natural;
+      Message       : String;
+      Action        : Action_Item)
+   is
+      Category_Iter : Gtk_Tree_Iter;
+      File_Iter     : Gtk_Tree_Iter;
+      Created       : Boolean;
+      Line_Iter     : Gtk_Tree_Iter;
+
+      pragma Unreferenced (Identifier);
+   begin
+      Get_Category_File (View, Category,
+                         File, Category_Iter, File_Iter, Created, False);
+
+      if Category_Iter /= Null_Iter
+        and then File_Iter /= Null_Iter
+      then
+         Line_Iter := Children (View.Model, File_Iter);
+
+         while File_Iter /= Null_Iter loop
+            if Get_String
+              (View.Model, File_Iter, Message_Column) = Message
+              and then Get_String
+                (View.Model, File_Iter, Line_Column) = Image (Line)
+              and then Get_String
+                (View.Model, File_Iter, Column_Column) = Image (Column)
+            then
+               Set (View.Model, File_Iter,
+                    Button_Column, C_Proxy (Action.Image));
+            end if;
+
+            Next (View.Model, File_Iter);
+         end loop;
+      end if;
+   end Add_Action_Item;
 
 end Glide_Result_View;
