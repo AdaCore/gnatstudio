@@ -34,8 +34,10 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
 with Gtk.Combo;
 with Gtk.Container;
+with Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Handlers;
+with Gtk.Label;
 with Gtk.List;
 with Gtk.List_Item;
 with Gtk.Menu;
@@ -194,6 +196,13 @@ package GUI_Utils is
    --  if any.
    --  If Event is null, then the current selection is returned.
    --  ??? The column is also available, but not returned.
+
+   function Find_Node
+     (Model   : Gtk.Tree_Store.Gtk_Tree_Store;
+      Name    : String;
+      Column  : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
+   --  Find in Model a node matching Name in Column.
+   --  return Gtk_Null_Iter if there is no such node
 
    -------------------------
    -- Full_Path_Menu_Item --
@@ -382,6 +391,19 @@ package GUI_Utils is
    --  Save the current accel map.
    --  As opposed to Gtk.Accel_Map.Save, this one doesn't keep the lines which
    --  have no shortcut, thus keeping the file small.
+
+   -----------
+   -- Label --
+   -----------
+
+   procedure Create_Blue_Label
+     (Label : out Gtk.Label.Gtk_Label;
+      Event : out Gtk.Event_Box.Gtk_Event_Box);
+   --  Create a new label, with a blue background.
+   --  Event should be inserted in the container, and the text should be set
+   --  in Label.
+
+
 
 private
 

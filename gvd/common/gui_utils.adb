@@ -42,6 +42,8 @@ with Gtk.Clist;                use Gtk.Clist;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Container;            use Gtk.Container;
 with Gtk.Dialog;               use Gtk.Dialog;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Item;                 use Gtk.Item;
@@ -54,6 +56,7 @@ with Gtk.Menu_Item;            use Gtk.Menu_Item;
 with Gtk.Menu_Bar;             use Gtk.Menu_Bar;
 with Gtk.Menu_Shell;           use Gtk.Menu_Shell;
 with Gtk.Stock;                use Gtk.Stock;
+with Gtk.Style;                use Gtk.Style;
 with Gtk.Text_Iter;            use Gtk.Text_Iter;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_Mark;            use Gtk.Text_Mark;
@@ -719,7 +722,10 @@ package body GUI_Utils is
             --  reference to the menu item, and the latter holds a reference to
             --  the label (see gtk_accel_label_set_accel_widget).
 
-            Destroy (Get_Child (Gtk_Bin (W)));
+            if W.all in Gtk_Bin_Record'Class then
+               Destroy (Get_Child (Gtk_Bin (W)));
+            end if;
+
             Remove (Container, W);
          end if;
       end loop;
@@ -1531,5 +1537,47 @@ package body GUI_Utils is
          Insert (P, Item, Index + 1);
       end if;
    end Add_Menu;
+
+   ---------------
+   -- Find_Node --
+   ---------------
+
+   function Find_Node
+     (Model   : Gtk_Tree_Store;
+      Name    : String;
+      Column  : Gint) return Gtk_Tree_Iter
+   is
+      Parent : Gtk_Tree_Iter := Get_Iter_First (Model);
+   begin
+      while Parent /= Null_Iter loop
+         if Get_String (Model, Parent, Column) = Name then
+            return Parent;
+         end if;
+         Next (Model, Parent);
+      end loop;
+
+      return Null_Iter;
+   end Find_Node;
+
+   -----------------------
+   -- Create_Blue_Label --
+   -----------------------
+
+   procedure Create_Blue_Label
+     (Label : out Gtk.Label.Gtk_Label;
+      Event : out Gtk.Event_Box.Gtk_Event_Box)
+   is
+      Color : Gdk_Color;
+   begin
+      Gtk_New (Event);
+      Color := Parse ("#0e79bd");
+      Alloc (Get_Default_Colormap, Color);
+      Set_Style (Event, Copy (Get_Style (Event)));
+      Set_Background (Get_Style (Event), State_Normal, Color);
+
+      Gtk_New (Label, "");
+      Set_Alignment (Label, 0.1, 0.5);
+      Add (Event, Label);
+   end Create_Blue_Label;
 
 end GUI_Utils;
