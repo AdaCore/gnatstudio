@@ -130,7 +130,7 @@ package body Debugger.Gdb is
    --  restriction is that the name can not contain newline characters.
 
    Exception_In_Breakpoint   : constant Pattern_Matcher := Compile
-     ("\bon ([-\w_:]+|all exceptions)");
+     ("\bon (exception ([-\w_:]+)|all|unhandled)");
    --  How to detect exception names in the info given by "info breakpoint"
 
    Subprogram_In_Breakpoint  : constant Pattern_Matcher := Compile
@@ -2970,8 +2970,14 @@ package body Debugger.Gdb is
 
                Match (Exception_In_Breakpoint, S (Tmp .. Index - 2), Matched);
                if Matched (0) /= No_Match then
-                  Br (Num).Except := new String'
-                    (S (Matched (1).First .. Matched (1).Last));
+                  if Matched (2) /= No_Match then
+                     Br (Num).Except := new String'
+                       (S (Matched (2).First .. Matched (2).Last));
+                  else
+                     Br (Num).Except :=
+                       new String'(S (Matched (1).First .. Matched (1).Last));
+                  end if;
+
                   M := True;
                end if;
 
