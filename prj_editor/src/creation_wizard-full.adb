@@ -27,7 +27,6 @@ with File_Utils;            use File_Utils;
 with Project_Viewers;       use Project_Viewers;
 with Project_Properties;    use Project_Properties;
 with Projects;              use Projects;
-with Ada.Unchecked_Deallocation;
 
 package body Creation_Wizard.Full is
 
@@ -46,7 +45,6 @@ package body Creation_Wizard.Full is
       Scenario_Variables : Projects.Scenario_Variable_Array;
       Project : in out Projects.Project_Type;
       Changed : in out Boolean);
-   procedure On_Destroy (Page : access Project_Editor_Page_Wrapper);
    --  See inherited documentation
 
    --------------------
@@ -85,18 +83,6 @@ package body Creation_Wizard.Full is
                Languages => Languages);
       Free (Languages);
    end Update_Page;
-
-   ----------------
-   -- On_Destroy --
-   ----------------
-
-   procedure On_Destroy (Page : access Project_Editor_Page_Wrapper) is
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Project_Editor_Page_Record'Class, Project_Editor_Page);
-   begin
-      Destroy (Page.Page.all);
-      Unchecked_Free (Page.Page);
-   end On_Destroy;
 
    ----------------------
    -- Generate_Project --
