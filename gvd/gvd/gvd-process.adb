@@ -649,6 +649,12 @@ package body GVD.Process is
            (GVD.Process.Preferences_Changed'Access),
          Process);
 
+      Widget_Callback.Object_Connect
+        (Process.Window, "preferences_changed",
+         Widget_Callback.To_Marshaller
+           (GVD.Canvas.Preferences_Changed'Access),
+         Process.Data_Canvas);
+
       --  Set up the command window for the contextual menus
 
       Add_Events (Process.Debugger_Text, Button_Press_Mask);
@@ -795,6 +801,10 @@ package body GVD.Process is
       --  Display the initial prompt
 
       Display_Prompt (Process.Debugger);
+
+      --  Initialize the pixmaps and colors for the canvas
+      Realize (Process.Data_Canvas);
+      Init_Graphics (Process.Data_Canvas);
 
       return Process;
    end Create_Debugger;
