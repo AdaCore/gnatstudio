@@ -563,11 +563,18 @@ package body VCS.Generic_VCS is
 
    procedure Add
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Args   : GNAT.OS_Lib.String_List_Access;
+
    begin
-      null;
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Log);
+
+      Generic_Command (Rep, Filenames, Args, Add, None);
+
+      GNAT.Strings.Free (Args);
    end Add;
 
    ------------
@@ -576,11 +583,18 @@ package body VCS.Generic_VCS is
 
    procedure Remove
      (Rep       : access Generic_VCS_Record;
-      Filenames : String_List.List)
+      Filenames : String_List.List;
+      Log       : String)
    is
-      pragma Unreferenced (Rep, Filenames);
+      Args   : GNAT.OS_Lib.String_List_Access;
+
    begin
-      null;
+      Args := new GNAT.OS_Lib.String_List (1 .. 1);
+      Args (1) := new String'(Log);
+
+      Generic_Command (Rep, Filenames, Args, Remove, None);
+
+      GNAT.Strings.Free (Args);
    end Remove;
 
    ------------
