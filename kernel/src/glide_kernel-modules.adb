@@ -787,15 +787,16 @@ package body Glide_Kernel.Modules is
       Enable_Navigation : Boolean := True)
    is
       Value : GValue_Array (1 .. 5);
+      Norm_Filename : String := Normalize_Pathname (Filename);
    begin
       Init (Value (1), Glib.GType_String);
 
-      if Is_Absolute_Path (Filename) then
-         Set_String (Value (1), Filename);
+      if Is_Absolute_Path (Norm_Filename) then
+         Set_String (Value (1), Norm_Filename);
       else
          Set_String
            (Value (1),
-            Find_Source_File (Kernel, Base_Name (Filename), True));
+            Find_Source_File (Kernel, Base_Name (Norm_Filename), True));
       end if;
 
       Init (Value (2), Glib.GType_Int);
