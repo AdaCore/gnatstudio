@@ -414,6 +414,19 @@ package body Python is
    end PyObject_GetAttrString;
 
    ----------------------------
+   -- PyObject_HasAttrString --
+   ----------------------------
+
+   function PyObject_HasAttrString
+     (Obj : PyObject; Attr_Name : String) return Boolean
+   is
+      function Internal (Object : PyObject; S : String) return Integer;
+      pragma Import (C, Internal, "PyObject_HasAttrString");
+   begin
+      return Boolean'Val (Internal (Obj, Attr_Name & ASCII.NUL));
+   end PyObject_HasAttrString;
+
+   ----------------------------
    -- PyObject_SetAttrString --
    ----------------------------
 
