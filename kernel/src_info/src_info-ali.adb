@@ -2026,6 +2026,7 @@ package body Src_Info.ALI is
    is
       Success : Boolean := True;
       F       : File_Info_Ptr_List;
+      Base    : constant String := To_Lower (Source_Filename);
    begin
       if File = No_LI_File then
          declare
@@ -2074,9 +2075,9 @@ package body Src_Info.ALI is
 
       if File /= No_LI_File then
          if (File.LI.Spec_Info /= null
-             and then File.LI.Spec_Info.Source_Filename.all = Source_Filename)
+             and then File.LI.Spec_Info.Source_Filename.all = Base)
            or else (File.LI.Body_Info /= null
-             and then File.LI.Body_Info.Source_Filename.all = Source_Filename)
+             and then File.LI.Body_Info.Source_Filename.all = Base)
          then
             return;
          end if;
@@ -2084,15 +2085,14 @@ package body Src_Info.ALI is
          F := File.LI.Separate_Info;
          while F /= null loop
             if F.Value /= null
-              and then F.Value.Source_Filename.all = Source_Filename
+              and then F.Value.Source_Filename.all = Base
             then
                return;
             end if;
             F := F.Next;
          end loop;
 
-         Trace (Me, "Parsed LI file didn't contain the info for "
-                  & Source_Filename);
+         Trace (Me, "Parsed LI file didn't contain the info for " & Base);
          File := No_LI_File;
       end if;
    end Create_Or_Complete_LI;
