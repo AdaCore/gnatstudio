@@ -33,6 +33,8 @@ with Ada.Text_IO;               use Ada.Text_IO;
 with String_Utils;              use String_Utils;
 with OS_Utils;                  use OS_Utils;
 
+with Src_Info;                  use Src_Info;
+
 with VCS_View_Pkg;              use VCS_View_Pkg;
 with VCS_Module;                use VCS_Module;
 
@@ -558,6 +560,9 @@ package body VCS.CVS is
       Index  : Natural;
       Next_Index : Natural;
 
+      Entries_Timestamp : Timestamp;
+      File_Timestamp    : Timestamp;
+
    begin
       --  ??? Do we really have to change the current (global) directory ?
       --  This may have unexpected side effects, so would be nice to avoid it.
@@ -567,6 +572,9 @@ package body VCS.CVS is
       --  Open and parse the Entries file.
 
       Open (File, In_File, Format_Pathname (New_Dir & "CVS/Entries"));
+
+      Entries_Timestamp :=
+        To_Timestamp (GNAT.OS_Lib.File_Time_Stamp (New_Dir & "CVS/Entries"));
 
       while Last >= 0
         and then not End_Of_File (File)
@@ -581,6 +589,16 @@ package body VCS.CVS is
 
             Append (Current_Status.File_Name,
                     New_Dir & Buffer (2 .. Index - 1));
+
+            File_Timestamp :=
+              To_Timestamp
+                (GNAT.OS_Lib.File_Time_Stamp
+                     (New_Dir & Buffer (2 .. Index - 1)));
+
+            if File_Timestamp > Entries_Timestamp then
+               Current_Status.Status := Modified;
+            end if;
+
             Append (Current_Status.Working_Revision,
                     Buffer (Index + 1 .. Next_Index - 1));
 
