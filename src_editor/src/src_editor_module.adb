@@ -88,7 +88,7 @@ with GVD.Preferences; use GVD.Preferences;
 with Src_Editor_Module.Line_Highlighting;
 with Src_Editor_Buffer.Buffer_Commands; use Src_Editor_Buffer.Buffer_Commands;
 with Src_Editor_Buffer.Line_Information;
-
+with Src_Editor_Buffer.Hooks;           use Src_Editor_Buffer.Hooks;
 with Src_Editor_Buffer.Text_Handling;   use Src_Editor_Buffer.Text_Handling;
 
 with Src_Printing;
@@ -390,6 +390,11 @@ package body Src_Editor_Module is
      (Kernel  : access Kernel_Handle_Record'Class;
       Data    : Hooks_Data'Class);
    --  Callback for the "file_saved" hook.
+
+   procedure Cursor_Stopped_Cb
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class);
+   --  Callback for the "cursor_stopped" hook.
 
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
@@ -1709,6 +1714,32 @@ package body Src_Editor_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Saved_Cb;
+
+   -----------------------
+   -- Cursor_Stopped_Cb --
+   -----------------------
+
+   procedure Cursor_Stopped_Cb
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Data    : Hooks_Data'Class)
+   is
+      D     : constant File_Hooks_Args := File_Hooks_Args (Data);
+      Box   : Source_Editor_Box;
+      Id    : constant Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
+   begin
+      if Id.Show_Subprogram_Names then
+         Box := Get_Source_Box_From_MDI (Find_Editor (Kernel, D.File));
+
+         if Box /= null then
+            Show_Subprogram_Name (Box);
+         end if;
+      end if;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end Cursor_Stopped_Cb;
 
    ---------------------
    -- Delete_Callback --
@@ -3589,6 +3620,7 @@ package body Src_Editor_Module is
          Kernel_Handle (Kernel));
 
       Add_Hook (Kernel, File_Saved_Hook, File_Saved_Cb'Access);
+      Add_Hook (Kernel, Cursor_Stopped_Hook, Cursor_Stopped_Cb'Access);
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
@@ -4208,6 +4240,10 @@ package body Src_Editor_Module is
         (Kernel, -"Directory of current file", 'd',
          Expand_Aliases_Entities'Access);
 
+      --  Register the editor hooks
+
+      Register_Editor_Hooks (Kernel);
+
       --  Create the module-wide GCs.
       --  We need to do that in a callback to "map"
 
@@ -4258,8 +4294,9 @@ package body Src_Editor_Module is
 
       Line_Highlighting.Add_Category (Search_Result_Highlighting, GC, Color);
 
-      if not Pref_Display_Subprogram_Names then
-         --  clear the subprogram name labels for all files opened
+      if Pref_Display_Subprogram_Names /= Id.Show_Subprogram_Names then
+         --  The preference for showing the subprogram name has changed:
+         --  we need either to show or to hide the name on all open editors.
 
          declare
             Files : constant VFS.File_Array := Open_Files (Kernel);
@@ -4270,10 +4307,16 @@ package body Src_Editor_Module is
                     Get_Source_Box_From_MDI
                       (Find_Editor (Kernel, Files (Node)));
                begin
-                  Clear_Subprogram_Name (Box);
+                  if Pref_Display_Subprogram_Names then
+                     Show_Subprogram_Name (Box);
+                  else
+                     Clear_Subprogram_Name (Box);
+                  end if;
                end;
             end loop;
          end;
+
+         Id.Show_Subprogram_Names := Pref_Display_Subprogram_Names;
       end if;
 
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
