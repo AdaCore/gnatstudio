@@ -265,12 +265,13 @@ package body Language is
       then
          Entity := Comment_Text;
          Next_Char := Buffer'First + Context.New_Line_Comment_Start_Length;
+
          while Next_Char <= Buffer'Last
-           and then Buffer (Next_Char) /= ASCII.CR
            and then Buffer (Next_Char) /= ASCII.LF
          loop
             Next_Char := Next_Char + 1;
          end loop;
+
          return;
       end if;
 
@@ -279,15 +280,18 @@ package body Language is
       if Buffer (Buffer'First) = Context.String_Delimiter then
          Entity := String_Text;
          Next_Char := Buffer'First;
+
          loop
             Next_Char := Next_Char + 1;
             exit when Next_Char >= Buffer'Last
               or else
-              (Buffer (Next_Char) = Context.String_Delimiter
-               and then (Context.Quote_Character = ASCII.Nul
+                (Buffer (Next_Char) = Context.String_Delimiter
+                   and then
+                     (Context.Quote_Character = ASCII.NUL
                         or else
-                        Buffer (Next_Char - 1) /= Context.Quote_Character));
+                          Buffer (Next_Char - 1) /= Context.Quote_Character));
          end loop;
+
          Next_Char := Next_Char + 1;
          return;
       end if;
