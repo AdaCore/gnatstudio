@@ -1041,10 +1041,9 @@ package body Src_Editor_Box is
       Pack_Start (Box.Root_Container, Hbox, Expand => True, Fill => True);
 
       Gtk_New (Drawing_Area);
-      Hide_All (Drawing_Area);
-      Set_Size_Request (Drawing_Area, 10, -1);
+      Set_Size_Request (Drawing_Area, 1, -1);
 
-      Pack_Start (Hbox, Drawing_Area, Expand => False, Fill => True);
+      Pack_Start (Hbox, Drawing_Area, Expand => False, Fill => False);
 
       Gtk_New (Scrolling_Area);
       Set_Policy
@@ -1284,28 +1283,6 @@ package body Src_Editor_Box is
 
       return False;
    end Check_Timestamp_Idle;
-
-   -------------------------
-   -- Get_Total_Ref_Count --
-   -------------------------
-
-   function Get_Total_Ref_Count
-     (Editor : access Source_Editor_Box_Record)
-      return Integer is
-   begin
-      return Get_Total_Ref_Count (Editor.Source_Buffer);
-   end Get_Total_Ref_Count;
-
-   -------------------
-   -- Get_Ref_Count --
-   -------------------
-
-   function Get_Ref_Count
-     (Editor : access Source_Editor_Box_Record)
-      return Integer is
-   begin
-      return Get_Ref_Count (Editor.Source_Buffer);
-   end Get_Ref_Count;
 
    --------------
    -- Focus_In --
