@@ -2399,8 +2399,11 @@ package body Project_Explorers is
       function Next return Gtk_Ctree_Node;
       --  Return the next matching node
 
-      function Next_Or_Child
-        (Name : String; Start : Gtk_Ctree_Node) return Gtk_Ctree_Node;
+      procedure Next_Or_Child
+        (Name   : String;
+         Start  : Gtk_Ctree_Node;
+         Result : out Gtk_Ctree_Node;
+         Finish : out Boolean);
       pragma Inline (Next_Or_Child);
       --  Move to the next node, starting from a project or directory node by
       --  name Name.
@@ -2436,14 +2439,23 @@ package body Project_Explorers is
       -- Next_Or_Child --
       -------------------
 
-      function Next_Or_Child
-        (Name : String; Start : Gtk_Ctree_Node) return Gtk_Ctree_Node is
+      procedure Next_Or_Child
+        (Name   : String;
+         Start  : Gtk_Ctree_Node;
+         Result : out Gtk_Ctree_Node;
+         Finish : out Boolean) is
       begin
-         if Get (C.Matches, Name'Unrestricted_Access) >= Search_Match then
+         if Start /= C.Current and then Match (C, Name) /= -1 then
+            Result := Start;
+            Finish := True;
+
+         elsif Get (C.Matches, Name'Unrestricted_Access) >= Search_Match then
             Compute_Children (Explorer, Start);
-            return Row_Get_Children (Node_Get_Row (Start));
+            Result := Row_Get_Children (Node_Get_Row (Start));
+            Finish := False;
          else
-            return Row_Get_Sibling (Node_Get_Row (Start));
+            Result := Row_Get_Sibling (Node_Get_Row (Start));
+            Finish := False;
          end if;
       end Next_Or_Child;
 
@@ -2528,12 +2540,18 @@ package body Project_Explorers is
             begin
                case User.Node_Type is
                   when Project_Node | Extends_Project_Node =>
-                     Tmp := Next_Or_Child
-                       (Get_Name_String (User.Name), Start_Node);
+                     Next_Or_Child
+                       (Get_Name_String (User.Name), Start_Node, Tmp, Finish);
+                     if Finish then
+                        return Tmp;
+                     end if;
 
                   when Directory_Node =>
-                     Tmp := Next_Or_Child
-                       (Get_String (User.Directory), Start_Node);
+                     Next_Or_Child
+                       (Get_String (User.Directory), Start_Node, Tmp, Finish);
+                     if Finish then
+                        return Tmp;
+                     end if;
 
                   when Obj_Directory_Node =>
                      Tmp := Row_Get_Sibling (Node_Get_Row (Start_Node));
@@ -2683,6 +2701,14 @@ package body Project_Explorers is
            (Get_Project (Kernel), Recursive => True);
       begin
          while Current (Iter) /= No_Project loop
+
+            if not C.Include_Entities
+              and then Match (C, Project_Name (Current (Iter))) /= -1
+            then
+               Set (C.Matches, new String'(Project_Name (Current (Iter))),
+                    Search_Match);
+            end if;
+
             declare
                Sources : String_Array_Access := Get_Source_Files
                  (Project_View => Current (Iter),
