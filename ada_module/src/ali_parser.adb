@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2003-2004                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -1136,7 +1136,7 @@ package body ALI_Parser is
          Reset (LI);
 
          Trace (Me, "Load_And_Scan_ALI: "
-                & Base_Name (Get_LI_Filename (LI)));
+                & Full_Name (Get_LI_Filename (LI)).all);
          Load_And_Scan_ALI
            (ALI_Filename   => Get_LI_Filename (LI),
             Reset_First    => Reset_ALI,
@@ -1418,13 +1418,20 @@ package body ALI_Parser is
       Project : Project_Type;
    begin
       --  If we already know about the file, we get the name of the LI file
-      --  from it
+      --  from it. However, we also need to check wether the object directory
+      --  of the project has changed (in case the user changed the scenario for
+      --  instance)
 
       Source := Get_Or_Create
         (Db           => Handler.Db,
          File         => Source_Filename,
          LI           => null);
-      if Source /= null and then Get_LI (Source) /= null then
+      if Source /= null
+        and then Get_LI (Source) /= null
+        and then Name_As_Directory (Object_Path
+          (Get_Project (Get_LI (Source)), Recursive => False)) =
+        Dir_Name (Get_LI_Filename (Get_LI (Source))).all
+      then
          if not Update_ALI (Handler, Get_LI (Source), Reset_ALI => Reset_ALI)
            and then File_Has_No_LI_Report /= null
          then
