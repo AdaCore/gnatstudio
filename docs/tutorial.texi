@@ -121,9 +121,8 @@ several areas:
 
 @noindent
 
-In the project explorer, click on the @code{common} icon, then
-open the @code{common} directory by clicking
-on the @code{[+]} box on the left of @code{common}.
+In the project explorer, open the @code{common} directory by clicking
+on the triangle on the left of @code{common}.
 This will open the directory and display a list of source files located
 in this directory.
 
@@ -253,7 +252,7 @@ explorer is to use the contextual menu from the source editor:
 @c --------------------------------------------------------------------
 
 @noindent
-Click on the @code{[+]} sign to open @file{tokens.ads} entities.
+Click on the triangle to open @file{tokens.ads} entities.
 When you click on a file in the explorer, you get
 language sensitive information about the file, such as
 @code{packages}, @code{subprograms}, @code{tasks}, ... for @code{Ada}.
@@ -301,7 +300,7 @@ is created at the bottom of the main window where the sdc application
 runs and displays an unexpected internal error: this is a good opportunity
 to use the integrated debugger.
 
-Close the execution window by clicking on the arrow on the top right
+Close the execution window by clicking on the x icon on the top right
 corner of this window.
 
 @c --------------------------------------------------------------------
@@ -322,9 +321,9 @@ created, a data window and a debugger console.
 You can also look at the various debug menu item and toolbar buttons which are
 now activated.
 
-Use the menu @code{Debug->Data->Call Stack}: this opens a new area in
-the data window. If you select the contextual menu in the call stack,
-various pieces of information can be displayed or
+Use the menu @code{Debug->Data->Call Stack}: this opens a new window on the
+right of the source editors. If you select the contextual menu in the call
+stack, various pieces of information can be displayed or
 removed in the call stack. From this contextual menu, add the
 @code{Frame Number} info by clicking on it.
 
@@ -333,7 +332,7 @@ arguments text entry, click on @code{OK}: the debugger stops on an exception
 (@code{Contraint_Error} in the file @file{stack.adb}, at line 49).
 
 Go up in the call stack by clicking on the @code{tokens.process} line
-(frame number 6). If needed, use the scrollbar on the right.
+(frame number 6).
 
 If you move the mouse over the parameter @code{T} at line 64, a tooltip is
 displayed showing the value of @code{T}. You have probably noticed that
@@ -637,7 +636,7 @@ directory and click on the @code{projects} subdirectory. Select the file
 
 You can see the new dependencies added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
-the @code{prj1} icon by clicking on the @code{[+]} sign, and then
+the @code{prj1} icon by clicking on the triangle, and then
 similarly open the @code{prj2} icon, you will notice that the project
 @code{prj4} is displayed twice: once as a dependency of @code{prj2}, and
 once as a dependency of @code{prj1}.
