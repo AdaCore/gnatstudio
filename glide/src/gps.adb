@@ -66,6 +66,7 @@ with External_Editor_Module;
 with GVD_Module;
 with Metrics_Module;
 with Project_Explorers;
+with Project_Explorers_Files;
 with Project_Viewers;
 with Src_Editor_Module;
 with VCS_Module;
@@ -349,6 +350,7 @@ procedure GPS is
       Browsers.Projects.Register_Module (GPS.Kernel);
       Project_Viewers.Register_Module (GPS.Kernel);
       Src_Editor_Module.Register_Module (GPS.Kernel);
+      Project_Explorers_Files.Register_Module (GPS.Kernel);
       Project_Explorers.Register_Module (GPS.Kernel);
       External_Editor_Module.Register_Module (GPS.Kernel);
       GVD_Module.Register_Module (GPS.Kernel);
