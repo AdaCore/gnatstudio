@@ -67,6 +67,10 @@ package Debugger.Gdb is
    function Source_Files_List (Debugger : access Gdb_Debugger)
                               return Odd.Types.String_Array;
 
+   function Find_File
+     (Debugger : access Gdb_Debugger; File_Name : String)
+     return String;
+
    function Type_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String) return String;

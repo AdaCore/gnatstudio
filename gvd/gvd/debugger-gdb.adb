@@ -496,6 +496,12 @@ package body Debugger.Gdb is
       if Debugger.Executable /= null then
          Set_Executable (Debugger, Debugger.Executable.all);
       else
+         --  Indicate that a new executable is present (even if there is none,
+         --  we still need to reset some data).
+         --  Do this before looking for the current file, since the explorer
+         --  must also be initialized.
+         Executable_Changed (Convert (Debugger.Window, Debugger));
+
          Push_Internal_Command_Status (Get_Process (Debugger), True);
 
          --  Detect the current language. Note that most of the work is done
@@ -513,6 +519,7 @@ package body Debugger.Gdb is
 
          --  Make sure everything is hidden
          Pop_Internal_Command_Status (Get_Process (Debugger));
+
       end if;
    end Initialize;
 
@@ -554,6 +561,11 @@ package body Debugger.Gdb is
          Send (Debugger, "file " & Executable);
       end if;
 
+      --  Report a change in the executable. This has to be done before we
+      --  look for the current file and line, so that the explorer can be
+      --  correctly updated.
+      Executable_Changed (Convert (Debugger.Window, Debugger));
+
       --  Detect the current language, and get the name and line of the
       --  initial file.
       Push_Internal_Command_Status (Get_Process (Debugger), True);
@@ -561,6 +573,7 @@ package body Debugger.Gdb is
       Send (Debugger, "list");
       Send (Debugger, "info line");
       Pop_Internal_Command_Status (Get_Process (Debugger));
+
    end Set_Executable;
 
    -----------------
@@ -1046,13 +1059,17 @@ package body Debugger.Gdb is
          Index  : Positive := S'First;
          Start  : Positive;
       begin
-         --  Parse first list (starts with ':')
-         Skip_To_Char (S, Index, ':');
-         Index := Index + 1;
-         Skip_Blanks (S, Index);
-
          while Index <= S'Last loop
             --  Parse each file
+
+            while Looking_At (S, Index, "Source files for")
+              or else Looking_At (S, Index, "No symbol table")
+            loop
+               Skip_To_Char (S, Index, ':');
+               Index := Index + 1;
+               Skip_Blanks (S, Index);
+            end loop;
+
             Start := Index;
             while Index <= S'Last
               and then S (Index) /= ','
@@ -1065,15 +1082,7 @@ package body Debugger.Gdb is
             if Index <= S'Last then
                Result (Num) := new String' (S (Start .. Index - 1));
                Num := Num + 1;
-
-               --  End of list ?
-               if S (Index) /= ',' then
-                  Skip_To_Char (S, Index, ':');
-                  Index := Index + 1;
-               else
-                  Index := Index + 1;
-               end if;
-
+               Index := Index + 1;
                Skip_Blanks (S, Index);
             end if;
          end loop;
@@ -1630,5 +1639,37 @@ package body Debugger.Gdb is
          return Default;
       end if;
    end Get_Type_Info;
+
+   ---------------
+   -- Find_File --
+   ---------------
+
+   function Find_File
+     (Debugger : access Gdb_Debugger; File_Name : String)
+     return String
+   is
+      File_First  : Natural := 0;
+      File_Last   : Positive;
+      Line        : Natural := 0;
+      First, Last : Natural;
+   begin
+      Set_Parse_File_Name (Get_Process (Debugger), False);
+
+      declare
+         Str : constant String :=
+           Send (Debugger, "info line " & File_Name & ":1",
+                 Is_Internal => True);
+      begin
+         Set_Parse_File_Name (Get_Process (Debugger), True);
+         Found_File_Name
+           (Debugger,
+            Str, File_First, File_Last, First, Last, Line);
+         if First = 0 then
+            return File_Name;
+         else
+            return Str (File_First .. File_Last);
+         end if;
+      end;
+   end Find_File;
 
 end Debugger.Gdb;
