@@ -393,14 +393,12 @@ package body Glide_Kernel.Console is
    procedure Initialize_Console
      (Kernel         : access Kernel_Handle_Record'Class)
    is
-      Top     : constant Glide_Window :=
+      Top                 : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
-
       Console             : Glide_Console;
       Interactive_Console : Glide_Interactive_Console;
       Results             : Result_View;
-
-      Child   : MDI_Child;
+      Child               : MDI_Child;
 
    begin
       if Top /= null
