@@ -61,7 +61,6 @@ with Project_Explorers;        use Project_Explorers;
 with Projects;                 use Projects;
 with Projects.Registry;        use Projects.Registry;
 with String_List_Utils;        use String_List_Utils;
-with String_Utils;             use String_Utils;
 with File_Utils;               use File_Utils;
 with GUI_Utils;                use GUI_Utils;
 with OS_Utils;                 use OS_Utils;
@@ -289,7 +288,7 @@ package body Project_Explorers_Files is
                      if Get_Project_From_File
                        (Get_Registry (D.Explorer.Kernel),
                         VF, Root_If_Not_Found => False) /= No_Project
-                       and then Dir_Name (VF).all = D.Norm_Dir.all
+                       and then File_Equal (Dir_Name (VF).all, D.Norm_Dir.all)
                      then
                         Append (D.Files, Name);
                      end if;
@@ -350,23 +349,12 @@ package body Project_Explorers_Files is
             --  Are we on the path to the target directory ?
 
             if not Path_Found
-               and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
-               and then
-                 ((Filenames_Are_Case_Sensitive
-                    and then (D.Norm_Dest
-                               (D.Norm_Dest'First
-                                .. D.Norm_Dest'First
-                                  + D.Norm_Dir'Length + Dir'Length - 1)
-                                   = D.Norm_Dir.all & Dir))
-                   or else
-                     (not Filenames_Are_Case_Sensitive
-                      and then Case_Insensitive_Equal
-                        (D.Norm_Dest.all
-                           (D.Norm_Dest.all'First
-                              .. D.Norm_Dest.all'First
-                                + D.Norm_Dir.all'Length
-                                  + Dir'Length - 1),
-                         D.Norm_Dir.all & Dir)))
+              and then D.Norm_Dir'Length + Dir'Length <= D.Norm_Dest'Length
+              and then File_Equal
+                (D.Norm_Dest
+                   (D.Norm_Dest'First ..
+                       D.Norm_Dest'First + D.Norm_Dir'Length + Dir'Length - 1),
+                 D.Norm_Dir.all & Dir)
             then
                Path_Found := True;
 
@@ -391,8 +379,8 @@ package body Project_Explorers_Files is
 
                --  Are we on the target directory ?
 
-               if D.Norm_Dest.all = D.Norm_Dir.all & Dir
-                  & Directory_Separator
+               if File_Equal
+                 (D.Norm_Dest.all, D.Norm_Dir.all & Dir & Directory_Separator)
                then
                   declare
                      Success   : Boolean;
@@ -499,10 +487,14 @@ package body Project_Explorers_Files is
                return;
          end;
 
-         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
-
+         --  Force a final directory separator, since otherwise on Windows
+         --  "C:\" is converted to "C:" and only file names relative to the
+         --  current directory will be returned
+         D.Norm_Dir := new String'
+           (Name_As_Directory (Normalize_Pathname (Dir)));
       else
-         D.Norm_Dir := new String'(Normalize_Pathname (Dir));
+         D.Norm_Dir := new String'
+           (Name_As_Directory ((Normalize_Pathname (Dir))));
       end if;
 
       D.Norm_Dest     := new String'(Normalize_Pathname (Append_To_Dir));
