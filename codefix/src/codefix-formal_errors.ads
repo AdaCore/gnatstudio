@@ -20,6 +20,7 @@ package Codefix.Formal_Errors is
    --  line number.
 
    procedure Initialize (This : in out Error_Message; Line, Col : Positive);
+   --  Sets the value of Line and Col field of an Error_Message.
 
    function Get_Message (This : Error_Message) return String;
    --  Returns the message with the header.
@@ -37,8 +38,10 @@ package Codefix.Formal_Errors is
      (This     : Solution_List;
       Position : Positive)
      return Extract;
+   --  Get the extract recorded in a solution list at the given position.
 
    procedure Free (This : in out Solution_List);
+   --  Free the memory associated to a Solution_List.
 
    ----------------------------------------------------------------------------
    --  functions of formal errors
