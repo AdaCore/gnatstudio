@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -684,9 +684,9 @@ package Glide_Kernel is
    --  Return null if no such editor was found.
 
    function Save_MDI_Children
-     (Handle : access Kernel_Handle_Record;
+     (Handle   : access Kernel_Handle_Record;
       Children : Gtkada.MDI.MDI_Child_Array := Gtkada.MDI.No_Children;
-      Force  : Boolean := False) return Boolean;
+      Force    : Boolean := False) return Boolean;
    --  Save all the MDI children, as well as the current project
    --  If Force is False, ask the user first.
    --  If Children is specified, only ask to save these specific children.
@@ -747,28 +747,28 @@ package Glide_Kernel is
    --  Runs the "context_changed" hook
 
    procedure Source_Lines_Revealed
-     (Handle      : access Kernel_Handle_Record;
-      Context     : access Selection_Context'Class);
+     (Handle  : access Kernel_Handle_Record;
+      Context : access Selection_Context'Class);
    --  Runs the "source_lines_revealed" hook.
 
    procedure File_Edited
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File);
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
    --  Runs the "file_edited" hook.
 
    procedure File_Saved
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File);
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
    --  Runs the "file_saved" hook
 
    procedure File_Closed
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File);
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
    --  Runs the "file_closed" hook
 
    procedure File_Changed_On_Disk
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File);
+     (Handle : access Kernel_Handle_Record;
+      File   : VFS.Virtual_File);
    --  Runs the "file_changed_on_disk" hook
 
    procedure Compilation_Finished
@@ -846,8 +846,8 @@ private
    end record;
 
    type Selection_Context is tagged record
-      Kernel  : Kernel_Handle;
-      Creator : Module_ID;
+      Kernel    : Kernel_Handle;
+      Creator   : Module_ID;
       Ref_Count : Natural := 1;
    end record;
 
@@ -975,7 +975,6 @@ private
       Customization_Strings : Glib.Xml_Int.Node_Ptr;
       --  The customization strings hard-coded by the modules, and they have
       --  been registered before all modules are loaded.
-
    end record;
 
 end Glide_Kernel;
