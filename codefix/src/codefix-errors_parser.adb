@@ -52,6 +52,7 @@ package body Codefix.Errors_Parser is
                Solutions,
                Success);
          end if;
+
          Current_Node := Next (Current_Node);
 
          if Success then
@@ -332,8 +333,11 @@ package body Codefix.Errors_Parser is
 
    procedure Initialize (This : in out Sth_Should_Be_Sth) is
    begin
-      This.Matcher := (1 => new Pattern_Matcher'
-        (Compile ("""([^""]+)"" should be ""([^""]+)""")));
+      This.Matcher :=
+        (new Pattern_Matcher'
+           (Compile ("""([^""]+)"" should be ""([^""]+)""")),
+         new Pattern_Matcher'
+           (Compile ("([^\w\s][^\s]*) should be ([^\w\s][^\s]*)")));
    end Initialize;
 
    procedure Fix
@@ -1661,13 +1665,13 @@ begin
 --   Add_Parser (new Should_Be_In);
 --   Add_Parser (new Bad_Column);
 --   Add_Parser (new Main_With_Missing);
---   Add_Parser (new Bad_Casing_Standard);
---   Add_Parser (new Bad_Casing_Declared);
---   Add_Parser (new Bad_Casing_Keyword);
+   Add_Parser (new Bad_Casing_Standard);
+   Add_Parser (new Bad_Casing_Declared);
+   Add_Parser (new Bad_Casing_Keyword);
    Add_Parser (new Object_Not_Referenced);
    Add_Parser (new Pkg_Not_Referenced);
 --   Add_Parser (new Pragma_Missplaced);
---   Add_Parser (new Constant_Expected);
+   Add_Parser (new Constant_Expected);
 --   Add_Parser (new Possible_Interpretation);
 --   Add_Parser (new Hidden_Declaration);
 --   Add_Parser (new Redundant_Conversion);
