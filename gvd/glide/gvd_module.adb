@@ -1237,7 +1237,7 @@ package body GVD_Module is
       Top   : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page  : constant GPS_Debugger :=
         GPS_Debugger (Get_Current_Process (Top));
-      Id    : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+      Id    : constant GVD_Module   := GVD_Module (GVD_Module_ID);
       use Debugger;
 
    begin
