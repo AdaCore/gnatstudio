@@ -425,9 +425,9 @@ package body Navigation_Module is
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
 
-         if B_Type in Construct_Category then
-            --  We are in a statement, go to the start.
-
+         if B_Type in Construct_Category
+           or else B_Type in Enclosing_Entity_Category
+         then
             B_Start := Get_Block_Start (Kernel, File, Line);
 
             if B_Start /= 0 then
@@ -475,9 +475,9 @@ package body Navigation_Module is
          Line   := Get_Current_Line (Kernel, File);
          B_Type := Get_Block_Type (Kernel, File, Line);
 
-         if B_Type in Construct_Category then
-            --  We are in a statement, go to the end.
-
+         if B_Type in Construct_Category
+           or else B_Type in Enclosing_Entity_Category
+         then
             B_End := Get_Block_End (Kernel, File, Line);
 
             if B_End /= 0 then
