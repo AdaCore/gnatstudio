@@ -90,15 +90,39 @@ package Glide_Kernel.Scripts is
    function Nth_Arg
      (Data : Callback_Data; N : Positive) return Integer is abstract;
    function Nth_Arg
+     (Data : Callback_Data; N : Positive) return Boolean is abstract;
+   function Nth_Arg
      (Data : Callback_Data; N : Positive) return System.Address is abstract;
    function Nth_Arg
      (Data : Callback_Data; N : Positive; Class : Class_Type)
       return Class_Instance is abstract;
    --  Get the nth argument to the function, starting from 1.
-   --  Raised Invalid parameter if there is no such parameter, or it doesn't
-   --  have the right type.
+   --  If there is not enough parameters, Invalid_Parameter is raised
+   --  If the parameters doesn't have the right type, Invalid_Parameter is
+   --  raised.
    --  In the last case, the class_instance must belong to Class or its
    --  children, or Invalid_Parameter is also raised.
+
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : String)
+      return String;
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : Integer)
+      return Integer;
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : Boolean)
+      return Boolean;
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : System.Address)
+      return System.Address;
+   function Nth_Arg
+     (Data    : Callback_Data;
+      N       : Positive;
+      Class   : Class_Type;
+      Default : Class_Instance)
+      return Class_Instance;
+   --  Same as above, except that if there are not enough parameters, Default
+   --  is returned.
 
    procedure Set_Error_Msg
      (Data : in out Callback_Data; Msg : String) is abstract;
@@ -114,27 +138,18 @@ package Glide_Kernel.Scripts is
    --  language, this could be a different type, such as a tuple in python.
 
    procedure Set_Return_Value
-     (Data   : in out Callback_Data;
-      Value  : Integer;
-      Append : Boolean := False) is abstract;
+     (Data : in out Callback_Data; Value : Integer) is abstract;
    procedure Set_Return_Value
-     (Data   : in out Callback_Data;
-      Value  : String;
-      Append : Boolean := False) is abstract;
+     (Data : in out Callback_Data; Value : String) is abstract;
    procedure Set_Return_Value
-     (Data   : in out Callback_Data;
-      Value  : System.Address;
-      Append : Boolean := False) is abstract;
+     (Data : in out Callback_Data; Value : System.Address) is abstract;
    procedure Set_Return_Value
-     (Data   : in out Callback_Data;
-      Value  : Class_Instance;
-      Append : Boolean := False) is abstract;
+     (Data : in out Callback_Data; Value : Class_Instance) is abstract;
    --  Set the return value of Data.
-   --  If Append is True, and the return value was set up as a list, the value
-   --  is appended to the list. For languages that do not support lists, the
-   --  append is only performed for strings (newline-separated).
-   --  If Append is True, and the return value is not a list, the new value
-   --  replaces the previous one.
+   --  If the return value was set as a list, Value is appended to the
+   --  list. For languages that do not support lists, the append is only
+   --  performed for strings (newline-separated). Other data types simply
+   --  replace the current return value.
    --
    --  When storing a Class_Instance, the Callback_Data takes control of the
    --  instance, and will be in charge of freeing it.

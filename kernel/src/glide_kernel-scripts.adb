@@ -411,8 +411,7 @@ package body Glide_Kernel.Scripts is
             while Current /= Module_List.Null_Node loop
                Set_Return_Value
                  (Data,
-                  Module_Name (Module_List.Data (Current)),
-                  Append => True);
+                  Module_Name (Module_List.Data (Current)));
                Current := Module_List.Next (Current);
             end loop;
          end;
@@ -428,22 +427,15 @@ package body Glide_Kernel.Scripts is
    is
       pragma Unreferenced (Command);
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
-      L, C   : Positive        := 1;
-      Name   : constant String := Nth_Arg (Data, 1);
-      File   : constant String := Nth_Arg (Data, 2);
+      Name   : constant String  := Nth_Arg (Data, 1);
+      File   : constant String  := Nth_Arg (Data, 2);
+      L      : constant Integer := Nth_Arg (Data, 3, Default => 1);
+      C      : constant Integer := Nth_Arg (Data, 4, Default => 1);
       Status : Find_Decl_Or_Body_Query_Status;
       Entity : Entity_Information;
       Instance : Class_Instance;
       Lib_Info : LI_File_Ptr;
    begin
-      if Number_Of_Arguments (Data) > 2 then
-         L := Nth_Arg (Data, 3);
-
-         if Number_Of_Arguments (Data) > 3 then
-            C := Nth_Arg (Data, 4);
-         end if;
-      end if;
-
       Lib_Info := Locate_From_Source_And_Complete (Kernel, File);
       if Lib_Info = No_LI_File then
          Set_Error_Msg (Data, -"File not found " & File);
@@ -549,10 +541,9 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => "create_entity",
+         Command      => "get_entity",
          Usage        =>
-           "create_entity (entity_name, file_name, [line], [column]) -> "
-           & "Entity",
+           "get_entity (entity_name, file_name, [line], [column]) -> Entity",
          Description  =>
            -"Create a new entity, from any of its references.",
          Minimum_Args => 2,
@@ -561,8 +552,8 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => "create_file",
-         Usage        => "create_file (file_name) -> File",
+         Command      => "get_file",
+         Usage        => "get_file (file_name) -> File",
          Description  => -"Create a new file, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -570,8 +561,8 @@ package body Glide_Kernel.Scripts is
 
       Register_Command
         (Kernel,
-         Command      => "create_project",
-         Usage        => "create_project (name) -> Project",
+         Command      => "get_project",
+         Usage        => "get_project (name) -> Project",
          Description  => -"Create a project handle, from its name.",
          Minimum_Args => 1,
          Maximum_Args => 1,
@@ -684,5 +675,85 @@ package body Glide_Kernel.Scripts is
          return "";
       end if;
    end Get_Name;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : String)
+      return String is
+   begin
+      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+         return Default;
+      else
+         return Nth_Arg (Callback_Data'Class (Data), N);
+      end if;
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : Integer)
+      return Integer is
+   begin
+      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+         return Default;
+      else
+         return Nth_Arg (Callback_Data'Class (Data), N);
+      end if;
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data : Callback_Data; N : Positive; Default : Boolean)
+      return Boolean is
+   begin
+      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+         return Default;
+      else
+         return Nth_Arg (Callback_Data'Class (Data), N);
+      end if;
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data    : Callback_Data;
+      N       : Positive;
+      Default : System.Address)
+      return System.Address is
+   begin
+      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+         return Default;
+      else
+         return Nth_Arg (Callback_Data'Class (Data), N);
+      end if;
+   end Nth_Arg;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data    : Callback_Data;
+      N       : Positive;
+      Class   : Class_Type;
+      Default : Class_Instance)
+      return Class_Instance is
+   begin
+      if N > Number_Of_Arguments (Callback_Data'Class (Data)) then
+         return Default;
+      else
+         return Nth_Arg (Callback_Data'Class (Data), N, Class);
+      end if;
+   end Nth_Arg;
 
 end Glide_Kernel.Scripts;
