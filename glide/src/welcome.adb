@@ -29,6 +29,7 @@ with Gtk.GEntry;           use Gtk.GEntry;
 with Gtk.Label;            use Gtk.Label;
 with Gtk.Separator;        use Gtk.Separator;
 with Gtk.Size_Group;       use Gtk.Size_Group;
+with Gtk.Stock;            use Gtk.Stock;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.File_Selector; use Gtkada.File_Selector;
@@ -78,6 +79,7 @@ package body Welcome is
       Label     : Gtk_Label;
       Button    : Gtk_Button;
       Size      : Gtk_Size_Group;
+      Quit      : Gtk_Widget;
    begin
       Screen := new Welcome_Screen_Record;
 
@@ -199,26 +201,33 @@ package body Welcome is
 
       Gtk_New_Hseparator (Sep);
       Pack_End (Box, Sep, Expand => False, Padding => 5);
+
+      Quit := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
    end Gtk_New;
 
    ---------
    -- Run --
    ---------
 
-   procedure Run (Screen : access Welcome_Screen_Record) is
+   function Run (Screen : access Welcome_Screen_Record) return Boolean is
+      Response : Gtk_Response_Type;
    begin
       if Get_Pref (Screen.Kernel, Display_Welcome) then
          Show_All (Screen);
 
          --  Prevent deleting of the dialog through the title bar's X button
          --  (which is shown on some window managers)
-         while Run (Screen) /= Gtk_Response_OK loop
-            null;
+         loop
+            Response := Run (Screen);
+            exit when Response = Gtk_Response_OK
+              or else Response = Gtk_Response_Close;
          end loop;
 
          if not Get_Active (Screen.Always_Show) then
             Set_Pref (Screen.Kernel, Display_Welcome, False);
          end if;
+
+         return Response /= Gtk_Response_Close;
 
       elsif Get_Text (Get_Entry (Screen.Open_Project)) /= "" then
          On_Load_Project (Screen);
@@ -226,6 +235,8 @@ package body Welcome is
       else
          On_Default_Project (Screen);
       end if;
+
+      return True;
    end Run;
 
    --------------------

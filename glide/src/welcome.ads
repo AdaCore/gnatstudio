@@ -37,11 +37,13 @@ package Welcome is
    --  Create a new welcome dialog. Project_Name is the project that should be
    --  suggested by default (empty string for the default project)
 
-   procedure Run (Screen : access Welcome_Screen_Record);
+   function Run (Screen : access Welcome_Screen_Record) return Boolean;
    --  Display the screen dialog on the screen, and let the user choose the
    --  initial project. If the preference Display_Welcome is false, the dialog
    --  is not actually displayed on the screen, but the project specified in
    --  Gtk_New is selected.
+   --  False is returned if the user decided to quit GPS instead of loading a
+   --  project.
 
 private
    type Welcome_Screen_Record is new Logo_Boxes.Logo_Box_Record with record
