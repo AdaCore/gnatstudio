@@ -9,6 +9,8 @@ package Generic_List is
 
    type List is private;
 
+   Null_List : constant List;
+
    type Comparison is access
      function (Arg1, Arg2 : Data_Type) return Boolean;
 
@@ -25,7 +27,11 @@ package Generic_List is
    function Is_Empty (L : List) return Boolean;
    --  True if L does not contain any element.
 
-   --  function Is_Last (L : List) return Boolean;
+   procedure Rev (L : in out List);
+   --  Reverse the order of elements in the list. Cost is O(n).
+
+   function Length (L : List) return Natural;
+   --  Return the number of elements in L. Cost is O(n).
 
    procedure Sort
      (L        : in out List;
@@ -33,6 +39,11 @@ package Generic_List is
    --  Sorts a List. The cost is O(n*log(n)).
    --  Inferior is a Comparison that returns True if Arg1 is strictly
    --  inferior to Arg2.
+
+   procedure Concat
+     (L1 : in out List;
+      L2 : List);
+   --  Append L2 at the end of L1.
 
    procedure Free (L : in out List);
    --  Free memory associated to L.
@@ -52,6 +63,8 @@ private
    type List_Node;
    type List is access List_Node;
 
+   Null_List : constant List := null;
+
    type Data_Access is access Data_Type;
 
    type List_Node is record
@@ -59,7 +72,12 @@ private
       Next    : List;
    end record;
 
-   procedure Free is new Unchecked_Deallocation (Data_Type, Data_Access);
+   procedure Free_Element is new
+     Unchecked_Deallocation (Data_Type, Data_Access);
    procedure Free_Node is new Unchecked_Deallocation (List_Node, List);
+
+   pragma Inline (Prepend);
+   pragma Inline (Head);
+   pragma Inline (Tail);
 
 end Generic_List;

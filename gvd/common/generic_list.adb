@@ -10,8 +10,7 @@ package body Generic_List is
 
    function List_Fuse
      (L1, L2   : in List;
-      Inferior : Comparison)
-     return List;
+      Inferior : Comparison) return List;
    --  Fuses two sorted lists into a sorted list.
    --  The cost is O(n) where n = (length(L1), length(L2)).
 
@@ -58,15 +57,58 @@ package body Generic_List is
    -- Is_Empty --
    --------------
 
-   function Is_Empty (L : List) return Boolean
-   is
+   function Is_Empty (L : List) return Boolean is
    begin
-      if L = null then
-         return True;
-      else
-         return False;
-      end if;
+      return L = null or else L.Element = null;
    end Is_Empty;
+
+   ---------
+   -- Rev --
+   ---------
+
+   procedure Rev (L : in out List) is
+      L_Buffer   : List;
+      L_Previous : List;
+      L_Current  : List;
+      L_Next     : List;
+
+   begin
+      if Is_Empty (L) then
+         return;
+      else
+         L_Previous := null;
+         L_Current  := L;
+         L_Next     := L.Next;
+
+         while L_Next /= null loop
+            L_Buffer := L_Current.Next;
+            L_Current.Next := L_Previous;
+            L_Previous := L_Current;
+            L_Current := L_Buffer;
+            L_Next := L_Current.Next;
+         end loop;
+
+         L_Current.Next := L_Previous;
+         L := L_Current;
+      end if;
+   end Rev;
+
+   ------------
+   -- Length --
+   ------------
+
+   function Length (L : List) return Natural is
+      L_Current : List := L;
+      Result    : Natural := 0;
+
+   begin
+      while not Is_Empty (L_Current) loop
+         Result := Result + 1;
+         L_Current := L_Current.Next;
+      end loop;
+
+      return Result;
+   end Length;
 
    ----------
    -- Sort --
@@ -94,10 +136,11 @@ package body Generic_List is
 
    procedure List_Split (L : in out List; L1, L2 : out List) is
       Append_To_L1 : Boolean := True;
-      L1_First : List;
-      L2_First : List;
-      L1_Last  : List;
-      L2_Last  : List;
+      L1_First     : List;
+      L2_First     : List;
+      L1_Last      : List;
+      L2_Last      : List;
+
    begin
       if L = null then
          L1 := null;
@@ -143,13 +186,13 @@ package body Generic_List is
 
    function List_Fuse
      (L1, L2   : in List;
-      Inferior : Comparison)
-     return List
+      Inferior : Comparison) return List
    is
       List_First : List;
       List_Last : List;
-      LL1 : List := L1;
-      LL2 : List := L2;
+      LL1       : List := L1;
+      LL2       : List := L2;
+
    begin
       if LL1 = null then
          return LL2;
@@ -188,20 +231,58 @@ package body Generic_List is
       return List_First;
    end List_Fuse;
 
+   ------------
+   -- Concat --
+   ------------
+
+   procedure Concat
+     (L1 : in out List;
+      L2 : List)
+   is
+      L1_Last : List;
+   begin
+      if Is_Empty (L1) then
+         L1 := L2;
+      else
+         L1_Last := L1;
+
+         while not Is_Empty (Tail (L1_Last)) loop
+            L1_Last := Tail (L1_Last);
+         end loop;
+
+         L1_Last.Next := L2;
+      end if;
+   end Concat;
+
    ----------
    -- Free --
    ----------
 
-   procedure Free (L : in out List)
-   is
+   procedure Free (L : in out List) is
       Previous : List;
+      Current  : List;
+
    begin
-      while L /= null loop
-         Previous := L;
-         Free (L.Element);
-         L := L.Next;
+      if L = null then
+         return;
+      end if;
+
+      Current := L.Next;
+      Previous := L;
+
+      while Current /= null loop
+         if Previous /= null then
+            Free_Element (Previous.Element);
+         end if;
+
          Free_Node (Previous);
+
+         Previous := Current;
+         Current := Current.Next;
       end loop;
+      Free_Element (Previous.Element);
+      Free_Node (Previous);
+
       L := null;
    end Free;
 
@@ -209,8 +290,7 @@ package body Generic_List is
    -- Tail --
    ----------
 
-   function Tail (L : List) return List
-   is
+   function Tail (L : List) return List is
    begin
       if L = null then
          raise List_Empty;
@@ -223,8 +303,7 @@ package body Generic_List is
    -- Head --
    ----------
 
-   function Head (L : List) return Data_Type
-   is
+   function Head (L : List) return Data_Type is
    begin
       if L = null
         or else L.Element = null
