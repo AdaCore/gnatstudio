@@ -331,6 +331,11 @@ package body Project_Trees is
       Data : Contextual_User_Data);
    --  Callback for the contextual menu item to add some source directories
 
+   procedure Change_Obj_Directory_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data);
+   --  Change the object directory associated with a specific project
+
    ---------------------
    -- On_Add_Variable --
    ---------------------
@@ -366,6 +371,30 @@ package body Project_Trees is
          Recompute_View (Data.Kernel);
       end if;
    end Add_Directory_From_Contextual;
+
+   ------------------------------------------
+   -- Change_Obj_Directory_From_Contextual --
+   ------------------------------------------
+
+   procedure Change_Obj_Directory_From_Contextual
+     (Item : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Data : Contextual_User_Data)
+   is
+      --  ??? Default should be the absolute current object directory (beware
+      --  ??? of relative paths)
+      Dir : constant String := Single_Directory_Selector_Dialog
+        (Get_Current_Dir);
+   begin
+      if Dir /= "" then
+         Update_Attribute_Value_In_Scenario
+           (Project         => Get_Project_From_View (Data.Project),
+            Pkg_Name        => "",
+            Attribute_Name  => "object_dir",
+            Value           => Dir,
+            Attribute_Index => No_String);
+         Recompute_View (Data.Kernel);
+      end if;
+   end Change_Obj_Directory_From_Contextual;
 
    --------------------------
    -- Tree_Contextual_Menu --
@@ -417,8 +446,15 @@ package body Project_Trees is
 
          Gtk_New (Item, Label => "Change Object Directory for "
                   & Get_Name_String (Projects.Table (Prj).Name));
-         Set_Sensitive (Item, False);
          Append (T.Contextual_Menu, Item);
+         Contextual_Callback.Connect
+           (Item, "activate",
+            Contextual_Callback.To_Marshaller
+            (Change_Obj_Directory_From_Contextual'Access),
+            (Kernel    => T.Kernel,
+             Project   => Prj,
+             File_Name => No_String,
+             Directory => No_String));
       end if;
 
       Directory := Get_Directory_From_Node (T, Node);
@@ -662,6 +698,8 @@ package body Project_Trees is
       Buffer : String (1 .. Current_Dir'Length + Directory'Length);
       Buffer_Len : Natural;
    begin
+      pragma Assert (Object_Directory or else Directory_String /= No_String);
+
       if Object_Directory then
          Node_Type := Obj_Directory_Node;
       end if;
@@ -1316,7 +1354,7 @@ package body Project_Trees is
       Count : Natural := 0;
       Src   : String_List_Id;
       Index : Natural;
-      N, N2 : Gtk_Ctree_Node;
+      N, N2, Tmp : Gtk_Ctree_Node;
       Current_Dir : constant String := String (Get_Current_Dir);
    begin
       --  The goal here is to keep the directories if their current state
@@ -1351,25 +1389,48 @@ package body Project_Trees is
 
             declare
                User : constant User_Data := Node_Get_Row_Data (Tree, N);
+               Prj  : Project_Id;
             begin
-               if User.Node_Type = Directory_Node then
-                  Index := Sources'First;
-                  while Index <= Sources'Last loop
-                     if Sources (Index) /= No_String
-                       and then String_Equal (Sources (Index), User.Directory)
-                     then
-                        Sources (Index) := No_String;
-                        exit;
-                     end if;
-                     Index := Index + 1;
-                  end loop;
+               case User.Node_Type is
+                  when Directory_Node =>
+                     Index := Sources'First;
+                     while Index <= Sources'Last loop
+                        if Sources (Index) /= No_String
+                          and then String_Equal
+                             (Sources (Index), User.Directory)
+                        then
+                           Sources (Index) := No_String;
+                           exit;
+                        end if;
+                        Index := Index + 1;
+                     end loop;
 
-                  if Index > Sources'Last then
+                     if Index > Sources'Last then
+                        Remove_Node (Tree, N);
+                     else
+                        Update_Node (Tree, N);
+                     end if;
+
+                  when Obj_Directory_Node =>
+                     Prj := Get_Project_From_Node (Tree, N);
                      Remove_Node (Tree, N);
-                  else
-                     Update_Node (Tree, N);
-                  end if;
-               end if;
+                     Tmp := Add_Directory_Node
+                       (Tree,
+                        Directory   => Get_Name_String
+                        (Projects.Table (Prj).Object_Directory),
+                        Parent_Node => Node,
+                        Current_Dir => Current_Dir,
+                        Object_Directory => True);
+
+                  when Project_Node =>
+                     --  The list of imported project files cannot change with
+                     --  the scenario, so there is nothing to be done here
+                     null;
+
+                  when others =>
+                     --  No other node type is possible
+                     null;
+               end case;
             end;
             N := N2;
          end loop;
