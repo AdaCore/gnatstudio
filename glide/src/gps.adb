@@ -125,6 +125,9 @@ procedure GPS is
    User_Directory_Existed : Boolean;
    Cleanup_Needed         : Boolean := False;
 
+   Started                : Boolean := False;
+   --  Whether the main loop is started.
+
    Button                 : Message_Dialog_Buttons;
    Result                 : Boolean;
    Timeout_Id             : Timeout_Handler_Id;
@@ -1055,6 +1058,11 @@ procedure GPS is
          Execute_Batch (Batch_File.all, As_File => True);
       end if;
 
+      Started := True;
+
+      --  Set the title of the GPS window.
+      Child_Selected (Get_MDI (GPS.Kernel), GPS.Kernel);
+
       return False;
    end Finish_Setup;
 
@@ -1070,8 +1078,10 @@ procedure GPS is
       pragma Unreferenced (MDI);
       C : constant MDI_Child := MDI_Child (To_Object (Child, 1));
    begin
-      --  Set the title of the main window.
-      Reset_Title (Glide_Window (Get_Main_Window (Kernel)), Get_Title (C));
+      if Started then
+         --  Set the title of the main window.
+         Reset_Title (Glide_Window (Get_Main_Window (Kernel)), Get_Title (C));
+      end if;
    end Title_Changed;
 
    --------------------
@@ -1088,11 +1098,13 @@ procedure GPS is
    begin
       --  Set the title of the main window.
 
-      if Child = null then
-         Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
-      else
-         Reset_Title
-           (Glide_Window (Get_Main_Window (Kernel)), Get_Title (Child));
+      if Started then
+         if Child = null then
+            Reset_Title (Glide_Window (Get_Main_Window (Kernel)));
+         else
+            Reset_Title
+              (Glide_Window (Get_Main_Window (Kernel)), Get_Title (Child));
+         end if;
       end if;
 
       if Context /= null then
