@@ -170,6 +170,29 @@ package Process_Proxies is
    --  Register a new post-processing command to be executed after the next
    --  call to Wait.
 
+   generic
+      type Data (<>) is private;
+      type Widget is tagged private;
+   package Register_Generic is
+      type Callback is access procedure
+        (W : access Widget'Class; User_Data : Data);
+
+      function Register_Post_Cmd_If_Needed
+        (Proxy     : access Process_Proxy'Class;
+         W         : access Widget'Class;
+         Cmd       : Callback;
+         User_Data : Data)
+        return Boolean;
+      --  This function tests whether the debugger is currently busy
+      --  processing some output.
+      --  If it is the case, then it registers Cmd as a procedure to call
+      --  when the debugger is available, and returns True;
+      --  It this is not the case, it returns False and does nothing
+
+   end Register_Generic;
+   --  This package must be instanciated at library level, since it needs to
+   --  reference some internal callback function.
+
    ----------------
    -- Exceptions --
    ----------------

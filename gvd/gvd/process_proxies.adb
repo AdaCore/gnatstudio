@@ -401,4 +401,66 @@ package body Process_Proxies is
       Free (Initial);
    end Process_Post_Processes;
 
+   ----------------------
+   -- Register_Generic --
+   ----------------------
+
+   package body Register_Generic is
+
+      type Data_Access is access Data;
+      type Widget_Access is access all Widget'Class;
+
+      type Data2 is record
+         D    : Data_Access;
+         Func : Callback;
+         W    : Widget_Access;
+      end record;
+      type Data2_Access is access all Data2;
+
+      function Convert is new Unchecked_Conversion
+        (Data2_Access, System.Address);
+      function Convert is new Unchecked_Conversion
+        (System.Address, Data2_Access);
+      procedure Free is new Unchecked_Deallocation (Data2, Data2_Access);
+      procedure Free is new Unchecked_Deallocation (Data, Data_Access);
+
+      procedure Internal_Callback (S : System.Address);
+      --  Internal function used as a post command.
+
+      -----------------------
+      -- Internal_Callback --
+      -----------------------
+
+      procedure Internal_Callback (S : System.Address) is
+         D : Data2_Access := Convert (S);
+      begin
+         D.Func (D.W, D.D.all);
+         Free (D.D);
+         Free (D);
+      end Internal_Callback;
+
+      ---------------------------------
+      -- Register_Post_Cmd_If_Needed --
+      ---------------------------------
+
+      function Register_Post_Cmd_If_Needed
+        (Proxy     : access Process_Proxy'Class;
+         W         : access Widget'Class;
+         Cmd       : Callback;
+         User_Data : Data)
+        return Boolean
+      is
+      begin
+         if Command_In_Process (Proxy) then
+            Register_Post_Cmd
+              (Proxy, Internal_Callback'Unrestricted_Access,
+               Convert (new Data2'
+                        (new Data'(User_Data), Cmd, Widget_Access (W))));
+            return True;
+         end if;
+         return False;
+      end Register_Post_Cmd_If_Needed;
+
+   end Register_Generic;
+
 end Process_Proxies;
