@@ -1,3 +1,10 @@
+Known Problems fixed in GVD 1.2.0
+
+- Parsing Ada exported variables in C
+  Problem:    GVD will generate a bug box when trying to display in C mode
+              a variable declared in Ada.
+  Workaround: Set the language to Ada before displaying the variable.
+
 Known Problems fixed in GVD 1.1.1
 
 - Parsing unconstrainted Ada arrays
