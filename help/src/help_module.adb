@@ -964,7 +964,7 @@ package body Help_Module is
             Open_HTML_File (Kernel, File, Anchor);
 
             if Navigate then
-               Args (1) := new String'("html.browse");
+               Args (1) := new String'("html_browse");
                Args (2) := new String'(File);
                Args (3) := new String'(Anchor);
 
