@@ -75,6 +75,7 @@ package body Glide_Kernel.Console is
    procedure On_Load_To_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Callback for File->Messages->Load Contents... menu.
+   pragma Unreferenced (On_Load_To_Console);
 
    procedure On_Clear_Console
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
