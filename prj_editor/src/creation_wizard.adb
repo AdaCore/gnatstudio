@@ -195,7 +195,7 @@ package body Creation_Wizard is
       Gtk_New_Vbox (Page);
       Set_Border_Width (Page, 5);
 
-      Gtk_New (Frame, -"Name and Location");
+      Gtk_New (Frame, -"Name & Location");
       Set_Border_Width (Frame, 5);
       Pack_Start (Page, Frame, Expand => False);
 
