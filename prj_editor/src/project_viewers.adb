@@ -1021,16 +1021,6 @@ package body Project_Viewers is
             --     Context_Callback.To_Marshaller
             --     (Edit_Switches_From_Contextual'Access),
             --     Selection_Context_Access (Context));
-
-            --  ??? Should be in another module
-            --  Gtk_New (Item, Label => File_Information (File_Context)
-            --           & " depends on...");
-            --  Append (Menu, Item);
-            --  Context_Callback.Connect
-            --    (Item, "activate",
-            --     Context_Callback.To_Marshaller
-            --     (Edit_Dependencies_From_Contextual'Access),
-            --     Selection_Context_Access (Context));
          end if;
       end if;
    end Project_Editor_Contextual;
