@@ -260,7 +260,7 @@ package body Glide_Kernel.Standard_Hooks is
          Message      => Message,
          Action       => Action);
    begin
-      if Run_Hook_Until_Success
+      if not Run_Hook_Until_Success
         (Kernel, Location_Action_Hook, Data, Set_Busy => False)
       then
          Trace (Me, "No location viewer registered.");
