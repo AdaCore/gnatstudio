@@ -3,6 +3,9 @@ details, please see the documentation.
 
 New features in GPS 2.1.0
 
+- Relative paths in Project View: use absolute paths if the only common part
+  of the path is the root directory of the file system
+
 - D930-017: New preference to chose whether the toolbar should be displayed
 
 - Customability enhancements: New project attributes and new preferences can
