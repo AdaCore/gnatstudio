@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                        Copyright (C) 2003                         --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -91,13 +91,19 @@ package body Codefix.Errors_Manager is
       Logic_Pos := 1;
       File_Pos  := 1;
 
+      --  ??? It seems the following loop is not needed, since GNAT correctly
+      --  expands the ASCII.HTs when displaying an error message. I am not
+      --  removing the loop, however, since I'm not sure that the field
+      --  File_Cursor.Col should indeed be taking into accound TAB expansion.
+      --  I'm simply commenting out the active of the loop below for now.
+
       loop
          exit when Logic_Pos = Current.Col
            or else File_Pos > Current_Line'Last;
 
-         if Current_Line (File_Pos) = ASCII.HT then
-            Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
-         end if;
+         --  if Current_Line (File_Pos) = ASCII.HT then
+         --     Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
+         --  end if;
 
          Logic_Pos := Logic_Pos + 1;
          File_Pos := File_Pos + 1;
