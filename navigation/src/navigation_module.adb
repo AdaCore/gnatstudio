@@ -1,4 +1,4 @@
-----------------------------------------------------------------------
+-----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
 --                        Copyright (C) 2002                         --
@@ -22,11 +22,12 @@ with Glib;                      use Glib;
 with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Menu;                  use Gtk.Menu;
 with Gtk.Button;                use Gtk.Button;
+with Gtk.Menu;                  use Gtk.Menu;
+with Gtk.Menu_Item;             use Gtk.Menu_Item;
 with Gtk.Stock;                 use Gtk.Stock;
 with Gtk.Toolbar;               use Gtk.Toolbar;
+with Gtk.Widget;                use Gtk.Widget;
 
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
@@ -180,11 +181,36 @@ package body Navigation_Module is
    procedure Initialize_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Button  : Gtk_Button;
+      Toolbar       : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+      Button        : Gtk_Button;
+      Data          : constant Navigation_Info_Access := new Navigation_Info;
+      Navigate_Root : constant String := -"Navigate";
+      Navigate      : constant String := "/" & Navigate_Root;
+      Menu_Item     : Gtk_Menu_Item;
 
-      Data : Navigation_Info_Access := new Navigation_Info;
    begin
+      Register_Menu
+        (Kernel,
+         "/_" & Navigate_Root,
+         Ref_Item => -"Edit",
+         Add_Before => False);
+
+      Register_Menu (Kernel, Navigate, -"Goto Line...", Stock_Jump_To, null);
+      Register_Menu (Kernel, Navigate, -"Goto File Spec<->Body",
+                     Stock_Convert, null);
+      Register_Menu (Kernel, Navigate, -"Goto Parent Unit", "", null);
+      Register_Menu (Kernel, Navigate, -"Goto Previous Location",
+                     Stock_Go_Back, null);
+      Register_Menu (Kernel, Navigate, -"Find All References", "", null);
+      Gtk_New (Menu_Item);
+      Register_Menu (Kernel, Navigate, Menu_Item);
+      Register_Menu (Kernel, Navigate, -"Start Of Statement",
+                     Stock_Go_Up, null);
+      Register_Menu (Kernel, Navigate, -"End Of Statement",
+                     Stock_Go_Down, null);
+      Register_Menu (Kernel, Navigate, -"Next Procedure", "", null);
+      Register_Menu (Kernel, Navigate, -"Previous Procedure", "", null);
+
       Append_Space (Toolbar);
 
       Button := Insert_Stock
