@@ -176,7 +176,7 @@ package body Commands.External is
       end loop;
 
       Command_String := new String'
-        (Command.Command.all & " " & Argument_List_To_Quoted_String (Args));
+        (Command.Command.all & " " & Argument_List_To_String (Args));
 
       if Command.Dir'Length > 0 then
          Trace (Me,
@@ -194,16 +194,18 @@ package body Commands.External is
       if Host = Windows then
          Exec_Command_Args :=
            GNAT.OS_Lib.Argument_String_To_List (Exec_Command);
+
          Real_Args := new GNAT.OS_Lib.Argument_List (1 .. 1);
 
-         Real_Args (1) := new String'(Command_String.all);
+         Real_Args (1) := new String'(Command.Command.all);
 
          Non_Blocking_Spawn
            (Command.Fd,
             Exec_Command_Args (Exec_Command_Args'First).all,
             Exec_Command_Args
               (Exec_Command_Args'First + 1 .. Exec_Command_Args'Last)
-              & Real_Args.all,
+            & Real_Args.all
+            & Args,
             Err_To_Out => True,
             Buffer_Size => 0);
 
@@ -218,7 +220,6 @@ package body Commands.External is
          end loop;
 
          Unchecked_Free (Exec_Command_Args);
-
 
       else
          Non_Blocking_Spawn
