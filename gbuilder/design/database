@@ -177,6 +177,10 @@ The format below is described in XMLSchema.
     the child becomes a box with both the child and the icon.
     The problem is to describe this in this database file...
 
+??? We are in fact missing information about all the default children that
+    are already there (Gtk_File_Selection), or that are automatically created
+    when using certain constructors (gtk_button_new_with_label).
+
 
 <schema xmlns="http://www.w3.org/2000/08/XMLSchema">
 
@@ -312,6 +316,8 @@ Here is an example for a gtk+ database
    <!--  List of required libraries for this module -->
    <requires>  <name>gtk+</name>  <version>1.2.8</version>  </requires>
 
+   <constructors_format lang="Ada">in_out</constructors_format>
+
    <!--  First widget defined: Gtk_Button -->
 
    <widget_type id="gtkbutton"
@@ -342,7 +348,7 @@ Here is an example for a gtk+ database
       <new default="yes">
           <subprogram lang="C">   gtk_button_new_with_label  </subprogram>
           <subprogram lang="Ada"> Gtk_New                    </subprogram>
-          <extra_arg field="label">string</extra_arg>
+          <extra_arg field="label" type="string" />
       </new>
 
       <!--  List of new signals defined in this class -->
@@ -359,6 +365,11 @@ Here is an example for a gtk+ database
          <subprogram lang="C">   gtk_container_add</subprogram>
          <subprogram lang="Ada"> Add              </subprogram>
       </add_child>
+      <add_child>
+         <subprogram lang="C">   gtk_box_pack_start</subprogram>
+         <extra_arg field="shrink" type="boolean" />
+              <!-- ???depends on the child. Should we have default value -->
+      </add_child>
 
       <!--  Possible type of children -->
       <child_type>gtkwidget</child_type>
@@ -366,7 +377,7 @@ Here is an example for a gtk+ database
       <!--  Public properties for that widget -->
       <property name="in_button" read-only="true" type="boolean">
          <documentation>True if the cursor is inside the button</documentation>
-         <get lang="C"> $->in_button </get>
+         <get lang="C"> $1->in_button </get>
          <get lang="Ada"> Get_In_Button($1) </get>
       </property>
 
