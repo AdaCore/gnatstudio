@@ -94,29 +94,30 @@ package Project_Trees is
    --    to get information when the selection has changed. Use the subprograms
    --    Get_Selected_Projects and Get_Selected_Dirs to get more information
    --    on the current state of the selection
+   --
+   --  </signals>
 
 private
+
+   type Node_Types is
+     (Project_Node,
+      Modified_Project_Node,
+      Directory_Node,
+      Obj_Directory_Node,
+      File_Node,
+      Category_Node,
+      Entity_Node);
+   --  The kind of nodes one might find in the tree
+
+   type Pixmap_Array is array (Node_Types) of Gdk.Pixmap.Gdk_Pixmap;
+   type Mask_Array   is array (Node_Types) of Gdk.Bitmap.Gdk_Bitmap;
+
+
    type Project_Tree_Record is new Gtk.Ctree.Gtk_Ctree_Record with record
       Manager            : Prj_Manager.Project_Manager;
-      Project_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
-      Project_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
-      Project_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Project_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-
-      Modified_Project_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
-      Modified_Project_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
-      Modified_Project_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Modified_Project_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-
-      Directory_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
-      Directory_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
-      Directory_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Directory_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-
-      Obj_Directory_Open_Pixmap   : Gdk.Pixmap.Gdk_Pixmap;
-      Obj_Directory_Open_Mask     : Gdk.Bitmap.Gdk_Bitmap;
-      Obj_Directory_Closed_Pixmap : Gdk.Pixmap.Gdk_Pixmap;
-      Obj_Directory_Closed_Mask   : Gdk.Bitmap.Gdk_Bitmap;
-
+      Open_Pixmaps       : Pixmap_Array;
+      Close_Pixmaps      : Pixmap_Array;
+      Open_Masks         : Mask_Array;
+      Close_Masks        : Mask_Array;
    end record;
 end Project_Trees;
