@@ -33,8 +33,14 @@ with String_Utils;              use String_Utils;
 with Src_Info;                  use Src_Info;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GUI_Utils;                 use GUI_Utils;
+with Traces;                    use Traces;
+with Projects.Registry;         use Projects, Projects.Registry;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Types;                     use Types;
 
 package body Project_Explorers_Common is
+
+   Me : constant Debug_Handle := Create ("Project_Explorers_Common");
 
    -------------------
    -- Columns_Types --
@@ -620,6 +626,60 @@ package body Project_Explorers_Common is
       end if;
    end Get_Directory_From_Node;
 
+   ---------------------------
+   -- Get_Project_From_Node --
+   ---------------------------
+
+   function Get_Project_From_Node
+     (Model     : Gtk_Tree_Store;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      Importing : Boolean) return Project_Type
+   is
+      Parent_Iter : Gtk_Tree_Iter;
+      Node_Type   : Node_Types;
+      Project     : Project_Type;
+      N           : Name_Id;
+   begin
+      if Importing then
+         Parent_Iter := Parent (Model, Node);
+
+         if Parent_Iter = Null_Iter then
+            return Get_Project (Kernel);
+         end if;
+      else
+         Parent_Iter := Node;
+      end if;
+
+      while Parent_Iter /= Null_Iter loop
+         Node_Type := Get_Node_Type (Model, Parent_Iter);
+
+         exit when Node_Type = Project_Node
+           or else Node_Type = Extends_Project_Node
+           or else Node_Type = Modified_Project_Node;
+
+         Parent_Iter := Parent (Model, Parent_Iter);
+      end loop;
+
+      if Parent_Iter /= Null_Iter then
+         N := Name_Id (Get_Int (Model, Parent_Iter, Project_Column));
+         Assert (Me, N /= No_Name,
+                 "Get_Project_From_Node: no project found");
+         Project := Get_Project_From_Name (Get_Registry (Kernel), N);
+
+      else
+         --  Should we fall back on Get_Project_From_File ?
+         Project := No_Project;
+      end if;
+
+      return Project;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return No_Project;
+   end Get_Project_From_Node;
+
    ---------------------
    -- Context_Factory --
    ---------------------
@@ -631,7 +691,7 @@ package body Project_Explorers_Common is
       Event      : Gdk_Event;
       Menu       : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Menu);
+      pragma Unreferenced (Menu);
 
       function Entity_Base (Name : String) return String;
       --  Return the "basename" for the entity, ie convert "parent.name" to
@@ -650,7 +710,6 @@ package body Project_Explorers_Common is
 
       Iter        : constant Gtk_Tree_Iter := Find_Iter_For_Event
         (Tree, Model, Event);
-      File        : GNAT.OS_Lib.String_Access := null;
       Parent_Iter : Gtk_Tree_Iter;
       Context     : Selection_Context_Access;
       Node_Type   : Node_Types;
@@ -671,22 +730,14 @@ package body Project_Explorers_Common is
          Context := new File_Selection_Context;
       end if;
 
-      if Node_Type = File_Node
-        or else Node_Type = Directory_Node
-        or else Node_Type = Obj_Directory_Node
-        or else Node_Type = Exec_Directory_Node
-        or else Node_Type = Entity_Node
-      then
-         File := new String'(Get_Absolute_Name (Model, Iter));
-      end if;
-
-      if File /= null then
-         Set_File_Information
-           (Context   => File_Selection_Context_Access (Context),
-            Directory => Dir_Name (File.all),
-            File_Name => Base_Name (File.all));
-         Free (File);
-      end if;
+      Set_File_Information
+        (Context      => File_Selection_Context_Access (Context),
+         Directory    => Normalize_Pathname
+           (Get_Directory_From_Node (Model, Iter)),
+         File_Name    => Get_File_From_Node (Model, Iter),
+         Project      => Get_Project_From_Node (Model, Kernel, Iter, False),
+         Importing_Project =>
+           Get_Project_From_Node (Model, Kernel, Iter, True));
 
       if Node_Type = Entity_Node then
          Set_Entity_Information

@@ -27,6 +27,7 @@ with Glide_Kernel;   use Glide_Kernel;
 with Language;       use Language;
 with Gtk.Tree_View;  use Gtk.Tree_View;
 with Gtk.Menu;       use Gtk.Menu;
+with Projects;
 
 package Project_Explorers_Common is
 
@@ -179,6 +180,14 @@ package Project_Explorers_Common is
    --  Return the name of the file containing Node (or, in case Node is an
    --  Entity_Node, the name of the file that contains the entity).
    --  The full name, including directory, is returned if Full_Path is True.
+
+   function Get_Project_From_Node
+     (Model     : Gtk_Tree_Store;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Node      : Gtk_Tree_Iter;
+      Importing : Boolean) return Projects.Project_Type;
+   --  Return the name of the project that Node belongs to. If Importing is
+   --  True, we return the importing project, not the one associated with Node.
 
    ----------
    -- Misc --
