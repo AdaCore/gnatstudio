@@ -429,6 +429,9 @@ Command used to establish a remote connection
 @item Remote Copy.
 Command used to copy files remotely
 (see @ref{Using GVD with a Remote Debugger}).
+@item HTML Browser.
+Command used to browse HTML files, in particular the HTML version of this
+help file.
 @end itemize
 
 @end itemize
