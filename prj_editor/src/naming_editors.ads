@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtk.Notebook;
-with Gtk.Window;
 with Glide_Kernel;
 with Foreign_Naming_Editors;
 with Ada_Naming_Editors;
@@ -45,25 +44,19 @@ package Naming_Editors is
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
 
-   procedure Edit_Naming_Scheme
-     (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_View : Prj.Project_Id);
-   --  Open a dialog to edit the naming scheme for Project (given one of its
-   --  views). This dialog is modal, and needs to be closed before the user can
-   --  do anything else with Fps.
-
-   procedure Create_Project_Entry
+   function Create_Project_Entry
      (Editor          : access Naming_Editor_Record;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project         : Prj.Tree.Project_Node_Id;
-      Ignore_Scenario : Boolean := False);
+      Project_View    : Prj.Project_Id;
+      Ignore_Scenario : Boolean := False) return Boolean;
    --  Create a new entry in the project file Project for the naming scheme
    --  defined in the editor.
    --  Return True if the project was changed.
    --  If Ignore_Scenario is True, then the entries will be created in the
    --  common section of the normalized project rather than in the case
    --  constructions for the scenario.
+   --  Project_View represents the current view, and can be No_Project.
 
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;
@@ -76,11 +69,18 @@ package Naming_Editors is
    --  will not be displayed, only the suffixes will be. This is intended to be
    --  used when creating new projects based on an existing one.
 
+   procedure Set_Visible_Pages
+     (Editor       : access Naming_Editor_Record;
+      Languages    : GNAT.OS_Lib.Argument_List;
+      Project_View : Prj.Project_Id);
+   --  Change the visible pages in editor, based on languages
+
 private
    type Language_Naming is record
       Language       : GNAT.OS_Lib.String_Access;
       Ada_Naming     : Ada_Naming_Editors.Ada_Naming_Editor;
       Foreign_Naming : Foreign_Naming_Editors.Foreign_Naming_Editor;
+      Is_Visible     : Boolean;
       --  ??? Should have a common ancestor for all naming editors, registered
       --  ??? in Language_Handlers.Glide. However, the latter must be
       --  ??? independent of GtkAda...

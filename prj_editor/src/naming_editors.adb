@@ -22,26 +22,25 @@ with Ada_Naming_Editors;      use Ada_Naming_Editors;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Basic_Types;             use Basic_Types;
 with Foreign_Naming_Editors;  use Foreign_Naming_Editors;
-with Glide_Intl;              use Glide_Intl;
 with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
-with Gtk.Box;                 use Gtk.Box;
-with Gtk.Dialog;              use Gtk.Dialog;
 with Gtk.Label;               use Gtk.Label;
 with Gtk.Notebook;            use Gtk.Notebook;
-with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Widget;              use Gtk.Widget;
 with Gtkada.Handlers;         use Gtkada.Handlers;
 with Namet;                   use Namet;
 with Prj;                     use Prj;
 with Prj_API;                 use Prj_API;
 with String_Utils;            use String_Utils;
+with Unchecked_Deallocation;
 
 package body Naming_Editors is
 
    procedure On_Destroy (Widget : access Gtk_Widget_Record'Class);
    --  Called when the naming editor is destroyed.
+
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Language_Naming_Array, Language_Naming_Array_Access);
 
    ----------------
    -- On_Destroy --
@@ -52,10 +51,12 @@ package body Naming_Editors is
    begin
       for P in Naming.Pages'Range loop
          Free (Naming.Pages (P).Language);
-         if Naming.Pages (P).Ada_Naming /= null then
-            Destroy (Naming.Pages (P).Ada_Naming);
-         else
-            Destroy (Naming.Pages (P).Foreign_Naming);
+         if not Naming.Pages (P).Is_Visible then
+            if Naming.Pages (P).Ada_Naming /= null then
+               Unref (Naming.Pages (P).Ada_Naming);
+            else
+               Unref (Naming.Pages (P).Foreign_Naming);
+            end if;
          end if;
       end loop;
    end On_Destroy;
@@ -66,44 +67,11 @@ package body Naming_Editors is
 
    procedure Gtk_New
      (Editor    : out Naming_Editor;
-      Languages : Argument_List)
-   is
-      Label : Gtk_Label;
+      Languages : Argument_List) is
    begin
       Editor := new Naming_Editor_Record;
       Gtk.Notebook.Initialize (Editor);
-
-      --  Default is to have a single language, Ada
-      if Languages'Length = 0 then
-         Editor.Pages := new Language_Naming_Array (1 .. 1);
-         Editor.Pages (1).Language := new String' (Ada_String);
-         Mixed_Case (Editor.Pages (1).Language.all);
-         Gtk_New (Label, Editor.Pages (1).Language.all);
-         Gtk_New (Editor.Pages (1).Ada_Naming);
-         Append_Page
-           (Editor, Get_Window (Editor.Pages (1).Ada_Naming), Label);
-
-      else
-         Editor.Pages := new Language_Naming_Array (Languages'Range);
-         for L in Languages'Range loop
-            Editor.Pages (L).Language := new String' (Languages (L).all);
-            Mixed_Case (Editor.Pages (L).Language.all);
-            Gtk_New (Label, Editor.Pages (L).Language.all);
-
-            if To_Lower (Languages (L).all) = Ada_String then
-               Gtk_New (Editor.Pages (L).Ada_Naming);
-               Append_Page
-                 (Editor, Get_Window (Editor.Pages (L).Ada_Naming), Label);
-
-            else
-               Name_Len := Languages (L)'Length;
-               Name_Buffer (1 .. Name_Len) := Languages (L).all;
-               Gtk_New (Editor.Pages (L).Foreign_Naming, Name_Find);
-               Append_Page
-                 (Editor, Get_Window (Editor.Pages (L).Foreign_Naming), Label);
-            end if;
-         end loop;
-      end if;
+      Set_Visible_Pages (Editor, Languages, No_Project);
 
       Widget_Callback.Connect
         (Editor, "destroy",
@@ -124,52 +92,159 @@ package body Naming_Editors is
       Free (Languages);
    end Gtk_New;
 
-   ------------------------
-   -- Edit_Naming_Scheme --
-   ------------------------
+   -----------------------
+   -- Set_Visible_Pages --
+   -----------------------
 
-   procedure Edit_Naming_Scheme
-     (Parent       : access Gtk.Window.Gtk_Window_Record'Class;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
+   procedure Set_Visible_Pages
+     (Editor       : access Naming_Editor_Record;
+      Languages    : GNAT.OS_Lib.Argument_List;
       Project_View : Prj.Project_Id)
    is
-      Dialog : Gtk_Dialog;
-      Button : Gtk_Widget;
-      Editor : Naming_Editor;
+      procedure Create_Page (Name : String);
+      --  Create a page for the language Name
+
+      -----------------
+      -- Create_Page --
+      -----------------
+
+      procedure Create_Page (Name : String) is
+         Label  : Gtk_Label;
+         Old  : Language_Naming_Array_Access;
+         Last : Natural;
+         Exists : Boolean := False;
+
+      begin
+         --  Has the page already been created ?
+         if Editor.Pages /= null then
+            for P in Editor.Pages'Range loop
+               if To_Lower (Editor.Pages (P).Language.all) =
+                 To_Lower (Name)
+               then
+                  Exists := True;
+
+                  --  If the page has already been created, but is not visible,
+                  --  then show it.
+                  if not Editor.Pages (P).Is_Visible then
+                     Editor.Pages (P).Is_Visible := True;
+                     Gtk_New (Label, Editor.Pages (P).Language.all);
+
+                     if Editor.Pages (P).Ada_Naming /= null then
+                        Append_Page
+                          (Editor,
+                           Get_Window (Editor.Pages (P).Ada_Naming),
+                           Label);
+                        Unref (Editor.Pages (P).Ada_Naming);
+
+                     else
+                        Append_Page
+                          (Editor,
+                           Get_Window (Editor.Pages (P).Foreign_Naming),
+                           Label);
+                        Unref (Editor.Pages (P).Foreign_Naming);
+                     end if;
+                  end if;
+
+                  exit;
+               end if;
+            end loop;
+         end if;
+
+         if Exists then
+            return;
+         end if;
+
+         --  Extend the array that stores all the editors
+         if Editor.Pages = null then
+            Editor.Pages := new Language_Naming_Array (1 .. 1);
+         else
+            Old := Editor.Pages;
+            Editor.Pages := new Language_Naming_Array
+              (Old'First .. Old'Last + 1);
+            Editor.Pages (Old'Range) := Old.all;
+            Unchecked_Free (Old);
+         end if;
+
+         --  Create the new page
+         Last := Editor.Pages'Last;
+         Editor.Pages (Last).Language := new String' (Name);
+         Mixed_Case (Editor.Pages (Last).Language.all);
+         Editor.Pages (Last).Is_Visible := True;
+
+         Gtk_New (Label, Editor.Pages (Last).Language.all);
+
+         if To_Lower (Name) = Ada_String then
+            Gtk_New (Editor.Pages (Last).Ada_Naming);
+            Append_Page
+              (Editor, Get_Window (Editor.Pages (Last).Ada_Naming), Label);
+
+            if Project_View /= No_Project then
+               Show_Project_Settings
+                 (Editor.Pages (Last).Ada_Naming, Project_View, True);
+            end if;
+
+         else
+            Name_Len := Name'Length;
+            Name_Buffer (1 .. Name_Len) := Name;
+            Gtk_New (Editor.Pages (Last).Foreign_Naming, Name_Find);
+            Append_Page
+              (Editor, Get_Window (Editor.Pages (Last).Foreign_Naming),
+               Label);
+
+            if Project_View /= No_Project then
+               Show_Project_Settings
+                 (Editor.Pages (Last).Foreign_Naming, Project_View, True);
+            end if;
+         end if;
+      end Create_Page;
+
    begin
-      Gtk_New (Dialog,
-               Title => -"Edit naming scheme for project "
-                 & Project_Name (Project_View),
-               Parent => Parent,
-               Flags  => Modal or Destroy_With_Parent);
+      if Editor.Pages /= null then
+         for P in Editor.Pages'Range loop
+            if Editor.Pages (P).Is_Visible
+              and then not Contains
+              (Languages, Editor.Pages (P).Language.all, False)
+            then
+               Editor.Pages (P).Is_Visible := False;
 
-      Gtk_New (Editor, Project_View);
-      Pack_Start (Get_Vbox (Dialog), Editor);
-
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
-
-      Show_Project_Settings (Editor, Project_View);
-
-      Show_All (Dialog);
-
-      if Run (Dialog) = Gtk_Response_OK then
-         Create_Project_Entry
-           (Editor, Kernel, Get_Project_From_View (Project_View));
+               if Editor.Pages (P).Ada_Naming /= null then
+                  Ref (Editor.Pages (P).Ada_Naming);
+                  Remove_Page
+                    (Editor,
+                     Page_Num (Editor,
+                               Get_Window (Editor.Pages (P).Ada_Naming)));
+               else
+                  Ref (Editor.Pages (P).Foreign_Naming);
+                  Remove_Page
+                    (Editor,
+                     Page_Num (Editor,
+                               Get_Window (Editor.Pages (P).Foreign_Naming)));
+               end if;
+            end if;
+         end loop;
       end if;
 
-      Destroy (Dialog);
-   end Edit_Naming_Scheme;
+      for L in Languages'Range loop
+         Create_Page (Languages (L).all);
+      end loop;
+
+      if Languages'Length = 0 then
+         Create_Page (Ada_String);
+      end if;
+
+      Show_All (Editor);
+   end Set_Visible_Pages;
 
    --------------------------
    -- Create_Project_Entry --
    --------------------------
 
-   procedure Create_Project_Entry
-     (Editor  : access Naming_Editor_Record;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project : Prj.Tree.Project_Node_Id;
-      Ignore_Scenario : Boolean := False)
+   function Create_Project_Entry
+     (Editor          : access Naming_Editor_Record;
+      Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project         : Prj.Tree.Project_Node_Id;
+      Project_View    : Prj.Project_Id;
+      Ignore_Scenario : Boolean := False) return Boolean
    is
       Changed : Boolean := False;
    begin
@@ -179,20 +254,20 @@ package body Naming_Editors is
       --  has actually changed.
 
       for P in Editor.Pages'Range loop
-         if Editor.Pages (P).Ada_Naming /= null then
-            Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Ada_Naming, Kernel, Project, Ignore_Scenario);
-         else
-            Changed := Changed or Create_Project_Entry
-              (Editor.Pages (P).Foreign_Naming, Kernel, Project,
-               Ignore_Scenario);
+         if Editor.Pages (P).Is_Visible then
+            if Editor.Pages (P).Ada_Naming /= null then
+               Changed := Changed or Create_Project_Entry
+                 (Editor.Pages (P).Ada_Naming, Kernel,
+                  Project, Project_View, Ignore_Scenario);
+            else
+               Changed := Changed or Create_Project_Entry
+                 (Editor.Pages (P).Foreign_Naming, Kernel, Project,
+                  Project_View, Ignore_Scenario);
+            end if;
          end if;
       end loop;
 
-      if Changed then
-         Set_Project_Modified (Kernel, Project, True);
-         Recompute_View (Kernel);
-      end if;
+      return Changed;
    end Create_Project_Entry;
 
    ---------------------------
