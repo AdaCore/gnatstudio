@@ -26,11 +26,11 @@ Known Problems fixed in GPS 2.1.1
   Workaround: Move the windows until you can find the popup dialog again
 
 - DC02-018 Crash when using menu Show in assembly view
-  Problem:    GPS will die when using the contextual menu Show in the assembly
+  Problem:    GPS will crash when using the contextual menu Show in the assembly
               view.
   Workaround: This menu is obsolete and has been removed. Instead, close
               the window to hide the assembly view, and use the menu
-              Debug->Data->Assembly to how it.
+              Debug->Data->Assembly to show it.
 
 Known Problems fixed in GPS 2.1.0
 
