@@ -1194,6 +1194,7 @@ package body Browsers.Entities is
       Show_Primitive_Button : Boolean := False;
    begin
       Trace (Me, "Resize_And_Draw: " & Get_Name (Item.Entity));
+      Reset_Active_Areas (Item.all);
 
       Lib_Info := Locate_From_Source_And_Complete
         (Kernel, Get_Declaration_File_Of (Item.Entity));
