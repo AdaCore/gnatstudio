@@ -2649,7 +2649,7 @@ package body Src_Editor_Module is
                   No_Location := True;
                end if;
 
-               if False and then Console_Has_Focus (Kernel) then
+               if Console_Has_Focus (Kernel) then
                   --  Only grab again the focus on Child (in Location_Callback)
                   --  if the focus was changed by Open_File, and an interactive
                   --  console had the focus previousely.
