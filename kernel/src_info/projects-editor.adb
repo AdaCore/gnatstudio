@@ -2833,6 +2833,47 @@ package body Projects.Editor is
          return;
       end if;
 
+      --  Replace all the with_clauses in the project hierarchy that points to
+      --  Project.
+
+      Iterator := Find_All_Projects_Importing
+        (Root_Project, Project, Direct_Only => False);
+
+      loop
+         Imported := Current (Iterator);
+         exit when Imported = No_Project;
+
+         With_Clause := First_With_Clause_Of (Imported.Node);
+         Modified := False;
+
+         while With_Clause /= Empty_Node loop
+            if Project_Node_Of (With_Clause) = Project.Node then
+               Set_Name_Of (With_Clause, Name);
+
+               Set_Path_Name_Of (With_Clause, Path_Name_Of (Project.Node));
+
+               if Full_Path = No_String then
+                  Start_String;
+                  Store_String_Chars (D);
+                  Full_Path := End_String;
+               end if;
+
+               Set_String_Value_Of (With_Clause, Full_Path);
+               Modified := True;
+            end if;
+
+            With_Clause := Next_With_Clause_Of (With_Clause);
+         end loop;
+
+         if Modified then
+            Set_Project_Modified (Imported, True);
+            Reset_Cache (Imported, Imported_By => True);
+            Reset_Cache (Imported, Imported_By => False);
+         end if;
+
+         Next (Iterator);
+      end loop;
+
       --  If the file was moved, update the source directories so that we still
       --  point to the same physical directories.
 
@@ -2880,47 +2921,6 @@ package body Projects.Editor is
       --  the default project.
 
       Set_Is_Default (Project, False);
-
-      --  Replace all the with_clauses in the project hierarchy that points to
-      --  Project.
-
-      Iterator := Find_All_Projects_Importing
-        (Root_Project, Project, Direct_Only => False);
-
-      loop
-         Imported := Current (Iterator);
-         exit when Imported = No_Project;
-
-         With_Clause := First_With_Clause_Of (Imported.Node);
-         Modified := False;
-
-         while With_Clause /= Empty_Node loop
-            if Project_Node_Of (With_Clause) = Project.Node then
-               Set_Name_Of (With_Clause, Name);
-
-               Set_Path_Name_Of (With_Clause, Path_Name_Of (Project.Node));
-
-               if Full_Path = No_String then
-                  Start_String;
-                  Store_String_Chars (D);
-                  Full_Path := End_String;
-               end if;
-
-               Set_String_Value_Of (With_Clause, Full_Path);
-               Modified := True;
-            end if;
-
-            With_Clause := Next_With_Clause_Of (With_Clause);
-         end loop;
-
-         if Modified then
-            Set_Project_Modified (Imported, True);
-            Reset_Cache (Imported, Imported_By => True);
-            Reset_Cache (Imported, Imported_By => False);
-         end if;
-
-         Next (Iterator);
-      end loop;
    end Rename_And_Move;
 
    ----------------------------
