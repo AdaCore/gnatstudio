@@ -1,5 +1,7 @@
 New features in GPS 1.2.0
 
+- C306-012 New "flat view" option in the project explorer
+
 - New menu Help->Recent
 
 - C224-009 Added support for the new limited-with statements in projects
