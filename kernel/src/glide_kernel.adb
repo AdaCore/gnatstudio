@@ -730,6 +730,35 @@ package body Glide_Kernel is
          Selection_Context_Access (Context));
    end Context_Changed;
 
+   ------------------------
+   -- Get_Current_Module --
+   ------------------------
+
+   function Get_Current_Module
+     (Kernel : access Kernel_Handle_Record) return Module_ID
+   is
+      use type Module_List.List_Node;
+      Module : Module_List.List_Node :=
+        Module_List.First (Kernel.Modules_List);
+      C : constant MDI_Child := Get_Focus_Child (Get_MDI (Kernel));
+   begin
+      if C = null then
+         return null;
+      end if;
+
+      while Module /= Module_List.Null_Node loop
+         if Module_List.Data (Module).Info.Child_Tag = Get_Widget (C)'Tag then
+            return Module_List.Data (Module);
+         end if;
+
+         Module := Module_List.Next (Module);
+      end loop;
+
+      Trace (Me, "Get_Current_Context: No module associated with tag "
+             & External_Tag (Get_Widget (C)'Tag));
+      return null;
+   end Get_Current_Module;
+
    -------------------------
    -- Get_Current_Context --
    -------------------------
@@ -737,49 +766,26 @@ package body Glide_Kernel is
    function Get_Current_Context (Kernel : access Kernel_Handle_Record)
       return Selection_Context_Access
    is
-      use type Module_List.List_Node;
-      C : MDI_Child;
-      Module : Module_List.List_Node :=
-        Module_List.First (Kernel.Modules_List);
+      Module : Module_ID;
    begin
       if Kernel.Current_Context /= null then
          Free (Kernel.Current_Context);
       end if;
 
-      C := Get_Focus_Child (Get_MDI (Kernel));
-      if C = null then
-         return null;
-      end if;
+      Module := Get_Current_Module (Kernel);
+      if Module /= null
+        and then Module.Info.Default_Factory /= null
+      then
+         Kernel.Current_Context := Module.Info.Default_Factory
+           (Kernel, Get_Widget (Get_Focus_Child (Get_MDI (Kernel))));
 
-      --  ??? Should we fall back on the explorer if no factory was defined for
-      --  the current child. However, it might have some unexpected effect
-      --  for the user.
-
-      while Module /= Module_List.Null_Node loop
-         if Module_List.Data (Module).Info.Child_Tag = Get_Widget (C)'Tag then
-            if Module_List.Data (Module).Info.Default_Factory /= null then
-               Kernel.Current_Context :=
-                 Module_List.Data (Module).Info.Default_Factory
-                 (Kernel, Get_Widget (C));
-
-               if Kernel.Current_Context /= null then
-                  Set_Context_Information
-                    (Kernel.Current_Context,
-                     Kernel,
-                     Module_List.Data (Module));
-               end if;
-            end if;
-            exit;
+         if Kernel.Current_Context /= null then
+            Set_Context_Information (Kernel.Current_Context, Kernel, Module);
          end if;
 
-         Module := Module_List.Next (Module);
-      end loop;
-
-      if Module = Module_List.Null_Node then
-         Trace (Me, "Get_Current_Context: No module associated with tag "
-                & External_Tag (Get_Widget (C)'Tag));
-      elsif Kernel.Current_Context = null then
-         Trace (Me, "Null context returned by the module");
+         if Kernel.Current_Context = null then
+            Trace (Me, "Null context returned by the module");
+         end if;
       end if;
 
       return Kernel.Current_Context;

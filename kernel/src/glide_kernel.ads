@@ -331,6 +331,12 @@ package Glide_Kernel is
    --  This function is mostly intended to be called for the callbacks in the
    --  menu bar.
 
+   function Get_Current_Module
+     (Kernel : access Kernel_Handle_Record) return Module_ID;
+   --  Return the module the currently selected MDI child belongs to.
+   --  null might be returned if there is either no selected child or GPS
+   --  couldn't find its module
+
    -------------
    -- Modules --
    -------------
