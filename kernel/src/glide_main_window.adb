@@ -110,6 +110,7 @@ package body Glide_Main_Window is
       Button : Gtk_Widget;
       Check  : Gtk_Check_Button;
       Frame  : Gtk_Frame;
+
    begin
       Gtk_New (Frame, -"Actions before exiting");
 
@@ -122,6 +123,7 @@ package body Glide_Main_Window is
       Button := Add_Button (Dialog, Stock_Yes, Gtk_Response_Yes);
       Button := Add_Button (Dialog, Stock_No,  Gtk_Response_No);
       Grab_Default (Button);
+      Grab_Focus (Button);
 
       Show_All (Dialog);
 
