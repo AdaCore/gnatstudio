@@ -1,7 +1,5 @@
 New features in GPS 1.2.0
 
-- BB29-016 C129-027 VCS explorer and location window now saved in desktops
-
 - New menu Help->Recent
 
 - C224-009 Added support for the new limited-with statements in projects
@@ -24,6 +22,8 @@ New features in GPS 1.2.0
 - C109-012 Ability to force saving of a read-only file
 
 - BC09-010 Filtering of duplicate messages in the Locations Tree.
+
+- BB29-016 VCS explorer and location window now saved in desktops
 
 - BB13-008 Confirmation dialog asking to wrap around during a search
 
