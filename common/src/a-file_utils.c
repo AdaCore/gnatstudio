@@ -1,7 +1,7 @@
 /*********************************************************************
  *                               G P S                               *
  *                                                                   *
- *                        Copyright (C) 2002                         *
+ *                    Copyright (C) 2002 - 2003                      *
  *                            ACT-Europe                             *
  *                                                                   *
  * GPS is free  software;  you can redistribute it and/or modify  it *
@@ -19,6 +19,7 @@
  *********************************************************************/
 
 #include <sys/stat.h>
+#include <sys/types.h>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -28,9 +29,9 @@ __gnat_subdirectories_count (name)
 {
   struct stat statbuf;
   int ret;
-  
+
   ret = __gnat_stat (name, &statbuf);
-  
+
 #ifdef _WIN32
   /* On windows, stat(2) always return 1 for the number of links, and thus can
      not be used reliably.
@@ -41,7 +42,7 @@ __gnat_subdirectories_count (name)
     return -1;
   else
     return 1;
-  
+
 #else
   if (ret || !S_ISDIR (statbuf.st_mode))
     return -1;
@@ -60,3 +61,40 @@ int __gnat_get_logical_drive_strings (char *buffer, int len)
 #endif
 }
 
+void __gnat_set_writable (char *file, int set)
+{
+  struct stat statbuf;
+  int ret;
+
+#ifdef _WIN32
+  /* ??? To be implemented */
+  return;
+#else
+  ret = __gnat_stat (file, &statbuf);
+
+  if (!ret)
+    if (set == 1)
+      chmod (file, statbuf.st_mode | S_IWRITE);
+    else
+      chmod (file, statbuf.st_mode & (~S_IWRITE));
+#endif
+}
+
+void __gnat_set_readable (char *file, int set)
+{
+  struct stat statbuf;
+  int ret;
+
+#ifdef _WIN32
+  /* ??? To be implemented */
+  return;
+#else
+  ret = __gnat_stat (file, &statbuf);
+
+  if (!ret)
+    if (set == 1)
+      chmod (file, statbuf.st_mode | S_IREAD);
+    else
+      chmod (file, statbuf.st_mode & (~S_IREAD));
+#endif
+}
