@@ -951,33 +951,23 @@ package body GVD.Menu is
       Widget : Limited_Widget)
    is
       pragma Unreferenced (Action, Widget);
-
-      function Internal_Update_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean;
-      --  Update the value for a specific item
-
-      --------------------------
-      -- Internal_Update_Item --
-      --------------------------
-
-      function Internal_Update_Item
-        (Canvas : access Interactive_Canvas_Record'Class;
-         Item   : access Canvas_Item_Record'Class) return Boolean is
-      begin
-         Display_Items.Update
-           (GVD_Canvas (Canvas),
-            Display_Item (Item),
-            Redisplay_Canvas => False);
-         return True;
-      end Internal_Update_Item;
-
       Tab : constant Visual_Debugger := Get_Current_Process (Object);
-
+      Iter : Item_Iterator;
+      Item : Canvas_Item;
    begin
       if Tab /= null then
-         For_Each_Item
-           (Tab.Data_Canvas, Internal_Update_Item'Unrestricted_Access);
+         Iter := Start (Tab.Data_Canvas);
+         loop
+            Item := Get (Iter);
+            exit when Item = null;
+
+            Display_Items.Update
+              (GVD_Canvas (Tab.Data_Canvas),
+               Display_Item (Item),
+               Redisplay_Canvas => False);
+
+            Next (Iter);
+         end loop;
          Refresh_Canvas (Tab.Data_Canvas);
       end if;
    end On_Refresh;

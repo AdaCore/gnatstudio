@@ -168,12 +168,6 @@ package body GVD.Canvas is
    --  Reallocate all the fonts, with the appropriate size given the current
    --  zoom
 
-   function Refresh_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean;
-   --  Recompute the size and redisplay the item. This function is meant to
-   --  be used in a For_Each_Item loop
-
    function Key_Press
      (Canvas : access Gtk_Widget_Record'Class; Event : Gdk_Event)
       return Boolean;
@@ -359,29 +353,23 @@ package body GVD.Canvas is
       return Canvas.Process;
    end Get_Process;
 
-   ------------------
-   -- Refresh_Item --
-   ------------------
-
-   function Refresh_Item
-     (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class) return Boolean
-   is
-      pragma Unreferenced (Canvas);
-   begin
-      Update_Resize_Display
-        (Display_Item (Item), True, Get_Pref (GVD_Prefs, Hide_Big_Items),
-         Redisplay_Canvas => False);
-      return True;
-   end Refresh_Item;
-
    --------------------
    -- Allocate_Fonts --
    --------------------
 
    procedure Allocate_Fonts (Canvas : access GVD_Canvas_Record'Class) is
+      Iter : Item_Iterator := Start (Canvas);
+      Item : Canvas_Item;
+      Hide : constant Boolean := Get_Pref (GVD_Prefs, Hide_Big_Items);
    begin
-      For_Each_Item (Canvas, Refresh_Item'Unrestricted_Access);
+      loop
+         Item := Get (Iter);
+         exit when Item = null;
+
+         Update_Resize_Display
+           (Display_Item (Item), True, Hide, Redisplay_Canvas => False);
+         Next (Iter);
+      end loop;
    end Allocate_Fonts;
 
    -------------------------
@@ -393,6 +381,9 @@ package body GVD.Canvas is
    is
       C   : GVD_Canvas := GVD_Canvas (Canvas);
       Win : Gdk.Window.Gdk_Window;
+      Item : Canvas_Item;
+      Iter : Item_Iterator;
+      Hide : constant Boolean := Get_Pref (GVD_Prefs, Hide_Big_Items);
 
    begin
       Realize (C);
@@ -480,7 +471,15 @@ package body GVD.Canvas is
 
       Allocate_Fonts (C);
 
-      For_Each_Item (C, Refresh_Item'Unrestricted_Access);
+      Iter := Start (C);
+      loop
+         Item := Get (Iter);
+         exit when Item = null;
+
+         Update_Resize_Display
+           (Display_Item (Item), True, Hide, Redisplay_Canvas => False);
+         Next (Iter);
+      end loop;
 
       Refresh_Canvas (C);
    end Preferences_Changed;
