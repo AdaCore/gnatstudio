@@ -20,6 +20,7 @@
 
 with Ada.Text_IO;
 with Unchecked_Deallocation;
+with Glib.Convert; use Glib.Convert;
 
 package body Basic_Mapper is
 
@@ -157,7 +158,8 @@ package body Basic_Mapper is
          Mapper := new File_Mapper;
       end if;
 
-      Ada.Text_IO.Open (File, Ada.Text_IO.In_File, File_Name);
+      Ada.Text_IO.Open
+        (File, Ada.Text_IO.In_File, Locale_From_UTF8 (File_Name));
 
       while Last_2 >= 0
         and then Last_1 >= 0
