@@ -39,6 +39,7 @@ with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Widget;          use Gtk.Widget;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Pango.Font;          use Pango.Font;
+with Pango.Enums;         use Pango.Enums;
 
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
@@ -139,6 +140,7 @@ package body Glide_Interactive_Consoles is
    is
       Prompt_Iter : Gtk_Text_Iter;
       Last_Iter   : Gtk_Text_Iter;
+      Success     : Boolean;
       Internal    : constant Boolean := Console.Internal_Insert;
 
    begin
@@ -167,6 +169,12 @@ package body Glide_Interactive_Consoles is
       Get_End_Iter (Console.Buffer, Last_Iter);
       Apply_Tag
         (Console.Buffer, Console.Uneditable_Tag, Prompt_Iter, Last_Iter);
+
+      Forward_Chars (Prompt_Iter, Console.User_Input'Length, Success);
+      Apply_Tag
+        (Console.Buffer,
+         Console.External_Messages_Tag,
+         Prompt_Iter, Last_Iter);
 
       Display_Prompt (Console);
 
@@ -532,6 +540,13 @@ package body Glide_Interactive_Consoles is
       Gtk_New (Console.Uneditable_Tag);
       Set_Property (Console.Uneditable_Tag, Editable_Property, False);
       Add (Get_Tag_Table (Console.Buffer), Console.Uneditable_Tag);
+
+      Gtk_New (Console.External_Messages_Tag);
+      Set_Property
+        (Console.External_Messages_Tag,
+         Gtk.Text_Tag.Style_Property,
+         Pango_Style_Oblique);
+      Add (Get_Tag_Table (Console.Buffer), Console.External_Messages_Tag);
 
       Gtk_New (Console.Prompt_Tag);
       Set_Property
