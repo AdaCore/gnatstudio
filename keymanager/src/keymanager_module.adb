@@ -31,6 +31,7 @@ with GNAT.OS_Lib;  use GNAT.OS_Lib;
 with GUI_Utils;    use GUI_Utils;
 with System;                   use System;
 with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Gdk.Color;                use Gdk.Color;
 with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;               use Gtk.Dialog;
@@ -48,6 +49,7 @@ with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
 with Gtk.Text_View;            use Gtk.Text_View;
 with Gtk.Box;                  use Gtk.Box;
+with Gtkada.Dialogs;           use Gtkada.Dialogs;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
 with Gtk.Vbutton_Box;          use Gtk.Vbutton_Box;
@@ -184,7 +186,9 @@ package body KeyManager_Module is
    procedure On_Add_Key (Editor : access Gtk_Widget_Record'Class);
    --  Handle the "Grab", "Remove" and "Add" buttons
 
-   function Grab_Multiple_Key (Window : access Gtk_Window_Record'Class)
+   function Grab_Multiple_Key
+     (Window : access Gtk_Window_Record'Class;
+      Allow_Multiple : Boolean)
       return String;
    --  Grab a key binding, with support for multiple keymaps. Returns the
    --  empty string if no key could be grabbed.
@@ -937,7 +941,9 @@ package body KeyManager_Module is
    -- Grab_Multiple_Key --
    -----------------------
 
-   function Grab_Multiple_Key (Window : access Gtk_Window_Record'Class)
+   function Grab_Multiple_Key
+     (Window : access Gtk_Window_Record'Class;
+      Allow_Multiple : Boolean)
       return String
    is
       Grabbed, Tmp : String_Access;
@@ -955,22 +961,24 @@ package body KeyManager_Module is
 
       --  Are we grabbing multiple keymaps ?
 
-      loop
-         Id := Timeout_Add (500, Cancel_Grab'Access);
-         Key_Grab (Window, Key, Modif);
-         Timeout_Remove (Id);
+      if Allow_Multiple then
+         loop
+            Id := Timeout_Add (500, Cancel_Grab'Access);
+            Key_Grab (Window, Key, Modif);
+            Timeout_Remove (Id);
 
-         exit when Key = 0 and then Modif = 0;
+            exit when Key = 0 and then Modif = 0;
 
-         if Key = GDK_Escape and then Modif = 0 then
-            Free (Grabbed);
-            return "";
-         end if;
+            if Key = GDK_Escape and then Modif = 0 then
+               Free (Grabbed);
+               return "";
+            end if;
 
-         Tmp := Grabbed;
-         Grabbed := new String'(Grabbed.all & ' ' & Image (Key, Modif));
-         Free (Tmp);
-      end loop;
+            Tmp := Grabbed;
+            Grabbed := new String'(Grabbed.all & ' ' & Image (Key, Modif));
+            Free (Tmp);
+         end loop;
+      end if;
 
       declare
          K : constant String := Grabbed.all;
@@ -1001,7 +1009,11 @@ package body KeyManager_Module is
          Handler.Active := False;
 
          declare
-            Key : constant String := Grab_Multiple_Key (Ed);
+            Is_Menu : constant Boolean := Get_String
+              (Model, Parent (Model, Iter), Action_Column) =
+              -Menu_Context_Name;
+            Key : constant String := Grab_Multiple_Key
+              (Ed, Allow_Multiple => not Is_Menu);
          begin
             if Key /= "" then
                Set (Ed.Model, Iter, Key_Column, Key);
@@ -1072,7 +1084,7 @@ package body KeyManager_Module is
 
    procedure Add_Dialog_Grab (Dialog : access Gtk_Widget_Record'Class) is
       D   : constant Add_Editor := Add_Editor (Dialog);
-      Key : constant String := Grab_Multiple_Key (D);
+      Key : constant String := Grab_Multiple_Key (D, True);
    begin
       if Key /= "" then
          Set_Text (D.Grab, Key);
@@ -1300,12 +1312,14 @@ package body KeyManager_Module is
 
       Show_All (Dialog);
 
-      if Run (Dialog) = Gtk_Response_OK then
+      loop
+         exit when Run (Dialog) /= Gtk_Response_OK;
+
          declare
             Iter  : Gtk_Tree_Iter;
             Model : Gtk_Tree_Model;
-            Key   : Gdk_Key_Type;
-            Modif : Gdk_Modifier_Type;
+            Result : Message_Dialog_Buttons;
+            pragma Unreferenced (Result);
          begin
             Get_Selected (Get_Selection (Dialog.View), Model, Iter);
 
@@ -1313,20 +1327,34 @@ package body KeyManager_Module is
               and then Children (Model, Iter) = Null_Iter
               and then Get_Text (Dialog.Grab) /= ""
             then
-               Value (Get_Text (Dialog.Grab), Key, Modif);
-
-               Iter := Set
-                 (Ed.Model,
-                  Parent => Find_Parent
-                    (Gtk_Tree_Store (Ed.Model),
-                     Get_String
-                       (Model, Gtk.Tree_Model.Parent (Model, Iter), 0)),
-                  Descr   => Get_String (Model, Iter, 0),
-                  Changed => True,
-                  Key     => Image (Key, Modif));
+               declare
+                  Parent : constant String := Get_String
+                    (Model, Gtk.Tree_Model.Parent (Model, Iter), 0);
+                  S : constant String := Get_Text (Dialog.Grab);
+               begin
+                  if Parent = -Menu_Context_Name
+                    and then Index (S, " ") /= 0
+                  then
+                     Result := Message_Dialog
+                       (Msg => -"Menu shortcuts cannot use multiple keymaps",
+                        Dialog_Type => Message_Dialog_Type'(Error),
+                        Buttons     => Button_OK,
+                        Title       => -"Invalid key shortcut",
+                        Parent      => Gtk_Window (Dialog));
+                  else
+                     Iter := Set
+                       (Ed.Model,
+                        Parent => Find_Parent
+                          (Gtk_Tree_Store (Ed.Model), Parent),
+                        Descr   => Get_String (Model, Iter, 0),
+                        Changed => True,
+                        Key     => S);
+                     exit;
+                  end if;
+               end;
             end if;
          end;
-      end if;
+      end loop;
       Destroy (Dialog);
    end On_Add_Key;
 
