@@ -86,9 +86,6 @@ package Config is
    Default_Font : constant String := "@DEFAULT_FONT@";
    --  Default system font used in the preferences.
 
-   Default_HTML_Browser : constant String := "@HTML_BROWSER@";
-   --  Command use to browse HTML pages.
-
    Default_Ps : constant String :=
      "@DEFAULT_PS@";
    --  Command used to list processes on a native system.
