@@ -375,12 +375,10 @@ package body Src_Editor_Box is
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
       Lang_Autodetect : Boolean := True;
-      Success         : out Boolean)
-   is
-      Ignored : Boolean;
+      Success         : out Boolean) is
    begin
       Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
-      Set_Cursor_Location (Editor, 1, 1, Ignored);
+      Set_Cursor_Location (Editor, 1, 1);
    end Load_File;
 
    ------------------
@@ -417,6 +415,21 @@ package body Src_Editor_Box is
       return Get_Language (Editor.Source_Buffer);
    end Get_Language;
 
+   -----------------------
+   -- Is_Valid_Location --
+   -----------------------
+
+   function Is_Valid_Location
+     (Editor : access Source_Editor_Box_Record;
+      Line   : Positive;
+      Column : Positive := 1) return Boolean
+   is
+      Buffer_Line : constant Gint := To_Buffer_Line (Line);
+      Buffer_Col  : constant Gint := To_Buffer_Column (Column);
+   begin
+      return Is_Valid_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
+   end Is_Valid_Location;
+
    -------------------------
    -- Set_Cursor_Location --
    -------------------------
@@ -424,20 +437,18 @@ package body Src_Editor_Box is
    procedure Set_Cursor_Location
      (Editor  : access Source_Editor_Box_Record;
       Line    : Positive;
-      Column  : Positive := 1;
-      Success : out Boolean)
+      Column  : Positive := 1)
    is
       Buffer_Line  : constant Gint := To_Buffer_Line (Line);
       Buffer_Col   : constant Gint := To_Buffer_Column (Column);
    begin
-      Set_Cursor_Position
-        (Editor.Source_Buffer, Buffer_Line, Buffer_Col, Success);
+      Set_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
       Scroll_To_Cursor_Location (Editor.Source_View);
    end Set_Cursor_Location;
 
-   ------------------------
-   -- Get_CursorLocation --
-   ------------------------
+   -------------------------
+   -- Get_Cursor_Location --
+   -------------------------
 
    procedure Get_Cursor_Location
      (Editor  : access Source_Editor_Box_Record;
@@ -452,16 +463,164 @@ package body Src_Editor_Box is
       Column := To_Box_Column (Buffer_Col);
    end Get_Cursor_Location;
 
+   --------------------------
+   -- Get_Selection_Bounds --
+   --------------------------
+
+   procedure Get_Selection_Bounds
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : out Positive;
+      Start_Column : out Positive;
+      End_Line     : out Positive;
+      End_Column   : out Positive;
+      Found        : out Boolean)
+   is
+      Start_L : Gint;
+      Start_C : Gint;
+      End_L   : Gint;
+      End_C   : Gint;
+   begin
+      Get_Selection_Bounds
+        (Editor.Source_Buffer, Start_L, Start_C, End_L, End_C, Found);
+      Start_Line   := To_Box_Line (Start_L);
+      Start_Column := To_Box_Column (Start_C);
+      End_Line     := To_Box_Line (End_L);
+      End_Column   := To_Box_Column (End_C);
+   end Get_Selection_Bounds;
+
+   -------------------
+   -- Get_Selection --
+   -------------------
+
+   function Get_Selection
+     (Editor : access Source_Editor_Box_Record) return String is
+   begin
+      return Get_Selection (Editor.Source_Buffer);
+   end Get_Selection;
+
+   ---------------
+   -- Get_Slice --
+   ---------------
+
+   function Get_Slice
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive) return String is
+   begin
+      return Get_Slice
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+   end Get_Slice;
+
+   ------------
+   -- Insert --
+   ------------
+
+   procedure Insert
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Column  : Positive;
+      Text    : String) is
+   begin
+      Insert
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Line), To_Buffer_Column (Column),
+         Text);
+   end Insert;
+
+   -------------------
+   -- Replace_Slice --
+   -------------------
+
+   procedure Replace_Slice
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive;
+      Text         : String) is
+   begin
+      Replace_Slice
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column),
+         Text);
+   end Replace_Slice;
+
+   ------------------
+   -- Delete_Slice --
+   ------------------
+
+   procedure Delete_Slice
+     (Editor       : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive) is
+   begin
+      Delete_Slice
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+   end Delete_Slice;
+
+   ----------------
+   -- Select_All --
+   ----------------
+
+   procedure Select_All (Editor : access Source_Editor_Box_Record) is
+   begin
+      Select_All (Editor.Source_Buffer);
+   end Select_All;
+
+   -------------------
+   -- Cut_Clipboard --
+   -------------------
+
+   procedure Cut_Clipboard (Editor : access Source_Editor_Box_Record) is
+   begin
+      Cut_Clipboard (Editor.Source_Buffer, Default_Editable => True);
+   end Cut_Clipboard;
+
+   --------------------
+   -- Copy_Clipboard --
+   --------------------
+
+   procedure Copy_Clipboard (Editor : access Source_Editor_Box_Record) is
+   begin
+      Copy_Clipboard (Editor.Source_Buffer);
+   end Copy_Clipboard;
+
+   ---------------------
+   -- Paste_Clipboard --
+   ---------------------
+
+   procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record) is
+   begin
+      Paste_Clipboard (Editor.Source_Buffer, Default_Editable => True);
+   end Paste_Clipboard;
+
+   -------------------
+   -- Paste_Primary --
+   -------------------
+
+   procedure Paste_Primary (Editor : access Source_Editor_Box_Record) is
+   begin
+      Paste_Primary (Editor.Source_Buffer, Default_Editable => True);
+   end Paste_Primary;
+
    --------------------
    -- Highlight_Line --
    --------------------
 
    procedure Highlight_Line
      (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive;
-      Success : out Boolean) is
+      Line    : Positive) is
    begin
-      Highlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line), Success);
+      Highlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
       --  Tell the view that something has changed in the layout, to avoid
       --  waiting for the next cursor blink to see the highlighting appearing.
       --  ??? Would that be a bug in Gtk+?
@@ -474,10 +633,9 @@ package body Src_Editor_Box is
 
    procedure Unhighlight_Line
      (Editor  : access Source_Editor_Box_Record;
-      Line    : Positive;
-      Success : out Boolean) is
+      Line    : Positive) is
    begin
-      Unhighlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line), Success);
+      Unhighlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line));
       --  Tell the view that something has changed in the layout, to avoid
       --  waiting for the next cursor blink to see the highlighting appearing.
       --  ??? Would that be a bug in Gtk+?
@@ -497,6 +655,49 @@ package body Src_Editor_Box is
       --  ??? Would that be a bug in Gtk+?
       Default_Style_Changed (Get_Layout (Editor.Source_View));
    end Cancel_Highlight_Line;
+
+   ----------------------
+   -- Highlight_Region --
+   ----------------------
+
+   procedure Highlight_Region
+     (Editor : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive) is
+   begin
+      Highlight_Region
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+   end Highlight_Region;
+
+   ------------------------
+   -- Unhighlight_Region --
+   ------------------------
+
+   procedure Unhighlight_Region
+     (Editor : access Source_Editor_Box_Record;
+      Start_Line   : Positive;
+      Start_Column : Positive;
+      End_Line     : Positive;
+      End_Column   : Positive) is
+   begin
+      Unhighlight_Region
+        (Editor.Source_Buffer,
+         To_Buffer_Line (Start_Line), To_Buffer_Column (Start_Column),
+         To_Buffer_Line (End_Line), To_Buffer_Column (End_Column));
+   end Unhighlight_Region;
+
+   ---------------------
+   -- Unhighlight_All --
+   ---------------------
+
+   procedure Unhighlight_All (Editor : access Source_Editor_Box_Record) is
+   begin
+      Unhighlight_All (Editor.Source_Buffer);
+   end Unhighlight_All;
 
    ---------------------------
    -- Set_Show_Line_Numbers --
