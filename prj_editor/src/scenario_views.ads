@@ -42,7 +42,7 @@ with Glide_Kernel;
 package Scenario_Views is
 
    type Scenario_View_Record is new Gtk.Table.Gtk_Table_Record with private;
-   type Scenario_View is access all Scenario_View_Record;
+   type Scenario_View is access all Scenario_View_Record'Class;
 
    procedure Gtk_New
      (View    : out Scenario_View;
