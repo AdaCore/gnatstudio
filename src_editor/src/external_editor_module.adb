@@ -493,10 +493,8 @@ package body External_Editor_Module is
       Process : TTY_Process_Descriptor;
    begin
       if Active (Me) then
-         Trace (Me, "Spawning new process: " & Command);
-         for A in Args'Range loop
-            Trace (Me, "  arg(" & Image (A) & ")=" & Args (A).all);
-         end loop;
+         Trace (Me, "Spawn: " & Command &
+                " " & Argument_List_To_String (Args));
       end if;
 
       Non_Blocking_Spawn
