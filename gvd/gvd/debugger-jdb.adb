@@ -1044,7 +1044,7 @@ package body Debugger.Jdb is
 
    function Complete
      (Debugger  : access Jdb_Debugger;
-      Beginning : in String) return Basic_Types.String_Array
+      Beginning : String) return Basic_Types.String_Array
    is
       Result : Basic_Types.String_Array (1 .. 0);
    begin

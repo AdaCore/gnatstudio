@@ -343,7 +343,7 @@ package Debugger.Gdb is
 
    function Complete
      (Debugger  : access Gdb_Debugger;
-      Beginning : in String) return Basic_Types.String_Array;
+      Beginning : String) return Basic_Types.String_Array;
 
    procedure Open_Processes (Debugger : access Gdb_Debugger);
 

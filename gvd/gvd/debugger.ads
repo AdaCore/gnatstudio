@@ -794,8 +794,8 @@ package Debugger is
    -----------------------------
 
    function Complete
-     (Debugger   : access Debugger_Root;
-      Beginning  : in String) return Basic_Types.String_Array is abstract;
+     (Debugger  : access Debugger_Root;
+      Beginning : String) return Basic_Types.String_Array is abstract;
    --  Return a list of commands recognized by the debugger that begin with
    --  Beginning.
    --  Note that the caller is responsible for freeing the memory allocated

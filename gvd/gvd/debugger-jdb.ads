@@ -314,7 +314,7 @@ package Debugger.Jdb is
 
    function Complete
      (Debugger  : access Jdb_Debugger;
-      Beginning : in String) return Basic_Types.String_Array;
+      Beginning : String) return Basic_Types.String_Array;
 
 private
 
