@@ -59,11 +59,11 @@ package body General_Preferences_Pkg.Callbacks is
          & Directory_Separator & "preferences");
    end On_Ok_Button_Clicked;
 
-   -----------------------------
-   -- On_Apply_Button_Clicked --
-   -----------------------------
+   ----------------------------
+   -- On_Test_Button_Clicked --
+   ----------------------------
 
-   procedure On_Apply_Button_Clicked
+   procedure On_Test_Button_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
       Pref : General_Preferences_Access :=
@@ -71,7 +71,7 @@ package body General_Preferences_Pkg.Callbacks is
    begin
       Apply_Preferences (Pref);
       Preferences_Changed (Main_Debug_Window_Access (Pref.Main_Window));
-   end On_Apply_Button_Clicked;
+   end On_Test_Button_Clicked;
 
    ------------------------------
    -- On_Cancel_Button_Clicked --

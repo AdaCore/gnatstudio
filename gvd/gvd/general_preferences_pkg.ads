@@ -139,9 +139,7 @@ package General_Preferences_Pkg is
       Label_Helpers : Gtk_Label;
       Hbuttonbox6 : Gtk_Hbutton_Box;
       Ok_Button : Gtk_Button;
-      Reset_Button : Gtk_Button;
-      Help_Button : Gtk_Button;
-      Apply_Button : Gtk_Button;
+      Test_Button : Gtk_Button;
       Cancel_Button : Gtk_Button;
    end record;
    type General_Preferences_Access is access all General_Preferences_Record'Class;

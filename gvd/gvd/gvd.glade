@@ -3570,16 +3570,16 @@
 
       <widget>
 	<class>GtkButton</class>
-	<name>apply_button</name>
+	<name>test_button</name>
 	<can_default>True</can_default>
 	<can_focus>True</can_focus>
 	<signal>
 	  <name>clicked</name>
-	  <handler>on_apply_button_clicked</handler>
+	  <handler>on_test_button_clicked</handler>
 	  <object>General_Preferences</object>
-	  <last_modification_time>Tue, 23 Jan 2001 23:11:08 GMT</last_modification_time>
+	  <last_modification_time>Fri, 26 Jan 2001 21:15:11 GMT</last_modification_time>
 	</signal>
-	<label>Apply</label>
+	<label>Test</label>
       </widget>
 
       <widget>

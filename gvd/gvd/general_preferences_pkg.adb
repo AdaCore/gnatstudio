@@ -720,12 +720,12 @@ begin
       Widget_Callback.To_Marshaller (On_Ok_Button_Clicked'Access), General_Preferences);
    Add (General_Preferences.Hbuttonbox6, General_Preferences.Ok_Button);
 
-   Gtk_New (General_Preferences.Apply_Button, -"Apply");
-   Set_Flags (General_Preferences.Apply_Button, Can_Default);
+   Gtk_New (General_Preferences.Test_Button, -"Test");
+   Set_Flags (General_Preferences.Test_Button, Can_Default);
    Widget_Callback.Object_Connect
-     (General_Preferences.Apply_Button, "clicked",
-      Widget_Callback.To_Marshaller (On_Apply_Button_Clicked'Access), General_Preferences);
-   Add (General_Preferences.Hbuttonbox6, General_Preferences.Apply_Button);
+     (General_Preferences.Test_Button, "clicked",
+      Widget_Callback.To_Marshaller (On_Test_Button_Clicked'Access), General_Preferences);
+   Add (General_Preferences.Hbuttonbox6, General_Preferences.Test_Button);
 
    Gtk_New (General_Preferences.Cancel_Button, -"Cancel");
    Set_Flags (General_Preferences.Cancel_Button, Can_Default);
