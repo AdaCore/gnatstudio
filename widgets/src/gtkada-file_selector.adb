@@ -334,6 +334,7 @@ package body Gtkada.File_Selector is
       Mask        : Gdk.Bitmap.Gdk_Bitmap;
       Current_Row : Gint;
       Style       : Gtk_Style;
+      Strings     : Chars_Ptr_Array (1 .. 3) := "" + "" + "";
 
    begin
       if Win.Current_Directory = null then
@@ -360,15 +361,15 @@ package body Gtkada.File_Selector is
             Style := null;
 
          when Normal =>
-            Current_Row := Append (Win.File_List, "" + "" + "");
+            Current_Row := Append (Win.File_List, Strings);
             Style := Win.Normal_Style;
 
          when Highlighted =>
-            Current_Row := Append (Win.File_List, "" + "" + "");
+            Current_Row := Append (Win.File_List, Strings);
             Style := Win.Highlighted_Style;
 
          when Insensitive =>
-            Current_Row := Append (Win.File_List, "" + "" + "");
+            Current_Row := Append (Win.File_List, Strings);
             Style := Win.Insensitive_Style;
             Set_Selectable (Win.File_List, Current_Row, False);
       end case;
@@ -388,6 +389,7 @@ package body Gtkada.File_Selector is
       end if;
 
       Free (Text);
+      Free (Strings);
       Win.Remaining_Files := Next (Win.Remaining_Files);
 
       return Win.Remaining_Files /= String_List.Null_Node;
@@ -493,9 +495,10 @@ package body Gtkada.File_Selector is
    -------------------
 
    procedure Refresh_Files (Win : access File_Selector_Window_Record'Class) is
-      Dir    : String := Win.Current_Directory.all;
-      Filter : File_Filter := null;
-      Id     : Idle_Handler_Id;
+      Dir     : String := Win.Current_Directory.all;
+      Filter  : File_Filter := null;
+      Id      : Idle_Handler_Id;
+      Strings : Chars_Ptr_Array (1 .. 3);
 
    begin
       if Get_Window (Win) = null
@@ -534,7 +537,9 @@ package body Gtkada.File_Selector is
          return;
       end if;
 
-      Insert (Win.File_List, -1, "" + (-"Opening ... ") + "");
+      Strings := "" + (-"Opening ... ") + "";
+      Insert (Win.File_List, -1, Strings);
+      Free (Strings);
       Win.Current_Filter := Filter;
 
       --  Fill the File_List.
@@ -552,7 +557,9 @@ package body Gtkada.File_Selector is
       exception
          when Directory_Error =>
             Clear (Win.File_List);
-            Insert (Win.File_List, -1, "" + (-"Could not open " & Dir) + "");
+            Strings := "" + (-"Could not open " & Dir) + "";
+            Insert (Win.File_List, -1, Strings);
+            Free (Strings);
       end;
 
       Set_Busy_Cursor (Get_Window (Win), False, False);
