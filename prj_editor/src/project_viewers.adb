@@ -332,6 +332,12 @@ package body Project_Viewers is
      (Object : access GObject_Record'Class; Kernel : Kernel_Handle);
    --  Called when the project has just changed
 
+   procedure On_File_Edited
+     (Object : access GObject_Record'Class;
+      Args   : Gtk_Args;
+      Kernel : Kernel_Handle);
+   --  Called when a new file is edited
+
    type On_Reopen is new Menu_Callback_Record with record
       Kernel : Kernel_Handle;
    end record;
@@ -2803,6 +2809,56 @@ package body Project_Viewers is
       return null;
    end Get_Naming_Scheme_Page;
 
+   --------------------
+   -- On_File_Edited --
+   --------------------
+
+   procedure On_File_Edited
+     (Object : access GObject_Record'Class;
+      Args   : Gtk_Args;
+      Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+   begin
+      if Status (Get_Project (Kernel)) = Default then
+         declare
+            File : constant String := To_String (Args, 1);
+            Dir  : aliased String := Dir_Name (File);
+            Current_Dirs : String_Array_Access := Source_Dirs
+              (Get_Project (Kernel), Recursive => False);
+         begin
+            for C in Current_Dirs'Range loop
+               if Current_Dirs (C).all = Dir then
+                  Free (Current_Dirs);
+                  return;
+               end if;
+            end loop;
+
+            Free (Current_Dirs);
+
+            if Message_Dialog
+              (Msg            => -"Add directory " & ASCII.LF
+                 & Dir & ASCII.LF
+                 & (-" to the default project ?"),
+               Dialog_Type    => Confirmation,
+               Buttons        => Button_Yes or Button_No,
+               Default_Button => Button_Yes,
+               Title          => -"Adding directory to project",
+               Justification  => Justify_Left,
+               Parent         => Get_Main_Window (Kernel)) = Button_Yes
+            then
+               Update_Attribute_Value_In_Scenario
+                 (Get_Project (Kernel),
+                  Scenario_Variables => Scenario_Variables (Kernel),
+                  Attribute          => Source_Dirs_Attribute,
+                  Values             => (1 => Dir'Unchecked_Access),
+                  Prepend            => True);
+               Recompute_View (Kernel);
+            end if;
+         end;
+      end if;
+   end On_File_Edited;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2840,6 +2896,10 @@ package body Project_Viewers is
       Kernel_Callback.Connect
         (Kernel, Project_Changed_Signal,
          Kernel_Callback.To_Marshaller (On_Project_Changed'Access),
+         Kernel_Handle (Kernel));
+      Kernel_Callback.Connect
+        (Kernel, File_Edited_Signal,
+         On_File_Edited'Access,
          Kernel_Handle (Kernel));
 
       Register_Menu
