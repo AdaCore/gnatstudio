@@ -1,0 +1,92 @@
+-----------------------------------------------------------------------
+--                 Odd - The Other Display Debugger                  --
+--                                                                   --
+--                         Copyright (C) 2000                        --
+--                 Emmanuel Briot and Arnaud Charlet                 --
+--                                                                   --
+-- Odd is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package handles all the history lists that are used throughout
+--  odd, like for instance the command history.
+--  All these histories can be imagined as lists, with a pointer to the
+--  last item retrieved.
+--
+--  To traverse the whole history, you should do:
+--     begin
+--        loop
+--           Move_To_Previous (History);
+--           Put (Get_Current (History));
+--        end loop
+--     exception
+--        when No_Such_Item => null;
+--     end;
+
+generic
+   type Data_Type (<>) is private;
+package Odd.Histories is
+
+   type History_List (Max_Items : Positive) is private;
+   --  This acts as a FIFO queue, ie if you are trying to add more items
+   --  than can fit in the list then the first items entered are discarded.
+
+   procedure Append (History : in out History_List;
+                     Data    : Data_Type);
+   --  Append a new value to the history.
+   --  The pointer to the current value now points to this new entry.
+   --  If you are appending more items than
+
+   function Get_Current (History : History_List) return Data_Type;
+   --  Return the item currently pointed to.
+   --  No_Such_Item is raised if the list is empty.
+
+   procedure Move_To_Previous (History : in out History_List);
+   --  Move the pointer to the value preceding the current one.
+   --  Calling this function multiple times will traverse the whole list.
+   --  If you are trying to move before the first item, nothing happens.
+
+   procedure Move_To_Next (History : in out History_List);
+   --  Move the pointer to the value following the current one.
+   --  Calling this function multiple times will traverse the whole list.
+   --  If you are trying to move after the last item, No_Such_Item is
+   --  raised.
+
+   No_Such_Item : exception;
+
+private
+   type Data_Access is access Data_Type;
+   type Data_Array is array (Positive range <>) of Data_Access;
+   type History_List (Max_Items : Positive) is record
+      Contents : Data_Array (1 .. Max_Items);
+      --  This is in fact a "circular" array, ie the item at position 1
+      --  follows the item at position Max_Items.
+
+      --  All indices point to value between 0 and Max_Items, since this is
+      --  much easier to manipulate through the use of 'mod' operations.
+
+      First    : Natural := 0;
+      --  Points to the first item in the history.
+
+      Last     : Integer := -1;
+      --  Points to the position following the last item.
+      --  This is equal to -1 when the history list is empty.
+
+      Current  : Integer := -1;
+      --  Points to the current item.
+      --  This is set to -1 if we are after the last item (Move_To_Previous
+      --  would move to the last item), or -2 if we are before the beginning
+      --  (Move_To_Next would move to the first item).
+   end record;
+
+end Odd.Histories;

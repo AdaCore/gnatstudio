@@ -139,17 +139,12 @@ package body Odd.Process is
       Str     : String)
    is
    begin
-      --  Do not show the output if we have an internal command
-
       Freeze (Process.Debugger_Text);
       Insert (Process.Debugger_Text,
               Get_Gdkfont (Debugger_Font, Debugger_Font_Size),
               Black (Get_System),
               White (Get_System),
               Str);
-      Process.Edit_Pos := Get_Length (Process.Debugger_Text);
-      Set_Point (Process.Debugger_Text, Process.Edit_Pos);
-      --         Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
       Thaw (Process.Debugger_Text);
    end Text_Output_Handler;
 
@@ -163,8 +158,11 @@ package body Odd.Process is
    is
       Process : Debugger_Process_Tab := Convert (Descriptor);
    begin
+      --  Do not show the output if we have an internal command
       if not Is_Internal_Command (Get_Process (Process.Debugger)) then
          Text_Output_Handler (Process, Str);
+         Process.Edit_Pos := Get_Length (Process.Debugger_Text);
+         Set_Point (Process.Debugger_Text, Process.Edit_Pos);
       end if;
    end Text_Output_Handler;
 

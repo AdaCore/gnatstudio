@@ -24,12 +24,23 @@ with Gtk.Widget; use Gtk.Widget;
 with Gtk.Handlers; use Gtk.Handlers;
 with Unchecked_Conversion;
 with Odd.Process; use Odd.Process;
+with Gdk.Types.Keysyms;  use Gdk.Types.Keysyms;
+with Gdk.Event;   use Gdk.Event;
+with Odd.Histories;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Process_Tab_Pkg.Callbacks is
 
+   Command_History_Size : constant := 100;
+   --  Number of items in the command history list.
+
    use Gtk.Arguments;
+
+
+   package String_History is new Odd.Histories (String);
+   use String_History;
+   Command_History : String_History.History_List (Command_History_Size);
 
    ----------------------------------
    -- On_Debugger_Text_Insert_Text --
@@ -66,8 +77,13 @@ package body Process_Tab_Pkg.Callbacks is
 
             --  Can't we at least change the cursor ?
 
-            Process_User_Command
-              (Top, Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos)));
+            declare
+               S : String :=
+                 Get_Chars (Top.Debugger_Text, Gint (Top.Edit_Pos));
+            begin
+               Process_User_Command (Top, S);
+               Append (Command_History, S);
+            end;
          end if;
       end if;
    end On_Debugger_Text_Insert_Text;
@@ -112,9 +128,47 @@ package body Process_Tab_Pkg.Callbacks is
       --  the cursor at an incorrect position, which we restore here.
 
       if Arg1 (Arg1'First) = ASCII.LF then
-         Set_Position (Top.Debugger_Text,
-                       Gint (Get_Length (Top.Debugger_Text)));
-      end if;
+         Top.Edit_Pos := Get_Length (Top.Debugger_Text);
+         Set_Point (Top.Debugger_Text, Top.Edit_Pos);
+         Set_Position (Top.Debugger_Text, Gint (Top.Edit_Pos));
+       end if;
    end On_Debugger_Text_Insert_Text2;
+
+   --------------------------------------
+   -- On_Debugger_Text_Key_Press_Event --
+   --------------------------------------
+
+   function On_Debugger_Text_Key_Press_Event
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args) return Boolean
+   is
+      Arg1 : Gdk_Event := To_Event (Params, 1);
+      Top  : Debugger_Process_Tab := Debugger_Process_Tab (Object);
+      use type Gdk.Types.Gdk_Key_Type;
+   begin
+      if Get_Key_Val (Arg1) = Gdk_Up
+        or else Get_Key_Val (Arg1) = Gdk_Down
+      then
+         Delete_Text (Top.Debugger_Text,
+                      Gint (Top.Edit_Pos),
+                      Gint (Get_Length (Top.Debugger_Text)));
+         begin
+            if Get_Key_Val (Arg1) = Gdk_Up then
+               Move_To_Previous (Command_History);
+            else
+               Move_To_Next (Command_History);
+            end if;
+            Set_Point (Top.Debugger_Text, Top.Edit_Pos);
+            Text_Output_Handler (Top, Get_Current (Command_History));
+            Set_Position (Top.Debugger_Text,
+                          Gint (Get_Length (Top.Debugger_Text)));
+         exception
+            when No_Such_Item =>
+               null;
+         end;
+         Emit_Stop_By_Name (Top.Debugger_Text, "key_press_event");
+      end if;
+      return True;
+   end On_Debugger_Text_Key_Press_Event;
 
 end Process_Tab_Pkg.Callbacks;

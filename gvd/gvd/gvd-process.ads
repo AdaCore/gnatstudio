@@ -91,5 +91,7 @@ package Odd.Process is
      (Process : Debugger_Process_Tab;
       Str     : String);
    --  Insert Str in the debugger window.
+   --  Note that this function does not change the Edit_Pos for the record,
+   --  so this should be used only for temporary output.
 
 end Odd.Process;
