@@ -21,7 +21,7 @@
 with System;
 with GNAT.Expect;
 with GNAT.Regpat;
-with Odd.Types;
+with GVD.Types;
 
 package Process_Proxies is
 
@@ -49,12 +49,12 @@ package Process_Proxies is
    --  See Command_In_Process for more details.
 
    function Get_Command_Mode (Proxy : access Process_Proxy)
-      return Odd.Types.Command_Type;
+      return GVD.Types.Command_Type;
    --  Return the type of the command currently processed.
 
    procedure Set_Command_Mode
      (Proxy : access Process_Proxy;
-      Mode  : Odd.Types.Command_Type);
+      Mode  : GVD.Types.Command_Type);
    --  Save the type of the command currently processed.
 
    procedure Set_Parse_File_Name
@@ -226,7 +226,7 @@ private
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Mode   : Odd.Types.Command_Type := Odd.Types.Hidden;
+      Internal_Mode   : GVD.Types.Command_Type := GVD.Types.Hidden;
       --  Indicates whether the current output from the debugger should be
       --  displayed in the output window
 

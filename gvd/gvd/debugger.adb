@@ -40,10 +40,10 @@ with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
 with GVD.Strings;       use GVD.Strings;
-with Odd.Types;         use Odd.Types;
+with GVD.Types;         use GVD.Types;
 with Odd.Process;       use Odd.Process;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Odd.Preferences;   use Odd.Preferences;
+with GVD.Preferences;   use GVD.Preferences;
 
 with Gtkada.Dialogs;     use Gtkada.Dialogs;
 
@@ -194,7 +194,7 @@ package body Debugger is
    is
       Descriptor : Process_Descriptor_Access;
    begin
-      if Odd.Preferences.Use_Ptys and then Can_Use_Ptys = 1 then
+      if Use_Ptys and then Can_Use_Ptys = 1 then
          Descriptor := new TTY_Process_Descriptor;
       else
          Descriptor := new Process_Descriptor;
@@ -319,9 +319,9 @@ package body Debugger is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return Odd.Types.String_Array
+     (Debugger : access Debugger_Root) return GVD.Types.String_Array
    is
-      A : Odd.Types.String_Array (1 .. 0);
+      A : GVD.Types.String_Array (1 .. 0);
    begin
       return A;
    end Source_Files_List;
@@ -586,7 +586,7 @@ package body Debugger is
    ---------------------
 
    function List_Exceptions
-     (Debugger : access Debugger_Root) return Odd.Types.Exception_Array
+     (Debugger : access Debugger_Root) return GVD.Types.Exception_Array
    is
       Arr : Exception_Array (1 .. 0);
    begin

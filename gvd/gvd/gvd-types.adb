@@ -21,7 +21,7 @@
 with Gtkada.Types;
 with Unchecked_Deallocation;
 
-package body Odd.Types is
+package body GVD.Types is
 
    ----------
    -- Free --
@@ -82,4 +82,4 @@ package body Odd.Types is
          Free (Exception_Access (E).Name);
       end loop;
    end Free;
-end Odd.Types;
+end GVD.Types;

@@ -35,10 +35,10 @@ with Debugger;         use Debugger;
 
 with Odd.Process;      use Odd.Process;
 with Odd.Code_Editors; use Odd.Code_Editors;
-with Odd.Preferences;  use Odd.Preferences;
+with GVD.Preferences;  use GVD.Preferences;
 with GVD.Strings;      use GVD.Strings;
 with Odd.Text_Boxes;   use Odd.Text_Boxes;
-with Odd.Types;        use Odd.Types;
+with GVD.Types;        use GVD.Types;
 with Odd_Intl;         use Odd_Intl;
 
 with GNAT.Regpat;      use GNAT.Regpat;
@@ -234,11 +234,11 @@ package body Odd.Asm_Editors is
 
             if Result then
                Remove_Breakpoint
-                 (Process.Debugger, Num, Mode => Odd.Types.Visible);
+                 (Process.Debugger, Num, Mode => GVD.Types.Visible);
             else
                if Addr /= "" then
                   Break_Address
-                    (Process.Debugger, Addr, Mode => Odd.Types.Visible);
+                    (Process.Debugger, Addr, Mode => GVD.Types.Visible);
                end if;
             end if;
          end;
@@ -471,7 +471,7 @@ package body Odd.Asm_Editors is
    is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
-      Breakpoints_Array : constant Odd.Types.Breakpoint_Array_Ptr :=
+      Breakpoints_Array : constant GVD.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
 
    begin
@@ -492,7 +492,7 @@ package body Odd.Asm_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Asm_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array)
+      Br        : GVD.Types.Breakpoint_Array)
    is
       Line  : Natural;
       Pix   : Gtk_Pixmap;

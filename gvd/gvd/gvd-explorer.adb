@@ -45,11 +45,11 @@ with Debugger;              use Debugger;
 with Odd.Code_Editors;      use Odd.Code_Editors;
 with Odd.Menus;             use Odd.Menus;
 with GVD.Pixmaps;           use GVD.Pixmaps;
-with Odd.Preferences;       use Odd.Preferences;
+with GVD.Preferences;       use GVD.Preferences;
 with Odd.Process;           use Odd.Process;
 with Odd.Source_Editors;    use Odd.Source_Editors;
 with GVD.Strings;           use GVD.Strings;
-with Odd.Types;             use Odd.Types;
+with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 
 with Ada.Text_IO; use Ada.Text_IO;
@@ -627,7 +627,7 @@ package body Odd.Explorer is
 
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
-      List : Odd.Types.String_Array) is
+      List : GVD.Types.String_Array) is
    begin
       Freeze (Tree);
 
@@ -750,12 +750,12 @@ package body Odd.Explorer is
      (Explorer : access Explorer_Record'Class)
    is
       Tab  : constant Debugger_Process_Tab := Convert (Explorer);
-      List : Odd.Types.String_Array := Source_Files_List (Tab.Debugger);
+      List : GVD.Types.String_Array := Source_Files_List (Tab.Debugger);
 
    begin
       Clear_Explorer (Explorer);
       Add_List_Of_Files (Explorer, List);
-      Odd.Types.Free (List);
+      GVD.Types.Free (List);
    end On_Executable_Changed;
 
    ---------------------
@@ -862,7 +862,7 @@ package body Odd.Explorer is
    procedure Display_Shared (Explorer : access Explorer_Record'Class) is
       Process : Debugger_Process_Tab := Convert (Explorer);
       Data    : Node_Data_Access := null;
-      Current : Odd.Types.String_Access;
+      Current : GVD.Types.String_Access;
    begin
       --  ??? Should be protected in case the debugger is currently busy
 

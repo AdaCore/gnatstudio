@@ -28,7 +28,7 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Odd.Types; use Odd.Types;
+with GVD.Types; use GVD.Types;
 
 package Open_Program_Pkg is
 

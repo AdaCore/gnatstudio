@@ -25,7 +25,7 @@ with GNAT.OS_Lib;
 with Debugger;
 with Gtk.Window;
 with GNAT.Regpat;
-with Odd.Types;
+with GVD.Types;
 
 package Debugger.Jdb is
 
@@ -77,46 +77,46 @@ package Debugger.Jdb is
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String;
-      Mode       : Odd.Types.Invisible_Command := Odd.Types.Internal);
+      Mode       : GVD.Types.Invisible_Command := GVD.Types.Internal);
 
    procedure Run
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Start
      (Debugger  : access Jdb_Debugger;
       Arguments : String := "";
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Attach_Process
      (Debugger : access Jdb_Debugger;
       Process  : String;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Detach_Process
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Step_Into
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Step_Over
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Step_Into_Instruction
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Step_Over_Instruction
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Continue
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Interrupt
      (Debugger : access Jdb_Debugger;
@@ -136,63 +136,63 @@ package Debugger.Jdb is
 
    procedure Stack_Down
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Stack_Up
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Stack_Frame
      (Debugger : access Jdb_Debugger;
       Frame    : Positive;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Break_Subprogram
      (Debugger  : access Jdb_Debugger;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Break_Source
      (Debugger  : access Jdb_Debugger;
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Break_Exception
      (Debugger  : access Jdb_Debugger;
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Break_Address
      (Debugger   : access Jdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Break_Regexp
      (Debugger   : access Jdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Enable_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
       Enable   : Boolean := True;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Remove_Breakpoint
      (Debugger : access Jdb_Debugger;
       Num      : Integer;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Finish
      (Debugger : access Jdb_Debugger;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Backtrace
      (Debugger : access Jdb_Debugger;
@@ -202,7 +202,7 @@ package Debugger.Jdb is
    procedure Change_Directory
      (Debugger    : access Jdb_Debugger;
       Dir         : String;
-      Mode        : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden);
 
    procedure Found_File_Name
      (Debugger    : access Jdb_Debugger;
@@ -225,7 +225,7 @@ package Debugger.Jdb is
 
    function List_Breakpoints
      (Debugger  : access Jdb_Debugger)
-     return Odd.Types.Breakpoint_Array;
+     return GVD.Types.Breakpoint_Array;
 
    procedure Get_Machine_Code
      (Debugger        : access Jdb_Debugger;
@@ -233,7 +233,7 @@ package Debugger.Jdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out Odd.Types.String_Access;
+      Code            : out GVD.Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "");
 
@@ -266,7 +266,7 @@ private
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
 
    type Jdb_Debugger is new Debugger.Debugger_Root with record

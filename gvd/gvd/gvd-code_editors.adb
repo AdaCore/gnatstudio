@@ -30,9 +30,9 @@ with Gtk.Widget;          use Gtk.Widget;
 
 with Odd.Asm_Editors;     use Odd.Asm_Editors;
 with Odd.Explorer;        use Odd.Explorer;
-with Odd.Preferences;     use Odd.Preferences;
+with GVD.Preferences;     use GVD.Preferences;
 with Odd.Source_Editors;  use Odd.Source_Editors;
-with Odd.Types;           use Odd.Types;
+with GVD.Types;           use GVD.Types;
 with Odd_Intl;            use Odd_Intl;
 
 with Ada.Text_IO;         use Ada.Text_IO;
@@ -217,7 +217,7 @@ package body Odd.Code_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array) is
+      Br        : GVD.Types.Breakpoint_Array) is
    begin
       Update_Breakpoints (Editor.Source, Br);
       Update_Breakpoints (Editor.Asm, Br);

@@ -28,7 +28,7 @@ with Callbacks_Odd;         use Callbacks_Odd;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Interfaces.C;          use Interfaces.C;
 with Interfaces.C.Strings;
-with Odd.Types;             use Odd.Types;
+with GVD.Types;             use GVD.Types;
 with Odd.Process;           use Odd.Process;
 with Odd_Intl;              use Odd_Intl;
 with Gtk.GEntry;            use Gtk.GEntry;
@@ -44,7 +44,7 @@ with Gtk.Check_Button;      use Gtk.Check_Button;
 with Process_Proxies;       use Process_Proxies;
 with Language;              use Language;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
-with Odd.Utils;             use Odd.Utils;
+with GVD.Utils;             use GVD.Utils;
 
 package body Odd.Dialogs is
 

@@ -28,7 +28,7 @@ with Gtk.Menu;
 with Gtk.Pixmap;
 with Gtk.Text;
 with Gtkada.Types;
-with Odd.Types;
+with GVD.Types;
 
 --  This box is a general box, that can contain any scrollable widget.
 --  It is associated with a vertical scrollbar, and a layout on the left
@@ -130,7 +130,7 @@ package Odd.Text_Boxes is
 
    procedure Set_Buffer
      (Box            : access Odd_Text_Box_Record;
-      Buffer         : Odd.Types.String_Access := null;
+      Buffer         : GVD.Types.String_Access := null;
       Clear_Previous : Boolean := True);
    --  Changes the buffer associated with the child. The child widget is simply
    --  cleared, but not redrawn, and you should call Update_Child to draw it
@@ -140,7 +140,7 @@ package Odd.Text_Boxes is
    --  Set Buffer to null if you simply want to free the memory.
 
    function Get_Buffer
-     (Box : access Odd_Text_Box_Record) return Odd.Types.String_Access;
+     (Box : access Odd_Text_Box_Record) return GVD.Types.String_Access;
    --  Return the buffer associated with the box
 
    function Lines_Count (Box : access Odd_Text_Box_Record) return Natural;
@@ -169,7 +169,7 @@ package Odd.Text_Boxes is
      (Box    : access Odd_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
-      Entity : in out Odd.Types.String_Access);
+      Entity : in out GVD.Types.String_Access);
    --  Return the entity pointed to by the mouse, as well as the smallest
    --  rectangle containing the entity. The X,Y coordinates of the rectangle
    --  should be relative to the X,Y arguments passed to the procedure.
@@ -196,7 +196,7 @@ private
 
       Buttons             : Gtk.Layout.Gtk_Layout;
 
-      Buffer              : Odd.Types.String_Access;
+      Buffer              : GVD.Types.String_Access;
       --  The contents of the text window
       --  ??? Is this really needed, this duplicates the memory used for the
       --  child.

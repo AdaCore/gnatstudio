@@ -27,7 +27,7 @@ with Gtk.List;      use Gtk.List;
 with Gtk.List_Item; use Gtk.List_Item;
 with Gtk.Widget;    use Gtk.Widget;
 
-package body Odd.Utils is
+package body GVD.Utils is
 
    ---------------------------
    -- Add_Unique_List_Entry --
@@ -87,4 +87,4 @@ package body Odd.Utils is
       Destroy (Cursor);
    end Set_Busy_Cursor;
 
-end Odd.Utils;
+end GVD.Utils;

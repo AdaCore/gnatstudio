@@ -24,7 +24,7 @@ with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
 with Gtk.Window;
-with Odd.Types;
+with GVD.Types;
 
 package Debugger is
 
@@ -94,7 +94,7 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Send a command to the underlying process associated with Debugger.
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
@@ -108,7 +108,7 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
    --  Same as above, but also returns the output of the debugger. The full
    --  output is returned, ie this includes the final prompt. You should
@@ -123,7 +123,7 @@ package Debugger is
       Cmd             : String;
       Empty_Buffer    : Boolean := True;
       Wait_For_Prompt : Boolean := True;
-      Mode            : Odd.Types.Invisible_Command := Odd.Types.Hidden)
+      Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String is abstract;
    --  Same as above, but return a clean version of the output, ie it deletes
    --  the final prompt if any, depending on the debugger type.
@@ -247,7 +247,7 @@ package Debugger is
    procedure Set_Executable
      (Debugger   : access Debugger_Root;
       Executable : String;
-      Mode       : Odd.Types.Invisible_Command := Odd.Types.Internal)
+      Mode       : GVD.Types.Invisible_Command := GVD.Types.Internal)
       is abstract;
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
@@ -270,7 +270,7 @@ package Debugger is
    procedure Change_Directory
      (Debugger    : access Debugger_Root;
       Dir         : String;
-      Mode        : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode        : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Change to directory Dir under a specified debugger session.
    --  See execution commands below for an explanation on the Mode parameter.
 
@@ -303,7 +303,7 @@ package Debugger is
    --  better to do it in Odd.Process.Text_Output_Handler.
 
    function Source_Files_List
-     (Debugger : access Debugger_Root) return Odd.Types.String_Array;
+     (Debugger : access Debugger_Root) return GVD.Types.String_Array;
    --  Return the list of source files for the currently loaded executable.
    --  If the debugger can not return a list of specific sources, it should
    --  return an empty array.
@@ -329,7 +329,7 @@ package Debugger is
    procedure Run
      (Debugger  : access Debugger_Root;
       Arguments : String := "";
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Start the execution of the executable.
    --  Arguments is a string passed on the command line to run
    --  Note that this command does not wait for the prompt, and returns
@@ -340,7 +340,7 @@ package Debugger is
    procedure Start
      (Debugger : access Debugger_Root;
       Arguments : String := "";
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Start the execution of the executable and stop at the first user line.
    --  Arguments is a string passed on the command line to run
    --  The arguments must have been set by a call to Set_Arguments.
@@ -350,47 +350,47 @@ package Debugger is
    procedure Attach_Process
      (Debugger : access Debugger_Root;
       Process  : String;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Attach a given process into the debugger.
    --  GDB_COMMAND: "attach"
 
    procedure Detach_Process
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Detach the current process from the debugger.
    --  GDB_COMMAND: "detach"
 
    procedure Step_Into
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Step program until it reaches a different source line.
    --  See above for details on Display.
    --  GDB_COMMAND: "step"
 
    procedure Step_Over
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Step program, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "next"
 
    procedure Step_Into_Instruction
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Step program until it reaches a different assembly line
    --  See above for details on Display.
    --  GDB_COMMAND: "stepu"
 
    procedure Step_Over_Instruction
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Step program one assembly instruction, proceeding over subroutines.
    --  See above for details on Display.
    --  GDB_COMMAND: "nexti"
 
    procedure Continue
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Continue program after signal or breakpoint.
    --  See above for details on Display.
    --  GDB_COMMAND: "cont"
@@ -435,14 +435,14 @@ package Debugger is
 
    procedure Stack_Down
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Select and print stack frame called by the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "down"
 
    procedure Stack_Up
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Select and print stack frame that called the current one.
    --  See above for details on Display.
    --  GDB_COMMAND: "up"
@@ -450,7 +450,7 @@ package Debugger is
    procedure Stack_Frame
      (Debugger : access Debugger_Root;
       Frame    : Positive;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Select and print the selected stack frame.
    --  The first frame is 1. It is up to the real debugger to convert to the
    --  appropriate Id when needed.
@@ -459,16 +459,16 @@ package Debugger is
 
    procedure Finish
      (Debugger : access Debugger_Root;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Finish executing the current frame.
    --  See above for details on Display.
    --  GDB_COMMAND: "finish"
 
    type Backtrace_Record is record
       Frame_Id        : Natural;
-      Program_Counter : Odd.Types.String_Access;
-      Subprogram      : Odd.Types.String_Access;
-      Source_Location : Odd.Types.String_Access;
+      Program_Counter : GVD.Types.String_Access;
+      Subprogram      : GVD.Types.String_Access;
+      Source_Location : GVD.Types.String_Access;
    end record;
 
    type Backtrace_Array is array (Positive range <>) of Backtrace_Record;
@@ -499,7 +499,7 @@ package Debugger is
      (Debugger  : access Debugger_Root;
       Name      : String;
       Temporary : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Break at the beginning of a specific subprogram.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -510,7 +510,7 @@ package Debugger is
       File      : String;
       Line      : Positive;
       Temporary : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Break at a specific source location.
    --  If Temporary is True, then the breakpoint should be deleted
    --  automatically the first time it is hit.
@@ -521,7 +521,7 @@ package Debugger is
       Name      : String  := "";
       Temporary : Boolean := False;
       Unhandled : Boolean := False;
-      Mode      : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode      : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Break on an exception, if the debugger and the language recognize that
    --  feature.
    --  The breakpoint is set on a specific exception Name (or all exceptions
@@ -536,14 +536,14 @@ package Debugger is
      (Debugger   : access Debugger_Root;
       Address    : String;
       Temporary  : Boolean := False;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Set a breakpoint at a specific address.
 
    procedure Break_Regexp
      (Debugger   : access Debugger_Root;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Mode       : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode       : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Set a breakpoint on all subprograms matching Regexp.
    --  This function is emulated when the debugger does not support it
    --  directly.
@@ -552,7 +552,7 @@ package Debugger is
      (Debugger : access Debugger_Root;
       Num      : Integer;
       Enable   : Boolean := True;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Enable or disable the breakpoint number Num.
    --  Num is always the number returned in the Num field of the
    --  Breakpoint_Data record by List_Breakpoints.
@@ -560,14 +560,14 @@ package Debugger is
    procedure Remove_Breakpoint
      (Debugger : access Debugger_Root;
       Num      : Integer;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden) is abstract;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden) is abstract;
    --  Delete a breakpoint.
    --  Num is always the number returned in the Num field of the
    --  Breakpoint_Data record.
 
    function List_Breakpoints
      (Debugger  : access Debugger_Root)
-     return Odd.Types.Breakpoint_Array is abstract;
+     return GVD.Types.Breakpoint_Array is abstract;
    --  Return the list of breakpoints set in the current session.
 
    ----------------
@@ -576,7 +576,7 @@ package Debugger is
 
    function List_Exceptions
      (Debugger : access Debugger_Root)
-     return Odd.Types.Exception_Array;
+     return GVD.Types.Exception_Array;
    --  Return the list of exceptions defined in the current session.
    --  An empty array is returned no breakpoint can be set on exceptions (this
    --  is the default behavior).
@@ -588,7 +588,7 @@ package Debugger is
    procedure Thread_Switch
      (Debugger : access Debugger_Root'Class;
       Thread   : Natural;
-      Mode     : Odd.Types.Command_Type := Odd.Types.Hidden);
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
    --  Switch to a specified thread.
    --  GDB_COMMAND: "thread" or "task"
 
@@ -628,7 +628,7 @@ package Debugger is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out Odd.Types.String_Access;
+      Code            : out GVD.Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "") is abstract;
    --  Return the machine code (or assembly code) for a specific region.

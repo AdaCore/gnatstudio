@@ -27,7 +27,7 @@ with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
 with Language;     use Language;
 
-with Odd.Types;    use Odd.Types;
+with GVD.Types;    use GVD.Types;
 with GVD.Strings;  use GVD.Strings;
 
 package body Items.Simples is

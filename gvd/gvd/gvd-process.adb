@@ -62,12 +62,12 @@ with Odd.Canvas;                use Odd.Canvas;
 with Odd.Dialogs;               use Odd.Dialogs;
 with GVD.Pixmaps;               use GVD.Pixmaps;
 with GVD.Strings;               use GVD.Strings;
-with Odd.Types;                 use Odd.Types;
+with GVD.Types;                 use GVD.Types;
 with Odd.Code_Editors;          use Odd.Code_Editors;
 with Odd.Menus;                 use Odd.Menus;
-with Odd.Preferences;           use Odd.Preferences;
+with GVD.Preferences;           use GVD.Preferences;
 with Odd.Status_Bar;            use Odd.Status_Bar;
-with Odd.Utils;                 use Odd.Utils;
+with GVD.Utils;                 use GVD.Utils;
 
 with System;
 with Unchecked_Conversion;
@@ -140,9 +140,9 @@ package body Odd.Process is
 
    type Load_File_Data is record
       Process   : Debugger_Process_Tab;
-      File_Name : Odd.Types.String_Access;
+      File_Name : GVD.Types.String_Access;
       Line      : Natural;
-      Addr      : Odd.Types.String_Access;
+      Addr      : GVD.Types.String_Access;
    end record;
    type Load_File_Data_Access is access Load_File_Data;
    function Convert is new Unchecked_Conversion
@@ -411,7 +411,7 @@ package body Odd.Process is
       --  Do not show the output if we have an internal or hidden command
 
       case Get_Command_Mode (Get_Process (Process.Debugger)) is
-         when User | Odd.Types.Visible =>
+         when User | GVD.Types.Visible =>
             if First = 0 then
                Text_Output_Handler (Process, Str, Set_Position => True);
             else
@@ -758,7 +758,7 @@ package body Odd.Process is
       First   : Natural;
       Dependent_On_First : Natural := Natural'Last;
       Link_Name_First    : Natural := Natural'Last;
-      Link_Name : Odd.Types.String_Access;
+      Link_Name : GVD.Types.String_Access;
       Link_From : Display_Item;
 
    begin
@@ -1011,7 +1011,7 @@ package body Odd.Process is
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : Visible_Command := Odd.Types.Visible)
+      Mode           : Visible_Command := GVD.Types.Visible)
    is
       Lowered_Command : constant String := To_Lower (Command);
       First           : Natural := Lowered_Command'First;
@@ -1220,7 +1220,7 @@ package body Odd.Process is
                Enable_Breakpoint
                  (Process.Debugger, Breakpoint_Num,
                   Process.Breakpoints (J).Enabled,
-                  Mode => Odd.Types.Visible);
+                  Mode => GVD.Types.Visible);
                return Process.Breakpoints (J).Enabled;
             end if;
          end loop;

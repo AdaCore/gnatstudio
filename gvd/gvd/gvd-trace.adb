@@ -21,13 +21,13 @@
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Odd.Process; use Odd.Process;
-with Odd.Types; use Odd.Types;
+with GVD.Types; use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger; use Debugger;
 with System;
 with Unchecked_Conversion;
 
-package body Odd.Trace is
+package body GVD.Trace is
 
    Input_String  : aliased constant String := "-> """;
    Output_String : aliased constant String := "<- """;
@@ -135,4 +135,4 @@ package body Odd.Trace is
       when Debugger_Not_Found => null;
    end Output_Filter;
 
-end Odd.Trace;
+end GVD.Trace;

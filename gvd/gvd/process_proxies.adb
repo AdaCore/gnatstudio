@@ -28,7 +28,7 @@ with Gtk.Main;              use Gtk.Main;
 with System;                use System;
 with Unchecked_Conversion;
 with Unchecked_Deallocation;
-with Odd.Types;             use Odd.Types;
+with GVD.Types;             use GVD.Types;
 
 package body Process_Proxies is
 

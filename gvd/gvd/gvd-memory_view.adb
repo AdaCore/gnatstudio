@@ -41,9 +41,9 @@ with Debugger;              use Debugger;
 with Memory_View_Pkg;       use Memory_View_Pkg;
 
 with GVD.Strings;     use GVD.Strings;
-with Odd.Types;       use Odd.Types;
+with GVD.Types;       use GVD.Types;
 with Odd.Process;     use Odd.Process;
-with Odd.Preferences; use Odd.Preferences;
+with GVD.Preferences; use GVD.Preferences;
 with Process_Proxies; use Process_Proxies;
 
 package body Odd.Memory_View is

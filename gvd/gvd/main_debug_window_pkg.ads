@@ -33,14 +33,14 @@ with Open_Session_Pkg; use Open_Session_Pkg;
 with Odd.Dialogs; use Odd.Dialogs;
 with Gtkada.Toolbar; use Gtkada.Toolbar;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Odd.Types;
+with GVD.Types;
 with Odd.Histories;
 with Odd.Memory_View;
 
 package Main_Debug_Window_Pkg is
 
    type History_Data is record
-      Mode         : Odd.Types.Command_Type;
+      Mode         : GVD.Types.Command_Type;
       Debugger_Num : Natural;
       Command      : String_Access;
    end record;
@@ -71,9 +71,9 @@ package Main_Debug_Window_Pkg is
       Log_File            : File_Descriptor := Standerr;
       TTY_Mode            : Boolean := False;
       Debug_Mode          : Boolean := False;
-      Log_Level           : Odd.Types.Command_Type := Odd.Types.Internal;
+      Log_Level           : GVD.Types.Command_Type := GVD.Types.Internal;
 
-      File_Caches         : Odd.Types.File_Cache_List;
+      File_Caches         : GVD.Types.File_Cache_List;
       --  List of data cached for each of the file of the application
       --  This field is handled in GVD.Files
 

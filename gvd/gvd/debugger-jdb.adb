@@ -31,8 +31,8 @@ with Debugger.Jdb.Java; use Debugger.Jdb.Java;
 with Process_Proxies;   use Process_Proxies;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Process;       use Odd.Process;
-with Odd.Trace;         use Odd.Trace;
-with Odd.Types;         use Odd.Types;
+with GVD.Trace;         use GVD.Trace;
+with GVD.Types;         use GVD.Types;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
 package body Debugger.Jdb is
@@ -770,9 +770,9 @@ package body Debugger.Jdb is
 
    function List_Breakpoints
      (Debugger  : access Jdb_Debugger)
-     return Odd.Types.Breakpoint_Array
+     return GVD.Types.Breakpoint_Array
    is
-      Br : Odd.Types.Breakpoint_Array (1 .. 0);
+      Br : GVD.Types.Breakpoint_Array (1 .. 0);
    begin
       --  Since jdb doesn't support enabling/disabling breakpoints, we should
       --  keep in the list all the breakpoints that have Enabled set to
@@ -844,7 +844,7 @@ package body Debugger.Jdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out Odd.Types.String_Access;
+      Code            : out GVD.Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "")
    is

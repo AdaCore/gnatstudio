@@ -22,7 +22,7 @@ with Gtk.Ctree;
 with Gtk.Widget;
 with Language;
 with Gtk.Style;
-with Odd.Types;
+with GVD.Types;
 with Gdk.Pixmap;
 with Gdk.Bitmap;
 
@@ -77,7 +77,7 @@ package Odd.Explorer is
 
    procedure Add_List_Of_Files
      (Tree : access Explorer_Record;
-      List : Odd.Types.String_Array);
+      List : GVD.Types.String_Array);
    --  Add several files in the explorer.
 
    procedure Set_Current_File

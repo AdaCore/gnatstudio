@@ -22,7 +22,7 @@ with Glib;                  use Glib;
 with Gdk.Window;            use Gdk.Window;
 with Gtk.Widget;            use Gtk.Widget;
 with Memory_View_Pkg;       use Memory_View_Pkg;
-with Odd.Types;             use Odd.Types;
+with GVD.Types;             use GVD.Types;
 
 package Odd.Memory_View is
 

@@ -41,10 +41,10 @@ with Items.Simples;    use Items.Simples;
 with Odd.Canvas;       use Odd.Canvas;
 with Odd.Menus;        use Odd.Menus;
 with GVD.Pixmaps;      use GVD.Pixmaps;
-with Odd.Preferences;  use Odd.Preferences;
+with GVD.Preferences;  use GVD.Preferences;
 with Odd.Process;      use Odd.Process;
 with Odd.Status_Bar;   use Odd.Status_Bar;
-with Odd.Types;        use Odd.Types;
+with GVD.Types;        use GVD.Types;
 
 with Ada.Text_IO;     use Ada.Text_IO;
 

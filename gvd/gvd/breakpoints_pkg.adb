@@ -35,7 +35,7 @@ with Odd.Code_Editors; use Odd.Code_Editors;
 with GVD.Strings;     use GVD.Strings;
 with Gdk.Color;       use Gdk.Color;
 with Gtk.List;        use Gtk.List;
-with Odd.Utils;       use Odd.Utils;
+with GVD.Utils;       use GVD.Utils;
 
 package body Breakpoints_Pkg is
 

@@ -199,7 +199,7 @@ is
    Buffer        : String (1 .. 256);
    Last          : Natural;
    Item          : Gtk_List_Item;
-   Program       : Odd.Types.String_Access;
+   Program       : GVD.Types.String_Access;
    Debugger_List : Debugger_List_Link := Top.First_Debugger;
    Num_Debuggers : Natural := 0;
    use String_History;
@@ -472,7 +472,7 @@ begin
                else
                   Process_User_Command
                     (Tab, Buffer (Index + 3 .. Last),
-                     Mode => Odd.Types.Visible);
+                     Mode => GVD.Types.Visible);
                   Wait_User_Command (Tab);
                end if;
             end if;

@@ -42,9 +42,9 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Odd.Canvas;          use Odd.Canvas;
 with Odd.Dialogs;         use Odd.Dialogs;
 with Gtkada.Types;        use Gtkada.Types;
-with Odd.Types;           use Odd.Types;
+with GVD.Types;           use GVD.Types;
 with GVD.Strings;         use GVD.Strings;
-with Odd.Preferences;
+with GVD.Preferences;
 with Odd.Code_Editors;    use Odd.Code_Editors;
 with Odd.Memory_View;     use Odd.Memory_View;
 with Unchecked_Deallocation;
@@ -220,7 +220,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Editor : constant String := Substitute
-        (Odd.Preferences.External_Editor,
+        (GVD.Preferences.External_Editor,
          Get_Current_File (Tab.Editor_Text),
          Get_Line (Tab.Editor_Text));
       Args   : Argument_List_Access;
@@ -312,7 +312,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
             Attach_Process
-              (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
+              (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
          end if;
       end;
    end On_Attach_To_Process1_Activate;
@@ -327,7 +327,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Detach_Process (Tab.Debugger, Mode => Odd.Types.Visible);
+         Detach_Process (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Detach_Process1_Activate;
 
@@ -354,7 +354,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
       begin
          if Dir /= "" then
-            Change_Directory (Tab.Debugger, Dir, Mode => Odd.Types.Visible);
+            Change_Directory (Tab.Debugger, Dir, Mode => GVD.Types.Visible);
          end if;
       end;
    end On_Change_Directory1_Activate;
@@ -519,9 +519,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
            or else Arguments (Arguments'First) /= ASCII.NUL
          then
             if Is_Start then
-               Start (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
+               Start (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
             else
-               Run (Tab.Debugger, Arguments, Mode => Odd.Types.Visible);
+               Run (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
             end if;
          end if;
       end;
@@ -537,7 +537,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Step_Into (Tab.Debugger, Mode => Odd.Types.Visible);
+         Step_Into (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Step1_Activate;
 
@@ -551,7 +551,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Step_Into_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
+         Step_Into_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Step_Instruction1_Activate;
 
@@ -565,7 +565,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Step_Over (Tab.Debugger, Mode => Odd.Types.Visible);
+         Step_Over (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Next1_Activate;
 
@@ -579,7 +579,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Step_Over_Instruction (Tab.Debugger, Mode => Odd.Types.Visible);
+         Step_Over_Instruction (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Next_Instruction1_Activate;
 
@@ -593,7 +593,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Finish (Tab.Debugger, Mode => Odd.Types.Visible);
+         Finish (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Finish1_Activate;
 
@@ -607,7 +607,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Continue (Tab.Debugger, Mode => Odd.Types.Visible);
+         Continue (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Continue1_Activate;
 
@@ -1043,7 +1043,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Run (Tab.Debugger, Mode => Odd.Types.Visible);
+         Run (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Run1_Toolbar_Activate;
 
@@ -1058,7 +1058,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Start (Tab.Debugger, Mode => Odd.Types.Visible);
+         Start (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Start1_Activate;
 
@@ -1073,7 +1073,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Stack_Up (Tab.Debugger, Mode => Odd.Types.Visible);
+         Stack_Up (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Up1_Activate;
 
@@ -1088,7 +1088,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
       if Tab /= null then
-         Stack_Down (Tab.Debugger, Mode => Odd.Types.Visible);
+         Stack_Down (Tab.Debugger, Mode => GVD.Types.Visible);
       end if;
    end On_Down1_Activate;
 

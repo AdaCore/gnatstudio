@@ -26,7 +26,7 @@ with Gdk.Bitmap;        use Gdk.Bitmap;
 with Gdk.GC;            use Gdk.GC;
 with Gdk.Window;        use Gdk.Window;
 with Language;          use Language;
-with Odd.Types;         use Odd.Types;
+with GVD.Types;         use GVD.Types;
 with Debugger;          use Debugger;
 with Language.Debugger; use Language.Debugger;
 

@@ -36,8 +36,8 @@ with Gdk.Font;            use Gdk.Font;
 with Gtk.Extra.PsFont;    use Gtk.Extra.PsFont;
 with Gtk.Adjustment;      use Gtk.Adjustment;
 with Gtk.Widget;          use Gtk.Widget;
-with Odd.Types;           use Odd.Types;
-with Odd.Preferences;     use Odd.Preferences;
+with GVD.Types;           use GVD.Types;
+with GVD.Preferences;     use GVD.Preferences;
 with GVD.Strings;         use GVD.Strings;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 
@@ -458,7 +458,7 @@ package body Odd.Text_Boxes is
       Line    : Natural := 0;
       Y       : Gint;
       Area    : Gdk.Rectangle.Gdk_Rectangle;
-      Entity  : Odd.Types.String_Access;
+      Entity  : GVD.Types.String_Access;
    begin
       case Get_Button (Event) is
          when 3 =>
@@ -505,7 +505,7 @@ package body Odd.Text_Boxes is
 
    procedure Set_Buffer
      (Box            : access Odd_Text_Box_Record;
-      Buffer         : Odd.Types.String_Access := null;
+      Buffer         : GVD.Types.String_Access := null;
       Clear_Previous : Boolean := True) is
    begin
       if Clear_Previous then
@@ -620,7 +620,7 @@ package body Odd.Text_Boxes is
    ----------------
 
    function Get_Buffer
-     (Box : access Odd_Text_Box_Record) return Odd.Types.String_Access is
+     (Box : access Odd_Text_Box_Record) return GVD.Types.String_Access is
    begin
       return Box.Buffer;
    end Get_Buffer;
@@ -633,7 +633,7 @@ package body Odd.Text_Boxes is
      (Box    : access Odd_Text_Box_Record'Class;
       X, Y   : in Glib.Gint;
       Area   : out Gdk.Rectangle.Gdk_Rectangle;
-      Entity : in out Odd.Types.String_Access)
+      Entity : in out GVD.Types.String_Access)
    is
       Line         : Natural := 0;
       Index        : Integer;

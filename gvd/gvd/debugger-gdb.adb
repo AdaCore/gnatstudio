@@ -41,8 +41,8 @@ with Process_Proxies;   use Process_Proxies;
 with Odd.Process;       use Odd.Process;
 with GVD.Strings;       use GVD.Strings;
 with Odd.Dialogs;       use Odd.Dialogs;
-with Odd.Types;         use Odd.Types;
-with Odd.Trace;         use Odd.Trace;
+with GVD.Types;         use GVD.Types;
+with GVD.Trace;         use GVD.Trace;
 with Items;             use Items;
 with Items.Simples;     use Items.Simples;
 with Items.Arrays;      use Items.Arrays;
@@ -1290,7 +1290,7 @@ package body Debugger.Gdb is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return Odd.Types.String_Array
+     (Debugger : access Gdb_Debugger) return GVD.Types.String_Array
    is
       S         : constant String :=
         Send (Debugger, "info sources", Mode => Internal);
@@ -1316,7 +1316,7 @@ package body Debugger.Gdb is
       Num_Files := Num_Files + 2;
 
       declare
-         Result : Odd.Types.String_Array (1 .. Num_Files);
+         Result : GVD.Types.String_Array (1 .. Num_Files);
          Num    : Natural := 1;
          Index  : Positive := S'First;
          Start  : Positive;
@@ -1868,7 +1868,7 @@ package body Debugger.Gdb is
 
    function List_Exceptions
      (Debugger : access Gdb_Debugger)
-     return Odd.Types.Exception_Array
+     return GVD.Types.Exception_Array
    is
       S : String := Send (Debugger, "info exceptions", Mode => Internal);
       Nums  : Natural := 0;
@@ -1985,7 +1985,7 @@ package body Debugger.Gdb is
       Range_End       : out Address_Type;
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural;
-      Code            : out Odd.Types.String_Access;
+      Code            : out GVD.Types.String_Access;
       Start_Address   : String := "";
       End_Address     : String := "")
    is

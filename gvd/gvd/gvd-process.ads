@@ -40,8 +40,8 @@ with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 with Items;
 with Odd.Code_Editors;
-with Odd.Types;
-with Odd.Types;
+with GVD.Types;
+with GVD.Types;
 
 package Odd.Process is
 
@@ -131,13 +131,13 @@ package Odd.Process is
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
 
-      Breakpoints : Odd.Types.Breakpoint_Array_Ptr;
+      Breakpoints : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
 
       Has_Temporary_Breakpoint : Boolean := True;
       --  Whether there exists a temporary breakpoint in Breakpoints.
 
-      Descriptor : Odd.Types.Program_Descriptor;
+      Descriptor : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
 
@@ -158,7 +158,7 @@ package Odd.Process is
    function Create_Debugger
      (Window          : access
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
-      Kind            : Odd.Types.Debugger_Type;
+      Kind            : GVD.Types.Debugger_Type;
       Executable      : String;
       Params          : Argument_List;
       Remote_Host     : String := "";
@@ -247,7 +247,7 @@ package Odd.Process is
      (Debugger       : Debugger_Process_Tab;
       Command        : String;
       Output_Command : Boolean := False;
-      Mode           : Odd.Types.Visible_Command := Odd.Types.Visible);
+      Mode           : GVD.Types.Visible_Command := GVD.Types.Visible);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to GVD are filtered and

@@ -29,7 +29,7 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
 with Odd.Text_Boxes;
-with Odd.Types;
+with GVD.Types;
 
 package Odd.Asm_Editors is
 
@@ -81,7 +81,7 @@ package Odd.Asm_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Asm_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array);
+      Br        : GVD.Types.Breakpoint_Array);
    --  See Odd.Code_Editors for more information
 
    procedure Highlight_Address_Range
@@ -98,10 +98,10 @@ private
    type Cache_Data;
    type Cache_Data_Access is access Cache_Data;
    type Cache_Data is record
-      Low, High : Odd.Types.String_Access;
+      Low, High : GVD.Types.String_Access;
       --  The low and high ranges for this item
 
-      Data      : Odd.Types.String_Access;
+      Data      : GVD.Types.String_Access;
       --  The assembly code for that range
 
       Next      : Cache_Data_Access;

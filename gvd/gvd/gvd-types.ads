@@ -21,7 +21,7 @@
 with Gtkada.Types;
 with Unchecked_Deallocation;
 
-package Odd.Types is
+package GVD.Types is
 
    subtype Pixmap_Array is Gtkada.Types.Chars_Ptr_Array (0 .. 0);
    type Pixmap_Access is access all Pixmap_Array;
@@ -201,4 +201,4 @@ package Odd.Types is
    --  This record contains all the information about how a debugger was
    --  started.
 
-end Odd.Types;
+end GVD.Types;

@@ -28,7 +28,7 @@ with Gtk.List; use Gtk.List;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Enums;
 with Debugger; use Debugger;
-with Odd.Types;
+with GVD.Types;
 with Gtk.Widget;
 
 package Odd.Dialogs is
@@ -46,10 +46,10 @@ package Odd.Dialogs is
    type History_Dialog_Access is access all History_Dialog_Record'Class;
 
    type Question_Record is record
-      Choice : Odd.Types.String_Access;
+      Choice : GVD.Types.String_Access;
       --  String that the user should enter to select that choice
 
-      Description : Odd.Types.String_Access;
+      Description : GVD.Types.String_Access;
       --  Associated description
    end record;
    type Question_Array is array (Positive range <>) of Question_Record;

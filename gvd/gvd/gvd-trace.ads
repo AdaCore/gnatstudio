@@ -21,7 +21,7 @@
 with GNAT.Expect; use GNAT.Expect;
 with System;
 
-package Odd.Trace is
+package GVD.Trace is
 
    procedure Input_Filter
      (Descriptor : Process_Descriptor'Class;
@@ -36,4 +36,4 @@ package Odd.Trace is
    --  Filter that should be called when Odd receives output from the
    --  underlying debugger.
 
-end Odd.Trace;
+end GVD.Trace;

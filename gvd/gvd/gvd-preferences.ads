@@ -20,7 +20,7 @@
 
 with Glib; use Glib;
 
-package Odd.Preferences is
+package GVD.Preferences is
 
    -------------------------
    -- General Preferences --
@@ -216,4 +216,4 @@ package Odd.Preferences is
    --  %f is replaced by the full path name for the file to edit.
    --  %l is the line number to show in the editor.
 
-end Odd.Preferences;
+end GVD.Preferences;

@@ -30,7 +30,7 @@ with Callbacks_Odd; use Callbacks_Odd;
 with Odd_Intl; use Odd_Intl;
 with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
 with GVD.Pixmaps; use GVD.Pixmaps;
-with Odd.Types;   use Odd.Types;
+with GVD.Types;   use GVD.Types;
 with Odd.Dialogs; use Odd.Dialogs;
 with Odd.Process; use Odd.Process;
 with Odd.Memory_View; use Odd.Memory_View;

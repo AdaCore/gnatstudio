@@ -45,7 +45,7 @@ with Language;
 with Odd.Asm_Editors;
 with Odd.Explorer;
 with Odd.Source_Editors;
-with Odd.Types;
+with GVD.Types;
 
 package Odd.Code_Editors is
 
@@ -88,7 +88,7 @@ package Odd.Code_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Code_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array);
+      Br        : GVD.Types.Breakpoint_Array);
    --  Change the list of breakpoints to highlight in the editor (source and
    --  assembly editors).
    --  All the breakpoints that previously existed are removed from the screen,
@@ -168,7 +168,7 @@ private
       Mode    : View_Mode := Source_Only;
 
       Source_Line : Natural;
-      Asm_Address : Odd.Types.String_Access;
+      Asm_Address : GVD.Types.String_Access;
 
       Process : Gtk.Widget.Gtk_Widget;
       --  The process tab in which the editor is found.

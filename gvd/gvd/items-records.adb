@@ -28,8 +28,8 @@ with Gdk.Types;    use Gdk.Types;
 with Gdk.Types;    use Gdk.Types;
 
 with Language;        use Language;
-with Odd.Types;       use Odd.Types;
-with Odd.Preferences; use Odd.Preferences;
+with GVD.Types;       use GVD.Types;
+with GVD.Preferences; use GVD.Preferences;
 
 with Unchecked_Deallocation;
 

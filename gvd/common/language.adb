@@ -20,7 +20,7 @@
 
 with Unchecked_Deallocation;
 with Gtkada.Types; use Gtkada.Types;
-with Odd.Types;    use Odd.Types;
+with GVD.Types;    use GVD.Types;
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 

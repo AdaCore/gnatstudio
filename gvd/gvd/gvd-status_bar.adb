@@ -35,7 +35,7 @@ with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Window;      use Gtk.Window;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Odd_Intl;        use Odd_Intl;
-with Odd.Preferences; use Odd.Preferences;
+with GVD.Preferences; use GVD.Preferences;
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 

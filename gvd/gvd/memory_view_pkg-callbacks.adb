@@ -30,7 +30,7 @@ with Gtk.GEntry;        use Gtk.GEntry;
 with Gtk.Handlers;      use Gtk.Handlers;
 
 with Odd.Memory_View;   use Odd.Memory_View;
-with Odd.Types;         use Odd.Types;
+with GVD.Types;         use GVD.Types;
 
 package body Memory_View_Pkg.Callbacks is
 

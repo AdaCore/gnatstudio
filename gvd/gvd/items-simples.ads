@@ -21,7 +21,7 @@
 --  Items used for simple types, ie whose value is a simple string.
 --  See the package Items for more information on all the private subprograms.
 
-with Odd.Types;
+with GVD.Types;
 
 package Items.Simples is
 
@@ -37,7 +37,7 @@ package Items.Simples is
    function New_Simple_Type return Generic_Type_Access;
    --  Create a new simple value.
 
-   function Get_Value (Item : Simple_Type) return Odd.Types.String_Access;
+   function Get_Value (Item : Simple_Type) return GVD.Types.String_Access;
    --  Return the current value of Item (or null if it is not known).
 
    procedure Set_Value (Item : in out Simple_Type; Value : String);
@@ -115,7 +115,7 @@ package Items.Simples is
 
 private
    type Simple_Type is new Generic_Type with record
-      Value : Odd.Types.String_Access := null;
+      Value : GVD.Types.String_Access := null;
       --  The value, as displayed by the debugger
 
       Has_Changed : Boolean := False;
@@ -176,7 +176,7 @@ private
    --  Free is inherited from Simple_Type.
 
    type Debugger_Output_Type is new Simple_Type with record
-      Refresh_Cmd : Odd.Types.String_Access;
+      Refresh_Cmd : GVD.Types.String_Access;
    end record;
    --  Since Value can be a multiple-line string, and we want to consider each
    --  line separately as far as highlighting is concerned, we in fact insert

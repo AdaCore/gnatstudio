@@ -20,7 +20,7 @@
 
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with GNAT.Regpat;
-with Odd.Types;
+with GVD.Types;
 
 package Language is
 
@@ -128,10 +128,10 @@ package Language is
    type Pattern_Matcher_Access is access all GNAT.Regpat.Pattern_Matcher;
 
    type Explorer_Category is record
-      Name           : Odd.Types.String_Access;
+      Name           : GVD.Types.String_Access;
       Regexp         : Pattern_Matcher_Access;
       Position_Index : Natural;
-      Icon           : Odd.Types.Pixmap_Access;
+      Icon           : GVD.Types.Pixmap_Access;
       Make_Entry     : Make_Entry_Func;
    end record;
    --  Definition for a category (ie one of the subtrees of the explorer).

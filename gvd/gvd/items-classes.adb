@@ -27,7 +27,7 @@ with Language;     use Language;
 with Gdk.Types;    use Gdk.Types;
 
 with Items.Records;  use Items.Records;
-with Odd.Preferences; use Odd.Preferences;
+with GVD.Preferences; use GVD.Preferences;
 
 package body Items.Classes is
 

@@ -31,7 +31,7 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Gtk.Clist;       use Gtk.Clist;
 with Gtk.Enums;       use Gtk.Enums;
 with Ada.Strings.Unbounded;  use Ada.Strings.Unbounded;
-with Odd.Types; use Odd.Types;
+with GVD.Types; use GVD.Types;
 
 package body Odd.Dialogs.Callbacks is
 
@@ -76,7 +76,7 @@ package body Odd.Dialogs.Callbacks is
 
    begin
       Thread_Switch
-        (Process.Debugger, Natural (Thread), Mode => Odd.Types.Visible);
+        (Process.Debugger, Natural (Thread), Mode => GVD.Types.Visible);
    end On_Task_List_Select_Row;
 
    -----------------------------
@@ -130,7 +130,7 @@ package body Odd.Dialogs.Callbacks is
 
       Send (Dialog.Debugger,
             To_String (S),
-            Mode => Odd.Types.Visible,
+            Mode => GVD.Types.Visible,
             Empty_Buffer => False,
             Wait_For_Prompt => False);
 
@@ -197,7 +197,7 @@ package body Odd.Dialogs.Callbacks is
                  (Tab,
                   Command,
                   Output_Command => True,
-                  Mode           => Odd.Types.User);
+                  Mode           => GVD.Types.User);
                Wait_User_Command (Tab);
                Gtk_New (Item, Label => Command);
                Show (Item);

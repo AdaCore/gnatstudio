@@ -20,7 +20,7 @@
 
 with Glib;                    use Glib;
 with Advanced_Breakpoint_Pkg; use Advanced_Breakpoint_Pkg;
-with Odd.Types;               use Odd.Types;
+with GVD.Types;               use GVD.Types;
 with Gtkada.Types;            use Gtkada.Types;
 with Gtk.Arguments;           use Gtk.Arguments;
 with Ada.Text_IO;             use Ada.Text_IO;
@@ -31,7 +31,7 @@ with Gtk.Enums;               use Gtk.Enums;
 with Gtk.Handlers;            use Gtk.Handlers;
 with Gtk.Combo;               use Gtk.Combo;
 with Gtkada.Handlers;         use Gtkada.Handlers;
-with Odd.Utils;               use Odd.Utils;
+with GVD.Utils;               use GVD.Utils;
 
 package body Breakpoints_Pkg.Callbacks is
 
@@ -142,7 +142,7 @@ package body Breakpoints_Pkg.Callbacks is
             File      => Get_Chars (Get_Entry (Editor.File_Combo)),
             Line      => Integer (Get_Value_As_Int (Editor.Line_Spin)),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
          Add_Unique_Combo_Entry
            (Editor.File_Combo, Get_Chars (Get_Entry (Editor.File_Combo)));
 
@@ -151,7 +151,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Name      => Get_Chars (Get_Entry (Editor.Subprogram_Combo)),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
          Add_Unique_Combo_Entry
            (Editor.Subprogram_Combo,
             Get_Chars (Get_Entry (Editor.Subprogram_Combo)));
@@ -161,7 +161,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Address   => Get_Chars (Get_Entry (Editor.Address_Combo)),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
          Add_Unique_Combo_Entry
            (Editor.Address_Combo,
             Get_Chars (Get_Entry (Editor.Address_Combo)));
@@ -171,7 +171,7 @@ package body Breakpoints_Pkg.Callbacks is
            (Editor.Process.Debugger,
             Regexp    => Get_Chars (Get_Entry (Editor.Regexp_Combo)),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
          Add_Unique_Combo_Entry
            (Editor.Regexp_Combo,
             Get_Chars (Get_Entry (Editor.Regexp_Combo)));
@@ -274,14 +274,14 @@ package body Breakpoints_Pkg.Callbacks is
             Name      => "",
             Unhandled => Get_Active (Editor.Stop_Not_Handled_Exception),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
 
       elsif Name = -"All assertions" then
          Break_Subprogram
            (Editor.Process.Debugger,
             Name      => "assert",
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
 
       else
          Break_Exception
@@ -289,7 +289,7 @@ package body Breakpoints_Pkg.Callbacks is
             Name      => Name,
             Unhandled => Get_Active (Editor.Stop_Not_Handled_Exception),
             Temporary => Temporary,
-            Mode      => Odd.Types.Visible);
+            Mode      => GVD.Types.Visible);
       end if;
    end On_Add_Exception_Clicked;
 
@@ -323,7 +323,7 @@ package body Breakpoints_Pkg.Callbacks is
          Remove_Breakpoint
            (Editor.Process.Debugger,
             Integer'Value (Get_Text (Editor.Clist1, Selection, 0)),
-            Mode => Odd.Types.Visible);
+            Mode => GVD.Types.Visible);
       end if;
    end On_Remove_Clicked;
 

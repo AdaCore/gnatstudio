@@ -48,11 +48,11 @@ with Process_Proxies;       use Process_Proxies;
 with Odd.Code_Editors;      use Odd.Code_Editors;
 with Odd.Explorer;          use Odd.Explorer;
 with Odd.Menus;             use Odd.Menus;
-with Odd.Preferences;       use Odd.Preferences;
+with GVD.Preferences;       use GVD.Preferences;
 with Odd.Process;           use Odd.Process;
 with GVD.Strings;           use GVD.Strings;
 with Odd.Text_Boxes;        use Odd.Text_Boxes;
-with Odd.Types;             use Odd.Types;
+with GVD.Types;             use GVD.Types;
 with Odd_Intl;              use Odd_Intl;
 with Display_Items;         use Display_Items;
 with Items;                 use Items;
@@ -219,7 +219,7 @@ package body Odd.Source_Editors is
       Num    : out Integer)
    is
       Process : Debugger_Process_Tab := Debugger_Process_Tab (Editor.Process);
-      Breakpoints_Array : Odd.Types.Breakpoint_Array_Ptr :=
+      Breakpoints_Array : GVD.Types.Breakpoint_Array_Ptr :=
         Process.Breakpoints;
 
    begin
@@ -301,11 +301,11 @@ package body Odd.Source_Editors is
 
          if Result then
             Remove_Breakpoint
-              (Process.Debugger, Num, Mode => Odd.Types.Visible);
+              (Process.Debugger, Num, Mode => GVD.Types.Visible);
          else
             Break_Source
               (Process.Debugger, Editor.Current_File.all,
-               Line, Mode => Odd.Types.Visible);
+               Line, Mode => GVD.Types.Visible);
          end if;
       end if;
 
@@ -608,7 +608,7 @@ package body Odd.Source_Editors is
       Text   : constant Gtk_Text := Get_Child (Editor);
       Index  : Gint := Invisible_Column_Width (Editor);
       Col    : Natural := 1;
-      Buffer : constant Odd.Types.String_Access := Get_Buffer (Editor);
+      Buffer : constant GVD.Types.String_Access := Get_Buffer (Editor);
       Line   : Natural := 1;
 
    begin
@@ -665,7 +665,7 @@ package body Odd.Source_Editors is
 
    procedure Update_Breakpoints
      (Editor    : access Source_Editor_Record;
-      Br        : Odd.Types.Breakpoint_Array)
+      Br        : GVD.Types.Breakpoint_Array)
    is
       use Gtk.Widget.Widget_List;
       Tmp : Glist := Editor.Breakpoint_Buttons;
@@ -798,8 +798,8 @@ package body Odd.Source_Editors is
    is
       Process   : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Editor.Process);
-      Contents  : Odd.Types.String_Access;
-      Error_Msg : Odd.Types.String_Access;
+      Contents  : GVD.Types.String_Access;
+      Error_Msg : GVD.Types.String_Access;
 
    begin
       --  Avoid reloading a file twice.
@@ -971,7 +971,7 @@ package body Odd.Source_Editors is
         (Get_Process (Br.Process.Debugger), Widget, Set_Breakpoint'Access, Br)
       then
          Break_Source
-           (Br.Process.Debugger, Br.File, Br.Line, Mode => Odd.Types.Visible);
+           (Br.Process.Debugger, Br.File, Br.Line, Mode => GVD.Types.Visible);
       end if;
    end Set_Breakpoint;
 
@@ -988,7 +988,7 @@ package body Odd.Source_Editors is
       then
          Break_Source
            (Br.Process.Debugger, Br.File, Br.Line, Temporary => True);
-         Continue (Br.Process.Debugger, Mode => Odd.Types.Visible);
+         Continue (Br.Process.Debugger, Mode => GVD.Types.Visible);
       end if;
    end Till_Breakpoint;
 
@@ -1208,7 +1208,7 @@ package body Odd.Source_Editors is
       use type Items.Generic_Type_Access;
       Entity        : Items.Generic_Type_Access;
       Value_Found   : Boolean;
-      Value         : Odd.Types.String_Access;
+      Value         : GVD.Types.String_Access;
 
       Debugger : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Box.Process);
@@ -1243,7 +1243,7 @@ package body Odd.Source_Editors is
       Get_Pointer (Get_Text_Area (Get_Child (Data.Box)), X, Y, Mask2, Win);
 
       declare
-         Variable_Name : Odd.Types.String_Access;
+         Variable_Name : GVD.Types.String_Access;
       begin
          Get_Entity_Area (Data.Box, X, Y, Area, Variable_Name);
 
@@ -1375,7 +1375,7 @@ package body Odd.Source_Editors is
    ----------------------------
 
    procedure Highlight_Current_Line (Editor : access Source_Editor_Record) is
-      Buffer : constant Odd.Types.String_Access := Get_Buffer (Editor);
+      Buffer : constant GVD.Types.String_Access := Get_Buffer (Editor);
       Index : Natural := 0;
       Current_Line : Natural := 1;
       Col : Natural := 1;

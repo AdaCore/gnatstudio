@@ -28,8 +28,8 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Gtkada.Types;
 with Language;
-with Odd.Preferences;
-with Odd.Types;
+with GVD.Preferences;
+with GVD.Types;
 with Odd.Explorer;
 with Odd.Text_Boxes;
 with Odd.Tooltips;
@@ -104,7 +104,7 @@ package Odd.Source_Editors is
 
    procedure Update_Breakpoints
      (Editor : access Source_Editor_Record;
-      Br     : Odd.Types.Breakpoint_Array);
+      Br     : GVD.Types.Breakpoint_Array);
    --  Change the list of breakpoints to highlight in the editor.
    --  All the breakpoints that previously existed are removed from the screen,
    --  and replaced by the new ones.
@@ -177,15 +177,15 @@ private
    record
       Process : Gtk.Widget.Gtk_Widget;
 
-      Show_Line_Nums       : Boolean := Odd.Preferences.Editor_Show_Line_Nums;
+      Show_Line_Nums       : Boolean := GVD.Preferences.Editor_Show_Line_Nums;
       Show_Lines_With_Code : Boolean :=
-        Odd.Preferences.Editor_Show_Line_With_Code;
+        GVD.Preferences.Editor_Show_Line_With_Code;
       --  Whether the lines where one can set a breakpoint have a small dot
       --  on the side.
 
-      Current_File : Odd.Types.String_Access;
+      Current_File : GVD.Types.String_Access;
 
-      Debugger_Current_File : Odd.Types.String_Access;
+      Debugger_Current_File : GVD.Types.String_Access;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
 
@@ -203,7 +203,7 @@ private
       --  Id for the Idle handle that is used to recompute the lines that
       --  contain some code.
 
-      Current_File_Cache : Odd.Types.File_Cache_List;
+      Current_File_Cache : GVD.Types.File_Cache_List;
       --  Cached data for the file currently displayed
 
       Tooltip : Editor_Tooltips.Tooltips;

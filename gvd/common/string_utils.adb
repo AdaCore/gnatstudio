@@ -20,7 +20,7 @@
 
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with GNAT.OS_Lib;
-with Odd.Preferences;         use Odd.Preferences;
+with GVD.Preferences;         use GVD.Preferences;
 
 package body GVD.Strings is
 

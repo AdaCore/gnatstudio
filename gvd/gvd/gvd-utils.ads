@@ -25,7 +25,7 @@ with Gdk.Window;
 with Gtk.Combo;
 with Gtk.List;
 
-package Odd.Utils is
+package GVD.Utils is
 
    procedure Add_Unique_List_Entry
      (List : access Gtk.List.Gtk_List_Record'Class;
@@ -44,4 +44,4 @@ package Odd.Utils is
       Busy     : Boolean := True);
    --  Enable or disable the "busy" cursor for a specific top-level window.
 
-end Odd.Utils;
+end GVD.Utils;

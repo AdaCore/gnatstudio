@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Canvas;
-with Odd.Preferences;
+with GVD.Preferences;
 with Gtk.Window;
 
 package Odd.Canvas is
@@ -63,7 +63,7 @@ private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
    record
-      Detect_Aliases : Boolean := Odd.Preferences.Default_Detect_Aliases;
+      Detect_Aliases : Boolean := GVD.Preferences.Default_Detect_Aliases;
       Item_Num       : Integer := 0;
 
       Process        : Gtk.Window.Gtk_Window;
