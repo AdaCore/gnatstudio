@@ -1766,17 +1766,22 @@ just as if you were debugging code in your application.
 
 @end enumerate
 
-@item How can I debug the Ada runtime library
+@item How can I debug the Ada run-time library ?
 
 @enumerate A
-@item The runtime distributed in binary versions of GNAT hasn't been
-compiled with the debug information. Thus, it needs to be recompiled
+@item The run time distributed in binary versions of GNAT hasn't been
+compiled with debug information. Thus, it needs to be recompiled
 before you can actually debug it.
 
-The simplest is to compile your application by adding the switch
+The simplest is to recompile your application by adding the switches
 @option{-a} and @option{-f} to the @command{gnatmake} command
-line. Note tha @option{-f} is only required the first time you compile
-your application.
+line. This extra step is then no longer required, assuming that you
+keep the generated object and ali files corresponding to the GNAT run time
+available.
+
+Another possibility on unix systems is to use the file @file{Makefile.adalib}
+that can be found in the adalib directory of your GNAT installation and
+specify e.g @option{-g -O2} for the @option{CFLAGS} switches.
 
 @end enumerate
 
