@@ -302,7 +302,7 @@ package body Codefix.Formal_Errors is
             Set_String
               (New_Extract, New_Str (1 .. Message.Col - 1) &
                  New_Str (Message.Col + String_Unexpected'Length
-                          .. New_Str'Length));
+                          .. New_Str'Last));
 
          when Regular_Expression =>
             Set_String
@@ -310,7 +310,7 @@ package body Codefix.Formal_Errors is
                  New_Str
                    (Message.Col +
                       Get_Word_Length (New_Extract, Message, String_Unexpected)
-                    .. New_Str'Length));
+                    .. New_Str'Last));
       end case;
 
       Set_String
@@ -611,15 +611,12 @@ package body Codefix.Formal_Errors is
             Index_Name := Index_Name + 1;
             Skip_To_Char (With_Info.Name.all, Index_Name, '.');
             exit when Index_Name > With_Info.Name'Last + 1;
-            Put_Line (Index_Name'Img);
 
             Use_Info := Search_Unit
               (Current_Text,
                Cursor.File_Name.all,
                Cat_Use,
                With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
-
-            Put_Line (With_Info.Name.all (Prev_Index + 1 .. Index_Name - 1));
 
             if Use_Info.Category /= Cat_Unknown then
                Cursor_Use.Col := Use_Info.Sloc_Start.Column;
@@ -826,6 +823,8 @@ package body Codefix.Formal_Errors is
       Object_Name   : String) return Ada_Instruction
    is
       procedure Right_Paren (Current_Index : in out Integer);
+      --  Put Current_Index extactly on the right paren correponding the last
+      --  left paren.
 
       New_Extract   : Ada_Instruction;
       Current_Line  : Ptr_Extract_Line;
