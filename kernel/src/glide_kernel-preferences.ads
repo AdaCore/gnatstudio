@@ -101,20 +101,24 @@ package Glide_Kernel.Preferences is
    File_View_Shows_Only_Project : Param_Spec_Boolean;
 
    -- Source Editor --
-   Default_Keyword_Color      : Param_Spec_Color;
-   Default_Comment_Color      : Param_Spec_Color;
-   Default_String_Color       : Param_Spec_Color;
-   Default_Character_Color    : Param_Spec_Color;
-   Default_HL_Line_Color      : Param_Spec_Color;
-   Default_HL_Region_Color    : Param_Spec_Color;
-   Automatic_Indentation      : Param_Spec_Boolean;
-   Strip_Blanks               : Param_Spec_Boolean;
-   Display_Line_Numbers       : Param_Spec_Boolean;
-   Default_Source_Editor_Font : Param_Spec_Font;
-   Default_Tooltip_Font       : Param_Spec_Font;
-   Display_Tooltip            : Param_Spec_Boolean;
-   Periodic_Save              : Param_Spec_Int;
-   Tab_Width                  : Param_Spec_Int;
+   Default_Keyword_Color   : Param_Spec_Color;
+   Default_Comment_Color   : Param_Spec_Color;
+   Default_String_Color    : Param_Spec_Color;
+   Default_Character_Color : Param_Spec_Color;
+   Default_HL_Line_Color   : Param_Spec_Color;
+   Default_HL_Region_Color : Param_Spec_Color;
+   Automatic_Indentation   : Param_Spec_Boolean;
+   Strip_Blanks            : Param_Spec_Boolean;
+   Display_Line_Numbers    : Param_Spec_Boolean;
+   Source_Editor_Font      : Param_Spec_Font;
+   Keyword_Font            : Param_Spec_Font;
+   Comment_Font            : Param_Spec_Font;
+   String_Font             : Param_Spec_Font;
+   Character_Font          : Param_Spec_Font;
+   Tooltip_Font            : Param_Spec_Font;
+   Display_Tooltip         : Param_Spec_Boolean;
+   Periodic_Save           : Param_Spec_Int;
+   Tab_Width               : Param_Spec_Int;
 
    -- Project Editor --
    Default_Switches_Color          : Param_Spec_Color;

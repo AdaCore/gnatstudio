@@ -244,23 +244,53 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Display_Line_Numbers), -"Editor");
 
-      Default_Source_Editor_Font := Param_Spec_Font (Gnew_Font
+      Source_Editor_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Default-Font",
          Default => "Courier 10",
          Blurb   => -"The font used in the source editor",
          Nick    => -"Default font"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Source_Editor_Font),
-         -"Editor");
+        (Kernel.Preferences, Param_Spec (Source_Editor_Font), -"Editor");
 
-      Default_Tooltip_Font := Param_Spec_Font (Gnew_Font
+      Keyword_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Keyword-Font",
+         Default => "Courier Bold 10",
+         Blurb   => -"The font used to display keywords",
+         Nick    => -"Keyword font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Keyword_Font), -"Editor");
+
+      Comment_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Comment-Font",
+         Default => "Courier Medium Oblique 10",
+         Blurb   => -"The font used to display comments",
+         Nick    => -"Comment font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Comment_Font), -"Editor");
+
+      String_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-String-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used to display strings",
+         Nick    => -"String font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (String_Font), -"Editor");
+
+      Character_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Character-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used to display characters",
+         Nick    => -"Character font"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Character_Font), -"Editor");
+
+      Tooltip_Font := Param_Spec_Font (Gnew_Font
         (Name    => "Src-Editor-Tooltip-Font",
          Default => "Helvetica 10",
          Blurb   => -"The font used to display tooltips in the source editor",
          Nick    => -"Tooltip font"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Tooltip_Font),
-         -"Editor");
+        (Kernel.Preferences, Param_Spec (Tooltip_Font), -"Editor");
 
       Display_Tooltip := Param_Spec_Boolean (Gnew_Boolean
         (Name    => "Src-Editor-Display-Tooltip",
