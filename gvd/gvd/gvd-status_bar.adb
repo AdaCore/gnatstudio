@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -339,5 +339,17 @@ package body GVD.Status_Bar is
          Set_Text (Status.Progress, Text);
       end if;
    end Set_Progress_Text;
+
+   -----------------------
+   -- Get_Progress_Area --
+   -----------------------
+
+   function Get_Progress_Area
+     (Status : access GVD_Status_Bar_Record) return Gtk.Box.Gtk_Hbox
+   is
+   begin
+      Destroy (Status.Progress);
+      return Gtk_Hbox (Status);
+   end Get_Progress_Area;
 
 end GVD.Status_Bar;

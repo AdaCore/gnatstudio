@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -69,6 +69,13 @@ package GVD.Status_Bar is
      (Status : access GVD_Status_Bar_Record;
       Text   : String);
    --  Set the text to superimpose in the progress bar.
+
+   function Get_Progress_Area
+     (Status : access GVD_Status_Bar_Record) return Gtk.Box.Gtk_Hbox;
+   --  Return the area to which you can add progress bars, using Pack_End.
+   --  Calling this function hides the integrated progress bar.
+   --  This destroys the internal toolbar, making the functions Set_Fraction
+   --  and Set_Progress_Text unusable.
 
 private
    type Id_Array is array (Category'Range) of Gtk.Status_Bar.Context_Id;
