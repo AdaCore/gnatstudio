@@ -136,7 +136,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
    begin
       if S /= "" then
          Tab := Get_Current_Process (Object);
-         Set_Executable (Tab.Debugger, S);
+         Set_Executable (Tab.Debugger, S, Mode => Hidden);
          Free (Tab.Descriptor.Program);
          Tab.Descriptor.Program := new String' (S);
       end if;
@@ -167,8 +167,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
               List,
               Program.Remote_Host.all,
               Program.Remote_Target.all,
-              Program.Protocol.all,
-              Program.Debugger_Name.all);
+              Program.Protocol.all);
       end if;
    end On_Open_Debugger1_Activate;
 
@@ -271,8 +270,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
                  List,
                  Program.Remote_Host.all,
                  Program.Remote_Target.all,
-                 Program.Protocol.all,
-                 Program.Debugger_Name.all);
+                 Program.Protocol.all);
 
             Tab := Get_Current_Process (Object);
          end loop;
