@@ -71,7 +71,6 @@ with Pango.Layout;             use Pango.Layout;
 with String_Utils;             use String_Utils;
 with System;                   use System;
 with String_List_Utils;        use String_List_Utils;
-with Ada.Calendar;             use Ada.Calendar;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
@@ -83,35 +82,13 @@ package body GUI_Utils is
    Me : constant Debug_Handle := Create ("GUI_Utils");
 
    type Contextual_Menu_Data is record
-      Create   : Contextual_Menu_Create;
-      Destroy  : Contextual_Menu_Destroy;
-      Widget   : Gtk_Widget;
-
-      Ref_Time : Time;
-      --  This field is used only under Windows, see
-      --  Button_Release_On_Contextual_Menu.
-      --  ??? Note that this field is present only to avoid having to
-      --  instantiate a new handler only for usage under windows.
+      Create  : Contextual_Menu_Create;
+      Destroy : Contextual_Menu_Destroy;
+      Widget  : Gtk_Widget;
    end record;
-
-   Dummy_Time : constant Time := Time_Of (1901, 1, 1);
-   --  A Time value that is not used.
-
-   Menu_Stay_Delay    : constant Duration := 0.1;
-   --  Time (in seconds) to wait before accepting the button_release_event on
-   --  a popup menu as valid. See comment for Button_Release_On_Contextual_Menu
 
    package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
-
-   function Button_Release_On_Contextual_Menu
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
-      Data   : Contextual_Menu_Data) return Boolean;
-   --  Used only under Windows: prevent the menu from being unmapped on the
-   --  button_release_event of a single click.
-   --  The single click is in this case detected by comparing the time of the
-   --  event to the Ref_Time stored in Data.
 
    function Button_Press_For_Contextual_Menu
      (Widget : access Gtk_Widget_Record'Class;
@@ -417,24 +394,6 @@ package body GUI_Utils is
          return False;
    end Key_Press_For_Contextual_Menu;
 
-   ---------------------------------------
-   -- Button_Release_On_Contextual_Menu --
-   ---------------------------------------
-
-   function Button_Release_On_Contextual_Menu
-     (Widget : access Gtk_Widget_Record'Class;
-      Event  : Gdk.Event.Gdk_Event;
-      Data   : Contextual_Menu_Data) return Boolean
-   is
-      pragma Unreferenced (Widget, Event);
-   begin
-      if Clock < Data.Ref_Time + Menu_Stay_Delay then
-         return True;
-      else
-         return False;
-      end if;
-   end Button_Release_On_Contextual_Menu;
-
    --------------------------------------
    -- Button_Press_For_Contextual_Menu --
    --------------------------------------
@@ -460,20 +419,19 @@ package body GUI_Utils is
             Grab_Focus (Widget);
             Show_All (Menu);
 
-            Popup (Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event));
+            --  Here we are calling Popup with an Activate_Time 200ms after
+            --  the event time. This works around a bug under Windows that
+            --  causes the menu to disappear on a click when there are too
+            --  many entries.
 
             if Host = Windows then
-               --  Prevent the menu from being unmapped on a single click
-               Contextual_Callback.Connect
-                 (Menu, "button_release_event",
-                  Contextual_Callback.To_Marshaller
-                    (Button_Release_On_Contextual_Menu'Access),
-                  (Data.Create,
-                   Data.Destroy,
-                   Data.Widget,
-                   Clock));
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+            else
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event));
             end if;
 
             Emit_Stop_By_Name (Widget, "button_press_event");
@@ -514,12 +472,12 @@ package body GUI_Utils is
         (Widget, "button_press_event",
          Contextual_Callback.To_Marshaller
            (Button_Press_For_Contextual_Menu'Access),
-         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget), Dummy_Time));
+         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
       Contextual_Callback.Connect
         (Widget, "key_press_event",
          Contextual_Callback.To_Marshaller
            (Key_Press_For_Contextual_Menu'Access),
-         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget), Dummy_Time));
+         (Menu_Create, Menu_Destroy, Gtk_Widget (Widget)));
    end Register_Contextual_Menu;
 
    ---------------------------
@@ -629,22 +587,20 @@ package body GUI_Utils is
                Grab_Focus (Widget);
                Show_All (Menu);
 
-               Popup (Menu,
-                      Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event));
+               --  Here we are calling Popup with an Activate_Time 200ms after
+               --  the event time. This works around a bug under Windows that
+               --  causes the menu to disappear on a click when there are too
+               --  many entries.
 
                if Host = Windows then
-                  --  Prevent the menu from being unmapped on a single click
-                  GUI_Utils.Contextual_Callback.Connect
-                    (Menu, "button_release_event",
-                     GUI_Utils.Contextual_Callback.To_Marshaller
-                       (Button_Release_On_Contextual_Menu'Access),
-                     (null,
-                      null,
-                      null,
-                      Clock));
+                  Popup (Menu,
+                         Button        => Gdk.Event.Get_Button (Event),
+                         Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+               else
+                  Popup (Menu,
+                         Button        => Gdk.Event.Get_Button (Event),
+                         Activate_Time => Gdk.Event.Get_Time (Event));
                end if;
-
 
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
