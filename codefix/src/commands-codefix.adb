@@ -18,10 +18,15 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Gtk.Menu;              use Gtk.Menu;
+
 with Glide_Kernel.Console;  use Glide_Kernel.Console;
+with Glide_Kernel.Modules;  use Glide_Kernel.Modules;
 
 with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
+
+with Codefix_Module;        use Codefix_Module;
 
 package body Commands.Codefix is
 
@@ -32,7 +37,13 @@ package body Commands.Codefix is
    function Execute (Command : access Codefix_Command) return Boolean is
       Success_Execute : Boolean;
       Result          : Extract;
+      Menu            : Gtk_Menu;
    begin
+      if Is_Fixed (Command.Error) then
+         Command_Finished (Command, True);
+         return True;
+      end if;
+
       if Get_Number_Of_Fixes (Command.Error) = 1 then
          Secured_Execute
            (Data (First (Get_Solutions (Command.Error))),
@@ -40,9 +51,11 @@ package body Commands.Codefix is
             Result,
             Success_Execute);
       else
+         Menu := Create_Submenu (Command.Error);
+         Show_All (Menu);
+         Popup (Menu);
          Command_Finished (Command, True);
          return True;
-         --  Here in future call the choice window
       end if;
 
       if Success_Execute then
@@ -57,6 +70,16 @@ package body Commands.Codefix is
              "No more sense for " & Get_Message
               (Get_Error_Message (Command.Error)));
       end if;
+
+      Remove_Location_Action
+        (Kernel        => Command.Kernel,
+         Identifier    => "--  ???",
+         Category      => "Builder Results",
+         File          => Get_Error_Message (Command.Error).File_Name.all,
+         Line          => Get_Error_Message (Command.Error).Line,
+         Column        => Get_Error_Message (Command.Error).Col,
+         Message       =>
+             Cut_Message (Get_Message (Get_Error_Message (Command.Error))));
 
       Command_Finished (Command, True);
 
