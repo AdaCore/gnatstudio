@@ -588,9 +588,9 @@ package body Shell_Script is
             Kernel_Handle (Kernel));
       else
          Child := Find_MDI_Child (Get_MDI (Kernel), Script.Console);
-         Raise_Child (Child);
       end if;
 
+      Raise_Child (Child);
       return Child;
    end Get_Or_Create_Console;
 
