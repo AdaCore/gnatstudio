@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -543,19 +543,18 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
-      --  Do not differentiate between Processing and Busy for now
-
-      if Window.Busy_Level = 0 then
+      if State = Busy then
          Set_Busy_Cursor (Get_Window (Window), True, True);
-
-         if Window.Timeout_Id = 0 then
-            Window.Timeout_Id := Glide_Kernel.Timeout.Add
-              (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
-               Anim_Cb'Access, Kernel_Handle (Handle));
-         end if;
+         Window.Busy_Level := Window.Busy_Level + 1;
       end if;
 
-      Window.Busy_Level := Window.Busy_Level + 1;
+      if Window.State_Level = 0 and then Window.Timeout_Id = 0 then
+         Window.Timeout_Id := Glide_Kernel.Timeout.Add
+           (Guint32 (Get_Delay_Time (Window.Animation_Iter)),
+            Anim_Cb'Access, Kernel_Handle (Handle));
+      end if;
+
+      Window.State_Level := Window.State_Level + 1;
    end Push_State;
 
    ---------------
@@ -571,16 +570,20 @@ package body Glide_Kernel is
 
       Window := Glide_Window (Handle.Main_Window);
 
-      if Window.Busy_Level > 0 then
-         Window.Busy_Level := Window.Busy_Level - 1;
+      if Window.State_Level > 0 then
+         Window.State_Level := Window.State_Level - 1;
 
-         if Window.Busy_Level = 0 then
-            if Window.Timeout_Id /= 0 then
-               Timeout_Remove (Window.Timeout_Id);
-               Window.Timeout_Id := 0;
+         if Window.Busy_Level > 0 then
+            Window.Busy_Level := Window.Busy_Level - 1;
+
+            if Window.Busy_Level = 0 then
+               Set_Busy_Cursor (Get_Window (Window), False, False);
             end if;
+         end if;
 
-            Set_Busy_Cursor (Get_Window (Window), False, False);
+         if Window.State_Level = 0 then
+            Timeout_Remove (Window.Timeout_Id);
+            Window.Timeout_Id := 0;
          end if;
       end if;
    end Pop_State;
