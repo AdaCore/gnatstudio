@@ -86,6 +86,7 @@ package body Custom_Combos is
    function Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
+      Combo_Class : Class_Type;
       On_Changed : Subprogram_Type;
       Instance   : Class_Instance) return Custom_Combo;
    --  Create a new combo
@@ -262,6 +263,7 @@ package body Custom_Combos is
    function Create_Combo
      (Kernel     : access Kernel_Handle_Record'Class;
       Id         : String;
+      Combo_Class : Class_Type;
       On_Changed : Subprogram_Type;
       Instance   : Class_Instance) return Custom_Combo
    is
@@ -287,7 +289,7 @@ package body Custom_Combos is
          Combo.Instance := Instance;
          Ref (Instance);
 
-         Set_Data (Instance, Convert (Combo));
+         Set_Data (Instance, Combo_Class, Convert (Combo));
       end if;
       return Combo;
    end Create_Combo;
@@ -367,6 +369,7 @@ package body Custom_Combos is
             EntInst := New_Instance (Get_Script (Data), EntClass);
             Combo := Create_Combo
               (Kernel, Id => Nth_Arg (Data, 2),
+               Combo_Class => EntClass,
                On_Changed => Nth_Arg (Data, 4, null),
                Instance   => EntInst);
 
@@ -402,28 +405,28 @@ package body Custom_Combos is
       elsif Command = "add" then
          Name_Parameters (Data, Add_Args);
          Add_Combo_Entry
-           (Combo       => Convert (Get_Data (Inst)),
+           (Combo       => Convert (Get_Data (Inst, Class)),
             Label       => Nth_Arg (Data, 2),
             On_Selected => Nth_Arg (Data, 3, null));
 
       elsif Command = "remove" then
          Name_Parameters (Data, Remove_Args);
          Remove_Combo_Item
-           (Combo => Convert (Get_Data (Inst)),
+           (Combo => Convert (Get_Data (Inst, Class)),
             Label => Nth_Arg (Data, 2));
 
       elsif Command = "clear" then
          Name_Parameters (Data, Simple_Args);
-         Clear_Combo (Combo => Convert (Get_Data (Inst)));
+         Clear_Combo (Combo => Convert (Get_Data (Inst, Class)));
 
       elsif Command = "get_text" then
          Name_Parameters (Data, Simple_Args);
          Set_Return_Value
-           (Data, Get_Combo_Text (Convert (Get_Data (Inst))));
+           (Data, Get_Combo_Text (Convert (Get_Data (Inst, Class))));
 
       elsif Command = "set_text" then
          Name_Parameters (Data, Set_Text_Args);
-         Set_Combo_Text (Convert (Get_Data (Inst)), Nth_Arg (Data, 2));
+         Set_Combo_Text (Convert (Get_Data (Inst, Class)), Nth_Arg (Data, 2));
       end if;
 
       Free (Inst);

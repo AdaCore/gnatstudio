@@ -138,11 +138,11 @@ package body Glide_Kernel.Preferences is
       Inst   : constant Class_Instance := Nth_Arg (Data, 1, Class);
    begin
       if Command = Constructor_Method then
-         Set_Data (Inst, String'(Nth_Arg (Data, 2)));
+         Set_Data (Inst, Class, String'(Nth_Arg (Data, 2)));
 
       elsif Command = "get" then
          declare
-            Pref  : constant String     := Get_Data (Inst);
+            Pref  : constant String     := Get_Data (Inst, Class);
             Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
             Typ   : GType;
          begin
@@ -203,7 +203,7 @@ package body Glide_Kernel.Preferences is
       elsif Command = "set" then
          Name_Parameters (Data, Set_Cmd_Parameters);
          declare
-            Pref  : constant String     := Get_Data (Inst);
+            Pref  : constant String     := Get_Data (Inst, Class);
             Param : constant Param_Spec := Get (Kernel.Preferences, Pref);
             Typ   : GType;
             Done  : Boolean := True;

@@ -926,17 +926,20 @@ package body Codefix_Module is
 
    procedure Set_Data
      (Instance : access Class_Instance_Record'Class;
-      Session  : Codefix_Session) is
+      Session  : Codefix_Session)
+   is
    begin
       if not Is_Subclass
         (Get_Script (Instance),
-         Get_Class (Instance),
+         Instance,
          Codefix_Module_ID.Codefix_Class)
       then
          raise Invalid_Data;
       end if;
 
-      Set_Data (Instance, Value => Session.all'Address);
+      Set_Data (Instance,
+                Class => Codefix_Module_ID.Codefix_Class,
+                Value => Session.all'Address);
    end Set_Data;
 
    --------------
@@ -955,13 +958,14 @@ package body Codefix_Module is
    begin
       if not Is_Subclass
         (Get_Script (Instance),
-         Get_Class (Instance),
+         Instance,
          Codefix_Module_ID.Codefix_Class)
       then
          raise Invalid_Data;
       end if;
 
-      return Convert (Get_Data (Instance));
+      return Convert
+        (Get_Data (Instance, Codefix_Module_ID.Codefix_Class));
    end Get_Data;
 
    --------------
@@ -976,7 +980,7 @@ package body Codefix_Module is
    begin
       if not Is_Subclass
         (Get_Script (Instance),
-         Get_Class (Instance),
+         Instance,
          Codefix_Module_ID.Codefix_Error_Class)
       then
          raise Invalid_Data;
@@ -985,6 +989,7 @@ package body Codefix_Module is
       Err := new Codefix_Error_Data'(Error);
       Set_Data
         (Instance,
+         Class      => Codefix_Module_ID.Codefix_Error_Class,
          Value      => Err.all'Address,
          On_Destroy => On_Destroy_Error'Access);
    end Set_Data;
@@ -1009,13 +1014,14 @@ package body Codefix_Module is
    begin
       if not Is_Subclass
         (Get_Script (Instance),
-         Get_Class (Instance),
+         Instance,
          Codefix_Module_ID.Codefix_Error_Class)
       then
          raise Invalid_Data;
       end if;
 
-      return Convert (Get_Data (Instance)).all;
+      return Convert
+        (Get_Data (Instance, Codefix_Module_ID.Codefix_Error_Class)).all;
    end Get_Data;
 
    ------------------------

@@ -129,8 +129,9 @@ package body Expect_Interface is
    -------------
 
    procedure Exit_Cb (Data : Process_Data; Status : Integer) is
+      Class : constant Class_Type := New_Class (Data.Kernel, "Process");
       Inst : constant Class_Instance := Convert (Data.Callback_Data);
-      D    : constant Custom_Action_Access := Convert (Get_Data (Inst));
+      D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
       Tmp  : Boolean;
       pragma Unreferenced (Tmp);
    begin
@@ -160,8 +161,9 @@ package body Expect_Interface is
    ---------------
 
    procedure Output_Cb (Data : Process_Data; Output : String) is
+      Class : constant Class_Type := New_Class (Data.Kernel, "Process");
       Inst : constant Class_Instance := Convert (Data.Callback_Data);
-      D    : constant Custom_Action_Access := Convert (Get_Data (Inst));
+      D    : constant Custom_Action_Access := Convert (Get_Data (Inst, Class));
       Matches   : Match_Array (0 .. Max_Paren_Count);
       Beg_Index : Natural;
       End_Index : Natural;
@@ -365,7 +367,7 @@ package body Expect_Interface is
                Fd            => D.Fd);
 
             if Success then
-               Set_Data (Inst, D.all'Address);
+               Set_Data (Inst, Process_Class, D.all'Address);
             else
                Free (D);
                Set_Error_Msg

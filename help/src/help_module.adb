@@ -495,7 +495,8 @@ package body Help_Module is
       if Command = Constructor_Method then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
          XML  := Initialize_XML_Doc (Kernel);
-         Set_Data (Inst, Set_Data (XML), On_Destroy_Html_Class'Access);
+         Set_Data (Inst, Help_Module_ID.Help_Class,
+                   Set_Data (XML), On_Destroy_Html_Class'Access);
          Free (Inst);
 
       elsif Command = "getdoc" then
@@ -504,7 +505,7 @@ package body Help_Module is
 
          declare
             Doc : constant String := Get_Shell_Documentation
-              (Get_Data (Get_Data (Inst)),
+              (Get_Data (Get_Data (Inst, Help_Module_ID.Help_Class)),
                Get_Name (Get_Script (Data)), Nth_Arg (Data, 2));
          begin
             if Doc /= "" then
@@ -518,7 +519,7 @@ package body Help_Module is
 
       elsif Command = "reset" then
          Inst := Nth_Arg (Data, 1, Help_Module_ID.Help_Class);
-         Set_Data (Inst, System.Null_Address);
+         Set_Data (Inst, Help_Module_ID.Help_Class, System.Null_Address);
          Free (Inst);
 
       elsif Command = "browse" then

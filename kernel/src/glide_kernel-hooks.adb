@@ -1365,15 +1365,15 @@ package body Glide_Kernel.Hooks is
          declare
             Name     : constant String := Nth_Arg (Data, 2);
             Instance : Class_Instance;
+            Class : constant Class_Type := Get_Hook_Class (Get_Kernel (Data));
          begin
             Info :=
               Hook_Description_Access (Get (Get_Kernel (Data).Hooks, Name));
             if Info = null then
                Set_Error_Msg (Data, -"No such hook: " & Name);
             else
-               Instance :=
-                 Nth_Arg (Data, 1, Get_Hook_Class (Get_Kernel (Data)));
-               Set_Data (Instance, Info.all'Address);
+               Instance := Nth_Arg (Data, 1, Class);
+               Set_Data (Instance, Class, Info.all'Address);
                Free (Instance);
             end if;
          end;
