@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;                         use Glib;
-with Gtk.Main;                     use Gtk.Main;
 with Gtk.Stock;                    use Gtk.Stock;
 with Gtk.Window;                   use Gtk.Window;
 with Gtkada.Dialogs;               use Gtkada.Dialogs;
@@ -168,10 +167,10 @@ package body Glide_Menu is
            Default_Button => Button_No,
            Parent         => Gtk_Window (Object));
 
+      Top  : constant Glide_Window := Glide_Window (Object);
    begin
       if Button = Button_Yes then
-         Destroy (Object);
-         Main_Quit;
+         Glide_Main_Window.Quit (Top);
       end if;
 
    exception
