@@ -21,14 +21,11 @@
 with Ada.Exceptions;         use Ada.Exceptions;
 
 with Glib;                   use Glib;
---  with Glib.Object;            use Glib.Object;
 with Gtk.GEntry;             use Gtk.GEntry;
 with Gtk.Combo;              use Gtk.Combo;
 with Gtk.Enums;              use Gtk.Enums;
 with Gtk.Notebook;           use Gtk.Notebook;
 with Gtk.Label;              use Gtk.Label;
---  with Gtk.Box;                use Gtk.Box;
---  with Gtk.Main;               use Gtk.Main;
 with Gtk.Clist;              use Gtk.Clist;
 
 with Diff_Utils;             use Diff_Utils;
@@ -38,17 +35,12 @@ with Vdiff_Utils;            use Vdiff_Utils;
 with Codefix;                use Codefix;
 with Codefix.Text_Manager;   use Codefix.Text_Manager;
 with Codefix.Errors_Manager; use Codefix.Errors_Manager;
-with Codefix.Errors_Parser;  use Codefix.Errors_Parser;
 with Codefix.Formal_Errors;  use Codefix.Formal_Errors;
 use Codefix.Formal_Errors.Command_List;
 
 with Final_Window_Pkg;       use Final_Window_Pkg;
 
---  with Interfaces.C.Strings;   use Interfaces.C.Strings;
-
 package body Codefix.Graphics is
-
-   --  Kernel_Class : GObject_Class := Uninitialized_Class;
 
    -------------
    -- Gtk_New --
@@ -73,13 +65,7 @@ package body Codefix.Graphics is
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Current_Text    : Ptr_Text_Navigator;
-      Errors_Found    : Ptr_Errors_Interface)
-   is
---      Signal_Parameters : Signal_Parameter_Types (1 .. 0, 1 .. 0);
-
---      Signals : chars_ptr_array (1 .. 0);
-      --  The list of signals defined for this object
-
+      Errors_Found    : Ptr_Errors_Interface) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
@@ -107,7 +93,6 @@ package body Codefix.Graphics is
       Free (Graphic_Codefix.Corrector);
       Free (Graphic_Codefix.Errors_Found.all);
       Free (Graphic_Codefix.Vdiff_List);
-      --  Unref (Graphic_Codefix);
       Destroy (Graphic_Codefix);
       --  Free_Parsers;  ??? Do I need to free parsers a then of the program ?
    end Free;
@@ -119,7 +104,6 @@ package body Codefix.Graphics is
    procedure Quit (Graphic_Codefix : access Graphic_Codefix_Record'Class) is
    begin
       Free (Graphic_Codefix);
---      Gtk.Main.Main_Quit;
    end Quit;
 
    ----------
