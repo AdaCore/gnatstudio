@@ -4562,6 +4562,7 @@ package body Src_Editor_Buffer is
    is
       First_Mark_Iter : Gtk_Text_Iter;
       Last_Mark_Iter  : Gtk_Text_Iter;
+
    begin
       if not Buffer.Highlight_Needed then
          Buffer.Highlight_Needed := True;
@@ -4608,9 +4609,6 @@ package body Src_Editor_Buffer is
 
       Get_Iter_At_Mark (Buffer, Start_Iter, Buffer.First_Highlight_Mark);
       Get_Iter_At_Mark (Buffer, End_Iter, Buffer.Last_Highlight_Mark);
-
-      Backward_To_Tag_Toggle (Start_Iter, Result => Ignored);
-      Forward_To_Tag_Toggle (End_Iter, Result => Ignored);
 
       --  Search the initial minimum area to re-highlight...
 
