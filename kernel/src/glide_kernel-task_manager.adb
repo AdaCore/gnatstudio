@@ -120,7 +120,6 @@ package body Glide_Kernel.Task_Manager is
       Interface : Task_Manager_Interface;
       Button    : Gtk_Widget;
       Response  : Gtk_Response_Type;
-      pragma Unreferenced (Button);
 
       Previous_Interface : constant Gtk_Widget := Get_GUI (Manager);
    begin
@@ -135,16 +134,18 @@ package body Glide_Kernel.Task_Manager is
          Flags  => Modal or Destroy_With_Parent);
 
       Gtk_New
-        (Label, -"The following tasks are running, do you want to quit GPS ?");
+        (Label, -"The following tasks are running, do you want to quit GPS ?" &
+         ASCII.LF & (-"Warning: Quitting will kill all running tasks"));
 
       Set_Alignment (Label, 0.0, 0.0);
-      Pack_Start (Get_Vbox (Dialog), Label, Expand => False);
+      Pack_Start (Get_Vbox (Dialog), Label, Expand => False, Padding => 10);
 
       Gtk_New (Interface, Manager, Dialog => Gtk_Widget (Dialog));
       Pack_Start (Get_Vbox (Dialog), Interface, Padding => 10);
 
-      Button := Add_Button (Dialog, Stock_Ok, Gtk_Response_Yes);
-      Button := Add_Button (Dialog, Stock_Cancel, Gtk_Response_Cancel);
+      Button := Add_Button (Dialog, Stock_Quit, Gtk_Response_Yes);
+      Grab_Default (Button);
+      Button := Add_Button (Dialog, -"Don't Quit", Gtk_Response_Cancel);
 
       Set_Size_Request (Interface, 400, 200);
       Show_All (Dialog);
