@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -32,6 +32,7 @@ with Gtk.Label;                 use Gtk.Label;
 with Gtk.Table;                 use Gtk.Table;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
 with Files_Extra_Info_Pkg;      use Files_Extra_Info_Pkg;
 with Osint;                     use Osint;
 with Projects;                  use Projects;
@@ -567,6 +568,10 @@ package body Src_Contexts is
    is
       Continue_Till_End : Boolean := False;
 
+      function Continue_Dialog (Message : String) return Boolean;
+      --  Popup a dialog asking whether the user wants to continue, and return
+      --  the result.
+
       function Stop_At_First_Callback (Match : Match_Result) return Boolean;
       --  Stop at the first match encountered
 
@@ -603,6 +608,22 @@ package body Src_Contexts is
          return True;
       end Backward_Callback;
 
+      function Continue_Dialog (Message : String) return Boolean is
+         Buttons : Message_Dialog_Buttons;
+      begin
+         Buttons := Message_Dialog
+           (Message,
+            Confirmation,
+            Button_Yes or Button_No,
+            Button_Yes,
+            "",
+            -"Continue search ?",
+            Justify_Center,
+            Get_Main_Window (Kernel));
+
+         return Buttons = Button_Yes;
+      end Continue_Dialog;
+
       Was_Partial : Boolean;
    begin
       Result := null;
@@ -613,13 +634,14 @@ package body Src_Contexts is
             Backward_Callback'Unrestricted_Access, Scope,
             Lexical_State, Lang, Was_Partial => Was_Partial);
 
-         --  ??? May want to display a dialog instead of wrapping automatically
+         --  Start from the end if necessary.
 
-         if Continue_Till_End then
-            Raise_Console (Kernel);
-            Insert
-              (Kernel, -"No more matches, starting from the end",
-               Mode => Error);
+         if Continue_Till_End
+           and then not Continue_Dialog
+             (-"No more matches, restart from the end ?")
+         then
+            Unchecked_Free (Result);
+            return;
          end if;
 
       else
@@ -630,13 +652,14 @@ package body Src_Contexts is
             Was_Partial);
 
          --  Start from the beginning if necessary
-         --  ??? May want to display a dialog instead of wrapping automatically
 
          if Result = null then
-            Raise_Console (Kernel);
-            Insert
-              (Kernel, -"No more matches, starting from beginning",
-               Mode => Error);
+            if not Continue_Till_End
+              and then not Continue_Dialog
+                (-"No more matches, restart from the beginning ?")
+            then
+               return;
+            end if;
 
             Lexical_State := Statements;
             Scan_Buffer
