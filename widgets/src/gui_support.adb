@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -76,7 +76,7 @@ package body Gui_Support is
          --  we want at least one selected item
 
          if not Get_Boolean (M, Iter, Data) then
-            Tmp := Get_Iter_Root (M);
+            Tmp := Get_Iter_First (M);
 
             while Tmp /= Null_Iter loop
                Set (M, Tmp, Data, False);
