@@ -2688,7 +2688,6 @@ package body Project_Explorers is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Project : constant String := '/' & (-"Project");
-      N       : Node_Ptr;
       Extra   : Explorer_Search_Extra;
       Box     : Gtk_Box;
 
@@ -2728,15 +2727,8 @@ package body Project_Explorers is
 
 
       --  Add a project explorer to the default desktop.
-      N := new Node;
-      N.Tag := new String'("Project_Explorer_Project");
-
       Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         215, 600,
-         Normal, Position_Left,
-         True, True);
+        (Kernel, "Project_Explorer_Project", Position_Left, False, True);
 
       Register_Menu
         (Kernel, Project, -"Project View", "", On_Open_Explorer'Access);

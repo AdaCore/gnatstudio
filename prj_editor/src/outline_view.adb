@@ -699,7 +699,6 @@ package body Outline_View is
    is
       Outline_View_Module_Name : constant String := "Outline_View";
       Project : constant String := '/' & (-"Project");
-      N       : Node_Ptr;
       Command : Interactive_Command_Access;
    begin
       Register_Module
@@ -720,15 +719,7 @@ package body Outline_View is
 
       Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
         (Save_Desktop'Access, Load_Desktop'Access);
-
-      N := new Node;
-      N.Tag := new String'("Outline_View");
-      Add_Default_Desktop_Item
-        (Kernel, N,
-         10, 10,
-         215, 600,
-         Normal, Position_Left,
-         True, True);
+      Add_Default_Desktop_Item (Kernel, "Outline_View", Position_Left);
 
       Outline_View_Font := Param_Spec_Font
         (Gnew_Font
