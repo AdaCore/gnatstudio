@@ -255,7 +255,7 @@ package body Ada_Analyzer is
    -- Local procedures --
    ----------------------
 
-   function Get_Token (S : String) return Token_Type;
+   function Get_Token (Str : String) return Token_Type;
    --  Return a token_Type given a string.
    --  For efficiency, S is assumed to start at index 1.
 
@@ -266,8 +266,15 @@ package body Ada_Analyzer is
    -- Get_Token --
    ---------------
 
-   function Get_Token (S : String) return Token_Type is
+   function Get_Token (Str : String) return Token_Type is
+      S : String (Str'Range);
    begin
+      --  First convert Str to lower case for the token parser below
+
+      for K in Str'Range loop
+         S (K) := To_Lower (Str (K));
+      end loop;
+
       if S'Length = 0 then
          return No_Token;
       elsif S'Length = 1 then
@@ -2348,9 +2355,7 @@ package body Ada_Analyzer is
       loop
          Str_Len := Current - Prec + 1;
 
-         for J in Prec .. Current loop
-            Str (J - Prec + 1) := To_Lower (Buffer (J));
-         end loop;
+         Str (1 .. Current - Prec + 1) := Buffer (Prec .. Current);
 
          Token := Get_Token (Str (1 .. Str_Len));
 
@@ -2367,9 +2372,8 @@ package body Ada_Analyzer is
 
                   Str_Len := Index_Ident - Prec + 1;
 
-                  for J in Current + 1 .. Index_Ident loop
-                     Str (J - Prec + 1) := To_Lower (Buffer (J));
-                  end loop;
+                  Str (Current - Prec + 2 .. Index_Ident - Prec + 1) :=
+                    Buffer (Current + 1 .. Index_Ident);
 
                   Current := Index_Ident;
                end if;
@@ -2466,12 +2470,18 @@ package body Ada_Analyzer is
                Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
 
             when Lower =>
-               --  Str already contains lowercase characters.
+               for J in 1 .. Str_Len loop
+                  Str (J) := To_Lower (Str (J));
+               end loop;
 
                Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
 
             when Mixed =>
                Mixed_Case (Str (1 .. Str_Len));
+               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
+
+            when Smart_Mixed =>
+               Smart_Mixed_Case (Str (1 .. Str_Len));
                Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
          end case;
 
