@@ -62,10 +62,11 @@ package Docgen_Backend_HTML is
       Info   : in out Docgen.Doc_Info_Base);
 
    procedure Doc_Header
-     (B                : access Backend_HTML;
-      Kernel           : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File             : File_Descriptor;
-      Info             : in out Docgen.Doc_Info_Header);
+     (B       : access Backend_HTML;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      LI_Unit : LI_File_Ptr;
+      File    : File_Descriptor;
+      Info    : in out Docgen.Doc_Info_Header);
 
    procedure Doc_Header_Private
      (B                : access Backend_HTML;
