@@ -234,7 +234,7 @@ package body Src_Editor_Box is
 
    procedure On_Goto_Line
      (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
+      Kernel  : access Kernel_Handle_Record'Class);
    --  Callback for the "Goto Line" contextual menu
 
    function On_Goto_Line_Func
@@ -255,11 +255,6 @@ package body Src_Editor_Box is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
    --  Callback for the "Goto type declaration" contextual menu
-
-   procedure On_Goto_Other_File
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access);
-   --  Callback for the "Goto spec <-> body" contextual menu
 
    procedure Find_Closest_Match
      (Source : access Source_Editor_Box_Record'Class;
@@ -906,10 +901,11 @@ package body Src_Editor_Box is
    -- Show_Subprogram_Name --
    --------------------------
 
-   procedure Show_Subprogram_Name (Box : Source_Editor_Box) is
+   procedure Show_Subprogram_Name
+     (Box              : Source_Editor_Box;
+      Subprogram_Name : String) is
    begin
-      Show_Which_Function
-        (Box, Get_Subprogram_Name (Box, Box.Current_Line));
+      Show_Which_Function (Box, Subprogram_Name);
    end Show_Subprogram_Name;
 
    -------------------------------------
@@ -1107,9 +1103,7 @@ package body Src_Editor_Box is
       end;
 
       Object_Return_Callback.Object_Connect
-        (Event_Box, "button_press_event",
-         Object_Return_Callback.To_Marshaller (On_Goto_Line_Func'Access),
-         Box);
+        (Event_Box, "button_press_event", On_Goto_Line_Func'Access, Box);
 
       --  Modified file area...
       Gtk_New_Vseparator (Separator);
@@ -1131,9 +1125,7 @@ package body Src_Editor_Box is
       Gtk_New (Box.Read_Only_Label);
       Add (Event_Box, Box.Read_Only_Label);
       Object_Return_Callback.Object_Connect
-        (Event_Box, "button_press_event",
-         Object_Return_Callback.To_Marshaller (On_Read_Only_Pressed'Access),
-         Box);
+        (Event_Box, "button_press_event", On_Read_Only_Pressed'Access, Box);
 
       --  Insert/Overwrite label
       Gtk_New_Vseparator (Separator);
@@ -1202,14 +1194,11 @@ package body Src_Editor_Box is
 
       Add_Events (Box.Source_View, Focus_Change_Mask);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "focus_in_event",
-         Object_Return_Callback.To_Marshaller (Focus_In'Access), Box, False);
+        (Box.Source_View, "focus_in_event", Focus_In'Access, Box, False);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "focus_out_event",
-         Object_Return_Callback.To_Marshaller (Focus_Out'Access), Box, False);
+        (Box.Source_View, "focus_out_event", Focus_Out'Access, Box, False);
       Object_Return_Callback.Object_Connect
-        (Box.Source_View, "key_press_event",
-         Object_Return_Callback.To_Marshaller (Key_Press'Access), Box);
+        (Box.Source_View, "key_press_event", Key_Press'Access, Box);
 
       --  The Contextual Menu handling
       Register_Contextual_Menu
@@ -1372,6 +1361,27 @@ package body Src_Editor_Box is
       return Get_Contextual_Menu (Kernel, Object, Event, Menu);
    end Get_Contextual_Menu;
 
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
+
+   function Filter_Matches_Primitive
+     (Filter  : access In_Line_Numbers_Area_Filter;
+      Context : access Selection_Context'Class) return Boolean
+   is
+      pragma Unreferenced (Filter);
+      Event  : constant Gdk_Event := Get_Current_Event;
+      Kernel : constant Kernel_Handle := Get_Kernel (Context);
+      Editor : constant Source_Editor_Box  :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Kernel));
+
+   begin
+      return Event /= null
+        and then Editor /= null
+        and then Get_Window (Event) =
+          Get_Window (Editor.Source_View, Text_Window_Left);
+   end Filter_Matches_Primitive;
+
    -------------------------
    -- Get_Contextual_Menu --
    -------------------------
@@ -1416,29 +1426,6 @@ package body Src_Editor_Box is
          Get_Iter_At_Location (Editor.Source_View, Start_Iter, X, Y);
          Line := Get_Line (Start_Iter);
          Place_Cursor (Editor.Source_Buffer, Start_Iter);
-
-         if Menu /= null then
-            Gtk_New (Item, -"Goto line...");
-            Add (Menu, Item);
-            Context_Callback.Object_Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Goto_Line'Access),
-               User_Data   => Selection_Context_Access (Context),
-               Slot_Object => Editor);
-
-            Gtk_New (Item, -"Goto file spec/body");
-            Add (Menu, Item);
-            Context_Callback.Object_Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
-               User_Data   => Selection_Context_Access (Context),
-               Slot_Object => Editor,
-               After       => True);
-
-            Gtk_New (Item, -"Goto parent unit");
-            Add (Menu, Item);
-            Set_Sensitive (Item, False);
-         end if;
 
       --  Else click in the text area
 
@@ -1569,9 +1556,7 @@ package body Src_Editor_Box is
                      Gtk_New (Item, -"Goto declaration of " & Name);
                      Add (Menu, Item);
                      Context_Callback.Object_Connect
-                       (Item, "activate",
-                        Context_Callback.To_Marshaller
-                          (On_Goto_Declaration'Access),
+                       (Item, "activate", On_Goto_Declaration'Access,
                         User_Data   => Selection_Context_Access (Context),
                         Slot_Object => Editor,
                         After       => True);
@@ -1600,9 +1585,7 @@ package body Src_Editor_Box is
 
                         Add (Menu, Item);
                         Context_Callback.Object_Connect
-                          (Item, "activate",
-                           Context_Callback.To_Marshaller
-                             (On_Goto_Next_Body'Access),
+                          (Item, "activate", On_Goto_Next_Body'Access,
                            User_Data   => Selection_Context_Access (Context),
                            Slot_Object => Editor,
                            After       => True);
@@ -1612,9 +1595,7 @@ package body Src_Editor_Box is
                         Gtk_New (Item, -"Goto type declaration of " & Name);
                         Add (Menu, Item);
                         Context_Callback.Object_Connect
-                          (Item, "activate",
-                           Context_Callback.To_Marshaller
-                             (On_Goto_Type'Access),
+                          (Item, "activate", On_Goto_Type'Access,
                            User_Data   => Selection_Context_Access (Context),
                            Slot_Object => Editor,
                            After       => True);
@@ -1625,14 +1606,14 @@ package body Src_Editor_Box is
                Pop_State (Get_Kernel (Context));
             end if;
 
-            Gtk_New (Item, -"Goto file spec/body");
-            Add (Menu, Item);
-            Context_Callback.Object_Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
-               User_Data   => Selection_Context_Access (Context),
-               Slot_Object => Editor,
-               After       => True);
+--              Gtk_New (Item, -"Goto file spec/body");
+--              Add (Menu, Item);
+--              Context_Callback.Object_Connect
+--                (Item, "activate",
+--                 Context_Callback.To_Marshaller (On_Goto_Other_File'Access),
+--                 User_Data   => Selection_Context_Access (Context),
+--                 Slot_Object => Editor,
+--                 After       => True);
 
             Gtk_New (Item, -"Goto parent unit");
             Add (Menu, Item);
@@ -1643,53 +1624,56 @@ package body Src_Editor_Box is
       return Selection_Context_Access (Context);
    end Get_Contextual_Menu;
 
-   ------------------------
-   -- On_Goto_Other_File --
-   ------------------------
+   -------------
+   -- Execute --
+   -------------
 
-   procedure On_Goto_Other_File
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access)
+   function Execute
+     (Command : access Goto_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
    is
-      pragma Unreferenced (Widget);
-      C      : constant Entity_Selection_Context_Access :=
-        Entity_Selection_Context_Access (Context);
-      Kernel : constant Kernel_Handle := Get_Kernel (Context);
-
+      pragma Unreferenced (Command);
+      C      : constant File_Selection_Context_Access :=
+        File_Selection_Context_Access (Context.Context);
+      Kernel : constant Kernel_Handle := Get_Kernel (C);
+      Other_File : constant Virtual_File := Create
+        (Other_File_Base_Name
+           (Project_Information (C), File_Information (C)),
+         Project_Information (C));
    begin
-      Push_State (Kernel, Busy);
-
-      if Has_File_Information (C) then
-         declare
-            Other_File : constant Virtual_File := Create
-              (Other_File_Base_Name
-                 (Project_Information (C), File_Information (C)),
-               Project_Information (C));
-         begin
-            if Other_File /= VFS.No_File then
-               Open_File_Editor (Kernel, Other_File, Line => 0);
-            end if;
-         end;
+      if Other_File /= VFS.No_File then
+         Open_File_Editor (Kernel, Other_File, Line => 0);
+         return Commands.Success;
+      else
+         return Commands.Failure;
       end if;
+   end Execute;
 
-      Pop_State (Kernel);
+   -------------
+   -- Execute --
+   -------------
 
-   exception
-      when E : others =>
-         Pop_State (Kernel);
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Other_File;
+   function Execute
+     (Command : access Goto_Line_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type
+   is
+      pragma Unreferenced (Context);
+      Box    : constant Source_Editor_Box :=
+        Get_Source_Box_From_MDI (Find_Current_Editor (Command.Kernel));
+   begin
+      On_Goto_Line (Box, Command.Kernel);
+      return Commands.Success;
+   end Execute;
 
    ------------------
    -- On_Goto_Line --
    ------------------
 
    procedure On_Goto_Line
-     (Editor : access GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle)
+     (Widget  : access GObject_Record'Class;
+      Kernel  : access Kernel_Handle_Record'Class)
    is
-      Box : constant Source_Editor_Box := Source_Editor_Box (Editor);
+      Box : constant Source_Editor_Box := Source_Editor_Box (Widget);
    begin
       declare
          Str : constant String := Simple_Entry_Dialog
@@ -1709,23 +1693,6 @@ package body Src_Editor_Box is
             Console.Insert
               (Kernel, -"Invalid line number: " & Str, Mode => Error);
       end;
-
-   exception
-      when E : others =>
-         Trace (Exception_Handle,
-                "Unexpected exception: " & Exception_Information (E));
-   end On_Goto_Line;
-
-   ------------------
-   -- On_Goto_Line --
-   ------------------
-
-   procedure On_Goto_Line
-     (Widget  : access GObject_Record'Class;
-      Context : Selection_Context_Access) is
-   begin
-      On_Goto_Line
-        (Editor => Source_Editor_Box (Widget), Kernel => Get_Kernel (Context));
    end On_Goto_Line;
 
    -----------------------
@@ -1735,7 +1702,9 @@ package body Src_Editor_Box is
    function On_Goto_Line_Func
      (Editor : access GObject_Record'Class) return Boolean is
    begin
-      On_Goto_Line (Editor, Source_Editor_Box (Editor).Kernel);
+      --  ??? Not nice to get a context here
+      On_Goto_Line (Source_Editor_Box (Editor),
+                    Source_Editor_Box (Editor).Kernel);
       return True;
    end On_Goto_Line_Func;
 
@@ -2706,12 +2675,20 @@ package body Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last) return String
    is
-      L     : Buffer_Line_Type := Get_Buffer_Line (Editor.Source_Buffer, Line);
+      Normalized_Line : Editable_Line_Type := Line;
+      L     : Buffer_Line_Type;
       New_L : Buffer_Line_Type;
       Block : Block_Record;
    begin
+      if Normalized_Line = Editable_Line_Type'Last then
+         Normalized_Line := Editor.Current_Line;
+      end if;
+
+      L := Get_Buffer_Line (Editor.Source_Buffer, Normalized_Line);
+
       Block := Get_Block (Editor.Source_Buffer, L, Force_Compute => True);
 
       if Block.Block_Type = Cat_Unknown

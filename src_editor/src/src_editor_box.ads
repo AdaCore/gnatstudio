@@ -52,6 +52,7 @@ with Glide_Kernel.Standard_Hooks;
 with Src_Editor_Buffer;     use Src_Editor_Buffer;
 with Src_Editor_View;
 with VFS;
+with Commands.Interactive;  use Commands, Commands.Interactive;
 
 with Ada.Unchecked_Deallocation;
 
@@ -277,7 +278,9 @@ package Src_Editor_Box is
      (Editor : access Source_Editor_Box_Record);
    --  Clear the subprogram name label (set to empty string)
 
-   procedure Show_Subprogram_Name (Box : Source_Editor_Box);
+   procedure Show_Subprogram_Name
+     (Box              : Source_Editor_Box;
+      Subprogram_Name : String);
    --  Show the name of the current subprogram.
 
    function Create_Mark
@@ -295,11 +298,6 @@ package Src_Editor_Box is
    --  Scroll Mark onscreen, and place the cursor on Mark.
    --  Lenght is the length of text that should be selected after
    --  Mark.
-
-   procedure On_Goto_Line
-     (Editor : access Glib.Object.GObject_Record'Class;
-      Kernel : Glide_Kernel.Kernel_Handle);
-   --  Navigate->Goto Line... menu
 
    function Get_Last_Line
      (Editor : access Source_Editor_Box_Record) return Positive;
@@ -340,8 +338,11 @@ package Src_Editor_Box is
 
    function Get_Subprogram_Name
      (Editor : access Source_Editor_Box_Record;
-      Line   : Src_Editor_Buffer.Editable_Line_Type) return String;
-   --  Return the name for the subprogram enclosing Line
+      Line   : Src_Editor_Buffer.Editable_Line_Type :=
+        Src_Editor_Buffer.Editable_Line_Type'Last) return String;
+   --  Return the name for the subprogram enclosing Line.
+   --  If Line is left to its default value, then the subprogram at the current
+   --  line is computed.
 
    procedure Check_Writable (Editor : access Source_Editor_Box_Record);
    --  Check whether the file in Editor is writable, and update the read-only
@@ -350,6 +351,29 @@ package Src_Editor_Box is
    ---------------------
    -- Contextual menu --
    ---------------------
+
+   type In_Line_Numbers_Area_Filter is new Glide_Kernel.Action_Filter_Record
+      with null record;
+   function Filter_Matches_Primitive
+     (Filter  : access In_Line_Numbers_Area_Filter;
+      Context : access Glide_Kernel.Selection_Context'Class) return Boolean;
+   --  True if the event currently processed was in an editor's line numbers
+   --  area
+
+   type Goto_Line_Command is new Interactive_Command with record
+      Kernel : Glide_Kernel.Kernel_Handle;
+   end record;
+   function Execute
+     (Command : access Goto_Line_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Ask the user on which line to jump to
+
+   type Goto_Other_File_Command is new Interactive_Command with null record;
+   function Execute
+     (Command : access Goto_Other_File_Command;
+      Context : Interactive_Command_Context) return Command_Return_Type;
+   --  Go to the file spec/body, depending on what is currently open
+
 
    function Get_Contextual_Menu
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
