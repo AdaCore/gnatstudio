@@ -138,6 +138,8 @@ package GVD.Process is
       Debugger_Text_Font      : Pango.Font.Pango_Font_Description;
       Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
 
+      Debuggee_Console        : Glide_Interactive_Console;
+
       Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
       --  was inserted. This is used to find what was typed by the user.
