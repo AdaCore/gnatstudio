@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -498,8 +498,8 @@ package body Variable_Editors is
       --  Add the new values
 
       declare
-         Values : String_Id_Array (1 .. Num_Rows);
-            Num_Values : Natural := Values'First - 1;
+         Values     : String_Id_Array (1 .. Num_Rows);
+         Num_Values : Natural := Values'First - 1;
       begin
          Iter := Get_Iter_First (Editor.Model);
 
@@ -512,6 +512,7 @@ package body Variable_Editors is
                Default : constant Boolean := Get_Boolean
                  (Editor.Model, Iter, Default_Value_Column);
                Id      : String_Id := No_String;
+               Expr    : Project_Node_Id;
 
             begin
                if Name /= New_Value_Name then
@@ -539,29 +540,27 @@ package body Variable_Editors is
                   end if;
 
                   if Default then
-                     declare
-                        Expr : Project_Node_Id := External_Default (Var);
-                     begin
-                        if Kind_Of (Expr) /= N_Literal_String
-                          or else Get_String (String_Value_Of (Expr)) /= Name
-                        then
-                           if Id = No_String then
-                              Start_String;
-                              Store_String_Chars (Name);
-                              Id := End_String;
-                           end if;
+                     Expr := External_Default (Var);
 
-                           Changed := True;
-
-                           Trace (Me, "Setting default value of "
-                                  & Get_String (Get_Environment (Var))
-                                  & " to " & Name);
-                           Set_Default_Value_For_External_Variable
-                             (Get_Project (Editor.Kernel),
-                              Get_String (Get_Environment (Var)),
-                              Id);
+                     if Kind_Of (Expr) /= N_Literal_String
+                       or else Get_String (String_Value_Of (Expr)) /= Name
+                     then
+                        if Id = No_String then
+                           Start_String;
+                           Store_String_Chars (Name);
+                           Id := End_String;
                         end if;
-                     end;
+
+                        Changed := True;
+
+                        Trace (Me, "Setting default value of "
+                               & Get_String (Get_Environment (Var))
+                               & " to " & Name);
+                        Set_Default_Value_For_External_Variable
+                          (Get_Project (Editor.Kernel),
+                           Get_String (Get_Environment (Var)),
+                           Id);
+                     end if;
                   end if;
                end if;
             end;
