@@ -1449,7 +1449,7 @@ package body Src_Info.Queries is
       --  Set the iterator to examine the declarations in LI
 
       function Check_Decl_File return E_Reference_List;
-      --  Check the next declaration list in Iterator.LI
+      --  Check the next declaration list in Iterator.LI.
 
       function Next_Reference (Ref : E_Reference_List) return E_Reference_List;
       --  Return the next element in Ref that is a real reference to the entity
@@ -1500,20 +1500,11 @@ package body Src_Info.Queries is
       --------------
 
       function Check_LI (LI : LI_File_Ptr) return E_Reference_List is
-         Ref       : E_Reference_List;
       begin
          --  If this is the LI file for Decl, we need to parse the
          --  body and spec infos. Otherwise, only the dependencies
          if LI = Iterator.Decl_Iter.Decl_LI then
-            Iterator.Part := Unit_Spec;
-
-            if LI.LI.Spec_Info /= null then
-               Ref := Check_Declarations (LI.LI.Spec_Info.Declarations);
-               if Ref /= null then
-                  return Ref;
-               end if;
-            end if;
-
+            Iterator.Part := None;
             return Check_Decl_File;
 
          --  Otherwise, check all the dependencies to see if we
@@ -1532,6 +1523,16 @@ package body Src_Info.Queries is
          Ref : E_Reference_List;
          LI  : constant LI_File_Ptr := Get (Iterator.Decl_Iter);
       begin
+         if Iterator.Part = None then
+            Iterator.Part := Unit_Spec;
+            if LI.LI.Spec_Info /= null then
+               Ref := Check_Declarations (LI.LI.Spec_Info.Declarations);
+               if Ref /= null then
+                  return Ref;
+               end if;
+            end if;
+         end if;
+
          --  Were we checking the declarations from the spec ?
          if Iterator.Part = Unit_Spec then
             Iterator.Part := Unit_Body;
@@ -1601,6 +1602,7 @@ package body Src_Info.Queries is
             Iterator.References := Check_LI (Get (Iterator.Decl_Iter));
             exit when Iterator.References /= null;
             Next (Lang_Handler, Iterator.Decl_Iter, List);
+            Iterator.Part := None;
          end loop;
       end if;
    end Next;

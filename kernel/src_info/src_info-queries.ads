@@ -532,6 +532,8 @@ private
       LI : LI_File_Ptr;
    end record;
 
+   type Analyzed_Part is (None, Unit_Spec, Unit_Body, Unit_Separate);
+
    type Entity_Reference_Iterator is record
       Entity    : Entity_Information;
       Decl_Iter : Dependency_Iterator;
@@ -542,7 +544,7 @@ private
       LI_Once : Boolean;
       --  True if we should return only one reference per LI file
 
-      Part : Unit_Part;
+      Part : Analyzed_Part := None;
       Current_Separate : File_Info_Ptr_List;
       --  If the LI file we are examining is the file in which the entity was
       --  declared, we need to examine the body, spec, and separates, and part
