@@ -153,12 +153,12 @@ begin
      (Switches_Editor.Make_Switches_Entry, "changed",
       Widget_Callback.To_Marshaller (On_Make_Switches_Entry_Changed'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label17, -("Make"));
-   Set_Alignment (Switches_Editor.Label17, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label17, 0, 0);
-   Set_Justify (Switches_Editor.Label17, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label17, False);
-   Set_Tab (Switches_Editor.Notebook, 0, Switches_Editor.Label17);
+   Gtk_New (Switches_Editor.Make_Label, -("Make"));
+   Set_Alignment (Switches_Editor.Make_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Make_Label, 0, 0);
+   Set_Justify (Switches_Editor.Make_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Make_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 0, Switches_Editor.Make_Label);
 
    Gtk_New (Switches_Editor.Ada_Switches, 3, 2, False);
    Set_Row_Spacings (Switches_Editor.Ada_Switches, 0);
@@ -397,12 +397,12 @@ begin
      (Switches_Editor.Ada_Switches_Entry, "changed",
       Widget_Callback.To_Marshaller (On_Ada_Switches_Entry_Changed'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label18, -("Ada"));
-   Set_Alignment (Switches_Editor.Label18, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label18, 0, 0);
-   Set_Justify (Switches_Editor.Label18, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label18, False);
-   Set_Tab (Switches_Editor.Notebook, 1, Switches_Editor.Label18);
+   Gtk_New (Switches_Editor.Ada_Label, -("Ada"));
+   Set_Alignment (Switches_Editor.Ada_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Ada_Label, 0, 0);
+   Set_Justify (Switches_Editor.Ada_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Ada_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 1, Switches_Editor.Ada_Label);
 
    Gtk_New (Switches_Editor.C_Switches, 3, 2, False);
    Set_Row_Spacings (Switches_Editor.C_Switches, 0);
@@ -543,12 +543,12 @@ begin
      (Switches_Editor.C_Switches_Entry, "changed",
       Widget_Callback.To_Marshaller (On_C_Switches_Entry_Changed'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label56, -("C"));
-   Set_Alignment (Switches_Editor.Label56, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label56, 0, 0);
-   Set_Justify (Switches_Editor.Label56, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label56, False);
-   Set_Tab (Switches_Editor.Notebook, 2, Switches_Editor.Label56);
+   Gtk_New (Switches_Editor.C_Label, -("C"));
+   Set_Alignment (Switches_Editor.C_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.C_Label, 0, 0);
+   Set_Justify (Switches_Editor.C_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.C_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 2, Switches_Editor.C_Label);
 
    Gtk_New (Switches_Editor.Cpp_Switches, 3, 2, False);
    Set_Row_Spacings (Switches_Editor.Cpp_Switches, 0);
@@ -710,12 +710,12 @@ begin
      (Switches_Editor.Cpp_Debug, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Cpp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label57, -("C++"));
-   Set_Alignment (Switches_Editor.Label57, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label57, 0, 0);
-   Set_Justify (Switches_Editor.Label57, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label57, False);
-   Set_Tab (Switches_Editor.Notebook, 3, Switches_Editor.Label57);
+   Gtk_New (Switches_Editor.Cpp_Label, -("C++"));
+   Set_Alignment (Switches_Editor.Cpp_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Cpp_Label, 0, 0);
+   Set_Justify (Switches_Editor.Cpp_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Cpp_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 3, Switches_Editor.Cpp_Label);
 
    Gtk_New (Switches_Editor.Pp_Switches, 6, 2, False);
    Set_Row_Spacings (Switches_Editor.Pp_Switches, 0);
@@ -1049,12 +1049,12 @@ begin
      (Switches_Editor.Max_Line_Length, "changed",
       Widget_Callback.To_Marshaller (Refresh_Pp_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label62, -("Pretty Printer"));
-   Set_Alignment (Switches_Editor.Label62, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label62, 0, 0);
-   Set_Justify (Switches_Editor.Label62, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label62, False);
-   Set_Tab (Switches_Editor.Notebook, 4, Switches_Editor.Label62);
+   Gtk_New (Switches_Editor.Pp_Label, -("Pretty Printer"));
+   Set_Alignment (Switches_Editor.Pp_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Pp_Label, 0, 0);
+   Set_Justify (Switches_Editor.Pp_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Pp_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 4, Switches_Editor.Pp_Label);
 
    Gtk_New (Switches_Editor.Binder_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Binder_Switches, 0);
@@ -1105,12 +1105,12 @@ begin
    Set_Active (Switches_Editor.Binder_Shared_Gnat, False);
    Pack_Start (Switches_Editor.Vbox27, Switches_Editor.Binder_Shared_Gnat, False, False, 0);
 
-   Gtk_New (Switches_Editor.Label19, -("Binder"));
-   Set_Alignment (Switches_Editor.Label19, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label19, 0, 0);
-   Set_Justify (Switches_Editor.Label19, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label19, False);
-   Set_Tab (Switches_Editor.Notebook, 5, Switches_Editor.Label19);
+   Gtk_New (Switches_Editor.Binder_Label, -("Binder"));
+   Set_Alignment (Switches_Editor.Binder_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Binder_Label, 0, 0);
+   Set_Justify (Switches_Editor.Binder_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Binder_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 5, Switches_Editor.Binder_Label);
 
    Gtk_New (Switches_Editor.Linker_Switches, 2, 1, False);
    Set_Row_Spacings (Switches_Editor.Linker_Switches, 0);
@@ -1156,12 +1156,12 @@ begin
      (Switches_Editor.Linker_Profile, "toggled",
       Widget_Callback.To_Marshaller (Refresh_Linker_Switches'Access), Switches_Editor);
 
-   Gtk_New (Switches_Editor.Label20, -("Linker"));
-   Set_Alignment (Switches_Editor.Label20, 0.5, 0.5);
-   Set_Padding (Switches_Editor.Label20, 0, 0);
-   Set_Justify (Switches_Editor.Label20, Justify_Center);
-   Set_Line_Wrap (Switches_Editor.Label20, False);
-   Set_Tab (Switches_Editor.Notebook, 6, Switches_Editor.Label20);
+   Gtk_New (Switches_Editor.Linker_Label, -("Linker"));
+   Set_Alignment (Switches_Editor.Linker_Label, 0.5, 0.5);
+   Set_Padding (Switches_Editor.Linker_Label, 0, 0);
+   Set_Justify (Switches_Editor.Linker_Label, Justify_Center);
+   Set_Line_Wrap (Switches_Editor.Linker_Label, False);
+   Set_Tab (Switches_Editor.Notebook, 6, Switches_Editor.Linker_Label);
 
    Gtk_New (Switches_Editor.Hbuttonbox1);
    Set_Spacing (Switches_Editor.Hbuttonbox1, 30);

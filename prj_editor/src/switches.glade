@@ -332,7 +332,7 @@
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label17</name>
+	<name>make_label</name>
 	<label>Make</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -995,7 +995,7 @@ Full + Automatic inlining
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label18</name>
+	<name>ada_label</name>
 	<label>Ada</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -1375,7 +1375,7 @@ Full + Automatic inlining
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label56</name>
+	<name>c_label</name>
 	<label>C</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -1815,7 +1815,7 @@ Full + Automatic inlining
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label57</name>
+	<name>cpp_label</name>
 	<label>C++</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -2660,7 +2660,7 @@ Reformat blocks
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label62</name>
+	<name>pp_label</name>
 	<label>Pretty Printer</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -2810,7 +2810,7 @@ Reformat blocks
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label19</name>
+	<name>binder_label</name>
 	<label>Binder</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
@@ -2945,7 +2945,7 @@ Reformat blocks
       <widget>
 	<class>GtkLabel</class>
 	<child_name>Notebook:tab</child_name>
-	<name>label20</name>
+	<name>linker_label</name>
 	<label>Linker</label>
 	<justify>GTK_JUSTIFY_CENTER</justify>
 	<wrap>False</wrap>
