@@ -140,8 +140,11 @@ package Glide_Kernel is
 
    type Module_ID_Information (<>) is private;
    type Module_ID is access Module_ID_Information;
+   --  Module identifier. Each of the registered module in Glide has such a
+   --  identifier, that contains its name and all the callbacks associated with
+   --  the module.
 
-   type Selection_Context is abstract tagged private;
+   type Selection_Context is tagged private;
    type Selection_Context_Access is access all Selection_Context'Class;
    --  This type contains all the information about the selection in any
    --  module. Note that this is a tagged type, so that it can easily be
@@ -163,8 +166,10 @@ package Glide_Kernel is
    function Get_Creator (Context : access Selection_Context) return Module_ID;
    --  Return the module ID for the module that created the context
 
-   procedure Destroy (Context : in out Selection_Context) is abstract;
-   --  Destroy the information contained in the context, and free the memory
+   procedure Destroy (Context : in out Selection_Context);
+   --  Destroy the information contained in the context, and free the memory.
+   --  Note that implementations of this subprogram should always call the
+   --  parent's Destroy subprogram as well
 
    procedure Free (Context : in out Selection_Context_Access);
    --  Free the memory occupied by Context. It automatically calls the
@@ -185,12 +190,17 @@ package Glide_Kernel is
    --  menu.
 
    type Module_Menu_Handler is access procedure
-     (Context   : access Selection_Context'Class;
-      Menu      : access Gtk.Menu.Gtk_Menu_Record'Class);
+     (Object  : access Glib.Object.GObject_Record'Class;
+      Context : access Selection_Context'Class;
+      Menu    : access Gtk.Menu.Gtk_Menu_Record'Class);
    --  Callback used every time some contextual menu event happens in Glide.
    --  The module that initiated the event (ie the one that is currently
    --  displaying the contextual menu) can be found by reading Get_Creator for
    --  the context.
+   --
+   --  The object that is displaying the contextual menu is Object. Note that
+   --  this isn't necessarily the widget in which the mouse event occurs.
+   --
    --  Context contains all the information about the current selection.
    --
    --  The callback should add the relevant items to Menu. It is recommended to
@@ -269,7 +279,7 @@ private
       Contextual_Menu : Module_Menu_Handler;
    end record;
 
-   type Selection_Context is abstract tagged record
+   type Selection_Context is tagged record
       Kernel  : Kernel_Handle;
       Creator : Module_ID;
    end record;
