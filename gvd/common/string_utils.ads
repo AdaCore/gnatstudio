@@ -262,17 +262,14 @@ package String_Utils is
 
    function To_Unix_Pathname (Path : String) return String;
    --  Convert all occurences of Directory_Separator to '/'.
+
+   function To_Host_Pathname (Path : String) return String;
+   --  Convert all occurrences of '/' to Directory_Separator.
    --  If Directory_Separator is different than '/', the following
    --  additional substitutions are operated:
    --  /cydrive/x/ -> x:\
    --  //x/        -> x:\
-   --  where x is an arbitrary character
-
-   function To_Host_Pathname (Path : String) return String;
-   --  Convert all occurrences of '/' to Directory_Separator.
-   --  This function is now obsolete, and you should use
-   --  GNAT.Directories.Normalize_Pathname instead. it is kept for
-   --  compatibility with 3.14 only.
+   --  where x is an single letter ('a'..'z' | 'A'..'Z')
 
    function To_File_Name (Name : in String) return String;
    --  Returns a file name from an ada subprogram/package name (ie converts '.'
