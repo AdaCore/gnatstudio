@@ -254,8 +254,7 @@ package body GPS.Main_Window is
       Prefix_Directory : String) is
    begin
       Main_Window := new GPS_Window_Record;
-      GPS.Main_Window.Initialize
-        (Main_Window, Home_Dir, Prefix_Directory);
+      GPS.Main_Window.Initialize (Main_Window, Home_Dir, Prefix_Directory);
    end Gtk_New;
 
    ----------------------
@@ -427,7 +426,10 @@ package body GPS.Main_Window is
       Menu_Item : Gtk_Menu_Item;
 
    begin
-      Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window), Home_Dir);
+      Gtk_New
+        (Main_Window.Kernel,
+         Gtk_Window (Main_Window),
+         Home_Dir, Prefix_Directory);
 
       Pref_Draw_Title_Bars := Param_Spec_Boolean
         (Gnew_Boolean
@@ -525,8 +527,6 @@ package body GPS.Main_Window is
       Set_Submenu (Menu_Item, Create_Menu (Main_Window.MDI));
 
       Setup_Toplevel_Window (Main_Window.MDI, Main_Window);
-      Main_Window.Home_Dir := new String'(Home_Dir);
-      Main_Window.Prefix_Directory := new String'(Prefix_Directory);
 
       Gtk_New_Vbox (Main_Window.Toolbar_Box, False, 0);
       Pack_Start (Vbox, Main_Window.Toolbar_Box, False, False, 0);
@@ -1052,9 +1052,6 @@ package body GPS.Main_Window is
 
       use Glib;
    begin
-      Free (Win.Home_Dir);
-      Free (Win.Prefix_Directory);
-
       if Win.Task_Dialog /= null then
          Destroy (Win.Task_Dialog);
       end if;

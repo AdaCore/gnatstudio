@@ -32,7 +32,6 @@ with Gtk.Toolbar;      use Gtk.Toolbar;
 with Gtk.Main;
 
 with Gtkada.MDI;       use Gtkada.MDI;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 
 with GPS.Kernel;
@@ -78,9 +77,6 @@ package GPS.Main_Window is
       Busy_Level       : Integer := 0;
       Desktop_Loaded   : Boolean := False;
       Public_Version   : Boolean := True;
-      Prefix_Directory : String_Access;
-      Home_Dir         : String_Access;
-      --  The location of the configuration (e.g ~/.gps) directory.
 
       --  ??? The following fields should be moved to the gvd module
 
