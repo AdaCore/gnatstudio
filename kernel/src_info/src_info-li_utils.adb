@@ -32,9 +32,6 @@ package body Src_Info.LI_Utils is
       Parsed                  : in Boolean);
    --  Creates an empty LI_File structure
 
-   --  function eq (str1 : String; str2 : String) return Boolean;
-   --  Checks two strings for equality
-
    -------------------------------------------------------------------------
 
    --------------------------
@@ -65,6 +62,14 @@ package body Src_Info.LI_Utils is
             File              => File,
             Source_Filename   => Source_Filename,
             Parsed            => True);
+      else
+         pragma Assert (File.LI.LI_Filename.all = Source_Filename,
+                     "Invalid Source Filename");
+         pragma Assert (LI_Handler (Handler) = File.LI.Handler,
+                     "Invalid Handler");
+         null;
+      end if;
+      if File.LI.Body_Info = null then
          File.LI.Body_Info := new File_Info'
                (Unit_Name => null,
                 Source_Filename => new String'(Source_Filename),
@@ -74,12 +79,6 @@ package body Src_Info.LI_Utils is
                 Original_Filename => null,
                 Original_Line => 1,
                 Declarations => null);
-      else
-         pragma Assert (File.LI.LI_Filename.all = Source_Filename,
-                     "Invalid Source Filename");
-         pragma Assert (LI_Handler (Handler) = File.LI.Handler,
-                     "Invalid Handler");
-         null;
       end if;
       if File.LI.Body_Info.Declarations = null then
          File.LI.Body_Info.Declarations := new E_Declaration_Info_Node;
@@ -172,7 +171,7 @@ package body Src_Info.LI_Utils is
          --  trying to locate Dependency_File_Info with given Source_Filename
          loop
             exit when
-               eq (Dep_Ptr.Value.File.Source_Filename.all, Referred_Filename);
+               Dep_Ptr.Value.File.Source_Filename.all = Referred_Filename;
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
@@ -308,7 +307,7 @@ package body Src_Info.LI_Utils is
          --  trying to locate Dependency_File_Info with given Source_Filename
          loop
             exit when
-               eq (Dep_Ptr.Value.File.Source_Filename.all, Referred_Filename);
+               Dep_Ptr.Value.File.Source_Filename.all = Referred_Filename;
             if Dep_Ptr.Next = null then
                --  Unable to find suitable Dependency_File_Info.
                --  Creating a new one.
@@ -436,7 +435,7 @@ package body Src_Info.LI_Utils is
          if Dep_Ptr = null then
             raise Declaration_Not_Found;
          end if;
-         exit when eq (Dep_Ptr.Value.File.Source_Filename.all, Filename);
+         exit when Dep_Ptr.Value.File.Source_Filename.all = Filename;
          Dep_Ptr := Dep_Ptr.Next;
       end loop;
       if Dep_Ptr.Value.Declarations = null then
@@ -494,7 +493,7 @@ package body Src_Info.LI_Utils is
          D_Ptr.Value.Declaration.Parent_Location.Next := null;
       else
          --  Processing parent information
-         if eq (Source_Filename, Parent_Filename) then
+         if Source_Filename = Parent_Filename then
             Tmp_LI_File_Ptr := File;
          else
             Tmp_LI_File_Ptr := Get (List.Table, Parent_Filename);
@@ -554,7 +553,7 @@ package body Src_Info.LI_Utils is
       loop
          exit when D_Ptr = null;
          if ((Symbol_Name'Length > 0
-                and then eq (D_Ptr.Value.Declaration.Name.all, Symbol_Name))
+                and then (D_Ptr.Value.Declaration.Name.all = Symbol_Name))
             or else (Symbol_Name'Length = 0))
            and then (
              (Location /= Invalid_Point
@@ -571,19 +570,6 @@ package body Src_Info.LI_Utils is
       end loop;
       raise Declaration_Not_Found;
    end Find_Declaration_Internal;
-
-   ----------
-   --  eq  --
-   ----------
-
-   function eq (str1 : String; str2 : String) return Boolean is
-   begin
-      if str1'Length /= str2'Length then
-         return False;
-      else
-         return str1 = str2;
-      end if;
-   end eq;
 
    ----------------------
    --  Create_LI_File  --
@@ -631,3 +617,4 @@ package body Src_Info.LI_Utils is
    -------------------------------------------------------------------------
 
 end Src_Info.LI_Utils;
+

@@ -98,9 +98,6 @@ private package Src_Info.LI_Utils is
    --  If value for some attribute is not given then this attribute doesn't
    --  affect on searching.
 
-   function eq (str1 : String; str2 : String) return Boolean;
-   --  compares to strings
-
    Declaration_Not_Found : exception;
    --  Thrown by Find_Declaration functions if declaration is not found
 

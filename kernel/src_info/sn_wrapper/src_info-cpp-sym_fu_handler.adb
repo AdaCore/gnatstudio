@@ -24,8 +24,8 @@ begin
          MDecl := Find (SN_Table (MD),
              Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         if eq (MDecl.Buffer (MDecl.Return_Type.First
-                                 .. MDecl.Return_Type.Last), "void") then
+         if MDecl.Buffer (MDecl.Return_Type.First
+                                 .. MDecl.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
          else
             Target_Kind := Non_Generic_Function_Or_Operator;
@@ -43,8 +43,8 @@ begin
       begin
          FU_Tab := Find (SN_Table (FU),
              Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-         if eq (FU_Tab.Buffer (FU_Tab.Return_Type.First
-                                    .. FU_Tab.Return_Type.Last), "void") then
+         if FU_Tab.Buffer (FU_Tab.Return_Type.First
+                                    .. FU_Tab.Return_Type.Last) = "void" then
             Target_Kind := Non_Generic_Procedure;
          else
             Target_Kind := Non_Generic_Function_Or_Operator;

@@ -18,8 +18,8 @@ begin
    begin
       FD_Tab := Find (SN_Table (FD),
           Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
-      if eq (FD_Tab.Buffer (FD_Tab.Return_Type.First
-                                 .. FD_Tab.Return_Type.Last), "void") then
+      if FD_Tab.Buffer (FD_Tab.Return_Type.First
+                                 .. FD_Tab.Return_Type.Last) = "void" then
          Target_Kind := Non_Generic_Procedure;
       else
          Target_Kind := Non_Generic_Function_Or_Operator;
