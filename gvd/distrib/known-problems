@@ -1,5 +1,11 @@
 Known Problems in GVD 1.0.1
 
+- Current line highlighted with an offset
+  Problem: If the previous current line contained some tabs, then the next
+           one is highlighted with an offset.
+  Woraround: Force a redisplay of the source window (hide line numbers)
+  Status: Fixed in GVD 1.0.2
+
 - Wrong handling of double in C structs.
   Problem:
      When trying to display a C structure containing a double, GVD would
