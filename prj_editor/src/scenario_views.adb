@@ -66,7 +66,6 @@ package body Scenario_Views is
    procedure Add_Possible_Values
      (List : access Gtk_List_Record'Class; Typ : Project_Node_Id);
    --  Add all the possible values for type Typ into the List.
-   --  ??? This is a duplicate of the one in variable_editors.adb
 
    type Variable_User_Data is record
       View : Scenario_View;
