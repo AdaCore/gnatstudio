@@ -214,22 +214,18 @@ package body Main_Debug_Window_Pkg.Callbacks is
          Index : Natural := Name'First;
       begin
          while Index < Name'Last loop
-            if Name (Index) = '%'
-              and then Name (Index + 1) = 'f'
-            then
-               return Name (Name'First .. Index - 1)
-                 & File
-                 & Substitute (Name (Index + 2 .. Name'Last), File, Line);
+            if Name (Index) = '%' and then Name (Index + 1) = 'f' then
+               return Name (Name'First .. Index - 1) &
+                 File &
+                 Substitute (Name (Index + 2 .. Name'Last), File, Line);
 
-            elsif Name (Index) = '%'
-              and then Name (Index + 1) = 'l'
-            then
+            elsif Name (Index) = '%' and then Name (Index + 1) = 'l' then
                declare
                   Img : constant String := Natural'Image (Line);
                begin
-                  return Name (Name'First .. Index - 1)
-                    & Img (Img'First + 1 .. Img'Last)
-                    & Substitute (Name (Index + 2 .. Name'Last), File, Line);
+                  return Name (Name'First .. Index - 1) &
+                    Img (Img'First + 1 .. Img'Last) &
+                    Substitute (Name (Index + 2 .. Name'Last), File, Line);
                end;
             end if;
 
@@ -330,7 +326,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
            (Parent  => Tab.Window,
             Title   => -"Process Selection",
             Message => -"Enter the process id to debug:",
-            Key     => "odd_process_id");
+            Key     => "gvd_process_id");
       begin
          if Arguments = ""
            or else Arguments (Arguments'First) /= ASCII.NUL
@@ -535,7 +531,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
            (Parent  => Tab.Window,
             Title   => -"Arguments Selection",
             Message => -"Enter the arguments to your application:",
-            Key     => "odd_run_arguments",
+            Key     => "gvd_run_arguments",
             Check_Msg => -"Stop at beginning of main subprogram",
             Button_Active => Is_Start'Access);
       begin
@@ -971,7 +967,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
            (Parent  => Tab.Window,
             Title   => -"Expression Selection",
             Message => -"Enter an expression to display:",
-            Key     => "odd_display_expression_dialog",
+            Key     => "gvd_display_expression_dialog",
             Check_Msg => -"Expression is a subprogram call",
             Button_Active => Is_Func'Access);
       begin
