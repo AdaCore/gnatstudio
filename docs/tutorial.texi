@@ -283,7 +283,7 @@ which you can verify by clicking on the left arrow in the tool bar, to go
 back to the previous locations visited.
 
 Repeat the operation until you're back in @file{sdc.adb}.
-As for the undo/redo capability in the source editor, the
+As with the undo/redo capability in the source editor, the
 @code{goto previous/next location} is infinite.
 
 @c --------------------------------------------------------------------
@@ -523,8 +523,9 @@ check box.
 
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
 for @i{Version Control System}.
-GPS has a generic support for @i{VCS} which allows it to easily support
-new systems. Currently GPS supports CVS and ClearCase. Select @code{CVS}.
+GPS provides a generic framework for @i{VCS} which allows it to support
+new systems easily. Currently, GPS supports CVS and ClearCase. Select
+@code{CVS}.
 
 Click on @code{Forward}: this is the source directories selection,
 used to specify the project's sources. Click on
@@ -572,7 +573,8 @@ Click on @code{Cancel} to close the wizard.
 In the project explorer, on the project @i{sdc}, use the contextual menu
 @code{Edit project properties}.
 All the properties set in the project wizard can be found here as well.
-You can also switch between pages by clicking on the tabs.
+You can switch between pages by clicking on the tabs located along the
+left side of the window.
 
 Once you're done exploring the property pages, click on the @code{Cancel}
 button to close the properties window.
@@ -581,15 +583,15 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-You have probably noticed the @code{Build} label located on top of the
+You may have noticed the @code{Build} label located on top of the
 project explorer. This is a configuration variable. With GPS and the GNAT
 project facility, you can define as many configuration variables as you want,
-and modify any project settings (e.g switches, sources, ...) based on the
+and modify any project settings (e.g. switches, sources, ...) based on the
 values of configuration variables. These variables can also take any
 number of different values.
 
-The @code{Build} variable shows a typical @code{Debug/Production} configuration
-where we've set different switches for the two modes.
+The @code{Build} variable demonstrates a typical @code{Debug/Production}
+configuration where we've set different switches for the two modes.
 
 Click on the button at the left (@code{Edit variable properties}): this
 is the variable editor, where values can be added or renamed.
@@ -602,16 +604,16 @@ Now, let's take a look at the switches set in the project.
 @noindent
 
 Select the menu item @code{Project->Edit File Switches}: a global
-switch editor is displayed in the working area, showing by default the
-switches associated with each file of the @code{sdc} project.
+switch editor is displayed in the working area, showing the
+switches associated with each file in the @code{sdc} project.
 
-The editor lists the switches associated with each file in the project and
-the gray area shows the default (global) switches; you will also notice
-that @file{screen_output.adb} has specific switches, which are highlighted
+The editor lists the switches associated with each file in the project.
+Gray entries indicate default (global) switches.  Notice that
+@file{screen_output.adb} has specific switches, which are highlighted
 using a different font.
 
 Switch between @code{Debug} and @code{Production} mode in the @code{Build}
-combo box: the switches are updated at the same time.
+combo box: the switches are updated automatically.
 
 Back to our project, let's now examine the dependencies between sources.
 
@@ -631,12 +633,12 @@ Click on the right arrow of @file{tokens.ads} to display the files that
 @section Project dependencies
 @noindent
 
-Back in the project explorer on the @i{sdc} project, select the contextual menu
-@code{Add dependency->From project file...}, then open the @i{tutorial}
+Back in the project explorer, on the @i{sdc} project, select the contextual
+menu @code{Add dependency->From project file...}, then open the @i{tutorial}
 directory and click on the @code{projects} subdirectory. Select the file
 @code{prj1.gpr}.
 
-You can see the new dependencies added in the project explorer, as a tree of
+You can see the new dependency added in the project explorer, as a tree of
 projects. In particular, project dependencies are duplicated: if you open
 the @code{prj1} icon by clicking on the @code{[+]} sign, and then
 similarly open the @code{prj2} icon, you will notice that the project
