@@ -84,9 +84,10 @@ package body Welcome is
    -------------
 
    procedure Gtk_New
-     (Screen       : out Welcome_Screen;
-      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Project_Name : String := "")
+     (Screen              : out Welcome_Screen;
+      Kernel              : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Project_Name        : String := "";
+      Default_Is_Tutorial : Boolean)
    is
       Box, Hbox    : Gtk_Box;
       Sep          : Gtk_Separator;
@@ -208,6 +209,23 @@ package body Welcome is
       Set_Sensitive (Screen.Open_Project, False);
       Set_Sensitive (Screen.Open_Browse, False);
 
+      --  Tutorial
+
+      Gtk_New_Hseparator (Sep);
+      Pack_Start (Box, Sep, Expand => False, Padding => 5);
+
+      Gtk_New
+        (Screen.Open_Tutorial_Button,
+         Screen.Create_Project,
+         -"Load the tutorial");
+      Pack_Start (Box, Screen.Open_Tutorial_Button, Expand => False);
+
+      if Default_Is_Tutorial then
+         Set_Active (Screen.Open_Tutorial_Button, True);
+      else
+         Set_Active (Screen.Default_Project, True);
+      end if;
+
       --  Always displaying the welcome dialog
 
       Gtk_New (Screen.Always_Show,
@@ -223,11 +241,13 @@ package body Welcome is
       Stock_Button := Add_Button (Screen, Stock_Quit, Gtk_Response_Close);
    end Gtk_New;
 
-   ---------
-   -- Run --
-   ---------
+   -----------------
+   -- Run_Welcome --
+   -----------------
 
-   function Run (Screen : access Welcome_Screen_Record) return Boolean is
+   function Run_Welcome (Screen : access Welcome_Screen_Record)
+      return Welcome_Result
+   is
       Response : Gtk_Response_Type;
    begin
       if Get_Pref (Screen.Kernel, Display_Welcome) then
@@ -251,12 +271,19 @@ package body Welcome is
          if Response = Gtk_Response_OK then
             if Get_Active (Screen.Default_Project) then
                On_Default_Project (Screen);
+               return Project_Loaded;
+
             elsif Get_Active (Screen.Open_Project_Button) then
                On_Load_Project (Screen);
+               return Project_Loaded;
+
+            elsif Get_Active (Screen.Open_Tutorial_Button) then
+               On_Default_Project (Screen);
+               return Show_Tutorial;
             end if;
          end if;
 
-         return Response /= Gtk_Response_Close;
+         return Quit_GPS;
 
       elsif Get_Text (Get_Entry (Screen.Open_Project)) /= "" then
          On_Load_Project (Screen);
@@ -265,8 +292,8 @@ package body Welcome is
          On_Default_Project (Screen);
       end if;
 
-      return True;
-   end Run;
+      return Project_Loaded;
+   end Run_Welcome;
 
    --------------------
    -- On_New_Project --
