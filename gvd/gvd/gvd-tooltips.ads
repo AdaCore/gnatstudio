@@ -38,7 +38,7 @@ with Gdk.Window;
 --  to the drawing function.
 --
 --  ??? Right now, both the user data and the widget on which the tooltips
---  are set are carried to the drawind function.
+--  are set are carried to the drawing function.
 --  This was done because the widget is needed by the actual drawing
 --  routines in most cases, although it is not entirely useful, since a
 --  user could insert a pointer to that widget within his data type.
