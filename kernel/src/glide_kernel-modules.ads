@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                          G L I D E  I I                           --
+--                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GLIDE is free software; you can redistribute it and/or modify  it --
+-- GPS is free software; you can redistribute it and/or modify  it   --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -346,6 +346,8 @@ package Glide_Kernel.Modules is
      (Context : access File_Selection_Context) return Prj.Project_Id;
    --  Return the id of the project to which the file belongs. Note that this
    --  is computed automatically and cached otherwise.
+   --  This function will return No_Project if the file stored in the context
+   --  doesn't belong to any project.
 
    function Has_Importing_Project_Information
      (Context : access File_Selection_Context) return Boolean;
