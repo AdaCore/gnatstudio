@@ -36,6 +36,7 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 with Gtkada.MDI;           use Gtkada.MDI;
 
 with Entities;                      use Entities;
+with Entities.Debug;                use Entities.Debug;
 with Entities.Queries;              use Entities.Queries;
 with Glide_Kernel;                  use Glide_Kernel;
 with Glide_Kernel.Modules;          use Glide_Kernel.Modules;
@@ -54,6 +55,7 @@ with VFS;                           use VFS;
 with Glide_Intl;       use Glide_Intl;
 with Browsers.Canvas;  use Browsers.Canvas;
 
+with Ada.Text_IO;      use Ada.Text_IO;
 with Ada.Exceptions;   use Ada.Exceptions;
 with System;           use System;
 with Ada.Unchecked_Conversion;
@@ -403,6 +405,11 @@ package body Browsers.Call_Graph is
      (Data : in out Callback_Data'Class; Command : String);
    --  Handle shell commands
 
+   procedure Xref_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String);
+   --  Handle shell commands related to the xref database as a whole
+
    procedure Examine_Ancestors_Call_Graph
      (Item : access Arrow_Item_Record'Class);
    procedure Examine_Entity_Call_Graph
@@ -599,6 +606,7 @@ package body Browsers.Call_Graph is
    begin
       loop
          Found := Get (Iter);
+
          exit when Found = null
            or else Entity_Item (Found).Entity = Entity;
          Next (Iter);
@@ -621,7 +629,6 @@ package body Browsers.Call_Graph is
    begin
       Child := Entity_Item (Find_Entity (Browser, Entity));
       if Child = null then
-
          if Automatically_Check_To_Dependencies then
             Iter := Get_All_Called_Entities (Entity);
             if not At_End (Iter) then
@@ -1891,6 +1898,12 @@ package body Browsers.Call_Graph is
          Examine_Ancestors_Call_Graph_Iterator
            (Kernel, Entity, Cb, Add_To_List'Unrestricted_Access,
             Background_Mode => False);
+
+      elsif Command = "called_by_browser" then
+         Examine_Ancestors_Call_Graph (Kernel, Entity);
+
+      elsif Command = "dump" then
+         Dump (Entity, Full => False, Name => "");
       end if;
 
    exception
@@ -1898,6 +1911,50 @@ package body Browsers.Call_Graph is
          Trace (Exception_Handle,
                 "Unexpected exception " & Exception_Information (E));
    end Call_Graph_Command_Handler;
+
+   --------------------------
+   -- Xref_Command_Handler --
+   --------------------------
+
+   procedure Xref_Command_Handler
+     (Data    : in out Callback_Data'Class;
+      Command : String)
+   is
+      pragma Unreferenced (Command);
+      Output : Ada.Text_IO.File_Type;
+
+      procedure My_Output (Str : String);
+      procedure My_Output_Line (Str : String);
+      --  Output a string to the file
+
+      ---------------
+      -- My_Output --
+      ---------------
+
+      procedure My_Output (Str : String) is
+      begin
+         Put (Output, Str);
+      end My_Output;
+
+      --------------------
+      -- My_Output_Line --
+      --------------------
+
+      procedure My_Output_Line (Str : String) is
+      begin
+         Put_Line (Output, Str);
+      end My_Output_Line;
+
+   begin
+      Create (Output, Name => Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+      Trace (Me, "Database dumped in "
+             & Get_Home_Dir (Get_Kernel (Data)) & "db_dump");
+      Entities.Debug.Output      := My_Output'Unrestricted_Access;
+      Entities.Debug.Output_Line := My_Output_Line'Unrestricted_Access;
+      Dump (Get_Database (Get_Kernel (Data)));
+      Set_Default_Output;
+      Close (Output);
+   end Xref_Command_Handler;
 
    ---------------------
    -- Register_Module --
@@ -1947,6 +2004,13 @@ package body Browsers.Call_Graph is
         (Kernel, "called_by",
          Class        => Get_Entity_Class (Kernel),
          Handler      => Call_Graph_Command_Handler'Access);
+      Register_Command
+        (Kernel, "called_by_browser",
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Call_Graph_Command_Handler'Access);
+      Register_Command
+        (Kernel, "dump_xref_db",
+         Handler      => Xref_Command_Handler'Access);
    end Register_Module;
 
    ------------------
