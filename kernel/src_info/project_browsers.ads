@@ -65,8 +65,8 @@ package Project_Browsers is
    --  The graph can be used directly in GtkAda.Canvas provided you set up the
    --  vertices correctly in your factory.
 
-   function Project_Name (Vertex : access Project_Vertex) return String;
-   --  Return the name of the project for Vertex
+   function Project_Name (Vertex : access Project_Vertex) return Types.Name_Id;
+   --  Return the name of the project for Vertex.
 
    procedure Set_Project_Name
      (Vertex : access Project_Vertex; Name : Types.Name_Id);

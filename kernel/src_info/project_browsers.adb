@@ -22,7 +22,6 @@ with Gtkada.Canvas; use Gtkada.Canvas;
 with Glib.Graphs;   use Glib.Graphs;
 with Prj.Tree;      use Prj.Tree;
 with Types;         use Types;
-with Namet;         use Namet;
 
 package body Project_Browsers is
 
@@ -153,9 +152,9 @@ package body Project_Browsers is
    -- Project_Name --
    ------------------
 
-   function Project_Name (Vertex : access Project_Vertex) return String is
+   function Project_Name (Vertex : access Project_Vertex) return Name_Id is
    begin
-      return Get_Name_String (Vertex.Name);
+      return Vertex.Name;
    end Project_Name;
 
    ----------------------
