@@ -175,8 +175,7 @@ package body Glide_Kernel.Editor is
      (Kernel          : access Kernel_Handle_Record'Class;
       Source_Info     : in out LI_File_Ptr;
       Source_Filename : String;
-      Status          : out LI_File_Update_Status)
-   is
+      Status          : out LI_File_Update_Status) is
    begin
       Status := Success;
 
@@ -626,7 +625,7 @@ package body Glide_Kernel.Editor is
    procedure Find_Dependencies
      (Kernel       : access Kernel_Handle_Record'Class;
       Source_Name  : String;
-      Dependencies : out Src_Info.Queries.Dependency_List;
+      Dependencies : out Src_Info.Dependency_File_Info_List;
       Status       : out Src_Info.Queries.Dependencies_Query_Status)
    is
       Source_Info   : LI_File_Ptr;
@@ -641,12 +640,11 @@ package body Glide_Kernel.Editor is
          Console.Insert
            (Kernel, "Internal Error detected: " & Msg & ".",
             Highlight_Sloc => False);
-         Destroy (Dependencies);
          Status := Internal_Error;
       end Handle_Internal_Error;
 
    begin
-      Dependencies := null;
+      Dependencies := No_Dependencies;
 
       if Source_Name = "" then
          Handle_Internal_Error (Msg => "Empty source file name");
@@ -660,7 +658,7 @@ package body Glide_Kernel.Editor is
 
       case Update_Status is
          when Failure =>
-            Dependencies := null;
+            Dependencies := No_Dependencies;
             Status := Failure;
             return;
          when Success =>
