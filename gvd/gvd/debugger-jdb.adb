@@ -1046,7 +1046,7 @@ package body Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Beginning : in String) return GVD.Types.String_Array
    is
-      Result : GVD.Types.String_Array (1 .. 1);
+      Result : GVD.Types.String_Array (1 .. 0);
    begin
       return Result;
    end Complete;
