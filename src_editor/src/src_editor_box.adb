@@ -39,6 +39,7 @@ with Gtk.Label;                  use Gtk.Label;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
 
 with GNAT.OS_Lib;                use GNAT.OS_Lib;
+with Language;                   use Language;
 with Src_Editor;                 use Src_Editor;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
 with Src_Editor_View;            use Src_Editor_View;
@@ -276,9 +277,10 @@ package body Src_Editor_Box is
    ---------------
 
    procedure Load_File
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : String;
-      Success  : out Boolean)
+     (Editor          : access Source_Editor_Box_Record;
+      Filename        : String;
+      Lang_Autodetect : Boolean := True;
+      Success         : out Boolean)
    is
       FD : File_Descriptor;
       Buffer_Length : constant := 1_024;
@@ -289,6 +291,11 @@ package body Src_Editor_Box is
       if FD = Invalid_FD then
          Success := False;
          return;
+      end if;
+
+      if Lang_Autodetect then
+         Set_Language
+           (Editor.Source_Buffer, Get_Language_From_File (Filename));
       end if;
 
       Characters_Read := Buffer_Length;

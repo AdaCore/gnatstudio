@@ -81,11 +81,18 @@ package Src_Editor_Box is
    --  Detach Box of its Parent, if possible.
 
    procedure Load_File
-     (Editor   : access Source_Editor_Box_Record;
-      Filename : String;
-      Success  : out Boolean);
-   --  Load the file into the buffer. The buffer is also highlighted according
-   --  to the language, if set.
+     (Editor          : access Source_Editor_Box_Record;
+      Filename        : String;
+      Lang_Autodetect : Boolean := True;
+      Success         : out Boolean);
+   --  Load the file into the buffer. If Lang_Autodetect is set to True, then
+   --  the editor tries to automatically set the language based on the
+   --  Filename. Otherwise, the language remains uchanged. After the file is
+   --  loaded into the buffer, the buffer is syntax-highlighted if Lang is set.
+   --
+   --  Note that if Lang_Autodetect is True, and the editor could not guess
+   --  the language from the filename, then Lang will be unset, and syntax
+   --  highlighting will be deactivated.
 
    procedure Set_Language
      (Editor : access Source_Editor_Box_Record;
