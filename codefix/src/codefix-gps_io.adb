@@ -23,6 +23,7 @@ with Glide_Kernel.Project;  use Glide_Kernel.Project;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
 with String_List_Utils;
 with String_Utils;          use String_Utils;
+with Projects.Registry;     use Projects.Registry;
 
 package body Codefix.GPS_Io is
 
@@ -55,8 +56,11 @@ package body Codefix.GPS_Io is
       SL.Append (Args, "-L");
       SL.Append (Args, "1");
       SL.Append
-        (Args, Find_Source_File
-           (Current_Text.Kernel, Get_File_Name (Current_Text)));
+        (Args, Get_Full_Path_From_File
+         (Registry        => Get_Registry (Current_Text.Kernel),
+          Filename        => Get_File_Name (Current_Text),
+          Use_Source_Path => True,
+          Use_Object_Path => False));
       Result.Id := new String'
         (Interpret_Command (Current_Text.Kernel, "create_mark", Args));
       SL.Free (Args);
@@ -200,7 +204,11 @@ package body Codefix.GPS_Io is
          SL.Append (Args, "-c");
          SL.Append (Args, Image (Cursor.Col));
          SL.Append
-           (Args, Find_Source_File (This.Kernel, Get_File_Name (This)));
+           (Args, Get_Full_Path_From_File
+            (Registry        => Get_Registry (This.Kernel),
+             Filename        => Get_File_Name (This),
+             Use_Source_Path => True,
+             Use_Object_Path => False));
          SL.Append (Args, "-a");
          SL.Append (Args, Image (Len));
          SL.Append (Args, "-b");
@@ -220,7 +228,11 @@ package body Codefix.GPS_Io is
          SL.Append (Args, "-c");
          SL.Append (Args, "1");
          SL.Append
-           (Args, Find_Source_File (This.Kernel, Get_File_Name (This)));
+           (Args, Get_Full_Path_From_File
+            (Registry        => Get_Registry (This.Kernel),
+             Filename        => Get_File_Name (This),
+             Use_Source_Path => True,
+             Use_Object_Path => False));
          SL.Append (Args, "-a");
          SL.Append (Args, "0");
          SL.Append (Args, "-b");
@@ -282,8 +294,11 @@ package body Codefix.GPS_Io is
       SL.Append (Args, "-c");
       SL.Append (Args, Image (Cursor.Col));
       SL.Append
-        (Args,
-         Find_Source_File (This.Kernel, Get_File_Name (This)));
+        (Args, Get_Full_Path_From_File
+         (Registry        => Get_Registry (This.Kernel),
+          Filename        => Get_File_Name (This),
+          Use_Source_Path => True,
+          Use_Object_Path => False));
       SL.Append (Args, """""");  --  string composed of double quotes
 
       declare
@@ -316,7 +331,11 @@ package body Codefix.GPS_Io is
       S    : String_Access;
       Args : SL.List;
    begin
-      SL.Append (Args, Find_Source_File (This.Kernel, Get_File_Name (This)));
+      SL.Append (Args, Get_Full_Path_From_File
+                 (Registry        => Get_Registry (This.Kernel),
+                  Filename        => Get_File_Name (This),
+                  Use_Source_Path => True,
+                  Use_Object_Path => False));
       S := new String'(Interpret_Command (This.Kernel, "get_buffer", Args));
       SL.Free (Args);
       return S;
@@ -386,7 +405,11 @@ package body Codefix.GPS_Io is
          Old_Index     := Current_Index;
       end loop;
 
-      SL.Append (Args, Find_Source_File (This.Kernel, Get_File_Name (This)));
+      SL.Append (Args, Get_Full_Path_From_File
+                 (Registry        => Get_Registry (This.Kernel),
+                  Filename        => Get_File_Name (This),
+                  Use_Source_Path => True,
+                  Use_Object_Path => False));
       This.Lines_Number.all := Natural'Value
         (Interpret_Command (This.Kernel, "get_last_line", Args));
       SL.Free (Args);
@@ -443,8 +466,11 @@ package body Codefix.GPS_Io is
 
       if Current /= Invalid_Error_Message then
          Assign
-           (Current.File_Name, Find_Source_File
-              (This.Kernel, Current.File_Name.all));
+           (Current.File_Name, Get_Full_Path_From_File
+            (Registry        => Get_Registry (This.Kernel),
+             Filename        => Current.File_Name.all,
+             Use_Source_Path => True,
+             Use_Object_Path => False));
       end if;
 
       This.Current_Index := This.Current_Index + 1;
