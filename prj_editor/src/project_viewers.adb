@@ -492,9 +492,7 @@ package body Project_Viewers is
    --------------
 
    procedure Activate (Callback : access On_Reopen; Item : String) is
-      Dir      : constant String := Dir_Name (Item);
    begin
-      Change_Dir (Dir);
       Load_Project (Callback.Kernel, Item);
 
    exception
