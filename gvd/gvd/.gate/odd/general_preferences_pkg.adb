@@ -129,7 +129,7 @@ begin
      0, 0);
    Set_Active (Odd_Preferences.Checkbutton8, False);
 
-   Gtk_New (Odd_Preferences.Checkbutton9, -"Warn if Multiple ODD Instances are Running");
+   Gtk_New (Odd_Preferences.Checkbutton9, -"Warn if Multiple GVD Instances are Running");
    Attach (Odd_Preferences.Table1, Odd_Preferences.Checkbutton9, 0, 4, 6, 7,
      Expand or Fill, Expand,
      0, 0);
@@ -660,7 +660,7 @@ begin
      0, 0);
    Set_Active (Odd_Preferences.Checkbutton31, False);
 
-   Gtk_New (Odd_Preferences.Checkbutton32, -"ODD Splash Screen");
+   Gtk_New (Odd_Preferences.Checkbutton32, -"GVD Splash Screen");
    Attach (Odd_Preferences.Table4, Odd_Preferences.Checkbutton32, 1, 3, 8, 9,
      Expand or Fill, Expand,
      0, 0);

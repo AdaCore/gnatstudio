@@ -51,7 +51,7 @@ begin
    Gtk.Window.Initialize (Main_Debug_Window, Window_Toplevel);
    Return_Callback.Connect
      (Main_Debug_Window, "delete_event", On_Main_Debug_Window_Delete_Event'Access);
-   Set_Title (Main_Debug_Window, -"The Other Display Debugger");
+   Set_Title (Main_Debug_Window, -"The GNU Visual Debugger");
    Set_Policy (Main_Debug_Window, False, True, False);
    Set_Position (Main_Debug_Window, Win_Pos_None);
    Set_Modal (Main_Debug_Window, False);
@@ -1008,7 +1008,7 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator30);
    Set_Right_Justify (Main_Debug_Window.Separator30, False);
 
-   Gtk_New (Main_Debug_Window.Odd_Reference1, -"ODD Reference...");
+   Gtk_New (Main_Debug_Window.Odd_Reference1, -"GVD Reference...");
    Set_Sensitive (Main_Debug_Window.Odd_Reference1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Odd_Reference1, "activate",
@@ -1016,7 +1016,7 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_Reference1);
    Set_Right_Justify (Main_Debug_Window.Odd_Reference1, False);
 
-   Gtk_New (Main_Debug_Window.Odd_News1, -"ODD News...");
+   Gtk_New (Main_Debug_Window.Odd_News1, -"GVD News...");
    Set_Sensitive (Main_Debug_Window.Odd_News1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Odd_News1, "activate",
@@ -1036,7 +1036,7 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator31);
    Set_Right_Justify (Main_Debug_Window.Separator31, False);
 
-   Gtk_New (Main_Debug_Window.Odd_License1, -"ODD License...");
+   Gtk_New (Main_Debug_Window.Odd_License1, -"GVD License...");
    Set_Sensitive (Main_Debug_Window.Odd_License1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Odd_License1, "activate",
@@ -1044,7 +1044,7 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Odd_License1);
    Set_Right_Justify (Main_Debug_Window.Odd_License1, False);
 
-   Gtk_New (Main_Debug_Window.Odd_Www_Page1, -"ODD WWW Page...");
+   Gtk_New (Main_Debug_Window.Odd_Www_Page1, -"GVD WWW Page...");
    Set_Sensitive (Main_Debug_Window.Odd_Www_Page1, False);
    Menu_Item_Callback.Connect
      (Main_Debug_Window.Odd_Www_Page1, "activate",
@@ -1056,7 +1056,7 @@ begin
    Add (Main_Debug_Window.Help1_Menu, Main_Debug_Window.Separator32);
    Set_Right_Justify (Main_Debug_Window.Separator32, False);
 
-   Gtk_New (Main_Debug_Window.About_Odd1, -"About ODD...");
+   Gtk_New (Main_Debug_Window.About_Odd1, -"About GVD...");
    Menu_Item_Callback.Connect
      (Main_Debug_Window.About_Odd1, "activate",
       Menu_Item_Callback.To_Marshaller (On_About_Odd1_Activate'Access));

@@ -21,7 +21,7 @@
     <handler>on_main_debug_window_delete_event</handler>
     <last_modification_time>Tue, 18 Apr 2000 21:12:01 GMT</last_modification_time>
   </signal>
-  <title>The Other Display Debugger</title>
+  <title>The GNU Visual Debugger</title>
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
@@ -1724,7 +1724,7 @@
 	      <handler>on_odd_reference1_activate</handler>
 	      <last_modification_time>Sat, 22 Apr 2000 20:27:19 GMT</last_modification_time>
 	    </signal>
-	    <label>ODD Reference...</label>
+	    <label>GVD Reference...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1737,7 +1737,7 @@
 	      <handler>on_odd_news1_activate</handler>
 	      <last_modification_time>Sat, 22 Apr 2000 20:27:28 GMT</last_modification_time>
 	    </signal>
-	    <label>ODD News...</label>
+	    <label>GVD News...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1769,7 +1769,7 @@
 	      <handler>on_odd_license1_activate</handler>
 	      <last_modification_time>Sat, 22 Apr 2000 20:27:37 GMT</last_modification_time>
 	    </signal>
-	    <label>ODD License...</label>
+	    <label>GVD License...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1782,7 +1782,7 @@
 	      <handler>on_odd_www_page1_activate</handler>
 	      <last_modification_time>Sat, 22 Apr 2000 20:27:48 GMT</last_modification_time>
 	    </signal>
-	    <label>ODD WWW Page...</label>
+	    <label>GVD WWW Page...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -1800,7 +1800,7 @@
 	      <handler>on_about_odd1_activate</handler>
 	      <last_modification_time>Sun, 23 Apr 2000 23:50:31 GMT</last_modification_time>
 	    </signal>
-	    <label>About ODD...</label>
+	    <label>About GVD...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 	</widget>
@@ -2548,7 +2548,7 @@
 	    <class>GtkCheckButton</class>
 	    <name>checkbutton9</name>
 	    <can_focus>True</can_focus>
-	    <label>Warn if Multiple ODD Instances are Running</label>
+	    <label>Warn if Multiple GVD Instances are Running</label>
 	    <active>False</active>
 	    <draw_indicator>True</draw_indicator>
 	    <child>
@@ -4190,7 +4190,7 @@
 	    <class>GtkCheckButton</class>
 	    <name>checkbutton32</name>
 	    <can_focus>True</can_focus>
-	    <label>ODD Splash Screen</label>
+	    <label>GVD Splash Screen</label>
 	    <active>False</active>
 	    <draw_indicator>True</draw_indicator>
 	    <child>
