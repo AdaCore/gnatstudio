@@ -840,10 +840,10 @@ package body Debugger.Gdb is
       Executable : String;
       Mode       : Command_Type := Hidden)
    is
-      pragma Unreferenced (Mode);
-
       Exec                : constant String := To_Unix_Pathname (Executable);
       Num                 : Breakpoint_Identifier;
+      pragma Unreferenced (Mode, Num);
+
       No_Such_File_Regexp : constant Pattern_Matcher :=
         Compile ("No such file or directory.");
       --  Note that this pattern should work even when LANG isn't english
@@ -2678,13 +2678,13 @@ package body Debugger.Gdb is
                  Mode => Internal);
 
          Index   : Natural := S'First;
-         Num     : Natural;
          Matched : Match_Array (0 .. 4);
          Scope   : GVD.Types.Scope_Type;
          Action  : GVD.Types.Action_Type;
 
       begin
          --  skip the first line
+
          Skip_To_Char (S, Index, ASCII.LF);
          Index := Index + 1;
 
@@ -2692,11 +2692,8 @@ package body Debugger.Gdb is
             Match (Breakpoint_Extra_Info, S (Index .. S'Last), Matched);
 
             if Matched (0) /= No_Match then
-               --  get the breakpoint identifier
-               Num := Integer'Value
-                 (S (Matched (1).First .. Matched (1).Last));
-
                --  get the scope value
+
                if S (Matched (2).First .. Matched (2).Last) = "task" then
                   Scope := Current_Task;
                elsif S (Matched (2).First .. Matched (2).Last) = "pd" then
@@ -2708,6 +2705,7 @@ package body Debugger.Gdb is
                end if;
 
                --  get the action value
+
                if S (Matched (3).First .. Matched (3).Last) = "task" then
                   Action := Current_Task;
                elsif S (Matched (3).First .. Matched (3).Last) = "pd" then
