@@ -662,11 +662,11 @@ package body Glide_Kernel is
          Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
 
+      C : Selection_Context_Access := Selection_Context_Access (Context);
    begin
-      Internal
-        (Get_Object (Handle),
-         Context_Changed_Signal & ASCII.NUL,
-         Selection_Context_Access (Context));
+      Ref (C);
+      Internal (Get_Object (Handle), Context_Changed_Signal & ASCII.NUL, C);
+      Unref (C);
    end Context_Changed;
 
    ------------------------
@@ -695,7 +695,7 @@ package body Glide_Kernel is
          Module := Module_List.Next (Module);
       end loop;
 
-      Trace (Me, "Get_Current_Context: No module associated with tag "
+      Trace (Me, "Get_Current_Module: No module associated with tag "
              & External_Tag (Get_Widget (C)'Tag));
 
       return null;
@@ -712,6 +712,7 @@ package body Glide_Kernel is
    begin
       if Kernel.Current_Context /= null then
          Unref (Kernel.Current_Context);
+         Kernel.Current_Context := null;
       end if;
 
       Module := Get_Current_Module (Kernel);
@@ -726,7 +727,8 @@ package body Glide_Kernel is
          end if;
 
          if Kernel.Current_Context = null then
-            Trace (Me, "Null context returned by the module");
+            Trace (Me, "Null context returned by the module "
+                   & Module.Info.Name);
          end if;
       end if;
 
@@ -982,11 +984,13 @@ package body Glide_Kernel is
       procedure Internal is new Ada.Unchecked_Deallocation
         (Selection_Context'Class, Selection_Context_Access);
    begin
-      if Context.Ref_Count > 1 then
-         Context.Ref_Count := Context.Ref_Count - 1;
-      else
-         Destroy (Context.all);
-         Internal (Context);
+      if Context /= null then
+         if Context.Ref_Count > 1 then
+            Context.Ref_Count := Context.Ref_Count - 1;
+         else
+            Destroy (Context.all);
+            Internal (Context);
+         end if;
       end if;
    end Unref;
 
@@ -996,7 +1000,9 @@ package body Glide_Kernel is
 
    procedure Ref (Context : in out Selection_Context_Access) is
    begin
-      Context.Ref_Count := Context.Ref_Count + 1;
+      if Context /= null then
+         Context.Ref_Count := Context.Ref_Count + 1;
+      end if;
    end Ref;
 
    ----------------
@@ -1030,7 +1036,6 @@ package body Glide_Kernel is
    begin
       Context.Kernel := Kernel_Handle (Kernel);
       Context.Creator := Creator;
-      Context.Ref_Count := 1;
    end Set_Context_Information;
 
    -------------
