@@ -3037,14 +3037,16 @@ package body Ada_Analyzer is
             exit Main_Loop when Handle_Reserved_Word (Token);
          end if;
 
-         case Casing is
-            when Unchanged =>
-               null;
+         if Indent_Params.Casing_Policy /= Disabled then
+            case Casing is
+               when Unchanged =>
+                  null;
 
-            when Upper | Lower | Mixed | Smart_Mixed  =>
-               Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
-               Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
-         end case;
+               when Upper | Lower | Mixed | Smart_Mixed  =>
+                  Set_Case (Case_Exceptions, Str (1 .. Str_Len), Casing);
+                  Replace_Text (Prec, Current + 1, Str (1 .. Str_Len));
+            end case;
+         end if;
 
          --  'is' is handled specially, so nothing is needed here
 
