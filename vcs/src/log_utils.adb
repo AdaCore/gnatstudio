@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2004                    --
+--                      Copyright (C) 2002-2004                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -135,9 +135,14 @@ package body Log_Utils is
       F           : Natural;
 
       function Get_GPS_User return String is
-         User : constant String := Getenv ("USER").all;
-         GCU  : constant String := Getenv ("GPS_CHANGELOG_USER").all;
+         User_Ptr : String_Access   := Getenv ("USER");
+         GCU_Ptr  : String_Access   := Getenv ("GPS_CHANGELOG_USER");
+         User     : constant String := User_Ptr.all;
+         GCU      : constant String := GCU_Ptr.all;
       begin
+         Free (User_Ptr);
+         Free (GCU_Ptr);
+
          if GCU = "" then
             if User = "" then
                return "name  <e-mail>";
