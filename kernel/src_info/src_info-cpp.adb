@@ -69,6 +69,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table);
    procedure Sym_E_Handler       (Sym : FIL_Table);
    procedure Sym_EC_Handler      (Sym : FIL_Table);
+   procedure Sym_T_Handler       (Sym : FIL_Table);
    procedure Sym_CL_Handler      (Sym : FIL_Table);
    procedure Sym_IV_Handler      (Sym : FIL_Table);
    procedure Sym_MA_Handler      (Sym : FIL_Table);
@@ -82,6 +83,7 @@ package body Src_Info.CPP is
       FU     => Sym_FU_Handler'Access,
       E      => Sym_E_Handler'Access,
       EC     => Sym_EC_Handler'Access,
+      T      => Sym_T_Handler'Access,
       CL     => Sym_CL_Handler'Access,
       MA     => Sym_MA_Handler'Access,
       IV     => Sym_IV_Handler'Access,
@@ -411,8 +413,8 @@ package body Src_Info.CPP is
 
    procedure Type_Name_To_Kind
      (Type_Name : in String;
-      Desc : out CType_Description;
-      Success : out Boolean)
+      Desc      : out CType_Description;
+      Success   : out Boolean)
    is
       Matches      : Match_Array (1 .. 1);
       Volatile_Str : constant String := "volatile ";
@@ -511,11 +513,11 @@ package body Src_Info.CPP is
             Enum_Def : E_Table;
          begin
             Enum_Def := Find (SN_Table (E), Type_Name);
-            Free (Enum_Def);
             Desc.Kind := Enumeration_Type;
             Desc.Parent_Point    := Enum_Def.Start_Position;
             Desc.Parent_Filename := new String'(Enum_Def.Buffer (
                     Enum_Def.File_Name.First .. Enum_Def.File_Name.Last));
+            Free (Enum_Def);
             Success := True;
             return;
          exception
@@ -641,6 +643,7 @@ package body Src_Info.CPP is
    procedure Sym_FU_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_E_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_EC_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_T_Handler       (Sym : FIL_Table) is separate;
    procedure Sym_CL_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_IV_Handler      (Sym : FIL_Table) is separate;
