@@ -18,8 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib; use Glib;
-
 package Odd is
 
    ---------------
@@ -29,42 +27,8 @@ package Odd is
    Version : constant String := "0.6w";
    --  Version number of this software.
 
-   Editor_Font_Size : constant Gint := 12;
-   --  Size of the font used in the editor.
-
-   Editor_Font : constant String := "Courier";
-   --  Font used in the editor.
-
-   Comments_Color : constant String := "#FF0000";
-   --  Color used for comments.
-
-   Strings_Color  : constant String := "#A52A2A";
-   --  Color used for strings (brown).
-
-   Keywords_Color : constant String := "#0000FF";
-   --  Color used for keywords (blue).
-
-   Debugger_Highlight_Color : constant String := "#0000FF";
-   --  Color used for highlighting in the debugger window (blue).
-
-   Debugger_Font_Size : constant Gint := 12;
-   --  Size of the font used in the debugger text window.
-
-   Debugger_Font : constant String := "Courier";
-   --  Font used in the debugger text window.
-
-   Editor_Show_Line_Nums : constant Boolean := True;
-   --  Whether line numbers should be shown in the code editor
-
-   Editor_Show_Line_With_Code : constant Boolean := True;
-   --  Whether dots should be shown in the code editor for lines that
-   --  contain code.
-
    Max_Frame : constant := 500;
    --  Maximum number of frames displayed in the backtrace window.
-
-   Align_Items_On_Grid : constant Boolean := True;
-   --  Should items be aligned on the grid.
 
    Max_Column_Width : constant := 200;
    --  Maximum width (in pixels) for a column in a list.

@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Canvas;  use Gtkada.Canvas;
-with Gtk.Handlers;   use Gtk.Handlers;
+with Gtkada.Canvas;   use Gtkada.Canvas;
+with Gtk.Handlers;    use Gtk.Handlers;
 
 package body Odd.Canvas is
 

@@ -35,6 +35,7 @@
 --  This information is also computed in a lazy fashion, ie while nothing
 --  else is happening in the application.
 
+with Glib;
 with Gtk.Menu;
 with Gtk.Paned;
 with Gtk.Scrolled_Window;

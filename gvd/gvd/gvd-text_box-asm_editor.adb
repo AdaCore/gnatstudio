@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Debugger;         use Debugger;
 with Gdk.Bitmap;       use Gdk.Bitmap;
 with Gdk.Color;        use Gdk.Color;
 with Gdk.Pixmap;       use Gdk.Pixmap;
@@ -32,18 +31,20 @@ with Gtk.Pixmap;       use Gtk.Pixmap;
 with Gtk.Text;         use Gtk.Text;
 with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Types;     use Gtkada.Types;
+
+with Debugger;         use Debugger;
+
 with Odd.Process;      use Odd.Process;
 with Odd.Code_Editors; use Odd.Code_Editors;
+with Odd.Preferences;  use Odd.Preferences;
 with Odd.Strings;      use Odd.Strings;
 with Odd.Text_Boxes;   use Odd.Text_Boxes;
 with Odd.Types;        use Odd.Types;
-with GNAT.Regpat;      use GNAT.Regpat;
 with Odd_Intl;         use Odd_Intl;
 
-package body Odd.Asm_Editors is
+with GNAT.Regpat;      use GNAT.Regpat;
 
-   Editor_Highlight_Color : constant String := "#FF0000";
-   --  Color to use to highlight the assembly code for the current line (red)
+package body Odd.Asm_Editors is
 
    package Editor_Cb is new Callback (Asm_Editor_Record);
 

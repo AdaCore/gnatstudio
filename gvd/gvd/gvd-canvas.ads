@@ -19,17 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Canvas;
+with Odd.Preferences;
 
 package Odd.Canvas is
-
-   ---------------
-   -- Constants --
-   ---------------
-   --  ??? These will eventually be moved to a preferences package.
-
-   Default_Detect_Aliases : constant Boolean := True;
-   --  If True, do not create new items when a matching item is already
-   --  present in the canvas.
 
    ----------------
    -- Odd_Canvas --
@@ -61,7 +53,7 @@ private
 
    type Odd_Canvas_Record is new Gtkada.Canvas.Interactive_Canvas_Record with
    record
-      Detect_Aliases : Boolean := Default_Detect_Aliases;
+      Detect_Aliases : Boolean := Odd.Preferences.Default_Detect_Aliases;
       Item_Num       : Integer := 0;
    end record;
 end Odd.Canvas;

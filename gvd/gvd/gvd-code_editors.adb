@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;         use Ada.Text_IO;
 with Glib;                use Glib;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -28,11 +27,15 @@ with Gtk.Paned;           use Gtk.Paned;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Widget;          use Gtk.Widget;
+
 with Odd.Asm_Editors;     use Odd.Asm_Editors;
 with Odd.Explorer;        use Odd.Explorer;
+with Odd.Preferences;     use Odd.Preferences;
 with Odd.Source_Editors;  use Odd.Source_Editors;
 with Odd.Types;           use Odd.Types;
 with Odd_Intl;            use Odd_Intl;
+
+with Ada.Text_IO;         use Ada.Text_IO;
 
 package body Odd.Code_Editors is
 
@@ -41,9 +44,6 @@ package body Odd.Code_Editors is
    ---------------------
    -- Local constants --
    ---------------------
-
-   Display_Explorer : constant Boolean := True;
-   --  True if we should associate an explorer tree to each editor.
 
    Explorer_Width : constant := 200;
    --  Width of the area reserved for the explorer.
