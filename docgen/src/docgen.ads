@@ -84,6 +84,38 @@ package Docgen is
      new Sort (Type_Reference_List, "<" => Compare_Elements_Name);
    --  Sort the list by name
 
+   type Entity_Handle is access Src_Info.Queries.Entity_Information;
+
+   type Reference_In_File is record
+      Name         : GNAT.OS_Lib.String_Access;
+      Line         : Positive;
+      Column       : Natural;
+      Entity       : Entity_Handle;
+   end record;
+   --  Record used to save a reference in a file
+   --  Entity is the declaration of the reference
+
+   procedure Free (X : in out Reference_In_File);
+   --  Free the information associated with X
+
+   package List_Reference_In_File is
+     new Generic_List (Reference_In_File);
+   --  List used to record the references of a file
+
+   function Compare_Elements_By_Line_And_Column
+     (X, Y : Reference_In_File) return Boolean;
+
+   procedure Sort_List_By_Line_And_Column   is
+     new Sort (List_Reference_In_File,
+               "<" => Compare_Elements_By_Line_And_Column);
+   --  Sort the list by line and column
+
+   procedure Free (X : in out Src_Info.Queries.Entity_Information);
+
+   package List_Entity_In_File is
+     new Generic_List (Src_Info.Queries.Entity_Information);
+   --  List used to record the declaration of references of a file
+
    type Entity_Type is
      (Subprogram_Entity,
       Exception_Entity,
@@ -323,6 +355,7 @@ package Docgen is
         (B             : Backend_Handle;
          Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
          File          : in Ada.Text_IO.File_Type;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          Info          : in out Docgen.Doc_Info;
          Doc_Directory : String;
          Doc_Suffix    : String);
@@ -338,6 +371,7 @@ package Docgen is
         (B             : access Backend;
          Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
          File          : in Ada.Text_IO.File_Type;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          Info          : in out Docgen.Doc_Info;
          Doc_Directory : String;
          Doc_Suffix    : String) is abstract;
@@ -394,6 +428,7 @@ package Docgen is
 
       procedure Format_Identifier
         (B                : access Backend;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          Start_Index      : Natural;
          Start_Line       : Natural;
          Start_Column     : Natural;
@@ -417,6 +452,7 @@ package Docgen is
         (B                : access Backend'Class;
          Kernel           : access Kernel_Handle_Record'Class;
          File             : Ada.Text_IO.File_Type;
+         List_Ref_In_File   : in out List_Reference_In_File.List;
          LI_Unit          : LI_File_Ptr;
          Text             : String;
          File_Name        : VFS.Virtual_File;
@@ -502,6 +538,7 @@ package Docgen is
      (B             : Backend_Handle;
       Kernel        : access Glide_Kernel.Kernel_Handle_Record'Class;
       File          : in Ada.Text_IO.File_Type;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Info          : in out Doc_Info;
       Doc_Directory : String;
       Doc_Suffix    : String);
@@ -509,6 +546,7 @@ package Docgen is
 
    procedure Format_All_Link
      (B                : access Backend'Class;
+      List_Ref_In_File   : in out List_Reference_In_File.List;
       Start_Index      : Natural;
       Start_Line       : Natural;
       Start_Column     : Natural;
@@ -524,7 +562,7 @@ package Docgen is
       Link_All         : Boolean;
       Is_Body          : Boolean;
       Process_Body     : Boolean);
-   --  This procedure is used by format of documentation like html to
+   --  This procedure is used by formats of documentation like html to
    --     create links for each entity of the file  File_Name on their
    --     own declaration. It's called by the method Format_Identifier of
    --     a child instance of a Backend object (eg. Backend_HTML).
