@@ -143,6 +143,8 @@ package body Odd.Menus is
                Auto_Refresh  => Var.Auto_Refresh);
       if Item /= null then
          Put (Var.Process.Data_Canvas, Item);
+     else
+         Put_Line ("???ITEM WAS NULL");
       end if;
    end Print_Variable;
 

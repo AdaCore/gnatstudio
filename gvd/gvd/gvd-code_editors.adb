@@ -720,7 +720,7 @@ package body Gtkada.Code_Editors is
          end if;
 
          Editor.Explorer :=
-           Explore (Editor, Editor.Buffer.all, Jump_To'Access);
+           Explore (Editor, Editor.Buffer.all, Editor.Lang, Jump_To'Access);
          Show_All (Editor.Explorer);
          Add (Editor.Explorer_Scroll, Editor.Explorer);
       end if;

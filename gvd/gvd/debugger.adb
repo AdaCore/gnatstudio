@@ -24,6 +24,7 @@ with Generic_Values;    use Generic_Values;
 with Process_Proxies;   use Process_Proxies;
 with Language;          use Language;
 with Language.Debugger; use Language.Debugger;
+with Odd.Types;         use Odd.Types;
 
 package body Debugger is
 

@@ -28,7 +28,7 @@ with GNAT.OS_Lib;         use GNAT.OS_Lib;
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
-with Generic_Values;
+with Odd.Types;
 
 with Ada.Text_IO;  use Ada.Text_IO;
 
@@ -1237,7 +1237,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Top : Main_Debug_Window_Access := Main_Debug_Window_Access (Object);
       Tab : Debugger_Process_Tab;
 
-      use type Generic_Values.String_Access;
+      use type Odd.Types.String_Access;
 
    begin
       Tab := Process_User_Data.Get

@@ -7,7 +7,7 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Object; use Gtk.Object;
-with Generic_Values; use Generic_Values;
+with Odd.Types; use Odd.Types;
 package Print_Dialog_Pkg is
 
    --  this is a temporary dialog that should be replaced in the near future

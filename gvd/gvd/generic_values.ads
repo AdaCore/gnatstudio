@@ -25,11 +25,9 @@ with Gdk.Bitmap;
 with Gdk.GC;
 with Gdk.Font;
 with Language;
+with Odd.Types; use Odd.Types;
 
 package Generic_Values is
-
-   type String_Access is access all String;
-   procedure Free is new Unchecked_Deallocation (String, String_Access);
 
    --  Description of the types and values that are parsed by Odd.
    --

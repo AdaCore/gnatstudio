@@ -24,6 +24,7 @@ with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
 with Gtk.Window;
+with Odd.Types;
 
 package Debugger is
 
@@ -106,10 +107,10 @@ package Debugger is
       Empty_Buffer    : Boolean := False;
       Wait_For_Prompt : Boolean := True) is abstract;
    --  Send a command to the underlying process associated with Debugger.
-   --  If Display is True, 
+   --  If Display is True,
    --  If Empty_Buffer is True, any input waiting from the process (or in the
    --  buffer) is first discarded before the command is sent.
-   
+
 
    function Highlighting_Pattern
      (Debugger : access Debugger_Root)
@@ -312,9 +313,9 @@ package Debugger is
 
    type Backtrace_Record is record
       Frame_Id        : Natural;
-      Program_Counter : Generic_Values.String_Access;
-      Subprogram      : Generic_Values.String_Access;
-      Source_Location : Generic_Values.String_Access;
+      Program_Counter : Odd.Types.String_Access;
+      Subprogram      : Odd.Types.String_Access;
+      Source_Location : Odd.Types.String_Access;
    end record;
 
    type Backtrace_Array is array (Positive range <>) of Backtrace_Record;

@@ -33,7 +33,6 @@ with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Unchecked_Conversion;
 with Odd.Strings;       use Odd.Strings;
 with Gtk.Window;        use Gtk.Window;
-with Text_IO;
 with Odd.Dialogs;       use Odd.Dialogs;
 
 package body Debugger.Gdb is

@@ -8,7 +8,7 @@ with Callbacks_Odd;   use Callbacks_Odd;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Interfaces.C;    use Interfaces.C;
 with Interfaces.C.Strings;
-with Generic_Values;  use Generic_Values;
+with Odd.Types;       use Odd.Types;
 
 package body Odd.Dialogs is
 

@@ -19,10 +19,6 @@
 -----------------------------------------------------------------------
 
 with Ada.Tags; use Ada.Tags;
-with Ada.Strings; use Ada.Strings;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Odd.Strings; use Odd.Strings;
 
 with Ada.Text_IO; use Ada.Text_IO;
@@ -654,7 +650,6 @@ package body Debugger.Gdb.C is
       ----------------
 
       procedure Parse_Item is
-         Int        : Natural := Index;
          Tmp        : Generic_Type_Access;
          Repeat_Num : Integer;
       begin

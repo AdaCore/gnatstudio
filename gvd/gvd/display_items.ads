@@ -24,6 +24,7 @@ with Gdk.Window;
 with Generic_Values;
 with Odd.Process;
 with Gdk.Event;
+with Odd.Types;
 
 package Display_Items is
 
@@ -62,7 +63,7 @@ package Display_Items is
 private
    type Display_Item_Record is new Gtkada.Canvas.Canvas_Item_Record with
       record
-         Name         : Generic_Values.String_Access := null;
+         Name         : Odd.Types.String_Access := null;
          Entity       : Generic_Values.Generic_Type_Access := null;
          Auto_Refresh : Boolean := True;
          Debugger     : Odd.Process.Debugger_Process_Tab;
@@ -74,7 +75,7 @@ private
          --  Entity fields contains both the types and the value). Set to
          --  False if Entity contains only the type definition.
 
-         Id           : Generic_Values.String_Access := null;
+         Id           : Odd.Types.String_Access := null;
          --  Uniq ID used for the variable.
          --  This Id is returned by the debugger, and can be the address of a
          --  variable (in Ada or C), or simply the name of the variable (in

@@ -172,6 +172,8 @@ package body Odd.Process is
       Freeze (Process.Debugger_Text);
       Set_Point (Process.Debugger_Text, Get_Length (Process.Debugger_Text));
 
+      --  ??? Should strip ^M from the text.
+
       --  Should all the string be highlighted ?
 
       if Is_Command then

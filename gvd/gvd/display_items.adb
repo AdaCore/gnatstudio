@@ -39,6 +39,7 @@ with Gdk.Event;        use Gdk.Event;
 with Odd.Pixmaps;      use Odd.Pixmaps;
 with Gtk.Menu;         use Gtk.Menu;
 with Odd.Menus;        use Odd.Menus;
+with Odd.Types;        use Odd.Types;
 
 with Ada.Text_IO;      use Ada.Text_IO;
 

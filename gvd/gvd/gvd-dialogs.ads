@@ -7,7 +7,7 @@ with Gtk.Button; use Gtk.Button;
 with Gtk.Window; use Gtk.Window;
 with Language; use Language;
 with Debugger; use Debugger;
-with Generic_Values; use Generic_Values;
+with Odd.Types;
 
 package Odd.Dialogs is
 
@@ -23,10 +23,10 @@ package Odd.Dialogs is
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
 
    type Question_Record is record
-      Choice : Generic_Values.String_Access;
+      Choice : Odd.Types.String_Access;
       --  String that the user should enter to select that choice
 
-      Description : Generic_Values.String_Access;
+      Description : Odd.Types.String_Access;
       --  Associated description
    end record;
    type Question_Array is array (Positive range <>) of Question_Record;

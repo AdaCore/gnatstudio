@@ -99,6 +99,11 @@ package Odd.Strings is
    function Base_File_Name (File_Name : String) return String;
    --  Return the base name of File_Name (ie without any directory indication)
 
+   function Reduce (S : String) return String;
+   --  Replace in string S all ASCII.LF and ASCII.HT characters with a space,
+   --  and replace multiple spaces with a single one.
+   --  Return the resulting string.
+
 private
    pragma Inline (Looking_At);
    pragma Inline (Skip_Blanks);

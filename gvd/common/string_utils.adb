@@ -337,4 +337,31 @@ package body Odd.Strings is
       end if;
    end Skip_Word;
 
+   ------------
+   -- Reduce --
+   ------------
+
+   function Reduce (S : String) return String is
+      Result : String (S'Range);
+      Len    : Positive := Result'First;
+      Blank  : Boolean  := False;
+
+   begin
+      for J in S'Range loop
+         if S (J) = ASCII.LF or else S (J) = ASCII.HT or else S (J) = ' ' then
+            if not Blank then
+               Result (Len) := ' ';
+               Len := Len + 1;
+               Blank := True;
+            end if;
+         else
+            Blank := False;
+            Result (Len) := S (J);
+            Len := Len + 1;
+         end if;
+      end loop;
+
+      return Result (Result'First .. Len - 1);
+   end Reduce;
+
 end Odd.Strings;

@@ -205,6 +205,8 @@ package body Process_Proxies is
                   Num_Events := Num_Events + 1;
                end loop;
 
+               --  While (G_Main_Iteration (False)); is recommended in C ?
+
             when others =>
                --  It matched, we can simply return.
                exit;
