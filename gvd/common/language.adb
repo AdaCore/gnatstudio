@@ -486,16 +486,6 @@ package body Language is
       end loop;
    end Parse_Entities;
 
-   ----------------
-   -- Can_Indent --
-   ----------------
-
-   function Can_Indent (Lang : access Language_Root) return Boolean is
-      pragma Unreferenced (Lang);
-   begin
-      return True;
-   end Can_Indent;
-
    ----------------------
    -- Next_Indentation --
    ----------------------
