@@ -29,28 +29,23 @@ package Vdiff2_Utils is
 
    procedure Show_Merge
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
       Merge  : String;
-      File1  : String;
-      File2  : String;
-      File3  : String := "");
+      Item   : Diff_List_Head);
    --  show a result of a Merge.
 
    procedure Show_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
-      File1  : String;
-      File2  : String;
-      File3  : String := "");
-   --  show a result of diff Diff.
+      Item   : Diff_List_Head);
+   --  show a result of diff Diff
+   procedure Show_Differences3
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Item   : Diff_List_Head);
 
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Diff   : Diff_Occurrence_Link;
-      File1  : String_Access;
-      File2  : String_Access;
-      File3  : String_Access := null);
+      Item   : Diff_List_Head);
    --  hide the hightlighting.
+
    type Text_Iterator;
 
    type Text_Iterator_Access is access all Text_Iterator;
