@@ -44,10 +44,15 @@ package body Src_Info.Debug is
    --  to the given Reference_Kind.
 
    procedure Dump_D_Line
-     (Filename : String; Timestamp : Types.Time_Stamp_Type);
+     (Filename       : String;
+      Timestamp      : Types.Time_Stamp_Type;
+      Show_Timestamp : Boolean := True);
    --  Print a 'D' line with the filename and the timestamp.
 
-   procedure Dump_D_Line (SF : Source_File; Timestamp : Types.Time_Stamp_Type);
+   procedure Dump_D_Line
+     (SF             : Source_File;
+      Timestamp      : Types.Time_Stamp_Type;
+      Show_Timestamp : Boolean := True);
    --  Print a 'D' line for a dependency to Source_File with the given
    --  Timestamp.
 
@@ -90,16 +95,29 @@ package body Src_Info.Debug is
    -----------------
 
    procedure Dump_D_Line
-     (Filename : String; Timestamp : Types.Time_Stamp_Type) is
+     (Filename       : String;
+      Timestamp      : Types.Time_Stamp_Type;
+      Show_Timestamp : Boolean := True) is
    begin
-      Put_Line ("D " & Filename & ' ' & String (Timestamp));
+      Put ("D " & Filename);
+      if Show_Timestamp then
+         Put (' ' & String (Timestamp));
+      end if;
+      New_Line;
    end Dump_D_Line;
 
-   procedure Dump_D_Line (SF : Source_File; Timestamp : Types.Time_Stamp_Type)
+   procedure Dump_D_Line
+     (SF             : Source_File;
+      Timestamp      : Types.Time_Stamp_Type;
+      Show_Timestamp : Boolean := True)
    is
       FI : File_Info_Ptr := Get_File_Info (SF);
    begin
-      Put ("D " & FI.Source_Filename.all & ' ' & String (Timestamp));
+      Put ("D " & FI.Source_Filename.all);
+      if Show_Timestamp then
+         Put (' ' & String (Timestamp));
+      end if;
+
       --  If the unit we're depending on is a subunit, print its name
       case SF.Part is
          when Unit_Spec | Unit_Body =>
@@ -121,9 +139,10 @@ package body Src_Info.Debug is
    -- Dump_LI_File_Ptr --
    ----------------------
 
-   procedure Dump_LI_File_Ptr (LIFP : LI_File_Ptr) is
+   procedure Dump_LI_File_Ptr
+     (LIFP : LI_File_Ptr; Show_Timestamps : Boolean := True) is
    begin
-      Dump_LI_File (LIFP.LI);
+      Dump_LI_File (LIFP.LI, Show_Timestamps);
    end Dump_LI_File_Ptr;
 
    ----------------------------
@@ -339,8 +358,7 @@ package body Src_Info.Debug is
    -- Dump_Dependency_Section --
    -----------------------------
 
-   procedure Dump_Unit_Dependency_Section
-     (LIF   : LI_File; Part : Unit_Part)
+   procedure Dump_Unit_Dependency_Section (LIF : LI_File; Part : Unit_Part)
    is
       Current_Dep_File_Info : Dependency_File_Info_List :=
         LIF.Dependencies_Info;
@@ -382,7 +400,8 @@ package body Src_Info.Debug is
    -- Dump_File_Dependency_Section --
    ----------------------------------
 
-   procedure Dump_File_Dependency_Section (LIF : LI_File)
+   procedure Dump_File_Dependency_Section
+     (LIF : LI_File; Show_Timestamps : Boolean := True)
    is
       Current_Dependency_File : Dependency_File_Info_List :=
         LIF.Dependencies_Info;
@@ -391,21 +410,24 @@ package body Src_Info.Debug is
       if LIF.Spec_Info /= null then
          Dump_D_Line
            (LIF.Spec_Info.Source_Filename.all,
-            LIF.Spec_Info.File_Timestamp);
+            LIF.Spec_Info.File_Timestamp,
+            Show_Timestamps);
       end if;
 
       --  Generate the line for the body if applicable
       if LIF.Body_Info /= null then
          Dump_D_Line
            (LIF.Body_Info.Source_Filename.all,
-            LIF.Body_Info.File_Timestamp);
+            LIF.Body_Info.File_Timestamp,
+            Show_Timestamps);
       end if;
 
       --  Generate all the other lines...
       while Current_Dependency_File /= null loop
          Dump_D_Line
            (Current_Dependency_File.Value.File,
-            Current_Dependency_File.Value.File_Timestamp);
+            Current_Dependency_File.Value.File_Timestamp,
+            Show_Timestamps);
          Current_Dependency_File := Current_Dependency_File.Next;
       end loop;
    end Dump_File_Dependency_Section;
@@ -414,7 +436,7 @@ package body Src_Info.Debug is
    -- Dump_LI_File --
    --------------------
 
-   procedure Dump_LI_File (LIF : LI_File) is
+   procedure Dump_LI_File (LIF : LI_File; Show_Timestamps : Boolean := True) is
    begin
       --  If the associated unit information file (the ALI file in the
       --  case of Ada files compiled with GNAT) has not been parsed,
@@ -448,7 +470,7 @@ package body Src_Info.Debug is
       end if;
 
       --  Generate the file dependency section
-      Dump_File_Dependency_Section (LIF);
+      Dump_File_Dependency_Section (LIF, Show_Timestamps);
       New_Line;
 
       --  Generate the references information
