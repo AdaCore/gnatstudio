@@ -19,7 +19,9 @@
 -----------------------------------------------------------------------
 
 with Glide_Kernel; use Glide_Kernel;
-with Gtk.Window; use Gtk.Window;
+with Gtk.Box;      use Gtk.Box;
+with Gtk.Enums;    use Gtk.Enums;
+with Gtk.Window;   use Gtk.Window;
 
 package body Glide_Main_Window is
 
@@ -47,6 +49,9 @@ package body Glide_Main_Window is
    begin
       GVD.Main_Window.Initialize (Main_Window, Key, Menu_Items);
       Gtk_New (Main_Window.Kernel, Gtk_Window (Main_Window));
+      Gtk_New (Main_Window.Toolbar, Orientation_Horizontal, Toolbar_Icons);
+      Set_Tooltips (Main_Window.Toolbar, True);
+      Pack_Start (Main_Window.Toolbar_Box, Main_Window.Toolbar, False, False);
       Main_Window.Standalone := False;
    end Initialize;
 
