@@ -34,6 +34,7 @@ with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
 with Gtk.Clist;
 with Gtk.Combo;
 with Gtk.Container;
+with Gtk.Enums;
 with Gtk.Event_Box;
 with Gtk.Handlers;
 with Gtk.Handlers;
@@ -54,6 +55,7 @@ with Gtk.Widget;
 with Pango.Font;
 with String_List_Utils;
 with System;
+with GNAT.OS_Lib;
 
 package GUI_Utils is
 
@@ -204,6 +206,39 @@ package GUI_Utils is
       Column  : Gint) return Gtk.Tree_Model.Gtk_Tree_Iter;
    --  Find in Model a node matching Name in Column.
    --  return Gtk_Null_Iter if there is no such node
+
+   function Create_Tree_View
+     (Column_Types   : Glib.GType_Array;
+      Column_Names   : GNAT.OS_Lib.String_List;
+      Show_Column_Titles : Boolean := True;
+      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
+        Gtk.Enums.Selection_Single;
+      Sortable_Columns : Boolean := True;
+      Initial_Sort_On  : Integer := -1)
+      return Gtk.Tree_View.Gtk_Tree_View;
+   --  Create a new simple tree view, where each column in the view is
+   --  associated with a column in the model.
+   --  Column_Names'Length is the number of columns in the view. If there are
+   --  less columns in the view than in the model, then the matching columns
+   --  in the model will not be visible on screen. There can't be more columns
+   --  in the view than in the model, extra columns will simply be ignored.
+   --  The caller is responsible for freeing Column_Names.
+   --
+   --  Columns associated with a boolean value will be rendered as a toggle
+   --  button.
+   --
+   --  The resulting view should be added to a scrolled_window
+   --
+   --  If Sortable_Columns is True (and in this case Show_Column_Titles should
+   --  be as well in most cases), then all columns in the view are sortable.
+   --  If Initial_Sort_On is not -1, then the view will be sorted automatically
+   --  initially (it is recommended not to do that if you have lots of info to
+   --  store in the model afterward). The value of Initial_Sort_On is
+   --  an index in Column_Names.
+   --
+   --  Limitations:
+   --     Columns are not editable. Radio buttons not supported,
+
 
    -------------------------
    -- Full_Path_Menu_Item --

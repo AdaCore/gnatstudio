@@ -77,6 +77,7 @@ with String_List_Utils;        use String_List_Utils;
 with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 with GVD;                      use GVD;
 
@@ -92,6 +93,12 @@ package body GUI_Utils is
 
    package Contextual_Callback is new Gtk.Handlers.User_Return_Callback
      (Gtk_Widget_Record, Boolean, Contextual_Menu_Data);
+
+   procedure Toggle_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint);
+   --  Called when a toggle renderer is clicked on.
 
    function Button_Press_For_Contextual_Menu
      (Widget : access Gtk_Widget_Record'Class;
@@ -1542,5 +1549,98 @@ package body GUI_Utils is
       Set_Alignment (Label, 0.1, 0.5);
       Add (Event, Label);
    end Create_Blue_Label;
+
+   ----------------------
+   -- Create_Tree_View --
+   ----------------------
+
+   function Create_Tree_View
+     (Column_Types   : Glib.GType_Array;
+      Column_Names   : GNAT.OS_Lib.String_List;
+      Show_Column_Titles : Boolean := True;
+      Selection_Mode : Gtk.Enums.Gtk_Selection_Mode :=
+        Gtk.Enums.Selection_Single;
+      Sortable_Columns : Boolean := True;
+      Initial_Sort_On  : Integer := -1)
+      return Gtk.Tree_View.Gtk_Tree_View
+   is
+      View            : Gtk_Tree_View;
+      Col             : Gtk_Tree_View_Column;
+      Col_Number      : Gint;
+      Model           : Gtk_Tree_Store;
+      Text_Render     : Gtk_Cell_Renderer_Text;
+      Toggle_Render   : Gtk_Cell_Renderer_Toggle;
+      pragma Unreferenced (Col_Number);
+   begin
+      Gtk_New (Model, Column_Types);
+      Gtk_New (View, Model);
+      Set_Mode (Get_Selection (View), Selection_Mode);
+      Set_Headers_Visible (View, Show_Column_Titles);
+
+      for N in 0
+        .. Integer'Min (Column_Names'Length, Column_Types'Length) - 1
+      loop
+         Gtk_New           (Col);
+         Set_Resizable     (Col, True);
+         Set_Reorderable   (Col, True);
+
+         Col_Number := Append_Column (View, Col);
+         if Column_Names (Column_Names'First + N) /= null then
+            Set_Title (Col, Column_Names (Column_Names'First + N).all);
+         end if;
+
+         case Column_Types (Column_Types'First + Guint (N)) is
+            when GType_Boolean =>
+               Gtk_New (Toggle_Render);
+               Set_Radio (Toggle_Render, False);
+               Tree_Model_Callback.Object_Connect
+                 (Toggle_Render, "toggled",
+                  Toggle_Callback'Access, Slot_Object => Model,
+                  User_Data => Gint (N));
+               Pack_Start (Col, Toggle_Render, False);
+               Add_Attribute (Col, Toggle_Render, "active", Gint (N));
+
+            when GType_String =>
+               if Text_Render = null then
+                  Gtk_New (Text_Render);
+               end if;
+               Pack_Start (Col, Text_Render, False);
+               Add_Attribute (Col, Text_Render, "text", Gint (N));
+
+            when others =>
+               raise Program_Error;
+         end case;
+
+         if Sortable_Columns then
+            Set_Sort_Column_Id (Col, Gint (N));
+            Set_Sort_Indicator (Col, True);
+            Set_Clickable (Col, True);
+            if Initial_Sort_On = N + Column_Names'First then
+               Clicked (Col);
+            end if;
+         end if;
+      end loop;
+      return View;
+   end Create_Tree_View;
+
+   ---------------------
+   -- Toggle_Callback --
+   ---------------------
+
+   procedure Toggle_Callback
+     (Model  : access GObject_Record'Class;
+      Params : Glib.Values.GValues;
+      Data   : Glib.Gint)
+   is
+      M           : constant Gtk_Tree_Store := Gtk_Tree_Store (Model);
+      Path_String : constant String := Get_String (Nth (Params, 1));
+      Iter        : Gtk_Tree_Iter;
+   begin
+      Iter := Get_Iter_From_String (M, Path_String);
+
+      if Iter /= Null_Iter then
+         Set (M, Iter, Data, not Get_Boolean (M, Iter, Data));
+      end if;
+   end Toggle_Callback;
 
 end GUI_Utils;
