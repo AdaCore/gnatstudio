@@ -22,10 +22,9 @@ with HTables;
 with Basic_Types;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
-with Prj;
+with Projects;
 with Language;
 with Language_Handlers;
-with Project_Browsers;
 
 package Src_Info is
 
@@ -89,11 +88,6 @@ package Src_Info is
    --  Information on a file and its unit. This information can be stored for
    --  later usage, and remains valid even when the LI file is parsed again.
 
-   type Unit_Part is (Unit_Spec, Unit_Body, Unit_Separate);
-   --  A unit is usally composed of two parts: the spec and the body.
-   --    - Unit_Spec represents package/subprogram/generic declarations
-   --    - Unit_Body represents package/subprogram/generic bodies and subunits.
-
    procedure Destroy (File : in out Internal_File);
    --  Destroy the memory associated with File_Info.
 
@@ -104,7 +98,7 @@ package Src_Info is
    function Make_Source_File
      (Source_Filename        : String;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String) return Internal_File;
    --  Converts from a source filename to a File_Info structure.
    --  The returned result will need to be destroyed.
@@ -116,10 +110,10 @@ package Src_Info is
    --  Return the Filename for the given File.
 
    function Get_Unit_Part
-     (Lib_Info : LI_File_Ptr; File : String) return Unit_Part;
+     (Lib_Info : LI_File_Ptr; File : String) return Projects.Unit_Part;
    --  Return the type of File (a body, a spec or a separate).
-   --  See also Prj_API.Get_Unit_Part_From_Filename if you are working with
-   --  filenames that don't have a matching LI_File.
+   --  See also Projects.Registry.Get_Unit_Part_From_Filename if you are
+   --  working with filenames that don't have a matching LI_File.
 
    function Get_Unit_Name
      (Lib_Info : LI_File_Ptr; File : String) return String;
@@ -199,7 +193,7 @@ package Src_Info is
       File                   : in out LI_File_Ptr;
       Source_Filename        : String;
       List                   : in out LI_File_List;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String) is abstract;
    --  Find the LI file for Source_Filename, or create one if there is none
@@ -214,7 +208,7 @@ package Src_Info is
    function LI_Filename_From_Source
      (Handler                : access LI_Handler_Record;
       Source_Filename        : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String)
       return String is abstract;
    --  Return the name of the Library Information file associated with
@@ -233,7 +227,7 @@ package Src_Info is
      (Handler                : access LI_Handler_Record;
       List                   : in out LI_File_List;
       In_Directory           : String;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String) is abstract;
    --  Parse all the existing LI information in the directory In_Directory, and
@@ -242,8 +236,8 @@ package Src_Info is
 
    function Generate_LI_For_Source
      (Handler       : access LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      File_Project  : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      File_Project  : Projects.Project_Type;
       Full_Filename : String) return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for a given file. In Ada, this means
    --  recompiling the file so as to generate the corresponding ALI
@@ -255,8 +249,8 @@ package Src_Info is
 
    function Generate_LI_For_Project
      (Handler       : access LI_Handler_Record;
-      Root_Project  : Prj.Project_Id;
-      Project       : Prj.Project_Id;
+      Root_Project  : Projects.Project_Type;
+      Project       : Projects.Project_Type;
       Recursive     : Boolean := False)
       return LI_Handler_Iterator'Class is abstract;
    --  Generate the LI information for all the source files in Project (and all
@@ -272,7 +266,7 @@ package Src_Info is
 
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
-      Root_Project : Prj.Project_Id;
+      Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
       File_Name    : String;
       Result       : out Language.Construct_List);
@@ -711,7 +705,7 @@ private
 
    type Source_File is record
       LI              : LI_File_Ptr;
-      Part            : Unit_Part;
+      Part            : Projects.Unit_Part;
       Source_Filename : String_Access;
       --  Allocated only when Part is set to Unit_Separate. Set to null
       --  otherwise.
@@ -727,7 +721,7 @@ private
 
    No_Source_File : constant Source_File :=
      (LI              => null,
-      Part            => Unit_Spec,
+      Part            => Projects.Unit_Spec,
       Source_Filename => null);
    --  To check that a Source_File is not null, a quick and good enough
    --  check is to verify that Source_File.LI is not null.
@@ -926,7 +920,7 @@ private
 
    function Get_Directory_Name
      (File                   : File_Info_Ptr;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String) return String;
    --  Return the directory name for File, and cache it for future usage.
    --  This function checks the timestamp of the file, to handle the following
@@ -1084,9 +1078,9 @@ private
 
    procedure Compute_Sources
      (Iterator     : in out LI_Handler_Iterator'Class;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_Type;
       Recursive    : Boolean;
-      Languages    : Project_Browsers.Name_Id_Array);
+      Languages    : Projects.Name_Id_Array);
    --  Compute the list of source files that will need to be analyzed by the
    --  iterator. Elements from this list can be read using
    --  Current_Source_File. Only the files belonging to Language will be

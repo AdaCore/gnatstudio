@@ -22,12 +22,10 @@ with Src_Info.Prj_Utils;        use Src_Info.Prj_Utils;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Unchecked_Deallocation;
 with Types;                     use Types;
-with Prj;                       use Prj;
-with Prj.Env;                   use Prj.Env;
 with Traces;                    use Traces;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
 with Basic_Types;
-with Prj_API;                   use Prj_API;
+with Projects;                  use Projects;
 
 package body Src_Info is
 
@@ -535,7 +533,7 @@ package body Src_Info is
    function Make_Source_File
      (Source_Filename        : String;
       Handler         : access Language_Handlers.Language_Handler_Record'Class;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String) return Internal_File
    is
       LI : constant String := LI_Filename_From_Source
@@ -629,7 +627,7 @@ package body Src_Info is
 
    procedure Parse_File_Constructs
      (Handler      : access LI_Handler_Record;
-      Root_Project : Prj.Project_Id;
+      Root_Project : Projects.Project_Type;
       Languages    : access Language_Handlers.Language_Handler_Record'Class;
       File_Name    : String;
       Result       : out Language.Construct_List)
@@ -652,7 +650,7 @@ package body Src_Info is
 
    function Get_Directory_Name
      (File                   : File_Info_Ptr;
-      Project                : Prj.Project_Id;
+      Project                : Projects.Project_Type;
       Predefined_Source_Path : String) return String
    is
       Ts : Timestamp := 0;
@@ -682,7 +680,7 @@ package body Src_Info is
          File.Directory_Name := new String'
            (Dir_Name
             (Find_File (File.Source_Filename.all,
-                        Ada_Include_Path (Project).all,
+                        Include_Path (Project, True),
                         Predefined_Source_Path)));
       end if;
 
@@ -789,15 +787,15 @@ package body Src_Info is
 
    procedure Compute_Sources
      (Iterator     : in out LI_Handler_Iterator'Class;
-      Project_View : Prj.Project_Id;
+      Project      : Projects.Project_Type;
       Recursive    : Boolean;
-      Languages    : Project_Browsers.Name_Id_Array)
+      Languages    : Projects.Name_Id_Array)
    is
       use type Basic_Types.String_Access;
    begin
       Basic_Types.Free (Iterator.Source_Files);
       Iterator.Source_Files := Get_Source_Files
-        (Project_View       => Project_View,
+        (Project            => Project,
          Recursive          => Recursive,
          Full_Path          => True,
          Normalized         => True,
