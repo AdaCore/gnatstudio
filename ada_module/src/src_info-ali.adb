@@ -1028,12 +1028,6 @@ package body Src_Info.ALI is
    begin
       Get_Source_File
         (Handler, New_ALI, Source, Dep.Subunit_Name, Project, Sfile);
-      Assert
-        (Me, Base_Name (Get_File_Info (Sfile).Source_Filename) =
-           Locale_To_UTF8 (Get_String (Dep.Sfile)),
-         "Process_Sdep_As_External, invalid source file " &
-         Full_Name (Get_File_Info (Sfile).Source_Filename).all & ' '
-         & Get_String (Dep.Sfile));
       New_Dep :=
         (File              => Sfile,
          Dep_Info          => (Depends_From_Spec => False,
