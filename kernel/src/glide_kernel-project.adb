@@ -671,6 +671,18 @@ package body Glide_Kernel.Project is
       Project   : Prj.Tree.Project_Node_Id;
       Langs     : GNAT.OS_Lib.Argument_List)
    is
+      procedure Report_Error (Msg : String);
+      --  Report errors to the user
+
+      ------------------
+      -- Report_Error --
+      ------------------
+
+      procedure Report_Error (Msg : String) is
+      begin
+         Insert (Kernel, Msg, Mode => Glide_Kernel.Console.Error);
+      end Report_Error;
+
       Args    : Argument_List (1 .. 2);
       Success : Boolean;
    begin
@@ -684,7 +696,9 @@ package body Glide_Kernel.Project is
         or else Langs (Langs'First).all /= "ada"
       then
          if Project_Modified (Kernel.Projects_Data, Project) then
-            Save_Project (Project, Kernel.Projects_Data, False);
+            Save_Project
+              (Project, Kernel.Projects_Data, False,
+               Report_Error'Unrestricted_Access);
             Args (1) := new String'("-R");
 
             declare
@@ -708,7 +722,8 @@ package body Glide_Kernel.Project is
          end if;
 
       else
-         Save_Project (Project, Kernel.Projects_Data, Recursive => False);
+         Save_Project (Project, Kernel.Projects_Data, False,
+                       Report_Error'Unrestricted_Access);
       end if;
    end Save_Single_Project;
 
