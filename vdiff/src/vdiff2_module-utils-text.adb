@@ -30,8 +30,7 @@ package body Vdiff2_Module.Utils.Text is
    procedure New_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
-      Line   : Natural)
-   is
+      Line   : Natural) is
    begin
       Insert_Line (Kernel, File, Line, "");
    end New_Line;
@@ -43,9 +42,7 @@ package body Vdiff2_Module.Utils.Text is
    function Line_Length
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
-      Line   : Natural)
-      return Natural
-   is
+      Line   : Natural) return Natural is
    begin
       return Get_Line (Kernel, File, Line)'Length;
    end Line_Length;
@@ -59,8 +56,7 @@ package body Vdiff2_Module.Utils.Text is
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
-      Len    : Natural := 0)
-   is
+      Len    : Natural := 0) is
    begin
       Replace_Text (Kernel, File, Line, Column, "", 0, Len);
    end Delete;
@@ -72,8 +68,7 @@ package body Vdiff2_Module.Utils.Text is
    procedure Delete_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
-      Line   : Natural)
-   is
+      Line   : Natural) is
    begin
       Replace_Text (Kernel, File, Line, 1, "");
    end Delete_Line;
@@ -87,8 +82,7 @@ package body Vdiff2_Module.Utils.Text is
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
-      Text   : String)
-   is
+      Text   : String) is
    begin
       Replace_Text (Kernel, File, Line, Column, Text, 0, 0);
    end Insert;
@@ -101,11 +95,9 @@ package body Vdiff2_Module.Utils.Text is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
-      Text   : String)
-   is
+      Text   : String) is
    begin
-      Replace_Text (Kernel, File, Line, 1,
-                    Text & ASCII.LF, 0, 0);
+      Replace_Text (Kernel, File, Line, 1, Text & ASCII.LF, 0, 0);
    end Insert_Line;
 
    ---------
@@ -117,9 +109,7 @@ package body Vdiff2_Module.Utils.Text is
       File   : Virtual_File;
       Line   : Natural;
       Column : Natural;
-      Len    : Natural)
-      return String
-   is
+      Len    : Natural) return String is
    begin
       return Get_Chars (Kernel, File, Line, Column, 0, Len);
    end Get;
@@ -131,9 +121,7 @@ package body Vdiff2_Module.Utils.Text is
    function Get_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
-      Line   : Natural)
-      return String
-   is
+      Line   : Natural) return String is
    begin
       return Get_Chars (Kernel, File, Line, 1);
    end Get_Line;
@@ -175,7 +163,6 @@ package body Vdiff2_Module.Utils.Text is
       end if;
 
       if Offset_Source > 0 and Offset_Dest > 0 then
-
          for J in 1 .. Offset_Min loop
             Current_Line := new String'
               (Get_Line (Kernel, Source_File, (First_Source + J - 1)));
@@ -218,7 +205,6 @@ package body Vdiff2_Module.Utils.Text is
                Current_Line.all);
          end loop;
       end if;
-
    end Move_Block;
 
    ------------------
@@ -255,11 +241,9 @@ package body Vdiff2_Module.Utils.Text is
       Line   : Natural;
       Column : Natural;
       Len    : Natural;
-      Text   : String)
-   is
+      Text   : String) is
    begin
-      Replace_Text (Kernel, File, Line, Column,
-                    Text, 0, Len);
+      Replace_Text (Kernel, File, Line, Column, Text, 0, Len);
    end Replace;
 
    ------------------
@@ -270,11 +254,9 @@ package body Vdiff2_Module.Utils.Text is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       File   : Virtual_File;
       Line   : Natural;
-      Text   : String)
-   is
+      Text   : String) is
    begin
-      Replace_Text (Kernel, File, Line, 1,
-                    Text);
+      Replace_Text (Kernel, File, Line, 1, Text);
    end Replace_Line;
 
 end Vdiff2_Module.Utils.Text;
