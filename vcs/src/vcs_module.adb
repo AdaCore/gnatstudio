@@ -707,12 +707,12 @@ package body VCS_Module is
       Register_Command
         (Kernel       => Kernel,
          Command      => "status_parse",
-         Params       => "(vcs_identifier, string, clear_logs, local)",
+         Params       => "(vcs_identifier, string, clear_logs, local, [dir])",
          Description  =>
          -("Parses string for vcs status."
             & " See the GPS documentation for detailed usage description."),
          Minimum_Args => 4,
-         Maximum_Args => 4,
+         Maximum_Args => 5,
          Class         => VCS_Class,
          Static_Method => True,
          Handler      => Status_Parse_Handler'Access);
@@ -952,6 +952,7 @@ package body VCS_Module is
 
       Clear_Logs     : constant Boolean := Nth_Arg (Data, 3);
       Local          : constant Boolean := Nth_Arg (Data, 4);
+      Dir            : constant String  := Nth_Arg (Data, 5, "");
 
    begin
       Ref := Get_VCS_From_Id (VCS_Identifier);
@@ -963,7 +964,7 @@ package body VCS_Module is
          return;
       end if;
 
-      Parse_Status (Ref, S, Local, Clear_Logs);
+      Parse_Status (Ref, S, Local, Clear_Logs, Dir);
    end Status_Parse_Handler;
 
    -------------------------------
