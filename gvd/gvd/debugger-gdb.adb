@@ -547,19 +547,20 @@ package body Debugger.Gdb is
    begin
       case Type_Str (Index) is
 
-         when 'i' =>
-            if Looking_At (Debugger, Type_Str, Index, "int") then
-               Result := new Simple_Type'(Address  => System.Null_Address,
-                                          Value    => null);
-               Index := Index + 3;
-            else
-               raise Unexpected_Type;
-            end if;
+--           when 'i' =>
+--              if Looking_At (Debugger, Type_Str, Index, "int") then
+--                 Result := new Simple_Type'(Address  => System.Null_Address,
+--                                            Value    => null);
+--                 Index := Index + 3;
+--              else
+--                 raise Unexpected_Type;
+--              end if;
 
          when others =>
             raise Unexpected_Type;
 
       end case;
+      Result := null;
    end Parse_Type_Gdb_C_From_String;
 
    -------------------------------------
