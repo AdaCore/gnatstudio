@@ -462,7 +462,7 @@ Rebuild by pressing the @key{F4} key.
 @c on the @code{Status} and @code{File name} labels.
 
 @c Move the mouse over @file{stack.ads}, select the contextual menu
-@c @code{Compare against head revision}:
+@c @code{Compare against head rev.}:
 @c this will open a visual comparison between the version in the repository,
 @c and the local (modified) file; You can see that scrolling is synchronized
 @c between the two files, and that colors are used to show lines
