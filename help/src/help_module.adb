@@ -281,6 +281,11 @@ package body Help_Module is
    --  Filename can be a full name or a base name, and can include ancors (e.g
    --  "foo.html#anchor").
 
+   procedure Parse_Index_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Directory : String);
+   --  Parse the index file for one specific directory
+
    function Get_Shell_Documentation
      (XML_Doc_File : Glib.Xml_Int.Node_Ptr;
       Language, Full_Name : String) return String;
@@ -366,10 +371,6 @@ package body Help_Module is
       Descr, Params, Returns, See_Also, Example : Unbounded_String;
       Child   : Node_Ptr;
    begin
-      if XML_Doc_File = null then
-         Trace (Me, "MANU: XML file hasn't been parsed");
-      end if;
-
       Tmp := XML_Doc_File.Child;
 
       while Tmp /= null loop
@@ -534,6 +535,10 @@ package body Help_Module is
             Help_Module_ID.Doc_Path := new String'
               (Nth_Arg (Data, 1) & Path_Separator & Old.all);
             Free (Old);
+
+            Parse_Index_File
+              (Kernel,
+               Directory => Nth_Arg (Data, 1));
          end;
 
       end if;
@@ -1553,39 +1558,45 @@ package body Help_Module is
       end loop;
    end Customize;
 
+   ----------------------
+   -- Parse_Index_File --
+   ----------------------
+
+   procedure Parse_Index_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      Directory : String)
+   is
+      Full : constant String := Name_As_Directory (Directory) & Index_File;
+      Node : Node_Ptr;
+      Err  : GNAT.OS_Lib.String_Access;
+   begin
+      if Is_Regular_File (Full) then
+         Trace (Me, "Parsing index " & Full);
+
+         XML_Parsers.Parse (Full, Node, Err);
+
+         if Node = null then
+            Insert (Kernel, Err.all, Mode => Error);
+            Free (Err);
+         else
+            Customize (Kernel, Create (Full), Node.Child, System_Wide);
+            Free (Node);
+         end if;
+      end if;
+   end Parse_Index_File;
+
    -----------------------
    -- Parse_Index_Files --
    -----------------------
 
    procedure Parse_Index_Files (Kernel : access Kernel_Handle_Record'Class) is
       Iter : Path_Iterator;
-      Err : GNAT.OS_Lib.String_Access;
    begin
       Iter := Start (Help_Module_ID.Doc_Path.all);
       while not At_End (Help_Module_ID.Doc_Path.all, Iter) loop
-         declare
-            Dir : constant String :=
-              Current (Help_Module_ID.Doc_Path.all, Iter);
-            Full : constant String := Name_As_Directory (Dir) & Index_File;
-            Node : Node_Ptr;
-         begin
-            exit when Dir = "";
-
-            if Is_Regular_File (Full) then
-               Trace (Me, "Parsing index " & Full);
-
-               XML_Parsers.Parse (Full, Node, Err);
-
-               if Node = null then
-                  Insert (Kernel, Err.all, Mode => Error);
-                  Free (Err);
-               else
-                  Customize (Kernel, Create (Full), Node.Child, System_Wide);
-                  Free (Node);
-               end if;
-            end if;
-         end;
-
+         Parse_Index_File
+           (Kernel    => Kernel,
+            Directory => Current (Help_Module_ID.Doc_Path.all, Iter));
          Iter := Next (Help_Module_ID.Doc_Path.all, Iter);
       end loop;
    end Parse_Index_Files;
