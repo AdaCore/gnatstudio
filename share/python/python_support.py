@@ -10,8 +10,12 @@
 ##   - Easy access to user-defined GPS configuration scripts through shift-F3
 ##     This is always active, even if the current project doesn't support
 ##     python
+##   - Add links to python documentation on the internet
 
 import GPS, sys, os.path
+
+pydoc_proc = None
+pydoc_port = 9432
 
 def reload_file (menu):
   """Reload the currently edited file in python"""
@@ -53,11 +57,34 @@ def project_recomputed (hook_name):
   except:
     pass
 
+def show_python_library ():
+  """Open a navigator to show  the help on the python library"""
+  global pydoc_proc, pydoc_port
+  if not pydoc_proc:
+     while 1:
+        pydoc_proc = GPS.Process ("pydoc -p " + `pydoc_port`)
+        out = pydoc_proc.expect ("pydoc server ready|Address already in use", 10000)
+        try:
+           out.rindex ("Address already in use")
+           pydoc_port += 1
+        except:
+           break
+  GPS.HTML.browse ("http://localhost:" + `pydoc_port` + "/")
+
+def before_exit (hook_name):
+  """Called before GPS exits"""
+  global pydoc_proc
+  if pydoc_proc:
+    pydoc_proc.kill()
+    pydoc_proc = None
+  return 1
+
+
 GPS.Menu.create ("/Python/reload file", on_activate=reload_file)
-GPS.Menu.get ("/Python").hide()
 
 GPS.Hook ("project_view_changed").add (project_recomputed)
 GPS.Hook ("context_changed").add (context_changed);
+GPS.Hook ("before_exit_action_hook").add (before_exit)
 
 GPS.parse_xml ("""
   <Language>
@@ -74,7 +101,23 @@ GPS.parse_xml ("""
   </Language>
 
   <filter_and name="Python file">
-     <filter id="Source editor" />
+    <filter id="Source editor" />
      <filter language="Python" />
-  </filter_and>""")
+  </filter_and>
 
+  <documentation_file>
+     <name>http://www.python.org/doc/2.3.4/tut/tut.html</name>
+     <descr>Python tutorial</descr>
+     <menu>/Python/Python Tutorial</menu>
+     <category>Scripts</category>
+  </documentation_file>
+
+  <documentation_file>
+     <shell lang="python">python_support.show_python_library()</shell>
+     <descr>Python Library</descr>
+     <menu>/Python/Python Library</menu>
+     <category>Scripts</category>
+  </documentation_file>
+""")
+
+GPS.Menu.get ("/Python").hide()
