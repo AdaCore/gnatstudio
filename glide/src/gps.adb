@@ -448,7 +448,13 @@ procedure GPS is
             Splash := null;
          end if;
 
-         Run (Screen);
+         --  If the user wants to quite immediately, so be it.
+         if not Run (Screen) then
+            Destroy (Screen);
+            Gtk.Main.Main_Quit;
+            return False;
+         end if;
+
          Destroy (Screen);
 
       else
