@@ -1334,10 +1334,10 @@ package body Browsers.Canvas is
    -- Build --
    -----------
 
-   function Build (Cb : Widget_Active_Callback;
-                   User : access Gtk.Widget.Gtk_Widget_Record'Class)
-      return Widget_Active_Area_Callback'Class
-   is
+   function Build
+     (Cb : Widget_Active_Callback;
+      User : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Widget_Active_Area_Callback'Class is
    begin
       return Widget_Active_Area_Callback'
         (Active_Area_Callback with
@@ -1349,7 +1349,7 @@ package body Browsers.Canvas is
    -- Refresh --
    -------------
 
-   procedure Refresh (Item    : access Browser_Item_Record'Class) is
+   procedure Refresh (Item : access Browser_Item_Record'Class) is
       Xoffset, Yoffset : Gint := 0;
    begin
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset);
