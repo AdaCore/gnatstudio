@@ -971,6 +971,100 @@ package body Src_Editor_Module is
             end if;
          end;
 
+      elsif Command = "block_get_start"
+        or else Command = "block_get_end"
+        or else Command = "block_get_type"
+        or else Command = "block_get_level"
+      then
+         declare
+            File   : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Child  : constant MDI_Child := Find_Editor (Kernel, File);
+            Line   : constant Editable_Line_Type :=
+              Editable_Line_Type (Positive'(Nth_Arg (Data, 2)));
+         begin
+            if Child = null then
+               Set_Error_Msg
+                 (Data,
+                    -("Attempting to get block information for non" &
+                      " open file : ") & Base_Name (File));
+            else
+               if Command = "block_get_start" then
+                  Set_Return_Value
+                    (Data,
+                     Get_Block_Start
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               elsif Command = "block_get_end" then
+                  Set_Return_Value
+                    (Data,
+                     Get_Block_End
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               elsif Command = "block_get_type" then
+                  Set_Return_Value
+                    (Data,
+                     Get_Block_Type
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               else
+                  --  Get_Level
+                  Set_Return_Value
+                    (Data,
+                     Get_Block_Level
+                       (Source_Box (Get_Widget (Child)).Editor, Line));
+               end if;
+            end if;
+         end;
+
+      elsif Command = "cursor_get_line"
+        or else Command = "cursor_get_column"
+      then
+         declare
+            File  : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Child : constant MDI_Child := Find_Editor (Kernel, File);
+         begin
+            if Child = null then
+               Set_Error_Msg
+                 (Data,
+                    -("Attempting to get cursor position for non open file : ")
+                  & Base_Name (File));
+            else
+               declare
+                  Line   : Editable_Line_Type;
+                  Column : Positive;
+               begin
+                  Get_Cursor_Position
+                    (Get_Buffer
+                       (Source_Box (Get_Widget (Child)).Editor), Line, Column);
+
+                  if Command = "cursor_get_line" then
+                     Set_Return_Value (Data, Integer (Line));
+                  else
+                     Set_Return_Value (Data, Column);
+                  end if;
+               end;
+            end if;
+         end;
+
+      elsif Command = "cursor_set_line" then
+         declare
+            File  : constant Virtual_File :=
+              Create (Nth_Arg (Data, 1), Kernel);
+            Child : constant MDI_Child := Find_Editor (Kernel, File);
+            Line  : constant Editable_Line_Type :=
+              Editable_Line_Type (Integer'(Nth_Arg (Data, 2)));
+         begin
+            if Child = null then
+               Set_Error_Msg
+                 (Data,
+                    -("Attempting to set cursor position for non open file : ")
+                  & Base_Name (File));
+            else
+               Set_Cursor_Position
+                 (Get_Buffer (Source_Box (Get_Widget (Child)).Editor),
+                  Line, 1);
+            end if;
+         end;
+
       elsif Command = "get_buffer" then
          declare
             File  : constant Virtual_File :=
@@ -3581,6 +3675,82 @@ package body Src_Editor_Module is
          Description  => -"Returns the number of the last line in file.",
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_get_start",
+         Params       => "(file, line)",
+         Return_Value => "integer",
+         Description  =>
+           -"Returns starting line number for block enclosing line.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_get_end",
+         Params       => "(file, line)",
+         Return_Value => "integer",
+         Description  =>
+           -"Returns ending line number for block enclosing line.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_get_type",
+         Params       => "(file, line)",
+         Return_Value => "string",
+         Description  =>
+           -"Returns type for block enclosing line.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "block_get_level",
+         Params       => "(file, line)",
+         Return_Value => "integer",
+         Description  =>
+           -"Returns nested level for block enclosing line.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "cursor_get_line",
+         Params       => "(file)",
+         Return_Value => "integer",
+         Description  =>
+           -"Returns current cursor line number.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "cursor_get_column",
+         Params       => "(file)",
+         Return_Value => "integer",
+         Description  =>
+           -"Returns current cursor column number.",
+         Minimum_Args => 1,
+         Maximum_Args => 1,
+         Handler      => Edit_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "cursor_set_line",
+         Params       => "(file, integer)",
+         Description  =>
+           -"Set cursor to line in buffer file.",
+         Minimum_Args => 2,
+         Maximum_Args => 2,
          Handler      => Edit_Command_Handler'Access);
 
       Register_Command
