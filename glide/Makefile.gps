@@ -65,7 +65,7 @@ ifeq ($(GLIDE_ROOT),True)
 	-@$(foreach f,$(GNAT_SOURCES), \
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 
 else
    DEPS_PROJECTS += $(GLIDE_BASE_DIR)/glide

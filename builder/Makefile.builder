@@ -31,7 +31,7 @@ ifneq ($(strip $(BUILDER_SRCS)),)
 endif
 
 ifeq ($(BUILDER_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(BUILDER_BASE_DIR)/builder
 endif

@@ -25,7 +25,7 @@ PROJECT_FILE = gvd_common
 LIBS := $(GVD_COMMON_OBJ_DIR)/libgvd_common$(AR_EXT) $(LIBS)
 
 ifeq ($(GVD_COMMON_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(GVD_COMMON_BASE_DIR)/gvd_common
 endif

@@ -37,7 +37,7 @@ ifneq ($(strip $(AUNIT_SRCS)),)
 endif
 
 ifeq ($(AUNIT_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(AUNIT_BASE_DIR)/aunit
 endif

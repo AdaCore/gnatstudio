@@ -29,7 +29,7 @@ ifneq ($(strip $(METRICS_SRCS)),)
 endif
 
 ifeq ($(METRICS_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(METRICS_BASE_DIR)/metrics
 endif

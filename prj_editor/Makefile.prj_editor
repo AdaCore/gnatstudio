@@ -36,7 +36,7 @@ PROJECT_FILE = prj_editor
 LIBS := $(PRJ_EDITOR_OBJ_DIR)/libprj_editor$(AR_EXT) $(LIBS)
 
 ifeq ($(PRJ_EDITOR_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(PRJ_EDITOR_BASE_DIR)/prj_editor
 endif

@@ -30,7 +30,7 @@ ifneq ($(strip $(COMMON_SRCS)),)
 endif
 
 ifeq ($(COMMON_ROOT),True)
-   include ../builder/src/Makefile.glide
+   include ../builder/src/Makefile.generic
 else
    DEPS_PROJECTS += $(COMMON_BASE_DIR)/common
 endif
