@@ -137,6 +137,9 @@ package VCS_View_API is
    function Get_Current_Ref (Project : Project_Type) return VCS_Access;
    --  Return the VCS reference registered in Project.
 
+   function Get_Status_Name (Status : File_Status) return String;
+   --  Return an explicit description of Status.
+
    procedure Display_Editor_Status
      (Kernel : access Kernel_Handle_Record'Class;
       Ref    : VCS_Access;
