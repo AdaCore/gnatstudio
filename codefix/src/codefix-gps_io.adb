@@ -126,7 +126,7 @@ package body Codefix.GPS_Io is
    procedure Undo (This : in out Console_Interface) is
       Args : Argument_List := (1 => new String'(Get_File_Name (This)));
       Ignore : constant String := Interpret_Command
-        (This.Kernel, "edit_undo", Args);
+        (This.Kernel, "edit.undo", Args);
       pragma Unreferenced (Ignore);
    begin
       Free (Args);
