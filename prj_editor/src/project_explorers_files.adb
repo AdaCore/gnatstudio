@@ -28,6 +28,7 @@ with Glib.Object;               use Glib.Object;
 with Glib.Values;               use Glib.Values;
 with Glib.Xml_Int;              use Glib.Xml_Int;
 with Gdk.Event;                 use Gdk.Event;
+with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Main;                  use Gtk.Main;
 with Gdk.Pixbuf;                use Gdk.Pixbuf;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -163,6 +164,11 @@ package body Project_Explorers_Files is
    --  Called every time a node is expanded in the file view.
    --  It is responsible for automatically adding the children of the current
    --  node if they are not there already.
+
+   function Expose_Event_Cb
+     (Explorer : access Glib.Object.GObject_Record'Class;
+      Values   : GValues) return Boolean;
+   --  Scroll the explorer to the current directory.
 
    procedure File_Tree_Collapse_Row_Cb
      (Explorer : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -625,16 +631,15 @@ package body Project_Explorers_Files is
                --  Are we on the target directory ?
 
                if D.Norm_Dest.all = D.Norm_Dir.all & Dir
-                 & Directory_Separator
+                  & Directory_Separator
                then
                   declare
                      Success   : Boolean;
                      pragma Unreferenced (Success);
 
-                     Path      : Gtk_Tree_Path;
                      Expanding : constant Boolean := D.Explorer.Expanding;
                   begin
-                     Path := Get_Path (D.Explorer.File_Model, Iter);
+                     D.Explorer.Path := Get_Path (D.Explorer.File_Model, Iter);
 
                      File_Append_Directory
                        (D.Explorer, D.Norm_Dir.all & Dir & Directory_Separator,
@@ -642,18 +647,18 @@ package body Project_Explorers_Files is
                         False);
 
                      D.Explorer.Expanding := True;
-                     Success := Expand_Row (D.Explorer.File_Tree, Path, False);
+                     Success := Expand_Row
+                       (D.Explorer.File_Tree,
+                        D.Explorer.Path, False);
                      D.Explorer.Expanding := Expanding;
 
                      Set (D.Explorer.File_Model, Iter, Icon_Column,
                           C_Proxy (D.Explorer.Open_Pixbufs (Directory_Node)));
-
-                     Scroll_To_Cell
-                       (D.Explorer.File_Tree,
-                        Path, null, True,
-                        0.1, 0.1);
-
-                     Path_Free (Path);
+                     D.Explorer.Scroll_To_Directory := True;
+                     D.Explorer.Realize_Cb_Id :=
+                       Gtkada.Handlers.Object_Return_Callback.Object_Connect
+                         (D.Explorer.File_Tree, "expose_event",
+                          Expose_Event_Cb'Access, D.Explorer, True);
                   end;
 
                else
@@ -820,10 +825,11 @@ package body Project_Explorers_Files is
 
       Set_Headers_Visible (Explorer.File_Tree, False);
 
-      Return_Callback.Object_Connect
+      Gtkada.Handlers.Return_Callback.Object_Connect
         (Explorer.File_Tree,
          "button_press_event",
-         Return_Callback.To_Marshaller (File_Button_Press'Access),
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (File_Button_Press'Access),
          Slot_Object => Explorer,
          After       => False);
 
@@ -1012,6 +1018,34 @@ package body Project_Explorers_Files is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Message (E));
    end File_Tree_Collapse_Row_Cb;
+
+   ----------------
+   -- Expose_Event_Cb --
+   ----------------
+
+   function Expose_Event_Cb
+     (Explorer : access Glib.Object.GObject_Record'Class;
+      Values   : GValues) return Boolean
+   is
+      pragma Unreferenced (Values);
+      T       : Project_Explorer_Files := Project_Explorer_Files (Explorer);
+
+   begin
+      if T.Scroll_To_Directory then
+         Scroll_To_Cell
+           (T.File_Tree,
+            T.Path, null, True,
+            0.1, 0.1);
+         Disconnect (T.File_Tree, T.Realize_Cb_Id);
+         T.Scroll_To_Directory := False;
+      end if;
+
+      return True;
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Message (E));
+         return True;
+   end Expose_Event_Cb;
 
    -----------------------------
    -- File_Tree_Expand_Row_Cb --
