@@ -257,7 +257,7 @@ package body Diff_Utils2 is
       Descriptor   : TTY_Process_Descriptor;
       Pattern      : constant Pattern_Matcher :=
         Compile ("^([0-9]+)(,[0-9]+)?([acd])([0-9]+)(,[0-9]+)?.*\n",
-          Multiple_Lines);
+                 Multiple_Lines);
       Matches      : Match_Array (0 .. 5);
       Args         : Argument_List (1 .. 2);
       Result       : Expect_Match;
@@ -289,7 +289,6 @@ package body Diff_Utils2 is
       end loop;
 
    exception
-
       when Process_Died =>
          Close (Descriptor);
          return Ret;
@@ -354,8 +353,7 @@ package body Diff_Utils2 is
       --  ??? Should use VFS.Read_File instead, more efficient
       Open (File, In_File, Locale_Full_Name (Diff_File));
 
-      while not End_Of_File (File)
-      loop
+      while not End_Of_File (File) loop
          Get_Line (File, Buffer, Last);
          Match (Pattern, Buffer (1 .. Last), Matches);
 
@@ -384,6 +382,7 @@ package body Diff_Utils2 is
       Item   : in out Diff_Head) is
    begin
       Free_List (Item.List);
+
       if Item.File1 /= VFS.No_File and Item.File2 /= VFS.No_File then
          if Item.File3 /= VFS.No_File then
             Item.List := Diff3 (Kernel, Item.File1, Item.File2, Item.File3);
@@ -404,9 +403,8 @@ package body Diff_Utils2 is
    is
       Diff3_Command  : constant String := Get_Pref (Kernel, Diff3_Cmd);
    begin
-
       return Diff3 (Diff3_Command, My_Change,
-                              Old_File, Your_Change);
+                    Old_File, Your_Change);
    end Diff3;
 
    -----------
@@ -443,7 +441,7 @@ package body Diff_Utils2 is
       Matches_Chunk2,
       Matches_Chunk3 : Match_Array (0 .. 5);
 
-      Chunk        : Diff3_Block;
+      Chunk          : Diff3_Block;
       Args           : Argument_List (1 .. 3);
       Result         : Expect_Match;
       Ret            : Diff_List;
@@ -524,8 +522,7 @@ package body Diff_Utils2 is
    begin
       Curr_Node := First (Diff);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := new Diff_Chunk'(Data (Curr_Node).all);
          VRange     :=
            (Curr_Chunk.Range1,
@@ -542,14 +539,15 @@ package body Diff_Utils2 is
                   end loop;
 
                when Change =>
-                  for I in VRange'Range loop
-                     if I /= Ref then
-                        if VRange (I).Action = Append then
-                           VRange (I).Action := Delete;
+                  for J in VRange'Range loop
+                     if J /= Ref then
+                        if VRange (J).Action = Append then
+                           VRange (J).Action := Delete;
                         end if;
                      end if;
                   end loop;
-                  --  ???I think that not a conflict
+                  --  ??? What does the following comment mean:
+                  --  ??? I think that not a conflict
 
                when others =>
                   null;
@@ -560,14 +558,13 @@ package body Diff_Utils2 is
          elsif Curr_Chunk.Location = 0 then
             Curr_Chunk.Conflict := true;
 
-            for I in VRange'Range loop
-
-               if I /= Ref and then VRange (I).Action = Append then
-                  VRange (I).Action := Delete;
+            for J in VRange'Range loop
+               if J /= Ref and then VRange (J).Action = Append then
+                  VRange (J).Action := Delete;
                end if;
 
-               if I /= Ref and then VRange (Ref).Action = Append then
-                  VRange (I).Action := Append;
+               if J /= Ref and then VRange (Ref).Action = Append then
+                  VRange (J).Action := Append;
                end if;
             end loop;
 
@@ -578,12 +575,11 @@ package body Diff_Utils2 is
                VRange (Curr_Chunk.Location).Action := Append;
             end if;
 
-            for I in VRange'Range loop
-               if I /= Ref and I /= Curr_Chunk.Location then
-                  VRange (I).Action := Nothing;
+            for J in VRange'Range loop
+               if J /= Ref and then J /= Curr_Chunk.Location then
+                  VRange (J).Action := Nothing;
                end if;
             end loop;
-
          end if;
 
          VRange (Ref).Action := Nothing;
@@ -591,8 +587,9 @@ package body Diff_Utils2 is
          Curr_Chunk.Range2 := VRange (2);
          Curr_Chunk.Range3 := VRange (3);
          Append (Res, Curr_Chunk);
-         Curr_Node  := Next (Curr_Node);
+         Curr_Node := Next (Curr_Node);
       end loop;
+
       return Res;
    end Simplify;
 
@@ -600,16 +597,13 @@ package body Diff_Utils2 is
    -- Free_List --
    ---------------
 
-   procedure Free_List (Link : in out Diff_List)
-   is
+   procedure Free_List (Link : in out Diff_List) is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-
    begin
       Curr_Node := First (Link);
 
-      while Curr_Node /= Diff_Chunk_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Chunk_List.Null_Node loop
          Curr_Chunk := Data (Curr_Node);
          Free (Curr_Chunk.Range1.Mark);
          Free (Curr_Chunk.Range2.Mark);
@@ -628,7 +622,7 @@ package body Diff_Utils2 is
    ----------
 
    procedure Free (Link : in out Diff_Head) is
-   pragma Unreferenced (Link);
+      pragma Unreferenced (Link);
    begin
       null; -- ???
    end Free;
@@ -651,12 +645,10 @@ package body Diff_Utils2 is
    -- Free --
    ----------
 
-   procedure Free (Vect : in out Diff3_Block)
-   is
+   procedure Free (Vect : in out Diff3_Block) is
       procedure Internal_Free is new
         Ada.Unchecked_Deallocation (Match_Array, Ptr_Match_Array);
    begin
-
       for J in Vect.Matches_Chunk'Range loop
          Internal_Free (Vect.Matches_Chunk (J));
       end loop;
@@ -670,19 +662,15 @@ package body Diff_Utils2 is
    -- Free_List --
    ---------------
 
-   procedure Free_List (List : in out Diff_Head_List.List)
-   is
+   procedure Free_List (List : in out Diff_Head_List.List) is
       Curr_Node : Diff_Head_List.List_Node := First (List);
       Diff : Diff_Head;
    begin
-
-      while Curr_Node /= Diff_Head_List.Null_Node
-      loop
+      while Curr_Node /= Diff_Head_List.Null_Node loop
          Diff := Data (Curr_Node);
          Free_All (Diff);
          Curr_Node := Next (Curr_Node);
       end loop;
-
    end Free_List;
 
    ----------
@@ -696,8 +684,4 @@ package body Diff_Utils2 is
       end loop;
    end Free;
 
-
 end Diff_Utils2;
-
-
-
