@@ -21,6 +21,7 @@ package Source_Analyzer is
       Indent_Return   : Natural;
       Indent_With     : Natural;
       Indent_Use      : Natural;
+      Indent_Record   : Natural;
    end record;
    --  Indent_Level    is the number of spaces when indenting a block.
    --  Indent_Continue is the number of spaces for a continuation line.
@@ -30,6 +31,8 @@ package Source_Analyzer is
    --  Indent_With     is the number of spaces when indenting a with clause
    --  Indent_Use      is the number of spaces when indenting a use clause (top
    --                  level only for now).
+   --  Indent_Record   is the number of extra spaces for a record declaration
+   --                  when the record keyword is on its own line.
 
    Default_Indent_Parameters : constant Indent_Parameters :=
      (Indent_Level    => 3,
@@ -37,7 +40,8 @@ package Source_Analyzer is
       Indent_Decl     => 0,
       Indent_Return   => 0,
       Indent_With     => 5,
-      Indent_Use      => 4);
+      Indent_Use      => 4,
+      Indent_Record   => 3);
 
    type Construct_Information;
    type Construct_Access is access Construct_Information;
