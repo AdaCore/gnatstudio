@@ -18,8 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Tags; use Ada.Tags;
 with Odd.Strings; use Odd.Strings;
+with Language.Debugger; use Language.Debugger;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
@@ -33,39 +33,6 @@ package body Debugger.Gdb.C is
    Array_End    : Character := '}';
    Record_Field : String    := "=";
    --  how are record field names separated from their values
-
-   procedure Parse_Array_Type
-     (Lang      : access Gdb_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access);
-   --  Parse the description of an array type.
-   --  Index should point at the opening character of the array in Type_Str
-   --  (ie "int [4]" in gdb).
-   --  Start_Of_Dim should point to the beginning of the definition of the
-   --  dimensions ("[4]" in the above example)
-
-   procedure Parse_Record_Type
-     (Lang      : access Gdb_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
-      Is_Union  : Boolean;
-      Result    : out Generic_Type_Access);
-   --  Parse the type describing a record.
-   --  Index should pointer after the initial "{".
-   --  This function is also used to parse the variant part of a record.
-   --  If Is_Union is True, then a union type is created instead of a record
-   --  type.
-
-   procedure Parse_Array_Value
-     (Lang     : access Gdb_C_Language;
-      Type_Str : String;
-      Index    : in out Natural;
-      Result   : in out Array_Type_Access);
-   --  Parse the value of an array.
 
    ---------------------
    -- Break Exception --
@@ -201,7 +168,8 @@ package body Debugger.Gdb.C is
                then
                   Index := Index + 1;
                   Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index, False, Result);
+                    (Lang, Type_Str, Entity, Index,
+                     Is_Union => False, Result => Result, End_On => "}");
                else
                   Result := Parse_Type
                     (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
@@ -221,7 +189,8 @@ package body Debugger.Gdb.C is
                then
                   Index := Index + 1;
                   Parse_Record_Type
-                    (Lang, Type_Str, Entity, Index, True, Result);
+                    (Lang, Type_Str, Entity, Index, Is_Union => True,
+                     Result => Result, End_On => "}");
                else
                   Result := Parse_Type
                     (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
@@ -256,232 +225,8 @@ package body Debugger.Gdb.C is
       Repeat_Num : out Positive)
    is
    begin
-      Repeat_Num := 1;
-
-      -------------------
-      -- Simple values --
-      -------------------
-
-      if Result'Tag = Simple_Type'Tag
-        or else Result'Tag = Range_Type'Tag
-        or else Result'Tag = Mod_Type'Tag
-        or else Result'Tag = Enum_Type'Tag
-      then
-         if Type_Str /= "" then
-            declare
-               Int : constant Natural := Index;
-            begin
-               Skip_Simple_Value (Type_Str, Index,
-                                  Array_Item_Separator => ',',
-                                  End_Of_Array         => Array_End,
-                                  Repeat_Item_Start    => '<');
-               Set_Value (Simple_Type (Result.all),
-                          Type_Str (Int .. Index - 1));
-
-               -------------------
-               -- Repeat values --
-               -------------------
-               --  This only happens inside arrays, so we can simply replace
-               --  Result (it will be deleted the next time the item is
-               --  parsed anyway).
-
-               if Looking_At (Type_Str, Index, "<repeats ") then
-                  Index := Index + 9;
-                  Parse_Num (Type_Str,
-                             Index,
-                             Long_Integer (Repeat_Num));
-                  Index := Index + 7;  --  skips " times>"
-               end if;
-
-            end;
-         else
-            Set_Value (Simple_Type (Result.all), "<???>");
-         end if;
-
-      -------------------
-      -- Access values --
-      -------------------
-      --  The value looks like:   (access integer) 0xbffff54c
-      --  or                  :    0x0
-
-      elsif Result'Tag = Access_Type'Tag then
-
-         --  Skip the parenthesis contents if needed
-         if Index <= Type_Str'Last and then Type_Str (Index) = '(' then
-            --  Make sure we skip to the last close parenthesis (there could
-            --  be some open parenthesis in the open, for instance for access
-            --  to subprograms in C: "(void (*)()) 0x804845c <foo>"
-            declare
-               Num_Open : Integer := 0;
-            begin
-               Index := Index + 1;
-               while Index <= Type_Str'Last
-                 and then (Type_Str (Index) /= ')'
-                           or else Num_Open /= 0)
-               loop
-                  if Type_Str (Index) = '(' then
-                     Num_Open := Num_Open + 1;
-                  elsif Type_Str (Index) = ')' then
-                     Num_Open := Num_Open - 1;
-                  end if;
-                  Index := Index + 1;
-               end loop;
-            end;
-            --  Skip_To_Char (Type_Str, Index, ')');
-            Index := Index + 2;
-         end if;
-
-         declare
-            Int : constant Natural := Index;
-         begin
-            Skip_Hexa_Digit (Type_Str, Index);
-            Set_Value (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
-         end;
-
-      -------------------
-      -- String values --
-      -------------------
-
-      elsif Result'Tag = Array_Type'Tag
-        and then Num_Dimensions (Array_Type (Result.all)) = 1
-        and then Type_Str'Length /= 0
-        and then Type_Str (Index) = '"'
-      then
-         declare
-            Dim : Dimension := Get_Dimensions (Array_Type (Result.all), 1);
-            S : String (1 .. Integer (Dim.Last - Dim.First + 1));
-            Simple : Simple_Type_Access;
-
-         begin
-            Parse_Cst_String (Type_Str, Index, S);
-            Simple := Simple_Type_Access (New_Simple_Type);
-            Set_Value (Simple.all, S);
-            Set_Value (Item       => Array_Type (Result.all),
-                       Elem_Value => Simple,
-                       Elem_Index => 0);
-            Shrink_Values (Array_Type (Result.all));
-         end;
-
-      ------------------
-      -- Array values --
-      ------------------
-
-      elsif Result'Tag = Array_Type'Tag
-        and then Type_Str'Length /= 0   --  for empty Arrays
-      then
-         --  Some array types can in fact be transformed into access types.
-         --  This is the case for instance in C for empty arrays ("int[0]" can
-         --  have a value of "0x..."), or in Ada for unconstrained arrays
-         --  ("array (1..1) of string" can have a value of "(0x0").
-         --  For such cases, we change the type once and for all, since we will
-         --  never need to go back to an array type.
-
-         if Type_Str (Index) /= Array_Start then
-            Free (Result);
-            Result := New_Access_Type;
-            Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num);
-         else
-            Parse_Array_Value
-              (Lang, Type_Str, Index, Array_Type_Access (Result));
-         end if;
-
-      -------------------
-      -- Record values --
-      -------------------
-
-      elsif Result'Tag = Record_Type'Tag
-        or else Result'Tag = Union_Type'Tag
-      then
-         declare
-            R : Record_Type_Access := Record_Type_Access (Result);
-            Int : Natural;
-         begin
-
-            --  Skip initial Record_Start if we are still looking at it (we
-            --  might not if we are parsing a variant part)
-
-            if Index <= Type_Str'Last
-              and then Type_Str (Index) = Record_Start
-            then
-               Index := Index + 1;
-            end if;
-
-            for J in 1 .. Num_Fields (R.all) loop
-
-               --  If we are expecting a field
-
-               if Get_Variant_Parts (R.all, J) = 0 then
-                  declare
-                     V          : Generic_Type_Access := Get_Value (R.all, J);
-                     Repeat_Num : Positive;
-                  begin
-                     --  Skips '='
-                     --  This also skips the address part in some "in out"
-                     --  parameters, like:
-                     --    (<ref> gnat.expect.process_descriptor) @0x818a990: (
-                     --     pid => 2012, ...
-
-                     Skip_To_Char
-                       (Type_Str, Index, Record_Field (Record_Field'First));
-                     Index := Index + 1 + Record_Field'Length;
-                     Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
-                  end;
-
-               --  Else we have a variant part record
-
-               else
-
-                  if Type_Str (Index) = ',' then
-                     Index := Index + 1;
-                     Skip_Blanks (Type_Str, Index);
-                  end if;
-
-                  --  Find which part is active
-                  --  We simply get the next field name and search for the
-                  --  part that defines it
-                  Int := Index;
-                  Skip_To_Char (Type_Str, Int, ' ');
-
-                  declare
-                     Repeat_Num : Positive;
-                     V : Generic_Type_Access;
-                  begin
-                     V := Find_Variant_Part
-                       (Item     => R.all,
-                        Field    => J,
-                        Contains => Type_Str (Index .. Int - 1));
-
-                     Parse_Value (Lang, Type_Str, Index, V, Repeat_Num);
-                  end;
-               end if;
-            end loop;
-         end;
-
-         Skip_Blanks (Type_Str, Index);
-
-         --  Skip closing Record_End, if seen
-         if Index <= Type_Str'Last
-           and then Type_Str (Index) = Record_End
-         then
-            Index := Index + 1;
-         end if;
-
-      ------------------
-      -- Class values --
-      ------------------
-
-      elsif Result'Tag = Class_Type'Tag then
-         declare
-            R : Generic_Type_Access;
-         begin
-            for A in 1 .. Get_Num_Ancestors (Class_Type (Result.all)) loop
-               R := Get_Ancestor (Class_Type (Result.all), A);
-               Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
-            end loop;
-            R := Get_Child (Class_Type (Result.all));
-            Parse_Value (Lang, Type_Str, Index, R, Repeat_Num);
-         end;
-      end if;
+      Internal_Parse_Value (Lang, Type_Str, Index, Result, Repeat_Num,
+                            Parent => null);
    end Parse_Value;
 
    ----------------------
@@ -552,7 +297,8 @@ package body Debugger.Gdb.C is
       Entity    : String;
       Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access)
+      Result    : out Generic_Type_Access;
+      End_On    : String)
    is
       Num_Fields : Natural := 0;
       Field      : Natural := 1;
@@ -654,8 +400,12 @@ package body Debugger.Gdb.C is
          Repeat_Num : Integer;
       begin
          --  Parse the next item
-         Tmp := Clone (Get_Item_Type (Result.all).all);
-         Parse_Value (Lang, Type_Str, Index, Tmp, Repeat_Num);
+         Tmp := Get_Value (Result.all, Current_Index);
+         if Tmp = null then
+            Tmp := Clone (Get_Item_Type (Result.all).all);
+         end if;
+         Internal_Parse_Value (Lang, Type_Str, Index, Tmp, Repeat_Num,
+                               Parent => Generic_Type_Access (Result));
          Set_Value (Item       => Result.all,
                     Elem_Value => Tmp,
                     Elem_Index => Current_Index,
@@ -743,5 +493,22 @@ package body Debugger.Gdb.C is
       --  ??? Unsupported, should we raise an exception ?
       return Result;
    end Parse_Thread_List;
+
+   --------------------------
+   -- Get_Language_Context --
+   --------------------------
+
+   function Get_Language_Context (Lang : access Gdb_C_Language)
+                                 return Language_Context
+   is
+   begin
+      return (Record_Field_Length => Record_Field'Length,
+              Record_Start        => Record_Start,
+              Record_End          => Record_End,
+              Array_Start         => Array_Start,
+              Array_End           => Array_End,
+              Record_Field        => Record_Field);
+   end Get_Language_Context;
+
 
 end Debugger.Gdb.C;

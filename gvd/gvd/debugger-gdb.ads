@@ -25,6 +25,7 @@ with GNAT.OS_Lib;
 with Debugger;
 with GNAT.Regpat;
 with Gtk.Window;
+with Language.Debugger;
 
 package Debugger.Gdb is
 
@@ -162,5 +163,17 @@ private
       Remote_Target  : Boolean;
       Target_Command : GNAT.OS_Lib.String_Access;
    end record;
+
+   procedure Internal_Parse_Value
+     (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Type_Str   : String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive;
+      Parent     : Generic_Values.Generic_Type_Access);
+   --  Internal function used to parse the value.
+   --  The parameters are the same as for Parse_Value, plus Parent that is
+   --  the item that contains Result.
+   --  Parent should be null for the top-level item.
 
 end Debugger.Gdb;

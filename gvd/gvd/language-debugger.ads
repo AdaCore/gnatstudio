@@ -55,6 +55,65 @@ package Language.Debugger is
    --  Type_Str should contain the value, as returned by the debugger itself.
    --  Repeat_Num is the number of times the item is repeated in the output.
 
+   procedure Parse_Array_Type
+     (Lang      : access Language_Debugger;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result    : out Generic_Values.Generic_Type_Access) is abstract;
+   --  Parse the description of an array type.
+   --  Index should point at the opening character of the array in Type_Str
+   --  (ie "array " in gdb Ada, or "int [4]" in gdb C).
+   --  Start_Of_Dim should point to the beginning of the definition of the
+   --  dimensions ("[4]" in the above example)
+
+   procedure Parse_Record_Type
+     (Lang      : access Language_Debugger;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Generic_Values.Generic_Type_Access;
+      End_On    : String) is abstract;
+   --  Parse the type describing a record.
+   --  Index should pointer after the initial "record ", and the record is
+   --  assumed to end on a string like End_On.
+   --  This function is also used to parse the variant part of a record.
+   --  If Is_Union is True, then a union type is created instead of a record
+   --  type.
+
+   procedure Parse_Array_Value
+     (Lang     : access Language_Debugger;
+      Type_Str : String;
+      Index    : in out Natural;
+      Result   : in out Generic_Values.Array_Type_Access) is abstract;
+   --  Parse the value of an array.
+
+   type Language_Context (Record_Field_Length : Positive) is record
+      Record_Start : Character;
+      --  Character that starts the display of record values
+
+      Record_End   : Character;
+      --  Character that ends the display of record values
+
+      Array_Start  : Character;
+      --  Character that starts the display of array values
+
+      Array_End    : Character;
+      --  Character that ends the display of array values
+
+      Record_Field : String (1 .. Record_Field_Length);
+      --  how are record field names separated from their values
+   end record;
+   --  Description of some strings used in the parsing of the output for
+   --  some given languages.
+
+
+   function Get_Language_Context (Lang : access Language_Debugger)
+                                 return Language_Context is abstract;
+   --  Return the context to use for a specific language
+
 private
    type Language_Debugger is abstract new Language_Root with record
       The_Debugger : Debugger_Access;

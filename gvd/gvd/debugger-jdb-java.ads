@@ -56,6 +56,32 @@ package Debugger.Jdb.Java is
      (Lang   : access Jdb_Java_Language;
       Output : String) return Language.Thread_Information_Array;
 
+   procedure Parse_Array_Type
+     (Lang      : access Jdb_Java_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result    : out Generic_Type_Access);
+
+   procedure Parse_Record_Type
+     (Lang      : access Jdb_Java_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Generic_Type_Access;
+      End_On    : String);
+
+   procedure Parse_Array_Value
+     (Lang     : access Jdb_Java_Language;
+      Type_Str : String;
+      Index    : in out Natural;
+      Result   : in out Array_Type_Access);
+
+   function Get_Language_Context (Lang : access Jdb_Java_Language)
+                                 return Language.Debugger.Language_Context;
+
 private
 
    type Jdb_Java_Language is new

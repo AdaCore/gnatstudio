@@ -24,6 +24,7 @@
 --  See language.ads for a complete spec.
 
 with Language.Debugger.Ada;
+with Generic_Values;
 
 package Debugger.Gdb.Ada is
 
@@ -60,6 +61,32 @@ package Debugger.Gdb.Ada is
    function Parse_Thread_List
      (Lang   : access Gdb_Ada_Language;
       Output : String) return Language.Thread_Information_Array;
+
+   procedure Parse_Array_Type
+     (Lang      : access Gdb_Ada_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result    : out Generic_Values.Generic_Type_Access);
+
+   procedure Parse_Record_Type
+     (Lang      : access Gdb_Ada_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Generic_Values.Generic_Type_Access;
+      End_On    : String);
+
+   procedure Parse_Array_Value
+     (Lang     : access Gdb_Ada_Language;
+      Type_Str : String;
+      Index    : in out Natural;
+      Result   : in out Generic_Values.Array_Type_Access);
+
+   function Get_Language_Context (Lang : access Gdb_Ada_Language)
+                                 return Language.Debugger.Language_Context;
 
 private
 
