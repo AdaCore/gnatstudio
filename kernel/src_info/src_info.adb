@@ -792,7 +792,7 @@ package body Src_Info is
    -- Get_Column --
    ----------------
 
-   function Get_Column (Location : File_Location) return Positive is
+   function Get_Column (Location : File_Location) return Natural is
    begin
       return Location.Column;
    end Get_Column;

@@ -266,7 +266,7 @@ package Src_Info is
 
    function Get_File   (Location : File_Location) return String;
    function Get_Line   (Location : File_Location) return Positive;
-   function Get_Column (Location : File_Location) return Positive;
+   function Get_Column (Location : File_Location) return Natural;
    --  Return the fields of a location
 
 private
