@@ -20,6 +20,7 @@
 
 with Glib;             use Glib;
 with Gdk.Color;        use Gdk.Color;
+with Gdk.Event;        use Gdk.Event;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.Window;       use Gdk.Window;
 
@@ -28,12 +29,10 @@ with Gtk.Arguments;    use Gtk.Arguments;
 with Gtk.Box;          use Gtk.Box;
 with Gtk.Button;       use Gtk.Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Clist;        use Gtk.Clist;
 with Gtk.Combo;        use Gtk.Combo;
 with Gtk.Dialog;       use Gtk.Dialog;
 with Gtk.Enums;        use Gtk.Enums;
 with Gtk.GEntry;       use Gtk.GEntry;
-with Gtk.Handlers;     use Gtk.Handlers;
 with Gtk.List;         use Gtk.List;
 with Gtk.Main;         use Gtk.Main;
 with Gtk.Notebook;     use Gtk.Notebook;
@@ -43,8 +42,13 @@ with Gtk.Style;        use Gtk.Style;
 with Gtk.Text;         use Gtk.Text;
 with Gtk.Widget;       use Gtk.Widget;
 
+with Gtk.Tree_View;        use Gtk.Tree_View;
+with Gtk.Tree_Model;       use Gtk.Tree_Model;
+with Gtk.Tree_Store;       use Gtk.Tree_Store;
+with Gtk.Tree_Selection;   use Gtk.Tree_Selection;
+with Gtk.Tree_View_Column; use Gtk.Tree_View_Column;
+
 with Gtkada.Handlers;  use Gtkada.Handlers;
-with Gtkada.Types;     use Gtkada.Types;
 with Basic_Types;      use Basic_Types;
 with GPS.Intl;       use GPS.Intl;
 with Breakpoints_Pkg.Callbacks; use Breakpoints_Pkg.Callbacks;
@@ -56,22 +60,22 @@ with GUI_Utils;        use GUI_Utils;
 with Debugger;         use Debugger;
 with VFS;              use VFS;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
+with Ada.Exceptions;          use Ada.Exceptions;
+with Traces;                  use Traces;
 
 package body Breakpoints_Editor is
 
-   Enable_Column : constant := 1;
-   --  Column in the clist display that contains the enable/disable state
-   --  of the breakpoints.
-
-   procedure Breakpoint_Row_Selected
+   procedure Breakpoint_Row_Selection_Change
      (Widget : access Gtk_Widget_Record'Class;
       Args   : Gtk.Arguments.Gtk_Args);
    --  Called when a row of the breakpoint editor was selected.
 
-   procedure Breakpoint_Row_Unselected
+   function Breakpoint_Clicked
      (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args);
-   --  Called when a row of the breakpoint editor was unselected.
+      Event  : Gdk_Event) return Boolean;
+   --  Called when receiving a click on the breakpoint tree.
 
    procedure Fill_Advanced_Dialog
      (Advanced : Advanced_Breakpoint_Access; Br : Breakpoint_Data);
@@ -157,146 +161,141 @@ package body Breakpoints_Editor is
       Show_All (Editor);
    end Breakpoint_Editor;
 
-   -----------------------------
-   -- Breakpoint_Row_Selected --
-   -----------------------------
+   ------------------------
+   -- Breakpoint_Clicked --
+   ------------------------
 
-   procedure Breakpoint_Row_Selected
+   function Breakpoint_Clicked
      (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
+      Event  : Gdk_Event) return Boolean
    is
       Editor  : constant Breakpoint_Editor_Access :=
         Breakpoint_Editor_Access (Widget);
-      Row     : constant Gint := To_Gint (Args, 1);
-      Column  : constant Gint := To_Gint (Args, 2);
+
+      Iter    : Gtk_Tree_Iter;
+      Col     : Gtk_Tree_View_Column;
+
+      Model   : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (Editor.Breakpoint_List));
+   begin
+      if Get_Button (Event) = 1
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         Coordinates_For_Event
+           (Editor.Breakpoint_List,
+            Get_Model (Editor.Breakpoint_List),
+            Event, Iter, Col);
+
+         if Col = Get_Column (Editor.Breakpoint_List, Col_Enb) then
+            --  Click in the second column => change the enable/disable state
+            --  For efficiency, no need to reparse the list of breakpoints,
+            --  since only the state of one of them as changed and we know all
+            --  about it.
+
+            Set (Model, Iter, Col_Enb,
+                 Toggle_Breakpoint_State
+                   (Editor.Process,
+                    Breakpoint_Num => Breakpoint_Identifier'Value
+                      (Get_String (Model, Iter, Col_Num))));
+
+            --  Stop propagation of the current signal, to avoid extra calls
+            --  to Select/Unselect row.
+
+            return True;
+         end if;
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+         return False;
+   end Breakpoint_Clicked;
+
+   -------------------------------------
+   -- Breakpoint_Row_Selection_Change --
+   -------------------------------------
+
+   procedure Breakpoint_Row_Selection_Change
+     (Widget : access Gtk_Widget_Record'Class;
+      Args   : Gtk_Args)
+   is
+      pragma Unreferenced (Args);
+
+      Editor  : constant Breakpoint_Editor_Access :=
+        Breakpoint_Editor_Access (Widget);
+
+      Model   : Gtk_Tree_Model;
+      Iter    : Gtk_Tree_Iter;
       Br      : Breakpoint_Data;
       Br_Num  : Breakpoint_Identifier;
 
    begin
-      --  Click in the second column => change the enable/disable state
+      Get_Selected (Get_Selection (Editor.Breakpoint_List), Model, Iter);
 
-      if Column = Enable_Column then
-         --  For efficiency, no need to reparse the list of breakpoints, since
-         --  only the state of one of them as changed and we know all about
-         --  it.
+      if Iter = Null_Iter then
+         Set_Sensitive (Editor.Advanced_Location, False);
+         Set_Sensitive (Editor.Remove, False);
+         Set_Sensitive (Editor.View, False);
+         return;
+      end if;
 
-         Freeze (Editor.Breakpoint_List);
+      Br_Num := Breakpoint_Identifier'Value
+        (Get_String (Model, Iter, Col_Num));
 
-         if Toggle_Breakpoint_State
-           (Editor.Process,
-            Breakpoint_Num => Breakpoint_Identifier'Value
-              (Get_Text (Editor.Breakpoint_List, Row, 0)))
-         then
-            Set_Pixmap
-              (Editor.Breakpoint_List, Row, Enable_Column,
-               Editor.Enabled_Pixmap, Editor.Enabled_Mask);
+      for B in Editor.Process.Breakpoints'Range loop
+         if Editor.Process.Breakpoints (B).Num = Br_Num then
+            Br := Editor.Process.Breakpoints (B);
+            exit;
+         end if;
+      end loop;
+
+      --  Fill the information
+
+      if Br.Except /= null then
+         Set_Page (Editor.Notebook1, 2);
+         Set_Active (Editor.Stop_Always_Exception, True);
+
+         if Br.Except.all = "all" then
+            Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
+         elsif Br.Except.all = "unhandled" then
+            Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
+            Set_Active (Editor.Stop_Not_Handled_Exception, True);
          else
-            Set_Text (Editor.Breakpoint_List, Row, Enable_Column, "");
+            Add_Unique_Combo_Entry (Editor.Exception_Name, Br.Except.all);
+            Set_Text (Get_Entry (Editor.Exception_Name), Br.Except.all);
          end if;
 
-         --  Stop propagation of the current signal, to avoid extra calls
-         --  to Select/Unselect row.
-
-         Emit_Stop_By_Name (Editor.Breakpoint_List, "select_row");
-
-         --  Put the selection back to its previous state.
-
-         Select_Row (Editor.Breakpoint_List, Row, -1);
-
-         Thaw (Editor.Breakpoint_List);
-
-      --  Otherwise, display the information in the correct tab
+         Set_Active (Editor.Temporary_Exception, Br.Disposition /= Keep);
 
       else
-         --  Get the information on the breakpoint
+         Set_Page (Editor.Notebook1, 0);
 
-         Br_Num := Breakpoint_Identifier'Value
-           (Get_Text (Editor.Breakpoint_List, Row, 0));
-
-         for B in Editor.Process.Breakpoints'Range loop
-            if Editor.Process.Breakpoints (B).Num = Br_Num then
-               Br := Editor.Process.Breakpoints (B);
-               exit;
-            end if;
-         end loop;
-
-         --  Fill the information
-
-         if Br.Except /= null then
-            Set_Page (Editor.Notebook1, 2);
-            Set_Active (Editor.Stop_Always_Exception, True);
-
-            if Br.Except.all = "all" then
-               Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
-            elsif Br.Except.all = "unhandled" then
-               Set_Text (Get_Entry (Editor.Exception_Name), -"All exceptions");
-               Set_Active (Editor.Stop_Not_Handled_Exception, True);
-            else
-               Add_Unique_Combo_Entry (Editor.Exception_Name, Br.Except.all);
-               Set_Text (Get_Entry (Editor.Exception_Name), Br.Except.all);
-            end if;
-
-            Set_Active (Editor.Temporary_Exception, Br.Disposition /= Keep);
-
+         if Br.File /= VFS.No_File then
+            Set_Active (Editor.Location_Selected, True);
+            Add_Unique_Combo_Entry
+              (Editor.File_Combo, Base_Name (Br.File));
+            Set_Text
+              (Get_Entry (Editor.File_Combo), Base_Name (Br.File));
+            Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
          else
-            Set_Page (Editor.Notebook1, 0);
-
-            if Br.File /= VFS.No_File then
-               Set_Active (Editor.Location_Selected, True);
-               Add_Unique_Combo_Entry
-                 (Editor.File_Combo, Base_Name (Br.File));
-               Set_Text
-                 (Get_Entry (Editor.File_Combo), Base_Name (Br.File));
-               Set_Value (Editor.Line_Spin, Grange_Float (Br.Line));
-            else
-               Set_Active (Editor.Address_Selected, True);
-               Add_Unique_Combo_Entry (Editor.Address_Combo, Br.Address.all);
-               Set_Text (Get_Entry (Editor.Address_Combo), Br.Address.all);
-            end if;
+            Set_Active (Editor.Address_Selected, True);
+            Add_Unique_Combo_Entry (Editor.Address_Combo, Br.Address.all);
+            Set_Text (Get_Entry (Editor.Address_Combo), Br.Address.all);
          end if;
-
-         Set_Sensitive (Editor.Advanced_Location, True);
-         Set_Sensitive (Editor.Remove, True);
-         Set_Sensitive (Editor.View, True);
-      end if;
-   end Breakpoint_Row_Selected;
-
-   -------------------------------
-   -- Breakpoint_Row_Unselected --
-   -------------------------------
-
-   procedure Breakpoint_Row_Unselected
-     (Widget : access Gtk_Widget_Record'Class;
-      Args   : Gtk_Args)
-   is
-      Editor  : constant Breakpoint_Editor_Access :=
-        Breakpoint_Editor_Access (Widget);
-      Row     : constant Gint := To_Gint (Args, 1);
-      Column  : constant Gint := To_Gint (Args, 2);
-   begin
-      if Column = Enable_Column then
-         Freeze (Editor.Breakpoint_List);
-
-         if Toggle_Breakpoint_State
-           (Editor.Process,
-            Breakpoint_Num => Breakpoint_Identifier'Value
-              (Get_Text (Editor.Breakpoint_List, Row, 0)))
-         then
-            Set_Pixmap
-              (Editor.Breakpoint_List, Row, Enable_Column,
-               Editor.Enabled_Pixmap, Editor.Enabled_Mask);
-         else
-            Set_Text (Editor.Breakpoint_List, Row, Enable_Column, "");
-         end if;
-
-         Emit_Stop_By_Name (Editor.Breakpoint_List, "unselect_row");
-         Thaw (Editor.Breakpoint_List);
       end if;
 
-      Set_Sensitive (Editor.Advanced_Location, False);
-      Set_Sensitive (Editor.Remove, False);
-      Set_Sensitive (Editor.View, False);
-   end Breakpoint_Row_Unselected;
+      Set_Sensitive (Editor.Advanced_Location, True);
+      Set_Sensitive (Editor.Remove, True);
+      Set_Sensitive (Editor.View, True);
+
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+   end Breakpoint_Row_Selection_Change;
 
    -------------------------
    -- Get_Selection_Index --
@@ -306,15 +305,15 @@ package body Breakpoints_Editor is
      (Editor : access Breakpoint_Editor_Record) return Integer
    is
       use Gint_List;
-      Selection : constant Gint_List.Glist :=
-        Get_Selection (Editor.Breakpoint_List);
       Br_Num    : Breakpoint_Identifier;
-
+      Iter      : Gtk_Tree_Iter;
+      The_Model : Gtk_Tree_Model;
    begin
-      if Selection /= Null_List then
+      Get_Selected (Get_Selection (Editor.Breakpoint_List), The_Model, Iter);
+
+      if Iter /= Null_Iter then
          Br_Num := Breakpoint_Identifier'Value
-           (Get_Text (Editor.Breakpoint_List,
-                      Get_Data (First (Selection)), 0));
+           (Get_String (The_Model, Iter, Col_Num));
 
          for B in Editor.Process.Breakpoints'Range loop
             if Editor.Process.Breakpoints (B).Num = Br_Num then
@@ -717,14 +716,16 @@ package body Breakpoints_Editor is
    is
       Selection    : constant Integer := Get_Selection_Index (Editor);
       Selected     : Breakpoint_Identifier := 0;
-      Selected_Row : Gint := -1;
-      Row          : Gint;
       Br           : Breakpoint_Data;
       Size         : Gint;
       pragma Unreferenced (Size);
+      Model : constant Gtk_Tree_Store := Gtk_Tree_Store
+        (Get_Model (Editor.Breakpoint_List));
+      Iter          : Gtk_Tree_Iter;
+      Selected_Iter : Gtk_Tree_Iter := Null_Iter;
 
    begin
-      Clear (Editor.Breakpoint_List);
+      Clear (Model);
 
       if Selection /= -1 then
          Selected := Editor.Process.Breakpoints (Selection).Num;
@@ -733,91 +734,68 @@ package body Breakpoints_Editor is
       if Editor.Process.Breakpoints = null
         or else Editor.Process.Breakpoints'Length <= 0
       then
-         --  Put at least one empty line, so that the columns are resized
-         --  correctly.
-
-         Set_Text (Editor.Breakpoint_List, 0, 0, " 1");
          return;
       end if;
-
-      Freeze (Editor.Breakpoint_List);
 
       for B in Editor.Process.Breakpoints'Range loop
          Br := Editor.Process.Breakpoints (B);
 
          --  Create a new line
-         --  WARNING: We must have at least as many elements as there are
-         --  columns in the clist.
-         Row := Append
-           (Editor.Breakpoint_List, "" + "" + "" + "" + "" + "" + "" + "");
 
-         Set_Text
-           (Editor.Breakpoint_List, Row, 0,
-            Breakpoint_Identifier'Image (Br.Num));
+         Append (Model, Iter, Null_Iter);
+         Set (Model, Iter, Col_Num, Breakpoint_Identifier'Image (Br.Num));
+
          if Selection /= -1 and then Br.Num = Selected then
-            Selected_Row := Row;
+            Selected_Iter := Iter;
          end if;
 
-         if Br.Enabled then
-            Set_Pixmap (Editor.Breakpoint_List, Row, Enable_Column,
-                        Editor.Enabled_Pixmap, Editor.Enabled_Mask);
-         end if;
+         Set (Model, Iter, Col_Enb, Br.Enabled);
 
          case Br.The_Type is
             when Breakpoint =>
-               Set_Text (Editor.Breakpoint_List, Row, 2, -"break");
+               Set (Model, Iter, Col_Type, -"break");
             when Watchpoint =>
-               Set_Text (Editor.Breakpoint_List, Row, 2, -"watch");
+               Set (Model, Iter, Col_Type, -"watch");
          end case;
 
-         case Br.Disposition is
-            when Delete =>
-               Set_Text (Editor.Breakpoint_List, Row, 3, -"delete");
-            when Disable =>
-               Set_Text (Editor.Breakpoint_List, Row, 3, -"disable");
-            when Keep =>
-               Set_Text (Editor.Breakpoint_List, Row, 3, -"keep");
-         end case;
+         Set (Model, Iter, Col_Disp, To_Lower (Br.Disposition'Img));
 
          if Br.Expression /= null then
-            Set_Text
-              (Editor.Breakpoint_List, Row, 4, Br.Expression.all);
+            Set (Model, Iter, Col_File, Br.Expression.all);
          end if;
 
          if Br.File /= VFS.No_File then
-            Set_Text (Editor.Breakpoint_List, Row, 4, Base_Name (Br.File));
-            Set_Text (Editor.Breakpoint_List, Row, 5, Integer'Image (Br.Line));
+            Set (Model, Iter, Col_File, Base_Name (Br.File));
+            Set (Model, Iter, Col_Line, Integer'Image (Br.Line));
          end if;
 
          if Br.Except /= null then
-            Set_Text (Editor.Breakpoint_List, Row, 6, Br.Except.all);
+            Set (Model, Iter, Col_Exception, Br.Except.all);
          end if;
 
          if Br.Subprogram /= null then
-            Set_Text
-              (Editor.Breakpoint_List, Row, 7, Br.Subprogram.all);
+            Set (Model, Iter, Col_Subprogs, Br.Subprogram.all);
          end if;
       end loop;
 
-      Set_Column_Min_Width (Editor.Breakpoint_List, 1, 20);
-      Set_Column_Justification (Editor.Breakpoint_List, 1, Justify_Center);
-      Size := Columns_Autosize (Editor.Breakpoint_List);
-
       Widget_Callback.Object_Connect
-        (Editor.Breakpoint_List, "select_row",
-         Breakpoint_Row_Selected'Access,
-         Slot_Object => Editor);
-      Widget_Callback.Object_Connect
-        (Editor.Breakpoint_List, "unselect_row",
-         Breakpoint_Row_Unselected'Access,
-         Slot_Object => Editor);
+        (Get_Selection (Editor.Breakpoint_List), "changed",
+         Breakpoint_Row_Selection_Change'Access,
+         Slot_Object => Editor,
+         After       => True);
 
-      Thaw (Editor.Breakpoint_List);
+      Gtkada.Handlers.Return_Callback.Object_Connect
+        (Editor.Breakpoint_List,
+         "button_press_event",
+         Gtkada.Handlers.Return_Callback.To_Marshaller
+           (Breakpoint_Clicked'Access),
+         Slot_Object => Editor,
+         After       => False);
 
       --  Reselect the same item as before
 
-      if Selected_Row /= -1 then
-         Select_Row (Editor.Breakpoint_List, Selected_Row, -1);
+      if Selected_Iter /= Null_Iter then
+         Select_Iter (Get_Selection (Editor.Breakpoint_List), Selected_Iter);
       end if;
    end Update_Breakpoint_List;
 
