@@ -23,26 +23,46 @@
     have several of them, in case the user wants to display some extra
     information (see "Adding extra information to directories")
 
+  * Handling of links to directories: we shouldn't be able to open the same
+    link multiple times (ln -s . foo).
+
 ---------------------
 -- Creation wizard --
 ---------------------
 
   * [Manu] Source_Dir selection
     The number of currently selected directories should be displayed somewhere
-
+  * [Manu] DND in Source_Dir selection
+    It would be more natural to have drag-n-drop in the source dir selection.
   * [Manu] Ctrees should be scrolled to show the selected line
-
   * [Manu] Obj_Dir selection should enable directory creation
     There should be a contextual menu to create subdirectories
+  * [Manu] Should check contents of current page before activating Next.
+  * [Manu] Should make it easy to add dependency on GtkAda, ASIS,...
 
 ---------------------
 -- Switches editor --
 ---------------------
 
   * [Manu] Get the strings for the combo boxes (optimization..) from gnatcmd.
-
-  * [Manu] Advanced switches editor: should show list at bottom
-    In red: unrecognized switches
-
+  * [Manu] put user switches in red in the command lines.
   * [Manu] Parsing switches: see if we can reuse the front-end
+  * [Manu] Create proper handlers for "destroy"
+  * [Manu] Should we have -gnatt (ASIS tree ?)
 
+---------------------
+-- Variable editor --
+---------------------
+
+  * [Manu] Should we show the package name in which the variable is defined ?
+  * [Manu] Possibility to give names to list of possible values.
+    These would be the names of the types in the generated project file.
+  * [Manu] Should show references to variables in color, in addition to
+    putting '$' in front. Likewise, it shouldn't be possible to insert
+    characters in the middle of the name, so that we know we always reference
+    existing variables.
+  * [Manu] Removing a variable: should check that it is not used anywhere.
+  * [Manu] Should remove all manipulations of Project_Node_Id in packages other
+    than Prj.API
+  * [Manu] If "${foo}" is entered manually in a project file, it should be
+    flaged as an error
