@@ -1312,6 +1312,7 @@ package body Src_Editor_View is
       Layout  : Pango_Layout;
       Color   : Gdk_Color;
       Height  : Gint;
+      Mode    : constant Speed_Column_Policies := Source.Speed_Column_Mode;
    begin
       --  Set the font.
 
@@ -1342,6 +1343,24 @@ package body Src_Editor_View is
          Source.Highlight_Blocks := Get_Pref (Kernel, Block_Highlighting);
       end if;
 
+      Source.Speed_Column_Mode :=
+        Speed_Column_Policies'Val (Get_Pref (Kernel, Speed_Column_Policy));
+
+      if Source.Speed_Column_Mode /= Mode then
+         if Source.Speed_Column_Mode = Never then
+            Set_Size_Request (Source.Area, 1, -1);
+
+         elsif Source.Speed_Column_Mode = Always then
+            Set_Size_Request (Source.Area, Speed_Column_Width, -1);
+         end if;
+
+         if Source.Speed_Column_Buffer /= null then
+            Gdk.Pixmap.Unref (Source.Speed_Column_Buffer);
+            Source.Speed_Column_Buffer := null;
+         end if;
+
+         Redraw_Speed_Column (Source);
+      end if;
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
@@ -1825,7 +1844,9 @@ package body Src_Editor_View is
       Info_Exists : Boolean := False;
 
    begin
-      if View.Area = null then
+      if View.Area = null
+        or else View.Speed_Column_Mode = Never
+      then
          return;
       end if;
 
@@ -1873,16 +1894,18 @@ package body Src_Editor_View is
          end loop;
 
          if Info_Exists then
-            if Width = 1 then
+            if Width = 1
+              and then View.Speed_Column_Mode /= Never
+            then
                Set_Size_Request (View.Area, Speed_Column_Width, -1);
             end if;
-            null;
          else
-            if Width = Speed_Column_Width then
+            if Width = Speed_Column_Width
+              and then View.Speed_Column_Mode /= Always
+            then
                Set_Size_Request (View.Area, 1, -1);
+               return;
             end if;
-
-            return;
          end if;
       end if;
 
