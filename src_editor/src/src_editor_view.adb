@@ -636,7 +636,7 @@ package body Src_Editor_View is
       --  Keep the cursor on screen when the editor is resized.
 
       if not Cursor_Is_On_Screen (Source_View (View)) then
-         Scroll_To_Cursor_Location (Source_View (View), Center => True);
+         Scroll_To_Cursor_Location (Source_View (View));
       end if;
 
    exception
@@ -1406,6 +1406,18 @@ package body Src_Editor_View is
         (View, Insert_Mark, Use_Align => Center,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
+
+   -------------------
+   -- Center_Cursor --
+   -------------------
+
+   procedure Center_Cursor (View  : access Source_View_Record) is
+      Insert_Mark : constant Gtk_Text_Mark := Get_Insert (Get_Buffer (View));
+   begin
+      Scroll_To_Mark
+        (View, Insert_Mark, Use_Align => False,
+         Within_Margin => 0.1, Xalign => 0.5, Yalign => 0.5);
+   end Center_Cursor;
 
    -----------------------------
    -- Window_To_Buffer_Coords --
