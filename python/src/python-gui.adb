@@ -593,7 +593,7 @@ package body Python.GUI is
       Default_Console : constant Gtk_Text_View := Interpreter.Console;
 
    begin
-      Trace (Me, "Running command: " & Command);
+      Trace (Me, "Running command: " & Cmd);
 
       Interpreter.Hide_Output := Hide_Output;
       Errors.all := False;
@@ -701,7 +701,10 @@ package body Python.GUI is
                   end if;
                end if;
             end;
+         else
+            PyErr_Clear;
          end if;
+
 
          if Interpreter.Use_Secondary_Prompt then
             Tmp := Interpreter.Buffer;
