@@ -220,7 +220,7 @@ package Glide_Kernel is
    --  Return the other file associated with Source_Filename (the spec if
    --  Source_Filename is a body or separate, the body if Source_Filename is
    --  the spec).
-   --  The empty string is returned if the file wasn't found (and error
+   --  No_File is returned if the file wasn't found (and error
    --  messages are printed to the console appropriately).
 
    procedure Find_Declaration_Or_Overloaded
