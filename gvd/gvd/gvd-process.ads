@@ -197,6 +197,12 @@ package Odd.Process is
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
 
+   function Get_Current_Process
+     (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Debugger_Process_Tab;
+   --  Return the current process tab in Main_Window.
+   --  Main_Window should be a pointer to the top-level window in gvd.
+
    procedure Process_Stopped
      (Debugger : access Debugger_Process_Tab_Record'Class);
    --  Emit the "process_stopped" signal.
@@ -206,12 +212,15 @@ package Odd.Process is
    --  Emit the "context_changed" and "process_stopped" signal.
 
    procedure Process_User_Command
-     (Debugger : Debugger_Process_Tab;
-      Command  : String);
+     (Debugger       : Debugger_Process_Tab;
+      Command        : String;
+      Output_Command : Boolean := False);
    --  Process a command entered by the user.
    --  In most cases, the command is simply transfered asynchronously to the
    --  debugger process. However, commands internal to odd are filtered and
    --  are not transmitted to the debugger.
+   --  If Output_Command is True, then the command is first output to the
+   --  command window. An ASCII.LF is appended at the end before printing
 
    procedure Text_Output_Handler
      (Process    : Debugger_Process_Tab;

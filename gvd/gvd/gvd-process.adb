@@ -96,18 +96,26 @@ package body Odd.Process is
 
 
    Graph_Cmd_Format : Pattern_Matcher := Compile
-     ("graph\s+(print|display)\s+((\S+)|`([^`]+)`)\s*"
+     ("graph\s+(print|display)\s+(`([^`]+)`|(\S+))\s*"
       & "(dependent\s+on\s+(\S+)\s*)?"
       & "(link_name\s+(\S+))?", Case_Insensitive);
    --  Format of the graph print commands, and how to parse them
 
    Graph_Cmd_Type_Paren          : constant := 1;
-   Graph_Cmd_Variable_Name_Paren : constant := 3;
-   Graph_Cmd_Expression_Paren    : constant := 4;
+   Graph_Cmd_Expression_Paren    : constant := 3;
+   Graph_Cmd_Variable_Name_Paren : constant := 4;
    Graph_Cmd_Dependent_Paren     : constant := 6;
    Graph_Cmd_Link_Paren          : constant := 8;
    --  Indexes of the parentheses pairs in Graph_Cmd_Format for each of the
    --  relevant fields.
+
+   Graph_Cmd_Format2 : Pattern_Matcher := Compile
+     ("graph\s+(enable|disable)\s+display\s+(.*)", Case_Insensitive);
+   --  Second possible set of commands.
+
+   Graph_Cmd_Format3 : Pattern_Matcher := Compile
+     ("graph\s+undisplay\s+(.*)", Case_Insensitive);
+   --  Third possible set of commands
 
    -----------------------
    -- Local Subprograms --
@@ -551,14 +559,21 @@ package body Odd.Process is
       Cmd     : String)
    is
       Matched : Match_Array (0 .. 10);
-      Item     : Display_Item;
+      Item    : Display_Item;
+      Index,
+      Last    : Positive;
+      Enable  : Boolean;
    begin
-      --  graph (print|display) variable [dependent on link_src]
+      --  graph (print|display) variable [dependent on display_num]
       --        [link_name name]
       --  graph (print|display) `command`
+      --  graph enable display display_num [display_num ...]
+      --  graph disable display display_num [display_num ...]
 
       Match (Graph_Cmd_Format, Cmd, Matched);
       if Matched (0) /= No_Match then
+         Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd'
+           or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'D';
 
          --  A general expression  (graph print `cmd`)
          if Matched (Graph_Cmd_Expression_Paren) /= No_Match then
@@ -578,9 +593,9 @@ package body Odd.Process is
                  (Item, Get_Window (Process.Data_Canvas),
                   Variable_Name  => Expr,
                   Debugger       => Process,
-                  Auto_Refresh   =>
-                    Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                  Auto_Refresh   => Enable,
                   Default_Entity => Entity);
+               Put (Process.Data_Canvas, Item);
             end;
 
          --  A variable name
@@ -646,8 +661,7 @@ package body Odd.Process is
                            Variable_Name => Variable_Name_With_Frame
                            (Process.Debugger, Var),
                            Debugger      => Process,
-                           Auto_Refresh  =>
-                             Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                           Auto_Refresh  => Enable,
                            Link_From     => Link_From,
                            Link_Name     => Link_Name);
                      end if;
@@ -657,14 +671,51 @@ package body Odd.Process is
                           (Item, Get_Window (Process.Data_Canvas),
                            Variable_Name => Var,
                            Debugger      => Process,
-                           Auto_Refresh  =>
-                             Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd',
+                           Auto_Refresh  => Enable,
                            Link_From     => Link_From,
                            Link_Name     => Link_Name);
                      end if;
                   end;
                end if;
             end;
+         end if;
+
+      else
+         --  Is this an enable/disable command ?
+         Match (Graph_Cmd_Format2, Cmd, Matched);
+         if Matched (2) /= No_Match then
+            Index := Matched (2).First;
+            Enable := Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'e'
+              or else Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'E';
+
+            while Index <= Cmd'Last loop
+               Last := Index;
+               Skip_To_Blank (Cmd, Last);
+               Set_Auto_Refresh
+                 (Find_Item (Process.Data_Canvas,
+                             Integer'Value (Cmd (Index .. Last - 1))),
+                  Get_Window (Process),
+                  Enable,
+                  Update_Value => True);
+               Index := Last + 1;
+               Skip_Blanks (Cmd, Index);
+            end loop;
+
+         --  Third possible set of commands
+         else
+            Match (Graph_Cmd_Format3, Cmd, Matched);
+            if Matched (1) /= No_Match then
+               Index := Matched (1).First;
+               while Index <= Cmd'Last loop
+                  Last := Index;
+                  Skip_To_Blank (Cmd, Last);
+                  Free
+                    (Find_Item (Process.Data_Canvas,
+                                Integer'Value (Cmd (Index .. Last - 1))));
+                  Index := Last + 1;
+                  Skip_Blanks (Cmd, Index);
+               end loop;
+            end if;
          end if;
       end if;
    end Process_Graph_Cmd;
@@ -673,14 +724,21 @@ package body Odd.Process is
    -- Process_User_Command --
    --------------------------
 
-   procedure Process_User_Command (Debugger : Debugger_Process_Tab;
-                                   Command  : String)
+   procedure Process_User_Command
+     (Debugger       : Debugger_Process_Tab;
+      Command        : String;
+      Output_Command : Boolean := False)
    is
       Command2 : String := To_Lower (Command);
       First    : Natural := Command2'First;
       Cursor   : Gdk_Cursor;
    begin
       Append (Debugger.Command_History, Command);
+
+      if Output_Command then
+         Text_Output_Handler
+           (Debugger, Command & ASCII.LF, Is_Command => True);
+      end if;
 
       Gdk_New (Cursor, Gdk.Types.Watch);
       Set_Cursor (Get_Window (Debugger.Window), Cursor);
@@ -824,5 +882,19 @@ package body Odd.Process is
       end if;
       return False;
    end Toggle_Breakpoint_State;
+
+   -------------------------
+   -- Get_Current_Process --
+   -------------------------
+
+   function Get_Current_Process
+     (Main_Window : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Debugger_Process_Tab
+   is
+   begin
+      return Process_User_Data.Get
+        (Get_Child (Get_Cur_Page
+         (Main_Debug_Window_Access (Main_Window).Process_Notebook)));
+   end Get_Current_Process;
 
 end Odd.Process;
