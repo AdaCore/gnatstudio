@@ -238,7 +238,6 @@ package body Glide_Result_View is
       Set (View.Model, Iter, Column_Column, Column);
       Set (View.Model, Iter, Length_Column, Length);
       Set (View.Model, Iter, Icon_Column, C_Proxy (Pixbuf));
-      Set (View.Model, Iter, Button_Column, C_Proxy (Pixbuf));
 
       if Line = "" then
          Set (View.Model, Iter, Weight_Column, 400);
@@ -509,6 +508,7 @@ package body Glide_Result_View is
       Add_Attribute (Col, Text_Rend, "weight", Weight_Column);
       Add_Attribute (Col, Text_Rend, "foreground_gdk", Color_Column);
       Dummy := Append_Column (Tree, Col);
+      Set_Expander_Column (Tree, Col);
 
       Gtk_New (Col);
       Gtk_New (Text_Rend);
