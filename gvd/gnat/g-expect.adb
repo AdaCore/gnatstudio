@@ -417,7 +417,7 @@ package body GNAT.Expect is
      (Pid         : in out Pipes_Id;
       Result      : out Expect_Match;
       Regexp      : String;
-      Matched     : GNAT.Regpat.Match_Array;
+      Matched     : out GNAT.Regpat.Match_Array;
       Timeout     : Integer := 10000;
       Full_Buffer : Boolean := False)
    is
@@ -450,7 +450,7 @@ package body GNAT.Expect is
      (Pid         : in out Pipes_Id;
       Result      : out Expect_Match;
       Regexp      : GNAT.Regpat.Pattern_Matcher;
-      Matched     : GNAT.Regpat.Match_Array;
+      Matched     : out GNAT.Regpat.Match_Array;
       Timeout     : Integer := 10000;
       Full_Buffer : Boolean := False)
    is
