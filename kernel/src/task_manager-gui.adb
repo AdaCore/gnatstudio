@@ -33,6 +33,7 @@ with Gtk.Enums;
 with Gtkada.Handlers;          use Gtkada.Handlers;
 with Glide_Intl;               use Glide_Intl;
 
+with String_Utils;             use String_Utils;
 with Commands;                 use Commands;
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 
@@ -126,6 +127,7 @@ package body Task_Manager.GUI is
    is
       Command  : Command_Access;
       Progress : Progress_Record;
+      Length   : Natural;
    begin
       if not (Index in View.Manager.Queues'Range)
         or else not View.Manager.Queues (Index).Need_Refresh
@@ -135,7 +137,9 @@ package body Task_Manager.GUI is
          return;
       end if;
 
-      if not Command_Queues.Is_Empty (View.Manager.Queues (Index).Queue) then
+      Length := Command_Queues.Length (View.Manager.Queues (Index).Queue);
+
+      if Length /= 0 then
          Command := Command_Queues.Head (View.Manager.Queues (Index).Queue);
 
          Set
@@ -148,11 +152,18 @@ package body Task_Manager.GUI is
            (View.Tree.Model, View.Lines (Index), Command_Status_Column,
               -(To_Lower (Progress.Activity'Img)));
 
-         Set
-           (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
-            Progress.Current'Img & "/" & Progress.Total'Img);
-      end if;
+         if Length = 1 then
+            Set
+              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
+               Image (Progress.Current) & "/" & Image (Progress.Total));
+         else
+            Set
+              (View.Tree.Model, View.Lines (Index), Command_Progress_Column,
+               Image (Progress.Current) & "/" & Image (Progress.Total)
+               & " (" & Image (Length) & (-" queued)"));
+         end if;
 
+      end if;
       View.Manager.Queues (Index).Need_Refresh := False;
    end Refresh_Command;
 
