@@ -85,6 +85,7 @@ package body VCS.Generic_VCS is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level);
    --  Called when a new customization in parsed
@@ -274,6 +275,7 @@ package body VCS.Generic_VCS is
       Node   : List_Node;
       Custom : Command_Access;
       Index  : Natural := 1;
+      Dir_Operation : Boolean;
 
       use type GNAT.OS_Lib.String_List_Access;
    begin
@@ -292,13 +294,17 @@ package body VCS.Generic_VCS is
          Node := First (Sorted_Files);
       end if;
 
+      Dir_Operation := GNAT.OS_Lib.Is_Directory (Data (Node));
+
       while Node /= Null_Node loop
          declare
-            Args   : GNAT.OS_Lib.String_List_Access;
-            Dir    : GNAT.Strings.String_Access;
+            Args      : GNAT.OS_Lib.String_List_Access;
+            Dir_Args  : GNAT.OS_Lib.String_List_Access;
+            Dir       : GNAT.Strings.String_Access;
 
          begin
-            --  Args and Dir are freed when the command proxy is destroyed.
+            --  Args, Dir and Dir_Args are freed when the command proxy is
+            --  destroyed.
 
             if First_Args = null then
                Args := new GNAT.OS_Lib.String_List
@@ -342,41 +348,55 @@ package body VCS.Generic_VCS is
                Node := Next (Node);
             end loop;
 
-            if The_Dir_Action /= No_Action then
-               Custom := Create_Proxy
-                 (The_Dir_Action.Command,
-                  (null,
-                   null,
-                   new String'(Dir.all),
-                new GNAT.OS_Lib.String_List'(1 => new String'(Dir.all))));
+            if Dir_Operation then
+               if The_Dir_Action /= No_Action then
+                  Dir_Args := new GNAT.OS_Lib.String_List
+                    (1 .. First_Args'Length + 1);
 
-               Launch_Background_Command
-                 (Kernel,
-                  Custom,
-                  True,
-                  Show_Bar,
-                  Ref.Id.all,
-                  True);
-            end if;
+                  for J in Dir_Args'Range loop
+                     Dir_Args (J) := new String'
+                       (Args (Args'First + J - 1).all);
+                  end loop;
 
-            if The_Action /= No_Action then
-               Custom := Create_Proxy
-                 (The_Action.Command,
-                  (null,
-                   null,
-                   Dir,
-                   Args));
+                  Dir_Args (Dir_Args'Last) := new String'(Dir.all);
 
-               Launch_Background_Command
-                 (Kernel,
-                  Custom,
-                  True,
-                  Show_Bar,
-                  Ref.Id.all,
-                  True);
+                  Custom := Create_Proxy
+                    (The_Dir_Action.Command,
+                     (null,
+                      null,
+                      new String'(Dir.all),
+                      Dir_Args));
+
+                  Launch_Background_Command
+                    (Kernel,
+                     Custom,
+                     True,
+                     Show_Bar,
+                     Ref.Id.all,
+                     True);
+               else
+                  GNAT.OS_Lib.Free (Dir);
+               end if;
             else
-               GNAT.OS_Lib.Free (Dir);
-               GNAT.Strings.Free (Args);
+               if The_Action /= No_Action then
+                  Custom := Create_Proxy
+                    (The_Action.Command,
+                     (null,
+                      null,
+                      Dir,
+                      Args));
+
+                  Launch_Background_Command
+                    (Kernel,
+                     Custom,
+                     True,
+                     Show_Bar,
+                     Ref.Id.all,
+                     True);
+               else
+                  GNAT.OS_Lib.Free (Dir);
+                  GNAT.Strings.Free (Args);
+               end if;
             end if;
          end;
       end loop;
@@ -457,16 +477,16 @@ package body VCS.Generic_VCS is
       Clear_Logs  : Boolean := False;
       Local       : Boolean := False)
    is
-      Args   : GNAT.OS_Lib.String_List_Access;
+      Args : GNAT.OS_Lib.String_List_Access;
    begin
       Args := new GNAT.OS_Lib.String_List (1 .. 1);
       Args (1) := new String'(Clear_Logs'Img);
 
       if Local then
          Generic_Command
-           (Rep, Filenames, Args, Local_Status, Local_Status_Dir, False);
+           (Rep, Filenames, Args, Local_Status_Files, Local_Status_Dir, False);
       else
-         Generic_Command (Rep, Filenames, Args, Status, Status_Dir);
+         Generic_Command (Rep, Filenames, Args, Status_Files, Status_Dir);
       end if;
 
       GNAT.Strings.Free (Args);
@@ -682,12 +702,13 @@ package body VCS.Generic_VCS is
 
    procedure Customize
      (Kernel : access Kernel_Handle_Record'Class;
+      File   : VFS.Virtual_File;
       Node   : Node_Ptr;
       Level  : Customization_Level)
    is
-      pragma Unreferenced (Level);
+      pragma Unreferenced (Level, File);
 
-      N : Node_Ptr := Node;
+      N   : Node_Ptr := Node;
 
       function Parse_Node (M : Node_Ptr) return Boolean;
       --  Parse one node that contains VCS information.
@@ -696,6 +717,8 @@ package body VCS.Generic_VCS is
          Name   : constant String := Get_Attribute (M, "name");
          Ref    : Generic_VCS_Access;
          Child  : constant Node_Ptr := M.Child;
+         P      : Node_Ptr;
+         Num    : Natural := 0;
          Node   : Node_Ptr;
          Field  : String_Ptr;
 
@@ -727,17 +750,66 @@ package body VCS.Generic_VCS is
            (N : Node_Ptr) return Status_Parser_Record
          is
             Parser : Status_Parser_Record;
+            M      : Node_Ptr;
          begin
             if N = null then
                return Parser;
             end if;
 
-            for A in File_Status loop
-               Field := Get_Field (N, To_Lower (A'Img));
+            M := N.Child;
 
-               if Field /= null then
-                  Parser.Status (A) := new String'(Field.all);
+            while M /= null loop
+               if M.Tag.all = "status_matcher" then
+                  declare
+                     Label  : constant String :=
+                        (Get_Attribute (M, "label", -"unnamed status"));
+                     Num    : Natural;
+                     Regexp : Pattern_Matcher_Access;
+                  begin
+                     Num := 0;
+
+                     --  Find the index of this status
+
+                     for J in Ref.Status'Range loop
+                        if Ref.Status (J).Label.all = Label then
+                           Num := J;
+                           exit;
+                        end if;
+                     end loop;
+
+                     --  Store the regexp corresponding to this status
+
+                     if M.Value = null then
+                        Insert
+                          (Kernel,
+                           -"No regexp specified for status_matcher " & Label);
+                        Regexp := new Pattern_Matcher'(Compile ("(.*)"));
+                     else
+                        Regexp := new Pattern_Matcher'(Compile (M.Value.all));
+                     end if;
+
+                     if Num /= 0 then
+                        Status_Parser.Append
+                          (Parser.Status_Identifiers, (Regexp, Num));
+                     else
+                        Unchecked_Free (Regexp);
+                     end if;
+
+                  exception
+                     when E : GNAT.Regpat.Expression_Error =>
+                        Insert
+                          (Kernel,
+                           -"Error when registering VCS """ & Name & """:"
+                           & ASCII.LF
+                           & (-"could not parse regular expression: ")
+                           & ASCII.LF & Field.all,
+                           Mode => Error);
+
+                        Trace (Me, Exception_Information (E));
+                  end;
                end if;
+
+               M := M.Next;
             end loop;
 
             Field := Get_Field (N, "regexp");
@@ -821,6 +893,37 @@ package body VCS.Generic_VCS is
             else
                Trace (Me, "Warning: no command provided for action " & A'Img);
             end if;
+         end loop;
+
+         --  Find all the declared status
+
+         P := Child;
+
+         while P /= null loop
+            if P.Tag.all = "status" then
+               Num := Num + 1;
+            end if;
+
+            P := P.Next;
+         end loop;
+
+         Ref.Status := new Status_Array (1 .. Num);
+
+         Num := 1;
+
+         P := Child;
+
+         while P /= null loop
+            if P.Tag.all = "status" then
+               Ref.Status (Num).Stock_Id := new String'
+                 (Get_Attribute (P, "stock", "gtk-new"));
+               Ref.Status (Num).Label := new String'
+                 (Get_Attribute (P, "label", -"unnamed status"));
+
+               Num := Num + 1;
+            end if;
+
+            P := P.Next;
          end loop;
 
          --  Parse the status parsers
@@ -925,14 +1028,22 @@ package body VCS.Generic_VCS is
                   Status_String : constant String :=
                     S (Matches (Parser.Status_Index).First
                        .. Matches (Parser.Status_Index).Last);
+                  Matches : Match_Array (0 .. 1);
+
+                  use Status_Parser;
+
+                  Node : Status_Parser.List_Node :=
+                           First (Parser.Status_Identifiers);
                begin
-                  for A in File_Status'Range loop
-                     if Parser.Status (A) /= null
-                       and then Status_String = Parser.Status (A).all
-                     then
-                        St.Status := A;
+                  while Node /= Status_Parser.Null_Node loop
+                     Match (Data (Node).Regexp.all, Status_String, Matches);
+
+                     if Matches (0) /= No_Match then
+                        St.Status := Rep.Status (Data (Node).Index);
                         exit;
                      end if;
+
+                     Node := Next (Node);
                   end loop;
                end;
             end if;
@@ -1062,6 +1173,22 @@ package body VCS.Generic_VCS is
       return Rep.Labels;
    end Get_Identified_Actions;
 
+   ---------------------------
+   -- Get_Registered_Status --
+   ---------------------------
+
+   function Get_Registered_Status
+     (Rep : access Generic_VCS_Record) return Status_Array
+   is
+      Result : Status_Array (1 .. Rep.Status'Length + 1);
+   begin
+      Result (Result'First) := Unknown;
+      Result (Result'First + 1 .. Result'First + Rep.Status'Length) :=
+        Rep.Status.all;
+
+      return Result;
+   end Get_Registered_Status;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -1081,5 +1208,14 @@ package body VCS.Generic_VCS is
          Customization_Handler   => Customize'Access,
          Contextual_Menu_Handler => null);
    end Register_Module;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Regexp_Status_Record) is
+   begin
+      Unchecked_Free (X.Regexp);
+   end Free;
 
 end VCS.Generic_VCS;
