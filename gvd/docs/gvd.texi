@@ -437,8 +437,10 @@ This value is superceded by the environment variable
 Try e.g using "xterm -e /bin/vi %f +%l" if you prefer vi.
 
 @item List Processes
-Currently not used. This is the command that generates a list of processes
-suitable for process actions such as attach.
+This is the command that generates a list of processes
+suitable for process actions such as attach. This helper is ignored under
+Windows when using a local debugger, since the computation of the list of
+processes is built-in under this OS.
 @item Remote Shell
 Command used to establish a remote connection
 (see @ref{Using GVD with a Remote Debugger}).
@@ -464,7 +466,7 @@ will be launched according to the arguments entered.
    @item Step
 Step the program until it reaches a different source line.
 
-   @item Step Instruction.
+   @item Step Instruction
 Step the program by one machine instruction exactly.
 
    @item Next
