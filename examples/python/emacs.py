@@ -86,7 +86,7 @@ def goto_other_file():
       try:
          entity = GPS.Entity (name, current_file, line)
 
-         if entity.declaration.file() == current_file:
+         if entity.declaration().file() == current_file:
             body = entity.body()
             if body.file() != current_file:
 	       GPS.Editor.edit (body.file().name(), line=body.line(), column=body.column())
