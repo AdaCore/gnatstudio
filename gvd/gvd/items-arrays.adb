@@ -566,7 +566,7 @@ package body Items.Arrays is
    is
       Current_Y : Gint := Y + Border_Spacing;
       Arrow_Pos : constant Gint := X + Border_Spacing + Item.Index_Width +
-        Left_Border - Text_Width (Context.Font, String' (" => "));
+        Left_Border - GVD_Text_Width (Context.Font, String' (" => "));
    begin
       Item.X := X;
       Item.Y := Y;
@@ -611,6 +611,7 @@ package body Items.Arrays is
 
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
+        and then Context.Type_Font /= null
       then
          Draw_Text
            (Context.Pixmap,
@@ -625,22 +626,24 @@ package body Items.Arrays is
 
       if Show_Value (Context.Mode) then
          for V in Item.Values'Range loop
-            Draw_Text
-              (Context.Pixmap,
-               Font => Context.Font,
-               GC   => Context.GC,
-               X    => X + Left_Border + Border_Spacing,
-               Y    => Current_Y + Get_Ascent (Context.Font),
-               Text =>
-                 Index_String
-                   (Item, Item.Values (V).Index, Item.Num_Dimensions));
-            Draw_Text
-              (Context.Pixmap,
-               Font => Context.Font,
-               GC   => Context.GC,
-               X    => Arrow_Pos,
-               Y    => Current_Y + Get_Ascent (Context.Font),
-               Text => " => ");
+            if Context.Font /= null then
+               Draw_Text
+                 (Context.Pixmap,
+                  Font => Context.Font,
+                  GC   => Context.GC,
+                  X    => X + Left_Border + Border_Spacing,
+                  Y    => Current_Y + Get_Ascent (Context.Font),
+                  Text => Index_String
+                    (Item, Item.Values (V).Index, Item.Num_Dimensions));
+               Draw_Text
+                 (Context.Pixmap,
+                  Font => Context.Font,
+                  GC   => Context.GC,
+                  X    => Arrow_Pos,
+                  Y    => Current_Y + Get_Ascent (Context.Font),
+                  Text => " => ");
+            end if;
+
             Paint
               (Item.Values (V).Value.all, Context,
                X + Left_Border + Border_Spacing + Item.Index_Width,
@@ -699,13 +702,12 @@ package body Items.Arrays is
          if Show_Type (Context.Mode)
            and then Item.Type_Name /= null
          then
-            Item.Type_Height := Get_Descent (Context.Type_Font)
-              + Get_Ascent (Context.Type_Font);
+            Item.Type_Height := GVD_Font_Height (Context.Type_Font);
             Total_Height := Total_Height + Item.Type_Height;
             Total_Width := Gint'Max
               (Total_Width,
-               Text_Width (Context.Type_Font,
-                           Get_Type_Name (Item'Access, Context)));
+               GVD_Text_Width
+               (Context.Type_Font, Get_Type_Name (Item'Access, Context)));
 
          else
             Item.Type_Height := 0;
@@ -724,19 +726,18 @@ package body Items.Arrays is
                   Item.Index_Width :=
                     Gint'Max
                       (Item.Index_Width,
-                       String_Width
+                       GVD_Text_Width
                          (Context.Font,
-                          Index_String
-                            (Item, Item.Values (V).Index,
-                             Item.Num_Dimensions)));
+                          Index_String (Item, Item.Values (V).Index,
+                                        Item.Num_Dimensions)));
                end loop;
 
                Total_Height :=
                  Total_Height + (Item.Values'Length - 1) * Line_Spacing;
             end if;
 
-            Item.Index_Width :=
-              Item.Index_Width + Text_Width (Context.Font, String'(" => "));
+            Item.Index_Width := Item.Index_Width
+              + GVD_Text_Width (Context.Font, String'(" => "));
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)

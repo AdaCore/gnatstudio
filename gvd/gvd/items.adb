@@ -392,4 +392,30 @@ package body Items is
       end if;
    end Constraint_Size;
 
+   --------------------
+   -- GVD_Text_Width --
+   --------------------
+
+   function GVD_Text_Width (F : Gdk.Font.Gdk_Font; Str : String) return Gint is
+   begin
+      if F = null then
+         return 0;
+      else
+         return Text_Width (F, Str);
+      end if;
+   end GVD_Text_Width;
+
+   ---------------------
+   -- GVD_Font_Height --
+   ---------------------
+
+   function GVD_Font_Height (F : Gdk.Font.Gdk_Font) return Gint is
+   begin
+      if F = null then
+         return 1;
+      else
+         return Get_Ascent (F) + Get_Descent (F);
+      end if;
+   end GVD_Font_Height;
+
 end Items;

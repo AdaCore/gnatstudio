@@ -130,6 +130,16 @@ package Items is
    --  All the contexts should be reset to their initial settings on exit of
    --  the Paint subprograms.
 
+   function GVD_Text_Width (F : Gdk.Font.Gdk_Font; Str : String)
+      return Glib.Gint;
+   --  Same as Gdk.Font.Text_Width, but provides special handling when F is
+   --  null because of the zooming.
+
+   function GVD_Font_Height (F : Gdk.Font.Gdk_Font) return Glib.Gint;
+   --  Return the maximal height of any character in the font (same as
+   --  Get_Ascent + Get_Descent). This also provides special handling when
+   --  the font is null because of the zooming.
+
    -----------------------------
    -- Printing and Displaying --
    -----------------------------

@@ -164,13 +164,15 @@ package body Items.Repeats is
          Set_Function (Context.GC, Copy_Invert);
       end if;
 
-      Draw_Text
-        (Context.Pixmap,
-         Font => Context.Font,
-         GC   => Context.GC,
-         X    => X + Border_Spacing,
-         Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
-         Text => Str);
+      if Context.Font /= null then
+         Draw_Text
+           (Context.Pixmap,
+            Font => Context.Font,
+            GC   => Context.GC,
+            X    => X + Border_Spacing,
+            Y    => Y + Border_Spacing + Get_Ascent (Context.Font),
+            Text => Str);
+      end if;
 
       Paint (Item.Value.all, Context,
              X + Item.Repeat_Str_Width, Y + Border_Spacing);
@@ -205,12 +207,11 @@ package body Items.Repeats is
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
       else
          Size_Request (Item.Value.all, Context, Hide_Big_Items);
-         Item.Repeat_Str_Width := Text_Width (Context.Font, Str);
+         Item.Repeat_Str_Width := GVD_Text_Width (Context.Font, Str);
          Item.Width :=
            Item.Value.Width + Item.Repeat_Str_Width + 2 * Border_Spacing;
          Item.Height :=
-           Gint'Max (Item.Value.Height,
-                     Get_Ascent (Context.Font) + Get_Descent (Context.Font)) +
+           Gint'Max (Item.Value.Height, GVD_Font_Height (Context.Font)) +
            2 * Border_Spacing;
       end if;
    end Size_Request;

@@ -396,7 +396,7 @@ package body Items.Records is
       Current_Y : Gint := Y + Item.Border_Spacing;
       Arrow_Pos : constant Gint :=
         X + Left_Border + Item.Border_Spacing + Item.Gui_Fields_Width -
-        Text_Width (Context.Font, String'(" => "));
+        GVD_Text_Width (Context.Font, String'(" => "));
 
       ----------------------
       -- Print_Field_Name --
@@ -404,20 +404,22 @@ package body Items.Records is
 
       procedure Print_Field_Name (F : Integer) is
       begin
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Font,
-            GC   => Context.GC,
-            X    => X + Left_Border + Item.Border_Spacing,
-            Y    => Current_Y + Get_Ascent (Context.Font),
-            Text => Item.Fields (F).Name.all);
-         Draw_Text
-           (Context.Pixmap,
-            Font => Context.Font,
-            GC   => Context.GC,
-            X    => Arrow_Pos,
-            Y    => Current_Y + Get_Ascent (Context.Font),
-            Text => " => ");
+         if Context.Font /= null then
+            Draw_Text
+              (Context.Pixmap,
+               Font => Context.Font,
+               GC   => Context.GC,
+               X    => X + Left_Border + Item.Border_Spacing,
+               Y    => Current_Y + Get_Ascent (Context.Font),
+               Text => Item.Fields (F).Name.all);
+            Draw_Text
+              (Context.Pixmap,
+               Font => Context.Font,
+               GC   => Context.GC,
+               X    => Arrow_Pos,
+               Y    => Current_Y + Get_Ascent (Context.Font),
+               Text => " => ");
+         end if;
       end Print_Field_Name;
 
    begin
@@ -552,13 +554,12 @@ package body Items.Records is
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
       then
-         Item.Type_Height := Get_Ascent (Context.Type_Font) +
-           Get_Descent (Context.Type_Font);
+         Item.Type_Height := GVD_Font_Height (Context.Type_Font);
          Total_Height := Total_Height + Item.Type_Height;
          Total_Width := Gint'Max
            (Total_Width,
-            Text_Width (Context.Type_Font,
-                        Get_Type_Name (Item'Access, Context)));
+            GVD_Text_Width (Context.Type_Font,
+                            Get_Type_Name (Item'Access, Context)));
 
       else
          Item.Type_Height := 0;
@@ -584,7 +585,7 @@ package body Items.Records is
                --  Keep at least enough space to print the field name
                Item.Fields (F).Value.Height := Gint'Max
                  (Item.Fields (F).Value.Height,
-                  Get_Ascent (Context.Font) + Get_Descent (Context.Font));
+                  GVD_Font_Height (Context.Font));
                Total_Height := Total_Height + Item.Fields (F).Value.Height;
             end if;
 
@@ -611,10 +612,10 @@ package body Items.Records is
 
          if Largest_Name = null then
             Item.Gui_Fields_Width :=
-              Text_Width (Context.Font, String' (" => "));
+              GVD_Text_Width (Context.Font, String' (" => "));
          else
             Item.Gui_Fields_Width :=
-              Text_Width (Context.Font, Largest_Name.all & " => ");
+              GVD_Text_Width (Context.Font, Largest_Name.all & " => ");
          end if;
 
          --  Keep enough space for the border (Border_Spacing on each side)

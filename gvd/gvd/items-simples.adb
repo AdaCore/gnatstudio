@@ -154,6 +154,7 @@ package body Items.Simples is
 
       if Show_Type (Context.Mode)
         and then Item.Type_Name /= null
+        and then Context.Type_Font /= null
       then
          Draw_Text
            (Context.Pixmap,
@@ -166,7 +167,9 @@ package body Items.Simples is
            Get_Descent (Context.Type_Font);
       end if;
 
-      if Show_Value (Context.Mode) then
+      if Show_Value (Context.Mode)
+        and then Context.Font /= null
+      then
          Draw_Text
            (Context.Pixmap,
             Font => Context.Font,
@@ -202,9 +205,8 @@ package body Items.Simples is
         and then Item.Value /= null
         and then Show_Value (Context.Mode)
       then
-         Item.Width  := Text_Width (Context.Font, Item.Value.all);
-         Item.Height :=
-           Get_Ascent (Context.Font) + Get_Descent (Context.Font);
+         Item.Width  := GVD_Text_Width (Context.Font, Item.Value.all);
+         Item.Height := GVD_Font_Height (Context.Font);
       end if;
 
       if Item.Valid
@@ -213,10 +215,9 @@ package body Items.Simples is
       then
          Item.Width := Gint'Max
            (Item.Width,
-            Text_Width (Context.Type_Font,
+            GVD_Text_Width (Context.Type_Font,
                         Get_Type_Name (Item'Access, Context)));
-         Item.Height := Item.Height +
-           Get_Ascent (Context.Type_Font) + Get_Descent (Context.Type_Font);
+         Item.Height := Item.Height + GVD_Font_Height (Context.Type_Font);
       end if;
 
       if not Item.Valid then
@@ -407,6 +408,7 @@ package body Items.Simples is
 
       if Item.Type_Name /= null
         and then Show_Type (Context.Mode)
+        and then Context.Type_Font /= null
       then
          Draw_Text
            (Context.Pixmap,
@@ -421,6 +423,7 @@ package body Items.Simples is
 
       if Item.Value /= null
         and then Show_Value (Context.Mode)
+        and then Context.Font /= null
       then
          Draw_Text
            (Context.Pixmap,
@@ -520,18 +523,17 @@ package body Items.Simples is
                Num_Lines := Num_Lines + 1;
                Width := Gint'Max
                  (Width,
-                  Text_Width (Context.Command_Font,
-                              Item.Value (Line_Start + 1 .. J - 1)));
+                  GVD_Text_Width (Context.Command_Font,
+                                  Item.Value (Line_Start + 1 .. J - 1)));
                Line_Start := J + 1;
             end if;
          end loop;
 
          Item.Width := Gint'Max
            (Width,
-            Text_Width (Context.Command_Font,
-                        Item.Value (Line_Start + 1 .. Item.Value'Last)));
-         Item.Height := (Get_Ascent (Context.Command_Font)
-           + Get_Descent (Context.Command_Font)) * Num_Lines;
+            GVD_Text_Width (Context.Command_Font,
+                            Item.Value (Line_Start + 1 .. Item.Value'Last)));
+         Item.Height := GVD_Font_Height (Context.Command_Font) * Num_Lines;
 
       else
          Get_Size (Context.Unknown_Pixmap, Item.Width, Item.Height);
@@ -576,27 +578,29 @@ package body Items.Simples is
 
       Line_Start := Item.Value'First;
 
-      for J in Item.Value'Range loop
-         if Item.Value (J) = ASCII.LF then
-            if Item.Value (Line_Start) = Line_Highlighted then
-               Text_GC := Context.Modified_GC;
-            else
-               Text_GC := Context.GC;
+      if Context.Command_Font /= null then
+         for J in Item.Value'Range loop
+            if Item.Value (J) = ASCII.LF then
+               if Item.Value (Line_Start) = Line_Highlighted then
+                  Text_GC := Context.Modified_GC;
+               else
+                  Text_GC := Context.GC;
+               end if;
+
+               Draw_Text
+                 (Context.Pixmap,
+                  Font => Context.Command_Font,
+                  GC   => Text_GC,
+                  X    => X,
+                  Y    => Line + Get_Ascent (Context.Command_Font),
+                  Text => Item.Value (Line_Start + 1 .. J - 1));
+
+               Line := Line + Get_Ascent (Context.Command_Font)
+                 + Get_Descent (Context.Command_Font);
+               Line_Start := J + 1;
             end if;
-
-            Draw_Text
-              (Context.Pixmap,
-               Font => Context.Command_Font,
-               GC   => Text_GC,
-               X    => X,
-               Y    => Line + Get_Ascent (Context.Command_Font),
-               Text => Item.Value (Line_Start + 1 .. J - 1));
-
-            Line := Line + Get_Ascent (Context.Command_Font)
-              + Get_Descent (Context.Command_Font);
-            Line_Start := J + 1;
-         end if;
-      end loop;
+         end loop;
+      end if;
 
       if Item.Value (Line_Start) = Line_Highlighted then
          Text_GC := Context.Modified_GC;
