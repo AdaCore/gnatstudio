@@ -27,6 +27,26 @@ with String_Utils;   use String_Utils;
 
 package body Codefix.Text_Manager is
 
+   -----------------
+   -- Compare_Pkg --
+   -----------------
+
+   function Compare_Pkg (Pkg_1, Pkg_2 : String) return Boolean is
+      Pkg_1_Lower : String := Pkg_1;
+      Pkg_2_Lower : String := Pkg_2;
+   begin
+      Lower_Case (Pkg_1_Lower);
+      Lower_Case (Pkg_2_Lower);
+
+      if Pkg_1'Length < Pkg_2'Length then
+         return Pkg_1_Lower = Pkg_2_Lower
+           (Pkg_2'Last - Pkg_1'Length + 1 .. Pkg_2'Last);
+      else
+         return Pkg_2_Lower = Pkg_1_Lower
+           (Pkg_1'Last - Pkg_2'Length + 1 .. Pkg_1'Last);
+      end if;
+   end Compare_Pkg;
+
    ----------------------------------------------------------------------------
    --  type Text_Cursor
    ----------------------------------------------------------------------------
@@ -270,10 +290,10 @@ package body Codefix.Text_Manager is
    procedure Get_Entity
      (This : in out Extract;
       Current_Text : Text_Navigator_Abstr'Class;
-      Cursor : File_Cursor)
+      Cursor : File_Cursor'Class)
    is
       Unit_Info, Body_Info : Construct_Information;
-      Line_Cursor          : File_Cursor := Cursor;
+      Line_Cursor          : File_Cursor := File_Cursor (Cursor);
    begin
       Line_Cursor.Col := 1;
 
@@ -646,7 +666,7 @@ package body Codefix.Text_Manager is
                                    Jump_String));
 
          if Result /= Null_File_Cursor then
-            return Result;
+            return Clone (Result);
          end if;
 
          exit when New_Cursor.Line = Last;
@@ -663,6 +683,10 @@ package body Codefix.Text_Manager is
 
       return Null_File_Cursor;
    end Search_String;
+
+   -----------------
+   -- Search_Unit --
+   -----------------
 
    function Search_Unit
      (This     : Text_Interface'Class;
@@ -857,7 +881,7 @@ package body Codefix.Text_Manager is
    is
       Matches    : Match_Array (1 .. 1);
       Matcher    : constant Pattern_Matcher := Compile (Format);
-      Str_Parsed : String :=  This.Content.all;
+      Str_Parsed : constant String := This.Content.all;
 
    begin
       Match (Matcher, Str_Parsed (Col .. Str_Parsed'Last), Matches);
@@ -887,30 +911,33 @@ package body Codefix.Text_Manager is
       Result : File_Cursor := File_Cursor (Cursor);
 
    begin
-      if Result.Col = 0 then Result.Col := This.Content.all'Last; end if;
+      if Result.Col = 0 then
+         Result.Col := This.Content'Last;
+      end if;
 
       case Step is
          when Normal_Step =>
-            for J in Result.Col .. This.Content.all'Last -
-              Searched'Last + 1
+
+            for J in Result.Col .. This.Content'Last - Searched'Last + 1
             loop
-               if This.Content.all (J .. J + Searched'Last - 1) =
-                 Searched
-               then
+
+               if This.Content (J .. J + Searched'Last - 1) = Searched then
                   Result.Col := J;
                   return Result;
                end if;
             end loop;
+
          when Reverse_Step =>
-            for J in reverse This.Content.all'First ..
+
+            for J in reverse This.Content'First ..
               Result.Col - Searched'Last + 1 loop
-               if This.Content.all (J .. J + Searched'Last - 1) =
-                 Searched
-               then
+
+               if This.Content (J .. J + Searched'Last - 1) = Searched then
                   Result.Col := J;
                   return Result;
                end if;
             end loop;
+
       end case;
 
       return Null_File_Cursor;
@@ -972,7 +999,7 @@ package body Codefix.Text_Manager is
    function Get_New_Text (This : Extract_Line; Detail : Boolean := True)
      return String is
 
-      Buffer : String := This.Content.all;
+      Buffer : constant String := This.Content.all;
 
    begin
 
@@ -998,7 +1025,7 @@ package body Codefix.Text_Manager is
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
 
             declare
-               Res : String := Get_New_Text
+               Res : constant String := Get_New_Text
                  (Get_Record (Old_Extract, 1).all,
                   False);
             begin
@@ -1012,7 +1039,7 @@ package body Codefix.Text_Manager is
             Get (Current_Text, This.Cursor, This.Original_Length, Old_Extract);
 
             declare
-               Res : String := Get_New_Text
+               Res : constant String := Get_New_Text
                  (Get_Record (Old_Extract, 1).all,
                   False);
             begin
@@ -1033,7 +1060,7 @@ package body Codefix.Text_Manager is
       Recursive : Boolean := False) return Natural is
       Total : Natural := 0;
 
-      Buffer : String := Get_New_Text (This);
+      Buffer : constant String := Get_New_Text (This);
 
    begin
       if Recursive and then This.Next /= null then
@@ -1052,7 +1079,7 @@ package body Codefix.Text_Manager is
       Recursive : Boolean := False) return Natural is
 
       Total  : Natural := 0;
-      Buffer : String := Get_Old_Text (This, Current_Text);
+      Buffer : constant String := Get_Old_Text (This, Current_Text);
 
    begin
       if Recursive and then This.Next /= null then
@@ -1188,6 +1215,34 @@ package body Codefix.Text_Manager is
 
    end Extend_After;
 
+   ----------------
+   -- Set_String --
+   ----------------
+
+   procedure Set_String
+     (This        : in out Extract_Line;
+      New_String  : String;
+      First, Last : Natural := 0)
+   is
+      First_Used, Last_Used : Natural;
+   begin
+      if First = 0 then
+         First_Used := 1;
+      else
+         First_Used := First;
+      end if;
+
+      if Last = 0 then
+         Last_Used := This.Content'Last;
+      else
+         Last_Used := Last;
+      end if;
+
+      This.Context := Line_Modified;
+      Assign (This.Content, This.Content (1 .. First_Used - 1) &
+                New_String &
+                This.Content (Last_Used + 1 .. This.Content'Last));
+   end Set_String;
 
    ----------------------------------------------------------------------------
    --  type Extract
@@ -1433,7 +1488,7 @@ package body Codefix.Text_Manager is
    --------------
 
    function Get_Line
-     (This : Extract; Position : File_Cursor) return Ptr_Extract_Line
+     (This : Extract; Position : File_Cursor'Class) return Ptr_Extract_Line
    is
       Current_Extract : Ptr_Extract_Line := This.First;
    begin
@@ -1449,7 +1504,7 @@ package body Codefix.Text_Manager is
 
       Raise_Exception
         (Text_Manager_Error'Identity,
-         "line" & Natural'Image (Position.Line) & "of " &
+         "line" & Natural'Image (Position.Line) & " of " &
            Position.File_Name.all & " not found in an extract");
    end Get_Line;
 
