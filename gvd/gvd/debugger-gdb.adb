@@ -765,6 +765,19 @@ package body Debugger.Gdb is
             Free (Debugger.Process);
    end Close;
 
+   -----------------------
+   -- Connect_To_Target --
+   -----------------------
+
+   procedure Connect_To_Target
+     (Debugger : access Gdb_Debugger;
+      Target   : String;
+      Protocol : String;
+      Mode     : Command_Type := Hidden) is
+   begin
+      Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
+   end Connect_To_Target;
+
    --------------
    -- Set_Args --
    --------------

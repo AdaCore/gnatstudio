@@ -49,6 +49,12 @@ package Debugger.Gdb is
 
    procedure Close (Debugger : access Gdb_Debugger);
 
+   procedure Connect_To_Target
+     (Debugger : access Gdb_Debugger;
+      Target   : String;
+      Protocol : String;
+      Mode     : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    procedure Wait_Prompt (Debugger : access Gdb_Debugger);
 
    function Wait_Prompt
