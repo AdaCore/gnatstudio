@@ -348,7 +348,7 @@ package body Vdiff2_Module is
                Set_Submenu (Mitem, Gtk_Widget (Submenu));
                Append (Menu, Mitem);
 
-               Gtk_New (Mitem, -"Is New Diff Ref");
+               Gtk_New (Mitem, -"Change Refference File");
                Append (Submenu, Mitem);
                Context_Callback.Connect
                  (Mitem, "activate",
