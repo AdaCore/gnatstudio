@@ -858,8 +858,8 @@ package body Entities is
          Get_Next (Db.Files, Iter);
       end loop;
 
-      Reset (Db.Files);
       Reset (Db.LIs);
+      Reset (Db.Files);
    end Reset;
 
    -------------
