@@ -1,8 +1,8 @@
 ------------------------------------------------------------------------------
 --                         P S - For Windows NT/2000                        --
 --                                                                          --
---                            Copyright (C) 2001                            --
---                                ACT-Europe                                --
+--                          Copyright (C) 2001-2005                         --
+--                                 AdaCore                                  --
 --                                                                          --
 --  This program is free software; you can redistribute it and/or modify    --
 --  it under the terms of the GNU General Public License as published by    --
@@ -32,7 +32,7 @@ procedure Winps is
 
    type HANDLE is new System.Address;
    type HMODULE is new System.Address;
-   type DWORD is new Interfaces.C.Unsigned_Long;
+   type DWORD is new Interfaces.C.unsigned_long;
    type BOOL is new Integer;
 
    Null_Handle : constant HANDLE  := HANDLE (System.Null_Address);
@@ -69,6 +69,9 @@ procedure Winps is
    pragma Import (Stdcall, GetModuleBaseName, "GetModuleBaseNameA");
 
    Max_Process : constant := 1_024;
+
+   procedure Print_Process (PID : DWORD);
+   --  Print info about PID
 
    -------------------
    -- Print_Process --
@@ -151,7 +154,9 @@ procedure Winps is
       end if;
 
       declare
-         Process_Name : constant String := Interfaces.C.To_Ada (SzProcessName);      begin
+         Process_Name : constant String :=
+           Interfaces.C.To_Ada (szProcessName);
+      begin
          if Process_Name = "" then
             Print_Process_Name ("???");
          else
