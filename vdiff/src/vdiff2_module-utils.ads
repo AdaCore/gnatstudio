@@ -120,6 +120,5 @@ private
    Change_Style         : constant String       := "Change_diff";
    Fine_Change_Style    : constant String       := "Fine_Change_diff";
    Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
-   Enable_Fine_Diff     : Boolean := True;
-   --  ??? Should not use a global variable
+
 end Vdiff2_Module.Utils;
