@@ -40,6 +40,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Check_Button;    use Gtk.Check_Button;
 with Gtk.Radio_Button;    use Gtk.Radio_Button;
 with Gtk.Handlers;        use Gtk.Handlers;
+pragma Elaborate_All (Gtk.Handlers);
 with Gtk.Widget;          use Gtk.Widget;
 
 with Prj.Tree;   use Prj.Tree;
@@ -50,6 +51,8 @@ with Stringt;    use Stringt;
 with Types;      use Types;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 with System;     use System;
+with Ada.Text_IO; use Ada.Text_IO;
+with Unchecked_Deallocation;
 
 with Prj_API;    use Prj_API;
 with Value_Editors; use Value_Editors;
@@ -103,14 +106,26 @@ package body Variable_Editors is
      (Button : access Gtk_Widget_Record'Class; Data : Var_Handler_Data);
    --  Called when editing a variable.
 
+   procedure Refresh_Row
+     (Editor : access Variable_Edit_Record'Class;
+      Row    : Guint;
+      Var    : Project_Node_Id);
+   --  Refresh the contents of a specific row in the table. If Row is greated
+   --  than the number of rows in the table, a new one is created.
+   --  The description of Var is displayed in that row.
+
    -------------
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New (Editor : out Variable_Edit) is
+   procedure Gtk_New (Editor  : out Variable_Edit;
+                      Project : Prj.Tree.Project_Node_Id;
+                      Pkg     : Prj.Tree.Project_Node_Id := Empty_Node) is
    begin
       Editor := new Variable_Edit_Record;
       Initialize (Editor);
+      Editor.Project := Project;
+      Editor.Pkg := Pkg;
    end Gtk_New;
 
    -------------
@@ -119,6 +134,7 @@ package body Variable_Editors is
 
    procedure Gtk_New
      (Editor : out New_Var_Edit;
+      Var_Edit : access Variable_Edit_Record'Class;
       Var : Prj.Tree.Project_Node_Id :=  Prj.Tree.Empty_Node)
    is
       use Widget_List;
@@ -129,8 +145,11 @@ package body Variable_Editors is
    begin
       Editor := new New_Var_Edit_Record;
       Editor.Var := Var;
+      Editor.Var_Editor := Variable_Edit (Var_Edit);
       Initialize (Editor);
+      Set_Variable_Kind (Editor.Single_Value, Prj.Single);
       Set_Visible_Lines (Editor.Single_Value, 1);
+      Allow_References (Editor.Enumeration_Value, False);
 
       --  Force toggle of the button, so that widgets are set sensitive
       --  appropriately.
@@ -163,17 +182,16 @@ package body Variable_Editors is
       --  Fill the information for the variable
 
       if Var /= Empty_Node then
-         Get_Name_String (Project_Nodes.Table (Var).Name);
+         Set_Title (Editor, "Editing a variable");
 
-         Set_Label (Editor.Name_Frame,
-                    "Name (old name was "
-                    & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");
+         Editor.Name_Was_Changed := True;
+         Get_Name_String (Project_Nodes.Table (Var).Name);
          Set_Text (Editor.Variable_Name,
                    Name_Buffer (Name_Buffer'First .. Name_Len));
+         Editor.Name_Was_Changed := False;
 
          Str := Get_Environment (Var);
          Set_Active (Editor.Get_Environment, Str /= No_String);
-         Set_Sensitive (Editor.List_Env_Variables, Str /= No_String);
 
          if Str /= No_String then
             String_To_Name_Buffer (Str);
@@ -231,7 +249,8 @@ package body Variable_Editors is
                      Get_Name_String (Project_Nodes.Table (N).Name);
                      Insert_Text
                        (Editable,
-                        "$" & Name_Buffer (Name_Buffer'First .. Name_Len),
+                        "${" & Name_Buffer (Name_Buffer'First .. Name_Len)
+                        & '}',
                         Pos);
 
                   when N_Literal_String =>
@@ -242,13 +261,12 @@ package body Variable_Editors is
                         Pos);
 
                   when others =>
+                     Put_Line ("Display_Expr: "
+                               & Project_Nodes.Table (N).Kind'Img);
                      raise Program_Error;
                end case;
 
                Term := Project_Nodes.Table (Term).Field2;
-               if Term /= Empty_Node then
-                  Insert_Text (Editable, " & ", Pos);
-               end if;
             end loop;
          end if;
 
@@ -257,6 +275,7 @@ package body Variable_Editors is
             Insert_Text (Editable, "" & ASCII.LF, Pos);
          end if;
       end loop;
+      Set_Position (Editable, 0);
    end Display_Expr;
 
    ------------------------
@@ -321,79 +340,120 @@ package body Variable_Editors is
       Set_Visible_Lines (Text, Num_Lines);
    end Resize_Text_Area;
 
-   ------------------
-   -- Add_Variable --
-   ------------------
+   -----------------
+   -- Refresh_Row --
+   -----------------
 
-   procedure Add_Variable
+   procedure Refresh_Row
      (Editor : access Variable_Edit_Record'Class;
-      Var    : Prj.Tree.Project_Node_Id)
+      Row    : Guint;
+      Var    : Project_Node_Id)
    is
+      procedure Free is new Unchecked_Deallocation
+        (Row_Data_Array, Row_Data_Array_Access);
       Button  : Gtk_Button;
-      Label   : Gtk_Label;
-      Combo   : Gtk_Combo;
-      Text    : Value_Editor;
       Data    : Var_Handler_Data;
-      Scrolled : Gtk_Scrolled_Window;
+      Row_Data : Row_Data_Array_Access;
    begin
-      pragma Assert
-        (Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration
-         or else Project_Nodes.Table (Var).Kind = N_Variable_Declaration);
+      if Row > Editor.Num_Rows then
+         Resize (Editor.List_Variables, Rows => Row, Columns => 5);
+         Editor.Num_Rows := Row;
+         Row_Data := new Row_Data_Array (0 .. Editor.Num_Rows);
+         if Editor.Data /= null then
+            Row_Data (0 .. Editor.Num_Rows - 1) := Editor.Data.all;
+            Free (Editor.Data);
+         end if;
+         Editor.Data := Row_Data;
 
-      Resize (Editor.List_Variables, Rows => Editor.Num_Rows, Columns => 5);
-      Editor.Num_Rows := Editor.Num_Rows + 1;
+         Editor.Data (Row).Var := Var;
 
-      Gtk_New (Button, "E");
-      Attach (Editor.List_Variables, Button, 0, 1,
-              Editor.Num_Rows - 1, Editor.Num_Rows,
-              Xoptions => 0, Yoptions => 0);
-      Data := (Var => Var, Editor => Variable_Edit (Editor));
-      Var_Handler.Connect
-        (Button, "clicked", Var_Handler.To_Marshaller (Edit_Variable'Access),
-         Data);
+         --  Insert the widgets
+         Gtk_New (Button, "E");
+         Attach (Editor.List_Variables, Button, 0, 1,
+                 Editor.Num_Rows - 1, Editor.Num_Rows,
+                 Xoptions => 0, Yoptions => 0);
+         Data := (Var => Var, Editor => Variable_Edit (Editor));
+         Var_Handler.Connect
+           (Button, "clicked",
+            Var_Handler.To_Marshaller (Edit_Variable'Access), Data);
 
-      Gtk_New (Button, "D");
-      Attach (Editor.List_Variables, Button, 1, 2,
-              Editor.Num_Rows - 1, Editor.Num_Rows,
-              Xoptions => 0, Yoptions => 0);
+         Gtk_New (Button, "D");
+         Attach (Editor.List_Variables, Button, 1, 2,
+                 Editor.Num_Rows - 1, Editor.Num_Rows,
+                 Xoptions => 0, Yoptions => 0);
+
+         --  Name of the variable
+         Gtk_New (Editor.Data (Row).Name_Label, "");
+         Set_Alignment (Editor.Data (Row).Name_Label, 0.0, 0.0);
+         Attach (Editor.List_Variables, Editor.Data (Row).Name_Label, 2, 3,
+                 Editor.Num_Rows - 1, Editor.Num_Rows,
+                 Yoptions => 0);
+
+         --  Environment variables
+         Gtk_New (Editor.Data (Row).Env_Label, "");
+         Set_Alignment (Editor.Data (Row).Env_Label, 0.0, 0.0);
+         Attach (Editor.List_Variables, Editor.Data (Row).Env_Label, 4, 5,
+                 Editor.Num_Rows - 1, Editor.Num_Rows,
+                 Yoptions => 0);
+
+         Show_All (Editor.List_Variables);
+      end if;
+
+      --  Set the correct values for the widgets
 
       Get_Name_String (Project_Nodes.Table (Var).Name);
-      Gtk_New (Label, Name_Buffer (Name_Buffer'First .. Name_Len));
-      Set_Alignment (Label, 0.0, 0.0);
-      Attach (Editor.List_Variables, Label, 2, 3,
-              Editor.Num_Rows - 1, Editor.Num_Rows,
-              Yoptions => 0);
+      Set_Text (Editor.Data (Row).Name_Label,
+                Name_Buffer (Name_Buffer'First .. Name_Len));
+
+      --  Note that the type of the variable might have changed since the
+      --  last time we did the update, so we have to recreate some of the
+      --  widgets now
+
+      if Editor.Data (Row).Type_Combo /= null then
+         Destroy (Editor.Data (Row).Type_Combo);
+         Editor.Data (Row).Type_Combo := null;
+      elsif Editor.Data (Row).Scrolled /= null then
+         Destroy (Editor.Data (Row).Scrolled);
+         Editor.Data (Row).Scrolled := null;
+         Editor.Data (Row).Value_Edit := null;
+      elsif Editor.Data (Row).Value_Edit /= null then
+         Destroy (Editor.Data (Row).Value_Edit);
+         Editor.Data (Row).Value_Edit := null;
+      end if;
 
       if Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration then
-         Gtk_New (Combo);
-         Set_Editable (Get_Entry (Combo), False);
-         Attach (Editor.List_Variables, Combo, 3, 4,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
+         Gtk_New (Editor.Data (Row).Type_Combo);
+         Set_Editable (Get_Entry (Editor.Data (Row).Type_Combo), False);
+         Attach (Editor.List_Variables, Editor.Data (Row).Type_Combo, 3, 4,
+                 Row - 1, Row, Yoptions => 0);
          Add_Possible_Values
-           (Get_List (Combo), Project_Nodes.Table (Var).Field2);
-         Delete_Text (Get_Entry (Combo));
-         Display_Expr (Get_Entry (Combo), Value_Of (Var));
+           (Get_List (Editor.Data (Row).Type_Combo),
+            Project_Nodes.Table (Var).Field2);
+         Delete_Text (Get_Entry (Editor.Data (Row).Type_Combo));
+         Display_Expr
+           (Get_Entry (Editor.Data (Row).Type_Combo), Value_Of (Var));
+         Show_All (Editor.Data (Row).Type_Combo);
 
       elsif Project_Nodes.Table (Var).Expr_Kind = Prj.List then
-         Gtk_New (Scrolled);
-         Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
-         Gtk_New (Text);
-         Add (Scrolled, Text);
-         Attach (Editor.List_Variables, Scrolled, 3, 4,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
-         Resize_Text_Area (Text, Var, 5);
-         Display_Expr (Text, Value_Of (Var));
-         Set_Position (Text, 0);
+         Gtk_New (Editor.Data (Row).Scrolled);
+         Set_Policy
+           (Editor.Data (Row).Scrolled, Policy_Never, Policy_Automatic);
+         Gtk_New (Editor.Data (Row).Value_Edit);
+         Add (Editor.Data (Row).Scrolled, Editor.Data (Row).Value_Edit);
+         Attach (Editor.List_Variables, Editor.Data (Row).Scrolled, 3, 4,
+                 Row - 1, Row, Yoptions => 0);
+         Resize_Text_Area (Editor.Data (Row).Value_Edit, Var, 5);
+         Display_Expr (Editor.Data (Row).Value_Edit, Value_Of (Var));
+         Set_Position (Editor.Data (Row).Value_Edit, 0);
+         Show_All (Editor.Data (Row).Scrolled);
 
       else
-         Gtk_New (Text);
-         Attach (Editor.List_Variables, Text, 3, 4,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
-         Set_Visible_Lines (Text, 1);
-         Display_Expr (Text, Value_Of (Var));
+         Gtk_New (Editor.Data (Row).Value_Edit);
+         Attach (Editor.List_Variables, Editor.Data (Row).Value_Edit, 3, 4,
+                 Row - 1, Row, Yoptions => 0);
+         Set_Visible_Lines (Editor.Data (Row).Value_Edit, 1);
+         Display_Expr (Editor.Data (Row).Value_Edit, Value_Of (Var));
+         Show_All (Editor.Data (Row).Value_Edit);
       end if;
 
       --  The environment variable
@@ -402,15 +462,40 @@ package body Variable_Editors is
            = N_External_Value
       then
          External_As_String (Project_Nodes.Table (Var).Field1);
-         Gtk_New (Label, Name_Buffer (Name_Buffer'First .. Name_Len));
-         Set_Alignment (Label, 0.0, 0.0);
-         Attach (Editor.List_Variables, Label, 4, 5,
-                 Editor.Num_Rows - 1, Editor.Num_Rows,
-                 Yoptions => 0);
+         Set_Text (Editor.Data (Row).Env_Label,
+                   Name_Buffer (Name_Buffer'First .. Name_Len));
       end if;
+   end Refresh_Row;
 
-      Show_All (Editor.List_Variables);
-   end Add_Variable;
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Editor : access Variable_Edit_Record;
+      Var    : Prj.Tree.Project_Node_Id := Empty_Node) is
+   begin
+      pragma Assert
+        (Project_Nodes.Table (Var).Kind = N_Typed_Variable_Declaration
+         or else Project_Nodes.Table (Var).Kind = N_Variable_Declaration);
+
+      if Var = Empty_Node then
+         --  ???  For each variable in the project
+         --  Refresh (Editor, Var);
+         null;
+
+      else
+         if Editor.Data /= null then
+            for J in Editor.Data'Range loop
+               if Editor.Data (J).Var = Var then
+                  Refresh_Row (Editor, J, Var);
+                  return;
+               end if;
+            end loop;
+         end if;
+         Refresh_Row (Editor, Editor.Num_Rows + 1, Var);
+      end if;
+   end Refresh;
 
    -------------------
    -- Edit_Variable --
@@ -421,8 +506,105 @@ package body Variable_Editors is
    is
       Edit : New_Var_Edit;
    begin
-      Gtk_New (Edit, Data.Var);
+      Gtk_New (Edit, Data.Editor, Data.Var);
       Show_All (Edit);
    end Edit_Variable;
+
+   ---------------------
+   -- Update_Variable --
+   ---------------------
+
+   procedure Update_Variable (Editor : access New_Var_Edit_Record) is
+      V : Validity := Valid;
+      Value : Value_Editor;
+      Parent : Project_Node_Id;
+      Expr : Project_Node_Id;
+   begin
+      if Get_Active (Editor.Typed_Variable) then
+         Value := Editor.Enumeration_Value;
+      elsif Get_Active (Editor.Untyped_List_Variable) then
+         Value := Editor.List_Value;
+      else
+         Value := Editor.Single_Value;
+      end if;
+
+      if V = Valid then
+         V := Check_Validity (Value);
+      end if;
+
+      case V is
+         when Valid =>
+            Expr := Get_Value (Value, Editor.Var_Editor.Project);
+
+            if Editor.Var = Empty_Node then
+               Parent := Editor.Var_Editor.Pkg;
+               if Parent = Empty_Node then
+                  Parent := Editor.Var_Editor.Project;
+               end if;
+
+               if Get_Active (Editor.Typed_Variable) then
+                  Editor.Var := Get_Or_Create_Typed_Variable
+                    (Parent,
+                     Name => Get_Text (Editor.Variable_Name),
+                     Typ  => Expr);
+               else
+                  Editor.Var := Get_Or_Create_Variable
+                    (Parent,
+                     Name => Get_Text (Editor.Variable_Name),
+                     Kind => Project_Nodes.Table (Expr).Expr_Kind);
+               end if;
+
+            else
+               declare
+                  N : constant String := Get_Text (Editor.Variable_Name);
+               begin
+                  Get_Name_String (Project_Nodes.Table (Editor.Var).Name);
+                  if Name_Buffer (Name_Buffer'First .. Name_Len) /= N then
+                     Name_Len := N'Length;
+                     Name_Buffer (Name_Buffer'First .. Name_Len) := N;
+                     Project_Nodes.Table (Editor.Var).Name := Name_Find;
+                  end if;
+                  Project_Nodes.Table (Editor.Var).Expr_Kind :=
+                    Project_Nodes.Table (Expr).Expr_Kind;
+
+                  if Get_Active (Editor.Typed_Variable) then
+                     --  Should delete previous type
+                     Project_Nodes.Table (Editor.Var).Kind :=
+                       N_Typed_Variable_Declaration;
+                     Project_Nodes.Table (Editor.Var).Field2 := Expr;
+                  end if;
+               end;
+            end if;
+
+            --  Should handle environment variables as well.
+            if not Get_Active (Editor.Typed_Variable) then
+               Project_Nodes.Table (Editor.Var).Field1 := Expr;
+               --  ??? Else should reset the current value if needed
+            end if;
+            Refresh (Editor.Var_Editor, Editor.Var);
+            Destroy (Editor);
+
+         when others =>
+            Put_Line ("Validity = " & V'Img);
+
+      end case;
+   end Update_Variable;
+
+   ------------------
+   -- Name_Changed --
+   ------------------
+
+   procedure Name_Changed (Editor : access New_Var_Edit_Record) is
+   begin
+      if Editor.Var /= Empty_Node
+        and then not Editor.Name_Was_Changed
+      then
+         Editor.Name_Was_Changed := True;
+         Get_Name_String (Project_Nodes.Table (Editor.Var).Name);
+         Set_Label (Editor.Name_Frame,
+                    "Name (old name was "
+                    & Name_Buffer (Name_Buffer'First .. Name_Len) & ")");
+      end if;
+   end Name_Changed;
 
 end Variable_Editors;
