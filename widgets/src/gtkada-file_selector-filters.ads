@@ -50,14 +50,6 @@ package Gtkada.File_Selector.Filters is
    --  New memory is allocated, that will be freed automatically by the file
    --  selector where the filter is registered.
 
-   type HTML_Filter_Record (<>) is new File_Filter_Record with private;
-   type HTML_Filter is access all HTML_Filter_Record'Class;
-
-   function HTML_File_Filter return HTML_Filter;
-   --  Return a new filter that only shows the Glide project files.
-   --  New memory is allocated, that will be freed automatically by the file
-   --  selector where the filter is registered.
-
 private
 
    procedure Use_File_Filter
@@ -71,17 +63,5 @@ private
       Text      : out GNAT.OS_Lib.String_Access);
 
    type Project_File_Filter_Record is new File_Filter_Record with null record;
-
-   procedure Use_File_Filter
-     (Filter    : access HTML_Filter_Record;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : String;
-      File      : String;
-      State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out GNAT.OS_Lib.String_Access);
-
-   type HTML_Filter_Record is new File_Filter_Record with null record;
 
 end Gtkada.File_Selector.Filters;

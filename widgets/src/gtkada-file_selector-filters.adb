@@ -60,17 +60,6 @@ package body Gtkada.File_Selector.Filters is
       return Result;
    end To_Lower;
 
-   ----------------------
-   -- HTML_File_Filter --
-   ----------------------
-
-   function HTML_File_Filter return HTML_Filter is
-      Filter : HTML_Filter := new HTML_Filter_Record;
-   begin
-      Filter.Label := new String'(-"HTML files");
-      return Filter;
-   end HTML_File_Filter;
-
    ---------------------
    -- Prj_File_Filter --
    ---------------------
@@ -104,34 +93,6 @@ package body Gtkada.File_Selector.Filters is
 
       if To_Lower (Tail (File, Project_File_Extension'Length)) =
         Project_File_Extension
-      then
-         State := Normal;
-      else
-         State := Invisible;
-      end if;
-   end Use_File_Filter;
-
-   procedure Use_File_Filter
-     (Filter    : access HTML_Filter_Record;
-      Win       : access File_Selector_Window_Record'Class;
-      Dir       : String;
-      File      : String;
-      State     : out File_State;
-      Pixmap    : out Gdk.Pixmap.Gdk_Pixmap;
-      Mask      : out Gdk.Bitmap.Gdk_Bitmap;
-      Text      : out GNAT.OS_Lib.String_Access)
-   is
-      pragma Unreferenced (Dir, Win, Filter);
-      HTML_Extension : constant String := ".html";
-      HTM_Extension  : constant String := ".htm";
-
-   begin
-      Text   := null;
-      Pixmap := null;
-      Mask   := null;
-
-      if To_Lower (Tail (File, HTML_Extension'Length)) = HTML_Extension
-        or else To_Lower (Tail (File, HTM_Extension'Length)) = HTM_Extension
       then
          State := Normal;
       else
