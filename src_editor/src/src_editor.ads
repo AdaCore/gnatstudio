@@ -32,29 +32,9 @@
 --  editor.
 --  </description>
 
-with Glib; use Glib;
-
 package Src_Editor is
 
    function "-" (Msg : String) return String;
    --  Convenient shortcut to the Gettext function.
-
-   function Image (N : Natural) return String;
-   --  Create a string image of the given Natural.
-
-   function Image (N : Gint) return String;
-   --  Create a string image of the given Gint.
-
-   function Image (N : Natural; Length : Positive) return String;
-   --  Create a string image of the given Natural. The returned string is
-   --  padded with leading spaces to create a string of at list Length
-   --  characters.
-
-   function Image (N : Gint; Length : Positive) return String;
-   --  Create a string image of the given Gint. The returned string is padded
-   --  with leading spaces to create a string of at list Length characters.
-
-   function Number_Of_Digits_In (N : Natural) return Natural;
-   --  Return the number of digits for the given Natural number;
 
 end Src_Editor;
