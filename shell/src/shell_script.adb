@@ -573,9 +573,9 @@ package body Shell_Script is
          Set_Completion_Handler (Script.Console, Commands_As_List'Access);
          Child := Put
            (Kernel, Script.Console,
-            Focus_Widget        => Gtk_Widget (Get_View (Script.Console)),
             Default_Width       => 400,
-            Default_Height      => 100,
+            Default_Height      => 120,
+            Focus_Widget        => Gtk_Widget (Get_View (Script.Console)),
             Module              => Shell_Module_Id,
             Desktop_Independent => True);
          Set_Title (Child, -"Shell");
@@ -653,7 +653,7 @@ package body Shell_Script is
       Add_Default_Desktop_Item
         (Kernel, N,
          10, 10,
-         400, 100,
+         400, 120,
          "Shell", "Shell Console",
          Docked, Bottom,
          False, False);
