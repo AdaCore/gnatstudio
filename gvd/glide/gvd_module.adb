@@ -102,6 +102,7 @@ with GVD.Text_Box.Source_Editor.Glide;
 use  GVD.Text_Box.Source_Editor.Glide;
 
 with Interactive_Consoles;      use Interactive_Consoles;
+with Glide_Kernel.Scripts;
 
 package body GVD_Module is
 
@@ -251,6 +252,11 @@ package body GVD_Module is
 
    procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences are changed in the GPS kernel
+
+   procedure Debugger_Command_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String);
+   --  Interactive command handler for the debugger module.
 
    function Delete_Asm
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class) return Boolean;
@@ -2503,6 +2509,34 @@ package body GVD_Module is
       end if;
    end Preferences_Changed;
 
+   ------------------------------
+   -- Debugger_Command_Handler --
+   ------------------------------
+
+   procedure Debugger_Command_Handler
+     (Data    : in out Glide_Kernel.Scripts.Callback_Data'Class;
+      Command : String)
+   is
+      Kernel : constant Kernel_Handle :=
+        Glide_Kernel.Scripts.Get_Kernel (Data);
+      Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+
+   begin
+      if Id.Initialized then
+         if Command = "send" then
+            declare
+               Process : constant Visual_Debugger :=
+                 Get_Current_Process (Get_Main_Window (Kernel));
+            begin
+               Process_User_Command
+                 (Process,
+                  Glide_Kernel.Scripts.Nth_Arg (Data, 1),
+                  Output_Command => True);
+            end;
+         end if;
+      end if;
+   end Debugger_Command_Handler;
+
    ---------------------
    -- Register_Module --
    ---------------------
@@ -2510,11 +2544,14 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Debug     : constant String := '/' & (-"Debug") & '/';
-      Debug_Sub : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub  : constant String := Debug & (-"Data") & '/';
-      Mitem     : Gtk_Menu_Item;
-      Menu      : Gtk_Menu;
+      Debug          : constant String := '/' & (-"Debug") & '/';
+      Debug_Sub      : constant String := Debug & (-"_Debug") & '/';
+      Data_Sub       : constant String := Debug & (-"Data") & '/';
+      Mitem          : Gtk_Menu_Item;
+      Menu           : Gtk_Menu;
+      Debugger_Class : constant Glide_Kernel.Scripts.Class_Type :=
+        Glide_Kernel.Scripts.New_Class
+          (Kernel, "Debugger", "Interface to debugger related commands");
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
@@ -2633,6 +2670,19 @@ package body GVD_Module is
 
       Add_Hook (Kernel, Preferences_Changed_Hook,
                 Preferences_Changed'Access);
+
+      --  Commands
+
+      Glide_Kernel.Scripts.Register_Command
+        (Kernel,
+         Command       => "send",
+         Params        => "(command)",
+         Description   => -("Send command to the current debugger."),
+         Class         => Debugger_Class,
+         Static_Method => True,
+         Minimum_Args  => 1,
+         Maximum_Args  => 1,
+         Handler       => Debugger_Command_Handler'Access);
 
       Init_Graphics;
    end Register_Module;
