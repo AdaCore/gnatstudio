@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
+--                     Copyright (C) 2003 - 2004                     --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -152,7 +152,6 @@ package body Task_Manager is
       Active  : Boolean) return Boolean
    is
       Lowest  : Integer := Integer'Last;
-      Current : Integer;
       Result  : Command_Return_Type;
       First   : Integer;
       Last    : Integer;
@@ -184,16 +183,16 @@ package body Task_Manager is
          for Q in First .. Last loop
             if Manager.Queues (Q).Current_Priority < Lowest then
                Lowest := Manager.Queues (Q).Current_Priority;
-               Current := Q;
+               Manager.Running_Queue := Q;
             end if;
 
             Manager.Queues (Q).Current_Priority :=
               Manager.Queues (Q).Current_Priority - Previous_Prio;
          end loop;
 
-         Manager.Queues (Current).Current_Priority :=
-           Manager.Queues (Current).Current_Priority
-           + Manager.Queues (Current).Priority;
+         Manager.Queues (Manager.Running_Queue).Current_Priority :=
+           Manager.Queues (Manager.Running_Queue).Current_Priority
+           + Manager.Queues (Manager.Running_Queue).Priority;
 
          if Active then
             Manager.Minimal_Active_Priority := Lowest;
@@ -201,37 +200,41 @@ package body Task_Manager is
             Manager.Minimal_Passive_Priority := Lowest;
          end if;
 
-         if Manager.Queues (Current).Status = Paused then
+         if Manager.Queues (Manager.Running_Queue).Status = Paused then
             return False;
          end if;
 
-         Command := Command_Queues.Head (Manager.Queues (Current).Queue);
+         Command := Command_Queues.Head
+           (Manager.Queues (Manager.Running_Queue).Queue);
 
-         if Manager.Queues (Current).Status = Interrupted then
+         if Manager.Queues (Manager.Running_Queue).Status = Interrupted then
             Result := Success;
          else
             Result := Safe_Execute (Command);
          end if;
 
-         Manager.Queues (Current).Need_Refresh := True;
+         Manager.Queues (Manager.Running_Queue).Need_Refresh := True;
 
          case Result is
             when Success | Failure =>
                --  ??? add the command to the list of done or failed commands.
 
-               if Manager.Queues (Current).Status = Interrupted then
-                  Command_Queues.Free (Manager.Queues (Current).Queue);
+               if Manager.Queues
+                 (Manager.Running_Queue).Status = Interrupted
+               then
+                  Command_Queues.Free
+                    (Manager.Queues (Manager.Running_Queue).Queue);
                else
                   if Result = Success then
                      declare
                         New_Queue : constant Command_Queues.List :=
                           Get_Consequence_Actions (Command);
                      begin
-                        Manager.Queues (Current).Total :=
-                          Manager.Queues (Current).Total
+                        Manager.Queues (Manager.Running_Queue).Total :=
+                          Manager.Queues (Manager.Running_Queue).Total
                           + Command_Queues.Length (New_Queue);
                         Command_Queues.Concat
-                          (Manager.Queues (Current).Queue,
+                          (Manager.Queues (Manager.Running_Queue).Queue,
                            New_Queue);
                      end;
 
@@ -242,11 +245,11 @@ package body Task_Manager is
                         New_Queue : constant Command_Queues.List :=
                           Get_Alternate_Actions (Command);
                      begin
-                        Manager.Queues (Current).Total :=
-                          Manager.Queues (Current).Total
+                        Manager.Queues (Manager.Running_Queue).Total :=
+                          Manager.Queues (Manager.Running_Queue).Total
                           + Command_Queues.Length (New_Queue);
                         Command_Queues.Concat
-                          (Manager.Queues (Current).Queue,
+                          (Manager.Queues (Manager.Running_Queue).Queue,
                            New_Queue);
                      end;
 
@@ -254,21 +257,22 @@ package body Task_Manager is
                      Free_Alternate_Actions (Command, False);
                   end if;
 
-                  Command_Queues.Next (Manager.Queues (Current).Queue);
+                  Command_Queues.Next
+                    (Manager.Queues (Manager.Running_Queue).Queue);
 
-                  Manager.Queues (Current).Done :=
-                    Manager.Queues (Current).Done + 1;
+                  Manager.Queues (Manager.Running_Queue).Done :=
+                    Manager.Queues (Manager.Running_Queue).Done + 1;
                end if;
                --  If it was the last command in the queue, free the queue.
 
                if Command_Queues.Is_Empty
-                 (Manager.Queues (Current).Queue)
+                 (Manager.Queues (Manager.Running_Queue).Queue)
                then
-                  Free (Manager.Queues (Current).Id);
+                  Free (Manager.Queues (Manager.Running_Queue).Id);
 
-                  if Manager.Queues (Current).Bar /= null then
-                     Destroy (Manager.Queues (Current).Bar);
-                     Manager.Queues (Current).Bar := null;
+                  if Manager.Queues (Manager.Running_Queue).Bar /= null then
+                     Destroy (Manager.Queues (Manager.Running_Queue).Bar);
+                     Manager.Queues (Manager.Running_Queue).Bar := null;
                   end if;
 
                   Manager.Need_Global_Refresh := True;
@@ -276,6 +280,7 @@ package body Task_Manager is
                   if Manager.Queues'Length = 1 then
                      Unchecked_Free (Manager.Queues);
                      Manager.Referenced_Command := -1;
+                     Manager.Running_Queue := -1;
                      return False;
 
                   else
@@ -284,24 +289,30 @@ package body Task_Manager is
                           (Manager.Queues'First .. Manager.Queues'Last - 1);
                      begin
                         New_Queues
-                          (Manager.Queues'First .. Current - 1) :=
+                          (Manager.Queues'First
+                           .. Manager.Running_Queue - 1) :=
                           Manager.Queues
-                            (Manager.Queues'First .. Current - 1);
+                            (Manager.Queues'First
+                             .. Manager.Running_Queue - 1);
 
                         New_Queues
-                          (Current .. Manager.Queues'Last - 1) :=
+                          (Manager.Running_Queue .. Manager.Queues'Last - 1) :=
                           Manager.Queues
-                            (Current + 1 .. Manager.Queues'Last);
+                            (Manager.Running_Queue + 1 .. Manager.Queues'Last);
 
                         if Active then
                            Manager.Passive_Index
                              := Manager.Passive_Index - 1;
                         end if;
 
-                        if Manager.Referenced_Command = Current then
+                        if Manager.Referenced_Command =
+                          Manager.Running_Queue
+                        then
                            Manager.Referenced_Command := -1;
 
-                        elsif Manager.Referenced_Command > Current then
+                        elsif Manager.Referenced_Command >
+                          Manager.Running_Queue
+                        then
                            Manager.Referenced_Command :=
                              Manager.Referenced_Command - 1;
                         end if;
@@ -313,15 +324,15 @@ package body Task_Manager is
                end if;
 
             when Raise_Priority =>
-               if Manager.Queues (Current).Priority > 1 then
-                  Manager.Queues (Current).Priority :=
-                    Manager.Queues (Current).Priority - 1;
+               if Manager.Queues (Manager.Running_Queue).Priority > 1 then
+                  Manager.Queues (Manager.Running_Queue).Priority :=
+                    Manager.Queues (Manager.Running_Queue).Priority - 1;
                end if;
 
             when Lower_Priority =>
-               if Manager.Queues (Current).Priority < 3 then
-                  Manager.Queues (Current).Priority :=
-                    Manager.Queues (Current).Priority + 1;
+               if Manager.Queues (Manager.Running_Queue).Priority < 3 then
+                  Manager.Queues (Manager.Running_Queue).Priority :=
+                    Manager.Queues (Manager.Running_Queue).Priority + 1;
                end if;
 
             when Execute_Again =>
@@ -329,6 +340,7 @@ package body Task_Manager is
 
          end case;
 
+         Manager.Running_Queue := -1;
          return True;
       end if;
    end Execute_Incremental;
@@ -421,6 +433,21 @@ package body Task_Manager is
                Manager.Queues := new Task_Queue_Array'(New_Queues);
 
                Manager.Passive_Index := Manager.Passive_Index + 1;
+
+               --  We may need to modify the current working queue here, since
+               --  adding an active action causes the queues to be renumbered.
+               --  This is to avoid the following circuitry:
+               --  -  An action A is being executed in queue 1
+               --  -  in the execution of this action, a new action B is added
+               --  -  this action is active, and added to the queue 1
+               --  -  queue 1 becomes queue 2
+               --  -  when A ends, queue 1 is freed and therefore B is never
+               --      executed.
+
+
+               if Manager.Running_Queue >= 1 then
+                  Manager.Running_Queue := Manager.Running_Queue + 1;
+               end if;
 
                return Manager.Queues'First;
             else
