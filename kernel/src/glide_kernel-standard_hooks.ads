@@ -91,6 +91,7 @@ package Glide_Kernel.Standard_Hooks is
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
       Force_Reload      : Boolean := False;
+      Focus             : Boolean := True;
    end record;
    --  Line and column indicate the location to display initially, and are
    --  ignored if left to 0 (in which case any existing editor will be left
@@ -103,6 +104,8 @@ package Glide_Kernel.Standard_Hooks is
    --  If New_File is true, new files will be created if needed.
    --  If Force_Reload is True, this forces a reload of the file if there is
    --  already an open editor for it.
+   --  Focus indicates whether the MDI child containing the editor should be
+   --  given the focus.
 
    Open_File_Action_Hook : constant String := "open_file_action_hook";
    --  This hook requests the opening of an editor. This could be either an
@@ -116,7 +119,8 @@ package Glide_Kernel.Standard_Hooks is
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      Force_Reload      : Boolean := False);
+      Force_Reload      : Boolean := False;
+      Focus             : Boolean := True);
    --  Calls Open_File_Action_Hook.
 
    procedure Clear_Highlighting
