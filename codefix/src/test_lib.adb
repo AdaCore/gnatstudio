@@ -38,9 +38,9 @@ package body Test_Lib is
       Current_Solution := First (Solutions);
 
       if Visible then
-         Put_Line ("Message: ");
-         Put_Line (Get_Message (Message));
-         Put_Line ("Old text: ");
+         Put_Line ("--------------------------------------------------------");
+         Put_Line ("Message: " & Get_Message (Message));
+         Put_Line ("--------------- Old text: ---------------");
          Put_Line (Get_Old_Text (Data (Current_Solution), Current_Text, 3, 3));
       end if;
 
@@ -77,7 +77,9 @@ package body Test_Lib is
 
          Num_Sol := Num_Sol + 1;
          if Visible then
-            Put_Line ("Proposition" & Integer'Image (Num_Sol) & " : ");
+            Put_Line
+              ("--------------- Proposition" & Integer'Image (Num_Sol) &
+               ": ---------------");
             Put_Line (Get_New_Text (Extended_Extract));
          end if;
 
@@ -100,6 +102,7 @@ package body Test_Lib is
       end if;
 
       if Visible then
+         Put_Line ("--------------------------------------------------------");
          New_Line;
       end if;
    end Corrections_Proposed;
