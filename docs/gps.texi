@@ -9151,7 +9151,9 @@ number of children, each of which is associated with its own switch. However,
 only one of the children can be selected at any given time.
 
 The children must have the tag @code{radio-entry}. This tag accepts the
-attributes @code{label}, @code{switch} and @code{tip}.
+attributes @code{label}, @code{switch} and @code{tip}. As a special case,
+the switch attribute can have an empty value ("") to indicate this is the
+default switch to use in this group of radio buttons.
 
 @item <field>
 @cindex <field>
