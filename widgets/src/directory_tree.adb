@@ -393,6 +393,7 @@ package body Directory_Tree is
                else
                   File_Append_Directory
                     (Tree, Curr_Dir, Iter, 1, D, True, True);
+                  Set_Cursor (Tree.File_Tree, Path, null, False);
                   Path_Free (Path);
                   return;
                end if;
