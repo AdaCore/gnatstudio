@@ -37,9 +37,9 @@ package body Debugger is
      (Debugger : access Debugger_Root'Class;
       Entity   : String) return Generic_Values.Generic_Type_Access
    is
-      Result : Generic_Type_Access;
-      Type_Str : String := Type_Of (Debugger, Entity);
-      Index  : Natural := Type_Str'First;
+      Result   : Generic_Type_Access;
+      Type_Str : String  := Type_Of (Debugger, Entity);
+      Index    : Natural := Type_Str'First;
 
    begin
       if Type_Str'Length /= 0 then
@@ -159,12 +159,12 @@ package body Debugger is
    -- Found_File_Name --
    ---------------------
 
-   procedure Found_File_Name (Debugger   : access Debugger_Root;
-                              Str        : String;
-                              Name_First : out Natural;
-                              Name_Last  : out Positive;
-                              Line       : out Natural)
-   is
+   procedure Found_File_Name
+     (Debugger   : access Debugger_Root;
+      Str        : String;
+      Name_First : out Natural;
+      Name_Last  : out Positive;
+      Line       : out Natural) is
    begin
       Name_First := 0;
       Name_Last  := 1;
