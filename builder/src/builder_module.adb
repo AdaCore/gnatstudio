@@ -41,6 +41,7 @@ with Language_Handlers.Glide; use Language_Handlers.Glide;
 with Prj_API;                 use Prj_API;
 with Prj;                     use Prj;
 with Src_Info;                use Src_Info;
+with Namet;                   use Namet;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
@@ -63,7 +64,10 @@ with Ada.Unchecked_Deallocation;
 package body Builder_Module is
 
    Timeout : constant Guint32 := 50;
-   --  Timeout in millisecond to check the build process
+   --  Timeout in milliseconds to check the build process
+
+   Timeout_Xref : constant Guint32 := 20;
+   --  Timeout in milliseconds to generate the xref information
 
    Me : constant Debug_Handle := Create (Builder_Module_Name);
 
@@ -501,6 +505,7 @@ package body Builder_Module is
       Num_Handlers : constant Natural := Languages_Count (Handler);
       Finished     : Boolean;
       LI           : LI_Handler;
+      New_Handler  : Boolean := False;
 
    begin
       if D.LI /= 0 and then D.Iter.all /= null then
@@ -509,9 +514,10 @@ package body Builder_Module is
          Finished := True;
       end if;
 
-      if Finished then
+      while Finished loop
          D.LI := D.LI + 1;
          if D.LI > Num_Handlers then
+            Insert (D.Kernel, "Finished parsing all source files");
             return False;
          end if;
 
@@ -519,13 +525,27 @@ package body Builder_Module is
 
          LI := Get_Nth_Handler (Handler, D.LI);
          if LI /= null then
-            D.Iter.all := new LI_Handler_Iterator'Class'
-              (Generate_LI_For_Project
-                 (Handler      => LI,
-                  Root_Project => Get_Project_View (D.Kernel),
-                  Project      => Get_Project_View (D.Kernel),
-                  Recursive    => True));
+            declare
+               L : constant String := Get_Nth_Language (Handler, D.LI);
+            begin
+               Name_Len := L'Length;
+               Name_Buffer (1 .. Name_Len) := L;
+               New_Handler := True;
+               D.Iter.all := new LI_Handler_Iterator'Class'
+                 (Generate_LI_For_Project
+                    (Handler      => LI,
+                     Root_Project => Get_Project_View (D.Kernel),
+                     Project      => Get_Project_View (D.Kernel),
+                     Language     => Name_Find,
+                     Recursive    => True));
+               Continue (D.Iter.all.all, Finished);
+            end;
          end if;
+      end loop;
+
+      if New_Handler then
+         Insert (D.Kernel, "Parsing source files for "
+                 & Get_Nth_Language (Handler, D.LI));
       end if;
 
       return True;
@@ -533,6 +553,7 @@ package body Builder_Module is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         Insert (D.Kernel, "Finished parsing all source files");
          return False;
    end Timeout_Compute_Xref;
 
@@ -549,7 +570,7 @@ package body Builder_Module is
    begin
       Push_State (Kernel, Processing);
       Id := Xref_Timeout.Add
-        (Timeout, Timeout_Compute_Xref'Access,
+        (Timeout_Xref, Timeout_Compute_Xref'Access,
          new Compute_Xref_Data' (Kernel, new LI_Handler_Iterator_Access, 0),
          Timeout_Xref_Destroy'Access);
 
