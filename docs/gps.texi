@@ -2472,7 +2472,7 @@ first. If an exception is found for this word, it will be used;
 otherwise the specified casing for keywords or identifiers is used.
 
 Note that this feature is not activated for entities (keywords or
-identifiers) for which the casing is set to @code{Unchanged}. See 
+identifiers) for which the casing is set to @code{Unchanged}. See
 @pxref{The Preferences Dialog}.
 
 A contextual menu named @b{Casing} has the following entries:
@@ -8019,6 +8019,11 @@ the number of rows of such frames.
 @item columns (default value is 1)
 This attribute specifies the number of columns of frames in the project
 properties page.
+
+@item separator (default value is "")
+This attribute specifies the default character that should go between a switch
+and its value, to distinguishes cases like "-a 1", "-a1" and "-a=1". This can
+be overriden separately for each switch.
 @end table
 
 This @code{<switches>} tag can have any number of child tag, among the
@@ -8069,6 +8074,10 @@ This attribute is only valid for @code{<combo>} tags, and described below.
 @item value (mandatory)
 This attribute is only valid for @code{<combo-entry>} tags.
 
+@item separator (default is the value given to @code{<switches>}
+This attribute specifies the separator to use between the switch and its value.
+See the description of this attribute for @code{<switches>}.
+
 @end table
 
 Here are the valid children for @code{<switches>}:
@@ -8106,7 +8115,8 @@ to the command line. This tag doesn't have any value or child tags.
 @item <spin>
 @cindex <spin>
 This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{tip}, @code{min}, @code{max} and @code{default} attributes.
+@code{tip}, @code{min}, @code{max}, @code{separator} and @code{default}
+attributes.
 This switch will add the contents of the @code{switch} attribute followed by
 the current numeric value of the widget to the command line. This is typically
 used to indicate indentation length for instance.
@@ -8125,8 +8135,9 @@ attributes @code{label}, @code{switch} and @code{tip}.
 
 @item <field>
 @cindex <field>
-This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch}
-and @code{tip} attributes. This tag describes a text edition field, which can
+This tag accepts the @code{line}, @code{column}, @code{label}, @code{switch},
+@code{separator} and @code{tip} attributes. This tag describes a text edition
+field, which can
 contain any text the user types. This text will be prefixed by the value of
 the @code{switch} attribute, and a space. If no text is entered in the field
 by the user, nothing is put on the command line.
@@ -8150,7 +8161,7 @@ This tag accepts two extra attributes:
 @cindex <combo>
 @cindex <combo-entry>
 This tags accepts the @code{line}, @code{column}, @code{label}, @code{switch},
-@code{tip}, @code{noswitch} and @code{nodigit} attributes.
+@code{tip}, @code{noswitch}, @code{separator} and @code{nodigit} attributes.
 
 The text inserted in the command line is the text from the @code{switch}
 attribute, concatenated with the text of the @code{value} attribute for the
