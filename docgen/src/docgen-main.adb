@@ -111,7 +111,7 @@ procedure Docgen.Main is
                Skip_To_Char (New_Line, Index2, ' ');
                if Options.Info_Output then
                   Put_Line ("Package name found:   *" &
-                              New_Line (Index1 .. Index2 - 1) & "*");
+                            New_Line (Index1 .. Index2 - 1) & "*");
                end if;
 
                Close (File);
@@ -165,7 +165,7 @@ procedure Docgen.Main is
             Options.Doc_One_File   := False;
 
             if S = "-h"    or else S = "-?" or else
-               S = "-help" or else S = "--help"
+              S = "-help" or else S = "--help"
             then
                raise Help_Requested;
             elsif S = "-texi" then
@@ -195,20 +195,20 @@ procedure Docgen.Main is
                   end if;
 
                elsif S (S'Last - 3 .. S'Last) = ".ads" then
-                     if Prj_File_Name /= null then
-                        Source_File_Node.File_Name := new String'(S);
-                        Source_File_Node.Prj_File_Name := Prj_File_Name;
-                        New_Package                   := Get_Package_Name (S);
-                        Source_File_Node.Package_Name :=
-                           New_Package.Package_Name;
-                        Source_File_Node.Def_In_Line  := New_Package.Line;
+                  if Prj_File_Name /= null then
+                     Source_File_Node.File_Name := new String'(S);
+                     Source_File_Node.Prj_File_Name := Prj_File_Name;
+                     New_Package                   := Get_Package_Name (S);
+                     Source_File_Node.Package_Name :=
+                       New_Package.Package_Name;
+                     Source_File_Node.Def_In_Line  := New_Package.Line;
 
-                        Source_File_Node.Other_File_Found := True;
-                        Type_Source_File_List.Append (Source_File_List,
-                                                   Source_File_Node);
-                     else
-                        raise Command_Line_Error;
-                     end if;
+                     Source_File_Node.Other_File_Found := True;
+                     Type_Source_File_List.Append (Source_File_List,
+                                                      Source_File_Node);
+                  else
+                     raise Command_Line_Error;
+                  end if;
                end if;
             end if;
          end;
@@ -233,7 +233,7 @@ procedure Docgen.Main is
                S : constant String := Argument (J);
             begin
                exit when S = "-?"    or else S = "-h" or else
-                         S = "-help" or else S = "--help";
+               S = "-help" or else S = "--help";
             end;
 
             J := J + 1;
@@ -357,12 +357,14 @@ begin --  DocGen
       --  Process all files listed or all files from the project file
 
       Process_Files (Source_File_List, Options);
+
+      TSFL.Free (Source_File_List);
    end if;
 
 exception
    when Command_Line_Error =>
       Put_Line (Current_Error,
-                 "Type ""docgen -?"" for more information.");
+                "Type ""docgen -?"" for more information.");
 
    when Help_Requested =>
       New_Line (Current_Error);
@@ -374,7 +376,7 @@ exception
       New_Line (Current_Error);
       Put_Line (Current_Error, "   docgen (-h | -help | --help | -?)");
       Put_Line (Current_Error, "   docgen  .gpr-file  .ads-file " &
-                               "{ .ads-files }");
+                "{ .ads-files }");
       Put_Line (Current_Error, "   [ -info ] [ -ic ] [ -under]" &
                 "[ -private] [ -texi ] ");
       Put_Line (Current_Error, "  [ -ref] [ -docpath=DIR ]");
