@@ -2325,7 +2325,19 @@ package body Src_Editor_Box is
    ---------------------
 
    procedure Paste_Clipboard (Editor : access Source_Editor_Box_Record) is
+      Result : Boolean;
+      pragma Unreferenced (Result);
    begin
+      --  Delete the selected region if it exists.
+      --  ??? This works around a bug which it seems is in gtk+, to be
+      --  investigated.
+      --  Scenario to reproduce the gtk bug : do a "select_region" and then
+      --  a "paste_clipboard", twice. (See C703-005)
+
+      if Selection_Exists (Editor.Source_Buffer) then
+         Result := Delete_Selection (Editor.Source_Buffer, False, False);
+      end if;
+
       Paste_Clipboard
         (Editor.Source_Buffer, Gtk.Clipboard.Get,
          Default_Editable => Editor.Writable);
