@@ -116,6 +116,12 @@ package body Python_Module is
       Hide_Output        : Boolean := False;
       Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
+   function Execute_Command
+     (Script             : access Python_Scripting_Record;
+      Command            : String;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
+      Errors             : access Boolean) return Boolean;
    procedure Execute_File
      (Script             : access Python_Scripting_Record;
       Filename           : String;
@@ -449,9 +455,10 @@ package body Python_Module is
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
       Ignored : Integer;
-      pragma Unreferenced (Ignored);
+      Result  : PyObject;
+      pragma Unreferenced (Ignored, Result);
       N       : Node_Ptr;
-      Errors  : Boolean;
+      Errors  : aliased Boolean;
 
    begin
       Python_Module_Id := new Python_Module_Record;
@@ -484,8 +491,10 @@ package body Python_Module is
 
       Python_Module_Id.Script.GPS_Module := Py_InitModule
         (GPS_Module_Name, Doc => "Interface with the GPS environment");
-      Run_Command (Python_Module_Id.Script.Interpreter,
-                   "import GPS", Hide_Output => True, Errors => Errors);
+      Result := Run_Command
+        (Python_Module_Id.Script.Interpreter,
+         "import GPS", Hide_Output => True,
+         Errors => Errors'Unrestricted_Access);
 
       Python_Module_Id.Script.GPS_Unexpected_Exception := PyErr_NewException
         (GPS_Module_Name & ".Unexpected_Exception", null, null);
@@ -627,7 +636,9 @@ package body Python_Module is
       D      : Dir_Type;
       File   : String (1 .. 1024);
       Last   : Natural;
-      Errors : Boolean;
+      Errors : aliased Boolean;
+      Result : PyObject;
+      pragma Unreferenced (Result);
 
    begin
       if Python_Module_Id = null then
@@ -637,11 +648,11 @@ package body Python_Module is
       if Is_Directory (Dir) then
          Trace (Me, "Load python files from " & Dir);
 
-         Run_Command
+         Result := Run_Command
            (Python_Module_Id.Script.Interpreter,
             "sys.path=['" & Dir & "']+sys.path",
             Hide_Output => True,
-            Errors      => Errors);
+            Errors      => Errors'Unrestricted_Access);
 
          Open (D, Dir);
 
@@ -1174,17 +1185,22 @@ package body Python_Module is
       Console            : Interactive_Consoles.Interactive_Console := null;
       Hide_Output        : Boolean := False;
       Show_Command       : Boolean := True;
-      Errors             : out Boolean) is
+      Errors             : out Boolean)
+   is
+      E : aliased Boolean;
+      Result : PyObject;
+      pragma Unreferenced (Result);
    begin
       if not Hide_Output and then Show_Command then
          Insert_Text (Script.Interpreter, Command & ASCII.LF, Console);
       end if;
 
-      Run_Command
+      Result := Run_Command
         (Script.Interpreter, Command,
          Console     => Console,
          Hide_Output => Hide_Output,
-         Errors      => Errors);
+         Errors      => E'Unrestricted_Access);
+      Errors := E;
    end Execute_Command;
 
    ---------------------
@@ -1206,6 +1222,28 @@ package body Python_Module is
          Console     => Console,
          Hide_Output => Hide_Output,
          Errors      => Errors);
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script             : access Python_Scripting_Record;
+      Command            : String;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
+      Errors             : access Boolean) return Boolean
+   is
+      Obj : PyObject;
+   begin
+      Obj := Run_Command
+        (Script.Interpreter, Command, Console, Hide_Output, Errors);
+      return Obj /= null
+        and then ((PyInt_Check (Obj) and then PyInt_AsLong (Obj) = 1)
+                  or else
+                    (PyString_Check (Obj)
+                     and then PyString_AsString (Obj) = "true"));
    end Execute_Command;
 
    ------------------

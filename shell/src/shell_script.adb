@@ -23,6 +23,7 @@
 
 with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
+with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with GNAT.Debug_Utilities;     use GNAT.Debug_Utilities;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Generic_List;
@@ -168,6 +169,12 @@ package body Shell_Script is
       Hide_Output        : Boolean := False;
       Show_Command       : Boolean := True;
       Errors             : access Boolean) return String;
+   function Execute_Command
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
+      Errors             : access Boolean) return Boolean;
    function Execute_Command_With_Args
      (Script             : access Shell_Scripting_Record;
       Command            : String;
@@ -1064,6 +1071,39 @@ package body Shell_Script is
       end if;
 
       return Result;
+   end Execute_Command;
+
+   ---------------------
+   -- Execute_Command --
+   ---------------------
+
+   function Execute_Command
+     (Script             : access Shell_Scripting_Record;
+      Command            : String;
+      Console            : Interactive_Consoles.Interactive_Console := null;
+      Hide_Output        : Boolean := False;
+      Errors             : access Boolean) return Boolean
+   is
+      Err    : aliased Boolean;
+      Result : constant String := Trim
+        (Reduce (Execute_GPS_Shell_Command
+                   (Script.Kernel, Command, Err'Unchecked_Access)),
+         Ada.Strings.Both);
+
+   begin
+      Errors.all := Err;
+
+      if not Hide_Output then
+         if Console = null then
+            if Script.Console /= null then
+               Insert (Script.Console, Result);
+            end if;
+         else
+            Insert (Console, Result);
+         end if;
+      end if;
+
+      return Result = "1" or else Case_Insensitive_Equal (Result, "true");
    end Execute_Command;
 
    -------------------------------
