@@ -264,6 +264,14 @@ package Debugger.Gdb is
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural);
 
+   function Get_Memory_Byte
+     (Debugger : access Gdb_Debugger;
+      Address  : in String) return String;
+
+   procedure Put_Memory_Byte
+     (Debugger : access Gdb_Debugger;
+      Address  : in String;
+      Byte     : in String);
 private
 
    function Send

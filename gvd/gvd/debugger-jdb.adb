@@ -864,4 +864,31 @@ package body Debugger.Jdb is
       Range_End_Len := 0;
    end Get_Line_Address;
 
+   ---------------------
+   -- Get_Memory_Byte --
+   ---------------------
+
+   function Get_Memory_Byte
+     (Debugger : access Jdb_Debugger;
+      Address  : in String) return String
+   is
+   begin
+      return "";
+      --  ??? Must implement this function !
+   end Get_Memory_Byte;
+
+   ---------------------
+   -- Put_Memory_Byte --
+   ---------------------
+
+   procedure Put_Memory_Byte
+     (Debugger : access Jdb_Debugger;
+      Address  : in String;
+      Byte     : in String)
+   is
+   begin
+      null;
+      --  ??? Must implement this function !
+   end Put_Memory_Byte;
+
 end Debugger.Jdb;

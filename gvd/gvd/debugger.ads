@@ -659,6 +659,25 @@ package Debugger is
    Spawn_Error : exception;
    --  Raised when the debugger could not be spawned.
 
+   -----------------------
+   -- Memory operations --
+   -----------------------
+
+   function Get_Memory_Byte
+     (Debugger : access Debugger_Root;
+      Address  : in String) return String is abstract;
+   --  Return the contents of the byte at a given address. The output should
+   --  be a 2-digit hexadecimal number.
+   --  Address is "0x" followed by an hexadecimal number.
+
+   procedure Put_Memory_Byte
+     (Debugger : access Debugger_Root;
+      Address  : in String;
+      Byte     : in String) is abstract;
+   --  Write the contents of one byte into the memory.
+   --  Address is "0x" followed by an hexadecimal number.
+   --  Byte is two hexadicimal digits.
+
 private
 
    type Debugger_Root is abstract tagged record

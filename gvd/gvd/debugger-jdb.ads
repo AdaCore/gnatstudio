@@ -243,6 +243,15 @@ package Debugger.Jdb is
       Range_Start_Len : out Natural;
       Range_End_Len   : out Natural);
 
+   function Get_Memory_Byte
+     (Debugger : access Jdb_Debugger;
+      Address  : in String) return String;
+
+   procedure Put_Memory_Byte
+     (Debugger : access Jdb_Debugger;
+      Address  : in String;
+      Byte     : in String);
+
 private
 
    function Send

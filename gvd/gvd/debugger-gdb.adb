@@ -1987,4 +1987,43 @@ package body Debugger.Gdb is
       Set_Parse_File_Name (Get_Process (Debugger), True);
    end Get_Line_Address;
 
+   ---------------------
+   -- Get_Memory_Byte --
+   ---------------------
+
+   function Get_Memory_Byte
+     (Debugger : access Gdb_Debugger;
+      Address  : in String) return String
+   is
+      S : constant String := Send
+        (Debugger, "x/1bx " & Address, Mode => Internal);
+      Index : Natural := 1;
+      Test  : Natural := 1;
+   begin
+      Skip_To_String (S, Index, ":");
+      Skip_To_String (S, Test, "Cannot");
+      Skip_To_String (S (Index .. S'Last), Index, "x");
+      if Index + 2 > S'Last
+        or else Test < S'Last - 5
+      then
+         return "xx";
+      else
+         return S (Index + 1 .. Index + 2);
+      end if;
+   end Get_Memory_Byte;
+
+   ---------------------
+   -- Put_Memory_Byte --
+   ---------------------
+
+   procedure Put_Memory_Byte
+     (Debugger : access Gdb_Debugger;
+      Address  : in String;
+      Byte     : in String)
+   is
+   begin
+      Send (Debugger, "set {byte}" & Address & " := 0x" & Byte,
+            Mode => Internal);
+   end Put_Memory_Byte;
+
 end Debugger.Gdb;
