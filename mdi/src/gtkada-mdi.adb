@@ -63,6 +63,7 @@ with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Window;       use Gtk.Window;
 with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.Types;     use Gtkada.Types;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 with GNAT.OS_Lib;      use GNAT.OS_Lib;
 
@@ -112,12 +113,55 @@ package body Gtkada.MDI is
    --  pointer is within Corner_Size in both coordinates, then we are clicking
    --  on the corner)
 
-   Close_Xpm : aliased Chars_Ptr_Array (0 .. 0);
-   Iconify_Xpm : aliased Chars_Ptr_Array (0 .. 0);
-   Maximize_Xpm : aliased Chars_Ptr_Array (0 .. 0);
-   pragma Import (C, Close_Xpm, "close_xpm");
-   pragma Import (C, Iconify_Xpm, "iconify_xpm");
-   pragma Import (C, Maximize_Xpm, "maximize_xpm");
+   Close_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
+     (New_String ("13 11 3 1"),
+      New_String ("      c None"),
+      New_String (".     c #C0C0C0"),
+      New_String ("+     c #000000"),
+      New_String ("............."),
+      New_String ("............."),
+      New_String ("...++....++.."),
+      New_String ("....++..++..."),
+      New_String (".....++++...."),
+      New_String ("......++....."),
+      New_String (".....++++...."),
+      New_String ("....++..++..."),
+      New_String ("...++....++.."),
+      New_String ("............."),
+      New_String ("............."));
+
+   Iconify_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
+     (New_String ("13 11 2 1"),
+      New_String (". c #000000"),
+      New_String ("# c #c0c0c0"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("#############"),
+      New_String ("##.......####"),
+      New_String ("##.......####"),
+      New_String ("#############"),
+      New_String ("#############"));
+
+   Maximize_Xpm : constant Interfaces.C.Strings.chars_ptr_array :=
+     (New_String ("13 11 3 1"),
+      New_String ("       c None"),
+      New_String (".      c #C0C0C0"),
+      New_String ("+      c #000000"),
+      New_String ("............."),
+      New_String ("....+++++++.."),
+      New_String ("....+++++++.."),
+      New_String ("....+.....+.."),
+      New_String ("..+++++++.+.."),
+      New_String ("..+++++++.+.."),
+      New_String ("..+.....+++.."),
+      New_String ("..+.....+...."),
+      New_String ("..+.....+...."),
+      New_String ("..+++++++...."),
+      New_String ("............."));
 
    use Widget_List;
 
