@@ -1,0 +1,9 @@
+# pangorc file for GPS.
+# Copyright 2002 by ACT Europe
+
+[Pango]
+ModuleFiles =
+
+[PangoX]
+AliasFiles = @prefix@/share/gps/pangox.aliases
+
