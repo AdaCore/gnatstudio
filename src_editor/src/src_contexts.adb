@@ -195,6 +195,66 @@ package body Src_Contexts is
    --  Auxiliary function, factorizes code between Search and Replace.
    --  Return True in case of success
 
+   function Find_Current_Context_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child;
+   --  Return an MDI child corresponding to an editor for the most recently
+   --  selected file.
+
+   ---------------------------------
+   -- Find_Current_Context_Editor --
+   ---------------------------------
+
+   function Find_Current_Context_Editor
+     (Kernel : access Kernel_Handle_Record'Class) return MDI_Child
+   is
+      Child        : MDI_Child;
+      Iterator     : Child_Iterator;
+      Context      : Selection_Context_Access;
+      File         : Virtual_File := No_File;
+   begin
+      --  ??? Here, we are relying on the fact that the Child_Iterator will
+      --  iterate through children in an order corresponding to the order at
+      --  which they were selected (most recently selected first, then the
+      --  one selected right before, and so on.)
+      --  This behaviour is already assumed in Find_Current_Editor, for
+      --  example, and is indeed implemented in Gtkada.MDI, but should be
+      --  documented as such.
+
+      Iterator := First_Child (Get_MDI (Kernel));
+
+      loop
+         Child := Get (Iterator);
+         exit when Child = null;
+
+         Context := Get_Context_For_Child (Kernel, Child);
+
+         if Context /= null
+           and then Context.all in File_Selection_Context'Class
+           and then Has_File_Information
+             (File_Selection_Context_Access (Context))
+         then
+            File := File_Information
+              (File_Selection_Context_Access (Context));
+            exit;
+         end if;
+
+         Unref (Context);
+         Next (Iterator);
+      end loop;
+
+      if File /= No_File then
+         Unref (Context);
+         Child := Find_Editor (Kernel, File);
+
+         if Child = null then
+            Open_File_Editor (Kernel, File);
+            Child := Find_Editor (Kernel, File);
+         end if;
+      end if;
+
+      return Child;
+   end Find_Current_Context_Editor;
+
    -----------------
    -- Scan_Buffer --
    -----------------
@@ -1168,7 +1228,7 @@ package body Src_Contexts is
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
       Search_Backward : Boolean) return Boolean
    is
-      Child  : constant MDI_Child := Find_Current_Editor (Kernel);
+      Child  : constant MDI_Child := Find_Current_Context_Editor (Kernel);
       Editor : Source_Editor_Box;
 
    begin
@@ -1199,7 +1259,7 @@ package body Src_Contexts is
       Replace_String  : String;
       Search_Backward : Boolean) return Boolean
    is
-      Child   : constant MDI_Child := Find_Current_Editor (Kernel);
+      Child   : constant MDI_Child := Find_Current_Context_Editor (Kernel);
       Editor  : Source_Editor_Box;
       Current_Matches : Boolean;
 
