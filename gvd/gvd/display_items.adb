@@ -507,14 +507,15 @@ package body Display_Items is
 
    function Update
      (Canvas : access Interactive_Canvas_Record'Class;
-      Item   : access Canvas_Item_Record'Class)
-     return Boolean
+      Item   : access Canvas_Item_Record'Class) return Boolean
    is
       Value_Found : Boolean;
       Entity      : Display_Item := Display_Item (Item);
    begin
-      Parse_Value (Entity.Debugger.Debugger, Entity.Name.all,
-                   Entity.Entity, Value_Found);
+      Parse_Value
+        (Entity.Debugger.Debugger, Entity.Name.all,
+         Entity.Entity, Value_Found);
+
       if not Value_Found then
          Set_Valid (Entity.Entity, False);
       end if;
@@ -535,10 +536,10 @@ package body Display_Items is
    -- Create_Link --
    -----------------
 
-   procedure Create_Link (Canvas : access Interactive_Canvas_Record'Class;
-                          From, To : access Display_Item_Record'Class;
-                          Name : String)
-   is
+   procedure Create_Link
+     (Canvas : access Interactive_Canvas_Record'Class;
+      From, To : access Display_Item_Record'Class;
+      Name : String) is
    begin
       if not Has_Link (Canvas, From, To, Name) then
          Add_Link (Canvas, From, To, End_Arrow, Name);
@@ -549,9 +550,10 @@ package body Display_Items is
    -- Dereference_Item --
    ----------------------
 
-   procedure Dereference_Item (Item : access Display_Item_Record;
-                               X    : Gint;
-                               Y    : Gint)
+   procedure Dereference_Item
+     (Item : access Display_Item_Record;
+      X    : Gint;
+      Y    : Gint)
    is
       Name : constant String := Get_Component_Name
         (Item.Entity,
@@ -804,9 +806,9 @@ package body Display_Items is
       --  This is slightly complicated since we need to get a valid item
       --  to undo the selection.
 
-      function Unselect (Canvas : access Interactive_Canvas_Record'Class;
-                         Item   : access Canvas_Item_Record'Class)
-                        return Boolean
+      function Unselect
+        (Canvas : access Interactive_Canvas_Record'Class;
+         Item   : access Canvas_Item_Record'Class) return Boolean
       is
          pragma Warnings (Off, Canvas);
       begin
@@ -826,5 +828,17 @@ package body Display_Items is
                 Activate_Time     => Get_Time (Event));
       end if;
    end On_Background_Click;
+
+   -------------------------------
+   -- On_Canvas_Process_Stopped --
+   -------------------------------
+
+   procedure On_Canvas_Process_Stopped
+     (Object : access Gtk.Widget.Gtk_Widget_Record'Class)
+   is
+      Canvas : Interactive_Canvas := Debugger_Process_Tab (Object).Data_Canvas;
+   begin
+      For_Each_Item (Canvas, Update'Access);
+   end On_Canvas_Process_Stopped;
 
 end Display_Items;
