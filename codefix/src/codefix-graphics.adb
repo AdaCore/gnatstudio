@@ -166,6 +166,11 @@ package body Codefix.Graphics is
          end;
       end if;
 
+      if Is_Fixed (Graphic_Codefix.Current_Error) then
+         Load_Next_Error (Graphic_Codefix);
+         return;
+      end if;
+
       if Get_Error_State
         (Graphic_Codefix.Automatic_Skip,
          Get_Category (Graphic_Codefix.Current_Error)) = Enabled
