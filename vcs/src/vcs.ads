@@ -240,6 +240,7 @@ package VCS is
    --  Return a changelog for the corresponding file.
    --  The result String_List.List with one element for each line.
 
+   Annotation_Id : constant String := "Annotate";
    procedure Annotate
      (Rep  : access VCS_Record;
       File : String) is abstract;
@@ -248,6 +249,7 @@ package VCS is
    --
    --  This procedure should call Glide_Kernel.Modules.Add_Line_Information
    --  in order to display the annotations in the GPS editors.
+   --  The Line_Information ID that must be used is Annotation_Id.
 
    procedure Set_Error
      (Rep            : access VCS_Record;
