@@ -835,13 +835,23 @@ package body GVD.Process is
       Gtk_New (Label);
 
       if Window.TTY_Mode then
-         Ref (Process.Command_Scrolledwindow);
-         Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
-         Ref (Process.Data_Editor_Paned);
-         Remove (Process.Process_Paned, Process.Data_Editor_Paned);
-         Ref (Process.Process_Paned);
-         Remove (Process.Process_Hbox, Process.Process_Paned);
-         Add (Process.Process_Hbox, Process.Data_Editor_Paned);
+         if Process.Separate_Data then
+            Ref (Process.Command_Scrolledwindow);
+            Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
+            Ref (Process.Editor_Vbox);
+            Remove (Process.Process_Paned, Process.Editor_Vbox);
+            Ref (Process.Process_Paned);
+            Remove (Process.Process_Hbox, Process.Process_Paned);
+            Add (Process.Process_Hbox, Process.Editor_Vbox);
+         else
+            Ref (Process.Command_Scrolledwindow);
+            Remove (Process.Process_Paned, Process.Command_Scrolledwindow);
+            Ref (Process.Data_Editor_Paned);
+            Remove (Process.Process_Paned, Process.Data_Editor_Paned);
+            Ref (Process.Process_Paned);
+            Remove (Process.Process_Hbox, Process.Process_Paned);
+            Add (Process.Process_Hbox, Process.Data_Editor_Paned);
+         end if;
       end if;
 
       Append_Page (Window.Process_Notebook, Process.Process_Hbox, Label);
@@ -1682,9 +1692,12 @@ package body GVD.Process is
          if Process.Separate_Data then
             Detach (Get_Source (Process.Editor_Text));
 
-            --  Ref the widget so that it is not destroyed.
-            Ref (Process.Data_Editor_Paned);
-            Remove (Process.Process_Paned, Process.Data_Editor_Paned);
+
+            if not Process.Window.TTY_Mode then
+               --  Ref the widget so that it is not destroyed.
+               Ref (Process.Data_Editor_Paned);
+               Remove (Process.Process_Paned, Process.Data_Editor_Paned);
+            end if;
 
             if Get_Active (Main.Call_Stack) then
                Widget := Gtk_Widget (Process.Data_Paned);
@@ -1693,7 +1706,18 @@ package body GVD.Process is
             end if;
 
             Reparent (Widget, Process);
-            Reparent (Process.Editor_Vbox, Process.Process_Paned);
+
+            if Process.Window.TTY_Mode then
+               Ref (Process.Editor_Vbox);
+               Remove (Process.Data_Editor_Paned, Process.Editor_Vbox);
+               Ref (Process.Data_Editor_Paned);
+               Remove (Process.Process_Hbox, Process.Data_Editor_Paned);
+               Add (Process.Process_Hbox, Process.Editor_Vbox);
+               Unref (Process.Editor_Vbox);
+            else
+               Reparent (Process.Editor_Vbox, Process.Process_Paned);
+            end if;
+
             Attach
               (Get_Source (Process.Editor_Text),
                Get_Editor_Container (Process.Editor_Text));
@@ -1710,10 +1734,19 @@ package body GVD.Process is
             end if;
 
             --  Put back the Data into the paned
-            Reparent (Widget, Process.Data_Editor_Paned);
-            Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
-            Add (Process.Process_Paned, Process.Data_Editor_Paned);
-            Unref (Process.Data_Editor_Paned);
+
+            if Process.Window.TTY_Mode then
+               Reparent (Widget, Process.Data_Editor_Paned);
+               Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
+               Add (Process.Process_Hbox, Process.Data_Editor_Paned);
+               Unref (Process.Data_Editor_Paned);
+            else
+               Reparent (Widget, Process.Data_Editor_Paned);
+               Reparent (Process.Editor_Vbox, Process.Data_Editor_Paned);
+               Add (Process.Process_Paned, Process.Data_Editor_Paned);
+               Unref (Process.Data_Editor_Paned);
+            end if;
+
             Attach
               (Get_Source (Process.Editor_Text),
                Get_Editor_Container (Process.Editor_Text));
