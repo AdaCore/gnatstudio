@@ -826,6 +826,7 @@ package body Src_Contexts is
 
          Context.Scope := Search_Scope'Val (Get_Index_In_List (Extra.Combo));
          Context.All_Occurrences := All_Occurrences;
+         Context.Begin_Line := 0;
 
          Re := Compile
            (Get_Text (Extra.Files_Entry),
@@ -837,11 +838,10 @@ package body Src_Contexts is
             Directory     => Get_Text (Extra.Directory_Entry),
             Recurse       => Get_Active (Extra.Subdirs_Check));
 
-         Move_To_Next_File (Context);
-
          return Search_Context_Access (Context);
       end if;
 
+      Trace (Me, "Files_Factory: no files pattern specified");
       return null;
    exception
       when Error_In_Regexp =>
@@ -1357,6 +1357,7 @@ package body Src_Contexts is
 
    exception
       when Directory_Error =>
+         Trace (Me, "Move_To_Next_File: Directory error");
          null;
    end Move_To_Next_File;
 
