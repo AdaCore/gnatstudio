@@ -207,18 +207,6 @@ package body Project_Explorers is
    --  The new node is initially closed, and its contents will only be
    --  initialized when the node is opened by the user.
 
-   function Add_Directory_Node
-     (Explorer         : access Project_Explorer_Record'Class;
-      Directory        : String;
-      Parent_Node      : Gtk_Tree_Iter := Null_Iter;
-      Project          : Project_Type;
-      Node_Type        : Directory_Node_Types) return Gtk_Tree_Iter;
-   --  Add a new directory node in the tree, for Directory.
-   --  Directory is expected to be an absolute path name.
-   --  Directory_String should be specified for source directories only, and is
-   --  not required for object directories.
-   --  Project is the project to which the directory belongs
-
    procedure Compute_Children
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter);
@@ -231,13 +219,20 @@ package body Project_Explorers is
    --  Add the object and exec directory nodes for Node. They are added
    --  unconditionally
 
-   procedure Add_Source_Directories
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter;
-      Project  : Project_Type;
-      Dirs     : in out String_List_Utils.String_List.List;
-      Files    : File_Array);
-   --  Add the sources directories listed in Dirs
+   procedure Set_Directory_Node_Attributes
+     (Explorer         : access Project_Explorer_Record'Class;
+      Directory        : String;
+      Node             : Gtk_Tree_Iter;
+      Project          : Project_Type;
+      Node_Type        : Directory_Node_Types);
+   --  Set the attributes in tree model for a directory node
+
+   procedure Add_Files_In_Directory
+     (Explorer         : access Project_Explorer_Record'Class;
+      Directory        : String;
+      Files_In_Project : File_Array_Access;
+      Node             : Gtk_Tree_Iter);
+   --  Add the files that belong to the directory
 
    ---------------------
    -- Expanding nodes --
@@ -962,120 +957,31 @@ package body Project_Explorers is
       Refresh (Explorer);
    end Update_Flat_View;
 
-   ------------------------
-   -- Add_Directory_Node --
-   ------------------------
+   -----------------------------------
+   -- Set_Directory_Node_Attributes --
+   -----------------------------------
 
-   function Add_Directory_Node
+   procedure Set_Directory_Node_Attributes
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
-      Parent_Node      : Gtk_Tree_Iter := Null_Iter;
+      Node             : Gtk_Tree_Iter;
       Project          : Project_Type;
-      Node_Type        : Directory_Node_Types) return Gtk_Tree_Iter
-   is
-      N : Gtk_Tree_Iter;
+      Node_Type        : Directory_Node_Types) is
    begin
-      if Node_Type /= Directory_Node then
-         --  Append the object directory before the first project.
-
-         declare
-            Ref : Gtk_Tree_Iter;
-         begin
-            Ref := Children (Explorer.Tree.Model, Parent_Node);
-
-            while Ref /= Null_Iter loop
-               if Get_Node_Type (Explorer.Tree.Model, Ref)
-                 /= Directory_Node
-               then
-                  Insert_Before (Explorer.Tree.Model, N, Parent_Node, Ref);
-                  exit;
-               end if;
-
-               Next (Explorer.Tree.Model, Ref);
-            end loop;
-
-            if Ref = Null_Iter then
-               Append (Explorer.Tree.Model, N, Parent_Node);
-            end if;
-         end;
-      else
-         Append (Explorer.Tree.Model, N, Parent_Node);
-      end if;
-
       if Normalized_Directories then
-         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+         Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
               Locale_To_UTF8 (Name_As_Directory
                               (Normalize_Pathname (Directory))));
       else
-         Set (Explorer.Tree.Model, N, Absolute_Name_Column,
+         Set (Explorer.Tree.Model, Node, Absolute_Name_Column,
               Locale_To_UTF8 (Name_As_Directory (Directory)));
       end if;
 
-      Update_Directory_Node_Text (Explorer, Project, N);
+      Update_Directory_Node_Text (Explorer, Project, Node);
 
-      Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
-      Set (Explorer.Tree.Model, N, Up_To_Date_Column, False);
-
-      return N;
-   end Add_Directory_Node;
-
-   ----------------------------
-   -- Add_Source_Directories --
-   ----------------------------
-
-   procedure Add_Source_Directories
-     (Explorer : access Project_Explorer_Record'Class;
-      Node     : Gtk_Tree_Iter;
-      Project  : Project_Type;
-      Dirs     : in out String_List_Utils.String_List.List;
-      Files    : File_Array)
-   is
-      use String_List_Utils.String_List;
-      N               : Gtk_Tree_Iter;
-      Dir_Node        : String_List_Utils.String_List.List_Node;
-      File_Node       : File_Array (Files'Range);
-      File_Node_Index : Integer;
-   begin
-      if Filenames_Are_Case_Sensitive then
-         String_List_Utils.Sort (Dirs);
-      else
-         String_List_Utils.Sort_Case_Insensitive (Dirs);
-      end if;
-
-      Dir_Node := First (Dirs);
-
-      while Dir_Node /= Null_Node loop
-         N := Add_Directory_Node
-           (Explorer    => Explorer,
-            Directory   => Data (Dir_Node),
-            Project     => Project,
-            Parent_Node => Node,
-            Node_Type   => Directory_Node);
-
-         File_Node_Index := File_Node'First;
-         for S in Files'Range loop
-            if File_Equal
-              (Dir_Name (Files (S)).all, Name_As_Directory (Data (Dir_Node)))
-            then
-               File_Node (File_Node_Index) := Files (S);
-               File_Node_Index := File_Node_Index + 1;
-            end if;
-         end loop;
-
-         Sort (File_Node (File_Node'First .. File_Node_Index - 1));
-
-         for S in File_Node'First .. File_Node_Index - 1 loop
-            Append_File
-              (Kernel => Explorer.Kernel,
-               Model  => Explorer.Tree.Model,
-               File   => File_Node (S),
-               Base   => N);
-         end loop;
-
-         Set (Explorer.Tree.Model, N, Up_To_Date_Column, True);
-         Dir_Node := Next (Dir_Node);
-      end loop;
-   end Add_Source_Directories;
+      Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
+      Set (Explorer.Tree.Model, Node, Up_To_Date_Column, False);
+   end Set_Directory_Node_Attributes;
 
    ------------------
    -- Draw_Tooltip --
@@ -1189,75 +1095,13 @@ package body Project_Explorers is
      (Explorer : access Project_Explorer_Record'Class;
       Node     : Gtk_Tree_Iter)
    is
-      use String_List_Utils.String_List;
       Project : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-
-      procedure Add_Projects;
-      --  Adds the subprojects.
-
-      procedure Add_Projects is
-         Iter : Imported_Project_Iterator;
-         P    : Project_Type;
-         N    : Gtk_Tree_Iter;
-         pragma Unreferenced (N);
-      begin
-         if not Get_History
-           (Get_History (Explorer.Kernel).all, Show_Flat_View)
-         then
-            Iter := Start (Project, Recursive => True, Direct_Only => True);
-            --  The modified project, if any, is always first
-
-            if Parent_Project (Project) /= No_Project then
-               N := Add_Project_Node
-                 (Explorer, Parent_Project (Project), Node);
-            end if;
-
-            --  Imported projects
-
-            loop
-               P := Current (Iter);
-               exit when P = No_Project;
-
-               if P /= Project and then Parent_Project (Project) /= P then
-                  N := Add_Project_Node (Explorer, P, Node);
-               end if;
-               Next (Iter);
-            end loop;
-         end if;
-      end Add_Projects;
-
       Files : File_Array_Access := Get_Source_Files
         (Project, Recursive => False);
-      Dirs  : String_List_Utils.String_List.List;
-      Dir   : constant Name_Id_Array := Source_Dirs (Project);
-
    begin
-      Push_State (Explorer.Kernel, Busy);
-
-      --  Prepare all the source files for all the directories now, so that
-      --  we can properly take into account cases where a project contains
-      --  duplicate source files (in which case we only want to list the
-      --  one that appears in the first directory).
-
-      for D in Dir'Range loop
-         Get_Name_String (Dir (D));
-         Append (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
-      end loop;
-
-      if Projects_Before_Directories then
-         Add_Projects;
-         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
-         Add_Object_Directories (Explorer, Node, Project);
-      else
-         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
-         Add_Object_Directories (Explorer, Node, Project);
-         Add_Projects;
-      end if;
-
+      Update_Project_Node (Explorer, Files, Node);
       Unchecked_Free (Files);
-      Free (Dirs);
-      Pop_State (Explorer.Kernel);
 
    exception
       when E : others =>
@@ -1278,27 +1122,48 @@ package body Project_Explorers is
       Obj  : constant String :=
         Name_As_Directory (Object_Path (Project, False));
       Exec : constant String := Executables_Directory (Project);
-      N    : Gtk_Tree_Iter;
-      pragma Unreferenced (N);
+
+      function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter;
+      --  Create a node for display of the object directory
+
+      -----------------------
+      -- Create_Object_Dir --
+      -----------------------
+
+      function Create_Object_Dir (Node : Gtk_Tree_Iter) return Gtk_Tree_Iter is
+         N : Gtk_Tree_Iter;
+         Ref : Gtk_Tree_Iter := Children (Explorer.Tree.Model, Node);
+      begin
+         while Ref /= Null_Iter loop
+            if Get_Node_Type (Explorer.Tree.Model, Ref) /= Directory_Node then
+               Insert_Before (Explorer.Tree.Model, N, Node, Ref);
+               return N;
+            end if;
+
+            Next (Explorer.Tree.Model, Ref);
+         end loop;
+
+         Append (Explorer.Tree.Model, N, Node);
+         return N;
+      end Create_Object_Dir;
+
    begin
       if Obj /= "" then
-         N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        => Obj,
-            Project          => Project,
-            Parent_Node      => Node,
-            Node_Type        => Obj_Directory_Node);
+         Set_Directory_Node_Attributes
+           (Explorer  => Explorer,
+            Directory => Obj,
+            Node      => Create_Object_Dir (Node),
+            Project   => Project,
+            Node_Type => Obj_Directory_Node);
       end if;
 
-      if Exec /= ""
-        and then Exec /= Obj
-      then
-         N := Add_Directory_Node
-           (Explorer       => Explorer,
-            Directory      => Exec,
-            Project        => Project,
-            Parent_Node    => Node,
-            Node_Type      => Exec_Directory_Node);
+      if Exec /= "" and then Exec /= Obj then
+         Set_Directory_Node_Attributes
+           (Explorer  => Explorer,
+            Directory => Exec,
+            Node      => Create_Object_Dir (Node),
+            Project   => Project,
+            Node_Type => Exec_Directory_Node);
       end if;
    end Add_Object_Directories;
 
@@ -1537,6 +1402,39 @@ package body Project_Explorers is
       end;
    end Get_Imported_Projects;
 
+   ----------------------------
+   -- Add_Files_In_Directory --
+   ----------------------------
+
+   procedure Add_Files_In_Directory
+     (Explorer         : access Project_Explorer_Record'Class;
+      Directory        : String;
+      Files_In_Project : File_Array_Access;
+      Node             : Gtk_Tree_Iter)
+   is
+      Files : File_Array (Files_In_Project'Range);
+      Index : Integer := Files'First;
+   begin
+      for S in Files_In_Project'Range loop
+         if File_Equal (Dir_Name (Files_In_Project (S)).all, Directory) then
+            Files (Index) := Files_In_Project (S);
+            Index := Index + 1;
+         end if;
+      end loop;
+
+      Sort (Files (Files'First .. Index - 1));
+
+      for S in Files'First .. Index - 1 loop
+         Append_File
+           (Kernel => Explorer.Kernel,
+            Model  => Explorer.Tree.Model,
+            File   => Files (S),
+            Base   => Node);
+      end loop;
+
+      Set (Explorer.Tree.Model, Node, Up_To_Date_Column, True);
+   end Add_Files_In_Directory;
+
    -------------------------
    -- Update_Project_Node --
    -------------------------
@@ -1546,48 +1444,26 @@ package body Project_Explorers is
       Files    : File_Array_Access;
       Node     : Gtk_Tree_Iter)
    is
-      function Is_Same_Directory (Dir1, Dir2 : String) return Boolean;
-      --  Compare the two directories. The first one is first normalized, the
-      --  second one is assumed to be normalized already
-
-      procedure Add_Directories;
-      --  Add the subdirectories;
-
       procedure Add_Projects;
       --  Add the subprojects that weren't present for the previous view
 
-      N, N2 : Gtk_Tree_Iter;
+      procedure Add_Remaining_Source_Dirs;
+      --  Add all remaining source directories
 
+      N, N2 : Gtk_Tree_Iter;
+      use String_List_Utils.String_List;
+      Index    : Natural;
+      Prj      : Project_Type;
+      Dirs     : String_List_Utils.String_List.List;
+      Dir_Node : String_List_Utils.String_List.List_Node;
       Project  : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
-      Sources  : Name_Id_Array := Source_Dirs (Project);
+      Sources  : constant Name_Id_Array := Source_Dirs (Project);
       Imported : Project_Type_Array := Get_Imported_Projects (Project);
 
-      function Is_Same_Directory (Dir1, Dir2 : String) return Boolean is
-         D1 : constant String := Name_As_Directory
-           (Normalize_Pathname (Dir1, Resolve_Links => False));
-      begin
-         return D1 = Dir2;
-      end Is_Same_Directory;
-
-      procedure Add_Directories is
-         Dirs        : String_List_Utils.String_List.List;
-      begin
-         --  Sources directory
-
-         for J in Sources'Range loop
-            if Sources (J) /= No_Name then
-               Get_Name_String (Sources (J));
-               String_List_Utils.String_List.Append
-                 (Dirs, Name_Buffer (1 .. Name_Len));
-            end if;
-         end loop;
-
-         Add_Source_Directories (Explorer, Node, Project, Dirs, Files.all);
-         Add_Object_Directories (Explorer, Node, Project);
-
-         String_List_Utils.String_List.Free (Dirs);
-      end Add_Directories;
+      ------------------
+      -- Add_Projects --
+      ------------------
 
       procedure Add_Projects is
          N : Gtk_Tree_Iter;
@@ -1605,18 +1481,59 @@ package body Project_Explorers is
          end if;
       end Add_Projects;
 
-      Index : Natural;
-      Prj   : Project_Type;
+      -------------------------------
+      -- Add_Remaining_Source_Dirs --
+      -------------------------------
+
+      procedure Add_Remaining_Source_Dirs is
+      begin
+         while Dir_Node /= Null_Node loop
+            Insert_Before
+              (Explorer.Tree.Model,
+               Iter    => N2,
+               Parent  => Node,
+               Sibling => N);
+            Set_Directory_Node_Attributes
+              (Explorer  => Explorer,
+               Directory => Data (Dir_Node),
+               Node      => N2,
+               Project   => Project,
+               Node_Type => Directory_Node);
+            Add_Files_In_Directory
+              (Explorer         => Explorer,
+               Directory        => Data (Dir_Node),
+               Files_In_Project => Files,
+               Node             => N2);
+            Dir_Node := Next (Dir_Node);
+         end loop;
+      end Add_Remaining_Source_Dirs;
+
    begin
       --  The goal here is to keep the directories if their current state
       --  (expanded or not), while doing the update.
 
-      --  Remove from the tree all the directories that are no longer in the
-      --  project
+      for J in Sources'Range loop
+         if Sources (J) /= No_Name then
+            Get_Name_String (Sources (J));
+            String_List_Utils.String_List.Append
+              (Dirs, Name_As_Directory (Name_Buffer (1 .. Name_Len)));
+         end if;
+      end loop;
 
-      N := Children (Explorer.Tree.Model, Node);
+      if Filenames_Are_Case_Sensitive then
+         String_List_Utils.Sort (Dirs);
+      else
+         String_List_Utils.Sort_Case_Insensitive (Dirs);
+      end if;
+
+      Dir_Node := First (Dirs);
+      N        := Children (Explorer.Tree.Model, Node);
 
       while N /= Null_Iter loop
+         if Get_Node_Type (Explorer.Tree.Model, N) /= Directory_Node then
+            Add_Remaining_Source_Dirs;
+         end if;
+
          N2 := N;
          Next (Explorer.Tree.Model, N2);
 
@@ -1626,32 +1543,46 @@ package body Project_Explorers is
                   Dir  : constant String :=
                     Get_Directory_From_Node (Explorer.Tree.Model, N);
                begin
-                  Update_Directory_Node_Text (Explorer, Project, N);
-                  Index := Sources'First;
+                  --  If the directory is no longer part of the sources, remove
+                  --  it.
+                  --  ??? Should be case insensitive compare
 
-                  while Index <= Sources'Last loop
-                     if Sources (Index) /= No_Name
-                       and then
-                         (Get_String (Sources (Index)) = Dir
-                          or else Is_Same_Directory
-                            (Get_String (Sources (Index)), Dir))
-                     then
-                        Sources (Index) := No_Name;
-                        exit;
-                     end if;
-
-                     Index := Index + 1;
-                  end loop;
-
-                  if Index > Sources'Last then
+                  if Dir_Node = Null_Node or else Dir < Data (Dir_Node) then
                      Remove (Explorer.Tree.Model, N);
-                  else
+                     N := N2;
+
+                  --  Directory still exists in the new view
+                  elsif File_Equal (Dir, Data (Dir_Node)) then
+                     Update_Directory_Node_Text (Explorer, Project, N);
                      Update_Node (Explorer, N, Files);
+                     N := N2;
+                     Dir_Node := Next (Dir_Node);
+
+                  --  New directory added to the project view
+                  else
+                     Insert_Before
+                       (Explorer.Tree.Model,
+                        Iter    => N2,
+                        Parent  => Node,
+                        Sibling => N);
+                     Set_Directory_Node_Attributes
+                       (Explorer  => Explorer,
+                        Directory => Data (Dir_Node),
+                        Node      => N2,
+                        Project   => Project,
+                        Node_Type => Directory_Node);
+                     Add_Files_In_Directory
+                       (Explorer         => Explorer,
+                        Directory        => Data (Dir_Node),
+                        Files_In_Project => Files,
+                        Node             => N2);
+                     Dir_Node := Next (Dir_Node);
                   end if;
                end;
 
             when Obj_Directory_Node | Exec_Directory_Node =>
                Remove (Explorer.Tree.Model, N);
+               N := N2;
 
             when Project_Node
               | Modified_Project_Node
@@ -1681,19 +1612,22 @@ package body Project_Explorers is
                   Update_Node (Explorer, N, Files_In_Project => null);
                end if;
 
+               N := N2;
+
             when others =>
                --  No other node type is possible
-               null;
+               N := N2;
          end case;
-
-         N := N2;
       end loop;
+
+      Add_Remaining_Source_Dirs;
+      String_List_Utils.String_List.Free (Dirs);
 
       if Projects_Before_Directories then
          Add_Projects;
-         Add_Directories;
+         Add_Object_Directories (Explorer, Node, Project);
       else
-         Add_Directories;
+         Add_Object_Directories (Explorer, Node, Project);
          Add_Projects;
       end if;
    end Update_Project_Node;
