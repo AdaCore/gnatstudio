@@ -3,6 +3,8 @@ details, please see the documentation.
 
 New features in GPS 2.0.0
 
+- Callgraph now shows clickable references location
+
 - Improved handling of C++ classes in the Entity Browser
 
 - CB14-004 New menu Make->All mains
