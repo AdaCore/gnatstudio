@@ -179,6 +179,8 @@ package body Src_Editor_View is
       Column : Positive) return Line_Info_Width;
    --  Return the side information corresponding to Line, Column in the
    --  Side window.
+   --  Return (null, 0) if the information was never set.
+   --  Return (null, -1) if the information was set to null.
 
    function On_Delete
      (View  : access Gtk_Widget_Record'Class;
@@ -379,7 +381,8 @@ package body Src_Editor_View is
    begin
       if View.Line_Info (Column).Stick_To_Data then
          if Line > View.Real_Lines'Last
-           or else View.Real_Lines (Line) = 0
+           or else View.Real_Lines (Line) not in
+             View.Line_Info (Column).Column_Info'Range
          then
             return (null, -1);
          else
@@ -727,7 +730,7 @@ package body Src_Editor_View is
       View : Source_View := Source_View (Widget);
       File : constant String := Get_String (Nth (Args, 1));
 
-      Max : Natural;
+      Max : Natural := 1;
    begin
       if Get_Filename (Source_Buffer (Get_Buffer (View))) = File then
 
