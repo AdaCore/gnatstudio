@@ -40,6 +40,7 @@ with Debugger;              use Debugger;
 
 with Glide_Kernel;          use Glide_Kernel;
 with Glide_Kernel.Project;  use Glide_Kernel.Project;
+with Glide_Kernel.Editor;   use Glide_Kernel.Editor;
 
 with Glide_Main_Window;     use Glide_Main_Window;
 with Glide_Page;            use Glide_Page;
@@ -313,27 +314,15 @@ package body Glide_Menu is
       Widget : Limited_Widget)
    is
       Top      : constant Glide_Window := Glide_Window (Object);
-      MDI      : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
       Filename : constant String :=
         File_Selection_Dialog (Title => "Open File", Must_Exist => True);
-      Success : Boolean;
-      Editor  : Source_Editor_Box;
-      Box     : Source_Box;
-      Child   : MDI_Child;
 
    begin
       if Filename = "" then
          return;
       end if;
 
-      Gtk_New (Editor, Top.Kernel);
-      Gtk_New (Box, Editor);
-      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Set_Title (Child, Filename);
-      Load_File (Editor, Filename, Success => Success);
+      Open_File (Top.Kernel, Filename);
    end On_Open_File;
 
    ---------------------
@@ -381,21 +370,9 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top    : constant Glide_Window := Glide_Window (Object);
-      MDI    : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Editor : Source_Editor_Box;
-      Box    : Source_Box;
-      Child  : MDI_Child;
-
+      Top : constant Glide_Window := Glide_Window (Object);
    begin
-      Gtk_New (Editor, Top.Kernel);
-      Gtk_New (Box, Editor);
-      Set_USize (Box, Default_Editor_Width, Default_Editor_Height);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Show_All (Box);
-      Set_Title (Child, "No Name");
+      New_Editor (Top.Kernel);
    end On_New_File;
 
    -------------
@@ -583,22 +560,9 @@ package body Glide_Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top     : constant Glide_Window := Glide_Window (Object);
-      MDI     : constant MDI_Window :=
-        Glide_Page.Glide_Page (Get_Current_Process (Top)).Process_Mdi;
-      Editor  : Source_Editor_Box;
-      Box     : Source_Box;
-      Focus   : constant MDI_Child := Get_Focus_Child (MDI);
-      Current : Source_Box := Source_Box (Get_Widget (Focus));
-      Child   : MDI_Child;
-      Title   : constant String := Get_Title (Focus);
-
+      Top : constant Glide_Window := Glide_Window (Object);
    begin
-      Create_New_View (Editor, Current.Editor);
-      Gtk_New (Box, Editor);
-      Attach (Editor, Box);
-      Child := Put (MDI, Box);
-      Set_Title (Child, Title & " <2>");
+      New_View (Top.Kernel);
    end On_New_View;
 
    --------------------
