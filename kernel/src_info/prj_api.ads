@@ -175,12 +175,6 @@ package Prj_API is
    --  Add to Project_View the list of source files for languages other than
    --  Ada.
 
-   function Executables_Directory (Project_View : Prj.Project_Id)
-      return String;
-   --  Return the directory that contains the executables generated for the
-   --  main programs in Project_View. This is either Exec_Dir or Object_Dir.
-   --  The returned string always ends with a directory separator.
-
    --------------------
    -- Creating nodes --
    --------------------
@@ -518,8 +512,10 @@ package Prj_API is
    Debugger_Command_Attribute : constant String := "debugger_command";
    Remote_Host_Attribute      : constant String := "remote_host";
    Main_Attribute             : constant String := "main";
-   Languages_Attribute        : constant String := "languages";
    Exec_Dir_Attribute         : constant String := "exec_dir";
+
+   Languages_Attribute : constant String := "languages";
+   --  For the languages attribute, use Get_Languages below
 
    function Get_Attribute_Value
      (Project_View   : Project_Id;
@@ -539,6 +535,22 @@ package Prj_API is
    --  Same as above, but for an attribute whose value is a list. An empty
    --  array is returned if the attribute isn't defined.
    --  It is the responsability of the called to free the memory.
+
+   function Get_Languages (Project_View : Project_Id)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the value of the Languages attribute. You should use this
+   --  function instead of Get_Attribute_Value, since it will correctly default
+   --  to Ada if no language was defined by the user.
+   --  The returned value must be freed by the user.
+
+   function Executables_Directory (Project_View : Prj.Project_Id)
+      return String;
+   --  Return the directory that contains the executables generated for the
+   --  main programs in Project_View. This is either Exec_Dir or Object_Dir.
+   --  The returned string always ends with a directory separator.
+   --
+   --  You should use this function instead of the Get_Attribute_Value for the
+   --  list Exec_Dir attribute.
 
    -----------
    -- Files --

@@ -3985,6 +3985,23 @@ package body Prj_API is
       end if;
    end Executables_Directory;
 
+   -------------------
+   -- Get_Languages --
+   -------------------
+
+   function Get_Languages (Project_View : Project_Id)
+      return GNAT.OS_Lib.Argument_List
+   is
+      Languages : Argument_List :=
+        Get_Attribute_Value (Project_View, Languages_Attribute);
+   begin
+      if Languages'Length = 0 then
+         return (1 => new String' (Ada_String));
+      else
+         return Languages;
+      end if;
+   end Get_Languages;
+
 begin
    Namet.Initialize;
    Csets.Initialize;
