@@ -961,4 +961,141 @@ package body Src_Info is
       return "";
    end Get_Unit_Name;
 
+   --------------------
+   -- Type_To_Object --
+   --------------------
+
+   function Type_To_Object (Kind : E_Kind) return E_Kind is
+      K : E_Kind := Kind;
+   begin
+      case K.Kind is
+         when Overloaded_Entity
+           | Unresolved_Entity
+           | Entry_Or_Entry_Family
+           | Enumeration_Literal
+           | Exception_Entity
+           | Label_On_Block
+           | Label_On_Loop
+           | Label_On_Statement
+           | Named_Number
+           | Function_Or_Operator
+           | Package_Kind
+           | Procedure_Kind
+           | Private_Type =>
+            null;
+
+         when Access_Kind
+           | Array_Kind
+           | Boolean_Kind
+           | Class_Wide
+           | Class
+           | Decimal_Fixed_Point
+           | Enumeration_Kind
+           | Floating_Point
+           | Modular_Integer
+           | Ordinary_Fixed_Point
+           | Protected_Kind
+           | Record_Kind
+           | Signed_Integer
+           | String_Kind
+           | Task_Kind =>
+            K.Is_Type := False;
+      end case;
+      return K;
+   end Type_To_Object;
+
+
+   --------------------
+   -- Kind_To_String --
+   --------------------
+
+   function Kind_To_String (Kind : E_Kind) return String is
+      function Get_Value (Typ, Obj : String) return String;
+      --  Return the appropriate string, depending on the properties of Kind
+      --  (generic type, generic object, type, object)
+
+      function Get_Value (Typ, Obj : String) return String is
+      begin
+         if Kind.Is_Type then
+            if Kind.Is_Generic then
+               return "generic " & Typ;
+            else
+               return Typ;
+            end if;
+         elsif Kind.Is_Generic then
+            return "generic " & Obj;
+         else
+            return Obj;
+         end if;
+      end Get_Value;
+
+   begin
+      --  ??? Would be nice to do it as a primitive subprogram of the
+      --  LI_Handlers, unfortunately they currently don't have access to
+      --  Glide_Intl for proper translations.
+
+      --  Special comments are put in place so that the script to find
+      --  translatable string find these as well
+
+      case Kind.Kind is
+         when Overloaded_Entity     => return "???";
+         when Unresolved_Entity     => return "unknown"; --  -"unknown"
+         when Access_Kind       => return Get_Value ("access type", "pointer");
+            --  -"access type"  -"pointer"
+         when Array_Kind        => return Get_Value ("array type", "array");
+            --  -"array type"   -"array"
+         when Boolean_Kind     => return Get_Value ("boolean type", "boolean");
+            --  -"boolean type"  -"boolean"
+         when Class_Wide => return Get_Value ("class wide type", "class wide");
+            --  -"class wide type"   -"class wide"
+         when Class => return Get_Value ("class type", "class instance");
+            --  -"class type"    -"class instance"
+         when Decimal_Fixed_Point   =>
+            return Get_Value ("decimal fixed point type",
+                              "decimal fixed point");
+            --  -"decimal fixed point type"   -"decimal fixed point"
+         when Entry_Or_Entry_Family => return "entry";   --  -"entry";
+         when Enumeration_Literal   =>  return "enumeration literal";
+            --  -"enumeration literal"
+         when Enumeration_Kind      =>
+            return Get_Value ("enumeration type", "enumeration");
+            --  -"enumeration type"   -"enumeration"
+         when Exception_Entity      =>  return "exception";  --  -"exception"
+         when Floating_Point =>
+            return Get_Value ("floating point type", "floating point");
+            --  -"floating point type"  -"floating point"
+         when Function_Or_Operator =>
+            return Get_Value ("function", "function"); --  -"function"
+         when Package_Kind =>
+            return Get_Value ("package", "package");  --  -"package"
+         when Procedure_Kind =>
+            return Get_Value ("procedure", "procedure");  --  -"procedure"
+         when Label_On_Block               =>
+            return "block label";              --  -"block label"
+         when Label_On_Loop                =>
+            return "loop label";               --  -"loop label"
+         when Label_On_Statement           =>
+            return "statement label";          --  -"statement label"
+         when Modular_Integer       =>
+            return Get_Value ("unsigned integer type", "unsigned integer");
+            --  -"unsigned integer type"   -"unsigned integer"
+         when Named_Number        => return "named number"; --  -"named number"
+         when Ordinary_Fixed_Point  =>
+            return Get_Value ("fixed point type", "fixed point");
+            --  -"fixed point type"   -"fixed point"
+         when Private_Type       =>  return "private type"; --  -"private type"
+         when Protected_Kind               =>
+            return Get_Value ("protected type", "protected object");
+            --  -"protected type"   -"protected object"
+         when Record_Kind       =>  return Get_Value ("record type", "record");
+            --  -"record type"   -"record"
+         when Signed_Integer  =>  return Get_Value ("integer type", "integer");
+            --  -"integer type"   -"integer"
+         when String_Kind       =>  return Get_Value ("string type", "string");
+            --  -"string type"   -"string"
+         when Task_Kind              => return Get_Value ("task type", "task");
+            --  -"task type"   -"task"
+      end case;
+   end Kind_To_String;
+
 end Src_Info;

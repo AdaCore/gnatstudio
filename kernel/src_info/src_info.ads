@@ -308,14 +308,13 @@ package Src_Info is
    -- E_Kind --
    ------------
    --  This type is exported only for use in the src_info hierarchy. In fact,
-   --  it will eventually be replaced by a tagged type hierarchy. It should not
-   --  be used outside of src_info.
+   --  it will eventually be replaced by a tagged type hierarchy.
 
-   type E_Kind is
+   type E_Kinds is
      (Overloaded_Entity,
       --  This special kind of entity is used for overloaded symbols that
-      --  couldn't be resolved by the parser. See the comment above for a more
-      --  complete explanation.
+      --  couldn't be resolved by the parser. See the comment at the beginning
+      --  of the private part for a more complete explanation.
 
       Unresolved_Entity,
       --  This special kind indicates that we do not know the exact kind of
@@ -323,53 +322,61 @@ package Src_Info is
       --     typedef old_type new_type;
       --  but old_type is defined nowhere in the closure of the include files.
 
-      Access_Object,
-      Access_Type,
-      Array_Object,
-      Array_Type,
-      Boolean_Object,
-      Boolean_Type,
-      Class_Wide_Object,
-      Class_Wide_Type,
-      Decimal_Fixed_Point_Object,
-      Decimal_Fixed_Point_Type,
+      Access_Kind,
+      Array_Kind,
+      Boolean_Kind,
+      Class_Wide,
+      Class,
+      Decimal_Fixed_Point,
       Entry_Or_Entry_Family,
       Enumeration_Literal,
-      Enumeration_Object,
-      Enumeration_Type,
+      Enumeration_Kind,
       Exception_Entity,
-      Floating_Point_Object,
-      Floating_Point_Type,
-      Generic_Class,
-      Generic_Function_Or_Operator,
-      Generic_Package,
-      Generic_Procedure,
+      Floating_Point,
       Label_On_Block,
       Label_On_Loop,
       Label_On_Statement,
-      Modular_Integer_Object,
-      Modular_Integer_Type,
+      Modular_Integer,
       Named_Number,
-      Non_Generic_Function_Or_Operator,
-      Non_Generic_Package,
-      Non_Generic_Procedure,
-      Ordinary_Fixed_Point_Object,
-      Ordinary_Fixed_Point_Type,
+      Function_Or_Operator,
+      Package_Kind,
+      Procedure_Kind,
+      Ordinary_Fixed_Point,
       Private_Type,
-      Protected_Object,
-      Protected_Type,
-      Record_Object,
-      Record_Type,
-      Signed_Integer_Object,
-      Signed_Integer_Type,
-      String_Object,
-      String_Type,
-      Task_Object,
-      Task_Type);
+      Protected_Kind,
+      Record_Kind,
+      Signed_Integer,
+      String_Kind,
+      Task_Kind);
    --  The entity kind (sorted by alphabetical order).
    --
    --  Note that Boolean is treated in a special way: it is treated as
    --  Boolean_Type/Object, rather than as an Enumeration_Type/Object.
+
+   type E_Kind is record
+      Kind       : E_Kinds;
+      Is_Generic : Boolean;
+      Is_Type    : Boolean;
+   end record;
+   --  Description for the type of an entity.
+   --  Kind describes its general family.
+   --  Is_Generic is set to true if this is a generic entity (or a template in
+   --    the C++ case).
+   --  Is_Type is true if this is a type, instead of an instance of a type.
+
+   Unresolved_Entity_Kind : constant E_Kind;
+   Overloaded_Entity_Kind : constant E_Kind;
+   --  Similar to Unresolved_Entity above
+
+   function Type_To_Object (Kind : E_Kind) return E_Kind;
+   --  Return a new E_Kind that is an object of the type Kind. For instance,
+   --  given a Access_Kind type, it returns an Access_Kind object. In some
+   --  cases (subprograms,...) this doesn't apply and will return Kind itself.
+
+   function Kind_To_String (Kind : E_Kind) return String;
+   --  Return a printable string for the entity kind.
+   --  It is the responsability of the caller to translate the string through
+   --  calls to Glide_Intl."-"
 
    type E_Scope is (Global_Scope, Local_Scope, Class_Static, Static_Local);
    --  The scope of an entity. The values have the following meaning:
@@ -692,6 +699,11 @@ private
       End_Of_Body                              => False);
    --  True if the reference is a write reference to the entity
 
+   Unresolved_Entity_Kind : constant E_Kind :=
+     (Unresolved_Entity, False, False);
+   Overloaded_Entity_Kind : constant E_Kind :=
+     (Overloaded_Entity, False, False);
+
    type LI_File_Constrained;
    type LI_File_Ptr is access LI_File_Constrained;
 
@@ -835,7 +847,7 @@ private
    No_Declaration : constant E_Declaration :=
      (Name                  => null,
       Location              => Null_File_Location,
-      Kind                  => E_Kind'First,
+      Kind                  => Unresolved_Entity_Kind,
       Parent_Location       => null,
       Scope                 => Local_Scope,
       End_Of_Scope          => No_Reference,
