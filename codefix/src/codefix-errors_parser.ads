@@ -4,19 +4,11 @@ with GNAT.Regpat; use GNAT.Regpat;
 with Generic_List;
 
 with Codefix.Text_Manager; use Codefix.Text_Manager;
+with Codefix.Formal_Errors; use Codefix.Formal_Errors;
 
-package Errors_Parser is
+use Codefix.Formal_Errors.Extract_List;
 
-   package Extract_List is new Generic_List (Extract);
-   use Extract_List;
-
-   subtype Solution_List is Extract_List.List;
-   --  This is a list of solutions proposed to solve an error.
-
-   function Get_Extract
-     (This     : Solution_List;
-      Position : Positive)
-     return Extract;
+package Codefix.Errors_Parser is
 
    type Error_Subcategorie is
      (Misspelling,
@@ -40,7 +32,8 @@ package Errors_Parser is
       Unefficient_Pragma,
       Wrong_Indentation,
       Missing_With,
-      Wrong_Case);
+      Wrong_Case,
+      Unit_Not_Referenced);
    --  Those subcatgeroies are the reals categories of errors that an user can
    --  choose to correct or not.
 
@@ -54,7 +47,7 @@ package Errors_Parser is
    --  Return the current error state.
 
    function Get_Solutions
-     (Current_Text : Text_Interface'Class);
+     (Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message) return Solution_List;
    --  Here is the big function that analyses a message and return the
    --  possible solutions.
@@ -81,7 +74,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Error_Parser'Class;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Success      : out Boolean);
@@ -90,7 +83,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Error_Parser;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array) is abstract;
@@ -119,7 +112,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Agregate_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -132,7 +125,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Ligth_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -145,7 +138,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Double_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -158,7 +151,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Goto_Misspelling;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -171,7 +164,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Sth_Should_Be_Sth;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -184,7 +177,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Should_Be_Semicolon;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -197,7 +190,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : And_Meant;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -210,7 +203,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Or_Meant;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -223,7 +216,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Unqualified_Expression;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -236,7 +229,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Goes_Before;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -249,7 +242,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected_3;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -262,7 +255,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected_2;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -275,7 +268,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Sth_Expected;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -288,7 +281,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Missing_Kw;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -305,7 +298,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Missing_Sep;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -322,7 +315,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Missing_All;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -335,7 +328,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Statement_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -348,7 +341,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Space_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -370,7 +363,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Name_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -383,7 +376,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Double_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -396,7 +389,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Extra_Paren;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -409,7 +402,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Redundant_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -422,7 +415,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Unexpected_Sep;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -435,7 +428,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Unexpected_Word;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -448,7 +441,21 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Kw_Not_Allowed;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Correct 'kw not allowed' etc.
+
+
+   type Sep_Not_Allowed is new Error_Parser (Unallowed_Style_Character, 4)
+      with null record;
+
+   procedure Initialize (This : in out Sep_Not_Allowed);
+
+   procedure Correct
+     (This         : Sep_Not_Allowed;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -461,7 +468,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Should_Be_In;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -474,7 +481,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Bad_Column;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -488,7 +495,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Main_With_Missing;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -501,7 +508,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Standard;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -514,7 +521,7 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Declared;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
@@ -527,10 +534,23 @@ package Errors_Parser is
 
    procedure Correct
      (This         : Bad_Casing_Keyword;
-      Current_Text : Text_Interface'Class;
+      Current_Text : Text_Navigator_Abstr'Class;
       Message      : Error_Message;
       Solutions    : out Solution_List;
       Matches      : Match_Array);
    --  Correct case problems with declared words etc.
 
-end Errors_Parser;
+   type Object_Not_Referenced is new Error_Parser (Unit_Not_Referenced, 6)
+      with null record;
+
+   procedure Initialize (This : in out Object_Not_Referenced);
+
+   procedure Correct
+     (This         : Object_Not_Referenced;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Message      : Error_Message;
+      Solutions    : out Solution_List;
+      Matches      : Match_Array);
+   --  Correct case problems with declared words etc.
+
+end Codefix.Errors_Parser;
