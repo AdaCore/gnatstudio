@@ -194,7 +194,7 @@ begin
    Set_Use_Arrows_Always (Vsearch.Context_Combo, False);
    String_List.Append (Context_Combo_Items, -"Current File");
    String_List.Append (Context_Combo_Items, -"Project Explorer");
-   String_List.Append (Context_Combo_Items, -"Project Files");
+   String_List.Append (Context_Combo_Items, -"Files From Project");
    String_List.Append (Context_Combo_Items, -"Files...");
    String_List.Append (Context_Combo_Items, -"Help");
    Combo.Set_Popdown_Strings (Vsearch.Context_Combo, Context_Combo_Items);
