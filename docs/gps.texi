@@ -1380,7 +1380,7 @@ display about the word.
 The kind of information displayed depends on the current state of GPS.
 
 In normal mode, the kind of entity and where it is declared is displayed when
-this information is available. That is, when the the cross reference
+this information is available. That is, when the cross reference
 information about the current file has been generated. If there is no relevant
 information, no tooltip is displayed.
 See @ref{Support for Cross References} for more information.
