@@ -58,34 +58,39 @@ package body Debugger.Gdb is
    --  Same as above, but for the C language.
 
    procedure Parse_Value_Gdb_Ada_From_String
-     (Debugger  : in Gdb_Debugger;
-      Type_Str  : in String;
-      Index     : in out Natural;
-      Result    : in out Generic_Values.Generic_Type_Access);
+     (Debugger   : in Gdb_Debugger;
+      Type_Str   : in String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive);
    --  Parse the value of an entity, for the Ada language.
    --  Type_Str should contain the value, as returned by the debugger itself.
+   --  Repeat_Num is the number of times the item is repeated in the output.
 
-   procedure Parse_Array_Type_Ada (Debugger  : in Gdb_Debugger;
-                                   Type_Str  : in String;
-                                   Entity    : in String;
-                                   Index     : in out Natural;
-                                   Result    : out Generic_Type_Access);
+   procedure Parse_Array_Type_Ada
+     (Debugger  : in Gdb_Debugger;
+      Type_Str  : in String;
+      Entity    : in String;
+      Index     : in out Natural;
+      Result    : out Generic_Type_Access);
    --  Parse the description of an array type.
    --  Index should point at the opening character of the array in Type_Str
    --  (ie "array " in gdb).
 
-   procedure Parse_Record_Type_Ada (Debugger  : in Gdb_Debugger;
-                                    Type_Str  : in String;
-                                    Entity    : in String;
-                                    Index     : in out Natural;
-                                    Result    : out Generic_Type_Access;
-                                    End_On    : in String);
+   procedure Parse_Record_Type_Ada
+     (Debugger  : in Gdb_Debugger;
+      Type_Str  : in String;
+      Entity    : in String;
+      Index     : in out Natural;
+      Result    : out Generic_Type_Access;
+      End_On    : in String);
    --  Parse the type describing a record.
    --  Index should pointer after the initial "record ", and the record is
    --  assumed to end on a string like End_On.
    --  This function is also used to parse the variant part of a record.
 
-   function Is_Simple_Ada_Type (Str : String) return Boolean;
+   function Is_Simple_Ada_Type
+     (Str : String) return Boolean;
    --  Return True if Str is a simple Ada type, like integer, ...
 
    pragma Inline (Is_Simple_Ada_Type);
@@ -104,26 +109,28 @@ package body Debugger.Gdb is
    --  This stops at the first special character.
 
 
-   procedure Parse_Array_Value (Debugger : in Gdb_Debugger;
-                                Type_Str : in String;
-                                Index    : in out Natural;
-                                Result   : in out Array_Type_Access);
+   procedure Parse_Array_Value
+     (Debugger : in Gdb_Debugger;
+      Type_Str : in String;
+      Index    : in out Natural;
+      Result   : in out Array_Type_Access);
    --  Parse the value of an array.
 
    --------------------------
    -- Parse_Array_Type_Ada --
    --------------------------
 
-   procedure Parse_Array_Type_Ada (Debugger  : in Gdb_Debugger;
-                                   Type_Str  : in String;
-                                   Entity    : in String;
-                                   Index     : in out Natural;
-                                   Result    : out Generic_Type_Access)
+   procedure Parse_Array_Type_Ada
+     (Debugger  : in Gdb_Debugger;
+      Type_Str  : in String;
+      Entity    : in String;
+      Index     : in out Natural;
+      Result    : out Generic_Type_Access)
    is
       Item_Separator : constant Character := ',';
       Dimension_End  : constant Character := ')';
       Num_Dim   : Integer := 1;
-      I         : Natural := Index;
+      Tmp_Index : Natural := Index;
       R         : Array_Type_Access;
       Index_Str : Unbounded_String;
    begin
@@ -132,49 +139,55 @@ package body Debugger.Gdb is
       --  unconstrained array), this is treated as an access type and not an
       --  array type).
 
-      if Looking_At (Type_Str, I, "array (<>)") then
-         Result := new Access_Type;
+      if Looking_At (Type_Str, Tmp_Index, "array (<>)") then
+         Result := New_Access_Type;
          return;
       end if;
 
       --  First, find the number of dimensions
 
-      while I <= Type_Str'Last
-        and then Type_Str (I) /= Dimension_End
+      while Tmp_Index <= Type_Str'Last
+        and then Type_Str (Tmp_Index) /= Dimension_End
       loop
-         if Type_Str (I) = Item_Separator then
+         if Type_Str (Tmp_Index) = Item_Separator then
             Num_Dim := Num_Dim + 1;
          end if;
-         I := I + 1;
+         Tmp_Index := Tmp_Index + 1;
       end loop;
 
       --  Create the type
 
-      R := new Array_Type (Num_Dimensions => Num_Dim);
+      Result := New_Array_Type (Num_Dimensions => Num_Dim);
+      R := Array_Type_Access (Result);
 
       --  Then parse the dimensions.
 
       Num_Dim := 1;
       Index := Index + 7;
 
-      while Num_Dim <= R.Num_Dimensions loop
-         Parse_Num (Type_Str, Index, R.Dimensions (Num_Dim).First);
-         Index := Index + 4;  --  skips ' .. '
-         Parse_Num (Type_Str, Index, R.Dimensions (Num_Dim).Last);
-         Num_Dim := Num_Dim + 1;
-         Index := Index + 2;  --  skips ', ' or ') '
+      while Num_Dim <= Num_Dimensions (R.all) loop
+         declare
+            First, Last : Long_Integer;
+         begin
+            Parse_Num (Type_Str, Index, First);
+            Index := Index + 4;  --  skips ' .. '
+            Parse_Num (Type_Str, Index, Last);
+            Index := Index + 2;  --  skips ', ' or ') '
+            Set_Dimensions (R.all, Num_Dim, (First, Last));
+            Num_Dim := Num_Dim + 1;
+         end;
       end loop;
 
       --  Skip the type of the items
 
       Index := Index + 3; --  skips 'of '
-      I := Index;
+      Tmp_Index := Index;
       Skip_To_Char (Type_Str, Index, ' ');
 
       --  If we have a simple type, no need to ask gdb, for efficiency reasons.
 
-      if Is_Simple_Ada_Type (Type_Str (I .. Index - 1)) then
-         R.Item_Type := new Simple_Type;
+      if Is_Simple_Ada_Type (Type_Str (Tmp_Index .. Index - 1)) then
+         Set_Item_Type (R.all, New_Simple_Type);
 
       else
 
@@ -185,18 +198,18 @@ package body Debugger.Gdb is
          --  Thus, we have to do a "ptype" directly on the first item of the
          --  array.
 
-         for J in 1 .. R.Num_Dimensions loop
-            Append (Index_Str, Long_Integer'Image (R.Dimensions (J).First));
-            if J /= R.Num_Dimensions then
+         for J in 1 .. Num_Dimensions (R.all) loop
+            Append (Index_Str,
+                    Long_Integer'Image (Get_Dimensions (R.all, J).First));
+            if J /= Num_Dimensions (R.all) then
                Append (Index_Str, ",");
             end if;
          end loop;
 
-         R.Item_Type := Parse_Type
-           (Debugger, Entity & "(" & To_String (Index_Str) & ")");
+         Set_Item_Type
+           (R.all, Parse_Type (Debugger,
+                               Entity & "(" & To_String (Index_Str) & ")"));
       end if;
-
-      Result := Generic_Type_Access (R);
    end Parse_Array_Type_Ada;
 
    ------------------------
@@ -222,75 +235,72 @@ package body Debugger.Gdb is
                                     Result    : out Generic_Type_Access;
                                     End_On    : in String)
    is
-      I : Natural;
-      Num_Fields : Natural := 0;
+      Tmp_Index : Natural;
+      Fields : Natural := 0;
       R : Record_Type_Access;
       Num_Parts  : Natural := 0;
    begin
       Skip_Blanks (Type_Str, Index);
-      I := Index;
+      Tmp_Index := Index;
 
       --  Count the number of fields
 
-      while not Looking_At (Type_Str, I, End_On) loop
+      while not Looking_At (Type_Str, Tmp_Index, End_On) loop
 
          --  A null field ? Do no increment the count
-         if Looking_At (Type_Str, I, "null;") then
-            I := I + 5;
+         if Looking_At (Type_Str, Tmp_Index, "null;") then
+            Tmp_Index := Tmp_Index + 5;
 
          --  A record with a variant part ? This counts as
          --  only one field
 
-         elsif Looking_At (Type_Str, I, "case ") then
-            I := I + 5;
-            Skip_To_String (Type_Str, I, "end case;");
-            Num_Fields := Num_Fields + 1;
-            I := I + 9;
+         elsif Looking_At (Type_Str, Tmp_Index, "case ") then
+            Tmp_Index := Tmp_Index + 5;
+            Skip_To_String (Type_Str, Tmp_Index, "end case;");
+            Fields := Fields + 1;
+            Tmp_Index := Tmp_Index + 9;
 
          --  Else a standard field
 
          else
-            Skip_To_Char (Type_Str, I, ';');
-            I := I + 1;
-            Num_Fields := Num_Fields + 1;
+            Skip_To_Char (Type_Str, Tmp_Index, ';');
+            Tmp_Index := Tmp_Index + 1;
+            Fields := Fields + 1;
          end if;
 
-         Skip_Blanks (Type_Str, I);
+         Skip_Blanks (Type_Str, Tmp_Index);
       end loop;
 
-      R := new Record_Type (Num_Fields);
+      Result := New_Record_Type (Fields);
+      R := Record_Type_Access (Result);
 
       --  Now parse all the fields
 
-      Num_Fields := 1;
+      Fields := 1;
 
-      while Num_Fields <= R.Num_Fields loop
+      while Fields <= Num_Fields (R.all) loop
 
          if Looking_At (Type_Str, Index, "null;") then
             Index := Index + 5;
 
          elsif Looking_At (Type_Str, Index, "case ") then
             Index := Index + 5;
-            I := Index;
+            Tmp_Index := Index;
 
             Skip_To_Char (Type_Str, Index, ' ');
 
-            R.Fields (Num_Fields).Name
-              := new String'(Type_Str (I .. Index - 1));
-            R.Fields (Num_Fields).Value := null;
-
             --  Count the number of alternatives in the variant part.
 
-            I := Index;
-            while not Looking_At (Type_Str, I, "end case") loop
-               if Type_Str (I .. I + 1) = "=>" then
+            Tmp_Index := Index;
+            while not Looking_At (Type_Str, Tmp_Index, "end case") loop
+               if Type_Str (Tmp_Index .. Tmp_Index + 1) = "=>" then
                   Num_Parts := Num_Parts + 1;
                end if;
-               I := I + 1;
+               Tmp_Index := Tmp_Index + 1;
             end loop;
 
-            R.Fields (Num_Fields).Variant_Part
-              := new  Record_Type_Array (1 .. Num_Parts);
+            Set_Field_Name (R.all, Fields, Type_Str (Tmp_Index .. Index - 1),
+                            Variant_Parts => Num_Parts);
 
             --  Parses the parts, and create a record for each
 
@@ -304,22 +314,23 @@ package body Debugger.Gdb is
                declare
                   Part : Generic_Type_Access;
                begin
-                  if Num_Parts = R.Fields (Num_Fields).Variant_Part'Last then
+                  if Num_Parts = Get_Variant_Parts (R.all, Fields) then
                      Parse_Record_Type_Ada (Debugger, Type_Str, Entity,
                                             Index, Part, "end case");
                   else
                      Parse_Record_Type_Ada (Debugger, Type_Str, Entity,
                                             Index, Part, "when ");
                   end if;
-                  R.Fields (Num_Fields).Variant_Part (Num_Parts)
-                    := Record_Type_Access (Part);
+
+                  Set_Variant_Field (R.all, Fields, Num_Parts,
+                                     Record_Type_Access (Part));
                end;
 
                Skip_Blanks (Type_Str, Index);
             end loop;
 
             Index := Index + 9;
-            Num_Fields := Num_Fields + 1;
+            Fields := Fields + 1;
 
          --  Else a standard field
 
@@ -327,33 +338,36 @@ package body Debugger.Gdb is
 
             --  Get the name of the field
 
-            I := Index;
+            Tmp_Index := Index;
             Skip_To_Char (Type_Str, Index, ':');
-            R.Fields (Num_Fields).Name
-              := new String'(Type_Str (I .. Index - 1));
+            Set_Field_Name (R.all, Fields, Type_Str (Tmp_Index .. Index - 1),
+                            Variant_Parts => 0);
 
             --  Get the type of the field
             Index := Index + 2;
-            I := Index;
+            Tmp_Index := Index;
             Skip_To_Char (Type_Str, Index, ';');
 
             --  If we have a simple type, no need to ask gdb, for efficiency
             --  reasons.
 
-            if Is_Simple_Ada_Type (Type_Str (I .. Index - 1)) then
-               R.Fields (Num_Fields).Value := new Simple_Type;
+            if Is_Simple_Ada_Type (Type_Str (Tmp_Index .. Index - 1)) then
+               Set_Value (Item  => R.all,
+                          Value => New_Simple_Type,
+                          Field => Fields);
             else
-               R.Fields (Num_Fields).Value := Parse_Type
-                 (Debugger, Entity & "." & R.Fields (Num_Fields).Name.all);
+               Set_Value (R.all,
+                          Parse_Type (Debugger,
+                                      Entity & "."
+                                      & Get_Field_Name (R.all, Fields).all),
+                          Field => Fields);
             end if;
             Index := Index + 1;
-            Num_Fields := Num_Fields + 1;
+            Fields := Fields + 1;
          end if;
 
          Skip_Blanks (Type_Str, Index);
       end loop;
-
-      Result := Generic_Type_Access (R);
    end Parse_Record_Type_Ada;
 
    -----------------------
@@ -384,8 +398,6 @@ package body Debugger.Gdb is
                                 Result   : in out Array_Type_Access)
    is
       Dim     : Natural := 0;            --  current dimension
-      Value_Index : Positive := 1;       --  Current index in Arr.Values
-      Item    : Array_Item_Array_Access;
       Current_Index : Long_Integer := 0; --  Current index in the parsed array
 
       procedure Parse_Item;
@@ -397,18 +409,10 @@ package body Debugger.Gdb is
       ----------------
 
       procedure Parse_Item is
-         Int : Natural := Index;
+         Int        : Natural := Index;
+         Tmp        : Generic_Type_Access;
+         Repeat_Num : Integer;
       begin
-         --  If we haven't allocated enough items, resize the array.
-
-         if Value_Index > Result.Values'Last then
-            Item := Result.Values;
-            Result.Values := new Array_Item_Array
-              (1 .. 2 * Result.Values'Last);
-            Result.Values (1 .. Item'Last) := Item.all;
-            Free (Item);
-         end if;
-
          --  Does gdb indicate the number of the item (as in '24 =>')
          --  We search the first character that does not belong to the item
          --  value.
@@ -427,25 +431,19 @@ package body Debugger.Gdb is
          end if;
 
          --  Parse the next item
-         Result.Values (Value_Index).Index := Current_Index;
-         Result.Values (Value_Index).Value := Clone (Result.Item_Type.all);
-         Parse_Value_Gdb_Ada_From_String
-           (Debugger, Type_Str, Index, Result.Values (Value_Index).Value);
+         Tmp := Clone (Get_Item_Type (Result.all).all);
+         Parse_Value_Gdb_Ada_From_String (Debugger, Type_Str, Index, Tmp,
+                                          Repeat_Num);
 
-         if Result.Values (Value_Index).Value'Tag = Repeat_Type'Tag then
-            Current_Index := Current_Index + Long_Integer (Repeat_Type_Access
-              (Result.Values (Value_Index).Value).Repeat_Num);
-         else
-            Current_Index := Current_Index + 1;
-         end if;
+         Set_Value (Item       => Result.all,
+                    Elem_Value => Tmp,
+                    Elem_Index => Current_Index,
+                    Repeat_Num => Repeat_Num);
 
-         Value_Index := Value_Index + 1;
+         Current_Index := Current_Index + Long_Integer (Repeat_Num);
       end Parse_Item;
 
    begin
-      --  Allocate some items in advance, just in case.
-      Result.Values := new Array_Item_Array (1 .. 100);
-
       loop
          case Type_Str (Index) is
 
@@ -459,7 +457,7 @@ package body Debugger.Gdb is
                --  record or an array. The distinction can be made by
                --  looking at the current dimension being parsed.
 
-               if Dim = Result.Dimensions'Last then
+               if Dim = Num_Dimensions (Result.all) then
                   Parse_Item;
                else
                   Dim := Dim + 1;
@@ -476,11 +474,7 @@ package body Debugger.Gdb is
       end loop;
 
       --  Shrink the table of values.
-
-      Item := Result.Values;
-      Result.Values := new Array_Item_Array (1 .. Value_Index - 1);
-      Result.Values.all := Item (1 .. Value_Index - 1);
-      Free (Item);
+      Shrink_Values (Result.all);
    end Parse_Array_Value;
 
    ------------------------------------
@@ -513,7 +507,7 @@ package body Debugger.Gdb is
             else
                Skip_To_Char (Type_Str, Index, '>');
                Index := Index + 1;
-               Result := new Simple_Type;
+               Result := New_Simple_Type;
             end if;
 
          when 'a' =>
@@ -527,7 +521,7 @@ package body Debugger.Gdb is
             --  Access types
 
             elsif Looking_At (Type_Str, Index, "access ") then
-               Result := new Access_Type;
+               Result := New_Access_Type;
             else
                raise Unexpected_Type;
             end if;
@@ -537,9 +531,13 @@ package body Debugger.Gdb is
             --  Modular types
 
             if Looking_At (Type_Str, Index, "mod ") then
-               Index := Index + 4;
-               Result := new Mod_Type;
-               Parse_Num (Type_Str, Index, Mod_Type_Access (Result).Max);
+               declare
+                  Modulo : Long_Integer;
+               begin
+                  Index := Index + 4;
+                  Parse_Num (Type_Str, Index, Modulo);
+                  Result := New_Mod_Type (Modulo);
+               end;
             end if;
 
          when 'r' =>
@@ -554,11 +552,15 @@ package body Debugger.Gdb is
             --  Range types
 
             elsif Looking_At (Type_Str, Index, "range ") then
-               Index := Index + 6;
-               Result := new Range_Type;
-               Parse_Num (Type_Str, Index, Range_Type_Access (Result).Min);
-               Index := Index + 4; --  skips ' .. '
-               Parse_Num (Type_Str, Index, Range_Type_Access (Result).Max);
+               declare
+                  Min, Max : Long_Integer;
+               begin
+                  Index := Index + 6;
+                  Parse_Num (Type_Str, Index, Min);
+                  Index := Index + 4; --  skips ' .. '
+                  Parse_Num (Type_Str, Index, Max);
+                  Result := New_Range_Type (Min, Max);
+               end;
 
             else
                raise Unexpected_Type;
@@ -569,7 +571,7 @@ package body Debugger.Gdb is
             --  Enumeration type
             Skip_To_Char (Type_Str, Index, ')');
             Index := Index + 1;
-            Result := new Enum_Type;
+            Result := New_Enum_Type;
 
          --  A type we do not expect.
 
@@ -613,10 +615,11 @@ package body Debugger.Gdb is
    -------------------------------------
 
    procedure Parse_Value_Gdb_Ada_From_String
-     (Debugger  : in Gdb_Debugger;
-      Type_Str  : in String;
-      Index     : in out Natural;
-      Result    : in out Generic_Values.Generic_Type_Access)
+     (Debugger   : in Gdb_Debugger;
+      Type_Str   : in String;
+      Index      : in out Natural;
+      Result     : in out Generic_Values.Generic_Type_Access;
+      Repeat_Num : out Positive)
    is
       procedure Ada_Skip_Simple_Value is new Skip_Simple_Value
         (Array_Item_Separator => ',',
@@ -624,6 +627,8 @@ package body Debugger.Gdb is
          Repeat_Item_Start    => '<');
 
    begin
+      Repeat_Num := 1;
+
       -------------------
       -- Simple values --
       -------------------
@@ -638,8 +643,8 @@ package body Debugger.Gdb is
                Int : constant Natural := Index;
             begin
                Ada_Skip_Simple_Value (Type_Str, Index);
-               Simple_Type_Access (Result).Value
-                 := new String'(Type_Str (Int .. Index - 1));
+               Set_Value (Simple_Type (Result.all),
+                          Type_Str (Int .. Index - 1));
 
                -------------------
                -- Repeat values --
@@ -649,20 +654,16 @@ package body Debugger.Gdb is
                --  parsed anyway).
 
                if Looking_At (Type_Str, Index, "<repeats ") then
-                  Result := new Repeat_Type'(Address => null,
-                                             Repeat_Num => 0,
-                                             Value   => Result);
                   Index := Index + 9;
                   Parse_Num (Type_Str,
                              Index,
-                             Long_Integer
-                             (Repeat_Type_Access (Result).Repeat_Num));
+                             Long_Integer (Repeat_Num));
                   Index := Index + 7;  --  skips " times>"
                end if;
 
             end;
          else
-            Simple_Type_Access (Result).Value := new String'("<???>");
+            Set_Value (Simple_Type (Result.all), "<???>");
          end if;
 
       -------------------
@@ -682,8 +683,7 @@ package body Debugger.Gdb is
             Int : constant Natural := Index;
          begin
             Skip_Hexa_Digit (Type_Str, Index);
-            Simple_Type_Access (Result).Value
-              := new String'(Type_Str (Int .. Index - 1));
+            Set_Value (Simple_Type (Result.all), Type_Str (Int .. Index - 1));
          end;
 
       -------------------
@@ -691,28 +691,22 @@ package body Debugger.Gdb is
       -------------------
 
       elsif Result'Tag = Array_Type'Tag
-        and then Array_Type_Access (Result).Num_Dimensions = 1
+        and then Num_Dimensions (Array_Type (Result.all)) = 1
         and then Type_Str'Length /= 0
         and then Type_Str (Index) = '"'
       then
          declare
-            First : constant Integer
-              := Integer (Array_Type_Access (Result).Dimensions (1).First);
-            Last : constant Integer
-              := Integer (Array_Type_Access (Result).Dimensions (1).Last);
-            S : String (1 .. Last - First + 1);
+            Dim : Dimension := Get_Dimensions (Array_Type (Result.all), 1);
+            S : String (1 .. Integer (Dim.Last - Dim.First + 1));
+            Simple : Simple_Type_Access;
          begin
             Parse_Cst_String (Type_Str, Index, S);
-
-            --  We need to allocate a single item in the array, that
-            --  contains the whole string.
-
-            Array_Type_Access (Result).Values
-              := new Array_Item_Array (1 .. 1);
-            Array_Type_Access (Result).Values (1)
-              := (Index => 0,
-                  Value => new Simple_Type'(Address => null,
-                                            Value   => new String'(S)));
+            Simple := Simple_Type_Access (New_Simple_Type);
+            Set_Value (Simple.all, S);
+            Set_Value (Item       => Array_Type (Result.all),
+                       Elem_Value => Simple,
+                       Elem_Index => 0);
+            Shrink_Values (Array_Type (Result.all));
          end;
 
       ------------------
@@ -741,17 +735,25 @@ package body Debugger.Gdb is
                Index := Index + 1;
             end if;
 
-            for J in R.Fields'Range loop
-               if R.Fields (J).Value /= null then
+            for J in 1 .. Num_Fields (R.all) loop
 
-                  --  Skips '=>'
-                  Skip_To_Char (Type_Str, Index, '=');
-                  Index := Index + 3;
+               --  If we are expecting a field
 
-                  Parse_Value_Gdb_Ada_From_String
-                    (Debugger, Type_Str, Index, R.Fields (J).Value);
+               if Get_Variant_Parts (R.all, J) = 0 then
+                  declare
+                     V          : Generic_Type_Access := Get_Value (R.all, J);
+                     Repeat_Num : Positive;
+                  begin
+                     --  Skips '=>'
+                     Skip_To_Char (Type_Str, Index, '=');
+                     Index := Index + 3;
+                     Parse_Value_Gdb_Ada_From_String
+                       (Debugger, Type_Str, Index, V, Repeat_Num);
+                  end;
 
-               elsif R.Fields (J).Variant_Part /= null then
+               --  Else we have a variant part record
+
+               else
 
                   if Type_Str (Index) = ',' then
                      Index := Index + 1;
@@ -764,16 +766,18 @@ package body Debugger.Gdb is
                   Int := Index;
                   Skip_To_Char (Type_Str, Int, ' ');
 
-                  for V in R.Fields (J).Variant_Part'Range loop
-                     if R.Fields (J).Variant_Part (V).Fields (1).Name.all
-                       = Type_Str (Index .. Int - 1)
-                     then
-                        Parse_Value_Gdb_Ada_From_String
-                          (Debugger, Type_Str, Index,
-                           Generic_Type_Access
-                           (R.Fields (J).Variant_Part (V)));
-                     end if;
-                  end loop;
+                  declare
+                     Repeat_Num : Positive;
+                     V : Generic_Type_Access;
+                  begin
+                     V := Find_Variant_Part
+                       (Item     => R.all,
+                        Field    => J,
+                        Contains => Type_Str (Index .. Int - 1));
+
+                     Parse_Value_Gdb_Ada_From_String
+                       (Debugger, Type_Str, Index, V, Repeat_Num);
+                  end;
                end if;
             end loop;
          end;
@@ -813,12 +817,14 @@ package body Debugger.Gdb is
       Entity    : String;
       Value     : in out Generic_Values.Generic_Type_Access)
    is
-      Type_Str : String := Value_Of (Debugger, Entity);
-      Index    : Natural := Type_Str'First;
+      Type_Str   : String := Value_Of (Debugger, Entity);
+      Index      : Natural := Type_Str'First;
+      Repeat_Num : Positive;
    begin
       --  Clear the value previously parsed.
       Clear_Value (Value.all);
-      Parse_Value_Gdb_Ada_From_String (Debugger, Type_Str, Index, Value);
+      Parse_Value_Gdb_Ada_From_String
+        (Debugger, Type_Str, Index, Value, Repeat_Num);
    end Parse_Value;
 
    -------------
@@ -892,8 +898,7 @@ package body Debugger.Gdb is
       --  not control the length of what gdb will return...
 
       Debugger.Process :=
-        new Pipes_Id'
-          (Non_Blocking_Spawn ("gdb", Null_List, Buffer_Size => 0));
+        new Pipes_Id'(Non_Blocking_Spawn ("gdb", Null_List, Buffer_Size => 0));
 
 --        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
 --        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);

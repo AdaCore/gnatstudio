@@ -19,27 +19,409 @@
 -----------------------------------------------------------------------
 
 with GNAT.IO;  use GNAT.IO;
+with Ada.Tags; use Ada.Tags;
 
 package body Generic_Values is
 
-   package body Array_Indexes is
+   ---------------------
+   -- New_Simple_Type --
+   ---------------------
 
-      -------------------
-      -- Compute_Index --
-      -------------------
+   function New_Simple_Type return Generic_Type_Access is
+   begin
+      return new Simple_Type;
+   end New_Simple_Type;
 
-      function Compute_Index (I : Indexes) return Long_Integer is
-         Index : Long_Integer := I (I'First) - For_Array.Dimensions (1).First;
-      begin
-         for J in 2 .. For_Array.Num_Dimensions loop
-            Index := Index * (For_Array.Dimensions (J).Last
-                              - For_Array.Dimensions (J).First + 1)
-              + I (I'First + J - 1) - For_Array.Dimensions (J).First;
-         end loop;
-         return Index;
-      end Compute_Index;
+   ---------------
+   -- Get_Value --
+   ---------------
 
-   end Array_Indexes;
+   function Get_Value (Item : Simple_Type) return String_Access is
+   begin
+      return Item.Value;
+   end Get_Value;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Item : in out Simple_Type; Value : String) is
+   begin
+      if Item.Value /= null then
+         Free (Item.Value);
+      end if;
+      Item.Value := new String'(Value);
+   end Set_Value;
+
+   --------------------
+   -- New_Range_Type --
+   --------------------
+
+   function New_Range_Type (Min, Max : Long_Integer)
+                           return Generic_Type_Access
+   is
+   begin
+      return new Range_Type'(Value => null,
+                             Min   => Min,
+                             Max   => Max);
+   end New_Range_Type;
+
+   ------------------
+   -- New_Mod_Type --
+   ------------------
+
+   function New_Mod_Type (Modulo : Long_Integer) return Generic_Type_Access is
+   begin
+      return new Mod_Type'(Value  => null,
+                           Modulo => Modulo);
+   end New_Mod_Type;
+
+   ---------------------
+   -- New_Access_Type --
+   ---------------------
+
+   function New_Access_Type return Generic_Type_Access is
+   begin
+      return new Access_Type;
+   end New_Access_Type;
+
+   -------------------
+   -- New_Enum_Type --
+   -------------------
+
+   function New_Enum_Type return Generic_Type_Access is
+   begin
+      return new Enum_Type;
+   end New_Enum_Type;
+
+   --------------------
+   -- New_Array_Type --
+   --------------------
+
+   function New_Array_Type (Num_Dimensions : Positive)
+                           return Generic_Type_Access
+   is
+   begin
+      return new Array_Type (Num_Dimensions => Num_Dimensions);
+   end New_Array_Type;
+
+   --------------------
+   -- Set_Dimensions --
+   --------------------
+
+   procedure Set_Dimensions (Item : in out Array_Type;
+                             Dim  : Positive;
+                             Size : Dimension)
+   is
+   begin
+      Item.Dimensions (Dim) := Size;
+   end Set_Dimensions;
+
+   --------------------
+   -- Num_Dimensions --
+   --------------------
+
+   function Num_Dimensions (Item : Array_Type) return Positive is
+   begin
+      return Item.Num_Dimensions;
+   end Num_Dimensions;
+
+   --------------------
+   -- Get_Dimensions --
+   --------------------
+
+   function Get_Dimensions (Item : Array_Type;
+                            Dim  : Positive)
+                           return Dimension
+   is
+   begin
+      return Item.Dimensions (Dim);
+   end Get_Dimensions;
+
+   -------------------
+   -- Set_Item_Type --
+   -------------------
+
+   procedure Set_Item_Type
+     (Item     : in out Array_Type;
+      The_Type : access Generic_Type'Class)
+   is
+   begin
+      Item.Item_Type := Generic_Type_Access (The_Type);
+   end Set_Item_Type;
+
+   -------------------
+   -- Get_Item_Type --
+   -------------------
+
+   function Get_Item_Type (Item : Array_Type)
+                          return Generic_Type_Access
+   is
+   begin
+      return Item.Item_Type;
+   end Get_Item_Type;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Item  : in out Array_Type;
+                        Elem_Value : access Generic_Type'Class;
+                        Elem_Index : Long_Integer;
+                        Repeat_Num : Positive := 1)
+   is
+      Tmp : Array_Item_Array_Access;
+   begin
+      if Item.Values = null  then
+         Item.Values := new Array_Item_Array (1 .. 100);
+         Item.Last_Value := 1;
+      else
+         Item.Last_Value := Item.Last_Value + 1;
+      end if;
+
+      if Item.Last_Value > Item.Values'Last then
+         Tmp := Item.Values;
+         Item.Values := new Array_Item_Array (1 .. 2 * Item.Values'Last);
+         Item.Values (1 .. Tmp'Last) := Tmp.all;
+         Free (Tmp);
+      end if;
+
+      if Item.Values (Item.Last_Value).Value /= null then
+         Free (Item.Values (Item.Last_Value).Value);
+      end if;
+      if Repeat_Num = 1 then
+         Item.Values (Item.Last_Value) :=
+           Array_Item'(Index => Elem_Index,
+                       Value => Generic_Type_Access (Elem_Value));
+      else
+         Item.Values (Item.Last_Value) :=
+           Array_Item'(Index => Elem_Index,
+                       Value => new Repeat_Type'
+                         (Repeat_Num => Repeat_Num,
+                          Value      => Generic_Type_Access (Elem_Value)));
+      end if;
+   end Set_Value;
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   function Get_Value (Item       : Array_Type;
+                       Elem_Index : Long_Integer)
+                      return Generic_Type_Access
+   is
+   begin
+      for J in Item.Values'Range loop
+         if Item.Values (J).Index = Elem_Index then
+            return Item.Values (J).Value;
+
+         elsif Item.Values (J).Value'Tag = Repeat_Type'Tag
+           and then Item.Values (J).Index < Elem_Index
+           and then Item.Values (J).Index
+           + Long_Integer (Repeat_Type_Access
+                           (Item.Values (J).Value).Repeat_Num) > Elem_Index
+         then
+            return Repeat_Type_Access (Item.Values (J).Value).Value;
+         end if;
+      end loop;
+      return null;
+   end Get_Value;
+
+   -------------------
+   -- Shrink_Values --
+   -------------------
+
+   procedure Shrink_Values (Item : in out Array_Type) is
+      Tmp : Array_Item_Array_Access;
+   begin
+      Tmp := Item.Values;
+      Item.Values := new Array_Item_Array (1 .. Item.Last_Value);
+      Item.Values.all := Tmp (1 .. Item.Last_Value);
+      Free (Tmp);
+   end Shrink_Values;
+
+   ---------------------
+   -- New_Record_Type --
+   ---------------------
+
+   function New_Record_Type (Num_Fields : Natural)
+                            return Generic_Type_Access
+   is
+   begin
+      return new Record_Type (Num_Fields);
+   end New_Record_Type;
+
+   ----------------
+   -- Num_Fields --
+   ----------------
+
+   function Num_Fields (Item : Record_Type) return Natural is
+   begin
+      return Item.Num_Fields;
+   end Num_Fields;
+
+   --------------------
+   -- Set_Field_Name --
+   --------------------
+
+   procedure Set_Field_Name (Item          : in out Record_Type;
+                             Index         : Positive;
+                             Name          : String;
+                             Variant_Parts : Natural := 0)
+   is
+   begin
+      if Item.Fields (Index).Value /= null then
+         Free (Item.Fields (Index).Value);
+      end if;
+      if Item.Fields (Index).Variant_Part /= null then
+         Free (Item.Fields (Index).Variant_Part);
+      end if;
+
+      if Variant_Parts = 0 then
+         Item.Fields (Index) := Record_Field'
+           (Name          => new String'(Name),
+            Value        => null,
+            Variant_Part => null);
+      else
+         Item.Fields (Index) := Record_Field'
+           (Name         => new String'(Name),
+            Value        => null,
+            Variant_Part => new Record_Type_Array (1 .. Variant_Parts));
+      end if;
+   end Set_Field_Name;
+
+   --------------------
+   -- Get_Field_Name --
+   --------------------
+
+   function Get_Field_Name (Item  : in Record_Type;
+                            Index : Positive)
+                           return String_Access
+   is
+   begin
+      return Item.Fields (Index).Name;
+   end Get_Field_Name;
+
+   -----------------------
+   -- Set_Variant_Field --
+   -----------------------
+
+   procedure Set_Variant_Field (Item          : in out Record_Type;
+                                Index         : Positive;
+                                Variant_Index : Positive;
+                                Value         : access Record_Type'Class)
+   is
+   begin
+      if Item.Fields (Index).Variant_Part /= null then
+         Item.Fields (Index).Variant_Part (Variant_Index) :=
+           Record_Type_Access (Value);
+      end if;
+   end Set_Variant_Field;
+
+   -----------------------
+   -- Get_Variant_Parts --
+   -----------------------
+
+   function Get_Variant_Parts (Item  : Record_Type;
+                               Field : Positive)
+                              return Natural
+   is
+   begin
+      if Item.Fields (Field).Variant_Part = null then
+         return 0;
+      else
+         return Item.Fields (Field).Variant_Part'Length;
+      end if;
+   end Get_Variant_Parts;
+
+   -----------------------
+   -- Find_Variant_Part --
+   -----------------------
+
+   function Find_Variant_Part (Item     : Record_Type;
+                               Field    : Positive;
+                               Contains : String)
+                              return Generic_Type_Access
+   is
+   begin
+      for J in Item.Fields (Field).Variant_Part'Range loop
+         if Item.Fields (Field).Variant_Part (J).Fields (1).Name.all = Contains
+         then
+            return Generic_Type_Access (Item.Fields (Field).Variant_Part (J));
+         end if;
+      end loop;
+      return null;
+   end Find_Variant_Part;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Item  : in out Record_Type;
+                        Value : access Generic_Type'Class;
+                        Field : String)
+   is
+   begin
+      for J in Item.Fields'Range loop
+         if Item.Fields (J).Name.all = Field then
+            Free (Item.Fields (J).Value);
+            Item.Fields (J).Value := Generic_Type_Access (Value);
+         end if;
+      end loop;
+   end Set_Value;
+
+   ---------------
+   -- Set_Value --
+   ---------------
+
+   procedure Set_Value (Item  : in out Record_Type;
+                        Value : access Generic_Type'Class;
+                        Field : Positive)
+   is
+   begin
+      Free (Item.Fields (Field).Value);
+      Item.Fields (Field).Value := Generic_Type_Access (Value);
+   end Set_Value;
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   function Get_Value (Item  : Record_Type;
+                       Field : String)
+                      return Generic_Type_Access
+   is
+   begin
+      for J in Item.Fields'Range loop
+         if Item.Fields (J).Name.all = Field then
+            return Item.Fields (J).Value;
+         end if;
+      end loop;
+      return null;
+   end Get_Value;
+
+   ---------------
+   -- Get_Value --
+   ---------------
+
+   function Get_Value (Item  : Record_Type;
+                       Field : Positive)
+                      return Generic_Type_Access
+   is
+   begin
+      return Item.Fields (Field).Value;
+   end Get_Value;
+
+   --------------------
+   -- New_Union_Type --
+   --------------------
+
+   function New_Union_Type (Num_Fields : Positive)
+                           return Generic_Type_Access
+   is
+   begin
+      return new Union_Type (Num_Fields);
+   end New_Union_Type;
 
    -----------
    -- Print --
@@ -73,7 +455,7 @@ package body Generic_Values is
 
    procedure Print (Value : Mod_Type) is
    begin
-      Put ("{Modulo " & Value.Max'Img & " = ");
+      Put ("{Modulo " & Value.Modulo'Img & " = ");
       if Value.Value /= null then
          Put (Value.Value.all);
       end if;
@@ -114,7 +496,7 @@ package body Generic_Values is
 
       Put ("= (");
       if Value.Values /= null then
-         for J in Value.Values'Range loop
+         for J in 1 .. Value.Last_Value loop
             Put (Value.Values (J).Index'Img & " => ");
             Print (Value.Values (J).Value.all);
             if J /= Value.Values'Last then
@@ -223,7 +605,7 @@ package body Generic_Values is
    procedure Clear_Value (Value : in out Array_Type) is
    begin
       if Value.Values /= null then
-         for J in Value.Values'Range loop
+         for J in 1 .. Value.Last_Value loop
             Clear_Value (Value.Values (J).Value.all);
          end loop;
          Free (Value.Values);
