@@ -72,7 +72,6 @@ package body Codefix.Errors_Manager is
       File_Pos, Logic_Pos : Natural;
 
    begin
-
       if This.Preview /= Invalid_Error_Message then
          Current := This.Preview;
          This.Preview := Invalid_Error_Message;
@@ -90,12 +89,13 @@ package body Codefix.Errors_Manager is
 
       Assign (Current_Line, Get_Line (Current_Text, Cursor_Line));
       Logic_Pos := 1;
-      File_Pos := 1;
+      File_Pos  := 1;
 
       loop
-         exit when Logic_Pos = Current.Col;
+         exit when Logic_Pos = Current.Col
+           or else File_Pos = Current_Line'Last;
 
-         if Current_Line.all (File_Pos) = ASCII.HT then
+         if Current_Line (File_Pos) = ASCII.HT then
             Logic_Pos := Logic_Pos + ((-Logic_Pos) mod Tab_Width);
          end if;
 
