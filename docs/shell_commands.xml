@@ -2497,6 +2497,11 @@ If ref and add_before are specified, they specify the name of another item in th
      <description>Change the name of a menu. The first underscore character seen in name will be used as the keyboard shortcut to access this menu from now on. If you actually want to insert an underscore in the name, you need to double it</description>
   </shell_doc>
 
+  <shell_doc name="GPS.send_socket">
+     <param name="id">A string</param>
+     <param name="msg">A string</param>
+     <description>When GPS is running in server mode (using the --server switch), send msg to the socket identified by id. The identification of a socket is done via the "id" command in the GPS socket.</description>
+  </shell_doc>
 
 
 </docs>
