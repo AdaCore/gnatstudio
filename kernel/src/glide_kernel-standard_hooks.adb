@@ -583,7 +583,8 @@ package body Glide_Kernel.Standard_Hooks is
       Kernel : constant Kernel_Handle := Get_Kernel (Data);
       Args   : File_Hooks_Args :=
         (Hooks_Data with
-         Get_File (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel)))));
+         Get_File
+           (Get_Data (Nth_Arg (Data, 2, Get_File_Class (Kernel), True))));
       pragma Unreferenced (Command);
    begin
       Run_Hook (Kernel, Name, Args);
