@@ -98,6 +98,20 @@ package body Project_Trees is
    --  Add the imported projects and directories to Project_Node, if they are
    --  not already inserted in the tree.
 
+   procedure Add_Node_Directories
+     (Tree : access Project_Tree_Record'Class;
+      Project_Node : Gtk_Ctree_Node;
+      Project_View : Project_Id);
+   --  Add the directories belong to Project_Node (found in Project_View).
+   --  Note that this is done unconditionnaly (don't test if they are already
+   --  there), and is already done by Add_Node_Contents.
+
+   procedure Add_Dummy_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
+   --  Add a dummy, invisible, child to Node. This is used to force Tree to
+   --  display an expansion box besides Node. The actual children of Node will
+   --  be computed on demand when the user expands Node.
+
    procedure Expand_Tree_Cb
      (Tree : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  called every time a node is expanded. It is responsible for
@@ -110,6 +124,25 @@ package body Project_Trees is
    --  Return the name of the project that Node belongs to. Note that if Node
    --  is directly associated with a projet, we return the importing project,
    --  note the one associated with Node.
+
+   function Get_Selected_Project_Node (Tree : access Project_Tree_Record)
+      return Gtk_Ctree_Node;
+   --  Return the node that contains the selected directory (or, if the user
+   --  selected a project directly, it returns the node of that project itself)
+
+   procedure Update_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node);
+   --  Refresh the contents of the Node after the Project_View has
+   --  changed. This means that possibly the list of directories has
+   --  changed. However, the hierarchy of projects can not change, nor the list
+   --  of modified projects
+
+   procedure Select_Directory
+     (Tree         : access Project_Tree_Record'Class;
+      Project_Node : Gtk_Ctree_Node;
+      Directory    : String := "");
+   --  Select a specific project, and (if not "") a specific directory
+   --  in that project
 
    -------------
    -- Gtk_New --
@@ -149,6 +182,30 @@ package body Project_Trees is
       Set_Column_Auto_Resize (Tree, 0, True);
    end Gtk_New;
 
+   --------------------
+   -- Add_Dummy_Node --
+   --------------------
+
+   procedure Add_Dummy_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+   is
+      N : Gtk_Ctree_Node;
+   begin
+      --  Add a dummy node
+      N := Insert_Node
+        (Ctree         => Tree,
+         Parent        => Node,
+         Sibling       => null,
+         Text          => Create_Line_Text ("dummy"),
+         Spacing       => 5,
+         Pixmap_Closed => Null_Pixmap,
+         Mask_Closed   => Null_Bitmap,
+         Pixmap_Opened => Null_Pixmap,
+         Mask_Opened   => Null_Bitmap,
+         Is_Leaf       => True,
+         Expanded      => True);
+   end Add_Dummy_Node;
+
    ----------------------
    -- Add_Project_Node --
    ----------------------
@@ -159,15 +216,11 @@ package body Project_Trees is
       Parent_Node  : Gtk_Ctree_Node := null) return Gtk_Ctree_Node
    is
       N : Gtk_Ctree_Node;
-      N2 : Gtk_Ctree_Node := null;
-      Is_Leaf : Boolean;
-
-   begin
-      Is_Leaf :=
+      Is_Leaf : constant Boolean :=
         Projects.Table (Project).Imported_Projects = Empty_Project_List
         and then (not Show_Directories
                   or else Projects.Table (Project).Source_Dirs = Nil_String);
-
+   begin
       N := Insert_Node
         (Ctree         => Tree,
          Parent        => Parent_Node,
@@ -186,25 +239,111 @@ package body Project_Trees is
         (Tree, N,
          (Project_Node, Projects.Table (Project).Name, Up_To_Date => False));
 
-      --  Add a dummy node
-
       if not Is_Leaf then
-         N2 := Insert_Node
-           (Ctree         => Tree,
-            Parent        => N,
-            Sibling       => N2,
-            Text          => Create_Line_Text ("dummy"),
-            Spacing       => 5,
-            Pixmap_Closed => Null_Pixmap,
-            Mask_Closed   => Null_Bitmap,
-            Pixmap_Opened => Null_Pixmap,
-            Mask_Opened   => Null_Bitmap,
-            Is_Leaf       => True,
-            Expanded      => True);
+         Add_Dummy_Node (Tree, N);
       end if;
 
       return N;
    end Add_Project_Node;
+
+   ----------------------
+   -- Select_Directory --
+   ----------------------
+
+   procedure Select_Directory
+     (Tree         : access Project_Tree_Record'Class;
+      Project_Node : Gtk_Ctree_Node;
+      Directory    : String := "")
+   is
+      N : Gtk_Ctree_Node :=
+        Row_Get_Children (Node_Get_Row (Project_Node));
+   begin
+      if Directory = "" then
+         Gtk_Select (Tree, Project_Node);
+
+      else
+         while N /= null loop
+            declare
+               D : constant User_Data := Node_Get_Row_Data (Tree, N);
+            begin
+               if D.Node_Type = Directory_Node then
+                  String_To_Name_Buffer (D.Directory);
+                  if Name_Buffer (1 .. Name_Len) = Directory then
+                     Gtk_Select (Tree, N);
+                     return;
+                  end if;
+               end if;
+            end;
+            N := Row_Get_Sibling (Node_Get_Row (N));
+         end loop;
+      end if;
+   end Select_Directory;
+
+   -----------------
+   -- Update_Node --
+   -----------------
+
+   procedure Update_Node
+     (Tree : access Project_Tree_Record'Class; Node : Gtk_Ctree_Node)
+   is
+      Data  : User_Data := Node_Get_Row_Data (Tree, Node);
+      N, N2 : Gtk_Ctree_Node;
+
+   begin
+      case Data.Node_Type is
+
+         when Project_Node =>
+            --  Nodes that are not expanded should remain that way. Their
+            --  contents will be computed only when the user tries to expand
+            --  them.
+            --  However, if the contents has been computed before, we need to
+            --  clean things up.
+
+            if not Row_Get_Expanded (Node_Get_Row (Node)) then
+               if Data.Up_To_Date then
+                  Data.Up_To_Date := False;
+                  Node_Set_Row_Data (Tree, Node, Data);
+
+                  N := Row_Get_Children (Node_Get_Row (Node));
+                  while N /= null loop
+                     N2 := Row_Get_Sibling (Node_Get_Row (N));
+                     Remove_Node (Tree, N);
+                     N := N2;
+                  end loop;
+
+                  Add_Dummy_Node (Tree, Node);
+               end if;
+
+            --  Else the node was expanded, we need to replace its contents
+            --  with the new one.
+
+            else
+
+               --  First remove old directories
+
+               N := Row_Get_Children (Node_Get_Row (Node));
+               while N /= null loop
+                  N2 := Row_Get_Sibling (Node_Get_Row (N));
+
+                  if Node_Get_Row_Data (Tree, N).Node_Type = Project_Node then
+                     Update_Node (Tree, N);
+                  else
+                     Remove_Node (Tree, N);
+                  end if;
+
+                  N := N2;
+               end loop;
+
+               --  Then put the new ones
+               Add_Node_Directories
+                 (Tree, Node, Get_Project_View_From_Name (Data.Name));
+            end if;
+
+         when Directory_Node =>
+            null;
+
+      end case;
+   end Update_Node;
 
    --------------------
    -- Expand_Tree_Cb --
@@ -218,6 +357,59 @@ package body Project_Trees is
       Add_Node_Contents (Project_Tree (Tree), Node);
    end Expand_Tree_Cb;
 
+   --------------------------
+   -- Add_Node_Directories --
+   --------------------------
+
+   procedure Add_Node_Directories
+     (Tree : access Project_Tree_Record'Class;
+      Project_Node : Gtk_Ctree_Node;
+      Project_View : Project_Id)
+   is
+      N           : Gtk_Ctree_Node := null;
+      Dir         : String_List_Id;
+      Current_Dir : constant String := String (Get_Current_Dir);
+   begin
+      --  Insert the directories in the project file
+      if Show_Directories then
+
+         --  ??? need a special icon for the object directory
+
+         Dir := Projects.Table (Project_View).Source_Dirs;
+         while Dir /= Nil_String loop
+            String_To_Name_Buffer (String_Elements.Table (Dir).Value);
+
+            if Absolute_Directories
+              and then not Is_Absolute_Path (Name_Buffer (1 .. Name_Len))
+            then
+               Name_Buffer
+                 (Current_Dir'Length + 1 .. Current_Dir'Length + Name_Len)
+                 := Name_Buffer (1 .. Name_Len);
+               Name_Buffer (1 .. Current_Dir'Length) := Current_Dir;
+               Name_Len := Current_Dir'Length + Name_Len;
+            end if;
+
+            N := Insert_Node
+              (Ctree         => Tree,
+               Parent        => Project_Node,
+               Sibling       => N,
+               Text          =>
+                 Create_Line_Text (Name_Buffer (1 .. Name_Len)),
+               Spacing       => 5,
+               Pixmap_Closed => Null_Pixmap,
+               Mask_Closed   => Null_Bitmap,
+               Pixmap_Opened => Null_Pixmap,
+               Mask_Opened   => Null_Bitmap,
+               Is_Leaf       => True,
+               Expanded      => True);
+            Node_Set_Row_Data
+              (Tree, N,
+               (Directory_Node, String_Elements.Table (Dir).Value));
+            Dir := String_Elements.Table (Dir).Next;
+         end loop;
+      end if;
+   end Add_Node_Directories;
+
    -----------------------
    -- Add_Node_Contents --
    -----------------------
@@ -230,8 +422,6 @@ package body Project_Trees is
       Data        : User_Data := Node_Get_Row_Data (Tree, Project_Node);
       Prj_List    : Project_List;
       N           : Gtk_Ctree_Node := null;
-      Dir         : String_List_Id;
-      Current_Dir : constant String := String (Get_Current_Dir);
    begin
       --  If the node is not already up-to-date
 
@@ -250,7 +440,6 @@ package body Project_Trees is
          --     Add_Node (Tree, N, Projects.Table (Project).Modifies);
          --  end if;
 
-
          --  Imported projects
 
          Prj_List := Projects.Table (Project).Imported_Projects;
@@ -260,46 +449,7 @@ package body Project_Trees is
             Prj_List := Project_Lists.Table (Prj_List).Next;
          end loop;
 
-         --  ??? need a special icon for the object directory
-
-         --  Insert the directories in the project file
-         if Show_Directories then
-            --  So that directories are added after imported projects
-            N := null;
-
-            Dir := Projects.Table (Project).Source_Dirs;
-            while Dir /= Nil_String loop
-               String_To_Name_Buffer (String_Elements.Table (Dir).Value);
-
-               if Absolute_Directories
-                 and then not Is_Absolute_Path (Name_Buffer (1 .. Name_Len))
-               then
-                  Name_Buffer
-                    (Current_Dir'Length + 1 .. Current_Dir'Length + Name_Len)
-                    := Name_Buffer (1 .. Name_Len);
-                  Name_Buffer (1 .. Current_Dir'Length) := Current_Dir;
-                  Name_Len := Current_Dir'Length + Name_Len;
-               end if;
-
-               N := Insert_Node
-                 (Ctree         => Tree,
-                  Parent        => Project_Node,
-                  Sibling       => N,
-                  Text          =>
-                    Create_Line_Text (Name_Buffer (1 .. Name_Len)),
-                  Spacing       => 5,
-                  Pixmap_Closed => Null_Pixmap,
-                  Mask_Closed   => Null_Bitmap,
-                  Pixmap_Opened => Null_Pixmap,
-                  Mask_Opened   => Null_Bitmap,
-                  Is_Leaf       => True,
-                  Expanded      => True);
-               Node_Set_Row_Data
-                 (Tree, N,
-                  (Directory_Node, String_Elements.Table (Dir).Value));
-               Dir := String_Elements.Table (Dir).Next;
-            end loop;
-         end if;
+         Add_Node_Directories (Tree, Project_Node, Project);
 
          Data.Up_To_Date := True;
          Node_Set_Row_Data (Tree, Project_Node, Data);
@@ -315,17 +465,55 @@ package body Project_Trees is
       Project      : Project_Node_Id;
       Project_View : Project_Id)
    is
-      use type Node_List.Glist;
+      Selected_P   : Gtk_Ctree_Node := null;
+      Selected_Dir : String_Id := No_String;
    begin
       pragma Assert
-        (Project_View /= No_Project, "Must specify a project view");
+        (Project /= Empty_Node and then Project_View /= No_Project);
       Tree.Current_View := Project_View;
+
       Freeze (Tree);
 
-      Clear (Tree);
-      Tree.Project := Project;
-      Expand
-        (Tree, Add_Project_Node (Tree, Project_View, Parent_Node => null));
+      --  If we are displaying a new view of the tree that was there before, we
+      --  want to keep the project nodes, and most important their open/close
+      --  status, so as to minimize the changes the user sees.
+
+      if Tree.Project = Project then
+
+         --  Save the selection, so that we can restore it later
+         Selected_P := Get_Selected_Project_Node (Tree);
+         if Selected_P /= null then
+            declare
+               U : User_Data := Node_Get_Row_Data
+                 (Tree, Node_List.Get_Data (Get_Selection (Tree)));
+            begin
+               if U.Node_Type = Directory_Node then
+                  Selected_Dir := U.Directory;
+               end if;
+            end;
+         end if;
+
+         String_To_Name_Buffer (Selected_Dir);
+         declare
+            D : constant String := Name_Buffer (Name_Buffer'First .. Name_Len);
+         begin
+            Update_Node (Tree, Node_Nth (Tree, 0));
+
+            --  Restore the selection. Note that this also resets the project
+            --  view clist, with the contents of all the files.
+
+            if Selected_P /= null then
+               Select_Directory (Tree, Selected_P, D);
+            end if;
+         end;
+
+      else
+         Clear (Tree);
+         Tree.Project := Project;
+         Expand
+           (Tree, Add_Project_Node (Tree, Project_View, Parent_Node => null));
+      end if;
+
       Thaw (Tree);
    end Load;
 
@@ -359,6 +547,30 @@ package body Project_Trees is
         Get_Project_View_From_Name (Node_Get_Row_Data (Tree, Parent).Name);
    end Get_Parent_Project;
 
+   -------------------------------
+   -- Get_Selected_Project_Node --
+   -------------------------------
+
+   function Get_Selected_Project_Node (Tree : access Project_Tree_Record)
+      return Gtk_Ctree_Node
+   is
+      use type Node_List.Glist;
+      Selection : Node_List.Glist := Get_Selection (Tree);
+      N : Gtk_Ctree_Node;
+   begin
+      if Selection /= Node_List.Null_List then
+         N := Node_List.Get_Data (Selection);
+         while N /= null loop
+            if Node_Get_Row_Data (Tree, N).Node_Type = Project_Node then
+               return N;
+            end if;
+
+            N := Row_Get_Parent (Node_Get_Row (N));
+         end loop;
+      end if;
+      return null;
+   end Get_Selected_Project_Node;
+
    --------------------------
    -- Get_Selected_Project --
    --------------------------
@@ -366,22 +578,11 @@ package body Project_Trees is
    function Get_Selected_Project (Tree : access Project_Tree_Record)
       return Project_Id
    is
-      use type Node_List.Glist;
-      Selection : Node_List.Glist := Get_Selection (Tree);
+      N : Gtk_Ctree_Node := Get_Selected_Project_Node (Tree);
    begin
-      if Selection /= Node_List.Null_List then
-         declare
-            N : constant Gtk_Ctree_Node := Node_List.Get_Data (Selection);
-            User : constant User_Data := Node_Get_Row_Data (Tree, N);
-         begin
-            case User.Node_Type is
-               when Project_Node =>
-                  return Get_Project_View_From_Name (User.Name);
-
-               when Directory_Node =>
-                  return Get_Parent_Project (Tree, N);
-            end case;
-         end;
+      if N /= null then
+         return Get_Project_View_From_Name
+           (Node_Get_Row_Data (Tree, N). Name);
       end if;
       return No_Project;
    end Get_Selected_Project;
