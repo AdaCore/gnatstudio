@@ -22,6 +22,7 @@ with Gdk.Event;             use Gdk.Event;
 with Gdk.Types;             use Gdk.Types;
 with Gdk.Types.Keysyms;     use Gdk.Types.Keysyms;
 with Glib.Object;           use Glib.Object;
+with Glib.Xml_Int;          use Glib.Xml_Int;
 with Gtk.Alignment;         use Gtk.Alignment;
 with Gtk.Box;               use Gtk.Box;
 with Gtk.Button;            use Gtk.Button;
@@ -144,6 +145,15 @@ package body Vsearch_Ext is
       Raise_Widget : Boolean := False) return Vsearch_Extended;
    --  Return a valid vsearch widget, creating one if necessary
 
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+   --  Restore the status of the explorer from a saved XML tree.
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Save the status of the project explorer to an XML tree
+
    ---------------
    -- Callbacks --
    ---------------
@@ -197,6 +207,51 @@ package body Vsearch_Ext is
    procedure Float_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    procedure Unfloat_Vsearch (Search_Child : access Gtk_Widget_Record'Class);
    --  The floating state of the search widget has changed
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget
+   is
+      Extended : Vsearch_Extended;
+   begin
+      if Node.Tag.all = "Vsearch" then
+         Gtk_New (Extended, User);
+         return Gtk_Widget (Extended);
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+      Extended : Vsearch_Extended;
+   begin
+      if Widget.all in Vsearch_Extended_Record'Class then
+         Extended := Vsearch_Extended (Widget);
+
+         --  We do not want floating search to appear automatically next time
+         --  gps is started
+         if Get_State (Find_MDI_Child (Get_MDI (Extended.Kernel), Extended)) /=
+           Floating
+         then
+            N := new Node;
+            N.Tag := new String'("Vsearch");
+            return N;
+         end if;
+      end if;
+
+      return null;
+   end Save_Desktop;
 
    -------------------
    -- Float_Vsearch --
@@ -793,8 +848,8 @@ package body Vsearch_Ext is
         (Vsearch.Options_Toggle, "toggled",
          Widget_Callback.To_Marshaller (On_Options_Toggled'Access), Vsearch);
 
-      Gtk_New (Vsearch.Close_Button, -"Close");
-      Pack_End (Vsearch.Vbox_Search, Vsearch.Close_Button);
+      Gtk_New_From_Stock (Vsearch.Close_Button, Stock_Close);
+      Pack_End (Vsearch.Vbox_Search, Vsearch.Close_Button, Expand => False);
       Widget_Callback.Object_Connect
         (Vsearch.Close_Button, "clicked",
          Widget_Callback.To_Marshaller (Close_Vsearch'Access), Vsearch);
@@ -877,7 +932,7 @@ package body Vsearch_Ext is
 
          Child := Put (Get_MDI (Kernel), Vsearch);
          Set_Title (Child, -"Search");
-         Set_Dock_Side (Child, Bottom);
+         Set_Dock_Side (Child, Left);
          Float_Child (Child, True);
 
          --  Put back the options frame under control
@@ -1068,6 +1123,8 @@ package body Vsearch_Ext is
          Kernel      => Kernel,
          Module_Name => Search_Module_Name,
          Priority    => Default_Priority);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
 
       --  Register the menus
       Register_Menu
