@@ -1114,8 +1114,7 @@ package body Project_Trees is
          declare
             User : constant User_Data := Node_Get_Row_Data (Tree, N);
          begin
-            exit when User.Node_Type = Directory_Node
-              or else User.Node_Type = Obj_Directory_Node;
+            exit when User.Node_Type = Directory_Node;
          end;
 
          N := Row_Get_Parent (Node_Get_Row (N));
