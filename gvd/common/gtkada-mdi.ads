@@ -346,77 +346,78 @@ private
    type Int_Array is array (Left .. Bottom) of Glib.Gint;
    type Window_Array is array (Left .. Bottom) of Gdk.Window.Gdk_Window;
 
-   type MDI_Window_Record is new Gtk.Fixed.Gtk_Fixed_Record with
-      record
-         Items : Gtk.Widget.Widget_List.Glist :=
-           Gtk.Widget.Widget_List.Null_List;
-         --  The list of all MDI children.
+   type MDI_Window_Record is new Gtk.Fixed.Gtk_Fixed_Record with record
+      Items : Gtk.Widget.Widget_List.Glist := Gtk.Widget.Widget_List.Null_List;
+      --  The list of all MDI children.
 
-         Docks : Notebook_Array := (others => null);
-         --  The five possible docks (one on each side and one in the middle.
-         --  Note that the one in the middle might not be visible, or even
-         --  created, if it is replaced by a Gtk_Layout.
+      Docks : Notebook_Array := (others => null);
+      --  The five possible docks (one on each side and one in the middle.
+      --  Note that the one in the middle might not be visible, or even
+      --  created, if it is replaced by a Gtk_Layout.
 
-         Layout : Gtk.Fixed.Gtk_Fixed;
-         --  The layout in the middle. It will be hidden when the items are
-         --  maximized and put in the middle dock.
+      Layout : Gtk.Fixed.Gtk_Fixed;
+      --  The layout in the middle. It will be hidden when the items are
+      --  maximized and put in the middle dock.
 
-         Docks_Size : Int_Array := (others => 0);
-         --  The size (height or width, depending on the location) of each of
-         --  the docks. The size of the middle dock depends on the size of all
-         --  the others.
-         --  If the value is 0, this means there is no dock on that size.
-         --  If the value is -1, this means that the value should be
-         --  recomputed based on the size requested by the dock itself.
+      Docks_Size : Int_Array := (others => 0);
+      --  The size (height or width, depending on the location) of each of
+      --  the docks. The size of the middle dock depends on the size of all
+      --  the others.
+      --  If the value is 0, this means there is no dock on that size.
+      --  If the value is -1, this means that the value should be
+      --  recomputed based on the size requested by the dock itself.
 
-         Handles : Window_Array;
-         --  The four handles that can be manipulated by the user to resize
-         --  the docks. We use separate windows so as not to handle the events
-         --  ourselves, but rely on the X server for this.
+      Handles : Window_Array;
+      --  The four handles that can be manipulated by the user to resize
+      --  the docks. We use separate windows so as not to handle the events
+      --  ourselves, but rely on the X server for this.
 
-         Selected : Dock_Side := None;
-         --  The handle that was selected for the resize operation.
+      Selected : Dock_Side := None;
+      --  The handle that was selected for the resize operation.
 
-         Selected_Child : MDI_Child := null;
-         --  The child that was selected for a resize or move operation
+      Selected_Child : MDI_Child := null;
+      --  The child that was selected for a resize or move operation
 
-         Xor_GC   : Gdk.GC.Gdk_GC;
-         --  GC used while resizing or moving a child
+      Xor_GC   : Gdk.GC.Gdk_GC;
+      --  GC used while resizing or moving a child
 
-         X_Root, Y_Root : Glib.Gint;
-         Current_X, Current_Y, Current_W, Current_H : Glib.Gint;
-         --  The coordinates of the initial click in a move or resize
-         --  operation.
+      X_Root, Y_Root : Glib.Gint;
+      Current_X, Current_Y, Current_W, Current_H : Glib.Gint;
+      --  The coordinates of the initial click in a move or resize
+      --  operation.
 
-         Initial_Width, Initial_Height : Glib.Gint;
-         --  Initial size of the child currently being resized.
+      Initial_Width, Initial_Height : Glib.Gint;
+      --  Initial size of the child currently being resized.
 
-         Focus_GC     : Gdk.GC.Gdk_GC;
-         Non_Focus_GC : Gdk.GC.Gdk_GC;
-         --  The various graphic contexts used to draw the titles of the
-         --  children.
+      Focus_GC     : Gdk.GC.Gdk_GC;
+      Non_Focus_GC : Gdk.GC.Gdk_GC;
+      --  The various graphic contexts used to draw the titles of the
+      --  children.
 
-         Current_Cursor : Gdk_Cursor_Type;
-         --  The cursor currently used within the MDI. It also indicates which
-         --  kind of operation is processing (moving, resizing a corner, ...)
+      Current_Cursor : Gdk_Cursor_Type;
+      --  The cursor currently used within the MDI. It also indicates which
+      --  kind of operation is processing (moving, resizing a corner, ...)
 
-         Focus_Child : MDI_Child := null;
-         --  The child that currently has the focus. Some default actions will
-         --  apply to this child only.
-         --  ??? Keypress events should be redirected to this child.
+      Focus_Child : MDI_Child := null;
+      --  The child that currently has the focus. Some default actions will
+      --  apply to this child only.
+      --  ??? Keypress events should be redirected to this child.
 
-         Priorities : Priorities_Array := (0, 1, 2, 3);
-         --  The order in which the docks should be displayed. See the
-         --  description of Priorities_Array.
+      Priorities : Priorities_Array := (0, 1, 2, 3);
+      --  The order in which the docks should be displayed. See the
+      --  description of Priorities_Array.
 
-         Menu               : Gtk.Menu.Gtk_Menu;
-         Dock_Menu_Item     : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-         Dock_Menu_Item_Id  : Gtk.Handlers.Handler_Id;
-         Float_Menu_Item    : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
-         Float_Menu_Item_Id : Gtk.Handlers.Handler_Id;
-         --  The dynamic menu used to provide access to the most common
-         --  functions of MDI.
-      end record;
+      Menu               : Gtk.Menu.Gtk_Menu;
+      Dock_Menu_Item     : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Dock_Menu_Item_Id  : Gtk.Handlers.Handler_Id;
+      Float_Menu_Item    : Gtk.Check_Menu_Item.Gtk_Check_Menu_Item;
+      Float_Menu_Item_Id : Gtk.Handlers.Handler_Id;
+      --  The dynamic menu used to provide access to the most common
+      --  functions of MDI.
+
+      Default_X, Default_Y : Glib.Gint := 10;
+      --  Default position when placing a new child.
+   end record;
 
    pragma Inline (Get_Window);
    pragma Inline (Get_Widget);

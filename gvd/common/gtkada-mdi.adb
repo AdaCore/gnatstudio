@@ -114,6 +114,9 @@ package body Gtkada.MDI is
    Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
    --  Minimal size for all windows
 
+   Threshold : constant Gint := 40;
+   --  Threshold used to reset coordinates when putting items in the MDI.
+
    Corner_Size : constant Gint := Border_Thickness * 2;
    --  Extra tolerance when the user selects a corner for resizing (if the
    --  pointer is within Corner_Size in both coordinates, then we are clicking
@@ -1900,8 +1903,24 @@ package body Gtkada.MDI is
       end if;
 
       C.MDI := MDI_Window (MDI);
-      C.X := 10;
-      C.Y := 10;
+      C.X   := MDI.Default_X;
+      C.Y   := MDI.Default_Y;
+
+      if MDI.Default_X + Threshold >
+        Gint (Get_Allocation_Width (MDI.Layout))
+      then
+         MDI.Default_X := 10;
+      else
+         MDI.Default_X := MDI.Default_X + 10;
+      end if;
+
+      if MDI.Default_Y + Threshold >
+        Gint (Get_Allocation_Height (MDI.Layout))
+      then
+         MDI.Default_Y := 10;
+      else
+         MDI.Default_Y := MDI.Default_Y + 10;
+      end if;
 
       if Child.all in Gtk_Window_Record'Class then
          C.Title := new String' (Get_Title (Gtk_Window (Child)));
@@ -1916,6 +1935,7 @@ package body Gtkada.MDI is
       Widget_List.Prepend (MDI.Items, Gtk_Widget (C));
 
       --  If all items are maximized, add Child to the notebook
+
       if MDI.Docks (None) /= null then
          Put_In_Notebook (MDI, None, C);
       else
@@ -2923,12 +2943,15 @@ package body Gtkada.MDI is
          --  cannot save this group into a variable, since it might change when
          --  the first child is removed from the MDI.
          Tmp := Child.MDI.Items;
+
          while Tmp /= Widget_List.Null_List loop
             First_Child := MDI_Child (Get_Data (Tmp));
+
             if First_Child.Menu_Item /= null then
                G := Group (First_Child.Menu_Item);
                exit;
             end if;
+
             Tmp := Next (Tmp);
          end loop;
 
@@ -2968,6 +2991,7 @@ package body Gtkada.MDI is
    is
       Item  : Gtk_Menu_Item;
       Child : MDI_Child;
+      Tmp   : Widget_List.Glist;
 
    begin
       if MDI.Menu = null then
@@ -3040,15 +3064,13 @@ package body Gtkada.MDI is
          Gtk_New (Item);
          Append (MDI.Menu, Item);
 
-         declare
-            Tmp : Widget_List.Glist := First (MDI.Items);
-         begin
-            while Tmp /= Null_List loop
-               Child := MDI_Child (Get_Data (Tmp));
-               Create_Menu_Entry (Child);
-               Tmp := Next (Tmp);
-            end loop;
-         end;
+         Tmp := First (MDI.Items);
+
+         while Tmp /= Null_List loop
+            Child := MDI_Child (Get_Data (Tmp));
+            Create_Menu_Entry (Child);
+            Tmp := Next (Tmp);
+         end loop;
 
          Widget_Callback.Object_Connect
            (MDI.Menu, "destroy",
