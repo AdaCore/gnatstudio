@@ -37,8 +37,8 @@ with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
 with Gtk.Scrolled_Window;        use Gtk.Scrolled_Window;
+with Gtk.Text_Layout;            use Gtk.Text_Layout;
 
-with GNAT.OS_Lib;                use GNAT.OS_Lib;
 with Language;                   use Language;
 with Src_Editor;                 use Src_Editor;
 with Src_Editor_Buffer;          use Src_Editor_Buffer;
@@ -66,6 +66,28 @@ package body Src_Editor_Box is
    -- Forward declarations --
    --------------------------
 
+   function To_Box_Line (Line : Gint) return Positive;
+   pragma Inline (To_Box_Line);
+   --  Convert a line number in the Source Buffer to a line number in the
+   --  Source Box. This conversion is necessary because line numbers start
+   --  from 1 in the Source Box (this is the natural numbering for humans),
+   --  whereas it starts from 0 in the Source Box.
+
+   function To_Box_Column (Col : Gint) return Positive;
+   pragma Inline (To_Box_Column);
+   --  Convert a column number in the Source Buffer to a column number
+   --  in the Source Box. Same rationale as in To_Box_Line.
+
+   function To_Buffer_Line (Line : Positive) return Gint;
+   pragma Inline (To_Buffer_Line);
+   --  Convert a line number in the Source Box to a line number in the
+   --  Source Buffer. Same rationale as in To_Box_Line.
+
+   function To_Buffer_Column (Col : Positive) return Gint;
+   pragma Inline (To_Buffer_Column);
+   --  Convert to a column number in the Source Box to a column number
+   --  in the Source Buffer. Same rationale as in To_Box_Line.
+
    procedure Show_Cursor_Position
      (Box    : Source_Editor_Box;
       Line   : Gint;
@@ -79,6 +101,50 @@ package body Src_Editor_Box is
    --  This handler is merly a proxy to Show_Cursor_Position. It just
    --  extracts the necessary values from Params, and pass them on to
    --  Show_Cursor_Position.
+
+   procedure Initialize_Box
+     (Box    : access Source_Editor_Box_Record;
+      Source : Source_Buffer := null;
+      Lang   : Language.Language_Access);
+   --  Perform the initialization of the given editor box. If Source_Buffer
+   --  is null, then a new buffer will automatically be created. Otherwise,
+   --  the editor creates a new editor for the same Source_Buffer.
+
+   -----------------
+   -- To_Box_Line --
+   -----------------
+
+   function To_Box_Line (Line : Gint) return Positive is
+   begin
+      return Positive (Line + 1);
+   end To_Box_Line;
+
+   -------------------
+   -- To_Box_Column --
+   -------------------
+
+   function To_Box_Column (Col : Gint) return Positive is
+   begin
+      return Positive (Col + 1);
+   end To_Box_Column;
+
+   --------------------
+   -- To_Buffer_Line --
+   --------------------
+
+   function To_Buffer_Line (Line : Positive) return Gint is
+   begin
+      return Gint (Line - 1);
+   end To_Buffer_Line;
+
+   ----------------------
+   -- To_Buffer_Column --
+   ----------------------
+
+   function To_Buffer_Column (Col : Positive) return Gint is
+   begin
+      return Gint (Col - 1);
+   end To_Buffer_Column;
 
    --------------------------
    -- Show_Cursor_Position --
@@ -97,9 +163,11 @@ package body Src_Editor_Box is
       --  0. It is more natural to start from one, so the Line and Column
       --  number displayed are incremented by 1 to start from 1.
       Set_Text
-        (Box.Cursor_Line_Label, Image (Line + 1, Nb_Digits_For_Line_Number));
+        (Box.Cursor_Line_Label,
+         Image (To_Box_Line (Line), Nb_Digits_For_Line_Number));
       Set_Text
-        (Box.Cursor_Column_Label, Image (Column + 1, Min_Column_Number_Width));
+        (Box.Cursor_Column_Label,
+         Image (To_Box_Column (Column), Min_Column_Number_Width));
    end Show_Cursor_Position;
 
    -------------------------------------
@@ -117,25 +185,14 @@ package body Src_Editor_Box is
       Show_Cursor_Position (Box, Line => Line, Column => Col);
    end Cursor_Position_Changed_Handler;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   --------------------
+   -- Initialize_Box --
+   --------------------
 
-   procedure Gtk_New
-     (Box  : out Source_Editor_Box;
-      Lang : Language.Language_Access := null) is
-   begin
-      Box := new Source_Editor_Box_Record;
-      Initialize (Box, Lang);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Box  : access Source_Editor_Box_Record;
-      Lang : Language.Language_Access)
+   procedure Initialize_Box
+     (Box    : access Source_Editor_Box_Record;
+      Source : Source_Buffer := null;
+      Lang   : Language.Language_Access)
    is
       Frame          : Gtk_Frame;
       Hbox           : Gtk_Box;
@@ -156,7 +213,12 @@ package body Src_Editor_Box is
          V_Scrollbar_Policy => Policy_Automatic);
       Add (Frame, Scrolling_Area);
 
-      Gtk_New (Box.Source_Buffer, Lang => Lang);
+      if Source = null then
+         Gtk_New (Box.Source_Buffer, Lang => Lang);
+      else
+         Box.Source_Buffer := Source;
+         Set_Language (Box.Source_Buffer, Lang => Lang);
+      end if;
 
       Gtk_New (Box.Source_View, Box.Source_Buffer, Show_Line_Numbers => True);
       Add (Scrolling_Area, Box.Source_View);
@@ -209,6 +271,29 @@ package body Src_Editor_Box is
 
       Show_Cursor_Position (Source_Editor_Box (Box), Line => 0, Column => 0);
 
+   end Initialize_Box;
+
+   -------------
+   -- Gtk_New --
+   -------------
+
+   procedure Gtk_New
+     (Box  : out Source_Editor_Box;
+      Lang : Language.Language_Access := null) is
+   begin
+      Box := new Source_Editor_Box_Record;
+      Initialize (Box, Lang);
+   end Gtk_New;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   procedure Initialize
+     (Box  : access Source_Editor_Box_Record;
+      Lang : Language.Language_Access) is
+   begin
+      Initialize_Box (Box, Lang => Lang);
    end Initialize;
 
    ---------------------
@@ -220,7 +305,7 @@ package body Src_Editor_Box is
       Source : access Source_Editor_Box_Record) is
    begin
       Box := new Source_Editor_Box_Record;
-      --  ??? This procedure is not completely implemented yet...
+      Initialize_Box (Box, Source.Source_Buffer, Get_Language (Source));
    end Create_New_View;
 
    -------------
@@ -280,38 +365,9 @@ package body Src_Editor_Box is
      (Editor          : access Source_Editor_Box_Record;
       Filename        : String;
       Lang_Autodetect : Boolean := True;
-      Success         : out Boolean)
-   is
-      FD : File_Descriptor;
-      Buffer_Length : constant := 1_024;
-      Buffer : String (1 .. Buffer_Length);
-      Characters_Read : Natural;
+      Success         : out Boolean) is
    begin
-      Success := True;
-
-      FD := Open_Read (Filename & ASCII.NUL, Fmode => Text);
-      if FD = Invalid_FD then
-         Success := False;
-         return;
-      end if;
-
-      Clear (Editor.Source_Buffer);
-
-      if Lang_Autodetect then
-         Set_Language
-           (Editor.Source_Buffer, Get_Language_From_File (Filename));
-      end if;
-
-      Characters_Read := Buffer_Length;
-      while Characters_Read = Buffer_Length loop
-         Characters_Read := Read (FD, Buffer'Address, Buffer_Length);
-         if Characters_Read > 0 then
-            Insert_At_Cursor
-              (Editor.Source_Buffer, Buffer (1 ..  Characters_Read));
-         end if;
-      end loop;
-
-      Close (FD);
+      Load_File (Editor.Source_Buffer, Filename, Lang_Autodetect, Success);
    end Load_File;
 
    ------------------
@@ -335,5 +391,85 @@ package body Src_Editor_Box is
    begin
       return Get_Language (Editor.Source_Buffer);
    end Get_Language;
+
+   -------------------------
+   -- Set_Cursor_Location --
+   -------------------------
+
+   procedure Set_Cursor_Location
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Column  : Positive := 1;
+      Success : out Boolean)
+   is
+      Buffer_Line  : constant Gint := To_Buffer_Line (Line);
+      Buffer_Col   : constant Gint := To_Buffer_Column (Column);
+   begin
+      Set_Cursor_Position
+        (Editor.Source_Buffer, Buffer_Line, Buffer_Col, Success);
+   end Set_Cursor_Location;
+
+   ------------------------
+   -- Get_CursorLocation --
+   ------------------------
+
+   procedure Get_Cursor_Location
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : out Positive;
+      Column  : out Positive)
+   is
+      Buffer_Line : Gint;
+      Buffer_Col  : Gint;
+   begin
+      Get_Cursor_Position (Editor.Source_Buffer, Buffer_Line, Buffer_Col);
+      Line   := To_Box_Line (Buffer_Line);
+      Column := To_Box_Column (Buffer_Col);
+   end Get_Cursor_Location;
+
+   --------------------
+   -- Highlight_Line --
+   --------------------
+
+   procedure Highlight_Line
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Success : out Boolean) is
+   begin
+      Highlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line), Success);
+      --  Tell the view that something has changed in the layout, to avoid
+      --  waiting for the next cursor blink to see the highlighting appearing.
+      --  ??? Would that be a bug in Gtk+?
+      Default_Style_Changed (Get_Layout (Editor.Source_View));
+   end Highlight_Line;
+
+   ----------------------
+   -- Unhighlight_Line --
+   ----------------------
+
+   procedure Unhighlight_Line
+     (Editor  : access Source_Editor_Box_Record;
+      Line    : Positive;
+      Success : out Boolean) is
+   begin
+      Unhighlight_Line (Editor.Source_Buffer, To_Buffer_Line (Line), Success);
+      --  Tell the view that something has changed in the layout, to avoid
+      --  waiting for the next cursor blink to see the highlighting appearing.
+      --  ??? Would that be a bug in Gtk+?
+      Default_Style_Changed (Get_Layout (Editor.Source_View));
+   end Unhighlight_Line;
+
+   ---------------------------
+   -- Cancel_Highlight_Line --
+   ---------------------------
+
+   procedure Cancel_Highlight_Line
+     (Editor : access Source_Editor_Box_Record) is
+   begin
+      Cancel_Highlight_Line (Editor.Source_Buffer);
+      --  Tell the view that something has changed in the layout, to avoid
+      --  waiting for the next cursor blink to see the highlighting appearing.
+      --  ??? Would that be a bug in Gtk+?
+      Default_Style_Changed (Get_Layout (Editor.Source_View));
+   end Cancel_Highlight_Line;
 
 end Src_Editor_Box;
