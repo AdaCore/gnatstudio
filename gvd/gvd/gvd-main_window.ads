@@ -19,11 +19,11 @@
 -----------------------------------------------------------------------
 
 with Glib;
+with Gtk.Accel_Group;  use Gtk.Accel_Group;
+with Gtk.Item_Factory; use Gtk.Item_Factory;
 with Gtk.Menu_Bar; use Gtk.Menu_Bar;
 with Gtk.Window; use Gtk.Window;
 with Gtk.Widget; use Gtk.Widget;
-with Gtk.Item_Factory; use Gtk.Item_Factory;
-with Gtk.Accel_Group;  use Gtk.Accel_Group;
 with GVD.Preferences_Dialog; use GVD.Preferences_Dialog;
 with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
 with GVD.Session_Dialog; use GVD.Session_Dialog;
@@ -114,6 +114,12 @@ package GVD.Main_Window is
      (Main_Window : access GVD_Main_Window_Record'Class;
       Key         : String;
       Menu_Items  : Gtk_Item_Factory_Entry_Array);
+   --  Internal initialize function.
+
+   procedure Set_Toolbar
+     (Main_Window : access GVD_Main_Window_Record'Class;
+      Toolbar     : access Gtk_Widget_Record'Class);
+   --  Set the main window's toolbar
 
    procedure Update_External_Dialogs
      (Window   : access GVD_Main_Window_Record'Class;

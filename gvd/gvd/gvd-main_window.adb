@@ -141,6 +141,22 @@ package body GVD.Main_Window is
       Add_File_Extensions (Cpp_Lang, Get_Pref (Cpp_Extensions));
    end Initialize;
 
+   -----------------
+   -- Set_Toolbar --
+   -----------------
+
+   procedure Set_Toolbar
+     (Main_Window : access GVD_Main_Window_Record'Class;
+      Toolbar     : access Gtk_Widget_Record'Class)
+   is
+      Box : Gtk_Hbox;
+   begin
+      Gtk_New_Hbox (Box, False, 0);
+      Pack_Start (Main_Window.Toolbar_Box, Box, False, False);
+      Pack_Start (Box, Toolbar, False, False);
+      Show_All (Box);
+   end Set_Toolbar;
+
    -----------------------------
    -- Update_External_Dialogs --
    -----------------------------
