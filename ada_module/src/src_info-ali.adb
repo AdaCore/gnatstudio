@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -948,6 +948,12 @@ package body Src_Info.ALI is
 
       --  Save the Source_File associated to this Sdep for later use.
       Sfiles (Id) := Sfile;
+
+   exception
+      when ALI_Internal_Error =>
+         --  Temporary: Do nothing in this case, this is probably a dependency
+         --  on a file other than an ALI file (preprocessing from gnatmake,...)
+         null;
    end Process_Sdep_As_External;
 
    -------------------
@@ -1229,6 +1235,13 @@ package body Src_Info.ALI is
             Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
             Predefined_Entity_Name => Xref_Ent.Tref_Standard_Entity,
             Next  => Decl.Parent_Location);
+
+         if Decl.Kind.Kind = Function_Or_Operator
+           or else Decl.Kind.Kind = Procedure_Kind
+           or else Decl.Kind.Kind = Entry_Or_Entry_Family
+         then
+            Decl.Parent_Location.Kind := Returned_Type;
+         end if;
 
       else
          Decl.Parent_Location := null;
