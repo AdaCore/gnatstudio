@@ -155,15 +155,15 @@ package body GVD_Module is
    --  Set the appropriate debugger menu items to the corresponding state.
 
    type GVD_Module_Record is new Module_ID_Record with record
-      Kernel           : Kernel_Handle;
+      Kernel                         : Kernel_Handle;
 
-      Initialized      : Boolean := False;
+      Initialized                    : Boolean := False;
       --  Whether the debugger is running;
 
-      Show_Lines_With_Code : Boolean;
+      Show_Lines_With_Code           : Boolean;
       --  Whether the lines with code should be explicitly queried.
 
-      Initialize_Menu  : Gtk_Menu;
+      Initialize_Menu                : Gtk_Menu;
 
       Current_Executable_For_Project : Virtual_File :=
         Create_From_Base ("</\unknown>");
@@ -174,9 +174,16 @@ package body GVD_Module is
       --  It might be left to No_File in case we don't know the
       --  executable because the module was already loaded on cross targets.
 
-      Delete_Id         : Handler_Id := (Null_Signal_Id, null);
-      File_Hook         : File_Edited_Hook;
-      Lines_Hook        : Lines_Revealed_Hook;
+      Delete_Id                      : Handler_Id := (Null_Signal_Id, null);
+      File_Hook                      : File_Edited_Hook;
+      Lines_Hook                     : Lines_Revealed_Hook;
+
+      Cont_Button,
+      Step_Button,
+      Next_Button,
+      Finish_Button,
+      Up_Button,
+      Down_Button                    : Gtk.Widget.Gtk_Widget;
    end record;
    type GVD_Module is access all GVD_Module_Record'Class;
 
@@ -196,6 +203,13 @@ package body GVD_Module is
       Width       : out Gint;
       Height      : out Gint);
    --  Create a pixmap suitable for a tooltip, if debugger has been initialized
+
+   procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class);
+   --  Add debugger related buttons to the main toolbar.
+
+   procedure Remove_Debug_Buttons
+     (Kernel : access Kernel_Handle_Record'Class);
+   --  Remove debugger related buttons from the main toolbar.
 
    type Debugger_State is (Debug_None, Debug_Busy, Debug_Available);
    --  Possible states of a debugger:
@@ -717,6 +731,112 @@ package body GVD_Module is
 
    procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "executable_changed" signal on the debugger process.
+
+   -----------------------
+   -- Add_Debug_Buttons --
+   -----------------------
+
+   procedure Add_Debug_Buttons (Kernel : access Kernel_Handle_Record'Class) is
+      Module   : constant GVD_Module := GVD_Module (GVD_Module_ID);
+      Toolbar  : constant Gtk_Toolbar  := Get_Toolbar (Kernel);
+      Window   : constant Gtk_Window := Get_Main_Window (Kernel);
+      Image    : Gtk_Image;
+
+   begin
+      if Module.Cont_Button /= null then
+         return;
+      end if;
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (run_xpm));
+      Module.Cont_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Go",
+         Tooltip_Text => -"Start/Continue the debugged program",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Cont_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Start_Continue'Access),
+         Window);
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
+      Module.Step_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Step",
+         Tooltip_Text => -"Step",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Step_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Step'Access), Window);
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
+      Module.Next_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Next",
+         Tooltip_Text => -"Next",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Next_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Next'Access), Window);
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
+      Module.Finish_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Finish",
+         Tooltip_Text => -"Execute until selected stack frame returns",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Finish_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Finish'Access), Window);
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
+      Module.Up_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Up",
+         Tooltip_Text =>
+         -"Select and print stack frame that called this one",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Up_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Up'Access), Window);
+
+      Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
+      Module.Down_Button := Append_Element
+        (Toolbar      => Toolbar,
+         The_Type     => Toolbar_Child_Button,
+         Text         => -"Down",
+         Tooltip_Text => -"Select and print stack frame called by this one",
+         Icon         => Gtk_Widget (Image));
+      Widget_Callback.Object_Connect
+        (Module.Down_Button, "clicked",
+         Widget_Callback.To_Marshaller (On_Down'Access), Window);
+   end Add_Debug_Buttons;
+
+   --------------------------
+   -- Remove_Debug_Buttons --
+   --------------------------
+
+   procedure Remove_Debug_Buttons
+     (Kernel : access Kernel_Handle_Record'Class)
+   is
+      Module  : constant GVD_Module  := GVD_Module (GVD_Module_ID);
+      Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
+
+   begin
+      if Module.Cont_Button /= null then
+         Remove (Toolbar, Module.Cont_Button);
+         Remove (Toolbar, Module.Step_Button);
+         Remove (Toolbar, Module.Next_Button);
+         Remove (Toolbar, Module.Finish_Button);
+         Remove (Toolbar, Module.Up_Button);
+         Remove (Toolbar, Module.Down_Button);
+         Module.Cont_Button := null;
+      end if;
+   end Remove_Debug_Buttons;
 
    -------------------------
    -- Initialize_Debugger --
@@ -1398,13 +1518,17 @@ package body GVD_Module is
      (Kernel : Kernel_Handle;
       State  : Debugger_State)
    is
-      Top       : constant Glide_Window :=
-        Glide_Window (Get_Main_Window (Kernel));
       Debug     : constant String := '/' & (-"Debug") & '/';
       Available : constant Boolean := State = Debug_Available;
       Sensitive : constant Boolean := State /= Debug_None;
 
    begin
+      if State = Debug_Available then
+         Add_Debug_Buttons (Kernel);
+      elsif State = Debug_None then
+         Remove_Debug_Buttons (Kernel);
+      end if;
+
       Set_Sensitive
         (Find_Menu_Item (Kernel, Debug & (-"Debug")), Available);
       Set_Sensitive
@@ -1427,13 +1551,6 @@ package body GVD_Module is
         (Kernel, Debug & (-"Terminate Current")), Sensitive);
       Set_Sensitive (Find_Menu_Item
         (Kernel, Debug & (-"Terminate")), Sensitive);
-
-      Set_Sensitive (Top.Cont_Button, Sensitive);
-      Set_Sensitive (Top.Step_Button, Sensitive);
-      Set_Sensitive (Top.Next_Button, Sensitive);
-      Set_Sensitive (Top.Finish_Button, Sensitive);
-      Set_Sensitive (Top.Up_Button, Sensitive);
-      Set_Sensitive (Top.Down_Button, Sensitive);
    end Set_Sensitive;
 
    -------------------
@@ -2341,7 +2458,7 @@ package body GVD_Module is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Window : constant Gtk_Window := Get_Main_Window (Kernel_Handle (Kernel));
+      Window : constant Gtk_Window := Get_Main_Window (Kernel);
       Top    : constant Glide_Window := Glide_Window (Window);
       Id     : constant GVD_Module  := GVD_Module (GVD_Module_ID);
       Prev   : Boolean;
@@ -2368,15 +2485,11 @@ package body GVD_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Toolbar      : constant Gtk_Toolbar := Get_Toolbar (Kernel);
-      Window       : constant Gtk_Window  := Get_Main_Window (Kernel);
-      Top          : constant Glide_Window := Glide_Window (Window);
-      Debug        : constant String := '/' & (-"Debug") & '/';
-      Debug_Sub    : constant String := Debug & (-"_Debug") & '/';
-      Data_Sub     : constant String := Debug & (-"Data") & '/';
-      Mitem        : Gtk_Menu_Item;
-      Menu         : Gtk_Menu;
-      Image        : Gtk_Image;
+      Debug     : constant String := '/' & (-"Debug") & '/';
+      Debug_Sub : constant String := Debug & (-"_Debug") & '/';
+      Data_Sub  : constant String := Debug & (-"Data") & '/';
+      Mitem     : Gtk_Menu_Item;
+      Menu      : Gtk_Menu;
 
    begin
       GVD_Module_ID := new GVD_Module_Record;
@@ -2490,78 +2603,6 @@ package body GVD_Module is
                      On_Debug_Terminate_Current'Access, Sensitive => False);
       Register_Menu (Kernel, Debug, -"Ter_minate", "",
                      On_Debug_Terminate'Access, Sensitive => False);
-
-      --  Add debugger buttons in the toolbar
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (run_xpm));
-      Top.Toolbar_Space := Append_Element
-        (Toolbar  => Toolbar,
-         The_Type => Toolbar_Child_Space);
-      Top.Cont_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Go",
-         Tooltip_Text => -"Start/Continue the debugged program",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Cont_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Start_Continue'Access),
-         Window);
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (step_xpm));
-      Top.Step_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Step",
-         Tooltip_Text => -"Step",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Step_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Step'Access), Window);
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (next_xpm));
-      Top.Next_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Next",
-         Tooltip_Text => -"Next",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Next_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Next'Access), Window);
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (finish_xpm));
-      Top.Finish_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Finish",
-         Tooltip_Text => -"Execute until selected stack frame returns",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Finish_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Finish'Access), Window);
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (up_xpm));
-      Top.Up_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Up",
-         Tooltip_Text => -"Select and print stack frame that called this one",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Up_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Up'Access), Window);
-
-      Gtk_New (Image, Gdk_New_From_Xpm_Data (down_xpm));
-      Top.Down_Button := Append_Element
-        (Toolbar      => Toolbar,
-         The_Type     => Toolbar_Child_Button,
-         Text         => -"Down",
-         Tooltip_Text => -"Select and print stack frame called by this one",
-         Icon         => Gtk_Widget (Image));
-      Widget_Callback.Object_Connect
-        (Top.Down_Button, "clicked",
-         Widget_Callback.To_Marshaller (On_Down'Access), Window);
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
