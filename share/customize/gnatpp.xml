@@ -9,11 +9,11 @@
       <filter language="ada"
               error="Pretty printing requires an Ada file" />
 
-      <shell>save_all</shell>
-      <shell>scenario_variables_cmd_line -X</shell>
-      <external output="">gnat pretty -rf %pps %1 %F</external>
+      <shell>MDI.save_all</shell>
+      <shell>Project.scenario_variables_cmd_line -X</shell>
+      <external output="">gnat pretty -rf "%pps" "%1" "%F"</external>
       <on-failure>Locations.parse """%1 """ "Pretty printer"</on-failure>
-      <shell>edit %F 0 0 0 true</shell>
+      <shell>Editor.edit "%F" 0 0 0 true</shell>
    </action>
 
    <Submenu>
