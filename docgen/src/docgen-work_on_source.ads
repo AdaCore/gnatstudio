@@ -90,7 +90,7 @@ package Docgen.Work_On_Source is
      (B                             : access Docgen.Backend.Backend'Class;
       Kernel                        : access Kernel_Handle_Record'Class;
       Subprogram_Index_List         : Docgen.Type_Entity_List.List;
-      Private_Subprogram_Index_List : in out Type_Entity_List.List;
+      Private_Subprogram_Index_List : Type_Entity_List.List;
       Source_File_List              : Type_Source_File_Table.HTable;
       Options                       : Docgen.All_Options);
    --  Create the index file for the subprograms
@@ -101,7 +101,7 @@ package Docgen.Work_On_Source is
      (B                       : access Docgen.Backend.Backend'Class;
       Kernel                  : access Kernel_Handle_Record'Class;
       Type_Index_List         : Docgen.Type_Entity_List.List;
-      Private_Type_Index_List : in out Type_Entity_List.List;
+      Private_Type_Index_List : Type_Entity_List.List;
       Source_File_List        : Type_Source_File_Table.HTable;
       Options                 : All_Options);
    --  Create the index file for the types.
@@ -112,8 +112,8 @@ package Docgen.Work_On_Source is
      (B                         : access Docgen.Backend.Backend'Class;
       Kernel                    : access Kernel_Handle_Record'Class;
       Tagged_Type_Index_List    : List_Entity_Information.List;
-      Private_Tagged_Types_List : in out List_Entity_Information.List;
-      Source_File_List          : in out Type_Source_File_Table.HTable;
+      Private_Tagged_Types_List : List_Entity_Information.List;
+      Source_File_List          : Type_Source_File_Table.HTable;
       Options                   : All_Options);
    --  Create the index file for the tagged types.
    --  Tagged_Type_Index_List    : list of public tagged types.
