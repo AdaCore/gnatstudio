@@ -1211,6 +1211,23 @@ package body GVD_Module is
          end if;
 
          declare
+            Ptr         : GNAT.OS_Lib.String_Access :=
+              GNAT.OS_Lib.Get_Executable_Suffix;
+            Module_Exec : constant String := Module.all & Ptr.all;
+
+         begin
+            GNAT.OS_Lib.Free (Ptr);
+
+            if Module'Length > 0
+              and then not GNAT.OS_Lib.Is_Regular_File (Module.all)
+              and then GNAT.OS_Lib.Is_Regular_File (Module_Exec)
+            then
+               Free (Module);
+               Module := new String'(Module_Exec);
+            end if;
+         end;
+
+         declare
             Args : GNAT.OS_Lib.Argument_List_Access :=
               GNAT.OS_Lib.Argument_String_To_List (Get_Attribute_Value
                 (Get_Project (K), Debugger_Command_Attribute,
