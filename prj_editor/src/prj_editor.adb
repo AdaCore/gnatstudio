@@ -12,12 +12,12 @@ with Gtk.Window;      use Gtk.Window;
 with Gtk.Enums;       use Gtk.Enums;
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Box;         use Gtk.Box;
-with Gtk.Button;      use Gtk.Button;
 
 with Project_Trees;   use Project_Trees;
 with Project_Viewers; use Project_Viewers;
 with Scenario_Views;  use Scenario_Views;
+
+with Gtkada.MDI;      use Gtkada.MDI;
 
 procedure Prj_Editor is
 
@@ -25,11 +25,11 @@ procedure Prj_Editor is
    Project_View : Project_Id;
 
    Win : Gtk_Window;
-   Box : Gtk_Box;
-   Button : Gtk_Button;
    Tree : Project_Tree;
    Viewer : Project_Viewer;
    Scenar : Scenario_View;
+   MDI : MDI_Window;
+   Child : MDI_Child;
 
    procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
    --  Called every time the selection has changed in the tree
@@ -73,6 +73,7 @@ procedure Prj_Editor is
       Prj.Com.Units.Set_Last (No_Unit);
       Prj.Com.Units_Htable.Reset;
 
+      Pretty_Print (Project);
       Process (Project => Project_View, From_Project_Node => Project);
       Errout.Finalize;
       pragma Assert (Project_View /= No_Project);
@@ -83,15 +84,26 @@ procedure Prj_Editor is
    end Refresh_Tree;
 
 begin
+
+   Prj.Part.Parse (Project, "root.gpr", Always_Errout_Finalize => True);
+   pragma Assert (Project /= Empty_Node);
+
+
    Gtk.Main.Init;
+
    Gtk_New (Win, Window_Toplevel);
-   Set_Default_Size (Win, 200, 200);
+   Set_Default_Size (Win, 500, 500);
 
-   Gtk_New_Vbox (Box, Homogeneous => False);
-   Add (Win, Box);
+   Gtk_New (MDI);
+   Add (Win, MDI);
+   Set_Priorities (MDI, (Top => 1, Left => 2, others => 3));
 
+
+   --  Explorer
    Gtk_New (Tree, Columns => 1);
-   Add (Box, Tree);
+   Child := Put (MDI, Tree);
+   Set_Dock_Side (Child, Left);
+   Dock_Child (Child);
 
    Widget_Callback.Connect
      (Tree, "tree_select_row",
@@ -100,27 +112,27 @@ begin
      (Tree, "tree_unselect_row",
       Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access));
 
-   Prj.Part.Parse (Project, "root.gpr", Always_Errout_Finalize => False);
-   pragma Assert (Project /= Empty_Node);
+   --  Project Viewer
 
-   Show_All (Win);
-
-   Gtk_New (Win, Window_Toplevel);
-   Set_Default_Size (Win, 200, 200);
    Gtk_New (Viewer);
-   Add (Win, Viewer);
-   Show_All (Win);
+   Child := Put (MDI, Viewer);
 
-   Gtk_New (Win, Window_Toplevel);
+   --  Scenario editor
+
    Gtk_New (Scenar, Project);
-   Add (Win, Scenar);
-   Show_All (Win);
+   Child := Put (MDI, Scenar);
+   Set_Dock_Side (Child, Top);
+   Dock_Child (Child);
 
    Widget_Callback.Object_Connect
      (Scenar, "changed",
       Widget_Callback.To_Marshaller (Refresh_Tree'Unrestricted_Access), Tree);
 
    Refresh_Tree (Tree);
+
+   Maximize_Children (MDI);
+
+   Show_All (Win);
    Main;
    Pretty_Print (Project);
 end Prj_Editor;
