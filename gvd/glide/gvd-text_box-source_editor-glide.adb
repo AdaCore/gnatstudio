@@ -217,8 +217,8 @@ package body GVD.Text_Box.Source_Editor.Glide is
    is
       pragma Unreferenced (Force);
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
-      File   : constant String := To_Host_Pathname
-        (GNAT.OS_Lib.Normalize_Pathname (File_Name));
+      File   : constant String := GNAT.OS_Lib.Normalize_Pathname
+        (To_Host_Pathname (File_Name));
 
    begin
       if Editor.Current_File = null
