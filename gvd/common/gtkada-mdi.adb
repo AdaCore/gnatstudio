@@ -1451,6 +1451,15 @@ package body Gtkada.MDI is
    end Put;
 
    ---------------
+   -- Get_Title --
+   ---------------
+
+   function Get_Title (Child : access MDI_Child_Record) return String is
+   begin
+      return Child.Title.all;
+   end Get_Title;
+
+   ---------------
    -- Set_Title --
    ---------------
 

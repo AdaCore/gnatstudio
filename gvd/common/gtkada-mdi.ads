@@ -136,6 +136,9 @@ package Gtkada.MDI is
    --  In every case, this title will be the one used for the window when the
    --  child is set to floating state.
 
+   function Get_Title (Child : access MDI_Child_Record) return String;
+   --  Return the title of a given child.
+
    procedure Raise_Child (Child : access MDI_Child_Record'Class);
    --  Put Child in the foreground.
 
