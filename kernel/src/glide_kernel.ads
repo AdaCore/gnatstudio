@@ -280,11 +280,11 @@ package Glide_Kernel is
    --  Free the memory occupied by Context. It automatically calls the
    --  primitive subprogram Destroy as well
 
-   function Get_Current_Context (Kernel : access Kernel_Handle_Record)
-      return Selection_Context_Access;
+   function Get_Current_Context
+     (Kernel : access Kernel_Handle_Record) return Selection_Context_Access;
    --  Return the context associated with the current MDI child.
-   --  The called should free the returned value, this is taken care of by the
-   --  kernel automatically.
+   --  The caller should not free the returned value, this is taken care of by
+   --  the kernel automatically.
    --  The returned value might be null, if the current child doesn't support
    --  selection contexts.
    --  This function is mostly intended to be called for the callbacks in the
