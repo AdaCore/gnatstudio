@@ -95,6 +95,10 @@ package body Diff_Utils is
                when others =>
                   raise Program_Error;
             end case;
+
+         exception
+            when Constraint_Error =>
+               null;
          end;
       end loop;
 
