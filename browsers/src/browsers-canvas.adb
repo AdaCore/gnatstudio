@@ -49,7 +49,6 @@ with Pango.Layout;        use Pango.Layout;
 
 with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with GNAT.OS_Lib;         use GNAT.OS_Lib;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -830,16 +829,12 @@ package body Browsers.Canvas is
    procedure Set_Title
      (Item : access Browser_Item_Record'Class;  Title : String := "") is
    begin
-      Free (Item.Title);
-
       if Title = "" then
          if Item.Title_Layout /= null then
             Unref (Item.Title_Layout);
             Item.Title_Layout := null;
          end if;
       else
-         Item.Title := new String'(Title);
-
          if Item.Title_Layout = null then
             Item.Title_Layout := Create_Pango_Layout (Item.Browser, Title);
             Set_Font_Description
@@ -857,14 +852,84 @@ package body Browsers.Canvas is
 
    procedure Close_Item
      (Event : Gdk.Event.Gdk_Event;
-      User  : access Browser_Item_Record'Class) is
+      User  : access Browser_Item_Record'Class)
+   is
+      B : constant General_Browser := Get_Browser (User);
    begin
       if Get_Button (Event) = 1
         and then Get_Event_Type (Event) = Button_Release
       then
-         Remove (Get_Canvas (Get_Browser (User)), User);
+         if B.Selected_Item = Canvas_Item (User) then
+            Internal_Select (B, null, True);
+         end if;
+
+         Remove (Get_Canvas (B), User);
       end if;
    end Close_Item;
+
+   ---------------------------
+   -- Draw_Title_Bar_Button --
+   ---------------------------
+
+   procedure Draw_Title_Bar_Button
+     (Item   : access Browser_Item_Record;
+      Num    : Gint;
+      Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      Cb     : Active_Area_Callback'Class)
+   is
+      Button_Width  : constant Gint := Get_Width  (Item.Browser.Close_Pixmap);
+      Button_Height : constant Gint := Get_Height (Item.Browser.Close_Pixmap);
+      X : constant Gint := Get_Coord (Item).Width
+        - (Num + 1) * (Margin + Button_Width);
+      Y, W, H : Gint;
+   begin
+      --  No title ? Don't draw any button
+      if Item.Title_Layout = null then
+         return;
+      end if;
+
+      Get_Pixel_Size (Item.Title_Layout, W, H);
+      Y := (H - Button_Height) / 2;
+
+      Draw_Shadow
+        (Style       => Get_Style (Item.Browser),
+         Window      => Pixmap (Item),
+         State_Type  => State_Normal,
+         Shadow_Type => Shadow_Out,
+         X           => X,
+         Y           => Y,
+         Width       => Button_Width,
+         Height      => Button_Height);
+
+      Render_To_Drawable_Alpha
+        (Pixbuf       => Pixbuf,
+         Drawable     => Pixmap (Item),
+         Src_X        => 0,
+         Src_Y        => 0,
+         Dest_X       => X,
+         Dest_Y       => Y,
+         Width        => -1,
+         Height       => -1,
+         Alpha        => Alpha_Full,
+         Alpha_Threshold => 128);
+
+      Add_Active_Area
+        (Item,
+         Gdk_Rectangle'(X, Y, Button_Width, Button_Height),
+         Cb);
+   end Draw_Title_Bar_Button;
+
+   ----------------------------
+   -- Get_Last_Button_Number --
+   ----------------------------
+
+   function Get_Last_Button_Number (Item : access Browser_Item_Record)
+      return Gint
+   is
+      pragma Unreferenced (Item);
+   begin
+      return 0;
+   end Get_Last_Button_Number;
 
    ---------------------
    -- Resize_And_Draw --
@@ -876,14 +941,17 @@ package body Browsers.Canvas is
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint)
    is
-      W, H, Y, X  : Gint;
+      Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
+        (Browser_Item (Item));  --  dispatching call
+      Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
+      W, H  : Gint;
       Layout_H : Gint := 0;
       Bg_GC : Gdk_GC;
    begin
-      if Item.Title /= null then
+      if Item.Title_Layout /= null then
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
-         W := Gint'Max (W + 3 * Margin + Get_Width (Item.Browser.Close_Pixmap),
-                        Width);
+         W := Gint'Max
+           (W + 2 * Margin + Num_Buttons * (Margin + Button_Width), Width);
          H := Layout_H + Height;
       else
          W := Width;
@@ -921,7 +989,7 @@ package body Browsers.Canvas is
          Width  => W,
          Height => H);
 
-      if Item.Title /= null then
+      if Item.Title_Layout /= null then
          Draw_Rectangle
            (Pixmap (Item),
             GC     => Item.Browser.Title_GC,
@@ -943,36 +1011,12 @@ package body Browsers.Canvas is
             Y1     => Layout_H,
             X2     => W,
             Y2     => Layout_H);
-         X := W - Margin - Get_Width (Item.Browser.Close_Pixmap);
-         Y := Yoffset +
-           (Layout_H - Get_Height (Item.Browser.Close_Pixmap)) / 2;
-         Draw_Shadow
-           (Style       => Get_Style (Item.Browser),
-            Window      => Pixmap (Item),
-            State_Type  => State_Normal,
-            Shadow_Type => Shadow_Out,
-            X           => X,
-            Y           => Y,
-            Width       => Get_Width (Item.Browser.Close_Pixmap),
-            Height      => Get_Height (Item.Browser.Close_Pixmap));
 
-         Render_To_Drawable_Alpha
-           (Pixbuf       => Item.Browser.Close_Pixmap,
-            Drawable     => Pixmap (Item),
-            Src_X        => 0,
-            Src_Y        => 0,
-            Dest_X       => X,
-            Dest_Y       => Y,
-            Width        => -1,
-            Height       => -1,
-            Alpha        => Alpha_Full,
-            Alpha_Threshold => 128);
-
-         Add_Active_Area
-           (Item,
-            Gdk_Rectangle'(X, Y, Get_Width (Item.Browser.Close_Pixmap),
-                           Get_Height (Item.Browser.Close_Pixmap)),
-            Build (Close_Item'Access, Item));
+         Draw_Title_Bar_Button
+           (Item   => Item,
+            Num    => 0,
+            Pixbuf => Item.Browser.Close_Pixmap,
+            Cb     => Build (Close_Item'Access, Item));
 
          Yoffset := Yoffset + Layout_H;
       end if;
@@ -1180,11 +1224,12 @@ package body Browsers.Canvas is
    -- Call --
    ----------
 
-   procedure Call
+   function Call
      (Callback : Item_Active_Area_Callback;
-      Event    : Gdk.Event.Gdk_Event) is
+      Event    : Gdk.Event.Gdk_Event) return Boolean is
    begin
       Callback.Cb (Event, Callback.User_Data);
+      return True;
    end Call;
 
    ---------------------
@@ -1337,8 +1382,7 @@ package body Browsers.Canvas is
             end if;
 
             if Area.Callback /= null then
-               Call (Area.Callback.all, Event);
-               return True;
+               return Call (Area.Callback.all, Event);
             end if;
          end if;
          return False;

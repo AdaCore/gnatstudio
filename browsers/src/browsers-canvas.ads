@@ -33,7 +33,6 @@ with Gtk.Hbutton_Box;
 with Gtk.Menu;
 with Gtk.Widget;
 with Pango.Layout;
-with GNAT.OS_Lib;
 with Ada.Unchecked_Deallocation;
 
 package Browsers.Canvas is
@@ -100,6 +99,32 @@ package Browsers.Canvas is
    --  Recompute the layout of items in the browser.
    --  If Force is true, then even the items that have been moved manually by
    --  the user are recomputed.
+
+   ------------------
+   -- Active areas --
+   ------------------
+   --  The items have a general mechanism to define active areas and nested
+   --  active areas. When the user clicks in the item, the appropriate callback
+   --  is called. The one chosen is the inner most one.
+   --  The callback chosen is undefined if two areas only partially overlap.
+
+   type Active_Area_Callback is abstract tagged null record;
+   type Active_Area_Cb is access all Active_Area_Callback'Class;
+   function Call (Callback : Active_Area_Callback;
+                  Event    : Gdk.Event.Gdk_Event)
+     return Boolean is abstract;
+   --  A callback for the active areas. Event is the mouse event that started
+   --  the chain that lead to callback.
+   --  This type provides an easy encapsulation for any user data you might
+   --  need.
+   --  Should return True if the event was handler, False otherwise. In the
+   --  latter case, the even is transmitted to the parent area
+
+   procedure Destroy (Callback : in out Active_Area_Callback);
+   --  Destroy the callback
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Active_Area_Callback'Class, Active_Area_Cb);
 
    -----------
    -- Items --
@@ -175,6 +200,34 @@ package Browsers.Canvas is
    --   - Modify Xoffset, Yoffset to the position that a child of item should
    --     be drawn at.
 
+   procedure Draw_Title_Bar_Button
+     (Item   : access Browser_Item_Record;
+      Num    : Glib.Gint;
+      Pixbuf : Gdk.Pixbuf.Gdk_Pixbuf;
+      Cb     : Active_Area_Callback'Class);
+   --  Draw the nth title bar button. They are numbered from right to left:
+   --       |--------------------------|
+   --       |  Title         [2][1][0] |
+   --       |--------------------------|
+   --  You can draw as many buttons as you want. However, make sure you have
+   --  reserved enough space (through Get_Last_Button_Number) or the buttons
+   --  will override the title itself.  Cb is called when the button is
+   --  pressed.
+   --
+   --  An item should use button numbers from the parent's
+   --  Get_Last_Button_Number + 1 upward.
+   --
+   --  The button (and its callback) will be destroyed the next time
+   --  Resize_And_Draw is called for the item.
+   --  All buttons are assumed to have the size Gtk.Enums.Icon_Size_Menu.
+   --
+   --  No button is drawn if no title was set for the item.
+
+   function Get_Last_Button_Number (Item : access Browser_Item_Record)
+      return Glib.Gint;
+   --  Return the last number of the button set by this item. This function is
+   --  used to make sure that no two items set the same button.
+
    procedure Reset (Browser : access General_Browser_Record'Class;
                     Item : access Browser_Item_Record);
    --  Reset the internal state of the item, as if it had never been expanded,
@@ -190,41 +243,6 @@ package Browsers.Canvas is
      (Item  : access Browser_Item_Record;
       Event : Gdk.Event.Gdk_Event_Button);
    --  See doc for inherited subprogram
-
-   ------------------
-   -- Active areas --
-   ------------------
-   --  The items have a general mechanism to define active areas and nested
-   --  active areas. When the user clicks in the item, the appropriate callback
-   --  is called. The one chosen is the inner most one.
-   --  The callback chosen is undefined if two areas only partially overlap.
-
-   type Active_Area_Callback is abstract tagged null record;
-   type Active_Area_Cb is access all Active_Area_Callback'Class;
-   procedure Call (Callback : Active_Area_Callback;
-                   Event    : Gdk.Event.Gdk_Event) is abstract;
-   --  A callback for the active areas. Event is the mouse event that started
-   --  the chain that lead to callback.
-   --  This type provides an easy encapsulation for any user data you might
-   --  need.
-
-   procedure Destroy (Callback : in out Active_Area_Callback);
-   --  Destroy the callback
-
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Active_Area_Callback'Class, Active_Area_Cb);
-
-   type Item_Active_Callback is access
-     procedure (Event : Gdk.Event.Gdk_Event;
-                User : access Browser_Item_Record'Class);
-   type Item_Active_Area_Callback is new Active_Area_Callback with private;
-   --  A special instanciation of the callback for cases where the user data is
-   --  a widget.
-
-   function Build (Cb : Item_Active_Callback;
-                   User : access Browser_Item_Record'Class)
-      return Item_Active_Area_Callback'Class;
-   --  Build a new callback
 
    procedure Add_Active_Area
      (Item      : access Browser_Item_Record;
@@ -243,6 +261,22 @@ package Browsers.Canvas is
 
    procedure Reset_Active_Areas (Item : access Browser_Item_Record);
    --  Remove all active areas in Item
+
+   ---------------
+   -- Item area --
+   ---------------
+
+   type Item_Active_Callback is access
+     procedure (Event : Gdk.Event.Gdk_Event;
+                User : access Browser_Item_Record'Class);
+   type Item_Active_Area_Callback is new Active_Area_Callback with private;
+   --  A special instanciation of the callback for cases where the user data is
+   --  a widget.
+
+   function Build (Cb : Item_Active_Callback;
+                   User : access Browser_Item_Record'Class)
+      return Item_Active_Area_Callback'Class;
+   --  Build a new callback
 
    ---------------
    -- Text_Item --
@@ -380,10 +414,9 @@ private
       Hide_Links : Boolean := False;
       Browser    : General_Browser;
 
-      Title        : GNAT.OS_Lib.String_Access;
       Title_Layout : Pango.Layout.Pango_Layout;
-      --  Handling of the title bar. No title bar is shown if the title is
-      --  null. In this case, the Title_Layout is not created either.
+      --  Handling of the title bar. No title bar is shown if no title was
+      --  set. In this case, Title_Layout is null.
 
       Active_Areas : Active_Area_Tree;
    end record;
@@ -423,8 +456,8 @@ private
       User_Data : Browser_Item;
       Cb        : Item_Active_Callback;
    end record;
-   procedure Call (Callback : Item_Active_Area_Callback;
-                   Event    : Gdk.Event.Gdk_Event);
+   function Call (Callback : Item_Active_Area_Callback;
+                  Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  See doc for inherited Call
 
    pragma Inline (Get_Canvas);
