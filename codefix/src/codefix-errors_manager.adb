@@ -235,11 +235,10 @@ package body Codefix.Errors_Manager is
    procedure Validate
      (This   : in out Correction_Manager;
       Error  : Error_Id;
-      Choice : Text_Command'Class)
-   is
-      pragma Unreferenced (Error);
+      Choice : Text_Command'Class) is
    begin
       Append (This.Fix_List, Choice);
+      Remove_Error (This, Error);
    end Validate;
 
    -------------------------
@@ -252,7 +251,6 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Natural)
    is
-      pragma Unreferenced (This);
       New_Extract : Extract;
    begin
       Execute
@@ -262,7 +260,7 @@ package body Codefix.Errors_Manager is
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
-      --  ??? How can I free the command ?
+      Remove_Error (This, Error);
    end Validate_And_Commit;
 
    -------------------------
@@ -275,7 +273,6 @@ package body Codefix.Errors_Manager is
       Error        : Error_Id;
       Choice       : Text_Command'Class)
    is
-      pragma Unreferenced (This, Error);
       New_Extract : Extract;
    begin
       Execute
@@ -285,8 +282,9 @@ package body Codefix.Errors_Manager is
       Commit (New_Extract, Current_Text);
 
       Free (New_Extract);
-      --  ??? How can I free the command ?
+      Remove_Error (This, Error);
    end Validate_And_Commit;
+
    ------------
    -- Commit --
    ------------
@@ -529,5 +527,19 @@ package body Codefix.Errors_Manager is
 
       return Unknown;
    end Get_Error_State;
+
+   ------------------
+   -- Remove_Error --
+   ------------------
+
+   procedure Remove_Error
+     (This : in out Correction_Manager;
+      Id   : Error_Id) is
+   begin
+      Remove_Nodes
+        (This.Potential_Corrections,
+         Prev (This.Potential_Corrections, Id),
+         Id);
+   end Remove_Error;
 
 end Codefix.Errors_Manager;
