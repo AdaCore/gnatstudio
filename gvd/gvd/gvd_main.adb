@@ -32,6 +32,7 @@ with Gtkada.Dialogs;        use Gtkada.Dialogs;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 with Debugger;
 with Process_Proxies;
+with OS_Utils;              use OS_Utils;
 with GVD.Process;           use GVD.Process;
 with GVD.Trace;             use GVD.Trace;
 with GVD.Types;             use GVD.Types;
@@ -102,9 +103,11 @@ procedure GVD_Main is
 
       if Prefix.all = "" then
          Free (Prefix);
-         Prefix := Getenv ("GNAT_ROOT");
+
+         Prefix := new String '(Executable_Location);
 
          if Prefix.all = "" then
+            Free (Prefix);
             Prefix := new String' (GVD.Prefix);
          end if;
       end if;
@@ -113,9 +116,7 @@ procedure GVD_Main is
         Directory_Separator & "locale");
 
       if Home.all /= "" then
-         if Home (Home'Last) = '/'
-           or else Home (Home'Last) = Directory_Separator
-         then
+         if Is_Directory_Separator (Home (Home'Last)) then
             Dir := new String' (Home (Home'First .. Home'Last - 1) &
               Directory_Separator & ".gvd");
          else
