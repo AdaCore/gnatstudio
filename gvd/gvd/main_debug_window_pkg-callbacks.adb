@@ -31,7 +31,9 @@ with Odd_Intl;            use Odd_Intl;
 with GVD;                 use GVD;
 with GVD.Process;         use GVD.Process;
 with GNAT.OS_Lib;         use GNAT.OS_Lib;
+pragma Warnings (Off);
 with GNAT.Expect;         use GNAT.Expect;
+pragma Warnings (On);
 with Glib;                use Glib;
 with Debugger;            use Debugger;
 with Process_Proxies;     use Process_Proxies;
@@ -114,14 +116,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  Ref the object since we will destroy it in the main procedure.
 
       Ref (Object);
-
-      Save_Window_Settings (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all
-                            & Directory_Separator & "window_settings",
-                            Gtk_Widget (Object));
-
+      Save_Window_Settings
+        (Main_Debug_Window_Access (Object).Gvd_Home_Dir.all &
+         Directory_Separator & "window_settings", Gtk_Widget (Object));
       Cleanup_Debuggers (Main_Debug_Window_Access (Object));
-
       Main_Quit;
+
       return False;
    end On_Main_Debug_Window_Delete_Event;
 
@@ -351,6 +351,12 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Process_List  : List_Select_Access;
+      Command_Index : Integer := Exec_Command'First;
+      Args          : Argument_List_Access;
+      P             : Process_Descriptor;
+      Match         : Expect_Match := 0;
+
    begin
       if Tab = null
         or else Command_In_Process (Get_Process (Tab.Debugger))
@@ -358,16 +364,53 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
+      Gtk_New (Process_List, Title => -"Process Selection");
+      Skip_To_Char (Exec_Command, Command_Index, ' ');
+      Args := Argument_String_To_List
+        (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
+
       declare
-         Arguments : constant String := Simple_Entry_Dialog
-           (Parent  => Tab.Window,
-            Title   => -"Process Selection",
-            Message => -"Enter the process id to debug:",
-            Key     => "gvd_process_id");
+         New_Args : Argument_List (Args'First .. Args'Last + 1);
       begin
-         if Arguments = ""
-           or else Arguments (Arguments'First) /= ASCII.NUL
-         then
+         New_Args (Args'First .. Args'Last) := Args.all;
+         New_Args (New_Args'Last) := new String' (Get_Pref (List_Processes));
+
+         GNAT.Expect.Non_Blocking_Spawn
+           (P,
+            Exec_Command (Exec_Command'First .. Command_Index - 1),
+            New_Args);
+         Expect (P, Match, "\n");
+
+         for J in New_Args'Range loop
+            Free (New_Args (J));
+         end loop;
+      end;
+
+      Free (Args);
+
+      --  Skip the first line in the output.
+      Expect (P, Match, "\n");
+
+      while Match = 1 loop
+         declare
+            S     : constant String := Expect_Out (P);
+            Index : Integer := S'First;
+         begin
+            Skip_Blanks (S, Index);
+            Skip_To_Char (S, Index, ' ');
+            Add_Item
+              (Process_List, S (S'First .. Index), S (Index + 1 .. S'Last));
+         end;
+
+         Expect (P, Match, "\n");
+      end loop;
+
+      Close (P);
+
+      declare
+         Arguments : constant String := Show (Process_List);
+      begin
+         if Arguments /= "" then
             Attach_Process
               (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
          end if;
@@ -861,84 +904,33 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Top      : constant Main_Debug_Window_Access :=
         Main_Debug_Window_Access (Object);
       Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
+
+   begin
+      if Tab /= null then
+         Show_All (Top.Thread_Dialog);
+         Gdk_Raise (Get_Window (Top.Thread_Dialog));
+         Update (Top.Thread_Dialog, Tab);
+      end if;
+   end On_Threads1_Activate;
+
+   ------------------------
+   -- On_Tasks1_Activate --
+   ------------------------
+
+   procedure On_Tasks1_Activate
+     (Object : access Gtk_Widget_Record'Class)
+   is
+      Top      : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Object);
+      Tab      : constant Debugger_Process_Tab := Get_Current_Process (Object);
+
    begin
       if Tab /= null then
          Show_All (Top.Task_Dialog);
          Gdk_Raise (Get_Window (Top.Task_Dialog));
          Update (Top.Task_Dialog, Tab);
       end if;
-   end On_Threads1_Activate;
-
-   ----------------------------
-   -- On_Processes1_Activate --
-   ----------------------------
-
-   procedure On_Processes1_Activate
-     (Object : access Gtk_Widget_Record'Class)
-   is
-      Tab           : constant Debugger_Process_Tab
-        := Get_Current_Process (Object);
-      Process_List  : List_Select_Access;
-      Command_Index : Integer := Exec_Command'First;
-      Args          : Argument_List_Access;
-      P             : Process_Descriptor;
-      Match         : Expect_Match := 0;
-   begin
-      if Tab = null
-        or else Command_In_Process (Get_Process (Tab.Debugger))
-      then
-         return;
-      end if;
-
-      Gtk_New (Process_List,
-               Title => "Process Selection");
-
-      Skip_To_Char (Exec_Command, Command_Index, ' ');
-
-      Args := Argument_String_To_List
-        (Exec_Command (Command_Index + 1 .. Exec_Command'Last));
-
-      declare
-         New_Args : Argument_List (Args'First .. Args'Last + 1);
-      begin
-         New_Args (Args'First .. Args'Last) := Args.all;
-         New_Args (New_Args'Last)
-           := new String' (Get_Pref (List_Processes));
-
-         GNAT.Expect.Non_Blocking_Spawn
-           (P,
-            Exec_Command (Exec_Command'First .. Command_Index - 1),
-            New_Args);
-         Expect (P, Match, "\n");
-      end;
-
-      --  Skip the first line in the output.
-      Expect (P, Match, "\n");
-
-      while Match = 1 loop
-         declare
-            S          : String := Expect_Out (P);
-            Index      : Integer := S'First;
-         begin
-            Skip_Blanks (S, Index);
-            Skip_To_Char (S, Index, ' ');
-            Add_Item (Process_List,
-                      S (S'First .. Index),
-                      S (Index + 1 .. S'Last));
-         end;
-         Expect (P, Match, "\n");
-      end loop;
-      Close (P);
-
-      declare
-         Arguments : String := Show (Process_List);
-      begin
-         if Arguments /= "" then
-            Attach_Process
-              (Tab.Debugger, Arguments, Mode => GVD.Types.Visible);
-         end if;
-      end;
-   end On_Processes1_Activate;
+   end On_Tasks1_Activate;
 
    --------------------------
    -- On_Signals1_Activate --
@@ -1204,13 +1196,13 @@ package body Main_Debug_Window_Pkg.Callbacks is
       Button : Message_Dialog_Buttons;
    begin
       Button := Message_Dialog
-        ("GVD " & Version &
-         (-(": The GNU Visual Debugger" & ASCII.LF & ASCII.LF &
-            "by Emmanuel Briot & Arnaud Charlet" & ASCII.LF & ASCII.LF &
-            "(c) 2000, 2001 ACT-Europe")),
+        ("GVD " & Version & (-" built for ") & GVD.Target & ASCII.LF &
+         (-"The GNU Visual Debugger") & ASCII.LF & ASCII.LF &
+         (-"by Emmanuel Briot & Arnaud Charlet") & ASCII.LF & ASCII.LF &
+           "(c) 2000, 2001 ACT-Europe",
          Help_Msg =>
-           -("This is the About information box." & ASCII.LF & ASCII.LF &
-             "Click on the OK button to close this window."),
+           (-"This is the About information box.") & ASCII.LF & ASCII.LF &
+           (-"Click on the OK button to close this window."),
          Title => -"About...");
    end On_About_Gvd_Activate;
 
