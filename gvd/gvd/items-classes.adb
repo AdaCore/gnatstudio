@@ -158,7 +158,7 @@ package body Items.Classes is
 
    procedure Clone_Dispatching
      (Item  : Class_Type;
-      Clone : out Generic_Type_Access)
+      Clone : in out Generic_Type_Access)
    is
       R : Class_Type_Access;
    begin

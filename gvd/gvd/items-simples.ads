@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -128,7 +128,7 @@ private
       Only_Value : Boolean := False);
    procedure Clone_Dispatching
      (Item  : Simple_Type;
-      Clone : out Generic_Type_Access);
+      Clone : in out Generic_Type_Access);
    procedure Paint
      (Item    : in out Simple_Type;
       Context : Drawing_Context;
@@ -201,7 +201,7 @@ private
    procedure Print (Value : Debugger_Output_Type; Indent : Natural := 0);
    procedure Clone_Dispatching
      (Item  : Debugger_Output_Type;
-      Clone : out Generic_Type_Access);
+      Clone : in out Generic_Type_Access);
    procedure Free (Item : access Debugger_Output_Type;
                    Only_Value : Boolean := False);
    procedure Size_Request

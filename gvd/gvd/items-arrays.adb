@@ -541,7 +541,7 @@ package body Items.Arrays is
 
    procedure Clone_Dispatching
      (Item  : Array_Type;
-      Clone : out Generic_Type_Access)
+      Clone : in out Generic_Type_Access)
    is
       R : Array_Type_Access;
    begin

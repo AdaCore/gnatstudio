@@ -285,11 +285,8 @@ package body Items is
 
    procedure Clone_Dispatching
      (Item  : Generic_Type;
-      Clone : out Generic_Type_Access) is
+      Clone : in out Generic_Type_Access) is
    begin
-      pragma Assert (Clone /= null);
-      pragma Warnings (Off, Clone);
-
       if Item.Type_Name /= null then
          Clone.Type_Name := new String'(Item.Type_Name.all);
       end if;

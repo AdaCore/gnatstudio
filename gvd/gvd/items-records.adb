@@ -355,7 +355,7 @@ package body Items.Records is
 
    procedure Clone_Dispatching
      (Item  : Record_Type;
-      Clone : out Generic_Type_Access)
+      Clone : in out Generic_Type_Access)
    is
       R : Record_Type_Access;
    begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -322,7 +322,7 @@ package Items is
 
    procedure Clone_Dispatching
      (Item  : Generic_Type;
-      Clone : out Generic_Type_Access);
+      Clone : in out Generic_Type_Access);
    --  Deep copy of the contents of Item into Clone.
    --  Clone must have been allocated first, and you should rather use the
    --  subprogram Clone above.
