@@ -127,6 +127,7 @@
 with Gdk.Event;
 with Glib.Object;
 with Glib.Values;
+with Glib.Xml_Int;
 with Gdk.Types;
 with Gdk.Pixbuf;
 with Gtk.Image;
@@ -177,7 +178,8 @@ package Glide_Kernel.Modules is
       Mime_Handler            : Module_Mime_Handler := null;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
-      Tooltip_Handler         : Module_Tooltip_Handler := null);
+      Tooltip_Handler         : Module_Tooltip_Handler := null;
+      Customization_Handler   : Module_Customization_Handler := null);
    --  Register a new module into GPS.
    --  If Module is null, a new module_id is created. Otherwise, the internal
    --  information stored in Module is changed. This allows you to store user
@@ -194,6 +196,10 @@ package Glide_Kernel.Modules is
    --  Tooltip_Handler is an optional callback used to display tooltips.
    --  See description of Module_Tooltip_Handler in Glide_Kernel and procedure
    --  Compute_Tooltip below for more details.
+   --
+   --  Customization_Handler is called every time some customization has
+   --  changed: initially after all modules are loaded, or every time a
+   --  module adds a customization string.
 
    procedure Dynamic_Register_Module
      (Kernel      : access Kernel_Handle_Record'Class;

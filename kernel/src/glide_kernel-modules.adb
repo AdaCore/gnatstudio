@@ -164,7 +164,8 @@ package body Glide_Kernel.Modules is
       Mime_Handler            : Module_Mime_Handler := null;
       Default_Context_Factory : Module_Default_Context_Factory := null;
       Save_Function           : Module_Save_Function := null;
-      Tooltip_Handler         : Module_Tooltip_Handler := null)
+      Tooltip_Handler         : Module_Tooltip_Handler := null;
+      Customization_Handler   : Module_Customization_Handler := null)
    is
       Prev    : Module_List.List_Node := Module_List.Null_Node;
       Current : Module_List.List_Node :=
@@ -177,14 +178,15 @@ package body Glide_Kernel.Modules is
       end if;
 
       Module.Info := new Module_ID_Information'
-        (Name_Length     => Module_Name'Length,
-         Name            => Module_Name,
-         Priority        => Priority,
-         Contextual_Menu => Contextual_Menu_Handler,
-         Mime_Handler    => Mime_Handler,
-         Default_Factory => Default_Context_Factory,
-         Save_Function   => Save_Function,
-         Tooltip_Handler => Tooltip_Handler);
+        (Name_Length           => Module_Name'Length,
+         Name                  => Module_Name,
+         Priority              => Priority,
+         Contextual_Menu       => Contextual_Menu_Handler,
+         Mime_Handler          => Mime_Handler,
+         Default_Factory       => Default_Context_Factory,
+         Save_Function         => Save_Function,
+         Tooltip_Handler       => Tooltip_Handler,
+         Customization_Handler => Customization_Handler);
 
       while Current /= Module_List.Null_Node loop
          if Module_List.Data (Current).Info.Name = Module_Name then
@@ -1481,8 +1483,7 @@ package body Glide_Kernel.Modules is
    is
       Value : GValue_Array (1 .. 6);
    begin
-      Init (Value (1), Glib.GType_String);
-      Set_String (Value (1), Full_Name (Filename).all);
+      Set_File (Value (1), Filename);
 
       Init (Value (2), Glib.GType_Int);
       Set_Int (Value (2), -1);
