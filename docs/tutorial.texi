@@ -516,6 +516,7 @@ the tutorial in another browser.
 
 Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
+Type @i{sdc2} in the project name field.
 
 Click on @code{Forward}: we are now on the language selection page.
 It is possible to create a multi-language project by e.g. selecting the C or C++
