@@ -57,8 +57,6 @@ package body Creation_Wizard is
       return Gtk_Widget;
    function Fourth_Page (Wiz : access Prj_Wizard_Record'Class)
       return Gtk_Widget;
-   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget;
    --  Return the widget to use for any of the pages in the wizard
 
    procedure Add_Src_Directory
@@ -160,7 +158,6 @@ package body Creation_Wizard is
       Add_Page (Wiz, Second_Page (Wiz), "Selecting sources");
       Add_Page (Wiz, Third_Page (Wiz),  "Selecting build directory");
       Add_Page (Wiz, Fourth_Page (Wiz), "Selecting switches");
-      Add_Page (Wiz, Fifth_Page (Wiz),  "Selecting switches (tmp)");
 
       Widget_Callback.Object_Connect
         (Finish_Button (Wiz), "clicked",
@@ -336,84 +333,6 @@ package body Creation_Wizard is
       return Gtk_Widget
    is
       Vbox : Gtk_Box;
-      Table : Gtk_Table;
-      Label : Gtk_Label;
-      Button : Gtk_Button;
-      Options : Gtk_Entry;
-   begin
-      Gtk_New_Vbox (Vbox);
-
-      Gtk_New (Label, "Please select the switches to build the project");
-      Set_Style (Label, Wiz.Title_Style);
-      Pack_Start (Vbox, Label, Expand => False, Fill => False);
-
-      Gtk_New (Table, Rows => 4, Columns => 3, Homogeneous => False);
-      Pack_Start (Vbox, Table, Expand => False, Fill => False);
-
-      Gtk_New (Label, "Make:");
-      Attach (Table, Label, 0, 1, 0, 1);
-      Gtk_New (Options, 1024);
-      Attach (Table, Options, 1, 2, 0, 1);
-      Gtk_New (Button, "...");
-      Attach (Table, Button, 2, 3, 0, 1);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Advanced_Make_Switches'Access),
-         Wiz);
-      Gtk_New (Wiz.Make_Switches, Gnatmake_Page);
-      Set_Switches (Wiz.Make_Switches, (1 => new String' ("-g")));
-      Set_Text (Options, "-g");
-
-      Gtk_New (Label, "Compiler:");
-      Attach (Table, Label, 0, 1, 1, 2);
-      Gtk_New (Options, 1024);
-      Attach (Table, Options, 1, 2, 1, 2);
-      Gtk_New (Button, "...");
-      Attach (Table, Button, 2, 3, 1, 2);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Advanced_Compiler_Switches'Access),
-         Wiz);
-      Gtk_New (Wiz.Comp_Switches, Compiler_Page);
-      Set_Switches (Wiz.Comp_Switches, (1 .. 0 => null));
-
-      Gtk_New (Label, "Binder:");
-      Attach (Table, Label, 0, 1, 2, 3);
-      Gtk_New (Options, 1024);
-      Attach (Table, Options, 1, 2, 2, 3);
-      Gtk_New (Button, "...");
-      Attach (Table, Button, 2, 3, 2, 3);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Advanced_Binder_Switches'Access),
-         Wiz);
-      Gtk_New (Wiz.Bind_Switches, Binder_Page);
-      Set_Switches (Wiz.Bind_Switches, (1 .. 0 => null));
-
-      Gtk_New (Label, "Linker:");
-      Attach (Table, Label, 0, 1, 3, 4);
-      Gtk_New (Options, 1024);
-      Attach (Table, Options, 1, 2, 3, 4);
-      Gtk_New (Button, "...");
-      Attach (Table, Button, 2, 3, 3, 4);
-      Widget_Callback.Object_Connect
-        (Button, "clicked",
-         Widget_Callback.To_Marshaller (Advanced_Linker_Switches'Access),
-         Wiz);
-      Gtk_New (Wiz.Link_Switches, Linker_Page);
-      Set_Switches (Wiz.Link_Switches, (1 .. 0 => null));
-
-      return Gtk_Widget (Vbox);
-   end Fourth_Page;
-
-   ----------------
-   -- Fifth_Page --
-   ----------------
-
-   function Fifth_Page (Wiz : access Prj_Wizard_Record'Class)
-      return Gtk_Widget
-   is
-      Vbox : Gtk_Box;
       Label : Gtk_Label;
    begin
       Gtk_New_Vbox (Vbox, Homogeneous => False);
@@ -422,14 +341,17 @@ package body Creation_Wizard is
       Set_Style (Label, Wiz.Title_Style);
       Pack_Start (Vbox, Label, Expand => False, Fill => False);
 
-      Gtk_New (Wiz.Switches, Gnatmake_Page or Compiler_Page);
-      Pack_Start (Vbox, Wiz.Switches, Expand => True, Fill => True);
+      Gtk_New (Wiz.Switches);
+      Pack_Start
+        (Vbox, Get_Window (Wiz.Switches), Expand => True, Fill => True);
 
-      Set_Switches (Wiz.Switches, (new String' ("-g"), new String' ("-i")));
-      Set_Switches (Wiz.Switches, (new String' ("-I-"), new String' ("-f")));
+      Set_Switches
+        (Wiz.Switches, Gnatmake, (new String' ("-g"), new String' ("-a")));
+      Set_Switches
+        (Wiz.Switches, Compiler, (1 => new String' ("-fno-inline")));
 
       return Gtk_Widget (Vbox);
-   end Fifth_Page;
+   end Fourth_Page;
 
    -------------------------
    -- Is_Source_Directory --
