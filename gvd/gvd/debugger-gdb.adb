@@ -855,8 +855,7 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Address    : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False)
-   is
+      Display    : Boolean := False) is
    begin
       if Temporary then
          Send (Debugger, "tbreak *" & Address);
@@ -873,8 +872,7 @@ package body Debugger.Gdb is
      (Debugger   : access Gdb_Debugger;
       Regexp     : String;
       Temporary  : Boolean := False;
-      Display    : Boolean := False)
-   is
+      Display    : Boolean := False) is
    begin
       if Temporary then
          raise Unknown_Command;
@@ -899,14 +897,12 @@ package body Debugger.Gdb is
    ------------------
 
    function Info_Threads
-     (Debugger : access Gdb_Debugger)
-     return Language.Thread_Information_Array
+     (Debugger : access Gdb_Debugger) return Language.Thread_Information_Array
    is
-      S : String :=  Send
-        (Debugger, Thread_List (Get_Language (Debugger)));
    begin
       return Parse_Thread_List
-        (Get_Language (Debugger), S (S'First .. S'Last));
+        (Get_Language (Debugger),
+         Send (Debugger, Thread_List (Get_Language (Debugger))));
    end Info_Threads;
 
    ------------------------
@@ -925,6 +921,7 @@ package body Debugger.Gdb is
             & Base_File_Name (File)
             & ':' &
             Line_String (Line_String'First + 1 .. Line_String'Last));
+
       if Index
         (Expect_Out (Get_Process (Debugger)), "starts at address") /= 0
       then
@@ -1008,7 +1005,8 @@ package body Debugger.Gdb is
    function Source_Files_List
      (Debugger : access Gdb_Debugger) return Odd.Types.String_Array
    is
-      S : String := Send (Debugger, "info sources");
+      S         : constant String :=
+        Send (Debugger, "info sources");
       Num_Files : Natural := 0;
    begin
       --  Count the number of files
@@ -1046,7 +1044,7 @@ package body Debugger.Gdb is
             end loop;
 
             if Index <= S'Last then
-               Result (Num) := new String'(S (Start .. Index - 1));
+               Result (Num) := new String' (S (Start .. Index - 1));
                Num := Num + 1;
 
                --  End of list ?
@@ -1060,6 +1058,7 @@ package body Debugger.Gdb is
                Skip_Blanks (S, Index);
             end if;
          end loop;
+
          return Result (1 .. Num - 1);
       end;
    end Source_Files_List;
