@@ -948,7 +948,8 @@ package body Glide_Kernel is
    ---------------
 
    procedure Pop_State (Handle : Kernel_Handle) is
-      Window : Glide_Window;
+      Window  : Glide_Window;
+      Console : Glide_Interactive_Console;
    begin
       if Handle = null then
          return;
@@ -968,12 +969,19 @@ package body Glide_Kernel is
          end if;
 
          if Window.State_Level = 0 then
-            Enable_Prompt_Display (Get_Interactive_Console (Handle), True);
+            Console := Get_Interactive_Console (Handle);
 
-            if Window.Timeout_Id /= 0 then
-               Timeout_Remove (Window.Timeout_Id);
-               Window.Timeout_Id := 0;
-               Display_Default_Image (Handle);
+            --  If console is null, it means we're exiting, so avoid accessing
+            --  fields that may have been deleted already
+
+            if Console /= null then
+               Enable_Prompt_Display (Console, True);
+
+               if Window.Timeout_Id /= 0 then
+                  Timeout_Remove (Window.Timeout_Id);
+                  Window.Timeout_Id := 0;
+                  Display_Default_Image (Handle);
+               end if;
             end if;
          end if;
       end if;
@@ -1127,27 +1135,28 @@ package body Glide_Kernel is
          Project := Get_Project_View (Kernel);
       end if;
 
-      Find_Next_Body (Lib_Info, File_Name, Entity_Name, Line, Column,
-                      Get_LI_Handler_From_File
-                        (Glide_Language_Handler (Kernel.Lang_Handler),
-                         File_Name, Project),
-                      Kernel.Source_Info_List,
-                      Project,
-                      Get_Predefined_Source_Path (Kernel),
-                      Get_Predefined_Object_Path (Kernel),
-                      Location, Status);
+      Find_Next_Body
+        (Lib_Info, File_Name, Entity_Name, Line, Column,
+         Get_LI_Handler_From_File
+           (Glide_Language_Handler (Kernel.Lang_Handler),
+            File_Name, Project),
+         Kernel.Source_Info_List,
+         Project,
+         Get_Predefined_Source_Path (Kernel),
+         Get_Predefined_Object_Path (Kernel),
+         Location, Status);
 
       if Status = Overloaded_Entity_Found then
          --  Ask the user what entity he is speaking about
          Find_Declaration_Or_Overloaded
-           (Kernel             => Kernel,
-            Lib_Info           => Lib_Info,
-            File_Name          => File_Name,
-            Entity_Name        => Entity_Name,
-            Line               => Line,
-            Column             => Column,
-            Entity             => Entity,
-            Status             => Status);
+           (Kernel      => Kernel,
+            Lib_Info    => Lib_Info,
+            File_Name   => File_Name,
+            Entity_Name => Entity_Name,
+            Line        => Line,
+            Column      => Column,
+            Entity      => Entity,
+            Status      => Status);
 
          --  And search for the body of that one
          if Status = Success or else Status = Fuzzy_Match then
@@ -1185,11 +1194,12 @@ package body Glide_Kernel is
       Decl          : out Entity_Information;
       Status        : out Src_Info.Queries.Find_Decl_Or_Body_Query_Status)
    is
-      procedure Set (Tree, Iter : System.Address;
-                     Col1 : Gint; Value1 : String;
-                     Col2, Value2, Col3, Value3 : Gint;
-                     Col4 : Gint; Value4 : String;
-                     Final : Gint := -1);
+      procedure Set
+        (Tree, Iter : System.Address;
+         Col1 : Gint; Value1 : String;
+         Col2, Value2, Col3, Value3 : Gint;
+         Col4 : Gint; Value4 : String;
+         Final : Gint := -1);
       pragma Import (C, Set, "gtk_tree_store_set");
 
       Column_Types : constant GType_Array :=
