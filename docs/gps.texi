@@ -713,6 +713,11 @@ up a file editor at the requested place. Right-clicking on file or
 category items brings up a contextual menu allowing you to remove the
 corresponding node from the view.
 
+Every time a new category is created, as a result of a compilation or a
+search operation for instance, the first entry of that category is
+automatically selected, and the corresponding editor opened. This behavior
+can be controlled through a preference @code{Jump To First Location}.
+
 @cindex key
 @cindex menu
 To navigate through the next and previous location (also called @code{Tag}),
@@ -5239,6 +5244,12 @@ calling external tools (e.g. before a build).
 @cindex desktop
 Whether the desktop (size and positions of all windows) should be saved when
 exiting.
+
+@item Jump To First Location
+@cindex location
+Whether the first entry of the location window should be selected
+automatically, and thus whether the corresponding editor should be
+immediately open.
 
 @item Windows
 @cindex MDI
