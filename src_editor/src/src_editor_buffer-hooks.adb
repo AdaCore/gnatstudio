@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;               use Glide_Kernel;
+with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
@@ -54,9 +54,8 @@ package body Src_Editor_Buffer.Hooks is
    --------------------
 
    procedure Cursor_Stopped (Buffer : Source_Buffer) is
-      Data   : constant File_Hooks_Args :=
-        (Hooks_Data with
-         File => Buffer.Filename);
+      Data : constant File_Hooks_Args :=
+        (Hooks_Data with File => Buffer.Filename);
    begin
       Run_Hook (Buffer.Kernel, Cursor_Stopped_Hook, Data, False);
    end Cursor_Stopped;
