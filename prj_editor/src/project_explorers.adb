@@ -27,6 +27,7 @@ with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Ada.Exceptions;            use Ada.Exceptions;
 
 with Gdk.Bitmap;           use Gdk.Bitmap;
 with Gdk.Color;            use Gdk.Color;
@@ -41,6 +42,7 @@ with Gtk.Arguments;        use Gtk.Arguments;
 with Gtk.Ctree;            use Gtk.Ctree;
 with Gtk.Main;             use Gtk.Main;
 with Gtk.Menu;             use Gtk.Menu;
+with Gtk.Menu_Item;        use Gtk.Menu_Item;
 with Gtk.Widget;           use Gtk.Widget;
 with Gtk.Label;            use Gtk.Label;
 with Gtk.Notebook;         use Gtk.Notebook;
@@ -75,12 +77,15 @@ with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Traces;                   use Traces;
 
 with Unchecked_Deallocation;
 with System;
 with Unchecked_Conversion;
 
 package body Project_Explorers is
+
+   Me : Debug_Handle := Create ("Project_Explorers");
 
    ---------------------
    -- Local constants --
@@ -497,6 +502,10 @@ package body Project_Explorers is
      (Explorer : access Gtk_Widget_Record'Class; Args : GValues);
    --  Called every time a new child is selected in the MDI. This makes sure
    --  that the selected not in the explorer doesn't reflect false information.
+
+   procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class);
+   --  Parse all the LI information contained in the object directory of the
+   --  current selection.
 
    -------------------
    -- Columns_Types --
@@ -1159,6 +1168,28 @@ package body Project_Explorers is
       return null;
    end Save_Desktop;
 
+   -------------------
+   -- On_Parse_Xref --
+   -------------------
+
+   procedure On_Parse_Xref (Explorer : access Gtk_Widget_Record'Class) is
+      E : Project_Explorer := Project_Explorer (Explorer);
+      Node : Gtk_Ctree_Node := Node_List.Get_Data (Get_Selection (E.Tree));
+      Data : User_Data := Node_Get_Row_Data (E.Tree, Node);
+   begin
+      pragma Assert (Data.Node_Type = Obj_Directory_Node);
+      Push_State (E.Kernel, Busy);
+      Parse_All_LI_Information
+        (E.Kernel, Normalize_Pathname (Get_String (Data.Directory)));
+      Pop_State (E.Kernel);
+
+   exception
+      when Ex : others =>
+         Trace (Me, "Unexpected exception in On_Parse_Xref: "
+                  & Exception_Message (Ex));
+         Pop_State (E.Kernel);
+   end On_Parse_Xref;
+
    ------------------------------
    -- Explorer_Context_Factory --
    ------------------------------
@@ -1170,9 +1201,10 @@ package body Project_Explorers is
       Event        : Gdk.Event.Gdk_Event;
       Menu         : Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Kernel, Event_Widget, Menu);
+      pragma Unreferenced (Kernel, Event_Widget);
       T            : Project_Explorer := Project_Explorer (Object);
       Context      : Selection_Context_Access;
+      Item         : Gtk_Menu_Item;
 
    begin
       if Get_Current_Page (T.Notebook) = 0 then
@@ -1238,9 +1270,17 @@ package body Project_Explorers is
                      Project_View => Get_Project_From_Node (T, Node),
                      Importing_Project => Importing_Project);
                end if;
-            end;
 
-            return Context;
+               if Data.Node_Type = Obj_Directory_Node then
+                  Gtk_New (Item, -"Parse all xref information");
+                  Add (Menu, Item);
+
+                  Widget_Callback.Object_Connect
+                    (Item, "activate",
+                     Widget_Callback.To_Marshaller (On_Parse_Xref'Access),
+                     T);
+               end if;
+            end;
          end;
       else
          declare
@@ -1281,9 +1321,9 @@ package body Project_Explorers is
             end if;
 
             Free (File);
-            return Context;
          end;
       end if;
+      return Context;
    end Explorer_Context_Factory;
 
    -------------------------------
@@ -2766,7 +2806,7 @@ package body Project_Explorers is
                      User       : User_Data_Access;
                   begin
                      --  ??? the following two lines are due to a possible
-                     --  mapping error in GtkAda : I need to call "Unset" on
+                     --  mapping error in GtkAd a: I need to call "Unset" on
                      --  Val before calling Get_Value below, otherwise I get
                      --  a critical error saying "cannot init val because it
                      --  was initialized before with value null"... and I need
