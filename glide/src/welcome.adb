@@ -202,8 +202,11 @@ package body Welcome is
       Get_History (Get_History (Kernel).all,
                    Project_Viewers.Project_History_Key, Screen.Open_Project);
       Pack_Start (Hbox, Screen.Open_Project, Expand => True, Fill => True);
-      Set_Text (Get_Entry (Screen.Open_Project),
-                Normalize_Pathname (Project_Name, Resolve_Links => False));
+
+      if Project_Name /= "" then
+         Set_Text (Get_Entry (Screen.Open_Project),
+                   Normalize_Pathname (Project_Name, Resolve_Links => False));
+      end if;
 
       Gtk_New (Screen.Open_Browse, -"Browse");
       Add_Widget (Size, Screen.Open_Browse);
@@ -212,8 +215,7 @@ package body Welcome is
         (Screen.Open_Browse, "clicked",
          Widget_Callback.To_Marshaller (On_Browse_Load'Access), Screen);
 
-      Set_Sensitive (Screen.Open_Project, False);
-      Set_Sensitive (Screen.Open_Browse, False);
+      Clicked (Screen.Open_Project_Button);
 
       --  Always displaying the welcome dialog
 
