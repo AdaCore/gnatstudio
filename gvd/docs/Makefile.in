@@ -4,6 +4,8 @@ docdir = $(prefix)/doc/gvd
 MKDIR = mkdir -p
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
+IMAGES = "assembly.gif canvas.gif explorer.gif memory-view.gif tasks.gif \
+breakpoints.gif colors.gif main-window.gif process.gif tooltips.gif"
 
 all: doc clean-temp-files
 doc: gvd.texi
@@ -22,6 +24,9 @@ install:
 	$(INSTALL_DATA) gvd.ps   $(docdir)
 	$(INSTALL_DATA) gvd.texi $(docdir)
 	$(INSTALL_DATA) gvd.txt  $(docdir)
+	for img in $(IMAGES); do \
+	  $(INSTALL_DATA) $$img $(docdir); \
+	done
 
 clean-temp-files:
 	-$(RM) *.aux
