@@ -453,6 +453,10 @@ package body Find_Utils is
                   end loop;
             end case;
          end loop;
+
+         if Pos > Buffer'Last then
+            Section_End := Buffer'Last;
+         end if;
       end Next_Scope_Transition;
 
       Pos           : Positive := 1;
@@ -471,7 +475,7 @@ package body Find_Utils is
 
       --  If the language is null, we simply use the more efficient algorithm
 
-      if Context.Options.Whole_Word or else Lang = null then
+      if Context.Options.Scope = Whole or else Lang = null then
          Scan_Buffer_No_Scope
            (Buffer,
             Context,
