@@ -46,8 +46,10 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Browsers.Module;           use Browsers.Module;
+with Browsers.Projects;         use Browsers.Projects;
 with Layouts;                   use Layouts;
 with Src_Info;                  use Src_Info;
+with Prj_API;                   use Prj_API;
 
 package body Browsers.Canvas is
 
@@ -252,6 +254,16 @@ package body Browsers.Canvas is
          Set_File_Information
            (File_Selection_Context_Access (Context),
             File_Name => Get_Source_Filename (Src));
+
+      elsif Item /= null
+        and then Item.all in Browser_Project_Vertex'Class
+      then
+         Context := new File_Selection_Context;
+
+         Set_File_Information
+           (File_Selection_Context_Access (Context),
+            Project_View => Get_Project_View_From_Name
+              (Project_Name (Browser_Project_Vertex_Access (Item))));
 
       --  Else, a general browser selection
       else
