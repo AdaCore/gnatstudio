@@ -718,13 +718,16 @@ package body Gtkada.MDI is
       --  Call this function so that for a dock item is highlighted if the
       --  current page is linked to the focus child.
 
-      Note := Gtk_Notebook (Child.Initial);
+      if Child.State = Docked
+        and then MDI.Focus_Child /= null
+        and then MDI.Focus_Child.State = Embedded
+      then
+         Note := Gtk_Notebook (Child.Initial);
+      end if;
 
       if MDI.Focus_Child = MDI_Child (Child)
         or else
-        (MDI.Focus_Child /= null
-         and then Child.State = Docked
-         and then MDI.Focus_Child.State = Embedded
+        (Note /= null
          and then Get_Nth_Page (Note, Get_Current_Page (Note)) =
            Gtk_Widget (MDI.Focus_Child.Initial_Child))
       then
@@ -1872,7 +1875,12 @@ package body Gtkada.MDI is
          Ref (Child);
          Widget_List.Prepend
            (Child.MDI.Invisible_Items, Gtk_Widget (Child));
-         Remove (Child.MDI, Child);
+
+         --  If the child belonged directly to the MDI (and not to one of the
+         --  docks for instance)
+         if Get_Parent (Child) = Gtk_Widget (Child.MDI) then
+            Remove (Child.MDI, Child);
+         end if;
 
          Child.State := Floating;
          Activate_Child (Child);
@@ -2688,6 +2696,13 @@ package body Gtkada.MDI is
          declare
             Tmp : Widget_List.Glist := First (Children (MDI));
          begin
+            while Tmp /= Null_List loop
+               Child := MDI_Child (Get_Data (Tmp));
+               Create_Menu_Entry (Child);
+               Tmp := Next (Tmp);
+            end loop;
+
+            Tmp := First (MDI.Invisible_Items);
             while Tmp /= Null_List loop
                Child := MDI_Child (Get_Data (Tmp));
                Create_Menu_Entry (Child);
