@@ -23,7 +23,6 @@ with Prj.Part;    use Prj.Part;
 with Prj.Proc;    use Prj.Proc;
 with Prj.Env;     use Prj.Env;
 with Prj.Ext;     use Prj.Ext;
-with Prj.Util;    use Prj.Util;
 with Prj.Tree;    use Prj.Tree;
 with Errout;      use Errout;
 with Namet;       use Namet;
@@ -489,27 +488,7 @@ package body Glide_Kernel.Project is
       --  already evaluated.
 
       for J in Scenario_Vars'Range loop
-         Ext_Ref := External_Reference_Of (Scenario_Vars (J));
-         String_To_Name_Buffer (Ext_Ref);
-
-         declare
-            Name : constant String :=
-              Name_Buffer (Name_Buffer'First .. Name_Len);
-            Value : Variable_Value;
-         begin
-            if Prj.Ext.Value_Of (Name_Find) = No_String then
-               Value := Prj.Util.Value_Of
-                 (Variable_Name => Prj.Tree.Name_Of (Scenario_Vars (J)),
-                  In_Variables => Projects.Table
-                    (Handle.Project_View).Decl.Variables);
-               pragma Assert
-                 (Value.Kind = Single,
-                  "Scenario variables can only be strings");
-               String_To_Name_Buffer (Value.Value);
-
-               Prj.Ext.Add (Name, Name_Buffer (Name_Buffer'First .. Name_Len));
-            end if;
-         end;
+         Ensure_External_Value (Handle.Project, Scenario_Vars (J));
       end loop;
 
       Compute_Predefined_Paths (Handle);
