@@ -54,9 +54,11 @@ package DB_API is
    --  ("data base thang" in terms of SN team).
 
    type Pair is record
-      Key  : Interfaces.C.Strings.chars_ptr;
-      Data : Interfaces.C.Strings.chars_ptr;
-      DBI  : Integer;
+      Key       : Interfaces.C.Strings.chars_ptr;
+      Key_Size  : Natural;
+      Data      : Interfaces.C.Strings.chars_ptr;
+      Data_Size : Natural;
+      DBI       : Integer;
    end record;
    --  Type for key/data pair retrieved from database by Get_Pair
    --  operation.
@@ -147,9 +149,10 @@ private
    pragma Convention (C, CSF);
    pragma Convention (C, Pair);
 
-   No_Pair : constant Pair := (Interfaces.C.Strings.Null_Ptr,
-                               Interfaces.C.Strings.Null_Ptr,
-                               -1);
+   No_Pair : constant Pair :=
+     (Interfaces.C.Strings.Null_Ptr, 0,
+      Interfaces.C.Strings.Null_Ptr, 0,
+      -1);
 
    pragma Import (C, CSF_Init, "csf_init");
 end DB_API;
