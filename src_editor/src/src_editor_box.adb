@@ -2391,8 +2391,9 @@ package body Src_Editor_Box is
       if After < 0 then
          if Get_Char (End_Iter) /= ASCII.LF then
             Forward_To_Line_End (End_Iter, Success);
-            Forward_Char (End_Iter, Success);
          end if;
+
+         Forward_Char (End_Iter, Success);
       else
          Success := True;
 
@@ -2469,8 +2470,9 @@ package body Src_Editor_Box is
       if After < 0 then
          if Get_Char (End_Iter) /= ASCII.LF then
             Forward_To_Line_End (End_Iter, Success);
-            Forward_Char (End_Iter, Success);
          end if;
+
+         Forward_Char (End_Iter, Success);
       else
          Success := True;
 
