@@ -29,6 +29,12 @@ generic
    type Data_Type is private;
    No_Data : Data_Type;
 
+   with function Get_Index (Data : Data_Type) return GNAT.OS_Lib.String_Access;
+   --  Return the index to use for Data. The returned string is not modified
+   --  or stored by the Trie tree, but it is more efficient to return a
+   --  String_Access than a String.
+   --  This should return null for No_Data.
+
    with procedure Free (Data : in out Data_Type) is <>;
    --  Free the memory occupied by Data. No_Data might be passed as an argument
 
@@ -41,7 +47,6 @@ package Tries is
 
    procedure Insert
      (Tree  : in out Trie_Tree;
-      Index : String;
       Data  : Data_Type);
    --  Insert a new entry in the tree.
    --  Index mustn't be the empty string.
@@ -75,9 +80,8 @@ package Tries is
    generic
       with procedure Put (Str : String) is <>;
       with procedure Put (Data : Data_Type) is <>;
-   procedure Dump (Tree : Trie_Tree; Size_Only : Boolean := False);
+   procedure Dump (Tree : Trie_Tree);
    --  Dump function for debugging purposes.
-   --  If Size_Only is true, only the size occupied by the table is displayed.
 
 private
    --  The structure of the tree is the following: this is n-ary tree. Each
@@ -97,9 +101,9 @@ private
    --  which is the emphasis for this tree.
 
    type Cell_Child is record
-      Index : GNAT.OS_Lib.String_Access;
-      --  The prefix of all strings started at this child. This doesn't include
-      --  the prefix of parent cells
+      Index_Length : Natural := 0;
+      --  The number of characters that should be considered in
+      --  Get_Index (Data) for this node.
 
       Data : Data_Type := No_Data;
       --  If there is any data associated with that cell
@@ -114,17 +118,8 @@ private
       Child : Cell_Child;
    end record;
 
-   type Cell_Child_And_Index is record
-      Index : GNAT.OS_Lib.String_Access;
-      Cell  : Cell_Child;
-   end record;
-   type Cell_Child_Index_Array is array (Natural range <>)
-      of Cell_Child_And_Index;
-   type Cell_Child_Index_Array_Access is access
-      Cell_Child_Index_Array;
-
    type Iterator is record
-      Cells : Cell_Child_Index_Array_Access;
+      Cells : Cell_Child_Array_Access;
       --  All the cells that must be returned
 
       Last  : Integer := 0;

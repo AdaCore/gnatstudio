@@ -25,21 +25,24 @@ package body Tries is
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Cell_Child_Array, Cell_Child_Array_Access);
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Cell_Child_Index_Array, Cell_Child_Index_Array_Access);
 
    procedure Free (Cell : in out Cell_Child);
    --  Free the memory used by Cell and its own children
 
+   function Get_Index (Cell : Cell_Child) return String_Access;
+   --  Return the base index for the cell. Only the Cell.Index_Length first
+   --  characters should be considered in the returned string.
+   --  The returned string must not be freed.
+
    type Cell_Child_Access is access all Cell_Child;
 
    procedure Find_Cell_Child
-     (Tree       : Cell_Child_Access;
-      Index      : String;
-      Cell       : out Cell_Child_Access;
-      Last       : out Natural;
-      Index_Last : out Natural;
-      Scenario   : out Natural);
+     (Tree         : Cell_Child_Access;
+      Index        : String;
+      Cell         : out Cell_Child_Access;
+      Last         : out Natural;
+      Index_Length : out Natural;
+      Scenario     : out Natural);
    --  Return the closest cell for Index. The first Last characters of Index
    --  have been processed so far on exit.  Kind describes the scenario, as
    --  in the following examples.
@@ -81,7 +84,6 @@ package body Tries is
 
    procedure Free (Cell : in out Cell_Child) is
    begin
-      Free (Cell.Index);
       Free (Cell.Data);
 
       if Cell.Children /= null then
@@ -91,6 +93,26 @@ package body Tries is
          Unchecked_Free (Cell.Children);
       end if;
    end Free;
+
+   ---------------
+   -- Get_Index --
+   ---------------
+
+   function Get_Index (Cell : Cell_Child) return String_Access is
+      C    : Cell_Child := Cell;
+      Ind : String_Access;
+   begin
+      loop
+         Ind := Get_Index (C.Data);
+         if Ind /= null then
+            return Ind;
+         end if;
+
+         --  There is at least one children if we had No_Data stored in the
+         --  tree.
+         C := C.Children (C.Children'First);
+      end loop;
+   end Get_Index;
 
    -----------
    -- Clear --
@@ -106,24 +128,28 @@ package body Tries is
    ---------------------
 
    procedure Find_Cell_Child
-     (Tree       : Cell_Child_Access;
-      Index      : String;
-      Cell       : out Cell_Child_Access;
-      Last       : out Natural;
-      Index_Last : out Natural;
-      Scenario   : out Natural)
+     (Tree         : Cell_Child_Access;
+      Index        : String;
+      Cell         : out Cell_Child_Access;
+      Last         : out Natural;
+      Index_Length : out Natural;
+      Scenario     : out Natural)
    is
       pragma Suppress (All_Checks);
       Start : Integer;
-      Ind   : String_Access;
+      Ind      : String_Access;
+      Ind_First, Ind_Last : Natural;
    begin
       if Tree.Children = null then
          Cell     := Tree;
          Scenario := 5;
       else
          for C in Tree.Children'Range loop
-            Ind := Tree.Children (C).Index;
-            if Ind (Ind'First) = Index (Index'First) then
+            Ind := Get_Index (Tree.Children (C));
+            Ind_First := Ind'First + Tree.Index_Length;
+            Ind_Last := Ind'First + Tree.Children (C).Index_Length - 1;
+
+            if Ind (Ind_First) = Index (Index'First) then
                if Ind'Length = 1 and then Index'Length = 1 then
                   Cell     := Tree.Children (C)'Unrestricted_Access;
                   Last     := Index'Last;
@@ -132,15 +158,15 @@ package body Tries is
                end if;
 
                Start := Index'First + 1;
-               for J in Ind'First + 1 .. Ind'Last loop
-                  if Tree.Children (C).Index (J) /= Index (Start) then
+               for J in Ind_First + 1 .. Ind_Last loop
+                  if Ind (J) /= Index (Start) then
 
                      --  If at least one character matched, this is the correct
                      --  cell, although it will have to be splitted
-                     Cell       := Tree.Children (C)'Unrestricted_Access;
-                     Last       := Start - 1;
-                     Index_Last := J - 1;
-                     Scenario   := 1;
+                     Cell         := Tree.Children (C)'Unrestricted_Access;
+                     Last         := Start - 1;
+                     Index_Length := J - Ind'First;
+                     Scenario     := 1;
                      return;
                   else
                      Start := Start + 1;
@@ -153,11 +179,11 @@ package body Tries is
                         --  If all the characters of the index matched, we have
                         --  found our cell
 
-                        if J = Tree.Children (C).Index'Last then
+                        if J = Ind_Last then
                            Scenario   := 3;
                         else
-                           Index_Last := J;
-                           Scenario   := 2;
+                           Index_Length := J - Ind'First + 1;
+                           Scenario     := 2;
                         end if;
                         return;
                      end if;
@@ -170,7 +196,7 @@ package body Tries is
                Find_Cell_Child
                  (Tree.Children (C)'Unrestricted_Access,
                   Index (Start .. Index'Last),
-                  Cell, Last, Index_Last, Scenario);
+                  Cell, Last, Index_Length, Scenario);
                return;
             end if;
          end loop;
@@ -187,51 +213,40 @@ package body Tries is
 
    procedure Insert
      (Tree  : in out Trie_Tree;
-      Index : String;
       Data  : Data_Type)
    is
       pragma Suppress (All_Checks);
       Cell       : Cell_Child_Access;
+      Index      : constant String_Access := Get_Index (Data);
       Last       : Integer;
       Scenario   : Integer;
-      Index_Last : Integer;
-      Tmp        : String_Access;
+      Index_Length : Integer;
       Tmp2       : Cell_Child_Array_Access;
    begin
       Find_Cell_Child
-        (Tree.Child'Unrestricted_Access, Index, Cell, Last,
-         Index_Last, Scenario);
-
+        (Tree.Child'Unrestricted_Access, Index.all, Cell, Last,
+         Index_Length, Scenario);
       case Scenario is
          when 1 =>
-            Tmp := Cell.Index;
             Cell.all :=
-              (Data    => No_Data,
-               Index   => new String'
-                 (Cell.Index (Cell.Index'First .. Index_Last)),
-               Children => new Cell_Child_Array'
-                 (1 => (Data  => Cell.Data,
-                           Index => new String'
-                             (Cell.Index (Index_Last + 1 .. Cell.Index'Last)),
-                           Children => Cell.Children),
-                  2 => (Data  => Data,
-                           Index => new String'
-                             (Index (Last + 1 .. Index'Last)),
-                           Children => null)));
-            Free (Tmp);
+              (Data         => No_Data,
+               Index_Length => Index_Length,
+               Children     => new Cell_Child_Array'
+                 (1 => (Data         => Cell.Data,
+                        Index_Length => Cell.Index_Length,
+                        Children     => Cell.Children),
+                  2 => (Data         => Data,
+                        Index_Length => Index'Last,
+                        Children     => null)));
 
          when 2 =>
-            Tmp := Cell.Index;
             Cell.all :=
-              (Data    => Data,
-               Index   => new String'
-                 (Cell.Index (Cell.Index'First .. Index_Last)),
-               Children => new Cell_Child_Array'
-                 (1 => (Data => Cell.Data,
-                        Index => new String'
-                          (Cell.Index (Index_Last + 1 .. Cell.Index'Last)),
-                        Children => Cell.Children)));
-            Free (Tmp);
+              (Data         => Data,
+               Index_Length => Index_Length,
+               Children     => new Cell_Child_Array'
+                 (1 => (Data         => Cell.Data,
+                        Index_Length => Cell.Index_Length,
+                        Children     => Cell.Children)));
 
          when 3 =>
             Free (Cell.Data);
@@ -249,9 +264,9 @@ package body Tries is
             end if;
 
             Cell.Children (Cell.Children'Last) :=
-              (Data     => Data,
-               Index    => new String'(Index (Last + 1 .. Index'Last)),
-               Children => null);
+              (Data         => Data,
+               Index_Length => Index'Length,
+               Children     => null);
 
          when others =>
             null;
@@ -262,43 +277,34 @@ package body Tries is
    -- Dump --
    ----------
 
-   procedure Dump (Tree : Trie_Tree; Size_Only : Boolean := False) is
-      Length : Natural := 0;
-
-      procedure Dump (Cell : Cell_Child; Tab : String);
+   procedure Dump (Tree : Trie_Tree) is
+      procedure Dump (Cell : Cell_Child; Eliminate : Natural);
       --  Dump a cell
 
-      procedure Dump (Cell : Cell_Child; Tab : String) is
+      procedure Dump (Cell : Cell_Child; Eliminate : Natural) is
+         Ind : constant String_Access := Get_Index (Cell);
       begin
-         if not Size_Only then
-            if Cell.Index = null then
-               Put ("(''");
-            else
-               Put ("('" & Cell.Index.all & "'");
-            end if;
+         Put ("('"
+              & Ind (Ind'First + Eliminate ..
+                       Ind'First + Cell.Index_Length - 1) & "'");
 
-            Put (Cell.Data);
-            Put (" ");
-         end if;
-
-         if Cell.Index /= null then
-            Length := Length + Cell.Index'Length;
-         end if;
+         Put (Cell.Data);
+         Put (" ");
 
          if Cell.Children /= null then
-            Length := Length + Cell.Children.all'Size / 8;
             for C in Cell.Children'Range loop
-               Dump (Cell.Children (C), Tab & "  ");
+               Dump (Cell.Children (C), Cell.Index_Length);
             end loop;
          end if;
 
-         if not Size_Only then
-            Put (")");
-         end if;
+         Put (")");
       end Dump;
    begin
-      Dump (Tree.Child, "");
-      Put (" length=" & Length'Img);
+      if Tree.Child.Children = null then
+         Put ("('')");
+      else
+         Dump (Tree.Child, 0);
+      end if;
    end Dump;
 
    ------------
@@ -309,14 +315,14 @@ package body Tries is
      (Tree  : in out Trie_Tree;
       Index : String)
    is
-      Cell       : Cell_Child_Access;
-      Last       : Integer;
-      Scenario   : Integer;
-      Index_Last : Integer;
+      Cell         : Cell_Child_Access;
+      Last         : Integer;
+      Scenario     : Integer;
+      Index_Length : Integer;
    begin
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index, Cell, Last,
-         Index_Last, Scenario);
+         Index_Length, Scenario);
 
       --  For efficiency, we do not rebalance the tree, just leave it as it is
       if Scenario = 3 then
@@ -330,16 +336,16 @@ package body Tries is
    ---------
 
    function Get (Tree : Trie_Tree; Index : String) return Data_Type is
-      Cell       : Cell_Child_Access;
-      Last       : Integer;
-      Scenario   : Integer;
-      Index_Last : Integer;
+      Cell         : Cell_Child_Access;
+      Last         : Integer;
+      Scenario     : Integer;
+      Index_Length : Integer;
    begin
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index, Cell, Last,
-         Index_Last, Scenario);
+         Index_Length, Scenario);
 
-      if Scenario = 3 then
+      if Scenario = 3 or Scenario = 4 then
          return Cell.Data;
       end if;
       return No_Data;
@@ -350,65 +356,58 @@ package body Tries is
    -----------
 
    function Start (Tree : Trie_Tree; Prefix : String) return Iterator is
-      Cell       : Cell_Child_Access;
-      Last       : Integer;
-      Scenario   : Integer;
-      Index_Last : Integer;
-      Iter       : Iterator;
+      Cell         : Cell_Child_Access;
+      Last         : Integer;
+      Scenario     : Integer;
+      Index_Length : Integer;
+      Iter         : Iterator;
 
-      procedure Process_Recursively (Cell : Cell_Child; Prefix : String);
+      procedure Process_Recursively (Cell : Cell_Child);
       --  Add cell to the list of cells that need to be returned by the
       --  iterator.
 
-      procedure Process_Recursively (Cell : Cell_Child; Prefix : String) is
-         Tmp : Cell_Child_Index_Array_Access;
+      procedure Process_Recursively (Cell : Cell_Child) is
+         Tmp : Cell_Child_Array_Access;
       begin
          if Cell.Data /= No_Data then
             if Iter.Cells = null or else Iter.Last = Iter.Cells'Last then
                Tmp := Iter.Cells;
                if Tmp /= null then
                   Iter.Cells :=
-                    new Cell_Child_Index_Array (Tmp'First .. Tmp'Last * 2);
+                    new Cell_Child_Array (Tmp'First .. Tmp'Last * 2);
                   Iter.Cells (Tmp'Range) := Tmp.all;
                   Unchecked_Free (Tmp);
                else
-                  Iter.Cells := new Cell_Child_Index_Array (1 .. 10);
+                  Iter.Cells := new Cell_Child_Array (1 .. 10);
                   Iter.Last  := 0;
                end if;
             end if;
 
             Iter.Last := Iter.Last + 1;
-            Iter.Cells (Iter.Last) :=
-              (new String'(Prefix & Cell.Index.all), Cell);
+            Iter.Cells (Iter.Last) := Cell;
          end if;
 
          if Cell.Children /= null then
             for C in Cell.Children'Range loop
-               if Cell.Index /= null then
-                  Process_Recursively
-                    (Cell.Children (C), Prefix & Cell.Index.all);
-               else
-                  Process_Recursively (Cell.Children (C), Prefix);
-               end if;
+               Process_Recursively (Cell.Children (C));
             end loop;
          end if;
       end Process_Recursively;
 
    begin
       if Prefix = "" then
-         Process_Recursively (Tree.Child, "");
+         Process_Recursively (Tree.Child);
 
       else
          --  Find the closest cell that matches the prefix
          Find_Cell_Child
            (Tree.Child'Unrestricted_Access, Prefix, Cell, Last,
-            Index_Last, Scenario);
+            Index_Length, Scenario);
 
          --  From there, we need to return the cell and all of its children
          --  recursively
-         if Scenario < 4 then
-            Process_Recursively
-              (Cell.all, Prefix (Prefix'First .. Last - Cell.Index'Length));
+         if Cell.Index_Length >= Prefix'Length then
+            Process_Recursively (Cell.all);
          end if;
       end if;
 
@@ -421,12 +420,7 @@ package body Tries is
 
    procedure Free (Iter : in out Iterator) is
    begin
-      if Iter.Cells /= null then
-         for C in Iter.Cells'First .. Iter.Last loop
-            Free (Iter.Cells (C).Index);
-         end loop;
-         Unchecked_Free (Iter.Cells);
-      end if;
+      Unchecked_Free (Iter.Cells);
    end Free;
 
    ----------
@@ -445,7 +439,7 @@ package body Tries is
    function Get (Iter : Iterator) return Data_Type is
    begin
       if Iter.Cells /= null and then Iter.Current <= Iter.Last then
-         return Iter.Cells (Iter.Current).Cell.Data;
+         return Iter.Cells (Iter.Current).Data;
       else
          return No_Data;
       end if;
@@ -456,9 +450,16 @@ package body Tries is
    -------------
 
    function Get_Key (Iter : Iterator) return String is
+      Ind : String_Access;
    begin
       if Iter.Cells /= null and then Iter.Current <= Iter.Last then
-         return Iter.Cells (Iter.Current).Index.all;
+         Ind := Get_Index (Iter.Cells (Iter.Current));
+         if Ind = null then
+            return "";
+         else
+            return Ind (Ind'First .. Ind'First
+                        + Iter.Cells (Iter.Current).Index_Length - 1);
+         end if;
       else
          return "";
       end if;
