@@ -59,6 +59,7 @@ package VCS is
       Update,             --  Update one or more files
       Commit,             --  Commits one or more files
       History,            --  Get the entire revision history for one file
+      History_Revision,   --  Get the revision history for specified revision
       Annotate,           --  Get the annotations for one file
       Diff_Head,          --  Diff current against head revision
       Diff,               --  Diff current against specified revision
