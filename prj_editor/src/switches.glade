@@ -19,11 +19,9 @@
   <type>GTK_WINDOW_TOPLEVEL</type>
   <position>GTK_WIN_POS_NONE</position>
   <modal>False</modal>
-  <default_width>400</default_width>
-  <default_height>300</default_height>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
+  <auto_shrink>True</auto_shrink>
 
   <widget>
     <class>GtkVBox</class>
@@ -2983,7 +2981,7 @@ Reformat blocks
   <modal>False</modal>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
+  <auto_shrink>True</auto_shrink>
 
   <widget>
     <class>GtkAlignment</class>
@@ -3591,7 +3589,6 @@ _.ada
 		<last_modification_time>Wed, 16 May 2001 22:35:41 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	      <child>
 		<padding>0</padding>
 		<expand>False</expand>
@@ -3614,9 +3611,9 @@ _.ada
   <modal>False</modal>
   <default_width>600</default_width>
   <default_height>400</default_height>
-  <allow_shrink>True</allow_shrink>
+  <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
+  <auto_shrink>True</auto_shrink>
 
   <widget>
     <class>GtkVBox</class>
@@ -3830,7 +3827,6 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>Delete</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 
 	      <widget>
@@ -3839,7 +3835,6 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>New</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 
 	      <widget>
@@ -3848,7 +3843,6 @@ _.ada
 		<can_default>True</can_default>
 		<can_focus>True</can_focus>
 		<label>Rename</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 	      </widget>
 	    </widget>
 	  </widget>
@@ -3867,7 +3861,7 @@ _.ada
   <modal>False</modal>
   <allow_shrink>False</allow_shrink>
   <allow_grow>True</allow_grow>
-  <auto_shrink>False</auto_shrink>
+  <auto_shrink>True</auto_shrink>
 
   <widget>
     <class>GtkVBox</class>
@@ -4163,7 +4157,6 @@ _.ada
 	      <last_modification_time>Wed, 16 May 2001 22:35:41 GMT</last_modification_time>
 	    </signal>
 	    <label>Update</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	    <child>
 	      <padding>0</padding>
 	      <expand>False</expand>
