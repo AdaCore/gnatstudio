@@ -18,37 +18,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Contexts;    use GPS.Kernel.Contexts;
-with GPS.Kernel.Preferences; use GPS.Kernel.Preferences;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
-with GPS.Kernel.MDI;         use GPS.Kernel.MDI;
-with GPS.Kernel.Modules;     use GPS.Kernel.Modules;
-with GPS.Kernel.Hooks;       use GPS.Kernel.Hooks;
+with GPS.Kernel.Contexts;       use GPS.Kernel.Contexts;
+with GPS.Kernel.Preferences;    use GPS.Kernel.Preferences;
+with GPS.Kernel.Project;        use GPS.Kernel.Project;
+with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
+with GPS.Kernel.Modules;        use GPS.Kernel.Modules;
+with GPS.Kernel.Hooks;          use GPS.Kernel.Hooks;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
-with GPS.Intl;               use GPS.Intl;
-with Glib.Object;              use Glib.Object;
-with VFS;                      use VFS;
-with Docgen.Work_On_File;      use Docgen.Work_On_File;
-with Docgen;                   use Docgen;
-with Entities;                 use Entities;
-with Traces;                   use Traces;
-with Ada.Exceptions;           use Ada.Exceptions;
-with Gtkada.File_Selector;     use Gtkada.File_Selector;
-with Projects;                 use Projects;
-with Glib;                     use Glib;
+with GPS.Intl;                  use GPS.Intl;
+with Glib.Object;               use Glib.Object;
+with VFS;                       use VFS;
+with Docgen.Work_On_File;       use Docgen.Work_On_File;
+with Docgen;                    use Docgen;
+with Entities;                  use Entities;
+with Traces;                    use Traces;
+with Ada.Exceptions;            use Ada.Exceptions;
+with Gtkada.File_Selector;      use Gtkada.File_Selector;
+with Projects;                  use Projects;
+with Glib;                      use Glib;
 with Glib.Generic_Properties;
-with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Docgen;
+with Glib.Properties.Creation;  use Glib.Properties.Creation;
+with Docgen;                    use Docgen;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Projects.Registry;         use Projects.Registry;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Docgen.Backend.HTML;       use Docgen.Backend.HTML;
+with Docgen_Registry;           use Docgen_Registry;
 with Commands.Interactive;      use Commands, Commands.Interactive;
+with Docgen.Backend.Text;       use Docgen.Backend.Text;
+with Glib.Xml_Int;              use Glib.Xml_Int;
 
 package body Docgen_Module is
 
    Me : constant Debug_Handle := Create ("Docgen");
+
+   type Supported_Backends is
+     array (Natural range <>) of Docgen.Backend.Backend_Handle;
+   type Supported_Backends_Access is access Supported_Backends;
 
    type Docgen_Module_Record is new Module_ID_Record with record
       --  Docgen preferences
@@ -81,8 +86,8 @@ package body Docgen_Module is
       Options : All_Options;
       --  Group all the preferences
 
-      HTML_Backend : Docgen.Backend.Backend_Handle;
-      --  A backend suitable for generating HTML output
+      Backends : Supported_Backends_Access;
+      --  The backends suitable for generating output
    end record;
    type Docgen_Module is access all Docgen_Module_Record'Class;
 
@@ -91,14 +96,14 @@ package body Docgen_Module is
        ("Type_Api_Doc", Type_Api_Doc);
 
    procedure Set_Options
-     (Type_Of_File_P         : Type_Api_Doc := HTML;
-      Process_Body_Files_P   : Boolean := False;
-      Ignorable_Comments_P   : Boolean := False;
-      Show_Private_P         : Boolean := False;
-      References_P           : Boolean := False;
-      One_Doc_File_P         : Boolean := False;
-      Link_All_P             : Boolean := False;
-      Tagged_Types_P         : Boolean := False);
+     (Type_Of_File_P       : Type_Api_Doc := HTML;
+      Process_Body_Files_P : Boolean := False;
+      Ignorable_Comments_P : Boolean := False;
+      Show_Private_P       : Boolean := False;
+      References_P         : Boolean := False;
+      One_Doc_File_P       : Boolean := False;
+      Link_All_P           : Boolean := False;
+      Tagged_Types_P       : Boolean := False);
    --  Set new options or reset options
    --
    --  - Type_Of_File_P is the type of the generated file (html, texi...)
@@ -127,6 +132,14 @@ package body Docgen_Module is
    procedure On_Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed
+
+   procedure Docgen_Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level);
+   --  Customization routine for the docgen module, this is a callback to
+   --  be used with a Register_Module.
 
    ------------------
    -- For the menu --
@@ -175,8 +188,8 @@ package body Docgen_Module is
    --  Return the backend to use given the current options
 
    procedure Generate
-     (Kernel : Kernel_Handle;
-      List   : in out Type_Source_File_Table.HTable;
+     (Kernel  : Kernel_Handle;
+      List    : in out Type_Source_File_Table.HTable;
       Backend : access Docgen.Backend.Backend'Class);
    --  With the list of source files, it generates the documentation
 
@@ -184,16 +197,16 @@ package body Docgen_Module is
    -- Commands --
    --------------
 
-   type Generate_Project_Command
-     is new Interactive_Command with record
+   type Generate_Project_Command is new Interactive_Command with record
       Recursive : Boolean := False;
-     end record;
+   end record;
+
    function Execute
      (Command : access Generate_Project_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   type Generate_File_Command
-     is new Interactive_Command with null record;
+   type Generate_File_Command is new Interactive_Command with null record;
+
    function Execute
      (Command : access Generate_File_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
@@ -264,8 +277,8 @@ package body Docgen_Module is
       List       : in out Type_Source_File_Table.HTable;
       Doc_Suffix : String)
    is
-      File   : aliased Virtual_File;
-      Source : Source_File;
+      File    : aliased Virtual_File;
+      Source  : Source_File;
       Is_Spec : Boolean;
    begin
       for J in 1 .. Tab'Length loop
@@ -321,8 +334,7 @@ package body Docgen_Module is
 
    function Execute
      (Command : access Generate_Project_Command;
-      Context : Interactive_Command_Context) return Command_Return_Type
-   is
+      Context : Interactive_Command_Context) return Command_Return_Type is
    begin
       Generate_Project
         (Get_Kernel (Context.Context),
@@ -404,11 +416,11 @@ package body Docgen_Module is
       Project   : Project_Type := No_Project;
       Recursive : Boolean)
    is
-      Sources : VFS.File_Array_Access;
+      B                : constant Docgen.Backend.Backend_Handle := Get_Backend;
+      Sources          : VFS.File_Array_Access;
       Source_File_List : Type_Source_File_Table.HTable;
-      B       : constant Docgen.Backend.Backend_Handle := Get_Backend;
-      P       : Project_Type := Project;
-      Context : Selection_Context_Access;
+      P                : Project_Type := Project;
+      Context          : Selection_Context_Access;
 
    begin
       if P = No_Project then
@@ -454,37 +466,76 @@ package body Docgen_Module is
     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
       pragma Unreferenced (Widget);
-      File  : aliased Virtual_File :=
+      File : aliased Virtual_File :=
         Select_File
           (Title             => -"Generate Documentation For",
            Parent            => Get_Current_Window (Kernel),
            Use_Native_Dialog => Get_Pref (Kernel, Use_Native_Dialogs),
            Kind              => Unspecified,
            History           => Get_History (Kernel));
-
    begin
       if File /= VFS.No_File then
          Generate_File (Kernel, File);
       end if;
    end Choose_Menu_File;
 
+   ----------------------
+   -- Docgen_Customize --
+   ----------------------
+
+   procedure Docgen_Customize
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : Virtual_File;
+      Node   : Node_Ptr;
+      Level  : Customization_Level)
+   is
+      pragma Unreferenced (Kernel, Level, File);
+   begin
+      if Node.Tag.all = "docgen_backend" then
+         --  This is a docgen backend description node
+
+         declare
+            Att        : constant UTF8_String :=
+                           Get_Attribute (Node, "format", "text");
+            N          : Node_Ptr := Node.Child;
+            Out_Format : Output_Description;
+         begin
+            if Att = "text" then
+               Out_Format.Format := Text;
+            else
+               Out_Format.Format := Binary;
+            end if;
+
+            while N /= null loop
+               if N.Tag.all = "description" then
+                  Out_Format.Description := new String'(N.Value.all);
+               elsif N.Tag.all = "extension" then
+                  Out_Format.Extension := new String'(N.Value.all);
+               end if;
+               N := N.Next;
+            end loop;
+
+            Insert (Out_Format);
+         end;
+      end if;
+   end Docgen_Customize;
+
    -------------------
    -- Generate_File --
    -------------------
 
    procedure Generate_File
-     (Kernel     : Kernel_Handle;
-      File       : Virtual_File)
+     (Kernel : Kernel_Handle;
+      File   : Virtual_File)
    is
-      Source_File_List : Type_Source_File_Table.HTable;
-      Body_File        : Virtual_File;
       Is_Spec          : constant Boolean := Is_Spec_File (Kernel, File);
       Process_Body     : constant Boolean :=
          Docgen_Module (Docgen_Module_Id).Options.Process_Body_Files;
+      B                : constant Docgen.Backend.Backend_Handle := Get_Backend;
+      Doc_Suffix       : constant String := Docgen.Backend.Get_Extension (B);
+      Source_File_List : Type_Source_File_Table.HTable;
+      Body_File        : Virtual_File;
       Source           : Source_File;
-      B         : constant Docgen.Backend.Backend_Handle := Get_Backend;
-      Doc_Suffix       : constant String :=
-         Docgen.Backend.Get_Extension (B);
 
    begin
       if not Is_Spec and then not Process_Body then
@@ -542,18 +593,30 @@ package body Docgen_Module is
    -----------------
 
    function Get_Backend return Docgen.Backend.Backend_Handle is
+      Backends : Supported_Backends_Access :=
+                   Docgen_Module (Docgen_Module_Id).Backends;
    begin
-      case Docgen_Module (Docgen_Module_Id).Options.Type_Of_File is
-         when HTML =>
-            return Docgen_Module (Docgen_Module_Id).HTML_Backend;
+      --  ??? This routine needs to be changed to display the list supported
+      --  formats in a dialog. Right now a single backend is supported for
+      --  HTML so we just use this one.
 
-            --  ???
-            --       when TEXI =>
-            --          return Docgen_Module (Docgen_Module_Id).TEXI_Backend
+      if Backends = null then
+         --  Initialize the backends now
 
-         when others =>
-            return null;
-      end case;
+         Backends := new Supported_Backends (1 .. Length);
+
+         Docgen_Module (Docgen_Module_Id).Backends := Backends;
+
+         for K in Docgen_Module (Docgen_Module_Id).Backends'Range loop
+            --  ??? We have a single textual backend, so we do not check for
+            --  binary ones for now.
+            Docgen_Module (Docgen_Module_Id).Backends (K) :=
+              new Docgen.Backend.Text.Backend (Get (K));
+         end loop;
+      end if;
+
+      --  ??? We have a single backend, return it for now
+      return Backends (Backends'First);
    end Get_Backend;
 
    --------------
@@ -561,8 +624,8 @@ package body Docgen_Module is
    --------------
 
    procedure Generate
-     (Kernel : Kernel_Handle;
-      List   : in out Type_Source_File_Table.HTable;
+     (Kernel  : Kernel_Handle;
+      List    : in out Type_Source_File_Table.HTable;
       Backend : access Docgen.Backend.Backend'Class)
    is
       use Docgen.Backend;
@@ -614,13 +677,13 @@ package body Docgen_Module is
       Command  : Interactive_Command_Access;
    begin
       Docgen_Module_Id := new Docgen_Module_Record;
-      Docgen_Module (Docgen_Module_Id).HTML_Backend := new Backend_HTML;
 
       Register_Module
-        (Module      => Docgen_Module_Id,
-         Kernel      => Kernel,
-         Module_Name => "Docgen",
-         Priority    => Default_Priority);
+        (Module                => Docgen_Module_Id,
+         Kernel                => Kernel,
+         Module_Name           => "Docgen",
+         Priority              => Default_Priority,
+         Customization_Handler => Docgen_Customize'Access);
 
       Command := new Generate_Project_Command;
       Register_Contextual_Menu
