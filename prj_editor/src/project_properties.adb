@@ -1260,7 +1260,8 @@ package body Project_Properties is
                               Vars,
                               Ref_Project => Project)
                            then
-                              Trace (Me, "Project modified on page " & P'Img);
+                              Trace (Me, "Project modified on page " & P'Img
+                                     & "/" & Editor.Pages'Length'Img);
                               Changed := True;
                            end if;
                         end if;
