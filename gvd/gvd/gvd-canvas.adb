@@ -18,23 +18,24 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;             use Glib;
-with Gdk;              use Gdk;
-with Gdk.Window;       use Gdk.Window;
-with Gdk.Color;        use Gdk.Color;
-with Gdk.Event;        use Gdk.Event;
-with Gdk.Pixmap;       use Gdk.Pixmap;
-with Gdk.GC;           use Gdk.GC;
-with Gdk.Bitmap;       use Gdk.Bitmap;
-with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.Handlers;     use Gtk.Handlers;
-with Gtk.Widget;       use Gtk.Widget;
-with Gtk.Accel_Group;  use Gtk.Accel_Group;
-with Gtk.Menu;         use Gtk.Menu;
-with Gtk.Menu_Item;    use Gtk.Menu_Item;
+with Glib;                use Glib;
+with Gdk;                 use Gdk;
+with Gdk.Window;          use Gdk.Window;
+with Gdk.Color;           use Gdk.Color;
+with Gdk.Event;           use Gdk.Event;
+with Gdk.Pixmap;          use Gdk.Pixmap;
+with Gdk.GC;              use Gdk.GC;
+with Gdk.Bitmap;          use Gdk.Bitmap;
+with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Handlers;        use Gtk.Handlers;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Accel_Group;     use Gtk.Accel_Group;
+with Gtk.Menu;            use Gtk.Menu;
+with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
+with Gtk.Window;          use Gtk.Window;
 
 with Gtkada.Canvas;    use Gtkada.Canvas;
 with Gtkada.Handlers;  use Gtkada.Handlers;
@@ -1055,19 +1056,21 @@ package body GVD.Canvas is
    ----------------------
 
    procedure View_Into_Memory
-     (Widget  : access Gtk_Widget_Record'Class;
-      Item    : Item_Record)
+     (Widget : access Gtk_Widget_Record'Class;
+      Item   : Item_Record)
    is
       pragma Unreferenced (Widget);
 
       Top  : constant GVD_Main_Window :=
         GVD_Main_Window (Visual_Debugger (Item.Canvas.Process).Window);
-      View : GVD_Memory_View := Top.Memory_View;
+      View : GVD_Memory_View;
 
    begin
-      if View = null then
-         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
-         View := Top.Memory_View;
+      if Top.Memory_View = null then
+         Gtk_New (View, Gtk_Widget (Top));
+         Top.Memory_View := Gtk_Window (View);
+      else
+         View := GVD_Memory_View (Top.Memory_View);
       end if;
 
       if not Visible_Is_Set (View) then

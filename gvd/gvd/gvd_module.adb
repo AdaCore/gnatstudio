@@ -1369,14 +1369,18 @@ package body GVD_Module is
         Entity_Selection_Context_Access (Context.Context);
       Top  : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Get_Kernel (Entity)));
+      Memory_View : GVD_Memory_View;
    begin
       if Top.Memory_View = null then
-         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+         Gtk_New (Memory_View, Gtk_Widget (Top));
+         Top.Memory_View := Gtk_Window (Memory_View);
+      else
+         Memory_View := GVD_Memory_View (Top.Memory_View);
       end if;
 
-      Show_All (Top.Memory_View);
-      Display_Memory (Top.Memory_View, Entity_Name_Information (Entity));
-      Gdk_Raise (Get_Window (Top.Memory_View));
+      Show_All (Memory_View);
+      Display_Memory (Memory_View, Entity_Name_Information (Entity));
+      Gdk_Raise (Get_Window (Memory_View));
       return Commands.Success;
    end Execute;
 

@@ -34,7 +34,6 @@ with Factory_Data;
 with GVD.Dialogs;           use GVD.Dialogs;
 with GVD.Types;             use GVD.Types;
 with GVD.Process;           use GVD.Process;
-with GVD.Memory_View;       use GVD.Memory_View;
 with Debugger;              use Debugger;
 with Process_Proxies;       use Process_Proxies;
 with Odd_Intl;              use Odd_Intl;

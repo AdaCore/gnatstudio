@@ -656,10 +656,12 @@ package body GVD.Menu is
    is
       pragma Unreferenced (Action, Widget);
 
-      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Top         : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Memory_View : GVD_Memory_View;
    begin
       if Top.Memory_View = null then
-         Gtk_New (Top.Memory_View, Gtk_Widget (Top));
+         Gtk_New (Memory_View, Gtk_Widget (Top));
+         Top.Memory_View := Gtk_Window (Memory_View);
       end if;
 
       Show_All (Top.Memory_View);
