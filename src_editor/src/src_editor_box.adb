@@ -1611,10 +1611,6 @@ package body Src_Editor_Box is
 
                Pop_State (Get_Kernel (Context));
             end if;
-
-            Gtk_New (Item, -"Goto parent unit");
-            Add (Menu, Item);
-            Set_Sensitive (Item, False);
          end if;
       end if;
 
