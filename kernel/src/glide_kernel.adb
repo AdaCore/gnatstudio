@@ -32,6 +32,7 @@ with Unchecked_Deallocation;
 with Gint_Xml;                  use Gint_Xml;
 with Glide_Main_Window;         use Glide_Main_Window;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
+with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Glide_Page;                use Glide_Page;
 with GVD.Process;               use GVD.Process;
@@ -186,6 +187,11 @@ package body Glide_Kernel is
       Add_File_Extensions (Ada_Lang, Get_Pref (Handle, Ada_Extensions));
       Add_File_Extensions (C_Lang,   Get_Pref (Handle, C_Extensions));
       Add_File_Extensions (Cpp_Lang, Get_Pref (Handle, Cpp_Extensions));
+
+      Handle.Explorer_Context := new File_Selection_Context;
+      Set_Context_Information (Handle.Explorer_Context, Handle, null);
+      Set_File_Information
+        (File_Selection_Context_Access (Handle.Explorer_Context));
    end Gtk_New;
 
    ------------------------------
@@ -362,7 +368,23 @@ package body Glide_Kernel is
          Signal  : String;
          Context : Selection_Context_Access);
       pragma Import (C, Internal, "g_signal_emit_by_name");
+
+      File : File_Selection_Context_Access;
    begin
+      if Module_Name (Get_Creator (Context)) = Explorer_Module_Name then
+         Free (Handle.Explorer_Context);
+         Handle.Explorer_Context := new File_Selection_Context;
+         Set_Context_Information
+           (Handle.Explorer_Context, Handle, Get_Creator (Context));
+
+         File := File_Selection_Context_Access (Context);
+         Set_File_Information
+           (File_Selection_Context_Access (Handle.Explorer_Context),
+            Project_Information (File),
+            Directory_Information (File),
+            File_Information (File));
+      end if;
+
       Internal
         (Get_Object (Handle),
          Context_Changed_Signal & ASCII.NUL,
