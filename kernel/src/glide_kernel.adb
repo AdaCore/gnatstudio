@@ -32,6 +32,7 @@ with Gtk.Handlers;              use Gtk.Handlers;
 with Interfaces.C;              use Interfaces.C;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 
 with Prj.Proc;                  use Prj.Proc;
 with Prj.Tree;                  use Prj.Tree;
@@ -42,6 +43,7 @@ with Snames;                    use Snames;
 with Types;                     use Types;
 
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
+with Src_Info.ALI;
 
 package body Glide_Kernel is
 
@@ -171,7 +173,97 @@ package body Glide_Kernel is
         (Handle, Signals, Kernel_Class, "GlideKernel", Signal_Parameters);
 
       Create_Default_Project (Handle);
+      Reset_Source_Info_List (Handle);
    end Gtk_New;
+
+   ---------------------
+   -- Set_Source_Path --
+   ---------------------
+
+   procedure Set_Source_Path
+     (Handle : access Kernel_Handle_Record;
+      Path   : String) is
+   begin
+      GNAT.OS_Lib.Free (Handle.Source_Path);
+      Handle.Source_Path := new String'(Path);
+   end Set_Source_Path;
+
+   ---------------------
+   -- Get_Source_Path --
+   ---------------------
+
+   function Get_Source_Path
+     (Handle : access Kernel_Handle_Record) return String is
+   begin
+      if Handle.Source_Path = null then
+         return "";
+      end if;
+      return Handle.Source_Path.all;
+   end Get_Source_Path;
+
+   ---------------------
+   -- Set_Object_Path --
+   ---------------------
+
+   procedure Set_Object_Path
+     (Handle : access Kernel_Handle_Record;
+      Path   : String) is
+   begin
+      GNAT.OS_Lib.Free (Handle.Object_Path);
+      Handle.Object_Path := new String'(Path);
+   end Set_Object_Path;
+
+   ---------------------
+   -- Get_Object_Path --
+   ---------------------
+
+   function Get_Object_Path
+     (Handle : access Kernel_Handle_Record) return String is
+   begin
+      if Handle.Object_Path = null then
+         return "";
+      end if;
+      return Handle.Object_Path.all;
+   end Get_Object_Path;
+
+   --------------------
+   -- Parse_ALI_File --
+   --------------------
+
+   procedure Parse_ALI_File
+     (Handle       : access Kernel_Handle_Record;
+      ALI_Filename : String;
+      Unit         : out Src_Info.LI_File_Ptr;
+      Success      : out Boolean) is
+   begin
+      Src_Info.ALI.Parse_ALI_File
+        (ALI_Filename => ALI_Filename,
+         Project      => Get_Project_View (Handle),
+         Source_Path  => Get_Source_Path (Handle),
+         List         => Handle.Source_Info_List,
+         Unit         => Unit,
+         Success      => Success);
+   end Parse_ALI_File;
+
+   ----------------------------
+   -- Reset_Source_Info_List --
+   ----------------------------
+
+   procedure Reset_Source_Info_List
+     (Handle : access Kernel_Handle_Record) is
+   begin
+      Src_Info.Reset (Handle.Source_Info_List);
+   end Reset_Source_Info_List;
+
+   --------------------------
+   -- Get_Source_Info_List --
+   --------------------------
+
+   function Get_Source_Info_List
+     (Handle : access Kernel_Handle_Record) return Src_Info.LI_File_List is
+   begin
+      return Handle.Source_Info_List;
+   end Get_Source_Info_List;
 
    ---------------------
    -- Project_Changed --
