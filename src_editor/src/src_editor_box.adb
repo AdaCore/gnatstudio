@@ -791,9 +791,19 @@ package body Src_Editor_Box is
 
    function To_Box_Line
      (B    : Source_Buffer;
-      Line : Gint) return Natural is
+      Line : Gint) return Natural
+   is
+      The_Line : Natural;
    begin
-      return Natural (Get_Editable_Line (B, Buffer_Line_Type (Line + 1)));
+      The_Line := Natural (Get_Editable_Line (B, Buffer_Line_Type (Line + 1)));
+
+      --  If the line is not an editable line, return 1.
+
+      if The_Line = 0 then
+         return 1;
+      else
+         return The_Line;
+      end if;
    end To_Box_Line;
 
    -------------------
