@@ -190,6 +190,10 @@ package Src_Editor_Box is
       Column  : out Positive);
    --  Get the current cursor position.
 
+   procedure Scroll_To_Cursor_Location
+     (Editor : access Source_Editor_Box_Record);
+   --  Scroll the view so that the given position is visible on the screen.
+
    procedure Get_Selection_Bounds
      (Editor       : access Source_Editor_Box_Record;
       Start_Line   : out Positive;

@@ -1544,6 +1544,16 @@ package body Src_Editor_Box is
       Column := To_Box_Column (Buffer_Col);
    end Get_Cursor_Location;
 
+   -------------------------------
+   -- Scroll_To_Cursor_Location --
+   -------------------------------
+
+   procedure Scroll_To_Cursor_Location
+     (Editor : access Source_Editor_Box_Record) is
+   begin
+      Scroll_To_Cursor_Location (Editor.Source_View);
+   end Scroll_To_Cursor_Location;
+
    --------------------------
    -- Get_Selection_Bounds --
    --------------------------
