@@ -717,10 +717,10 @@ package body Navigation_Module is
       Navigation_Module_ID := new Navigation_Module_Record;
 
       Register_Module
-        (Module                  => Navigation_Module_ID,
-         Kernel                  => Kernel,
-         Module_Name             => Navigation_Module_Name,
-         Priority                => High_Priority);
+        (Module       => Navigation_Module_ID,
+         Kernel       => Kernel,
+         Module_Name  => Navigation_Module_Name,
+         Priority     => High_Priority);
 
       Register_Menu
         (Kernel,
