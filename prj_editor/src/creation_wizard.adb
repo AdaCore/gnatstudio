@@ -51,6 +51,7 @@ with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Intl;       use Glide_Intl;
 with String_Utils;     use String_Utils;
 with Project_Viewers;  use Project_Viewers;
+with Languages_Lists;  use Languages_Lists;
 
 package body Creation_Wizard is
 
@@ -77,11 +78,6 @@ package body Creation_Wizard is
      (Wiz : access Gtk_Widget_Record'Class; Args : Gtk_Args);
    --  Called when a new page is selected in the wizard. We dynamically create
    --  the page if needed.
-
-   function Get_Languages (Wiz : access Prj_Wizard_Record'Class)
-      return Argument_List;
-   --  Return the list of languages selected by the user. The returned array
-   --  must be freed by the caller.
 
    -------------
    -- Gtk_New --
@@ -152,7 +148,7 @@ package body Creation_Wizard is
          end if;
 
          declare
-            Languages : Argument_List := Get_Languages (W);
+            Languages : Argument_List := Get_Languages (W.Languages);
          begin
             Refresh
               (Page         => Get_Nth_Project_Editor_Page
@@ -253,7 +249,6 @@ package body Creation_Wizard is
       Page   : Gtk_Vbox;
       Box    : Gtk_Vbox;
       Frame  : Gtk_Frame;
-
    begin
       Gtk_New_Vbox (Page);
       Set_Border_Width (Page, 5);
@@ -299,23 +294,8 @@ package body Creation_Wizard is
         (Button, "clicked",
          Widget_Callback.To_Marshaller (Advanced_Prj_Location'Access), Wiz);
 
-      Gtk_New (Frame, -"Programming Languages");
-      Set_Border_Width (Frame, 5);
-      Pack_Start (Page, Frame, Expand => False);
-
-      Gtk_New_Vbox (Box);
-      Set_Border_Width (Box, 5);
-      Add (Frame, Box);
-
-      Gtk_New (Wiz.Ada_Support, "Ada");
-      Set_Active (Wiz.Ada_Support, True);
-      Pack_Start (Box, Wiz.Ada_Support, Expand => False);
-
-      Gtk_New (Wiz.C_Support, "C");
-      Pack_Start (Box, Wiz.C_Support, Expand => False);
-
-      Gtk_New (Wiz.Cpp_Support, "C++");
-      Pack_Start (Box, Wiz.Cpp_Support, Expand => False);
+      Gtk_New (Wiz.Languages, Wiz.Kernel, No_Project);
+      Pack_Start (Page, Wiz.Languages, Expand => False);
 
       Gtk_New (Frame, -"General");
       Set_Border_Width (Frame, 5);
@@ -356,34 +336,6 @@ package body Creation_Wizard is
       end if;
    end Advanced_Prj_Location;
 
-   -------------------
-   -- Get_Languages --
-   -------------------
-
-   function Get_Languages (Wiz : access Prj_Wizard_Record'Class)
-      return Argument_List
-   is
-      Languages : Argument_List (1 .. 3);
-      Current : Natural := Languages'First;
-   begin
-      if Get_Active (Wiz.C_Support) then
-         Languages (Current) := new String'(C_String);
-         Current := Current + 1;
-      end if;
-
-      if Get_Active (Wiz.Cpp_Support) then
-         Languages (Current) := new String'(Cpp_String);
-         Current := Current + 1;
-      end if;
-
-      if Get_Active (Wiz.Ada_Support) then
-         Languages (Current) := new String'(Ada_String);
-         Current := Current + 1;
-      end if;
-
-      return Languages (Languages'First .. Current - 1);
-   end Get_Languages;
-
    ------------------
    -- Generate_Prj --
    ------------------
@@ -394,7 +346,7 @@ package body Creation_Wizard is
         (Get_Text (Wiz.Project_Location));
       Name           : constant String := Get_Text (Wiz.Project_Name);
       Relative_Paths : constant Boolean := Get_Active (Wiz.Relative_Paths);
-      Languages      : Argument_List := Get_Languages (Wiz);
+      Languages      : Argument_List := Get_Languages (Wiz.Languages);
       Project        : Project_Type;
       Changed        : Boolean;
       pragma Unreferenced (Changed);

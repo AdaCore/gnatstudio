@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@ with Gtk.Check_Button;
 
 with Wizards;
 with Glide_Kernel;
+with Languages_Lists;
 
 package Creation_Wizard is
 
@@ -52,15 +53,13 @@ package Creation_Wizard is
 
 
 private
+
    type Prj_Wizard_Record is new Wizards.Wizard_Record with record
       Project_Name      : Gtk.GEntry.Gtk_Entry;
       Project_Location  : Gtk.GEntry.Gtk_Entry;
-      Ada_Support       : Gtk.Check_Button.Gtk_Check_Button;
-      C_Support         : Gtk.Check_Button.Gtk_Check_Button;
-      Cpp_Support       : Gtk.Check_Button.Gtk_Check_Button;
+      Languages         : Languages_Lists.Languages_List;
       Language_Changed  : Boolean := True;
       Relative_Paths    : Gtk.Check_Button.Gtk_Check_Button;
-
       Kernel            : Glide_Kernel.Kernel_Handle;
    end record;
 
