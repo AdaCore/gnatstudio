@@ -122,9 +122,11 @@ check_gtkada: force
 #############
 # Handling of C files: since these can include directory names (for instance if
 # we need to compile a C file from another module), we need to look for files
-# in that other directory. This is done through the VPATH variable.
+# in that other directory. This is done through the vpath directive.
 # Not that we always want the object file in ../obj, thus the slightly complex
-# form of C_OBJS
+# form of C_OBJS. This is also the reason why we can not use VPATH directly,
+# since we want to make sure that make will not search for object files in
+# directories specified in VPATH.
 
 ALL_FLAGS:=${GNATMAKE_FLAGS} -aI../src -aO../obj ${MODULE_INCLUDE} ${GNATBIND_FLAGS}
 C_OBJS:=${foreach name,${C_FILES},${OBJ_DIR}/${notdir ${name:.c=.o}}}
@@ -139,7 +141,7 @@ ${NO_STYLE_FILES}: force
 
 empty:=
 space:= $(empty) $(empty)
-VPATH:=${subst ${space},:,${dir ${C_FILES}}}
+vpath %.c ${subst ${space},:,${dir ${C_FILES}}}
 
 ${OBJ_DIR}/%.o: %.c
 	cd ${OBJ_DIR}; gcc ${CFLAGS} -Wall -c ../src/$< -I../src ${MODULE_INCLUDE}
