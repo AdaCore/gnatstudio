@@ -1962,7 +1962,7 @@ package body Glide_Kernel.Modules is
          Free (Result);
 
          if not Command_Found then
-            return -"Command not recognized";
+            return -"Command not recognized" & ASCII.LF;
          else
             return R;
          end if;
