@@ -37,41 +37,25 @@ package body Src_Info.CPP is
    type SN_Table_Array is array (Table_Type) of DB_File;
 
    procedure Open_DB_Files
-     (SN_Table : in out SN_Table_Array;
-      DB_Prefix : in String);
+     (DB_Prefix : in String);
 
-   procedure Close_DB_Files (SN_Table : in out SN_Table_Array);
+   procedure Close_DB_Files;
 
    procedure Process_File
-     (Source_Filename : in String;
-      File            : in out LI_File_Ptr;
-      SN_Table        : in SN_Table_Array);
+     (Source_Filename : in String);
 
    --------------------
    -- Symbol_Handler --
    --------------------
 
-   type Symbol_Handler is access procedure
-     (Sym      : FIL_Table;
-      File     : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array);
+   type Symbol_Handler is access procedure (Sym      : FIL_Table);
 
-   procedure Sym_Default_Handler
-     (Sym      : FIL_Table;
-      File     : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array);
+   procedure Sym_Default_Handler (Sym      : FIL_Table);
    --  This is default handler for symbols, which are not registered
    --  in Symbols_Handlers.
 
-   procedure Sym_GV_Handler
-     (Sym      : FIL_Table;
-      File     : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array);
-
-   procedure Sym_FU_Handler
-     (Sym      : FIL_Table;
-      File     : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array);
+   procedure Sym_GV_Handler (Sym      : FIL_Table);
+   procedure Sym_FU_Handler (Sym      : FIL_Table);
 
    function Ext (S : String) return String;
    --  Used to fill Table_Type_To_Ext array
@@ -87,6 +71,25 @@ package body Src_Info.CPP is
       return R;
    end Ext;
    pragma Inline (Ext);
+
+   type CType_Description is
+      record
+         Kind         : E_Kind;
+         IsVolatile   : Boolean;
+         IsConst      : Boolean;
+      end record;
+
+   ----------------
+   --  SN_Table  --
+   ----------------
+
+   SN_Table : SN_Table_Array;
+
+   ----------------------
+   --  Global_LI_File  --
+   ----------------------
+
+   Global_LI_File : LI_File_Ptr;
 
    -----------------------
    -- Table_Type_To_Ext --
@@ -122,8 +125,7 @@ package body Src_Info.CPP is
    -------------------
 
    procedure Open_DB_Files
-     (SN_Table : in out SN_Table_Array;
-      DB_Prefix : in String)
+     (DB_Prefix : in String)
    is
    begin
       for Table in Table_Type loop
@@ -147,7 +149,7 @@ package body Src_Info.CPP is
    -- Close_DB_Files --
    --------------------
 
-   procedure Close_DB_Files (SN_Table : in out SN_Table_Array) is
+   procedure Close_DB_Files is
    begin
       for Table in Table_Type loop
          begin
@@ -164,9 +166,7 @@ package body Src_Info.CPP is
    ------------------
 
    procedure Process_File
-     (Source_Filename : in String;
-      File : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array)
+     (Source_Filename : in String)
    is
       P : Pair_Ptr;
    begin
@@ -183,7 +183,7 @@ package body Src_Info.CPP is
             Sym : FIL_Table := Parse_Pair (P.all);
          begin
             --  apply corresponding symbol handler
-            Symbol_Handlers (Sym.Symbol)(Sym, File, SN_Table);
+            Symbol_Handlers (Sym.Symbol)(Sym);
             Free (Sym);
          end;
 
@@ -209,8 +209,6 @@ package body Src_Info.CPP is
       pragma Unreferenced (Predefined_Source_Path);
       pragma Unreferenced (Predefined_Object_Path);
 
-      SN_Table    : SN_Table_Array;
-
       SN_Dir      : String :=
         Prj_API.Object_Path (Project, Recursive => False)
         & Browse.DB_Dir_Name;
@@ -224,12 +222,13 @@ package body Src_Info.CPP is
       Browse.Generate_Xrefs (SN_Dir);
 
       Open_DB_Files
-        (SN_Table,
-         SN_Dir & Directory_Separator & Browse.DB_File_Name);
+        (SN_Dir & Directory_Separator & Browse.DB_File_Name);
 
-      Process_File (Source_Filename, File, SN_Table);
+      Global_LI_File := File;
+      Process_File (Source_Filename);
+      Global_LI_File := No_LI_File;
 
-      Close_DB_Files (SN_Table);
+      Close_DB_Files;
    end Create_Or_Complete_LI;
 
    ----------------------------------
@@ -262,14 +261,8 @@ package body Src_Info.CPP is
       return Source_Filename;
    end LI_Filename_From_Source;
 
-   type CType_Description is
-      record
-         Kind         : E_Kind;
-         IsVolatile   : Boolean;
-         IsConst      : Boolean;
-      end record;
-
-   procedure Builtin_Type_To_Kind (Type_Name : in String;
+   procedure Builtin_Type_To_Kind
+     (Type_Name : in String;
       Desc : out CType_Description; Success : out Boolean);
    --  Attempts to convert string into E_Kind assuming that the string
    --  is a builtin C type. If conversion fails returns False
@@ -278,7 +271,8 @@ package body Src_Info.CPP is
    -- Builtin_Type_To_Kind --
    --------------------------
 
-   procedure Builtin_Type_To_Kind (Type_Name : in String;
+   procedure Builtin_Type_To_Kind
+     (Type_Name : in String;
       Desc : out CType_Description; Success : out Boolean) is
    begin
       if Type_Name = "char"          or Type_Name = "signed char"
@@ -302,8 +296,8 @@ package body Src_Info.CPP is
       end if;
    end Builtin_Type_To_Kind;
 
-   procedure Type_Name_To_Kind (SN_Table : in SN_Table_Array;
-      Type_Name : in String; Desc : out CType_Description;
+   procedure Type_Name_To_Kind
+     (Type_Name : in String; Desc : out CType_Description;
       Success : out Boolean);
    --  Attempts to convert type name into E_Kind. Searches up for
    --  the name in the class, typedef, etc. tables.
@@ -318,8 +312,9 @@ package body Src_Info.CPP is
    -- Type_Name_To_Kind --
    -----------------------
 
-   procedure Type_Name_To_Kind (SN_Table : in SN_Table_Array;
-      Type_Name : in String; Desc : out CType_Description;
+   procedure Type_Name_To_Kind
+     (Type_Name : in String;
+      Desc : out CType_Description;
       Success : out Boolean)
    is
       Matches      : Match_Array (1 .. 1);
@@ -336,7 +331,7 @@ package body Src_Info.CPP is
                      = Volatile_Str
       then -- volatile modifier
          --  Put_Line ("volatile ");
-         Type_Name_To_Kind (SN_Table, Type_Name
+         Type_Name_To_Kind (Type_Name
             (Type_Name'First + Volatile_Str'Length .. Type_Name'Last),
             Desc, Success);
          Desc.IsVolatile := True;
@@ -349,7 +344,7 @@ package body Src_Info.CPP is
                      = Const_Str
       then -- const modifier
          --  Put_Line ("const ");
-         Type_Name_To_Kind (SN_Table, Type_Name
+         Type_Name_To_Kind (Type_Name
             (Type_Name'First + Const_Str'Length .. Type_Name'Last),
             Desc, Success);
          Desc.IsConst := True;
@@ -377,7 +372,7 @@ package body Src_Info.CPP is
             return;
          end if;
          --  Put_Line ("functional ");
-         Type_Name_To_Kind (SN_Table,
+         Type_Name_To_Kind (
             Type_Name (Matches (1).First ..  Matches (1).Last),
             Desc, Success);
          return;
@@ -396,7 +391,7 @@ package body Src_Info.CPP is
          Typedef   : T_Table;
       begin
          Typedef   := Find (SN_Table (T), Type_Name);
-         Type_Name_To_Kind (SN_Table, Typedef.Buffer (
+         Type_Name_To_Kind (Typedef.Buffer (
                  Typedef.Original.First .. Typedef.Original.Last),
                  Desc, Success);
          if Success then
@@ -437,13 +432,9 @@ package body Src_Info.CPP is
    -------------------------
 
    procedure Sym_Default_Handler
-     (Sym : FIL_Table;
-      File : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array)
+     (Sym : FIL_Table)
    is
       --  pragma Unreferenced (Sym);
-      pragma Unreferenced (File);
-      pragma Unreferenced (SN_Table);
    begin
       Put_Line ("Sym_Default_Hanlder ("
         & Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last) & ")");
@@ -455,9 +446,7 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_GV_Handler
-     (Sym : FIL_Table;
-      File : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array)
+     (Sym : FIL_Table)
    is
       Desc       : CType_Description;
       Var        : GV_Table;
@@ -473,7 +462,7 @@ package body Src_Info.CPP is
       --  Lookup variable type
       Var := Find (SN_Table (GV), Sym.Buffer
          (Sym.Identifier.First .. Sym.Identifier.Last));
-      Type_Name_To_Kind (SN_Table, Var.Buffer
+      Type_Name_To_Kind (Var.Buffer
          (Var.Value_Type.First .. Var.Value_Type.Last), Desc, Success);
 
       if not Success then
@@ -489,7 +478,7 @@ package body Src_Info.CPP is
 
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
-         File              => File,
+         File              => Global_LI_File,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -511,11 +500,8 @@ package body Src_Info.CPP is
    --------------------
 
    procedure Sym_FU_Handler
-     (Sym : FIL_Table;
-      File : in out LI_File_Ptr;
-      SN_Table : in SN_Table_Array)
+     (Sym : FIL_Table)
    is
-      pragma Unreferenced (SN_Table);
       tmp_ptr : E_Declaration_Info_List;
    begin
 
@@ -525,7 +511,7 @@ package body Src_Info.CPP is
 
       Insert_Declaration
         (Handler           => LI_Handler (Global_CPP_Handler),
-         File              => File,
+         File              => Global_LI_File,
          Symbol_Name       =>
            Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
          Source_Filename   =>
@@ -536,6 +522,113 @@ package body Src_Info.CPP is
          Declaration_Info  => tmp_ptr);
 
    end Sym_FU_Handler;
+
+   --------------------
+   -- Sym_FU_Handler --
+   --------------------
+--    procedure Sym_FU_Handler (Sym : DB.FIL_Table) is
+--       P : Pair_Ptr;
+--   S : String := Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last);
+--       Class : Unbounded_String := To_Unbounded_String ("#");
+--       Comment : Unbounded_String;
+--       --  FU_Tab : FU_Table;
+--       MDecl  : MD_Table;
+--       Sym_Type : String_Access :=
+--             new String'(ASCII.NUL & ASCII.NUL & ASCII.NUL);
+--       tmp_int : Integer;
+--       tmp_ptr : E_Declaration_Info_List;
+--    begin
+--       --  Handler for FU (function) symbol.
+--  --      HTML.Highlight (Sym, HTML.Font_Color_Blue);
+--       --  Method implementation specific handling goes here
+--       if Sym.Symbol = MI then
+--          Comment := To_Unbounded_String (
+--                "method " & Sym.Buffer (Sym.Class.First .. Sym.Class.Last)
+--                & "::" &
+--                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+--          begin
+--             MDecl := Find (SN_Table (MD),
+--                 Sym.Buffer (Sym.Class.First .. Sym.Class.Last),
+--                 Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+--             Comment := Make_Method_Comment (MDecl);
+--             Insert_Declaration
+--             HTML.Insert_Xref (Sym.Highlight_Start_Position,
+--                Sym.Highlight_End_Position,
+--           MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last),
+--                MDecl.Start_Position,
+--                To_String (Comment));
+--             Insert_Declaration
+--               (Handler           => LI_Handler (Global_CPP_Handler),
+--                File              => File,
+--                Symbol_Name       =>
+--                  Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last),
+--               Source_Filename   =>
+--                   Sym.Buffer (Sym.File_Name.First .. Sym.File_Name.Last),
+--                Location          => Sym.Start_Position,
+--                Kind              => Non_Generic_Procedure,
+--                Scope             => Global_Scope,
+--                Declaration_Info  => tmp_ptr);
+--             Free (MDecl);
+--          exception
+--             when DB_Error | Not_Found =>
+--                null;
+--          end;
+--       else
+--          Comment := To_Unbounded_String ("global function definition: " &
+--                Sym.Buffer (Sym.Identifier.First .. Sym.Identifier.Last));
+--          HTML.Highlight (Sym, HTML.Title, To_String (Comment));
+--       end if;
+--
+--       tmp_int := 1;
+--       To_String (Sym.Symbol, Sym_Type, tmp_int);
+--       Set_Cursor
+--         (SN_Table (TO),
+--          Position => By_Key,
+--          Key => To_String (Class) & Field_Sep & S &
+--                            Field_Sep &
+--                            Sym_Type.all,
+--                            Exact_Match => False);
+--
+--       loop
+--          P := Get_Pair (SN_Table (TO), Next_By_Key);
+--          exit when P = null;
+--
+--          declare
+--             --  FIXME:
+--             --  SN has only line number in .to table. So, to get exact
+--             --  position we are getting that line from source file and
+--             --  calling corresponding handler for EVERY
+--             --  occurrence of that symbol in that line.
+--             Ref      : DB.TO_Table := DB.Parse_Pair (P.all);
+--
+--           Src_Line : String := File_Buffer.Get_Line (Ref.Position.Line);
+--             PRef     : DB.TO_Table;  -- Ref with exact position
+--             P        : Natural := Src_Line'First; -- index to start from
+--             S        : String  :=
+--                   Ref.Buffer (Ref.Referred_Symbol_Name.First
+--                                     .. Ref.Referred_Symbol_Name.Last);
+--             Matches  : Match_Array (0 .. 0);
+--             Pat      : Pattern_Matcher := Compile ("\b" & S & "\b");
+--          begin
+--             loop
+--                Match (Pat, Src_Line (P .. Src_Line'Last), Matches);
+--                exit when Matches (0) = No_Match or Ref.Symbol = Undef;
+--                P := Matches (0).Last + 1;
+--                PRef := Ref;
+--                --  conversion to column
+--              PRef.Position.Column := Matches (0).First - Src_Line'First;
+--                Fu_To_Handlers (Ref.Referred_Symbol)(PRef);
+--             end loop;
+--             Free (Ref);
+--          end;
+--
+--          Free (P);
+--       end loop;
+--
+--    exception
+--       when DB_Error => null; -- non-existent table .to
+--
+--    end Sym_FU_Handler;
 
 end Src_Info.CPP;
 
