@@ -667,11 +667,9 @@ package body Src_Editor_View is
    is
       Line : constant Gint := Get_Int (Nth (Params, 1));
    begin
-      if User.Child = null then
-         return;
-      end if;
-
-      if User.Child = Get_Focus_Child (Get_MDI (User.Kernel)) then
+      if Position_Set_Explicitely (Buffer)
+        or else User.Child = Get_Focus_Child (Get_MDI (User.Kernel))
+      then
          Save_Cursor_Position (User);
          Scroll_To_Cursor_Location (User);
       end if;
@@ -1087,7 +1085,6 @@ package body Src_Editor_View is
       pragma Unreferenced (Result);
 
    begin
-      View.Has_Focus := False;
       View.As_Is_Mode := False;
 
       Save_Cursor_Position (View);
@@ -1122,8 +1119,6 @@ package body Src_Editor_View is
          Set_Disable_Scroll_On_Focus (View, True);
          Restore_Cursor_Position (View);
       end if;
-
-      View.Has_Focus := True;
 
       return False;
 
@@ -1852,7 +1847,6 @@ package body Src_Editor_View is
                      Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
                      Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
-                     View.Has_Focus := True;
                      Set_Focus_Child (Get_MDI (View.Kernel), View);
                      On_Click (Buffer, Line, Button_X);
                   end;
