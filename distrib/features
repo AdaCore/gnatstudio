@@ -5,3 +5,7 @@ New features in GPS 2.1.0
 
 - New command refill to wrap text or comment according to the right margin as
   defined by the column highlight editor's preference.
+
+- New shell commands, to ease writing of GPS scripts. See 'help' in the
+  GPS shell for a full list of GPS commands.
+
