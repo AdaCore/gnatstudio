@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.0
 
+- Output of external commands not visible
+  Problem:    If you specify an external command to be executed through a
+              customization file, the command and its output were not visible in
+              the Messages window
+  Workaround: Do an explicit call to "echo" if your custom action
+
 - Duplicate new file names
   Problem:    Creating several new files, and closing one that is not the last
               one, and creating a new one again result in a name duplication,
