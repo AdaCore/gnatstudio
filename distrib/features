@@ -4,10 +4,9 @@ For more details, please see the documentation.
 New features in GPS 2.2.0
 
 - All areas of the GPS window can now be split, including the side areas.
-  However, desktops you have previously saved will not be reloaded properly,
-  and it is recommended to remove the $HOME/.gps/desktop file (although not
-  mandatory)
-  Windows can no longer be minimized or iconified in the MDI
+  Windows can no longer be minimized or iconified in the MDI.
+  Desktops are now saved in the file .gps/desktop.xml in a format incompatible
+  with previous "desktop" files.
 
 - New Outline View, showing the content of the current file
 
