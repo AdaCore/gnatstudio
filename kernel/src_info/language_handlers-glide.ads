@@ -23,7 +23,6 @@
 with Language;
 with Basic_Types;
 with Src_Info;
-with Glide_Kernel;
 with Prj;
 
 package Language_Handlers.Glide is
@@ -33,10 +32,13 @@ package Language_Handlers.Glide is
    type Glide_Language_Handler is access all
      Glide_Language_Handler_Record'Class;
 
-   procedure Gtk_New
-     (Handler : out Glide_Language_Handler;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+   procedure Gtk_New (Handler : out Glide_Language_Handler);
    --  Create a new language handler
+
+   procedure Set_Project_View
+     (Handler : access Glide_Language_Handler_Record;
+      Project_View : Prj.Project_Id);
+   --  Set the top-level project for Handler.
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
@@ -93,7 +95,7 @@ private
    type Glide_Language_Handler_Record is new Language_Handler_Record
    with record
       Languages : Language_Info_Access;
-      Kernel    : Glide_Kernel.Kernel_Handle;
+      Project_View : Prj.Project_Id;
    end record;
 
 end Language_Handlers.Glide;

@@ -21,8 +21,6 @@
 with Language;                  use Language;
 with Basic_Types;               use Basic_Types;
 with Src_Info;                  use Src_Info;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
 with Ada.Unchecked_Deallocation;
 with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with Prj_API;                   use Prj_API;
@@ -53,13 +51,21 @@ package body Language_Handlers.Glide is
    -- Gtk_New --
    -------------
 
-   procedure Gtk_New
-     (Handler : out Glide_Language_Handler;
-      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class) is
+   procedure Gtk_New (Handler : out Glide_Language_Handler) is
    begin
       Handler := new Glide_Language_Handler_Record;
-      Handler.Kernel := Kernel_Handle (Kernel);
    end Gtk_New;
+
+   ----------------------
+   -- Set_Project_View --
+   ----------------------
+
+   procedure Set_Project_View
+     (Handler : access Glide_Language_Handler_Record;
+      Project_View : Prj.Project_Id) is
+   begin
+      Handler.Project_View := Project_View;
+   end Set_Project_View;
 
    -----------------------------
    -- Get_Index_From_Language --
@@ -71,8 +77,8 @@ package body Language_Handlers.Glide is
    begin
       if Handler.Languages /= null then
          for Index in Handler.Languages'Range loop
-            if Language_Name =
-              Handler.Languages (Index).Language_Name.all
+            if To_Lower (Language_Name) =
+              To_Lower (Handler.Languages (Index).Language_Name.all)
             then
                return Index;
             end if;
@@ -111,8 +117,7 @@ package body Language_Handlers.Glide is
       --  ??? Could be optimized, since both Get_Project_From_File and
       --  ??? Get_Language_Of traverse the project structure
       Lang : Name_Id := Get_Language_Of
-        (Get_Project_From_File
-           (Get_Project_View (Handler.Kernel), Source_Filename),
+        (Get_Project_From_File (Handler.Project_View, Source_Filename),
          Base_Name (Source_Filename));
    begin
       if Lang = No_Name then
@@ -137,7 +142,7 @@ package body Language_Handlers.Glide is
    begin
       if Project = No_Project then
          Proj := Get_Project_From_File
-           (Get_Project_View (Handler.Kernel), Source_Filename);
+           (Handler.Project_View, Source_Filename);
       end if;
 
       Lang := Get_Language_Of (Proj, Base_Name (Source_Filename));
@@ -159,12 +164,11 @@ package body Language_Handlers.Glide is
       Name    : String;
       Lang    : Language.Language_Access)
    is
-      N : constant String := To_Lower (Name);
       Tmp : Language_Info_Access;
       Index : Natural;
    begin
       if Handler.Languages /= null then
-         Index := Get_Index_From_Language (Handler, N);
+         Index := Get_Index_From_Language (Handler, Name);
          if Index /= 0 then
             Handler.Languages (Index).Lang := Lang;
             return;
@@ -224,8 +228,7 @@ package body Language_Handlers.Glide is
       Default_Spec_Suffix : String;
       Default_Body_Suffix : String)
    is
-      N : constant String := To_Lower (Language_Name);
-      Index : Natural := Get_Index_From_Language (Handler, N);
+      Index : Natural := Get_Index_From_Language (Handler, Language_Name);
       Lang : Name_Id;
       Spec, Impl : Name_Id;
    begin
