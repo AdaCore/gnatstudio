@@ -58,23 +58,26 @@ package body Commands is
          Free (Q.Redo_Queue, Free_Data => False);
 
          Free (Q.The_Queue);
-         Free (Q.Queue_Change_Hook);
+         Destroy (Q.Queue_Change_Hook);
          Free_Queue_Access (Q);
       end if;
    end Free_Queue;
 
-   ----------
-   -- Free --
-   ----------
+   -------------
+   -- Destroy --
+   -------------
 
-   procedure Free (X : in out Command_Access) is
+   procedure Destroy (X : in out Command_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Root_Command'Class, Command_Access);
    begin
       if X /= null then
          Free (X.Next_Commands);
          Free (X.Alternate_Commands);
-         Destroy (X);
+         Free (X.all);
+         Unchecked_Free (X);
       end if;
-   end Free;
+   end Destroy;
 
    ----------
    -- Name --
@@ -95,16 +98,6 @@ package body Commands is
       Command_Finished (Command, False);
       return False;
    end Undo;
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (X : access Root_Command) is
-      pragma Unreferenced (X);
-   begin
-      null;
-   end Destroy;
 
    -------------
    -- Enqueue --
