@@ -164,13 +164,13 @@ procedure Docgen is
                Options.Ignorable_Comments := True;
             elsif S = "-under" then
                Options.Comments_Under := True;
-            elsif S = "-info" then
+            elsif S = "-verbose" then
                Options.Info_Output := True;
             elsif S = "-ref" then
                Options.References := True;
             elsif S = "-private" then
                Options.Show_Private := True;
-            elsif S (1 .. 9) = "-docpath=" and S'Last > 9 then
+            elsif S'Last > 9 and then S (1 .. 9) = "-docpath=" then
                Options.Doc_Directory := new String '(S (10 .. S'Last));
             elsif S'Length > 5 then
                if S (S'Last - 3 .. S'Last) = ".gpr" then
