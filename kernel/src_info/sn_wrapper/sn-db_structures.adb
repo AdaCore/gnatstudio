@@ -68,7 +68,7 @@ package body SN.DB_Structures is
    --  For efficiency, it is assumed that Name ends with '='.
 
    procedure Parse_Key
-     (Key            : Pair;
+     (Key            : CSF;
       Name           : out Segment;
       File_Name      : out Segment;
       Start_Position : out Point;
@@ -299,7 +299,7 @@ package body SN.DB_Structures is
    ---------------
 
    procedure Parse_Key
-     (Key            : Pair;
+     (Key            : CSF;
       Name           : out Segment;
       File_Name      : out Segment;
       Start_Position : out Point;
@@ -307,19 +307,19 @@ package body SN.DB_Structures is
       Extra_Length   : Integer := 0;
       Start_Index    : Integer := 1)
    is
-      Len1 : constant Integer := Get_Field_Length (Key.Key, Start_Index);
-      Len3 : constant Integer := Get_Field_Length (Key.Key, Start_Index + 2);
+      Len1 : constant Integer := Get_Field_Length (Key, Start_Index);
+      Len3 : constant Integer := Get_Field_Length (Key, Start_Index + 2);
    begin
       Buffer := new String (1 .. Len1 + Len3 + Extra_Length);
 
-      Get_Field (Key.Key, Start_Index, Buffer.all, Len1);
+      Get_Field (Key, Start_Index, Buffer.all, Len1);
       Name := (1, Len1);
 
-      Get_Field (Key.Key, Start_Index + 2,
+      Get_Field (Key, Start_Index + 2,
                  Buffer (Len1 + 1 .. Buffer'Last), Len3);
       File_Name := (Len1 + 1, Len1 + Len3);
 
-      Get_Position (Key.Key, Start_Index + 1, Start_Position);
+      Get_Position (Key, Start_Index + 1, Start_Position);
    end Parse_Key;
 
    ----------------
@@ -328,18 +328,21 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CL_Table) is
       Pos : Integer;
-      Len : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
+      Len : Integer;
+      Key, Data : CSF;
    begin
-      Tab.DBI    := Key_Data_Pair.DBI;
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len      := Get_Field_Length (Data, 4);
+      Tab.DBI  := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
-         Tab.Buffer, Len);
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position, Tab.Buffer, Len);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len, Tab.Buffer, Pos, Tab.Template_Parameters);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 4, Len, Tab.Buffer, Pos, Tab.Template_Parameters);
    end Parse_Pair;
 
    ----------------
@@ -347,22 +350,24 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CON_Table) is
-      Pos   : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Pos, Len3d, Len6d   : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len6d := Get_Field_Length (Data, 6);
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len3d + Len6d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Declared_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Declared_Type);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Type_Start_Position :=
         Get_Position_From_Comment (Tab.Comments, Tab.Buffer, "type_beg=");
    end Parse_Pair;
@@ -372,13 +377,16 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out E_Table) is
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
-         Tab.Buffer, 0);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position, Tab.Buffer, 0);
+      Get_Position (Data, 1, Tab.End_Position);
+      Get_Hex      (Data, 2, Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -386,19 +394,21 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out EC_Table) is
-      Pos   : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
+      Pos, Len3d   : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+      Len3d := Get_Field_Length (Data, 3);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
-         Tab.Buffer, Len3d);
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position, Tab.Buffer, Len3d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Enumeration_Name);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Enumeration_Name);
    end Parse_Pair;
 
    ----------------
@@ -406,26 +416,27 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FD_Table) is
-      Pos       : Integer;
-      Len3d     : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d     : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
-      Len6d     : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
-
+      Pos, Len3d, Len4d, Len6d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len3d + Len4d + Len6d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
+      Get_No_Brackets (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Template_Parameters :=
         Get_Segment_From_Comment (Tab.Comments, Tab.Buffer, "template_args=");
    end Parse_Pair;
@@ -436,26 +447,31 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FIL_Table) is
       Pos  : Integer := 1;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 3);
-      Len4  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 4);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
+      Len1, Len3, Len4, Len4d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len3  := Get_Field_Length (Key, 3);
+      Len4  := Get_Field_Length (Key, 4);
+      Len4d := Get_Field_Length (Data, 4);
+
       Tab.DBI := Key_Data_Pair.DBI;
       Tab.Buffer  := new String (1 .. Len1 + Len3 + Len4 + Len4d);
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.File_Name);
-      Get_Position (Key_Data_Pair.Key, 2, Tab.Start_Position);
-      Get_Field (Key_Data_Pair.Key, 3, Len3, Tab.Buffer, Pos, Tab.Class);
-      Get_Field (Key_Data_Pair.Key, 4, Len4, Tab.Buffer, Pos, Tab.Identifier);
-      Tab.Symbol := Get_Symbol (Key_Data_Pair.Key, 5);
+      Get_Field    (Key, 1, Len1, Tab.Buffer, Pos, Tab.File_Name);
+      Get_Position (Key, 2, Tab.Start_Position);
+      Get_Field    (Key, 3, Len3, Tab.Buffer, Pos, Tab.Class);
+      Get_Field    (Key, 4, Len4, Tab.Buffer, Pos, Tab.Identifier);
+      Tab.Symbol := Get_Symbol (Key, 5);
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Position (Key_Data_Pair.Data, 2, Tab.Highlight_Start_Position);
-      Get_Position (Key_Data_Pair.Data, 3, Tab.Highlight_End_Position);
+      Get_Position (Data, 1, Tab.End_Position);
+      Get_Position (Data, 2, Tab.Highlight_Start_Position);
+      Get_Position (Data, 3, Tab.Highlight_End_Position);
       Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos,
-         Tab.Types_Of_Arguments);
+        (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Types_Of_Arguments);
    end Parse_Pair;
 
    ----------------
@@ -463,22 +479,25 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FR_Table) is
-      Pos   : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
+      Pos, Len3d, Len4d   : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len3d + Len4d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
+      Get_No_Brackets (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
    end Parse_Pair;
 
    ----------------
@@ -486,20 +505,25 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out FU_Table) is
-      Pos   : Integer;
-      Len1  : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
-      Num_Of_Fields  : constant Integer := Get_Field_Count (Key_Data_Pair.Key);
+      Pos, Len1, Len3d, Len4d, Len6d : Integer;
+      Key, Data : CSF;
+      Num_Of_Fields : Integer;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+      Len6d := Get_Field_Length (Data, 6);
+      Num_Of_Fields := Get_Field_Count (Key);
+
       Tab.DBI    := Key_Data_Pair.DBI;
 
       --  Do we have a ".fu" table ?
 
       if Num_Of_Fields = 3 then
          Parse_Key
-           (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+           (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
             Tab.Buffer, Len3d + Len4d + Len6d + 1);
          Pos := Tab.File_Name.Last + 1;
 
@@ -509,23 +533,20 @@ package body SN.DB_Structures is
 
       --  Else we have a ".mi" table
       else
-         Len1 := Get_Field_Length (Key_Data_Pair.Key, 1);
+         Len1 := Get_Field_Length (Key, 1);
          Parse_Key
-           (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+           (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
             Tab.Buffer, Len1 + Len3d + Len4d + Len6d, Start_Index => 2);
          Pos := Tab.File_Name.Last + 1;
 
-         Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
+         Get_Field (Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
       end if;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
+      Get_No_Brackets (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Template_Parameters := Get_Segment_From_Comment
         (Tab.Comments, Tab.Buffer, "template_args=");
    end Parse_Pair;
@@ -535,22 +556,25 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out GV_Table) is
-      Pos : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Pos, Len3d, Len6d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len3d + Len6d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Type_Start_Position :=
         Get_Position_From_Comment (Tab.Comments, Tab.Buffer, "type_beg=");
    end Parse_Pair;
@@ -560,18 +584,23 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out IN_Table) is
-      Pos : Integer;
-      Len1 : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
+      Pos, Len1 : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1 := Get_Field_Length (Key, 1);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Base_Class, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Base_Class, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len1, Start_Index => 2);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
+      Get_Field    (Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
+      Get_Position (Data, 1, Tab.End_Position);
+      Get_Hex      (Data, 2, Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -580,17 +609,21 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out IU_Table) is
       Pos  : Integer := 1;
-      Len1 : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3 : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 3);
+      Len1, Len3 : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1 := Get_Field_Length (Key, 1);
+      Len3 := Get_Field_Length (Key, 3);
+
       Tab.DBI := Key_Data_Pair.DBI;
       Tab.Buffer := new String (1 .. Len1 + Len3);
 
-      Get_Field
-        (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Included_File);
-      Get_Field
-        (Key_Data_Pair.Key, 3, Len3, Tab.Buffer, Pos, Tab.Included_From_File);
-      Get_Position (Key_Data_Pair.Key, 3, Tab.Included_At_Position);
+      Get_Field    (Key, 1, Len1, Tab.Buffer, Pos, Tab.Included_File);
+      Get_Field    (Key, 3, Len3, Tab.Buffer, Pos, Tab.Included_From_File);
+      Get_Position (Key, 3, Tab.Included_At_Position);
    end Parse_Pair;
 
    ----------------
@@ -598,21 +631,25 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out IV_Table) is
-      Pos : Integer;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
+      Pos, Len1, Len3d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len3d := Get_Field_Length (Data, 3);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len1 + Len3d, Start_Index => 2);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
+      Get_Field       (Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
    end Parse_Pair;
 
    ----------------
@@ -620,31 +657,31 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out LV_Table) is
-      Pos : Integer;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
-      Len5d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 5);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Pos, Len1, Len3d, Len4d, Len5d, Len6d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+      Len5d := Get_Field_Length (Data, 5);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len1 + Len3d + Len4d + Len5d + Len6d, Start_Index => 2);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Field
-        (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Function_Name);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Class);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos, Tab.Value_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 5, Len5d, Tab.Buffer, Pos, Tab.Arg_Types);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Field       (Key, 1, Len1, Tab.Buffer, Pos, Tab.Function_Name);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Class);
+      Get_No_Brackets (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Value_Type);
+      Get_No_Brackets (Data, 5, Len5d, Tab.Buffer, Pos, Tab.Arg_Types);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Type_Start_Position :=
         Get_Position_From_Comment (Tab.Comments, Tab.Buffer, "type_beg=");
    end Parse_Pair;
@@ -654,13 +691,16 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out MA_Table) is
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
-         Tab.Buffer);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position, Tab.Buffer);
+      Get_Position (Data, 1, Tab.End_Position);
+      Get_Hex      (Data, 2, Tab.Attributes);
    end Parse_Pair;
 
    ----------------
@@ -668,27 +708,29 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out MD_Table) is
-      Pos   : Integer;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Pos, Len1, Len3d, Len4d, Len6d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len1 + Len3d + Len4d + Len6d, Start_Index => 2);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+      Get_Field (Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Return_Type);
+      Get_No_Brackets (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Arg_Types);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Template_Parameters :=
         Get_Segment_From_Comment (Tab.Comments, Tab.Buffer, "template_args=");
    end Parse_Pair;
@@ -698,23 +740,25 @@ package body SN.DB_Structures is
    ----------------
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out T_Table) is
-      Pos   : Integer;
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Pos, Len3d, Len6d   : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len3d := Get_Field_Length (Data, 3);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI    := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len3d + Len6d);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Position (Key_Data_Pair.Data, 1, Tab.End_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Original);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
-
+      Get_Position    (Data, 1, Tab.End_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Original);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Class_Name :=
         Get_Segment_From_Comment (Tab.Comments, Tab.Buffer, "class=");
    end Parse_Pair;
@@ -725,27 +769,30 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out TA_Table) is
       Pos : Integer := 1;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len3d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 3);
-      Len4d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 4);
-      Len6d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 6);
+      Len1, Len3d, Len4d, Len6d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len3d := Get_Field_Length (Data, 3);
+      Len4d := Get_Field_Length (Data, 4);
+      Len6d := Get_Field_Length (Data, 6);
+
       Tab.DBI := Key_Data_Pair.DBI;
       Parse_Key
-        (Key_Data_Pair, Tab.Name, Tab.File_Name, Tab.Start_Position,
+        (Key, Tab.Name, Tab.File_Name, Tab.Start_Position,
          Tab.Buffer, Len1 + Len3d + Len4d + Len6d, Start_Index => 2);
       Pos := Tab.File_Name.Last + 1;
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Scope);
-      Get_Position (Key_Data_Pair.Data, 1, Tab.Type_Position);
-      Get_Hex      (Key_Data_Pair.Data, 2, Tab.Attributes);
+      Get_Field       (Key, 1, Len1, Tab.Buffer, Pos, Tab.Scope);
+      Get_Position    (Data, 1, Tab.Type_Position);
+      Get_Hex         (Data, 2, Tab.Attributes);
+      Get_No_Brackets (Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
       Get_No_Brackets
-        (Key_Data_Pair.Data, 3, Len3d, Tab.Buffer, Pos, Tab.Value_Type);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 4, Len4d, Tab.Buffer, Pos,
-         Tab.Template_Parameters);
-      Get_No_Brackets
-        (Key_Data_Pair.Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
+        (Data, 4, Len4d, Tab.Buffer, Pos, Tab.Template_Parameters);
+      Get_No_Brackets (Data, 6, Len6d, Tab.Buffer, Pos, Tab.Comments);
       Tab.Class_Name :=
         Get_Segment_From_Comment (Tab.Comments, Tab.Buffer, "class=");
    end Parse_Pair;
@@ -756,39 +803,38 @@ package body SN.DB_Structures is
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out TO_Table) is
       Pos : Integer := 1;
-      Len1  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 1);
-      Len2  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 2);
-      Len4  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 4);
-      Len5  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 5);
-      Len7  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 7);
-      Len9  : constant Integer := Get_Field_Length (Key_Data_Pair.Key, 9);
-      Len1d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 1);
-      Len2d : constant Integer := Get_Field_Length (Key_Data_Pair.Data, 2);
+      Len1, Len2, Len4, Len5, Len7, Len9, Len1d, Len2d : Integer;
+      Key, Data : CSF;
    begin
+      CSF_Init (Key_Data_Pair.Key, Key);
+      CSF_Init (Key_Data_Pair.Data, Data);
+
+      Len1  := Get_Field_Length (Key, 1);
+      Len2  := Get_Field_Length (Key, 2);
+      Len4  := Get_Field_Length (Key, 4);
+      Len5  := Get_Field_Length (Key, 5);
+      Len7  := Get_Field_Length (Key, 7);
+      Len9  := Get_Field_Length (Key, 9);
+      Len1d := Get_Field_Length (Data, 1);
+      Len2d := Get_Field_Length (Data, 2);
+
       Tab.DBI := Key_Data_Pair.DBI;
       Tab.Buffer := new String
         (1 .. Len1 + Len2 + Len4 + Len5 + Len7 + Len9 + Len1d + Len2d);
 
-      Get_Field (Key_Data_Pair.Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
-      Get_Field (Key_Data_Pair.Key, 2, Len2, Tab.Buffer, Pos, Tab.Symbol_Name);
-      Tab.Symbol := Get_Symbol (Key_Data_Pair.Key, 3);
-      Get_Field
-        (Key_Data_Pair.Key, 4, Len4, Tab.Buffer, Pos, Tab.Referred_Class);
-      Get_Field
-        (Key_Data_Pair.Key, 5, Len5, Tab.Buffer, Pos,
-         Tab.Referred_Symbol_Name);
-      Tab.Referred_Symbol := Get_Symbol (Key_Data_Pair.Key, 6);
-      Get_Field
-        (Key_Data_Pair.Key, 7, Len7, Tab.Buffer, Pos, Tab.Access_Type);
-      Get_Field
-        (Key_Data_Pair.Key, 9, Len9, Tab.Buffer, Pos, Tab.File_Name);
-      Get_Position (Key_Data_Pair.Key, 8, Tab.Position);
+      Get_Field (Key, 1, Len1, Tab.Buffer, Pos, Tab.Class);
+      Get_Field (Key, 2, Len2, Tab.Buffer, Pos, Tab.Symbol_Name);
+      Tab.Symbol := Get_Symbol (Key, 3);
+      Get_Field (Key, 4, Len4, Tab.Buffer, Pos, Tab.Referred_Class);
+      Get_Field (Key, 5, Len5, Tab.Buffer, Pos, Tab.Referred_Symbol_Name);
+      Tab.Referred_Symbol := Get_Symbol (Key, 6);
+      Get_Field (Key, 7, Len7, Tab.Buffer, Pos, Tab.Access_Type);
+      Get_Field (Key, 9, Len9, Tab.Buffer, Pos, Tab.File_Name);
+      Get_Position (Key, 8, Tab.Position);
       Get_No_Brackets
-        (Key_Data_Pair.Data, 1, Len1d, Tab.Buffer, Pos,
-         Tab.Caller_Argument_Types);
+        (Data, 1, Len1d, Tab.Buffer, Pos, Tab.Caller_Argument_Types);
       Get_No_Brackets
-        (Key_Data_Pair.Data, 2, Len2d, Tab.Buffer, Pos,
-         Tab.Referred_Argument_Types);
+        (Data, 2, Len2d, Tab.Buffer, Pos, Tab.Referred_Argument_Types);
    end Parse_Pair;
 
    ----------
