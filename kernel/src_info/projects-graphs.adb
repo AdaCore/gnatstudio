@@ -271,7 +271,7 @@ package body Projects.Graphs is
       return Name_Id_Array
    is
       G : Graph := Dependency_Graph
-        (Root_Project, null, Add_Limited_Withs => False);
+        (Root_Project, null, Add_Limited_Withs => True);
       Vertices : constant Depth_Vertices_Array := Depth_First_Search (G);
       List : Name_Id_Array (1 .. Vertices'Length);
    begin
