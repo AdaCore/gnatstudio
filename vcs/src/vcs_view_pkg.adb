@@ -33,6 +33,7 @@ with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Cell_Renderer_Pixbuf;  use Gtk.Cell_Renderer_Pixbuf;
+with Gtk.Cell_Renderer_Toggle;  use Gtk.Cell_Renderer_Toggle;
 with Gtk.Enums;
 with Gtk.Handlers;              use Gtk.Handlers;
 with Gtk.Menu;                  use Gtk.Menu;
@@ -115,8 +116,7 @@ package body VCS_View_Pkg is
    Rep_Rev_Column            : constant := 3;
    Status_Description_Column : constant := 4;
    Status_Pixbuf_Column      : constant := 5;
-   Log_Column                : constant := 6;
-   Has_Log_Column            : constant := 7;
+   Has_Log_Column            : constant := 6;
 
    -------------------
    -- Columns_Types --
@@ -131,7 +131,6 @@ package body VCS_View_Pkg is
          Rep_Rev_Column            => GType_String,
          Status_Description_Column => GType_String,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
-         Log_Column                => Gdk.Pixbuf.Get_Type,
          Has_Log_Column            => GType_Boolean);
    end Columns_Types;
 
@@ -781,16 +780,7 @@ package body VCS_View_Pkg is
 
       --  ??? We might want to use other pixmaps for the log column.
 
-      if Line_Info.Log then
-         Set (Explorer.Model, Iter, Has_Log_Column, True);
-         Set (Explorer.Model, Iter, Log_Column,
-              C_Proxy (Status_Up_To_Date_Pixbuf));
-      else
-         Set (Explorer.Model, Iter, Has_Log_Column, False);
-         Set (Explorer.Model, Iter, Log_Column,
-              C_Proxy (Status_Not_Registered_Pixbuf));
-      end if;
-
+      Set (Explorer.Model, Iter, Has_Log_Column, Line_Info.Log);
       Set (Explorer.Model, Iter, Name_Column,
            Full_Name (Line_Info.Status.File).all);
 
@@ -925,12 +915,14 @@ package body VCS_View_Pkg is
       Col         : Gtk_Tree_View_Column;
       Text_Rend   : Gtk_Cell_Renderer_Text;
       Pixbuf_Rend : Gtk_Cell_Renderer_Pixbuf;
+      Toggle_Rend : Gtk_Cell_Renderer_Toggle;
       Dummy       : Gint;
       pragma Unreferenced (Dummy);
 
    begin
       Gtk_New (Text_Rend);
       Gtk_New (Pixbuf_Rend);
+      Gtk_New (Toggle_Rend);
 
       Set_Rules_Hint (Explorer.Tree, True);
 
@@ -945,8 +937,9 @@ package body VCS_View_Pkg is
 
       Gtk_New (Explorer.Log_Column);
       Set_Title (Explorer.Log_Column, -"Log");
-      Pack_Start (Explorer.Log_Column, Pixbuf_Rend, False);
-      Add_Attribute (Explorer.Log_Column, Pixbuf_Rend, "pixbuf", Log_Column);
+      Pack_Start (Explorer.Log_Column, Toggle_Rend, False);
+      Add_Attribute
+        (Explorer.Log_Column, Toggle_Rend, "active", Has_Log_Column);
       Set_Clickable (Explorer.Log_Column, False);
       Dummy := Append_Column (Explorer.Tree, Explorer.Log_Column);
 
