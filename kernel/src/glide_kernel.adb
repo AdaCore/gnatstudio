@@ -73,7 +73,6 @@ with Src_Info;                  use Src_Info;
 with Src_Info.Queries;          use Src_Info.Queries;
 with Basic_Mapper;              use Basic_Mapper;
 with Histories;                 use Histories;
-with Commands;                  use Commands;
 with VFS;                       use VFS;
 
 with Projects.Registry;         use Projects, Projects.Registry;
@@ -101,7 +100,6 @@ package body Glide_Kernel is
    History_Max_Length : constant Positive := 10;
    --  <preferences> Maximum number of entries to store in each history
 
-   use Actions_Htable.String_Hash_Table;
    use Action_Filters_Htable.String_Hash_Table;
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -1994,87 +1992,6 @@ package body Glide_Kernel is
 
       return W;
    end Get_Current_Focus_Widget;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Action : in out Action_Record) is
-   begin
-      Commands.Destroy (Command_Access (Action.Command));
-      Free (Action.Description);
-   end Free;
-
-   ---------------------
-   -- Register_Action --
-   ---------------------
-
-   procedure Register_Action
-     (Kernel      : access Kernel_Handle_Record;
-      Name        : String;
-      Command     : access Commands.Interactive.Interactive_Command'Class;
-      Description : String := "";
-      Filter      : Action_Filter := null) is
-   begin
-      Set (Kernel.Actions,
-           Name,
-           (Commands.Interactive.Interactive_Command_Access (Command),
-            Filter,
-            new String'(Description)));
-   end Register_Action;
-
-   -----------
-   -- Start --
-   -----------
-
-   function Start (Kernel : access Kernel_Handle_Record'Class)
-      return Action_Iterator
-   is
-      Iter : Action_Iterator;
-   begin
-      Get_First (Kernel.Actions, Iter.Iterator);
-      return Iter;
-   end Start;
-
-   ----------
-   -- Next --
-   ----------
-
-   procedure Next
-     (Kernel : access Kernel_Handle_Record'Class;
-      Iter   : in out Action_Iterator) is
-   begin
-      Get_Next (Kernel.Actions, Iter.Iterator);
-   end Next;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Action_Iterator) return String is
-   begin
-      return Get_Key (Iter.Iterator);
-   end Get;
-
-   ---------
-   -- Get --
-   ---------
-
-   function Get (Iter : Action_Iterator) return Action_Record is
-   begin
-      return Get_Element (Iter.Iterator);
-   end Get;
-
-   -------------------
-   -- Lookup_Action --
-   -------------------
-
-   function Lookup_Action
-     (Kernel : access Kernel_Handle_Record; Name : String) return Action_Record
-   is
-   begin
-      return Get (Kernel.Actions, Name);
-   end Lookup_Action;
 
    -------------------
    -- Lookup_Filter --
