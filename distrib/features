@@ -2,8 +2,9 @@ New features in GPS 1.2.0
 
 - More flexible handling of custom files
 
-- (Windows specific) When GPS is open, double clicking on the source file
-  in Explorer opens it in the same instance of GPS (i.e. GPS now uses DDE)
+- Under Windows when GPS is already running, double clicking on a source file
+  in Windows Explorer opens it in the same instance of GPS instead of
+  launching a new GPS (i.e. GPS now uses DDE).
 
 - Ability to start a debug session from the command line
 
