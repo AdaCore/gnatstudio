@@ -1,0 +1,28 @@
+project Standalone is
+   for Source_Dirs use
+     ("common", "gtkada", "gvd", "sn_wrapper", "gnat", ".", "tests");
+   for Object_Dir use "standalone_obj/";
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-m");
+   end Builder;
+
+   package Compiler is
+      for Switches ("sdefault.adb") use ("-g");
+      for Default_Switches ("ada") use ("-gnatwue", "-gnata", "-gnatg", "-g");
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
+   package Linker is
+      for Default_Switches ("Ada") use 
+        ("-lgccprefix", Project'Object_Dir & "file-utils.o");
+   end Linker;
+
+   package Naming is
+      for Implementation ("mlib.tgt") use "5lml-tgt.adb";
+   end Naming;
+
+end Standalone;

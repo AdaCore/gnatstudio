@@ -1,0 +1,251 @@
+include(macros.m4)
+include(toolbox.m4)
+
+/*
+ * Copyright (C) 1997 Cygnus Solutions, Inc.
+ *
+ * Description:
+ * Lex input file (prior to M4 processing) for the Source-Navigator ASM parser.
+ */
+
+%{
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "snptools.h"
+
+#undef DEBUG
+
+#undef yywrap
+#define	YY_SKIP_YYWRAP	1
+#define	yywrap()	(1)
+
+
+enum { text, data };
+
+static char *p;				/* general purpose pointer */
+static char group[] = "asm";
+static char last_label[512];
+
+static int current_segment = text;
+%}
+
+%x COMMENT
+
+alphas		[a-zA-Z]
+digits		[0-9]
+alphanums	({alphas}|{digits})
+specials	[_"."]
+
+ws		[ \t]
+string          \".*\"
+filename	{string}
+symbol-name	[a-zA-Z_"."][a-zA-Z0-9_"."]*
+
+%%
+{string}	/* eat string literals */ 
+
+".include"{ws}+{filename} {
+  for (p = yytext; !isspace(*p); sn_advance_column(1), p++);
+  for (; isspace(*p); sn_advance_column(1), p++);
+#ifdef DEBUG
+  printf("found an include (%s)\n",p); 
+#endif
+}
+
+"@function" {
+  current_segment = text;
+}
+
+"@object" {
+  current_segment = data;
+}
+
+(_CALLOP){ws}+{symbol-name} {
+  for (p = yytext; !isspace(*p); sn_advance_column(1), p++);
+  for (; isspace(*p); sn_advance_column(1), p++);
+
+  if (strncmp(p, "_LOCLABEL", strlen("_LOCLABEL")) != 0 &&
+      strncmp(last_label, "_LOCLABEL", strlen("_LOCLABEL")) != 0 &&
+      current_segment == text)
+  {
+    /* not a local label and not a label for a data object */
+#ifdef DEBUG
+    printf("found call (from %s to %s) @ %ld:%ld\n", last_label, p, sn_line(), sn_column());
+#endif
+    sn_insert_xref(SN_REF_TO_FUNCTION, SN_FUNC_DEF, SN_REF_SCOPE_GLOBAL,
+                 NULL, last_label, NULL, NULL, p, NULL, sn_current_file(), 
+                 sn_line(), SN_REF_PASS);
+  }
+  sn_advance_column(yytext + yyleng - p);
+}
+
+("_MACROP"){ws}+{symbol-name} {
+  for (p = yytext; !isspace(*p); sn_advance_column(1), p++);
+  for (; isspace(*p); sn_advance_column(1), p++);
+
+#ifdef DEBUG
+  printf("found macro (%s) @ %ld:%ld\n", p, sn_line(), sn_column());
+#endif
+
+  sn_insert_symbol(SN_MACRO_DEF, NULL, p, sn_current_file(), sn_line(),
+                   sn_column(), sn_line(), sn_column() + (yytext + yyleng - p),
+                   0, NULL, NULL, NULL, NULL, sn_line(), sn_column(),
+                   sn_line(), sn_column() + (yytext + yyleng - p));
+
+  sn_advance_column(yytext + yyleng - p);
+}
+
+("equate"){ws}+{symbol-name}{ws}*, {
+  char * x = (char *) strstr(yytext, ",");
+  char * y = x;
+  while (*x)
+  {
+    if (isspace(*x))
+      {
+	x++; break;
+      }
+    else
+      {
+	x--;
+      }
+  }
+  sn_advance_column(x - yytext);
+  *y = 0;
+
+#ifdef DEBUG
+  printf("found constant (%s) @ %ld:%ld\n", x, sn_line(), sn_column());
+#endif
+
+  sn_insert_symbol(SN_CONS_DEF, NULL, x, sn_current_file(), sn_line(),
+                   sn_column(), sn_line(), sn_column() + y - x, 0, NULL,
+                   NULL, NULL, NULL, sn_line(), sn_column(), sn_line(),
+                   sn_column() + y - x);
+
+  sn_advance_column(y - x + 1); /* add one to jump over the trailing comma */
+}
+
+(_GLOBALOP){ws}+{symbol-name}{ws}*, {
+  char * x = (char *) strstr(yytext, ",");
+  char * y = x;
+  while (*x)
+  {
+    if (isspace(*x))
+    {
+      x++;
+      break;
+    }
+    else
+    {
+      x--;
+    }
+  }
+  sn_advance_column(x - yytext);
+  *y = 0;
+
+#ifdef DEBUG
+  printf("found global (%s) @ %ld:%ld\n", x, sn_line(), sn_column());
+#endif
+
+  sn_insert_symbol(SN_GLOB_VAR_DEF, NULL, x, sn_current_file(), sn_line(),
+                   sn_column(), sn_line(), sn_column() + y - x, 0, NULL,
+                   NULL, NULL, NULL, sn_line(), sn_column(), sn_line(),
+                   sn_column() + y - x);
+
+  sn_advance_column(y - x + 1); /* jump over comma also */
+}
+
+^(_LABEL) {
+  char * x = (char *) yytext;
+  while (*x)
+  {
+    if (*x == ' ' || *x == '\t' || *x == ':')
+      break;
+    else
+      x++;
+  }
+  *x = 0; 
+
+  if (strncmp(yytext, "_LOCLABEL", strlen("_LOCLABEL")) != 0 &&
+      strncmp(yytext, "gcc2_compiled", strlen("gcc2_compiled")) != 0)
+  {
+    /* not a local label */
+#ifdef DEBUG
+    printf("found label (%s) @ %ld:%ld\n", yytext, sn_line(), sn_column());
+#endif
+    sn_insert_symbol(SN_FUNC_DEF, NULL, yytext, sn_current_file(), 
+                     sn_line(), sn_column(), sn_line(), sn_column() + yyleng,
+                     0, NULL, NULL, NULL, NULL, sn_line(), sn_column(),
+                     sn_line(), sn_column() + yyleng - 1);
+  }
+
+  strcpy(last_label, yytext);
+  sn_advance_column(yyleng);
+}
+
+"/*"		{ /* we really ought to buffer up the C comment as we eat
+                     characters from the input so we don't just put "blah" 
+                     in the S-N project dbase ;-) */ 
+  sn_push_line();
+  sn_push_column();
+  BEGIN(COMMENT);
+}
+
+<COMMENT>\n	{
+  sn_advance_line();
+  sn_reset_column();
+}
+
+<COMMENT>\r	;
+
+<COMMENT>.	{
+  sn_advance_column(yyleng); 
+}
+
+<COMMENT>"*/"	{
+  sn_advance_column(yyleng);
+
+  sn_insert_comment(NULL, last_label, sn_current_file(), "blah", 
+                    sn_line(), sn_column());
+  
+#ifdef DEBUG
+  printf("found C-style comment from %ld:%ld to %ld:%ld\n",
+	 sn_pop_line(), sn_pop_column(), sn_line(), sn_column());
+#endif
+
+  BEGIN(INITIAL);
+}
+
+(_COMMCHAR).*\n {
+  char *x;
+
+#ifdef DEBUG
+  printf("found endline comment @ %ld:%ld\n", sn_line(), sn_column());
+#endif
+  for (x = yytext, x++; isspace(*x); x++);
+
+  sn_insert_comment(NULL, last_label, sn_current_file(), x, sn_line(),
+                    sn_column());
+
+  sn_advance_line();
+  sn_reset_column();
+}
+
+.		{ sn_advance_column(yyleng); /* eat asm text */ }
+
+\n		{ sn_advance_line(); sn_reset_column(); }
+
+%%
+
+void
+reset()
+{
+  sn_reset_line();
+  sn_reset_column();
+}
+
+int
+main(int argc, char *argv[])
+{
+  return sn_main(argc, argv, group, &yyin, yylex, reset);
+}

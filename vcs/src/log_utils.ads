@@ -1,0 +1,55 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                     Copyright (C) 2001-2003                       --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glide_Kernel;   use Glide_Kernel;
+with VFS;
+
+package Log_Utils is
+
+   procedure Initialize (Kernel : access Kernel_Handle_Record'Class);
+   --  This subprogram must be called before calling any subprogram
+   --  from this package.
+
+   function Get_Log_From_File
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File;
+      Create    : Boolean) return VFS.Virtual_File;
+   --  Return the name for the log file corresponding to File_Name.
+   --  If the log file doesn't exist and Create is True, then
+   --  the function will create the file, return an empty string
+   --  otherwise.
+
+   function Get_File_From_Log
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Log_Name : VFS.Virtual_File) return VFS.Virtual_File;
+   --  Return the name for the file corresponding to Log_Name;
+
+   function Get_Log
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File) return String;
+   --   Return the log for the given file.
+
+   procedure Remove_File_From_Mapping
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : VFS.Virtual_File);
+   --  Remove the entry File_Name from the logs mapping,
+   --  if such an entry exists.
+
+end Log_Utils;

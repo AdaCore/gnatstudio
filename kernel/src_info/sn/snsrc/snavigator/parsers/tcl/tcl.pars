@@ -1,0 +1,332 @@
+/* $Id$ */
+
+PARSER
+
+EXPORT {
+# include <stdio.h>
+
+extern int	tcl80, itcl, itcl15;
+extern FILE *	yyin		;
+extern FILE *	hlfp		;
+extern int	hl		;
+extern char *	current_file	;
+
+extern void start_parser ARGS ((char * fname, int parse_cplpl, FILE * highl_fp, int highlight));
+}
+
+GLOBAL {
+#include <stdlib.h>
+#include "Tree.h"
+#include "Position.h"
+#include "Eval.h"
+#include "Trafo.h"
+#include "itcl.h"
+
+# define fprintf(x,y)
+
+extern	FILE *	cross_ref_fp	;
+
+	int	tcl80, itcl, itcl15;
+	FILE *	yyin		;
+	FILE *	hlfp		;
+	int	hl		;
+	char *	current_file	;
+
+static	rbool	is_initialized	= rfalse;
+static	rbool	report		= rfalse;
+static	rbool	graphic		= rfalse;
+static	tIdent	i_lparent, i_rparent;
+static	int	dialect		;
+
+static void get_options ARGS ((void))
+{
+   char * arg = getenv ("PAF_TCL");
+
+   if (arg == NULL) return;
+
+   while (* arg) {
+      if (* arg == '-') {
+	 switch (* ++ arg) {
+	 case 'f': report = rtrue; break;
+	 case 'g': graphic = rtrue; break;
+	 case 'h':
+	    (void) printf ("\nsyntax of PAF_TCL:\n\n");
+	    (void) printf ("   [-f] [-h]\n\n");
+	    (void) printf (" f : report error messages (default: do not report)\n");
+	    (void) printf (" h : help\n\n");
+	    break;
+	 }
+      }
+      arg ++;
+   }
+}
+
+void start_parser (fname, parse_cplpl, highl_fp, highlight)
+   char	*	fname;
+   int		parse_cplpl;
+   FILE	*	highl_fp;
+   int		highlight;
+{
+   current_file = fname;
+   hlfp         = highl_fp;
+   hl           = highlight;
+   tcl80 = itcl = itcl15 = 0;
+
+   if (! is_initialized) { get_options (); is_initialized = rtrue; }
+   StoreMessages	(rtrue);
+   InitStringMemory	();
+   InitIdents		();
+   if (fname) Attribute.Position.FileName = MakeIdent (fname, strlen (fname));
+   else       Attribute.Position.FileName = NoIdent;
+   BeginFile		("");
+   Beginitcl		();
+   BeginTrafo		();
+   (void) Parser	();
+   /* CheckTree		(TreeRoot); */
+   Eval			(TreeRoot);
+   itcl += itcl15;
+   if (itcl > 0 && tcl80 > 0)
+   			{ Interpret_tcl (TreeRoot); fprintf (stderr, "???\n"); }
+   else if (tcl80 > 0)	{ Interpret_tcl (TreeRoot); fprintf (stderr, "tcl\n"); }
+   else if (itcl > 0) {
+        if (itcl15 > 0) { Interpret_itcl (TreeRoot); fprintf (stderr, "itcl15\n"); }
+	else		{ Interpret_itcl (TreeRoot); fprintf (stderr, "itcl22\n"); }
+   } else		{ Interpret_tcl (TreeRoot); fprintf (stderr, "zero\n"); }
+# ifdef DRAWTREE
+   if (graphic) DrawTree (TreeRoot);
+# endif
+   if (report) WriteMessages (stderr);
+   CloseStringMemory	();
+   ReleaseTreeModule	();
+}
+
+# define SHARE
+
+# ifdef DRAWTREE
+# undef SHARE
+# endif
+
+# ifdef SHARE
+
+static tTree		snostmt, snoword, snotext;
+
+# define dnostmt	snostmt
+# define dnoword	snoword
+# define dnotext	snotext
+
+# else
+
+# define dnostmt	mnostmt ()
+# define dnoword	mnoword ()
+# define dnotext	mnotext ()
+
+# endif
+}
+
+BEGIN {
+   BeginScanner ();
+   i_lparent		= MakeIdent ("(" , 1);
+   i_rparent		= MakeIdent (")" , 1);
+
+# ifdef SHARE
+   snostmt		= mnostmt ();
+   snoword		= mnoword ();
+   snotext		= mnotext ();
+# endif
+}
+
+PROPERTY INPUT
+
+RULE
+
+program		= statements
+		{ => TreeRoot = mprogram (statements:tree); } .
+
+statements	= <
+		=
+		{ tree := dnostmt; } .
+		= statement statements
+		{ tree := Mstmt (statements:tree, statement:tree); } .
+		= end statements .
+> .
+statement	= <
+		= words end
+		{ tree := ReverseTree (words:tree); } .
+		= space words end
+		{ tree := ReverseTree (words:tree); } .
+> .
+words		= <
+		= word
+		{ tree := Mword (dnoword, word:tree); } .
+		= words space word
+		{ tree := Mword (words:tree, word:tree); } .
+> .
+word		= <
+		= qualification .
+		= ')'
+		{ tree := mone_word (NoTree, i_rparent, ')':Position); } .
+		= word qualification
+		{ tree := mone_qualification (Mqualification (word:tree),
+			qualification:tree); } .
+		= word ')' .				/* we forget ')' */
+> .
+qualification	= <
+		= local_qualification .
+		= local_qualification '(' .		/* we forget '(' */
+		= local_qualification '(' qualification
+		{ tree := msubscription ('(':Position,
+			local_qualification:tree, qualification:tree); } .
+		= local_qualification '(' qualification ')'
+		{ tree := msubscription ('(':Position,
+			local_qualification:tree, qualification:tree); } .
+		= global_qualification .
+		= global_qualification '(' .		/* we forget '(' */
+		= global_qualification '(' qualification
+		{ tree := msubscription ('(':Position,
+			global_qualification:tree, qualification:tree); } .
+		= global_qualification '(' qualification ')'
+		{ tree := msubscription ('(':Position,
+			global_qualification:tree, qualification:tree); } .
+		= '::'
+		{ tree := mglobal_ident ('::':Position, NoIdent); } .
+		= '::' '('
+		{ tree := mglobal_ident ('(':Position, i_lparent); } .
+		= '::' '(' qualification
+		{ tree := msubscription ('(':Position, mglobal_ident
+			('::':Position, NoIdent), qualification:tree); } .
+		= '::' '(' qualification ')'
+		{ tree := msubscription ('(':Position, mglobal_ident
+			('::':Position, NoIdent), qualification:tree); } .
+		= '('
+		{ tree := mlocal_ident ('(':Position, i_lparent); } .
+		= '(' qualification .			/* we forget '(' */
+		= '(' qualification ')' .	/* we forget '(' and ')' */
+> .
+local_qualification	= <
+		= fragments
+		{ tree := fragments:is_simple ?
+			mlocal_ident (fragments:tree->text.pos,
+			   make_one_word (fragments:tree)) :
+			mlocal_text (fragments:tree->text.pos,
+			   fragments:tree); } .
+		= local_qualification '::' fragments
+		{ tree := fragments:is_simple ?
+			mqualification (fragments:tree->text.pos,
+			   local_qualification:tree, make_one_word (fragments:tree)) :
+			mcomplex_qual (fragments:tree->text.pos,
+			   local_qualification:tree, fragments:tree); } .
+		= local_qualification '::' .		/* we forget '::' */
+> .
+global_qualification	= <
+		= '::' fragments
+		{ tree := fragments:is_simple ?
+			mglobal_ident (fragments:tree->text.pos, make_one_word (fragments:tree)) :
+			mglobal_text (fragments:tree->text.pos, fragments:tree); } .
+		= global_qualification '::' fragments
+		{ tree := fragments:is_simple ?
+			mqualification (fragments:tree->text.pos,
+			   global_qualification:tree, make_one_word (fragments:tree)) :
+			mcomplex_qual (fragments:tree->text.pos,
+			   global_qualification:tree, fragments:tree); } .
+		= global_qualification '::' .		/* we forget '::' */
+> .
+fragments	= <
+		= fragment
+		{ tree := { tree = fragment:tree; tree->text.next = dnotext; }; } .
+		= fragment fragments
+		{ tree := { tree = fragment:tree; tree->text.next = fragments:tree; };
+		  is_simple := fragment:is_simple & fragments:is_simple; } .
+> .
+fragment	= <
+		= '$'
+		{ tree := mcharacter (NoTree, '$':Position, '$');
+		  is_simple := rtrue; } .
+		= character
+		{ tree := mcharacter (NoTree, character:Position, character:text);
+		  is_simple := rtrue; } .
+		= ident
+		{ tree := mident (NoTree, ident:Position, ident:ident);
+		  is_simple := rtrue; } .
+		= '"(' statements '")'
+		{ tree := mblock (NoTree, '"(':Position, '")':Position, statements:tree, '"');
+		  is_simple := rfalse; } .
+		= '[' statements ']'
+		{ tree := mblock (NoTree, '[':Position, ']':Position, statements:tree, '[');
+		  is_simple := rfalse; } .
+		= '{' statements '}'
+		{ tree := mblock (NoTree, '{':Position, '}':Position, statements:tree, '{');
+		  is_simple := rfalse; } .
+		= '$' '{' statements '}'
+		{ tree := Mblock_content ('$':Position, '}':Position, statements:tree);
+		  is_simple := rfalse; } .
+		= '$' variable
+		{ tree := mcontent (NoTree, '$':Position, variable:tree);
+		  is_simple := rfalse; } .
+		= '$' '::'
+		{ tree := mcharacter (NoTree, '$':Position, '$');
+		  is_simple := rtrue; } .		/* we forget '::' */
+> .
+variable	= <
+		= simple_local_qual .
+		= simple_local_qual '(' .		/* we forget '(' */
+		= simple_local_qual '(' qualification
+		{ tree := msubscription ('(':Position, simple_local_qual:tree,
+			qualification: tree); } .
+		= simple_local_qual '(' qualification ')'
+		{ tree := msubscription ('(':Position, simple_local_qual:tree,
+			qualification: tree); } .
+		= simple_global_qual .
+		= simple_global_qual '(' .		/* we forget '(' */
+		= simple_global_qual '(' qualification
+		{ tree := msubscription ('(':Position, simple_global_qual:tree,
+			qualification: tree); } .
+		= simple_global_qual '(' qualification ')'
+		{ tree := msubscription ('(':Position, simple_global_qual:tree,
+			qualification: tree); } .
+> .
+simple_local_qual	= <
+		= ident
+		{ tree := mlocal_ident (ident:Position, ident:ident); } .
+		= simple_local_qual '::' ident
+		{ tree := mqualification (ident:Position,
+			simple_local_qual:tree, ident:ident); } .
+		= simple_local_qual '::' .		/* we forget '::' */
+> .
+simple_global_qual	= <
+		= '::' ident
+		{ tree := mglobal_ident (ident:Position, ident:ident); } .
+		= simple_global_qual '::' ident
+		{ tree := mqualification (ident:Position,
+			simple_global_qual:tree, ident:ident); } .
+		= simple_global_qual '::' .		/* we forget '::' */
+> .
+end		= <
+		= "EOF" .
+		= space "EOF" .
+		= end_of_command .
+		= space end_of_command .
+> .
+
+ident		: [ident: tIdent] { ident := NoIdent	; } .
+character	: [text : char	] { text  := '?'	; } .
+
+MODULE tree
+
+DECLARE
+   statements
+   statement
+   words
+   word
+   qualification
+   local_qualification
+   global_qualification
+   fragments
+   fragment
+   simple_local_qual
+   simple_global_qual
+   variable		= [tree		: tTree] .
+
+   fragments
+   fragment		= [is_simple	: rbool] .
+
+END tree

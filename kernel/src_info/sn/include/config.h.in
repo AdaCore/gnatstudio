@@ -1,0 +1,47 @@
+/* include/config.h.in. */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you have the strerror function.  */
+#undef HAVE_STRERROR
+
+/* Define if you have the getopt function. */
+#undef HAVE_GETOPT
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if int8_t and friends are in <sys/types.h>.  */
+#undef HAVE_INT8_T
+
+/* Define if u_int8_t is defined in <sys/types.h>.  */
+#undef HAVE_UINT8_T
+
+/* Define if int16_t and friends are in <sys/types.h>.  */
+#undef HAVE_INT16_T
+
+/* Define if u_int16_t and friends are in <sys/types.h>.  */
+#undef HAVE_UINT16_T
+
+/* Define if int32_t and friends are in <sys/types.h>.  */
+#undef HAVE_INT32_T
+
+/* Define if u_int32_t and friends are in <sys/types.h>.  */
+#undef HAVE_UINT32_T
+
+/* Define if int64_t and friends are in <sys/types.h>.  */
+#undef HAVE_INT64_T
+
+/* Define if u_int64_t and friends are in <sys/types.h>.  */
+#undef HAVE_UINT64_T
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+

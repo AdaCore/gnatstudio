@@ -1,0 +1,146 @@
+#!/bin/sh
+
+clear
+cat <<EOF
+
+  This script is provided to simplify the installation of GPS,
+  the GNAT Programming System.
+
+  You will be asked for confirmation before the actual installation is
+  done. You can break out of this script at any time before this.
+
+  Hit RETURN to continue.
+EOF
+
+read x
+
+current_dir=`/bin/pwd`
+
+## Read the base directory (absolute path name)
+## Sets the variable  $basedir
+ask_basedir() {
+   clear
+   default_dir=`(type gnatmake | cut -d' ' -f3) 2>/dev/null`
+   default_dir=`dirname $default_dir`
+
+   if [ "$default_dir " != "." -a "$default_dir " != "/usr/bin" ]; then
+      default_dir=`cd $default_dir/..; pwd`
+      cat <<EOF
+
+  GNAT has been found in $default_dir.
+  Do you want to install GPS there too? Hit RETURN if yes or enter
+  the name of the directory in which GPS should be installed:
+
+EOF
+   else
+     cat <<EOF
+  Enter the name of the directory in which you would like to install GPS
+
+EOF
+   fi
+
+   while [ "$basedir " = " " ]; do
+      printf "[$default_dir] "
+      read basedir
+      if [ " $basedir" = " " ]; then
+         basedir="$default_dir"
+      fi
+      if echo $basedir | egrep "^[/~]" >/dev/null; then
+         true
+      else
+         basedir=`pwd`/$basedir
+      fi
+   done
+
+   # Suppress the final / in basedir
+   basedir=`echo $basedir | sed -e 's/\/$//'`
+
+   # Check that we have permission to write in $basedir
+   if test -d $basedir; then
+     if test -w $basedir; then
+        if [ -x $basedir/bin/gps ]; then
+           echo "  $basedir/bin/gps found."
+           printf "  Do you want to overwrite existing installation [Y/n] ? "
+           read x
+           if [ " $x" = " n" -o " $x" = " N" ]; then
+              echo "Aborting the installation process"
+	      exit
+           fi
+        fi
+     else
+        echo "You do not have permission to write in $basedir"
+        echo "Please check whether you should be root to install in that directory."
+        echo "Aborting the installation process"
+        exit
+     fi
+   else
+     echo ""
+     echo "  Directory $basedir does not exist."
+     printf "  Do you want to create it [Y/n] ? "
+     read x
+     if [ " $x" = " n" -o " $x" = " N" ]; then
+        echo "Aborting the installation process"
+	exit
+     fi
+     mkdir -p $basedir
+   fi
+
+   echo ""
+   printf "  Are you now ready to proceed with the installation [Y/n] ? "
+   read x
+   if [ " $x" = " n" -o " $x" = " N" ]; then
+      echo "Aborting the installation process"
+      exit
+   fi
+}
+
+##################################
+## Do the actual installation
+##################################
+
+install_binaries() {
+
+  echo "Installing the binaries ...."
+  cd $basedir
+
+  if [ -f bin/gpr2make ]; then
+     rm $current_dir/bin/gpr2make
+  fi
+
+  # Do the installation through tar, to preserve symbolic links
+  # We also explicitly work on specific directories to avoid
+  # copying junk files
+
+  (cd $current_dir; tar cf - bin lib doc share) | tar xf -
+}
+
+##
+##  Write the end message
+##
+end_message() {
+   clear
+   cat <<EOF
+
+   GPS has now been installed on your machine.
+   You can start it with the following command:
+
+   $basedir/bin/gps
+
+   Make sure that gps is in your path by typing one of the following
+   commands:
+
+   for csh and tcsh shells:
+      setenv PATH $basedir/bin:\$PATH
+   for sh, bash, ksh and zsh:
+      PATH=$basedir/bin:\$PATH
+      export PATH
+
+EOF
+}
+
+## Main program
+
+ask_basedir
+install_binaries
+end_message
+

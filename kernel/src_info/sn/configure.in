@@ -1,0 +1,43 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/db_capi.c)
+AC_CONFIG_HEADER(include/config.h)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_AWK
+
+dnl Check for availability of GNU Ada Translator (GNAT).
+dnl At the moment we support no other Ada95 compiler.
+cf_ada_make=gnatmake
+ADAFLAGS="-O2 -gnaty"
+AC_CHECK_PROG(gnat_exists, $cf_ada_make, yes, no)
+if test "$ac_cv_prog_gnat_exists" = no; then
+   AC_MSG_ERROR(Failed to find GNAT)
+fi
+ADAFLAGS="-O2 $ADAFLAGS"
+
+AC_ARG_WITH(ada-compiler,
+        [  --with-ada-compiler=CMD specify Ada95 compiler command (default gnatmake)],
+        [cf_ada_compiler=$withval],
+        [cf_ada_compiler=gnatmake])
+
+AC_SUBST(cf_ada_make)
+AC_SUBST(cf_ada_compiler)
+AC_SUBST(ADAFLAGS)
+
+dnl Checks for libraries.
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS([strerror getopt])
+
+CY_AC_BERKELEY_DB
+
+
+AC_OUTPUT([Makefile src/Makefile])

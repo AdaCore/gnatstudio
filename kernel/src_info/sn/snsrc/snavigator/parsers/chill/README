@@ -1,0 +1,73 @@
+Notes for the Source-Navigator 4.1 CHILL parser
+
+B. Elliston <bje@cygnus.com>
+10 February 1998
+
+Build issues
+
+1. Bison will produce a number of warnings when processing the grammar
+   input file about unused terminal symbols.  This is to be expected,
+   as GNU CHILL is a subset of Z.200 ITU CHILL.
+
+2. The parser is totally resiliant to errors in the input stream, but
+   may not recover well from them.  If errors are too severe in the
+   input, the resultant S-N database might be pretty meaningless.
+   I intend to improve on this using yacc's ``error'' tokens at a
+   later date.  If the input files passed through this parser can be
+   compiled with GNU CHILL, then it will work as expected.
+
+Language syntax issues
+
+1.  Z.200 states that compiler directives will take the form:
+
+	<directive clause> ::=
+		<> <directive> [ , <directive> ]* <>
+	
+	<directive> ::=
+		<implementation directive>
+
+2.  To maintain strict compatibility with GNU CHILL, the S-N parser will
+    treat compiler directives as:
+
+	<directive clause> ::=
+		<> <directive> <>
+
+	<directive> ::=
+		<implementation directive>
+
+2.  The only compiler directives that are implemented by GNU CHILL
+    that are of interest to an S-N parser are:
+
+	USE_SEIZE_FILE
+	USE_SEIZE_FILE_RESTRICTED
+
+    From devo/gcc/ch/hash.h, it looks like these directives are case
+    insensitive, so the S-N parser will behave the same way.
+
+3. According to Per Bothner, strings in CHILL used to be legal when
+   surrounded by apostrophes (ie. 'hello world').  I have taken this
+   into account.  Character literals are the set of strings of the form:
+
+	'.'
+   or   '^.+' (for integer literal specifications of a character sequence)
+
+4. Literals may be terminated by an apostrophe.  This is a throwback to a
+   1980s version of Z.200 apparently.  For example:
+
+	B'010101010'
+   or	D'26'
+
+   We do this to retain compatibility with old source code.
+
+5. A <quasi definition statement> shall not include a <signal definition statement>.
+   It causes parsing headaches and Per said it was OK :-)
+
+Other issues
+
+1. We do not need to do anything in particular to support input/output.  Most
+   of this is implementation defined, with a small number of predefined
+   procedures in Z.200.  We will just treat them like all other procedures
+   and generate cross-referencing to them.  [Z.200 chapter 7].
+
+2. It would be nice if we could store information about all known exceptions 
+   and where they are caught.

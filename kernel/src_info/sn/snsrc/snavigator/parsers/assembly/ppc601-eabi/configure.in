@@ -1,0 +1,80 @@
+dnl Process this file with autoconf to produce a configure script.
+
+dnl Initialization.
+AC_INIT(abrowser.l)
+AC_PREREQ(2.12.2)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(sn,5.0.0)
+AM_MAINTAINER_MODE
+
+AC_PROG_CC
+AC_EXEEXT
+AC_OBJEXT
+AC_PROG_AWK
+AM_PROG_LEX
+AC_PROG_RANLIB
+AC_PROG_YACC
+
+CYG_AC_PATH_TCLCONFIG
+CYG_AC_LOAD_TCLCONFIG
+
+dnl Put a plausible default for CC_FOR_BUILD in Makefile.  In the
+dnl normal case, this will just set CC_FOR_BUILD to be CC.  People who
+dnl are building with a cross compiler must know what they are doing.
+if test -z "$CC_FOR_BUILD"; then
+  if test "$cross_compiling" = yes; then
+    CC_FOR_BUILD=gcc
+  else
+    CC_FOR_BUILD='$(CC)'
+  fi
+fi
+AC_SUBST(CC_FOR_BUILD)
+
+AM_CONDITIONAL(CROSS_COMPILING, test x$cross_compiling = xyes)
+
+AC_SUBST(TCL_BUILD_LIB_SPEC)
+AC_SUBST(TCL_LIBS)
+
+dnl Random other stuff
+
+DB_LIBDIR='$(top_builddir)/../../../../db/PORT'
+AC_SUBST(DB_LIBDIR)
+DB_INCDIR='$(top_srcdir)/../../../../db/include'
+AC_SUBST(DB_INCDIR)
+
+AC_CHECK_HEADERS([unistd.h])
+
+# In the cygwin32 environment, we need some additional flags and
+# libraries.
+AC_CACHE_CHECK([for cygwin32], ide_cv_os_cygwin32,
+[AC_EGREP_CPP(lose, [
+#ifdef __CYGWIN32__
+lose
+#endif],[ide_cv_os_cygwin32=yes],[ide_cv_os_cygwin32=no])])
+if test x$ide_cv_os_cygwin32 = xyes; then
+  WINFLAGS="-D_WINDOWS=1 -DWIN32"
+  WIN32LIBS="-lcomdlg32 -ladvapi32 -lshell32 -luser32 -lgdi32"
+  WIN32LDAPP="-Wl,--subsystem,windows"
+  SNCONFIGDIR="win"
+  ac_win_build="yes"
+elif test x$ac_cv_prog_CC = xcl; then
+  WINFLAGS="-D_WINDOWS=1 -DWIN32 -D__MSVC__ -DWINNT -FI\$(top_srcdir)/../../../../db/PORT/win32/NTunixstubs.h -I\$(top_srcdir)/../../../../db/PORT/win32/include"
+  WIN32LIBS="comdlg32.lib advapi32.lib shell32.lib user32.lib gdi32.lib"
+  WIN32LDAPP="-subsystem:windows -entry:WinMainCRTStartup"
+  SNCONFIGDIR="win"
+  ac_win_build="yes"
+else
+  WINFLAGS=
+  WIN32LIBS=
+  WIN32LDAPP=
+  SNCONFIGDIR="unix"
+  ac_win_build="no"
+fi
+
+AC_SUBST(WINFLAGS)
+AC_SUBST(WIN32LIBS)
+AC_SUBST(WIN32LDAPP)
+AM_CONDITIONAL(WINDOWS, test x$ac_win_build = xyes)
+AM_CONDITIONAL(MSVC, test x$ac_cv_prog_CC = xcl)
+
+AC_OUTPUT([Makefile])

@@ -1,0 +1,737 @@
+TRAFO	Trafo
+
+PUBLIC	to_types to_names to_files get_objects Traverse
+
+GLOBAL {
+# include "Reuse.h"
+# include "StringM.h"
+# include "Idents.h"
+# include "Parser.h"
+# include "deftab.h"
+# include "paf.h"
+
+# define null (char *) NULL
+
+static	char *	p;
+static	char *	cur_class_ptr	;
+static	char *	cur_method_ptr	;
+static	char *	cur_arg_types_ptr;
+static	char	cur_arg_types [256];
+static	char	ref_class [256], ref_sym [256], ref_arg_types [256];
+static	int	acc		= PAF_REF_READ;
+static	short	no_of_args	= -1;
+}
+
+PROCEDURE to_types ([decl_list, type, qualified_symbol], tString)
+
+t, buffer :- p := buffer; get_types (t); * p := '\0'; .
+
+PROCEDURE get_types ([decl_list, type, qualified_symbol])
+
+parameter (next := next, type := type, ident := ident, array := array) :-
+   get_types (type);
+   get_types (array);
+   get_separator (next);
+   get_types (next);
+   .
+simple_type (type := type) :-
+   strcpy (p, types [type]); p := p + strlen (types [type]);
+   .
+named_type (qualified_symbol := qualified_symbol) :-
+   get_types (qualified_symbol);
+   .
+array_type (type := type) :-
+   get_types (type);
+   strcpy (p, "[]"); p := p + 2;
+   .
+qualification (qualified_symbol := qualified_symbol, ident := ident) :-
+   get_types (qualified_symbol);
+   * p ++ := '.';
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   .
+ident (ident := ident) :-
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   .
+
+PROCEDURE to_names (decl_list, tString)
+
+t, buffer :- p := buffer; get_names (t); * p := '\0'; .
+
+PROCEDURE get_names (decl_list)
+
+parameter (next := next, ident := ident) :-
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   get_separator (next);
+   get_names (next);
+   .
+
+PROCEDURE to_files (qualified_symbol, tString)
+
+t, buffer :- p := buffer; get_files (t); * p := '\0'; .
+
+PROCEDURE get_files (qualified_symbol)
+
+qualification (qualified_symbol := qualified_symbol, ident := ident) :-
+   get_files (qualified_symbol);
+   * p ++ := '/';
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   .
+ident (ident := ident) :-
+   GetString (ident, p); p := p + LengthSt (GetStringRef (ident));
+   .
+
+PROCEDURE get_separator (decl_list)
+
+parameter (...) :- * p ++ := ','; .
+
+/********* add the objects declared in various lists to list o.	*/
+
+FUNCTION get_objects (t: Tree, o: objects) objects
+
+import_asterisk (next := next, qualified_symbol := qualified_symbol), _ :-
+   RETURN get_objects (next, o);
+   .
+import (next := next, qualified_symbol := qualified_symbol), _ :-
+   RETURN get_objects (next, get_objects (qualified_symbol, o));
+   .
+noimport (...), _ :-
+   RETURN o;
+   .
+qualification (qualified_symbol := qualified_symbol, ident := ident), _ :-
+   RETURN object (t, ident, o, _);
+   .
+ident (ident := ident), _ :-
+   RETURN object (t, ident, o, _);
+   .
+type_decl (next := next, ident := ident), _ :-
+   RETURN get_objects (next, object (t, ident, o, _));
+   .
+function (next := next, ident := ident), _ :-
+   RETURN get_objects (next, object (t, ident, o, _));
+   .
+var_decl (next := next, decl_list := decl_list), _ :-
+   RETURN get_objects (next, get_objects (decl_list, o));
+   .
+field (next := next), _ :-
+   RETURN get_objects (next, o);
+   .
+nofield (...), _ :-
+   RETURN o;
+   .
+decl (next := next, ident := ident), _ :-
+   RETURN get_objects (next, object (t, ident, o, _));
+   .
+nodecl (...), _ :-
+   RETURN o;
+   .
+statement (next := next, statement := statement), _ :-
+   RETURN get_objects (next, get_objects (statement, o));
+   .
+nostatement (...), _ :-
+   RETURN o;
+   .
+var_decl_stmt (decl_list := decl_list), _ :-
+   RETURN get_objects (decl_list, o);
+   .
+type_decl_stmt (type_decl := type_decl), _ :-
+   RETURN get_objects (type_decl, o);
+   .
+if_stmt (then := then), _ :-
+   RETURN get_objects (then, o);
+   .
+if_else_stmt (then := then, Else := Else), _ :-
+   RETURN get_objects (Else, get_objects (then, o));
+   .
+while_stmt (statement := statement), _ :-
+   RETURN get_objects (statement, o);
+   .
+do_stmt (statement := statement), _ :-
+   RETURN get_objects (statement, o);
+   .
+synchronized_stmt (statement := statement), _ :-
+   RETURN get_objects (statement, o);
+   .
+labeled_stmt (ident := ident, statement := statement), _ :-
+   RETURN get_objects (statement, object (t, ident, o, _));
+   .
+try_stmt (statement := statement, finally := finally), _ :-
+   RETURN get_objects (finally, get_objects (statement, o));
+   .
+switch_stmt (switch_list := switch_list), _ :-
+   RETURN get_objects (switch_list, o);
+   .
+statement_c (...), _ :-
+   RETURN o;
+   .
+switch_ (next := next, statement_list := statement_list), _ :-
+   RETURN get_objects (next, get_objects (statement_list, o));
+   .
+noswitch (...), _ :-
+   RETURN o;
+   .
+
+/********* report a used object: ident or qualification */
+
+PROCEDURE use_object (qualified_symbol)
+
+ident (pos := pos1, env := env1, ident := ident, object := noobject (...)) :-
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+      PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      "?", GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := parameter (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, ident := ident, object :=
+   object (object := variable (env := e, pos := pos2))) :-
+   e->Kind == kenv2 && Tree_IsType (e->env2.env1->env.object, ktype_decl);
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      get_class_name (e), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := variable (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := labeled_stmt (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_CONSTANT, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, PAF_REF_READ);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := function (env := env2, decl_list := decl_list))) :-
+   to_types  (decl_list, ref_arg_types);
+   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := type_decl (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := ident (env := env2, pos := pos2))) ;
+ident (pos := pos1, env := env1, ident := ident, object :=
+   object (object := qualification (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos1.Line, PAF_REF_READ);
+   .
+qualification (pos := pos1, env := env1, qualified_symbol :=
+   qualified_symbol (object := object (object := type_decl (ident := i))),
+   ident := ident, object := noobject (...)) :-
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+     PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      GetCStr (i), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+qualification (pos := pos1, env := env1, qualified_symbol :=
+   qualified_symbol (object := object (object :=
+   decl (type := named_type (qualified_symbol := qualified_symbol)))),
+   ident := ident, object := noobject (...)) :-
+   to_types (qualified_symbol, ref_class);
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+     PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+qualification (pos := pos1, env := env1, qualified_symbol :=
+   qualified_symbol, ident := ident, object := noobject (...)) :-
+   to_types (qualified_symbol, ref_class);
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+   PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      ref_class, GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+qualification (pos := pos1, env := env1, qualified_symbol :=
+   qualified_symbol, ident := ident, object :=
+   object (object := variable (env := env2, pos := pos2))) :-
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      get_class_name (env2), GetCStr (ident), null, current_file, (int) pos1.Line, acc);
+   .
+qualification (pos := pos1, env := env1, qualified_symbol :=
+   qualified_symbol, ident := ident, object :=
+   object (object := function (env := env2, decl_list := decl_list))) :-
+   to_types (decl_list, ref_arg_types);
+   put_cross_ref (PAF_REF_TO_MBR_FUNC, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      get_class_name (env2), GetCStr (ident), ref_arg_types, current_file, (int) pos1.Line, acc);
+   .
+
+FUNCTION get_class_name (envs) tString
+
+NIL :-
+   RETURN null;
+   .
+env (object := type_decl (ident := ident)) :-
+   RETURN GetCStr (ident);
+   .
+env (object := anonymous (...)) :-
+   RETURN s_anonymous;
+   .
+env2 (env1 := env1) :-
+   RETURN get_class_name (env1);
+   .
+
+FUNCTION get_class_name_2 ([type_decl, anonymous]) tString
+
+type_decl (ident := ident) :-
+   RETURN GetCStr (ident);
+   .
+anonymous (...) :-
+   RETURN s_anonymous;
+   .
+
+FUNCTION get_current_class (envs) [type_decl, anonymous]
+
+env (object := compilation_unit	(...)) :-
+   RETURN NIL;
+   .
+env (object := o: type_decl	(...)) :-
+   RETURN o;
+   .
+env (object := o: anonymous	(...)) :-
+   RETURN o;
+   .
+env (object := function		(env := env)) ;
+env (object := compound_stmt	(env := env)) ;
+env (object := for_stmt		(env := env)) ;
+env (object := catch		(env := env)) :-
+   RETURN get_current_class (env);
+   .
+env2 (env1 := env1) :-
+   RETURN get_current_class (env1);
+   .
+_ :-
+   RETURN NIL;
+   .
+
+PROCEDURE Tsuperclass (field_list)
+
+class (next := next, ident := ident, block := blk, extends := named_type (qualified_symbol := qs: qualified_symbol (object := obj))) :-
+   cur_class_ptr := GetCStr (ident);
+   Tclass (qs);
+{
+   if (obj != nnoobject && obj->object.object->Kind == kclass)
+      blk::env->env2.env1->env.env = obj->object.object->type_decl.block->field_list.env->env2.env1;
+};
+   Tsuperclass (next);
+   .
+class (next := next) :-
+   Tsuperclass (next);
+   .
+interface (next := next, ident := ident, block := block, extends := extends) :-
+   cur_class_ptr := GetCStr (ident);
+   Tclass (extends);
+   Tsuperclass (next);
+   .
+
+PROCEDURE Traverse (Tree)
+
+compilation_unit (package := package: qualified_symbol, import_list := import_list, field_list := field_list) :-
+   cur_class_ptr := null; cur_method_ptr := null; cur_arg_types_ptr := null;
+   /* Traverse (package); */
+   /* Traverse (import_list); */
+   Tsuperclass (field_list);
+   cur_class_ptr := null; cur_method_ptr := null; cur_arg_types_ptr := null;
+   Traverse (field_list);
+   .
+import (env := env, next := next: import_list, qualified_symbol := qualified_symbol) :-
+   Tclass (qualified_symbol);
+   Traverse (next);
+   .
+class (env := env, next := next: field_list, modifiers := modifiers, ident := ident, pos := pos, block := block, extends := extends, interfaces := interfaces) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   Tclass (interfaces);
+   Traverse (block);
+   cur_class_ptr := prev_class;
+   Traverse (next);
+   .
+interface (env := env, next := next: field_list, modifiers := modifiers, ident := ident, pos := pos, block := block, extends := extends) :-
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := GetCStr (ident);
+   Traverse (block);
+   cur_class_ptr := prev_class;
+   Traverse (next);
+   .
+method (env := env, next := next: field_list, modifiers := modifiers, ident := ident, pos := pos, decl_list := decl_list, type := type, throws := throws, block := block) :-
+   cur_method_ptr := GetCStr (ident);
+   to_types  (decl_list, cur_arg_types); cur_arg_types_ptr := cur_arg_types;
+   Traverse (decl_list);
+   Traverse (type);
+   Texception (throws);
+   Traverse (block);
+   Traverse (next);
+   .
+constructor (env := env, next := next: field_list, modifiers := modifiers, ident := ident, pos := pos, decl_list := decl_list, throws := throws, block := block) :-
+   cur_method_ptr := GetCStr (ident);
+   to_types  (decl_list, cur_arg_types); cur_arg_types_ptr := cur_arg_types;
+   Traverse (decl_list);
+   Texception (throws);
+   Traverse (block);
+   Traverse (next);
+   .
+var_decl (env := env, next := next: field_list, modifiers := modifiers, type := type, decl_list := decl_list) :-
+   cur_method_ptr := null; cur_arg_types_ptr := null;
+   Traverse (type);
+   Traverse (decl_list);
+   Traverse (next);
+   .
+static_initializer (env := env, next := next: field_list, statement_c := statement_c) :-
+   cur_method_ptr := null; cur_arg_types_ptr := null;
+   Traverse (statement_c);
+   Traverse (next);
+   .
+initializer (env := env, next := next: field_list, statement_c := statement_c) :-
+   cur_method_ptr := null; cur_arg_types_ptr := null;
+   Traverse (statement_c);
+   Traverse (next);
+   .
+parameter (env := env, next := next: decl_list, type := type, ident := ident, pos := pos, array := array) :-
+   Traverse (type);
+   Traverse (array);
+   Traverse (next);
+   .
+variable (next := next, expression := noexpression (...)) :-
+   Traverse (next);
+   .
+variable (env := env2 (env1 := e), next := next, ident := i, pos := pos, expression := expression) :-
+   put_cross_ref (PAF_REF_TO_MBR_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      get_class_name_2 (e->env.object), GetCStr (i), null, current_file,
+      (int) pos.Line, PAF_REF_WRITE);
+   Traverse (expression);
+   Traverse (next);
+   .
+variable (next := next, ident := ident, pos := pos, expression := expression) :-
+   put_cross_ref (PAF_REF_TO_LOCAL_VAR, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_LOCAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos.Line, PAF_REF_WRITE);
+   Traverse (expression);
+   Traverse (next);
+   .
+compound_stmt (env := env, statement_list := statement_list) :-
+   Traverse (statement_list);
+   .
+expression_stmt (env := env, expression := expression: expression_c) :-
+   Traverse (expression);
+   .
+var_decl_stmt (env := env, type := type, decl_list := decl_list) :-
+   Traverse (type);
+   Traverse (decl_list);
+   .
+type_decl_stmt (env := env, type_decl := type_decl) :-
+   Traverse (type_decl);
+   .
+if_else_stmt (env := env, expression := expression: expression_c, then := then: statement_c, Else := Else: statement_c) :-
+   Traverse (expression);
+   Traverse (then);
+   Traverse (Else);
+   .
+if_stmt (env := env, expression := expression: expression_c, then := then: statement_c) :-
+   Traverse (expression);
+   Traverse (then);
+   .
+while_stmt (env := env, expression := expression: expression_c, statement := statement: statement_c) :-
+   Traverse (expression);
+   Traverse (statement);
+   .
+do_stmt (env := env, statement := statement: statement_c, expression := expression: expression_c) :-
+   Traverse (statement);
+   Traverse (expression);
+   .
+break_id_stmt (env := env, expression := expression: expression_c) :-
+   Traverse (expression);
+   .
+continue_id_stmt (env := env, expression := expression: expression_c) :-
+   Traverse (expression);
+   .
+return_expr_stmt (env := env, expression := expression: expression_c) :-
+   Traverse (expression);
+   .
+for_stmt (env := env, for_init := for_init: statement_list, expression := expression: expression_c, for_incr := for_incr: statement_list, statement := statement: statement_c) :-
+   Traverse (for_init);
+   Traverse (expression);
+   Traverse (for_incr);
+   Traverse (statement);
+   .
+throw_stmt (env := env, expression := expression: expression_c) :-
+   Traverse (expression);
+   .
+synchronized_stmt (env := env, expression := expression: expression_c, statement := statement: statement_c) :-
+   Traverse (expression);
+   Traverse (statement);
+   .
+labeled_stmt (env := env, ident := ident, pos := pos, statement := statement: statement_c) :-
+   Traverse (statement);
+   .
+try_stmt (env := env, statement := statement: statement_c, catch_list := catch_list, finally := finally: statement_c) :-
+   Traverse (statement);
+   Traverse (catch_list);
+   Traverse (finally);
+   .
+switch_stmt (env := env, expression := expression: expression_c, switch_list := switch_list) :-
+   Traverse (expression);
+   Traverse (switch_list);
+   .
+statement (env := env, next := next: statement_list, statement := statement: statement_c) :-
+   Traverse (statement);
+   Traverse (next);
+   .
+switch_ (next := next, expression_list := expression_list, statement_list := statement_list) :-
+   Traverse (expression_list);
+   Traverse (statement_list);
+   Traverse (next);
+   .
+catch (next := next, decl_list := parameter (type := type), statement := statement) :-
+   Texception (type);
+   Traverse (statement);
+   Traverse (next);
+   .
+named_type (env := env, qualified_symbol := qualified_symbol) :-
+   Tclass (qualified_symbol);
+   .
+array_type (env := env, type := type) :-
+   Traverse (type);
+   .
+expression (env := env, next := next: expression_list, expression := expression: expression_c) :-
+   Traverse (expression);
+   Traverse (next);
+   .
+q: qualification (qualified_symbol := qualified_symbol, ident := ident, pos := pos) :-
+   id_obj: objects; id_obj := Tidentify (q);
+   id_obj == nnoobject;
+   to_types (qualified_symbol, ref_class);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, ref_class, null, current_file, (int) qualified_symbol::pos.Line, acc);
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+      PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      ref_class, GetCStr (ident), null, current_file, (int) pos.Line, acc);
+   .
+q: qualification (...) :-
+   Tqualification (q);
+   .
+i: ident (...) :-
+{  Tidentify (i); };
+   use_object (i);
+   .
+unary (pos := pos, env := env, expression := expression: expression_c, operator := operator) :-
+   acc_save: int;
+{
+   switch (operator) {
+   case post_decr	\:
+   case post_incr	\:
+   case pre_decr	\:
+   case pre_incr	\:
+      acc_save = acc; acc = PAF_REF_WRITE;
+      Traverse (expression);
+      acc = acc_save;
+      break;
+   default		\:
+      Traverse (expression);
+   }
+};
+   .
+binary (pos := pos, env := env, lop := lop: expression_c, rop := rop: expression_c, operator := operator) :-
+   Traverse (lop);
+   Traverse (rop);
+   .
+assign (pos := pos, env := env, lval := lval: expression_c, rval := rval: expression_c, operator := operator) :-
+   acc := PAF_REF_WRITE;
+   Traverse (lval);
+   acc := PAF_REF_READ;
+   Traverse (rval);
+   .
+aggregate (pos := pos, env := env, expression_list := expression_list) :-
+   Traverse (expression_list);
+   .
+call (pos := pos, env := env, expression := expression, expression_list := expression_list: expression_list (no_of_args := n)) :-
+   no_of_args := n;
+   Traverse (expression);
+   no_of_args := -1;
+   acc_save: int; acc_save := acc; acc := PAF_REF_PASS;
+   Traverse (expression_list);
+   acc := acc_save;
+   .
+select (pos := pos, env := env1, expression := this (...), ident := ident) :-
+   class: [type_decl, anonymous]; class := get_current_class (env1);
+   object: objects;
+   class != NIL && class->Kind == kclass;
+   object := IdentifyLocal (ident, class::block->field_list.env);
+   use_object (qualification (pos := pos, env := env1, object := object, qualified_symbol := 
+      ident (object := object (object := class, ident := class::ident),
+	 ident := class::ident), ident := ident));
+   .
+select (pos := pos, env := env1, expression := super (...), ident := ident) :-
+   class: [type_decl, anonymous]; class := get_current_class (env1);
+   object: objects;
+   class != NIL && class->Kind == kclass;
+   class->class.extends->Kind == knamed_type;
+   class->class.extends->named_type.qualified_symbol->qualified_symbol.object != nnoobject;
+   class := class->class.extends->named_type.qualified_symbol->qualified_symbol.object->object.object;
+   (Tree_IsType (class, ktype_decl));
+   object := IdentifyLocal (ident, class::block->field_list.env);
+   use_object (qualification (pos := pos, env := env1, object := object, qualified_symbol := 
+      ident (object := object (object := class, ident := class::ident),
+	 ident := class::ident), ident := ident));
+   .
+select (pos := pos, env := env, expression := expression: expression_c, ident := ident) :-
+   no_of_args_save: short; no_of_args_save := no_of_args; no_of_args := -1;
+   Traverse (expression);
+   no_of_args := no_of_args_save;
+   put_cross_ref (no_of_args >= 0 \? PAF_REF_TO_MBR_FUNC \: PAF_REF_TO_MBR_VAR,
+      PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      "?", GetCStr (ident), null, current_file, (int) pos.Line, acc);
+   .
+get_class_of_expr (pos := pos, env := env, expression := expression: expression_c) :-
+   no_of_args_save: short; no_of_args_save := no_of_args; no_of_args := -1;
+   Traverse (expression);
+   no_of_args := no_of_args_save;
+   .
+get_class (pos := pos, env := env, type := type) :-
+   Traverse (type);
+   .
+subscript (pos := pos, env := env, base := base: expression_c, index := index: expression_c) :-
+   Traverse (base);
+   acc_save: int; acc_save := acc; acc := PAF_REF_READ;
+   Traverse (index);
+   acc := acc_save;
+   .
+type_compare (pos := pos, env := env, expression := expression: expression_c, type := type) :-
+   Traverse (expression);
+   Traverse (type);
+   .
+type_cast (pos := pos, env := env, type := type, expression := expression: expression_c) :-
+   Traverse (type);
+   Traverse (expression);
+   .
+new (pos := pos, env := env, type := type, expression_list := expression_list, expression := expression: expression_c) :-
+   Traverse (type);
+   Traverse (expression_list);
+   Traverse (expression);
+   .
+anonymous (pos := pos, env := env, type := type, expression_list := expression_list, block := block: field_list) :-
+   Traverse (type);
+   Traverse (expression_list);
+   prev_class: tString; prev_class := cur_class_ptr;
+   cur_class_ptr := s_anonymous;
+   Traverse (block);
+   cur_class_ptr := prev_class;
+   .
+conditional (pos := pos, env := env, condition := condition: expression_c, true_expr := true_expr: expression_c, false_expr := false_expr: expression_c) :-
+   Traverse (condition);
+   Traverse (true_expr);
+   Traverse (false_expr);
+   .
+
+PROCEDURE Tqualification (qualified_symbol)
+
+q: qualification (qualified_symbol := qualified_symbol) :-
+   no_of_args_save: short; no_of_args_save := no_of_args; no_of_args := -1;
+   Tqualification (qualified_symbol);
+   no_of_args := no_of_args_save;
+   use_object (q);
+   .
+i: ident (...) :-
+   use_object (i);
+   .
+
+PROCEDURE Tclass ([expression_c, type_name_list])
+
+ident (env := env, ident := ident, pos := pos, object := object) :-
+   object := IdentifyWhole (ident, env);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, GetCStr (ident), null, current_file, (int) pos.Line, PAF_REF_READ);
+   .
+q: qualification (pos := pos) :-
+   to_types (q, ref_sym);
+   put_cross_ref (PAF_REF_TO_CLASS, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, ref_sym, null, current_file, (int) pos.Line, PAF_REF_READ);
+   .
+type_name (next := next, named_type := named_type (qualified_symbol := qualified_symbol)) :-
+   Tclass (qualified_symbol);
+   Tclass (next);
+   .
+type_name (next := next) :-
+   Tclass (next);
+   .
+
+PROCEDURE Texception ([type, expression_c, type_name_list])
+
+named_type (qualified_symbol := qualified_symbol) :-
+   Texception (qualified_symbol);
+   .
+array_type (type := type) :-
+   Texception (type);
+   .
+q: qualified_symbol (pos := pos) :-
+   to_types (q, ref_sym);
+   put_cross_ref (PAF_REF_TO_EXCEPTION, PAF_MBR_FUNC_DEF, PAF_REF_SCOPE_GLOBAL,
+      cur_class_ptr, cur_method_ptr, cur_arg_types_ptr,
+      null, ref_sym, null, current_file, (int) pos.Line, acc);
+   .
+type_name (next := next, named_type := named_type) :-
+   Texception (named_type);
+   Texception (next);
+   .
+
+FUNCTION Tidentify (qualified_symbol) objects
+
+qualification (qualified_symbol := qualified_symbol, ident := ident, object := object) :-
+   no_of_args_save: short; no_of_args_save := no_of_args; no_of_args := -1;
+   id_obj: objects; id_obj := Tidentify (qualified_symbol);
+   no_of_args := no_of_args_save;
+{
+   if (qualified_symbol::object != nnoobject) {
+      tTree obj = qualified_symbol::object->\object.\object;
+      switch (obj->Kind) {
+      case kvariable	\:
+      case kparameter	\:
+	 if (obj->decl.\type->Kind != knamed_type) break;
+	 obj = obj->decl.\type->named_type.\qualified_symbol;
+	 if (obj->\qualified_symbol.\object == nnoobject) {
+	    if (obj->Kind != kident) break;
+	    obj->\ident.\object = IdentifyWhole (obj->\ident.\ident, obj->\ident.\env);
+	    if (obj->\ident.\object == nnoobject) break;
+	 }
+	 obj = obj->\qualified_symbol.\object->\object.\object;
+	 if (! Tree_IsType (obj, ktype_decl)) break;
+      case kclass	\:
+      case kinterface	\:
+	 if (no_of_args >= 0)
+	    object = IdentifyMethod (ident, obj->type_decl.block->field_list.\env, no_of_args);
+	 else
+	    object = IdentifyLocal (ident, obj->type_decl.block->field_list.\env);
+      }
+   }
+};
+   RETURN id_obj;
+   .
+ident (env := env, ident := ident, object := object) :-
+   no_of_args >= 0;
+   object := IdentifyMethod (ident, env, no_of_args);
+   RETURN object;
+   .
+ident (env := env, ident := ident, object := object) :-
+   object := IdentifyWhole (ident, env);
+   RETURN object;
+   .
+_ :-
+   RETURN nnoobject;
+   .

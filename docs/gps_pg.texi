@@ -1,0 +1,320 @@
+\input texinfo   @c -*-texinfo-*-
+@input texiplus
+
+@set GPS
+@set GPSVersion 1.3.0
+
+@c %**start of header
+@setfilename gps_pg.info
+@settitle GPS Programmer's Guide
+@syncodeindex fn cp
+
+@titlepage
+
+@title{GPS Programmer's Guide}
+@subtitle Version @value{GPSVersion}
+@subtitle Document revision level $Revision$
+@subtitle Date: $Date$
+@author ACT Europe
+
+@c Insist we have a draft
+@iftex
+@headings off
+@everyheading @emph{Draft!} @| @thispage @| @thischapter
+@everyfooting @| @| Version: 0.27: @today{}
+@end iftex
+
+
+@page
+@vskip 0pt plus 1filll
+
+Copyright @copyright{} 2002-2003, ACT Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@end titlepage
+
+@ifinfo
+@node Top, Introduction, (dir), (dir)
+@top GPS Programmer's Guide
+
+Version @value{GPSVersion}
+
+Date: $Date$
+
+Copyright @copyright{} 2002-2003, ACT Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@menu
+* Introduction::
+* System Setup::
+* Hello World Walk Through::
+* The GPS Kernel::
+* Documenting your module::
+* Debugging::
+* Contexts::
+
+@detailmenu
+
+ --- The Detailed Node Listing ---
+
+@end detailmenu
+@end menu
+@end ifinfo
+
+@c --------------------------------------------------------------------
+@node Introduction
+@chapter Introduction
+@c --------------------------------------------------------------------
+
+@b{Important note}: This document is not ready for release yet.
+
+
+@noindent
+This document explains how to add your own modules to the GPS programming
+system.
+
+GPS is a fully open architecture, to which one can add new features ranging
+from new menu items to launch external tools to full support for new languages,
+including cross-references.
+
+@cindex adding menus
+@cindex menus
+@cindex toolbar
+@cindex key bindings
+
+Some of these additions can be done solely through the use of text
+files. These are for instance adding new key bindings to various parts
+of GPS, for instance in the editor. The end-user can also easily add new menus
+or toolbar buttons. See the customization chapters in the GPS user's guide.
+
+This document will focus on these additions that can only be done
+through programming languages.
+
+At this point, GPS can only be extended by programming in
+@b{Ada95}. However, it is planned for the near future that extensions
+in @b{C} or @b{C++} can be done, and that GPS should even have a full
+scripting languages permitting most of the extensions described below.
+
+Likewise, adding basic support for new languages will be made easier,
+and doable through external text files, requiring no
+programming. This is not available for this first release of the GPS
+environment.
+
+@c --------------------------------------------------------------------
+@node System Setup
+@chapter System Setup
+@c --------------------------------------------------------------------
+
+@noindent
+As explained in the introduction, GPS can currently only be extended
+by programming in Ada. This assumes that a number of tools are
+available on your system, so that you can recompile your new module.
+
+Most of these external tools and libraries are available from
+@url{http://libre.act-europe.fr}.
+
+@table @bullet
+@item GNAT 3.15 or above
+GNAT is the GNU Ada Compiler, integrated into the gcc tool chain, and
+developed by @b{Ada Core Technologies} and @b{ACT Europe}. GPS will not compile
+with other Ada compilers than GNAT.
+
+You also need to download the sources of GNAT, since GPS uses some of
+these directly.
+
+@item gtk+ 2.0.8 or above
+gtk+ is a C toolkit used for the graphical interface of GPS. It is
+available on a number of platforms, including most UNIX systems and
+Windows. Available from @url{http://www.gtk.org}.
+
+@item GtkAda 2.0 or above
+GtkAda is the Ada binding to the C library @b{gtk+}. GPS was build
+with gtk+ version 2.0 or above, and therefore GtkAda 2.0 or above is
+also needed. The site @url{http://libre.act-europe.fr} provides
+read-only access to the CVS repository, and therefore to the most
+up-to-date version.
+
+@item GVD
+GVD is the GNU visual debugger, also developed in Ada. You need to
+get the most recent version from the CVS repository.
+
+@item GPS sources
+And of course, you need to get the GPS sources.
+    
+@end table
+
+The GPS sources contain an INSTALL file that explains how to recompile
+GPS itself. GPS knows how to dynamically load a module. As a result,
+you do not necessarily need to rebuild GPS itself to add new modules,
+although the dynamic loading hasn't been fully tested yet and might
+not work on all platforms.
+
+@c --------------------------------------------------------------------
+@node Hello World Walk Through
+@chapter Hello World walk through
+@c --------------------------------------------------------------------
+
+@noindent
+Creating a new module is best demonstrated by going through the
+classical and simple example ``hello world''. This example will be
+refined as new extension possibilities are described later on in this
+document.
+
+
+@c Registering the module: gps.adb or dynamic loading
+@c Adding new modules dynamically
+@c Adding new contextual menu: display "hello <file>" when a file is
+@c   selected.
+@c Adding new window in the MDI
+@c Adding messages to the console
+@c Compiling the module: project files,...
+
+@c --------------------------------------------------------------------
+@node The GPS Kernel
+@chapter The GPS Kernel
+@c --------------------------------------------------------------------
+
+@noindent
+
+@c glide_kernel.ads
+@c glide_kernel-module.ads
+@c up-to-date documentation found in the sources themselves
+@c Saving data from one session to the next:
+@c   - adding new preferences
+@c   - interface to histories
+@c   - custom files (XML,...)
+@c interface with projects: projects.ads
+@c i18n and utf8
+
+@c --------------------------------------------------------------------
+@node Documenting your module
+@chapter Documenting your module
+@c --------------------------------------------------------------------
+
+@noindent
+All modules should be documented, so that the users are aware of all
+its capabilities.
+
+There are several levels of documentation:
+
+@itemize @bullet
+
+@item Tooltips
+It is recommended that all new preferences and as much of the GUI as
+possible be documented through tooltips. This is the only help that
+most users will read.
+
+Tooltips are easily added directly with gtk+: Just call
+@code{Gtk.Tooltips.Set_Tooltip} with the appropriate parameters. The
+kernel itself contains a tooltip group, which should be used when
+setting new tooltips. This is so that a common timeout is used for all
+tooltips in the application: when a user has waited long enough for
+the first tooltip to be displayed, he won't have to wait again for the
+other tooltips.
+
+@item extended documentation
+Extended documentation should be written in HTML.
+See the GPS user's guide on how to make new documentation available to
+users. 
+
+@end itemize
+
+@c --------------------------------------------------------------------
+@node Debugging
+@chapter Debugging
+@c --------------------------------------------------------------------
+
+@section X11 server
+
+If you are developing on a linux system, it is recommended that you
+reconfigure your X11 server with the following setup (see the file
+@file{/etc/X11/XF86Config-4}):
+
+@smallexample
+Section "ServerFlags"
+        Option "AllowDeactivateGrabs" "true"   # Ctrl+Alt+Keypad *
+        Option "AllowClosedownGrabs"  "true"   # Ctrl+Alt+Keypad /
+EndSection
+@end smallexample
+
+The two key bindings described above are used to release any grab that
+a GUI application might have. This is especially useful when debugging
+through @code{gdb}: it might happen that the breakpoint happens while
+such a grab is in place, and would therefore prevent any input (mouse
+or keyboard) to any application in your X11 session, in particular the
+debugger.
+
+
+@section gtk+ library
+
+It is also recommended that you recompile your own gtk+ library (on
+systems where this is easily doable such as Unix systems), with the
+following configure command:
+
+@smallexample
+   ./configure --with-debug=yes
+@end smallexample
+
+In addition to providing the usual debugging information in the
+debugger, this also activates several environment variables which
+might be used to monitor the actions in gtk+ and its associated
+libraries.
+
+These variables are the following:
+
+@smallexample
+export GTK_DEBUG=misc:plugsocket:text:tree:updates:keybindings;
+export GDK_DEBUG=updates:nograbs:events:dnd:misc:xim:colormap:gdkrb:gc:pixmap:image:input:cursor;
+export GOBJECT_DEBUG=objects:signals; 
+@end smallexample
+
+Some of the values for these variables can be omitted. The exact
+semantic (or even the exact list) of such variables depends on your
+version of gtk+, and you should therefore consult its documentation.
+
+
+@section debugger
+
+When debugging with @code{gdb}, it is recommended that you always
+specify the flag @code{--sync} to gps. This forces any gtk+
+application, and in particular GPS, to process X11 events
+synchronously, and therefore makes it easier to debug possible
+problems.
+
+If your application is printing some gtk+ warnings on the console, you
+should do the following in the debugger:
+
+@smallexample
+  (gdb) set args --sync
+  (gdb) begin
+  (gdb) break g_log
+  (gdb) cont
+@end smallexample
+
+This will stop the application as soon as the gtk+ warning is printed.
+
+@c --------------------------------------------------------------------
+@node Contexts
+@chapter Contexts
+@c --------------------------------------------------------------------
+
+@noindent
+
+@c describe what contexts are: file context, entity context,
+@c defining new contexts
+
+
+@c --------------------------------------------------------------------
+@unnumbered Index
+@printindex cp
+
+@c --------------------------------------------------------------------
+@contents
+
+@bye

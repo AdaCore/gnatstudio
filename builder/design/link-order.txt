@@ -1,0 +1,56 @@
+Thu Apr 17 2003
+
+Issues with order of libraries when linking.
+
+If project are mutually dependent, you can end up with undefined symbols
+when linking using the Makefile.generic approach, because we link with
+archive files, and symbols inside each archive may depend in a mutual way
+on objects in other archives.
+
+Current approach:
+- create an archive for each project, and link with them once
+  - pros: only needed objects are linked
+          avoid command line limitations
+  - cons: may get unresolved symbols, depending on order and lib dependencies
+          need to recreate the archive each time a file in the project modified
+
+Possible solutions are:
+- create an archive for each project and link with them twice
+  that is, once in the default (recursive top-down) order, and once in the
+  reverse order
+  - pros: more symbols resolved
+          only needed objects are linked
+          avoid command line limitation (to a certain extent)
+  - cons: would not resolve all symbols in all cases.
+          need to recreate the archive each time
+
+- specify all objects on the command line instead
+  - pros: all symbols resolved
+  - cons: can hit command line length limit easily
+          all objects always linked
+
+- create a relocatable object for each project
+  - pros: all symbols resolved
+          avoid command line limitations
+  - cons: all objects always linked
+          need to recreate the relocatable object each time a file is modified
+
+- create a global archive at link time
+  - pros: all symbols resolved
+          only needed objects are linked
+          avoid command line limitations
+  - cons: longer link time
+
+Last solution looks to me to be the right one, unless there is a better
+option I haven't listed.
+
+Implementation issues:
+
+- to avoid the command line length limitation, we want to build the
+  archive incrementally, project by project.
+  -> use the same recursive mechanism used for e.g. the compile target
+
+- tricky: we want to rebuild this global archive only when needed, which is
+  difficult to know, since the objects are spread amongst several projects.
+  Consider using stamp files, but these are hard to get completely right
+  (see gcc makefile).

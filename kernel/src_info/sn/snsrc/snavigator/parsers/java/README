@@ -1,0 +1,33 @@
+                                                                1.11.96
+Dear Mr. Koppany,
+
+The Java parser now contains calls to put_symbol and put_cross_ref.
+INTERFACE is treated similar to class and highlighting is implemented.
+With put_cross_ref, inheritance and overloading are implemented after
+number of parameters.  Overloading after parameter types is still missing
+as well as some difficult constructs e.g. m1(a).m2(b).
+
+For the missing things a complete type testing is necessary, which is
+rather complex.
+
+Running the command:
+
+   time main ... > /dev/null
+
+With highlighting however without data base link and without put_cross_ref
+with einer Geschwindigkeit von 2000 bzw. 4250 lines per second
+(on SPARCstation ELC bzw. PC 486 with 66 MHZ).
+with put_cross_ref are es 1750 bzw. 3750 lines per second.
+
+
+With friendly greetings,
+
+Dr. Josef Grosch
+
+Datenverarbeitung
+Hagsfelder Allee 16
+D-76131 Karlsruhe
+
+Tel.: +49-721-697061
+Fax : +49-721-661966
+Mail: grosch@cocolab.sub.com

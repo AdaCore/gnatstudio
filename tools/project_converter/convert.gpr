@@ -1,0 +1,16 @@
+with "../../gnat";
+with "../../common/common";
+project Convert is
+   for Main use ("convert_prj");
+   for Object_Dir use "obj";
+   for Exec_Dir use ".";
+   
+   package Compiler is
+      for Default_Switches ("Ada") use
+         ("-gnaty", "-gnatQ", "-g", "-gnatwjmbeurk");
+   end Compiler;
+
+   package Linker is
+      for Default_Switches ("Ada") use ("../../common/obj/update_path.o");
+   end Linker;
+end Convert;

@@ -1,0 +1,192 @@
+Known Problems fixed in GPS 1.3.0
+
+- C611-012 Cross-references do not work with C under Solaris
+  Problem:    Under some circumstances, on Solaris, the navigation in C/C++
+              files does not work and displays the message "No cross-reference
+              information found for (...)".
+  Workaround: None.
+
+- C703-014 Locations window is raised for every compiling message
+  Problem:    When the compilation outputs many error/warning messages,
+              the locations window is raised above the messages window with
+              every new error.
+  Workaround: Move the locations window or the messages window to another part
+              of the MDI.
+
+- C703-005 Pasting text from the clipboard doesn't overwrite the selection
+  Problem:    If you are doing an interactive search, replacing the text using
+              the keyboard shortcut for "Paste" doesn't replace the selected
+              text.
+  Workaround: Use the Search/Replace function.
+
+- C627-007 Exec directory settings lost when editing project properties
+  Problem:    If you have specified a relative path for the executables
+              directory and you edit the project properties, it can happen
+              that the executables directory is corrupted if the current
+              directory has changed.
+  Workaround: Either use absolute paths for the executables directory, or
+              make sure the current directory is the one containing the
+              project file before you edit the project properties.
+
+- C626-007 Extra blank lines in messages window under Windows
+  Problem:    When running external processes (e.g. using a custom file)
+              that output CR/LF line terminators, extra blank line are
+              displayed in the messages window.
+  Workaround: Add a wrapper around the external process that transforms
+              CR/LF into LF.
+
+- C625-002 Debugger breakpoints not always appearing in the GPS source editor
+  Problem:    When in debugger mode, setting a breakpoint by clicking on the
+              dots in the editor does not always display a breakpoint icon.
+  Workaround: The breakpoint is active even if it's not displayed. To delete
+              it, type "delete <number of the breakpoint>" in the debugger
+              console.
+
+- C618-002 Font size changes under Windows when highlighting Messages window
+  Problem:    Under Windows, when the Messages window gets some output
+              and does not have the focus, the size of the title font is
+              changed, in addition to the change of color
+  Workaround: None
+
+- C616-002 Incorrect handling of relative exec directories
+  Problem:    If the executable directory was defined as a relative path in
+              the project file, then GPS will not be able to run or debug
+              the executable
+  Workaround: Change the current directory with File->Change Directory to be
+              the one that contains the project file before doing a run or a
+              debug.
+
+- C611-001 Protection domain entry not accessible in GPS
+  Problem:    The Protection Domains entry in the Debug->Data menu
+              is not enabled for AE debuggers.
+  Workaround: Use the gdb console to view and switch protection
+              domains: "info pds" and "pd <pd_id>" respectively.
+
+- C605-005 Duplicate key bindings in Build menu
+  Problem:    If you are using an extending project, then the build menu
+              (Build->Make) will contain an entry for the executables from
+              the project and its parent, but both entries will have the same
+              key shortcut associated with them.
+  Workaround: use the contextual menu on projects in the project explorer to
+              select which executable you want to build.
+
+- C605-003 Key binding not reset when new project loaded
+  Problem:    Some of the key bindings are incorrectly reset when a new
+              project is loaded. For instance, if you have set a keybinding
+              for Build->Make->All Main Units, and then load a new project,
+              pressing a key will still build the units of the old project.
+  Workaround: Select the menu with the mouse instead of using the key
+
+- C604-004 Switching windows with Ctrl+<key> doesn't allow typing characters
+  Problem:    On windows, using control-<key> to switch between windows
+              disables the possibility to select windows by typing their names
+  Workaround: Use the Window menu to switch between windows
+
+- C513-008 Untitled files saved in desktop
+  Problem:    When saving a desktop GPS will improperly save untitled files,
+              and generate an error when trying to load the desktop.
+  Workaround: Close or save untitled files before saving the desktop, or
+              manually edit the file ~/.gps/desktop
+
+- C511-002 Project not recomputed after using "save as"
+  Problem:    When a file is saved with "save as", the file doesn't appear
+              immediately in the project view, and will not be loaded correctly
+              if it contains compilation errors
+  Workaround: Select the menu Project->Recompute Project after saving
+
+- C509-003 Incorrect expansion of -gnatVa compiler switch
+  Problem:    If your project used -gnatVa, and you edit the compiler switches
+              through the project properties editor, none of the check boxes
+              in Validity Checkin are selected
+  Workaround: Select the boxes you wish to activate. This just impacts the
+              initial value.
+
+- C508-012 Main units from extended projects now displayed in Debug->Initialize
+  Problem:    The main units defined in some extended projects are not
+              shown in the Debug->Initialize, although they are displayed in
+              the Build->Make menu
+  Workaround: Initialize the debugger with no main unit, and then load the
+              executable you wish to debug through Debug->Debug->Load File
+
+- C504-003 Alias file not saved properly under Windows
+  Problem:    In some cases, extra CR character are improperly printed when
+              saved the aliases under Windows.
+  Workaround: Remove the extra CR characters in the file %HOME%\.gps\aliases
+
+- C501-006 Child projects cannot be edited graphically
+  Problem:    When a child project (ie whose name has a '.') is edited through
+              the project properties editor, it cannot be saved afterwards.
+  Workaround: Either edit the project manually, or save it under a new name and
+              rename it afterwards
+
+- C501-004 Incorrect naming scheme when saving new Ada file
+  Problem:    When you save a newly created Ada file, the suggested default
+              name used the GNAT naming scheme (.adb and .ads), instead of
+              the root project's
+  Workaround: Override the default value with the proper name
+
+- Incorrect placement of cursor after insertion of <return>
+  Problem:    When auto-indentation is actived and one presses <return> in the
+              middle of a line, the cursor ends up at the end of the second
+              line instead of the beginning
+  Workaround: Press <home> just after <return>
+
+- C429-010 Automatic Uncomment Lines operations sometimes fail.
+  Problem:    When uncommenting Ada lines that only contain "--", or lines
+              starting with spaces, with less than two spaces after "--",
+              the line is not uncommented.
+  Workaround: Uncomment those lines manually.
+
+- C428-025 Read-only editors can be modified by internal actions.
+  Problem:    When an editor is set as read-only, its contents can still be
+              modified by actions such as undo/redo or automatic code fixing.
+  Workaround: Do not use undo/redo or automatic code fixing on read-only
+              files.
+
+- C425-019 Handling of projects with no supported language
+  Problem:    If you create a project with no supported language (either through
+              the project properties editor or manually by setting the
+              Languages attribute to the empty list), GPS will show "Ada" as
+              supported the next time the project properties editor is open
+  Workaround: Edit such projects by hand
+
+- C424-007 Cannot copy-paste from the documentation
+  Problem:    Copying part of the documentation through the contextual menu
+              sometimes results in gtk+ warnings and some incorrect characters
+              appearing when the text is pasted in an editor
+  Workaround: Avoid selecting the navigation arrows in the documentation.
+              ASCII text is correctly copied. Or read the manuals directly
+              from an external browser
+
+- gnat stub started with wrong project
+  Problem:    When the menu Edit->Generate Body is selected, gnat stub fails
+              executing because it cannot found the project
+  Workaround: run gnat stub directly in a shell window
+
+- Incorrect refresh of the project explorer when the project changes
+  Problem:    If you change the project or the scenario variables, the project
+              explorer's contents is refreshed, and all directories seem to
+              contain files (there is a [+] on the left).
+  Workaround: None needed, when you click on the +, it simply disappears.
+
+- C326-004 Duplicate entries in dialog File->Open From Project
+  Problem:    When using extending projects, duplicate source files might be
+              displayed in this dialog (once for the original project and once
+              for the extending project)
+  Workaround: Click on any of the instance, they all point to the same file
+
+- C312-002 Code correction error with CR/LF files
+  Problem:    When using automatic code correction with files containing CR/LF
+              line terminators, the correction is wrong.
+  Workaround: Save the files in "unix" mode
+
+- C305-012 Removed files are not displayed in the VCS Explorer.
+  Problem:    When querying the status of files in a directory, the removed
+              files do not appear in the VCS Explorer.
+  Workaround: None.
+
+- C115-009 Added files not displayed in the VCS Explorer
+  Problem:    When a file has been locally added but not committed to the
+              repository, it appears as "Not registered".
+  Workaround: None
+

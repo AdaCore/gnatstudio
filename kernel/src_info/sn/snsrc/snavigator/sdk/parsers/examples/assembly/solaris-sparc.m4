@@ -1,0 +1,7 @@
+define(`_COMMCHAR', `!')
+define(`_CALLOP', `call')
+define(`_GLOBALOP', `.global')
+define(`_STATICOP', `.common')
+define(`_MACROP', `.macro')
+define(`_LOCLABEL', `.LL')
+define(`_LABEL', `{symbol-name}:')

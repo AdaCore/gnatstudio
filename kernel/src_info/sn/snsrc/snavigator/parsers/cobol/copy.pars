@@ -1,0 +1,273 @@
+/*
+
+		COPY grammar
+		============
+
+*/
+
+/* Ich, Doktor Josef Grosch, Informatiker, May 1995 */
+
+/*
+
+Terminals with	: unsigned_integer, plus_integer, minus_integer, level_number,
+ attributes are	: real, string, name, paragraph_name, pseudo_text,
+		  picture_string, illegal_character
+
+*/
+
+PARSER copy_pars
+
+GLOBAL {
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+
+# define yyInitBufferSize	32
+
+# define TOKENOP	PrevEPos = CurrentEPos; CurrentEPos = Attribute.name.EPos;
+# define BEFORE_TRIAL	tPosition SavePEPos, SaveCEPos; SavePEPos = PrevEPos; SaveCEPos = CurrentEPos;
+# define AFTER_TRIAL	PrevEPos = SavePEPos; CurrentEPos = SaveCEPos;
+
+extern	rbool		Copy ARGS ((tIdent ident, tPosition pos));
+
+static	tPosition	PrevEPos, CurrentEPos;
+static	tIdent		iCURRENT_DATE	;
+static	tIdent		iWHEN_COMPILED	;
+}
+
+BEGIN {
+   iCURRENT_DATE	= MakeIdent ("CURRENT-DATE"	, 12);
+   iWHEN_COMPILED	= MakeIdent ("WHEN-COMPILED"	, 13);
+}
+
+PROPERTY INPUT
+
+RULE
+
+start		= <
+		= copy		{ => { YYACCEPT; }; } '.' .
+		= replace	{ => { YYACCEPT; }; } '.' .
+> .
+copy		= <
+		= /* COPY */ copy_name                     copy_suppress_o copy_replacing_o
+		{ => { (void) Copy (copy_name:Ident, copy_name:Pos); }; } .
+		= /* COPY */ copy_name in_of n2: copy_name copy_suppress_o copy_replacing_o
+		{ => { (void) Copy (copy_name:Ident, copy_name:Pos); }; } .
+> .
+copy_name	= <
+		= name	 { Pos := name:Position; } .
+		= string { Pos := string:Position;
+			   Ident := { {
+			      char word [128];
+			      StGetString (string:Value, word);
+			      Ident = MakeIdent (& word [1], strlen (word) - 2);
+			   } }; } .
+> .
+copy_suppress_o	= <
+		= SUPPRESS .
+		= .
+> .
+copy_replacing_o	= <
+		= { => { begin_replacing (); }; }
+		  REPLACING copy_replacing_l
+		  { => { end_replacing (); }; } .
+		= .
+> .
+copy_replacing_l	= <
+		= copy_replacing_e .
+		= copy_replacing_l copy_replacing_e .
+> .
+copy_replacing_e	= replacing_item_1 BY replacing_item_2 .
+
+replace		= <
+		= /* REPLACE */
+		  { => { begin_replacing (); }; }
+		  replace_l
+		  { => { end_replacing (); }; }.
+		= /* REPLACE */ OFF .
+> .
+replace_l	= <
+		= replace_e .
+		= replace_l replace_e .
+> .
+replace_e	= pseudo_text_1 BY pseudo_text_2 .
+
+replacing_item_1	= <
+		= replacing_item .
+  pseudo_text_1	= '==' token_l '==' .
+> .
+replacing_item_2	= <
+		= replacing_item .
+  pseudo_text_2	= { => { start_pseudo_text (); }; } '==' pseudo_text '==' .
+> .
+replacing_item	= <
+		= identifier .
+		= paragraph_name in_of chapter_name .
+		= u_integer      in_of chapter_name .
+		= token .
+> .
+token_l		= <
+		= token_e .
+		= token_l token_e .
+> .
+token_e		= <
+		= name .
+		= token .
+		= '.' .
+> .
+token		= <
+		= paragraph_name ? { GetLookahead (2) == YYCODE (BY) } .
+		= literal .
+		= picture_string .
+		= illegal_character .
+		= ALL .
+		= BY .
+		= 'FUNCTION' .
+		= 'IN' .
+		= LENGTH .
+		= OF .
+		= '&' .
+		= '(' .
+		= ')' .
+		= '*' .
+		= '**' .
+		= '+' .
+		= '-' .
+		= '/' .
+		= ':' .
+		= '<' .
+		= '<=' .
+		= '<>' .
+		= '=' .
+		= '>' .
+		= '>=' .
+> .
+
+/* expression */
+
+expression	= <
+		= multiplicative_expression .
+		= expression '+' multiplicative_expression .
+		= expression '-' multiplicative_expression .
+		= expression '&' multiplicative_expression .
+> .
+multiplicative_expression	= <
+		= power_expression .
+		= multiplicative_expression '*' power_expression .
+		= multiplicative_expression '/' power_expression .
+> .
+power_expression	= <
+		= unary_expression .
+		= power_expression '**' unary_expression .
+> .
+unary_expression	= <
+		= '+' primary_expression .
+		= '-' primary_expression .
+		=     primary_expression .
+> .
+primary_expression	= <
+		= identifier .
+		= literal .
+		= '(' expression ')' .
+		= LENGTH OF identifier .
+> .
+function_call	= <
+		= 'FUNCTION' function_name_1 ? - reference_modifier .
+		= 'FUNCTION' function_name_2 '(' argument_l ')' ? - reference_modifier .
+		= 'FUNCTION' function_name_1 reference_modifier .
+		= 'FUNCTION' function_name_2 '(' argument_l ')' reference_modifier .
+> .
+function_name_1	= name
+		? { name:Ident == iCURRENT_DATE || name:Ident == iWHEN_COMPILED } .
+
+function_name_2	= <
+		= name .
+		= LENGTH .
+> .
+argument_l	= <
+		= expression .
+		= argument_l expression .
+> .
+identifier	= <
+		= qualification .
+		= qualification '(' ALL index_l ')' .
+		= qualification '(' expression index_l ')' ? - reference_modifier .
+		= qualification                            reference_modifier .
+		= qualification '(' expression index_l ')' reference_modifier .
+		= function_call .
+> .
+qualification	= <
+		= name ? { GetLookahead (2) == YYCODE (BY) } .
+		= name in_of q: qualification .
+> .
+in_of		= <
+		= 'IN' .
+		= OF .
+> .
+index_l		= <
+		= .
+		= index_l index .
+		= index_l ALL .
+> .
+index		= <
+		= integer .
+		= qualification .
+		= qualification '+' integer .
+		= qualification '-' integer .
+> .
+reference_modifier	= <
+		= '(' expression ':' ')' .
+		= '(' expression ':' expression ')' .
+> .
+chapter_name	= <
+		= name .
+		= paragraph_name .
+		= u_integer .
+> .
+literal		= <
+		= integer .
+		= real .
+		= string .
+> .
+integer		= <
+		= u_integer ? { GetLookahead (2) == YYCODE (BY) } .
+		= plus_integer .
+		= minus_integer .
+> .
+u_integer	= <			/* complete unsigned integers */
+		= unsigned_integer	{ Scan := unsigned_integer:Scan	; } .
+		= level_number		{ Scan := level_number:Scan	; } .
+		= '66' { Value := 66;	  Scan := '66':Scan		; } .
+		= '77' { Value := 77;	  Scan := '77':Scan		; } .
+		= '78' { Value := 78;	  Scan := '78':Scan		; } .
+		= '88' { Value := 88;	  Scan := '88':Scan		; } .
+> .
+
+
+name		: 1 [Ident: tIdent	] { Ident := NoIdent	; } .
+paragraph_name	: 2 [Ident: tIdent	] { Ident := NoIdent	; } .
+unsigned_integer: 3 [Value: long	] { Value := 0		; } .
+plus_integer	: 4 [Value: long	] { Value := 1		; } .
+minus_integer	: 5 [Value: long	] { Value := -1		; } .
+level_number	: 6 [Value: int		] { Value := 1		; } .
+real		: 7 [Value: tStringRef	] { Value := PutString (String, 0); } .
+string		: 8 [Value: tStringRef	] { Value := PutString (String, 0); } .
+pseudo_text	: 9 [Value: tStringRef	] { Value := PutString (String, 0); } . 
+picture_string	: 10[Value: tStringRef	] { Value := PutString (String, 0); } . 
+illegal_character:11[Value: char	] { Value := ' '	; } .
+
+MODULE attributes
+
+DECLARE
+
+integer		= [Value: long	 SYN] .
+u_integer	= [Value: long	 SYN] [Scan: tScanAttribute SYN] .
+copy_name	= [Ident: tIdent SYN] [Pos: tPosition] .
+
+END attributes
+
+MODULE tokens
+
+RULE
+
+'.'	: 12 .

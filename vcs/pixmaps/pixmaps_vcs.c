@@ -1,0 +1,8 @@
+#include "unknown_file_xpm"
+#include "removed_file_xpm"
+#include "modified_xpm"
+#include "up_to_date_xpm"
+#include "needs_merge_xpm"
+#include "needs_update_xpm"
+#include "not_registered_xpm"
+#include "added_file_xpm"

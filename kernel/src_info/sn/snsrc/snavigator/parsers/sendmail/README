@@ -1,0 +1,15 @@
+This is a parser for sendmail.cf.  It should be generic enough to handle old,
+old versions of the configuration file format, right up to V8 and IDA
+sendmail.
+
+Current limitations:
+
+* Continuation lines (starting with tab [\t]) are not handled.  I have
+  never seen these used anyway.
+
+* It would be cool if macro names were interpreted (ie. DZ showed up in 
+  the symbol browser as "version").
+
+---
+Ben Elliston
+bje@cygnus.com

@@ -1,0 +1,17 @@
+with "../gnat";
+with "../gtkada/gtkada";
+with "../common/common";
+with "../widgets/widgets";
+with "../gvd/gvd";
+with "../shared";
+
+project Kernel is
+
+   for Source_Dirs use ("src", "src_info", "src_info/sn_wrapper");
+
+   for Object_Dir use "obj";
+
+   package Compiler renames Shared.Compiler;
+   package IDE renames Shared.IDE;
+
+end Kernel;

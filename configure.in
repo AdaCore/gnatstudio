@@ -1,0 +1,244 @@
+ADC_REVISION($Revision$)
+AC_INIT(common/src/sdefault.adb.in)
+
+AC_CANONICAL_SYSTEM
+
+GPS_VERSION=1.3.0w
+GVD_VERSION=$GPS_VERSION
+STRIP_CR=False
+CAN_OUTPUT=True
+TARGET_CFLAGS=""
+TARGET_LFLAGS=""
+EXEC_COMMAND="sh -c"
+DEFAULT_FONT="sans 9"
+DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
+HTML_BROWSER="netscape"
+PRINT_CMD="a2ps"
+OPAQUE_MDI=False
+HOST_TYPE=Unix
+PYTHON_LIBS=""
+
+ROOT=`pwd`
+TARGET=$host
+EXEC_PREFIX="$prefix"
+
+######## Command line options ###
+
+AC_ARG_WITH(ptys,
+[   --without-ptys          don't use ptys to communicate with the debuggers],
+[if test "$withval" = yes; then
+   USE_PTYS=True
+ else
+   USE_PTYS=False
+ fi],
+USE_PTYS=True)
+
+PYTHON_PATH_WITH=no    # For now, compile without python by default
+AC_ARG_WITH(python,
+[ --with-python=<path>     Specify the full path to the Python installation],
+[PYTHON_PATH_WITH=$withval],
+PYTHON_PATH_WITH="no")
+
+######## checking for local tools ###
+AC_PROG_CC
+AC_ISC_POSIX
+AC_HEADER_STDC
+AM_PATH_GNAT
+AM_PATH_PYTHON
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+AC_CHECK_PROGS(DVIPS, dvips)
+AC_CHECK_PROGS(MAKEINFO, makeinfo)
+AC_CHECK_PROGS(TEXI2DVI, texi2dvi)
+
+######## GNU regex checking
+AC_CHECK_FUNC(re_compile_pattern, AC_DEFINE(HAVE_GNU_REGEX))
+
+######## Support for ptys ###
+AC_CHECK_HEADERS(sys/stropts.h)
+AC_CHECK_FUNCS(getpt)
+AC_CHECK_FUNCS(grandpt)
+AC_CHECK_FUNCS(setpgid)
+AC_CHECK_FUNCS(setsid)
+
+opsys=''
+
+case "${host}" in
+
+  ## Alpha (DEC) machines.
+  alpha*-dec-osf* )
+    machine=alpha opsys=osf1
+  ;;
+
+  ## HP 9000 series 700 and 800, running HP/UX
+  hppa*-hp-hpux1[[0-9]]* )
+    machine=hp800 opsys=hpux10
+  ;;
+
+  mips-sgi-irix6.5* )
+    machine=iris4d opsys=irix6-5
+  ;;
+  mips-sgi-irix6* )
+    machine=iris4d opsys=irix6-0
+  ;;
+
+  ## IBM, AIX machines
+  rs6000-ibm-aix4.1* | powerpc-ibm-aix4.1*  )
+    machine=ibmrs6000 opsys=aix4-1
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+  rs6000-ibm-aix4.2* | powerpc-ibm-aix4.2* | powerpc-ibm-aix4.3* )
+    machine=ibmrs6000 opsys=aix4-2
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+  rs6000-ibm-aix4.0* | powerpc-ibm-aix4.0*  )
+    machine=ibmrs6000 opsys=aix4
+    TARGET_LFLAGS="-Wl,-bbigtoc"
+  ;;
+
+  ## PowerPC
+  powerpc-*-linux-gnu )
+    machine=powerpc opsys=gnu-linux
+  ;;
+
+  ## Suns
+  *-auspex-sunos* | *-sun-sunos* | *-sun-bsd* | *-sun-solaris* \
+    | i[[3456]]86-*-solaris2* | i[3456]86-*-sunos5* | powerpc*-*-solaris2* \
+    | rs6000-*-solaris2* | sparc*-linux*-gnu )
+    case "${host}" in
+      m68*-sunos1* )    machine=sun1 ;;
+      m68*-sunos2* )    machine=sun2 ;;
+      m68* )            machine=sun3 ;;
+      i[[3456]]86-sun-sunos[[34]]* )        machine=sun386 ;;
+      i[[3456]]86-*-* )     machine=intel386 ;;
+      powerpcle* )      machine=powerpcle ;;
+      powerpc* | rs6000* )  machine=ibmrs6000 ;;
+      sparc* )          machine=sparc ;;
+      * )               unported=yes ;;
+    esac
+    case "${host}" in
+      ## The Sun386 didn't get past 4.0.
+      i[[3456]]86-*-sunos4          ) opsys=sunos4-0 ;;
+      *-sunos4.0*         ) opsys=sunos4-0 ;;
+      *-sunos4.1.[[3-9]]*noshare )
+                opsys=sunos413
+                ;;
+      *-sunos4.1.[[3-9]]* | *-sunos4shr*)
+                opsys=sunos4shr
+                ;;
+      *-sunos4* | *-sunos )
+                opsys=sunos4-1
+                ;;
+      *-sunos5.3* | *-solaris2.3* )
+                opsys=sol2-3
+                ;;
+      *-sunos5.4* | *-solaris2.4* )
+                opsys=sol2-4
+                ;;
+      *-sunos5.5* | *-solaris2.5* )
+                opsys=sol2-5
+                ;;
+      *-sunos5* | *-solaris* )
+                opsys=sol2-5
+                ;;
+      *-linux-gnu* )
+  	        opsys=gnu-linux
+		;;
+      *) opsys=bsd4-2   ;;
+    esac;;
+
+  ## Intel 386 machines where we don't care about the manufacturer
+  i[[3456]]86-*-* )
+    machine=intel386
+    case "${host}" in
+      *-lynxos* )               opsys=lynxos ;;
+      *-isc1.* | *-isc2.[[01]]* ) opsys=386-ix ;;
+      *-isc2.2* )               opsys=isc2-2 ;;
+      *-isc4.0* )               opsys=isc4-0 ;;
+      *-isc4.* )                opsys=isc4-1 ;;
+      *-isc* )                  opsys=isc3-0 ;;
+      *-esix5* )                opsys=esix5r4 ;;
+      *-esix* )                 opsys=esix ;;
+      *-xenix* )                opsys=xenix ;;
+      *-linux-gnu* )
+	opsys=gnu-linux
+
+	# If we do not link with -Wl,-export-dynamic, commands like
+	# "import time" will raise errors in the interpreter
+	PYTHON_LIBS="-Wl,-export-dynamic -ldl -lutil -lm"
+	;;
+
+      *-sco3.2v4* )             opsys=sco4  ;;
+      *-sco3.2v5* )             opsys=sco5 ;;
+      *-sysv4.2uw* | *-sysv5uw* ) opsys=unixware ;;
+      *-386bsd* )               opsys=386bsd ;;
+      *-freebsd* )              opsys=freebsd ;;
+      *-nextstep* )             opsys=nextstep ;;
+      *win32* | *mingw32* )
+	machine=intel386 opsys=windows
+	STRIP_CR=True
+	CAN_OUTPUT=False
+	TARGET_LFLAGS="-luser32 -lcomdlg32 -mwindows"
+	TARGET=pentium-mingw32msv
+	COLOR_SELECTION="#BEBEBE"
+	EXEC_COMMAND="cmd /c"
+	DEFAULT_PS="winps"
+	DEFAULT_FONT="tahoma 8"
+	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
+	PRINT_CMD=""
+	OPAQUE_MDI=True
+	HOST_TYPE=Windows
+	;;
+      ## Otherwise, we'll fall through to the generic opsys code at the bottom.
+    esac
+  ;;
+
+  *) echo "Unknown system: ${host}"
+     exit;;
+esac
+
+machfile="'\"machine/${machine}.h\"'"
+opsysfile="\\\"system/${opsys}.h\\\""
+
+# checking for gtk
+AM_PATH_GTK(2.0.0,,AC_MSG_ERROR(Test for GtkAda failed. See the file 'INSTALL' for help.))
+
+# Set the version number of GPS/GVD
+AC_SUBST(GPS_VERSION)
+AC_SUBST(GVD_VERSION)
+
+AC_SUBST(opsysfile)
+
+AC_SUBST(ROOT)
+AC_SUBST(TARGET)
+AC_SUBST(EXEC_PREFIX)
+
+AC_SUBST(STRIP_CR)
+AC_SUBST(USE_PTYS)
+AC_SUBST(CAN_OUTPUT)
+AC_SUBST(TARGET_CFLAGS)
+AC_SUBST(TARGET_LFLAGS)
+AC_SUBST(TARGET)
+AC_SUBST(EXEC_COMMAND)
+AC_SUBST(DEFAULT_PS)
+AC_SUBST(DEFAULT_FONT)
+AC_SUBST(HTML_BROWSER)
+AC_SUBST(PRINT_CMD)
+AC_SUBST(OPAQUE_MDI)
+AC_SUBST(HOST_TYPE)
+AC_SUBST(PYTHON_BASE)
+AC_SUBST(PYTHON_VERSION)
+AC_SUBST(PYTHON_ADA_SOURCE)
+AC_SUBST(PYTHON_DIR)
+AC_SUBST(PYTHON_LIBS)
+
+AC_CONFIG_SUBDIRS(kernel/src_info/sn)
+AC_CONFIG_SUBDIRS(kernel/src_info/sn/snsrc)
+
+echo ""
+echo "--------- Summary --------------"
+echo "       python: $PYTHON_BASE"
+echo ""
+
+AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr)

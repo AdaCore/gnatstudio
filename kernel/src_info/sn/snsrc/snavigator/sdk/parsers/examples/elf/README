@@ -1,0 +1,24 @@
+
+This directory contains the necessary files to produce a third-party parser
+for Source-Navigator.
+
+The ebrowser.l file is a Source-Navigator parser written in GNU flex for the
+ELF programming language.  There are two example ELF source files:
+
+	sql.elf
+	blobsql.elf
+
+To try out the parser, replace "SN=/usr/local/snavigator" in the Makefile
+with the path to your Source-Navigator installation.
+
+Because different operating systems have different library names for the
+dynamic loading library, you may need to change the "-ldl" library name
+to the library which supports dynamic loading on your system. This is required
+to get rid of libtcl8.1 linker errors.
+
+Build and test the parser by running "make test".  The Source-Navigator
+project database will be created in the .snprj subdirectory.  During the test,
+the names of the known functions in the project will be displayed.
+
+Refer to the Source-Navigator Programmer's Reference Guide for details on
+writing additional parsers for other programming languages.

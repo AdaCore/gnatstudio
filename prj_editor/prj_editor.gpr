@@ -1,0 +1,44 @@
+with "../common/common";
+with "../gtkada/gtkada";
+with "../kernel/kernel";
+with "../gvd/gvd_common";
+with "../widgets/widgets";
+with "../vsearch/vsearch";
+with "../shared";
+
+project Prj_Editor is
+
+   for Languages use ("C", "Ada");
+   for Source_Dirs use ("src", "pixmaps", "testsuite");
+   for Object_Dir use "obj";
+
+   type Build_Type is ("Debug", "Production");
+   Build : Build_Type := External ("Build", "Debug");
+
+   package Builder is
+      --  -a is required for g-exptty.adb
+      for Default_Switches ("Ada") use ("-g", "-a", "-m");
+      case Build is
+          when "Debug" =>
+             for Default_Switches ("Ada") use Builder'Default_Switches ("Ada")
+                 & ("-gnatVa");
+             for Global_Configuration_Pragmas use "../glide/gnat_debug.adc";
+          when "Production" =>
+             for Global_Configuration_Pragmas use "../glide/gnat.adc";
+      end case;
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("new_variable_editor_pkg.adb") use ("-g", "-O2");
+      for Switches ("switches_editor_pkg.adb") use ("-g", "-O2");
+      for Switches ("wizard_window_pkg.adb") use ("-g", "-O2");
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
+   package IDE renames Shared.IDE;
+
+end Prj_Editor;

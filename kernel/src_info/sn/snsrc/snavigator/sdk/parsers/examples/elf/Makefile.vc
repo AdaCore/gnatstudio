@@ -1,0 +1,47 @@
+###############################################################################
+#
+# $Id$
+#
+# Copyright (C) 1997 Cygnus Solutions, Inc.
+#
+# Description:
+# Makefile for the ELF parser.
+#
+###############################################################################
+
+SDK     = ../../..
+LIBS	= ${SDK}/lib/libsnptools.a ${SDK}/lib/libdbutils.a ${SDK}/lib/libpafdb.a ${SDK}/lib/libutils.a ${SDK}/lib/libtcl81.a
+INCLUDES= -I$(SDK)/include
+
+CC      = cl
+CCLD	= link
+LEX	= flex
+
+DBDIR	= .snprj
+DB	= $(DBDIR)/test
+LIBEXEC = $(SDK)/../../libexec
+
+OUT = ebrowser.exe
+
+all:	${OUT}
+
+OBJECTS = ebrowser.obj
+
+${OUT}:	${OBJECTS}
+		${CCLD} -out:$@ ${OBJECTS} ${LIBS}
+
+%.c:		%.l
+		${LEX} $< && mv lex.yy.c $@
+
+%.obj:		%.c
+		${CC} -c ${CFLAGS} ${DEFINES} ${INCLUDES} $<
+
+clean:
+		rm -rf ${OUT} *.o .snprj sources
+
+test:		ebrowser
+		ls -1 *.elf > sources
+		-mkdir $(DBDIR)
+		ebrowser -n $(DB) -y sources -p $(LIBEXEC)/dbimp
+		@echo "Functions:"
+		@$(LIBEXEC)/dbdump $(DB).fu

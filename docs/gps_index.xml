@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<index>
+   <file>
+      <name>gps-welcome.html</name>
+      <descr>Welcome</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Welcome</menu>
+   </file>
+
+   <file>
+      <name>gps.html</name>
+      <descr>Using the GNAT Programming System</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/Using the GNAT Programming System</menu>
+   </file>
+
+   <file>
+      <name>gps-tutorial.html</name>
+      <descr>GNAT Programming System Tutorial</descr>
+      <category>GPS</category>
+      <menu>/Help/GPS/GNAT Programming System Tutorial</menu>
+   </file>
+
+   <file>
+      <name>gnat_ugn.html</name>
+      <descr>Native GNAT User's Guide</descr>
+      <category>GNAT</category>
+      <menu>/Help/GNAT/Native GNAT User's Guide</menu>
+   </file>
+
+   <file>
+      <name>gnat_ugx.html</name>
+      <descr>Cross GNAT User's Guide</descr>
+      <category>GNAT</category>
+      <menu>/Help/GNAT/Cross GNAT User's Guide</menu>
+   </file>
+
+   <file>
+      <name>gnat_rm.html</name>
+      <descr>GNAT Reference Manual</descr>
+      <menu>/Help/GNAT/GNAT Reference Manual</menu>
+      <category>GNAT</category>
+   </file>
+
+   <file>
+      <name>arm95.html</name>
+      <descr>Ada 95 Reference Manual</descr>
+      <menu>/Help/GNAT/Ada 95 Reference Manual</menu>
+      <category>GNAT</category>
+   </file>
+
+   <file>
+      <name>gdb.html</name>
+      <descr>Using the GNU Debugger</descr>
+      <menu>/Help/Using the GNU Debugger</menu>
+      <category>General</category>
+   </file>
+
+   <file>
+      <name>gvd.html</name>
+      <descr>Using the GNU Visual Debugger</descr>
+      <menu>/Help/GNAT/Using the GNU Visual Debugger</menu>
+      <category>GNAT</category>
+   </file>
+
+   <file>
+      <name>gcc.html</name>
+      <descr>Using GCC</descr>
+      <menu>/Help/Using GCC</menu>
+      <category>General</category>
+   </file>
+</index>

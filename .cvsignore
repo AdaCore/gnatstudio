@@ -1,0 +1,8 @@
+Makefile
+config.log
+config.cache
+conftest.adb
+conftest
+config.status
+conftest.ok
+Makefile.common

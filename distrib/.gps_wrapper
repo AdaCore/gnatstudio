@@ -1,0 +1,23 @@
+#!/bin/sh
+# .gps_wrapper
+#
+# Copyright 2002-2003 by ACT Europe.
+
+prog=`basename $0`
+root=`dirname $0`
+
+# Strip 'bin' directory to retrieve the real root
+
+root=`dirname $root`
+LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
+GTK_DATA_PREFIX=$root
+
+if [ x"$GPS_DOC_PATH" = x ]; then
+   GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gnat-cross/html:$root/doc/gps/html
+else
+   GPS_DOC_PATH=$GPS_DOC_PATH:$root/doc/gnat/html:$root/doc/gnat-cross/html:$root/doc/gps/html
+fi
+
+export LD_LIBRARY_PATH GTK_DATA_PREFIX GPS_DOC_PATH
+GDK_USE_XFT=False
+exec $root/bin/${prog}_exe "$@"

@@ -1,0 +1,40 @@
+project Sdc is
+
+   for Languages use ("ada");
+   for Source_Dirs use ("common", "struct");
+   for Main use ("sdc.adb");
+   type Build_Type is ("PRODUCTION", "DEBUG");
+   Build : Build_Type := external ("Build", "DEBUG");
+
+   for Object_Dir use "obj";
+
+   package Compiler is
+      case Build is
+         when "DEBUG" =>
+            for Default_Switches ("ada") use
+              ("-gnatwe", "-gnaty", "-gnato", "-g");
+            for Switches ("screen_output.adb") use
+              ("-gnatwe", "-gnaty", "-g");
+
+         when "PRODUCTION" =>
+            for Default_Switches ("ada") use
+              ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
+      end case;
+   end Compiler;
+
+   package Builder is
+      case Build is
+         when "DEBUG" =>
+            for Default_Switches ("ada") use ("-g");
+
+         when "PRODUCTION" =>
+            for Default_Switches ("ada") use ();
+      end case;
+   end Builder;
+
+   package Ide is
+      for Vcs_Kind use "CVS";
+   end Ide;
+
+end Sdc;
+

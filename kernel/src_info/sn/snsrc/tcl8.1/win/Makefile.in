@@ -1,0 +1,632 @@
+# Copyright (c) 1995-1996 Sun Microsystems, Inc.
+
+# This file is CYGNUS LOCAL.  It is a copy of makefile.vc from the
+# standard tcl distribution, modified to work with cygwin32 and an
+# autoconf configure script.  I have chosen to minimize the number of
+# changes, so the comments continue to refer to Visual C++ and the
+# like.  This should make it easier to merge in a new version if that
+# is necessary.
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+VPATH = @srcdir@:@srcdir@/../generic:@srcdir@/../compat
+srcdir = @srcdir@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+NM = @NM@
+AS = @AS@
+LD = @LD@
+DLLTOOL = @DLLTOOL@
+WINDRES = @WINDRES@
+
+DLL_LDFLAGS = @DLL_LDFLAGS@
+DLL_LDLIBS = @DLL_LDLIBS@
+TCL_ALLOC_OBJ = @TCL_ALLOC_OBJ@
+
+OBJEXT=@OBJEXT@
+
+# Current Tcl version;  used in various names.
+
+DIRVERSION = @TCL_VERSION@
+
+# The following definition can be set to non-null for special systems
+# like AFS with replication.  It allows the pathnames used for installation
+# to be different than those used for actually reference files at
+# run-time.  INSTALL_ROOT is prepended to $prefix and $exec_prefix
+# when installing files.
+INSTALL_ROOT =
+
+# Directory from which applications will reference the library of Tcl
+# scripts (note: you can set the TCL_LIBRARY environment variable at
+# run-time to override this value):
+TCL_LIBRARY =   @datadir@/tcl$(DIRVERSION)
+
+# Path name to use when installing library scripts:
+SCRIPT_INSTALL_DIR =    $(INSTALL_ROOT)$(TCL_LIBRARY)
+
+# Directory in which to install libtcl.so or libtcl.a:
+LIB_INSTALL_DIR =       $(INSTALL_ROOT)@libdir@
+
+# Directory in which to install the program tclsh:
+BIN_INSTALL_DIR =       $(INSTALL_ROOT)@bindir@
+
+# Directory in which to install the include file tcl.h:
+INCLUDE_INSTALL_DIR =   $(INSTALL_ROOT)@includedir@
+
+#
+# Visual C++ 2.x and 4.0 makefile
+#
+# Does not depend on the presence of any environment variables in
+# order to compile tcl; all needed information is derived from 
+# location of the compiler directories.
+
+#
+# Project directories
+#
+# ROOT    = top of source tree
+#
+# TMPDIR  = location where .obj files should be stored during build
+#
+# TOOLS32 = location of VC++ 32-bit development tools. Note that the
+#	   VC++ 2.0 header files are broken, so you need to use the
+#	   ones that come with the developer network CD's, or later
+#	   versions of VC++.
+#
+# TOOLS16 = location of VC++ 1.5 16-bit tools, needed to build thunking
+#	   library.  This information is optional; if the 16-bit compiler
+#	   is not available, then the 16-bit code will not be built.  
+#	   Tcl will still run without the 16-bit code, but...
+#	       A. Under Windows 3.X you will any calls to the exec command
+#		  will return an error.
+#	       B. A 16-bit program to test the behavior of the exec
+#		  command under NT and 95 will not be built.
+#
+
+ROOT	    = $(srcdir)/..
+TMPDIR	  = .
+TOOLS32	 = c:\msdev
+TOOLS16	 = c:\msvc
+
+# Set this to the appropriate value of /MACHINE: for your platform
+MACHINE = IX86
+
+# Comment the following line to compile with symbols
+NODEBUG=1
+
+# uncomment one of the following lines to compile with TCL_MEM_DEBUG, 
+# TCL_MEM_DEBUG, or TCL_COMPILE_DEBUG
+#DEBUGDEFINES   = -DTCL_MEM_DEBUG
+#DEBUGDEFINES   = -DTCL_MEM_DEBUG -DTCL_COMPILE_DEBUG
+#DEBUGDEFINES   = -DTCL_MEM_DEBUG -DTCL_COMPILE_STATS
+#DEBUGDEFINES   = -DTCL_MEM_DEBUG -DTCL_COMPILE_DEBUG -DTCL_COMPILE_STATS
+
+######################################################################
+# Do not modify below this line
+######################################################################
+
+VERSION = 81
+
+TCLLIB	  = libtcl$(VERSION).a
+TCLPLUGINLIB    = libtcl$(VERSION)p.a
+TCL16DLL	= # tcl16$(VERSION).dll
+TCLSH	   = cygtclsh$(VERSION).exe
+TCLSHP	  = cygtclshp$(VERSION).exe
+TCLTEST	 = tcltest.exe
+ifeq ($(OBJEXT),obj)
+DUMPEXTS	= $(TMPDIR)/dumpexts.exe
+endif
+TCLPIPEDLL      = cygtclpip$(VERSION).dll
+TCLREGDLL       = cygtclreg$(VERSION).dll
+CAT16	   = # cat16.exe
+CAT32	   = cat32.exe
+
+
+ifeq ($(OBJEXT),obj)
+
+TCL_ALLOC_OBJ=$(TMPDIR)/tclAlloc.$(OBJEXT)
+TCLDLL	  = sntcl$(VERSION).dll
+TCLPLUGINDLL    = sntcl$(VERSION)p.dll
+TCLIMPORTLIB    = sntcl$(VERSION).lib
+else
+
+TCLDLL	  = cygtcl$(VERSION).dll
+TCLPLUGINDLL    = cygtcl$(VERSION)p.dll
+TCLIMPORTLIB    = cygtcl$(VERSION).dll
+
+endif
+
+TCLSHOBJS = 
+TCLTESTOBJS = 
+TCLOBJS = tcl.$(OBJEXT)
+
+cc32	    = $(TOOLS32)\bin\cl.exe
+link32	  = $(TOOLS32)\bin\link.exe
+rc32	    = $(TOOLS32)\bin\rc.exe
+include32       =
+
+cc16	    = $(TOOLS16)\bin\cl.exe
+link16	  = $(TOOLS16)\bin\link.exe
+rc16	    = $(TOOLS16)\bin\rc.exe
+include16       =
+
+WINDIR	  = $(ROOT)/win
+GENERICDIR      = $(ROOT)/generic
+
+ifeq ($(OBJEXT),o)
+MSVC_DEFINES =
+else
+MSVC_DEFINES = -Dtry=__try -Dexcept=__except
+endif
+
+
+TCL_INCLUDES    = -I$(WINDIR) -I$(GENERICDIR)
+TCL_DEFINES     = -D__WIN32__ $(DEBUGDEFINES) $(MSVC_DEFINES)
+
+
+TCL_CFLAGS      = $(cdebug) $(cflags) $(cvarsdll) \
+			$(TCL_INCLUDES) $(TCL_DEFINES) $(CFLAGS) \
+			@TCL_CFLAGS@
+
+CON_CFLAGS      = $(cdebug) $(cflags) $(cvars) -DCONSOLE
+DOS_CFLAGS      = $(cdebug) $(cflags) $(include16) -AL 
+DLL16_CFLAGS    = $(cdebug) $(cflags) $(include16) -ALw
+
+ifeq ($(OBJEXT),o)
+linkdebug =
+else
+linkdebug = -DEBUG
+endif
+conlflags =
+conlibsdll =
+
+######################################################################
+# Link flags
+######################################################################
+
+#!IFDEF NODEBUG
+#ldebug = /RELEASE
+#!ELSE
+#ldebug = -debug:full -debugtype:cv
+#!ENDIF
+
+# declarations common to all linker options
+lcommon = /NODEFAULTLIB /RELEASE /NOLOGO
+
+# declarations for use on Intel i386, i486, and Pentium systems
+#!IF "$(MACHINE)" == "IX86"
+#DLLENTRY = @12
+#lflags   = $(lcommon) -align:0x1000 /MACHINE:$(MACHINE)
+#!ELSE
+#lflags   = $(lcommon) /MACHINE:$(MACHINE)
+#!ENDIF
+
+ifeq ($(OBJEXT),o)
+conlflags = -Wl,--subsystem,console -mwindows
+else
+conlflags = -subsystem:console
+endif
+
+dlllflags =
+
+#!IF "$(MACHINE)" == "PPC"
+#libc = libc.lib
+#libcdll = crtdll.lib
+#!ELSE
+#libc = libc.lib oldnames.lib
+#libcdll = msvcrt.lib oldnames.lib
+#!ENDIF
+
+ifeq ($(OBJEXT),o)
+
+baselibs   = -lkernel32 $(optlibs) -ladvapi32 -luser32
+winlibs    = $(baselibs) -lgdi32 -lcomdlg32 -lwinspool
+
+else
+
+libc       = libc.lib oldnames.lib
+baselibs   = kernel32.lib $(optlibs) advapi32.lib user32.lib
+winlibs    = $(baselibs) gdi32.lib comdlg32.lib winspool.lib
+libcdll    = msvcrt.lib oldnames.lib
+
+endif
+
+guilibs    = $(libc) $(winlibs)
+conlibs    = $(libc) $(baselibs)
+guilibsdll = $(libcdll) $(winlibs)
+conlibsdll = $(libcdll) $(baselibs)
+
+######################################################################
+# Compile flags
+######################################################################
+
+#!IFDEF NODEBUG
+#cdebug = -Ox
+#!ELSE
+#cdebug = -Z7 -Od -WX
+#!ENDIF
+
+# declarations common to all compiler options
+ccommon = -c -W3 -nologo -YX -Dtry=__try -Dexcept=__except
+
+#!IF "$(MACHINE)" == "IX86"
+#cflags = $(ccommon) -D_X86_=1
+#!ELSE
+#!IF "$(MACHINE)" == "MIPS"
+#cflags = $(ccommon) -D_MIPS_=1
+#!ELSE
+#!IF "$(MACHINE)" == "PPC"
+#cflags = $(ccommon) -D_PPC_=1
+#!ELSE
+#!IF "$(MACHINE)" == "ALPHA"
+#cflags = $(ccommon) -D_ALPHA_=1
+#!ENDIF
+#!ENDIF
+#!ENDIF
+#!ENDIF
+
+cvars      = -DWIN32 -D_WIN32
+cvarsmt    = $(cvars) -D_MT
+cvarsdll   = $(cvarsmt) -D_DLL
+
+######################################################################
+# Project specific targets
+######################################################################
+
+all:	$(TCLLIB)
+release:    $(TCLLIB)
+dlls:       
+tcltest:    
+plugin:     
+test:      
+
+install: install-binaries
+
+install-binaries: $(TCLLIB)
+	@for i in $(LIB_INSTALL_DIR) $(BIN_INSTALL_DIR) ; \
+	    do \
+	    if [ ! -d $$i ] ; then \
+		echo "Making directory $$i"; \
+		mkdir $$i; \
+		chmod 755 $$i; \
+		else true; \
+		fi; \
+	    done;
+	@echo "Installing $(TCLLIB) to $(LIB_INSTALL_DIR)"
+	@$(INSTALL_DATA) $(TCLLIB) $(LIB_INSTALL_DIR)/$(TCLLIB)
+	@chmod 555 $(LIB_INSTALL_DIR)/$(TCLLIB)
+
+#       @echo "Installing tclsh"
+#       @$(INSTALL_PROGRAM) $(TCLSH) $(BIN_INSTALL_DIR)/$(TCLSH)
+#       @echo "Installing tclConfig.sh"
+#       @$(INSTALL_DATA) ../unix/tclConfig.sh $(LIB_INSTALL_DIR)/tclConfig.sh
+
+install-libraries:
+	@echo "Installing $(TCLDLL)"
+	@$(INSTALL_DATA) $(TCLDLL) $(BIN_INSTALL_DIR)/$(TCLDLL)
+	@echo "Installing $(TCLPIPEDLL)"
+	@$(INSTALL_DATA) $(TCLPIPEDLL) $(BIN_INSTALL_DIR)/$(TCLPIPEDLL)
+	@echo "Installing $(TCLREGDLL)"
+	@$(INSTALL_DATA) $(TCLREGDLL) $(BIN_INSTALL_DIR)/$(TCLREGDLL)
+	@for i in $(INSTALL_ROOT)@datadir@ $(INCLUDE_INSTALL_DIR) \
+		$(SCRIPT_INSTALL_DIR) ; \
+	    do \
+	    if [ ! -d $$i ] ; then \
+		echo "Making directory $$i"; \
+		mkdir $$i; \
+		chmod 755 $$i; \
+		else true; \
+		fi; \
+	    done;
+	@for i in http2.0 http1.0 opt0.4 encoding tcltest0.1; \
+	    do \
+	    if [ ! -d $(SCRIPT_INSTALL_DIR)/$$i ] ; then \
+		echo "Making directory $(SCRIPT_INSTALL_DIR)/$$i"; \
+		mkdir $(SCRIPT_INSTALL_DIR)/$$i; \
+		chmod 755 $(SCRIPT_INSTALL_DIR)/$$i; \
+		else true; \
+		fi; \
+	    done;
+	@echo "Installing tcl.h"
+	@$(INSTALL_DATA) $(GENERICDIR)/tcl.h $(INCLUDE_INSTALL_DIR)/tcl.h
+	@for i in $(ROOT)/library/*.tcl $(ROOT)/library/tclIndex $(WINDIR)/tclAppInit.c; \
+	    do \
+	    echo "Installing $$i"; \
+	    $(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR); \
+	    done;
+	@for i in http2.0 http1.0 opt0.4 tcltest0.1; \
+	    do \
+	    for j in $(ROOT)/library/$$i/*.tcl ; \
+		do \
+		echo "Installing $$j"; \
+		$(INSTALL_DATA) $$j $(SCRIPT_INSTALL_DIR)/$$i; \
+		done; \
+	    done;
+	@for i in $(ROOT)/library/encoding/*.enc ; do \
+		echo "Installing $$i"; \
+		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/encoding; \
+		done;
+
+install-minimal:
+	@echo "Installing DLL"
+	@$(INSTALL_DATA) $(TCLDLL) $(BIN_INSTALL_DIR)/$(TCLDLL)
+	@$(INSTALL_DATA) $(TCLPIPEDLL) $(BIN_INSTALL_DIR)/$(TCLPIPEDLL)
+	@$(INSTALL_DATA) $(TCLREGDLL) $(BIN_INSTALL_DIR)/$(TCLREGDLL)
+	@for i in $(INSTALL_ROOT)@datadir@ $(SCRIPT_INSTALL_DIR) ; \
+	    do \
+	    if [ ! -d $$i ] ; then \
+		echo "Making directory $$i"; \
+		mkdir $$i; \
+		chmod 755 $$i; \
+		else true; \
+		fi; \
+	    done;
+	@for i in http2.0 http1.0 opt0.4 tcltest0.1; \
+	    do \
+	    if [ ! -d $(SCRIPT_INSTALL_DIR)/$$i ] ; then \
+		echo "Making directory $(SCRIPT_INSTALL_DIR)/$$i"; \
+		mkdir $(SCRIPT_INSTALL_DIR)/$$i; \
+		chmod 755 $(SCRIPT_INSTALL_DIR)/$$i; \
+		else true; \
+		fi; \
+	    done;
+	@for i in $(ROOT)/library/*.tcl $(ROOT)/library/tclIndex; \
+	    do \
+	    echo "Installing $$i"; \
+	    $(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR); \
+	    done;
+	@for i in http2.0 http1.0 opt0.4 encoding tcltest0.1; \
+	    do \
+	    for j in $(ROOT)/library/$$i/*.tcl ; \
+		do \
+		echo "Installing $$j"; \
+		$(INSTALL_DATA) $$j $(SCRIPT_INSTALL_DIR)/$$i; \
+		done; \
+	    done;
+	@for i in $(ROOT)/library/encoding/*.enc ; do \
+		echo "Installing $$i"; \
+		$(INSTALL_DATA) $$i $(SCRIPT_INSTALL_DIR)/encoding; \
+	done;
+
+ifeq ($(OBJEXT),obj)
+
+$(DUMPEXTS): $(WINDIR)/winDumpExts.c
+	$(CC) -Z7 -Od -nologo -c $(CON_CFLAGS) $?
+	link $(linkdebug) -out:$@ $(TMPDIR)/winDumpExts.$(OBJEXT) -NODEFAULTLIB \
+		$(conlibs) -subsystem:console -entry:mainCRTStartup
+
+endif
+
+$(TCLLIB): $(TCLOBJS)
+	ar rc $(TCLLIB) $(TCLOBJS)
+
+$(TCLPLUGINLIB): $(TMPDIR)/plugin.def
+	$(DLLTOOL) --as=$(AS) --dllname $(TCLPLUGINDLL) --def $(TMPDIR)/plugin.def --output-lib $(TCLPLUGINLIB)
+
+$(TCLPLUGINDLL): $(TCLOBJS) $(TMPDIR)/plugin.def tclres.$(OBJEXT)
+	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tclplugin.base -o $(TCLPLUGINDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66600000
+	$(DLLTOOL) --as=$(AS) --dllname $(TCLPLUGINDLL) --def $(TMPDIR)/plugin.def --base-file tclplugin.base --output-exp tcl.exp
+	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tclplugin.base -Wl,tcl.exp -o $(TCLPLUGINDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66600000
+	$(DLLTOOL) --as=$(AS) --dllname $(TCLPLUGINDLL) --def $(TMPDIR)/plugin.def --base-file tclplugin.base --output-exp tcl.exp
+	$(CC) $(DLL_LDFLAGS) -Wl,tcl.exp -o $(TCLPLUGINDLL) $(TCLOBJS) tclres.$(OBJEXT) $(DLL_LDLIBS) -mwindows -Wl,-e,_DllMain@12 -Wl,--image-base,0x66600000
+
+ifeq ($(OBJEXT),o)
+
+$(TCLSH): $(TCLSHOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+	$(CC) $(linkdebug) $(conlflags) -Wl,--stack=0x2300000 \
+		-o $@ $(conlibsdll) $(TCLSHOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+
+else
+
+$(TCLSH): $(TCLSHOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+	link $(linkdebug) $(conlflags) $(tclsh_flags) -NODEFAULTLIB -subsystem:console -entry:mainCRTStartup \
+		-out:$@ $(conlibsdll) $(TCLSHOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+
+endif
+
+$(TCLSHP): $(TCLSHOBJS) $(TCLPLUGINLIB) tclshres.$(OBJEXT)
+	$(CC) $(linkdebug) $(conlflags) -Wl,--stack=0x2300000 \
+		-o $@ $(conlibsdll) $(TCLSHOBJS) tclshres.$(OBJEXT) $(TCLPLUGINLIB)
+
+$(TCLTEST): $(TCLTESTOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+	$(CC) $(linkdebug) $(conlflags) -Wl,--stack=0x2300000 \
+		 -o $@ $(conlibsdll) $(TCLTESTOBJS) tclshres.$(OBJEXT) $(TCLLIB)
+
+# $(TCL16DLL):  $(WINDIR)\tcl16.rc $(WINDIR)\tclWin16.c
+#       if exist $(cc16) $(cc16) @<<
+# $(DLL16_CFLAGS) -Fo$(TMPDIR)\ $(WINDIR)\tclWin16.c
+# <<			 
+#       @copy << $(TMPDIR)\tclWin16.def > nul
+# LIBRARY $(@B);dll
+# EXETYPE WINDOWS
+# CODE PRELOAD MOVEABLE DISCARDABLE
+# DATA PRELOAD MOVEABLE SINGLE
+# HEAPSIZE 1024 
+# EXPORTS
+#       WEP @1 RESIDENTNAME
+#       UTPROC @2 
+# << 
+#       if exist $(cc16) $(link16) /NOLOGO /ONERROR:NOEXE /NOE @<<
+# $(TMPDIR)\tclWin16.obj
+# $@
+# nul
+# $(TOOLS16)\lib\ ldllcew oldnames libw toolhelp
+# $(TMPDIR)\tclWin16.def
+# <<
+#       if exist $(cc16) $(rc16) -i $(GENERICDIR) $(TCL_DEFINES) $(WINDIR)\tcl16.rc $@
+
+ifeq ($(OBJEXT),o)
+
+$(TCLPIPEDLL): $(WINDIR)/stub16.c
+	$(CC) -c $(CON_CFLAGS) $(WINDIR)/stub16.c
+	$(CC) $(linkdebug) $(conlflags) -o $@ $(TMPDIR)/stub16.$(OBJEXT) $(guilibs)
+else
+
+$(TCLPIPEDLL): $(WINDIR)/stub16.c
+	$(CC) -c $(CON_CFLAGS) -Fo$(TMPDIR)/ $(WINDIR)/stub16.c
+	link $(ldebug) $(conlflags) -out:$@ $(TMPDIR)/stub16.obj $(guilibsdll)
+endif
+
+ifeq ($(OBJEXT),o)
+
+$(TCLREGDLL): $(TMPDIR)/tclWinReg.$(OBJEXT) $(TCLLIB)
+	echo EXPORTS > $(TMPDIR)/tclreg.def
+	echo Registry_Init >> $(TMPDIR)/tclreg.def
+	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tclreg.base -o $(TCLREGDLL) $(TMPDIR)/tclWinReg.$(OBJEXT) $(TCLLIB) $(DLL_LDLIBS) -ladvapi32 -mwindows -Wl,-e,_DllEntryPoint@12 -Wl,--image-base,0x66200000
+	$(DLLTOOL) --as=$(AS) --dllname $(TCLREGDLL) --def $(TMPDIR)/tclreg.def --base-file tclreg.base --output-exp tclreg.exp
+	$(CC) -s $(DLL_LDFLAGS) -Wl,--base-file,tclreg.base -Wl,tclreg.exp -o $(TCLREGDLL) $(TMPDIR)/tclWinReg.$(OBJEXT) $(TCLLIB) $(DLL_LDLIBS) -ladvapi32 -mwindows -Wl,-e,_DllEntryPoint@12 -Wl,--image-base,0x66200000
+	$(DLLTOOL) --as=$(AS) --dllname $(TCLREGDLL) --def $(TMPDIR)/tclreg.def --base-file tclreg.base --output-exp tclreg.exp
+	$(CC) $(DLL_LDFLAGS) -Wl,tclreg.exp -o $(TCLREGDLL) $(TMPDIR)/tclWinReg.$(OBJEXT) $(TCLLIB) $(DLL_LDLIBS) -ladvapi32 -mwindows -Wl,-e,_DllEntryPoint@12 -Wl,--image-base,0x66200000
+	rm -f $(TMPDIR)/tclreg.def
+else
+$(TCLREGDLL): $(TMPDIR)/tclWinReg.obj
+	link $(ldebug) $(conlflags) $(dlllflags) -out:$@ $(TMPDIR)/tclWinReg.obj \
+		$(conlibsdll) $(TCLLIB) -entry:_DllMainCRTStartup@12
+endif
+
+ifeq ($(OBJEXT),o)
+
+$(CAT32): $(WINDIR)/cat.c
+	$(CC) -c $(CON_CFLAGS) $?
+	$(CC) -o $@ -Wl,-stack,16384 $(TMPDIR)/cat.$(OBJEXT) $(conlibs)
+
+else
+
+$(CAT32): $(WINDIR)/cat.c
+	$(CC) $(CON_CFLAGS) -Fo$(TMPDIR)/ $(WINDIR)/cat.c
+	link -subsystem:console -entry:mainCRTStartup -out:$@ -stack:16384 $(TMPDIR)/cat.obj $(conlibs)
+endif
+
+# $(CAT16): $(WINDIR)\cat.c
+#       if exist $(cc16) $(cc16) $(DOS_CFLAGS) -Fo$(TMPDIR)\ $?
+#       set LIB=$(TOOLS16)\lib
+#       if exist $(cc16) $(link16) /NOLOGO /ONERROR:NOEXE /NOI /STACK:16384 \
+#	       $(TMPDIR)\cat.obj,$@,nul,llibce.lib,nul
+
+ifeq ($(OBJEXT),obj)
+
+$(TMPDIR)/tclcyg.def: $(DUMPEXTS) $(TCLOBJS)
+	$(DUMPEXTS) -o $@ $(TCLDLL) $(TCLOBJS)
+
+else
+
+$(TMPDIR)/tclcyg.def: $(DUMPEXTS) $(TCLOBJS)
+	echo 'EXPORTS' > tmp.def
+	-for o in $(TCLOBJS); do \
+	  $(NM) --extern-only --defined-only $$o | sed -e 's/[^ ]* [^ ]* //' -e 's/^_//' | fgrep -v DllEntryPoint | fgrep -v DllMain | fgrep -v impure_ptr >> tmp.def; \
+	done
+	mv tmp.def $(TMPDIR)/tclcyg.def
+
+endif
+
+$(TMPDIR)/plugin.def: $(DUMPEXTS) $(TCLOBJS)
+	echo 'EXPORTS' > tmp.def
+	-for o in $(TCLOBJS); do \
+	  $(NM) --extern-only --defined-only $$o | sed -e 's/[^ ]* [^ ]* //' -e 's/^_//' | fgrep -v DllEntryPoint | fgrep -v DllMain | fgrep -v impure_ptr >> tmp.def; \
+	done
+	mv tmp.def $(TMPDIR)/plugin.def
+
+.SUFFIXES: .S .c .o .obj .s
+ifeq ($(OBJEXT),o)
+
+#
+# Implicit rules
+#
+
+.c.$(OBJEXT):
+	$(CC) -c -DDLL_BUILD -DBUILD_tcl $(TCL_CFLAGS) $<
+
+#
+# Special case object file targets
+#
+
+$(TMPDIR)/tclWinInit.obj: $(WINDIR)/tclWinInit.c
+	$(CC) -c -DDLL_BUILD -DBUILD_tcl $(TCL_CFLAGS) $(EXTFLAGS) $<
+
+$(TMPDIR)/testMain.$(OBJEXT): $(WINDIR)/tclAppInit.c
+	$(CC) -c $(TCL_CFLAGS) -DSTATIC_BUILD -DTCL_TEST $<
+
+$(TMPDIR)/tclTest.$(OBJEXT): $(WINDIR)/tclTest.c
+	$(CC) -c $(TCL_CFLAGS) $<
+
+$(TMPDIR)/tclTestObj.$(OBJEXT): $(WINDIR)/tclTestObj.c
+	$(CC) -c $(TCL_CFLAGS) $<
+
+$(TMPDIR)/tclWinTest.$(OBJEXT): $(WINDIR)/tclWinTest.c
+	$(CC) -c $(TCL_CFLAGS) $<
+
+$(TMPDIR)/tclAppInit.$(OBJEXT): $(WINDIR)/tclAppInit.c
+	$(CC) -c $(TCL_CFLAGS) -DSTATIC_BUILD $<
+
+else
+
+#
+# Implicit rules
+#
+
+.c.$(OBJEXT):
+	$(CC) -c -DDLL_BUILD -DBUILD_tcl $(TCL_CFLAGS) -Dtry=__try -Dexcept=__except $<
+
+#
+# Special case object file targets
+#
+
+
+$(TMPDIR)/tclWinInit.obj: $(WINDIR)/tclWinInit.c
+	$(CC) -c -DDLL_BUILD -DBUILD_tcl $(TCL_CFLAGS) $(EXTFLAGS) -Fo$@ $?
+
+$(TMPDIR)/testMain.$(OBJEXT): $(WINDIR)/tclAppInit.c
+	$(CC) -c $(TCL_CFLAGS) -DSTATIC_BUILD -DTCL_TEST -Fo$@ $?
+
+$(TMPDIR)/tclTest.$(OBJEXT): $(WINDIR)/tclTest.c
+	$(CC) -c $(TCL_CFLAGS) -Fo$@ $?
+
+$(TMPDIR)/tclTestObj.$(OBJEXT): $(WINDIR)/tclTestObj.c
+	$(CC) -c $(TCL_CFLAGS) -Fo$@ $?
+
+$(TMPDIR)/tclWinTest.$(OBJEXT): $(WINDIR)/tclWinTest.c
+	$(CC) -c $(TCL_CFLAGS) -Fo$@ $?
+
+$(TMPDIR)/tclAppInit.$(OBJEXT): $(WINDIR)/tclAppInit.c
+	$(CC) -c $(TCL_CFLAGS) -DSTATIC_BUILD -Fo$@ $?
+
+
+endif
+
+
+
+ifeq ($(OBJEXT),o)
+
+tclres.$(OBJEXT): $(srcdir)/tcl.rc
+	$(WINDRES) --include $(GENERICDIR) --include $(WINDIR) --define __WIN32__ --define VS_VERSION_INFO=1 $(srcdir)/tcl.rc tclres.$(OBJEXT)
+
+tclshres.$(OBJEXT): $(srcdir)/tclsh.rc
+	$(WINDRES) --include $(GENERICDIR) --include $(WINDIR) --define __WIN32__ --define VS_VERSION_INFO=1 $(srcdir)/tclsh.rc tclshres.$(OBJEXT)
+
+else
+
+tclres.$(OBJEXT): $(srcdir)/tcl.rc
+	rc -i$(GENERICDIR) -i$(WINDIR) -d__WIN32__ -dVS_VERSION_INFO=1 -fotclres.$(OBJEXT) $(srcdir)/tcl.rc 
+
+tclshres.$(OBJEXT): $(srcdir)/tclsh.rc
+	rc -i$(GENERICDIR) -i$(WINDIR) -d__WIN32__ -dVS_VERSION_INFO=1 -fotclshres.$(OBJEXT) $(srcdir)/tclsh.rc 
+
+endif
+
+#{$(WINDIR)}.rc{$(TMPDIR)}.res:
+#       $(rc32) -fo $@ -r -i $(GENERICDIR) -i $(WINDIR) -D__WIN32__ \
+#	       $(TCL_DEFINES) $<
+
+clean:
+	rm -f *.exp *.a *.dll *.exe $(TMPDIR)/*.$(OBJEXT) *.res *.def
+	rm -f tcl.base tclreg.base tclplugin.base
+
+Makefile: $(WINDIR)/Makefile.in config.status
+	$(SHELL) config.status
+
+config.status: $(WINDIR)/configure
+	./config.status --recheck

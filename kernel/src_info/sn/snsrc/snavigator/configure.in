@@ -1,0 +1,424 @@
+dnl Process this file with autoconf to produce a configure script.
+
+dnl Initialization.
+AC_INIT(hyper/sn.h)
+AC_PREREQ(2.12.2)
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(sn,5.0.0)
+AM_MAINTAINER_MODE
+
+dnl Constants.  These _must_ come after the AC_INIT macro invocation.
+
+dnl Put default arguments for kind of releases here. Override them later with
+dnl individual --enable or --disable flags.
+
+BUG_ADDRESS=support@cygnus.com
+SUITE_NAME="Red Hat Embedded DevKit"
+PRODUCT_NAME="Source-Navigator"
+SDK_DIR=sdk
+SENDMAIL_PARSER=sendmail
+JAVA_PARSER=
+JAVAEXE=jbrowser
+SPLASHFILE=splashsn.gif
+X11ICON=paf.xbm
+SN_DOCSET=enterprise
+SN_BOOKS="userguide progref"
+SN_LAUNCH_SHELL=snavigator
+AC_DEFINE(SN_ELIX, 0)
+C_DEMO=c++_demo
+ASM_DEMO=asm_demo
+COB_DEMO=cob_demo
+FOR_DEMO=for_demo
+MONOP_DEMO=monop
+JAV_DEMO=jav_demo
+GETTING_STARTED_DIR=
+GETTING_STARTED_INDEX=
+GETTING_STARTED_NAME=
+USING_GNUPRO_DIR=
+USING_GNUPRO_INDEX=
+USING_GNUPRO_NAME=
+PROGRAMMERS_REFERENCE_DIR=progref
+PROGRAMMERS_REFERENCE_INDEX=index_pr.html
+PROGRAMMERS_REFERENCE_NAME="Programmer's Reference Guide"
+ASSEMBLER_DIRS=ppc601-eabi
+
+dnl Set all of the product specific variables.
+
+dnl EL/IX specific features
+AC_ARG_ENABLE(elix, [  --enable-elix          Enable EL/IX specific features.],enable_elix=yes,)
+AM_CONDITIONAL(SNEDK, test x$enable_elix = xyes)
+
+if test x$enable_elix = xyes; then
+   AC_DEFINE(SN_ELIX, 1)
+   SN_LAUNCH_SHELL=snedk
+   ASM_DEMO=
+   COB_DEMO=
+   JAV_DEMO=
+   FOR_DEMO=
+   MONOP_DEMO=
+   SN_DOCSET=edk
+   SN_BOOKS="getstart userguide gnupro"
+   GETTING_STARTED_DIR=getstart
+   GETTING_STARTED_INDEX=index_gs.html
+   GETTING_STARTED_NAME="Getting Started Guide"
+   USING_GNUPRO_DIR=gnupro
+   USING_GNUPRO_INDEX=index_gp.html
+   USING_GNUPRO_NAME="Using GNUPro Toolkit"
+   PROGRAMMERS_REFERENCE_DIR=
+   PROGRAMMERS_REFERENCE_INDEX=
+   PROGRAMMERS_REFERENCE_NAME=
+fi
+
+dnl Set the assembler parser
+AC_ARG_ENABLE(assembly-parser, [  --enable-assembly-parser  Change the default assembly parser], ASSEMBLER_DIRS=$enableval,)
+
+echo $ASSEMBLER_DIRS
+
+dnl The address to send bug reports to.
+AC_ARG_ENABLE(bug-address, [  --enable-bug-address    Specify a non-default address to send bug reports to],
+BUG_ADDRESS=$enableval,)
+
+dnl Set the product name
+AC_ARG_ENABLE(product-name, [  --enable-product-name    Specify the product name.],
+PRODUCT_NAME=$enableval,)
+AC_DEFINE_UNQUOTED(PRODUCT_NAME, "$PRODUCT_NAME", [Name of the product])
+
+dnl Set the Suite name for this package
+AC_ARG_ENABLE(suite-name, [  --enable-suite-name   Specify the suite name of the package],
+SUITE_NAME=$enableval,)
+AC_DEFINE_UNQUOTED(SUITE_NAME, "$SUITE_NAME", [Suite name of the product])
+
+AC_SUBST(BUG_ADDRESS)
+AC_SUBST(SUITE_NAME)
+AC_SUBST(PRODUCT_NAME)
+AC_SUBST(SDK_DIR)
+AC_SUBST(SENDMAIL_PARSER)
+AC_SUBST(JAVA_PARSER)
+AC_SUBST(JAVAEXE)
+AC_SUBST(SPLASHFILE)
+AC_SUBST(X11ICON)
+AC_SUBST(SN_DOCSET)
+AC_SUBST(SN_LAUNCH_SHELL)
+AC_SUBST(C_DEMO)
+AC_SUBST(ASM_DEMO)
+AC_SUBST(COB_DEMO)
+AC_SUBST(FOR_DEMO)
+AC_SUBST(MONOP_DEMO)
+AC_SUBST(JAV_DEMO)
+AC_SUBST(GETTING_STARTED_DIR)
+AC_SUBST(GETTING_STARTED_INDEX)
+AC_SUBST(GETTING_STARTED_NAME)
+AC_SUBST(USING_GNUPRO_DIR)
+AC_SUBST(USING_GNUPRO_INDEX)
+AC_SUBST(USING_GNUPRO_NAME)
+AC_SUBST(PROGRAMMERS_REFERENCE_DIR)
+AC_SUBST(PROGRAMMERS_REFERENCE_INDEX)
+AC_SUBST(PROGRAMMERS_REFERENCE_NAME)
+AC_SUBST(SN_BOOKS)
+AC_SUBST(ASSEMBLER_DIRS)
+
+# Check for compiler
+AC_PROG_CC
+
+if test x$ac_cv_prog_CC != xcl; then
+   HYPER_CFLAGS="-Wall -fwritable-strings"
+fi
+AC_SUBST(HYPER_CFLAGS) 
+
+dnl Checks for programs.
+AC_EXEEXT
+AC_OBJEXT
+AC_PROG_AWK
+AM_PROG_LEX
+AC_PROG_RANLIB
+AC_PROG_YACC
+
+WINDRES=${WINDRES-windres}
+AC_SUBST(WINDRES)
+
+dnl Put a plausible default for CC_FOR_BUILD in Makefile.  In the
+dnl normal case, this will just set CC_FOR_BUILD to be CC.  People who
+dnl are building with a cross compiler must know what they are doing.
+if test -z "$CC_FOR_BUILD"; then
+  if test "$cross_compiling" = yes; then
+    CC_FOR_BUILD=gcc
+  else
+    CC_FOR_BUILD='$(CC)'
+  fi
+fi
+AC_SUBST(CC_FOR_BUILD)
+
+AM_CONDITIONAL(CROSS_COMPILING, test x$cross_compiling = xyes)
+
+dnl If we are using GNU tar, we want to create old-style archives,
+dnl because GNU tar by default creates archives that only it can read.
+dnl On other tars, -o means something else, so we can't unconditionally
+dnl use it.  GNU tar's --help output implies that it generates ANSI
+dnl tar files, but it it wrong.
+AC_PATH_PROGS(TAR, [gnutar gtar tar])
+OLDTARFLAG=
+if ($TAR --version) < /dev/null > /dev/null 2>&1; then
+   OLDTARFLAG=o
+fi
+AC_SUBST(OLDTARFLAG)
+
+dnl Checks for header files.
+AC_HEADER_DIRENT
+AC_HEADER_STDC
+AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([fcntl.h limits.h malloc.h netinet/in.h search.h strings.h sys/in.h sys/ioctl.h sys/time.h sys/utsname.h termio.h unistd.h stropt.h])
+
+#--------------------------------------------------------------------
+#	Supply a substitute for stdlib.h if it doesn't define strtol,
+#	strtoul, or strtod (which it doesn't in some versions of SunOS).
+#--------------------------------------------------------------------
+
+AC_MSG_CHECKING(stdlib.h)
+AC_HEADER_EGREP(strtol, stdlib.h, tk_ok=yes, tk_ok=no)
+AC_HEADER_EGREP(strtoul, stdlib.h, , tk_ok=no)
+AC_HEADER_EGREP(strtod, stdlib.h, , tk_ok=no)
+if test $tk_ok = no; then
+    AC_DEFINE(NO_STDLIB_H)
+fi
+AC_MSG_RESULT($tk_ok)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+
+dnl Test for GNU libc.
+AC_CACHE_CHECK([for GNU libc],sn_cv_lib_glibc,[AC_EGREP_CPP(yes, [
+#include <features.h>
+#ifdef __ELF__
+# ifdef __GLIBC__
+#  if __GLIBC__ >= 2
+    yes
+#  endif
+# endif
+#endif], sn_cv_lib_glibc=yes, sn_cv_lib_glibc=no)])
+if test x$sn_cv_lib_glibc = xyes; then
+   AC_DEFINE(HAVE_GLIBC)
+fi
+
+dnl Tcl ensures that strncasecmp is provided everywhere.  But in some
+dnl situations we might need to declare it.  We check for that case
+dnl here.
+AC_EGREP_CPP(strncasecmp, [#include <string.h>],
+  AC_DEFINE(HAVE_STRNCASECMP_DECL))
+
+dnl Checks for library functions.
+AC_FUNC_ALLOCA
+AC_TYPE_GETGROUPS
+AC_FUNC_MEMCMP
+if test "$cross_compiling" = yes; then
+  AC_CACHE_CHECK(whether setpgrp takes no argument, ac_cv_func_setpgrp_void,
+  AC_TRY_COMPILE([#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif],
+  [getpgrp (0); setpgrp (0, 0);],
+  ac_cv_func_setpgrp_void=no, ac_cv_func_setpgrp_void=yes))
+  if test $ac_cv_func_setpgrp_void = yes; then
+    AC_DEFINE(SETPGRP_VOID)
+  fi
+else
+  AC_FUNC_SETPGRP
+fi
+AC_FUNC_VPRINTF
+AC_FUNC_WAIT3
+AC_CHECK_FUNCS([getcwd getwd getopt grantpt mkdir ptsname putenv realpath regcomp rmdir select strcspn strdup strspn strstr strtod strtol strtoul uname unlockpt])
+
+AM_CONDITIONAL(HAVE_GETOPT, test x$ac_cv_func_getopt = xyes)
+AM_CONDITIONAL(HAVE_REALPATH, test x$ac_cv_func_realpath = xyes)
+
+dnl If we have random, assumes we have srandom.  If we have drand48,
+dnl assume we have srand48.  If we have rand, assume we have srand.
+AC_CHECK_FUNCS(random drand48 rand, break)
+
+# In the cygwin32 environment, we need some additional flags and
+# libraries.
+AC_CACHE_CHECK([for cygwin32], ide_cv_os_cygwin32,
+[AC_EGREP_CPP(lose, [
+#ifdef __CYGWIN32__
+lose
+#endif],[ide_cv_os_cygwin32=yes],[ide_cv_os_cygwin32=no])])
+if test x$ide_cv_os_cygwin32 = xyes; then
+  WINFLAGS="-D_WINDOWS=1 -DWIN32"
+  WIN32LIBS="-lcomdlg32 -ladvapi32 -lshell32 -luser32 -lgdi32"
+  WIN32LDAPP="-Wl,--subsystem,windows"
+  SNCONFIGDIR="win"
+  ac_win_build="yes"
+elif test x$ac_cv_prog_CC = xcl; then
+  WINFLAGS="-D_WINDOWS=1 -DWIN32 -D__MSVC__ -DWINNT -FI\$(top_srcdir)/../db/PORT/win32/NTunixstubs.h -I\$(top_srcdir)/../db/PORT/win32/include"
+  WIN32LIBS="comdlg32.lib advapi32.lib shell32.lib user32.lib gdi32.lib"
+  WIN32LDAPP="-subsystem:windows -entry:WinMainCRTStartup"
+  SNCONFIGDIR="win"
+  ac_win_build="yes"
+else
+  WINFLAGS=
+  WIN32LIBS=
+  WIN32LDAPP=
+  SNCONFIGDIR="unix"
+  ac_win_build="no"
+fi
+
+AC_SUBST(WINFLAGS)
+AC_SUBST(WIN32LIBS)
+AC_SUBST(WIN32LDAPP)
+AM_CONDITIONAL(WINDOWS, test x$ac_win_build = xyes)
+AM_CONDITIONAL(MSVC, test x$ac_cv_prog_CC = xcl)
+
+dnl Check for -lsocket and -lnsl.  This is copied from Tcl.
+AC_CACHE_CHECK([for socket libraries], tcl_cv_lib_sockets,
+ [tcl_cv_lib_sockets=
+  tcl_checkBoth=0
+  unset ac_cv_func_connect
+  AC_CHECK_FUNC(connect, tcl_checkSocket=0, tcl_checkSocket=1)
+  if test "$tcl_checkSocket" = 1; then
+      unset ac_cv_func_connect
+      AC_CHECK_LIB(socket, main, tcl_cv_lib_sockets="-lsocket",
+		   tcl_checkBoth=1)
+  fi
+  if test "$tcl_checkBoth" = 1; then
+      tcl_oldLibs=$LIBS
+      LIBS="$LIBS -lsocket -lnsl"
+      unset ac_cv_func_accept
+      AC_CHECK_FUNC(accept,
+		    [tcl_checkNsl=0
+		     tcl_cv_lib_sockets="-lsocket -lnsl"])
+      unset ac_cv_func_accept
+      LIBS=$tcl_oldLibs
+  fi
+  unset ac_cv_func_gethostbyname
+  tcl_oldLibs=$LIBS
+  LIBS="$LIBS $tcl_cv_lib_sockets"
+  AC_CHECK_FUNC(gethostbyname, ,
+		[AC_CHECK_LIB(nsl, main,
+			      [tcl_cv_lib_sockets="$tcl_cv_lib_sockets -lnsl"])])
+  unset ac_cv_func_gethostbyname
+  LIBS=$tcl_oldLibs
+])
+SOCKLIB="$tcl_cv_lib_sockets"
+AC_SUBST(SOCKLIB)
+
+hold_libs="$LIBS"
+LIBS="$LIBS $SOCKLIB"
+AC_CHECK_FUNCS(gethostent gethostname)
+LIBS="$hold_libs"
+
+dnl Random other stuff
+
+dnl Why do this?  Because it gets the definition into every
+dnl Makefile.in without any extra work.  FIXME these should be in
+dnl CY_AC_BERKELEY_DB.
+DB_LIBDIR='$(top_builddir)/../db/PORT'
+AC_SUBST(DB_LIBDIR)
+DB_INCDIR='$(top_srcdir)/../db/include'
+AC_SUBST(DB_INCDIR)
+CY_AC_BERKELEY_DB
+
+CYG_AC_PATH_TCLCONFIG
+CYG_AC_LOAD_TCLCONFIG
+dnl CYG_AC_PATH_TKCONFIG
+dnl CYG_AC_LOAD_TKCONFIG
+CYG_AC_PATH_TCLH
+dnl CYG_AC_PATH_TKH
+dnl CY_AC_PATH_TIXCONFIG
+dnl CY_AC_LOAD_TIXCONFIG
+dnl CYG_AC_PATH_ITCLCONFIG
+dnl CYG_AC_LOAD_ITCLCONFIG
+dnl CYG_AC_PATH_ITKCONFIG
+dnl CYG_AC_LOAD_ITKCONFIG
+
+# Find the init.tcl file.
+
+dnl AC_MSG_CHECKING(for init.tcl)
+AC_MSG_CHECKING(for tcl.h)
+AC_CACHE_VAL(ac_cv_c_tcl_libdir,[
+dnl currently, only check the source tree
+if test -f $srcdir/../tcl/library/tcl.h ; then
+  ac_cv_c_tcl_libdir=`cd $srcdir/../tcl/library; pwd`
+elif test -f $srcdir/../tcl8.1/library/tcl.h; then
+  ac_cv_c_tcl_libdir=`cd $srcdir/../tcl8.1/library; pwd`
+fi
+])
+AC_MSG_RESULT(${ac_cv_c_tcl_libdir})
+
+if test x$ac_win_build = xyes; then
+  tmp2="`cygpath --windows $ac_cv_c_tcl_libdir`"
+  TCL_LIBRARY="`echo $tmp2 | sed -e s#\\\\\\\\#/#g`"
+else
+  TCL_LIBRARY=$ac_cv_c_tcl_libdir
+fi
+AC_SUBST(TCL_LIBRARY)
+
+
+if test x$ac_win_build = xyes ; then
+  HYPER_MAIN='winMain.$(OBJEXT)'
+  HYPER_CONSOLE='$(top_builddir)/../tk8.1/win/tkConsole.$(OBJEXT)'
+else
+  HYPER_MAIN=
+  HYPER_CONSOLE=
+fi
+
+AC_SUBST(HYPER_MAIN)
+AC_SUBST(HYPER_CONSOLE)
+
+dnl tmp="`cd $srcdir/gui; pwd`"
+dnl if test x$ac_win_build = xyes ; then
+dnl   tmp2="`cygpath --windows $tmp`"
+dnl   SN_GUI_DIR="`echo $tmp2 | sed -e s#\\\\\\\\#/#g`"
+dnl else
+dnl   SN_GUI_DIR=$tmp
+dnl fi
+dnl AC_SUBST(SN_GUI_DIR)
+
+SN_SDK_EXEC_PREFIX=${prefix}
+dnl if test x${exec_prefix} = xNONE; then
+dnl   SN_SDK_EXEC_PREFIX=${prefix}/share/sdk
+dnl else
+dnl  SN_SDK_EXEC_PREFIX=${exec_prefix}/sdk
+dnl fi
+AC_SUBST(SN_SDK_EXEC_PREFIX)
+
+if test x$ac_win_build = xyes; then
+   SN_PLATFORM_DIR=win
+else
+   SN_PLATFORM_DIR=unix
+fi
+AC_SUBST(SN_PLATFORM_DIR)
+
+AC_CACHE_CHECK([whether we need to build grep], ac_build_grep,
+   [if test x$ac_win_build = xyes; then
+      ac_build_grep=yes
+   else
+      AC_PATH_PROGS(GREP, [grep])
+      if ($GREP --version) < /dev/null > /dev/null 2>&1; then
+         ac_build_grep=no
+      else
+         ac_build_grep=yes
+      fi
+   fi])
+
+AM_CONDITIONAL(BUILD_GREP, test $ac_build_grep = yes)
+AC_SUBST(BUILD_GREP)
+
+AC_CONFIG_SUBDIRS(parsers/assembly/$ASSEMBLER_DIRS)
+
+AC_OUTPUT([Makefile
+install/Makefile
+hyper/Makefile
+db/Makefile
+dbutils/Makefile
+parsers/Makefile
+parsers/cpp/Makefile
+parsers/cpp/cpplib/Makefile
+misc/Makefile
+misc/libutils/Makefile
+])
+

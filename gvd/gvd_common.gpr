@@ -1,0 +1,22 @@
+with "../gtkada/gtkada";
+with "../shared";
+with "../gnat";
+
+project GVD_Common is
+
+   for Languages use ("C", "Ada");
+   for Source_Dirs use ("common", "gnat");
+   for Object_Dir use "common/obj";
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-a");
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("g-exptty.adb") use ("-gnatpg", "-g", "-O2");
+   end Compiler;
+
+   package IDE renames Shared.IDE;
+
+end GVD_Common;

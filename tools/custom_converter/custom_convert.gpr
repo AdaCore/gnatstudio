@@ -1,0 +1,21 @@
+with "../../shared";
+with "../../gtkada/gtkada";
+
+project Custom_Convert is
+
+   for Main use ("gps2custom_1_3.adb");
+
+   for Object_Dir use "obj";
+
+   package Builder is
+      for Executable ("gps2custom_1_3.adb") use "gps2custom-1.3";
+   end Builder;
+
+   package Compiler renames Shared.Compiler;
+
+   package Linker is
+      for Default_Switches ("Ada") use ("../../gtkada/src/libgtkada.a");
+   end Linker;
+
+end Custom_Convert;
+

@@ -1,0 +1,13 @@
+with "gvd";
+with "../kernel/kernel";
+with "../shared";
+
+project GVD_Glide is
+
+   for Source_Dirs use ("glide");
+   for Object_Dir use "obj";
+
+   package Compiler renames Shared.Compiler;
+   package IDE renames Shared.IDE;
+
+end GVD_Glide;

@@ -1,0 +1,128 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2002                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this program; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package provides some tools that can be used in ada formal
+--  errors and commands.
+
+with Generic_List;
+with GNAT.OS_Lib;
+
+with Codefix.Text_Manager; use Codefix.Text_Manager;
+
+package Codefix.Ada_Tools is
+
+   package Words_Lists is new Generic_List (Word_Cursor);
+   use Words_Lists;
+
+   function Get_Use_Clauses
+     (Clause_Name  : String;
+      File_Name    : String;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Exclusive    : Boolean := False) return Words_Lists.List;
+   --  Return all the use clauses that are related to a with or an
+   --  instantiation name. If Exclusive is true, then only use clauses
+   --  that are not linked to any other will be returned.
+
+   type Ada_Escape_Str is new Escape_Str_Manager with private;
+
+   function Is_In_Escape_Part
+     (This     : Ada_Escape_Str;
+      Text     : String;
+      Position : Natural) return Boolean;
+   --  Return True if Position is in comments or between two quotes.
+
+   Std_Ada_Escape : constant Ada_Escape_Str;
+
+   function Get_Next_With_Position
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String) return File_Cursor'Class;
+
+   function Search_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String;
+      Pkg_Name     : String) return File_Cursor'Class;
+
+private
+
+   type Use_Type is record
+      Position : File_Cursor;
+      Name     : GNAT.OS_Lib.String_Access;
+      Nb_Ref   : Natural := 0;
+   end record;
+
+   type Ptr_Use is access all Use_Type;
+
+   procedure Free (This : in out Ptr_Use);
+
+   type Arr_Use is array (Natural range <>) of Ptr_Use;
+
+   type Arr_Str is array (Natural range <>) of GNAT.OS_Lib.String_Access;
+   --  ??? Should use subprogram in basic_types.ads
+
+   type With_Type (Nb_Elems : Natural) is record
+      Name_Str : GNAT.OS_Lib.String_Access;
+      Name     : Arr_Str (1 .. Nb_Elems);
+      Clauses  : Arr_Use (1 .. Nb_Elems);
+   end record;
+
+   type Ptr_With is access all With_Type;
+
+   procedure Free (This : in out Ptr_With);
+
+   package With_Lists is new Generic_List (Ptr_With);
+   use With_Lists;
+
+   package Use_Lists is new Generic_List (Ptr_Use);
+   use Use_Lists;
+
+   function Get_Parts_Number (Str : String) return Positive;
+   --  Return the number of parts separed with dots in String.
+
+   function Get_Arr_Str (Str : String) return Arr_Str;
+   --  Return an array in witch each line is initialized with a part of Str.
+
+   procedure Try_Link_Clauses
+     (With_Clause : Ptr_With; Use_Clause  : Ptr_Use);
+   --  Make the link between With_Clause and Use_Clause if the use is a use of
+   --  a package evocated in With_Clause.
+
+   function List_All_With
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String) return With_Lists.List;
+   --  List all the with clauses existing in File_Name.
+
+   function List_All_Use
+     (Current_Text : Text_Navigator_Abstr'Class;
+      File_Name    : String) return Use_Lists.List;
+   --  List all the use clauses existing in File_Name.
+
+   procedure Link_All_Clauses
+     (List_Of_With : in out With_Lists.List;
+      List_Of_Use  : in out Use_Lists.List);
+   --  Link all with clauses to use clauses when possible.
+
+   type Ada_Escape_Str is new Escape_Str_Manager with record
+      null;
+   end record;
+
+   Std_Ada_Escape : constant Ada_Escape_Str :=
+     (Escape_Str_Manager with null record);
+
+end Codefix.Ada_Tools;

@@ -1,0 +1,24 @@
+package body Sdefault is
+   pragma Style_Checks (Off);
+   S1 : aliased constant String := "<unknown>";
+   S2 : aliased constant String := "<unknown>";
+   S3 : aliased constant String := "@TARGET@/";
+   S4 : aliased constant String := "<unknown>";
+
+   function Include_Dir_Default_Name return String_Ptr is
+   begin
+      return new String'(S1);
+   end Include_Dir_Default_Name;
+   function Object_Dir_Default_Name return String_Ptr is
+   begin
+      return new String'(S2);
+   end Object_Dir_Default_Name;
+   function Target_Name return String_Ptr is
+   begin
+      return new String'(S3);
+   end Target_Name;
+   function Search_Dir_Prefix return String_Ptr is
+   begin
+      return new String'(S4);
+   end Search_Dir_Prefix;
+end Sdefault;

@@ -1,0 +1,105 @@
+EXPORT {
+# include "Position.h"
+# include "StringM.h"
+# include "Idents.h"
+
+INSERT tScanAttribute
+}
+
+GLOBAL {
+# include <ctype.h>
+# include "Errors.h"
+# include "Parser.h"
+# if HAVE_STDLIB_H | defined _MSC_VER
+#    include <stdlib.h>
+# endif
+# include "paf.h"
+
+# define HIGHLIGHT if (hl && isalpha (* TokenPtr)) { \
+	(void) fprintf (hlfp, "%d key %d.%d %d.%d\n", PAF_HIGH, \
+	Attribute.Position.Line, Attribute.Position.Column - 1, \
+	Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1); }
+
+static	tPosition	StartPosition;
+
+INSERT ErrorAttribute
+}
+
+DEFAULT {
+   if (' ' < * TokenPtr && * TokenPtr <= '~') {
+      MessageI ("illegal character", xxError, Attribute.Position,
+	 xxCharacter, TokenPtr);
+   } else {
+      char s [5];
+      (void) sprintf (s, "\\%03d", (unsigned char) * TokenPtr);
+      MessageI ("illegal character", xxError, Attribute.Position,
+	 xxString, s);
+   }
+}
+
+DEFINE
+   IDENTIFIER	= {A-Za-z_$} {A-Za-z_$0-9} * .
+   DIGIT	= {0-9} .
+   HEXDIGIT	= {A-Fa-f0-9} .
+   OCTDIGIT	= {0-7} .
+   DECNUMBER	= {1-9} DIGIT * .
+   HEXNUMBER	= 0 {Xx} HEXDIGIT + .
+   OCTNUMBER	= 0 OCTDIGIT * .
+   DECLONG	= DECNUMBER {Ll} .
+   HEXLONG	= HEXNUMBER {Ll} .
+   OCTLONG	= OCTNUMBER {Ll} .
+   EXPONENT	= {Ee} {+\-} ? DIGIT + .
+   FLOATBASE	= ((DIGIT + \. DIGIT * | DIGIT * \. DIGIT +) EXPONENT ?) | (DIGIT + EXPONENT) .
+   DOUBLE	= (FLOATBASE {Dd} ?) | (DIGIT + {Dd}) .
+   FLOAT	= (FLOATBASE | DIGIT +) {Ff} .
+   UNICODE_CHAR	= \\u HEXDIGIT [4] .
+   ONECHAR	= - {\\"'} | \\ ANY | \\ OCTDIGIT [1-2] | \\ {0123} ? OCTDIGIT [2] | UNICODE_CHAR .
+   CHARLITCHAR	= ONECHAR | \" .
+   CHARACTER	= ' CHARLITCHAR ' .
+   STRINGCHAR	= ONECHAR | ' .
+   STRING	= \" STRINGCHAR * \" .
+
+START COMMENT
+
+RULES
+
+#STD# "/*"	: { yyStart (COMMENT); StartPosition = Attribute.Position; }
+#COMMENT# - {*\n\r} + | "*"	:-{}
+#COMMENT# "*/"	: { yyPrevious; if (hl) {
+	(void) fprintf (hlfp, "%d rem %d.%d %d.%d\n", PAF_HIGH,
+	StartPosition.Line, StartPosition.Column - 1,
+	Attribute.Position.Line, Attribute.Position.Column + 1); } }
+
+#STD# "//" - {\n\r} *	: { if (hl) {
+	(void) fprintf (hlfp, "%d rem %d.%d %d.%d\n", PAF_HIGH,
+	Attribute.Position.Line, Attribute.Position.Column - 1,
+	Attribute.Position.Line, Attribute.Position.Column + TokenLength - 1); } }
+
+#STD# \t | \f | \26	:- {}
+
+      \r | \r ? \n	:- { yyEol (0); }
+
+INSERT RULES #STD# { HIGHLIGHT; }
+
+#STD# DECLONG	: { Attribute.LongLiteral.value = atol (TokenPtr);
+		    return LongLiteral; }
+#STD# HEXLONG	: { (void) sscanf (TokenPtr, "%li", & Attribute.LongLiteral.value);
+		    return LongLiteral; }
+#STD# OCTLONG	: { (void) sscanf (TokenPtr, "%li", & Attribute.LongLiteral.value);
+		    return LongLiteral; }
+#STD# DECNUMBER : { Attribute.IntegerLiteral.value = atol (TokenPtr);
+		    return IntegerLiteral; }
+#STD# HEXNUMBER : { (void) sscanf (TokenPtr, "%li", & Attribute.IntegerLiteral.value);
+		    return IntegerLiteral; }
+#STD# OCTNUMBER : { (void) sscanf (TokenPtr, "%li", & Attribute.IntegerLiteral.value);
+		    return IntegerLiteral; }
+#STD# CHARACTER : { Attribute.CharacterLiteral.value = PutString (TokenPtr, TokenLength);
+		    return CharacterLiteral; }
+#STD# FLOAT	: { Attribute.FloatingPointLiteral.value = PutString (TokenPtr, TokenLength);
+		    return FloatingPointLiteral; }
+#STD# DOUBLE	: { Attribute.DoubleLiteral.value = PutString (TokenPtr, TokenLength);
+		    return DoubleLiteral; }
+#STD# STRING	: { Attribute.StringLiteral.value = PutString (TokenPtr, TokenLength);
+		    return StringLiteral; }
+#STD# IDENTIFIER: { Attribute.Identifier.ident = MakeIdent (TokenPtr, TokenLength);
+		    return Identifier; }

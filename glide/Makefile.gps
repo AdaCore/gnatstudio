@@ -1,0 +1,106 @@
+ifeq ($(OS),Windows_NT)
+   LN = cp -p
+else
+   LN = ln -s
+endif
+
+ifeq ($(GLIDE_PROJECT),)
+GLIDE_PROJECT=True
+
+ifeq ($(BASE_DIR),)
+   include ../Makefile.common
+   BASE_DIR=$(shell pwd)
+   GLIDE_ROOT=True
+endif
+
+GLIDE_BASE_DIR := $(BASE_DIR)
+
+BASE_DIR=$(GLIDE_BASE_DIR)/../gtkada
+include $(BASE_DIR)/Makefile.gtkada
+BASE_DIR=$(GLIDE_BASE_DIR)/../gvd
+include $(BASE_DIR)/Makefile.gvd_glide
+BASE_DIR=$(GLIDE_BASE_DIR)/../kernel
+include $(BASE_DIR)/Makefile.kernel
+BASE_DIR=$(GLIDE_BASE_DIR)/../vsearch
+include $(BASE_DIR)/Makefile.vsearch
+BASE_DIR=$(GLIDE_BASE_DIR)/../prj_editor
+include $(BASE_DIR)/Makefile.prj_editor
+BASE_DIR=$(GLIDE_BASE_DIR)/../src_editor
+include $(BASE_DIR)/Makefile.src_editor
+BASE_DIR=$(GLIDE_BASE_DIR)/../aunit
+include $(BASE_DIR)/Makefile.aunit
+BASE_DIR=$(GLIDE_BASE_DIR)/../vdiff
+include $(BASE_DIR)/Makefile.vdiff
+BASE_DIR=$(GLIDE_BASE_DIR)/../browsers
+include $(BASE_DIR)/Makefile.browsers
+BASE_DIR=$(GLIDE_BASE_DIR)/../vcs
+include $(BASE_DIR)/Makefile.vcs
+BASE_DIR=$(GLIDE_BASE_DIR)/../metrics
+include $(BASE_DIR)/Makefile.metrics
+BASE_DIR=$(GLIDE_BASE_DIR)/../builder
+include $(BASE_DIR)/Makefile.builder
+BASE_DIR=$(GLIDE_BASE_DIR)/../navigation
+include $(BASE_DIR)/Makefile.navigation
+BASE_DIR=$(GLIDE_BASE_DIR)/../keymanager
+include $(BASE_DIR)/Makefile.keymanager
+BASE_DIR=$(GLIDE_BASE_DIR)/../custom
+include $(BASE_DIR)/Makefile.custom
+BASE_DIR=$(GLIDE_BASE_DIR)/../help
+include $(BASE_DIR)/Makefile.help
+BASE_DIR=$(GLIDE_BASE_DIR)/../vfs
+include $(BASE_DIR)/Makefile.vfs
+BASE_DIR=$(GLIDE_BASE_DIR)/../codefix
+include $(BASE_DIR)/Makefile.codefix
+BASE_DIR=$(GLIDE_BASE_DIR)/../ada_module
+include $(BASE_DIR)/Makefile.ada_module
+BASE_DIR=$(GLIDE_BASE_DIR)/../cpp_module
+include $(BASE_DIR)/Makefile.cpp_module
+BASE_DIR=$(GLIDE_BASE_DIR)/../aliases
+include $(BASE_DIR)/Makefile.aliases
+BASE_DIR=$(GLIDE_BASE_DIR)/../python
+include $(BASE_DIR)/Makefile.python
+BASE_DIR=$(GLIDE_BASE_DIR)/../shell
+include $(BASE_DIR)/Makefile.shell
+
+GLIDE_SRC_DIRS = $(GLIDE_BASE_DIR)/src $(GLIDE_BASE_DIR)/pixmaps
+SRC_DIRS += $(GLIDE_SRC_DIRS)
+C_SRCS = \
+  $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+GLIDE_SRCS := \
+  $(foreach name,$(GLIDE_SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+GLIDE_OBJ_DIR = $(GLIDE_BASE_DIR)/obj
+OBJ_DIR = $(GLIDE_OBJ_DIR)
+
+CFLAGS = -g -O2
+ADA_SOURCES = gps.adb
+
+PROJECT_FILE = gps
+
+ifneq ($(strip $(GLIDE_SRCS)),)
+   LIBS := $(GLIDE_OBJ_DIR)/libgps$(AR_EXT) $(LIBS)
+endif
+
+ifeq ($(GLIDE_ROOT),True)
+
+   ifeq ($(OS),Windows_NT)
+      default: resources do_links all
+   else
+      default: do_links all
+   endif
+
+   resources: force
+	cd $(GLIDE_BASE_DIR)/src; windres gps.rc -O coff \
+	  -o $(GLIDE_OBJ_DIR)/gps.res
+
+   do_links: force
+	-@$(foreach f,$(GNAT_SOURCES), \
+	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
+
+   include ../Makefile.gnat
+   include ../builder/src/Makefile.generic
+
+else
+   DEPS_PROJECTS += $(GLIDE_BASE_DIR)/glide
+endif
+
+endif

@@ -1,0 +1,193 @@
+/* $Id$ */
+
+EXPORT {
+# include "Position.h"
+# include "Errors.h"
+# include "StringM.h"
+# include "Idents.h"
+
+INSERT tScanAttribute
+}
+
+GLOBAL {
+# include "ratc.h"
+# include "Reuse.h"
+
+INSERT ErrorAttribute
+
+static	rbool	EOF_reached	= rfalse;
+static	rbool	first_word	= rtrue;
+
+static	int	KlLvl;
+static	char	KPop;
+static	char	KlStack [255];
+
+# define r_brace  '}'
+# define push(ch) KlStack [++ KlLvl] = ch;
+
+static rbool is_open (char SymClose)
+  {
+    register int i;
+    switch (SymClose) {
+    case '"':
+      for (i = KlLvl; i >= 0; i --) {
+	switch (KlStack [i]) {
+	case '[': return rfalse;
+	case '"': return rtrue;
+	}
+      }
+      return rfalse;
+    case ']':
+      for (i = KlLvl; i >= 0; i --) {
+	switch (KlStack [i]) {
+	case '[': return rtrue;
+        case '"': return rfalse;
+        case '{': return rfalse;
+	}
+      }
+      return rfalse;
+    case '}':
+      for (i = KlLvl; i >= 0; i --)
+	if (KlStack [i] == '{') {
+	   return rtrue;
+	}
+      return rfalse;
+    }
+    return rfalse;
+  }
+}
+
+LOCAL {
+  char word [256];
+
+/*
+ * Abbau des Stacks geöffneter Klammern bis zur nächsten passenden Klammerebene.
+ * d.h. ggf werden im Source nicht vorhandene Klammerzu-Zeichen zurückgeliefert.
+ * aus {[} --> {[end_of_command]end_of_command}
+ * der Parser kann bei Bedarf die 'unechten' Tokens an einem Attribut erkennen.
+ */
+
+  if (KPop != 'X') {
+  L_KlPop:
+    switch (KlStack [KlLvl]) {
+    case '"' : KlStack [KlLvl] = 'A';
+    	       first_word = rtrue; return end_of_command;
+    case '{' : KlStack [KlLvl] = '}';
+    	       first_word = rtrue; return end_of_command;
+    case '[' : KlStack [KlLvl] = ']';
+    	       first_word = rtrue; return end_of_command;
+    case 'A' : if (KlStack [KlLvl --] == KPop) { KPop = 'X'; }
+    	       first_word = rfalse; return '")';
+    case '}' : if (KlStack [KlLvl --] == KPop) { KPop = 'X'; }
+    	       first_word = rfalse; return '}';
+    case ']' : if (KlStack [KlLvl --] == KPop) { KPop = 'X'; }
+    	       first_word = rfalse; return ']';
+    }
+  }
+
+  if (EOF_reached) return EofToken;
+}
+
+EOF { EOF_reached = rtrue; return "EOF"; }
+
+BEGIN {
+   EOF_reached	= rfalse;
+   first_word	= rtrue;
+   KlLvl	= 0;
+   KPop		= 'X';
+   KlStack [0]	= 'X';
+
+   yyStart (STD);
+}
+
+DEFAULT {
+   MessageI ("illegal character", xxError, Attribute.Position,
+      xxCharacter, TokenPtr);
+}
+
+DEFINE
+   digit	= {0-9} .
+   oct_digit	= {0-7} .
+   hex_digit	= {0-9 A-F a-f} .
+   letter	= {A-Z a-z _} .
+   ident	= letter (letter | digit) * .
+   wsp		= {\ \t\r} .
+
+START	Comment
+
+RULE
+
+#Comment# ANY *	:-{ yyPrevious; }
+
+#Comment# \n	: { yyPrevious; yyEol (0); first_word = rtrue; return end_of_command; }
+
+#STD#	wsp * \\ \r ? \n wsp *
+		: { char * p = strchr (TokenPtr, '\n');
+		    yyEol (TokenPtr + TokenLength - p - 1);
+		    return space;
+		  }
+
+#STD#	\#	: { if (first_word && ! is_open (r_brace)) {
+		       yyStart (Comment);
+		    } else {
+		       Attribute.character.text = '#';
+		       first_word = rfalse; return character;
+		    }
+		  }
+
+#STD#	\"	: { if (is_open ('"')) {
+		       KPop = 'A'; goto L_KlPop;
+		    } else {
+		       push ('"'); first_word = rfalse; return '"(';
+		    }
+		  }
+
+#STD#	\}, \]	: { if (is_open (* TokenPtr)) {
+		       KPop = * TokenPtr; goto L_KlPop;
+		    } else {
+		       Attribute.character.text = * TokenPtr;
+		       first_word = rfalse; return character;
+		    }
+		  }
+
+#STD#	\;	: { first_word = rtrue; return end_of_command; }
+
+#STD#	\r ? \n	: { yyEol (0); first_word = rtrue; return end_of_command; }
+
+#STD#	wsp +	: { return space; }
+
+#STD#	\{	: { push ('{'); first_word = rfalse; return '{'; }
+#STD#	\[	: { push ('['); first_word = rfalse; return '['; }
+#STD#	\(	: { first_word = rfalse; return '('; }
+#STD#	\)	: { first_word = rfalse; return ')'; }
+#STD#	 $	: { first_word = rfalse; return '$'; }
+#STD#	\:\: +	: { first_word = rfalse; return '::'; }
+#STD#	\@\@	: { first_word = rfalse; return '::'; }
+
+#STD#	ident	: { Attribute.ident.ident = MakeIdent (TokenPtr, TokenLength);
+		    first_word = rfalse; return ident;
+		  }
+
+#STD#	\\ oct_digit [1-3]
+		: { unsigned int i;
+		    GetWord (word);
+		    sscanf (word + 1, "%o", & i);
+		    Attribute.character.text = i;
+		    first_word = rfalse; return character;
+		  }
+
+#STD#	\\ x hex_digit [1-2]
+		: { unsigned int i;
+		    GetWord (word);
+		    sscanf (word + 2, "%x", & i);
+		    Attribute.character.text = i;
+		    first_word = rfalse; return character;
+		  }
+
+#STD#	\\ ANY	: { Attribute.character.text = TokenPtr [1];
+		    first_word = rfalse; return character;
+		  }
+
+#STD#	ANY	: { Attribute.character.text = * TokenPtr;
+		    first_word = rfalse; return character;
+		  }

@@ -1,0 +1,34 @@
+with "../gtkada/gtkada";
+with "gvd_common";
+with "../shared";
+
+project GVD is
+
+   for Languages use ("C", "Ada");
+   for Source_Dirs use ("gvd", "pixmaps");
+   for Object_Dir use "obj";
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-a", "-m");
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("ada");
+      for Switches ("advanced_breakpoint_pkg.adb") use ("-g", "-O2");
+      for Switches ("breakpoints_pkg.adb") use ("-g", "-O2");
+      for Switches ("general_preferences_pkg.adb") use ("-g", "-O2");
+      for Switches ("list_select_pkg.adb") use ("-g", "-O2");
+      for Switches ("main_debug_window_pkg.adb") use ("-g", "-O2");
+      for Switches ("memory_view_pkg.adb") use ("-g", "-O2");
+      for Switches ("open_program_pkg.adb") use ("-g", "-O2");
+      for Switches ("open_session_pkg.adb") use ("-g", "-O2");
+      for Switches ("process_tab_pkg.adb") use ("-g", "-O2");
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
+   package IDE renames Shared.IDE;
+
+end GVD;

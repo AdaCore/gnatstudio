@@ -1,0 +1,14 @@
+This is a parser for python source code.
+
+Current limitations:
+
+* Continuation lines (ending in a backslash) are not always
+  handled correctly.
+
+* This parser has nearly the same limitations as python's
+  class browser module pyclbr.py (which also served as implementation
+  guideline). Triple quoted strings are, however, handled correctly.
+
+---
+Thomas Heller
+thomas.heller@ion-tof.com

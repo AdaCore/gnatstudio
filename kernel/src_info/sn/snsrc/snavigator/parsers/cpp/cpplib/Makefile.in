@@ -1,0 +1,419 @@
+# Makefile.in generated automatically by automake 1.4-p1 from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+# Copyright (c) 2000, Red Hat, Inc.
+# 
+# This file is part of Source-Navigator.
+# 
+# Source-Navigator is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License as published
+# by the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+# 
+# Source-Navigator is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along
+# with Source-Navigator; see the file COPYING.  If not, write to
+# the Free Software Foundation, 59 Temple Place - Suite 330, Boston,
+# MA 02111-1307, USA.
+# 
+
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = ../../..
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+ASM_DEMO = @ASM_DEMO@
+ASSEMBLER_DIRS = @ASSEMBLER_DIRS@
+AWK = @AWK@
+BFDHDIR = @BFDHDIR@
+BFDLIB = @BFDLIB@
+BUG_ADDRESS = @BUG_ADDRESS@
+BUILD_GREP = @BUILD_GREP@
+CC = @CC@
+CC_FOR_BUILD = @CC_FOR_BUILD@
+COB_DEMO = @COB_DEMO@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
+C_DEMO = @C_DEMO@
+DB_INCDIR = @DB_INCDIR@
+DB_LIBDIR = @DB_LIBDIR@
+DEJAGNUHDIR = @DEJAGNUHDIR@
+DEJAGNULIB = @DEJAGNULIB@
+DEVOHDIR = @DEVOHDIR@
+ENDIAN = @ENDIAN@
+EXEEXT = @EXEEXT@
+FOR_DEMO = @FOR_DEMO@
+GETTING_STARTED_DIR = @GETTING_STARTED_DIR@
+GETTING_STARTED_INDEX = @GETTING_STARTED_INDEX@
+GETTING_STARTED_NAME = @GETTING_STARTED_NAME@
+GREP = @GREP@
+GUILIB = @GUILIB@
+HAVE_DEVO_SIM = @HAVE_DEVO_SIM@
+HYPER_CFLAGS = @HYPER_CFLAGS@
+HYPER_CONSOLE = @HYPER_CONSOLE@
+HYPER_MAIN = @HYPER_MAIN@
+IDEHDIR = @IDEHDIR@
+IDELIB = @IDELIB@
+IDETCLLIB = @IDETCLLIB@
+ILUHDIR = @ILUHDIR@
+ILULIB = @ILULIB@
+ILUTOP = @ILUTOP@
+INTLHDIR = @INTLHDIR@
+INTLLIB = @INTLLIB@
+ITCLHDIR = @ITCLHDIR@
+ITCLLIB = @ITCLLIB@
+ITCLMKIDX = @ITCLMKIDX@
+ITCLSH = @ITCLSH@
+ITCL_BUILD_LIB_SPEC = @ITCL_BUILD_LIB_SPEC@
+ITCL_LIB_FILE = @ITCL_LIB_FILE@
+ITCL_LIB_FULL_PATH = @ITCL_LIB_FULL_PATH@
+ITCL_SH = @ITCL_SH@
+ITK_BUILD_LIB_SPEC = @ITK_BUILD_LIB_SPEC@
+ITK_LIB_FILE = @ITK_LIB_FILE@
+ITK_LIB_FULL_PATH = @ITK_LIB_FULL_PATH@
+JAVAEXE = @JAVAEXE@
+JAVA_PARSER = @JAVA_PARSER@
+JAV_DEMO = @JAV_DEMO@
+LEX = @LEX@
+LIBERTY = @LIBERTY@
+LIBGCC = @LIBGCC@
+LIBGUIHDIR = @LIBGUIHDIR@
+LIBGUILIB = @LIBGUILIB@
+LIBIBERTY = @LIBIBERTY@
+MAINT = @MAINT@
+MAKEINFO = @MAKEINFO@
+MONOP_DEMO = @MONOP_DEMO@
+OBJEXT = @OBJEXT@
+OLDTARFLAG = @OLDTARFLAG@
+OPCODESLIB = @OPCODESLIB@
+PACKAGE = @PACKAGE@
+PRODUCT_NAME = @PRODUCT_NAME@
+PROGRAMMERS_REFERENCE_DIR = @PROGRAMMERS_REFERENCE_DIR@
+PROGRAMMERS_REFERENCE_INDEX = @PROGRAMMERS_REFERENCE_INDEX@
+PROGRAMMERS_REFERENCE_NAME = @PROGRAMMERS_REFERENCE_NAME@
+RANLIB = @RANLIB@
+RUNTESTDIR = @RUNTESTDIR@
+SDK_DIR = @SDK_DIR@
+SENDMAIL_PARSER = @SENDMAIL_PARSER@
+SIMHDIR = @SIMHDIR@
+SIMLIB = @SIMLIB@
+SN_BOOKS = @SN_BOOKS@
+SN_DOCSET = @SN_DOCSET@
+SN_LAUNCH_SHELL = @SN_LAUNCH_SHELL@
+SN_PLATFORM_DIR = @SN_PLATFORM_DIR@
+SN_SDK_EXEC_PREFIX = @SN_SDK_EXEC_PREFIX@
+SOCKLIB = @SOCKLIB@
+SPLASHFILE = @SPLASHFILE@
+SUITE_NAME = @SUITE_NAME@
+TAR = @TAR@
+TCLCONFIG = @TCLCONFIG@
+TCLHDIR = @TCLHDIR@
+TCL_BIN_DIR = @TCL_BIN_DIR@
+TCL_BUILD_LIB_SPEC = @TCL_BUILD_LIB_SPEC@
+TCL_CFLAGS = @TCL_CFLAGS@
+TCL_DEFS = @TCL_DEFS@
+TCL_LD_FLAGS = @TCL_LD_FLAGS@
+TCL_LD_SEARCH_FLAGS = @TCL_LD_SEARCH_FLAGS@
+TCL_LIBRARY = @TCL_LIBRARY@
+TCL_LIBS = @TCL_LIBS@
+TCL_LIB_FILE = @TCL_LIB_FILE@
+TCL_LIB_FULL_PATH = @TCL_LIB_FULL_PATH@
+TCL_LIB_SPEC = @TCL_LIB_SPEC@
+TCL_RANLIB = @TCL_RANLIB@
+TCL_SHLIB_CFLAGS = @TCL_SHLIB_CFLAGS@
+TCL_SHLIB_LD = @TCL_SHLIB_LD@
+TIXHDIR = @TIXHDIR@
+TIX_BUILD_LIB_SPEC = @TIX_BUILD_LIB_SPEC@
+TIX_LIB_FULL_PATH = @TIX_LIB_FULL_PATH@
+TKCONFIG = @TKCONFIG@
+TKHDIR = @TKHDIR@
+TK_BUILD_INCLUDES = @TK_BUILD_INCLUDES@
+TK_BUILD_LIB_SPEC = @TK_BUILD_LIB_SPEC@
+TK_DEFS = @TK_DEFS@
+TK_LIBS = @TK_LIBS@
+TK_LIB_FILE = @TK_LIB_FILE@
+TK_LIB_FULL_PATH = @TK_LIB_FULL_PATH@
+TK_LIB_SPEC = @TK_LIB_SPEC@
+TK_VERSION = @TK_VERSION@
+TK_XINCLUDES = @TK_XINCLUDES@
+TK_XLIBSW = @TK_XLIBSW@
+USING_GNUPRO_DIR = @USING_GNUPRO_DIR@
+USING_GNUPRO_INDEX = @USING_GNUPRO_INDEX@
+USING_GNUPRO_NAME = @USING_GNUPRO_NAME@
+VERSION = @VERSION@
+WIN32LDAPP = @WIN32LDAPP@
+WIN32LIBS = @WIN32LIBS@
+WINDRES = @WINDRES@
+WINFLAGS = @WINFLAGS@
+X11ICON = @X11ICON@
+YACC = @YACC@
+ac_cv_c_itclsh = @ac_cv_c_itclsh@
+
+AUTOMAKE_OPTIONS = cygnus
+
+INCLUDES = $(WINFLAGS) -I$(top_srcdir)/hyper -I$(top_srcdir)/dbutils 	$(TCLHDIR)
+
+
+noinst_LIBRARIES = libcpp2.a
+
+libcpp2_a_SOURCES = cp_argument.c cp_class.c cp_crossref.c cp_declaration.c cp_declarator.c cp_enum.c cp_error.c cp_expression.c cp_init.c cp_list.c cp_literal.c cp_malloc.c cp_name.c cp_oper.c cp_process.c cp_stack.c cp_statement.c cp_step.c cp_symbol.c cp_type.c cp_typename.c cpdefines.h cplex.c cpkeyw.c cpkeyw.h crossref.h crossrefP.h operator.h symbol.h macread.c macro.c token.c expr.c process.c
+
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_HEADER = ../../../config.h
+CONFIG_CLEAN_FILES = 
+LIBRARIES =  $(noinst_LIBRARIES)
+
+
+DEFS = @DEFS@ -I. -I$(srcdir) -I../../..
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+libcpp2_a_LIBADD = 
+libcpp2_a_OBJECTS =  cp_argument.$(OBJEXT) cp_class.$(OBJEXT) \
+cp_crossref.$(OBJEXT) cp_declaration.$(OBJEXT) cp_declarator.$(OBJEXT) \
+cp_enum.$(OBJEXT) cp_error.$(OBJEXT) cp_expression.$(OBJEXT) \
+cp_init.$(OBJEXT) cp_list.$(OBJEXT) cp_literal.$(OBJEXT) \
+cp_malloc.$(OBJEXT) cp_name.$(OBJEXT) cp_oper.$(OBJEXT) \
+cp_process.$(OBJEXT) cp_stack.$(OBJEXT) cp_statement.$(OBJEXT) \
+cp_step.$(OBJEXT) cp_symbol.$(OBJEXT) cp_type.$(OBJEXT) \
+cp_typename.$(OBJEXT) cplex.$(OBJEXT) cpkeyw.$(OBJEXT) \
+macread.$(OBJEXT) macro.$(OBJEXT) token.$(OBJEXT) expr.$(OBJEXT) \
+process.$(OBJEXT)
+AR = ar
+CFLAGS = @CFLAGS@
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+DIST_COMMON =  Makefile.am Makefile.in
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+GZIP_ENV = --best
+SOURCES = $(libcpp2_a_SOURCES)
+OBJECTS = $(libcpp2_a_OBJECTS)
+
+all: all-redirect
+.SUFFIXES:
+.SUFFIXES: .S .c .o .obj .s
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --cygnus parsers/cpp/cpplib/Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+
+mostlyclean-noinstLIBRARIES:
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+
+distclean-noinstLIBRARIES:
+
+maintainer-clean-noinstLIBRARIES:
+
+.c.o:
+	$(COMPILE) -c $<
+
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
+.s.o:
+	$(COMPILE) -c $<
+
+.S.o:
+	$(COMPILE) -c $<
+
+mostlyclean-compile:
+	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
+
+clean-compile:
+
+distclean-compile:
+	-rm -f *.tab.c
+
+maintainer-clean-compile:
+
+libcpp2.a: $(libcpp2_a_OBJECTS) $(libcpp2_a_DEPENDENCIES)
+	-rm -f libcpp2.a
+	$(AR) cru libcpp2.a $(libcpp2_a_OBJECTS) $(libcpp2_a_LIBADD)
+	$(RANLIB) libcpp2.a
+
+tags: TAGS
+
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $$unique $(LISP)
+
+TAGS:  $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+
+mostlyclean-tags:
+
+clean-tags:
+
+distclean-tags:
+	-rm -f TAGS ID
+
+maintainer-clean-tags:
+
+distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
+
+subdir = parsers/cpp/cpplib
+
+distdir: $(DISTFILES)
+	@for file in $(DISTFILES); do \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+info-am:
+info: info-am
+dvi-am:
+dvi: dvi-am
+check-am:
+check: check-am
+installcheck-am:
+installcheck: installcheck-am
+install-info-am: 
+install-info: install-info-am
+install-exec-am:
+install-exec: install-exec-am
+
+install-data-am:
+install-data: install-data-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-am
+uninstall-am:
+uninstall: uninstall-am
+all-am: Makefile $(LIBRARIES)
+all-redirect: all-am
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs:
+
+
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+mostlyclean-am:  mostlyclean-noinstLIBRARIES mostlyclean-compile \
+		mostlyclean-tags mostlyclean-generic
+
+mostlyclean: mostlyclean-am
+
+clean-am:  clean-noinstLIBRARIES clean-compile clean-tags clean-generic \
+		mostlyclean-am
+
+clean: clean-am
+
+distclean-am:  distclean-noinstLIBRARIES distclean-compile \
+		distclean-tags distclean-generic clean-am
+
+distclean: distclean-am
+
+maintainer-clean-am:  maintainer-clean-noinstLIBRARIES \
+		maintainer-clean-compile maintainer-clean-tags \
+		maintainer-clean-generic distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-am
+
+.PHONY: mostlyclean-noinstLIBRARIES distclean-noinstLIBRARIES \
+clean-noinstLIBRARIES maintainer-clean-noinstLIBRARIES \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile tags mostlyclean-tags distclean-tags \
+clean-tags maintainer-clean-tags distdir info-am info dvi-am dvi check \
+check-am installcheck-am installcheck install-info-am install-info \
+install-exec-am install-exec install-data-am install-data install-am \
+install uninstall-am uninstall all-redirect all-am all installdirs \
+mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:

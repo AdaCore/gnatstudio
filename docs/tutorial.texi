@@ -1,0 +1,691 @@
+\input texiplus   @c -*-texinfo-*-
+@c %**start of header
+@setfilename tutorial.info
+@settitle GNAT Programming System Tutorial
+@syncodeindex fn cp
+
+@set GPSVersion 1.3.0
+
+@titlepage
+
+@title GNAT Programming System Tutorial
+@subtitle Version @value{GPSVersion}
+@subtitle Document revision level $Revision$
+@subtitle Date: $Date$
+@author ACT-Europe
+
+@page
+@vskip 0pt plus 1filll
+
+Copyright @copyright{} 2002-2003, ACT-Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@end titlepage
+
+@ifinfo
+@node Top, Introduction, (dir), (dir)
+@top GNAT Programming System Tutorial
+
+GNAT Programming System Tutorial
+
+Version @value{GPSVersion}
+
+Date: $Date$
+
+Copyright @copyright{} 2002-2003, ACT-Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@menu
+* Introduction::
+* Quick overview of the GPS areas::
+* Editing sources::
+* Building applications::
+* Source Navigation::
+* Search Dialog::
+* Project Explorer (entities)::
+* Back to Source Navigation::
+* Run::
+* Debug::
+* Call Graph::
+* Locations Tree::
+* Projects::
+* Epilogue::
+
+@end menu
+@end ifinfo
+
+@c --------------------------------------------------------------------
+@node Introduction
+@chapter Introduction
+@c --------------------------------------------------------------------
+
+@noindent
+This document provides a guide through the major capabilities
+of the GNAT Programming System by working on a code example: sdc, a simple
+desktop calculator.
+
+It is important to realize that the features that you are about to
+experiment with are available on multiple platforms, using the same user
+interface and capabilities, providing a user-friendly environment
+with a tight integration between the tools.
+
+Start GPS in the directory containing the tutorial files, or if the directory
+is read-only, copy the @file{tutorial} directory and its subdirectories in a
+local (writable) area, and start GPS from the @file{tutorial} directory, so
+that GPS will load the right context.
+
+By default, the tutorial sources can be found under
+@code{<prefix>/doc/gps/examples/tutorial}, where @code{<prefix>} is the
+prefix directory of the GPS installation.
+
+Alternatively, if you have already started GPS in another directory, you
+can load the project @code{sdc.gpr} by using the menu @code{Project->Open...}
+
+If you are reading this document from GPS itself, we recommend that you
+select the window displaying this document by clicking on it: the title
+bar should be displayed in @i{blue}; then select the menu item
+@code{Window->Floating}: this will move the @i{Help} window outside GPS
+itself, allowing you to easily read this document while following the
+tutorial steps in the main window of GPS.
+
+@c --------------------------------------------------------------------
+@node Quick overview of the GPS areas
+@chapter Quick overview of the GPS areas
+@c --------------------------------------------------------------------
+
+@noindent
+
+Having launched GPS, you should now have access to a main window composed of
+several areas:
+
+@itemize @bullet
+@item a menu bar at the top
+@item a tool bar under the menu bar
+@item a project explorer under the tool bar, on the left side
+@item a working area on the right of the project explorer
+@item a messages window under the working area
+@item a status bar at the bottom left
+@item a progress bar at the bottom right
+@end itemize
+
+@c --------------------------------------------------------------------
+@node Editing sources
+@chapter Editing sources
+@c --------------------------------------------------------------------
+
+@noindent
+
+In the project explorer, open the @code{common} directory by clicking
+on the @code{[+]} sign on the left of @code{common}.
+This will open the directory and display a list of source files located
+in this directory.
+
+Now, double click on @file{sdc.adb}: this will open a source editor on this
+file. The source code is syntax-highlighted: keywords, comments, strings and
+characters have different colors.
+
+As with many other properties, colors are configurable in GPS:
+
+Select the menu @code{Edit->Preferences}. This will open a preferences
+dialog window.
+
+Select the @code{Editor->Fonts & Colors} page by clicking on the cross next to
+the item @code{Editor} and then selecting the @code{Fonts & Colors} item.
+
+As you go over the various lines and labels, you will notice that by
+holding the mouse over a label, a tool tip pops up displaying on-line help
+about the selected item.
+
+Change the background color of the @code{Keywords} by clicking on the last
+down arrow, at the right of the @code{Keywords} line.
+
+Choose a color, e.g a light green. When you're done with the color
+selection, simply click again on the arrow, or anywhere outside the
+color selection area.
+
+Click on the @code{Apply} button and look at the effects in the source
+editor. If you like the new display, click on @code{OK} to confirm the
+changes, otherwise clicking on @code{Cancel} will revert to the previous
+(black) color.
+
+@c --------------------------------------------------------------------
+@node Building applications
+@chapter Building applications
+@c --------------------------------------------------------------------
+
+@noindent
+
+Select the menu @code{Build->Make->sdc.adb}: this will launch a complete
+build of the @i{sdc} application. Note also that a key binding
+is associated with this menu item (@key{F4}).
+
+The build has generated a number of errors in a new window: the @i{Locations}
+tree, displayed in the bottom area. The errors are also highlighted in the
+corresponding source editor.
+
+GPS has automatically jumped to the first error message
+(@i{sdc.adb, 28:6  : (style) bad indentation}),
+at the line (28) and column (06) of the error.
+
+Fix the error by hand by inserting a space.
+
+Now you can fix the next error by moving the cursor to the line 30 (press
+the @key{down} arrow twice), and by using @key{Ctrl-Tab} (press first the
+@key{Control} key, and then the @key{Tab} key on your keyboard): this key
+combination asks the source editor to automatically re-indent the current
+line.
+
+Note that on some window managers or desktop environments,
+@key{Ctrl-Tab} is already defined. If this is the case, you can change this
+shortcut from the preferences dialog (menu @code{Edit->Preferences},
+@code{Editor} tab).
+
+You can then fix all the remaining errors by selecting the whole block
+(from line 28 to line 40) and pressing @key{Ctrl-Tab}. To select a block,
+you can either click on the left mouse button and select the area while
+holding the button, or using the keyboard by pressing the @key{Shift} key
+and moving the cursor using the @key{Up} or @key{Down} keys.
+
+Press the @key{F4} key to build again. GPS will automatically save the
+modified files, and start a build. This behavior (automatic saving of files
+before building) can be configured in the preferences dialog.
+
+If you look at the progress bar, you will see that while the build is in
+progress the state of the compilation is displayed, giving you
+the current number of files compiled, and the number of remaining files.
+
+This should now report a successful build.
+
+@c --------------------------------------------------------------------
+@node Source Navigation
+@chapter Source Navigation
+@c --------------------------------------------------------------------
+
+@noindent
+
+Now let's try to understand a little bit about how the program is working by
+looking at the @file{sdc.adb} editor: there's a loop, the main processing is
+done by the functions Process and Next (at line 30).
+
+Click around line 30, move the mouse over @code{Process} and let a tool tip
+appear (@code{global procedure tokens.process declared at tokens.ads:19}): this
+gives information about the kind of entity and the location (file and line) of
+the declaration of this procedure.
+
+Do the same for @code{Next} (@code{global procedure tokens.next declared at
+tokens.ads:15}).
+
+Keeping the mouse over @code{Next}, display the contextual menu by clicking on
+the right mouse button,
+then click on @code{Goto declaration of Next}: we're now in the package
+@code{Tokens}, in file @file{tokens.ads}; but where is this file in the project?
+
+@c --------------------------------------------------------------------
+@node Search Dialog
+@chapter Search Dialog
+@c --------------------------------------------------------------------
+
+@noindent
+
+Select the menu @code{Navigate->Find/Replace...}: this will open a search
+dialog.
+In the @code{Search for:} text entry type @file{tokens.ads}. Then
+select @code{Project explorer} in the @code{Look in:} area. The search
+area provides an easy way to search for text or regular expressions in
+several contexts including the current file, the project explorer, the help
+window, ...
+
+Now click on @code{Find}. The file @file{tokens.ads}, in directory @code{struct}
+is highlighted.
+
+Close the search dialog by clicking on the @code{Close} button.
+
+Note that in this specific case, a simpler way to locate a file in the
+explorer is to use the contextual menu from the source editor:
+@code{Locate in explorer: tokens.ads}.
+
+@c --------------------------------------------------------------------
+@node Project Explorer (entities)
+@chapter Project Explorer (entities)
+@c --------------------------------------------------------------------
+
+@noindent
+Click on the @code{[+]} sign to open @file{tokens.ads} entities.
+When you click on a file in the explorer, you get
+language sensitive information about the file, such as
+@code{packages}, @code{subprograms}, @code{tasks}, ... for @code{Ada}.
+
+Open the @code{subprogram} category, click on @code{Process}: this
+will open @file{tokens.ads} and move the cursor on the first line
+corresponding to the procedure @code{Process}.
+
+Similarly, click on @code{Next}, and move your mouse on @code{Next}
+in the source editor.
+
+@c --------------------------------------------------------------------
+@node Back to Source Navigation
+@chapter Back to Source Navigation
+@c --------------------------------------------------------------------
+
+@noindent
+
+Using the contextual menu, select @code{Goto body of Next};
+scroll through the procedure @code{Next}, move the mouse on
+@code{Instructions.Read} at line 46 and from the contextual menu, select
+@code{Goto body of Read}.
+
+We've now navigated quite a bit through the application source code,
+which you can verify by clicking on the left arrow in the tool bar, to go
+back to the previous locations visited.
+
+Repeat the operation until you're back in @file{sdc.adb}.
+As for the undo/redo capability in the source editor, the
+@code{goto previous/next location} is infinite.
+
+@c --------------------------------------------------------------------
+@node Run
+@chapter Run
+@c --------------------------------------------------------------------
+
+@noindent
+It is now time to run the application: select the menu
+@code{Build->Run->sdc}, which will open a dialog window.
+Type @code{input.txt} in the text entry: this is the name of a text
+file that will be passed as argument to the @i{sdc} program.
+
+Now click on @code{OK}: a new window titled @code{Run: sdc input.txt}
+is created at the bottom of the main window where the sdc application
+runs and displays an unexpected internal error: this is a good opportunity
+to use the integrated debugger.
+
+Close the execution window by clicking on the x icon on the top right
+corner of this window.
+
+@c --------------------------------------------------------------------
+@node Debug
+@chapter Debug
+@c --------------------------------------------------------------------
+
+@noindent
+
+Open the preferences dialog (menu @code{Edit->Preferences}) and
+click on the @code{Debugger} item on the left; set the button
+@code{Break on exceptions} to @i{Enabled}: this will enable by default a special
+breakpoint every time an exception is raised. Click on @code{OK} to confirm your
+change.
+
+Now select the menu @code{Debug->Initialize->sdc}: two new windows are
+created, a data window and a debugger console.
+You can also look at the various debug menu item and tool bar buttons which are
+now activated.
+
+Use the menu @code{Debug->Data->Call Stack}: this opens a new window on the
+right of the source editors. If you select the contextual menu in the call
+stack, various pieces of information can be displayed or
+removed in the call stack. From this contextual menu, add the
+@code{Frame Number} info by clicking on it.
+
+Now select the menu @code{Debug->Run...}. Notice that @code{input.txt} has
+been filled automatically for you since the two menus @code{Build->Run...} and
+@code{Debug->Run...} are synchronized. Click on @code{OK}: the debugger should
+stop on an exception (@code{Constraint_Error} in the file @file{stack.adb}, at
+line 49).
+
+Go up in the call stack by clicking on the @code{tokens.process} line
+(frame number 6).
+
+If you move the mouse over the parameter @code{T} at line 64, a tool tip is
+displayed showing the value of @code{T}. You have probably noticed that
+tool tips, like menus, are contextual: depending on the current session and
+on the entity selected, different information is displayed.
+
+Select the contextual menu @code{Debug->Display T}: this displays in the data
+window a box containing the different fields of @code{T}, each clearly
+separated.
+
+On @code{T} data display, select the contextual menu
+@code{Display->Show Value + Type}: this displays for all fields both their
+type and value.
+
+Special colors are used in the data display: blue for pointers that can be
+dereferenced by a double-click (double click on @code{T.val}); red for fields
+that have been modified since last step.
+
+In the contextual menu that pops up when you hold the mouse over @code{T}.
+select @code{Debug->View memory at address of T}: a memory view is opened.
+Use the @code{up} and @code{down} arrows on the right to visit memory.
+
+Click in the memory dump, and modify it by typing numbers. Notice the
+red color for modified values;
+click on @code{Undo Changes} to cancel the modifications;
+click on @code{Close} to close the memory window.
+
+In the call stack, go back to @code{stack.push} frame (num 4).
+Move the mouse over @code{Last} and let the debugger display its value: 0.
+From the contextual menu, select @code{Goto declaration of Last}: this
+will jump to the line 16 of @file{stack.adb}, where you can see that
+@code{Last} is a @code{Natural}. Now click on the @code{Goto Previous Location}
+button in the tool bar: we're now back at line 49 where we can see that for a
+@code{Push} procedure, @code{Last} should be incremented, and not decremented.
+
+Fix the line to @code{Last := Last + 1;}
+
+Save the file (@key{Ctrl-S});
+End the debug session: menu @code{Debug->Terminate};
+Rebuild (press @key{F4} key);
+Rerun (menu @code{Build->Run->sdc}): the program now completes as expected.
+Close the execution window.
+
+@c --------------------------------------------------------------------
+@node Call Graph
+@chapter Call Graph
+@c --------------------------------------------------------------------
+
+@noindent
+Now go back to the file @file{sdc.adb}, move the mouse over the procedure
+@i{sdc} at line 8, select the contextual menu
+@code{References->Sdc calls}: this will open a new window titled
+@i{Call graph browser}.
+
+Click on the right arrow of @code{Process} (one of the first items on
+the right). Also click on the right arrow of @code{error_msg}.
+
+Select @code{Orthogonal links} in the contextual menu of the graph to change the
+way links are displayed in the graph.
+Click on the canvas, then play with the zoom (@key{=} and @key{-} keys).
+
+If you select @code{Hide links} from @code{error_msg} contextual menu, this
+will hide all the links that are related to this item: the link between the
+callers and callees of @code{error_msg} are no longer displayed. This can
+be useful when the graph becomes complex, to hide some parts. If you go back to
+the contextual menu, you can now select @code{Show links} to show the links
+again.
+
+Click on right arrow of @code{process} (@file{instructions.ads:12},
+the item at the top right of the graph).
+
+The items can also be moved: move e.g @code{msg} item around.
+
+Click on left arrow of @code{msg}
+to display who is calling @code{msg}. Notice that @code{view} (on the left
+of the graph) calls @code{msg}.
+
+Click on left arrow of @code{view}: the arrow disappears, and no
+new items are created, which means that @code{view} isn't called by anyone,
+so we're now going to remove this procedure.
+
+@c --------------------------------------------------------------------
+@node Locations Tree
+@chapter Locations Tree
+@c --------------------------------------------------------------------
+
+@noindent
+From @i{view}, select the contextual menu @code{Go to spec};
+then from the source editor (file @file{stack.ads}), select the contextual
+menu @code{References->Find all references to View}: this highlights the
+@code{Locations} tree which now contains all the references for @code{view},
+grouped by files (@file{stack.ads} and @file{stack.adb}).
+
+The first location is highlighted automatically: this is the spec of the
+procedure @code{View}. Now click in the tree on the @code{+} sign at the left
+of @file{stack.adb}: two locations are listed, at line 90 and 97.
+Click on each of these locations: they correspond to the procedure body.
+
+The @code{Find all references} capability is another way to list all the uses of
+an entity, and it confirms that @code{View} isn't called in our project.
+
+Remove @i{View} body by e.g selecting it, and pressing the @key{Delete} key,
+then save the file (@key{Ctrl-S}).
+
+Do the same for the spec, save the file.
+
+Close the @file{stack.ads} and @file{stack.adb} files (menu File->Close,
+or using the shortcut @key{Ctrl-W}), as well as the call graph window.
+Rebuild by pressing the @key{F4} key.
+
+@c "Let's now have a look at all the changes we've done so far, by looking at
+@c  the version control system explorer, aka VCS explorer"
+
+@c --------------------------------------------------------------------
+@c @node Version Control
+@c @chapter Version Control
+@c --------------------------------------------------------------------
+
+@c @noindent
+@c From the project explorer, contextual menu on project @i{sdc}, select
+@c @code{Version Control->Query status for project}. The VCS Explorer is
+@c opened, listing the files in the project.
+@c => Explain the use of icons for status, log files, ...
+@c => The list can be sorted by status or by file name, by clicking
+@c on the @code{Status} and @code{File name} labels.
+
+@c Move the mouse over @file{stack.ads}, select the contextual menu
+@c @code{Compare against head rev.}:
+@c this will open a visual comparison between the version in the repository,
+@c and the local (modified) file; You can see that scrolling is synchronized
+@c between the two files, and that colors are used to show lines
+@c added, removed and modified.
+
+@c Close the Visual Comparison window
+
+@c Go back to the VCS Explorer
+
+@c On @file{stack.ads}, contextual menu, @code{Edit changelog}
+
+@c In the change log, type a log, e.g: @code{(View): Removed, since unused}
+
+@c Save and close the log editor.
+@c This log file will now associated with @file{stack.ads} until the
+@c next check in.
+
+@c Go back to the VCS Explorer, @file{stack.ads} has now an icon
+@c showing that a log is associated with this file.
+
+@c On @file{stack.ads}, commit the file using the contextual menu,
+@c entry @code{Commit}.
+
+Let's now see how to create a project corresponding to the @i{sdc}
+project we've used in this tutorial.
+
+@c --------------------------------------------------------------------
+@node Projects
+@chapter Projects
+@c --------------------------------------------------------------------
+
+@menu
+* Project Wizard::
+* Project properties::
+* Variable editor::
+* Switch editor::
+* Source dependencies::
+* Project dependencies::
+@end menu
+
+@node Project Wizard
+@section Project Wizard
+@noindent
+
+@b{WARNING}: while in the project wizard, you will not be able to scroll
+through the tutorial if you are reading it within GPS. You may want to resize
+the window now so that the entire section on the wizard is visible, or reopen
+the tutorial in another browser.
+
+Go to the menu @code{Project->New...}: this is a standard wizard, with various
+steps listed on the left area of the window.
+
+Type @i{sdc2} in the project name field.
+It is possible to create a multi-language project by selecting the C or C++
+check box.
+
+Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
+for @i{Version Control System}.
+GPS has a generic support for @i{VCS} which allows it to easily support
+new systems. Currently GPS supports CVS and ClearCase. Select @code{CVS}.
+
+Click on @code{Forward}: this is the source directories selection,
+used to specify the project's sources. Open @file{tutorial}, click on
+@code{struct}, and add it by clicking on the down arrow.
+
+Click on @code{Forward}: this is the @code{Build} and @code{Exec} directory
+selection, used to store object, ali files, ...
+
+Click on @code{Browse}, open @file{tutorial}, click on @code{obj}, click on
+@code{OK}.
+
+Click on @code{Forward}: this is the naming scheme editor.
+GNAT is very flexible and can use any kind of naming scheme for Ada files.
+In particular, you can easily set the default file
+extensions (e.g by using one of the predefined schemes) and you
+can also specify exceptions that use non standard file names.
+
+Click on @code{Forward}: this is the main units selection, used mainly for
+building executables and debugging.
+
+Click on @code{Add}, open the @code{common} directory and select
+@code{sdc.adb}.
+
+Click on @code{Forward}: we're now in the switch selector.
+Select @code{Recompile if switches changed}.
+
+Click on @code{Ada} page.
+
+Select @code{Full errors} and @code{Overflow checking}.
+The boxes and the command line (the text entry at the
+bottom of the page) are fully synchronized, e.g if you click on the
+command line, and change @code{-gnatf} to @code{-gnat}, the
+@code{Full errors} check box is unselected; now type @code{a} to get
+@code{-gnata}, and notice that @code{Enable assertions} is now selected.
+
+Click on @code{Forward}: voila, we've created a project similar to the one
+used in this tutorial.
+
+Click on @code{Cancel} to close the wizard.
+
+@node Project properties
+@section Project properties
+@noindent
+
+In the project explorer, on the project @i{sdc}, use the contextual menu
+@code{Edit project properties}.
+All the properties set in the project wizard can be found here as well.
+You can also switch between pages by clicking on the tabs.
+
+Once you're done exploring the property pages, click on the @code{Cancel}
+button to close the properties window.
+
+@node Variable editor
+@section Variable editor
+@noindent
+
+You have probably noticed the @code{Build} label located on top of the
+project explorer. This is a configuration variable. With GPS and the GNAT
+project facility, you can define as many configuration variables as you want,
+and modify any project settings (e.g switches, sources, ...) based on the
+values of configuration variables. These variables can also take any
+number of different values.
+
+The @code{Build} variable shows a typical @code{Debug/Production} configuration
+where we've set different switches for the two modes.
+
+Click on the button at the left (@code{Edit variable properties}): this
+is the variable editor, where values can be added or renamed.
+Close the variable editor by clicking on the @code{Cancel} button.
+
+Now, let's take a look at the switches set in the project.
+
+@node Switch editor
+@section Switch editor
+@noindent
+
+Select the menu item @code{Project->Edit File Switches}: a global
+switch editor is displayed in the working area.
+
+The editor lists the switches associated with each file in the project and
+the gray area shows the default (global) switches; you will also notice
+that @file{screen_output.adb} has specific switches, which are highlighted
+using a different font.
+
+Switch between @code{Debug} and @code{Production} mode in the @code{Build}
+combo box: the switches are updated at the same time.
+
+Back to our project, let's now examine the dependencies between sources.
+
+@node Source dependencies
+@section Source dependencies
+@noindent
+
+Select @file{sdc.adb} in the explorer and then the contextual menu item
+@code{Show dependencies for sdc.adb}: this will open a new graph showing
+the dependencies between sources of the project.
+
+Click on the right arrow of @file{tokens.ads} to display the files that
+@file{tokens.ads} depends on. Similarly, click on the right arrow of
+@file{stack.ads}.
+
+@node Project dependencies
+@section Project dependencies
+@noindent
+
+Back in the project explorer on the @i{sdc} project, select the contextual menu
+@code{Add dependency->From project file...}, then open the @i{tutorial}
+directory and click on the @code{projects} subdirectory. Select the file
+@code{prj1.gpr}.
+
+You can see the new dependencies added in the project explorer, as a tree of
+projects. In particular, project dependencies are duplicated: if you open
+the @code{prj1} icon by clicking on the @code{[+]} sign, and then
+similarly open the @code{prj2} icon, you will notice that the project
+@code{prj4} is displayed twice: once as a dependency of @code{prj2}, and
+once as a dependency of @code{prj1}.
+
+GPS can also display the graph of dependencies between projects: on @i{sdc}
+project, use the contextual menu
+@code{Show projects imported by sdc}: this will open a project hierarchy
+browser.
+
+On the @code{sdc.gpr} project, select the contextual menu
+@code{Show recursive dependencies for sdc}.
+
+In the browser, you can move the project items, and select them to highlight
+the dependencies.
+
+Close the project browser by clicking on the @code{[x]} sign at the top right
+area of the window, or by typing @key{Ctrl-W}, or by using the menu
+@code{File->Close}.
+
+On @i{prj1} project, select the contextual menu
+@code{Remove dependency sdc -> prj1} to remove the dependency added between
+@i{sdc} and @i{prj1}.
+
+@c --------------------------------------------------------------------
+@node Epilogue
+@chapter Epilogue
+@c --------------------------------------------------------------------
+
+@noindent
+This terminates our tour of GPS, the GNAT Programming System.
+We hope this tutorial gave you a good overview of the general capabilities
+available with GPS. A non exhaustive list of the features not mentioned in
+this document includes:
+
+@itemize @bullet
+@item Automatic generation of body files
+@item Pretty printing
+@item Visual comparison of files
+@item Version control
+@item Flexible multiple document interface
+@end itemize
+
+For more information, please look at the @i{User's Guide} (@url{gps.html}).
+
+@c @printindex cp
+
+@contents
+
+@bye

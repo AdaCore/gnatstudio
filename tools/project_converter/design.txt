@@ -1,0 +1,56 @@
+Design:
+
+Project dependencies:
+   Since we do not want to analyze source dependencies, we simply use the
+   "limited with" statements to indicate the dependencies between the
+   projects
+
+Handling of build_dir:
+   This is the directory where objects were put with .adp files. Thus, it
+   needs to be the object_dir of the root .gpr project.
+
+Handling of obj_dir:
+   Each obj_dir attribute in the .adp file indicates an extra library to
+   search for ALI files. They are for building as components of the
+   ADA_OBJECT_PATH variable.
+   Thus, one project file needs to be generated for each of them. No need if
+   obj_dir is ".", since this is then handled with build_dir.
+
+Handling of src_dir:
+   Various cases need to be handled here:
+     - obj_dir is ".", or there is no obj_dir:
+       In this case, the build directory is build_dir, and a single project
+       file can be generated that incorporates all src_dir.
+
+     - If no object file is found in any of the directories:
+       Associate all source dirs with the root project, and let all other
+       projects have an empty Source_Dirs attribute.
+
+     - There are multiple object directories (even if single obj_dir):
+       - If we can associate each obj_dir with a set of source dirs and these
+         sets do not intersect, then set the Source_Dirs attribute for each
+         project with this set.
+
+       - If there is no unique association
+         All projects have the same source directories, but an attribute
+         Source_Files is generated, depending on what was found in the
+         object directories.
+
+Handling of duplicate source files:
+   Generate a Source_Files attribute, and only reference the first file found
+   in the source path.
+
+Handling of main_unit:
+    The attribute Main is generated appropriately
+
+Handling of gnatmake_opt, comp_opt, bind_opt and link_opt:
+    The packages Builder, Compiler, Binder and Linker are generated
+    appropriately, with a Default_Switches attribute
+
+Handling of cross_prefix:
+    A package IDE is generated, which sets Compiler_Command and
+    Debugger_Command.
+
+Handling of debug_cmd, run_cmd, debug_pre_cmd, debug_post_cmd, make_cmd,
+check_cmd:
+    No conversion is provided, these are handled by GPS itself.

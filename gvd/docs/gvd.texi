@@ -1,0 +1,37 @@
+\input texinfo
+@input texiplus   @c -*-texinfo-*-
+
+@c %**start of header
+@setfilename gvd.info
+@settitle Using the GNU Visual Debugger
+@syncodeindex fn cp
+
+@set GVDVersion 2.0.0
+
+@titlepage
+
+@title Using the GNU Visual Debugger
+@subtitle Version @value{GVDVersion}
+@subtitle Document revision level $Revision$
+@subtitle Date: $Date$
+@author ACT Europe
+
+@page
+@vskip 0pt plus 1filll
+
+Copyright @copyright{} 2000-2001, ACT Europe.
+This document may be copied, in whole or in part, in any form or by any
+means, as is or with alterations, provided that (1) alterations are clearly
+marked as alterations and (2) this copyright notice is included
+unmodified in any copy.
+
+@end titlepage
+
+@include gvd_contents.texi
+
+@unnumbered Index
+@printindex cp
+
+@contents
+
+@bye

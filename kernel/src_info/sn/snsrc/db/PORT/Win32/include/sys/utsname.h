@@ -1,0 +1,1 @@
+#pragma message ("Dummy utsname.h included for windows.")

@@ -1,0 +1,13 @@
+glide_intl.adb
+glide_intl.ads
+file_utils.ads
+file_utils.adb
+file-utils.c
+htables.adb
+htables.ads
+sdefault.adb
+traces.adb
+traces.ads
+string_hash.adb
+string_hash.ads
+src_info-*.ad[bs]

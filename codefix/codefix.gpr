@@ -1,0 +1,34 @@
+with "../kernel/kernel";
+with "../gvd/gvd_common";
+with "../common/common";
+with "../vdiff/vdiff";
+with "../shared";
+
+project Codefix is
+
+   for Source_Dirs use ("src");
+   for Languages use ("Ada");
+   for Object_Dir use "obj/";
+   for Exec_Dir use "obj/";
+
+   package Binder is
+      for Default_Switches ("ada") use ("-static");
+   end Binder;
+
+   package Linker is
+      for Default_Switches ("ada") use ("-lgmem", "-g");
+   end Linker;
+
+   package Compiler is
+      for Default_Switches ("Ada") use Shared.Compiler'Default_Switches ("Ada");
+      for Switches ("codefix_window_pkg.adb") use ("-g", "-O2");
+      for Switches ("final_window_pkg.adb") use ("-g", "-O2");
+   end Compiler;
+
+   package Builder is
+      for Default_Switches ("ada") use ("-g");
+   end Builder;
+
+   package Ide renames Shared.Ide;
+
+end Codefix;

@@ -1,0 +1,67 @@
+Index: common/src/stubs.c
+*** gps-1.0.1/common/src/stubs.c	Sat Mar 24 05:37:44 2001
+--- common/src/stubs.c	Sun Sep 22 11:59:25 2002
+***************
+*** 0 ****
+--- 1,26 ----
++ #include <sys/stat.h>
++ #ifdef _WIN32
++ #include <windows.h>
++ #endif
++ 
++ extern int __gnat_stat (char *, struct stat *);
++ 
++ int __gnat_copy_attribs (from, to, mode) {}
++ 
++ const int __gnat_vmsp = 0;
++ 
++ int get_gcc_version () { return 2; }
++ 
++ int
++ __gnat_is_symbolic_link (char *name)
++ {
++ #if defined (_WIN32) || defined (VMS)
++   return 0;
++ #else
++   int ret;
++   struct stat statbuf;
++ 
++   ret = lstat (name, &statbuf);
++   return (!ret && S_ISLNK (statbuf.st_mode));
++ #endif
++ }
+*** shared.gpr.old	Tue Oct  1 18:21:51 2002
+--- shared.gpr	Tue Oct  1 18:22:03 2002
+***************
+*** 4,10 ****
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Debug");
+  
+     for Source_Dirs use ();
+  
+--- 4,10 ----
+     OS : OS_Type := External ("OS", "unix");
+  
+     type Build_Type is ("Debug", "Production");
+!    Build : Build_Type := External ("Build", "Production");
+  
+     for Source_Dirs use ();
+  
+*** gps-1.2.0/glide/gps.gpr	10 Feb 2003 17:29:25
+--- glide/gps.gpr	10 Feb 2003 17:30:55 -0000
+***************
+*** 33,43 ****
+        case Shared.Build is
+           when "Debug" =>
+             for Default_Switches ("Ada") use ("-m", "-a", "-g");
+-            for Global_Configuration_Pragmas use "gnat_debug.adc";
+  
+           when "Production" =>
+             for Default_Switches ("Ada") use ("-a", "-g");
+-            for Global_Configuration_Pragmas use "gnat.adc";
+        end case;
+     end Builder;
+  
+--- 33,41 ----

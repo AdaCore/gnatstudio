@@ -1,0 +1,40 @@
+CP              = cp -p
+MKDIR           = mkdir -p
+STRIP           = strip
+INSTALL         = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA    = @INSTALL_DATA@
+prefix          = @prefix@
+bindir          = $(prefix)/bin
+sharedir        = $(prefix)/share
+
+default build compile link ada c c++:
+	$(MAKE) -s -C glide -f Makefile.gps $@
+
+clean:
+	$(RM) gnat/*.ad*
+	$(RM) obj/*.ali obj/*.o
+	$(MAKE) -s -C glide -f Makefile.gps $@
+
+install-common:
+	$(MKDIR) $(bindir)
+	$(MKDIR) $(sharedir) $(sharedir)/make
+	$(MKDIR) $(sharedir)/gps/aliases $(sharedir)/gps/customize
+	$(INSTALL_DATA) gnat/Makefile.generic $(sharedir)/make
+	$(INSTALL_DATA) gnat/Makefile.prolog $(sharedir)/make
+	$(INSTALL_DATA) share/aliases.ada $(sharedir)/gps/aliases
+	$(INSTALL_DATA) share/gpr.xml $(sharedir)/gps/customize
+	$(MAKE) -C docs install
+
+install: install-common
+	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
+	$(MAKE) -C kernel/src_info/sn/snsrc install
+
+install-strip: install-common
+	$(INSTALL_PROGRAM) -s glide/obj/gps $(bindir)
+	$(MAKE) -C kernel/src_info/sn/snsrc install-strip
+
+gvd:
+	$(MAKE) -s -C gvd -f Makefile.gvd EXEC=gvd ADA_SOURCES=gvd_main.adb
+
+.PHONY: gvd install install-common install-strip

@@ -1,0 +1,108 @@
+-----------------------------------------------------------------------
+--                   GVD - The GNU Visual Debugger                   --
+--                                                                   --
+--                      Copyright (C) 2000-2003                      --
+--                             ACT-Europe                            --
+--                                                                   --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+--  This package contains target specific parameters that are set at configure
+--  time.
+
+package GVD is
+   pragma Pure;
+
+   type Host_Type is (Windows, Unix, VMS, Unknown);
+   --  Possible kind of host where GPS is built.
+
+   ---------------
+   -- Constants --
+   ---------------
+
+   Version : constant String := "@GVD_VERSION@";
+   --  Version number of this software.
+
+   Target  : constant String := "@TARGET@";
+   --  Target for which GVD is built.
+
+   Prefix : constant String := "@prefix@";
+   --  Default prefix used e.g for finding support files like po files.
+   --  Note that this prefix can be overriden by using the GVD_ROOT or
+   --  GNAT_ROOT environment variables.
+
+   Host : constant Host_Type := @HOST_TYPE@;
+   --  Host kind where GPS is built.
+   --  Note: it is in most cases inappropriate to test the value of this
+   --  variable and do different things based on it. Consider using this
+   --  variable as a last resort, to address very target specific issues.
+
+   Source_Date : constant String := "unknown date";
+
+   Max_Frame : constant := 500;
+   --  Maximum number of frames displayed in the backtrace window.
+
+   Max_Tasks : constant := 999;
+   --  Maximum number of tasks/threads displayed in the tasks/threads windows.
+
+   Max_PD : constant := 99;
+   --  Maximum number of protection domains displayed in the
+   --  protection domain window.
+
+   Max_Column_Width : constant := 200;
+   --  Maximum width (in pixels) for a column in a list.
+
+   Need_To_Strip_CR : constant Boolean := @STRIP_CR@;
+   --  True on systems where lines are separated by both LF and CR.
+
+   Use_Ptys : constant Boolean := @USE_PTYS@;
+   --  True if we should connect to the debugger through pseudo-terminals
+   --  (at least on Unix machines). False if we should use pipes.
+   --  Although the latter is more portable, and should be used for machines
+   --  that don't support ptys, we recommend using the former since this
+   --  provides a better support for remote debuggers and the "interrupt"
+   --  button, among other things.
+
+   Async_Commands : constant Boolean := True;
+   --  True if user commands are handled asynchronousely, to avoid recursion
+   --  in the event processing. See design/commands.txt for more details.
+   --  This variable is primarily useful for debugging.
+
+   Can_Output : constant Boolean := @CAN_OUTPUT@;
+   --  True if gvd can print text on standard output/error, false if gvd
+   --  is a GUI only process (e.g under windows).
+
+   Layout_Width : constant := 20;
+   --  Width for the area reserved for the buttons in the source/asm editor.
+
+   Exec_Command : constant String := "@EXEC_COMMAND@";
+   --  Command used to run helpers.
+
+   Default_Font : constant String := "@DEFAULT_FONT@";
+   --  Default system font used in the preferences.
+
+   Default_HTML_Browser : constant String := "@HTML_BROWSER@";
+   --  Command use to browse HTML pages.
+
+   Default_Ps : constant String :=
+     "@DEFAULT_PS@";
+   --  Command used to list processes on a native system.
+
+   Default_Print_Cmd : constant String := "@PRINT_CMD@";
+   --  Command used to print a file.
+
+   Default_Opaque_MDI : constant Boolean := @OPAQUE_MDI@;
+   --  Default value for the MDI opaque preference.
+
+end GVD;
