@@ -343,6 +343,8 @@ package body Codefix.Errors_Manager is
          Success);
 
       if not Success then
+         Free (Little_Fix_List);
+         Free (Merged_Extract);
          return;
       end if;
 
@@ -392,6 +394,8 @@ package body Codefix.Errors_Manager is
 
          Line_Object := Next (Line_Object.all);
       end loop;
+
+      Free (Little_Fix_List);
 
    end Update_Changes;
 

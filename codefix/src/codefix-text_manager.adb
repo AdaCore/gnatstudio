@@ -2083,6 +2083,8 @@ package body Codefix.Text_Manager is
             if Left_After = 0 then
                if Size_Before = 0 then
                   Remove (Current_Line, Prev_Line, This);
+                  Free (Current_Line.all);
+                  Free (Current_Line);
                else
                   Prev_Line := Current_Line;
                   Add_Last;
