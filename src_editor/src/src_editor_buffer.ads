@@ -589,6 +589,10 @@ package Src_Editor_Buffer is
    pragma Inline (Get_Block);
    --  Return the block information associated with Line.
 
+   function Has_Block_Information
+     (Editor : access Source_Buffer_Record) return Boolean;
+   --  Returh whether the buffer has relevant block information.
+
    --------------
    --  Signals --
    --------------
@@ -623,6 +627,10 @@ package Src_Editor_Buffer is
    --  </signals>
 
 private
+
+   procedure Buffer_Information_Changed
+     (Buffer : access Source_Buffer_Record'Class);
+   --  Emit the "buffer_information_changed" signal.
 
    -----------------------
    -- Line highlighting --
