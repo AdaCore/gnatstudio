@@ -54,6 +54,9 @@ package Vsearch_Ext is
    Context_Files         : constant := 3;
    --  Index of the "Files..." choice in the "Look In" entry.
 
+   Context_Help          : constant := 4;
+   --  Index of the "Help" choice in the "Look In" entry.
+
    Scope_Whole_Text       : constant := 0;
    --  Index of the "Whole Text" choice in the "Scope" entry.
 

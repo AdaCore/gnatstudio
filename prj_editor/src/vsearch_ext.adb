@@ -33,12 +33,12 @@ with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Glide_Intl;            use Glide_Intl;
 with Glide_Kernel;          use Glide_Kernel;
+with Glide_Kernel.Help;
 
 with Find_Utils;            use Find_Utils;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.Regexp;           use GNAT.Regexp;
-with GNAT.IO;               use GNAT.IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 
 with Glide_Kernel.Project;
@@ -48,7 +48,11 @@ with String_Utils;          use String_Utils;
 with Gdk.Color;             use Gdk.Color;
 with Gtk.Main;
 
+with Traces; use Traces;
+
 package body Vsearch_Ext is
+
+   Me : Debug_Handle := Create ("Vsearch_Project");
 
    ---------------
    -- Callbacks --
@@ -92,6 +96,7 @@ package body Vsearch_Ext is
       Highlight      : Gdk_Color;
       Sources        : String_Array_Access;
       Scope          : Search_Scope;
+      Found          : Boolean;
 
       procedure Reset_Search;
       --  Call it before every search using this callback.
@@ -202,19 +207,28 @@ package body Vsearch_Ext is
 
       else
          --  Search only once
-         null;
+
+         case Vsearch.Context is
+            when Context_Help =>
+               Found := Help.Search
+                 (Kernel         => Vsearch.Kernel,
+                  Text           => Get_Text (Vsearch.Pattern_Entry),
+                  Case_Sensitive => Get_Active (Vsearch.Case_Check),
+                  Forward        => True,
+                  Regular        => Get_Active (Vsearch.Regexp_Check));
+               return;
+
+            when others =>
+               null;
+         end case;
       end if;
 
    exception
       when Error_In_Regexp =>
-         Put_Line ("--- Bad globbing pattern: '"
-                   & Get_Text (Vsearch.Files_Entry)
-                   & "'");
+         Trace (Me, "Bad regexp: " & Get_Text (Vsearch.Files_Entry));
 
       when E : others =>
-         Put_Line ("--- Exception >>>");
-         Put_Line (Exception_Information (E));
-         Put_Line ("--- <<< Exception");
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Search_Next;
 
    -----------------------
@@ -231,8 +245,18 @@ package body Vsearch_Ext is
    ------------------------
 
    procedure On_Search_Previous (Object : access Gtk_Widget_Record'Class) is
+      Vsearch : constant Vsearch_Extended := Vsearch_Extended (Object);
+      Found   : Boolean;
+
    begin
-      null;
+      case Vsearch.Context is
+         when Context_Help =>
+            Found := Help.Search_Next (Vsearch.Kernel);
+            return;
+
+         when others =>
+            null;
+      end case;
    end On_Search_Previous;
 
    --------------------
@@ -283,8 +307,10 @@ package body Vsearch_Ext is
       if Get_Selection (List) /= Widget_List.Null_List then
          Value := Child_Position (List, Get_Data (Get_Selection (List)));
 
-         if Vsearch.Context /= Context_Explorer
-           and then Value = Context_Explorer
+         if (Vsearch.Context /= Context_Explorer
+             and then Value = Context_Explorer)
+           or else (Vsearch.Context /= Context_Help
+             and then Value = Context_Help)
          then
             Set_Sensitive (Vsearch.Replace_Label, False);
             Set_Sensitive (Vsearch.Replace_Combo, False);
@@ -293,8 +319,10 @@ package body Vsearch_Ext is
             Set_Sensitive (Vsearch.Scope_Combo, False);
             Set_Sensitive (Vsearch.Search_All_Check, False);
 
-         elsif Vsearch.Context = Context_Explorer
-           and then Value /= Context_Explorer
+         elsif (Vsearch.Context = Context_Explorer
+             and then Value /= Context_Explorer)
+           or else (Vsearch.Context = Context_Help
+             and then Value /= Context_Help)
          then
             Set_Sensitive (Vsearch.Replace_Label, True);
             Set_Sensitive (Vsearch.Replace_Combo, True);
@@ -366,7 +394,6 @@ package body Vsearch_Ext is
       Handle  : Glide_Kernel.Kernel_Handle)
    is
       pragma Suppress (All_Checks);
-
    begin
       Vsearch_Pkg.Initialize (Vsearch);
       Vsearch.Kernel := Handle;
