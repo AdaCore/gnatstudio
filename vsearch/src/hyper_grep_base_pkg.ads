@@ -37,7 +37,6 @@ with Gtk.Radio_Button; use Gtk.Radio_Button;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with Gtk.Object; use Gtk.Object;
 package Hyper_Grep_Base_Pkg is
 
    type Hyper_Grep_Base_Record is new Gtk_Window_Record with record
@@ -78,6 +77,7 @@ package Hyper_Grep_Base_Pkg is
    type Hyper_Grep_Base_Access is access all Hyper_Grep_Base_Record'Class;
 
    procedure Gtk_New (Hyper_Grep_Base : out Hyper_Grep_Base_Access);
-   procedure Initialize (Hyper_Grep_Base : access Hyper_Grep_Base_Record'Class);
+   procedure Initialize
+     (Hyper_Grep_Base : access Hyper_Grep_Base_Record'Class);
 
 end Hyper_Grep_Base_Pkg;
