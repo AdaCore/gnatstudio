@@ -89,6 +89,7 @@ Description of the main windows
 * The Shell Window::
 * The Locations Tree::
 * The Status Line::
+* The Task Manager::
 
 Integrated Help
 * The Help Menu::
@@ -243,6 +244,7 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Locations Tree::
 * The Execution Window::
 * The Status Line::
+* The Task Manager::
 @end menu
 
 @c --------------------------------------------------------------------
@@ -757,7 +759,7 @@ or to cancel the close operation.
 
 @noindent
 The status line is composed of two areas: on the left a status bar and
-on the right a progress bar.
+on the right one or several progress bars.
 
 @cindex messages
 The status bar is used to display temporary information about GPS
@@ -765,8 +767,29 @@ operations. Note that most of the information GPS displays can be found
 in the @code{Messages} window.
 
 @cindex build
-The progress bar is used to display information about on going operations
-such as builds.
+The progress bars are used to display information about on going
+operations such as builds, searches, or VCS commands. These tasks
+operate in the background, and can be paused/resumed via a contextual
+menu. This contextual menu is available by right-clicking on the
+progress bars themselves or on the corresponding lines in the Task
+Manager. See @ref{The Task Manager}
+
+@c --------------------------------------------------------------------
+@node The Task Manager
+@section The Task Manager
+@cindex tasks
+@cindex background tasks
+@cindex task manager
+@c --------------------------------------------------------------------
+
+@noindent
+The Task Manager window lists all the currently running GPS operations
+that run in the background, such as builds, searches or VCS commands.
+
+For each of these tasks, the Task Manager shows the status of the
+task, and the current progress. The execution of theses tasks can be
+suspended using a contextual menu, brought up by right-clicking on a
+line.
 
 @c --------------------------------------------------------------------
 @node Integrated Help
@@ -1998,6 +2021,14 @@ language syntax.
 @item Uncomment Lines
 @cindex uncomment
 Remove the comment delimiters from the current selection or line.
+
+@item Fold all blocks
+@cindex fold
+Collapse all the blocks in the current file.
+
+@item Unfold all blocks
+@cindex unfold
+Uncollapse all the blocks in the current file.
 
 @item Generate Body
 @cindex gnatstub
@@ -4536,6 +4567,10 @@ The file is not known to the VCS repository.
 The file corresponds to the latest version in the corresponding branch
 on the repository.
 
+@item Added
+The file has been added remotely but is not yet updated in the local
+view.
+
 @item Removed
 The file still exists locally but is known to have been removed from
 the VCS repository.
@@ -4726,6 +4761,10 @@ Remove annotations for the selected files.
 @item Edit revision log
 Edit the revision log file corresponding to the selected files.
 
+@item Revert
+Revert the file to the latest version in the repository, erasing
+your local changes.
+
 @item Remove revision log
 Deletes the revision log file corresponding to the selected files.
 
@@ -4836,6 +4875,9 @@ Open a shell console at the bottom are of GPS.
 
 @item Compare
 @xref{Visual Comparison}.
+
+@item Task Manager
+@xref{The Task Manager}.
 
 @end table
 
