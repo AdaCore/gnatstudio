@@ -32,16 +32,17 @@ package body SN.Find_Fns is
    -- Find --
    ----------
 
-   function Find (DB : DB_File;
-                  Ref_Class : String := Invalid_String;
-                  Ref_Symbol_Name : String := Invalid_String;
-                  Ref_Type : String := Invalid_String;
-                  Class : String := Invalid_String;
-                  Symbol_Name : String := Invalid_String;
-                  Sym_Type : Symbol_Type := Undef;
-                  Access_Type : String := Invalid_String;
-                  Position : Point := Invalid_Point;
-                  Filename : String := Invalid_String)
+   function Find
+     (DB              : DB_File;
+      Ref_Class       : String := Invalid_String;
+      Ref_Symbol_Name : String := Invalid_String;
+      Ref_Type        : String := Invalid_String;
+      Class           : String := Invalid_String;
+      Symbol_Name     : String := Invalid_String;
+      Sym_Type        : Symbol_Type := Undef;
+      Access_Type     : String := Invalid_String;
+      Position        : Point := Invalid_Point;
+      Filename        : String := Invalid_String)
       return BY_Table
    is
       P    : Pair_Ptr;
