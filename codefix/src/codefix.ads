@@ -40,6 +40,9 @@ package Codefix is
    EOL_Str : constant String := (1 => ASCII.LF);
    --  String used to insert an end of line.
 
+   Label_VDiff_Size_Limit : constant Natural := 50;
+   --  Limits of the numbers of chars displayed in the VDiff's labels.
+
    ----------------------------------------------------------------------------
    --  type Dynamic_String
    ----------------------------------------------------------------------------
