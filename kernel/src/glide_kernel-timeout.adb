@@ -301,7 +301,7 @@ package body Glide_Kernel.Timeout is
          if Line_By_Line then
             Data.Expect_Regexp := new Pattern_Matcher'(Compile ("^.*?\n"));
          else
-            Data.Expect_Regexp := new Pattern_Matcher'(Compile (".+"));
+            Data.Expect_Regexp := new Pattern_Matcher'(Compile (".$"));
          end if;
 
          Data.D       := (Kernel, Fd, Callback, Exit_Cb, Callback_Data);
