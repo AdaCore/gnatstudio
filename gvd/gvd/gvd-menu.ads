@@ -44,6 +44,11 @@ package GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget);
 
+   procedure On_Add_Symbols
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget);
+
    procedure On_Edit_Source
      (Object : Data_Type_Access;
       Action : Guint;

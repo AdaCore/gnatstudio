@@ -126,6 +126,11 @@ package body GVD.Menu is
       Process : Debugger_Process_Tab;
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Tab     : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Max_Args : constant := 4;
+      Args     : Argument_List (1 .. Max_Args);
+      Num_Args : Natural := 0;
+      Pid      : GNAT.OS_Lib.Process_Id;
+      Prog     : GNAT.OS_Lib.String_Access;
 
    begin
       Open_Program (Top.Open_Program, Program);
@@ -140,7 +145,48 @@ package body GVD.Menu is
             end if;
 
          when New_Debugger =>
-            null;
+            --  If async commands aren't supported, the only reliable
+            --  way to get a new debugger is to launch a new gvd.
+
+            if not GVD.Async_Commands then
+               Output_Info (Top, "launching another instance of gvd...");
+
+               Prog := Locate_Exec_On_Path ("gvd");
+
+               if Prog /= null then
+                  Num_Args := Num_Args + 1;
+                  Args (Num_Args) := new String' (Program.Program.all);
+
+                  if Program.Remote_Host.all /= "" then
+                     Num_Args := Num_Args + 1;
+                     Args (Num_Args) :=
+                       new String' ("--host=" & Program.Remote_Host.all);
+                  end if;
+
+                  if Program.Remote_Target.all /= "" then
+                     Num_Args := Num_Args + 1;
+                     Args (Num_Args) :=
+                       new String' ("--target=" & Program.Remote_Target.all &
+                                    ":" & Program.Protocol.all);
+                  end if;
+
+                  if Program.Debugger_Name.all /= "" then
+                     Num_Args := Num_Args + 1;
+                     Args (Num_Args) :=
+                       new String' ("--debugger=" & Program.Debugger_Name.all);
+                  end if;
+
+                  Pid := GNAT.OS_Lib.Non_Blocking_Spawn
+                    (Prog.all, Args (1 .. Num_Args));
+                  Free (Prog);
+               end if;
+
+               for J in Args'Range loop
+                  Free (Args (J));
+               end loop;
+
+               return;
+            end if;
       end case;
 
       Process :=
@@ -191,6 +237,41 @@ package body GVD.Menu is
          end if;
       end;
    end On_Open_Core_Dump;
+
+   --------------------
+   -- On_Add_Symbols --
+   --------------------
+
+   procedure On_Add_Symbols
+     (Object : Data_Type_Access;
+      Action : Guint;
+      Widget : Limited_Widget)
+   is
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+   begin
+      --  ??? Should be able to remove this test at some point
+      if Tab = null
+        or else Command_In_Process (Get_Process (Tab.Debugger))
+      then
+         return;
+      end if;
+
+      declare
+         S : constant String :=
+           To_Unix_Pathname (File_Selection_Dialog (-"Select Module"));
+
+      begin
+         if Tab.Descriptor.Remote_Host /= null
+           or else Is_Regular_File (S)
+         then
+            Add_Symbols (Tab.Debugger, S, Mode => GVD.Types.Visible);
+         else
+            Output_Error
+              (GVD_Main_Window (Get_Toplevel (Object)),
+               -(" Could not find file: ") & S);
+         end if;
+      end;
+   end On_Add_Symbols;
 
    --------------------
    -- On_Edit_Source --
@@ -346,9 +427,20 @@ package body GVD.Menu is
       Process_List  : List_Select_Access;
       Success       : Boolean;
       Info          : Process_Info;
+      Button        : Message_Dialog_Buttons;
 
    begin
       if Tab = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot attach to a task/process while the") & ASCII.LF &
+            (-"underlying debugger is busy.") & ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
          return;
       end if;
 
@@ -391,7 +483,7 @@ package body GVD.Menu is
       if Tab /= null then
          if Command_In_Process (Get_Process (Tab.Debugger)) then
             Button := Message_Dialog
-              ((-"Cannot detach the process while the") & ASCII.LF &
+              ((-"Cannot detach the task/process while the") & ASCII.LF &
                (-"underlying debugger is busy.") & ASCII.LF &
                (-"Interrupt the debugger or wait for its availability."),
               Dialog_Type => Warning,
@@ -412,9 +504,21 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
+
    begin
       if Tab = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot detach the process while the") & ASCII.LF &
+            (-"underlying debugger is busy.") & ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
          return;
       end if;
 
@@ -566,9 +670,21 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
+
    begin
       if Tab = null then
+         return;
+      end if;
+
+      if Command_In_Process (Get_Process (Tab.Debugger)) then
+         Button := Message_Dialog
+           ((-"Cannot rerun while the underlying debugger is busy.") &
+            ASCII.LF &
+            (-"Interrupt the debugger or wait for its availability."),
+           Dialog_Type => Warning,
+           Buttons => Button_OK);
          return;
       end if;
 
@@ -730,6 +846,8 @@ package body GVD.Menu is
          Display_Prompt (Tab.Debugger);
       end if;
 
+      Set_Busy_Cursor (Tab, False);
+
       --  We used to flush the output here, so that if the program was
       --  outputting a lot of things, we just stop there.
       --  However, this is not doable, since it in fact also flushes the
@@ -799,6 +917,8 @@ package body GVD.Menu is
       Page      : Gtk_Widget;
       Num_Pages : constant Gint :=
         Gint (Page_List.Length (Get_Children (Top.Process_Notebook)));
+      Button    : Message_Dialog_Buttons;
+      Item      : Gtk_Widget;
 
    begin
       --  ??? Is there a memory leak here ? Data_Paned might be ref'd, but
@@ -811,12 +931,28 @@ package body GVD.Menu is
          if Page /= null then
             Process := Process_User_Data.Get (Page);
 
-            if Get_Active (Gtk_Check_Menu_Item (Get_Item
-              (Top.Factory, -"/Data/Call Stack")))
-            then
+            Item := Get_Item (Top.Factory, -"/Data/Call Stack");
+
+            if Item = null then
+               Item := Get_Item (Top.Factory, -"/Debug/Data/Call Stack");
+            end if;
+
+            if Get_Active (Gtk_Check_Menu_Item (Item)) then
                Add1 (Process.Data_Paned, Process.Stack_Scrolledwindow);
                Unref (Process.Stack_Scrolledwindow);
-               Update_Call_Stack (Process);
+
+               if Command_In_Process (Get_Process (Process.Debugger)) then
+                  Button := Message_Dialog
+                    ((-"Cannot show call stack while the debugger is busy.") &
+                     ASCII.LF &
+                     (-"Interrupt the debugger or wait for its availability."),
+                    Dialog_Type => Warning,
+                    Buttons => Button_OK);
+
+               else
+                  Update_Call_Stack (Process);
+               end if;
+
             else
                Ref (Process.Stack_Scrolledwindow);
                Dock_Remove (Process.Data_Paned, Process.Stack_Scrolledwindow);
@@ -834,11 +970,22 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
 
    begin
       if Tab /= null then
+         if Command_In_Process (Get_Process (Tab.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot display threads list while the debugger is busy.") &
+               ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons => Button_OK);
+            return;
+         end if;
+
          Show_All (Top.Thread_Dialog);
          Gdk_Raise (Get_Window (Top.Thread_Dialog));
          Update (Top.Thread_Dialog, Tab);
@@ -854,11 +1001,22 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Top : constant GVD_Main_Window := GVD_Main_Window (Object);
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Top    : constant GVD_Main_Window := GVD_Main_Window (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
 
    begin
       if Tab /= null then
+         if Command_In_Process (Get_Process (Tab.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot display tasks list while the debugger is busy.") &
+               ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons => Button_OK);
+            return;
+         end if;
+
          Show_All (Top.Task_Dialog);
          Gdk_Raise (Get_Window (Top.Task_Dialog));
          Update (Top.Task_Dialog, Tab);
@@ -876,9 +1034,20 @@ package body GVD.Menu is
    is
       Top     : constant GVD_Main_Window := GVD_Main_Window (Object);
       Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button  : Message_Dialog_Buttons;
 
    begin
       if Process /= null then
+         if Command_In_Process (Get_Process (Process.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot edit breakpoints while the debugger is busy.") &
+               ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons => Button_OK);
+            return;
+         end if;
+
          Breakpoint_Editor
            (Breakpoint_Editor_Access (Top.Breakpoints_Editor), Process);
       end if;
@@ -1139,6 +1308,7 @@ package body GVD.Menu is
          Gtk_New (-"/_File/Open Program...", "F3", On_Open_Program'Access),
          Gtk_New (-"/_File/New Debugger...", "", On_Open_Debugger'Access),
          Gtk_New (-"/_File/Open Core Dump...", "", On_Open_Core_Dump'Access),
+         Gtk_New (-"/_File/Add Symbols...", "", On_Add_Symbols'Access),
          Gtk_New (-"/_File/sep1", Item_Type => Separator),
          Gtk_New (-"/_File/Edit Current Source", "<control>E",
                   On_Edit_Source'Access),
@@ -1150,9 +1320,9 @@ package body GVD.Menu is
          Gtk_New (-"/_File/Save Session As...", "<control>S",
                   On_Save_Session_As'Access),
          Gtk_New (-"/_File/sep3", Item_Type => Separator),
-         Gtk_New (-"/_File/Attach To Process...", "",
+         Gtk_New (-"/_File/Attach...", "",
                   On_Attach_To_Process'Access),
-         Gtk_New (-"/_File/Detach Process", "", On_Detach_Process'Access),
+         Gtk_New (-"/_File/Detach", "", On_Detach_Process'Access),
          Gtk_New (-"/_File/sep4", Item_Type => Separator),
          Gtk_New (-"/_File/Change Directory...", "",
                   On_Change_Directory'Access),
