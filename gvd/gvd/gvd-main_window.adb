@@ -28,6 +28,8 @@ with Gtk.Object;            use Gtk.Object;
 with Gtk.Widget;            use Gtk.Widget;
 with Gtkada.Handlers;       use Gtkada.Handlers;
 with Gtkada.Types;
+
+with Breakpoints_Editor;    use Breakpoints_Editor;
 with Factory_Data;
 with GVD.Types;             use GVD.Types;
 with GVD.Preferences;       use GVD.Preferences;
@@ -223,6 +225,7 @@ package body GVD.Main_Window is
          Update (Window.Thread_Dialog, Tab);
          Update (Window.Task_Dialog, Tab);
          Update (Window.History_Dialog, Tab);
+         Update (Window.PD_Dialog, Tab);
       end if;
    end Update_External_Dialogs;
 
@@ -284,5 +287,48 @@ package body GVD.Main_Window is
            (Handler, "c++", Get_Pref (GVD_Prefs, Cpp_Extensions));
       end if;
    end Preferences_Changed;
+
+   ---------------------
+   -- Switch_Debugger --
+   ---------------------
+
+   procedure Switch_Debugger
+     (Window   : access GVD_Main_Window_Record'Class;
+      Debugger : Glib.Object.GObject)
+   is
+      Process     : constant Visual_Debugger := Visual_Debugger (Debugger);
+      Widget      : Gtk_Widget;
+      WTX_Version : Natural;
+
+   begin
+      Update_External_Dialogs (Window, Debugger);
+
+      if Window.Breakpoints_Editor /= null then
+         Set_Process
+           (Breakpoint_Editor_Access (Window.Breakpoints_Editor), Process);
+      end if;
+
+      --  Update the sensitivity of the Data/Protection Domains menu
+      --  item
+
+      Widget := Get_Widget (Window.Factory, -"/Data/Protection Domains");
+
+      if Widget = null then
+         --  This means that GVD is part of GPS
+
+         Widget := Get_Widget
+           (Window.Factory, -"/Debug/Data/Protection Domains");
+      end if;
+
+      if Widget /= null then
+         Info_WTX (Process.Debugger, WTX_Version);
+
+         if WTX_Version /= 3 then
+            Set_Sensitive (Widget, False);
+         else
+            Set_Sensitive (Widget, True);
+         end if;
+      end if;
+   end Switch_Debugger;
 
 end GVD.Main_Window;
