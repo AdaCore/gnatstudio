@@ -484,11 +484,11 @@ package body Display_Items is
       Context : constant Box_Drawing_Context :=
         Get_Box_Context (GVD_Canvas (Item.Debugger.Data_Canvas));
       Zoom_Spacing : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
       Zoom_Buttons : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
       Zoom_Border : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Border_Spacing);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Border_Spacing);
       W, H : Gint;
 
    begin
@@ -513,7 +513,7 @@ package body Display_Items is
 
       Alloc_Width := Gint'Max (Alloc_Width, Title_Width);
       Alloc_Width := Gint'Max
-        (Alloc_Width, To_Canvas (Item.Debugger.Data_Canvas, 40));
+        (Alloc_Width, To_Canvas_Coordinates (Item.Debugger.Data_Canvas, 40));
       Alloc_Height := Title_Height + Alloc_Height;
 
       Propagate_Width (Item.Entity.all, Alloc_Width - 2 * Zoom_Border);
@@ -634,8 +634,8 @@ package body Display_Items is
          Ysrc   => 0,
          Xdest  => Alloc_Width - Zoom_Buttons - Zoom_Spacing,
          Ydest  => Zoom_Spacing,
-         Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
-         Height => To_Canvas (Item.Debugger.Data_Canvas, H));
+         Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
+         Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);
       Set_Clip_Origin (Context.Black_GC, 0, 0);
 
@@ -1007,13 +1007,13 @@ package body Display_Items is
       Event  : Gdk.Event.Gdk_Event_Button)
    is
       Zoom_Spacing : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
       Zoom_Buttons : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
       Zoom_Buttons_Size : constant Gint :=
         Gint'Min (Buttons_Size, Zoom_Buttons);
       Zoom_Border  : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Border_Spacing);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Border_Spacing);
 
       Buttons_Start : Gint :=
         Gint (Get_Coord (Item).Width) - Num_Buttons * Zoom_Buttons -
@@ -1195,9 +1195,9 @@ package body Display_Items is
       Update_Value : Boolean := False)
    is
       Zoom_Spacing : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Spacing);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Spacing);
       Zoom_Buttons : constant Gint :=
-        To_Canvas (Item.Debugger.Data_Canvas, Buttons_Size);
+        To_Canvas_Coordinates (Item.Debugger.Data_Canvas, Buttons_Size);
 
       Width : Gint := Gint (Get_Coord (Item).Width);
       Context : constant Box_Drawing_Context :=
@@ -1229,8 +1229,8 @@ package body Display_Items is
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
             Ydest  => Zoom_Spacing,
-            Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
-            Height => To_Canvas (Item.Debugger.Data_Canvas, H));
+            Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
+            Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
 
       else
          Set_Clip_Mask (Context.Black_GC, Context.Locked_Mask);
@@ -1243,8 +1243,8 @@ package body Display_Items is
             Ysrc   => 0,
             Xdest  => Width - 2 * Zoom_Buttons - 2 * Zoom_Spacing,
             Ydest  => Zoom_Spacing,
-            Width  => To_Canvas (Item.Debugger.Data_Canvas, W),
-            Height => To_Canvas (Item.Debugger.Data_Canvas, H));
+            Width  => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, W),
+            Height => To_Canvas_Coordinates (Item.Debugger.Data_Canvas, H));
       end if;
 
       Set_Clip_Mask (Context.Black_GC, Null_Pixmap);

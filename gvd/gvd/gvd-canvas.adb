@@ -351,7 +351,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Font);
       end if;
 
-      Size := To_Canvas (Canvas, Get_Pref (Value_Font_Size));
+      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Font := null;
       else
@@ -362,7 +362,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Type_Font);
       end if;
 
-      Size := To_Canvas (Canvas, Get_Pref (Type_Font_Size));
+      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Type_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Type_Font := null;
       else
@@ -374,7 +374,7 @@ package body GVD.Canvas is
          Unref (Canvas.Item_Context.Command_Font);
       end if;
 
-      Size := To_Canvas (Canvas, Get_Pref (Value_Font_Size));
+      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Value_Font_Size));
       if Size <= Font_Limit then
          Canvas.Item_Context.Command_Font := null;
       else
@@ -412,7 +412,7 @@ package body GVD.Canvas is
          Unref (Canvas.Box_Context.Title_Font);
       end if;
 
-      Size := To_Canvas (Canvas, Get_Pref (Title_Font_Size));
+      Size := To_Canvas_Coordinates (Canvas, Get_Pref (Title_Font_Size));
       if Size <= Font_Limit then
          Canvas.Box_Context.Title_Font := null;
       else
