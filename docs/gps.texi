@@ -5196,7 +5196,11 @@ Program used to execute commands externally.
 @item Print command
 @cindex print
 @anchor{Print Command}
-Program used to print files.
+Program used to print files. By default @code{a2ps}, available under Linux
+by default. This utility can be used on most unix systems, and can be downloaded
+from @url{http://www.inf.enst.fr/~demaille/a2ps}.
+Under Windows systems, a possible replacement is the PrintFile utility available
+from @url{http://www.lerup.com/printfile/descr.html}.
 
 @end table
 
