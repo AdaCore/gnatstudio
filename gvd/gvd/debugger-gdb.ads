@@ -298,6 +298,20 @@ package Debugger.Gdb is
    function Get_Variable_Address
      (Debugger  : access Gdb_Debugger;
       Variable  : in String) return String;
+
+   procedure Switch_Language
+     (Debugger : access Gdb_Debugger;
+      Language : in String);
+   --  Switch gdb to another language. The possible values for Language are:
+   --  "ada", "c", "c++", "asm", "chill", "fortran", "java", "modula-2",
+   --  "scheme".
+   --  When calling this function, the current language is stored internally
+   --  and can be restored by calling Restore_Language.
+
+   procedure Restore_Language
+     (Debugger : access Gdb_Debugger);
+   --  Restore the language that was active before Switch_Language was called.
+
 private
 
    function Send
@@ -313,6 +327,7 @@ private
       Executable_Args : GNAT.OS_Lib.String_Access;
       Remote_Target   : Boolean;
       Target_Command  : GNAT.OS_Lib.String_Access;
+      Stored_Language : GNAT.OS_Lib.String_Access;
    end record;
 
    procedure Internal_Parse_Value

@@ -2236,8 +2236,10 @@ package body Debugger.Gdb is
       Address  : in String;
       Byte     : in String) is
    begin
-      Send (Debugger, "set {byte}" & Address & " := 0x" & Byte,
+      Switch_Language (Debugger, "c");
+      Send (Debugger, "set {short_short_integer}" & Address & " = 0x" & Byte,
             Mode => Internal);
+      Restore_Language (Debugger);
    end Put_Memory_Byte;
 
    --------------------------
@@ -2274,5 +2276,49 @@ package body Debugger.Gdb is
 
       return S (Index .. S'Last);
    end Get_Variable_Address;
+
+   ---------------------
+   -- Switch_Language --
+   ---------------------
+
+   procedure Switch_Language
+     (Debugger : access Gdb_Debugger;
+      Language : in String)
+   is
+      S           : String := Send (Debugger, "show lang", Mode => Internal);
+      First_Index : Integer := S'First;
+      End_Index   : Integer;
+   begin
+      if Debugger.Stored_Language /= null then
+         Free (Debugger.Stored_Language);
+      end if;
+
+      Skip_To_Char (S, First_Index, '"');
+      End_Index := First_Index + 1;
+
+      while S (End_Index) /= '"'
+        and then S (End_Index) /= ';'
+      loop
+         End_Index := End_Index + 1;
+      end loop;
+
+      Debugger.Stored_Language := new String'
+        (S (First_Index + 1 .. End_Index - 1));
+
+      Send (Debugger, "set lang " & Language);
+   end Switch_Language;
+
+   ----------------------
+   -- Restore_Language --
+   ----------------------
+
+   procedure Restore_Language
+     (Debugger : access Gdb_Debugger)
+   is
+   begin
+      if Debugger.Stored_Language /= null then
+         Send (Debugger, "set lang " & Debugger.Stored_Language.all);
+      end if;
+   end Restore_Language;
 
 end Debugger.Gdb;
