@@ -34,23 +34,31 @@ with Gdk.Types.Keysyms;        use Gdk.Types.Keysyms;
 with Gtk.Adjustment;           use Gtk.Adjustment;
 with Gtk.Box;                  use Gtk.Box;
 with Gtk.Button;               use Gtk.Button;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
 with Gtk.Check_Button;         use Gtk.Check_Button;
 with Gtk.Combo;                use Gtk.Combo;
 with Gtk.Dialog;               use Gtk.Dialog;
 with Gtk.Enums;                use Gtk.Enums;
 with Gtk.Event_Box;            use Gtk.Event_Box;
 with Gtk.Font_Selection;       use Gtk.Font_Selection;
+with Gtk.Frame;                use Gtk.Frame;
 with Gtk.GEntry;               use Gtk.GEntry;
 with Gtk.Handlers;             use Gtk.Handlers;
 with Gtk.Label;                use Gtk.Label;
 with Gtk.List;                 use Gtk.List;
 with Gtk.List_Item;            use Gtk.List_Item;
 with Gtk.Main;                 use Gtk.Main;
-with Gtk.Notebook;             use Gtk.Notebook;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Separator;            use Gtk.Separator;
 with Gtk.Spin_Button;          use Gtk.Spin_Button;
 with Gtk.Stock;                use Gtk.Stock;
 with Gtk.Style;                use Gtk.Style;
 with Gtk.Table;                use Gtk.Table;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
 with Gtk.Toggle_Button;        use Gtk.Toggle_Button;
 with Gtk.Tooltips;             use Gtk.Tooltips;
 with Gtk.Widget;               use Gtk.Widget;
@@ -1544,41 +1552,91 @@ package body Default_Preferences is
       Parent            : access Gtk.Window.Gtk_Window_Record'Class;
       On_Changed        : Action_Callback)
    is
-      function Find_Page
-        (Note : access Gtk_Notebook_Record'Class; Name : String)
-         return Gtk_Widget;
-      --  Return the widget in the page whose name is Name, or null if the page
-      --  wasn't found.
+      Model             : Gtk_Tree_Store;
+      Main_Table        : Gtk_Table;
+      Current_Selection : Gtk_Table;
+      Title             : Gtk_Label;
 
-      ---------------
-      -- Find_Page --
-      ---------------
+      function Find_Or_Create_Page (Name : String) return Gtk_Table;
+      --  Return the iterator in Model matching Name. The page is created if
+      --  needed.
 
-      function Find_Page
-        (Note : access Gtk_Notebook_Record'Class;
-         Name : String) return Gtk_Widget
-      is
-         Page_Num  : Gint := 0;
-         Widget    : Gtk_Widget;
+      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class);
+      --  Called when the selected page has changed.
+
+      function Find_Or_Create_Page (Name : String) return Gtk_Table is
+         Current : Gtk_Tree_Iter := Null_Iter;
+         Child   : Gtk_Tree_Iter;
+         First, Last : Integer := Name'First;
+         Table   : Gtk_Table;
+
       begin
-         loop
-            Widget := Get_Nth_Page (Note, Page_Num);
-            if Widget = null
-              or else Get_Tab_Label_Text (Note, Widget) = Name
-            then
-               return Widget;
+         while First <= Name'Last loop
+            Last := First;
+            while Last <= Name'Last and then Name (Last) /= ':' loop
+               Last := Last + 1;
+            end loop;
+
+            if Current = Null_Iter then
+               Child := Get_Iter_First (Model);
+            else
+               Child := Children (Model, Current);
             end if;
-            Page_Num := Page_Num + 1;
+
+            while Child /= Null_Iter
+              and then Get_String (Model, Child, 0) /= Name (First .. Last - 1)
+            loop
+               Next (Model, Child);
+            end loop;
+
+            if Child = Null_Iter then
+               Gtk_New (Table, Rows => 0, Columns => 2,
+                        Homogeneous => False);
+               Set_Row_Spacings (Table, 1);
+               Set_Col_Spacings (Table, 5);
+
+               Append (Model, Child, Current);
+               Set (Model, Child, 0, Name (First .. Last - 1));
+               Set (Model, Child, 1, GObject (Table));
+
+               Set_Child_Visible (Table, False);
+               Attach (Main_Table, Table, 1, 2, 2, 3,
+                       Ypadding => 0, Xpadding => 10);
+            end if;
+
+            Current := Child;
+
+            First := Last + 1;
          end loop;
-      end Find_Page;
+
+         return Gtk_Table (Get_Object (Model, Current, 1));
+      end Find_Or_Create_Page;
+
+      procedure Selection_Changed (Tree : access Gtk_Widget_Record'Class) is
+         Iter : Gtk_Tree_Iter;
+         M    : Gtk_Tree_Model;
+      begin
+         if Current_Selection /= null then
+            Set_Child_Visible (Current_Selection, False);
+         end if;
+
+         Get_Selected (Get_Selection (Gtk_Tree_View (Tree)), M, Iter);
+         Current_Selection := Gtk_Table (Get_Object (Model, Iter, 1));
+         Set_Child_Visible (Current_Selection, True);
+         Set_Text (Title, Get_String (Model, Iter, 0));
+      end Selection_Changed;
 
       Dialog     : Gtk_Dialog;
+      Frame      : Gtk_Frame;
       Table      : Gtk_Table;
-      Label      : Gtk_Label;
-      Note       : Gtk_Notebook;
-      Main_Note  : Gtk_Notebook;
+      View       : Gtk_Tree_View;
+      Col        : Gtk_Tree_View_Column;
+      Render     : Gtk_Cell_Renderer_Text;
+      Num        : Gint;
+      Scrolled   : Gtk_Scrolled_Window;
+
       Tmp        : Gtk_Widget;
-      pragma Unreferenced (Tmp);
+      pragma Unreferenced (Tmp, Num);
 
       Prefs      : Preference_Information_Access := Manager.Default;
       Saved_Pref : Node_Ptr := Deep_Copy (Manager.Preferences);
@@ -1587,6 +1645,9 @@ package body Default_Preferences is
       Widget     : Gtk_Widget;
       Tips       : Gtk_Tooltips;
       Event      : Gtk_Event_Box;
+      Label      : Gtk_Label;
+      Color      : Gdk_Color;
+      Separator  : Gtk_Separator;
 
    begin
       Gtk_New
@@ -1595,65 +1656,55 @@ package body Default_Preferences is
          Parent => Gtk_Window (Parent),
          Flags  => Modal or Destroy_With_Parent);
       Set_Position (Dialog, Win_Pos_Mouse);
+      Set_Default_Size (Dialog, 620, 400);
       Gtk_New (Tips);
 
-      Gtk_New (Main_Note);
-      Set_Show_Tabs (Main_Note, False);
-      Set_Tab_Pos (Main_Note, Pos_Left);
-      Pack_Start (Get_Vbox (Dialog), Main_Note);
+      Gtk_New (Main_Table, Rows => 3, Columns => 2, Homogeneous => False);
+      Pack_Start (Get_Vbox (Dialog), Main_Table);
+
+      Gtk_New (Frame);
+      Attach (Main_Table, Frame, 0, 1, 0, 3);
+
+      Gtk_New (Event);
+      Attach (Main_Table, Event, 1, 2, 0, 1, Yoptions => 0);
+      Color := Parse ("#0e79bd");
+      Alloc (Get_Default_Colormap, Color);
+      Set_Style (Event, Copy (Get_Style (Event)));
+      Set_Background (Get_Style (Event), State_Normal, Color);
+
+      Gtk_New (Title, " ");
+      Set_Alignment (Title, 0.1, 0.5);
+      Add (Event, Title);
+
+      Gtk_New_Hseparator (Separator);
+      Attach (Main_Table, Separator, 1, 2, 1, 2, Yoptions => 0, Ypadding => 1);
+
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Never, Policy_Automatic);
+      Add (Frame, Scrolled);
+
+      Gtk_New (Model, (0 => GType_String, 1 => GType_Object));
+      Gtk_New (View, Model);
+      Set_Headers_Visible (View, False);
+
+      Gtk_New (Col);
+      Num := Append_Column (View, Col);
+      Gtk_New (Render);
+      Pack_Start (Col, Render, Expand => True);
+      Add_Attribute (Col, Render, "text", 0);
+
+      Widget_Callback.Object_Connect
+        (Get_Selection (View), "changed",
+         Widget_Callback.To_Marshaller (Selection_Changed'Unrestricted_Access),
+         View);
+
+      Add (Scrolled, View);
 
       while Prefs /= null loop
          if (Flags (Prefs.Param) and Param_Writable) /= 0 then
-            declare
-               Page_Name : constant String := Get_Page (Manager, Prefs.Param);
-               Last : Natural := Page_Name'First;
-            begin
-               while Last <= Page_Name'Last
-                 and then Page_Name (Last) /= ':'
-               loop
-                  Last := Last + 1;
-               end loop;
-
-               --  Find the appropriate page for that module
-               Note := Gtk_Notebook (Find_Page
-                 (Main_Note, Page_Name (Page_Name'First .. Last - 1)));
-               if Note = null then
-                  Gtk_New (Note);
-                  Set_Scrollable (Note, True);
-                  Gtk_New (Label, Page_Name (Page_Name'First .. Last - 1));
-                  Set_Show_Tabs (Note, False);
-                  Append_Page (Main_Note, Note, Label);
-                  Set_Show_Tabs
-                    (Main_Note, Get_Nth_Page (Main_Note, 1) /= null);
-               end if;
-
-               --  Find the appropriate page in the module specific notebook
-               if Last < Page_Name'Last then
-                  Table := Gtk_Table
-                    (Find_Page (Note, Page_Name (Last + 1 .. Page_Name'Last)));
-               else
-                  Table := Gtk_Table (Find_Page (Note, -"General"));
-               end if;
-
-               if Table = null then
-                  Gtk_New (Table, Rows => 1, Columns => 2,
-                           Homogeneous => False);
-                  Set_Row_Spacings (Table, 1);
-                  Set_Col_Spacings (Table, 5);
-
-                  if Last < Page_Name'Last then
-                     Gtk_New (Label, Page_Name (Last + 1 .. Page_Name'Last));
-                  else
-                     Gtk_New (Label, -"General");
-                  end if;
-                  Append_Page (Note, Table, Label);
-                  Set_Show_Tabs (Note, Get_Nth_Page (Note, 1) /= null);
-                  Row := 0;
-               else
-                  Row := Get_Property (Table, N_Rows_Property);
-                  Resize (Table, Rows =>  Row + 1, Columns => 2);
-               end if;
-            end;
+            Table := Find_Or_Create_Page (Get_Page (Manager, Prefs.Param));
+            Row := Get_Property (Table, N_Rows_Property);
+            Resize (Table, Rows =>  Row + 1, Columns => 2);
 
             Gtk_New (Event);
             Gtk_New (Label, Nick_Name (Prefs.Param));

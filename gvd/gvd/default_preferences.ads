@@ -97,9 +97,8 @@ package Default_Preferences is
    --  The description is used in the tooltips to provide more information the
    --  preference.
    --  Page is the name of the preferences dialog page that should contain this
-   --  property. A new page will be created if no such page already exists. If
-   --  the name is of the form Page:subpage, then a notebook will be created
-   --  for Page, with a page called subpage.
+   --  property. Pages are organized into a hierarchy, parsed from
+   --  Page:subpage1:subpage2:...
    --  Due to some limitations in glib, the name in Param must only use
    --  alphanumeric characters or '-'.
 
