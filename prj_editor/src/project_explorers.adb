@@ -1689,41 +1689,15 @@ package body Project_Explorers is
       Prj       : constant Project_Type := Get_Project_From_Node
         (Explorer.Tree.Model, Explorer.Kernel, Node, False);
       Files     : File_Array_Access := Files_In_Project;
-      Expanded  : Boolean := Get_Expanded (Explorer.Tree, Node);
+      Expanded  : constant Boolean := Get_Expanded (Explorer.Tree, Node);
    begin
       if Files = null then
-         Files := Get_Source_Files
-           (Prj, Recursive => False);
+         Files := Get_Source_Files (Prj, Recursive => False);
       end if;
 
       --  If the information about the node hasn't been computed before,
       --  then we don't need to do anything. This will be done when the
       --  node is actually expanded by the user
-
-      --  We need to recompute if a node now has children, when it didn't
-      --  before.
-
-      N := Children (Explorer.Tree.Model, Node);
-
-      if N = Null_Iter then
-         declare
-            Str : constant String :=
-              Get_String (Explorer.Tree.Model, Node, Absolute_Name_Column);
-         begin
-            if (Node_Type = Directory_Node
-                and then Directory_Contains_Files (Prj, Str))
-              or else
-                (Node_Type = Project_Node and then Has_Imported_Projects (Prj))
-            then
-               Set_Node_Type (Explorer.Tree.Model, Node, Node_Type, False);
-               Set (Explorer.Tree.Model, Node, Project_Column,
-                    Gint (Name_Id'(Project_Name (Prj))));
-
-               Append_Dummy_Iter (Explorer.Tree.Model, Node);
-            end if;
-            Expanded := True;
-         end;
-      end if;
 
       if Is_Up_To_Date (Explorer.Tree.Model, Node) then
          --  Likewise, if a node is not expanded, we simply remove all
