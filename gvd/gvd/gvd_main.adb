@@ -235,15 +235,15 @@ procedure GVD_Main is
          Put_Line ("GVD " & GVD.Version & ", the GNU Visual Debugger.");
          Put_Line (-"Usage:");
          Put_Line (-"   gvd [options...] executable-file");
-         Put_Line (-"       [--dargs [debugger options]] " &
-                           "[--pargs [program options]]");
+         Put_Line (
+           -"       [--dargs [debugger options]] [--pargs [program options]]");
          Put_Line (-"Options:");
          Put_Line
            (-"   --debugger DEBUG    use DEBUG as the underlying debugger.");
          Put_Line (-"   --jdb               assume a java debugger.");
          Put_Line (-"   --host HOST         Run inferior debugger on HOST.");
-         Put_Line (-("   --target=TARG:PRO   " &
-                     "Load program on machine TARG using protocol PRO."));
+         Put_Line ((-"   --target=TARG:PRO   ") &
+                   (-"Load program on machine TARG using protocol PRO."));
          Put_Line
            (-"   --log-level [0-4]   Set level of logging (Default is 3).");
          Put_Line (-"   --editor-window=xid Use xid as the editor X window.");
@@ -251,24 +251,21 @@ procedure GVD_Main is
            (-("   --tty               Use controlling tty as additional " &
               "debugger console."));
          Put_Line (-"   --version           Show the GVD version and exit.");
-         New_Line;
-         Put_Line (-"Other arguments are passed to the underlying debugger.");
 
       else
          Button := Message_Dialog
            ("GVD " & GVD.Version & LF &
-            "Usage:" & LF &
-            "   gvd [options...] executable-file " &
-              "[--dargs [debugger options]] [--pargs [program options]]" & LF &
-            "Options:" & LF &
-            "   --debugger DEBUG  use DEBUG as the underlying debugger." & LF &
-            "   --jdb             assume a java debugger." & LF &
-            "   --host HOST       Run inferior debugger on HOST." & LF &
-            "   --target TARG:PRO " &
-            "Load program on machine TARG using protocol PRO." & LF &
-            "   --log-level [0-4] Set level of logging (Default is 3)." & LF &
-            "   --version         Show the GVD version and exit." & LF & LF &
-            "Other arguments are passed to the underlying debugger.",
+            (-"Usage:") & LF &
+            (-"   gvd [options...] executable-file") &
+            (-" [--dargs [debugger options]] [--pargs [program options]]") &
+            LF & (-"Options:") & LF &
+            (-"   --debugger DEBUG    use DEBUG as the underlying debugger.") &
+            LF & (-"   --jdb               assume a java debugger.") & LF &
+            (-"   --host HOST         Run inferior debugger on HOST.") & LF &
+            (-"   --target=TARG:PRO   ") &
+            (-"Load program on machine TARG using protocol PRO.") & LF &
+            (-"   --log-level [0-4]   Set level of logging (Default is 3).") &
+            LF & (-"   --version           Show the GVD version and exit."),
             Information, Button_OK,
             Title => -"Help",
             Justification => Justify_Left);
