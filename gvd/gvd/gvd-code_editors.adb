@@ -1271,8 +1271,11 @@ package body Odd.Code_Editors is
    procedure Show_Current_Line_Menu (Editor : access Code_Editor_Record'Class)
    is
       Name : constant String := Get_Current_File (Editor.Explorer);
+      Lang : Language_Access;
    begin
       if Name /= "" then
+         Lang := Get_Language_From_File (Name);
+         Set_Current_Language (Editor, Lang);
          Load_File (Editor,
                     Find_File
                     (Debugger_Process_Tab (Editor.Process).Debugger, Name),
