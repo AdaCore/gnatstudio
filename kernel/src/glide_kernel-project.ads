@@ -124,30 +124,10 @@ package Glide_Kernel.Project is
    -- Source files --
    ------------------
 
-   function Find_Source_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Source_Path : Boolean := False)
-      return String;
-   --  Search in the project source path Short_File_Name and return its
-   --  complete path, or an empty string in case of failure. If not found,
-   --  and if Use_Predefined_Source_Path is set to True, then also try to
-   --  locate the source file in the Predefined Source Path of the given
-   --  Kernel Handle.
-
-   function Find_Object_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Object_Path : Boolean := False)
-      return String;
-   --  This is the equivalent function of Find_Source_File for object files.
-   --  This also works for ali files.
-
    procedure Change_Project_Dir
      (Handle : access Kernel_Handle_Record'Class;
       Dir    : String);
-   --  Change the current directory, and update the project source directory
-   --  if the current project is the default project.
+   --  Change the current directory.
 
    --------------
    -- Scenarii --

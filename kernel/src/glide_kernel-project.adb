@@ -33,7 +33,6 @@ with Gtkada.Dialogs; use Gtkada.Dialogs;
 
 with Projects;           use Projects;
 with Projects.Registry;  use Projects.Registry;
-with Src_Info.Prj_Utils; use Src_Info.Prj_Utils;
 with String_Utils;       use String_Utils;
 with Basic_Types;
 
@@ -70,52 +69,6 @@ package body Glide_Kernel.Project is
       --  end if;
    end Change_Project_Dir;
 
-   ----------------------
-   -- Find_Source_File --
-   ----------------------
-
-   function Find_Source_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Source_Path : Boolean := False)
-      return String is
-   begin
-      if Use_Predefined_Source_Path
-        and then Get_Predefined_Source_Path (Kernel) /= ""
-      then
-         return Find_File
-           (Short_File_Name,
-            Include_Path (Get_Project (Kernel), True),
-            Get_Predefined_Source_Path (Kernel));
-      else
-         return Find_File
-           (Short_File_Name, Include_Path (Get_Project (Kernel), True), "");
-      end if;
-   end Find_Source_File;
-
-   ----------------------
-   -- Find_Object_File --
-   ----------------------
-
-   function Find_Object_File
-     (Kernel                     : access Kernel_Handle_Record'Class;
-      Short_File_Name            : String;
-      Use_Predefined_Object_Path : Boolean := False)
-      return String is
-   begin
-      if Use_Predefined_Object_Path
-        and then Get_Predefined_Object_Path (Kernel) /= ""
-      then
-         return Find_File
-           (Short_File_Name,
-            Object_Path (Get_Project (Kernel), True),
-            Get_Predefined_Object_Path (Kernel));
-      else
-         return Find_File
-           (Short_File_Name, Object_Path (Get_Project (Kernel), True), "");
-      end if;
-   end Find_Object_File;
-
    ------------------------------
    -- Compute_Predefined_Paths --
    ------------------------------
@@ -123,7 +76,7 @@ package body Glide_Kernel.Project is
    procedure Compute_Predefined_Paths
      (Handle : access Kernel_Handle_Record'Class)
    is
-      Source_Path : Boolean := True;
+      Current : GNAT.OS_Lib.String_Access;
 
       procedure Add_Directory (S : String);
       --  Add S to the search path.
@@ -146,18 +99,11 @@ package body Glide_Kernel.Project is
             --  directory is at that point, ...
             return;
 
-         elsif Source_Path then
-            Tmp := Handle.Predefined_Source_Path;
-            Handle.Predefined_Source_Path := new String'
-              (Handle.Predefined_Source_Path.all & Path_Separator & S);
-
          else
-            Tmp := Handle.Predefined_Object_Path;
-            Handle.Predefined_Object_Path := new String'
-              (Handle.Predefined_Object_Path.all & Path_Separator & S);
+            Tmp := Current;
+            Current := new String'(Current.all & Path_Separator & S);
+            Free (Tmp);
          end if;
-
-         Free (Tmp);
       end Add_Directory;
 
       Fd          : TTY_Process_Descriptor;
@@ -181,17 +127,14 @@ package body Glide_Kernel.Project is
 
       Free (Handle.Gnatls_Cache);
       Handle.Gnatls_Cache := new String'(Gnatls);
-      Free (Handle.Predefined_Source_Path);
-      Free (Handle.Predefined_Object_Path);
-      Basic_Types.Free (Handle.Predefined_Source_Files);
-      Handle.Predefined_Source_Path := new String'("");
-      Handle.Predefined_Object_Path := new String'("");
 
       --  ??? Should remove, when possible, the previous predefined project
 
       Path := Locate_Exec_On_Path (Gnatls_Args (1).all);
 
       if Path /= null then
+         Current := new String'("");
+
          Non_Blocking_Spawn
            (Fd, Path.all,
             Gnatls_Args (2 .. Gnatls_Args'Last),
@@ -218,18 +161,26 @@ package body Glide_Kernel.Project is
                  Trim (Strip_CR (Expect_Out (Fd)), Ada.Strings.Left);
             begin
                if S = "Object Search Path:" & ASCII.LF then
-                  Source_Path := False;
+                  Set_Predefined_Source_Path
+                    (Handle.Registry.all, Current.all);
+                  Free (Current);
+                  Current := new String'("");
                else
                   Add_Directory (S (S'First .. S'Last - 1));
                end if;
             end;
          end loop;
-      end if;
 
-      Free (Gnatls_Args);
+      else
+         Set_Predefined_Source_Path (Handle.Registry.all, "");
+         Set_Predefined_Object_Path (Handle.Registry.all, "");
+         Free (Gnatls_Args);
+      end if;
 
    exception
       when Process_Died =>
+         Set_Predefined_Object_Path (Handle.Registry.all, Current.all);
+         Free (Current);
          Close (Fd);
    end Compute_Predefined_Paths;
 
