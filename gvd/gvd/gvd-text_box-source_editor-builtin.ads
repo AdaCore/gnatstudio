@@ -150,6 +150,8 @@ package GVD.Source_Editors is
 
    procedure Highlight_Current_Line (Editor : access Source_Editor_Record);
    --  Highlight the current line in the editor, if required by the user.
+   --  If the edited file is not the one that contains the current line,
+   --  this procedure does nothing.
 
    procedure Preferences_Changed
      (Editor : access Source_Editor_Record'Class);

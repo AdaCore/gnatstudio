@@ -1434,6 +1434,15 @@ package body GVD.Source_Editors is
       Show_Line_Nums : constant Boolean := Editor.Show_Line_Nums;
 
    begin
+      --  Highlight the current line only if the current file is the one
+      --  that contains the current line.
+
+      if Editor.Debugger_Current_File = null
+        or else Get_Current_File (Editor) /= Editor.Debugger_Current_File.all
+      then
+         return;
+      end if;
+
       if Get_Pref (Editor_Highlight_Current_Line)
         and then Buffer /= null
       then
@@ -1503,11 +1512,20 @@ package body GVD.Source_Editors is
       Free (Editor.Current_File);
       Clear_Cache (Debugger_Process_Tab (Editor.Process).Window,
                    Force => False);
-      Load_File (Editor, File_Name);
+      Load_File (Editor, File_Name, False);
       Set_Value (Get_Vadj (Get_Child (Editor)), Value);
-      Set_Line (Editor, Get_Line (Editor), False);
 
-      Highlight_Current_Line (Editor);
+      --  If the file is the one containing the current location, go to that
+      --  line, otherwise go to line 1.
+
+      if Editor.Debugger_Current_File = null
+        or else Get_Current_File (Editor) = Editor.Debugger_Current_File.all
+      then
+         Set_Line (Editor, Get_Line (Editor), True);
+         Highlight_Current_Line (Editor);
+      else
+         Set_Line (Editor, 1, False);
+      end if;
 
       --  Hide or display the lines with code. This needs to be done after we
       --  have redisplayed the editor
