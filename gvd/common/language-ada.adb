@@ -59,6 +59,14 @@ package body Language.Debugger.Ada is
    --  Function used to create an entry in the explorer, for tasks.
    --  See the description of Explorer_Categories for more information.
 
+   function Make_Entry_Protected
+     (Str      : String;
+      Matched  : Match_Array;
+      Category : access Category_Index) return String;
+   --  Function used to create an entry in the explorer, for protected objects
+   --  and types.
+   --  See the description of Explorer_Categories for more information.
+
    Subprogram_RE : aliased Pattern_Matcher :=
      Compile
        ("^[ \t]*(procedure|function)\s+" &
@@ -74,6 +82,11 @@ package body Language.Debugger.Ada is
 
    Task_RE       : aliased Pattern_Matcher :=
      Compile ("^[ \t]*task[ \t]+((body|type)[ \t]+)?(\w+)", Multiple_Lines);
+
+   Protected_RE : aliased Pattern_Matcher :=
+     Compile ("^[ \t]*protected[ \t]+((type|body)[ \t]+)?(\w+)",
+              Multiple_Lines);
+
 
    --  The Specs are not parsed specifically. Instead, all the work is done
    --  while parsing for subprograms, and the function Make_Entry_Subprogram
@@ -108,8 +121,13 @@ package body Language.Debugger.Ada is
        Regexp         => Task_RE'Access,
        Position_Index => 3,
        Icon           => package_xpm'Access,
-       Make_Entry     => Make_Entry_Task'Access));
+       Make_Entry     => Make_Entry_Task'Access),
 
+      (Name           => new String'("Protected"),
+       Regexp         => Protected_RE'Access,
+       Position_Index => 3,
+       Icon           => package_xpm'Access,
+       Make_Entry     => Make_Entry_Protected'Access));
 
    --------------------
    -- Is_Simple_Type --
@@ -356,6 +374,26 @@ package body Language.Debugger.Ada is
       return Str (Matched (2).First .. Matched (2).Last);
    end Make_Entry_Type;
 
+   --------------------------
+   -- Make_Entry_Protected --
+   --------------------------
+
+   function Make_Entry_Protected
+     (Str : String; Matched : Match_Array; Category : access Category_Index)
+     return String
+   is
+      First, Last : Natural;
+   begin
+      First := Matched (2).First;
+      Last := Matched (2).Last;
+      if First < Str'First then
+         First := Str'First;
+      end if;
+
+      return Str (Matched (3).First .. Matched (3).Last) & " (" &
+        Reduce (Str (First .. Last)) & ")";
+   end Make_Entry_Protected;
+
    ---------------------
    -- Make_Entry_Task --
    ---------------------
@@ -364,9 +402,16 @@ package body Language.Debugger.Ada is
      (Str : String; Matched : Match_Array; Category : access Category_Index)
      return String
    is
+      First, Last : Natural;
    begin
+      First := Matched (2).First;
+      Last := Matched (2).Last;
+      if First < Str'First then
+         First := Str'First;
+      end if;
+
       return Str (Matched (3).First .. Matched (3).Last) & " (" &
-        Reduce (Str (Matched (2).First .. Matched (2).Last)) & ")";
+        Reduce (Str (First .. Last)) & ")";
    end Make_Entry_Task;
 
    --------------------
