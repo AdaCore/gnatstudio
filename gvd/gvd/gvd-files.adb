@@ -157,6 +157,8 @@ package body GVD.Files is
          begin
             Length := Read (F, S'Address, Length);
 
+            Cache.CR_Stripped := Get_Pref (Should_Strip_CR);
+
             if Get_Pref (Should_Strip_CR) then
                Contents := new String' (Strip_CR (S));
             else
@@ -185,5 +187,44 @@ package body GVD.Files is
 
       Error_Msg := new String'(-"File not found: " & Cache.File_Name.all);
    end Load_File;
+
+   -----------------
+   -- Clear_Cache --
+   -----------------
+
+   procedure Clear_Cache
+     (Window : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+      Force : Boolean := True)
+   is
+      Tmp : File_Cache_List := Window.File_Caches;
+      Next : File_Cache_List;
+      Last_Kept : File_Cache_List := null;
+   begin
+      Window.File_Caches := null;
+      while Tmp /= null loop
+         Next := Tmp.Next;
+
+         --  If the CR was already stripped, no need to free the file
+         if Force
+           or else
+           (not Tmp.CR_Stripped and then Get_Pref (Should_Strip_CR))
+         then
+            Free (Tmp.File_Name);
+            Free (Tmp.Line_Has_Code);
+            Free (Tmp.Line_Parsed);
+            Free (Tmp.File_Contents);
+            Free (Tmp);
+         else
+            if Window.File_Caches = null then
+               Window.File_Caches := Tmp;
+            else
+               Last_Kept.Next := Tmp;
+            end if;
+            Last_Kept := Tmp;
+            Last_Kept.Next := null;
+         end if;
+         Tmp := Next;
+      end loop;
+   end Clear_Cache;
 
 end GVD.Files;

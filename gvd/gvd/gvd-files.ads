@@ -48,4 +48,11 @@ package GVD.Files is
    --  contains the exact text of the error message.
    --  Error_Msg is left to null if the file could be found.
 
+   procedure Clear_Cache
+     (Window : access Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
+      Force : Boolean := True);
+   --  Clear the contents of the cached data for Window.
+   --  if Force is False, then only the entries for which the Carriage return
+   --  were not stripped are deleted, otherwise all entries are removed
+
 end GVD.Files;
