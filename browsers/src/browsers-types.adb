@@ -1091,7 +1091,7 @@ package body Browsers.Types is
       Event : Gdk.Event.Gdk_Event;
       Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
    is
-      pragma Unreferenced (Browser, Event, Menu);
+      pragma Unreferenced (Browser, Event);
       Context : Entity_Selection_Context_Access;
    begin
       Context := new Entity_Selection_Context;
@@ -1131,4 +1131,3 @@ package body Browsers.Types is
    end Default_Factory;
 
 end Browsers.Types;
-
