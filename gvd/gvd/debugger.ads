@@ -254,6 +254,8 @@ package Debugger is
    --  Load an executable into the debugger.
    --  Note that this can have a different meaning with some languages like
    --  Java, where Executable should be the name of the main class.
+   --  Raises Executable_Not_Found when Executable could not be loaded in
+   --  the debugger.
    --  GDB_COMMAND: "file"
 
    procedure Set_Variable
@@ -658,6 +660,9 @@ package Debugger is
 
    Spawn_Error : exception;
    --  Raised when the debugger could not be spawned.
+
+   Executable_Not_Found : exception;
+   --  Raised when the parameter to Set_Executable could not be loaded.
 
    -----------------------
    -- Memory operations --

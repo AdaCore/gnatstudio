@@ -588,13 +588,25 @@ package body Debugger.Gdb is
       Executable : String;
       Mode       : Command_Type := Internal)
    is
+      No_Such_File_Regexp : Pattern_Matcher :=
+        Compile ("No such file or directory");
    begin
       Set_Is_Started (Debugger, False);
 
       if Debugger.Remote_Target then
-         Send (Debugger, "load " & Executable, Mode => Mode);
+         if Match
+           (No_Such_File_Regexp,
+            Send (Debugger, "load " & Executable, Mode => Mode)) /= 0
+         then
+            raise Executable_Not_Found;
+         end if;
       else
-         Send (Debugger, "file " & Executable, Mode => Mode);
+         if Match
+           (No_Such_File_Regexp,
+            Send (Debugger, "file " & Executable, Mode => Mode)) /= 0
+         then
+            raise Executable_Not_Found;
+         end if;
       end if;
 
       --  Report a change in the executable. This has to be done before we
