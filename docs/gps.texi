@@ -3670,10 +3670,7 @@ object files generated during the build.
 Blank separated list of source directories.
 
 @item LDFLAGS
-Linker options.
-
-@item LIBS
-Additional libraries that this foreign project uses.
+Linker options (e.g. libraries or objects to link with).
 
 @item DEPS_PROJECTS
 List of projects (foreign or non foreign) that this project depends upon.
@@ -3710,7 +3707,7 @@ SRC_DIRS += $(FOO_SRC_DIRS)
 
 # Add <build>/libfoo.a, built by the internal-build rule above, to the
 # list of libraries to link with
-LIBS := $(FOO_BASE_DIR)/<build>/libfoo.a $(LIBS)
+LDFLAGS += $(FOO_BASE_DIR)/<build>/libfoo.a
 
 ifneq ($(FOO_ROOT),True)
    DEPS_PROJECTS += $(FOO_BASE_DIR)/foo
