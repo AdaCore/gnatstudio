@@ -97,6 +97,10 @@ package Browsers.Canvas is
    --  this item, they should be added to Menu.
    --  null should be return if there is no special contextual for this
    --  item. In that case, the context for the browser itself will be used.
+   --
+   --  You shoud make sure that this function can be used with a null event and
+   --  a null menu, which is the case when creating a current context for
+   --  Glide_Kernel.Get_Current_Context.
 
    procedure Refresh (Browser : access Glide_Browser_Record'Class;
                       Item    : access Glide_Browser_Item_Record);
