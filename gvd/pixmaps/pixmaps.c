@@ -27,6 +27,7 @@
 #include "step_xpm"
 #include "stepi_xpm"
 #include "stop_xpm"
+#include "trash_xpm"
 #include "subprogram_xpm"
 #include "undisplay_xpm"
 #include "until_xpm"
