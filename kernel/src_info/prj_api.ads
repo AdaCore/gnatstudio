@@ -42,6 +42,7 @@ package Prj_API is
    type Project_Node_Array is array (Positive range <>) of Project_Node_Id;
    type Project_Node_Array_Access is access Project_Node_Array;
    type String_Id_Array is array (Positive range <>) of Types.String_Id;
+   type String_Id_Array_Access is access String_Id_Array;
    type Project_Id_Array is array (Positive range <>) of Project_Id;
    type Project_Id_Array_Access is access Project_Id_Array;
 
@@ -58,6 +59,8 @@ package Prj_API is
      (Project_Node_Array, Project_Node_Array_Access);
    procedure Free is new Unchecked_Deallocation
      (Project_Id_Array, Project_Id_Array_Access);
+   procedure Free is new Unchecked_Deallocation
+     (String_Id_Array, String_Id_Array_Access);
 
    function Get_Project_View_From_Name
      (Name : Types.Name_Id) return Project_Id;
@@ -154,6 +157,13 @@ package Prj_API is
    --  It is the caller's responsability to free the list.
    --  If Full_Path is true, then the file names will also include the
    --  directory.
+
+   function Get_Source_Files
+     (Project_View : Prj.Project_Id;
+      Recursive : Boolean)
+      return String_Id_Array;
+   --  Same as above, but return the string ids.
+   --  Only the short file names are returned.
 
    procedure Add_Foreign_Source_Files (Project_View : Prj.Project_Id);
    --  Add to Project_View the list of source files for languages other than

@@ -3468,6 +3468,57 @@ package body Prj_API is
       return Sources;
    end Get_Source_Files;
 
+   ----------------------
+   -- Get_Source_Files --
+   ----------------------
+
+   function Get_Source_Files
+     (Project_View : Prj.Project_Id;
+      Recursive : Boolean)
+      return String_Id_Array
+   is
+      Src     : String_List_Id;
+      Count   : Natural := 0;
+      Sources : String_Id_Array_Access;
+      Index   : Natural := 1;
+      Iter    : Imported_Project_Iterator := Start
+        (Get_Project_From_View (Project_View), Recursive);
+
+   begin
+      while Current (Iter) /= Empty_Node loop
+         Src := Projects.Table (Current (Iter)).Sources;
+
+         while Src /= Nil_String loop
+            Count := Count + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      Reset (Iter);
+      Sources := new String_Id_Array (1 .. Count);
+
+      while Current (Iter) /= Empty_Node loop
+         Src := Projects.Table (Current (Iter)).Sources;
+
+         while Src /= Nil_String loop
+            Sources (Index) := String_Elements.Table (Src).Value;
+            Index := Index + 1;
+            Src := String_Elements.Table (Src).Next;
+         end loop;
+
+         Next (Iter);
+      end loop;
+
+      declare
+         S : constant String_Id_Array := Sources.all;
+      begin
+         Free (Sources);
+         return S;
+      end;
+   end Get_Source_Files;
+
    ---------------------------
    -- Get_Project_From_Name --
    ---------------------------
