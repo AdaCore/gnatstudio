@@ -389,7 +389,8 @@ package body Debugger.Gdb is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "")
    is
-      Num_Options     : Natural := Count (Gdb_Options, " ") + 1;
+      Num_Options     : Natural :=
+        Standard.Ada.Strings.Fixed.Count (Gdb_Options, " ") + 1;
       Local_Arguments : Argument_List (1 .. Arguments'Length + Num_Options);
       First           : Natural := 1;
       Last            : Natural;
@@ -1492,8 +1493,10 @@ package body Debugger.Gdb is
                  (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
             end loop;
             R := Get_Child (Class_Type (Result.all));
-            Internal_Parse_Value
-              (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+            if Num_Fields (Record_Type (R.all)) /= 0 then
+               Internal_Parse_Value
+                 (Lang, Type_Str, Index, R, Repeat_Num, Parent => Result);
+            end if;
          end;
       end if;
 
