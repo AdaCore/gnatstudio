@@ -40,7 +40,7 @@ export C_INCLUDE_PATH
 ############
 # libiconv #
 ############
-# This step should no longer be required under Solaris, to be checked
+# This step isn't needed on Linux nor Solaris
 
 tar xzvf libiconv-1.7.tar.gz
 cd libiconv-1.7
@@ -103,7 +103,7 @@ make install
 ########
 tar xzvf glib-2.0.3.tar.gz
 cd glib-2.0.3
-# on linux:
+# on Linux and Solaris:
 ./configure --prefix=$prefix --enable-debug=minimum
 # on other systems:
 ./configure --prefix=$prefix --enable-debug=minimum --with-libiconv
@@ -148,11 +148,6 @@ cd gtk+-2.0.3
 ./configure --disable-modules --without-libtiff \
   --with-included-loaders=xpm,png,gif,jpeg --prefix=$prefix \
   --enable-debug=minimum
-
-# This should no longer be needed with Gtk+ 2.0.3 (to be verified):
-# in gdk-pixbuf/Makefile, remove libpixbufloader-static-tiff.la in
-# noinst_LTLIBRARIES.
-
 make
 make install
 cd ..
