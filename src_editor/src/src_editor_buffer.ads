@@ -303,7 +303,7 @@ package Src_Editor_Buffer is
 
    procedure End_Action (Buffer : access Source_Buffer_Record);
    --  This procedure should be called every time that an external
-   --  event should cancel the current user action : focus switching
+   --  event should cancel the current user action: focus switching
    --  to another window, cursor moved, etc.
 
    procedure Undo (Buffer : access Source_Buffer_Record);
