@@ -27,6 +27,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with Prj;                     use Prj;
 with Prj.Tree;                use Prj.Tree;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
+with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
 with Prj_API;                 use Prj_API;
 with Basic_Types;             use Basic_Types;
@@ -755,7 +756,8 @@ package body Src_Info.Queries is
       Subprograms_Pkg_Only : Boolean := True) is
    begin
       if Tree /= Null_Scope_Tree then
-         Trace (Handler, "Scope tree for " & Tree.LI_Filename.all);
+         Trace (Handler, "Scope tree for "
+                & Base_Name (Tree.LI_Filename.all));
          if Node = Null_Scope_Tree_Node then
             Trace (Handler, "Part= BODY");
             Trace_Dump (Handler, Tree.Body_Tree, "",
