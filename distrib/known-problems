@@ -1,5 +1,8 @@
 Known Problems fixed in GPS 1.2.0
 
+- Problem:    When the debugger preference "show lines with code" is set,
+              unsetting a breakpoint will leave a blue dot.
+
 Known Problems fixed in GPS 1.1.0
 
 - BB28-005 File comparison not working under Windows
