@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "cscmarshal.h"
 #include "cschtml-private.h"
 #include "cschtml-stream.h"
 
@@ -2905,7 +2906,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [SET_BASE] =
 		gtk_signal_new ("set_base",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, set_base),
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
@@ -2914,7 +2915,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [SET_BASE_TARGET] =
 		gtk_signal_new ("set_base_target",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, set_base_target),
 				gtk_marshal_NONE__STRING,
 				GTK_TYPE_NONE, 1,
@@ -2923,7 +2924,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [LOAD_DONE] = 
 		gtk_signal_new ("load_done",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, load_done),
 				gtk_marshal_NONE__NONE,
 				GTK_TYPE_NONE, 0);
@@ -2931,7 +2932,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [TITLE_CHANGED] = 
 		gtk_signal_new ("title_changed",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, title_changed),
 				gtk_marshal_NONE__NONE,
 				GTK_TYPE_NONE, 0);
@@ -2939,9 +2940,9 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [URL_REQUESTED] =
 		gtk_signal_new ("url_requested",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, url_requested),
-				gtk_marshal_NONE__POINTER_POINTER,
+				cschtml_VOID__STRING_POINTER,
 				GTK_TYPE_NONE, 2,
 				GTK_TYPE_STRING,
 				GTK_TYPE_POINTER);
@@ -2949,7 +2950,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [DRAW_PENDING] =
 		gtk_signal_new ("draw_pending",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, draw_pending),
 				gtk_marshal_NONE__NONE,
 				GTK_TYPE_NONE, 0);
@@ -2957,7 +2958,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [REDIRECT] =
 		gtk_signal_new ("redirect",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, redirect),
 				gtk_marshal_NONE__POINTER_INT,
 				GTK_TYPE_NONE, 2,
@@ -2967,7 +2968,7 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [SUBMIT] =
 		gtk_signal_new ("submit",
 				GTK_RUN_FIRST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, submit),
 				gtk_marshal_NONE__POINTER_POINTER_POINTER,
 				GTK_TYPE_NONE, 3,
@@ -2978,13 +2979,11 @@ html_engine_class_init (HTMLEngineClass *klass)
 	signals [OBJECT_REQUESTED] =
 		gtk_signal_new ("object_requested",
 				GTK_RUN_LAST,
-				object_class->type,
+				G_TYPE_FROM_CLASS (object_class),
 				GTK_SIGNAL_OFFSET (HTMLEngineClass, object_requested),
 				gtk_marshal_BOOL__POINTER,
 				GTK_TYPE_BOOL, 1,
 				GTK_TYPE_POINTER);
-
-	gtk_object_class_add_signals (object_class, signals, LAST_SIGNAL);
 
 	object_class->destroy = html_engine_destroy;
 
@@ -3085,7 +3084,9 @@ html_engine_realize (HTMLEngine *e,
 
 	g_return_if_fail (e != NULL);
 	g_return_if_fail (window != NULL);
-	g_return_if_fail (e->window == NULL);
+
+	if (e->window != NULL)
+	  g_object_unref (e->window);
 
 	e->window = window;
 
