@@ -81,19 +81,49 @@ begin
    Set_Child_Ipadding (Variable_Editor.Hbuttonbox2, 7, 0);
    Pack_Start (Variable_Editor.Vbox31, Variable_Editor.Hbuttonbox2, False, False, 0);
 
-   Gtk_New (Variable_Editor.Add_Button, -"Add...");
+   Gtk_New (Variable_Editor.Add_Button);
    Set_Flags (Variable_Editor.Add_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Variable_Editor.Add_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Add_Clicked'Access), Variable_Editor);
    Add (Variable_Editor.Hbuttonbox2, Variable_Editor.Add_Button);
 
-   Gtk_New (Variable_Editor.Close_Button, -"Close");
+   Gtk_New_Hbox (Variable_Editor.Hbox4, False, 0);
+   Add (Variable_Editor.Add_Button, Variable_Editor.Hbox4);
+
+   Variable_Editor.Pixmap1 := Create_Pixmap ("stock_add_xpm", Variable_Editor);
+   Set_Alignment (Variable_Editor.Pixmap1, 0.5, 0.5);
+   Set_Padding (Variable_Editor.Pixmap1, 0, 0);
+   Pack_Start (Variable_Editor.Hbox4, Variable_Editor.Pixmap1, False, False, 0);
+
+   Gtk_New (Variable_Editor.Label57, -("Add..."));
+   Set_Alignment (Variable_Editor.Label57, 0.5, 0.5);
+   Set_Padding (Variable_Editor.Label57, 0, 0);
+   Set_Justify (Variable_Editor.Label57, Justify_Center);
+   Set_Line_Wrap (Variable_Editor.Label57, False);
+   Pack_Start (Variable_Editor.Hbox4, Variable_Editor.Label57, True, True, 0);
+
+   Gtk_New (Variable_Editor.Close_Button);
    Set_Flags (Variable_Editor.Close_Button, Can_Default);
    Widget_Callback.Object_Connect
      (Variable_Editor.Close_Button, "clicked",
       Widget_Callback.To_Marshaller (On_Close_Clicked'Access), Variable_Editor);
    Add (Variable_Editor.Hbuttonbox2, Variable_Editor.Close_Button);
+
+   Gtk_New_Hbox (Variable_Editor.Hbox5, False, 0);
+   Add (Variable_Editor.Close_Button, Variable_Editor.Hbox5);
+
+   Variable_Editor.Pixmap2 := Create_Pixmap ("stock_close_xpm", Variable_Editor);
+   Set_Alignment (Variable_Editor.Pixmap2, 0.5, 0.5);
+   Set_Padding (Variable_Editor.Pixmap2, 0, 0);
+   Pack_Start (Variable_Editor.Hbox5, Variable_Editor.Pixmap2, False, False, 0);
+
+   Gtk_New (Variable_Editor.Label58, -("Close"));
+   Set_Alignment (Variable_Editor.Label58, 0.5, 0.5);
+   Set_Padding (Variable_Editor.Label58, 0, 0);
+   Set_Justify (Variable_Editor.Label58, Justify_Center);
+   Set_Line_Wrap (Variable_Editor.Label58, False);
+   Pack_Start (Variable_Editor.Hbox5, Variable_Editor.Label58, True, True, 0);
 
 end Initialize;
 
