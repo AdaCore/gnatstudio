@@ -315,13 +315,47 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Tab_Width), -"Editor:General");
 
-      Default_Keyword_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Keyword-Color",
-         Nick    => -"Keyword color",
-         Blurb   => -"Color for highlighting keywords",
-         Default => "black"));
+      Source_Editor_Font := Param_Spec_Font (Gnew_Font
+        (Name    => "Src-Editor-Default-Font",
+         Default => "Courier 10",
+         Blurb   => -"The font used in the source editor",
+         Nick    => -"Default font"));
       Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Keyword_Color),
+        (Kernel.Preferences, Param_Spec (Source_Editor_Font),
+         -"Editor:Fonts & Colors");
+      GVD.Preferences.Fixed_Font := Source_Editor_Font;
+
+      Keywords_Style := Gnew_Style
+        (Name    => "Src-Editor-Keywords-Style",
+         Nick    => -"Keywords",
+         Blurb   => -"Style to use when displaying keywords",
+         Default_Font => "Courier Bold 10",
+         Default_Fg   => "black",
+         Default_Bg   => "white");
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Keywords_Style),
+         -"Editor:Fonts & Colors");
+
+      Comments_Style := Gnew_Style
+        (Name    => "Src-Editor-Comments-Style",
+         Nick    => -"Comments",
+         Blurb   => -"Style to use when displaying comments",
+         Default_Font => "Courier Medium Oblique 10",
+         Default_Fg   => "blue",
+         Default_Bg   => "white");
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Comments_Style),
+         -"Editor:Fonts & Colors");
+
+      Strings_Style := Gnew_Style
+        (Name    => "Src-Editor-Strings-Style",
+         Nick    => -"Strings",
+         Blurb   => -"Style to use when displaying strings",
+         Default_Font => "Courier 10",
+         Default_Fg   => "brown",
+         Default_Bg   => "white");
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Strings_Style),
          -"Editor:Fonts & Colors");
 
       Current_Line_Color := Param_Spec_Color (Gnew_Color
@@ -332,24 +366,6 @@ package body Glide_Kernel.Preferences is
       Register_Property
         (Kernel.Preferences, Param_Spec (Current_Line_Color),
            -"Editor:Fonts & Colors");
-
-      Default_Comment_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-Comment-Color",
-         Default => "blue",
-         Blurb   => -"Color for highlighting comments",
-         Nick    => -"Comment color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_Comment_Color),
-         -"Editor:Fonts & Colors");
-
-      Default_String_Color := Param_Spec_Color (Gnew_Color
-        (Name    => "Src-Editor-String-Color",
-         Default => "brown",
-         Blurb   => -"Color for highlighting strings",
-         Nick    => -"String color"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Default_String_Color),
-         -"Editor:Fonts & Colors");
 
       Default_HL_Line_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Highlight-Line-Color",
@@ -368,43 +384,6 @@ package body Glide_Kernel.Preferences is
          Nick    => -"Region highlighting color"));
       Register_Property
         (Kernel.Preferences, Param_Spec (Default_HL_Region_Color),
-         -"Editor:Fonts & Colors");
-
-      Source_Editor_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Default-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used in the source editor",
-         Nick    => -"Default font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Source_Editor_Font),
-         -"Editor:Fonts & Colors");
-      GVD.Preferences.Fixed_Font := Source_Editor_Font;
-
-      Keyword_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Keyword-Font",
-         Default => "Courier Bold 10",
-         Blurb   => -"The font used to display keywords",
-         Nick    => -"Keyword font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Keyword_Font),
-         -"Editor:Fonts & Colors");
-
-      Comment_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-Comment-Font",
-         Default => "Courier Medium Oblique 10",
-         Blurb   => -"The font used to display comments",
-         Nick    => -"Comment font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (Comment_Font),
-         -"Editor:Fonts & Colors");
-
-      String_Font := Param_Spec_Font (Gnew_Font
-        (Name    => "Src-Editor-String-Font",
-         Default => "Courier 10",
-         Blurb   => -"The font used to display strings",
-         Nick    => -"String font"));
-      Register_Property
-        (Kernel.Preferences, Param_Spec (String_Font),
          -"Editor:Fonts & Colors");
 
       -- Editor:Languages --
@@ -962,6 +941,27 @@ package body Glide_Kernel.Preferences is
    begin
       Get_Pref (Kernel.Preferences, Pref, Modifier, Key);
    end Get_Pref;
+
+   function Get_Pref_Font
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description is
+   begin
+      return Get_Pref_Font (Kernel.Preferences, Pref);
+   end Get_Pref_Font;
+
+   function Get_Pref_Fg
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color is
+   begin
+      return Get_Pref_Fg (Kernel.Preferences, Pref);
+   end Get_Pref_Fg;
+
+   function Get_Pref_Bg
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color is
+   begin
+      return Get_Pref_Bg (Kernel.Preferences, Pref);
+   end Get_Pref_Bg;
 
    --------------
    -- Set_Pref --

@@ -75,6 +75,15 @@ package Glide_Kernel.Preferences is
       Pref     : Param_Spec_Key;
       Modifier : out Gdk.Types.Gdk_Modifier_Type;
       Key      : out Gdk.Types.Gdk_Key_Type);
+   function Get_Pref_Font
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Pango.Font.Pango_Font_Description;
+   function Get_Pref_Fg
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
+   function Get_Pref_Bg
+     (Kernel   : access Kernel_Handle_Record'Class;
+      Pref     : Param_Spec_Style) return Gdk.Color.Gdk_Color;
    pragma Inline (Get_Pref);
    --  See Default_Preferences.Get_Pref
 
@@ -142,9 +151,11 @@ package Glide_Kernel.Preferences is
    File_View_Shows_Only_Project : Param_Spec_Boolean;
 
    -- Source Editor --
-   Default_Keyword_Color     : Param_Spec_Color;
-   Default_Comment_Color     : Param_Spec_Color;
-   Default_String_Color      : Param_Spec_Color;
+   Keywords_Style            : Param_Spec_Style;
+   Comments_Style            : Param_Spec_Style;
+   Strings_Style             : Param_Spec_Style;
+   Source_Editor_Font        : Param_Spec_Font;
+
    Default_HL_Line_Color     : Param_Spec_Color;
    Default_HL_Region_Color   : Param_Spec_Color;
    Current_Line_Color        : Param_Spec_Color;
@@ -152,10 +163,6 @@ package Glide_Kernel.Preferences is
    Strip_Blanks              : Param_Spec_Boolean;
    Line_Terminator           : Param_Spec_Enum;
    Display_Line_Numbers      : Param_Spec_Boolean;
-   Source_Editor_Font        : Param_Spec_Font;
-   Keyword_Font              : Param_Spec_Font;
-   Comment_Font              : Param_Spec_Font;
-   String_Font               : Param_Spec_Font;
    Display_Tooltip           : Param_Spec_Boolean;
    Highlight_Delimiters      : Param_Spec_Boolean;
    Periodic_Save             : Param_Spec_Int;
