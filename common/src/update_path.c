@@ -22,9 +22,7 @@
 /* Dummy version of update_path (needed by osint.adb) for GPS */
 
 char *
-update_path (path, key)
-     char *path;
-     char *key;
+update_path (char *path, char *key)
 {
   return path;
 }
