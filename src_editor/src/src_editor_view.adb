@@ -29,6 +29,7 @@ with Gdk.Font;                    use Gdk.Font;
 with Gdk.GC;                      use Gdk.GC;
 with Gdk.Window;                  use Gdk.Window;
 with Gdk.Pixbuf;                  use Gdk.Pixbuf;
+with Gdk.Pixmap;                  use Gdk.Pixmap;
 with Gdk.Rectangle;               use Gdk.Rectangle;
 with Gdk.Types;                   use Gdk.Types;
 with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
@@ -1228,10 +1229,14 @@ package body Src_Editor_View is
       X, Y, Width, Height, Depth : Gint;
       Dummy_Boolean              : Boolean;
       Data                       : Line_Info_Width;
+
+      Buffer                     : Gdk.Pixmap.Gdk_Pixmap;
    begin
       Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+
+      Gdk_New (Buffer, Left_Window, Width, Height);
       Draw_Rectangle
-        (Left_Window, View.Side_Background_GC, True, X, Y, Width, Height);
+        (Buffer, View.Side_Background_GC, True, X, Y, Width, Height);
 
       Window_To_Buffer_Coords
         (View, Text_Window_Left,
@@ -1243,6 +1248,8 @@ package body Src_Editor_View is
          Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
 
       Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+
+
       Current_Line := View.Top_Line;
 
       Drawing_Loop :
@@ -1272,7 +1279,7 @@ package body Src_Editor_View is
             if Data.Info /= null then
                if Data.Info.Text /= null then
                   Draw_Text
-                    (Drawable => Left_Window,
+                    (Drawable => Buffer,
                      Font => View.Font,
                      Gc => View.Side_Column_GC,
                      X =>  Gint (View.Line_Info (J).Starting_X
@@ -1286,7 +1293,7 @@ package body Src_Editor_View is
                if Data.Info.Image /= Null_Pixbuf then
                   Render_To_Drawable
                     (Pixbuf   => Data.Info.Image,
-                     Drawable => Left_Window,
+                     Drawable => Buffer,
                      Gc       => View.Side_Column_GC,
                      Src_X    => 0,
                      Src_Y    => 0,
@@ -1307,6 +1314,15 @@ package body Src_Editor_View is
 
          Current_Line := Natural (Get_Line (Iter)) + 1;
       end loop Drawing_Loop;
+
+      Draw_Pixmap
+        (Drawable => Left_Window,
+         Src      => Buffer,
+         Gc       => View.Side_Column_GC,
+         Xsrc     => 0,
+         Ysrc     => 0,
+         Xdest    => 0,
+         Ydest    => 0);
    end Redraw_Columns;
 
    --------------------------
