@@ -251,6 +251,10 @@ package body Generic_List is
          L1.Last.all := Start_Node;
          Start_Node.Next := null;
       else
+         Free (Next_Node.Element.all);
+         Free_Element (Next_Node.Element);
+         Free_Node (Next_Node);
+
          Start_Node.Next := Next_End;
       end if;
    end Remove_Nodes;
