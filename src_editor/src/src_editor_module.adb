@@ -460,7 +460,9 @@ package body Src_Editor_Module is
    ------------------
 
    procedure On_Open_File
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
    begin
       declare
          Filename : constant String := Select_File (Title => -"Open File");
@@ -484,6 +486,7 @@ package body Src_Editor_Module is
    procedure On_New_File
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Editor : Source_Editor_Box;
    begin
       Editor := Open_File (Kernel, File => "");
@@ -498,7 +501,9 @@ package body Src_Editor_Module is
    -------------
 
    procedure On_Undo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
    begin
       null;
 
@@ -512,7 +517,9 @@ package body Src_Editor_Module is
    -------------
 
    procedure On_Redo
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget, Kernel);
    begin
       null;
 
@@ -528,6 +535,7 @@ package body Src_Editor_Module is
    procedure On_Save
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Success : Boolean;
    begin
       Save_To_File (Kernel, Success => Success);
@@ -544,6 +552,7 @@ package body Src_Editor_Module is
    procedure On_Save_As
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Success : Boolean;
    begin
       declare
@@ -564,6 +573,7 @@ package body Src_Editor_Module is
    procedure On_Cut
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       if Source /= null then
@@ -582,6 +592,7 @@ package body Src_Editor_Module is
    procedure On_Copy
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       if Source /= null then
@@ -600,6 +611,7 @@ package body Src_Editor_Module is
    procedure On_Paste
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       if Source /= null then
@@ -618,6 +630,7 @@ package body Src_Editor_Module is
    procedure On_Select_All
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Source : constant Source_Editor_Box := Find_Current_Editor (Kernel);
    begin
       if Source /= null then
@@ -634,7 +647,9 @@ package body Src_Editor_Module is
    -----------------
 
    procedure On_New_View
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
    begin
       New_View (Kernel);
 
@@ -648,7 +663,9 @@ package body Src_Editor_Module is
    ---------------------------------
 
    procedure On_Goto_Declaration_Or_Body
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle) is
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
    begin
       if Get_Editor_Filename (Kernel) /= "" then
          Push_State (Kernel, Busy);
@@ -669,6 +686,7 @@ package body Src_Editor_Module is
    procedure On_Generate_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Success : Boolean;
       Title   : constant String := Get_Editor_Filename (Kernel);
 
@@ -745,6 +763,7 @@ package body Src_Editor_Module is
    procedure On_Pretty_Print
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
+      pragma Unreferenced (Widget);
       Title : constant String := Get_Editor_Filename (Kernel);
    begin
       Push_State (Kernel, Processing);
@@ -762,6 +781,7 @@ package body Src_Editor_Module is
       Data      : GValue_Array;
       Mode      : Mime_Mode := Read_Write) return Boolean
    is
+      pragma Unreferenced (Mode);
       Edit : Source_Editor_Box;
       Id : Idle_Handler_Id;
    begin
@@ -805,6 +825,7 @@ package body Src_Editor_Module is
      (Widget : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
+      pragma Unreferenced (Widget);
       File : File_Selection_Context_Access := File_Selection_Context_Access
         (Context);
    begin
@@ -826,6 +847,7 @@ package body Src_Editor_Module is
       Context : access Selection_Context'Class;
       Menu    : access Gtk.Menu.Gtk_Menu_Record'Class)
    is
+      pragma Unreferenced (Object);
       File  : File_Selection_Context_Access;
       Mitem : Gtk_Menu_Item;
    begin
