@@ -12,7 +12,7 @@ Known Problems fixed in GPS 2.0.2
   Problem:    If the body of a subprogram is defined through a separate entity,
               GPS doesn't go to the actual body of the entity, but only to the
               stub that contains the "is separate".
-  Workaround: Compile explicitely the file that contains the separate body,
+  Workaround: Compile explicitly the file that contains the separate body,
               with shift-F4, or use "Find all references" to find the reference
               to the real body.
 
