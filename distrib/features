@@ -63,3 +63,6 @@ New features in GPS 2.0.0
 
 - Improvements in handling of key bindings in floating windows
 
+- Add support for global ChangeLog file. This file can be used to record
+  revision history, GPS will extract, the revision history for a file to
+  commit, from this file if present.
