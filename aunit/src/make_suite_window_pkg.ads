@@ -19,14 +19,9 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Label; use Gtk.Label;
 with Gtk.GEntry; use Gtk.GEntry;
-with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Clist; use Gtk.Clist;
-with Gtk.Vbutton_Box; use Gtk.Vbutton_Box;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 with GtkAda.File_Selector; use GtkAda.File_Selector;

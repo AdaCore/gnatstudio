@@ -19,11 +19,8 @@
 -----------------------------------------------------------------------
 
 with Gtk.Window; use Gtk.Window;
-with Gtk.Box; use Gtk.Box;
-with Gtk.Label; use Gtk.Label;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
-with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
 with Gtk.Status_Bar; use Gtk.Status_Bar;
 
 with GNAT.OS_Lib; use GNAT.OS_Lib;

@@ -19,12 +19,18 @@
 -----------------------------------------------------------------------
 
 with Gtk; use Gtk;
-with Gtk.Widget;      use Gtk.Widget;
-with Gtk.Enums;       use Gtk.Enums;
-with Gtk.Clist;       use Gtk.Clist;
+with Gtk.Widget;          use Gtk.Widget;
+with Gtk.Enums;           use Gtk.Enums;
+with Gtk.Clist;           use Gtk.Clist;
+with Gtk.Box;             use Gtk.Box;
+with Gtk.Label;           use Gtk.Label;
+with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
+with Gtk.Vbutton_Box;     use Gtk.Vbutton_Box;
+with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
+
 with Gtkada.Handlers; use Gtkada.Handlers;
 with Callbacks_Aunit_Gui; use Callbacks_Aunit_Gui;
-with Aunit_Gui_Intl; use Aunit_Gui_Intl;
+with Glide_Intl; use Glide_Intl;
 with Make_Suite_Window_Pkg.Callbacks; use Make_Suite_Window_Pkg.Callbacks;
 
 package body Make_Suite_Window_Pkg is
