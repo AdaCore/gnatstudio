@@ -129,6 +129,23 @@ package body Language_Handlers.Glide is
       end if;
    end Get_Language_From_File;
 
+   --------------------------
+   -- Get_Language_By_Name --
+   --------------------------
+
+   function Get_Language_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Language.Language_Access
+   is
+      Index : constant Natural := Get_Index_From_Language (Handler, Name);
+   begin
+      if Index = 0 then
+         return Unknown_Lang;
+      else
+         return Handler.Languages (Index).Lang;
+      end if;
+   end Get_Language_By_Name;
+
    -------------------------
    -- Register_LI_Handler --
    -------------------------

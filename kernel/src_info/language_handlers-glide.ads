@@ -121,6 +121,10 @@ package Language_Handlers.Glide is
       Source_Filename : String) return String;
    --  Return "" if the language is unknown.
 
+   function Get_Language_By_Name
+     (Handler : access Glide_Language_Handler_Record;
+      Name    : String) return Language.Language_Access;
+
    procedure Register_Language
      (Handler : access Glide_Language_Handler_Record;
       Name    : String;

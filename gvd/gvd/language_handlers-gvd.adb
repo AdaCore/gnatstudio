@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2003                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -19,12 +19,14 @@
 -----------------------------------------------------------------------
 
 with Language;                use Language;
+with Language.Unknown;        use Language.Unknown;
 with Basic_Types;             use Basic_Types;
 with GNAT.Regpat;             use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
 with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
+with String_Utils;            use String_Utils;
 
 package body Language_Handlers.GVD is
 
@@ -115,6 +117,29 @@ package body Language_Handlers.GVD is
 
       return "";
    end Get_Language_From_File;
+
+   --------------------------
+   -- Get_Language_By_Name --
+   --------------------------
+
+   function Get_Language_By_Name
+     (Handler : access GVD_Language_Handler_Record;
+      Name    : String) return Language.Language_Access
+   is
+   begin
+      if Handler.Languages /= null then
+         for Index in Handler.Languages'Range loop
+            if Handler.Languages (Index).Language_Name /= null
+              and then Case_Insensitive_Equal
+              (Handler.Languages (Index).Language_Name.all, Name)
+            then
+               return Handler.Languages (Index).Lang;
+            end if;
+         end loop;
+      end if;
+
+      return Unknown_Lang;
+   end Get_Language_By_Name;
 
    ---------------------
    -- Known_Languages --

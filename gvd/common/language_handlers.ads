@@ -45,6 +45,11 @@ package Language_Handlers is
    --  Same as above, but return the language name in a canonical form.
    --  The empty string is returned if the language wasn't recognized.
 
+   function Get_Language_By_Name
+     (Handler : access Language_Handler_Record;
+      Name    : String) return Language.Language_Access is abstract;
+   --  Return the language based on its name
+
    ------------------
    -- Registration --
    ------------------
