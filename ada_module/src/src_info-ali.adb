@@ -141,11 +141,6 @@ package body Src_Info.ALI is
    --  An exception raised when an internal error is detected. It should not
    --  be propagated outside of this package.
 
-   procedure Destroy (T : in out Sdep_To_Sfile_Table);
-   pragma Warnings (Off, Destroy);
-   --  Free the memory allocated for the given table.
-   --  ??? Not used for now
-
    function Char_To_E_Kind (C : Character) return E_Kind;
    pragma Inline (Char_To_E_Kind);
    --  Translate the given character into the associated E_Kind value.
@@ -174,7 +169,7 @@ package body Src_Info.ALI is
    procedure Get_Source_File
      (Handler          : ALI_Handler;
       New_ALI          : ALIs_Record;
-      Source_Filename  : File_Name_Type;
+      Source_Filename  : Virtual_File;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
       File             : out Source_File);
@@ -297,7 +292,7 @@ package body Src_Info.ALI is
 
    procedure Chain_Declaration_For_Separate
      (New_LI_File     : LI_File_Ptr;
-      Source_Filename : String;
+      Source_Filename : Virtual_File;
       Decl_Info       : E_Declaration_Info);
    --  Inserts Decl_Info at the head of the list of declarations of the
    --  separate unit of New_LI_File whose name is Unit_Name.
@@ -368,19 +363,6 @@ package body Src_Info.ALI is
    --  intended source file, this is just the closest ALI file found on the
    --  path.
    --  The empty string is returned if nothing was found.
-
-   -------------
-   -- Destroy --
-   -------------
-
-   procedure Destroy (T : in out Sdep_To_Sfile_Table) is
-   begin
-      for Sdep_Index in T'Range loop
-         if T (Sdep_Index) /= No_Source_File then
-            Destroy (T (Sdep_Index));
-         end if;
-      end loop;
-   end Destroy;
 
    -------------------------
    -- Get_Source_Filename --
@@ -582,13 +564,11 @@ package body Src_Info.ALI is
    procedure Get_Source_File
      (Handler          : ALI_Handler;
       New_ALI          : ALIs_Record;
-      Source_Filename  : File_Name_Type;
+      Source_Filename  : Virtual_File;
       Subunit_Name     : Name_Id := No_Name;
       Project          : Project_Type;
       File             : out Source_File)
    is
-      Source : constant Virtual_File := Create_From_Base
-        (Locale_To_UTF8 (Get_String (Source_Filename)));
       Prj : Project_Type;
    begin
       --  Search algorithm:
@@ -639,17 +619,17 @@ package body Src_Info.ALI is
       if Subunit_Name = No_Name then
          --  ??? Do we really need to find another project
          Prj := Get_Project_From_File
-           (Project_Registry'Class (Get_Registry (Project)), Source);
+           (Project_Registry'Class (Get_Registry (Project)), Source_Filename);
 
          if Prj = No_Project then
             --  ??? We have a file that doesn't belong the an project.
             Prj := Project;
          end if;
 
-         Get_Unit_Source_File (Handler, Source, Prj, File);
+         Get_Unit_Source_File (Handler, Source_Filename, Prj, File);
       else
          Get_Subunit_Source_File
-           (Handler, Source,
+           (Handler, Source_Filename,
             Locale_To_UTF8 (Get_String (New_ALI.Sfile)),
             Project,
             Subunit_Name, File);
@@ -702,7 +682,7 @@ package body Src_Info.ALI is
       File :=
         (LI              => Get (Handler.Table.all, ALI_Filename),
          Part            => Part,
-         Source_Filename => null);
+         Source_Filename => Source_Filename);
 
       --  If there is not LI_File_Ptr yet for the given ALI_Filename then
       --  create a stub
@@ -759,7 +739,6 @@ package body Src_Info.ALI is
       Subunit_Name     : Name_Id;
       File             : out Source_File)
    is
-      Base : constant String := Base_Name (Source_Filename);
       ALI_Filename : constant String := Get_ALI_Filename (Sig_Base_Name);
       --   ??? Could we use Sname
       Sep          : File_Info_Ptr_List;
@@ -768,7 +747,7 @@ package body Src_Info.ALI is
       File :=
          (LI              => Get (Handler.Table.all, Base_Name (ALI_Filename)),
           Part            => Unit_Separate,
-          Source_Filename => new String'(Base));
+          Source_Filename => Source_Filename);
       --  ??? No real need to duplicate the string above, since we know with
       --  the current implementation of VFS that Base will never be freed. But
       --  this is more secure, and the implementation of ALI tables will
@@ -797,7 +776,6 @@ package body Src_Info.ALI is
          end;
 
          if File.LI = null then
-            Destroy (File);
             File := No_Source_File;
             raise ALI_Internal_Error;
          end if;
@@ -808,7 +786,7 @@ package body Src_Info.ALI is
       Sep := File.LI.LI.Separate_Info;
 
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = Base;
+         exit when Sep.Value.Source_Filename = Source_Filename;
          Sep := Sep.Next;
       end loop;
 
@@ -822,7 +800,6 @@ package body Src_Info.ALI is
 
    exception
       when others =>
-         Destroy (File);
          File := No_Source_File;
          raise;
    end Get_Subunit_Source_File;
@@ -911,9 +888,10 @@ package body Src_Info.ALI is
    begin
       Create_File_Info
         (Fi_Ptr         => New_File_Info,
-         Full_Filename  =>
-           Create (Full_Filename =>
-                     Locale_To_UTF8 (Get_String (Current_Unit.Sfile))),
+         Full_Filename  => Create
+           (Base_Name => Locale_To_UTF8 (Get_String (Current_Unit.Sfile)),
+            Project => New_LI_File.LI.Project,
+            Use_Object_Path => False),
          Unit_Name  => Strip_Unit_Part
            (Locale_To_UTF8 (Get_String (Current_Unit.Uname))),
          Set_Time_Stamp => False);
@@ -966,14 +944,14 @@ package body Src_Info.ALI is
             Sfiles, Is_Separate => True);
 
       elsif New_LI_File.LI.Spec_Info /= null
-        and then New_LI_File.LI.Spec_Info.Source_Filename.all =
+        and then Base_Name (New_LI_File.LI.Spec_Info.Source_Filename) =
                    Locale_To_UTF8 (Get_String (Dep.Sfile))
       then
          Process_Sdep_As_Self
            (New_LI_File, Id, New_LI_File.LI.Spec_Info, Sfiles);
 
       elsif New_LI_File.LI.Body_Info /= null
-        and then New_LI_File.LI.Body_Info.Source_Filename.all =
+        and then Base_Name (New_LI_File.LI.Body_Info.Source_Filename) =
                    Locale_To_UTF8 (Get_String (Dep.Sfile))
       then
          Process_Sdep_As_Self
@@ -1020,7 +998,9 @@ package body Src_Info.ALI is
       --  Save the Source_File associated to this Sdep for later use.
 
       Sfiles (Id) :=
-        (LI => New_LI_File, Source_Filename => null, Part => Part);
+        (LI              => New_LI_File,
+         Source_Filename => Finfo.Source_Filename,
+         Part            => Part);
    end Process_Sdep_As_Self;
 
    ------------------------------
@@ -1040,18 +1020,22 @@ package body Src_Info.ALI is
       New_Dep : Dependency_File_Info;
       Sfile   : Source_File;
 
+      Source : constant Virtual_File := Create
+        (Base_Name       => Locale_To_UTF8 (Get_String (Dep.Sfile)),
+         Project         => Project,
+         Use_Object_Path => False);
+
    begin
       Get_Source_File
-        (Handler, New_ALI, Dep.Sfile, Dep.Subunit_Name,
-         Project, Sfile);
+        (Handler, New_ALI, Source, Dep.Subunit_Name, Project, Sfile);
       Assert
-        (Me, Get_File_Info (Sfile).Source_Filename.all =
+        (Me, Base_Name (Get_File_Info (Sfile).Source_Filename) =
            Locale_To_UTF8 (Get_String (Dep.Sfile)),
          "Process_Sdep_As_External, invalid source file " &
-         Get_File_Info (Sfile).Source_Filename.all & ' '
+         Full_Name (Get_File_Info (Sfile).Source_Filename).all & ' '
          & Get_String (Dep.Sfile));
       New_Dep :=
-        (File              => Copy (Sfile),
+        (File              => Sfile,
          Dep_Info          => (Depends_From_Spec => False,
                                Depends_From_Body => False),
          Declarations      => null);
@@ -1126,18 +1110,18 @@ package body Src_Info.ALI is
 
       if New_LI_File.LI.Spec_Info /= null
         and then
-          (New_LI_File.LI.Spec_Info.Source_Filename.all = Source_Base
+          (Base_Name (New_LI_File.LI.Spec_Info.Source_Filename) = Source_Base
            or else
-             New_LI_File.LI.Spec_Info.Source_Filename.all = Krunch_Name)
+           Base_Name (New_LI_File.LI.Spec_Info.Source_Filename) = Krunch_Name)
       then
          return;
       end if;
 
       if New_LI_File.LI.Body_Info /= null
         and then
-          (New_LI_File.LI.Body_Info.Source_Filename.all = Source_Base
+          (Base_Name (New_LI_File.LI.Body_Info.Source_Filename) = Source_Base
            or else
-             New_LI_File.LI.Body_Info.Source_Filename.all = Krunch_Name)
+           Base_Name (New_LI_File.LI.Body_Info.Source_Filename) = Krunch_Name)
       then
          return;
       end if;
@@ -1145,7 +1129,7 @@ package body Src_Info.ALI is
       Current_Sep := New_LI_File.LI.Separate_Info;
 
       while Current_Sep /= null loop
-         if Current_Sep.Value.Source_Filename.all = Source_Base then
+         if Base_Name (Current_Sep.Value.Source_Filename) = Source_Base then
             return;
          end if;
 
@@ -1161,8 +1145,8 @@ package body Src_Info.ALI is
       while Current_Dep /= null loop
          Finfo := Get_File_Info (Current_Dep.Value.File);
 
-         if Finfo.Source_Filename.all = Source_Base
-           or else Finfo.Source_Filename.all = Krunch_Name
+         if Base_Name (Finfo.Source_Filename) = Source_Base
+           or else Base_Name (Finfo.Source_Filename) = Krunch_Name
          then
             --  Update the unit name if not present
 
@@ -1227,20 +1211,20 @@ package body Src_Info.ALI is
 
    procedure Chain_Declaration_For_Separate
      (New_LI_File     : LI_File_Ptr;
-      Source_Filename : String;
+      Source_Filename : Virtual_File;
       Decl_Info       : E_Declaration_Info)
    is
       Sep : File_Info_Ptr_List := New_LI_File.LI.Separate_Info;
    begin
       while Sep /= null loop
-         exit when Sep.Value.Source_Filename.all = Source_Filename;
+         exit when Sep.Value.Source_Filename = Source_Filename;
          Sep := Sep.Next;
       end loop;
 
       if Sep = null then
          --  Failed to find the separate, this is a bug
          Trace (Me, "Chain_Declaration_For_Separate: "
-                  & Source_Filename & " not found");
+                  & Full_Name (Source_Filename).all & " not found");
          raise ALI_Internal_Error;
       end if;
 
@@ -1310,7 +1294,7 @@ package body Src_Info.ALI is
       end if;
 
       Decl.Location :=
-        (File   => Copy (Sfile),
+        (File   => Sfile,
          Line   => Positive (Xref_Ent.Line),
          Column => Col);
       Decl.Kind := Char_To_E_Kind (Xref_Ent.Etype);
@@ -1324,7 +1308,7 @@ package body Src_Info.ALI is
       if Xref_Ent.Tref_File_Num /= No_Sdep_Id then
          begin
             Decl.Parent_Location := new File_Location_Node'
-              (Value => (File   => Copy (Sfiles (Xref_Ent.Tref_File_Num)),
+              (Value => (File   => Sfiles (Xref_Ent.Tref_File_Num),
                          Line   => Positive (Xref_Ent.Tref_Line),
                          Column => Positive (Xref_Ent.Tref_Col)),
                Kind  => Tref_Kind_To_Parent_Kind (Xref_Ent.Tref),
@@ -1391,8 +1375,8 @@ package body Src_Info.ALI is
                         Decl.Rename :=
                           (Line  => Positive (Xref_Entity.Table (Entity).Line),
                            Column => Natural (Xref_Entity.Table (Entity).Col),
-                           File => Copy
-                             (Sfiles (Xref_Section.Table (Sect).File_Num)));
+                           File =>
+                             Sfiles (Xref_Section.Table (Sect).File_Num));
                         exit Sect_Loop;
                      end if;
                   end loop;
@@ -1435,7 +1419,7 @@ package body Src_Info.ALI is
                end if;
 
                E_Ref.Location :=
-                 (File   => Copy (Current_Sfile),
+                 (File   => Current_Sfile,
                   Line   => Positive (Current_Xref.Line),
                   Column => Natural (Current_Xref.Col));
 
@@ -1461,7 +1445,7 @@ package body Src_Info.ALI is
                      Decl.End_Of_Scope :=
                        (Kind     => E_Ref.Kind,
                         Location =>
-                          (File   => Copy (Current_Sfile),
+                          (File   => Current_Sfile,
                            Line   => Positive (Current_Xref.Line),
                            Column => Natural (Current_Xref.Col)));
 
@@ -1530,7 +1514,7 @@ package body Src_Info.ALI is
 
             when Unit_Separate =>
                Chain_Declaration_For_Separate
-                 (New_LI_File, Sfile.Source_Filename.all, Decl_Info);
+                 (New_LI_File, Sfile.Source_Filename, Decl_Info);
          end case;
 
       else
@@ -1645,8 +1629,6 @@ package body Src_Info.ALI is
 
       Process_Withs (New_LI_File, New_ALI, Project);
       Process_Xrefs (New_LI_File, New_ALI, Sfiles);
-
-      Destroy (Sfiles);
 
       if not LI_File_Is_New then
          Destroy (LI_File_Copy.LI);
@@ -1957,18 +1939,23 @@ package body Src_Info.ALI is
 
                if File /= No_LI_File then
                   if (File.LI.Spec_Info /= null
-                      and then File.LI.Spec_Info.Source_Filename.all = Base)
+                      and then File.LI.Spec_Info.Source_Filename =
+                        Source_Filename)
                     or else
                       (File.LI.Body_Info /= null
-                       and then File.LI.Body_Info.Source_Filename.all = Base)
+                       and then File.LI.Body_Info.Source_Filename =
+                         Source_Filename)
                   then
                      return;
                   end if;
 
                   F := File.LI.Separate_Info;
                   while F /= null loop
+                     Trace (Me, Full_Name (F.Value.Source_Filename).all
+                            & " "
+                            & Full_Name (Source_Filename).all);
                      if F.Value /= null
-                       and then F.Value.Source_Filename.all = Base
+                       and then F.Value.Source_Filename = Source_Filename
                      then
                         return;
                      end if;
