@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Generic_List;
+with String_List;
 with Gtk.Widget;
 
 package VCS is
@@ -43,11 +44,6 @@ package VCS is
 
    procedure Free (Ref : access VCS_Record);
    --  ???
-
-   procedure Free (S : in out String);
-   --  ???
-
-   package String_List is new Generic_List (String, Free => Free);
 
    type File_Status is
      (Unknown,

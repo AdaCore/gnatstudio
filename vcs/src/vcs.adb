@@ -61,15 +61,6 @@ package body VCS is
    -- Free --
    ----------
 
-   procedure Free (S : in out String) is
-   begin
-      null;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
    procedure Free (F : in out File_Status_Record) is
       use String_List;
       use File_Status_List;
