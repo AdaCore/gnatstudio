@@ -36,10 +36,6 @@ package body Process_Proxies is
    Timeout_Ms : constant := 50;
    --  Timeout in milliseconds for the low level calls to expect
 
-   procedure Free (Post_Processes : in out Post_Process_Access);
-   --  Free the list of post_processes pointed to by
-   --  Post_Processes.
-
    ----------
    -- Free --
    ----------
@@ -56,7 +52,6 @@ package body Process_Proxies is
    begin
       Free_Internal (Proxy.Descriptor);
       Free_Internal (Proxy.Command_In_Process);
-      Free (Proxy.Post_Processes);
       Free_Internal (Proxy);
    end Free;
 
@@ -359,138 +354,5 @@ package body Process_Proxies is
          Put (Str);
       end if;
    end TTY_Filter;
-
-   -----------------------
-   -- Register_Post_Cmd --
-   -----------------------
-
-   procedure Register_Post_Cmd
-     (Proxy     : access Process_Proxy;
-      Cmd       : Post_Process_Cmd;
-      User_Data : System.Address)
-   is
-      Tmp : Post_Process_Access := Proxy.Post_Processes;
-   begin
-      if Tmp = null then
-         Proxy.Post_Processes := new Post_Process_Record'
-           (Cmd  => Cmd,
-            Data => User_Data,
-            Next => null);
-
-      else
-         while Tmp.Next /= null loop
-            Tmp := Tmp.Next;
-         end loop;
-
-         Tmp.Next := new Post_Process_Record'
-           (Cmd  => Cmd,
-            Data => User_Data,
-            Next => null);
-      end if;
-   end Register_Post_Cmd;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Post_Processes : in out Post_Process_Access) is
-      procedure Free_Internal is new Ada.Unchecked_Deallocation
-        (Post_Process_Record, Post_Process_Access);
-
-      Tmp : Post_Process_Access;
-
-   begin
-      while Post_Processes /= null loop
-         Tmp := Post_Processes.Next;
-         Free_Internal (Post_Processes);
-         Post_Processes := Tmp;
-      end loop;
-   end Free;
-
-   ----------------------------
-   -- Process_Post_Processes --
-   ----------------------------
-
-   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class) is
-      Initial : Post_Process_Access := Proxy.Post_Processes;
-      Tmp     : Post_Process_Access := Proxy.Post_Processes;
-
-   begin
-      --  We must reinitialize the list of post_processes for the proxy
-      --  before calling each of the command, otherwise if the command calls
-      --  Wait as well, then the same list of post_cmds will be processed
-      --  over and over again.
-
-      Proxy.Post_Processes := null;
-
-      while Tmp /= null loop
-         Tmp.Cmd (Tmp.Data);
-         Tmp := Tmp.Next;
-      end loop;
-
-      Free (Initial);
-   end Process_Post_Processes;
-
-   ----------------------
-   -- Register_Generic --
-   ----------------------
-
-   package body Register_Generic is
-
-      type Data_Access is access Data;
-      type Widget_Access is access all Widget'Class;
-
-      type Internal_Data is record
-         D    : Data_Access;
-         Func : Callback;
-         W    : Widget_Access;
-      end record;
-      type Internal_Data_Access is access all Internal_Data;
-
-      function Convert is new Ada.Unchecked_Conversion
-        (Internal_Data_Access, System.Address);
-      function Convert is new Ada.Unchecked_Conversion
-        (System.Address, Internal_Data_Access);
-      procedure Free is new
-        Ada.Unchecked_Deallocation (Internal_Data, Internal_Data_Access);
-      procedure Free is new Ada.Unchecked_Deallocation (Data, Data_Access);
-
-      procedure Internal_Callback (S : System.Address);
-      --  Internal function used as a post command.
-
-      -----------------------
-      -- Internal_Callback --
-      -----------------------
-
-      procedure Internal_Callback (S : System.Address) is
-         D : Internal_Data_Access := Convert (S);
-      begin
-         D.Func (D.W, D.D.all);
-         Free (D.D);
-         Free (D);
-      end Internal_Callback;
-
-      ---------------------------------
-      -- Register_Post_Cmd_If_Needed --
-      ---------------------------------
-
-      function Register_Post_Cmd_If_Needed
-        (Proxy     : access Process_Proxy'Class;
-         W         : access Widget'Class;
-         Cmd       : Callback;
-         User_Data : Data) return Boolean is
-      begin
-         if Command_In_Process (Proxy) then
-            Register_Post_Cmd
-              (Proxy, Internal_Callback'Unrestricted_Access,
-               Convert (new Internal_Data'
-                        (new Data' (User_Data), Cmd, Widget_Access (W))));
-            return True;
-         end if;
-
-         return False;
-      end Register_Post_Cmd_If_Needed;
-
-   end Register_Generic;
 
 end Process_Proxies;

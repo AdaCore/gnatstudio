@@ -167,65 +167,9 @@ package Process_Proxies is
    --  is not in internal state.
    --  Proxy is the address of a Process_Proxy'Class.
 
-   ---------------------
-   -- Post processing --
-   ---------------------
-   --  It is possible, at any time, to register some post-processing commands
-   --  that will be executed after the current (or next, if there is no
-   --  current) call to Wait.
-   --  These post-processing commands should be used so that no concurrent Wait
-   --  call can occur on a given Process_Proxy.
-
-   type Post_Process_Cmd is access procedure (User_Data : System.Address);
-
-   procedure Register_Post_Cmd
-     (Proxy     : access Process_Proxy;
-      Cmd       : Post_Process_Cmd;
-      User_Data : System.Address);
-   --  Register a new post-processing command to be executed after the next
-   --  call to Wait.
-
-   generic
-      type Data (<>) is private;
-      type Widget is tagged private;
-   package Register_Generic is
-      type Callback is access procedure
-        (W : access Widget'Class; User_Data : Data);
-
-      function Register_Post_Cmd_If_Needed
-        (Proxy     : access Process_Proxy'Class;
-         W         : access Widget'Class;
-         Cmd       : Callback;
-         User_Data : Data) return Boolean;
-      --  This function tests whether the debugger is currently busy
-      --  processing some output.
-      --  If it is the case, then it registers Cmd as a procedure to call
-      --  when the debugger is available, and returns True;
-      --  It this is not the case, it returns False and does nothing
-
-   end Register_Generic;
-   --  This package must be instantiated at library level, since it needs to
-   --  reference some internal callback function.
-
-   procedure Process_Post_Processes (Proxy : access Process_Proxy'Class);
-   --  Call all of the post-processes to be executed for Proxy.
-   --  Free the list when the execution is completed.
-
-   ----------------
-   -- Exceptions --
-   ----------------
-
 private
 
    type Boolean_Access is access Boolean;
-
-   type Post_Process_Record;
-   type Post_Process_Access is access Post_Process_Record;
-   type Post_Process_Record is record
-      Cmd  : Post_Process_Cmd;
-      Data : System.Address;
-      Next : Post_Process_Access;
-   end record;
 
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
@@ -243,9 +187,6 @@ private
       --  True if file name/lines patterns should be recognized in the output
       --  of the debugger. If set to False, the text displayed in the code
       --  editor will not be changed.
-
-      Post_Processes     : Post_Process_Access := null;
-      --  The list of commands to be processed after the next call to wait.
 
       Interrupted        : Boolean := False;
       --  Whether the process has been interrupted
