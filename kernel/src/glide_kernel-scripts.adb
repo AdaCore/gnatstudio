@@ -636,7 +636,7 @@ package body Glide_Kernel.Scripts is
         (Callback_Data'Class (Data), N, Class);
       Value : constant Integer := Get_Data (Inst, Class);
       Project : constant Project_Type := Get_Project_From_Name
-        (Project_Registry (Get_Registry (Get_Kernel (Data))),
+        (Project_Registry (Get_Registry (Get_Kernel (Data)).all),
          Name_Id (Value));
    begin
       Free (Inst);
@@ -958,9 +958,15 @@ package body Glide_Kernel.Scripts is
            (Data, Create_Project
             (Get_Script (Data),
              Get_Project_From_File
-             (Registry          => Project_Registry (Get_Registry (Kernel)),
+             (Registry         => Project_Registry (Get_Registry (Kernel).all),
               Source_Filename   => Info.File,
               Root_If_Not_Found => True)));
+
+      elsif Command = "language" then
+         Info := Get_Data (Data, 1);
+         Set_Return_Value
+           (Data, Get_String (Get_Language_From_File
+                                (Get_Registry (Kernel).all, Info.File)));
 
       elsif Command = "other_file" then
          declare
@@ -970,7 +976,7 @@ package body Glide_Kernel.Scripts is
             Info := Get_Data (Data, 1);
 
             Project := Get_Project_From_File
-              (Project_Registry (Get_Registry (Kernel)),
+              (Project_Registry (Get_Registry (Kernel).all),
                Info.File,
                Root_If_Not_Found => True);
             Other := Create
@@ -1054,7 +1060,7 @@ package body Glide_Kernel.Scripts is
          if Command = Constructor_Method then
             Name_Parameters (Data, Project_Cmd_Parameters);
             Project  := Get_Project_From_Name
-              (Project_Registry (Get_Registry (Kernel)),
+              (Project_Registry (Get_Registry (Kernel).all),
                Get_String (Nth_Arg (Data, 2)));
 
             if Project = No_Project then
@@ -1219,7 +1225,7 @@ package body Glide_Kernel.Scripts is
                Create_Project
                  (Get_Script (Data),
                   Get_Project_From_File
-                    (Project_Registry (Get_Registry (Kernel)),
+                    (Project_Registry (Get_Registry (Kernel).all),
                      File_Information (File),
                      Root_If_Not_Found => False)));
          else
@@ -1561,6 +1567,10 @@ package body Glide_Kernel.Scripts is
         (Kernel, Constructor_Method,
          Minimum_Args => 1,
          Maximum_Args => 1,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Create_File_Command_Handler'Access);
+      Register_Command
+        (Kernel, "language",
          Class        => Get_File_Class (Kernel),
          Handler      => Create_File_Command_Handler'Access);
       Register_Command
