@@ -2100,26 +2100,33 @@ package body Gtkada.MDI is
       C : MDI_Child;
       Num_Children : Gint := 0;
       Alloc : Gtk_Allocation;
-
+      Max_W, Max_H : Gint;
    begin
-      Maximize_Children (MDI, False);
+      if MDI.Docks (None) /= null then
+         Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
+         Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
+         Maximize_Children (MDI, False);
+      else
+         Max_W := Gint (Get_Allocation_Width (MDI.Layout));
+         Max_H := Gint (Get_Allocation_Height (MDI.Layout));
+      end if;
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
          if C.State = Normal or else C.State = Iconified then
             Num_Children := Num_Children + 1;
+            Minimize_Child (C, False);
          end if;
          List := Widget_List.Next (List);
       end loop;
 
-      W := Gint (Get_Allocation_Width (MDI.Layout))
-        / Num_Children;
-      H := Gint (Get_Allocation_Height (MDI.Layout));
+      W := Max_W / Num_Children;
+      H := Max_H;
 
       List := First (MDI.Items);
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
-         if C.State = Normal or else C.State = Iconified then
+         if C.State = Normal then
             C.X := Level;
             C.Y := 0;
             C.Uniconified_Width := W;
@@ -2128,12 +2135,11 @@ package body Gtkada.MDI is
                       Allocation_Int (C.Uniconified_Width),
                       Allocation_Int (C.Uniconified_Height));
             Size_Allocate (C, Alloc);
-            --  Move (MDI.Layout, C, Gint16 (C.X), Gint16 (C.Y));
-            --  Set_USize (C, C.Uniconified_Width, C.Uniconified_Height);
             Level := Level + W;
          end if;
          List := Widget_List.Next (List);
       end loop;
+      Queue_Resize (MDI);
    end Tile_Horizontally;
 
    ---------------------
@@ -2148,20 +2154,29 @@ package body Gtkada.MDI is
       C : MDI_Child;
       Num_Children : Gint := 0;
       Alloc : Gtk_Allocation;
+      Max_W, Max_H : Gint;
 
    begin
-      Maximize_Children (MDI, False);
+      if MDI.Docks (None) /= null then
+         Max_W := Gint (Get_Allocation_Width (MDI.Docks (None)));
+         Max_H := Gint (Get_Allocation_Height (MDI.Docks (None)));
+         Maximize_Children (MDI, False);
+      else
+         Max_W := Gint (Get_Allocation_Width (MDI.Layout));
+         Max_H := Gint (Get_Allocation_Height (MDI.Layout));
+      end if;
 
       while List /= Null_List loop
          C := MDI_Child (Get_Data (List));
          if C.State = Normal or else C.State = Iconified then
             Num_Children := Num_Children + 1;
+            Minimize_Child (C, False);
          end if;
          List := Widget_List.Next (List);
       end loop;
 
-      W := Gint (Get_Allocation_Width (MDI.Layout));
-      H := Gint (Get_Allocation_Height (MDI.Layout)) / Num_Children;
+      W := Max_W;
+      H := Max_H / Num_Children;
 
       List := First (MDI.Items);
       while List /= Null_List loop
