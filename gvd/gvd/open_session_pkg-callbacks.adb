@@ -33,17 +33,6 @@ package body Open_Session_Pkg.Callbacks is
 
    use Gtk.Arguments;
 
-   -------------------------------
-   -- On_List_Selection_Changed --
-   -------------------------------
-
-   procedure On_List_Selection_Changed
-     (Object : access Gtk_List_Record'Class)
-   is
-   begin
-      null;
-   end On_List_Selection_Changed;
-
    --------------------------
    -- On_List_Select_Child --
    --------------------------
@@ -52,14 +41,21 @@ package body Open_Session_Pkg.Callbacks is
      (Object : access Gtk_List_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
+      Open : Open_Session_Access
+        := Open_Session_Access (Get_Toplevel (Object));
       Arg1 : Gtk_Widget := Gtk_Widget (To_Object (Params, 1));
       use Widget_List;
+      Text : String := Get (Gtk_Label
+                            (Get_Data
+                             (Children
+                              (Gtk_Container (Arg1)))));
+
    begin
-      Set_Text (Open_Session_Access (Get_Toplevel (Object)).Entry1,
-                Get (Gtk_Label
-                     (Get_Data
-                      (Children
-                       (Gtk_Container (Arg1))))));
+      Set_Text (Open.Entry1, Text);
+      if not Open.Lock_Buttons then
+         Remove_All_Buttons (Open);
+         Create_Buttons (Open, Text);
+      end if;
    end On_List_Select_Child;
 
    ------------------------------
@@ -74,6 +70,40 @@ package body Open_Session_Pkg.Callbacks is
       Main_Quit;
       Hide_All (Get_Toplevel (Object));
    end On_Cancel_Button_Clicked;
+
+   ---------------------------
+   -- On_Select_All_Clicked --
+   ---------------------------
+
+   procedure On_Select_All_Clicked
+     (Object : access Gtk_Button_Record'Class)
+     is
+      Open : Open_Session_Access
+        := Open_Session_Access (Get_Toplevel (Object));
+      Button : Button_Link := Open.First_Button;
+   begin
+      while Button /= null loop
+         Set_Active (Button.Button, True);
+         Button := Button.Next;
+      end loop;
+   end On_Select_All_Clicked;
+
+   -----------------------------
+   -- On_Unselect_All_Clicked --
+   -----------------------------
+
+   procedure On_Unselect_All_Clicked
+     (Object : access Gtk_Button_Record'Class)
+   is
+      Open : Open_Session_Access
+        := Open_Session_Access (Get_Toplevel (Object));
+      Button : Button_Link := Open.First_Button;
+   begin
+      while Button /= null loop
+         Set_Active (Button.Button, False);
+         Button := Button.Next;
+      end loop;
+   end On_Unselect_All_Clicked;
 
    ------------------------------
    -- On_Ok_Button_Clicked --
