@@ -20,7 +20,6 @@
 
 with Glide_Kernel;            use Glide_Kernel;
 with Scenario_Views;          use Scenario_Views;
-with Vsearch_Ext;             use Vsearch_Ext;
 with Gtk.Box;                 use Gtk.Box;
 with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Interfaces.C.Strings;
@@ -85,7 +84,6 @@ with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Intl;               use Glide_Intl;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
 with Traces;                   use Traces;
-with Vsearch_Ext;              use Vsearch_Ext;
 with Find_Utils;               use Find_Utils;
 
 with Unchecked_Deallocation;
@@ -1250,14 +1248,6 @@ package body Project_Explorers is
    begin
       Initialize_Vbox (Explorer, Homogeneous => False);
       Explorer.Kernel := Kernel_Handle (Kernel);
-
-      Gtk_New (Explorer.Search, Kernel_Handle (Kernel));
-      Ref (Explorer.Search.Vbox_Search);
-      Remove (Explorer.Search, Explorer.Search.Vbox_Search);
-      Pack_Start
-        (Explorer, Explorer.Search.Vbox_Search,
-         Fill => True, Expand => False);
-      Unref (Explorer.Search.Vbox_Search);
 
       Gtk_New (Explorer.Scenario, Kernel);
       Pack_Start (Explorer, Explorer.Scenario, Fill => True, Expand => False);
@@ -3596,7 +3586,6 @@ package body Project_Explorers is
 
       Register_Menu
         (Kernel, Project, -"Explorer", "", On_Open_Explorer'Access);
-      Vsearch_Ext.Register_Default_Search (Kernel);
 
       if Enable_Entity_Search then
          Extra := new Explorer_Search_Extra_Record;

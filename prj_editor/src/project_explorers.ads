@@ -26,7 +26,6 @@
 
 with Glide_Kernel;
 with Scenario_Views;
-with Vsearch_Ext;
 with Gtk.Main;
 with Gtk.Ctree;
 with Gtk.Handlers;
@@ -105,7 +104,6 @@ private
       Tree          : Gtk.Ctree.Gtk_Ctree;
 
       Notebook      : Gtk.Notebook.Gtk_Notebook;
-      Search        : Vsearch_Ext.Vsearch_Extended;
       Kernel        : Glide_Kernel.Kernel_Handle;
       Open_Pixmaps  : Pixmap_Array;
       Close_Pixmaps : Pixmap_Array;
