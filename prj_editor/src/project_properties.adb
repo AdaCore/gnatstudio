@@ -325,11 +325,14 @@ package body Project_Properties is
    --  Called when a selection has changed in the editor
 
    procedure Select_Attribute_In_List
-     (Editor   : access List_Attribute_Editor_Record'Class;
-      Project  : Project_Type;
-      Iter     : Gtk_Tree_Iter;
-      Selected : Boolean);
-   --  Select a particular value for the attribute in Editor.
+     (Project     : Project_Type;
+      Index_Pkg   : String;
+      Index_Name  : String;
+      Index_Value : String;
+      Is_Selected : Boolean);
+   --  A specific value is selected in a list.
+   --  Check whether any other attribute used this one as an index, and update
+   --  their editor
 
    type List_Attribute_Callback is access procedure
      (Value : String; Is_Default : Boolean);
@@ -1545,15 +1548,14 @@ package body Project_Properties is
    ------------------------------
 
    procedure Select_Attribute_In_List
-     (Editor   : access List_Attribute_Editor_Record'Class;
-      Project  : Project_Type;
-      Iter     : Gtk_Tree_Iter;
-      Selected : Boolean)
+     (Project     : Project_Type;
+      Index_Pkg   : String;
+      Index_Name  : String;
+      Index_Value : String;
+      Is_Selected : Boolean)
    is
       New_Iter  : Gtk_Tree_Iter;
    begin
-      Set (Editor.Model, Iter, 1, Selected);
-
       --  Find all attributes with this one as an index. Add (or remove) new
       --  entries in their editing widget
 
@@ -1566,34 +1568,32 @@ package body Project_Properties is
                for A in Sect.Attributes'Range loop
                   if Sect.Attributes (A).Indexed
                     and then Sect.Attributes (A).Index_Package.all =
-                       Editor.Attribute.Pkg.all
+                       Index_Pkg
                     and then Sect.Attributes (A).Index_Attribute.all =
-                       Editor.Attribute.Name.all
+                       Index_Name
                   then
                      declare
-                        Specialized : constant String :=
-                          Get_String (Editor.Model, Iter, 0);
                         Att  : constant Attribute_Description_Access :=
                           Sect.Attributes (A);
                         Ed   : constant Indexed_Attribute_Editor :=
                           Indexed_Attribute_Editor (Att.Editor);
                      begin
-                        if Ed.Model /= null and then Selected then
+                        if Ed.Model /= null and then Is_Selected then
                            Append (Ed.Model, New_Iter, Null_Iter);
-                           Set (Ed.Model, New_Iter, 0, Specialized);
+                           Set (Ed.Model, New_Iter, 0, Index_Value);
                            Set (Ed.Model, New_Iter, 1,
                                 Get_Current_Value
                                   (Project => Project,
                                    Attr    => Att,
-                                   Index   => Specialized));
+                                   Index   => Index_Value));
                            Set (Ed.Model, New_Iter, 2,
-                                Is_Any_String (Att, Specialized));
+                                Is_Any_String (Att, Index_Value));
 
                         elsif Ed.Model /= null then  --  Remove
                            New_Iter := Get_Iter_First (Ed.Model);
                            while New_Iter /= Null_Iter loop
                               if Get_String (Ed.Model, New_Iter, 0) =
-                                Specialized
+                                Index_Value
                               then
                                  Remove (Ed.Model, New_Iter);
                                  exit;
@@ -1623,7 +1623,12 @@ package body Project_Properties is
         Get_Iter_From_String (Ed.Model, Path);
       Selected : constant Boolean := not Get_Boolean (Ed.Model, Iter, 1);
    begin
-      Select_Attribute_In_List (Ed, Ed.Project, Iter, Selected);
+      Set (Ed.Model, Iter, 1, Selected);
+      Select_Attribute_In_List (Index_Pkg   => Ed.Attribute.Pkg.all,
+                                Index_Name  => Ed.Attribute.Name.all,
+                                Project     => Ed.Project,
+                                Index_Value => Get_String (Ed.Model, Iter, 0),
+                                Is_Selected => Selected);
    end Attribute_List_Changed;
 
    ---------------------------
@@ -1863,13 +1868,29 @@ package body Project_Properties is
          if Ed.As_Directory then
             Set (Ed.Model, Iter, 0, Normalize_Pathname
                    (Value,
-                    Directory => Get_Text (Ed.Path_Widget),
+                    Directory     => Get_Text (Ed.Path_Widget),
                     Resolve_Links => False));
          else
             Set (Ed.Model, Iter, 0, Base_Name (Value));
          end if;
          Set (Ed.Model, Iter, 1, False);
          Set (Ed.Model, Iter, 2, Value);
+
+         if Ed.Attribute.Base_Name_Only then
+            Select_Attribute_In_List
+              (Project     => Ed.Project,
+               Index_Pkg   => Ed.Attribute.Pkg.all,
+               Index_Name  => Ed.Attribute.Name.all,
+               Index_Value => Base_Name (Value),
+               Is_Selected => True);
+         else
+            Select_Attribute_In_List
+              (Project     => Ed.Project,
+               Index_Pkg   => Ed.Attribute.Pkg.all,
+               Index_Name  => Ed.Attribute.Name.all,
+               Index_Value => Value,
+               Is_Selected => True);
+         end if;
       end if;
    end Add_String_In_List;
 
@@ -1885,6 +1906,22 @@ package body Project_Properties is
       Iter  : Gtk_Tree_Iter;
    begin
       Get_Selected (Get_Selection (Ed.View), M, Iter);
+      if Ed.Attribute.Base_Name_Only then
+         Select_Attribute_In_List
+           (Project     => Ed.Project,
+            Index_Pkg   => Ed.Attribute.Pkg.all,
+            Index_Name  => Ed.Attribute.Name.all,
+            Index_Value => Get_String (Ed.Model, Iter, 0),
+            Is_Selected => False);
+      else
+         Select_Attribute_In_List
+           (Project     => Ed.Project,
+            Index_Pkg   => Ed.Attribute.Pkg.all,
+            Index_Name  => Ed.Attribute.Name.all,
+            Index_Value => Get_String (Ed.Model, Iter, 0),
+            Is_Selected => False);
+      end if;
+
       Remove (Ed.Model, Iter);
    end Remove_String_From_List;
 
@@ -2653,18 +2690,32 @@ package body Project_Properties is
       declare
          Current_Value : aliased GNAT.OS_Lib.String_List :=
            Get_Current_Value (Kernel, Project, Index);
+         Iter : Gtk_Tree_Iter;
       begin
-         Current_Index := Current_Value'Unchecked_Access;
          case Index.Non_Index_Type.Typ is
             when Attribute_As_Static_List | Attribute_As_Dynamic_List =>
+               Current_Index := Current_Value'Unchecked_Access;
                For_Each_Item_In_List
                  (Kernel, Index.Non_Index_Type, Value_Cb'Unrestricted_Access);
             when others =>
-               Insert (Kernel,
-                       -"Index for project attribute """
-                       & Attr.Pkg.all & "'" & Attr.Name.all
-                       & """ must be a list",
-                       Mode => Error);
+               if not Index.Is_List then
+                  Insert (Kernel,
+                          -"Index for project attribute """
+                          & Attr.Pkg.all & "'" & Attr.Name.all
+                          & """ must be a list",
+                          Mode => Error);
+               else
+                  for C in Current_Value'Range loop
+                     Append (Ed.Model, Iter, Null_Iter);
+                     Set (Ed.Model, Iter, Language_Col, Current_Value (C).all);
+                     Set (Ed.Model, Iter, Attribute_Col,
+                          Get_Current_Value
+                            (Project => Project, Attr  => Attr,
+                             Index => Current_Value (C).all));
+                     Set (Ed.Model, Iter, Editable_Col,
+                          Is_Any_String (Attr, Current_Value (C).all));
+                  end loop;
+               end if;
          end case;
          Free (Current_Value);
       end;
