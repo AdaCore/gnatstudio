@@ -1196,13 +1196,11 @@ package body VCS_View_Pkg is
    --------------------------
 
    function Get_Files_In_Project
-     (Kernel : Kernel_Handle) return String_List.List
+     (Project : Project_Node_Id) return String_List.List
    is
       Result  : String_List.List;
-      Project : Project_Node_Id;
       Files   : String_Array_Access;
    begin
-      Project := Get_Project (Kernel);
       Files   := Get_Source_Files (Project, True);
 
       for J in reverse Files.all'Range loop
