@@ -108,6 +108,9 @@ package Codefix.GPS_Io is
      (This : in out Console_Interface; Kernel : Kernel_Handle);
    --  Set the value of the kernel linked to the Console_Interface.
 
+   procedure Constrain_Update (This : in out Console_Interface);
+   --  Set the text to modified state.
+
    type Compilation_Output is new Errors_Interface with private;
    --  This type is an interface to the list of compilation errors that the
    --  compilator has found.

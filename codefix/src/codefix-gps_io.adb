@@ -346,7 +346,6 @@ package body Codefix.GPS_Io is
 
       This.File_Modified.all := False;
       Free (File);
-
    end Update;
 
    ----------------
@@ -358,6 +357,15 @@ package body Codefix.GPS_Io is
    begin
       This.Kernel := Kernel;
    end Set_Kernel;
+
+   ----------------------
+   -- Constrain_Update --
+   ----------------------
+
+   procedure Constrain_Update (This : in out Console_Interface) is
+   begin
+      This.File_Modified.all := True;
+   end Constrain_Update;
 
    ----------
    -- Free --
