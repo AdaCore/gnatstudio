@@ -213,14 +213,15 @@ package body GVD.Dialogs is
       Len      : Natural;
       Process  : constant Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
-      List     : Gtk_Clist;
+      List     : Gtk_Clist := Debugger_Process_Tab (Debugger).Stack_List;
       Columns  : Gint;
 
    begin
-      --  if not Visible_Is_Set (Stack_Dialog) then
-      --     return;
-      --  end if;
-      List := Debugger_Process_Tab (Debugger).Stack_List;
+      --  Do nothing if the stack list has been hidden
+      if not Visible_Is_Set (List) then
+         return;
+      end if;
+
       Columns := Get_Columns (List);
 
       Freeze (List);
