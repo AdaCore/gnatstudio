@@ -36,6 +36,7 @@ with Glide_Kernel;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with Prj;
 with Prj.Tree;
+with Prj_API;
 
 package Switches_Editors is
 
@@ -100,9 +101,10 @@ package Switches_Editors is
       Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project      : Prj.Tree.Project_Node_Id;
       Project_View : Prj.Project_Id;
-      Files        : GNAT.OS_Lib.Argument_List) return Boolean;
+      Files        : GNAT.OS_Lib.Argument_List)
+      return Prj_API.Project_Node_Array;
    --  Generate the information in Project to represent the status of Switches.
-   --  True is returned if the project was modified.
+   --  The list of modified projects is returned.
    --  Project_View can be No_Project, in which case the return value will
    --  always be True, after modification of the project.
 

@@ -1214,16 +1214,20 @@ package body Switches_Editors is
       Kernel       : access Kernel_Handle_Record'Class;
       Project      : Prj.Tree.Project_Node_Id;
       Project_View : Prj.Project_Id;
-      Files        : Argument_List) return Boolean
+      Files        : Argument_List) return Project_Node_Array
    is
-      function Change_Switches
+      Max_Modified_Packages : constant := 5;
+      Result                : Project_Node_Array (1 .. Max_Modified_Packages);
+      Current               : Natural := Result'First;
+
+      procedure Change_Switches
         (Tool      : Tool_Names;
          Pkg_Name  : String;
          Language  : Name_Id;
-         File_Name : String) return Boolean;
+         File_Name : String);
       --  Changes the switches for a specific package and tool.
 
-      function Process_File (File_Name : String) return Boolean;
+      procedure Process_File (File_Name : String);
       --  Generate the switches for a specific file (or the default switches if
       --  File_Name is the empty string). Return True if the project was
       --  changed.
@@ -1232,16 +1236,23 @@ package body Switches_Editors is
       -- Change_Switches --
       ---------------------
 
-      function Change_Switches
+      procedure Change_Switches
         (Tool : Tool_Names;
          Pkg_Name : String;
          Language : Name_Id;
-         File_Name : String) return Boolean
+         File_Name : String)
       is
          Args     : Argument_List := Get_Switches (Switches, Tool);
          Value    : Variable_Value;
          Is_Default_Value : Boolean;
+         Rename_Prj : Project_Node_Id;
       begin
+         Rename_Prj := Find_Project_Of_Package (Project, Pkg_Name);
+
+         if not Has_Been_Normalized (Rename_Prj) then
+            Normalize (Rename_Prj, Recurse => False);
+         end if;
+
          if Project_View = No_Project then
             Is_Default_Value := False;
 
@@ -1309,69 +1320,75 @@ package body Switches_Editors is
          end if;
          Free (Args);
 
-         return not Is_Default_Value;
+         if not Is_Default_Value then
+            Is_Default_Value := False;
+            for C in Result'First .. Current - 1 loop
+               if Result (C) = Rename_Prj then
+                  Is_Default_Value := True;
+               end if;
+            end loop;
+
+            if not Is_Default_Value then
+               Result (Current) := Rename_Prj;
+               Current := Current + 1;
+            end if;
+         end if;
       end Change_Switches;
 
       ------------------
       -- Process_File --
       ------------------
 
-      function Process_File (File_Name : String) return Boolean is
-         Changed : Boolean := False;
+      procedure Process_File (File_Name : String) is
       begin
          if (Get_Pages (Switches) and Gnatmake_Page) /= 0 then
             --  ??? Currently, we only edit the default switches for Ada
-            Changed := Changed or Change_Switches
+            Change_Switches
               (Gnatmake, "builder", Snames.Name_Ada, File_Name);
          end if;
 
          if (Get_Pages (Switches) and Ada_Page) /= 0 then
-            Changed := Changed or Change_Switches
+            Change_Switches
               (Ada_Compiler, "compiler", Snames.Name_Ada, File_Name);
          end if;
 
          if (Get_Pages (Switches) and C_Page) /= 0 then
-            Changed := Changed or Change_Switches
-              (C_Compiler, "compiler", Snames.Name_C, File_Name);
+            Change_Switches (C_Compiler, "compiler", Snames.Name_C, File_Name);
          end if;
 
          if (Get_Pages (Switches) and Cpp_Page) /= 0 then
-            Changed := Changed or Change_Switches
+            Change_Switches
               (Cpp_Compiler, "compiler", Name_C_Plus_Plus, File_Name);
          end if;
 
          if (Get_Pages (Switches) and Pretty_Printer_Page) /= 0 then
             --  ??? Currently, we only edit the default switches for Ada
-            Changed := Changed or Change_Switches
+            Change_Switches
               (Pretty_Printer, "pretty_printer", Snames.Name_Ada, File_Name);
          end if;
 
          if (Get_Pages (Switches) and Binder_Page) /= 0 then
             --  ??? Currently, we only edit the default switches for Ada
-            Changed := Changed or Change_Switches
-              (Binder, "binder", Snames.Name_Ada, File_Name);
+            Change_Switches (Binder, "binder", Snames.Name_Ada, File_Name);
          end if;
 
          if (Get_Pages (Switches) and Linker_Page) /= 0 then
             --  ??? Currently, we only edit the default switches for Ada
-            Changed := Changed or Change_Switches
-              (Linker, "linker", Snames.Name_Ada, File_Name);
+            Change_Switches (Linker, "linker", Snames.Name_Ada, File_Name);
          end if;
-         return Changed;
       end Process_File;
 
-      Changed : Boolean := False;
    begin
       pragma Assert (Project /= Empty_Node);
 
       if Files'Length = 0 then
-         Changed := Process_File ("");
+         Process_File ("");
       else
          for F in Files'Range loop
-            Changed := Changed or Process_File (Files (F).all);
+            Process_File (Files (F).all);
          end loop;
       end if;
-      return Changed;
+      return Result (Result'First .. Current - 1);
    end Generate_Project;
 
    -------------------------
@@ -1382,19 +1399,20 @@ package body Switches_Editors is
      (Switches     : access Switches_Edit_Record'Class;
       Project      : Project_Node_Id;
       Project_View : Project_Id;
-      Files        : Argument_List) is
-   begin
-      if not Has_Been_Normalized (Project) then
-         Normalize (Project, Recurse => False);
-      end if;
-
-      if Generate_Project
+      Files        : Argument_List)
+   is
+      Result : constant Project_Node_Array := Generate_Project
         (Switches     => Switches,
          Kernel       => Switches.Kernel,
          Project      => Project,
          Project_View => Project_View,
-         Files        => Files)
-      then
+         Files        => Files);
+   begin
+      for R in Result'Range loop
+         Set_Project_Modified (Switches.Kernel, Result (R), True);
+      end loop;
+
+      if Result'Length /= 0 then
          Recompute_View (Switches.Kernel);
       end if;
    end Close_Switch_Editor;
@@ -1664,7 +1682,6 @@ package body Switches_Editors is
       --  of this dialog.
 
       if Run (Dialog) = Gtk_Response_OK then
-         Set_Project_Modified (Kernel, Project, True);
          Close_Switch_Editor (Switches, Project, Project_View, Files);
       end if;
 
