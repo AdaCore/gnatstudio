@@ -106,6 +106,11 @@ package Glide_Interactive_Consoles is
       Color   : Gdk_Color);
    --  Set the color used for highlighting tags.
 
+   function Get_Chars
+     (Console : access Glide_Interactive_Console_Record)
+     return String;
+   --  Return the contents of the console window.
+
 private
 
    use String_List;
