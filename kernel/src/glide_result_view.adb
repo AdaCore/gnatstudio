@@ -665,17 +665,20 @@ package body Glide_Result_View is
             Next (View.Tree.Model, Loc_Iter);
          end loop;
 
-         while not Is_Empty (Categories) loop
-            Highlight_Line
-              (View.Kernel,
-               Create
-                 (Full_Filename => Get_String
-                    (View.Tree.Model, File_Iter, Absolute_Name_Column)),
-               0, 0, 0, Head (Categories),
-               False);
-
-            Next (Categories);
-         end loop;
+         declare
+            File : constant Virtual_File := Create
+              (Full_Filename => Get_String
+                 (View.Tree.Model, File_Iter, Absolute_Name_Column));
+         begin
+            --  ??? Shouldn't we only remove for the specific lines, in case
+            --  we have multiple categories associated with the file (for
+            --  instance a loca search and all refs search)
+            while not Is_Empty (Categories) loop
+               Highlight_Line
+                 (View.Kernel, File, 0, 0, 0, Head (Categories), False);
+               Next (Categories, Free_Data => True);
+            end loop;
+         end;
 
          exit when not Removing_Category;
 
