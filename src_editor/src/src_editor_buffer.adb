@@ -4271,23 +4271,11 @@ package body Src_Editor_Buffer is
          return False;
    end Do_Indentation;
 
-   --------------
-   -- Get_Name --
-   --------------
+   ------------------------------
+   -- Filter_Matches_Primitive --
+   ------------------------------
 
-   function Get_Name
-     (Context : access Src_Editor_Action_Context) return String
-   is
-      pragma Unreferenced (Context);
-   begin
-      return "Source editor";
-   end Get_Name;
-
-   ---------------------
-   -- Context_Matches --
-   ---------------------
-
-   function Context_Matches
+   function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
       Kernel  : access Kernel_Handle_Record'Class) return Boolean
    is
@@ -4296,7 +4284,7 @@ package body Src_Editor_Buffer is
    begin
       return Widget /= null
         and then Widget.all in Source_View_Record'Class;
-   end Context_Matches;
+   end Filter_Matches_Primitive;
 
    ----------
    -- Free --

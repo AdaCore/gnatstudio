@@ -681,11 +681,9 @@ package Src_Editor_Buffer is
      (Editor : access Source_Buffer_Record) return Boolean;
    --  Returh whether the buffer has relevant block information.
 
-   type Src_Editor_Action_Context is new Glide_Kernel.Action_Context_Record
+   type Src_Editor_Action_Context is new Glide_Kernel.Action_Filter_Record
       with null record;
-   function Get_Name
-     (Context : access Src_Editor_Action_Context) return String;
-   function Context_Matches
+   function Filter_Matches_Primitive
      (Context : access Src_Editor_Action_Context;
       Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class)
      return Boolean;
