@@ -22,3 +22,4 @@
 #include "until.xpm"
 #include "up.xpm"
 #include "watch.xpm"
+#include "stop.xpm"
