@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -77,10 +77,6 @@ package body Creation_Wizard is
 
    procedure Advanced_Prj_Location (W : access Gtk_Widget_Record'Class);
    --  Open up a dialog to select the project location.
-
-   function Directory_Name (File_Name : String) return String;
-   --  Return the directory name for File_Name (always ends with a directory
-   --  separator).
 
    function Generate_Prj (W : access Gtk_Widget_Record'Class) return String;
    --  Generate the project files from the contents of the wizard W.
@@ -350,22 +346,6 @@ package body Creation_Wizard is
       Gtk_New (Wiz.Naming);
       return Get_Window (Wiz.Naming);
    end Fifth_Page;
-
-   --------------------
-   -- Directory_Name --
-   --------------------
-
-   function Directory_Name (File_Name : String) return String is
-   begin
-      for J in reverse File_Name'Range loop
-         if File_Name (J) = GNAT.OS_Lib.Directory_Separator
-           or else File_Name (J) = '/'
-         then
-            return File_Name (File_Name'First .. J);
-         end if;
-      end loop;
-      return "";
-   end Directory_Name;
 
    ---------------------------
    -- Advanced_Prj_Location --
