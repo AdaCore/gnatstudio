@@ -49,8 +49,6 @@ begin
    --  Set_Modal (Process_Tab, False);
 
    Gtk_New_Vpaned (Process_Tab.Process_Paned);
-   Return_Callback.Object_Connect
-     (Process_Tab.Process_Paned, "delete_event", On_Process_Paned_Delete_Event'Access, Process_Tab);
    --  Add (Process_Tab, Process_Tab.Process_Paned);
    Set_Handle_Size (Process_Tab.Process_Paned, 10);
    Set_Gutter_Size (Process_Tab.Process_Paned, 6);
@@ -64,7 +62,7 @@ begin
 
    Gtk_New (Process_Tab.Scrolledwindow9);
    Add (Process_Tab.Vpaned6, Process_Tab.Scrolledwindow9);
-   Set_Policy (Process_Tab.Scrolledwindow9, Policy_Always, Policy_Always);
+   Set_Policy (Process_Tab.Scrolledwindow9, Policy_Automatic, Policy_Automatic);
 
    Gtk_New (Process_Tab.Data_Canvas);
    Add (Process_Tab.Scrolledwindow9, Process_Tab.Data_Canvas);
