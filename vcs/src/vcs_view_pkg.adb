@@ -60,7 +60,7 @@ with VCS.CVS;
 with VCS_View_Pixmaps; use VCS_View_Pixmaps;
 
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Editor;     use Glide_Kernel.Editor;
+with Glide_Kernel.Modules;    use Glide_Kernel.Modules;
 with Glide_Intl;      use Glide_Intl;
 
 package body VCS_View_Pkg is
@@ -340,13 +340,12 @@ package body VCS_View_Pkg is
       Kernel   : Kernel_Handle;
       Filename : String)
    is
-      Success : Boolean;
    begin
       if Kernel = null then
          --  ??? Must deal with this case correctly.
          Put_Line ("glide " & Filename);
       else
-         Open_File (Kernel, Filename, Success);
+         Open_File_Editor (Kernel, Filename);
       end if;
    end Launch_Editor;
 
