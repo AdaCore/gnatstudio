@@ -29,7 +29,7 @@ install-common:
 
 install: install-common
 	$(INSTALL_PROGRAM) glide/obj/gps $(bindir)
-	$(MAKE) -C cpp_module/src/sn/snsrc install
+	$(MAKE) -C kernel/src_info/sn/snsrc install
 
 install-strip: install-common
 	$(INSTALL_PROGRAM) -s glide/obj/gps $(bindir)
