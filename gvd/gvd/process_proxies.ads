@@ -23,6 +23,10 @@ with GNAT.Regpat;
 
 package Process_Proxies is
 
+   Internal_Status_Stack_Size : constant := 20;
+   --  Number of successive Push_Internal_Command_Status calls that can be
+   --  emitted.
+
    type Process_Proxy is tagged private;
    type Process_Proxy_Access is access all Process_Proxy'Class;
    --  This type acts as a proxy to an external process as found in
@@ -45,12 +49,22 @@ package Process_Proxies is
    --  internally (ie that was not sent by the user, and whose output should
    --  be hidden).
 
-   procedure Set_Internal_Command (Proxy       : access Process_Proxy;
-                                   Is_Internal : Boolean);
-   --  Set the internal status for the following commands.
-   --  The default behavior is True, so that we don't have to set this in
-   --  every callback in our application, but only set it to False for
-   --  explicit user commands.
+   procedure Push_Internal_Command_Status
+     (Proxy       : access Process_Proxy;
+      Is_Internal : Boolean);
+   --  Set a new internal status for the following commands, and save the
+   --  previous value. If you are trying to call this function more than
+   --  Internal_Status_Stack_Size times (without an Pop_Internal_Command_Status
+   --  in between), an exception Internal_Command_Status_Stack_Overfull is
+   --  emitted.
+   --  The default behavior is False, so as to show as much output as
+   --  possible from the debugger.
+   --  The new value remains active until this function is called again or
+   --  Pop_Internal_Command_Status is called.
+
+   procedure Pop_Internal_Command_Status (Proxy : access Process_Proxy);
+   --  Go back to status preceeding the last call to
+   --  Push_Internal_Command_Status.
 
    procedure Set_Parse_File_Name (Proxy : access Process_Proxy;
                                   Parse : Boolean);
@@ -121,9 +135,14 @@ package Process_Proxies is
       Timeout : Integer := 20);
    --  In GUI mode, this processes the graphic events between each iteration.
 
+   Internal_Command_Status_Stack_Overfull : exception;
+
 private
 
    type Boolean_Access is access Boolean;
+   type Boolean_Array is array (1 .. Internal_Status_Stack_Size) of
+     Boolean;
+   pragma Pack (Boolean_Array);
 
    type Process_Proxy is tagged record
       Descriptor         : GNAT.Expect.Process_Descriptor_Access;
@@ -133,9 +152,10 @@ private
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Command   : Boolean := False;
-      --  True if we are processing a set of commands that were not sent by
-      --  the user, and whose output should be hidden.
+      Internal_Command_Stack : Boolean_Array := (others => False);
+      Internal_Command   : Positive := 1;
+      --  Stack of internal command status. Internal_Command is an index to
+      --  the current status;
 
       Parse_File_Name    : Boolean := True;
       --  True if file name/lines patterns should be recognized in the output

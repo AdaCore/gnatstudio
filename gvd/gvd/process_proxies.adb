@@ -223,19 +223,8 @@ package body Process_Proxies is
                                 return Boolean
    is
    begin
-      return Proxy.Internal_Command;
+      return Proxy.Internal_Command_Stack (Proxy.Internal_Command);
    end Is_Internal_Command;
-
-   --------------------------
-   -- Set_Internal_Command --
-   --------------------------
-
-   procedure Set_Internal_Command (Proxy       : access Process_Proxy;
-                                   Is_Internal : Boolean)
-   is
-   begin
-      Proxy.Internal_Command := Is_Internal;
-   end Set_Internal_Command;
 
    -------------------------
    -- Set_Parse_File_Name --
@@ -258,5 +247,32 @@ package body Process_Proxies is
    begin
       return Proxy.Parse_File_Name;
    end Get_Parse_File_Name;
+
+   ----------------------------------
+   -- Push_Internal_Command_Status --
+   ----------------------------------
+
+   procedure Push_Internal_Command_Status
+     (Proxy       : access Process_Proxy;
+      Is_Internal : Boolean)
+   is
+   begin
+      if Proxy.Internal_Command = Internal_Status_Stack_Size then
+         raise Internal_Command_Status_Stack_Overfull;
+      end if;
+      Proxy.Internal_Command := Proxy.Internal_Command + 1;
+      Proxy.Internal_Command_Stack (Proxy.Internal_Command) := Is_Internal;
+   end Push_Internal_Command_Status;
+
+   ---------------------------------
+   -- Pop_Internal_Command_Status --
+   ---------------------------------
+
+   procedure Pop_Internal_Command_Status (Proxy : access Process_Proxy) is
+   begin
+      --  Constraint_Error will be raised if we are trying to pop too many
+      --  values.
+      Proxy.Internal_Command := Proxy.Internal_Command - 1;
+   end Pop_Internal_Command_Status;
 
 end Process_Proxies;
