@@ -65,6 +65,10 @@ package Switches_Editors is
    --  The pages are completely removed from memory, but it isn't possible
    --  to recreate them later on.
 
+   function Get_Pages
+     (Editor : access Switches_Edit_Record) return Page_Filter;
+   --  Return the list of pages that are visible in the switches editor.
+
    function Get_Window
      (Editor : access Switches_Edit_Record) return Gtk.Widget.Gtk_Widget;
    --  Return the window to use to insert the editor in a parent container.

@@ -100,6 +100,16 @@ package body Switches_Editors is
       end if;
    end Destroy_Pages;
 
+   ---------------
+   -- Get_Pages --
+   ---------------
+
+   function Get_Pages
+     (Editor : access Switches_Edit_Record) return Page_Filter is
+   begin
+      return Editor.Pages;
+   end Get_Pages;
+
    ----------------
    -- Get_Window --
    ----------------
