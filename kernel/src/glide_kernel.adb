@@ -272,12 +272,14 @@ package body Glide_Kernel is
    -- Renaming_Of --
    -----------------
 
-   function Renaming_Of
-     (Kernel : access Kernel_Handle_Record;
-      Entity : Src_Info.Queries.Entity_Information)
-      return Src_Info.Queries.Entity_Information is
+   procedure Renaming_Of
+     (Kernel         : access Kernel_Handle_Record;
+      Entity         : Entity_Information;
+      Is_Renaming    : out Boolean;
+      Renamed_Entity : out Entity_Information) is
    begin
-      return Renaming_Of (Kernel.Source_Info_List, Entity);
+      Renaming_Of
+        (Kernel.Source_Info_List, Entity, Is_Renaming, Renamed_Entity);
    end Renaming_Of;
 
    ----------------------------

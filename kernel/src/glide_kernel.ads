@@ -205,10 +205,11 @@ package Glide_Kernel is
       Iterator : in out Src_Info.Queries.Dependency_Iterator);
    --  See Src_Info.Queries.
 
-   function Renaming_Of
-     (Kernel : access Kernel_Handle_Record;
-      Entity : Src_Info.Queries.Entity_Information)
-      return Src_Info.Queries.Entity_Information;
+   procedure Renaming_Of
+     (Kernel         : access Kernel_Handle_Record;
+      Entity         : Src_Info.Queries.Entity_Information;
+      Is_Renaming    : out Boolean;
+      Renamed_Entity : out Src_Info.Queries.Entity_Information);
    --  See Src_Info.Queries.
    --  You must call Destroy on the returned entity.
 
