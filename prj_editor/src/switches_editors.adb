@@ -52,6 +52,7 @@ with Ada.Unchecked_Deallocation;
 with Prj;
 with Projects.Editor;      use Projects, Projects.Editor;
 with Glide_Kernel;         use Glide_Kernel;
+with Glide_Kernel.Console; use Glide_Kernel.Console;
 with Glide_Kernel.Project; use Glide_Kernel.Project;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Contexts; use Glide_Kernel.Contexts;
@@ -344,11 +345,13 @@ package body Switches_Editors is
      (Page   : access Switches_Editor_Page_Record'Class;
       Switch : String) return Switch_Basic_Widget is
    begin
-      for S in Page.Switches'Range loop
-         if Page.Switches (S).Switch = Switch then
-            return Page.Switches (S);
-         end if;
-      end loop;
+      if Page.Switches /= null then
+         for S in Page.Switches'Range loop
+            if Page.Switches (S).Switch = Switch then
+               return Page.Switches (S);
+            end if;
+         end loop;
+      end if;
       return null;
    end Get_Switch_Widget;
 
@@ -799,50 +802,53 @@ package body Switches_Editors is
          P.Block_Refresh := True;
          Set_Text (P.Cmd_Line, "");
 
-         Assert (Me, P.Switches /= null,
-                 "No switches defined for " & P.Title.all);
+         if P.Switches = null then
+            Insert (P.Kernel,
+                    "No switches defined for " & P.Title.all,
+                    Mode => Glide_Kernel.Console.Error);
+         else
+            --  Find out all selected switches through the widgets
 
-         --  Find out all selected switches through the widgets
+            for S in P.Switches'Range loop
+               declare
+                  Text : constant String := Get_Switch (P.Switches (S).all);
+               begin
+                  Found := False;
+                  if Text /= "" then
+                     --  For "coalesce switches", we cannot add them
+                     --  immediately, since we have to coalesce them first.
+                     for C in P.Coalesce_Switches'Range loop
+                        if Text'Length >= P.Coalesce_Switches (C)'Length
+                          and then P.Coalesce_Switches (C).all = Text
+                          (Text'First .. P.Coalesce_Switches (C)'Length - 1
+                           + Text'First)
+                        then
+                           Tmp := Coalesce_Switches (C);
 
-         for S in P.Switches'Range loop
-            declare
-               Text : constant String := Get_Switch (P.Switches (S).all);
-            begin
-               Found := False;
-               if Text /= "" then
-                  --  For "coalesce switches", we cannot add them immediately,
-                  --  since we have to coalesce them first.
-                  for C in P.Coalesce_Switches'Range loop
-                     if Text'Length >= P.Coalesce_Switches (C)'Length
-                       and then P.Coalesce_Switches (C).all =
-                       Text (Text'First .. P.Coalesce_Switches (C)'Length - 1
-                             + Text'First)
-                     then
-                        Tmp := Coalesce_Switches (C);
+                           if Coalesce_Switches (C) = null then
+                              Coalesce_Switches (C) := new String'(Text);
+                           else
+                              Coalesce_Switches (C) := new String'
+                                (Coalesce_Switches (C).all
+                                 & Text (P.Coalesce_Switches (C)'Length
+                                         + Text'First .. Text'Last));
+                              Free (Tmp);
+                           end if;
 
-                        if Coalesce_Switches (C) = null then
-                           Coalesce_Switches (C) := new String'(Text);
-                        else
-                           Coalesce_Switches (C) := new String'
-                             (Coalesce_Switches (C).all
-                              & Text (P.Coalesce_Switches (C)'Length
-                                      + Text'First .. Text'Last));
-                           Free (Tmp);
+                           Found := True;
+                           exit;
                         end if;
+                     end loop;
 
-                        Found := True;
-                        exit;
+                     if not Found then
+                        Append_Text (P.Cmd_Line, Text & ' ');
                      end if;
-                  end loop;
-
-                  if not Found then
-                     Append_Text (P.Cmd_Line, Text & ' ');
                   end if;
-               end if;
 
-               Filter_Switch (P.Switches (S).all, Current);
-            end;
-         end loop;
+                  Filter_Switch (P.Switches (S).all, Current);
+               end;
+            end loop;
+         end if;
 
          --  Remove from current all switches that have been coalesced
          for Cur in Current'Range loop
@@ -1516,20 +1522,25 @@ package body Switches_Editors is
          if Master_Page /= null and then Slave_Page /= null then
             S1 := Get_Switch_Widget (Master_Page, Dep.Master_Switch.all);
             S2 := Get_Switch_Widget (Slave_Page, Dep.Slave_Switch.all);
-            Assert (Me, S1 /= null
-                    and then S2 /= null
-                    and then S1.all in Switch_Check_Widget'Class
-                    and then S2.all in Switch_Check_Widget'Class,
-                    "Can only add dependencies between check button switches "
-                    & Master_Page.Title.all & ' ' & Dep.Master_Switch.all
-                    & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all);
-
-            Dependency_Callback.Connect
-              (Switch_Check_Widget_Access (S1).Check, "toggled",
-               Dependency_Callback.To_Marshaller (Check_Dependency'Access),
-               (Dep.Master_Status,
-                Switch_Check_Widget_Access (S2),
-                Dep.Slave_Status));
+            if S1 = null
+              or else S2 = null
+              or else S1.all not in Switch_Check_Widget'Class
+              or else S2.all not in Switch_Check_Widget'Class
+            then
+               Insert
+                 (Page.Kernel,
+                  "Can only add dependencies between check button switches "
+                  & Master_Page.Title.all & ' ' & Dep.Master_Switch.all
+                  & ' ' & Slave_Page.Title.all & ' ' & Dep.Slave_Switch.all,
+                  Mode => Glide_Kernel.Console.Error);
+            else
+               Dependency_Callback.Connect
+                 (Switch_Check_Widget_Access (S1).Check, "toggled",
+                  Dependency_Callback.To_Marshaller (Check_Dependency'Access),
+                  (Dep.Master_Status,
+                   Switch_Check_Widget_Access (S2),
+                   Dep.Slave_Status));
+            end if;
          end if;
 
          Dep := Dep.Next;

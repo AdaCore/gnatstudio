@@ -3352,15 +3352,17 @@ package body Project_Properties is
          --  sent to the parent of the notebook. In case of nested notebooks,
          --  this means the event is sent to the parent's of the enclosing
          --  notebook, and thus is improperly handled by the nested notebooks.
-         Gtk_New (Event);
 
-         Gtk_New (Label, Get_Label (Page));
          Editor.Pages (E) := Widget_Factory
            (Page, Project, Project_Path (Project), Editor.Kernel);
 
-         Add (Event, Editor.Pages (E));
-         Show (Event);
-         Append_Page (Main_Note, Event, Label);
+         if Editor.Pages (E) /= null then
+            Gtk_New (Label, Get_Label (Page));
+            Gtk_New (Event);
+            Add (Event, Editor.Pages (E));
+            Show (Event);
+            Append_Page (Main_Note, Event, Label);
+         end if;
       end loop;
 
       Set_Current_Page (Main_Note, 0);
