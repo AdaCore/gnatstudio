@@ -597,8 +597,6 @@ begin
                    (Get_Children (Main_Debug_Window.Process_Notebook)));
 
             begin
-               Main_Debug_Window.Locked := False;
-
                for Page_Num in 0 .. Num_Pages - 1 loop
                   Page := Get_Nth_Page
                     (Main_Debug_Window.Process_Notebook, Page_Num);
