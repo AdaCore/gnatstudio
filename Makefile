@@ -15,10 +15,10 @@ widgets \
 syntax \
 vdiff \
 aunit \
+vsearch \
 prj_editor \
 browsers \
 src_editor \
-hypergrep \
 glide
 
 all: do_links ${EXTERNAL_DEPENDENCIES} ${DEPENDENCIES}
