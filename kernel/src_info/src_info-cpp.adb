@@ -725,50 +725,51 @@ package body Src_Info.CPP is
    -- Get_SN_Dirs --
    -----------------
 
-   function Get_SN_Dirs (Project : Prj.Project_Id)
-      return GNAT.OS_Lib.String_List_Access
+   function Get_SN_Dirs
+     (Project : Prj.Project_Id) return GNAT.OS_Lib.String_List_Access
    is
       N             : Integer := 0;
       Dirs          : GNAT.OS_Lib.String_List_Access;
-      Path          : String := Prj_API.Object_Path (Project, True);
-      First_Dir     : String := Prj_API.Object_Path (Project, False);
-      I             : Integer := Path'First;
-      J             : Integer;
+      Path          : constant String := Prj_API.Object_Path (Project, True);
+      First_Dir     : constant String := Prj_API.Object_Path (Project, False);
+      J             : Integer := Path'First;
+      K             : Integer;
       Tmp           : GNAT.OS_Lib.String_Access;
+
    begin
       if Path = "" then
          return null;
       end if;
 
       loop
-         I := Ada.Strings.Fixed.Index
-           (Path (I .. Path'Last),
+         J := Ada.Strings.Fixed.Index
+           (Path (J .. Path'Last),
             "" & GNAT.OS_Lib.Path_Separator);
-         exit when I = 0;
+         exit when J = 0;
          N := N + 1;
-         I := I + 1;
+         J := J + 1;
       end loop;
 
       Dirs := new GNAT.OS_Lib.String_List (1 .. N + 1);
 
-      I := Path'First;
+      J := Path'First;
       N := 1;
       loop
-         J := I;
-         I := Ada.Strings.Fixed.Index
-           (Path (I .. Path'Last),
-            "" & GNAT.OS_Lib.Path_Separator);
+         K := J;
+         J := Ada.Strings.Fixed.Index
+           (Path (J .. Path'Last),
+            (1 => GNAT.OS_Lib.Path_Separator));
 
-         if I = 0 then
+         if J = 0 then
             Dirs (N) := new String'(
-               Name_As_Directory (Path (J .. Path'Last))
+               Name_As_Directory (Path (K .. Path'Last))
                & Name_As_Directory (Browse.DB_Dir_Name)
             );
             exit;
          end if;
 
          Dirs (N) := new String'(
-            Name_As_Directory (Path (J .. I - 1))
+            Name_As_Directory (Path (K .. J - 1))
             & Name_As_Directory (Browse.DB_Dir_Name)
          );
 
@@ -778,7 +779,7 @@ package body Src_Info.CPP is
             Dirs (N) := Tmp;
          end if;
          N := N + 1;
-         I := I + 1;
+         J := J + 1;
       end loop;
       return Dirs;
    end Get_SN_Dirs;
@@ -797,9 +798,9 @@ package body Src_Info.CPP is
             Files : String_List_Access
                := new String_List (1 .. DB_Dirs'Length);
          begin
-            for I in DB_Dirs'Range loop
-               Files (I) := new String'(
-                  DB_Dirs (I).all & Browse.DB_File_Name & Ext
+            for J in DB_Dirs'Range loop
+               Files (J) := new String'(
+                  DB_Dirs (J).all & Browse.DB_File_Name & Ext
                );
             end loop;
 
