@@ -50,7 +50,7 @@ package body Src_Info.LI_Utils is
    --  Checks if given position belongs to class body (found in the given
    --  list of declarations)
 
---   function Convert_Filename_To_LI (Filename : String) return String;
+   function Convert_Filename_To_LI (Filename : String) return String;
 
    -------------------------------------------------------------------------
 
@@ -97,6 +97,7 @@ package body Src_Info.LI_Utils is
          --  ??? we should extract Directory_Name from Source_Filename
                 File_Timestamp => To_Timestamp
                                     (File_Time_Stamp (Source_Filename)),
+         --  ??? File_Time_Stamp returns rubbish if filename is incorrect
                 Original_Filename => null,
                 Original_Line => 1,
                 Declarations => null);
@@ -169,6 +170,7 @@ package body Src_Info.LI_Utils is
                        Separate_Info     => Tmp_LI_File.Separate_Info,
                        LI_Timestamp      =>
                          To_Timestamp (File_Time_Stamp (Source_Filename)),
+            --  ??? if file is not found?
                        Compilation_Errors_Found => False,
                        Dependencies_Info => null);
          end if;
@@ -289,7 +291,9 @@ package body Src_Info.LI_Utils is
                        Spec_Info    => Tmp_LI_File.Spec_Info,
                        Body_Info    => Tmp_LI_File.Body_Info,
                        Separate_Info     => Tmp_LI_File.Separate_Info,
-                       LI_Timestamp      => 0,
+                       LI_Timestamp      => To_Timestamp
+                         (File_Time_Stamp (Source_Filename)),
+            --  ??? if file is not found?
                        Compilation_Errors_Found => False,
                        Dependencies_Info => null);
          end if;
@@ -754,28 +758,33 @@ package body Src_Info.LI_Utils is
    begin
       if (Parsed) then
          File := new LI_File_Constrained'
-                  (LI =>  (Parsed => True,
+                   (LI =>  (Parsed => True,
                            Handler => LI_Handler (Handler),
                            LI_Filename => new String'
-                                (Source_Filename),
---                              (Convert_Filename_To_LI (Source_Filename)),
+--                                (Source_Filename),
+                              (Convert_Filename_To_LI (Source_Filename)),
                            Body_Info => null,
                            Spec_Info => null,
                            Dependencies_Info => null,
                            Compilation_Errors_Found => False,
                            Separate_Info => null,
-                           LI_Timestamp => 0));
+                           LI_Timestamp => To_Timestamp
+                             (File_Time_Stamp (Source_Filename))));
+         --  ??? If source_filename is incorrect?
+
       else
          File := new LI_File_Constrained'
                   (LI =>  (Parsed => False,
                            Handler => LI_Handler (Handler),
                            LI_Filename => new String'
-                                (Source_Filename),
---                              (Convert_Filename_To_LI (Source_Filename)),
+--                                (Source_Filename),
+                              (Convert_Filename_To_LI (Source_Filename)),
                            Body_Info => null,
                            Spec_Info => null,
                            Separate_Info => null,
-                           LI_Timestamp => 0));
+                           LI_Timestamp => To_Timestamp
+                             (File_Time_Stamp (Source_Filename))));
+         --  ??? If source_filename is incorrect?
       end if;
    end Create_LI_File;
 
@@ -792,7 +801,8 @@ package body Src_Info.LI_Utils is
         (Unit_Name         => null,
          Source_Filename   => new String'(Source_Filename),
          Directory_Name    => new String'(Directory_Name),
-         File_Timestamp    => 0,
+         File_Timestamp    => To_Timestamp
+                                (File_Time_Stamp (Source_Filename)),
          Original_Filename => null,
          Original_Line     => 1,
          Declarations      => null);
@@ -837,18 +847,18 @@ package body Src_Info.LI_Utils is
    --  Convert_File_Name_To_LI  --
    -------------------------------
 
---   function Convert_Filename_To_LI (Filename : String) return String is
---      buf : String (Filename'First .. Filename'Last);
---   begin
---      for i in Filename'First .. Filename'Last loop
---         if Filename (i) = '/' or Filename (i) = '\' then
---            buf (i) := '_';
---         else
---            buf (i) := Filename (i);
---         end if;
---      end loop;
---      return buf;
---   end Convert_Filename_To_LI;
+   function Convert_Filename_To_LI (Filename : String) return String is
+      buf : String (Filename'First .. Filename'Last);
+   begin
+      for i in Filename'First .. Filename'Last loop
+         if Filename (i) = '/' or Filename (i) = '\' then
+            buf (i) := '_';
+         else
+            buf (i) := Filename (i);
+         end if;
+      end loop;
+      return buf;
+   end Convert_Filename_To_LI;
 
    -------------------------------------------------------------------------
 
