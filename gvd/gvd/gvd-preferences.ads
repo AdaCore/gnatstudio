@@ -83,8 +83,8 @@ package GVD.Preferences is
    function Get_Pref (Name : String_Gint) return Gint;
    function Get_Pref (Name : String_Color) return Gdk.Color.Gdk_Color;
    function Get_Pref (Name : String_Font) return String;
-   function Get_Pref (Name : String_Tooltips_In_Source)
-      return Tooltips_In_Source_Type;
+   function Get_Pref
+     (Name : String_Tooltips_In_Source) return Tooltips_In_Source_Type;
    --  Get the value of a specific preference parameter.
    --  An assertion failure is raised if you are not getting an existing
    --  preference value or if you are requesting the wrong type.
@@ -197,6 +197,9 @@ package GVD.Preferences is
    -----------------
    -- Data Window --
    -----------------
+
+   Separate_Data : constant String_Boolean := "Separate_Data";
+   --  Whether the Data window should be a separate window (False).
 
    Xref_Color : constant String_Color := "Xref_Color";
    --  Color to use for the items that are clickable (blue).

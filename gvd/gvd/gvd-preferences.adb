@@ -38,11 +38,6 @@ package body GVD.Preferences is
    package Gint_Xml is new Glib.XML (Gint);
    use Gint_Xml;
 
-   --  These functions are there only so that GVD doesn't depend on the
-   --  very latest version of GtkAda and can be released independently.
-   --  These should be coordinated with GtkAda when a new release of the latter
-   --  is done. ???
-
    Current_Preferences : Node_Ptr;
    --  The XML tree that contains the current preferences.
 
@@ -92,6 +87,7 @@ package body GVD.Preferences is
       if Current_Preferences /= null then
          Free (Current_Preferences);
       end if;
+
       Current_Preferences := Parse (File_Name);
       Set_Default_Preferences;
    end Load_Preferences;
@@ -349,6 +345,8 @@ package body GVD.Preferences is
 
       Set (String (Asm_Highlight_Color), "#FF0000");
       Set (String (Assembly_Range_Size), "100");
+
+      Set (Separate_Data, False);
       Set (String (Xref_Color), "#0000FF");
       Set (String (Title_Color), "#BEBEBE");
       Set (String (Change_Color), "#FF0000");
@@ -460,6 +458,9 @@ package body GVD.Preferences is
       Set_Color (Dialog.Change_Color_Combo, Get_Pref (Change_Color));
       Set_Color (Dialog.Thaw_Bg_Color_Combo, Get_Pref (Thaw_Bg_Color));
       Set_Color (Dialog.Freeze_Bg_Color_Combo, Get_Pref (Freeze_Bg_Color));
+
+      --  Separate Data
+      Set_Active (Dialog.Separate_Data_Check, Get_Pref (Separate_Data));
 
       --  Look 3d
       Set_Active (Dialog.Look_3d_Check, Get_Pref (Look_3d));
@@ -578,6 +579,7 @@ package body GVD.Preferences is
       Set (Strings_Color, Get_Color (Dialog.String_Color_Combo), True);
       Set (Keywords_Color, Get_Color (Dialog.Keyword_Color_Combo), True);
       Set (Asm_Highlight_Color, Get_Color (Dialog.Asm_Highlight_Combo), True);
+      Set (Separate_Data, Get_Active (Dialog.Separate_Data_Check), True);
       Set (Xref_Color, Get_Color (Dialog.Xref_Color_Combo), True);
       Set (Title_Color, Get_Color (Dialog.Title_Color_Combo), True);
       Set (Change_Color, Get_Color (Dialog.Change_Color_Combo), True);
