@@ -964,8 +964,8 @@ package body Src_Editor_Box is
       Line : constant Gint :=
         Gint (Values.Get_Int (Values.Nth (Params, 1)));
 
-      Pref_Display_Subprogram_Name : constant Boolean :=
-        Get_Pref (Box.Kernel, Display_Subprogram_Name);
+      Pref_Display_Subprogram_Names : constant Boolean :=
+        Get_Pref (Box.Kernel, Display_Subprogram_Names);
 
       function Get_Enclosing_Subprogram return String;
       --  Returns the name of the enclosing subprogram or package. This is
@@ -1019,7 +1019,7 @@ package body Src_Editor_Box is
             Line   => Line,
             Column => Values.Get_Int (Values.Nth (Params, 2)));
 
-         if Pref_Display_Subprogram_Name then
+         if Pref_Display_Subprogram_Names then
             Show_Which_Function (Box, Name => Get_Enclosing_Subprogram);
          end if;
       end if;
