@@ -349,7 +349,7 @@ package body Projects is
             Sources : Name_Id_Array (1 .. Count);
          begin
             for C in Sources'Range loop
-               Sources (C) := String_Elements.Table (Src).Value;
+               Sources (C) := String_Elements.Table (Src).Display_Value;
                Src         := String_Elements.Table (Src).Next;
             end loop;
             return Sources;
@@ -491,7 +491,7 @@ package body Projects is
          Src  := Prj.Projects.Table (Get_View (Project)).Sources;
 
          while Src /= Nil_String loop
-            Get_Name_String (String_Elements.Table (Src).Value);
+            Get_Name_String (String_Elements.Table (Src).Display_Value);
 
             declare
                File : constant String := Name_Buffer (1 .. Name_Len);
