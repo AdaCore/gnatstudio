@@ -18,8 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GNAT.Regpat;  use GNAT.Regpat;
-with GVD.Pixmaps;  use GVD.Pixmaps;
+with GNAT.Regpat;       use GNAT.Regpat;
+with GVD.Pixmaps;       use GVD.Pixmaps;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Language.C is
 
@@ -114,16 +115,11 @@ package body Language.C is
       Name  : String;
       Field : String) return String is
    begin
-      --  Simplify the expression by replacing (*foo).bar by foo->bar
-
-      if Name'Length > 3
-        and then Name (Name'First) = '('
-        and then Name (Name'First + 1) = '*'
-        and then Name (Name'Last) = ')'
-      then
-         return Name (Name'First + 2 .. Name'Last - 1) & "->" & Field;
-      else
+      if Index (Name, "*") = 0 then
          return Name & '.' & Field;
+      else
+         --  Name is complex, protect it
+         return '(' & Name & ")." & Field;
       end if;
    end Record_Field_Name;
 
