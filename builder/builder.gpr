@@ -1,5 +1,4 @@
 with "../gtkada/gtkada";
-with "../common/common";
 with "../kernel/kernel";
 
 project Builder is
