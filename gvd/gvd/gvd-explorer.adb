@@ -38,6 +38,7 @@ with Gtkada.Handlers;       use Gtkada.Handlers;
 
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with Interfaces.C.Strings;  use Interfaces.C.Strings;
 
 with Language;              use Language;
 with Debugger;              use Debugger;
@@ -83,7 +84,7 @@ package body GVD.Explorer is
       Node    : Gtk_Ctree_Node;
    end record;
    type Internal_Categories is
-     array (Category_Index range <>) of Internal_Category;
+     array (Positive range <>) of Internal_Category;
 
    package Tree_Cb is new Gtk.Handlers.Callback (Explorer_Record);
 
@@ -168,6 +169,9 @@ package body GVD.Explorer is
    --  initialized and its own internal styles have been created, otherwise
    --  the current file might not have the same font as the other files.
    --  This does nothing if the style has already been created.
+
+   function Category_Name (Category : Language_Category) return String;
+   --  Return the name of the node for Category
 
    -------------------------------
    -- Create_Current_File_Style --
@@ -385,8 +389,10 @@ package body GVD.Explorer is
       Line         : Natural;
       Line_Pos     : Natural;
       Pos          : Natural;
+      Match_Index  : Natural;
       Node         : Gtk_Ctree_Node;
       Data         : Node_Data_Access;
+      S            : Interfaces.C.Strings.chars_ptr;
 
    begin
       Freeze (Tree);
@@ -405,67 +411,73 @@ package body GVD.Explorer is
       --  For each category, parse the file
 
       for C in Categories'Range loop
-         if Categories (C).Make_Entry /= null then
-            Node     := null;
-            First    := Buffer'First;
-            Line     := 1;
-            Line_Pos := 0;
+         Node     := null;
+         First    := Buffer'First;
+         Line     := 1;
+         Line_Pos := 0;
 
-            loop
-               Match (Categories (C).Regexp.all,
-                      Buffer (First .. Buffer'Last),
-                      Matches);
+         loop
+            Match (Categories (C).Regexp.all,
+                   Buffer (First .. Buffer'Last),
+                   Matches);
 
-               exit when Matches (0) = No_Match;
+            exit when Matches (0) = No_Match;
 
-               declare
-                  Cat : aliased Category_Index := C;
-                  S   : constant String := Categories (C).Make_Entry
-                    (Buffer, Matches, Cat'Access);
+            Match_Index := Categories (C).Position_Index;
 
-               begin
-                  --  Create the parent node for the category, if needed.
+            if Categories (C).Make_Entry = null then
+               S := New_String (Buffer (Matches (Match_Index).First ..
+                                        Matches (Match_Index).Last));
+            else
+               S := New_String
+                 (Categories (C).Make_Entry (Buffer, Matches));
+            end if;
 
-                  if Internal_Cat (Cat).Node = null then
-                     Internal_Cat (Cat).Node := Insert_Node
-                       (Tree, Root, null,
-                        Null_Array + Categories (Cat).Name.all,
-                        5, Tree.Folder_Pixmap, Tree.Folder_Mask,
-                        Tree.Folder_Open_Pixmap, Tree.Folder_Open_Mask,
-                        False, False);
-                  end if;
+            declare
+               Name : constant String :=
+                 Category_Name (Categories (C).Category);
 
-                  Node := Insert_Node
-                    (Tree, Internal_Cat (Cat).Node, null,
-                     Null_Array + S,
-                     5,
-                     Internal_Cat (Cat).Pixmap, Internal_Cat (Cat).Mask,
-                     null, null,
-                     True, False);
-               end;
+            begin
+               --  Create the parent node for the category, if needed.
 
-               Pos := Matches (Categories (C).Position_Index).First;
+               if Internal_Cat (C).Node = null then
+                  Internal_Cat (C).Node := Insert_Node
+                    (Tree, Root, null,
+                     Null_Array + Name,
+                     5, Tree.Folder_Pixmap, Tree.Folder_Mask,
+                     Tree.Folder_Open_Pixmap, Tree.Folder_Open_Mask,
+                     False, False);
+               end if;
 
-               for J in First .. Pos loop
-                  if Buffer (J) = ASCII.LF then
-                     Line     := Line + 1;
-                     Line_Pos := J;
-                  end if;
-               end loop;
+               Node := Insert_Node
+                 (Tree, Internal_Cat (C).Node, null,
+                  (1 => S), 5,
+                  Internal_Cat (C).Pixmap, Internal_Cat (C).Mask,
+                  null, null,
+                  True, False);
+            end;
 
-               Data := new Node_Data'
-                 (Length       => 0,
-                  Extension    => "",
-                  Is_File_Node => False,
-                  Computed     => False,
-                  Dummy_Node   => null,
-                  Pos          => Position_Type (Pos),
-                  Line         => Line,
-                  Col          => Pos - Line_Pos);
-               Row_Data_Pkg.Node_Set_Row_Data (Tree, Node, Data);
-               First := Matches (0).Last;
+            Pos := Matches (Match_Index).First;
+
+            for J in First .. Pos loop
+               if Buffer (J) = ASCII.LF then
+                  Line     := Line + 1;
+                  Line_Pos := J;
+               end if;
             end loop;
-         end if;
+
+            Data := new Node_Data'
+              (Length       => 0,
+               Extension    => "",
+               Is_File_Node => False,
+               Computed     => False,
+               Dummy_Node   => null,
+               Pos          => Position_Type (Pos),
+               Line         => Line,
+               Col          => Pos - Line_Pos);
+            Row_Data_Pkg.Node_Set_Row_Data (Tree, Node, Data);
+            First := Matches (0).Last;
+         end loop;
       end loop;
 
       --  Free all icons
@@ -1224,5 +1236,36 @@ package body GVD.Explorer is
          Clear_Files_Data (Explorer);
       end if;
    end Preferences_Changed;
+
+   -------------------
+   -- Category_Name --
+   -------------------
+
+   function Category_Name (Category : Language_Category) return String is
+   begin
+      if Category in Dependency_Category
+        or else Category in Construct_Category
+        or else Category = Cat_Representation_Clause
+        or else Category = Cat_Local_Variable
+      then
+         return "";
+
+      elsif Category in Subprogram_Explorer_Category then
+         return -"subprogram";
+
+      elsif Category in Type_Category then
+         return -"type";
+
+      else
+         declare
+            S : String := Language_Category'Image (Category);
+         begin
+            Lower_Case (S);
+
+            --  Skip the "Cat_" part
+            return S (S'First + 4 .. S'Last);
+         end;
+      end if;
+   end Category_Name;
 
 end GVD.Explorer;
