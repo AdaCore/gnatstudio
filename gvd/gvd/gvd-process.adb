@@ -37,6 +37,7 @@ with Gtk.Dialog;          use Gtk.Dialog;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
 with Gtk.Item_Factory;    use Gtk.Item_Factory;
+with Gtk.Main;            use Gtk.Main;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
 with Gtk.Widget;          use Gtk.Widget;
@@ -1727,9 +1728,23 @@ package body GVD.Process is
       Object_Callback.Emit_By_Name (GObject (Debugger), "debugger_closed");
       Debugger.Exiting := True;
       Free (Debugger.Breakpoints);
+      Unregister_Dialog (Debugger);
+
+      if Debugger.Timeout_Id /= 0 then
+         Set_Busy (Debugger, False);
+         Timeout_Remove (Debugger.Timeout_Id);
+         Debugger.Timeout_Id := 0;
+      end if;
 
       if Debugger.Debugger /= null then
+         if Get_Command_Mode (Get_Process (Debugger.Debugger))
+           in Visible_Command
+         then
+            Set_Busy (Debugger, False);
+         end if;
+
          Close (Debugger.Debugger);
+         Debugger.Debugger := null;
       end if;
 
       --  Recompute Top.Current_Debugger and Top.First_Debugger:
