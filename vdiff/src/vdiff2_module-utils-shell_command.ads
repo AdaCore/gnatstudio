@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2003                         --
---                            ACT-Europe                             --
+--                     Copyright (C) 2003-2005                       --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -27,7 +27,7 @@ package Vdiff2_Module.Utils.Shell_Command is
       File   : Virtual_File;
       Pos    : Natural;
       Style  : String := "";
-      Number : Natural := 1) return String;
+      Number : Natural := 1) return Natural;
    --  Add a blank line at line Pos of a given file editor,
    --  using Style for color.
    --  Return corresponding Mark.
@@ -72,11 +72,6 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Returns the current line of Mark
    pragma Inline (Get_Line_Number);
 
-   procedure Goto_Difference
-     (Kernel : Kernel_Handle;
-      Link   : Diff_Chunk_Access);
-   pragma Inline (Goto_Difference);
-
    procedure Delete_Mark
      (Kernel : Kernel_Handle;
       Link   : String);
@@ -101,20 +96,13 @@ package Vdiff2_Module.Utils.Shell_Command is
    --  Highlights a portion of a line in a file with the given category
    pragma Inline (Highlight_Range);
 
-   function Mark_Diff_Block
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      File  : Virtual_File;
-      Pos   : Natural) return String;
-   --  Return the mark corresponding the begining of line number Pos
-   pragma Inline (Mark_Diff_Block);
-
    procedure Register_Highlighting
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register color preferences
 
    procedure Remove_Blank_Lines
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Mark   : in out String_Access);
+      Mark   : Natural);
    --  Remove blank lines located at mark
    pragma Inline (Remove_Blank_Lines);
 
