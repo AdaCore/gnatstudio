@@ -191,9 +191,12 @@ package Src_Info is
       Project                : Prj.Project_Id;
       Predefined_Source_Path : String;
       Predefined_Object_Path : String) is abstract;
-   --  Create (if File is null) or complete (otherwise) the LI declaration if
-   --  File.
-   --  File is associated with the given Source_Filename.
+   --  Find the LI file for Source_Filename, or create one if there is none
+   --  yet.
+   --  On calling this subprogram, File is always null, and must be looked for
+   --  in List. However, this search is done differently depending on handler.
+   --  If an LI file was found in list, but was either incomplete or no longer
+   --  up-to-date, it must be parsed again.
    --  Source_Filename should contain the full path to the source file.
 
    function LI_Filename_From_Source

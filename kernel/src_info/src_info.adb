@@ -127,7 +127,7 @@ package body Src_Info is
       Source_Filename : String)
       return LI_File_Ptr
    is
-      Short_Filename : constant String := Base_Name (Source_Filename);
+      Short_Filename : constant String := Source_Filename;
       Current_LI     : LI_File_Node_Ptr;
       Current_Sep    : File_Info_Ptr_List;
       Table : LI_File_HTable.HTable := List.Table;
