@@ -1,7 +1,7 @@
 Known Problems fixed in GPS 1.2.0
 
-- C228-015 Command Make "All main subprograms" fail on Windows
-  Problem:    The command make "All main subprograms" fail on Windows. GPS
+- C228-015 Command Make "All main subprograms" fails on Windows
+  Problem:    The command make "All main subprograms" fails on Windows. GPS
               just report immediately "process exited with status -1".
   Workaround: Build all main procedures separately.
 
