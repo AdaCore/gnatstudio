@@ -18,6 +18,9 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Strings.Maps;            use Ada.Strings.Maps;
+with Ada.Exceptions;              use Ada.Exceptions;
+
 with Glib;                        use Glib;
 with Glib.Object;                 use Glib.Object;
 with Glib.Properties;             use Glib.Properties;
@@ -49,6 +52,7 @@ with Gtk.Window;                  use Gtk.Window;
 with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Buffer.Blocks;    use Src_Editor_Buffer.Blocks;
+with Src_Editor_Buffer.Hooks;     use Src_Editor_Buffer.Hooks;
 
 with Src_Editor_Buffer.Line_Information;
 use Src_Editor_Buffer.Line_Information;
@@ -56,15 +60,18 @@ with Pango.Font;                  use Pango.Font;
 with Pango.Layout;                use Pango.Layout;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with GVD;                         use GVD;
-with Ada.Exceptions;              use Ada.Exceptions;
 with Traces;                      use Traces;
 with Glide_Kernel;                use Glide_Kernel;
 with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
 with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with VFS;                         use VFS;
+with Language;                    use Language;
 
 package body Src_Editor_View is
+
+   On_The_Fly_Casing : constant Debug_Handle :=
+                         Create ("on_the_fly_casing", Off);
 
    Speed_Column_Width : constant := 10;
    --  The width of the speed column
@@ -1863,7 +1870,19 @@ package body Src_Editor_View is
             External_End_Action (Buffer);
 
          when others =>
-            null;
+            if Active (On_The_Fly_Casing) then
+               declare
+                  Key_Str : constant String := Get_String (Event);
+               begin
+                  if Key_Str'Length = 1
+                    and then
+                      not Is_In (Key_Str (Key_Str'First),
+                                 Word_Character_Set (Get_Language (Buffer)))
+                  then
+                     Word_Added (Buffer);
+                  end if;
+               end;
+            end if;
       end case;
 
       return False;
