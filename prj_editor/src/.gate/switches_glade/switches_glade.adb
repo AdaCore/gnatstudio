@@ -4,11 +4,13 @@ with Gtk.Widget; use Gtk.Widget;
 with Switches_Editor_Pkg; use Switches_Editor_Pkg;
 with Naming_Scheme_Editor_Pkg; use Naming_Scheme_Editor_Pkg;
 with New_Variable_Editor_Pkg; use New_Variable_Editor_Pkg;
+with Window1_Pkg; use Window1_Pkg;
 
 procedure Switches_Glade is
    Switches_Editor : Switches_Editor_Access;
    Naming_Scheme_Editor : Naming_Scheme_Editor_Access;
    New_Variable_Editor : New_Variable_Editor_Access;
+   Window1 : Window1_Access;
 
 begin
    Gtk.Main.Set_Locale;
@@ -19,5 +21,7 @@ begin
    Show_All (Naming_Scheme_Editor);
    Gtk_New (New_Variable_Editor);
    Show_All (New_Variable_Editor);
+   Gtk_New (Window1);
+   Show_All (Window1);
    Gtk.Main.Main;
 end Switches_Glade;
