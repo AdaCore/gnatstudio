@@ -221,6 +221,8 @@ package body Glide_Kernel.Project is
       Handle.Predefined_Source_Path := new String'("");
       Handle.Predefined_Object_Path := new String'("");
 
+      --  ??? Need to handle arguments given to gnatls (e.g --RTS)
+
       Path := Locate_Exec_On_Path (Gnatls);
 
       if Path /= null then
