@@ -1,8 +1,41 @@
+-----------------------------------------------------------------------
+--                                                                   --
+--                     Copyright (C) 2001                            --
+--                          ACT-Europe                               --
+--                                                                   --
+-- This library is free software; you can redistribute it and/or     --
+-- modify it under the terms of the GNU General Public               --
+-- License as published by the Free Software Foundation; either      --
+-- version 2 of the License, or (at your option) any later version.  --
+--                                                                   --
+-- This library is distributed in the hope that it will be useful,   --
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of    --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details.                          --
+--                                                                   --
+-- You should have received a copy of the GNU General Public         --
+-- License along with this library; if not, write to the             --
+-- Free Software Foundation, Inc., 59 Temple Place - Suite 330,      --
+-- Boston, MA 02111-1307, USA.                                       --
+--                                                                   --
+-- As a special exception, if other files instantiate generics from  --
+-- this unit, or you link this unit with other files to produce an   --
+-- executable, this  unit  does not  by itself cause  the resulting  --
+-- executable to be covered by the GNU General Public License. This  --
+-- exception does not however invalidate any other reasons why the   --
+-- executable file  might be covered by the  GNU Public License.     --
+-----------------------------------------------------------------------
+
 with HTables;
 with Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
+with Prj;
 
 package Src_Info is
+
+   -------------------------------
+   -- Library Information files --
+   -------------------------------
 
    type LI_File_Ptr is private;
    --  A handle to a structure containing all the semantic information
@@ -38,6 +71,82 @@ package Src_Info is
    --  Source_Filename. Return No_LI_File if not found.
    --  Note that the path to the file is ignored during the search, only
    --  the basename is taken into account.
+
+   ------------------
+   -- Source files --
+   ------------------
+
+   type Source_File is private;
+   --  Information on a source file and its library unit file.
+
+   No_Source_File : constant Source_File;
+
+   procedure Get_Unit_Name
+     (Source            : in out Source_File;
+      Source_Info_List  : in out LI_File_List;
+      Project           : Prj.Project_Id;
+      Extra_Source_Path : String;
+      Extra_Object_Path : String;
+      Unit_Name         : out String_Access);
+   --  Return the Unit Name from the given Source. The returned string must not
+   --  be freed by the caller.
+   --
+   --  This Unit_Name is computed lazily, that is only when read for the first
+   --  time. In cases where computing the unit_name fails, null is returned.
+
+   function Get_Source_Filename (File : Source_File) return String;
+   --  Returns the source filename of the given file.
+   --  Note that this function is merely a shortcut to
+   --       File.Unit.Spec/Body/Separate_Info.Source_Filename.all
+   --  and does not perform any check before accessing these fields. The
+   --  caller should make sure that the information is accessible before
+   --  invoking this function.
+
+   function Make_Source_File
+     (LI : LI_File_Ptr; Source_Filename : String) return Source_File;
+   --  Return a Source_File based on a *parsed* LI and a filename. This
+   --  automatically checks whether Source_Filename is a spec, a body,...
+   --
+   --  No_Source_File is returned if Source_Filename is not associated with LI.
+
+   ----------------------------
+   -- Dependency Information --
+   ----------------------------
+
+   type Dependency_Info is private;
+   --  Information about a dependency.
+
+   function Get_Depends_From_Spec (Dep : Dependency_Info) return Boolean;
+   --  Return True if the given Dep is an explicit dependency from the
+   --  specificiations part.
+
+   function Get_Depends_From_Body (Dep : Dependency_Info) return Boolean;
+   --  Return True if the given Dep is an explicit dependency from the
+   --  implementation part.
+
+   ------------------------------
+   -- Dependency between files --
+   ------------------------------
+
+   type Dependency_File_Info_Node is private;
+   type Dependency_File_Info_List is private;
+   --  A dependency between two units, and list of dependencies.
+
+   No_Dependencies : constant Dependency_File_Info_List;
+
+   function File_Information (Dep : Dependency_File_Info_List)
+      return Source_File;
+   --  Return the information on the file that Dep depends on.
+
+   function Dependency_Information (Dep : Dependency_File_Info_List)
+      return Dependency_Info;
+   --  Return the information on the dependency itself. This doesn't contain
+   --  information about the files.
+
+   function Next (Dep : Dependency_File_Info_List)
+      return Dependency_File_Info_List;
+   --  Return the next item in the list.
+   --  ??? We should use proper iterators for the list.
 
 private
 
@@ -269,16 +378,22 @@ private
    --  inside LI_File record between the Spec_Info, Body_Info and Separate_Info
    --  fields which all contain File_Info_Ptr types.
 
+   type Dependency_Info is record
+      Depends_From_Spec : Boolean;
+      Depends_From_Body : Boolean;
+   end record;
+   --  Information about where a dependency between two units comes from.
+
    type Dependency_File_Info is record
       File              : Source_File;
       File_Timestamp    : Types.Time_Stamp_Type;
-      Depends_From_Spec : Boolean;
-      Depends_From_Body : Boolean;
+      Dep_Info          : Dependency_Info;
       Declarations      : E_Declaration_Info_List;
    end record;
    --  the information about a file on which a source file depends.
+   --  File_Timestamp is the timestamp that File had when the current unit
+   --  was last compiled.
 
-   type Dependency_File_Info_Node;
    type Dependency_File_Info_List is access Dependency_File_Info_Node;
    type Dependency_File_Info_Node is record
       Value : Dependency_File_Info;
@@ -286,6 +401,8 @@ private
    end record;
    --  Dependency_File_Info_List is a chained list of Dependency_File_Info.
    --  Dependency_File_Info_Node is a node of this list.
+
+   No_Dependencies : constant Dependency_File_Info_List := null;
 
    type LI_File (Parsed : Boolean := False) is record
       LI_Filename   : String_Access;
@@ -434,16 +551,9 @@ private
    --  Returns True if the given file location value has been set. It is
    --  faster than comparing the Location against Null_File_Location.
 
-   function Get_Source_Filename (File : Source_File) return String;
-   --  Returns the source filename of the given file.
-   --  Note that this function is merely a shortcut to
-   --       File.Unit.Spec/Body/Separate_Info.Source_Filename.all
-   --  and does not perform any check before accessing these fields. The
-   --  caller should make sure that the information is accessible before
-   --  invoking this function.
-
    function Get_File_Info (SF : Source_File) return File_Info_Ptr;
    --  Return an access to the File_Info associated to the given Source_File.
+   --  This is basically the opposite of Make_Source_File.
 
    procedure Destroy (LIF : in out LI_File);
    --  Deallocate recursively the data contained in the given LI_File.
