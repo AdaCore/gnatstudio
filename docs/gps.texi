@@ -418,7 +418,7 @@ initially displayed on the left side of the GPS window. Their goal is to
 show a full view of the various components of your projects. These
 various components are presented below.
 
-The following screenshot displays the two pages side-by-side: on the
+The following screen-shot displays the two pages side-by-side: on the
 left, the @code{Project View}, and on the right the @code{File View}.
 
 @iftex
@@ -465,7 +465,7 @@ A given project might appear multiple times in the
 
 There exists a second display for this project view, which lists
 all projects with no hierarchy: all projects appear only once in the explorer,
-at the toplevel. This display might be useful for deep project hierarchies, to
+at the top level. This display might be useful for deep project hierarchies, to
 make it easier to find projects in the explorer.
 
 @cindex Show flat view
@@ -874,7 +874,7 @@ file, using the standard HTML syntax.
 @end smallexample
 
 @item descr
-This is the description for this help file. It appears in a tooltip
+This is the description for this help file. It appears in a tool tip
 for the menu item.
 
 @item category
@@ -947,7 +947,7 @@ menu @code{Window}.
 
 Alternatively, windows can be selected with the keyboard. By default,
 the selection key is @key{Alt-Tab}. When you press it, a temporary
-dialog is poped-up on the screen, with the name of the window that
+dialog is popped-up on the screen, with the name of the window that
 will be selected when the key is released. If you press the selection
 key multiple times, this will iterate over all the windows currently
 open in GPS.
@@ -1442,7 +1442,7 @@ the pop up window if the variable is known to the debugger, in the right frame,
 and if the program being debugged is in the right state. If one of these
 conditions is not met, the normal mode information is displayed.
 
-You can disable the automatic pop up of tooltips in the Editor section of
+You can disable the automatic pop up of tool tips in the Editor section of
 the preferences dialog. @xref{The Preferences Dialog}.
 
 @item Word completion
@@ -1798,7 +1798,7 @@ This dialog will only show each file once. If you have extended
 projects in your hierarchy, some files may be redefined in some
 extending project. In this case, only the files from the extending
 project are shown, and you cannot have access through this dialog to
-the overriden files of the extended project. Of course, you can still
+the overridden files of the extended project. Of course, you can still
 use the project explorer or the standard @code{File->Open} menu to
 open these files.
 
@@ -2763,7 +2763,7 @@ entities declared in the source files.
 
 It is worth noting that the explorer provides a tree representation of
 the project hierarchy. If a project is imported by multiple other
-projects in the hiearchy, then this project will appear multiple times
+projects in the hierarchy, then this project will appear multiple times
 in the explorer.
 
 @cindex limited with
@@ -2803,7 +2803,7 @@ directories, @dots{} @xref{The Project Properties Editor}.
 
 @item Add Dependency...
 @cindex add dependency
-This menu and its two submenus are the primary way to change the
+This menu and its two sub-menus are the primary way to change the
 relationship between projects in the hierarchy. You can either add a
 dependency on an already existing project, or a dependency on a newly
 created project.
@@ -2906,7 +2906,7 @@ Recompute the contents of the project after modifications outside of GPS. In
 particular, it will take into account new files added externally to the source
 directories.
 This isn't needed for modifications made through GPS. Note also that
-this doesn't reparse the physical project file on disk. Instead, you can
+this doesn't re-parse the physical project file on disk. Instead, you can
 reopen the project if you have done manual modifications to it.
 
 @item File View and Project View
@@ -2930,7 +2930,7 @@ The most usual way to access this wizard is through the menu
 @code{Project->New...} On exit, the wizard will ask whether the newly
 created project should replace the currently loaded ones.
 
-The project wizard is also actived when a new dependency is created
+The project wizard is also activated when a new dependency is created
 between two projects, through the contextual menu in the project
 explorer.
 
@@ -3066,7 +3066,7 @@ default, this is the same directory as the object directory.
 @c ------------------------------------------------------------------
 
 @noindent
-A naming scheme indicates the filenaming conventions used in the different
+A naming scheme indicates the file naming conventions used in the different
 languages supported by a given project.
 For example, all @file{.adb} files are Ada files, all @file{.c} files are
 C files.
@@ -3126,7 +3126,7 @@ Typically, for C applications, these are the files that contain the
 @code{main()} function. For Ada applications, these are the files that
 contain the main subprogram for the partition.
 
-These files are treated specially by GPS. Some submenus of
+These files are treated specially by GPS. Some sub-menus of
 @code{Build} and @code{Debug} will have predefined entries for the
 main units, which make it more convenient to compile and link your
 executables.
@@ -3204,7 +3204,7 @@ non-existing directories, @dots{}), a warning dialog is displayed when you
 select the menu. This reminds you that the project might be only
 partially loaded, and editing it might result in the loss of data. In
 such cases, it is recommended that you edit the project file manually,
-which is doable directly from the popup dialog.
+which is doable directly from the pop-up dialog.
 
 Fix the project file as you would for any text file, and then reload
 it manually (through the @code{Project->Open...} or
@@ -3230,7 +3230,7 @@ wizard (@pxref{The Project Wizard}). In fact, all pages but the
 read the description for these in the project wizard chapter.
 
 The general page gives access to more attributes than the general page
-of the project wizard does. In addtion, you can select the name of all the
+of the project wizard does. In addition, you can select the name of all the
 external tools that GPS uses (compilers for the various languages,
 linker, pretty-printer, @dots{}).
 
@@ -3273,12 +3273,12 @@ button.
 @c -------------------------------------------------------------------
 
 @noindent
-The switches editor, available throught the menu @code{Project->Edit
+The switches editor, available through the menu @code{Project->Edit
 Switches}, lists all the source files associated with the selected
 project.
 
 For each file, the compiler switches are listed. These switches are
-displayed in grey if they are the default switches defined at the
+displayed in gray if they are the default switches defined at the
 project level (@pxref{The Project Properties Editor}). They are defined
 in black if they are specific to a given file.
 
@@ -3619,7 +3619,7 @@ Recompute the cross reference information for C and C++ source files.
    bottom area where input and output of the application is handled. This
    window is never closed automatically, even when the application terminates,
    so that you can still have access to the application's output. If you
-   explicitely close an execution window while an application is still running,
+   explicitly close an execution window while an application is still running,
    a dialog window will be displayed to confirm whether the application should
    be terminated.
 
@@ -3916,7 +3916,7 @@ same effect as clicking on the left title bar arrow if the item is
 already present in the call graph.
 @end table
 
-The contextal menu available by right-clicking on the entities in the
+The contextual menu available by right-clicking on the entities in the
 browser has the following new entries, in addition to the ones added by
 other modules of GPS.
 
@@ -3964,7 +3964,7 @@ files. Each item in the browser represents one source file.
 
 In this browser, clicking on the right arrow in the title bar will
 display the list of files that the selected file depends on. A file
-depend on another one if it explicitely imports it (@code{with}
+depend on another one if it explicitly imports it (@code{with}
 statement in Ada, or @code{#include} in C/C++). Implicit dependencies
 are currently not displayed in this browser, since the information is
 accessible by opening the other direct dependencies.
@@ -4019,7 +4019,7 @@ variables,...)
 
 This menu entry indicates whether standard system files (runtime files
 for instance in the case of Ada) are displayed in the browser. By
-default, these files will only be displayed if you explicitely select
+default, these files will only be displayed if you explicitly select
 them through the @code{Open file} menu, or the contextual menu in the
 project explorer.
 
@@ -4028,7 +4028,7 @@ project explorer.
 
 This menu entry indicates whether implicit dependencies should also be
 displayed for the files. Implicit dependencies are files that are
-required to compile the selected file, but that are not explicitely
+required to compile the selected file, but that are not explicitly
 imported through a @code{with} or @code{#include} statement. For
 instance, the body of generics in Ada is an implicit dependency.
 Any time one of the implicit dependencies is modified, the selected
@@ -4076,7 +4076,7 @@ one of the fields will open a new item for the type.
 
 @item Ada tagged type / C++ class
 The list of attributes and methods is displayed. They are also
-clickable hyper-links.
+click-able hyper-links.
 
 @item Subprograms
 The list of parameters is displayed
@@ -4110,7 +4110,7 @@ the selected entity.
 
 @end table
 
-Most information in the items are clickable (by default, they appear as
+Most information in the items are click-able (by default, they appear as
 underlined blue text). Clicking on one of these hyper links will open
 a new item in the entity browser for the selected entity.
 
@@ -4320,7 +4320,7 @@ of @key{Esc}.
 @subsection Contextual Menus
 @noindent
 All the debugger-related contextual menus can now be found under the
-@code{Debug} submenu.
+@code{Debug} sub-menu.
 
 The only difference is the contextual menu @code{Show} used to display
 the assembly dump of the current code. It is replaced by the menu
@@ -4385,7 +4385,7 @@ See @ref{Source Browsing} for more details.
 @item Builds, see @ref{Compilation/Build} for more details.
 
 @item Semantic support.
-In particular, future versions of GPS will be able to e.g. differenciate
+In particular, future versions of GPS will be able to e.g. differentiate
 variables from types when displaying a contextual menu, which is not possible
 in GVD.
 
@@ -4411,7 +4411,7 @@ editor. @xref{The Project Properties Editor}.
 
 The systems that are currently supported in GPS are CVS and ClearCase.
 It is recommended that you first get familiar with the version control
-system that you inted to use in GPS first, since many concepts used in GPS
+system that you intend to use in GPS first, since many concepts used in GPS
 assume basic knowledge of the underlying system.
 
 Associating a VCS to a project enables the use of basic VCS features on the
@@ -4536,10 +4536,10 @@ Open or raise the VCS Explorer. @xref{The VCS Explorer}.
 
 @item Update all projects
 Update the source files in the current project, and all imported
-subprojects, recursively.
+sub-projects, recursively.
 
 @item Query status for all projects
-Query the status of all files in the project and all imported subprojects.
+Query the status of all files in the project and all imported sub-projects.
 
 @item Update
 @anchor{Update}
@@ -4558,9 +4558,9 @@ name as argument, and displays any error message on the standard
 output. The VCS commit operation will actually occur only if nothing
 was written on the standard output.
 
-It is also possible to check the changelog of a file before commit, by
+It is also possible to check the change-log of a file before commit, by
 specifying a @code{Log checker} in the project properties dialog. This
-works on changelog files in the same way as the @code{File checker} works on
+works on change-log files in the same way as the @code{File checker} works on
 source files.
 
 @item Start Editing
@@ -4702,17 +4702,17 @@ Queries the status for all the source files contained in the project.
 @item Update project
 Updates all the source files in the project.
 
-@item List all files in project and subprojects
+@item List all files in project and sub-projects
 Brings up the VCS Explorer with all the source files contained in the
-project and all imported subprojects.
+project and all imported sub-projects.
 
-@item Query status for project and subprojects
+@item Query status for project and sub-projects
 Queries the status for all the source files contained in the project
-and all imported subprojects.
+and all imported sub-projects.
 
-@item Update project and subprojects
+@item Update project and sub-projects
 Updates all the source files in the project and all imported
-subprojects.
+sub-projects.
 
 @end table
 
@@ -4787,7 +4787,7 @@ or two different versions of the same file.
 
 This tool is based on the standard text command @command{diff}, available
 on all Unix systems. Under Windows, you need to provide a proper equivalent,
-by e.g. installing a set of unix tools such as cygwin
+by e.g. installing a set of Unix tools such as cygwin
 (@url{http://www.cygwin.com}).
 
 The dialog is composed of two main areas: on the left side, the reference
@@ -4814,7 +4814,7 @@ stay synchronized.
 Colors are used to display the different kinds of chunks:
 
 @table @b
-@item grey
+@item gray
 This color is used for all the chunks on the reference (left) file. Only
 the modified (right) file is displayed with different colors.
 
@@ -4860,7 +4860,7 @@ button which will display a contextual menu with a text explaining the action
 that will be performed. Similarly, if you display the contextual menu anywhere
 else on the message line, a sub menu called @i{Code Fixing} gives you
 access to the same information. In the previous example of a missing
-semicolon, the menu will contain an entry labelled @i{Add expected string ";"}.
+semicolon, the menu will contain an entry labeled @i{Add expected string ";"}.
 
 Once the code change has been performed, the tool icon is no longer displayed.
 
@@ -5098,7 +5098,7 @@ destroyed.
 
 @item All floating
 @cindex float
-If True, then all the windows will be floating by default, ie be under the
+If True, then all the windows will be floating by default, i.e. be under the
 control of your system (Windows) or your window manager (Unix machines). This
 replaces the MDI.
 
@@ -5180,7 +5180,7 @@ The default external editor to use.
 Specify the command line for launching a custom editor.
 It is assumed that the command will create a new window/terminal as needed.
 If the editor itself does not provide this capability (such as vi or pico under
-unix systems), you can use an external terminal command, e.g:
+Unix systems), you can use an external terminal command, e.g:
 
 @smallexample
 xterm -geometry 80x50 -exec vi +%l %f
@@ -5399,7 +5399,7 @@ Lets you change the preferences of the @i{Data Window}, in particular
 the fonts and colors used to display the data graphically.
 
 @table @b
-@item Clickable item
+@item Click-able item
 Indicates color to be used for the items that are click-able (e.g pointers).
 
 @item Changed data
@@ -5710,7 +5710,7 @@ directory to the new format. This conversion tool is called
 @noindent
 
 These files distinguish the actions from their associated menus or
-keybindings. These actions can take on several forms: external commands,
+key bindings. These actions can take on several forms: external commands,
 shell commands and predefined commands, as will be explained in more details
 below.
 
@@ -5725,7 +5725,7 @@ The following XML tags are valid children for @code{<action>}.
 
 @cindex external
 @item <external>
-This defines a command to execute through the system (ie a standard Unix or
+This defines a command to execute through the system (i.e. a standard Unix or
 Windows command)
 
 Note for Windows users: like under UNIX, scripts can be called
@@ -5822,7 +5822,7 @@ aliases expansion, manipulating MDI windows,...
 @cindex menus
 @noindent
 
-These commands can be associated with menus, toolbar buttons and keys. All
+These commands can be associated with menus, tool bar buttons and keys. All
 of these use similar syntax.
 
 Binding a menu to an action is done through the @code{<menu>} tag. This tag
@@ -5836,7 +5836,7 @@ You can define the accelerator keys for your menus, using underscores
 in the titles. Thus, if you want an accelerator on the first letter in
 a menu named @code{File}, set its title as @code{_File}.
 
-You can specify which menu this new item is added to by puting the
+You can specify which menu this new item is added to by putting the
 @code{<menu>} tag to a @code{<submenu>} tag. The latter also takes a
 @code{<title>} as a child. You can add items or sub menus to existing menus,
 using titles for menus that already exist.
@@ -5891,7 +5891,7 @@ or @code{xpm}) to be used as icon for the button. An empty
 @code{<button>} tag indicates a separator in the tool bar.
 
 A title can also be specified with @code{<title>}. This will be visible only
-if the user choses to see both text and icons in the toolbar.
+if the user choses to see both text and icons in the tool bar.
 
 The following example defines a new button:
 
@@ -6051,7 +6051,7 @@ tag. Defining languages gives GPS the ability to highlight the syntax of a
 file, explore a file (using e.g. the project explorer), and find files
 associated with a given language.
 
-As described previousely for menu items, any file in the @file{customize}
+As described previously for menu items, any file in the @file{customize}
 directory will be loaded by GPS at start up. Therefore, you can either
 define new languages in a separate file, or reuse a file where you already
 define actions and menus.
@@ -6096,11 +6096,11 @@ Describes the context used to highlight the syntax of a file.
    A character defining the string delimiter.
 
    @item Quote_Character
-   A character defining the quote character, used for e.g. cancelling the
+   A character defining the quote character, used for e.g. canceling the
    meaning of a string delimiter (@code{\} in C).
 
    @item Constant_Character
-   A character defining the beginning of a character litteral.
+   A character defining the beginning of a character literal.
 
    @item Can_Indent
    A boolean indicating whether indentation should be enabled for this
@@ -6449,7 +6449,7 @@ An RC file is a text file which is composed of a sequence of declarations.
 All the literals are case sensitive;
 @code{#} characters delimit comments and the portion of a line after a
 @code{#} is ignored when parsing an RC file.
-The syntax of the toplevel declarations is described below.
+The syntax of the top level declarations is described below.
 Opening/closing brackets on the same line (@{ ... @}) are used to represent
 a sequence of 0 or more elements. Brackets on their own line are real bracket
 characters.
@@ -6962,7 +6962,7 @@ environment. It can also be used as a command line interface to GPS,
 if you script's last command is to exit GPS.
 
 @cindex --eval
-Inline commands can also be given directly on the command line through
+In-line commands can also be given directly on the command line through
 @code{--eval} command line switch.
 
 For instance, if you want to analyze an entity in the entity browser
@@ -7146,7 +7146,7 @@ file in which they are defined. For instance if a file @file{mystartup.py}
 is copied to the startup directory, and defines the function @code{func},
 then the latter will be accessible in GPS through @code{mystartup.func}.
 
-If you are writting a set of python scripts that other people will use,
+If you are writing a set of python scripts that other people will use,
 you need to provide several things:
 
 @itemize
@@ -7156,7 +7156,7 @@ you need to provide several things:
 @item An XML file with the format described in the customization section
  of this documentation. This XML file should create a series of actions,
  through the @code{<action>} tag, exported to the user. This allows him
- to either create menus to execute these commands or to bindg them to special
+ to either create menus to execute these commands or to bind them to special
  key shortcuts
 
 @end itemize
@@ -7195,7 +7195,7 @@ Options:
    --debugger debugger Specify the debugger's command line
    --target=TARG:PRO   Load program on machine TARG using protocol PRO
    --load=lang:file    Execute an external file written in the language lang
-   --eval=lang:file    Execute an inline script written in the language lang
+   --eval=lang:file    Execute an in-line script written in the language lang
 
 Source files are searched everywhere on the project's source path
 @end smallexample
@@ -7290,7 +7290,7 @@ automatically created if you have activated the dynamic key bindings feature
 
    @item $HOME/.gps/keys.xml
 Contains all the key bindings for the actions defined in GPS or in the
-custom files. This only contains the key bindings overriden through the
+custom files. This only contains the key bindings overridden through the
 key shortcuts editor (see @ref{The Key Manager Dialog}).
 
    @item $HOME/.gps/debugger.log
