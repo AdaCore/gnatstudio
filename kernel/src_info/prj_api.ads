@@ -270,6 +270,21 @@ package Prj_API is
       return Project_Node_Id;
    --  Create a literal string whose value is Str.
 
+   Ide_Package                : constant String := "ide";
+   Gnatlist_Attribute         : constant String := "gnatlist";
+   Compiler_Command_Attribute : constant String := "compiler_command";
+   Debugger_Command_Attribute : constant String := "debugger_command";
+   Remote_Host_Attribute      : constant String := "remote_host";
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Default        : String := "") return String;
+   --  Return the value for a single-string attribute.
+   --  Default is returned if the attribute wasn't set by the user and
+   --  has no default value.
+
    -----------------------
    -- Imported projects --
    -----------------------

@@ -3762,6 +3762,48 @@ package body Prj_API is
       end if;
    end Get_Language_Of;
 
+   -------------------------
+   -- Get_Attribute_Value --
+   -------------------------
+
+   function Get_Attribute_Value
+     (Project_View   : Project_Id;
+      Attribute_Name : String;
+      Package_Name   : String := "";
+      Default        : String := "") return String
+   is
+      Pkg : Package_Id := No_Package;
+      Value : Variable_Value;
+      Var : Variable_Id;
+   begin
+      if Package_Name /= "" then
+         Name_Len := Package_Name'Length;
+         Name_Buffer (1 .. Name_Len) := Package_Name;
+         Pkg := Value_Of
+           (Name_Find,
+            In_Packages => Projects.Table (Project_View).Decl.Packages);
+         if Pkg = No_Package then
+            return Default;
+         end if;
+         Var := Packages.Table (Pkg).Decl.Attributes;
+      else
+         Var := Projects.Table (Project_View).Decl.Attributes;
+      end if;
+
+      Name_Len := Attribute_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Attribute_Name;
+      Value := Value_Of (Name_Find, Var);
+
+      if Value.Kind = Undefined then
+         return Default;
+      end if;
+
+      Assert (Me, Value.Kind = Prj.Single,
+              "Attribute " & Attribute_Name & " is not a single string");
+
+      return Get_String (Value.Value);
+   end Get_Attribute_Value;
+
    -------------------------------------
    -- Register_Default_Naming_Schemes --
    -------------------------------------
