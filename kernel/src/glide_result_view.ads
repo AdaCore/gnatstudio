@@ -155,7 +155,6 @@ private
       Tree   : Tree_View;
 
       Non_Leaf_Color : Gdk.Color.Gdk_Color;
-      Leaf_Color     : Gdk.Color.Gdk_Color;
       --  The color to use in the first column, depending on the status of the
       --  line.
 
