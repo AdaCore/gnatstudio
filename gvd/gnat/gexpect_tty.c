@@ -915,16 +915,6 @@ allocate_pty (void)
 
 #if defined (HAVE_GRANTPT)
   grantpt (master_fd);
-#ifdef HPUX
-  /* grantpt() behavior on some versions of HP-UX differs from what's
-     specified in the man page: the group of the slave PTY is set to
-     the user's primary group, and we fix that. */
-  { 
-    struct group *tty_group = getgrnam ("tty");
-    if (tty_group != NULL)
-      chown (pty_name, (uid_t) -1, tty_group->gr_gid);
-  }
-#endif /* HPUX has broken grantpt() */
 #endif /* HAVE_GRANTPT */
 
 #if defined (HAVE_UNLOCKPT)
