@@ -384,10 +384,22 @@ package body GVD.Menu is
       Action : Guint;
       Widget : Limited_Widget)
    is
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Button : Message_Dialog_Buttons;
+
    begin
       if Tab /= null then
-         Detach_Process (Tab.Debugger, Mode => GVD.Types.Visible);
+         if Command_In_Process (Get_Process (Tab.Debugger)) then
+            Button := Message_Dialog
+              ((-"Cannot detach the process while the") & ASCII.LF &
+               (-"underlying debugger is busy.") & ASCII.LF &
+               (-"Interrupt the debugger or wait for its availability."),
+              Dialog_Type => Warning,
+              Buttons => Button_OK);
+
+         else
+            Detach_Process (Tab.Debugger, Mode => GVD.Types.Visible);
+         end if;
       end if;
    end On_Detach_Process;
 
