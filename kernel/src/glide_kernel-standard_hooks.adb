@@ -935,7 +935,8 @@ package body Glide_Kernel.Standard_Hooks is
       Create_Hook_Type
         (Kernel, Open_File_Hook_Type,
         -("Common type for all hooks related to opening files." & ASCII.LF
-          & "Arguments are the following: (file, line, column, column_end,"
+          & "Arguments are the following: (hook_name, file, line, column,"
+          & " column_end,"
           & " enable_navigation, new_file, force_reload, [focus])" & ASCII.LF
           & "Do not confuse with " & File_Edited_Hook & " which signals that"
           & " a file has just been opened."),
@@ -948,7 +949,7 @@ package body Glide_Kernel.Standard_Hooks is
       Create_Hook_Type
         (Kernel, Before_Exit_Hook_Type,
          -("Hook type called before GPS exits." & ASCII.LF
-           & "No arguments."),
+           & "Argument is the following: (hook_name)"),
          Hook_With_Args_And_Return, Before_Exit_Run_Hook_Handler'Access);
       Register_Hook
         (Kernel, Before_Exit_Action_Hook,
@@ -959,7 +960,7 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, File_Line_Hook_Type,
          -("Common type for all hooks displaying information on the side of"
            & " editors." & ASCII.LF
-           & "Arguments are the following: (identifier, file, info,"
+           & "Arguments are the following: (hook_name, identifier, file, info,"
            & " stick_to_data, every_line, normalize)"),
           Hook_With_Args_And_Return, Line_Information_Run_Hook_Handler'Access);
       Register_Hook
@@ -972,7 +973,8 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, Location_Hook_Type,
          -("Common type for all hooks displaying information on the side of"
            & " location window." & ASCII.LF
-           & "Arguments are the following: (identifier, category, file, line,"
+           & "Arguments are the following: (hook_name, identifier, category,"
+           & " file, line,"
            & " column, message)"),
          Hook_With_Args_And_Return, Location_Run_Hook_Handler'Access);
       Register_Hook
@@ -984,7 +986,8 @@ package body Glide_Kernel.Standard_Hooks is
       Create_Hook_Type
         (Kernel, Html_Hook_Type,
          -("Common type for all hooks displaying HTML files." & ASCII.LF
-           & "Arguments are the following: (file, enable_navigation, anchor)"),
+           & "Arguments are the following: (hook_name, file,"
+           & " enable_navigation, anchor)"),
          Hook_With_Args_And_Return, Html_Run_Hook_Handler'Access);
       Register_Hook
         (Kernel, Html_Action_Hook,
@@ -994,7 +997,8 @@ package body Glide_Kernel.Standard_Hooks is
       Create_Hook_Type
         (Kernel, Diff_Hook_Type,
          -("Common type for all hooks displaying comparison window." & ASCII.LF
-           & "Arguments are the following: (orig_file, ref_file, diff_file)"),
+           & "Arguments are the following: (hook_name,"
+           & " orig_file, ref_file, diff_file)"),
          Hook_With_Args_And_Return, Diff_Run_Hook_Handler'Access);
       Register_Hook
         (Kernel, Diff_Action_Hook,
@@ -1005,13 +1009,13 @@ package body Glide_Kernel.Standard_Hooks is
         (Kernel, File_Hook_Type,
          -("Common type for all hooks that take a single file as parameter"
            & ASCII.LF
-           & "Arguments are the following: (file)"),
+           & "Arguments are the following: (hook_name, file)"),
          Hook_With_Args, File_Run_Hook_Handler'Access);
       Create_Hook_Type
         (Kernel, Context_Hook_Type,
          -("Common type for all hooks that take a context as parameter"
            & ASCII.LF
-           & "Arguments are the following: (context)"),
+           & "Arguments are the following: (hook_name, context)"),
          Hook_With_Args, Context_Run_Hook_Handler'Access);
    end Register_Action_Hooks;
 
