@@ -240,59 +240,54 @@ package body Welcome is
    -- Run_Welcome --
    -----------------
 
-   function Run_Welcome (Screen : access Welcome_Screen_Record)
-      return Welcome_Result
+   function Run_Welcome
+     (Screen : access Welcome_Screen_Record) return Welcome_Result
    is
       Response : Gtk_Response_Type;
    begin
-      if Get_Pref (Screen.Kernel, Display_Welcome) then
-         Show_All (Screen);
+      if not Get_Pref (Screen.Kernel, Display_Welcome) then
+         On_Default_Project (Screen);
+         return Project_Loaded;
+      end if;
 
-         --  While the user hasn't selected a valid project...
+      Show_All (Screen);
 
+      --  While the user hasn't selected a valid project...
+
+      loop
+         --  Prevent deleting of the dialog through the title bar's X button
+         --  (which is shown on some window managers)
          loop
-            --  Prevent deleting of the dialog through the title bar's X button
-            --  (which is shown on some window managers)
-            loop
-               Response := Run (Screen);
+            Response := Run (Screen);
 
-               exit when Response = Gtk_Response_Close
-                 or else (Response = Gtk_Response_OK
-                          and then (not Get_Active (Screen.Create_Project)
-                                    or else On_New_Project (Screen)));
-            end loop;
-
-            if not Get_Active (Screen.Always_Show) then
-               Set_Pref (Screen.Kernel, Display_Welcome, False);
-            end if;
-
-            if Response = Gtk_Response_OK then
-               if Get_Active (Screen.Default_Project) then
-                  On_Default_Project (Screen);
-                  return Project_Loaded;
-
-               elsif Get_Active (Screen.Open_Project_Button) then
-                  if On_Load_Project (Screen) then
-                     return Project_Loaded;
-                  end if;
-
-               else
-                  --  A new project was loaded.
-                  return Project_Loaded;
-               end if;
-            else
-               return Quit_GPS;
-            end if;
+            exit when Response = Gtk_Response_Close
+              or else (Response = Gtk_Response_OK
+                       and then (not Get_Active (Screen.Create_Project)
+                                 or else On_New_Project (Screen)));
          end loop;
 
-      elsif Get_Text (Get_Entry (Screen.Open_Project)) /= "" then
-         if not On_Load_Project (Screen) then
-            On_Default_Project (Screen);
+         if not Get_Active (Screen.Always_Show) then
+            Set_Pref (Screen.Kernel, Display_Welcome, False);
          end if;
 
-      else
-         On_Default_Project (Screen);
-      end if;
+         if Response = Gtk_Response_OK then
+            if Get_Active (Screen.Default_Project) then
+               On_Default_Project (Screen);
+               return Project_Loaded;
+
+            elsif Get_Active (Screen.Open_Project_Button) then
+               if On_Load_Project (Screen) then
+                  return Project_Loaded;
+               end if;
+
+            else
+               --  A new project was loaded.
+               return Project_Loaded;
+            end if;
+         else
+            return Quit_GPS;
+         end if;
+      end loop;
 
       return Project_Loaded;
    end Run_Welcome;
