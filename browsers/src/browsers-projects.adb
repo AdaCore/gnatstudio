@@ -174,7 +174,6 @@ package body Browsers.Projects is
          Edge_Factory'Unrestricted_Access);
 
       Set_Items (Get_Canvas (In_Browser), G);
-      Layout (Get_Canvas (In_Browser), Force => True, Vertical_Layout => True);
       Refresh_Canvas (Get_Canvas (In_Browser));
    end Examine_Project_Hierarchy;
 
