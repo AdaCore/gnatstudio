@@ -26,29 +26,43 @@ package body Language.Cpp is
 
    Keywords_List : Pattern_Matcher := Compile
      ("^(" & C_Keywords_Regexp &
-      "|abstract|c(atch|lass|onst)|f(inal|riend)|interface|namespace|"
+      "|abstract|c(atch|lass)|f(inal|riend)|interface|namespace|"
       & "p(r(ivate|otected)|ublic)|synchronized|t(emplate|ry)|virtual"
       & ")\W");
    --  Adds: ("class" "interface" "namespace" "try" "catch" "friend"
-   --  "virtual" "template" "public" "protected" "private" "const" "abstract"
+   --  "virtual" "template" "public" "protected" "private" "abstract"
    --  "synchronized" "final"
 
    Classes_RE : aliased Pattern_Matcher :=
      Compile ("^\s*(class|struct)\s+([\w_]+)\s*(:[^{]+)?\{", Multiple_Lines);
 
+   Methods_RE : aliased Pattern_Matcher :=
+     Compile                  --  Based on Language.C.Subprogram_RE
+       ("^(\w+\s+)?"
+        & "([\w_*]+\s+)?"
+        & "([\w_*]+\s+)?"
+        & "([*&]+\s*)?"
+        & "([\w_*]+(::[\w_*]+)+)\s*"  -- method name
+        & "\([^(]",
+        Multiple_Lines);
+
    function Make_Entry_Class
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String;
+      Matched  : Match_Array) return String;
    --  Function used to create an entry in the explorer, for classes.
    --  See the description of Explorer_Categories for more information.
 
-   Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 1) :=
-     (1 => (Name           => new String' ("Classes"),
+   Cpp_Explorer_Categories : constant Explorer_Categories (1 .. 2) :=
+     (1 => (Category       => Cat_Class,
             Regexp         => Classes_RE'Access,
             Position_Index => 2,
             Icon           => package_xpm'Access,
-            Make_Entry     => Make_Entry_Class'Access));
+            Make_Entry     => Make_Entry_Class'Access),
+      2 => (Category       => Cat_Method,
+            Regexp         => Methods_RE'Access,
+            Position_Index => 5,
+            Icon           => subprogram_xpm'Access,
+            Make_Entry     => null));
 
    ----------------------
    -- Make_Entry_Class --
@@ -56,10 +70,7 @@ package body Language.Cpp is
 
    function Make_Entry_Class
      (Str      : String;
-      Matched  : Match_Array;
-      Category : access Category_Index) return String
-   is
-      pragma Unreferenced (Category);
+      Matched  : Match_Array) return String is
    begin
       return Str (Matched (1).First .. Matched (1).Last)
         & " " & Str (Matched (2).First .. Matched (2).Last);
