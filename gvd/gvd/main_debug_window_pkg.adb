@@ -38,12 +38,12 @@ with GVD.Preferences; use GVD.Preferences;
 with GVD.Process; use GVD.Process;
 with GVD.Memory_View; use GVD.Memory_View;
 
-with Language.Debugger.Ada; use Language.Debugger.Ada;
-with Language.Debugger.C;   use Language.Debugger.C;
-with Language.Debugger.Cpp; use Language.Debugger.Cpp;
-with Language;              use Language;
+with Language.Ada; use Language.Ada;
+with Language.C;   use Language.C;
+with Language.Cpp; use Language.Cpp;
+with Language;     use Language;
 
-with System;        use System;
+with System;       use System;
 with Interfaces.C.Strings; use Interfaces.C.Strings;
 
 package body Main_Debug_Window_Pkg is
