@@ -1614,15 +1614,12 @@ package body Src_Info.CPP is
                Free (Sym);
                raise;
          end;
-
-         Free (P);
       end loop;
 
       Release_Cursor (Handler.SN_Table (FIL));
       Free (Module_Typedefs);
    exception
       when others   => -- unexpected exception
-         Free (P);
          Free (Module_Typedefs);
          Release_Cursor (Handler.SN_Table (FIL));
          --  ??? Here we probably want to report the unexpected exception
@@ -1994,8 +1991,6 @@ package body Src_Info.CPP is
                Free (Sym);
                raise;
          end;
-
-         Free (P);
       end loop;
 
       Result := Constructs;
@@ -2006,7 +2001,6 @@ package body Src_Info.CPP is
       when E : others   =>
          Trace (Info_Stream,
                 "Unexpected exception: " & Exception_Information (E));
-         Free (P);
          Free (Module_Typedefs);
    end Parse_File_Constructs;
 
@@ -2320,7 +2314,6 @@ package body Src_Info.CPP is
          end if;
 
          Parse_Pair (P, MD_Tab);
-         Free (P);
 
          --  Update position of the first forward declaration
 
@@ -2350,7 +2343,6 @@ package body Src_Info.CPP is
          Get_Pair (MD_File, Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, MD_Tab_Tmp);
-         Free (P);
 
          --  Update position of the first forward declaration
          if MD_Tab.Buffer (MD_Tab.File_Name.First .. MD_Tab.File_Name.Last)
@@ -2498,7 +2490,6 @@ package body Src_Info.CPP is
          exit when P = No_Pair;
 
          Parse_Pair (P, FD_Tab);
-         Free (P);
          Match := True;
 
          exit when Cmp_Prototypes
@@ -2533,7 +2524,6 @@ package body Src_Info.CPP is
          Get_Pair (FD_File, Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, FD_Tab_Tmp);
-         Free (P);
          --  Update position of the first forward declaration
          Match :=
             FD_Tab.Buffer (FD_Tab.File_Name.First .. FD_Tab.File_Name.Last)
@@ -3078,7 +3068,6 @@ package body Src_Info.CPP is
             Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
             exit when P = No_Pair;
             Parse_Pair (P, MDecl);
-            Free (P);
 
             --  ??? Should we compare base or full name here ?
             if MDecl.Buffer (MDecl.File_Name.First .. MDecl.File_Name.Last) /=
@@ -3117,7 +3106,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, MBody);
-            Free (P);
 
             --  ??? Should we compare full or base name
             if MBody.Buffer (MBody.File_Name.First .. MBody.File_Name.Last) /=
@@ -3201,7 +3189,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, FDecl);
-            Free (P);
 
             --  ??? Should we compare full or base name
             if FDecl.Buffer (FDecl.File_Name.First .. FDecl.File_Name.Last) /=
@@ -3234,7 +3221,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, Fn);
-            Free (P);
 
             --  ??? Should we compare full or base name
             if Fn.Buffer (Fn.File_Name.First .. Fn.File_Name.Last) /=
@@ -3341,7 +3327,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, FDecl_Tmp);
-            Free (P);
 
             if not Forward_Declared then
                FDecl := FDecl_Tmp;
@@ -3374,7 +3359,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, Fn_Tmp);
-            Free (P);
 
             if not Forward_Declared and No_Body then
                --  No forward decls, but we found the first function
@@ -3962,7 +3946,6 @@ package body Src_Info.CPP is
          Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, MDecl_Tmp);
-         Free (P);
          if Init then
             Init  := False;
             MDecl := MDecl_Tmp;
@@ -4002,8 +3985,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, Fn);
-
-            Free (P);
             Init := False;
 
             exit when Cmp_Arg_Types
@@ -4521,7 +4502,6 @@ package body Src_Info.CPP is
                   Free (Super_Def);
                end if;
                Free (Super);
-               Free (P);
             end loop;
             Release_Cursor (Handler.SN_Table (SN_IN));
          exception
@@ -4810,7 +4790,6 @@ package body Src_Info.CPP is
          exit when P = No_Pair;
 
          Parse_Pair (P, FD_Tab_Tmp);
-         Free (P);
 
          --  Update position of the first forward declaration
          --  We have to compare prototypes of all global functions
@@ -4890,7 +4869,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, FU_Tab);
-            Free (P);
             Match := Cmp_Prototypes
                (FD_Tab.Buffer,
                 FU_Tab.Buffer,
@@ -5183,8 +5161,6 @@ package body Src_Info.CPP is
                --  exception
                raise;
          end;
-
-         Free (P);
       end loop;
       Release_Cursor (Handler.SN_Table (TO));
 
@@ -5605,7 +5581,6 @@ package body Src_Info.CPP is
          Get_Pair (Handler.SN_Table (MD), Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, MD_Tab_Tmp);
-         Free (P);
 
          --  Update position of the first forward declaration
 
@@ -5708,7 +5683,6 @@ package body Src_Info.CPP is
             exit when P = No_Pair;
 
             Parse_Pair (P, MI_Tab);
-            Free (P);
             Found := Cmp_Prototypes
                (MD_Tab.Buffer,
                 MI_Tab.Buffer,
@@ -5963,7 +5937,6 @@ package body Src_Info.CPP is
          Get_Pair (Handler.SN_Table (LV), Next_By_Key, Result => P);
          exit when P = No_Pair;
          Parse_Pair (P, Var);
-         Free (P);
 
          --  Check if we found the right local variable:
          --  compare class names (for methods only)
@@ -6177,7 +6150,6 @@ package body Src_Info.CPP is
          exit when P = No_Pair;
 
          Parse_Pair (P, Ref);
-         Free (P);
 
          --  Check if we found the right lv usage: comapre file name
          --  and argument types
@@ -6252,7 +6224,6 @@ package body Src_Info.CPP is
          exit when P = No_Pair;
 
          Parse_Pair (P, Ref);
-         Free (P);
 
          if Ref.Buffer (Ref.Access_Type.First .. Ref.Access_Type.Last)
            = "w"
@@ -6328,7 +6299,6 @@ package body Src_Info.CPP is
          exit when P = No_Pair;
 
          Parse_Pair (P, Arg);
-         Free (P);
 
          if Buffer (File_Name.First .. File_Name.Last)
            = Arg.Buffer (Arg.File_Name.First .. Arg.File_Name.Last)
