@@ -62,6 +62,7 @@ with GVD.Dialogs;               use GVD.Dialogs;
 with String_Utils;              use String_Utils;
 with String_List_Utils;
 with GUI_Utils;                 use GUI_Utils;
+with OS_Utils;                  use OS_Utils;
 with System;
 
 with GNAT.Expect;               use GNAT.Expect;
@@ -154,6 +155,7 @@ package body Builder_Module is
      (Kernel       : Kernel_Handle;
       Syntax       : Command_Syntax;
       Project      : Project_Type;
+      Path         : String;
       File         : Virtual_File;
       Compile_Only : Boolean := False) return Argument_List_Access;
    --  Compute the make arguments following the right Syntax
@@ -162,6 +164,8 @@ package body Builder_Module is
    --
    --  If File is No_File, then all files of the project will be recompiled.
    --  If Compile_Only is True, then use compile rather than build syntax.
+   --
+   --  If Path is not empty, use Path as project path.
 
    procedure Add_Build_Menu
      (Menu         : in out Gtk_Menu;
@@ -191,7 +195,8 @@ package body Builder_Module is
       Remote_Protocol : String;
       Command         : String;
       Arguments       : Argument_List;
-      Fd              : Process_Descriptor_Access);
+      Fd              : Process_Descriptor_Access;
+      Insert          : Boolean := True);
    --  Compute the command to be executed from Command, Remote_Host
    --  and Remote_Protocol (execution is local when
    --  Remote_Host = "" or Remote_Protocol = ""
@@ -277,25 +282,39 @@ package body Builder_Module is
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Synchronous : Boolean := False;
-      Syntax_Only : Boolean := False);
+      Syntax_Only : Boolean := False;
+      Quiet       : Boolean := False;
+      Shadow      : Boolean := False);
    --  Launch a compilation command for File.
    --  If Synchronous is true, then this procedure will not return until the
    --  file is fully compiled; all other GPS operations are blocked while the
    --  compilation takes place in this case.
    --  If Syntax_Only is True, perform only syntax checks.
+   --  If Quiet is True, compile only in the background, without showing the
+   --  compilation command.
+   --  If Shadow is True, then a new file and an extending project will be
+   --  created, and those files will be deleted after the compilation command
+   --  ends.
 
-   procedure Clear_Compilation_Output (Kernel : Kernel_Handle);
+   procedure Clear_Compilation_Output
+     (Kernel : Kernel_Handle;
+      Shadow : Boolean);
    --  Clear the compiler output, the console, and the result view.
 
    ------------------------------
    -- Clear_Compilation_Output --
    ------------------------------
 
-   procedure Clear_Compilation_Output (Kernel : Kernel_Handle) is
+   procedure Clear_Compilation_Output
+     (Kernel : Kernel_Handle;
+      Shadow : Boolean) is
    begin
-      Console.Clear (Kernel);
-
-      Remove_Result_Category (Kernel, -Error_Category);
+      if Shadow then
+         Remove_Result_Category (Kernel, -Shadow_Category);
+      else
+         Console.Clear (Kernel);
+         Remove_Result_Category (Kernel, -Error_Category);
+      end if;
 
       String_List_Utils.String_List.Free
         (Builder_Module_ID_Access (Builder_Module_ID).Output);
@@ -309,14 +328,21 @@ package body Builder_Module is
      (Kernel       : Kernel_Handle;
       Syntax       : Command_Syntax;
       Project      : Project_Type;
+      Path         : String;
       File         : Virtual_File;
       Compile_Only : Boolean := False) return Argument_List_Access
    is
-      Project_Str    : constant String := Project_Path (Project);
+      Project_Str    : String_Access;
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
 
    begin
+      if Path = "" then
+         Project_Str := new String'(Project_Path (Project));
+      else
+         Project_Str := new String'(Path);
+      end if;
+
       case Syntax is
          when GNAT_Syntax =>
             --  gnatmake -d -Pproject main -XVAR1=value1 ...
@@ -332,7 +358,7 @@ package body Builder_Module is
                R_Tmp (K) := new String'("-d");
 
                K := K + 1;
-               R_Tmp (K) := new String'("-P" & Project_Str);
+               R_Tmp (K) := new String'("-P" & Project_Str.all);
 
                if File = VFS.No_File then
                   if Compile_Only then
@@ -359,10 +385,10 @@ package body Builder_Module is
                List : constant Argument_List :=
                  ((new String'("-s"),
                    new String'("-C"),
-                   new String'(Dir_Name (Project_Str)),
+                   new String'(Dir_Name (Project_Str.all)),
                    new String'("-f"),
                    new String'("Makefile." &
-                               Base_Name (Project_Str, ".gpr"))) &
+                               Base_Name (Project_Str.all, ".gpr"))) &
                   Vars.all);
                Base : constant String := Locale_From_UTF8 (Base_Name (File));
                Base_Object : constant String :=
@@ -424,6 +450,7 @@ package body Builder_Module is
       end case;
 
       Basic_Types.Unchecked_Free (Vars);
+      Free (Project_Str);
       return Result;
    end Compute_Arguments;
 
@@ -478,14 +505,17 @@ package body Builder_Module is
       Remote_Protocol : String;
       Command         : String;
       Arguments       : Argument_List;
-      Fd              : Process_Descriptor_Access)
+      Fd              : Process_Descriptor_Access;
+      Insert          : Boolean := True)
    is
       Remote_Args : Argument_List_Access;
       Cmd         : constant String :=
         Command & " " & Argument_List_To_String (Arguments);
 
    begin
-      Console.Raise_Console (Kernel);
+      if Insert then
+         Console.Raise_Console (Kernel);
+      end if;
 
       if Remote_Host /= ""
         and then Remote_Protocol /= ""
@@ -493,8 +523,10 @@ package body Builder_Module is
          Remote_Args := Argument_String_To_List
            (Remote_Protocol & " " & Remote_Host);
 
-         Console.Insert
-           (Kernel, Remote_Protocol & " " & Remote_Host & " " & Cmd);
+         if Insert then
+            Console.Insert
+              (Kernel, Remote_Protocol & " " & Remote_Host & " " & Cmd);
+         end if;
 
          Non_Blocking_Spawn
            (Fd.all,
@@ -505,7 +537,10 @@ package body Builder_Module is
          Free (Remote_Args);
 
       else
-         Console.Insert (Kernel, Cmd);
+         if Insert then
+            Console.Insert (Kernel, Cmd);
+         end if;
+
          Non_Blocking_Spawn
            (Fd.all, Command, Arguments, Buffer_Size => 0, Err_To_Out => True);
       end if;
@@ -619,7 +654,7 @@ package body Builder_Module is
                         Use_Initial_Value => True)
                        & new String'(Full_Name (F).all));
                else
-                  Args := Compute_Arguments (Kernel, Syntax, Prj, F);
+                  Args := Compute_Arguments (Kernel, Syntax, Prj, "", F);
                end if;
             end;
 
@@ -663,13 +698,18 @@ package body Builder_Module is
 
          else
             Args := Compute_Arguments
-              (Kernel, Syntax, Project, File, Compile_Only => not Main_Units);
+              (Kernel,
+               Syntax,
+               Project,
+               "",
+               File,
+               Compile_Only => not Main_Units);
          end if;
 
          Change_Dir (Dir_Name (Project_Path (Project)));
       end if;
 
-      Clear_Compilation_Output (Kernel);
+      Clear_Compilation_Output (Kernel, False);
 
       case Syntax is
          when GNAT_Syntax =>
@@ -786,7 +826,9 @@ package body Builder_Module is
      (Kernel      : Kernel_Handle;
       File        : Virtual_File;
       Synchronous : Boolean := False;
-      Syntax_Only : Boolean := False)
+      Syntax_Only : Boolean := False;
+      Quiet       : Boolean := False;
+      Shadow      : Boolean := False)
    is
       Top          : constant Glide_Window :=
         Glide_Window (Get_Main_Window (Kernel));
@@ -794,7 +836,7 @@ package body Builder_Module is
         Get_Project_From_File (Get_Registry (Kernel), File);
       Cmd          : String_Access;
       Fd           : Process_Descriptor_Access;
-      Local_File   : aliased String := Locale_Full_Name (File);
+      Local_File   : String_Access;
       Lang         : String := Get_Language_From_File
         (Get_Language_Handler (Kernel), File);
       C            : Build_Command_Access;
@@ -802,27 +844,57 @@ package body Builder_Module is
       Args         : Argument_List_Access;
       Old_Dir      : constant Dir_Name_Str := Get_Current_Dir;
       Syntax       : Command_Syntax;
+      Shadow_Path  : String_Access;
+      Compilable_File : Virtual_File := File;
 
    begin
+      --  Is there a file to compile ?
+
       if File = VFS.No_File then
-         Console.Insert
-           (Kernel, -"No file name, cannot compile",
-            Mode => Error);
+         if not Quiet then
+            Console.Insert
+              (Kernel, -"No file name, cannot compile",
+               Mode => Error);
+         end if;
+
+         return;
       end if;
 
       To_Lower (Lang);
 
-      if not Save_MDI_Children
-        (Kernel, Force => Get_Pref (Kernel, Auto_Save))
-      then
+      --  Save the corresponding files if needed
+
+      if not Shadow then
+         if not Save_MDI_Children
+           (Kernel, Force => Get_Pref (Kernel, Auto_Save))
+         then
+            return;
+         end if;
+      end if;
+
+      --  Determine the project for the file
+
+      if Prj = No_Project then
+         if not Quiet then
+            Console.Insert
+              (Kernel, -"Could not determine the project for file: "
+               & Full_Name (File).all,
+               Mode => Error);
+         end if;
+
          return;
       end if;
 
-      if Prj = No_Project then
-         Console.Insert
-           (Kernel, -"Could not determine the project for file: "
-            & Full_Name (File).all,
-            Mode => Error);
+      --  Determine the language for the file
+
+      if Lang = "" then
+         if not Quiet then
+            Console.Insert
+              (Kernel, -"Could not determine the language for file: "
+               & Full_Name (File).all,
+               Mode => Error);
+         end if;
+
          return;
 
       elsif Lang = "ada" then
@@ -841,9 +913,13 @@ package body Builder_Module is
 
       else
          if Status (Prj) /= From_File then
-            Console.Insert
-              (Kernel, -"You must save the project before compiling",
-               Mode => Error);
+            if not Quiet then
+               Console.Insert
+                 (Kernel, -"You must save the project before compiling",
+                  Mode => Error);
+            end if;
+
+            Free (Local_File);
             return;
          end if;
 
@@ -852,13 +928,72 @@ package body Builder_Module is
          Common_Args := new Argument_List'(1 .. 0 => null);
       end if;
 
-      Change_Dir (Dir_Name (Project_Path (Prj)));
-      Clear_Compilation_Output (Kernel);
+      Clear_Compilation_Output (Kernel, Shadow);
       Set_Sensitive_Menus (Kernel, False);
       Top.Interrupted := False;
       Fd := new TTY_Process_Descriptor;
 
-      if Status (Prj) /= From_File then
+      if Shadow then
+         --  Create a temporary project, and a temporary file containing the
+         --  buffer data, so as to be able to compile the file without saving
+         --  the buffer to disk.
+
+         declare
+            Tmp_Dir      : constant String := Get_Tmp_Dir;
+            Temp_Project : Virtual_File := Create (Tmp_Dir & "ext.gpr");
+            Temp_File    : Virtual_File := Create
+              (Get_Tmp_Dir & Base_Name (File));
+            Writable     : Writable_File;
+         begin
+            --  Do nothing if one of the files already exists.
+
+            if Is_Regular_File (Temp_Project)
+              or else Is_Regular_File (Temp_File)
+            then
+               return;
+            end if;
+
+            --  Write the temporary project file
+            Writable := Write_File (Temp_Project);
+            Write
+              (Writable,
+               "project ext extends """ & Project_Path (Prj) & """ is"
+               & ASCII.LF & "end ext;",
+               False);
+            Close (Writable);
+
+            --  Write the temporary buffer file
+            Writable := Write_File (Temp_File);
+            Write
+              (Writable,
+               Execute_GPS_Shell_Command
+                 (Kernel, "get_buffer " & Full_Name (File).all),
+               True);
+            Close (Writable);
+
+            Local_File := new String'(Locale_Full_Name (Temp_File));
+            Shadow_Path := new String'(Full_Name (Temp_Project).all);
+            Compilable_File := Temp_File;
+            Change_Dir (Tmp_Dir);
+            Create
+              (Item  => C,
+               Data  => (Kernel, Fd, null, null, System.Null_Address),
+               Quiet => Quiet,
+               Files => new File_Array'
+                 (1 => Temp_File,
+                  2 => Temp_Project));
+         end;
+      else
+         Local_File := new String'(Locale_Full_Name (File));
+         Change_Dir (Dir_Name (Project_Path (Prj)));
+         Shadow_Path := new String'("");
+         Create (C, (Kernel, Fd, null, null, System.Null_Address), Quiet);
+      end if;
+
+      if not Shadow
+        and then (Status (Prj) /= From_File
+                  or else Syntax_Only)
+      then
          --  Use the default switches for that tool
          declare
             Default_Builder_Switches : Argument_List := Get_Switches
@@ -874,14 +1009,21 @@ package body Builder_Module is
                Remote_Host => Get_Attribute_Value (Prj, Remote_Host_Attribute),
                Command         => Cmd.all,
                Arguments       => Default_Builder_Switches &
-               Common_Args.all & (1 => Local_File'Unchecked_Access),
-               Fd              => Fd);
+               Common_Args.all & (1 => Local_File),
+               Fd              => Fd,
+               Insert          => not Quiet);
             Free (Default_Builder_Switches);
          end;
 
       else
          Args := Compute_Arguments
-           (Kernel, Syntax, Prj, File, Compile_Only => True);
+           (Kernel,
+            Syntax,
+            Prj,
+            Shadow_Path.all,
+            Compilable_File,
+            Compile_Only => True);
+
          Insert_And_Launch
            (Kernel,
             Remote_Protocol => Get_Pref (GVD_Prefs, Remote_Protocol),
@@ -889,13 +1031,13 @@ package body Builder_Module is
               Get_Attribute_Value (Prj, Remote_Host_Attribute),
             Command         => Cmd.all,
             Arguments       => Common_Args.all & Args.all,
-            Fd              => Fd);
+            Fd              => Fd,
+            Insert          => not Quiet);
          Free (Args);
       end if;
 
       Basic_Types.Unchecked_Free (Common_Args);
       Free (Cmd);
-      Create (C, (Kernel, Fd, null, null, System.Null_Address));
 
       if Synchronous then
          Launch_Synchronous (Command_Access (C), 0.1);
@@ -907,6 +1049,8 @@ package body Builder_Module is
       end if;
 
       Change_Dir (Old_Dir);
+      Free (Local_File);
+      Free (Shadow_Path);
 
    exception
       when Invalid_Process =>
@@ -940,6 +1084,14 @@ package body Builder_Module is
          Compile_File (Get_Kernel (Data), Get_File (Info),
                        Synchronous => True,
                        Syntax_Only => True);
+
+      elsif Command = "shadow_check_syntax" then
+         Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
+         Compile_File (Get_Kernel (Data), Get_File (Info),
+                       Synchronous => False,
+                       Syntax_Only => True,
+                       Quiet       => True,
+                       Shadow      => True);
 
       elsif Command = "make" then
          Info := Get_Data (Nth_Arg (Data, 1, Get_File_Class (Kernel)));
@@ -1048,7 +1200,7 @@ package body Builder_Module is
             return;
          end if;
 
-         Clear_Compilation_Output (Kernel);
+         Clear_Compilation_Output (Kernel, False);
          Set_Sensitive_Menus (Kernel, False);
 
          Top.Interrupted := False;
@@ -1754,6 +1906,19 @@ package body Builder_Module is
          Description  =>
            -("Check the syntax for current file. This call will return only"
              & " once the check is completed"),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_File_Class (Kernel),
+         Handler      => Compile_Command'Access);
+
+      Register_Command
+        (Kernel,
+         Command      => "shadow_check_syntax",
+         Description  =>
+           -("Check the syntax for current file. The current file will not be "
+             & "saved, but a temporary extending project will be created, and "
+             & "deleted when the compilation ends. This call will launch a "
+             & "background process and return immediately."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_File_Class (Kernel),
