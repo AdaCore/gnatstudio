@@ -1179,11 +1179,11 @@ package body Format is
                if Num_Parens = 1 and then Prev_Num_Parens = 0 then
                   Param_Indent := Prec - Line_Start (Buffer, Prec);
                elsif Num_Parens = 0 then
-                  if Prev_Num_Parens = 1 then
+                  if Semicolon or else Prev_Num_Parens = 1 then
                      Subprogram_Decl := False;
                      Param_Indent    := None;
 
-                     if Semicolon then
+                     if Semicolon and then not In_Generic then
                         --  subprogram decl with no following reserved word,
                         --  e.g:
                         --  procedure ... ();
@@ -1243,7 +1243,7 @@ package body Format is
                ", around character" & Current'Img);
          end if;
 
-         Current := End_Of_Word (Buffer, Prec);
+         Current    := End_Of_Word (Buffer, Prec);
          Word_Count := Word_Count + 1;
 
          --  A new line, reset flags.
