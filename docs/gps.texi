@@ -9339,10 +9339,8 @@ a lot of output to process.
 This section lists some of the problems that have been encountered while using
 Python inside GPS. This is not a general Python discussion.
 
-@itemize @bullet
-
-@c ----- FAQ 1
-@item The output of spawned processes can't be redirected to a GPS window
+@c -------------------------------------------
+@subsubsection Redirecting the output of spawned processes
 
 In general, it is possible to redirect the output of any Python script to
 any GPS window (either an already existing one, or creating one automatically),
@@ -9353,7 +9351,7 @@ through os.exec() or os.spawn() is redirected to the standard output, and not
 to the usual python output that GPS has overriden.
 
 There are two solutions for this:
-@itemize -
+@itemize @bullet
 @item Execute the external process through a pipe
 
 The output of the pipe is then redirected to Python's output, as in:
@@ -9391,8 +9389,8 @@ first solution.
 @end itemize
 
 
-@c ----- FAQ 2
-@item How do I create a contextual menu on object directories only ?
+@c ----------------------------------------------
+@subsubsection Contextual menus on object directories only
 
 The following filter can be used for actions that can only execute in the
 Project View, and only when the user clicks on an object directory. The
@@ -9418,14 +9416,14 @@ contextual menu entry will not be visible in other contexts
 @end smallexample
 
 
-@c  ------ FAQ 3
-@item How do I redirect the output of my python script to another window  ?
+@c  --------------------------------------------------------
+@subsubsection Redirecting the output to specific windows
 
 By default, the output of all python commands is displayed in the Python
 console. However, you might want in some cases to create other windows in
 GPS for this output. This can be done in one of two ways:
 
-@itemize -
+@itemize @bullet
 @item Define a new action
 
 If the whole output of your script should be redirected to the same window,
@@ -9490,8 +9488,6 @@ output sent to that console should be saved by GPS, and reused for the
 @code{%1}, @code{%2},... parameters if the command is executed in a
 GPS action. That should generally be 1, except for stderr where it should
 be 0.
-@end itemize
-
 @end itemize
 
 @end ifset
