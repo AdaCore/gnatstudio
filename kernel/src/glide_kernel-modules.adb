@@ -1190,6 +1190,20 @@ package body Glide_Kernel.Modules is
    -- Free --
    ----------
 
+   procedure Free (X : in out Action_Item) is
+      procedure Unchecked_Free is
+        new Ada.Unchecked_Deallocation (Line_Information_Record, Action_Item);
+   begin
+      if X /= null then
+         Free (X.all);
+         Unchecked_Free (X);
+      end if;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
    procedure Free (X : in out Line_Information_Record) is
    begin
       Free (X.Text);
@@ -1288,6 +1302,67 @@ package body Glide_Kernel.Modules is
    begin
       General_Line_Information (Kernel, File, Identifier, Info);
    end Add_Line_Information;
+
+   -------------------------
+   -- Add_Location_Action --
+   -------------------------
+
+   procedure Add_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String;
+      Action        : Action_Item)
+   is
+      Value         : GValue_Array (1 .. 8);
+   begin
+      Init (Value (1),  Glib.GType_String);
+      Init (Value (2),  Glib.GType_String);
+      Init (Value (3),  Glib.GType_String);
+      Init (Value (4),  Glib.GType_Int);
+      Init (Value (5),  Glib.GType_Int);
+      Init (Value (6),  Glib.GType_String);
+      Init (Value (7),  Glib.GType_Pointer);
+      Set_String (Value (1), Identifier);
+      Set_String (Value (2), Category);
+      Set_String (Value (3), File);
+      Set_Int (Value (4), Gint (Line));
+      Set_Int (Value (5), Gint (Column));
+      Set_String (Value (7), Message);
+      Set_Address (Value (8), To_Address (Action));
+
+      if not Mime_Action
+        (Kernel, Mime_Location_Action, Value, Set_Busy => False)
+      then
+         Trace (Me, "No location viewer registered.");
+      end if;
+
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
+   end Add_Location_Action;
+
+   ----------------------------
+   -- Remove_Location_Action --
+   ----------------------------
+
+   procedure Remove_Location_Action
+     (Kernel        : access Kernel_Handle_Record'Class;
+      Identifier    : String;
+      Category      : String;
+      File          : String;
+      Line          : Integer;
+      Column        : Integer;
+      Message       : String)
+   is
+   begin
+      Add_Location_Action
+        (Kernel, Identifier,
+         Category, File, Line, Column, Message, null);
+   end Remove_Location_Action;
 
    ------------------------
    -- Clear_Highlighting --
