@@ -29,7 +29,7 @@ with Gtkada.Handlers;      use Gtkada.Handlers;
 
 with Gint_Xml;             use Gint_Xml;
 with Glide_Kernel;         use Glide_Kernel;
-with Glide_Kernel.Editor;  use Glide_Kernel.Editor;
+with Glide_Kernel.Modules; use Glide_Kernel.Modules;
 with Glide_Kernel.Console; use Glide_Kernel.Console;
 
 with GNAT.Regpat;          use GNAT.Regpat;
@@ -186,7 +186,6 @@ package body Glide_Consoles is
       Matched     : Match_Array (0 .. 3);
       Line        : Positive;
       Column      : Positive;
-      Ignored     : Boolean;
 
    begin
       if Contents'Length = 0 then
@@ -217,9 +216,9 @@ package body Glide_Consoles is
          end if;
 
          if Matched (1).First < Matched (1).Last then
-            Go_To (Console.Kernel,
-                   Contents (Matched (1).First .. Matched (1).Last),
-                   Line, Column, Success => Ignored);
+            Open_File_Editor (Console.Kernel,
+                              Contents (Matched (1).First .. Matched (1).Last),
+                              Line, Column);
          end if;
       end if;
 
