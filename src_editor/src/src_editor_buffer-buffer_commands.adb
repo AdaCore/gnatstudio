@@ -18,10 +18,12 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Tags;                  use Ada.Tags;
+
 with Glib;                      use Glib;
 with Gtk;                       use Gtk;
 with Gtk.Text_Iter;             use Gtk.Text_Iter;
-
+with Gtk.Widget;                use Gtk.Widget;
 
 with Commands.Editor;           use Commands.Editor;
 with Glide_Kernel;              use Glide_Kernel;
@@ -42,13 +44,23 @@ package body Src_Editor_Buffer.Buffer_Commands is
       return Command_Return_Type
    is
       pragma Unreferenced (Event);
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      View   : Source_View;
+      Widget : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Command.Kernel);
+      Buffer : Source_Buffer;
       On_Cursor_Iter       : Gtk_Text_Iter;
       First_Highlight_Iter : Gtk_Text_Iter;
       Last_Highlight_Iter  : Gtk_Text_Iter;
    begin
+      if Widget /= null
+        and then Widget.all'Tag = Source_View_Record'Tag
+      then
+         View := Source_View (Widget);
+         Buffer := Source_Buffer (Get_Buffer (View));
+      else
+         return Commands.Failure;
+      end if;
+
       if not Buffer.Has_Delimiters_Highlight then
          return Commands.Failure;
       end if;
@@ -77,9 +89,10 @@ package body Src_Editor_Buffer.Buffer_Commands is
    is
       pragma Unreferenced (Event);
       use String_List_Utils.String_List;
-      View   : constant Source_View   :=
-        Source_View (Get_Current_Focus_Widget (Command.Kernel));
-      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Widget : constant Gtk_Widget :=
+        Get_Current_Focus_Widget (Command.Kernel);
+      View   : Source_View;
+      Buffer : Source_Buffer;
 
       procedure Extend_Completions_List;
       --  Add an item to the buffer's completion, or mark it as
@@ -247,6 +260,15 @@ package body Src_Editor_Buffer.Buffer_Commands is
       Text    : GNAT.OS_Lib.String_Access;
 
    begin
+      if Widget /= null
+        and then Widget.all'Tag = Source_View_Record'Tag
+      then
+         View := Source_View (Widget);
+         Buffer := Source_Buffer (Get_Buffer (View));
+      else
+         return Commands.Failure;
+      end if;
+
       if Is_Empty (Buffer.Completion) then
          Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
 
