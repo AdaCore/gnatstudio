@@ -1,10 +1,16 @@
 Known Problems fixed in GPS 1.4.1
 
+- CB17-001 Bad indentation of separate functions
+  Problem:    When indenting functions declaraed as separate whose
+              specification is longer than one line, the indentation will
+              be incorrect.
+  Workaround: Put the specification is one line.
+
 - CB14-007 Open file from project fails with extending projects
   Problem:    If your setup includes extending projects, it is possible that
               the menu File->Open From Path will open the file from the
               parent project instead of the extending project.
-  Workaround: Use the File->Open dialog instead
+  Workaround: Use the File->Open dialog instead.
 
 Known Problems fixed in GPS 1.4.0
 
