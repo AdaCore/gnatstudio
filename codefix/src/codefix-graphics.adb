@@ -56,11 +56,12 @@ package body Codefix.Graphics is
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator) is
+      Current_Text    : Ptr_Text_Navigator;
+      Corrector       : Ptr_Correction_Manager) is
    begin
       Graphic_Codefix := new Graphic_Codefix_Record;
       Codefix.Graphics.Initialize
-        (Graphic_Codefix, Kernel, Current_Text);
+        (Graphic_Codefix, Kernel, Current_Text, Corrector);
    end Gtk_New;
 
    ----------------
@@ -70,12 +71,14 @@ package body Codefix.Graphics is
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator) is
+      Current_Text    : Ptr_Text_Navigator;
+      Corrector       : Ptr_Correction_Manager) is
    begin
       Codefix_Window_Pkg.Initialize (Graphic_Codefix);
 
       Graphic_Codefix.Kernel := Kernel_Handle (Kernel);
       Graphic_Codefix.Current_Text := Current_Text;
+      Graphic_Codefix.Corrector := Corrector;
 
       Remove_Page (Graphic_Codefix.Choices_Proposed, 0);
       Load_Next_Error (Graphic_Codefix);
@@ -148,7 +151,7 @@ package body Codefix.Graphics is
          Graphic_Codefix.Current_Error := Next (Graphic_Codefix.Current_Error);
       else
          Graphic_Codefix.Current_Error :=
-           Get_First_Error (Graphic_Codefix.Corrector);
+           Get_First_Error (Graphic_Codefix.Corrector.all);
       end if;
 
       if Graphic_Codefix.Current_Error = Null_Error_Id then
@@ -177,7 +180,7 @@ package body Codefix.Graphics is
            Get_Category (Graphic_Codefix.Current_Error)) = Enabled
       then
          Validate_And_Commit
-           (Graphic_Codefix.Corrector,
+           (Graphic_Codefix.Corrector.all,
             Graphic_Codefix.Current_Text.all,
             Graphic_Codefix.Current_Error,
             1);
@@ -448,7 +451,7 @@ package body Codefix.Graphics is
       end loop;
 
       Validate_And_Commit
-        (Graphic_Codefix.Corrector,
+        (Graphic_Codefix.Corrector.all,
          Graphic_Codefix.Current_Text.all,
          Graphic_Codefix.Current_Error,
          Data (Current_Command));
