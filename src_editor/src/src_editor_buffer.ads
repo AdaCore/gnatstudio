@@ -394,6 +394,8 @@ private
    type Completion_Data is record
       Prefix : GNAT.OS_Lib.String_Access;
       --  The current prefix for the search.
+      --  Warning : this is an UTF-8 string obtained from the buffer, and
+      --  should only be compared with UTF-8 strings.
 
       List : String_List_Utils.String_List.List;
       --  The possible current completions. If empty, then there is no
