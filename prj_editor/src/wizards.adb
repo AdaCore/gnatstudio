@@ -38,10 +38,8 @@ with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Pango.Font;         use Pango.Font;
 with Unchecked_Deallocation;
 
-with Pixmaps_IDE;              use Pixmaps_IDE;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
-with Glide_Intl;               use Glide_Intl;
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 
 package body Wizards is
@@ -107,13 +105,11 @@ package body Wizards is
         (1 => (1 => GType_Uint, 2 => GType_None));
       Color : Gdk_Color;
       Style : Gtk_Style;
-      Font : Gdk_Font;
-      Desc : Pango_Font_Description;
+      Font  : Gdk_Font;
+      Desc  : Pango_Font_Description;
       Event : Gtk_Event_Box;
-      Vbox2 : Gtk_Vbox;
-      Pixmap1 : Gtk_Pixmap;
-      Hbox1   : Gtk_Hbox;
-      Label   : Gtk_Label;
+      Vbox  : Gtk_Vbox;
+
    begin
       Gtk.Dialog.Initialize
         (Dialog  => Wiz,
@@ -149,14 +145,14 @@ package body Wizards is
       Add (Event, Wiz.Toc_Box);
 
       --  Same thing for the title box
-      Gtk_New_Vbox (Vbox2, False, 0);
-      Pack_Start (Wiz.Page_Box, Vbox2, True, True, 0);
+      Gtk_New_Vbox (Vbox, False, 0);
+      Pack_Start (Wiz.Page_Box, Vbox, True, True, 0);
 
       Gtk_New (Event);
       Set_Style (Event, Style);
       Set_Size_Request (Event, -1,
                         (Get_Ascent (Font) + Get_Descent (Font)) * 3);
-      Pack_Start (Vbox2, Event, False, False, 0);
+      Pack_Start (Vbox, Event, False, False, 0);
 
       Gtk_New (Wiz.Title, Title);
       Set_Alignment (Wiz.Title, 0.5, 0.5);
@@ -171,30 +167,15 @@ package body Wizards is
       --  The actual contents of the wizard is put in a frame
       Gtk_New (Wiz.Page_Frame);
       Set_Shadow_Type (Wiz.Page_Frame, Shadow_In);
-      Pack_Start (Vbox2, Wiz.Page_Frame, True, True, 0);
+      Pack_Start (Vbox, Wiz.Page_Frame, True, True, 0);
 
       --  The Previous button
-      Gtk_New_Hbox (Hbox1, False, 0);
-      Pixmap1 := Create_Pixmap (stock_left_arrow_xpm, Wiz);
-      Pack_Start (Hbox1, Pixmap1, False, True, 0);
-      Gtk_New (Label, -"Previous");
-      Pack_Start (Hbox1, Label, True, True, 0);
-
-      Gtk_New (Wiz.Previous);
+      Gtk_New_From_Stock (Wiz.Previous, Stock_Go_Back);
       Set_Sensitive (Wiz.Previous, False);
-      Add (Wiz.Previous, Hbox1);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Previous);
 
-
       --  The Next button
-      Gtk_New_Hbox (Hbox1, False, 0);
-      Pixmap1 := Create_Pixmap (stock_right_arrow_xpm, Wiz);
-      Pack_Start (Hbox1, Pixmap1, False, True, 0);
-      Gtk_New (Label, -"Next");
-      Pack_Start (Hbox1, Label, True, True, 0);
-
-      Gtk_New (Wiz.Next);
-      Add (Wiz.Next, Hbox1);
+      Gtk_New_From_Stock (Wiz.Next, Stock_Go_Forward);
       Pack_Start (Get_Action_Area (Wiz), Wiz.Next);
 
       --  The Cancel and Apply button
@@ -224,8 +205,9 @@ package body Wizards is
         (Wiz.Normal_Style, State_Normal, White (Get_Default_Colormap));
 
       Wiz.Highlight_Style := Copy (Get_Style (Wiz));
-      Set_Foreground (Wiz.Highlight_Style, State_Normal,
-                      Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
+      Set_Foreground
+        (Wiz.Highlight_Style, State_Normal,
+         Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
 
       Wiz.Toc := new Widget_Array (1 .. Num_Pages);
       Wiz.Toc.all := (others => null);
@@ -296,7 +278,7 @@ package body Wizards is
       Pack_Start
         (Wiz.Toc_Box, Wiz.Toc (Page_Num), Expand => False, Fill => True);
       --  ??? Should use a list instead of a box, so that we can put the item
-      --  ??? at a specific location.
+      --  at a specific location.
 
       Set_Style (Wiz.Toc (Page_Num), Wiz.Normal_Style);
 
@@ -335,7 +317,7 @@ package body Wizards is
       Title        : String;
       Toc_Contents : String)
    is
-      Old : Widget_Array_Access;
+      Old  : Widget_Array_Access;
       Old2 : String_List_Access;
    begin
       Old := Wiz.Toc;
