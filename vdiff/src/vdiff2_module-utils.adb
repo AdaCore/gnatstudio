@@ -54,7 +54,7 @@ package body Vdiff2_Module.Utils is
    Append_Style         : constant String       := "Append_diff";
    Remove_Style         : constant String       := "Remove_diff";
    Change_Style         : constant String       := "Change_diff";
-      Fine_Change_Style : constant String       := "Default_diff";
+   Fine_Change_Style    : constant String       := "Default_diff";
    Id_Col_Vdiff         : constant String       := "Vdiff2_Col_Merge";
 
    type   T_VLine_Information is array (1 .. 3) of Line_Information_Data;
@@ -88,6 +88,14 @@ package body Vdiff2_Module.Utils is
       Source_Range : Diff_Range;
       Dest_Range   : Diff_Range := Null_Range);
    --  Highlight Fine change between two diff block
+
+   procedure Fine_Highlight_Line
+     (Kernel            : Kernel_Handle;
+      Current_Line_Source,
+      Current_Line_Dest : String;
+      File              : Virtual_File;
+      Line              : Natural);
+   --  Highlight difference in File between two lines
 
    function Get_File_Last_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -252,6 +260,86 @@ package body Vdiff2_Module.Utils is
       end loop;
    end Append;
 
+   -------------------------
+   -- Fine_Highlight_Line --
+   -------------------------
+
+   procedure Fine_Highlight_Line
+     (Kernel            : Kernel_Handle;
+      Current_Line_Source,
+      Current_Line_Dest : String;
+      File              : Virtual_File;
+      Line              : Natural)
+   is
+      Long_Min : Natural;
+      First    : Natural;
+      Last     : Natural;
+      In_Block : Boolean := False;
+      Args_Highlight_Range : Argument_List :=
+        (1 => new String'(Full_Name (File)),
+         2 => new String'(Fine_Change_Style),
+         3 => new String'(Natural'Image (Line)),
+         4 => null,
+         5 => null);
+   begin
+      if (Current_Line_Source'Length) <
+        (Current_Line_Dest'Length)
+      then
+         Long_Min := Current_Line_Source'Length;
+      else
+         Long_Min := Current_Line_Dest'Length;
+      end if;
+
+      for Ind in 1 .. Long_Min loop
+         if Current_Line_Source (Ind) /=
+           Current_Line_Dest (Ind)
+         then
+            if not In_Block then
+               First    := Ind;
+               In_Block := True;
+            end if;
+         elsif In_Block then
+            Last := Ind;
+            Free (Args_Highlight_Range (4));
+            Free (Args_Highlight_Range (5));
+            Args_Highlight_Range (4) :=
+              new String'(Natural'Image (First));
+            Args_Highlight_Range (5) :=
+              new String'(Natural'Image (Last));
+            Execute_GPS_Shell_Command
+              (Kernel, "highlight_range", Args_Highlight_Range);
+            In_Block := False;
+         end if;
+      end loop;
+
+      if In_Block then
+         Last := Long_Min;
+         Free (Args_Highlight_Range (4));
+         Free (Args_Highlight_Range (5));
+         Args_Highlight_Range (4) :=
+           new String'(Natural'Image (First));
+         Args_Highlight_Range (5) :=
+           new String'(Natural'Image (Last));
+         Execute_GPS_Shell_Command
+           (Kernel, "highlight_range", Args_Highlight_Range);
+         In_Block := False;
+      end if;
+
+      if Long_Min < Current_Line_Dest'Length then
+         Free (Args_Highlight_Range (4));
+         Free (Args_Highlight_Range (5));
+         Last := Current_Line_Dest'Length;
+         First := Long_Min;
+         Args_Highlight_Range (4) :=
+           new String'(Natural'Image (First));
+         Args_Highlight_Range (5) :=
+           new String'(Natural'Image (Last));
+         Execute_GPS_Shell_Command
+           (Kernel, "highlight_range", Args_Highlight_Range);
+      end if;
+      Basic_Types.Free (Args_Highlight_Range);
+   end Fine_Highlight_Line;
+
    -----------------------
    --  Fine_Diff_Block  --
    -----------------------
@@ -276,14 +364,9 @@ package body Vdiff2_Module.Utils is
         (1 => new String'(Full_Name (Dest_File)),
          2 => new String'(Natural'Image (Dest_Range.First)),
          3 => new String'(Natural'Image (1)));
-      Args_Highlight_Range : Argument_List :=
-        (1 => new String'(Full_Name (Dest_File)),
-         2 => new String'(Fine_Change_Style),
-         3 => new String'(Natural'Image (Dest_Range.First)),
-         4 => null,
-         5 => null);
       Current_Line_Source : String_Access;
       Current_Line_Dest   : String_Access;
+      Line                : Natural := Dest_Range.First;
 
    begin
 
@@ -305,86 +388,26 @@ package body Vdiff2_Module.Utils is
             Put_Line ("source : " & Current_Line_Source.all);
             Put_Line ("dest   : " & Current_Line_Dest.all);
 
-            declare
-               Long_Min : Natural;
-               First    : Natural;
-               Last     : Natural;
-               In_Block : Boolean := false;
-            begin
-               if (Current_Line_Source.all'Length) <
-                 (Current_Line_Dest.all'Length)
-               then
-                  Long_Min := Current_Line_Source.all'Length;
-               else
-                  Long_Min := Current_Line_Dest.all'Length;
-               end if;
+            Fine_Highlight_Line (Kernel,
+                                 Current_Line_Source.all,
+                                 Current_Line_Dest.all,
+                                 Dest_File,
+                                 Line);
 
-               for Ind in 1 .. Long_Min loop
-                  if Current_Line_Source.all (Ind) /=
-                    Current_Line_Dest.all (Ind)
-                  then
-                     if not In_Block then
-                        First    := Ind;
-                        In_Block := true;
-                     end if;
-                  elsif In_Block then
-                     Last := Ind;
-                     Free (Args_Highlight_Range (4));
-                     Free (Args_Highlight_Range (5));
-                     Args_Highlight_Range (4) :=
-                       new String'(Natural'Image (First));
-                     Args_Highlight_Range (5) :=
-                       new String'(Natural'Image (Last));
-                     Execute_GPS_Shell_Command
-                       (Kernel, "highlight_range", Args_Highlight_Range);
-                     In_Block := false;
-                  end if;
-               end loop;
-
-               if In_Block then
-                  Last := Long_Min;
-                  Free (Args_Highlight_Range (4));
-                  Free (Args_Highlight_Range (5));
-                  Args_Highlight_Range (4) :=
-                    new String'(Natural'Image (First));
-                  Args_Highlight_Range (5) :=
-                    new String'(Natural'Image (Last));
-                  Execute_GPS_Shell_Command
-                    (Kernel, "highlight_range", Args_Highlight_Range);
-                  In_Block := false;
-               end if;
-
-               if Long_Min < Current_Line_Dest.all'Length then
-                  Free (Args_Highlight_Range (4));
-                  Free (Args_Highlight_Range (5));
-                  Last := Current_Line_Dest.all'Length;
-                  First := Long_Min;
-                  Args_Highlight_Range (4) :=
-                    new String'(Natural'Image (First));
-                  Args_Highlight_Range (5) :=
-                    new String'(Natural'Image (Last));
-                  Execute_GPS_Shell_Command
-                    (Kernel, "highlight_range", Args_Highlight_Range);
-               end if;
-            end;
-
+            Line := Dest_Range.First + J;
             Free (Current_Line_Source);
             Free (Current_Line_Dest);
             Free (Args_Get_Chars_Src (2));
             Free (Args_Get_Chars_Dest (2));
-            Free (Args_Highlight_Range (3));
             Args_Get_Chars_Src (2) := new String'
               (Natural'Image (Source_Range.First + J));
             Args_Get_Chars_Dest (2) := new String'
-              (Natural'Image (Dest_Range.First + J));
-            Args_Highlight_Range (3) := new String'
-              (Natural'Image (Dest_Range.First + J));
+              (Natural'Image (Line));
          end loop;
       end if;
 
       Basic_Types.Free (Args_Get_Chars_Dest);
       Basic_Types.Free (Args_Get_Chars_Src);
-      Basic_Types.Free (Args_Highlight_Range);
    end Fine_Diff_Block;
 
    ----------
@@ -464,7 +487,8 @@ package body Vdiff2_Module.Utils is
    is
       Curr_Node  : Diff_List_Node;
       Curr_Chunk : Diff_Chunk_Access;
-      Args : Argument_List (1 .. 1);
+      Args       : Argument_List (1 .. 1);
+      Arg2       : Argument_List (1 .. 2);
    begin
       Curr_Node := First (Item.List);
       while Curr_Node /= Diff_Chunk_List.Null_Node
@@ -502,6 +526,11 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Line (Kernel, Item.File1, 0, Change_Style);
          Remove_Line_Information_Column
            (Kernel, Item.File1, Id_Col_Vdiff);
+         Arg2 (1) := new String'(Full_Name (Item.File1));
+         Arg2 (2) := new String'(Fine_Change_Style);
+         Execute_GPS_Shell_Command
+           (Kernel, "unhighlight_range", Arg2);
+         Basic_Types.Free (Arg2);
       end if;
 
       if Item.File2 /= VFS.No_File then
@@ -512,6 +541,11 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Line (Kernel, Item.File2, 0, Change_Style);
          Remove_Line_Information_Column
            (Kernel, Item.File2, Id_Col_Vdiff);
+         Arg2 (1) := new String'(Full_Name (Item.File2));
+         Arg2 (2) := new String'(Fine_Change_Style);
+         Execute_GPS_Shell_Command
+           (Kernel, "unhighlight_range", Arg2);
+         Basic_Types.Free (Arg2);
       end if;
 
       if Item.File3 /= VFS.No_File then
@@ -522,6 +556,11 @@ package body Vdiff2_Module.Utils is
          Unhighlight_Line (Kernel, Item.File3, 0, Change_Style);
          Remove_Line_Information_Column
            (Kernel, Item.File3, Id_Col_Vdiff);
+         Arg2 (1) := new String'(Full_Name (Item.File3));
+         Arg2 (2) := new String'(Fine_Change_Style);
+         Execute_GPS_Shell_Command
+           (Kernel, "unhighlight_range", Arg2);
+         Basic_Types.Free (Arg2);
       end if;
 
    end Hide_Differences;
