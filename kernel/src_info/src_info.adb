@@ -1090,7 +1090,8 @@ package body Src_Info is
          when Ordinary_Fixed_Point  =>
             return Get_Value ("fixed point type", "fixed point");
             --  -"fixed point type"   -"fixed point"
-         when Private_Type       =>  return "private type"; --  -"private type"
+         when Private_Type       =>  return "generic formal";
+            --  -"generic formal"
          when Protected_Kind               =>
             return Get_Value ("protected type", "protected object");
             --  -"protected type"   -"protected object"
