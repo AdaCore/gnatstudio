@@ -84,7 +84,8 @@ package body GVD.Process.Standalone is
 
       Initialize (Process, Window, Source);
       Configure
-        (Process, Kind, Executable, Debugger_Args, Executable_Args,
+        (Process, Kind, new Process_Proxy,
+         Executable, Debugger_Args, Executable_Args,
          Remote_Host, Remote_Target, Remote_Protocol, Debugger_Name,
          Success => Success);
 
