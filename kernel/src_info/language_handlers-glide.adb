@@ -38,13 +38,6 @@ package body Language_Handlers.Glide is
    --  Return the index of Language in Handler.Languages, or 0 if no such
    --  language is known.
 
-   function Get_Language_From_File
-     (Handler         : access Glide_Language_Handler_Record;
-      Source_Filename : String;
-      Project         : Prj.Project_Id) return String;
-   --  Same as the default one, except we already know the project to which for
-   --  Source_Filename belongs.
-
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Language_Info_Array, Language_Info_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
@@ -100,18 +93,31 @@ package body Language_Handlers.Glide is
    ----------------------------
 
    function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access
+     (Handler         : access Glide_Language_Handler_Record;
+      Source_Filename : String;
+      Project_View    : Prj.Project_Id) return Language.Language_Access
    is
       Index : Natural;
    begin
       Index := Get_Index_From_Language
-        (Handler, Get_Language_From_File (Handler, Source_Filename));
+        (Handler,
+         Get_Language_From_File (Handler, Source_Filename, Project_View));
       if Index /= 0 then
          return Handler.Languages (Index).Lang;
       end if;
 
       return Unknown_Lang;
+   end Get_Language_From_File;
+
+   ----------------------------
+   -- Get_Language_From_File --
+   ----------------------------
+
+   function Get_Language_From_File
+     (Handler : access Glide_Language_Handler_Record;
+      Source_Filename : String) return Language.Language_Access is
+   begin
+      return Get_Language_From_File (Handler, Source_Filename, No_Project);
    end Get_Language_From_File;
 
    ----------------------------
@@ -132,15 +138,15 @@ package body Language_Handlers.Glide is
    function Get_Language_From_File
      (Handler         : access Glide_Language_Handler_Record;
       Source_Filename : String;
-      Project         : Prj.Project_Id) return String
+      Project_View    : Prj.Project_Id) return String
    is
       --  ??? Could be optimized, since both Get_Project_From_File and
       --  Get_Language_Of traverse the project structure
-      Proj : Project_Id := Project;
+      Proj : Project_Id := Project_View;
       Lang : Name_Id;
 
    begin
-      if Project = No_Project then
+      if Proj = No_Project then
          Proj := Get_Project_From_File
            (Handler.Project_View, Source_Filename);
 

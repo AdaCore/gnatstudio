@@ -112,15 +112,32 @@ package Language_Handlers.Glide is
    ---------------
 
    function Get_Language_From_File
-     (Handler : access Glide_Language_Handler_Record;
-      Source_Filename : String) return Language.Language_Access;
+     (Handler         : access Glide_Language_Handler_Record;
+      Source_Filename : String;
+      Project_View    : Prj.Project_Id) return Language.Language_Access;
    --  Find the language of a given file.
    --  Return Unknown_Lang if no other language could be found.
+   --  Project_View should be the project to which Source_Filename belongs, or
+   --  No_Project if it should be computed automatically.
+
+   function Get_Language_From_File
+     (Handler : access Glide_Language_Handler_Record;
+      Source_Filename : String) return Language.Language_Access;
+   --  Same as above, but the project is always computed automatically.
+
+   function Get_Language_From_File
+     (Handler         : access Glide_Language_Handler_Record;
+      Source_Filename : String;
+      Project_View    : Prj.Project_Id) return String;
+   --  Return "" if the language is unknown.
+   --  Project_View should be the project to which Source_Filename belongs, or
+   --  No_Project if it should be computed automatically.
 
    function Get_Language_From_File
      (Handler : access Glide_Language_Handler_Record;
       Source_Filename : String) return String;
-   --  Return "" if the language is unknown.
+   --  Same as above, but the project is always computed automatically. This
+   --  version is required to override the inherited abstract subprogram.
 
    procedure Register_Language
      (Handler : access Glide_Language_Handler_Record;
