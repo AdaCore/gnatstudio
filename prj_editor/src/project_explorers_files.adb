@@ -630,7 +630,7 @@ package body Project_Explorers_Files is
         (Kernel          => Kernel,
          Event_On_Widget => Explorer.File_Tree,
          Object          => Explorer,
-         ID              => Explorer_Module_ID,
+         ID              => Explorer_Files_Module_Id,
          Context_Func    => Explorer_Context_Factory'Access);
 
       Init_Graphics;
