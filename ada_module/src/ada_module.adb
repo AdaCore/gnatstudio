@@ -22,6 +22,7 @@ with Glib.Generic_Properties;
 with Glib.Object;              use Glib, Glib.Object;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
 with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Src_Info.ALI;             use Src_Info.ALI;
 with Language.Ada;             use Language.Ada;
 with Language_Handlers.Glide;  use Language_Handlers.Glide;
@@ -31,6 +32,7 @@ with Language;                 use Language;
 with Project_Viewers;          use Project_Viewers;
 with Naming_Editors;           use Naming_Editors;
 with Ada_Naming_Editors;       use Ada_Naming_Editors;
+with Projects.Registry;        use Projects.Registry;
 
 package body Ada_Module is
 
@@ -55,7 +57,7 @@ package body Ada_Module is
    --  Called when the preferences have changed
 
    function Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor;
    --  Create the naming scheme editor page
 
@@ -64,10 +66,10 @@ package body Ada_Module is
    --------------------------
 
    function Naming_Scheme_Editor
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class; Lang : String)
       return Language_Naming_Editor
    is
-      pragma Unreferenced (Kernel);
+      pragma Unreferenced (Kernel, Lang);
       Naming : Ada_Naming_Editor;
    begin
       Gtk_New (Naming);
@@ -120,9 +122,12 @@ package body Ada_Module is
         (Handler, "Ada", new Src_Info.ALI.ALI_Handler_Record);
 
       Register_Language (Handler, "Ada", Ada_Lang);
-      Add_Language_Info
+      Set_Language_Handler
         (Handler, "Ada",
-         LI                  => Get_LI_Handler_By_Name (Handler, "Ada"),
+         LI                  => Get_LI_Handler_By_Name (Handler, "Ada"));
+      Register_Default_Language_Extension
+        (Get_Registry (Kernel),
+         Language_Name       => "Ada",
          Default_Spec_Suffix => ".ads",
          Default_Body_Suffix => ".adb");
 
