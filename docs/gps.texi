@@ -5223,7 +5223,7 @@ Show a visual comparison between two specific revisions
 of the file in the repository.
 
 @item Compare base against head
-@anchor{Compare working against head}
+@anchor{Compare base against head}
 Show a visual comparison between the corresponding version of the
 file in the repository and the most recent version of that file.
 
@@ -8816,7 +8816,7 @@ etc@dots{}
 
 @smallexample
 <?xml version="1.0"?>
-<Custom>
+<menu-example>
   <action name="action1">
     <external>external-command 1</external>
   </action>
@@ -8834,15 +8834,11 @@ etc@dots{}
     <submenu>
       <title>other menu</title>
       <menu action="action2">
-        <title> (etc..)
+        <title>item 2</title>
       </menu>
-
-      <submenu>
-        (...)
-      </submenu>
     </submenu>
   </submenu>
-</Custom>
+</menu-example>
 @end smallexample
 
 @c ----------------------------------------------------------------
