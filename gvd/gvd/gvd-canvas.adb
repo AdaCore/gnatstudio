@@ -19,9 +19,6 @@
 -----------------------------------------------------------------------
 
 with Glib;             use Glib;
-with Gtkada.Canvas;    use Gtkada.Canvas;
-with Gtk.Handlers;     use Gtk.Handlers;
-with GVD.Preferences;  use GVD.Preferences;
 with Gdk;              use Gdk;
 with Gdk.Window;       use Gdk.Window;
 with Gdk.Color;        use Gdk.Color;
@@ -29,27 +26,32 @@ with Gdk.Font;         use Gdk.Font;
 with Gdk.Pixmap;       use Gdk.Pixmap;
 with Gdk.GC;           use Gdk.GC;
 with Gdk.Bitmap;       use Gdk.Bitmap;
-with Gtk.Enums;        use Gtk.Enums;
-with Gtk.Widget;       use Gtk.Widget;
 with Gdk.Types.Keysyms; use Gdk.Types.Keysyms;
+with Gtk.Enums;        use Gtk.Enums;
+with Gtk.Handlers;     use Gtk.Handlers;
+with Gtk.Widget;       use Gtk.Widget;
 with Gtk.Accel_Group;  use Gtk.Accel_Group;
-with Items;            use Items;
-with Pixmaps_IDE;      use Pixmaps_IDE;
-with GVD.Dialogs;      use GVD.Dialogs;
-with GVD.Process;      use GVD.Process;
-with GVD.Memory_View;  use GVD.Memory_View;
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
-with Display_Items;    use Display_Items;
-with Odd_Intl;         use Odd_Intl;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Radio_Menu_Item; use Gtk.Radio_Menu_Item;
 with Gtk.Check_Menu_Item; use Gtk.Check_Menu_Item;
-with Gtkada.Handlers;  use Gtkada.Handlers;
-with Debugger;         use Debugger;
 
+with Gtkada.Canvas;    use Gtkada.Canvas;
+with Gtkada.Handlers;  use Gtkada.Handlers;
+
+with Debugger;         use Debugger;
+with Display_Items;    use Display_Items;
+with Items;            use Items;
+with Pixmaps_IDE;      use Pixmaps_IDE;
+
+with Odd_Intl;         use Odd_Intl;
+with GVD.Dialogs;      use GVD.Dialogs;
 with GVD.Main_Window;  use GVD.Main_Window;
-with Main_Debug_Window_Pkg.Callbacks; use Main_Debug_Window_Pkg.Callbacks;
+with GVD.Memory_View;  use GVD.Memory_View;
+with GVD.Menu;         use GVD.Menu;
+with GVD.Preferences;  use GVD.Preferences;
+with GVD.Process;      use GVD.Process;
 
 package body GVD.Canvas is
 
@@ -210,7 +212,7 @@ package body GVD.Canvas is
       Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Get_Process (GVD_Canvas (Canvas)));
    begin
-      On_Display_Expression1_Activate (Process.Window);
+      On_Display_Expression (Process.Window.all'Access);
    end Display_Expression;
 
    ------------------------
