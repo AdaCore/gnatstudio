@@ -322,8 +322,10 @@ package body VCS_Module is
       Selector : VCS_Selector := VCS_Selector (Widget);
       Changed : Boolean := False;
    begin
-      if Project_View = No_Project
-        or else Get_Label (Selector.Selected) /= Get_Vcs_Kind (Project_View)
+      if Project_View = No_Project or else
+        (Get_Label (Selector.Selected) /= Get_Vcs_Kind (Project_View)
+         and then (Get_Vcs_Kind (Project_View) /= ""
+                   or else Get_Label (Selector.Selected) /= -Auto_Detect))
       then
          if Get_Label (Selector.Selected) /= -Auto_Detect then
             Update_Attribute_Value_In_Scenario
@@ -339,6 +341,7 @@ package body VCS_Module is
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Vcs_Kind_Attribute);
          end if;
+         Trace (Me, "Vcs_Kind is different");
          Changed := True;
       end if;
 
@@ -360,6 +363,7 @@ package body VCS_Module is
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Vcs_Log_Check);
          end if;
+         Trace (Me, "Vcs_Log_Check is different");
          Changed := True;
       end if;
 
@@ -381,6 +385,7 @@ package body VCS_Module is
                Scenario_Variables => Scenario_Variables,
                Attribute_Name     => Vcs_File_Check);
          end if;
+         Trace (Me, "Vcs_File_Check is different");
          Changed := True;
       end if;
 
