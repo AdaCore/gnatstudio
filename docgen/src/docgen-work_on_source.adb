@@ -1451,7 +1451,7 @@ package body Docgen.Work_On_Source is
               and then
                 Get_Name
                   (Get_Caller (Declaration_As_Reference (Entity.Entity))).all =
-                Package_Name
+                Get_Name (Package_Information).all
               and then Entity_Defined_In_Package
                 (Entity.Entity, Package_Information) -- ??? Is that needed ?
 
