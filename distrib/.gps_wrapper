@@ -12,4 +12,4 @@ root=`dirname $root`
 LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 PANGO_RC_FILE=$root/share/gps/pangorc
 export LD_LIBRARY_PATH PANGO_RC_FILE
-exec $root/bin/${prog}_exe "$@" > /dev/null 2>&1
+exec $root/bin/${prog}_exe "$@" 2>&1 | grep -v 'No such file or directory'
