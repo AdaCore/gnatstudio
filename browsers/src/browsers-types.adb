@@ -34,6 +34,7 @@ with String_List_Utils;    use String_List_Utils;
 
 with Glib;          use Glib;
 with Glib.Object;   use Glib.Object;
+with Glib.Xml_Int;  use Glib.Xml_Int;
 with Gdk.GC;        use Gdk.GC;
 with Gdk.Event;     use Gdk.Event;
 with Gdk.Drawable;  use Gdk.Drawable;
@@ -41,6 +42,7 @@ with Gdk.Rectangle; use Gdk.Rectangle;
 with Gtk.Menu;      use Gtk.Menu;
 with Gtk.Menu_Item; use Gtk.Menu_Item;
 with Gtk.Style;     use Gtk.Style;
+with Gtk.Widget;    use Gtk.Widget;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gtkada.MDI;    use Gtkada.MDI;
 with Pango.Context; use Pango.Context;
@@ -50,6 +52,8 @@ with Pango.Layout;  use Pango.Layout;
 package body Browsers.Types is
 
    Me : constant Debug_Handle := Create ("Browser.Type");
+
+   Type_Browser_Module : Module_ID;
 
    procedure On_Type_Browser
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
@@ -110,14 +114,20 @@ package body Browsers.Types is
    function "<" (E1, E2 : Entity_Information) return Boolean;
 
    type Entity_Information_Array_Access is access Entity_Information_Array;
+   type Natural_Array is array (Natural range <>) of Natural;
+   type Natural_Array_Access is access Natural_Array;
+
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Entity_Information_Array, Entity_Information_Array_Access);
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Natural_Array, Natural_Array_Access);
 
    type Xref_List is record
-      Lines : GNAT.Strings.String_List_Access;
-      Xrefs : Entity_Information_Array_Access;
+      Lines   : GNAT.Strings.String_List_Access;
+      Xrefs   : Entity_Information_Array_Access;
+      Lengths : Natural_Array_Access;
    end record;
 
    procedure Add_Primitive_Operations
@@ -141,6 +151,8 @@ package body Browsers.Types is
       Entity      : Entity_Information);
    --  Add the list of fields for a record-like entity to the end of
    --  Attr_Layout.
+   --  This is also usable to get the enumeration literals for an enumeration
+   --  type.
 
    procedure Add_Parent_Package
      (List        : in out Xref_List;
@@ -149,21 +161,30 @@ package body Browsers.Types is
    --  Add the parent package for Entity at the end of Attr_Layout
 
    procedure Add_Line
-     (List : in out Xref_List; Str : String; Xref : Entity_Information);
+     (List : in out Xref_List;
+      Str : String;
+      Xref : Entity_Information;
+      Length1 : Natural := Natural'Last);
    --  Add a new line that will be displayed in a layout.
    --  Str can contain one substring delimited by @...@. When the user
    --  clicks on that zone, a callback will be called to display the
    --  information for the entity Xref.
+   --  Length1 is the number of characters in the first column. The first
+   --  character in the second column will always be aligned. Set to
+   --  Natural'Last if there is only one column.
 
    procedure Display_Lines
      (Item   : access Browser_Item_Record'Class;
       List   : Xref_List;
       X      : Gint;
       Y      : in out Gint;
+      Second_Column : Gint;
       Layout : access Pango_Layout_Record'Class);
    --  Display the lines from List into Pixmap, starting at X, Y, and setup
    --  appropriate callbacks.
    --  Layout is used while drawing the strings.
+   --  Second_Column is the pixel number where the second column (if any)
+   --  should start.
 
    procedure Free (List : in out Xref_List);
    --  Free the data in List (but not the xrefs, since they are still used for
@@ -172,10 +193,24 @@ package body Browsers.Types is
    procedure Get_Pixel_Size
      (Browser : access General_Browser_Record'Class;
       List : Xref_List;
-      W, H : out Gint;
+      W1, W2, H : out Gint;
       Layout : Pango_Layout);
    --  Compute the approximate pixels size for List.
+   --  W1, W2 are the widths of the two columns (depending on how each line was
+   --  split).
    --  Layout is used while computing the length
+
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget;
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+      return Node_Ptr;
+   --  Support functions for the MDI
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access;
+   --  Create a current kernel context, based on the currently selected item
 
    ----------
    -- Call --
@@ -187,17 +222,17 @@ package body Browsers.Types is
    is
       Canvas   : Interactive_Canvas;
       New_Item : Type_Item;
-      Link     : Canvas_Link;
+      Link     : Browser_Link;
    begin
       if Get_Button (Event) = 1
-        and then Get_Event_Type (Event) = Gdk_2button_Press
+        and then Get_Event_Type (Event) = Button_Press
       then
          Canvas := Get_Canvas (Get_Browser (Callback.Item));
          New_Item := Add_Or_Select_Item
            (Type_Browser (Get_Browser (Callback.Item)), Callback.Entity);
 
          if not Has_Link (Canvas, Callback.Item, New_Item) then
-            Link := new Canvas_Link_Record;
+            Link := new Browser_Link_Record;
             Configure (Link, Descr => Get_Name (Callback.Entity));
             Add_Link (Canvas, Link, Callback.Item, New_Item);
          end if;
@@ -242,10 +277,14 @@ package body Browsers.Types is
    --------------
 
    procedure Add_Line
-     (List : in out Xref_List; Str : String; Xref : Entity_Information)
+     (List    : in out Xref_List;
+      Str     : String;
+      Xref    : Entity_Information;
+      Length1 : Natural := Natural'Last)
    is
       Tmp : GNAT.Strings.String_List_Access := List.Lines;
       Xrefs : Entity_Information_Array_Access := List.Xrefs;
+      Tmp2 : Natural_Array_Access := List.Lengths;
    begin
       if Tmp /= null then
          List.Lines :=
@@ -261,6 +300,13 @@ package body Browsers.Types is
       else
          List.Xrefs := new Entity_Information_Array'(1 => Xref);
       end if;
+
+      if Tmp2 /= null then
+         List.Lengths := new Natural_Array'(Tmp2.all & Length1);
+         Unchecked_Free (Tmp2);
+      else
+         List.Lengths := new Natural_Array'(1 => Length1);
+      end if;
    end Add_Line;
 
    --------------------
@@ -270,15 +316,16 @@ package body Browsers.Types is
    procedure Get_Pixel_Size
      (Browser : access General_Browser_Record'Class;
       List : Xref_List;
-      W, H : out Gint;
+      W1, W2, H : out Gint;
       Layout : Pango_Layout)
    is
       Descr : constant Pango_Font_Description :=
         Get_Pref (Get_Kernel (Browser), Browsers_Link_Font);
       Font  : Pango_Font;
       Metrics : Pango_Font_Metrics;
-      Longest : Gint := 0;
-      H2    : Gint;
+      Longest1, Longest2 : Gint := 0;
+      H2, W    : Gint;
+      Last : Natural;
    begin
       H := 0;
 
@@ -291,13 +338,28 @@ package body Browsers.Types is
       Metrics := Get_Metrics (Font);
 
       for L in List.Lines'Range loop
-         Set_Text (Layout, List.Lines (L).all);
-         Get_Pixel_Size (Layout, W, H2);
-         H := H + H2;
-         Longest := Gint'Max (Longest, W);
+         declare
+            Line : GNAT.Strings.String_Access renames List.Lines (L);
+         begin
+            Last := Natural'Min (List.Lengths (L), Line'Length);
+
+            --  First column
+            Set_Text (Layout, Line (Line'First .. Line'First + Last - 1));
+            Get_Pixel_Size (Layout, W, H2);
+            H := H + H2;
+            Longest1 := Gint'Max (Longest1, W);
+
+            --  Second column
+            if L < Line'Length then
+               Set_Text (Layout, Line (Line'First + Last .. Line'Last));
+               Get_Pixel_Size (Layout, W, H2);
+               Longest2 := Gint'Max (Longest2, W);
+            end if;
+         end;
       end loop;
 
-      W := Longest;
+      W1 := Longest1;
+      W2 := Longest2;
       Unref (Metrics);
       Unref (Font);
    end Get_Pixel_Size;
@@ -311,6 +373,7 @@ package body Browsers.Types is
       List   : Xref_List;
       X      : Gint;
       Y      : in out Gint;
+      Second_Column : Gint;
       Layout : access Pango_Layout_Record'Class)
    is
       Browser : constant General_Browser := Get_Browser (Item);
@@ -356,8 +419,6 @@ package body Browsers.Types is
 
             X2 := X2 + W;
          end if;
-
-         In_Xref := not In_Xref;
       end Display;
 
    begin
@@ -366,15 +427,22 @@ package body Browsers.Types is
       end if;
 
       for L in List.Lines'Range loop
-         First := List.Lines'First;
+         First := List.Lines (L)'First;
          Last := First;
          X2   := X;
          In_Xref := False;
 
          while Last <= List.Lines (L)'Last loop
+            if Last - List.Lines (L)'First + 1 = List.Lengths (L) then
+               Display (L);
+               First   := Last;
+               X2      := Second_Column;
+            end if;
+
             if List.Lines (L)(Last) = '@' then
                Display (L);
                First   := Last + 1;
+               In_Xref := not In_Xref;
             end if;
 
             Last := Last + 1;
@@ -395,13 +463,16 @@ package body Browsers.Types is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      Type_Browser_Module : Module_ID;
    begin
       Register_Module
         (Module                  => Type_Browser_Module,
          Kernel                  => Kernel,
          Module_Name             => "Type_Browser",
-         Contextual_Menu_Handler => Browser_Contextual_Menu'Access);
+         Contextual_Menu_Handler => Browser_Contextual_Menu'Access,
+         MDI_Child_Tag           => Type_Browser_Record'Tag,
+         Default_Context_Factory => Default_Factory'Access);
+      Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+        (Save_Desktop'Access, Load_Desktop'Access);
       Register_Menu
         (Kernel      => Kernel,
          Parent_Path => '/' & (-"Tools"),
@@ -524,6 +595,14 @@ package body Browsers.Types is
       Browser : constant Type_Browser := new Type_Browser_Record;
    begin
       Initialize (Browser, Kernel, Create_Toolbar => False);
+
+      Register_Contextual_Menu
+        (Kernel          => Kernel,
+         Event_On_Widget => Browser,
+         Object          => Browser,
+         ID              => Type_Browser_Module,
+         Context_Func    => Default_Browser_Context_Factory'Access);
+
       return Browser;
    end Open_Type_Browser;
 
@@ -694,7 +773,8 @@ package body Browsers.Types is
            (List,
             Get_Name (Parameter) & ": "
             & Image (Get_Type (Subs)) & " @" & Get_Name (Typ) & '@',
-            Typ);
+            Typ,
+            Length1 => Get_Name (Parameter)'Length + 1);
          --  Do not free Type, it is needed for callbacks
 
          Destroy (Parameter);
@@ -733,7 +813,8 @@ package body Browsers.Types is
       Tree : Scope_Tree;
       Node : Scope_Tree_Node;
       Iter : Scope_Tree_Node_Iterator;
-      Xref, Typ, Field : Entity_Information;
+      Typ, Field : Entity_Information;
+      Is_Enum : constant Boolean := Get_Kind (Entity).Kind = Enumeration_Kind;
    begin
       Get_Scope_Tree (Kernel, Entity, Tree, Node);
 
@@ -746,19 +827,29 @@ package body Browsers.Types is
 
             if Is_Declaration (Node) then
                Field := Get_Entity (Node);
-               Typ   := Get_Variable_Type (Lib_Info, Field);
 
-               if Is_Predefined_Entity (Typ) then
-                  Xref := No_Entity_Information;
+               if Is_Enum then
+                  Add_Line (List, Get_Name (Field), No_Entity_Information);
+
                else
-                  Xref := Typ;
-               end if;
+                  Typ   := Get_Variable_Type (Lib_Info, Field);
 
-               Add_Line
-                 (List,
-                  Get_Name (Field) & ": @" & Get_Name (Typ) & '@',
-                  Xref);
-               --  Do not free Typ, needed for callbacks
+                  if Is_Predefined_Entity (Typ) then
+                     Add_Line
+                       (List,
+                        Get_Name (Field) & ": " & Get_Name (Typ),
+                        No_Entity_Information,
+                        Length1 => Get_Name (Field)'Length + 1);
+                     Destroy (Typ);
+                  else
+                     Add_Line
+                       (List,
+                        Get_Name (Field) & ": @" & Get_Name (Typ) & '@',
+                        Typ,
+                        Length1 => Get_Name (Field)'Length + 1);
+                     --  Do not free Typ, needed for callbacks
+                  end if;
+               end if;
                Destroy (Field);
             end if;
 
@@ -779,7 +870,8 @@ package body Browsers.Types is
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint)
    is
-      W, H, Layout_H, Layout_W, Meth_Layout_W, Meth_Layout_H : Gint;
+      W, H, Layout_H, Layout_W1, Layout_W2,
+        Meth_Layout_W1, Meth_Layout_W2, Meth_Layout_H : Gint;
       Y : Gint;
       Attr_Lines, Meth_Lines : Xref_List;
       Parent : Entity_Information;
@@ -802,7 +894,6 @@ package body Browsers.Types is
          when Boolean_Kind
            | Decimal_Fixed_Point
            | Enumeration_Literal
-           | Enumeration_Kind
            | Exception_Entity
            | Floating_Point
            | Modular_Integer
@@ -811,6 +902,11 @@ package body Browsers.Types is
            | Signed_Integer
            | String_Kind =>
             null;
+
+         when Enumeration_Kind =>
+            Lib_Info := Locate_From_Source_And_Complete
+              (Kernel, Get_Declaration_File_Of (Item.Entity));
+            Add_Fields (Kernel, Attr_Lines, Lib_Info, Item.Entity);
 
          when Access_Kind =>
             Lib_Info := Locate_From_Source_And_Complete
@@ -865,12 +961,13 @@ package body Browsers.Types is
          Get_Pref (Get_Kernel (Get_Browser (Item)), Browsers_Link_Font));
 
       Get_Pixel_Size
-        (Get_Browser (Item), Attr_Lines, Layout_W, Layout_H, Layout);
-      Get_Pixel_Size
-        (Get_Browser (Item), Meth_Lines, Meth_Layout_W, Meth_Layout_H,
+        (Get_Browser (Item), Attr_Lines, Layout_W1, Layout_W2, Layout_H,
          Layout);
-      W := Gint'Max (Width, Layout_W);
-      W := Gint'Max (W, Meth_Layout_W);
+      Get_Pixel_Size
+        (Get_Browser (Item), Meth_Lines, Meth_Layout_W1, Meth_Layout_W2,
+         Meth_Layout_H, Layout);
+      W := Gint'Max (Width, Layout_W1 + Layout_W2);
+      W := Gint'Max (W, Meth_Layout_W1 + Meth_Layout_W2);
       H := Height + Layout_H + 4 * Margin + Meth_Layout_H;
 
       Resize_And_Draw
@@ -879,7 +976,8 @@ package body Browsers.Types is
 
       Y := Margin + Yoffset;
 
-      Display_Lines (Item, Attr_Lines, Margin + Xoffset, Y, Layout);
+      Display_Lines (Item, Attr_Lines, Margin + Xoffset, Y,
+                     Gint'Max (Layout_W1, Meth_Layout_W1), Layout);
 
       if Layout_H /= 0 and then Meth_Layout_H /= 0 then
          Draw_Line
@@ -891,7 +989,8 @@ package body Browsers.Types is
             Y2       => Y);
       end if;
 
-      Display_Lines (Item, Meth_Lines, Margin + Xoffset, Y, Layout);
+      Display_Lines (Item, Meth_Lines, Margin + Xoffset, Y,
+                     Gint'Max (Meth_Layout_W1, Meth_Layout_W2), Layout);
 
       Free (Attr_Lines);
       Free (Meth_Lines);
@@ -920,8 +1019,13 @@ package body Browsers.Types is
          Gtk_New (Found, Browser, Entity);
          Put (Get_Canvas (Browser), Found);
          Refresh (Found);
-         Refresh_Canvas (Get_Canvas (Browser));
+         Layout (Browser, Force => False);
+         Refresh (Found);
       end if;
+
+      --  Need to always refresh the canvas so that the links are correctly
+      --  displayed.
+      Refresh_Canvas (Get_Canvas (Browser));
 
       return Found;
    end Add_Or_Select_Item;
@@ -943,6 +1047,88 @@ package body Browsers.Types is
         (Browser => Type_Browser (Get_Widget (Child)),
          Entity  => Get_Entity (Entity_Selection_Context_Access (Context)));
    end Add_Or_Select_Item;
+
+   ------------------
+   -- Load_Desktop --
+   ------------------
+
+   function Load_Desktop
+     (Node : Node_Ptr; User : Kernel_Handle) return Gtk_Widget is
+   begin
+      if Node.Tag.all = "Type_Browser" then
+         return Gtk_Widget (Open_Type_Browser (User));
+      end if;
+
+      return null;
+   end Load_Desktop;
+
+   ------------------
+   -- Save_Desktop --
+   ------------------
+
+   function Save_Desktop
+     (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
+     return Node_Ptr
+   is
+      N : Node_Ptr;
+   begin
+      if Widget.all in Type_Browser_Record'Class then
+         N := new Node;
+         N.Tag := new String'("Type_Browser");
+         return N;
+      end if;
+
+      return null;
+   end Save_Desktop;
+
+   ------------------------
+   -- Contextual_Factory --
+   ------------------------
+
+   function Contextual_Factory
+     (Item  : access Type_Item_Record;
+      Browser : access General_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Selection_Context_Access
+   is
+      pragma Unreferenced (Browser, Event, Menu);
+      Context : Entity_Selection_Context_Access;
+   begin
+      Context := new Entity_Selection_Context;
+      Set_Entity_Information
+        (Context     => Context,
+         Entity_Name => Get_Name (Item.Entity),
+         Line        => Get_Declaration_Line_Of (Item.Entity),
+         Column      => Get_Declaration_Column_Of (Item.Entity));
+      --  Do not set the file information, we should really limit to
+      --  entity-related submenus here.
+
+      if Menu /= null then
+         --  ??? Add menu to show the source file for the entity.
+         null;
+      end if;
+
+      return Selection_Context_Access (Context);
+   end Contextual_Factory;
+
+   ---------------------
+   -- Default_Factory --
+   ---------------------
+
+   function Default_Factory
+     (Kernel : access Kernel_Handle_Record'Class;
+      Child  : Gtk.Widget.Gtk_Widget) return Selection_Context_Access
+   is
+      pragma Unreferenced (Kernel);
+      Browser : constant Type_Browser := Type_Browser (Child);
+   begin
+      if Selected_Item (Browser) = null then
+         return null;
+      end if;
+
+      return Contextual_Factory
+        (Browser_Item (Selected_Item (Browser)), Browser, null, null);
+   end Default_Factory;
 
 end Browsers.Types;
 

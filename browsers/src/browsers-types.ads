@@ -20,6 +20,8 @@
 
 with Src_Info.Queries;
 with Glide_Kernel;
+with Gdk.Event;
+with Gtk.Menu;
 with Browsers.Canvas;
 with Glib;
 
@@ -61,6 +63,11 @@ private
       Width, Height               : Glib.Gint;
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset            : in out Glib.Gint);
+   function Contextual_Factory
+     (Item  : access Type_Item_Record;
+      Browser : access Browsers.Canvas.General_Browser_Record'Class;
+      Event : Gdk.Event.Gdk_Event;
+      Menu  : Gtk.Menu.Gtk_Menu) return Glide_Kernel.Selection_Context_Access;
    --  See doc for inherited subprogram
 
    type Type_Item_Record is new Browsers.Canvas.Browser_Item_Record with record
