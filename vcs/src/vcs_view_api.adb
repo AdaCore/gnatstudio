@@ -190,6 +190,10 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
+   procedure On_Menu_Diff_Working_Head
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access);
+
    procedure On_Menu_Update
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -425,6 +429,17 @@ package body VCS_View_API is
       On_Menu_Diff_Local (Widget, Get_Current_Context (Kernel));
    end View_Work_Diff;
 
+   -------------------------
+   -- View_Work_Head_Diff --
+   -------------------------
+
+   procedure View_Work_Head_Diff
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle) is
+   begin
+      On_Menu_Diff_Working_Head (Widget, Get_Current_Context (Kernel));
+   end View_Work_Head_Diff;
+
    --------------
    -- View_Log --
    --------------
@@ -571,6 +586,15 @@ package body VCS_View_API is
                  (Item, "activate",
                   Context_Callback.To_Marshaller
                     (On_Menu_Diff_Local'Access),
+                  Selection_Context_Access (Context));
+
+               Gtk_New (Item, Label =>
+                        -"Compare working revision against head revision");
+               Append (Menu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                    (On_Menu_Diff_Working_Head'Access),
                   Selection_Context_Access (Context));
 
                Gtk_New (Item, Label => -"Annotate");
@@ -1760,6 +1784,50 @@ package body VCS_View_API is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Menu_View_Log;
 
+   -------------------------------
+   -- On_Menu_Diff_Working_Head --
+   -------------------------------
+
+   procedure On_Menu_Diff_Working_Head
+     (Widget  : access GObject_Record'Class;
+      Context : Selection_Context_Access)
+   is
+      use File_Status_List;
+      pragma Unreferenced (Widget);
+
+      Files  : String_List.List;
+      Ref    : constant VCS_Access := Get_Current_Ref (Context);
+      Status : File_Status_List.List;
+      Status_Temp : List_Node;
+
+   begin
+      Files := Get_Selected_Files (Context);
+
+      if String_List.Is_Empty (Files) then
+         return;
+      end if;
+
+      Status := Local_Get_Status (Ref, Files);
+      Status_Temp := First (Status);
+
+      while Status_Temp /= Null_Node loop
+         if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
+            Diff (Ref,
+                  String_List.Head (Data (Status_Temp).File_Name),
+                  String_List.Head (Data (Status_Temp).Working_Revision),
+                  "");
+         end if;
+
+         Status_Temp := Next (Status_Temp);
+      end loop;
+
+      String_List.Free (Files);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+   end On_Menu_Diff_Working_Head;
+
    ------------------------
    -- On_Menu_Diff_Local --
    ------------------------
@@ -1790,6 +1858,7 @@ package body VCS_View_API is
          if not String_List.Is_Empty (Data (Status_Temp).Working_Revision) then
             Diff (Ref,
                   String_List.Head (Data (Status_Temp).File_Name),
+                  "",
                   String_List.Head (Data (Status_Temp).Working_Revision));
          end if;
 
