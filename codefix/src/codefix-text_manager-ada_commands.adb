@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002                         --
+--                      Copyright (C) 2002-2003                      --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -186,6 +186,7 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Extract : Ada_Lists.List_Node;
       Already_Loaded  : Boolean;
       Merge_Success   : Boolean;
+
    begin
       Current_Word := First (This.Remove_List);
 
@@ -235,9 +236,13 @@ package body Codefix.Text_Manager.Ada_Commands is
       Current_Extract := First (Remove_Extracts);
 
       while Current_Extract /= Ada_Lists.Null_Node loop
-
          declare
+            pragma Warnings (Off, New_Extract);
             Extract_Temp : Extract := Extract (New_Extract);
+            --  New_Extract has not been initializated on the first
+            --  iteration, so what is this supposed to do ???
+            --  Disable clever GNAT warning for now, to be revisited.
+
          begin
             Merge_Extracts
               (New_Extract,
@@ -245,8 +250,8 @@ package body Codefix.Text_Manager.Ada_Commands is
                Data (Current_Extract),
                Merge_Success,
                False);
-
             Free (Extract_Temp);
+            --  Is it really safe to call Free here ???
          end;
 
          if not Merge_Success then
