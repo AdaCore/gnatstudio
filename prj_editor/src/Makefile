@@ -1,6 +1,6 @@
 
 C_FILES=pixmaps.c env.c
-MAIN=toto prj_wizard
+MAIN=prj_editor prj_wizard
 MODULES=gnat gtkada common
 NO_STYLE_FILES=
 
