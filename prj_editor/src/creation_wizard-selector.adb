@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2004                            --
+--                     Copyright (C) 2004-2005                       --
 --                            AdaCore                                --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,30 +18,22 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with GPS.Kernel;             use GPS.Kernel;
-with Gtk.Tree_View;            use Gtk.Tree_View;
-with Gtk.Tree_Model;           use Gtk.Tree_Model;
-with Gtk.Tree_Store;           use Gtk.Tree_Store;
-with Gtk.Tree_Selection;       use Gtk.Tree_Selection;
-with Gtk.Enums;                use Gtk.Enums;
-with Gtk.Paned;                use Gtk.Paned;
+with Gtk.Radio_Button;         use Gtk.Radio_Button;
 with Glib.Object;              use Glib.Object;
 with Gtk.Widget;               use Gtk.Widget;
 with Gtk.Box;                  use Gtk.Box;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Gtk.Text_View;            use Gtk.Text_View;
-with Gtk.Text_Buffer;          use Gtk.Text_Buffer;
+with Gtk.Label;                use Gtk.Label;
+with Gtk.Separator;            use Gtk.Separator;
 
-with GUI_Utils;                use GUI_Utils;
 with Ada.Exceptions;           use Ada.Exceptions;
-with GNAT.OS_Lib;              use GNAT.OS_Lib;
-with GPS.Intl;               use GPS.Intl;
+with GPS.Intl;                 use GPS.Intl;
 with Creation_Wizard.Full;     use Creation_Wizard.Full;
 with Creation_Wizard.Adp;      use Creation_Wizard.Adp;
 with Creation_Wizard.Simple;   use Creation_Wizard.Simple;
-with GPS.Kernel;             use GPS.Kernel;
-with GPS.Kernel.Project;     use GPS.Kernel.Project;
+with GPS.Kernel;               use GPS.Kernel;
+with GPS.Kernel.Project;       use GPS.Kernel.Project;
 with Traces;                   use Traces;
 with Wizards;                  use Wizards;
 with Creation_Wizard;          use Creation_Wizard;
@@ -53,10 +45,11 @@ package body Creation_Wizard.Selector is
    From_Adp_Label     : constant String := "From .adp file";
 
    type Wizard_Selector_Page is new Project_Wizard_Page_Record with record
-      View          : Gtk_Tree_View;
-      Description   : Gtk_Text_View;
       Last_Selected : Integer := -1;
       Name_And_Loc  : Name_And_Location_Page_Access;
+      From_Scratch  : Gtk_Radio_Button;
+      From_Existing : Gtk_Radio_Button;
+      From_Adp      : Gtk_Radio_Button;
    end record;
    type Wizard_Selector_Page_Access is access all Wizard_Selector_Page'Class;
    function Create_Content
@@ -73,11 +66,6 @@ package body Creation_Wizard.Selector is
       Wiz  : access Wizard_Record'Class) return Wizard_Page;
    --  See inherited documentation
 
-   procedure Selection_Changed
-     (Selection : access Gtk_Widget_Record'Class;
-      Page      : Project_Wizard_Page);
-   --  Called when a new type of project is selected
-
    ---------------
    -- Next_Page --
    ---------------
@@ -86,24 +74,15 @@ package body Creation_Wizard.Selector is
      (Page : access Wizard_Selector_Page;
       Wiz  : access Wizard_Record'Class) return Wizard_Page
    is
-      Iter  : Gtk_Tree_Iter;
-      Model : Gtk_Tree_Model;
       Selected : Integer;
    begin
-      Get_Selected (Get_Selection (Page.View), Model, Iter);
-
-      declare
-         Project_T : constant String :=
-           Get_String (Gtk_Tree_Store (Model), Iter, 0);
-      begin
-         if Project_T = -From_Sources_Label then
-            Selected := 1;
-         elsif Project_T = -From_Adp_Label then
-            Selected := 2;
-         else
-            Selected := 3;
-         end if;
-      end;
+      if Get_Active (Page.From_Existing) then
+         Selected := 1;
+      elsif Get_Active (Page.From_Adp) then
+         Selected := 2;
+      else
+         Selected := 3;
+      end if;
 
       if Page.Last_Selected /= Selected then
          Page.Last_Selected := Selected;
@@ -135,27 +114,6 @@ package body Creation_Wizard.Selector is
       null;
    end Generate_Project;
 
-   -----------------------
-   -- Selection_Changed --
-   -----------------------
-
-   procedure Selection_Changed
-     (Selection : access Gtk_Widget_Record'Class;
-      Page      : Project_Wizard_Page)
-   is
-      pragma Unreferenced (Selection);
-      P              : constant Wizard_Selector_Page_Access :=
-        Wizard_Selector_Page_Access (Page);
-      Buffer         : constant Gtk_Text_Buffer := Get_Buffer (P.Description);
-      Selected       : Gtk_Tree_Iter;
-      Selected_Model : Gtk_Tree_Model;
-   begin
-      Get_Selected (Get_Selection (P.View), Selected_Model, Selected);
-      Set_Text (Buffer,
-                Get_String (Gtk_Tree_Store (Get_Model (P.View)),
-                            Selected, 1));
-   end Selection_Changed;
-
    ------------------------
    -- Create_New_Project --
    ------------------------
@@ -171,7 +129,7 @@ package body Creation_Wizard.Selector is
       Add_Page (Wiz,
                 Page        => P,
                 Description => -"Select the type of project to create",
-                Toc         => -"Select project type");
+                Toc         => -"Project type");
 
       P.Name_And_Loc := Add_Name_And_Location_Page (Wiz);
 
@@ -202,66 +160,66 @@ package body Creation_Wizard.Selector is
       Wiz  : access Wizard_Record'Class) return Gtk.Widget.Gtk_Widget
    is
       pragma Unreferenced (Wiz);
-      Project_Type_Cst : aliased String := -"Project type";
-      Model  : Gtk_Tree_Store;
-      From_Sources_Iter   : Gtk_Tree_Iter;
-      From_Scratch_Iter   : Gtk_Tree_Iter;
-      From_Adp_Iter       : Gtk_Tree_Iter;
-      Paned  : Gtk_Paned;
-      Button : Gtk_Widget;
-      Box    : Gtk_Box;
+      Button    : Gtk_Widget;
+      Box       : Gtk_Box;
+      Separator : Gtk_Separator;
+      Label     : Gtk_Label;
       pragma Unreferenced (Button);
    begin
       Gtk_New_Vbox (Box, Homogeneous => False);
 
-      Gtk_New_Hpaned (Paned);
-      Pack_Start (Box, Paned);
+      Gtk_New (Page.From_Existing, Label => -From_Sources_Label);
+      Pack_Start (Box, Page.From_Existing, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create a new set of projects given a set of source directories"
+           & ASCII.LF
+           & "and a set of object directories. GPS will try to create"
+           & ASCII.LF
+           & "projects so as to be able to get the same location for"
+           & ASCII.LF
+           & "object files when your application is build using project"
+           & ASCII.LF
+           & "files as it was when you build it previously."));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
 
-      Page.View := Create_Tree_View
-        (Column_Types  => (1 => GType_String, 2 => GType_String),
-         Column_Names  => (1 => Project_Type_Cst'Unchecked_Access),
-         Show_Column_Titles => False);
-      Add1 (Paned, Page.View);
-      Model := Gtk_Tree_Store (Get_Model (Page.View));
+      Gtk_New (Page.From_Scratch, Get_Group (Page.From_Existing),
+               -From_Scratch_Label);
+      Pack_Start (Box, Page.From_Scratch, Expand => False);
+      Gtk_New
+        (Label,
+         -("Create a new project file, where you can specify each of its"
+           & ASCII.LF
+           & "properties, like the set of source directories, its object"
+           & ASCII.LF
+           & "directory, compiler switches,..."));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
+      Gtk_New_Hseparator (Separator);
+      Pack_Start (Box, Separator, Expand => False);
 
-      Append (Model, From_Sources_Iter, Null_Iter);
-      Set (Model, From_Sources_Iter, 0, -From_Sources_Label);
-      Set (Model, From_Sources_Iter, 1,
-           -("Create a new set of projects given a set of source directories"
-             & " and a set of object directories. GPS will try to create"
-             & " projects so as to be able to get the same location for"
-             & " object files when your application is build using project"
-             & " files as it was when you build it previously."));
+      Gtk_New (Page.From_Adp, Get_Group (Page.From_Existing),
+               -From_Adp_Label);
+      Pack_Start (Box, Page.From_Adp, Expand => False);
+      Gtk_New
+        (Label,
+         -(".adp files are the project files used in the AdaCore's Glide"
+           & ASCII.LF
+           & "environment, based on Emacs. It is a very simple project."
+           & ASCII.LF
+           & "This wizard will allow you to easily convert such a file to"
+           & ASCII.LF
+           & "GPS's own format"));
+      Set_Padding (Label, 20, 5);
+      Set_Alignment (Label, 0.0, 0.5);
+      Pack_Start (Box, Label, Expand => False);
 
-      Append (Model, From_Scratch_Iter, Null_Iter);
-      Set (Model, From_Scratch_Iter, 0, -From_Scratch_Label);
-      Set (Model, From_Scratch_Iter, 1,
-           -("Create a new project file, where you can specify each of its"
-             & " properties, like the set of source directories, its object"
-             & " directory, compiler switches,..."));
-
-      Append (Model, From_Adp_Iter, Null_Iter);
-      Set (Model, From_Adp_Iter, 0, -From_Adp_Label);
-      Set (Model, From_Adp_Iter, 1,
-           -(".adp files are the project files used in the AdaCore's Glide"
-             & " environment, based on Emacs. It is a very simple project."
-             & ASCII.LF
-             & "This wizard will allow you to easily convert such a file to"
-             & " GPS's own format"));
-
-      Gtk_New (Page.Description);
-      Add2 (Paned, Page.Description);
-      Set_Cursor_Visible (Page.Description, False);
-      Set_Wrap_Mode (Page.Description, Wrap_Word);
-      Set_Editable (Page.Description, False);
-
-      Page_Handlers.Object_Connect
-        (Get_Selection (Page.View), "changed",
-         Selection_Changed'Access,
-         Slot_Object => Page.View,
-         User_Data => Project_Wizard_Page (Page));
-      Select_Iter (Get_Selection (Page.View), From_Scratch_Iter);
-
+      Set_Active (Page.From_Scratch, True);
       return Gtk_Widget (Box);
    end Create_Content;
 
