@@ -390,6 +390,8 @@ begin
       end case;
    end loop;
 
+   Glide_Page.Load_Desktop (Page, GPS);
+
    loop
       declare
          S : constant String := Get_Argument (Do_Expansion => True);
@@ -429,7 +431,9 @@ begin
 
    Show_All (GPS);
 
-   if not File_Opened then
+   if not File_Opened
+     and then not Has_Saved_Desktop (GPS.Kernel)
+   then
       Open_Html
         (GPS.Kernel,
          Format_Pathname
