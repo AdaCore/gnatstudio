@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with GNAT.Expect;           use GNAT.Expect;
+with Gtk.Main;              use Gtk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
 with System;                use System;
@@ -122,9 +123,9 @@ package body Process_Proxies is
       Result : GNAT.Expect.Expect_Match;
    begin
       if At_Least_One then
-         Wait (Proxy, Result, ".+", Timeout => 0);
+         Wait (Proxy, Result, ".+", Timeout => 1);
       else
-         Wait (Proxy, Result, ".*", Timeout => 0);
+         Wait (Proxy, Result, ".*", Timeout => 1);
       end if;
    end Empty_Buffer;
 
@@ -158,14 +159,9 @@ package body Process_Proxies is
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer := 20) is
+      Timeout : Integer := 1000) is
    begin
-      if Timeout = -1 then
-         Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => -1);
-      else
-         Expect
-           (Proxy.Descriptor.all, Result, Pattern, Timeout => Timeout * 50);
-      end if;
+      Expect (Proxy.Descriptor.all, Result, Pattern, Timeout => Timeout);
    end Wait;
 
    procedure Wait
@@ -173,20 +169,16 @@ package body Process_Proxies is
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Matched : out GNAT.Regpat.Match_Array;
-      Timeout : Integer := 20) is
+      Timeout : Integer := 1000) is
    begin
-      if Timeout = -1 then
-         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, -1);
-      else
-         Expect (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout * 50);
-      end if;
+      Expect (Proxy.Descriptor.all, Result, Pattern, Matched, Timeout);
    end Wait;
 
    procedure Wait
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : String;
-      Timeout : Integer := 20) is
+      Timeout : Integer := 1000) is
    begin
       Wait (Proxy, Result, Compile (Pattern), Timeout);
    end Wait;
@@ -196,9 +188,15 @@ package body Process_Proxies is
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Matched : out GNAT.Regpat.Match_Array;
-      Timeout : Integer := 20)
+      Timeout : Integer := 1000)
    is
-      Num : Integer := 1;
+      Num        : Integer := Timeout_Ms;
+      Num_Events : Positive;
+      Max_Events : constant := 30;
+      --  Limit the number of events to process in one iteration
+
+      No_Main_Loop : Boolean;
+
    begin
       --  Reset the interrupted flag before processing.
 
@@ -225,9 +223,15 @@ package body Process_Proxies is
             exit;
          end if;
 
-         Expect
-           (Proxy.Descriptor.all, Result, Pattern, Matched,
-            Timeout => Timeout_Ms);
+         if Timeout = -1 then
+            Expect
+              (Proxy.Descriptor.all, Result, Pattern, Matched,
+               Timeout => Timeout_Ms);
+         else
+            Expect
+              (Proxy.Descriptor.all, Result, Pattern, Matched,
+               Timeout => Integer'Min (Timeout_Ms, Timeout));
+         end if;
 
          case Result is
             when Expect_Full_Buffer =>
@@ -237,8 +241,30 @@ package body Process_Proxies is
                exit;
 
             when Expect_Timeout =>
-               exit when Timeout = 0 or else Num = Timeout;
-               Num := Num + 1;
+               --  Process any graphical event, and loop again.
+
+               --  If we are already waiting, that means that one of the events
+               --  that we processed in this loop led to a Wait command,
+               --  and so that event must be simply discarded, since we want
+               --  to process only graphical events here.
+
+               Num_Events := 1;
+
+               if not Proxy.Waiting then
+                  Proxy.Waiting := True;
+
+                  while Gtk.Main.Events_Pending
+                    and then Num_Events <= Max_Events
+                  loop
+                     No_Main_Loop := Gtk.Main.Main_Iteration;
+                     Num_Events := Num_Events + 1;
+                  end loop;
+
+                  Proxy.Waiting := False;
+
+                  exit when Timeout = 0 or else Num >= Timeout;
+                  Num := Num + Timeout_Ms;
+               end if;
 
             when others =>
                --  It matched, we can simply return.
@@ -251,7 +277,7 @@ package body Process_Proxies is
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer := 20)
+      Timeout : Integer := 1000)
    is
       Matched : Match_Array (0 .. 0);
    begin

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -102,11 +102,12 @@ package Process_Proxies is
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer := 20);
+      Timeout : Integer := 1000);
    --  Wait until some output from the debugger matches Pattern.
-   --  This functions waits at least (Timeout * 50ms). It does *not*
-   --  handle graphic events (e.g Gtk+ events), so this is the responsibility
-   --  of the caller to handle these events between calls to Wait if desired.
+   --  This functions waits at least Timeout ms, and is overriden
+   --  in simple graphic mode so that Gtk+ events are handled by hand.
+   --  The procedure can actually wait longer, depending on
+   --  what is processes between each iteration.
    --  The function returns the same kind of result as an Expect call would.
    --  Default Timeout is one second.
 
@@ -115,14 +116,14 @@ package Process_Proxies is
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Matched : out GNAT.Regpat.Match_Array;
-      Timeout : Integer := 20);
+      Timeout : Integer := 1000);
    --  Same but Matched is also filled.
 
    procedure Wait
      (Proxy   : access Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : String;
-      Timeout : Integer := 20);
+      Timeout : Integer := 1000);
    --  Same, but the regular expression is given a string.
 
    procedure Send
@@ -142,16 +143,22 @@ package Process_Proxies is
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
-      Timeout : Integer := 20);
+      Timeout : Integer := 1000);
    --  In GUI mode, this processes the graphic events between each iteration.
+   --  Note that it is not recommended to use this procedure, since handling
+   --  Gtk+ events by hand can cause lots of confusion, and in particular,
+   --  create unwanted recursion in the handling of callbacks.
+   --  The recommended way is to use a (non GUI) Process_Proxy and call Wait
+   --  with small timeouts inside Gtk+ timeout handlers.
 
    procedure Wait
      (Proxy   : access Gui_Process_Proxy;
       Result  : out GNAT.Expect.Expect_Match;
       Pattern : GNAT.Regpat.Pattern_Matcher;
       Matched : out GNAT.Regpat.Match_Array;
-      Timeout : Integer := 20);
+      Timeout : Integer := 1000);
    --  In GUI mode, this processes the graphic events between each iteration.
+   --  See comments above.
 
    -------------
    -- Filters --
@@ -189,6 +196,9 @@ private
 
       Interrupted        : Boolean := False;
       --  Whether the process has been interrupted
+
+      Waiting            : Boolean := False;
+      --  Whether we are already polling the output of the process.
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;
