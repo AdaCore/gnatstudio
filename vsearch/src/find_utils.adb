@@ -394,11 +394,7 @@ package body Find_Utils is
          NL_Comm_Start : String    renames Context.New_Line_Comment_Start;
          M_Comm_Start  : String    renames Context.Comment_Start;
          M_Comm_End    : String    renames Context.Comment_End;
-
-         NL_Comm_Start_Length : Natural renames
-                                  Context.New_Line_Comment_Start_Length;
-         M_Comm_Start_Length  : Natural renames Context.Comment_Start_Length;
-         M_Comm_End_Length    : Natural renames Context.Comment_End_Length;
+         Char_Delim    : Character renames Context.Constant_Character;
 
          Called   : Boolean := False; --  Was callback called on this line ?
          Continue : Boolean := True;  --  really necessary ???
@@ -417,25 +413,30 @@ package body Find_Utils is
             case Search.Lexical_State is
                when Statements =>
                   while Pos <= EOL loop
-                     if M_Comm_Start_Length /= 0
-                       and then Pos + M_Comm_Start_Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_Start_Length - 1)
+                     if M_Comm_Start'Length /= 0
+                       and then Pos + M_Comm_Start'Length - 1 <= EOL
+                       and then Line (Pos .. Pos + M_Comm_Start'Length - 1)
                                 = M_Comm_Start
                      then
                         Next_Lexical_State := Multi_Comments;
-                        Next := Pos + M_Comm_Start_Length;
+                        Next := Pos + M_Comm_Start'Length;
                         exit;
 
-                     elsif NL_Comm_Start_Length /= 0
-                       and then Pos + NL_Comm_Start_Length - 1 <= EOL
-                       and then Line (Pos .. Pos + NL_Comm_Start_Length - 1)
+                     elsif NL_Comm_Start'Length /= 0
+                       and then Pos + NL_Comm_Start'Length - 1 <= EOL
+                       and then Line (Pos .. Pos + NL_Comm_Start'Length - 1)
                                 = NL_Comm_Start
                      then
                         Next_Lexical_State := Mono_Comments;
-                        Next := Pos + NL_Comm_Start_Length;
+                        Next := Pos + NL_Comm_Start'Length;
                         exit;
 
-                     elsif Line (Pos) = Str_Delim then
+                     elsif Line (Pos) = Str_Delim
+                       and then (Pos = Line'First
+                                 or else Pos = EOL
+                                 or else Line (Pos - 1) /= Char_Delim
+                                 or else Line (Pos + 1) /= Char_Delim)
+                     then
                         Next_Lexical_State := Strings;
                         Next := Pos + 1;
                         exit;
@@ -465,13 +466,13 @@ package body Find_Utils is
 
                when Multi_Comments =>
                   while Pos <= EOL loop
-                     if M_Comm_End_Length /= 0
-                       and then Pos + M_Comm_End_Length - 1 <= EOL
-                       and then Line (Pos .. Pos + M_Comm_End_Length - 1)
+                     if M_Comm_End'Length /= 0
+                       and then Pos + M_Comm_End'Length - 1 <= EOL
+                       and then Line (Pos .. Pos + M_Comm_End'Length - 1)
                                 = M_Comm_End
                      then
                         Next_Lexical_State := Statements;
-                        Next := Pos + M_Comm_End_Length;
+                        Next := Pos + M_Comm_End'Length;
                         exit;
                      end if;
 
@@ -500,6 +501,12 @@ package body Find_Utils is
 
             exit Whole_Line_Loop when Reached > EOL;
          end loop Whole_Line_Loop;
+
+         --  Handle empty mono-comments
+
+         if Search.Lexical_State = Mono_Comments then
+            Search.Lexical_State := Statements;
+         end if;
 
          return Continue;
       end Scan_Line_With_Context;

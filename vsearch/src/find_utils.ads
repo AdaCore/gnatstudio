@@ -154,7 +154,11 @@ private
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file.
-   --  Statements is all but comments and strings.
+   --
+   --  Statements      all but comments and strings and characters
+   --  Strings         string literals
+   --  Mono_Comments   end of line terminated comments
+   --  Multi_Comments  (possibly) multi-line comments
 
    type Code_Search is record
       Look_For        : String_Access := null;
