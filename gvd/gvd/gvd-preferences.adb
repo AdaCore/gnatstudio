@@ -71,6 +71,7 @@ package body GVD.Preferences is
       Helpers        : constant String := -"Helpers";
       Source_Flags   : Param_Flags := Param_Readable;
       External_Flags : Param_Flags := Param_Readable;
+      HTML_Flags     : Param_Flags;
 
    begin
       --  In standalone mode, the source editor prefs are also editable
@@ -98,6 +99,15 @@ package body GVD.Preferences is
 
       else
          External_Flags := External_Flags or Param_Writable;
+      end if;
+
+      if Config.Host = Windows then
+         --  This preference is not used under Windows
+
+         HTML_Flags := Source_Flags;
+
+      else
+         HTML_Flags := External_Flags;
       end if;
 
       Debugger_Highlight_Color := Param_Spec_Color (Gnew_Color
@@ -476,8 +486,8 @@ package body GVD.Preferences is
         (Name     => XML_Prefix & "HTML-Browser",
          Nick     => -"HTML browser",
          Blurb    => -"Program used to browse HTML pages",
-         Flags    => External_Flags,
-         Default  => Default_HTML_Browser));
+         Flags    => HTML_Flags,
+         Default  => ""));
       Register_Property (Prefs, Param_Spec (Html_Browser), Helpers);
 
       Print_Command := Param_Spec_String (Gnew_String
