@@ -173,6 +173,9 @@ package body Glide_Kernel.Project is
    is
       Had_Project_Desktop : Boolean;
       pragma Unreferenced (Had_Project_Desktop);
+
+      Iter : Tools_Htable.String_Hash_Table.Iterator;
+      Prop : Tool_Properties_Record;
    begin
       --  Save all open children, and close everything. A new desktop will be
       --  open in the end anway
@@ -184,6 +187,39 @@ package body Glide_Kernel.Project is
       Load_Default_Project
         (Kernel.Registry.all,
          Normalize_Pathname (Directory, Resolve_Links => False));
+
+      --  For all registered tool that contain default switches, set these up
+
+      Tools_Htable.String_Hash_Table.Get_First (Kernel.Tools, Iter);
+      loop
+         Prop := Tools_Htable.String_Hash_Table.Get_Element (Iter);
+         exit when Prop = No_Tool;
+
+         if Prop.Initial_Cmd_Line /= null then
+            declare
+               Switches : Argument_List_Access :=
+                 Argument_String_To_List (Prop.Initial_Cmd_Line.all);
+               No_Scenario : constant Scenario_Variable_Array (1 .. 0) :=
+                 (others => No_Variable);
+            begin
+               Update_Attribute_Value_In_Scenario
+                 (Get_Project (Kernel),
+                  Scenario_Variables => No_Scenario,
+                  Attribute          => Build
+                    (Prop.Project_Package.all, Prop.Project_Attribute.all),
+                  Values             => Switches.all,
+                  Attribute_Index    => Prop.Project_Index.all);
+               Free (Switches);
+            end;
+         end if;
+
+         Tools_Htable.String_Hash_Table.Get_Next (Kernel.Tools, Iter);
+      end loop;
+
+      Set_Project_Modified (Get_Project (Kernel), False);
+
+      --  Compute the project
+
       Project_Changed (Kernel);
       Recompute_View (Kernel);
 
