@@ -90,9 +90,6 @@ package body Python_Module is
    procedure Register_Command
      (Script        : access Python_Scripting_Record;
       Command       : String;
-      Params        : String := "";
-      Return_Value  : String := "";
-      Description   : String := "";
       Minimum_Args  : Natural := 0;
       Maximum_Args  : Natural := 0;
       Handler       : Module_Command_Function;
@@ -101,7 +98,6 @@ package body Python_Module is
    procedure Register_Class
      (Script        : access Python_Scripting_Record;
       Name          : String;
-      Description   : String := "";
       Base          : Class_Type := No_Class);
    procedure Execute_Command
      (Script             : access Python_Scripting_Record;
@@ -630,25 +626,21 @@ package body Python_Module is
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__str__",
-         Return_Value => "string",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__repr__",
-         Return_Value => "string",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__hash__",
-         Return_Value => "integer",
          Handler      => Python_File_Command_Handler'Access,
          Class        => Get_File_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__cmp__",
-         Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_File_Command_Handler'Access,
@@ -657,25 +649,21 @@ package body Python_Module is
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__str__",
-         Return_Value => "string",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__repr__",
-         Return_Value => "string",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__hash__",
-         Return_Value => "integer",
          Handler      => Python_Project_Command_Handler'Access,
          Class        => Get_Project_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__cmp__",
-         Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Project_Command_Handler'Access,
@@ -684,25 +672,21 @@ package body Python_Module is
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__str__",
-         Return_Value => "string",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__repr__",
-         Return_Value => "string",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__hash__",
-         Return_Value => "integer",
          Handler      => Python_Entity_Command_Handler'Access,
          Class        => Get_Entity_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__cmp__",
-         Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Entity_Command_Handler'Access,
@@ -711,25 +695,21 @@ package body Python_Module is
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__str__",
-         Return_Value => "string",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__repr__",
-         Return_Value => "string",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__hash__",
-         Return_Value => "integer",
          Handler      => Python_Location_Command_Handler'Access,
          Class        => Get_File_Location_Class (Kernel));
       Register_Command
         (Python_Module_Id.Script,
          Command      => "__cmp__",
-         Return_Value => "integer",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Python_Location_Command_Handler'Access,
@@ -1226,33 +1206,12 @@ package body Python_Module is
    procedure Register_Command
      (Script        : access Python_Scripting_Record;
       Command       : String;
-      Params        : String := "";
-      Return_Value  : String := "";
-      Description   : String := "";
       Minimum_Args  : Natural := 0;
       Maximum_Args  : Natural := 0;
       Handler       : Module_Command_Function;
       Class         : Class_Type := No_Class;
       Static_Method : Boolean := False)
    is
-      function Profile return String;
-      --  Return a printable version of the profile
-
-      function Profile return String is
-      begin
-         if Params = "" then
-            if Return_Value = "" then
-               return "() -> None";
-            else
-               return "() -> " & Return_Value;
-            end if;
-         elsif Return_Value = "" then
-            return Params & " -> None";
-         else
-            return Params & " -> " & Return_Value;
-         end if;
-      end Profile;
-
       H   : constant Handler_Data_Access := new Handler_Data'
         (Length       => Command'Length,
          Command      => Command,
@@ -1269,22 +1228,14 @@ package body Python_Module is
       if Class = No_Class then
          Add_Function
            (Module => Script.GPS_Module,
-            Func   => Create_Method_Def
-              (Command, First_Level'Access,
-               Command & ' ' & Profile & ASCII.LF & ASCII.LF & Description),
+            Func   => Create_Method_Def (Command, First_Level'Access),
             Self   => User_Data);
 
       else
          if Command = Constructor_Method then
-            Def := Create_Method_Def
-              ("__init__", First_Level'Access,
-               Get_Name (Class) & ' ' & Profile
-               & ASCII.LF & ASCII.LF & Description);
+            Def := Create_Method_Def ("__init__", First_Level'Access);
          else
-            Def := Create_Method_Def
-              (Command, First_Level'Access,
-               Command & ' ' & Profile
-               & ASCII.LF & ASCII.LF & Description);
+            Def := Create_Method_Def (Command, First_Level'Access);
          end if;
 
          Klass := Lookup_Class_Object (Script.GPS_Module, Get_Name (Class));
@@ -1305,7 +1256,6 @@ package body Python_Module is
    procedure Register_Class
      (Script        : access Python_Scripting_Record;
       Name          : String;
-      Description   : String := "";
       Base          : Class_Type := No_Class)
    is
       Dict  : constant PyDictObject := PyDict_New;
@@ -1315,8 +1265,6 @@ package body Python_Module is
       S       : chars_ptr;
       pragma Unreferenced (Ignored);
    begin
-      PyDict_SetItemString
-        (Dict, "__doc__", PyString_FromString (Description));
       PyDict_SetItemString
         (Dict, "__module__", PyString_FromString (GPS_Module_Name));
 

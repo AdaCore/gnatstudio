@@ -21,7 +21,6 @@
 --  This package contains the implementation for a specific scripting language,
 --  the simple GPS shell.
 
-with Ada.Characters.Handling;  use Ada.Characters.Handling;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Strings.Fixed;        use Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
@@ -150,9 +149,6 @@ package body Shell_Script is
    procedure Register_Command
      (Script        : access Shell_Scripting_Record;
       Command       : String;
-      Params        : String := "";
-      Return_Value  : String := "";
-      Description   : String;
       Minimum_Args  : Natural := 0;
       Maximum_Args  : Natural := 0;
       Handler       : Module_Command_Function;
@@ -161,7 +157,6 @@ package body Shell_Script is
    procedure Register_Class
      (Script        : access Shell_Scripting_Record;
       Name          : String;
-      Description   : String := "";
       Base          : Class_Type := No_Class);
    procedure Execute_Command
      (Script             : access Shell_Scripting_Record;
@@ -283,8 +278,6 @@ package body Shell_Script is
    type Command_Information is record
       Command         : GNAT.OS_Lib.String_Access;
       Short_Command   : GNAT.OS_Lib.String_Access;
-      Usage           : GNAT.OS_Lib.String_Access;
-      Description     : GNAT.OS_Lib.String_Access;
       Minimum_Args    : Natural;
       Maximum_Args    : Natural;
       Command_Handler : Module_Command_Function;
@@ -511,8 +504,6 @@ package body Shell_Script is
    begin
       Free (X.Command);
       Free (X.Short_Command);
-      Free (X.Usage);
-      Free (X.Description);
       Unchecked_Free (X);
    end Free;
 
@@ -732,36 +723,22 @@ package body Shell_Script is
 
       --  The following commands are specific to the GPS shell script.
       Register_Command
-        (Script,
-         Command      => "help",
-         Description  => -"List recognized commands.",
+        (Script, "help",
          Minimum_Args => 0,
          Maximum_Args => 1,
          Handler      => Module_Command_Handler'Access);
-
       Register_Command
-        (Script,
-         Command      => "echo",
-         Description  => -"Display a line of text.",
+        (Script, "echo",
          Minimum_Args => 0,
          Maximum_Args => Natural'Last,
          Handler      => Module_Command_Handler'Access);
-
       Register_Command
-        (Script,
-         Command      => "load",
-         Params       => "(filename)",
-         Description  => -"Load and execute a script file.",
+        (Script, "load",
          Minimum_Args => 1,
          Maximum_Args => 1,
          Handler      => Module_Command_Handler'Access);
-
       Register_Command
-        (Script,
-         Command      => "clear_cache",
-         Description  => -"Free the internal cache used for return values.",
-         Minimum_Args => 0,
-         Maximum_Args => 0,
+        (Script, "clear_cache",
          Handler      => Module_Command_Handler'Access);
    end Register_Module;
 
@@ -881,29 +858,14 @@ package body Shell_Script is
    procedure Register_Command
      (Script         : access Shell_Scripting_Record;
       Command        : String;
-      Params         : String := "";
-      Return_Value   : String := "";
-      Description    : String;
       Minimum_Args   : Natural := 0;
       Maximum_Args   : Natural := 0;
       Handler        : Module_Command_Function;
       Class          : Class_Type := No_Class;
       Static_Method  : Boolean := False)
    is
-      function Ret_Val return String;
-      --  Return a printable version of Return_Value
-
-      function Ret_Val return String is
-      begin
-         if Return_Value = "" then
-            return "";
-         else
-            return " return " & Return_Value;
-         end if;
-      end Ret_Val;
-
       pragma Unreferenced (Script);
-      Cmd, U  : GNAT.OS_Lib.String_Access;
+      Cmd  : GNAT.OS_Lib.String_Access;
       Min  : Natural := Minimum_Args;
       Max  : Natural := Maximum_Args;
       Info : Command_Information_Access;
@@ -940,28 +902,9 @@ package body Shell_Script is
          return;
       end if;
 
-      if Class = No_Class
-        or else Static_Method
-        or else Command = Constructor_Method
-      then
-         U := new String'(Params & Ret_Val);
-      else
-         if Params = "" then
-            U := new String'
-              ('(' & To_Lower (Get_Name (Class))  & ')' & Ret_Val);
-
-         else
-            U := new String'
-              ('(' & To_Lower (Get_Name (Class))
-               & ", " & Params (Params'First + 1 .. Params'Last) & Ret_Val);
-         end if;
-      end if;
-
       Info := new Command_Information'
         (Command         => Cmd,
          Short_Command   => new String'(Command),
-         Usage           => U,
-         Description     => new String'(Description),
          Minimum_Args    => Min,
          Maximum_Args    => Max,
          Class           => Class,
@@ -977,10 +920,9 @@ package body Shell_Script is
    procedure Register_Class
      (Script        : access Shell_Scripting_Record;
       Name          : String;
-      Description   : String := "";
       Base          : Class_Type := No_Class)
    is
-      pragma Unreferenced (Script, Name, Description, Base);
+      pragma Unreferenced (Script, Name, Base);
    begin
       --   Classes not supported in the shell module
       null;
@@ -1296,7 +1238,7 @@ package body Shell_Script is
                    & " Expecting >=" & Data.Minimum_Args'Img
                    & " and <=" & Data.Maximum_Args'Img);
             return -"Incorrect number of arguments." & ASCII.LF
-            & Data.Command.all & ' ' & Data.Usage.all;
+            & Data.Command.all & ' ';
          end if;
       end if;
 
