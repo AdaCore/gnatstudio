@@ -1761,7 +1761,10 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
 
       if( token( 0 ) == '<' )
       {
-         g_tp = template_argument_skip( &Class->name );
+         /* here we get only encounter only template specialization?
+          * skip it
+          */
+         free_template_param (template_argument_skip( &Class->name ));
       }
 
       Class->lineno_end = f_lineno( -1 );
@@ -1807,6 +1810,8 @@ extern int f_class( Declaration_t Declaration, Class_t Class )
          {
             template_args = 0;
          }
+
+         if ( g_tp ) attr |= PAF_TEMPLATE;
 
          Put_symbol( paf
                    , get_scope( Class->name.buf )
@@ -3131,22 +3136,29 @@ extern int qualified_name( LongString *plstr, int *plineno, int *pcharno )
       if( plstr )
       {
          LongStringIdAppend( plstr, ident( 0 ));
-         LongStringMyAppend( plstr, "::" );
       }
 
       step( 1 );
       free_template_param (template_argument_skip( plstr ));
+
       if( token( 0 ) == SN_CLCL )
       {
          step( 1 );
+         if ( plstr ) {
+            LongStringMyAppend( plstr, "::" );
+         }
+         qualified_name( plstr, plineno, pcharno );
       }
       else  /* 21.02.97 rigo */
       {
+         /* template <> template <> int A<int>::f<long> () { ... }
+
          Restore_d();
          niveau--;
          return False;
+         */
+         qualified_name( plstr, plineno, pcharno );
       }
-      qualified_name( plstr, plineno, pcharno );
       niveau--;
       return True;
    }
@@ -4675,7 +4687,8 @@ extern template_param* template_argument_skip( LongString *plstr )
 
              bSeekNext = True;
 
-             LongStringMyAppend (plstr, StringToText (ident (0)));
+             if ( plstr ) 
+                 LongStringMyAppend (plstr, StringToText (ident (0)));
              /* skip name: it is really of no use
              LongStringMyAppend (plstr, " ");
              LongStringMyAppend (plstr, StringToText (ident (1)));
@@ -4700,25 +4713,27 @@ extern template_param* template_argument_skip( LongString *plstr )
 
              LongStringMyAppend (&tp->type, "template ");
              tp->params = template_argument_skip (&tp->type);
+             LongStringMyAppend (&tp->type, " class");
 
-             if ( token (0) != SN_IDENTIFIER )
+             if ( token (0) != SN_CLASS || token (1) != SN_IDENTIFIER )
                  return 0;
 
-             LongStringMyAppend (&tp->name, StringToText (ident (0)));
-             tp->name_lineno = f_lineno (0);
-             tp->name_charno = f_charno (0);
+             LongStringMyAppend (&tp->name, StringToText (ident (1)));
+             tp->name_lineno = f_lineno (1);
+             tp->name_charno = f_charno (1);
              tp->next = root;
 
              root = tp;
 
              bSeekNext = True;
 
-             LongStringMyAppend (plstr, tp->type.buf);
+             if ( plstr ) 
+                 LongStringMyAppend (plstr, tp->type.buf);
              /* skip name: it is really of no use
              LongStringMyAppend (plstr, " ");
              LongStringMyAppend (plstr, tp->name.buf);
              */
-             step (1);
+             step (2);
          } else {
              return 0;
          }
@@ -4752,17 +4767,21 @@ extern template_param* template_argument_skip( LongString *plstr )
              tp->type_lineno = 0;
              tp->type_charno = 0;
              skip_expression ();
-             plstr->append (plstr, "?", 1);
+             if ( plstr ) 
+                 plstr->append (plstr, "?", 1);
              LongStringMyFree (&name);                                       
              LongStringMyFree (&type);                                  
              LongStringMyFree (&arg_pos);                                       
              LongStringMyFree (&arg_type_pos);                                  
          } else {
              tp->name = name;                                                   
+             if ( !tp->name.buf ) LongStringMyAppend (&tp->name, "?");
              get_pos (arg_pos.buf, &tp->name_lineno, &tp->name_charno);         
              tp->type = type;                                                   
+             if ( !tp->type.buf ) LongStringMyAppend (&tp->type, "?");
              get_pos (arg_type_pos.buf, &tp->type_lineno, &tp->type_charno);    
-             LongStringsMyAppend (plstr, &type);                                
+             if ( plstr ) 
+                 LongStringsMyAppend (plstr, &type);                                
              /* skip name: it is really of no use                               
              LongStringMyAppend (plstr, " ");                                   
              LongStringsMyAppend (plstr, &name);                                
@@ -4780,7 +4799,8 @@ extern template_param* template_argument_skip( LongString *plstr )
       } else if ( bSeekNext ) {
          if ( token (0) == ',' ) {
              bSeekNext = False;
-             LongStringMyAppend (plstr, ", ");
+             if ( plstr ) 
+                 LongStringMyAppend (plstr, ", ");
          }
          step (1);
       }
