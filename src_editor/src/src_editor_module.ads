@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                            ACT-Europe                             --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -23,9 +23,7 @@ with Glib;               use Glib;
 with Gdk.GC;
 with Gdk.Color;          use Gdk.Color;
 with Gdk.Pixbuf;         use Gdk.Pixbuf;
-with Gtk.Button;
 with Gtk.Box;            use Gtk.Box;
-with Gtk.Menu_Item;      use Gtk.Menu_Item;
 with Gtk.Text_Mark;      use Gtk.Text_Mark;
 with Gtk.Text_Buffer;    use Gtk.Text_Buffer;
 with Gtk.Text_View;      use Gtk.Text_View;
@@ -44,6 +42,8 @@ with Generic_List;
 with Basic_Types;
 with HTables;
 
+with Commands.Controls;  use Commands.Controls;
+
 package Src_Editor_Module is
 
    Src_Editor_Module_Id : GPS.Kernel.Module_ID;
@@ -51,17 +51,12 @@ package Src_Editor_Module is
 
    Search_Result_Highlighting : constant String := "Search Results";
 
-   type Undo_Redo_Information is record
-      Undo_Button    : Gtk.Button.Gtk_Button;
-      Redo_Button    : Gtk.Button.Gtk_Button;
-
-      Undo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
-      Redo_Menu_Item : Gtk.Menu_Item.Gtk_Menu_Item;
-   end record;
-
    Undo_Redo_Id : constant String := "Source_Editor_Undo_Redo_Information";
 
-   package Undo_Redo_Data is new Glib.Object.User_Data (Undo_Redo_Information);
+   package Undo_Redo_Data is new Glib.Object.User_Data (Undo_Redo);
+   --  ??? The undo/redo widgets should probably be handled by the kernel, not
+   --  by the source_editor_module. This will allow us to get rid of this
+   --  package
 
    ---------------------------------------
    -- Module-specific graphical objects --
