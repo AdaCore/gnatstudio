@@ -28,7 +28,7 @@
 @page
 @vskip 0pt plus 1filll
 
-Copyright @copyright{} 2002, ACT Europe.
+Copyright @copyright{} 2002-2003, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -44,7 +44,7 @@ Version @value{GPSVersion}
 
 Date: $Date$
 
-Copyright @copyright{} 2002, ACT Europe.
+Copyright @copyright{} 2002-2003, ACT Europe.
 This document may be copied, in whole or in part, in any form or by any
 means, as is or with alterations, provided that (1) alterations are clearly
 marked as alterations and (2) this copyright notice is included
@@ -55,6 +55,7 @@ unmodified in any copy.
 * System Setup::
 * Hello World Walk Through::
 * The GPS Kernel::
+* Documenting your module::
 * Contexts::
 
 @detailmenu
@@ -189,6 +190,40 @@ document.
 @c   - custom files (XML,...)
 @c interface with projects: projects.ads
 @c i18n and utf8
+
+@c --------------------------------------------------------------------
+@node Documenting your module
+@chapter Documenting your module
+@c --------------------------------------------------------------------
+
+@noindent
+All modules should be documented, so that the users are aware of all
+its capabilities.
+
+There are several levels of documentation:
+
+@itemize @bullet
+
+@item Tooltips
+It is recommended that all new preferences and as much of the GUI as
+possible be documented through tooltips. This is the only help that
+most users will read.
+
+Tooltips are easily added directly with gtk+: Just call
+@code{Gtk.Tooltips.Set_Tooltip} with the appropriate parameters. The
+kernel itself contains a tooltip group, which should be used when
+setting new tooltips. This is so that a common timeout is used for all
+tooltips in the application: when a user has waited long enough for
+the first tooltip to be displayed, he won't have to wait again for the
+other tooltips.
+
+@item extended documentation
+Extended documentation should be written in HTML.
+See the GPS user's guide on how to make new documentation availble to
+users. 
+
+@end itemize
+
 
 @c --------------------------------------------------------------------
 @node Contexts
