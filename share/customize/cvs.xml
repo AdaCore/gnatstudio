@@ -1,4 +1,4 @@
-<?xml version="1.0"?> 
+<?xml version="1.0"?>
 <!--  This file adds support for cvs -->
 
 <cvs_support>
@@ -21,7 +21,7 @@
    <action name="generic_cvs_status_dir" show-command="true" output="none">
       <shell>pwd</shell>
       <shell output="">echo "Querying status for %1"</shell>
-      <external>cvs status .</external>
+      <external>cvs status -l .</external>
       <on-failure>
          <shell output="">echo "CVS error:"</shell>
          <shell output="">echo "%2"</shell>
