@@ -420,4 +420,123 @@ package body Codefix.Text_Manager.Ada_Commands is
       Free (This.Body_End);
    end Free;
 
+   --------------------
+   -- Add_Pragma_Cmd --
+   --------------------
+
+   procedure Initialize
+     (This           : in out Add_Pragma_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Position       : File_Cursor'Class;
+      Name, Argument : String) is
+   begin
+      Assign (This.Name, Name);
+      Assign (This.Argument, Argument);
+      This.Position := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Position));
+   end Initialize;
+
+   procedure Execute
+     (This         : Add_Pragma_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      Position : File_Cursor;
+   begin
+      Position := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Position.all));
+
+      --  ??? Later, this function could detect the presence of another pragma
+      --  and not add one a second time
+
+      Add_Line
+        (New_Extract,
+         Position,
+         "pragma " & This.Name.all & "(" & This.Argument.all & ")");
+   end Execute;
+
+   procedure Free (This : in out Add_Pragma_Cmd) is
+   begin
+      Free (This.Position);
+      Free (This.Name);
+      Free (This.Argument);
+   end Free;
+
+   -----------------------
+   -- Make_Constant_Cmd --
+   -----------------------
+
+   procedure Initialize
+     (This         : in out Make_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Name         : String) is
+   begin
+      This.Position := new Mark_Abstr'Class'
+        (Get_New_Mark (Current_Text, Position));
+      Assign (This.Name, Name);
+   end Initialize;
+
+
+   procedure Execute
+     (This         : Make_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class)
+   is
+      Cursor        : File_Cursor;
+      Work_Extract  : Ada_List;
+      Tmp_Extract   : Extract;
+      New_Instr     : Dynamic_String;
+      Col_Decl      : Natural;
+      Success_Merge : Boolean;
+   begin
+      Cursor := File_Cursor
+        (Get_Current_Cursor (Current_Text, This.Position.all));
+      Get_Unit (Current_Text, Cursor, Work_Extract);
+
+      if Get_Number_Of_Elements (Work_Extract) = 1 then
+         Replace_Word
+           (Work_Extract,
+            Search_String (Work_Extract, ":"),
+            ": constant",
+            ":");
+      else
+         Cut_Off_Elements (Work_Extract, New_Instr, This.Name.all);
+
+         Col_Decl := New_Instr'First;
+         Skip_To_Char (New_Instr.all, Col_Decl, ':');
+
+         Assign
+           (New_Instr,
+            New_Instr (New_Instr'First .. Col_Decl) & " constant" &
+              New_Instr (Col_Decl + 1 .. New_Instr'Last));
+
+         Add_Line (Work_Extract, Get_Stop (Work_Extract), New_Instr.all);
+         Free (New_Instr);
+      end if;
+
+      Unchecked_Assign (Tmp_Extract, New_Extract);
+      Unchecked_Free (New_Extract);
+
+      Merge_Extracts
+        (New_Extract,
+         Tmp_Extract,
+         Work_Extract,
+         Success_Merge,
+         False);
+
+      if not Success_Merge then
+         raise Codefix_Panic;
+      end if;
+
+      Free (Work_Extract);
+
+   end Execute;
+
+   procedure Free (This : in out Make_Constant_Cmd) is
+   begin
+      Free (This.Position);
+      Free (This.Name);
+   end Free;
+
 end Codefix.Text_Manager.Ada_Commands;

@@ -22,7 +22,9 @@ with Codefix.Text_Manager.Ada_Extracts; use Codefix.Text_Manager.Ada_Extracts;
 
 package Codefix.Text_Manager.Ada_Commands is
 
-   --  Recase_Word_Cmd  --
+   ---------------------
+   -- Recase_Word_Cmd --
+   ---------------------
 
    type Recase_Word_Cmd is new Text_Command with private;
 
@@ -40,7 +42,9 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Recase_Word_Cmd);
 
-   --  Remove_Instruction_Cmd  --
+   ----------------------------
+   -- Remove_Instruction_Cmd --
+   ----------------------------
 
    type Remove_Instruction_Cmd is new Text_Command with private;
 
@@ -56,7 +60,9 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Instruction_Cmd);
 
-   --  Remove_Elements_Cmd  --
+   -------------------------
+   -- Remove_Elements_Cmd --
+   -------------------------
 
    type Remove_Elements_Cmd is new Text_Command with private;
 
@@ -72,7 +78,9 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Elements_Cmd);
 
+   ----------------------------
    -- Remove_Pkg_Clauses_Cmd --
+   ----------------------------
 
    type Remove_Pkg_Clauses_Cmd is new Text_Command with private;
 
@@ -106,6 +114,44 @@ package Codefix.Text_Manager.Ada_Commands is
 
    procedure Free (This : in out Remove_Entity_Cmd);
 
+   --------------------
+   -- Add_Pragma_Cmd --
+   --------------------
+
+   type Add_Pragma_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This           : in out Add_Pragma_Cmd;
+      Current_Text   : Text_Navigator_Abstr'Class;
+      Position       : File_Cursor'Class;
+      Name, Argument : String);
+
+   procedure Execute
+     (This         : Add_Pragma_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   procedure Free (This : in out Add_Pragma_Cmd);
+
+   -----------------------
+   -- Make_Constant_Cmd --
+   -----------------------
+
+   type Make_Constant_Cmd is new Text_Command with private;
+
+   procedure Initialize
+     (This         : in out Make_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      Position     : File_Cursor'Class;
+      Name         : String);
+
+   procedure Execute
+     (This         : Make_Constant_Cmd;
+      Current_Text : Text_Navigator_Abstr'Class;
+      New_Extract  : in out Extract'Class);
+
+   procedure Free (This : in out Make_Constant_Cmd);
+
 private
 
    package Mark_List is new Generic_List (Word_Mark);
@@ -137,6 +183,16 @@ private
    type Remove_Entity_Cmd is new Text_Command with record
       Spec_Begin, Spec_End : Ptr_Mark;
       Body_Begin, Body_End : Ptr_Mark;
+   end record;
+
+   type Add_Pragma_Cmd is new Text_Command with record
+      Position       : Ptr_Mark;
+      Name, Argument : Dynamic_String;
+   end record;
+
+   type Make_Constant_Cmd is new Text_Command with record
+      Position : Ptr_Mark;
+      Name     : Dynamic_String;
    end record;
 
 end Codefix.Text_Manager.Ada_Commands;
