@@ -48,6 +48,7 @@ package Vdiff_Utils is
       Action             : Diff_Action := Nothing;
       Color_Enabled      : Boolean := True;
       Next               : Text_Iterator_Access;
+      File_Caption       : Boolean := False;
    end record;
    --  In this structure, Original_Position is the number of the line in the
    --  old text. If Action is Append, then New_Line should be null and
