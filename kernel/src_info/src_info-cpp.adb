@@ -813,9 +813,8 @@ package body Src_Info.CPP is
             List          => List,
             Full_Filename => Full_Filename,
             Parsed        => True);
-      else
-         Convert_To_Parsed (File, Update_Timestamp => True);
       end if;
+      Convert_To_Parsed (File, Update_Timestamp => True);
 
       Process_File (Full_Filename, Handler, File, Project, List);
 

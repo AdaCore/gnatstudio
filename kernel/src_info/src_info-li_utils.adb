@@ -756,15 +756,10 @@ package body Src_Info.LI_Utils is
       Compilation_Errors : Boolean := False)
    is
       Success : Boolean;
-      Time    : Timestamp := 0;
       Name    : constant GNAT.OS_Lib.String_Access :=
         new String' (Base_Name (LI_Full_Filename));
    begin
       if Parsed then
-         if Is_Regular_File (LI_Full_Filename) then
-            Time := To_Timestamp (File_Time_Stamp (LI_Full_Filename));
-         end if;
-
          File := new LI_File_Constrained'
            (LI => (Parsed                   => True,
                    Handler                  => Handler,
@@ -774,7 +769,7 @@ package body Src_Info.LI_Utils is
                    Dependencies_Info        => null,
                    Compilation_Errors_Found => Compilation_Errors,
                    Separate_Info            => null,
-                   LI_Timestamp             => Time));
+                   LI_Timestamp             => 0));
       else
          File := new LI_File_Constrained'
            (LI =>  (Parsed        => False,
