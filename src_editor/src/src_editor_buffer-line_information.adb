@@ -967,8 +967,6 @@ package body Src_Editor_Buffer.Line_Information is
       --  Create a command to remove the line information at the desired
       --  column.
 
-      Mark := Create_Mark (Editor, "", Iter);
-
       Command := new Remove_Blank_Lines_Command_Type;
       Command.Buffer := Source_Buffer (Editor);
       Command.Mark   := Create_Mark (Editor, "", Iter);
@@ -981,6 +979,7 @@ package body Src_Editor_Buffer.Line_Information is
 
       Editor.Blank_Lines := Editor.Blank_Lines + Number;
 
+      Mark := Create_Mark (Editor, "", Iter);
       return Mark;
    end Add_Blank_Lines;
 
@@ -1530,7 +1529,6 @@ package body Src_Editor_Buffer.Line_Information is
       Number_Of_Lines_Folded : Natural := 0;
    begin
       Get_Iter_At_Mark (Buffer, Iter, Mark);
-
       Buffer_Line := Buffer_Line_Type (Get_Line (Iter) + 1);
 
       Line_Start := Get_Editable_Line (Buffer, Buffer_Line);
@@ -1618,9 +1616,10 @@ package body Src_Editor_Buffer.Line_Information is
 
       Command := new Unhide_Editable_Lines_Type;
       Command.Buffer := Source_Buffer (Buffer);
-      Command.Mark := Mark;
+      Get_Iter_At_Mark (Buffer, Iter, Mark);
+      Command.Mark := Create_Mark (Buffer, "", Iter);
       Command.First_Line := Line_Start;
-      Command.Last_Line   := Line_End;
+      Command.Last_Line  := Line_End;
 
       Add_Block_Command
         (Buffer, Buffer_Line - 1, Command_Access (Command),
