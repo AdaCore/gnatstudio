@@ -71,7 +71,7 @@ package Process_Proxies is
    function Get_Descriptor
      (Proxy : access Process_Proxy)
       return GNAT.Expect.Process_Descriptor_Access;
-   --  Returns the associated Process_Descriptor, so that all the functions of
+   --  Return the associated Process_Descriptor, so that all the functions of
    --  GNAT.Expect can be applied to it.
    --  You should not use Expect directly, but rather Wait below.
 
@@ -79,6 +79,16 @@ package Process_Proxies is
      (Proxy      : access Process_Proxy;
       Descriptor : GNAT.Expect.Process_Descriptor_Access);
    --  Set the external process descriptor.
+
+   function Interrupted (Proxy : access Process_Proxy) return Boolean;
+   --  Return the Interrupted flag associated with Proxy.
+   --  Interrupted should be set to True when an attempt to interrupt the
+   --  underlying process is made.
+
+   procedure Set_Interrupted
+     (Proxy       : access Process_Proxy;
+      Interrupted : Boolean := True);
+   --  Set the Interrupted flag.
 
    procedure Empty_Buffer
      (Proxy        : access Process_Proxy;
@@ -186,8 +196,7 @@ package Process_Proxies is
         (Proxy     : access Process_Proxy'Class;
          W         : access Widget'Class;
          Cmd       : Callback;
-         User_Data : Data)
-        return Boolean;
+         User_Data : Data) return Boolean;
       --  This function tests whether the debugger is currently busy
       --  processing some output.
       --  If it is the case, then it registers Cmd as a procedure to call
@@ -226,7 +235,7 @@ private
       --  not always have to be passed as an "in out" parameter, but simply
       --  an "in" parameter.
 
-      Internal_Mode   : GVD.Types.Command_Type := GVD.Types.Hidden;
+      Internal_Mode      : GVD.Types.Command_Type := GVD.Types.Hidden;
       --  Indicates whether the current output from the debugger should be
       --  displayed in the output window
 
@@ -237,6 +246,9 @@ private
 
       Post_Processes     : Post_Process_Access := null;
       --  The list of commands to be processed after the next call to wait.
+
+      Interrupted        : Boolean := False;
+      --  Whether the process has been interrupted
    end record;
 
    type Gui_Process_Proxy is new Process_Proxy with null record;

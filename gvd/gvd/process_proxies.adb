@@ -99,6 +99,26 @@ package body Process_Proxies is
       Proxy.Command_In_Process.all := In_Process;
    end Set_Command_In_Process;
 
+   -----------------
+   -- Interrupted --
+   -----------------
+
+   function Interrupted (Proxy : access Process_Proxy) return Boolean is
+   begin
+      return Proxy.Interrupted;
+   end Interrupted;
+
+   ---------------------
+   -- Set_Interrupted --
+   ---------------------
+
+   procedure Set_Interrupted
+     (Proxy       : access Process_Proxy;
+      Interrupted : Boolean := True) is
+   begin
+      Proxy.Interrupted := Interrupted;
+   end Set_Interrupted;
+
    ------------------
    -- Empty_Buffer --
    ------------------
@@ -193,13 +213,28 @@ package body Process_Proxies is
       --  Limit the number of events to process in one iteration
 
    begin
+      --  Reset the interrupted flag before processing.
+
+      Set_Interrupted (Proxy, False);
+
       --  We do not use a for loop, so that even if the timeout is 0 we
       --  execute the Expect call at least once.
 
       loop
-         --  In case the external process was killed during the wait.
+         --  In case the external process was killed or interrupted during the
+         --  wait.
 
          if Proxy.Descriptor = null then
+            exit;
+         end if;
+
+         if Interrupted (Proxy) then
+            --  Flush the output and exit
+
+            Set_Interrupted (Proxy, False);
+            Expect
+              (Proxy.Descriptor.all,
+               Result, Pattern, Matched, Timeout => Timeout);
             exit;
          end if;
 
@@ -235,13 +270,11 @@ package body Process_Proxies is
                   Num_Events := Num_Events + 1;
                end loop;
 
-               --  It matched, we can simply return.
-               --  ??? Arno thinks this might be better moved before the case
-               --  statement, we'll have to look at when this Wait is called.
                exit when Timeout = 0 or else Num = Timeout;
                Num := Num + 1;
 
             when others =>
+               --  It matched, we can simply return.
                exit;
          end case;
       end loop;
