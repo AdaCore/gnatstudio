@@ -141,7 +141,6 @@ package body Tries is
       Index_Length : out Natural;
       Scenario     : out Natural)
    is
-      pragma Suppress (All_Checks);
       Start : Integer;
       Ind      : String_Access;
       Ind_First, Ind_Last : Natural;
@@ -172,16 +171,23 @@ package body Tries is
                      return;
                   end if;
 
+                  if Index'Length = 1 then
+                     Scenario := 2;
+                     Index_Length := Index'Last;
+                     Last     := Index'Last;
+                     Cell     := Tree.Children (C)'Unrestricted_Access;
+                     return;
+                  end if;
+
                   Start := Index'First + 1;
                   for J in Ind_First + 1 .. Ind_Last loop
                      if Ind (J) /= Index (Start) then
-
                         --  If at least one character matched, this is the
                         --  correct cell, although it will have to be splitted
                         Cell         := Tree.Children (C)'Unrestricted_Access;
                         Last         := Start - 1;
                         Index_Length := J - Ind'First;
-                        Scenario     := 1;
+                        Scenario := 1;
                         return;
                      else
                         Start := Start + 1;
@@ -244,6 +250,7 @@ package body Tries is
       Find_Cell_Child
         (Tree.Child'Unrestricted_Access, Index.all, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
+
       case Scenario is
          when 1 =>
             Cell.all :=
@@ -431,7 +438,7 @@ package body Tries is
         (Tree.Child'Unrestricted_Access, Index, Cell, Cell_Parent, Last,
          Index_Length, Scenario);
 
-      if Scenario = 3 or Scenario = 4 then
+      if Scenario <= 4 then
          return Cell.Data;
       end if;
       return No_Data;
