@@ -498,7 +498,7 @@ private
       --  and another editor becomes Primary.
       --  This attribute is used mainly for determining whether the user
       --  should be prompted for saving the contents.
-      
+
       Check_Timestamp_Registered : Boolean := False;
       Check_Timestamp_Id         : Gtk.Main.Idle_Handler_Id;
       --  Used to protect the idle handler from being called after the box is
