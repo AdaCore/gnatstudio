@@ -52,7 +52,6 @@ package body Glide_Kernel.Scripts is
    end record;
    type Scripting_Data is access all Scripting_Data_Record'Class;
 
-
    type Entity_Information_Access is access Entity_Information;
    function Convert is new Ada.Unchecked_Conversion
      (System.Address, Entity_Information_Access);
@@ -88,8 +87,8 @@ package body Glide_Kernel.Scripts is
    begin
       Scripting_Data (Kernel.Scripts).Scripting_Languages :=
         new Scripting_Language_Data'
-        (Script => Scripting_Language (Script),
-         Next   => Scripting_Data (Kernel.Scripts).Scripting_Languages);
+          (Script => Scripting_Language (Script),
+           Next   => Scripting_Data (Kernel.Scripts).Scripting_Languages);
    end Register_Scripting_Language;
 
    -------------------------------
@@ -107,8 +106,10 @@ package body Glide_Kernel.Scripts is
          if Get_Name (Tmp.Script) = Name then
             return Tmp.Script;
          end if;
+
          Tmp := Tmp.Next;
       end loop;
+
       return null;
    end Lookup_Scripting_Language;
 
@@ -144,8 +145,7 @@ package body Glide_Kernel.Scripts is
    --  function Interpret_Command
    --    (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
    --     Command : String;
-   --     Args    : GNAT.OS_Lib.Argument_List) return String
-   --  is
+   --     Args    : GNAT.OS_Lib.Argument_List) return String is
    --  begin
    --     return Execute_GPS_Shell_Command (Kernel, Command, Args);
    --  end Interpret_Command;
@@ -160,9 +160,10 @@ package body Glide_Kernel.Scripts is
       Description   : String := "";
       As_Dictionary : Boolean := False) return Class_Type
    is
-      Tmp : Scripting_Language_List :=
+      Tmp   : Scripting_Language_List :=
         Scripting_Data (Kernel.Scripts).Scripting_Languages;
       Class : Class_Type;
+
    begin
       Class := Get (Scripting_Data (Kernel.Scripts).Classes, Name);
 
@@ -335,8 +336,7 @@ package body Glide_Kernel.Scripts is
    ----------------
 
    procedure Initialize
-     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Kernel.Scripts := new Scripting_Data_Record;
    end Initialize;
@@ -346,8 +346,7 @@ package body Glide_Kernel.Scripts is
    --------------------------------------
 
    procedure Register_Default_Script_Commands
-     (Kernel     : access Glide_Kernel.Kernel_Handle_Record'Class)
-   is
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
    begin
       Register_Command
         (Kernel,
