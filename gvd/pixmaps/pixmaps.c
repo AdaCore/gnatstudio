@@ -11,6 +11,7 @@
 #include "lock_xpm"
 #include "mini-folder_xpm"
 #include "mini-ofolder_xpm"
+#include "mini_page_xpm"
 #include "next_xpm"
 #include "nexti_xpm"
 #include "package_xpm"
