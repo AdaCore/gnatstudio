@@ -156,22 +156,6 @@ package body VCS_View_Pkg is
    procedure Refresh (Explorer : VCS_View_Access);
    --  ???
 
-   procedure Open_Files
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  Open a list of files.
-   --  User must free Files afterwards.
-
-   procedure Diff_Files
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access);
-   --  View differences between Files and the head revision.
-   --  User must free Files afterwards.
-
    procedure Create_Model (VCS_View : access VCS_View_Record'Class);
    --  Creates the underlying tree model for VCS_View.
 
@@ -187,21 +171,6 @@ package body VCS_View_Pkg is
    --  Fills the tree info at the given Iter with values from
    --  Status_Record.
    --  Success tells whether the information has been filled or not.
-
-   procedure Launch_Viewer
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Strings  : in out String_List.List;
-      Title    : String := "");
-   --  Display a String_List.
-   --  Strings is freed by that procedure.
-
-   procedure Launch_Editor
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Filename : String);
-   --  Launch an editor for the given file.
-   --  ??? Explorer is not useful.
 
    procedure Commit
      (Kernel   : Kernel_Handle;
@@ -256,49 +225,6 @@ package body VCS_View_Pkg is
        Event   : Gdk_Event)
       return Boolean;
    --  Callback for the "button_press" event.
-
-   -------------------
-   -- Launch_Viewer --
-   -------------------
-
-   procedure Launch_Viewer
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Strings  : in out String_List.List;
-      Title    : String := "")
-   is
-      pragma Unreferenced (Explorer, Title);
-   begin
-      while not String_List.Is_Empty (Strings) loop
-         if Kernel = null then
-            Put_Line (String_List.Head (Strings));
-         else
-            Console.Insert
-              (Kernel, String_List.Head (Strings), Mode => Verbose);
-         end if;
-
-         String_List.Tail (Strings);
-      end loop;
-   end Launch_Viewer;
-
-   -------------------
-   -- Launch_Editor --
-   -------------------
-
-   procedure Launch_Editor
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Filename : String)
-   is
-      pragma Unreferenced (Explorer);
-   begin
-      if Kernel = null then
-         --  ??? Must deal with this case correctly.
-         Put_Line ("glide " & Filename);
-      else
-         Open_File_Editor (Kernel, Filename);
-      end if;
-   end Launch_Editor;
 
    -----------
    -- Clear --
@@ -838,54 +764,6 @@ package body VCS_View_Pkg is
          end loop;
       end if;
    end Edit_Log;
-
-   ----------------
-   -- Diff_Files --
-   ----------------
-
-   procedure Diff_Files
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access)
-   is
-      pragma Unreferenced (Explorer, Kernel);
-      L_Temp  : String_List.List := Files;
-
-   begin
-      pragma Assert (Ref /= null);
-
-      while not String_List.Is_Empty (L_Temp) loop
-         Diff (Ref, String_List.Head (L_Temp));
-
-         L_Temp := String_List.Next (L_Temp);
-      end loop;
-
-      String_List.Free (L_Temp);
-   end Diff_Files;
-
-   ----------------
-   -- Open_Files --
-   ----------------
-
-   procedure Open_Files
-     (Explorer : VCS_View_Access;
-      Kernel   : Kernel_Handle;
-      Files    : String_List.List;
-      Ref      : VCS_Access) is
-   begin
-      pragma Assert (Ref /= null);
-      Open (Ref, Files);
-
-      declare
-         L_Temp : String_List.List := Files;
-      begin
-         while not String_List.Is_Empty (L_Temp) loop
-            Launch_Editor (Explorer, Kernel, String_List.Head (L_Temp));
-            L_Temp := String_List.Next (L_Temp);
-         end loop;
-      end;
-   end Open_Files;
 
    ------------
    -- Commit --
