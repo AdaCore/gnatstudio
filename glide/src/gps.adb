@@ -498,11 +498,11 @@ procedure GPS is
       if Splash = null then
          Timeout_Id := Process_Timeout.Add
            (1, Finish_Setup'Unrestricted_Access,
-            (GPS.Kernel, null, null, null, null, System.Null_Address));
+            (GPS.Kernel, null, null, null, System.Null_Address));
       else
          Timeout_Id := Process_Timeout.Add
            (Splash_Timeout, Finish_Setup'Unrestricted_Access,
-            (GPS.Kernel, null, null, null, null, System.Null_Address));
+            (GPS.Kernel, null, null, null, System.Null_Address));
       end if;
    end Init_Settings;
 
