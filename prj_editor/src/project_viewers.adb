@@ -48,6 +48,7 @@ with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with Interfaces.C.Strings;      use Interfaces.C.Strings;
 with Interfaces.C;              use Interfaces.C;
 
+with String_Utils;
 with Prj_API;                  use Prj_API;
 with Creation_Wizard;          use Creation_Wizard;
 with Glide_Kernel;             use Glide_Kernel;
@@ -374,12 +375,12 @@ package body Project_Viewers is
 
    begin
       if Is_Absolute_Path (Directory_Name) then
-         File_Desc := Open_Read (Directory_Name & Directory_Separator
-                                 & File_Name & ASCII.Nul, Text);
+         File_Desc := Open_Read
+           (String_Utils.Name_As_Directory (Directory_Name) & File_Name, Text);
       else
          File_Desc := Open_Read
-           (Get_Current_Dir & Directory_Name & Directory_Separator
-            & File_Name & ASCII.Nul, Text);
+           (Get_Current_Dir & String_Utils.Name_As_Directory (Directory_Name)
+            & File_Name, Text);
       end if;
 
       for Column in Line'Range loop
@@ -425,7 +426,7 @@ package body Project_Viewers is
 
       if Directory_Filter /= ""
         and then not Is_Regular_File
-        (Directory_Filter & Directory_Separator & File_N)
+          (String_Utils.Name_As_Directory (Directory_Filter) & File_N)
       then
          return;
       end if;
