@@ -2491,6 +2491,8 @@ package body Ada_Analyzer is
 
       --  Try to register partial constructs, friendlier
 
+      Prec := Integer'Min (Prec, Buffer'Last);
+
       if Constructs /= null then
          while Top (Tokens).Token /= No_Token loop
             Pop (Tokens);
