@@ -1125,6 +1125,8 @@ package body Commands.Custom is
                Lang    : constant String :=
                  Get_Attribute (N, "on-failure-lang", GPS_Shell_Name);
             begin
+               Trace (Me, "Command failed, executing failure command: "
+                      & Failure);
                if Failure /= "" then
                   Success := Execute_Simple_Command
                     (Lookup_Scripting_Language (Command.Kernel, Lang),
