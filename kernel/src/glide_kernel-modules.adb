@@ -336,6 +336,7 @@ package body Glide_Kernel.Modules is
 
             Current := Module_List.Next (Current);
          end loop;
+         Unref (Context);
       end if;
 
       Pop_State (User.Kernel);
