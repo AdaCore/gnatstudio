@@ -23,6 +23,12 @@ Known Problems fixed in GPS 2.1.0
                and are therefore hard to read.
   Workaround:  Select another line or give the focus to another component.
 
+- D615-009 References highlighting is confused by TABs
+  Problem     When navigating through search results in the Locations view,
+              the highlighting is wrong on lines that contain TABs before the
+              reference.
+  Workaround: There is no known workaround.
+
 - D515-001 "Tasks are running" window shows internal processings of GPS
   Problem:    When launching GPS and exiting quickly, or when exiting right
               after opening a new editor, GPS opens the "Tasks are running"
