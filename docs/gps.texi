@@ -486,7 +486,7 @@ menu to open the external editor.
 GPS can be configured through the usual gtk+ mechanisms of @file{rc
 files}. The trick is to create a text file called @file{gtkrc} in the
 gps home directory (@file{~/.gps} on Unix systems), or as a global
-change, in the directory share/gps in the GPS installation. This file
+change, in the directory etc/gps in the GPS installation. This file
 contains the usual configuration description.
 
 For instance, the following will set the default font for all widgets
