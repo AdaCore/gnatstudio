@@ -26,8 +26,11 @@ with String_List_Utils;
 with String_Utils;          use String_Utils;
 with Projects.Registry;     use Projects.Registry;
 with Basic_Types;           use Basic_Types;
+with Traces;                use Traces;
 
 package body Codefix.GPS_Io is
+
+   Me : constant Debug_Handle := Create ("Codefix.GPS_IO");
 
    package SL renames String_List_Utils.String_List;
 
@@ -76,14 +79,27 @@ package body Codefix.GPS_Io is
    is
       New_Cursor : File_Cursor;
       Args : Argument_List (1 .. 1);
+
    begin
       Assign (New_Cursor.File_Name, Get_File_Name (Current_Text));
-
       Args (1) := new String'(GPS_Mark (Mark).Id.all);
-      New_Cursor.Col := Natural'Value
-        (Execute_GPS_Shell_Command (Current_Text.Kernel, "get_column", Args));
-      New_Cursor.Line := Natural'Value
-        (Execute_GPS_Shell_Command (Current_Text.Kernel, "get_line", Args));
+
+      declare
+         Column : constant String :=
+           Execute_GPS_Shell_Command (Current_Text.Kernel, "get_column", Args);
+         Line : constant String :=
+           Execute_GPS_Shell_Command (Current_Text.Kernel, "get_line", Args);
+
+      begin
+         New_Cursor.Col := Natural'Value (Column);
+         New_Cursor.Col := Natural'Value (Line);
+
+      exception
+         when Constraint_Error =>
+            Trace (Me, "unexpected result from get_column/line: " &
+                   Column & ":" & Line);
+      end;
+
       Free (Args);
       return New_Cursor;
    end Get_Current_Cursor;
@@ -169,6 +185,10 @@ package body Codefix.GPS_Io is
       Node := First (This.Lines.all);
 
       for J in 1 .. Number - 1 loop
+         if Node = Null_Node then
+            return "";
+         end if;
+
          Node := Next (Node);
       end loop;
 
@@ -400,10 +420,16 @@ package body Codefix.GPS_Io is
                 Filename        => Get_File_Name (This),
                 Use_Source_Path => True,
                 Use_Object_Path => False)));
+         Result : constant String :=
+           Execute_GPS_Shell_Command (This.Kernel, "get_last_line", Args);
+
       begin
-         This.Lines_Number.all := Natural'Value
-           (Execute_GPS_Shell_Command (This.Kernel, "get_last_line", Args));
+         This.Lines_Number.all := Natural'Value (Result);
          Free (Args);
+
+      exception
+         when Constraint_Error =>
+            Trace (Me, "unexpected result from get_last_line: " & Result);
       end;
 
       This.File_Modified.all := False;
