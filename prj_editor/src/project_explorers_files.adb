@@ -458,9 +458,14 @@ package body Project_Explorers_Files is
       end if;
 
       if Idle then
-         Timeout_Id :=
-           File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
-         Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
+         --  Do not append the first item in an idle loop.
+         --  Necessary for preserving order in drive names.
+
+         if Read_Directory (D) then
+            Timeout_Id :=
+              File_Append_Directory_Timeout.Add (1, Read_Directory'Access, D);
+            Timeout_Id_List.Append (Explorer.Fill_Timeout_Ids, Timeout_Id);
+         end if;
       else
          loop
             exit when not Read_Directory (D);
