@@ -359,7 +359,7 @@ package Docgen is
          Doc_Directory    : String;
          Doc_Suffix       : String);
       --  This method is transmited by a pointer whose type is
-      --     Doc_Subprogram_Type. In its body, it calls Doc_Create.
+      --  Doc_Subprogram_Type. In its body, it calls Doc_Create.
 
       --  ??? This approach seems over complicated and could probably be
       --  simplified using standard OOP.
