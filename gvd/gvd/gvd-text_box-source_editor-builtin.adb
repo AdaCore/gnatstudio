@@ -544,8 +544,8 @@ package body Odd.Source_Editors is
       Position : Odd.Explorer.Position_Type)
    is
       Last   : Positive;
-      Pos    : Positive :=
-        Position.Index + (Position.Line + 1) * (Line_Numbers_Width + 1) - 1;
+      Pos    : Positive := Position.Index
+        + (Position.Line + 1) * Natural (Invisible_Column_Width (Editor)) - 1;
       Text   : Gtk_Text := Get_Child (Editor);
       Buffer : String := Get_Chars (Text, Gint (Pos));
 
