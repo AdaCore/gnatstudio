@@ -510,7 +510,7 @@ package body VCS_View_API is
                   (On_Menu_Open'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Diff against head revision");
+               Gtk_New (Item, Label => -"Compare against head revision");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
@@ -518,7 +518,7 @@ package body VCS_View_API is
                   (On_Menu_Diff'Access),
                   Selection_Context_Access (Context));
 
-               Gtk_New (Item, Label => -"Diff against working revision");
+               Gtk_New (Item, Label => -"Compare against working revision");
                Append (Menu, Item);
                Context_Callback.Connect
                  (Item, "activate",
