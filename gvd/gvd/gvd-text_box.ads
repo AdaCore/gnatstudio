@@ -159,8 +159,9 @@ package Odd.Text_Boxes is
    --  the text child (which is the default behavior).
    --  It can be overriden if one wants to provide syntax highlighting.
 
-   function Get_Entity (Box : access Odd_Text_Box_Record'Class) return
-     String;
+   function Get_Entity
+     (Box : access Odd_Text_Box_Record'Class;
+      X, Y : Glib.Gint) return String;
    --  Return the entity pointed to by the mouse.
 
 

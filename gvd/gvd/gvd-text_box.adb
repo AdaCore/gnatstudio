@@ -411,13 +411,18 @@ package body Odd.Text_Boxes is
    is
       Menu    : Gtk_Menu;
       Line    : Natural := 0;
+      Y       : Gint;
    begin
       case Get_Button (Event) is
          when 3 =>
             if Get_Event_Type (Event) = Button_Press then
 
+               Y := Gint (Get_Y (Event)) - 1
+                 + Gint (Get_Value (Get_Vadj (Box.Child)));
+               Line := Line_From_Pixels (Box, Y);
                Menu := Child_Contextual_Menu
-                 (Box, Line, Get_Entity (Box));
+                 (Box, Line, Get_Entity
+                  (Box, Gint (Get_X (Event)), Gint (Get_Y (Event))));
 
                Popup (Menu,
                       Button        => Gdk.Event.Get_Button (Event),
@@ -568,9 +573,10 @@ package body Odd.Text_Boxes is
    -- Get_Entity --
    ----------------
 
-   function Get_Entity (Box : access Odd_Text_Box_Record'Class) return String
+   function Get_Entity
+     (Box : access Odd_Text_Box_Record'Class;
+      X, Y : Gint) return String
    is
-      X, Y    : Gint;
       Line    : Natural := 0;
       Index   : Integer;
       Current_Line : Natural := 1;
@@ -579,27 +585,17 @@ package body Odd.Text_Boxes is
                                      Get_Selection_End_Pos (Box.Child)));
       Max : Gint := Gint (Guint'Max (Get_Selection_Start_Pos (Box.Child),
                                      Get_Selection_End_Pos (Box.Child)));
-      Mask : Gdk_Modifier_Type;
-      Window : Gdk_Window;
+      X2 : Gint;
    begin
-      Get_Pointer (Get_Window (Box),
-                   X, Y,
-                   Mask,
-                   Window);
-
       if Box.Buffer /= null then
          Index := Box.Buffer'First;
 
-         Y := Y - 1
-           + Gint (Get_Value (Get_Vadj (Box.Child)));
+         Line := Line_From_Pixels
+           (Box, Y - 1 + Gint (Get_Value (Get_Vadj (Box.Child))));
+         X2 := X / Char_Width (Box.Font, Character' ('m'))
+           - Invisible_Column_Width (Box) + 1;
 
-         Line := Line_From_Pixels (Box, Y);
-
-         X := (X + 1) / Char_Width (Box.Font, Character' ('m')) - 38;
-         --  ??? This line is obviously wrong.
-         --  ??? Should be able to make clever use of Invisible_Column_Width.
-
-         if X <= 0 then
+         if X2 <= 0 then
             Index := -1;
          else
             while Index <= Box.Buffer'Last
@@ -608,9 +604,18 @@ package body Odd.Text_Boxes is
                if Box.Buffer (Index) = ASCII.LF then
                   Current_Line := Current_Line + 1;
                end if;
+
                Index := Index + 1;
             end loop;
-            Index := Index + Integer (X) - Box.Buffer'First;
+
+            --  Go to the right column, but make sure we are still on
+            --  the current line
+            Index := Index - Box.Buffer'First;
+            for J in 1 .. Integer (X2) loop
+               Index := Index + 1;
+               exit when Box.Buffer'Last < Index
+                 or else Box.Buffer (Index) = ASCII.LF;
+            end loop;
          end if;
 
          Start_Index := Index +
