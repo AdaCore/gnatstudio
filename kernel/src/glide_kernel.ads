@@ -523,6 +523,9 @@ package Glide_Kernel is
       File    : String);
    --  Emits the "file_edited" signal.
 
+   procedure Preferences_Changed (Handle : access Kernel_Handle_Record);
+   --  Emits the "preferences_changed" signal.
+
    -------------
    -- Signals --
    -------------
@@ -559,6 +562,12 @@ package Glide_Kernel is
    --    Emitted when one of the scenario variables has been renamed, removed,
    --    or when one of its possible values has changed.
    --
+   --  - "preferences_changed"
+   --    procedure Handler (Handle : access Kernel_Handle_Record'Class);
+   --
+   --    Emitted when the preferences have been changed. When possible, the
+   --    widgets should refresh themselves with the new preferences
+   --
    --  - "source_lines_revealed"
    --    procedure Handler (Handle     : access Kernel_Handle_Record'Class;
    --                       File       : String;
@@ -576,6 +585,7 @@ package Glide_Kernel is
    Variable_Changed_Signal      : constant String := "variable_changed";
    Source_Lines_Revealed_Signal : constant String := "source_lines_revealed";
    File_Edited_Signal           : constant String := "file_edited";
+   Preferences_Changed_Signal   : constant String := "preferences_changed";
 
 private
 

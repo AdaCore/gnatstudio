@@ -88,7 +88,8 @@ package body Glide_Kernel is
       3 => New_String (Context_Changed_Signal),
       4 => New_String (Variable_Changed_Signal),
       5 => New_String (Source_Lines_Revealed_Signal),
-      6 => New_String (File_Edited_Signal));
+      6 => New_String (File_Edited_Signal),
+      7 => New_String (Preferences_Changed_Signal));
    --  The list of signals defined for this object
 
    Kernel_Class : GObject_Class := Uninitialized_Class;
@@ -143,9 +144,9 @@ package body Glide_Kernel is
       Home_Dir    : String)
    is
       Signal_Parameters : constant Signal_Parameter_Types :=
-        (1 .. 2 | 4 => (1 => GType_None),
-         3      | 5 => (1 => GType_Pointer),
-         6          => (1 => GType_String));
+        (1 .. 2 | 4 | 7 => (1 => GType_None),
+         3      | 5     => (1 => GType_Pointer),
+         6              => (1 => GType_String));
       Handler : Glide_Language_Handler;
    begin
       Handle := new Kernel_Handle_Record;
@@ -529,6 +530,15 @@ package body Glide_Kernel is
    begin
       Object_Callback.Emit_By_Name (Handle, Project_View_Changed_Signal);
    end Project_View_Changed;
+
+   -------------------------
+   -- Preferences_Changed --
+   -------------------------
+
+   procedure Preferences_Changed (Handle : access Kernel_Handle_Record) is
+   begin
+      Object_Callback.Emit_By_Name (Handle, Preferences_Changed_Signal);
+   end Preferences_Changed;
 
    ----------------------
    -- Variable_Changed --
