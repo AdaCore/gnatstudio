@@ -172,7 +172,9 @@ package body GVD.Text_Box.Source_Editor.GPS is
    is
       Kernel : constant Kernel_Handle := GPS_Window (Window).Kernel;
       Args   : GNAT.OS_Lib.Argument_List :=
-        (new String'(Highlight_Category), new String'("True"));
+        (new String'(Highlight_Category),
+         new String'("#00FF00"),
+         new String'("True"));
 
    begin
       Editor.Window := GPS_Window (Window);
