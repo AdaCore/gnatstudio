@@ -20,7 +20,8 @@
 
 --  This package defines the GLIDE module for communication with VCS.
 
-with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel; use Glide_Kernel;
+with GNAT.OS_Lib;
 
 package VCS_Module is
 
@@ -29,5 +30,15 @@ package VCS_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module into the list
+
+   function Get_VCS_List (Module : Module_ID)
+      return GNAT.OS_Lib.Argument_List;
+   --  Return the list of recognized VCS systems.
+   --  You mustn't free the returned array.
+
+   procedure Register_VCS (Module : Module_ID; VCS_Identifier : String);
+   --  Add a VCS identifier to the list of recognized VCS systems.
+   --  ??? This is temporary, until the VCS module can directly add a page in
+   --  the wizard or the project properties editor.
 
 end VCS_Module;
