@@ -149,7 +149,6 @@ package Main_Debug_Window_Pkg is
       Status1 : Gtk_Menu_Item;
       Status1_Menu : Gtk_Menu;
       Backtrace1 : Gtk_Menu_Item;
-      Registers1 : Gtk_Menu_Item;
       Threads1 : Gtk_Menu_Item;
       Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
@@ -179,6 +178,7 @@ package Main_Debug_Window_Pkg is
       Separator25 : Gtk_Menu_Item;
       Display_Local_Variables1 : Gtk_Menu_Item;
       Display_Arguments1 : Gtk_Menu_Item;
+      Display_Registers1 : Gtk_Menu_Item;
       More_Status_Display1 : Gtk_Menu_Item;
       Separator27 : Gtk_Menu_Item;
       Rotate_Graph1 : Gtk_Menu_Item;
