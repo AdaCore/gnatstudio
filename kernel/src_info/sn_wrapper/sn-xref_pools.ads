@@ -76,14 +76,6 @@ package SN.Xref_Pools is
    --  Directory must end with a directory separator.
    --  The returned string must not be freed by the user.
 
-   procedure Free_Filename_For
-     (Source_Filename : VFS.Virtual_File;
-      Directory       : String;
-      Pool            : Xref_Pool);
-   --  Releases previously generated xref file name from memory,
-   --  removes it from disk (in specified directory),
-   --  thus makes that name able to associate with other source file name.
-
    function Is_Xref_Valid
      (Source_Filename : VFS.Virtual_File;
       Pool            : Xref_Pool) return Boolean;

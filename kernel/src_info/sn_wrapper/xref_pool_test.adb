@@ -46,10 +46,5 @@ begin
    Free (Xrefs);
    Load (Xrefs, "XXX");
 
-   Free_Filename_For (F1, D, Xrefs);
-   Free_Filename_For (F2, D, Xrefs);
-   Free_Filename_For (F3, D, Xrefs);
-   Free_Filename_For (F4, D, Xrefs);
-
    Free (Xrefs);
 end Xref_Pool_Test;
