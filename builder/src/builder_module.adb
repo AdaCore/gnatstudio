@@ -58,6 +58,7 @@ with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
 
 with Basic_Types;
 with Std_Dialogs;               use Std_Dialogs;
+with File_Utils;                use File_Utils;
 with String_Utils;              use String_Utils;
 with String_List_Utils;
 with GUI_Utils;                 use GUI_Utils;
@@ -371,10 +372,13 @@ package body Builder_Module is
       Vars           : Argument_List_Access;
 
    begin
+      --  Convert project path to unix pathname, since this is now supported
+      --  by Windows, and is needed when using a remote unix host from Windows.
+
       if Path = "" then
-         Project_Str := new String'(Project_Path (Project));
+         Project_Str := new String'(To_Unix_Pathname (Project_Path (Project)));
       else
-         Project_Str := new String'(Path);
+         Project_Str := new String'(To_Unix_Pathname (Path));
       end if;
 
       --  -XVAR1=value1 [-c] -Pproject [-u] main...
