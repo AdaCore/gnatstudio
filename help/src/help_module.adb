@@ -824,7 +824,7 @@ package body Help_Module is
          Success := True;
 
       else
-         Trace (Me, "link not found: " & Full_Name (File).all);
+         Trace (Me, "file not found: " & Full_Name (File).all);
          Success := False;
       end if;
 
@@ -862,8 +862,8 @@ package body Help_Module is
          end;
       end if;
 
-      Buffer := Read_File (Url_File);
       Trace (Me, "url normalized: " & Full_Name (Url_File).all);
+      Buffer := Read_File (Url_File);
 
       if Buffer /= null then
          Stream_Write (Stream, Buffer.all);
@@ -1225,7 +1225,13 @@ package body Help_Module is
       if Node.Tag.all = "Help_Browser" then
          File := Get_Field (Node, "File");
          if File /= null then
-            return Create_Html_Editor (User, Create_Html (File.all, User));
+            --  Do not reload network help, since it would block too much the
+            --  loading
+            if File'Length < 7
+              or else File (File'First .. File'First + 6) /= "http://"
+            then
+               return Create_Html_Editor (User, Create_Html (File.all, User));
+            end if;
          else
             return null;
          end if;
