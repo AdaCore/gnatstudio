@@ -165,6 +165,10 @@ package body String_Utils is
       else
          Result := 0;
       end if;
+
+   exception
+      when Constraint_Error =>
+         Result := Long_Integer'Last;
    end Parse_Num;
 
    ----------------
