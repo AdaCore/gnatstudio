@@ -8,7 +8,7 @@ prefix          = @prefix@
 bindir          = $(prefix)/bin
 sharedir        = $(prefix)/share/make
 
-default build compile link ada c c++ clean:
+default build compile link ada c c++:
 	$(MAKE) -s -C glide -f Makefile.gps $@
 
 clean:
