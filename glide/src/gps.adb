@@ -115,9 +115,10 @@ procedure GPS is
    Gtk_Trace : constant Debug_Handle := Create ("Gtk+");
    Pid_Image : constant String := String_Utils.Image (Get_Process_Id);
 
-   Docgen_Trace  : constant Debug_Handle := Create ("MODULE.Docgen", Off);
-   Vdiff2_Trace  : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
-   Metrics_Trace : constant Debug_Handle := Create ("MODULE.Metrics", On);
+   Docgen_Trace   : constant Debug_Handle := Create ("MODULE.Docgen", Off);
+   Vdiff2_Trace   : constant Debug_Handle := Create ("MODULE.Vdiff2", Off);
+   Metrics_Trace  : constant Debug_Handle := Create ("MODULE.Metrics", On);
+   Refactor_Trace : constant Debug_Handle := Create ("MODULE.Refactor", Off);
    --  If any of these debug handles is active, the correponding module
    --  is loaded.
 
@@ -993,7 +994,10 @@ procedure GPS is
       Glide_Kernel.Task_Manager.Register_Module (GPS.Kernel);
       Custom_Module.Register_Module (GPS.Kernel);
       Glide_Result_View.Register_Module (GPS.Kernel);
-      Refactoring_Module.Register_Module (GPS.Kernel);
+
+      if Active (Refactor_Trace) then
+         Refactoring_Module.Register_Module (GPS.Kernel);
+      end if;
 
       if Active (Docgen_Trace) then
          Docgen_Module.Register_Module (GPS.Kernel);
