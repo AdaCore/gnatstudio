@@ -249,6 +249,7 @@ begin
       Program.Remote_Host := new String' ("");
       Program.Remote_Target := new String' ("");
       Program.Protocol := new String' ("");
+      Program.Debugger_Name := new String' ("");
       Process_Tab.Descriptor := Program;
 
    else
@@ -265,6 +266,7 @@ begin
       Program.Remote_Host := new String' (Remote_Host.all);
       Program.Remote_Target := new String' ("");
       Program.Protocol := new String' ("");
+      Program.Debugger_Name := new String' ("");
       Process_Tab.Descriptor := Program;
    end if;
 
