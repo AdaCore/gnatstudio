@@ -206,7 +206,7 @@ package body GVD.Tooltips is
 
          Gdk.Window.Gdk_New
            (Tooltip.Display_Window,
-            Tooltip.all.Parent_Window,
+            Tooltip.Parent_Window,
             Window_Attr,
             Wa_Cursor and Wa_Wmclass
             and Wa_Colormap and Wa_Visual);

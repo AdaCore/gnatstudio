@@ -1,5 +1,6 @@
 @SET_MAKE@
 
+CC              = @CC@
 MKDIR           = mkdir -p
 STRIP           = strip
 INSTALL         = @INSTALL@
@@ -30,7 +31,7 @@ style:
 pkg_files: ${PKG_FILES}
 
 ${PKG_FILES}: force
-	gcc -c $(ALL_CFLAGS) $@
+	$(CC) -c $(ALL_CFLAGS) $@
 
 $(EXEC): force
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E \
@@ -38,17 +39,17 @@ $(EXEC): force
 
 libgvd:
 	rm -f $(EXEC)
-	gcc -c $(ALL_CFLAGS) gvd-api.adb
+	$(CC) -c $(ALL_CFLAGS) gvd-api.adb
 	gnatmake -m $(ALL_CFLAGS) $(MAIN) -o $(EXEC) -bargs -E -n \
 	  -largs --LINK=true
 	ar cr libgvd.a $(C_OBJECTS) b~$(MAIN).o gvd-api.o \
 	  `grep '   --   ' b~$(MAIN).adb | grep '\.o$$' | sed 's/   --   //'`
 
 gvd_test: gvd_test.o libgvd
-	gcc -o gvd_test gvd_test.o $(GTK_LIBS) -L. -lgvd -L$(ADALIB) -lgnat
+	$(CC) -o gvd_test gvd_test.o $(GTK_LIBS) -L. -lgvd -L$(ADALIB) -lgnat
 
 gvd_test.o: gvd_test.c gvd-api.h
-	gcc -c $(CFLAGS) `gtk-config --cflags` gvd_test.c
+	$(CC) -c $(CFLAGS) `gtk-config --cflags` gvd_test.c
 
 install: $(EXEC)
 	$(MKDIR) $(bindir)
