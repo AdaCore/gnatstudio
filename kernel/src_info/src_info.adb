@@ -31,7 +31,7 @@ with Prj_API;                   use Prj_API;
 
 package body Src_Info is
 
-   Me : Debug_Handle := Create ("Src_Info");
+   Me : constant Debug_Handle := Create ("Src_Info");
 
    Base_Year         : constant := 1990;
    --  Year used as year 0 when computing timestamps. This avoids range

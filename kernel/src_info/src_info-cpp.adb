@@ -51,9 +51,9 @@ package body Src_Info.CPP is
    CBrowser : constant String := "cbrowser";
    --  SN C and C++ parser
 
-   Info_Stream : Debug_Handle := Create ("CPP.Info");
-   Warn_Stream : Debug_Handle := Create ("CPP.Warn");
-   Fail_Stream : Debug_Handle := Create ("CPP.Fail");
+   Info_Stream : constant Debug_Handle := Create ("CPP.Info");
+   Warn_Stream : constant Debug_Handle := Create ("CPP.Warn");
+   Fail_Stream : constant Debug_Handle := Create ("CPP.Fail");
 
    --------------------
    -- Symbol_Handler --
@@ -599,7 +599,7 @@ package body Src_Info.CPP is
       for Table in Table_Type loop
          if Table_Type_To_Ext (Table)(1) /= ASCII.NUL then
             declare
-               File_Name : String :=
+               File_Name : constant String :=
                  DB_Prefix & "." & Table_Type_To_Ext (Table);
             begin
                Open (SN_Table (Table), File_Name);
@@ -3236,7 +3236,7 @@ package body Src_Info.CPP is
       P              : Pair_Ptr;
       FU_Tab         : FU_Table;
       MI_Tab         : MI_Table;
-      Start_Position : Point := Sym.Start_Position;
+      Start_Position : constant Point := Sym.Start_Position;
       Body_Position  : Point := Invalid_Point;
       End_Position   : Point;
       IsTemplate     : Boolean := False;

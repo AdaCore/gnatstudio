@@ -37,7 +37,7 @@ with Traces;                    use Traces;
 
 package body Src_Info.ALI is
 
-   Me : Debug_Handle := Create ("Src_Info.Ali");
+   Me : constant Debug_Handle := Create ("Src_Info.Ali");
 
    Maximum_Filename_Length : constant := 8;
    --  ??? The maximum number of characters in a krunched filename (not
@@ -836,7 +836,7 @@ package body Src_Info.ALI is
          --  a vaste of time. Use 'Unrestricted_Access instead.
 
          Buffer     : Text_Buffer (1 .. File_Length);
-         Buffer_Ptr : Text_Buffer_Ptr := Buffer'Unrestricted_Access;
+         Buffer_Ptr : constant Text_Buffer_Ptr := Buffer'Unrestricted_Access;
 
       begin
          Chars_Read := Read (FD, Buffer'Address, Integer (File_Length));

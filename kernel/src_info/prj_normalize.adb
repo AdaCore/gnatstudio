@@ -34,7 +34,7 @@ with Unchecked_Deallocation;
 
 package body Prj_Normalize is
 
-   Me : Debug_Handle := Create ("Prj_Normalize");
+   Me : constant Debug_Handle := Create ("Prj_Normalize");
 
    type External_Variable_Value_Array_Access is access
      External_Variable_Value_Array;
