@@ -6,3 +6,12 @@
   * [Yeti] Handling context
     Ensure basic extensions are recognized to select a context (*.ad?, *.[ch]).
 
+----------
+-- Bugs --
+----------
+
+  * [Yeti] Storage_Error with Browse
+    I haven't a precise scenario for this, but try this: type a directory, and
+    overwrite it with Browse, start the search. This raises SE.
+    Also found when not changing directory nor selecting Browse.
+    Never reappeared, may not be related to Browse.
