@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 2.1.0
 
+- D831-003 Ada runtime files not seen as direct sources of a project
+  Problem:    If a project has one or more files with the same name as the
+              Ada runtime, these files will not be displayed in the Project
+              View, and cannot be open through the "Open From Project" menu
+  Workaround: Edit the file with File->Open. This doesn't impact the build
+              mechanism
+
 - D914-015 MDI docks size incorrectly restored when loading desktop
   Problem:    When a desktop file is read, the size of the docks (on each
               side of the main GPS window) is incorrectly restored
