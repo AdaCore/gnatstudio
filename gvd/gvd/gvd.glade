@@ -88,6 +88,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_core_dump1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:15:10 GMT</last_modification_time>
 	    </signal>
 	    <label>Open Core Dump...</label>
@@ -100,6 +101,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_source1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:15:20 GMT</last_modification_time>
 	    </signal>
 	    <label>Open Source...</label>
@@ -123,6 +125,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_open_session1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:15:54 GMT</last_modification_time>
 	    </signal>
 	    <label>Open Session...</label>
@@ -140,6 +143,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_save_session_as1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:15:59 GMT</last_modification_time>
 	    </signal>
 	    <label>Save Session As...</label>
@@ -158,6 +162,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_attach_to_process1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:16:14 GMT</last_modification_time>
 	    </signal>
 	    <label>Attach To Process...</label>
@@ -170,6 +175,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_detach_process1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:16:25 GMT</last_modification_time>
 	    </signal>
 	    <label>Detach Process</label>
@@ -193,6 +199,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_print_graph1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:16:45 GMT</last_modification_time>
 	    </signal>
 	    <label>Print Graph...</label>
@@ -205,26 +212,10 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_change_directory1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:16:53 GMT</last_modification_time>
 	    </signal>
 	    <label>Change Directory...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>make1</name>
-	    <accelerator>
-	      <modifiers>GDK_CONTROL_MASK</modifiers>
-	      <key>GDK_M</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_make1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:17:03 GMT</last_modification_time>
-	    </signal>
-	    <label>Make...</label>
 	    <right_justify>False</right_justify>
 	  </widget>
 
@@ -245,6 +236,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_close1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:17:12 GMT</last_modification_time>
 	    </signal>
 	    <label>Close</label>
@@ -257,6 +249,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_restart1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:17:18 GMT</last_modification_time>
 	    </signal>
 	    <label>Restart</label>
@@ -461,6 +454,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_gdb_settings1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:26:11 GMT</last_modification_time>
 	    </signal>
 	    <label>GDB Settings...</label>
@@ -490,29 +484,13 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>view1</name>
+	<sensitive>False</sensitive>
 	<label>View</label>
 	<right_justify>False</right_justify>
 
 	<widget>
 	  <class>GtkMenu</class>
 	  <name>view1_menu</name>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>command_tool1</name>
-	    <accelerator>
-	      <modifiers>GDK_MOD1_MASK</modifiers>
-	      <key>GDK_8</key>
-	      <signal>activate</signal>
-	    </accelerator>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_command_tool1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:26:54 GMT</last_modification_time>
-	    </signal>
-	    <label>Command Tool...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -682,6 +660,7 @@
 	    <signal>
 	      <name>activate</name>
 	      <handler>on_run_in_execution_window1_activate</handler>
+	      <object>main_debug_window</object>
 	      <last_modification_time>Tue, 28 Mar 2000 02:31:42 GMT</last_modification_time>
 	    </signal>
 	    <label>Run in Execution Window</label>
@@ -909,6 +888,7 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>commands1</name>
+	<sensitive>False</sensitive>
 	<label>Commands</label>
 	<right_justify>False</right_justify>
 
@@ -1259,30 +1239,13 @@
       <widget>
 	<class>GtkMenuItem</class>
 	<name>source1</name>
+	<sensitive>False</sensitive>
 	<label>Source</label>
 	<right_justify>False</right_justify>
 
 	<widget>
 	  <class>GtkMenu</class>
 	  <name>source1_menu</name>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>edit_breakpoints1</name>
-	    <signal>
-	      <name>activate</name>
-	      <handler>on_edit_breakpoints1_activate</handler>
-	      <last_modification_time>Tue, 28 Mar 2000 02:39:22 GMT</last_modification_time>
-	    </signal>
-	    <label>Edit Breakpoints...</label>
-	    <right_justify>False</right_justify>
-	  </widget>
-
-	  <widget>
-	    <class>GtkMenuItem</class>
-	    <name>separator20</name>
-	    <right_justify>False</right_justify>
-	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -1469,6 +1432,18 @@
 	<widget>
 	  <class>GtkMenu</class>
 	  <name>data1_menu</name>
+
+	  <widget>
+	    <class>GtkMenuItem</class>
+	    <name>edit_breakpoints1</name>
+	    <signal>
+	      <name>activate</name>
+	      <handler>on_edit_breakpoints1_activate</handler>
+	      <last_modification_time>Tue, 28 Mar 2000 02:39:22 GMT</last_modification_time>
+	    </signal>
+	    <label>Edit Breakpoints...</label>
+	    <right_justify>False</right_justify>
+	  </widget>
 
 	  <widget>
 	    <class>GtkMenuItem</class>
@@ -5702,10 +5677,10 @@ read or written
 	    <child_name>GtkCombo:entry</child_name>
 	    <name>combo-entry3</name>
 	    <can_focus>True</can_focus>
-	    <editable>True</editable>
+	    <editable>False</editable>
 	    <text_visible>True</text_visible>
 	    <text_max_length>0</text_max_length>
-	    <text>written</text>
+	    <text>read</text>
 	  </widget>
 	</widget>
       </widget>

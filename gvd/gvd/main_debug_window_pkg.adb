@@ -85,16 +85,16 @@ begin
    Set_Right_Justify (Main_Debug_Window.Open_Recent1, False);
 
    Gtk_New (Main_Debug_Window.Open_Core_Dump1, -"Open Core Dump...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Core_Dump1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Open_Core_Dump1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Open_Core_Dump1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Core_Dump1);
    Set_Right_Justify (Main_Debug_Window.Open_Core_Dump1, False);
 
    Gtk_New (Main_Debug_Window.Open_Source1, -"Open Source...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Source1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Open_Source1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Open_Source1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Source1);
    Set_Right_Justify (Main_Debug_Window.Open_Source1, False);
 
@@ -105,18 +105,18 @@ begin
    Gtk_New (Main_Debug_Window.Open_Session1, -"Open Session...");
    Add_Accelerator (Main_Debug_Window.Open_Session1, "activate",
      The_Accel_Group, GDK_N, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Open_Session1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Open_Session1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Open_Session1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Open_Session1);
    Set_Right_Justify (Main_Debug_Window.Open_Session1, False);
 
    Gtk_New (Main_Debug_Window.Save_Session_As1, -"Save Session As...");
    Add_Accelerator (Main_Debug_Window.Save_Session_As1, "activate",
      The_Accel_Group, GDK_S, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Save_Session_As1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Save_Session_As1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Save_Session_As1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Save_Session_As1);
    Set_Right_Justify (Main_Debug_Window.Save_Session_As1, False);
 
@@ -125,16 +125,16 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator2, False);
 
    Gtk_New (Main_Debug_Window.Attach_To_Process1, -"Attach To Process...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Attach_To_Process1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Attach_To_Process1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Attach_To_Process1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Attach_To_Process1);
    Set_Right_Justify (Main_Debug_Window.Attach_To_Process1, False);
 
    Gtk_New (Main_Debug_Window.Detach_Process1, -"Detach Process");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Detach_Process1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Detach_Process1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Detach_Process1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Detach_Process1);
    Set_Right_Justify (Main_Debug_Window.Detach_Process1, False);
 
@@ -145,27 +145,18 @@ begin
    Gtk_New (Main_Debug_Window.Print_Graph1, -"Print Graph...");
    Add_Accelerator (Main_Debug_Window.Print_Graph1, "activate",
      The_Accel_Group, GDK_P, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Print_Graph1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Print_Graph1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Print_Graph1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Print_Graph1);
    Set_Right_Justify (Main_Debug_Window.Print_Graph1, False);
 
    Gtk_New (Main_Debug_Window.Change_Directory1, -"Change Directory...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Change_Directory1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Change_Directory1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Change_Directory1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Change_Directory1);
    Set_Right_Justify (Main_Debug_Window.Change_Directory1, False);
-
-   Gtk_New (Main_Debug_Window.Make1, -"Make...");
-   Add_Accelerator (Main_Debug_Window.Make1, "activate",
-     The_Accel_Group, GDK_M, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Make1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Make1_Activate'Access));
-   Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Make1);
-   Set_Right_Justify (Main_Debug_Window.Make1, False);
 
    Gtk_New (Main_Debug_Window.Separator4);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Separator4);
@@ -174,16 +165,16 @@ begin
    Gtk_New (Main_Debug_Window.Close1, -"Close");
    Add_Accelerator (Main_Debug_Window.Close1, "activate",
      The_Accel_Group, GDK_W, Gdk.Types.Control_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Close1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Close1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Close1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Close1);
    Set_Right_Justify (Main_Debug_Window.Close1, False);
 
    Gtk_New (Main_Debug_Window.Restart1, -"Restart");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Restart1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Restart1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Restart1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.File1_Menu, Main_Debug_Window.Restart1);
    Set_Right_Justify (Main_Debug_Window.Restart1, False);
 
@@ -293,9 +284,9 @@ begin
    Set_Right_Justify (Main_Debug_Window.Preferences1, False);
 
    Gtk_New (Main_Debug_Window.Gdb_Settings1, -"GDB Settings...");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Gdb_Settings1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Gdb_Settings1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Gdb_Settings1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Edit2_Menu, Main_Debug_Window.Gdb_Settings1);
    Set_Right_Justify (Main_Debug_Window.Gdb_Settings1, False);
 
@@ -311,20 +302,12 @@ begin
    Set_Right_Justify (Main_Debug_Window.Save_Options1, False);
 
    Gtk_New (Main_Debug_Window.View1, -"View");
+   Set_Sensitive (Main_Debug_Window.View1, False);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.View1);
    Set_Right_Justify (Main_Debug_Window.View1, False);
 
    Gtk_New (Main_Debug_Window.View1_Menu);
    Set_Submenu (Main_Debug_Window.View1, Main_Debug_Window.View1_Menu);
-
-   Gtk_New (Main_Debug_Window.Command_Tool1, -"Command Tool...");
-   Add_Accelerator (Main_Debug_Window.Command_Tool1, "activate",
-     The_Accel_Group, GDK_8, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Command_Tool1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Command_Tool1_Activate'Access));
-   Add (Main_Debug_Window.View1_Menu, Main_Debug_Window.Command_Tool1);
-   Set_Right_Justify (Main_Debug_Window.Command_Tool1, False);
 
    Gtk_New (Main_Debug_Window.Execution_Window1, -"Execution Window...");
    Add_Accelerator (Main_Debug_Window.Execution_Window1, "activate",
@@ -416,9 +399,9 @@ begin
    Set_Right_Justify (Main_Debug_Window.Separator10, False);
 
    Gtk_New (Main_Debug_Window.Run_In_Execution_Window1, -"Run in Execution Window");
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Run_In_Execution_Window1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Run_In_Execution_Window1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Run_In_Execution_Window1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Program1_Menu, Main_Debug_Window.Run_In_Execution_Window1);
    Set_Right_Justify (Main_Debug_Window.Run_In_Execution_Window1, False);
 
@@ -526,7 +509,7 @@ begin
 
    Gtk_New (Main_Debug_Window.Abort1, -"Abort");
    Add_Accelerator (Main_Debug_Window.Abort1, "activate",
-     The_Accel_Group, GDK_backslash, Gdk.Types.Control_Mask, Accel_Visible);
+     The_Accel_Group, GDK_Backslash, Gdk.Types.Control_Mask, Accel_Visible);
    Widget_Callback.Object_Connect
      (Main_Debug_Window.Abort1, "activate",
       Widget_Callback.To_Marshaller (On_Abort1_Activate'Access), Main_Debug_Window);
@@ -534,6 +517,7 @@ begin
    Set_Right_Justify (Main_Debug_Window.Abort1, False);
 
    Gtk_New (Main_Debug_Window.Commands1, -"Commands");
+   Set_Sensitive (Main_Debug_Window.Commands1, False);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Commands1);
    Set_Right_Justify (Main_Debug_Window.Commands1, False);
 
@@ -727,22 +711,12 @@ begin
    Set_Right_Justify (Main_Debug_Window.Down1, False);
 
    Gtk_New (Main_Debug_Window.Source1, -"Source");
+   Set_Sensitive (Main_Debug_Window.Source1, False);
    Add (Main_Debug_Window.Menubar1, Main_Debug_Window.Source1);
    Set_Right_Justify (Main_Debug_Window.Source1, False);
 
    Gtk_New (Main_Debug_Window.Source1_Menu);
    Set_Submenu (Main_Debug_Window.Source1, Main_Debug_Window.Source1_Menu);
-
-   Gtk_New (Main_Debug_Window.Edit_Breakpoints1, -"Edit Breakpoints...");
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Edit_Breakpoints1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Edit_Breakpoints1_Activate'Access));
-   Add (Main_Debug_Window.Source1_Menu, Main_Debug_Window.Edit_Breakpoints1);
-   Set_Right_Justify (Main_Debug_Window.Edit_Breakpoints1, False);
-
-   Gtk_New (Main_Debug_Window.Separator20);
-   Add (Main_Debug_Window.Source1_Menu, Main_Debug_Window.Separator20);
-   Set_Right_Justify (Main_Debug_Window.Separator20, False);
 
    Gtk_New (Main_Debug_Window.Lookup_1, -"Lookup ()");
    Add_Accelerator (Main_Debug_Window.Lookup_1, "activate",
@@ -846,6 +820,13 @@ begin
 
    Gtk_New (Main_Debug_Window.Data1_Menu);
    Set_Submenu (Main_Debug_Window.Data1, Main_Debug_Window.Data1_Menu);
+
+   Gtk_New (Main_Debug_Window.Edit_Breakpoints1, -"Edit Breakpoints...");
+   Menu_Item_Callback.Connect
+     (Main_Debug_Window.Edit_Breakpoints1, "activate",
+      Menu_Item_Callback.To_Marshaller (On_Edit_Breakpoints1_Activate'Access));
+   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Edit_Breakpoints1);
+   Set_Right_Justify (Main_Debug_Window.Edit_Breakpoints1, False);
 
    Gtk_New (Main_Debug_Window.Edit_Displays1, -"Edit Displays...");
    Menu_Item_Callback.Connect
