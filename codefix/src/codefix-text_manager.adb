@@ -721,6 +721,16 @@ package body Codefix.Text_Manager is
       return Result;
    end Previous_Char;
 
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo
+     (This : Text_Navigator_Abstr'Class; File_Name : String) is
+   begin
+      Undo (Get_File (This, File_Name).all);
+   end Undo;
+
    ----------------------------------------------------------------------------
    --  type Text_Interface
    ----------------------------------------------------------------------------
@@ -1642,7 +1652,6 @@ package body Codefix.Text_Manager is
          Content : constant String := Get_String (This);
       begin
          Reset (It);
-         This.Number_Actions := 0;
 
          loop
             Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
@@ -1656,21 +1665,18 @@ package body Codefix.Text_Manager is
                      Cursor,
                      Len,
                      Content (Cursor.Col .. Cursor.Col + Len - 1));
-                  This.Number_Actions := This.Number_Actions + 1;
                when Unit_Created =>
                   Replace
                     (Current_Text,
                      Cursor,
                      0,
                      Content (Cursor.Col .. Cursor.Col + Len - 1));
-                  This.Number_Actions := This.Number_Actions + 1;
                when Unit_Deleted =>
                   Replace
                     (Current_Text,
                      Cursor,
                      Len,
                      "");
-                  This.Number_Actions := This.Number_Actions + 1;
                when Original_Unit =>
                   null;
             end case;
@@ -1687,13 +1693,11 @@ package body Codefix.Text_Manager is
               (Current_Text,
                Cursor,
                To_String (This.Content));
-            This.Number_Actions := 1;
             Offset_Line := Offset_Line + 1;
          when Unit_Deleted =>
             Delete_Line
               (Current_Text,
                Cursor);
-            This.Number_Actions := 1;
             Offset_Line := Offset_Line - 1;
          when Unit_Modified =>
             Commit_Modified_Line;
@@ -1701,6 +1705,56 @@ package body Codefix.Text_Manager is
             null;
       end case;
    end Commit;
+
+   ------------------------
+   -- Get_Number_Actions --
+   ------------------------
+
+   function Get_Number_Actions (This : Extract_Line) return Natural is
+      Cursor : File_Cursor := This.Cursor;
+
+      function Count_Modified_Line_Actions return Natural;
+      --  Commit separately each part of a modified line, in order to keep
+      --  marks.
+
+      -------------------------
+      -- Count_Modified_Line --
+      -------------------------
+
+      function Count_Modified_Line_Actions return Natural is
+         It             : Mask_Iterator;
+         Len            : Natural;
+         Info           : Merge_Info;
+         Number_Actions : Natural := 0;
+      begin
+         Reset (It);
+
+         loop
+            Get_Next_Area (This.Content, It, Cursor.Col, Len, Info);
+
+            exit when Len = 0;
+
+            case Info is
+               when Unit_Modified | Unit_Created | Unit_Deleted =>
+                  Number_Actions := Number_Actions + 1;
+               when Original_Unit =>
+                  null;
+            end case;
+         end loop;
+
+         return Number_Actions;
+      end Count_Modified_Line_Actions;
+
+   begin
+      case This.Context is
+         when Unit_Created | Unit_Deleted =>
+            return 1;
+         when Unit_Modified =>
+            return Count_Modified_Line_Actions;
+         when Original_Unit =>
+            return 0;
+      end case;
+   end Get_Number_Actions;
 
    -----------
    -- Clone --
@@ -1821,8 +1875,7 @@ package body Codefix.Text_Manager is
          Original_Length => Len,
          Content         => To_Mergable_String (Get (This, Cursor, Len)),
          Next            => null,
-         Coloration      => True,
-         Number_Actions  => 0);
+         Coloration      => True);
    end Get;
 
    --------------
@@ -1844,8 +1897,7 @@ package body Codefix.Text_Manager is
          Original_Length => Str.all'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True,
-         Number_Actions  => 0);
+         Coloration      => True);
       Free (Str);
    end Get_Line;
 
@@ -1868,8 +1920,7 @@ package body Codefix.Text_Manager is
          Original_Length => Str'Last,
          Content         => To_Mergable_String (Str.all),
          Next            => null,
-         Coloration      => True,
-         Number_Actions  => 0);
+         Coloration      => True);
       Free (Str);
    end Get_Line;
 
@@ -2214,6 +2265,18 @@ package body Codefix.Text_Manager is
    --  type Extract
    ----------------------------------------------------------------------------
 
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (This : in out Ptr_Extract) is
+      procedure Free_Pool is new Ada.Unchecked_Deallocation
+        (Extract'Class, Ptr_Extract);
+   begin
+      Free (This.all);
+      Free_Pool (This);
+   end Free;
+
    -----------
    -- Clone --
    -----------
@@ -2256,8 +2319,7 @@ package body Codefix.Text_Manager is
             Original_Length => Len,
             Content         => To_Mergable_String (Get (This, Cursor, Len)),
             Next            => null,
-            Coloration      => True,
-            Number_Actions  => 0));
+            Coloration      => True));
    end Get;
 
    --------------
@@ -2279,8 +2341,7 @@ package body Codefix.Text_Manager is
             Original_Length => Str'Length,
             Content         => To_Mergable_String (Str),
             Next            => null,
-            Coloration      => True,
-            Number_Actions  => 0));
+            Coloration      => True));
    end Get_Line;
 
    ----------------
@@ -2762,8 +2823,7 @@ package body Codefix.Text_Manager is
           Original_Length => 0,
           Content         => To_Mergable_String (Text),
           Next            => null,
-          Coloration      => True,
-          Number_Actions  => 0));
+          Coloration      => True));
    end Add_Line;
 
    -----------------------
@@ -2819,8 +2879,7 @@ package body Codefix.Text_Manager is
               To_Mergable_String ((1 .. Next_Indent => ' ') &
                                    Text (First_Char .. Text'Last)),
            Next            => null,
-           Coloration      => True,
-           Number_Actions  => 0));
+           Coloration      => True));
    end Add_Indented_Line;
 
    -----------------
@@ -3282,12 +3341,29 @@ package body Codefix.Text_Manager is
       Total : Natural := 0;
    begin
       while Line /= null loop
-         Total := Total + Line.Number_Actions;
+         Total := Total + Get_Number_Actions (Line.all);
          Line := Next (Line);
       end loop;
 
       return Total;
    end Get_Number_Actions;
+
+   ----------
+   -- Undo --
+   ----------
+
+   procedure Undo (This : Extract; Current_Text : Text_Navigator_Abstr'Class)
+   is
+      Line : Ptr_Extract_Line := Get_First_Line (This);
+   begin
+      while Line /= null loop
+         for J in 1 .. Get_Number_Actions (Line.all) loop
+            Undo (Current_Text, Line.Cursor.File_Name.all);
+         end loop;
+
+         Line := Line.Next;
+      end loop;
+   end Undo;
 
    ----------------------------------------------------------------------------
    --  type Text_Command
