@@ -178,24 +178,24 @@ package body Aunit_Module is
       Register_Menu (Kernel, Edit, Menu_Item,
                      Ref_Item => Unit_Testing, Add_Before => True);
 
-      Gtk_New (Menu_Item, -"New Test Case");
+      Gtk_New (Menu_Item, -"New Test Case...");
       Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Test_Case'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, -"Add Routine");
+      Gtk_New (Menu_Item, -"Add Routine...");
       Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
 
-      Gtk_New (Menu_Item, -"New Test Suite");
+      Gtk_New (Menu_Item, -"New Test Suite...");
       Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
          Kernel_Callback.To_Marshaller (On_New_Test_Suite'Access),
          Kernel_Handle (Kernel));
 
-      Gtk_New (Menu_Item, -"New Test Harness");
+      Gtk_New (Menu_Item, -"New Test Harness...");
       Register_Menu (Kernel, Edit & Unit_Testing, Menu_Item);
       Kernel_Callback.Connect
         (Menu_Item, "activate",
