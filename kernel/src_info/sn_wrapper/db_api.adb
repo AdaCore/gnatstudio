@@ -100,7 +100,6 @@ package body DB_API is
          Raise_Exception (DB_Open_Error'Identity,
            Error_Message (DB));
       end if;
-      Set_Cursor (DB, First);
    end Open;
 
    ---------
