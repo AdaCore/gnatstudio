@@ -17,13 +17,13 @@ import re, string
 
 
 GPS.parse_xml ("""
-   <action name="find other file">
+   <action name="find other file" output="none">
      <filter id="Source editor" />
      <shell lang="python">emacs.goto_other_file()</shell>
    </action>
    <key action="find other file">control-c o</key>
 
-   <action name="subprogram box">
+   <action name="subprogram box" output="none">
       <filter_and>
          <filter id="Source editor" />
          <filter language="ada" />
@@ -32,23 +32,23 @@ GPS.parse_xml ("""
    </action>
    <key action="subprogram box">control-c n</key>
                                                                                 
-   <action name="kill-line">
+   <action name="kill-line" output="none">
       <filter id="Source editor" />
       <shell lang="python">emacs.kill_line()</shell>
    </action>
    <key action="kill-line">control-k</key>
 
-   <action name="clone-and-split-horizontally">
+   <action name="Clone-and-split-horizontally" output="none">
       <shell>MDI.clone_window</shell>
       <shell>MDI.split_horizontally</shell>
    </action>
-   <key action="clone-and-split-horizontally">control-x 3</key>
+   <key action="Clone-and-split-horizontally">control-x 3</key>
 
-   <action name="clone-and-split-vertically">
+   <action name="Clone-and-split-vertically" output="none">
       <shell>MDI.clone_window</shell>
       <shell>MDI.split_vertically</shell>
    </action>
-   <key action="clone-and-split-vertically">control-x 2</key>
+   <key action="Clone-and-split-vertically">control-x 2</key>
 """)
 
 subprograms_re=re.compile ("^([ \t]*)(procedure|function) ([a-zA-Z0-9_]+)", re.IGNORECASE)
@@ -72,7 +72,7 @@ def add_subprogram_box():
    if match[0] != None:
       prefix = ' ' * len (match[0].group (1))
       box = prefix + ('-' * (6 + len (match[0].group (3)))) + "\n"
-      GPS.editor.replace_text (GPS.current_context().file().name(), match[1], 1,
+      GPS.Editor.replace_text (GPS.current_context().file().name(), match[1], 1,
                     box + prefix + "-- " + match[0].group (3) + " --\n" + box + "\n",
                     0, 0)
   
@@ -86,14 +86,14 @@ def goto_other_file():
       try:
          entity = GPS.Entity (name, current_file, line)
 
-         if entity.declaration().file() == current_file:
+         if entity.decl_file() == current_file:
             body = entity.body()
             if body.file() != current_file:
 	       GPS.Editor.edit (body.file().name(), line=body.line(), column=body.column())
             else:
                GPS.Editor.edit (current_file.other_file().name())
          else:
-            GPS.Editor.edit (entity.declaration().file().name(), line=entity.decl_line(),
+            GPS.Editor.edit (entity.decl_file().name(), line=entity.decl_line(),
                   column=entity.decl_column())
       except:
          print "Not found " + name + ":" + current_file.name() + ":" + `line`
