@@ -1016,6 +1016,10 @@ package body VCS.CVS is
       Command_Head    : List;
       Args            : List;
    begin
+      --  Use -f to avoid e.g. -u or -c options set in ~/.cvsrc
+
+      Append (Args, "-f");
+
       Append (Args, "diff");
 
       if Version_1 /= "" then
