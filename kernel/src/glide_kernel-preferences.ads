@@ -125,6 +125,4 @@ package Glide_Kernel.Preferences is
      Register_Property ("Wizard:Title_Font", "helvetica bold oblique 14");
    --  Font to use for the title of the pages in the wizard
 
-
-
 end Glide_Kernel.Preferences;
