@@ -1152,8 +1152,8 @@ package body Project_Explorers_Files is
          Gtk_New (Files, Kernel);
          Child := Put
            (Kernel, Files,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => 215,
+            Default_Height => 600,
             Module => Explorer_Files_Module_Id);
          Set_Focus_Child (Child);
          Set_Title
@@ -1233,7 +1233,7 @@ package body Project_Explorers_Files is
       Add_Default_Desktop_Item
         (Kernel, N,
          10, 10,
-         300, 600,
+         215, 600,
          "File View", "Project Explorer - File View",
          Docked, Left,
          False);

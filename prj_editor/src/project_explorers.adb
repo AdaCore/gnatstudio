@@ -68,7 +68,6 @@ with String_Utils;              use String_Utils;
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Intl;                use Glide_Intl;
 with Language_Handlers.Glide;   use Language_Handlers.Glide;
@@ -1927,8 +1926,8 @@ package body Project_Explorers is
          Refresh (Explorer);
          Child := Put
            (Kernel, Explorer,
-            Default_Width  => Get_Pref (Kernel, Default_Widget_Width),
-            Default_Height => Get_Pref (Kernel, Default_Widget_Height),
+            Default_Width  => 215,
+            Default_Height => 600,
             Module         => Explorer_Module_ID);
          Set_Title
            (Child, -"Project Explorer - Project View",  -"Project View");
@@ -2697,7 +2696,7 @@ package body Project_Explorers is
       Add_Default_Desktop_Item
         (Kernel, N,
          10, 10,
-         300, 600,
+         215, 600,
          "Project View", "Project Explorer - Project View",
          Docked, Left,
          True, True);
