@@ -6,4 +6,5 @@ read_ali_twice
 read_many_ali
 find_ref
 find_dep
+find_local_ref
 generate_db
