@@ -19,6 +19,7 @@
 -----------------------------------------------------------------------
 
 with Glib;                        use Glib;
+with Glib.Values;                 use Glib.Values;
 with Gdk;                         use Gdk;
 with Gdk.Drawable;                use Gdk.Drawable;
 with Gdk.Event;                   use Gdk.Event;
@@ -40,9 +41,14 @@ with Gtkada.Handlers;             use Gtkada.Handlers;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with String_Utils;                use String_Utils;
 
+with Basic_Types;                 use Basic_Types;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+
+with Unchecked_Deallocation;
 package body Src_Editor_View is
 
    use type Pango.Font.Pango_Font_Description;
+   use Line_Info_List;
 
    Minimal_Number_Of_Digits_In_LNA : constant := 3;
    --  Minimal number of digits for a line number that the Line Numbers Area
@@ -99,11 +105,17 @@ package body Src_Editor_View is
    --  is mapped, such as creating GCs associated to the left border window
    --  for instance.
 
-   procedure Modified_Cb
+   procedure Insert_Text_Handler
      (Buffer : access Source_Buffer_Record'Class;
-      View   : Source_View);
-   --  This procedure re-evaluates the number of lines in the buffer, and
-   --  changes the width of the LNA if necessary.
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "insert_text" signal.
+
+   procedure Delete_Range_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View);
+   --  Callback for the "delete_range" signal.
 
    function LNA_Width_In_Digits
      (View : access Source_View_Record'Class) return Natural;
@@ -127,17 +139,39 @@ package body Src_Editor_View is
    --  Recalculate the size of the small window on the left used to display
    --  entities such as line numbers, breakpoint icons, etc.
 
-   procedure Redraw_Line_Numbers
-     (View        : access Source_View_Record'Class;
-      Left_Window : Gdk.Window.Gdk_Window;
-      Area        : Gdk_Rectangle);
-   --  Redraw the line numbers for Area of the given Left_Window.
+   procedure Redraw_Columns (View : access Source_View_Record'Class);
+   --  Redraw the left and right areas around View.
 
    procedure Set_Font
      (View : access Source_View_Record'Class;
       Font : Pango.Font.Pango_Font_Description);
    --  Change the font used in the given Source_View. Note that this service
    --  should not be used if the widget is not realized.
+
+   procedure Add_Lines
+     (View   : access Source_View_Record'Class;
+      Start  : Integer;
+      Number : Integer);
+   --  Add blank lines to the column info.
+
+   procedure Remove_Lines
+     (View       : access Source_View_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer);
+   --  Remove lines from the column info.
+
+   procedure Insert_At_Position
+     (L    : in out Line_Info_List.List;
+      Info : Line_Information_Record);
+   --  Insert Info at the correct line position in L.
+
+   procedure Get_Column_For_Identifier
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer);
+   --  Return the index of the column corresponding to the identifier.
+   --  Create such a column if necessary.
 
    ----------------
    -- Realize_Cb --
@@ -152,6 +186,55 @@ package body Src_Editor_View is
       Reset_Left_Border_Window_Size (View);
    end Realize_Cb;
 
+   --------------------------
+   -- Delete_Range_Handler --
+   --------------------------
+
+   procedure Delete_Range_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Buffer);
+      Start_Iter : Gtk_Text_Iter;
+      End_Iter   : Gtk_Text_Iter;
+
+      Start_Line : Integer;
+      End_Line   : Integer;
+   begin
+      Get_Text_Iter (Nth (Params, 1), Start_Iter);
+      Get_Text_Iter (Nth (Params, 2), End_Iter);
+      Start_Line := Integer (Get_Line (Start_Iter));
+      End_Line   := Integer (Get_Line (End_Iter));
+
+      if Start_Line /= End_Line then
+         Remove_Lines (User, Start_Line + 1, End_Line + 1);
+      end if;
+   end Delete_Range_Handler;
+
+   -------------------------
+   -- Insert_Text_Handler --
+   -------------------------
+
+   procedure Insert_Text_Handler
+     (Buffer : access Source_Buffer_Record'Class;
+      Params : Glib.Values.GValues;
+      User   : Source_View)
+   is
+      pragma Unreferenced (Buffer);
+      Pos    : Gtk_Text_Iter;
+      Length : constant Gint := Get_Int (Nth (Params, 3));
+      Dummy  : Boolean;
+      Start  : Integer;
+      Iter   : Gtk_Text_Iter;
+   begin
+      Get_Text_Iter (Nth (Params, 1), Pos);
+      Copy (Pos, Iter);
+      Start := Integer (Get_Line (Pos));
+      Backward_Chars (Pos, Length, Dummy);
+      Add_Lines (User, Start, Start - Integer (Get_Line (Pos)));
+   end Insert_Text_Handler;
+
    ---------------------
    -- Expose_Event_Cb --
    ---------------------
@@ -160,15 +243,64 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      View        : constant Source_View := Source_View (Widget);
+      View   : constant Source_View := Source_View (Widget);
+      Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
       Left_Window : constant Gdk.Window.Gdk_Window :=
         Get_Window (View, Text_Window_Left);
-      Area : constant Gdk_Rectangle := Get_Area (Event);
    begin
       --  If the event applies to the left border window, then redraw
       --  the line numbers.
       if Get_Window (Event) = Left_Window then
-         Redraw_Line_Numbers (View, Left_Window, Area);
+         declare
+            Top_In_Buffer              : Gint;
+            Bottom_In_Buffer           : Gint;
+            Dummy_Gint                 : Gint;
+            Iter                       : Gtk_Text_Iter;
+            Top_Line                   : Natural;
+            Bottom_Line                : Natural;
+            X, Y, Width, Height, Depth : Gint;
+            Previous_Top_Line          : Natural := View.Min_Top_Line;
+            Previous_Bottom_Line       : Natural := View.Max_Bottom_Line;
+         begin
+            Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+
+            Window_To_Buffer_Coords
+              (View, Text_Window_Left,
+               Window_X => 0, Window_Y => Y,
+               Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+            Window_To_Buffer_Coords
+              (View, Text_Window_Left,
+               Window_X => 0, Window_Y => Y + Height,
+               Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+            Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+            Top_Line := Natural (Get_Line (Iter) + 1);
+            Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
+            Bottom_Line := Natural (Get_Line (Iter) + 1);
+
+            --  If one of the values hadn't been initialized, display the
+            --  whole range of lines.
+            View.Top_Line := Top_Line;
+            View.Bottom_Line := Bottom_Line;
+
+            if Previous_Top_Line = 0
+              or else Previous_Top_Line = 0
+            then
+               Source_Lines_Revealed (Buffer, Top_Line, Bottom_Line);
+               View.Min_Top_Line := Top_Line;
+               View.Max_Bottom_Line := Bottom_Line;
+
+            elsif Top_Line < Previous_Top_Line then
+               Source_Lines_Revealed (Buffer, Top_Line, Previous_Top_Line);
+               View.Min_Top_Line := Top_Line;
+            elsif Bottom_Line > Previous_Bottom_Line then
+               Source_Lines_Revealed
+                 (Buffer, Previous_Bottom_Line, Bottom_Line);
+               View.Max_Bottom_Line := Bottom_Line;
+            end if;
+
+            Redraw_Columns (View);
+            --  return True;
+         end;
       end if;
 
       --  Return false, so that the signal is not blocked, and other
@@ -229,24 +361,6 @@ package body Src_Editor_View is
          Get_Window (Source_View (View), Text_Window_Left));
    end Map_Cb;
 
-   -----------------
-   -- Modified_Cb --
-   -----------------
-
-   procedure Modified_Cb
-     (Buffer : access Source_Buffer_Record'Class;
-      View   : Source_View)
-   is
-      pragma Unreferenced (Buffer);
-      New_Number_Of_Digits : constant Natural := LNA_Width_In_Digits (View);
-   begin
-      if View.Show_Line_Numbers
-        and then New_Number_Of_Digits /= View.LNA_Width_In_Digits
-      then
-         Reset_Left_Border_Window_Size (View);
-      end if;
-   end Modified_Cb;
-
    -------------------------
    -- LNA_Width_In_Digits --
    -------------------------
@@ -297,81 +411,6 @@ package body Src_Editor_View is
       end if;
       Set_Border_Window_Size (View, Enums.Text_Window_Left, Border_Size);
    end Reset_Left_Border_Window_Size;
-
-   -------------------------
-   -- Redraw_Line_Numbers --
-   -------------------------
-
-   procedure Redraw_Line_Numbers
-     (View        : access Source_View_Record'Class;
-      Left_Window : Gdk.Window.Gdk_Window;
-      Area        : Gdk_Rectangle)
-   is
-      Top                      : constant Gint := Area.Y;
-      Bottom                   : constant Gint := Top + Area.Height;
-      Number_Of_Lines          : constant Natural :=
-        Natural (Get_Line_Count (Get_Buffer (View)));
-      Line_Number_Image_Length : constant Natural :=
-        Natural'Max
-          (Number_Of_Digits (Number_Of_Lines),
-           Minimal_Number_Of_Digits_In_LNA);
-      Top_In_Buffer            : Gint;
-      Bottom_In_Buffer         : Gint;
-      Iter                     : Gtk_Text_Iter;
-      Y_In_Buffer              : Gint;
-      Y_In_Window              : Gint;
-      Line_Height              : Gint;
-      Line_Number              : Natural;
-      Dummy_Gint               : Gint;
-      Dummy_Boolean            : Boolean;
-
-   begin
-      --  First, convert the window coords into buffer coords
-
-      Window_To_Buffer_Coords
-        (View, Text_Window_Left,
-         Window_X => 0, Window_Y => Top,
-         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
-      Window_To_Buffer_Coords
-        (View, Text_Window_Left,
-         Window_X => 0, Window_Y => Bottom,
-         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
-
-      --  Initialize the iterator on the first line number to redraw
-      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
-
-      --  Redraw each exposed line...
-      Drawing_Loop :
-      while not Is_End (Iter) loop
-         --  Get buffer coords and line height of current line
-         Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
-         --  Convert the buffer coords back to window coords
-         Buffer_To_Window_Coords
-           (View, Text_Window_Left,
-            Buffer_X => 0, Buffer_Y => Y_In_Buffer,
-            Window_X => Dummy_Gint, Window_Y => Y_In_Window);
-         --  And finally add the font height (ascent + descent) to get
-         --  the Y coordinates of the line base
-         Y_In_Window :=
-           Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 1;
-         --  ??? Verify that Get_Ascent and Get_Descent do not cause a
-         --  ??? X11 query. Otherwise, cache it in the source_view object.
-
-         --  Get the line number...
-         Line_Number := Natural (Get_Line (Iter)) + 1;
-         --  ... and draw.
-         Draw_Text
-           (Drawable => Left_Window,
-            Font => View.Font,
-            Gc => View.Line_Numbers_GC,
-            X => LNA_Border_Width,
-            Y => Y_In_Window,
-            Text => Image (Line_Number, Line_Number_Image_Length));
-
-         exit Drawing_Loop when Y_In_Buffer + Line_Height >= Bottom_In_Buffer;
-         Forward_Line (Iter, Dummy_Boolean);
-      end loop Drawing_Loop;
-   end Redraw_Line_Numbers;
 
    -------------
    -- Gtk_New --
@@ -426,11 +465,6 @@ package body Src_Editor_View is
         (View, "expose_event",
          Marsh => Return_Callback.To_Marshaller (Expose_Event_Cb'Access),
          After => False);
-      Source_Buffer_Callback.Connect
-        (Buffer, "changed",
-         Marsh => Source_Buffer_Callback.To_Marshaller (Modified_Cb'Access),
-         User_Data => Source_View (View),
-         After => True);
       Return_Callback.Connect
         (View, "focus_in_event",
          Marsh => Return_Callback.To_Marshaller (Focus_In_Event_Cb'Access),
@@ -447,6 +481,22 @@ package body Src_Editor_View is
         (View, "key_press_event",
          Marsh => Return_Callback.To_Marshaller (Key_Press_Event_Cb'Access),
          After => False);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "insert_text",
+         Cb        => Insert_Text_Handler'Access,
+         User_Data => Source_View (View),
+         After     => True);
+
+      Source_Buffer_Callback.Connect
+        (Buffer, "delete_range",
+         Cb        => Delete_Range_Handler'Access,
+         User_Data => Source_View (View),
+         After     => False);
+
+      View.Line_Info := new Line_Info_Display_Array (1 .. 0);
+      View.Queue := New_Queue;
+      --  ??? when is this freed ?
    end Initialize;
 
    --------------
@@ -590,11 +640,69 @@ package body Src_Editor_View is
      (Widget : access Gtk_Widget_Record'Class;
       Event  : Gdk_Event) return Boolean
    is
-      pragma Unreferenced (Event);
       View   : constant Source_View := Source_View (Widget);
       Buffer : constant Source_Buffer := Source_Buffer (Get_Buffer (View));
+      Left_Window : constant Gdk.Window.Gdk_Window :=
+        Get_Window (View, Text_Window_Left);
+
    begin
       End_Action (Buffer);
+
+      if Get_Window (Event) = Left_Window
+        and then Get_Event_Type (Event) = Button_Press
+      then
+         declare
+            Dummy_Gint                 : Gint;
+            Iter                       : Gtk_Text_Iter;
+            Line                       : Natural;
+            Column_Index               : Integer := -1;
+            Button_X, Button_Y         : Gint;
+            X, Y                       : Gint;
+            Node                       : List_Node;
+
+         begin
+            --  Get the coordinates of the click.
+
+            Button_X := Gint (Get_X (Event));
+            Button_Y := Gint (Get_Y (Event));
+
+            Window_To_Buffer_Coords
+              (View, Text_Window_Left,
+               Window_X => Button_X, Window_Y => Button_Y,
+               Buffer_X => X, Buffer_Y => Y);
+
+            Get_Line_At_Y (View, Iter, Y, Dummy_Gint);
+            Line := Natural (Get_Line (Iter)) + 1;
+
+            for J in View.Line_Info.all'Range loop
+               if View.Line_Info (J).Starting_X <= Natural (Button_X)
+                 and then Natural (Button_X)
+                 <= View.Line_Info (J).Starting_X + View.Line_Info (J).Width
+               then
+                  Column_Index := J;
+                  exit;
+               end if;
+            end loop;
+
+            if Column_Index > 0 then
+               Node := First (View.Line_Info (Column_Index).Column_Info);
+
+               while Node /= Null_Node
+                 and then Data (Node).Line < Line
+               loop
+                  Node := Next (Node);
+               end loop;
+
+               if Node /= Null_Node
+                 and then Data (Node).Line = Line
+                 and then Data (Node).Associated_Command /= null
+               then
+                  Enqueue (View.Queue, Data (Node).Associated_Command);
+               end if;
+            end if;
+         end;
+      end if;
+
       return False;
    end Button_Press_Event_Cb;
 
@@ -622,5 +730,327 @@ package body Src_Editor_View is
 
       return False;
    end Key_Press_Event_Cb;
+
+   ------------------------
+   -- Insert_At_Position --
+   ------------------------
+
+   procedure Insert_At_Position
+     (L    : in out Line_Info_List.List;
+      Info : Line_Information_Record)
+   is
+      Node : List_Node;
+   begin
+      if Is_Empty (L) then
+         Append (L, new Line_Information_Record' (Info));
+      else
+         Node := First (L);
+
+         while Next (Node) /= Null_Node
+           and then Data (Next (Node)).Line <= Info.Line
+         loop
+            Node := Next (Node);
+         end loop;
+
+         if Data (Node).Line = Info.Line then
+            Set_Data (Node, new Line_Information_Record' (Info));
+         else
+            Append (L, Node, new Line_Information_Record' (Info));
+         end if;
+      end if;
+   end Insert_At_Position;
+
+   --------------------
+   -- Redraw_Columns --
+   --------------------
+
+   procedure Redraw_Columns (View : access Source_View_Record'Class)
+   is
+      Left_Window : constant Gdk.Window.Gdk_Window :=
+        Get_Window (View, Text_Window_Left);
+
+      Top_In_Buffer              : Gint;
+      Bottom_In_Buffer           : Gint;
+      Dummy_Gint                 : Gint;
+      Iter                       : Gtk_Text_Iter;
+      Y_In_Buffer                : Gint;
+      Y_In_Window                : Gint;
+      Line_Height                : Gint;
+      Current_Line               : Natural;
+      X, Y, Width, Height, Depth : Gint;
+      Dummy_Boolean              : Boolean;
+
+      Nodes : array (View.Line_Info.all'Range) of List_Node;
+   begin
+      for J in Nodes'Range loop
+         Nodes (J) := First (View.Line_Info (J).Column_Info);
+
+         while Nodes (J) /= Null_Node
+           and then Data (Nodes (J)).Line < View.Top_Line
+         loop
+            Nodes (J) := Next (Nodes (J));
+         end loop;
+      end loop;
+
+      Get_Geometry (Left_Window, X, Y, Width, Height, Depth);
+
+      Window_To_Buffer_Coords
+        (View, Text_Window_Left,
+         Window_X => 0, Window_Y => Y,
+         Buffer_X => Dummy_Gint, Buffer_Y => Top_In_Buffer);
+      Window_To_Buffer_Coords
+        (View, Text_Window_Left,
+         Window_X => 0, Window_Y => Y + Height,
+         Buffer_X => Dummy_Gint, Buffer_Y => Bottom_In_Buffer);
+
+      Get_Line_At_Y (View, Iter, Top_In_Buffer, Dummy_Gint);
+      Current_Line := View.Top_Line;
+
+      Drawing_Loop :
+      while Current_Line <= View.Bottom_Line loop
+
+         --  Get buffer coords and line height of current line
+         Get_Line_Yrange (View, Iter, Y_In_Buffer, Line_Height);
+         --  Convert the buffer coords back to window coords
+         Buffer_To_Window_Coords
+           (View, Text_Window_Left,
+            Buffer_X => 0, Buffer_Y => Y_In_Buffer,
+            Window_X => Dummy_Gint, Window_Y => Y_In_Window);
+         --  And finally add the font height (ascent + descent) to get
+         --  the Y coordinates of the line base
+         Y_In_Window :=
+           Y_In_Window + Get_Ascent (View.Font) + Get_Descent (View.Font) - 2;
+
+         for J in Nodes'Range loop
+            while Nodes (J) /= Null_Node
+              and then Data (Nodes (J)).Line < Current_Line
+            loop
+               Nodes (J) := Next (Nodes (J));
+            end loop;
+
+            if Nodes (J) /= Null_Node
+              and then Data (Nodes (J)).Line = Current_Line
+            then
+               if Data (Nodes (J)).Text /= null then
+                  Draw_Text
+                    (Drawable => Left_Window,
+                     Font => View.Font,
+                     Gc => View.Line_Numbers_GC,
+                     X =>  Gint (View.Line_Info (J).Starting_X),
+                     Y => Y_In_Window,
+                     Text => Data (Nodes (J)).Text.all);
+               end if;
+            end if;
+         end loop;
+
+         Forward_Line (Iter, Dummy_Boolean);
+         exit Drawing_Loop when Dummy_Boolean = False;
+
+         Current_Line := Natural (Get_Line (Iter)) + 1;
+      end loop Drawing_Loop;
+   end Redraw_Columns;
+
+   --------------------------
+   -- Add_File_Information --
+   --------------------------
+
+   procedure Add_File_Information
+     (View          : access Source_View_Record;
+      Identifier    : String;
+      Width         : Integer;
+      Info          : Glide_Kernel.Modules.Line_Information_Data;
+      Stick_To_Data : Boolean := True)
+   is
+      Column : Integer;
+   begin
+      --  Refresh the stored data.
+      Get_Column_For_Identifier
+        (View,
+         Identifier,
+         Width,
+         Column);
+
+      View.Line_Info (Column).Stick_To_Data := Stick_To_Data;
+
+      for J in Info.all'Range loop
+         Insert_At_Position (View.Line_Info (Column).Column_Info, Info (J));
+      end loop;
+
+      --  If some of the data was in the display range, draw it.
+
+      Redraw_Columns (View);
+   end Add_File_Information;
+
+   -------------------------------
+   -- Get_Column_For_Identifier --
+   -------------------------------
+
+   procedure Get_Column_For_Identifier
+     (View       : access Source_View_Record;
+      Identifier : String;
+      Width      : Integer;
+      Column     : out Integer)
+   is
+   begin
+      for J in View.Line_Info.all'Range loop
+         if View.Line_Info (J).Identifier.all = Identifier then
+            Column := J;
+
+            if View.Line_Info (J).Width < Width then
+               for K in (J + 1) .. View.Line_Info.all'Last loop
+                  View.Line_Info (K).Starting_X :=
+                    View.Line_Info (K).Starting_X + Width
+                    - View.Line_Info (J).Width;
+               end loop;
+
+               View.Total_Column_Width :=
+                 View.Total_Column_Width + Width
+                 - View.Line_Info (J).Width;
+
+               Set_Border_Window_Size (View, Enums.Text_Window_Left,
+                                       Gint (View.Total_Column_Width));
+
+               View.Line_Info (J).Width := Width;
+            end if;
+
+            return;
+         end if;
+      end loop;
+
+      declare
+         A : Line_Info_Display_Array
+           (View.Line_Info.all'First .. View.Line_Info.all'Last + 1);
+      begin
+         A (View.Line_Info.all'First .. View.Line_Info.all'Last)
+           := View.Line_Info.all;
+         A (View.Line_Info.all'Last + 1) :=
+           (Identifier  => new String' (Identifier),
+            Starting_X  => View.Total_Column_Width + 2,
+            Width       => Width,
+            Column_Info => Null_List,
+            Stick_To_Data => True);
+         View.Line_Info := new Line_Info_Display_Array' (A);
+         Column := View.Line_Info.all'Last;
+
+         View.Total_Column_Width := View.Total_Column_Width + Width + 2;
+
+         Set_Border_Window_Size (View, Enums.Text_Window_Left,
+                                 Gint (View.Total_Column_Width));
+      end;
+   end Get_Column_For_Identifier;
+
+   ---------------
+   -- Add_Lines --
+   ---------------
+
+   procedure Add_Lines
+     (View   : access Source_View_Record'Class;
+      Start  : Integer;
+      Number : Integer)
+   is
+      Node : List_Node;
+      Info : Line_Information_Access;
+   begin
+      if Number <= 0 then
+         return;
+      end if;
+
+      for J in View.Line_Info.all'Range loop
+         if View.Line_Info (J).Stick_To_Data then
+            Node := First (View.Line_Info (J).Column_Info);
+
+            while Node /= Null_Node
+              and then Data (Node).Line <= Start
+            loop
+               Node := Next (Node);
+            end loop;
+
+            while Node /= Null_Node loop
+               Info := Data (Node);
+               Info.Line := Info.Line + Number;
+               Node := Next (Node);
+            end loop;
+         end if;
+      end loop;
+   end Add_Lines;
+
+   ------------------
+   -- Remove_Lines --
+   ------------------
+
+   procedure Remove_Lines
+     (View       : access Source_View_Record'Class;
+      Start_Line : Integer;
+      End_Line   : Integer)
+   is
+      Node       : List_Node;
+      First_Node : List_Node := Null_Node;
+      Info       : Line_Information_Access;
+   begin
+      if End_Line <= Start_Line then
+         return;
+      end if;
+
+      for J in View.Line_Info.all'Range loop
+         if View.Line_Info (J).Stick_To_Data then
+            First_Node := Null_Node;
+            Node := First (View.Line_Info (J).Column_Info);
+
+            while Node /= Null_Node
+              and then Data (Node).Line < Start_Line
+              and then Data (Node).Line <= End_Line
+            loop
+               Node := Next (Node);
+            end loop;
+
+            if Node /= Null_Node
+              and then Data (Node).Line <= End_Line
+            then
+               First_Node := Node;
+
+               --  Find the end node.
+               while Node /= Null_Node
+                 and then Next (Node) /= Null_Node
+                 and then Data (Next (Node)).Line <= End_Line
+               loop
+                  Node := Next (Node);
+               end loop;
+
+               if First_Node = Node then
+                  First_Node := Prev (View.Line_Info (J).Column_Info,
+                                      First_Node);
+               end if;
+
+               Remove_Nodes (View.Line_Info (J).Column_Info,
+                             First_Node,
+                             Node);
+
+            end if;
+
+            if First_Node /= Null_Node then
+               Node := Next (First_Node);
+            end if;
+
+            while Node /= Null_Node loop
+               Info := Data (Node);
+               Info.Line := Info.Line + Start_Line - End_Line;
+               Node := Next (Node);
+            end loop;
+         end if;
+      end loop;
+   end Remove_Lines;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Line_Information_Access)
+   is
+      procedure Free is new Unchecked_Deallocation
+        (Line_Information_Record, Line_Information_Access);
+   begin
+      Free (X.all);
+      Free (X);
+   end Free;
 
 end Src_Editor_View;
