@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -18,21 +18,21 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;            use Glide_Kernel;
-with Glide_Kernel.Console;    use Glide_Kernel.Console;
-with Glide_Kernel.Project;    use Glide_Kernel.Project;
-with Language_Handlers.Glide; use Language_Handlers.Glide;
-with Language.C;              use Language.C;
-with Language.Cpp;            use Language.Cpp;
-with Src_Info;                use Src_Info;
-with Src_Info.CPP;            use Src_Info.CPP;
-with Traces;                  use Traces;
-with Ada.Exceptions;          use Ada.Exceptions;
+with Glide_Kernel;             use Glide_Kernel;
+with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Project;     use Glide_Kernel.Project;
+with Language_Handlers.Glide;  use Language_Handlers.Glide;
+with Language.C;               use Language.C;
+with Language.Cpp;             use Language.Cpp;
+with Src_Info;                 use Src_Info;
+with Src_Info.CPP;             use Src_Info.CPP;
+with Traces;                   use Traces;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
-with Glide_Intl;              use Glide_Intl;
-with Projects;                use Projects;
-with Projects.Registry;       use Projects.Registry;
-with Ada.Exceptions;          use Ada.Exceptions;
+with Glide_Intl;               use Glide_Intl;
+with Projects;                 use Projects;
+with Projects.Registry;        use Projects.Registry;
+with Ada.Exceptions;           use Ada.Exceptions;
 with Glib.Properties.Creation; use Glib, Glib.Properties.Creation;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
