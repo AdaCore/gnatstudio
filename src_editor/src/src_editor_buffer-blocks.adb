@@ -21,6 +21,7 @@
 with Language;    use Language;
 with Basic_Types; use Basic_Types;
 with Interfaces.C;
+with Interfaces.C.Strings;
 
 package body Src_Editor_Buffer.Blocks is
 
@@ -46,6 +47,8 @@ package body Src_Editor_Buffer.Blocks is
       Block         : Block_Access;
       pragma Suppress (Access_Check, Slice);
 
+      use type Interfaces.C.Strings.chars_ptr;
+
    begin
       if not Buffer.Parse_Blocks then
          return;
@@ -65,7 +68,12 @@ package body Src_Editor_Buffer.Blocks is
          Buffer.Line_Data (Line).Block := null;
       end loop;
 
-      C_Str        := Get_Slice (Buffer, 0, 0);
+      C_Str := Get_Slice (Buffer, 0, 0);
+
+      if C_Str = Gtkada.Types.Null_Ptr then
+         return;
+      end if;
+
       Slice        := To_Unchecked_String (C_Str);
       Slice_Length := Natural (Strlen (C_Str));
 
