@@ -892,15 +892,9 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
-   <shell>Editor.edit "g-perhas.ads"</shell>
-   <descr>GNAT.Perfect_Hash</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash</menu>
-   <category>GNAT Runtime</category>
-</documentation_file>
-<documentation_file>
    <shell>Editor.edit "g-pehage.ads"</shell>
-   <descr>GNAT.Perfect_Hash.Generators</descr>
-   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash.Generators</menu>
+   <descr>GNAT.Perfect_Hash_Generators</descr>
+   <menu>/Help/GNAT Runtime/GNAT/GNAT.Perfect__Hash__Generators</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
@@ -1036,6 +1030,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "interfac.ads"</shell>
+   <descr>Interfaces</descr>
+   <menu>/Help/GNAT Runtime/Interfaces/Interfaces</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "i-c.ads"</shell>
    <descr>Interfaces.C</descr>
    <menu>/Help/GNAT Runtime/Interfaces/Interfaces.C</menu>
@@ -1162,6 +1162,12 @@
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
+   <shell>Editor.edit "system.ads"</shell>
+   <descr>System</descr>
+   <menu>/Help/GNAT Runtime/System/System</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
    <shell>Editor.edit "s-addima.ads"</shell>
    <descr>System.Address_Image</descr>
    <menu>/Help/GNAT Runtime/System/System.Address__Image</menu>
@@ -1195,6 +1201,18 @@
    <shell>Editor.edit "s-parint.ads"</shell>
    <descr>System.Partition_Interface</descr>
    <menu>/Help/GNAT Runtime/System/System.Partition__Interface</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-pooglo.ads"</shell>
+   <descr>System.Pool_Global</descr>
+   <menu>/Help/GNAT Runtime/System/System.Pool__Global</menu>
+   <category>GNAT Runtime</category>
+</documentation_file>
+<documentation_file>
+   <shell>Editor.edit "s-pooloc.ads"</shell>
+   <descr>System.Pool_Local</descr>
+   <menu>/Help/GNAT Runtime/System/System.Pool__Local</menu>
    <category>GNAT Runtime</category>
 </documentation_file>
 <documentation_file>
