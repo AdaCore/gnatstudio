@@ -1333,11 +1333,7 @@ package body Src_Info.ALI is
 
                elsif (E_Ref.Kind /= Primitive_Operation
                       and then E_Ref.Kind /= Overriding_Primitive_Operation)
-                 and then Decl_Info.References = null
                then
-                  Decl_Info.References := new E_Reference_Node'
-                    (Value => E_Ref, Next => null);
-               else
                   --  Insert at the end, so that the result of
                   --  "Find_All_References" is properly sorted.
 
