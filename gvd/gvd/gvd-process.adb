@@ -1538,7 +1538,7 @@ package body GVD.Process is
          Skip_Blanks (Command, First);
          Data.Command := new String' (Command);
          Append (Debugger.Window.Command_History, Data);
-         Set_Busy_Cursor (Debugger);
+         Set_Busy (Debugger);
       end Pre_User_Command;
 
    begin
@@ -1563,13 +1563,13 @@ package body GVD.Process is
          Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
-         Set_Busy_Cursor (Debugger, False);
+         Set_Busy (Debugger, False);
 
       elsif Looking_At (Lowered_Command, First, "view") then
          Pre_User_Command;
          Process_View_Cmd (Debugger, Command);
          Display_Prompt (Debugger.Debugger);
-         Set_Busy_Cursor (Debugger, False);
+         Set_Busy (Debugger, False);
 
       elsif Lowered_Command = "quit" then
          Close_Debugger (Debugger);
@@ -1761,17 +1761,17 @@ package body GVD.Process is
       end if;
    end Get_Current_Process;
 
-   ---------------------
-   -- Set_Busy_Cursor --
-   ---------------------
+   --------------
+   -- Set_Busy --
+   --------------
 
-   procedure Set_Busy_Cursor
-     (Debugger : access Debugger_Process_Tab_Record'Class;
-      Busy     : Boolean := True;
+   procedure Set_Busy
+     (Debugger      : access Debugger_Process_Tab_Record;
+      Busy          : Boolean := True;
       Force_Refresh : Boolean := False) is
    begin
       Set_Busy_Cursor (Get_Window (Debugger.Window), Busy, Force_Refresh);
-   end Set_Busy_Cursor;
+   end Set_Busy;
 
    -------------
    -- Get_Num --
