@@ -138,8 +138,12 @@ package body GVD.Source_Editors is
    procedure Print_Variable
      (Widget : access Gtk_Widget_Record'Class;
       Br     : Contextual_Data_Record);
-   --  Callback for the "print variable" or "display variable" contextual menu
-   --  items.
+   --  Callback for the "print " contextual menu item.
+
+   procedure Graph_Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record);
+   --  Callback for the "display variable" contextual menu item.
 
    procedure Change_Lines_With_Code
      (Item   : access Gtk_Check_Menu_Item_Record'Class;
@@ -405,7 +409,7 @@ package body GVD.Source_Editors is
       Data.Auto_Refresh := True;
       Widget_Breakpoint_Handler.Connect
         (Mitem, "activate",
-         Widget_Breakpoint_Handler.To_Marshaller (Print_Variable'Access),
+         Widget_Breakpoint_Handler.To_Marshaller (Graph_Print_Variable'Access),
          Data);
 
       if Entity'Length = 0 then
@@ -1060,6 +1064,23 @@ package body GVD.Source_Editors is
       if not Register_Post_Cmd_If_Needed
         (Get_Process (Br.Process.Debugger), Widget, Print_Variable'Access, Br)
       then
+        Print_Value (Br.Process.Debugger, Br.Name);
+      end if;
+   end Print_Variable;
+   
+   --------------------------
+   -- Graph_Print_Variable --
+   --------------------------
+
+   procedure Graph_Print_Variable
+     (Widget : access Gtk_Widget_Record'Class;
+      Br     : Contextual_Data_Record) is
+   begin
+      if not Register_Post_Cmd_If_Needed
+               (Get_Process (Br.Process.Debugger), 
+                Widget, 
+                Graph_Print_Variable'Access, Br)
+      then
          if Br.Auto_Refresh then
             Process_User_Command
               (Br.Process, "graph display " & Br.Name,
@@ -1070,7 +1091,7 @@ package body GVD.Source_Editors is
                Output_Command => True);
          end if;
       end if;
-   end Print_Variable;
+   end Graph_Print_Variable;
 
    ----------------------
    -- Change_Line_Nums --
