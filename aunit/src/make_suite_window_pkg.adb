@@ -45,6 +45,8 @@ package body Make_Suite_Window_Pkg is
    procedure Initialize
      (Make_Suite_Window : access Make_Suite_Window_Record'Class)
    is
+      pragma Suppress (All_Checks);
+
       Hbox1 : Gtk_Hbox;
       Hbox2 : Gtk_Hbox;
       Hbox3 : Gtk_Hbox;
@@ -54,11 +56,7 @@ package body Make_Suite_Window_Pkg is
       Vbox3 : Gtk_Vbox;
       Vbox4 : Gtk_Vbox;
 
-      Label1 : Gtk_Label;
-      Label2 : Gtk_Label;
-      Label3 : Gtk_Label;
-      Label5 : Gtk_Label;
-      Label6 : Gtk_Label;
+      Label : Gtk_Label;
 
       Vbuttonbox1 : Gtk_Vbutton_Box;
       Hbuttonbox1 : Gtk_Hbutton_Box;
@@ -85,12 +83,8 @@ package body Make_Suite_Window_Pkg is
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox1, Vbox2, False, False, 5);
 
-      Gtk_New (Label1, -("Suite name :"));
-      Set_Alignment (Label1, 1.0, 0.5);
-      Set_Padding (Label1, 0, 0);
-      Set_Justify (Label1, Justify_Center);
-      Set_Line_Wrap (Label1, False);
-      Pack_Start (Vbox2, Label1, False, False, 0);
+      Gtk_New (Label, -"Suite name:");
+      Pack_Start (Vbox2, Label, False, False, 0);
 
       Gtk_New_Vbox (Vbox3, True, 0);
       Pack_Start (Hbox1, Vbox3, True, True, 3);
@@ -108,13 +102,8 @@ package body Make_Suite_Window_Pkg is
       Gtk_New_Vbox (Vbox4, False, 0);
       Pack_Start (Hbox3, Vbox4, True, True, 3);
 
-      Gtk_New (Label2,
-               -("The following tests will be added to the new suite :"));
-      Set_Alignment (Label2, 0.0, 0.5);
-      Set_Padding (Label2, 6, 0);
-      Set_Justify (Label2, Justify_Center);
-      Set_Line_Wrap (Label2, False);
-      Pack_Start (Vbox4, Label2, False, False, 0);
+      Gtk_New (Label, -"The following tests will be added to the new suite:");
+      Pack_Start (Vbox4, Label, False, False, 0);
 
       Gtk_New_Hbox (Hbox2, False, 0);
       Pack_Start (Vbox4, Hbox2, True, True, 0);
@@ -133,26 +122,14 @@ package body Make_Suite_Window_Pkg is
       Set_Column_Auto_Resize (Make_Suite_Window.Test_List, 0, True);
       Add (Scrolledwindow2, Make_Suite_Window.Test_List);
 
-      Gtk_New (Label5, -("label5"));
-      Set_Alignment (Label5, 0.5, 0.5);
-      Set_Padding (Label5, 0, 0);
-      Set_Justify (Label5, Justify_Center);
-      Set_Line_Wrap (Label5, False);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 0, Label5);
+      Gtk_New (Label);
+      Set_Column_Widget (Make_Suite_Window.Test_List, 0, Label);
 
-      Gtk_New (Label6, -("label6"));
-      Set_Alignment (Label6, 0.5, 0.5);
-      Set_Padding (Label6, 0, 0);
-      Set_Justify (Label6, Justify_Center);
-      Set_Line_Wrap (Label6, False);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 1, Label6);
+      Gtk_New (Label);
+      Set_Column_Widget (Make_Suite_Window.Test_List, 1, Label);
 
-      Gtk_New (Label3, -("label7"));
-      Set_Alignment (Label3, 0.5, 0.5);
-      Set_Padding (Label3, 0, 0);
-      Set_Justify (Label3, Justify_Center);
-      Set_Line_Wrap (Label3, False);
-      Set_Column_Widget (Make_Suite_Window.Test_List, 2, Label3);
+      Gtk_New (Label);
+      Set_Column_Widget (Make_Suite_Window.Test_List, 2, Label);
 
       Gtk_New (Vbuttonbox1);
       Set_Spacing (Vbuttonbox1, 10);
@@ -161,7 +138,7 @@ package body Make_Suite_Window_Pkg is
       Set_Child_Ipadding (Vbuttonbox1, 7, 0);
       Pack_Start (Hbox2, Vbuttonbox1, False, True, 3);
 
-      Gtk_New (Make_Suite_Window.Add, -"Add");
+      Gtk_New (Make_Suite_Window.Add, -"Add...");
       Set_Relief (Make_Suite_Window.Add, Relief_Normal);
       Set_Flags (Make_Suite_Window.Add, Can_Default);
       Button_Callback.Connect
@@ -199,14 +176,6 @@ package body Make_Suite_Window_Pkg is
         (Make_Suite_Window.Cancel, "clicked",
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
       Add (Hbuttonbox1, Make_Suite_Window.Cancel);
-
-      Gtk_New (Make_Suite_Window.Help, -"Help");
-      Set_Relief (Make_Suite_Window.Help, Relief_Normal);
-      Set_Flags (Make_Suite_Window.Help, Can_Default);
-      Button_Callback.Connect
-        (Make_Suite_Window.Help, "clicked",
-         Button_Callback.To_Marshaller (On_Help_Clicked'Access));
-      Add (Hbuttonbox1, Make_Suite_Window.Help);
    end Initialize;
 
 end Make_Suite_Window_Pkg;

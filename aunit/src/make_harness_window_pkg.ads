@@ -37,7 +37,6 @@ package Make_Harness_Window_Pkg is
       Browse          : Gtk_Button;
       Ok              : Gtk_Button;
       Cancel          : Gtk_Button;
-      Help            : Gtk_Button;
       Statusbar       : Gtk_Statusbar;
    end record;
    type Make_Harness_Window_Access is

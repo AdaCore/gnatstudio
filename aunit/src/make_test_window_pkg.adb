@@ -41,15 +41,14 @@ package body Make_Test_Window_Pkg is
    procedure Initialize
      (Make_Test_Window : access Make_Test_Window_Record'Class)
    is
+      pragma Suppress (All_Checks);
+
       Vbox0 : Gtk_Vbox;
       Vbox2 : Gtk_Vbox;
 
       Hbox1 : Gtk_Hbox;
       Vbox1 : Gtk_Vbox;
-      Label1 : Gtk_Label;
-      Label2 : Gtk_Label;
-      Label3 : Gtk_Label;
-      Label4 : Gtk_Label;
+      Label : Gtk_Label;
 
       Hbuttonbox1 : Gtk_Hbutton_Box;
 
@@ -72,33 +71,17 @@ package body Make_Test_Window_Pkg is
       Gtk_New_Vbox (Vbox1, True, 0);
       Pack_Start (Hbox1, Vbox1, False, False, 5);
 
-      Gtk_New (Label1, -("Unit name : "));
-      Set_Alignment (Label1, 1.0, 0.5);
-      Set_Padding (Label1, 0, 0);
-      Set_Justify (Label1, Justify_Center);
-      Set_Line_Wrap (Label1, False);
-      Pack_Start (Vbox1, Label1, False, False, 3);
+      Gtk_New (Label, -"Unit name: ");
+      Pack_Start (Vbox1, Label, False, False, 3);
 
-      Gtk_New (Label2, -("Description : "));
-      Set_Alignment (Label2, 1.0, 0.5);
-      Set_Padding (Label2, 0, 0);
-      Set_Justify (Label2, Justify_Center);
-      Set_Line_Wrap (Label2, False);
-      Pack_Start (Vbox1, Label2, False, False, 3);
+      Gtk_New (Label, -"Description: ");
+      Pack_Start (Vbox1, Label, False, False, 3);
 
-      Gtk_New (Label3);
-      Set_Alignment (Label3, 0.5, 0.5);
-      Set_Padding (Label3, 0, 0);
-      Set_Justify (Label3, Justify_Center);
-      Set_Line_Wrap (Label3, False);
-      Pack_Start (Vbox1, Label3, False, False, 0);
+      Gtk_New (Label);
+      Pack_Start (Vbox1, Label, False, False, 0);
 
-      Gtk_New (Label4);
-      Set_Alignment (Label4, 0.5, 0.5);
-      Set_Padding (Label4, 0, 0);
-      Set_Justify (Label4, Justify_Center);
-      Set_Line_Wrap (Label4, False);
-      Pack_Start (Vbox1, Label4, False, False, 0);
+      Gtk_New (Label);
+      Pack_Start (Vbox1, Label, False, False, 0);
 
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox1, Vbox2, True, True, 3);
@@ -153,14 +136,6 @@ package body Make_Test_Window_Pkg is
         (Make_Test_Window.Cancel, "clicked",
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
       Add (Hbuttonbox1, Make_Test_Window.Cancel);
-
-      Gtk_New (Make_Test_Window.Help, -"Help");
-      Set_Relief (Make_Test_Window.Help, Relief_Normal);
-      Set_Flags (Make_Test_Window.Help, Can_Default);
-      Button_Callback.Connect
-        (Make_Test_Window.Help, "clicked",
-         Button_Callback.To_Marshaller (On_Help_Clicked'Access));
-      Add (Hbuttonbox1, Make_Test_Window.Help);
    end Initialize;
 
 end Make_Test_Window_Pkg;

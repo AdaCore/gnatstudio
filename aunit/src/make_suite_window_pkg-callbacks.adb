@@ -190,10 +190,9 @@ package body Make_Suite_Window_Pkg.Callbacks is
    -- On_Remove_Clicked --
    -----------------------
 
-   procedure On_Remove_Clicked
-     (Object : access Gtk_Button_Record'Class)
-   is
+   procedure On_Remove_Clicked (Object : access Gtk_Button_Record'Class) is
       --  Remove selected files from the suite component list
+
       Suite_Window : constant Make_Suite_Window_Access :=
         Make_Suite_Window_Access (Get_Toplevel (Object));
 
@@ -334,14 +333,5 @@ package body Make_Suite_Window_Pkg.Callbacks is
       Hide (Get_Toplevel (Object));
       Main_Quit;
    end On_Cancel_Clicked;
-
-   ---------------------
-   -- On_Help_Clicked --
-   ---------------------
-
-   procedure On_Help_Clicked (Object : access Gtk_Button_Record'Class) is
-   begin
-      null;
-   end On_Help_Clicked;
 
 end Make_Suite_Window_Pkg.Callbacks;

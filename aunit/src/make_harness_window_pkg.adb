@@ -43,6 +43,8 @@ package body Make_Harness_Window_Pkg is
    procedure Initialize
      (Make_Harness_Window : access Make_Harness_Window_Record'Class)
    is
+      pragma Suppress (All_Checks);
+
       Hbox1  : Gtk_Hbox;
       Hbox2  : Gtk_Hbox;
       Hbox3  : Gtk_Hbox;
@@ -53,8 +55,7 @@ package body Make_Harness_Window_Pkg is
       Vbox4  : Gtk_Vbox;
       Vbox5  : Gtk_Vbox;
 
-      Label1 : Gtk_Label;
-      Label2 : Gtk_Label;
+      Label : Gtk_Label;
 
       Hbuttonbox1 : Gtk_Hbutton_Box;
    begin
@@ -76,22 +77,14 @@ package body Make_Harness_Window_Pkg is
       Gtk_New_Vbox (Vbox2, True, 0);
       Pack_Start (Hbox2, Vbox2, True, True, 3);
 
-      Gtk_New (Label2, -("Procedure name :"));
-      Set_Alignment (Label2, 1.0, 0.5);
-      Set_Padding (Label2, 0, 0);
-      Set_Justify (Label2, Justify_Center);
-      Set_Line_Wrap (Label2, False);
-      Pack_Start (Vbox2, Label2, False, False, 3);
+      Gtk_New (Label, -"Procedure name:");
+      Pack_Start (Vbox2, Label, False, False, 3);
 
       Gtk_New_Vbox (Vbox1, True, 0);
       Pack_Start (Vbox2, Vbox1, True, True, 3);
 
-      Gtk_New (Label1, -("Suite file :"));
-      Set_Alignment (Label1, 1.0, 0.5);
-      Set_Padding (Label1, 0, 0);
-      Set_Justify (Label1, Justify_Center);
-      Set_Line_Wrap (Label1, False);
-      Pack_Start (Vbox1, Label1, False, False, 3);
+      Gtk_New (Label, -"Suite file:");
+      Pack_Start (Vbox1, Label, False, False, 3);
 
       Gtk_New_Vbox (Vbox4, True, 0);
       Pack_Start (Hbox2, Vbox4, True, True, 3);
@@ -125,7 +118,7 @@ package body Make_Harness_Window_Pkg is
       Gtk_New_Vbox (Vbox5, True, 0);
       Pack_Start (Hbox3, Vbox5, False, False, 3);
 
-      Gtk_New (Make_Harness_Window.Browse, -"Browse");
+      Gtk_New (Make_Harness_Window.Browse, -"Browse...");
       Set_Relief (Make_Harness_Window.Browse, Relief_Normal);
       Pack_Start (Vbox5, Make_Harness_Window.Browse, False, False, 3);
       Button_Callback.Connect
@@ -155,17 +148,8 @@ package body Make_Harness_Window_Pkg is
          Button_Callback.To_Marshaller (On_Cancel_Clicked'Access));
       Add (Hbuttonbox1, Make_Harness_Window.Cancel);
 
-      Gtk_New (Make_Harness_Window.Help, -"Help");
-      Set_Relief (Make_Harness_Window.Help, Relief_Normal);
-      Set_Flags (Make_Harness_Window.Help, Can_Default);
-      Button_Callback.Connect
-        (Make_Harness_Window.Help, "clicked",
-         Button_Callback.To_Marshaller (On_Help_Clicked'Access));
-      Add (Hbuttonbox1, Make_Harness_Window.Help);
-
       Gtk_New (Make_Harness_Window.Statusbar);
       Pack_Start (Vbox3, Make_Harness_Window.Statusbar, False, False, 0);
-
    end Initialize;
 
 end Make_Harness_Window_Pkg;

@@ -37,7 +37,6 @@ package Make_Suite_Window_Pkg is
       Remove     : Gtk_Button;
       Ok         : Gtk_Button;
       Cancel     : Gtk_Button;
-      Help       : Gtk_Button;
    end record;
    type Make_Suite_Window_Access is access all Make_Suite_Window_Record'Class;
 

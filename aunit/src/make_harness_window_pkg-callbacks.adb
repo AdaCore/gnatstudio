@@ -282,13 +282,4 @@ package body Make_Harness_Window_Pkg.Callbacks is
       Main_Quit;
    end On_Cancel_Clicked;
 
-   ---------------------
-   -- On_Help_Clicked --
-   ---------------------
-
-   procedure On_Help_Clicked (Object : access Gtk_Button_Record'Class) is
-   begin
-      null;
-   end On_Help_Clicked;
-
 end Make_Harness_Window_Pkg.Callbacks;

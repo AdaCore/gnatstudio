@@ -41,7 +41,4 @@ package Make_Test_Window_Pkg.Callbacks is
    procedure On_Cancel_Clicked
      (Object : access Gtk_Button_Record'Class);
 
-   procedure On_Help_Clicked
-     (Object : access Gtk_Button_Record'Class);
-
 end Make_Test_Window_Pkg.Callbacks;
