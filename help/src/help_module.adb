@@ -1418,7 +1418,6 @@ package body Help_Module is
       Search_Backward : Boolean;
       Give_Focus      : Boolean) return Boolean
    is
-      pragma Unreferenced (Give_Focus);
       MDI      : constant MDI_Window := Get_MDI (Kernel);
       Child    : constant MDI_Child := Find_MDI_Child_By_Tag
         (MDI, Help_Browser_Record'Tag);
@@ -1428,6 +1427,8 @@ package body Help_Module is
       if Child = null then
          return False;
       end if;
+
+      Raise_Child (Child, Give_Focus);
 
       Scrolled := Help_Browser (Get_Widget (Child));
 
