@@ -1,6 +1,6 @@
 
 C_FILES=../src/pixmaps.c
-MAIN=test_wizard test_directory test_api
+MAIN=test_wizard test_directory
 MODULES=gtkada gnat common
 NO_STYLE_FILES=
 OBJ_DIR=.
