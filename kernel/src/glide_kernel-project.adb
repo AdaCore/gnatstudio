@@ -366,11 +366,14 @@ package body Glide_Kernel.Project is
       Recursive : Boolean := False)
    is
       Iter : Imported_Project_Iterator := Start (Project, Recursive);
+      Modified : Boolean := False;
    begin
       while Current (Iter) /= No_Project loop
          declare
             Langs : Argument_List := Get_Languages (Current (Iter));
          begin
+            Modified := Modified or else Project_Modified (Current (Iter));
+
             Save_Single_Project (Kernel, Current (Iter), Langs);
             Basic_Types.Free (Langs);
          end;
@@ -381,7 +384,9 @@ package body Glide_Kernel.Project is
       --  Force a change in the icons in the explorer.
       --  ??? Probably not very efficient, however.
 
-      Project_View_Changed (Kernel);
+      if Modified then
+         Project_View_Changed (Kernel);
+      end if;
    end Save_Project;
 
    -------------------------
