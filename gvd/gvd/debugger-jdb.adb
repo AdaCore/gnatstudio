@@ -213,14 +213,29 @@ package body Debugger.Jdb is
    --------------------
 
    procedure Set_Executable
-     (Debugger : access Jdb_Debugger;
+     (Debugger   : access Jdb_Debugger;
       Executable : String;
-      Mode       : Invisible_Command := Internal) is
+      Mode       : Invisible_Command := Hidden) is
    begin
       Set_Is_Started (Debugger, False);
       Send (Debugger, "load " & Executable, Mode => Mode);
-      Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
+
+      if Debugger.Window /= null then
+         Executable_Changed (Convert (Debugger.Window, Debugger), Executable);
+      end if;
    end Set_Executable;
+
+   --------------------
+   -- Load_Core_File --
+   --------------------
+
+   procedure Load_Core_File
+     (Debugger : access Jdb_Debugger;
+      Core     : String;
+      Mode     : Invisible_Command := Hidden) is
+   begin
+      null;
+   end Load_Core_File;
 
    --------------------
    -- Attach_Process --

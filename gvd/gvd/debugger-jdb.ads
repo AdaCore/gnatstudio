@@ -77,7 +77,12 @@ package Debugger.Jdb is
    procedure Set_Executable
      (Debugger   : access Jdb_Debugger;
       Executable : String;
-      Mode       : GVD.Types.Invisible_Command := GVD.Types.Internal);
+      Mode       : GVD.Types.Invisible_Command := GVD.Types.Hidden);
+
+   procedure Load_Core_File
+     (Debugger : access Jdb_Debugger;
+      Core     : String;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden);
 
    procedure Run
      (Debugger  : access Jdb_Debugger;

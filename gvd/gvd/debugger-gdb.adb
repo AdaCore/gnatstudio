@@ -628,7 +628,7 @@ package body Debugger.Gdb is
    procedure Set_Executable
      (Debugger   : access Gdb_Debugger;
       Executable : String;
-      Mode       : Invisible_Command := Internal)
+      Mode       : Invisible_Command := Hidden)
    is
       No_Such_File_Regexp : Pattern_Matcher :=
         Compile ("No such file or directory.");
@@ -665,10 +665,35 @@ package body Debugger.Gdb is
 
       --  Detect the current language, and get the name and line of the
       --  initial file.
+
       Send (Debugger, "show lang", Mode => Internal);
       Send (Debugger, "list", Mode => Internal);
       Send (Debugger, "info line", Mode => Internal);
    end Set_Executable;
+
+   --------------------
+   -- Load_Core_File --
+   --------------------
+
+   procedure Load_Core_File
+     (Debugger : access Gdb_Debugger;
+      Core     : String;
+      Mode     : Invisible_Command := Hidden) is
+   begin
+      Set_Is_Started (Debugger, False);
+      Send (Debugger, "core " & Core, Mode => Mode);
+
+      --  Detect the current language, and get the name and line of the
+      --  current file.
+
+      Send (Debugger, "show lang", Mode => Internal);
+      Send (Debugger, "list", Mode => Internal);
+      Send (Debugger, "info line", Mode => Internal);
+
+      if Debugger.Window /= null then
+         Process_Stopped (Convert (Debugger.Window, Debugger));
+      end if;
+   end Load_Core_File;
 
    --------------------
    -- Attach_Process --

@@ -251,18 +251,6 @@ package Debugger is
    --  Return the value of the entity.
    --  GDB_COMMAND: "print"
 
-   procedure Set_Executable
-     (Debugger   : access Debugger_Root;
-      Executable : String;
-      Mode       : GVD.Types.Invisible_Command := GVD.Types.Internal)
-      is abstract;
-   --  Load an executable into the debugger.
-   --  Note that this can have a different meaning with some languages like
-   --  Java, where Executable should be the name of the main class.
-   --  Raises Executable_Not_Found when Executable could not be loaded in
-   --  the debugger.
-   --  GDB_COMMAND: "file"
-
    procedure Set_Variable
      (Debugger : access Debugger_Root;
       Var_Name : String;
@@ -341,6 +329,25 @@ package Debugger is
    --  history. If Internal or Hidden is passed for this parameter, the command
    --  is not shown in the command window associated with the debugger.
    --  Additionally, the command history is not updated for internal commands.
+
+   procedure Set_Executable
+     (Debugger   : access Debugger_Root;
+      Executable : String;
+      Mode       : GVD.Types.Invisible_Command := GVD.Types.Hidden)
+      is abstract;
+   --  Load an executable into the debugger.
+   --  Note that this can have a different meaning with some languages like
+   --  Java, where Executable should be the name of the main class.
+   --  Raises Executable_Not_Found when Executable could not be loaded in
+   --  the debugger.
+   --  GDB_COMMAND: "file"
+
+   procedure Load_Core_File
+     (Debugger : access Debugger_Root;
+      Core     : String;
+      Mode     : GVD.Types.Invisible_Command := GVD.Types.Hidden) is abstract;
+   --  Load a core file into the debugger.
+   --  GDB_COMMAND: "core"
 
    procedure Run
      (Debugger  : access Debugger_Root;
