@@ -27,6 +27,7 @@
 -----------------------------------------------------------------------
 
 with Gdk.Color;
+with Gdk.Font;
 with Glib.Properties;
 with Glib;
 with Default_Preferences; use Default_Preferences;
@@ -62,6 +63,9 @@ package Glide_Kernel.Preferences is
    function Get_Pref
      (Kernel : access Kernel_Handle_Record'Class;
       Pref   : Property_Color) return Gdk.Color.Gdk_Color;
+   function Get_Pref
+     (Kernel : access Kernel_Handle_Record'Class;
+      Pref   : Property_Font) return Gdk.Font.Gdk_Font;
    --  Return the value for a specific property.
    --  The colors and fonts have already been allocated when they are returned.
 
@@ -124,5 +128,17 @@ package Glide_Kernel.Preferences is
    Wizard_Title_Font : constant Glib.Properties.Property_String :=
      Register_Property ("Wizard:Title_Font", "helvetica bold oblique 14");
    --  Font to use for the title of the pages in the wizard
+
+   --------------
+   -- Browsers --
+   --------------
+
+   Browsers_Link_Font : constant Property_Font :=
+     Register_Property ("Browsers:Link_Font", "Helvetica 12");
+   --  Font used to draw the links in the items
+
+   Browsers_Link_Color : constant Property_Color :=
+     Register_Property ("Browsers:Link_Color", "#0000FF");
+   --  Color used to draw the links in the items
 
 end Glide_Kernel.Preferences;
