@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                         Copyright (C) 2001                        --
+--                      Copyright (C) 2001-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -66,6 +66,10 @@ package OS_Utils is
    procedure Uninstall_Ctrl_C_Handler;
    --  Reinstall the standard Control-C handler.
    --  If Install_Handler has never been called, this procedure has no effect.
+
+   function Get_Tmp_Dir return String;
+   --  Return a string representing a valid directory that can be used to
+   --  create temporary files.
 
 private
    pragma Import (C, Install_Ctrl_C_Handler, "__gnat_install_int_handler");

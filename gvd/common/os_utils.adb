@@ -29,6 +29,47 @@ package body OS_Utils is
 
    OpenVMS_Host : Boolean := False;
 
+   -----------------
+   -- Get_Tmp_Dir --
+   -----------------
+
+   function Get_Tmp_Dir return String is
+      S : String_Access;
+   begin
+      --  Try in the following order:
+      --  TMPDIR env var
+      --  TEMP env var
+      --  system specific function (GetWindows () & "\Temp" under Windows)
+      --  ??? not implemented yet
+      --  if the above failed, fall back to /tmp
+
+      S := Getenv ("TMPDIR");
+
+      if S.all /= "" then
+         declare
+            Val : constant String := S.all;
+         begin
+            Free (S);
+            return Val;
+         end;
+      end if;
+
+      Free (S);
+      S := Getenv ("TEMP");
+
+      if S.all /= "" then
+         declare
+            Val : constant String := S.all;
+         begin
+            Free (S);
+            return Val;
+         end;
+      end if;
+
+      Free (S);
+      return "/tmp";
+   end Get_Tmp_Dir;
+
    -------------------------
    -- Executable_Location --
    -------------------------
@@ -45,8 +86,7 @@ package body OS_Utils is
       --  S is the executable name preceeded by the absolute or relative
       --  path, e.g. "c:\usr\bin\gcc.exe" or "..\bin\gcc". Returns the absolute
       --  or relative directory where "bin" lies (in the example "C:\usr"
-      --  or ".."). If the executable is not a a "bin" directory halt the
-      --  program and issue an error.
+      --  or ".."). If the executable is not a "bin" directory, return "".
 
       ---------------------
       -- Get_Install_Dir --
