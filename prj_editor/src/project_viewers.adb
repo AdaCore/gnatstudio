@@ -35,6 +35,7 @@ with Gtk.Enums;                    use Gtk.Enums;
 with Gtk.Event_Box;                use Gtk.Event_Box;
 with Gtk.Frame;                    use Gtk.Frame;
 with Gtk.GEntry;                   use Gtk.GEntry;
+with Gtk.Handlers;
 with Gtk.Label;                    use Gtk.Label;
 with Gtk.List_Store;               use Gtk.List_Store;
 with Gtk.Menu;                     use Gtk.Menu;
@@ -58,11 +59,14 @@ with Gtkada.File_Selector;         use Gtkada.File_Selector;
 with Ada.Exceptions;            use Ada.Exceptions;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Ada.Unchecked_Deallocation;
+with Ada.Characters.Handling;   use Ada.Characters.Handling;
 with System;
 
 with Basic_Types;              use Basic_Types;
 with String_Utils;
 with Prj;
+with Shell;                    use Shell;
 with Projects.Editor;          use Projects, Projects.Editor;
 with Projects.Registry;        use Projects.Registry;
 with Creation_Wizard;          use Creation_Wizard;
@@ -94,8 +98,34 @@ package body Project_Viewers is
 
    Me : constant Debug_Handle := Create ("Project_Viewers");
 
+   type Project_Editor_Page_Array is array (Natural range <>)
+     of Project_Editor_Page;
+   type Project_Editor_Page_Array_Access is access Project_Editor_Page_Array;
+
+   type Pages_Array is array (Natural range <>) of Switches_Page_Creator;
+   type Page_Array_Access is access Pages_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Pages_Array, Page_Array_Access);
+
+   type Naming_Page is record
+      Language : Name_Id;
+      Creator  : Naming_Scheme_Editor_Creator;
+   end record;
+
+   type Naming_Pages_Array is array (Natural range <>) of Naming_Page;
+   type Naming_Pages_Array_Access is access Naming_Pages_Array;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Naming_Pages_Array, Naming_Pages_Array_Access);
+
    type Prj_Editor_Module_Id_Record is new Module_ID_Record with record
       Reopen_Menu : Gtk.Menu_Item.Gtk_Menu_Item;
+
+      Project_Editor_Pages : Project_Editor_Page_Array_Access;
+      --  The pages to be added in the project properties editor and the
+      --  project creation wizard.
+
+      Switches_Pages       : Page_Array_Access;
+      Naming_Pages         : Naming_Pages_Array_Access;
    end record;
    type Prj_Editor_Module_Id_Access is access all
      Prj_Editor_Module_Id_Record'Class;
@@ -108,6 +138,58 @@ package body Project_Viewers is
    File_Name_Column         : constant := 0;
    Compiler_Switches_Column : constant := 1;
    Compiler_Color_Column    : constant := 2;
+
+   type Project_Viewer_Record is new Gtk.Box.Gtk_Hbox_Record with record
+      Tree  : Gtk.Tree_View.Gtk_Tree_View;
+      Model : Gtk.Tree_Store.Gtk_Tree_Store;
+      --  The actual contents of the viewer
+
+      Default_Switches_Color : Gdk.Color.Gdk_Color;
+      --  Color to use when displaying switches that are set at the project
+      --  level, rather than file specific
+
+      Kernel  : Glide_Kernel.Kernel_Handle;
+
+      View_Changed_Id : Gtk.Handlers.Handler_Id;
+      --  Id for the "project_view_changed" handler
+
+      Current_Project : Projects.Project_Type;
+      --  The project to which the files currently in the viewer belong. This
+      --  indicates which project file should be normalized when a modification
+      --  takes place.
+   end record;
+   type Project_Viewer is access all Project_Viewer_Record'Class;
+
+   procedure Gtk_New
+     (Viewer  : out Project_Viewer;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Create a new project viewer.
+   --  Every time the selection in Explorer changes, the info displayed in
+   --  the viewer is changed.
+
+   procedure Initialize
+     (Viewer : access Project_Viewer_Record'Class;
+      Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class);
+   --  Internal subprogram for creating widgets
+
+   procedure Show_Project
+     (Viewer              : access Project_Viewer_Record'Class;
+      Project_Filter      : Projects.Project_Type;
+      Directory_Filter    : String := "");
+   --  Shows all the direct source files of Project_Filter (ie not including
+   --  imported projects, but including all source directories).
+   --  This doesn't clear the list first!
+   --  Directory_Filter should be used to limit the search path for the files.
+   --  Only the files in Directory_Filter will be displayed.
+   --
+   --  Project_Filter mustn't be No_Project.
+
+   procedure Destroy (Module : in out Prj_Editor_Module_Id_Record);
+   --  Free the memory associated with the module
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Project_Editor_Page_Array, Project_Editor_Page_Array_Access);
+   --  Free the memory used by Pages
 
    procedure Refresh_Reopen_Menu (Kernel : access Kernel_Handle_Record'Class);
    --  Fill the reopen menu.
@@ -385,6 +467,29 @@ package body Project_Viewers is
 
    procedure Remove_Main_Unit (Editor : access Gtk_Widget_Record'Class);
    --  Remove the selected main units.
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Module : in out Prj_Editor_Module_Id_Record) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Project_Editor_Page_Record'Class, Project_Editor_Page);
+   begin
+      if Module.Project_Editor_Pages /= null then
+         for P in Module.Project_Editor_Pages'Range loop
+            Destroy (Module.Project_Editor_Pages (P).all);
+            Unchecked_Free (Module.Project_Editor_Pages (P));
+         end loop;
+
+         Unchecked_Free (Module.Project_Editor_Pages);
+      end if;
+
+      Unchecked_Free (Module.Switches_Pages);
+      Unchecked_Free (Module.Naming_Pages);
+
+      Destroy (Module_ID_Record (Module));
+   end Destroy;
 
    ---------------
    -- On_Reopen --
@@ -774,7 +879,7 @@ package body Project_Viewers is
    ------------------
 
    procedure Show_Project
-     (Viewer           : access Project_Viewer_Record;
+     (Viewer           : access Project_Viewer_Record'Class;
       Project_Filter   : Project_Type;
       Directory_Filter : String := "")
    is
@@ -2282,6 +2387,279 @@ package body Project_Viewers is
          Refresh_Reopen_Menu (Kernel);
       end if;
    end On_Project_Changed;
+
+   -------------
+   -- Destroy --
+   -------------
+
+   procedure Destroy (Page : in out Project_Editor_Page_Record) is
+   begin
+      Free (Page.Label);
+      Free (Page.Toc);
+      Free (Page.Title);
+   end Destroy;
+
+   -------------
+   -- Refresh --
+   -------------
+
+   procedure Refresh
+     (Page      : access Project_Editor_Page_Record;
+      Widget    : access Gtk.Widget.Gtk_Widget_Record'Class;
+      Project   : Project_Type := No_Project;
+      Languages : Argument_List)
+   is
+      pragma Unreferenced (Page, Widget, Project, Languages);
+   begin
+      null;
+   end Refresh;
+
+   ---------------
+   -- Get_Label --
+   ---------------
+
+   function Get_Label (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Label.all;
+   end Get_Label;
+
+   -------------
+   -- Get_Toc --
+   -------------
+
+   function Get_Toc (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Toc.all;
+   end Get_Toc;
+
+   ---------------
+   -- Get_Title --
+   ---------------
+
+   function Get_Title (Page : access Project_Editor_Page_Record'Class)
+      return String is
+   begin
+      return Page.Title.all;
+   end Get_Title;
+
+   ---------------
+   -- Get_Flags --
+   ---------------
+
+   function Get_Flags (Page : access Project_Editor_Page_Record'Class)
+      return Selector_Flags is
+   begin
+      return Page.Flags;
+   end Get_Flags;
+
+   ----------------------------------
+   -- Register_Project_Editor_Page --
+   ----------------------------------
+
+   procedure Register_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class;
+      Page   : Project_Editor_Page;
+      Label  : String;
+      Toc    : String;
+      Title  : String;
+      Flags     : Selector_Flags := Multiple_Projects or Multiple_Scenarios;
+      Ref_Page  : String := "";
+      Add_After : Boolean := True)
+   is
+      pragma Unreferenced (Kernel);
+      Tmp : Project_Editor_Page_Array_Access;
+      Pos : Natural;
+   begin
+      if Prj_Editor_Module_ID = null then
+         Trace (Me, "Register_Project_Editor_Page: module not registered");
+         return;
+      end if;
+
+      Tmp := Prj_Editor_Module_ID.Project_Editor_Pages;
+
+      if Tmp = null then
+         Prj_Editor_Module_ID.Project_Editor_Pages :=
+           new Project_Editor_Page_Array (1 .. 1);
+      else
+         Prj_Editor_Module_ID.Project_Editor_Pages :=
+           new Project_Editor_Page_Array (Tmp'First .. Tmp'Last + 1);
+         Prj_Editor_Module_ID.Project_Editor_Pages (Tmp'Range) := Tmp.all;
+         Unchecked_Free (Tmp);
+      end if;
+
+      Page.Flags := Flags;
+      Page.Label := new String'(Label);
+      Page.Toc   := new String'(Toc);
+      Page.Title := new String'(Title);
+
+      Tmp := Prj_Editor_Module_ID.Project_Editor_Pages;
+
+      Pos := Tmp'Last;
+
+      if Ref_Page /= "" then
+         for J in Tmp'First .. Tmp'Last - 1 loop
+            if Tmp (J).Label.all = Ref_Page then
+               if Add_After then
+                  Pos := J + 1;
+               elsif J > Tmp'First then
+                  Pos := J - 1;
+               else
+                  Pos := J;
+               end if;
+               exit;
+            end if;
+         end loop;
+      end if;
+
+      Tmp (Pos + 1 .. Tmp'Last) := Tmp (Pos .. Tmp'Last - 1);
+      Tmp (Pos) := Page;
+   end Register_Project_Editor_Page;
+
+   --------------------------------
+   -- Project_Editor_Pages_Count --
+   --------------------------------
+
+   function Project_Editor_Pages_Count
+     (Kernel : access Kernel_Handle_Record'Class) return Natural
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Prj_Editor_Module_ID.Project_Editor_Pages = null then
+         return 0;
+      else
+         return Prj_Editor_Module_ID.Project_Editor_Pages'Length;
+      end if;
+   end Project_Editor_Pages_Count;
+
+   ---------------------------------
+   -- Get_Nth_Project_Editor_Page --
+   ---------------------------------
+
+   function Get_Nth_Project_Editor_Page
+     (Kernel : access Kernel_Handle_Record'Class; Num : Natural)
+      return Project_Editor_Page
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Prj_Editor_Module_ID.Project_Editor_Pages /= null
+        and then Num <= Prj_Editor_Module_ID.Project_Editor_Pages'Length
+      then
+         return Prj_Editor_Module_ID.Project_Editor_Pages
+           (Prj_Editor_Module_ID.Project_Editor_Pages'First + Num - 1);
+      end if;
+      return null;
+   end Get_Nth_Project_Editor_Page;
+
+   ----------------------------
+   -- Register_Switches_Page --
+   ----------------------------
+
+   procedure Register_Switches_Page
+     (Kernel  : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Creator : Switches_Page_Creator)
+   is
+      pragma Unreferenced (Kernel);
+      Tmp : Page_Array_Access;
+   begin
+      if Prj_Editor_Module_ID /= null then
+         if Prj_Editor_Module_ID.Switches_Pages = null then
+            Prj_Editor_Module_ID.Switches_Pages :=
+              new Pages_Array'(1 => Creator);
+         else
+            Tmp := Prj_Editor_Module_ID.Switches_Pages;
+            Prj_Editor_Module_ID.Switches_Pages := new Pages_Array'
+              (Tmp.all & Creator);
+            Unchecked_Free (Tmp);
+         end if;
+      else
+         Trace (Me, "Register_Switches_Page: module not registered");
+      end if;
+   end Register_Switches_Page;
+
+   ---------------------------
+   -- Get_Nth_Switches_Page --
+   ---------------------------
+
+   function Get_Nth_Switches_Page
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Editor : access Switches_Editors.Switches_Edit_Record'Class;
+      Num    : Positive)
+      return Switches_Editors.Switches_Editor_Page is
+   begin
+      if Prj_Editor_Module_ID.Switches_Pages = null
+        or else Num not in Prj_Editor_Module_ID.Switches_Pages'Range
+      then
+         return null;
+      else
+         return Prj_Editor_Module_ID.Switches_Pages (Num) (Kernel, Editor);
+      end if;
+   end Get_Nth_Switches_Page;
+
+   -------------------------
+   -- Switches_Page_Count --
+   -------------------------
+
+   function Switches_Page_Count
+     (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) return Natural
+   is
+      pragma Unreferenced (Kernel);
+   begin
+      if Prj_Editor_Module_ID.Switches_Pages = null then
+         return 0;
+      else
+         return Prj_Editor_Module_ID.Switches_Pages'Length;
+      end if;
+   end Switches_Page_Count;
+
+   -----------------------------------
+   -- Register_Naming_Scheme_Editor --
+   -----------------------------------
+
+   procedure Register_Naming_Scheme_Editor
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Language : String;
+      Creator  : Naming_Scheme_Editor_Creator)
+   is
+      pragma Unreferenced (Kernel);
+      Tmp : Naming_Pages_Array_Access;
+      Lang : constant Name_Id := Get_String (To_Lower (Language));
+   begin
+      if Prj_Editor_Module_ID /= null then
+         if Prj_Editor_Module_ID.Naming_Pages = null then
+            Prj_Editor_Module_ID.Naming_Pages :=
+              new Naming_Pages_Array'(1 => (Lang, Creator));
+         else
+            Tmp := Prj_Editor_Module_ID.Naming_Pages;
+            Prj_Editor_Module_ID.Naming_Pages := new Naming_Pages_Array'
+              (Tmp.all & Naming_Page'(Lang, Creator));
+            Unchecked_Free (Tmp);
+         end if;
+      else
+         Trace (Me, "Register_Naming_Scheme_Editor: module not registered");
+      end if;
+   end Register_Naming_Scheme_Editor;
+
+   ----------------------------
+   -- Get_Naming_Scheme_Page --
+   ----------------------------
+
+   function Get_Naming_Scheme_Page
+     (Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class;
+      Language : String) return Naming_Editors.Language_Naming_Editor
+   is
+      Lang : constant Name_Id := Get_String (To_Lower (Language));
+   begin
+      if Prj_Editor_Module_ID.Naming_Pages /= null then
+         for Num in Prj_Editor_Module_ID.Naming_Pages'Range loop
+            if Prj_Editor_Module_ID.Naming_Pages (Num).Language = Lang then
+               return Prj_Editor_Module_ID.Naming_Pages (Num).Creator (Kernel);
+            end if;
+         end loop;
+      end if;
+      return null;
+   end Get_Naming_Scheme_Page;
 
    ---------------------
    -- Register_Module --
