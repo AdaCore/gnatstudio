@@ -353,7 +353,7 @@ begin
    Set_Shadow_Type (General_Preferences.Frame3, Shadow_Etched_In);
    Add (General_Preferences.Notebook1, General_Preferences.Frame3);
 
-   Gtk_New (General_Preferences.Table3, 11, 4, False);
+   Gtk_New (General_Preferences.Table3, 12, 4, False);
    Set_Row_Spacings (General_Preferences.Table3, 2);
    Set_Col_Spacings (General_Preferences.Table3, 2);
    Add (General_Preferences.Frame3, General_Preferences.Table3);
@@ -595,6 +595,12 @@ begin
    Gtk_New (General_Preferences.Separate_Data_Check, -"Separate Window");
    Set_Active (General_Preferences.Separate_Data_Check, False);
    Attach (General_Preferences.Table3, General_Preferences.Separate_Data_Check, 2, 4, 3, 4,
+     Fill, 0,
+     0, 0);
+
+   Gtk_New (General_Preferences.Show_Stack_Check, -"Show Call Stack");
+   Set_Active (General_Preferences.Show_Stack_Check, False);
+   Attach (General_Preferences.Table3, General_Preferences.Show_Stack_Check, 0, 2, 11, 12,
      Fill, 0,
      0, 0);
 
