@@ -9,6 +9,7 @@ with "../aunit/aunit";
 with "../vdiff/vdiff";
 with "../browsers/browsers";
 with "../vcs/vcs";
+with "../metrics/metrics";
 
 project Glide is
 
