@@ -4676,50 +4676,53 @@ package body Src_Editor_Buffer is
       --  Add Str to the result string, Last_Line is set to true if Str is
       --  the last line content.
 
+      procedure Add (Str : String);
+      pragma Inline (Add);
+      --  Add Str to the result string
+
+      procedure Add_EOL;
+      --  Add LF to the result string
+
+      function Is_Empty (Line : Src_String) return Boolean;
+      --  Returns True if Line is empty (no content or only spaces/HT)
+
+      ---------
+      -- Add --
+      ---------
+
+      procedure Add (Str : String) is
+      begin
+         Append (New_Text, Str);
+
+         for K in Str'Range loop
+            if Str (K) = ASCII.HT then
+               Line_Size := Line_Size + 8;
+            else
+               Line_Size := Line_Size + 1;
+            end if;
+         end loop;
+      end Add;
+
+      -------------
+      -- Add_EOL --
+      -------------
+
+      procedure Add_EOL is
+      begin
+         Add ((1 => ASCII.LF));
+         Is_Start := True;
+         Line_Size := 0;
+      end Add_EOL;
+
       ----------------
       -- Add_Result --
       ----------------
 
       procedure Add_Result (Str : String) is
 
-         procedure Add (Str : String);
-         pragma Inline (Add);
-         --  Add Str to the result string
-
          procedure Add_Word (Word : String);
          --  Add Word to the result string, properly insert a new-line if
          --  line goes over the right margin.
-
-         procedure Add_EOL;
-         --  Add LF to the result string
-
-         ---------
-         -- Add --
-         ---------
-
-         procedure Add (Str : String) is
-         begin
-            Append (New_Text, Str);
-
-            for K in Str'Range loop
-               if Str (K) = ASCII.HT then
-                  Line_Size := Line_Size + 8;
-               else
-                  Line_Size := Line_Size + 1;
-               end if;
-            end loop;
-         end Add;
-
-         -------------
-         -- Add_EOL --
-         -------------
-
-         procedure Add_EOL is
-         begin
-            Add ((1 => ASCII.LF));
-            Is_Start := True;
-            Line_Size := 0;
-         end Add_EOL;
 
          --------------
          -- Add_Word --
@@ -4787,24 +4790,56 @@ package body Src_Editor_Buffer is
       begin
          F := Str'First;
 
-         while F < Str'Last loop
-            --  Skip spaces and HT
+         --  Skip spaces and HT
 
-            while F < Str'Last
-              and then (Str (F) = ' ' or else Str (F) = ASCII.HT)
-            loop
-               F := F + 1;
+         while F < Str'Last
+           and then (Str (F) = ' ' or else Str (F) = ASCII.HT)
+         loop
+            F := F + 1;
+         end loop;
+
+         --  Skip comment separator
+
+         if Sep /= null
+           and then F + Sep'Length - 1 <= Str'Last
+           and then Str (F .. F + Sep'Length - 1) = Sep.all
+         then
+            F := F + Sep'Length;
+         end if;
+
+         --  Is there something remaining
+
+         declare
+            Is_Empty : Boolean := True;
+            --  True if only spaces or HT remaining on the line
+            N        : Natural := 0;
+            --  Number of spaces after the comment separator if any
+         begin
+            for K in F .. Str'Last loop
+               if Str (K) /= ' ' and then Str (K) /= ASCII.HT then
+                  Is_Empty := False;
+                  exit;
+               end if;
+               N := N + 1;
             end loop;
 
-            --  Skip comment separator
+            if Is_Empty then
+               --  No word found, we want to keep the current empty comment
+               --  line as-is.
+               Add_EOL; --  Terminate current line
+               Add_Word ("");
+               Add_EOL;
 
-            if Sep /= null
-              and then F + Sep'Length <= Str'Last
-              and then Str (F .. F + Sep'Length - 1) = Sep.all
-            then
-               F := F + Sep'Length;
+            else
+               --  There is something after, record the new indent level
+               --  inside the comment.
+               After := N;
             end if;
+         end;
 
+         --  Read all words on the line
+
+         while F < Str'Last loop
             --  Skip spaces
 
             while F < Str'Last and then Str (F) = ' ' loop
@@ -4915,6 +4950,32 @@ package body Src_Editor_Buffer is
          end;
       end Analyse_Line;
 
+      --------------
+      -- Is_Empty --
+      --------------
+
+      function Is_Empty (Line : Src_String) return Boolean is
+
+         function Only_Spaces return Boolean;
+         --  Return True is Line contains only spaces or HT
+
+         function Only_Spaces return Boolean is
+            Result : Boolean := True;
+         begin
+            for K in 1 .. Line.Length loop
+               if Line.Contents (K) /= ' '
+                 or else Line.Contents (K) /= ASCII.HT
+               then
+                  Result := False;
+               end if;
+            end loop;
+            return Result;
+         end Only_Spaces;
+
+      begin
+         return Line.Contents = null or else Only_Spaces;
+      end Is_Empty;
+
    begin -- Do_Refill
       declare
          Result : Boolean;
@@ -4962,7 +5023,11 @@ package body Src_Editor_Buffer is
          declare
             Line : constant Src_String := Get_String (Buffer, K);
          begin
-            if Line.Contents /= null then
+            if Is_Empty (Line) then
+               --  Terminate current line and skip one line
+               Add_EOL;
+               Add_EOL;
+            else
                Add_Result (Line.Contents (1 .. Line.Length));
             end if;
          end;
@@ -4970,7 +5035,7 @@ package body Src_Editor_Buffer is
 
       --  Add final LF
 
-      Append (New_Text, String'(1 => ASCII.LF));
+      Add_EOL;
 
       --  Replace text with the new one
 
