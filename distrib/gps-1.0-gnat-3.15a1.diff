@@ -49,14 +49,20 @@ Index: common/src/stubs.c
     hostparm.ads \
     krunch.ads \
 *** gps-1.0.0/glide/gps.gpr	Wed Apr 24 11:15:52 2002
---- glide/gps.gpr	Thu May 30 18:29:52 2002
+--- glide/gps.gpr	Thu Jul 11 16:07:25 2002
 ***************
-*** 31,37 ****
-     package Builder is
-        for Default_Switches ("Ada") use ("-m", "-a", "-g", "-gnatQ");
+*** 34,46 ****
+             for Default_Switches ("Ada") use
+               ("-m", "-a", "-g", "-gnata", "-gnatVa", "-gnatQ", 
+                "-gnatwk", "-gnatwr", "-j2");
+-            for Global_Configuration_Pragmas use "gnat_debug.adc";
   
--       for Global_Configuration_Pragmas use "gnat.adc";
+           when others =>
+             for Default_Switches ("Ada") use
+               ("-m", "-a", "-g", "-gnatQ", 
+                "-gnatwk", "-gnatwr", "-j2");
+-            for Global_Configuration_Pragmas use "gnat.adc";
+        end case;
      end Builder;
   
-     package Compiler is
---- 31,36 ----
+--- 34,44 ----
