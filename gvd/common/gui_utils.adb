@@ -75,6 +75,8 @@ with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Exceptions;           use Ada.Exceptions;
 with Traces;                   use Traces;
 
+with GVD;                      use GVD;
+
 package body GUI_Utils is
 
    Me : constant Debug_Handle := Create ("GUI_Utils");
@@ -416,9 +418,22 @@ package body GUI_Utils is
 
             Grab_Focus (Widget);
             Show_All (Menu);
-            Popup (Menu,
-                   Button        => Gdk.Event.Get_Button (Event),
-                   Activate_Time => Gdk.Event.Get_Time (Event));
+
+            --  Here we are calling Popup with an Activate_Time 200ms after
+            --  the event time. This works around a bug under Windows that
+            --  causes the menu to disappear on a click when there are too
+            --  many entries.
+
+            if Host = Windows then
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+            else
+               Popup (Menu,
+                      Button        => Gdk.Event.Get_Button (Event),
+                      Activate_Time => Gdk.Event.Get_Time (Event));
+            end if;
+
             Emit_Stop_By_Name (Widget, "button_press_event");
             return True;
          end if;
@@ -577,9 +592,16 @@ package body GUI_Utils is
                --  causes the menu to disappear on a click when there are too
                --  many entries.
 
-               Popup (Menu,
-                      Button        => Gdk.Event.Get_Button (Event),
-                      Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+               if Host = Windows then
+                  Popup (Menu,
+                         Button        => Gdk.Event.Get_Button (Event),
+                         Activate_Time => Gdk.Event.Get_Time (Event) + 200);
+               else
+                  Popup (Menu,
+                         Button        => Gdk.Event.Get_Button (Event),
+                         Activate_Time => Gdk.Event.Get_Time (Event));
+               end if;
+
                Emit_Stop_By_Name (Widget, "button_press_event");
                return True;
             end if;
