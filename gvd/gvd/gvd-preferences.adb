@@ -26,13 +26,12 @@ with Gtk.GEntry;              use Gtk.GEntry;
 with Gtk.Extra.Font_Combo;    use Gtk.Extra.Font_Combo;
 with Gdk.Color;               use Gdk.Color;
 with Gtk.Combo;               use Gtk.Combo;
-with Gtk.Label;               use Gtk.Label;
 with Gtk.Check_Button;        use Gtk.Check_Button;
 with Gtk.Spin_Button;         use Gtk.Spin_Button;
 with Gtk.Toggle_Button;       use Gtk.Toggle_Button;
-with Gtk.Radio_Button;        use Gtk.Radio_Button;
 with GVD.Color_Combo;         use GVD.Color_Combo;
 with Ada.Integer_Text_IO;     use Ada.Integer_Text_IO;
+with Ada.Strings.Fixed;       use Ada.Strings.Fixed;
 
 package body GVD.Preferences is
 
@@ -325,10 +324,13 @@ package body GVD.Preferences is
       end if;
 
       Set (Hide_Delay, Guint' (5000));
+      Set (String (Ada_Extensions), ".ads;.adb;.ada;.a;.dg");
+      Set (String (C_Extensions), ".c;.h");
+      Set (String (Cpp_Extensions), ".cc;.cpp;.C;.hh;.H");
+
       Set (Display_Explorer, True);
       Set (String (File_Name_Bg_Color), "#BEBEBE");
       Set (String (Editor_Font), "Courier");
-      Set (String (Editor_Mode), "Source_Only");
       Set (Editor_Font_Size, Gint' (12));
       Set (Editor_Show_Line_Nums, True);
       Set (Editor_Show_Line_With_Code, True);
@@ -394,20 +396,17 @@ package body GVD.Preferences is
 
    procedure Fill_Dialog (Dialog : General_Preferences_Access) is
    begin
-      --  Automatic display of button hints
-      Set_Sensitive (Dialog.Label13, False);
-      Set_Sensitive (Dialog.Button_Hint_Popup_Check, False);
-      Set_Sensitive (Dialog.Button_Hint_Status_Check, False);
-
-      --  Warn if multiple instances of GVD are running
-      Set_Sensitive (Dialog.Warn_Multiple_Check, False);
-
       --  Break on exception
       Set_Sensitive (Dialog.Break_Exception_Check, False);
 
       --  Status bar timeout
       Set_Text (Dialog.Statusbar_Timeout_Entry,
-                Guint'Image (Get_Pref (Hide_Delay)));
+                Trim (Guint'Image (Get_Pref (Hide_Delay)), Ada.Strings.Left));
+
+      --  Language Extensions
+      Set_Text (Dialog.Ada_Extensions_Entry, Get_Pref (Ada_Extensions));
+      Set_Text (Dialog.C_Extensions_Entry, Get_Pref (C_Extensions));
+      Set_Text (Dialog.Cpp_Extensions_Entry, Get_Pref (Cpp_Extensions));
 
       --  Display Explorer Tree
       Set_Active (Dialog.Display_Explorer_Check, Get_Pref (Display_Explorer));
@@ -425,14 +424,6 @@ package body GVD.Preferences is
          Height => Get_Pref (Editor_Font_Size));
       Hide (Get_Bold_Button (Dialog.Editor_Font_Combo));
       Hide (Get_Italic_Button (Dialog.Editor_Font_Combo));
-
-      if Get_Pref (Editor_Mode) = "Source_Only" then
-         Set_Active (Dialog.Show_Source, True);
-      elsif Get_Pref (Editor_Mode) = "Asm_Only" then
-         Set_Active (Dialog.Show_Asm, True);
-      else
-         Set_Active (Dialog.Show_Asm_Source, True);
-      end if;
 
       --  Show line numbers
       Set_Active
@@ -571,30 +562,29 @@ package body GVD.Preferences is
    procedure Set_From_Dialog
      (Dialog : General_Preferences_Pkg.General_Preferences_Access) is
    begin
+      Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
+           True);
+      Set (String (Ada_Extensions),
+           Get_Chars (Dialog.Ada_Extensions_Entry), True);
+      Set (String (C_Extensions), Get_Chars (Dialog.C_Extensions_Entry), True);
+      Set (String (Cpp_Extensions),
+           Get_Chars (Dialog.Cpp_Extensions_Entry), True);
+
+      Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
+      Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
+      Set (Editor_Font, Editor_Font_Size, Dialog.Editor_Font_Combo, True);
+
+      Set (Editor_Show_Line_Nums, Get_Active (Dialog.Show_Line_Numbers_Check),
+           True);
+      Set (Editor_Show_Line_With_Code,
+           Get_Active (Dialog.Show_Lines_Code_Check), True);
+
       if Get_Active (Dialog.Tooltips_Check) then
          Set (Tooltips_In_Source, Simple, True);
       else
          Set (Tooltips_In_Source, None, True);
       end if;
 
-      Set (Hide_Delay, Guint'Value (Get_Text (Dialog.Statusbar_Timeout_Entry)),
-           True);
-      Set (Display_Explorer, Get_Active (Dialog.Display_Explorer_Check), True);
-      Set (File_Name_Bg_Color, Get_Color (Dialog.File_Name_Bg_Combo), True);
-      Set (Editor_Font, Editor_Font_Size, Dialog.Editor_Font_Combo, True);
-
-      if Get_Active (Dialog.Show_Source) then
-         Set ("Editor_Mode", "Source_Only", True);
-      elsif Get_Active (Dialog.Show_Asm) then
-         Set ("Editor_Mode", "Asm_Only", True);
-      else
-         Set ("Editor_Mode", "Source_Asm", True);
-      end if;
-
-      Set (Editor_Show_Line_Nums, Get_Active (Dialog.Show_Line_Numbers_Check),
-           True);
-      Set (Editor_Show_Line_With_Code,
-           Get_Active (Dialog.Show_Lines_Code_Check), True);
       Set (Do_Color_Highlighting, Get_Active (Dialog.Syntax_Highlight_Check),
            True);
       Set (Should_Strip_CR, Get_Active (Dialog.Strip_Cr_Check), True);
