@@ -17,8 +17,8 @@
   
      for Source_Dirs use ();
   
---- gps.gpr	21 Oct 2004 15:05:13 -0000	1.65
-+++ gps.gpr	2 Nov 2004 17:08:37 -0000
+--- glide/gps.gpr	21 Oct 2004 15:05:13 -0000	1.65
++++ glide/gps.gpr	2 Nov 2004 17:08:37 -0000
 @@ -39,11 +39,9 @@
        case Shared.Build is
           when "Debug" =>
