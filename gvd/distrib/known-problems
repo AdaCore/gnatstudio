@@ -1,5 +1,12 @@
 Known Problems fixed in GVD 1.0.2
 
+- Cancel in File->Open Program does not work properly
+  Problem:    Hitting the 'Cancel' button causes GVD to ask the debugger
+              to open the '' program. One symptom is, when a program was
+              already open, a question from gdb asking whether the symbols
+              from the previous program should be discarded.
+  Workaround: Do not press on the 'Cancel' button :-)
+
 - [8408-001] Attach command in the debugger window does not start gvd properly
   Problem:    When typing the attach, load or add-symbol-file command in the
               debugger window, some functionalities like 'Display Files in
