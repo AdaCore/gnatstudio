@@ -1457,10 +1457,9 @@ package body Glide_Kernel.Modules is
       Column_End        : Natural := 0;
       Enable_Navigation : Boolean := True;
       New_File          : Boolean := True;
-      Force_Reload      : Boolean := False;
-      Dock              : Gtkada.MDI.Dock_Side := Gtkada.MDI.None)
+      Force_Reload      : Boolean := False)
    is
-      Value      : GValue_Array (1 .. 8);
+      Value      : GValue_Array (1 .. 7);
 
    begin
       if Enable_Navigation then
@@ -1498,9 +1497,6 @@ package body Glide_Kernel.Modules is
       Init (Value (7), Glib.GType_Boolean);
       Set_Boolean (Value (7), Force_Reload);
 
-      Init (Value (8), Glib.GType_Int);
-      Set_Int (Value (8), Dock_Side'Pos (Dock));
-
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
       end if;
@@ -1518,7 +1514,7 @@ package body Glide_Kernel.Modules is
      (Kernel   : access Kernel_Handle_Record'Class;
       Filename : Virtual_File)
    is
-      Value : GValue_Array (1 .. 8);
+      Value : GValue_Array (1 .. 7);
    begin
       Set_File (Value (1), Filename);
 
@@ -1539,9 +1535,6 @@ package body Glide_Kernel.Modules is
 
       Init (Value (7), Glib.GType_Boolean);
       Set_Boolean (Value (7), False);
-
-      Init (Value (8), Glib.GType_Int);
-      Set_Int (Value (8), 1);
 
       if not Mime_Action (Kernel, Mime_Source_File, Value) then
          Trace (Me, "No file editor was registered");
