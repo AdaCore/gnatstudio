@@ -71,3 +71,5 @@ New features in GPS 2.0.0
   commit, from this file if present.
 
 - Add function name, under the current cursor location, into the status bar.
+
+- Add support for casing exceptions for non case sensitive languages.
