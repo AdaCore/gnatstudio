@@ -1832,6 +1832,7 @@ package body Entities.Queries is
       Iter.EL := Get (Iter.Iter);
 
       if Iter.EL = null then
+         Iter.Processing_Entities := False;
          Next (Iter);
       else
          Iter.Index_In_EL := Entity_Information_Arrays.First;
