@@ -2367,7 +2367,7 @@ package body VCS_View_API is
       Files := Get_Source_Files (Project, Recursive);
 
       for J in reverse Files.all'Range loop
-         String_List.Prepend (Result, Base_Name (Files (J)));
+         String_List.Prepend (Result, Full_Name (Files (J)));
       end loop;
 
       Unchecked_Free (Files);
