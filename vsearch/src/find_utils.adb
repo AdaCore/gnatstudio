@@ -38,6 +38,7 @@ with GNAT.Regexp;             use GNAT.Regexp;
 with GNAT.OS_Lib;             use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Language;                use Language;
+with Language_Handlers;       use Language_Handlers;
 with OS_Utils;                use OS_Utils;
 
 package body Find_Utils is
@@ -82,6 +83,7 @@ package body Find_Utils is
 
    procedure Scan_File
      (Context  : access Search_Context'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
       Name     : String;
       Callback : Scan_Callback);
    --  Search Context in the file Name, searching only in the appropriate
@@ -302,6 +304,7 @@ package body Find_Utils is
 
    procedure Scan_File
      (Context  : access Search_Context'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
       Name     : String;
       Callback : Scan_Callback)
    is
@@ -462,8 +465,7 @@ package body Find_Utils is
       --  ??? Would be nice to handle backward search, which is extremely hard
       --  with regular expressions
 
-      --  ??? We should use the naming scheme to find the actual language
-      Lang := Get_Language_From_File (Name);
+      Lang := Get_Language_From_File (Get_Language_Handler (Kernel), Name);
 
       if FD = Invalid_FD then
          return;
@@ -562,7 +564,6 @@ package body Find_Utils is
       Kernel   : access Kernel_Handle_Record'Class;
       Name : String) return Match_Result_Array_Access
    is
-      pragma Unreferenced (Kernel);
       Result : Match_Result_Array_Access := null;
       Count  : Natural := 0;
 
@@ -594,7 +595,7 @@ package body Find_Utils is
       end Callback;
 
    begin
-      Scan_File (Context, Name, Callback'Unrestricted_Access);
+      Scan_File (Context, Kernel, Name, Callback'Unrestricted_Access);
       return Result;
    end Scan_File_And_Store;
 
