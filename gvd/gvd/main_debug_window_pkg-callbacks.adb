@@ -33,6 +33,8 @@ with Process_Proxies;     use Process_Proxies;
 with Language;            use Language;
 with Breakpoints_Pkg;     use Breakpoints_Pkg;
 with Odd.Types;
+with Odd.Process;         use Odd.Process;
+with GNAT.Expect;         use GNAT.Expect;
 
 package body Main_Debug_Window_Pkg.Callbacks is
 
@@ -501,7 +503,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
          return;
       end if;
 
+      Set_Busy_Cursor (Tab, True);
       Run (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Run1_Activate;
 
    ----------------------------
@@ -524,7 +528,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       Start (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Start1_Activate;
 
    ------------------------------------------
@@ -547,7 +553,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       Step_Into (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Step1_Activate;
 
    -----------------------------------
@@ -557,8 +565,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Step_Instruction1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       null;
+      Set_Busy_Cursor (Tab, False);
    end On_Step_Instruction1_Activate;
 
    -----------------------
@@ -570,7 +581,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       Step_Over (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Next1_Activate;
 
    -----------------------------------
@@ -580,8 +593,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Next_Instruction1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       null;
+      Set_Busy_Cursor (Tab, False);
    end On_Next_Instruction1_Activate;
 
    ------------------------
@@ -591,8 +607,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Until1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       null;
+      Set_Busy_Cursor (Tab, False);
    end On_Until1_Activate;
 
    -------------------------
@@ -604,7 +623,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       Finish (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Finish1_Activate;
 
    ---------------------------
@@ -616,7 +637,9 @@ package body Main_Debug_Window_Pkg.Callbacks is
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
    begin
+      Set_Busy_Cursor (Tab, True);
       Continue (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Continue1_Activate;
 
    ------------------------------------------
@@ -649,8 +672,29 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       Tab : Debugger_Process_Tab := Get_Current_Process (Object);
+      Tmp   : Boolean;
    begin
+      --  Give some visual feedback to the user
+      Text_Output_Handler (Tab, "<^C>" & ASCII.LF, Is_Command => True);
+
+      --  Process the events so as to show the text.
+      while Gtk.Main.Events_Pending loop
+         Tmp := Gtk.Main.Main_Iteration;
+      end loop;
+
+      --  Empty all the buffers to avoid waiting for a long time that all
+      --  the output is processed.
       Interrupt (Tab.Debugger);
+      Flush (Get_Descriptor (Get_Process (Tab.Debugger)).all, Timeout => 500);
+
+      --  Make sure a final prompt is displayed for the user.
+      --  If we are already processing a command (such as "run"), that command
+      --  is already waiting for the prompt, and we don't need to do it.
+      --  Otherwise, we need to do it ourselves, so that the new prompt
+      --  appears as well.
+      Display_Prompt (Tab.Debugger,
+         Wait_For_Prompt =>
+           not Command_In_Process (Get_Process (Tab.Debugger)));
    end On_Interrupt1_Activate;
 
    ------------------------
@@ -1254,9 +1298,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Stack_Up (Process.Debugger, True);
+      Set_Busy_Cursor (Tab, True);
+      Stack_Up (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Up1_Activate;
 
    -----------------------
@@ -1267,9 +1313,11 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Process : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
    begin
-      Stack_Down (Process.Debugger, True);
+      Set_Busy_Cursor (Tab, True);
+      Stack_Down (Tab.Debugger, True);
+      Set_Busy_Cursor (Tab, False);
    end On_Down1_Activate;
 
 end Main_Debug_Window_Pkg.Callbacks;
