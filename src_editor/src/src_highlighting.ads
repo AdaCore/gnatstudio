@@ -29,10 +29,12 @@
 
 --  <description>
 --  This package provides some data types and some services to help
---  in the syntax highlighting processing.
+--  in the source highlighting processing (syntax highlighting, but
+--  also line or word highlighting, etc).
 --  </description>
 
 with Gtk.Text_Tag;
+with Pango.Enums;
 
 with Language;
 
@@ -43,6 +45,15 @@ package Src_Highlighting is
    --  This array contains the tags associated to each Language Entity
    --  Kind that needs to be highlighted in the source editor.
 
+   type Font_Attributes is record
+      Style  : Pango.Enums.Style;
+      Weight : Pango.Enums.Weight;
+   end record;
+   --  A structure describing the font attributes for a given Highlighting Tag.
+   --  Note that the color name is not included, since we can not have Strings
+   --  inside such record, and using Strings access types or chars_ptr types is
+   --  not very simple...
+
    Keyword_Color_Tag_Name : constant String := "keyword_tag";
    Comment_Color_Tag_Name : constant String := "comment_tag";
    String_Color_Tag_Name  : constant String := "string_tag";
@@ -50,10 +61,20 @@ package Src_Highlighting is
    --  and strings. Declared as public so that one can retrieve them from
    --  the source buffer using their names.
 
+   function To_Font_Attributes
+     (Style  : Pango.Enums.Style  := Pango.Enums.Pango_Style_Normal;
+      Weight : Pango.Enums.Weight := Pango.Enums.Pango_Weight_Normal)
+     return Font_Attributes;
+   --  Convenience function to create a Font_Attributes structure.
+
    function Create_Tags
-     (Keyword_Color : String;
-      Comment_Color : String;
-      String_Color  : String) return Highlighting_Tags;
+     (Keyword_Color     : String;
+      Keyword_Font_Attr : Font_Attributes := To_Font_Attributes;
+      Comment_Color     : String;
+      Comment_Font_Attr : Font_Attributes := To_Font_Attributes;
+      String_Color      : String;
+      String_Font_Attr  : Font_Attributes := To_Font_Attributes)
+     return Highlighting_Tags;
    --  Create a Highlighting_Tags object using the given color names.
    --  If some colors name can not be parsed, then no special color will
    --  be used to highlight the associated source parts.
