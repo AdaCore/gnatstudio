@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -1207,12 +1207,13 @@ package body Prj_API is
    --------------------------
 
    procedure Add_Imported_Project
-     (Project : Project_Node_Id;
+     (Project                   : Project_Node_Id;
       Imported_Project_Location : String;
-      Report_Errors  : Output.Output_Proc := null)
+      Report_Errors             : Output.Output_Proc := null)
    is
       use Prj.Tree.Tree_Private_Part;
-      With_Clause : Project_Node_Id := First_With_Clause_Of (Project);
+
+      With_Clause      : Project_Node_Id := First_With_Clause_Of (Project);
       Imported_Project : Project_Node_Id;
 
       Ext      : constant String := GNAT.Directory_Operations.File_Extension
@@ -1221,6 +1222,7 @@ package body Prj_API is
         (Imported_Project_Location, Ext);
       Dep_ID   : Name_Id;
       Dep_Name : Prj.Tree.Tree_Private_Part.Project_Name_And_Node;
+
    begin
       Output.Set_Special_Output (Report_Errors);
 
@@ -3238,14 +3240,15 @@ package body Prj_API is
       return Project_Id_Array
    is
       type Boolean_Array is array (Positive range <>) of Boolean;
-      List : Name_Id_Array := Topological_Sort (Root_Project);
-      Include : Boolean_Array (List'Range) := (others => False);
-      Result : Project_Id_Array (List'Range);
-      Name : Name_Id := No_Name;
-      Index : Integer := List'Last;
-      Prj : Project_List;
-   begin
 
+      List    : Name_Id_Array := Topological_Sort (Root_Project);
+      Include : Boolean_Array (List'Range) := (others => False);
+      Result  : Project_Id_Array (List'Range);
+      Name    : Name_Id := No_Name;
+      Index   : Integer := List'Last;
+      Prj     : Project_List;
+
+   begin
       if Project /= No_Project then
          Name := Projects.Table (Project).Name;
 

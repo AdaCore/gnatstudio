@@ -4,7 +4,7 @@
 --                      Copyright (C) 2001-2002                      --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free software; you can redistribute it and/or modify  it   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -905,9 +905,9 @@ package body Browsers.Call_Graph is
          Path := new String' (File);
       end if;
 
-      Insert (Kernel,
-              Path.all & ':' & Image (Line)   & ':' & Image (Column) & ' '
-              & Name);
+      Console.Insert
+        (Kernel,
+         Path.all & ':' & Image (Line) & ':' & Image (Column) & ' ' & Name);
       Free (Path);
    end Print_Ref;
 
@@ -915,14 +915,11 @@ package body Browsers.Call_Graph is
    -- Find_Next_Reference --
    -------------------------
 
-   function Find_Next_Reference (D : Entity_Idle_Data)
-      return Boolean
-   is
+   function Find_Next_Reference (D : Entity_Idle_Data) return Boolean is
       Location : File_Location;
    begin
       if Get (D.Iter.all) = No_Reference then
          return False;
-
       else
          Location := Get_Location (Get (D.Iter.all));
          Print_Ref
@@ -930,6 +927,7 @@ package body Browsers.Call_Graph is
             Get_Line (Location), Get_Column (Location),
             Get_Name (D.Entity));
          Next (D.Kernel, D.Iter.all);
+
          return True;
       end if;
    end Find_Next_Reference;
@@ -943,11 +941,13 @@ package body Browsers.Call_Graph is
       Context : Selection_Context_Access)
    is
       pragma Unreferenced (Widget);
+
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Data     : Entity_Idle_Data;
       Info     : Entity_Information;
       Idle_Id  : Idle_Handler_Id;
+
    begin
       Push_State (Get_Kernel (Entity), Busy);
       Info := Get_Entity (Entity);
