@@ -303,7 +303,7 @@ package body Docgen.Work_On_Source is
       Converter         : Doc_Subprogram_Type;
       Doc_Directory     : String;
       Doc_Suffix        : String);
-   --  Add title "Private : " when private entities are required
+   --  Add title "Private: " when private entities are required
 
    procedure Process_Footer
      (B                : Backend_Handle;
@@ -388,14 +388,15 @@ package body Docgen.Work_On_Source is
       Doc_Directory      : String;
       Doc_Suffix         : String)
    is
-      use type Basic_Types.String_Access;
-      File_Text   : GNAT.OS_Lib.String_Access;
-      Parsed_List : Construct_List;
+      File_Text        : GNAT.OS_Lib.String_Access;
+      Parsed_List      : Construct_List;
       Display_Private  : Boolean;
+      use type Basic_Types.String_Access;
+
    begin
       Display_Private := False;
-
       File_Text := Read_File (Source_Filename);
+
       --  All the file is stored in a string
 
       if File_Text = null then
@@ -436,11 +437,12 @@ package body Docgen.Work_On_Source is
       --  Different ways of process for spec and body files
 
       if Is_Spec_File (Kernel, Source_Filename) then
-         Parse_Constructs (Get_Language_From_File
-                             (Get_Language_Handler (Kernel),
-                              Source_Filename),
-                           File_Text.all,
-                           Parsed_List);
+         Parse_Constructs
+           (Get_Language_From_File
+              (Get_Language_Handler (Kernel),
+               Source_Filename),
+            File_Text.all,
+            Parsed_List);
          --  Parse the source file and create the Parsed_List
 
          --  ??? The order of the following procedure calls can't be changed
@@ -467,7 +469,7 @@ package body Docgen.Work_On_Source is
             Options,
             Converter, Doc_Directory, Doc_Suffix);
 
-         --  The 6 subprograms following have the value "False" for the
+         --  The 6 following calls have the value "False" for the
          --  parameter Private_Entity. So, only public entities are
          --  processed
          Process_Packages
@@ -912,16 +914,16 @@ package body Docgen.Work_On_Source is
    ------------------------------
 
    procedure Process_Subprogram_Index
-     (B                     : Backend_Handle;
-      Kernel                : access Kernel_Handle_Record'Class;
-      Subprogram_Index_List : Type_Entity_List.List;
+     (B                             : Backend_Handle;
+      Kernel                        : access Kernel_Handle_Record'Class;
+      Subprogram_Index_List         : Type_Entity_List.List;
       Private_Subprogram_Index_List : in out Type_Entity_List.List;
-      Entity_List           : in out Type_Entity_List.List;
-      List_Ref_In_File      : in out List_Reference_In_File.List;
-      Options               : All_Options;
-      Converter             : Doc_Subprogram_Type;
-      Doc_Directory         : String;
-      Doc_Suffix            : String)
+      Entity_List                   : in out Type_Entity_List.List;
+      List_Ref_In_File              : in out List_Reference_In_File.List;
+      Options                       : All_Options;
+      Converter                     : Doc_Subprogram_Type;
+      Doc_Directory                 : String;
+      Doc_Suffix                    : String)
    is
       use TEL;
 
@@ -960,7 +962,7 @@ package body Docgen.Work_On_Source is
                Doc_Info_Options           => Options,
                Doc_LI_Unit                => No_LI_File,
                Doc_File_List              => TSFL.Null_List,
-               Public_Index_Title => new String'("Public :"));
+               Public_Index_Title         => new String'("Public:"));
             Converter
               (B, Kernel, Index_File,
                Entity_List, List_Ref_In_File,
@@ -1007,7 +1009,7 @@ package body Docgen.Work_On_Source is
             Doc_Info_Options           => Options,
             Doc_LI_Unit                => No_LI_File,
             Doc_File_List              => TSFL.Null_List,
-            Private_Index_Title => new String'("Private :"));
+            Private_Index_Title        => new String'("Private:"));
          Converter
            (B, Kernel, Index_File,
             Entity_List, List_Ref_In_File,
@@ -1065,16 +1067,16 @@ package body Docgen.Work_On_Source is
    ------------------------
 
    procedure Process_Type_Index
-     (B                : Backend_Handle;
-      Kernel           : access Kernel_Handle_Record'Class;
-      Type_Index_List  : Docgen.Type_Entity_List.List;
+     (B                       : Backend_Handle;
+      Kernel                  : access Kernel_Handle_Record'Class;
+      Type_Index_List         : Docgen.Type_Entity_List.List;
       Private_Type_Index_List : in out Type_Entity_List.List;
-      Entity_List      : in out Type_Entity_List.List;
-      List_Ref_In_File : in out List_Reference_In_File.List;
-      Options          : All_Options;
-      Converter        : Doc_Subprogram_Type;
-      Doc_Directory    : String;
-      Doc_Suffix       : String)
+      Entity_List             : in out Type_Entity_List.List;
+      List_Ref_In_File        : in out List_Reference_In_File.List;
+      Options                 : All_Options;
+      Converter               : Doc_Subprogram_Type;
+      Doc_Directory           : String;
+      Doc_Suffix              : String)
    is
       use TEL;
       Type_Index_Node : Type_Entity_List.List_Node;
@@ -1109,7 +1111,7 @@ package body Docgen.Work_On_Source is
                Doc_Info_Options           => Options,
                Doc_LI_Unit                => No_LI_File,
                Doc_File_List              => TSFL.Null_List,
-               Public_Index_Title => new String'("Public :"));
+               Public_Index_Title         => new String'("Public:"));
             Converter
               (B, Kernel, Index_File,
                Entity_List, List_Ref_In_File,
@@ -1158,7 +1160,7 @@ package body Docgen.Work_On_Source is
             Doc_Info_Options           => Options,
             Doc_LI_Unit                => No_LI_File,
             Doc_File_List              => TSFL.Null_List,
-            Private_Index_Title => new String'("Private :"));
+            Private_Index_Title        => new String'("Private:"));
          Converter
            (B, Kernel, Index_File,
             Entity_List, List_Ref_In_File,
@@ -1217,17 +1219,17 @@ package body Docgen.Work_On_Source is
    -------------------------------
 
    procedure Process_Tagged_Type_Index
-     (B                      : Backend_Handle;
-      Kernel                 : access Kernel_Handle_Record'Class;
-      Tagged_Type_Index_List : Docgen.Type_List_Tagged_Element.List;
+     (B                         : Backend_Handle;
+      Kernel                    : access Kernel_Handle_Record'Class;
+      Tagged_Type_Index_List    : Docgen.Type_List_Tagged_Element.List;
       Private_Tagged_Types_List : in out Type_List_Tagged_Element.List;
-      Entity_List            : in out Type_Entity_List.List;
-      List_Ref_In_File       : in out List_Reference_In_File.List;
-      Source_File_List       : in out Type_Source_File_List.List;
-      Options                : All_Options;
-      Converter              : Doc_Subprogram_Type;
-      Doc_Directory          : String;
-      Doc_Suffix             : String)
+      Entity_List               : in out Type_Entity_List.List;
+      List_Ref_In_File          : in out List_Reference_In_File.List;
+      Source_File_List          : in out Type_Source_File_List.List;
+      Options                   : All_Options;
+      Converter                 : Doc_Subprogram_Type;
+      Doc_Directory             : String;
+      Doc_Suffix                : String)
    is
       use Type_List_Tagged_Element;
       use List_Entity_Handle;
@@ -1267,7 +1269,7 @@ package body Docgen.Work_On_Source is
                Doc_Info_Options           => Options,
                Doc_LI_Unit                => No_LI_File,
                Doc_File_List              => TSFL.Null_List,
-               Public_Index_Title => new String'("Public :"));
+               Public_Index_Title         => new String'("Public:"));
             Converter
               (B, Kernel, Index_File,
                Entity_List, List_Ref_In_File,
@@ -1459,7 +1461,7 @@ package body Docgen.Work_On_Source is
             Doc_Info_Options           => Options,
             Doc_LI_Unit                => No_LI_File,
             Doc_File_List              => TSFL.Null_List,
-            Private_Index_Title => new String'("Private :"));
+            Private_Index_Title        => new String'("Private:"));
          Converter
            (B, Kernel, Index_File,
             Entity_List, List_Ref_In_File,
@@ -1747,7 +1749,7 @@ package body Docgen.Work_On_Source is
          Doc_Info_Options => Options,
          Doc_LI_Unit      => No_LI_File,
          Doc_File_List    => TSFL.Null_List,
-         Header_Title     => new String'("Private :"));
+         Header_Title     => new String'("Private:"));
    begin
       Converter (B, Kernel, Doc_File,
                  Entity_List, List_Ref_In_File,
@@ -3014,11 +3016,12 @@ package body Docgen.Work_On_Source is
                 Parse_Node.Name.all'First + 1 <=
                   Parse_Node.Name.all'Last - 1
             then
-               --  This case appens when operators are overridden
+               --  This case happens when operators are overridden
                --  It's necessary to look after " in Parse_Node.Name.all
-               --  because Parse_Construct return the name with " (eg. "<")
-               --  whereas functions wich permit to build the list of entities
+               --  because Parse_Construct returns the name with " (eg. "<")
+               --  whereas functions which permit to build the list of entities
                --  return the name without " (eg. <).
+
                if To_Lower (Parse_Node.Name.all
                               (Parse_Node.Name.all'First + 1
                                  .. Parse_Node.Name.all'Last - 1))
@@ -3039,6 +3042,7 @@ package body Docgen.Work_On_Source is
                end if;
             end if;
          end if;
+
          Parse_Node := Parse_Node.Next;
       end loop;
 
