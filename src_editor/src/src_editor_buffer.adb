@@ -481,6 +481,18 @@ package body Src_Editor_Buffer is
    end Free;
 
    ----------------
+   -- Free_Block --
+   ----------------
+
+   procedure Free_Block (Block : in out Block_Access) is
+      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+        (Block_Record, Block_Access);
+   begin
+      Free (Block.Name);
+      Unchecked_Free (Block);
+   end Free_Block;
+
+   ----------------
    -- Get_String --
    ----------------
 
@@ -2111,7 +2123,7 @@ package body Src_Editor_Buffer is
    -------------
 
    procedure Execute
-     (Hook : Preferences_Changed_Hook_Record;
+     (Hook   : Preferences_Changed_Hook_Record;
       Kernel : access Kernel_Handle_Record'Class)
    is
       B       : Source_Buffer := Hook.Buffer;
