@@ -1348,6 +1348,7 @@ package body VCS.CVS is
       Append (Args, "log");
 
       if Rev /= "" then
+         Append (Args, "-N");
          Append (Args, "-r" & Rev);
       end if;
 
