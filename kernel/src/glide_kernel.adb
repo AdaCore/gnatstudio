@@ -36,6 +36,7 @@ with Gtk.Tree_Store;            use Gtk.Tree_Store;
 with Gtk.Tree_View;             use Gtk.Tree_View;
 with Gtk.Tree_View_Column;      use Gtk.Tree_View_Column;
 with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Window;                use Gtk.Window;
 with Gtk.Tooltips;              use Gtk.Tooltips;
 with Gtkada.Handlers;           use Gtkada.Handlers;
 with Gtkada.MDI;                use Gtkada.MDI;
@@ -824,6 +825,8 @@ package body Glide_Kernel is
         Get_Current_Process (Handle.Main_Window).Process_Mdi;
       File : File_Type;
 
+      N     : Node_Ptr;
+      M     : Node_Ptr;
    begin
       Create
         (File,
@@ -832,7 +835,44 @@ package body Glide_Kernel is
            String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop");
       Set_Output (File);
 
-      Print (Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI));
+      N := new Node'
+        (Tag => new String'("GPS_Desktop"),
+         Child => Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI),
+         Parent => null,
+         Value  => null,
+         Attributes => null,
+         Next => null,
+         Specific_Data => 0);
+
+      M := new Node'
+        (Tag => new String'("GPS_Width"),
+         Value => new String'
+           (Allocation_Int'Image
+              (Get_Allocation_Width (Gtk_Widget ((Handle.Main_Window))))),
+         Child => null,
+         Parent => null,
+         Next => null,
+         Specific_Data => 0,
+         Attributes => null);
+
+      Add_Child (N, M);
+
+      M := new Node'
+        (Tag => new String'("GPS_Height"),
+         Value => new String'
+           (Allocation_Int'Image
+              (Get_Allocation_Height (Gtk_Widget ((Handle.Main_Window))))),
+         Child => null,
+         Parent => null,
+         Next => null,
+         Specific_Data => 0,
+         Attributes => null);
+
+      Add_Child (N, M);
+
+      Print (N);
+
+      Free (N);
 
       Set_Output (Standard_Output);
       Close (File);
@@ -864,16 +904,55 @@ package body Glide_Kernel is
       File : constant String :=
         String_Utils.Name_As_Directory (Handle.Home_Dir.all) & "desktop";
 
+      Child  : Node_Ptr;
+      Desktop_Node : Node_Ptr;
+      Width  : Gint := 640;
+      Height : Gint := 480;
    begin
       if Is_Regular_File (File) then
          Trace (Me, "loading desktop file " & File);
          Node := Parse (File);
-         Kernel_Desktop.Restore_Desktop (MDI, Node, Kernel_Handle (Handle));
-         Free (Handle.Default_Desktop);
 
+         if Node /= null then
+            Child := Node.Child;
+         end if;
+
+         while Child /= null loop
+            if Child.Tag /= null then
+               if Child.Tag.all = "MDI" then
+                  Desktop_Node := Child;
+                  Free (Handle.Default_Desktop);
+
+               elsif Child.Tag.all = "GPS_Height" then
+                  Height := Gint'Value (Child.Value.all);
+               elsif Child.Tag.all = "GPS_Width" then
+                  Width := Gint'Value (Child.Value.all);
+               end if;
+            end if;
+
+            Child := Child.Next;
+         end loop;
+
+         Set_Default_Size (Handle.Main_Window, Width, Height);
+
+         --  Call Show_All before restoring the desktop, in case some
+         --  children stored in the desktop have something to hide.
+         Show_All (Handle.Main_Window);
+
+         if Desktop_Node /= null then
+            Kernel_Desktop.Restore_Desktop
+              (MDI, Desktop_Node, Kernel_Handle (Handle));
+         else
+            Kernel_Desktop.Restore_Desktop
+              (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
+         end if;
+
+         Free (Node);
          return True;
+
       else
          Trace (Me, "loading default desktop");
+         Show_All (Handle.Main_Window);
          Kernel_Desktop.Restore_Desktop
            (MDI, Handle.Default_Desktop, Kernel_Handle (Handle));
 
