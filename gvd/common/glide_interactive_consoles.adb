@@ -42,9 +42,6 @@ with Pango.Enums;         use Pango.Enums;
 
 with System;               use System;
 
-with Ada.Exceptions;       use Ada.Exceptions;
-with Ada.Text_IO;          use Ada.Text_IO;
-
 package body Glide_Interactive_Consoles is
 
    package Console_Idle is new Gtk.Main.Idle (Glide_Interactive_Console);
@@ -211,8 +208,7 @@ package body Glide_Interactive_Consoles is
       return False;
 
    exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+      when others =>
          return False;
    end Button_Press_Handler;
 
@@ -235,8 +231,7 @@ package body Glide_Interactive_Consoles is
       return False;
 
    exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+      when others =>
          return False;
    end Button_Release_Handler;
 
@@ -531,8 +526,7 @@ package body Glide_Interactive_Consoles is
       end case;
 
    exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+      when others =>
          return False;
    end Key_Press_Handler;
 
@@ -653,8 +647,8 @@ package body Glide_Interactive_Consoles is
       C.Internal_Insert := False;
 
    exception
-      when E : others =>
-         Put_Line ("Unexpected exception: " & Exception_Information (E));
+      when others =>
+         null;
    end Mark_Set_Handler;
 
    ----------------
