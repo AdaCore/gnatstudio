@@ -28,7 +28,7 @@ cp_gvd:
 
 stamp-pdf: $(IMAGES)
 	@echo "Converting images to PDF"
-	@-for img in [^g]*.gif; do \
+	@-for img in [^g]*.gif gps-vcs-*.gif; do \
 	  $(CONVERT) $${img} `basename $${img} .gif`.pdf; \
 	done
 	touch stamp-pdf
