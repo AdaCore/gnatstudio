@@ -686,15 +686,15 @@ package body Main_Debug_Window_Pkg.Callbacks is
    end On_Threads1_Activate;
 
    ----------------------------
-   -- On_Processus1_Activate --
+   -- On_Processes1_Activate --
    ----------------------------
 
-   procedure On_Processus1_Activate
+   procedure On_Processes1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
    begin
       null;
-   end On_Processus1_Activate;
+   end On_Processes1_Activate;
 
    --------------------------
    -- On_Signals1_Activate --

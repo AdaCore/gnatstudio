@@ -147,7 +147,7 @@ package Main_Debug_Window_Pkg is
       Backtrace1 : Gtk_Menu_Item;
       Registers1 : Gtk_Menu_Item;
       Threads1 : Gtk_Menu_Item;
-      Processus1 : Gtk_Menu_Item;
+      Processes1 : Gtk_Menu_Item;
       Signals1 : Gtk_Menu_Item;
       Separator19 : Gtk_Menu_Item;
       Up1 : Gtk_Menu_Item;

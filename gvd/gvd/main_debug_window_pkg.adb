@@ -690,12 +690,12 @@ begin
    Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Threads1);
    Set_Right_Justify (Main_Debug_Window.Threads1, False);
 
-   Gtk_New (Main_Debug_Window.Processus1, -"Processus...");
+   Gtk_New (Main_Debug_Window.Processes1, -"Processes...");
    Widget_Callback.Object_Connect
-     (Main_Debug_Window.Processus1, "activate",
-      Widget_Callback.To_Marshaller (On_Processus1_Activate'Access), Main_Debug_Window);
-   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Processus1);
-   Set_Right_Justify (Main_Debug_Window.Processus1, False);
+     (Main_Debug_Window.Processes1, "activate",
+      Widget_Callback.To_Marshaller (On_Processes1_Activate'Access), Main_Debug_Window);
+   Add (Main_Debug_Window.Status1_Menu, Main_Debug_Window.Processes1);
+   Set_Right_Justify (Main_Debug_Window.Processes1, False);
 
    Gtk_New (Main_Debug_Window.Signals1, -"Signals...");
    Widget_Callback.Object_Connect
