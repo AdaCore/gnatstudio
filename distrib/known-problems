@@ -7,6 +7,9 @@ Known Problems fixed in GPS 1.4.1
               screen, or the project view not restored.
   Workaround: Do not use the quit button, or edit manually the file
               .gps/desktop to fix the incorrect values.
+              If the main window is not shown under Windows, you can
+              right click on the program icon in the task bar and maximize
+              the window.
 
 - CB18-006 Duplicate entries in Help module
   Problem:    The GNAT documentation appears twice in the Help menu.
