@@ -1418,22 +1418,23 @@ package body KeyManager_Module is
    procedure On_Edit_Keys
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
    is
-      Editor : Keys_Editor;
+      Editor   : Keys_Editor;
       Scrolled : Gtk_Scrolled_Window;
-      Bbox : Gtk_Vbutton_Box;
-      Box    : Gtk_Box;
-      Button : Gtk_Button;
-      Col    : Gtk_Tree_View_Column;
-      Render : Gtk_Cell_Renderer_Text;
-      Num    : Gint;
-      Action : Gtk_Widget;
+      Bbox     : Gtk_Vbutton_Box;
+      Box      : Gtk_Box;
+      Button   : Gtk_Button;
+      Col      : Gtk_Tree_View_Column;
+      Render   : Gtk_Cell_Renderer_Text;
+      Num      : Gint;
+      Action   : Gtk_Widget;
       pragma Unreferenced (Widget, Num, Action);
    begin
       Editor := new Keys_Editor_Record;
-      Initialize (Editor,
-                  Title  => -"Key shortcuts",
-                  Parent => Get_Main_Window (Kernel),
-                  Flags  => Destroy_With_Parent or Modal);
+      Initialize
+        (Editor,
+         Title  => -"Key shortcuts",
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Destroy_With_Parent or Modal);
       Set_Default_Size (Editor, 640, 480);
       Editor.Kernel  := Kernel;
 
@@ -1441,6 +1442,7 @@ package body KeyManager_Module is
       Pack_Start (Get_Vbox (Editor), Box);
 
       Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
       Pack_Start (Box, Scrolled, Expand => True, Fill => True);
 
       Gtk_New (Bbox);
@@ -1468,10 +1470,11 @@ package body KeyManager_Module is
          Widget_Callback.To_Marshaller (On_Grab_Key'Access),
          Editor);
 
-      Gtk_New (Editor.Model,
-               (Action_Column  => GType_String,
-                Key_Column     => GType_String,
-                Changed_Column => GType_Boolean));
+      Gtk_New
+        (Editor.Model,
+         (Action_Column  => GType_String,
+          Key_Column     => GType_String,
+          Changed_Column => GType_Boolean));
       Gtk_New (Editor.View, Editor.Model);
       Add (Scrolled, Editor.View);
 
