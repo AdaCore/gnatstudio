@@ -917,6 +917,10 @@ package body Src_Info is
       Info : File_Info_Ptr;
       List : File_Info_Ptr_List;
    begin
+      if Lib_Info = null then
+         return "";
+      end if;
+
       Info := Lib_Info.LI.Spec_Info;
 
       if Info /= null
@@ -942,6 +946,7 @@ package body Src_Info is
       end if;
 
       List := Lib_Info.LI.Separate_Info;
+
       while List /= null loop
          Info := List.Value;
 
