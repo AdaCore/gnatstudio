@@ -118,6 +118,7 @@ private
 
       Buffer_Top_Line     : Src_Editor_Buffer.Buffer_Line_Type := 1;
       Buffer_Bottom_Line  : Src_Editor_Buffer.Buffer_Line_Type := 0;
+      Buffer_Column_Size  : Gint := 1;
       Side_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
       --  Cache for avoiding to redraw the side columns too often.
 
@@ -125,6 +126,9 @@ private
 
       Connect_Expose_Id : Gtk.Main.Idle_Handler_Id;
       --  Handler ID for the Connect_Expose idle callback.
+
+      Idle_Redraw_Id : Gtk.Main.Idle_Handler_Id;
+      --  Handler ID for Idle redraw of the side columns.
 
       Has_Focus           : Boolean := False;
       --  Whether the view currently has the focus.
