@@ -1181,6 +1181,10 @@ package body Debugger.Gdb is
       --  Note: some of commands below can have a numeric parameter, that needs
       --  to be ignored (e.g/ cont 99)
 
+      if Command = "" then
+         return False;
+      end if;
+
       Skip_Word (Command, Index);
       return    Command (Command'First .. Index - 1) = "step"
         or else Command (Command'First .. Index - 1) = "stepi"
