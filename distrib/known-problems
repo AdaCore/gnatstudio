@@ -1,10 +1,5 @@
 Known Problems fixed in GPS 2.1.0
 
-- VCS "List all files in projects [and subprojects]" does not work
-  Problem:    When using CVS, Native ClearCase or any custom VCS, the menu
-              operations to list files from projects do not list any file.
-  Workaround: Use the "list files in directory" capabilities.
-
 - D715-006 Drag-and-drop a window on another floating window fails
   Problem:    If you are trying to make a window floating by dragging it
               and dropping over an already floating window, GPS will in
