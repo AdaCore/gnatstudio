@@ -989,13 +989,13 @@ package body Src_Editor_Module is
       Register_Menu (Kernel, File, -"Save As...",  Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Close");
 
-      Undo_Redo.Undo_Menu_Item
-        := Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
-                          On_Undo'Access, Ref_Item => -"Preferences");
+      Undo_Redo.Undo_Menu_Item :=
+        Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
+                       On_Undo'Access, Ref_Item => -"Preferences");
 
-      Undo_Redo.Redo_Menu_Item
-        := Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
-                          On_Redo'Access, Ref_Item => -"Preferences");
+      Undo_Redo.Redo_Menu_Item :=
+        Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
+                       On_Redo'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem);
       Register_Menu
