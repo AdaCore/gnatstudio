@@ -471,7 +471,8 @@ package body Projects.Registry is
       P := Get_Project_From_Name (Registry, Name_Find);
       if P = No_Project then
          Prj.Part.Parse (Registry.Data.Tree,
-                         Node, Normalize_Project_Path (Project_Path), True);
+                         Node, Normalize_Project_Path (Project_Path), True,
+                         Store_Comments => True);
          P := Get_Project_From_Name
            (Registry, Prj.Tree.Name_Of (Node, Registry.Data.Tree));
       end if;
@@ -555,7 +556,8 @@ package body Projects.Registry is
       Prj.Com.Fail := Fail'Unrestricted_Access;
 
       Prj.Part.Parse
-        (Registry.Data.Tree, Project, Root_Project_Path, True);
+        (Registry.Data.Tree, Project, Root_Project_Path, True,
+         Store_Comments => True);
       Prj.Com.Fail := null;
 
       Opt.Full_Path_Name_For_Brief_Errors := False;
