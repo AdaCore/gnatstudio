@@ -1247,17 +1247,10 @@ package body Codefix.Errors_Parser is
    begin
       This.Matcher :=
         (new Pattern_Matcher'
-           (Compile ("(procedure) ""([\w]+)"" is not referenced")),
+           (Compile ("(procedure|variable|constant|parameter|type|literal|" &
+                     "named number) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-           (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")),
-         new Pattern_Matcher'
-           (Compile ("(variable) ""([\w]+)"" is not referenced")),
-         new Pattern_Matcher'
-           (Compile ("(constant) ""([\w]+)"" is not referenced")),
-         new Pattern_Matcher'
-           (Compile ("(parameter) ""([\w]+)"" is not referenced")),
-         new Pattern_Matcher'
-           (Compile ("(type) ""([\w]+)"" is not referenced")));
+           (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")));
    end Initialize;
 
    procedure Fix
@@ -1281,10 +1274,14 @@ package body Codefix.Errors_Parser is
          Category := Cat_Function;
       elsif First_Word = "variable" then
          Category := Cat_Variable;
-      elsif First_Word = "constant" then
+      elsif First_Word = "constant"
+        or else First_Word = "named number"
+      then
          Category := Cat_Variable;
       elsif First_Word = "parameter" then
-         Category := Cat_Local_Variable; --  Used instead of Cat_Parameter
+         Category := Cat_Parameter;
+      elsif First_Word = "literal" then
+         Category := Cat_Literal;
       elsif First_Word = "type" then
          Category := Cat_Type;
       end if;
