@@ -21,12 +21,11 @@
 --  This package provides a widget to edit the list of languages. It provides a
 --  number of check buttons, one per known language, which the user can select.
 
-with Gtk.Check_Button;
 with Gtk.Frame;
-with Gtk.Widget;
 with Glide_Kernel;
 with GNAT.OS_Lib;
 with Projects;
+with Gtk.Tree_Store;
 
 package Languages_Lists is
 
@@ -50,10 +49,8 @@ package Languages_Lists is
       return Boolean;
    --  Return True if Language is currently selected in List
 
-   function Get_Check_Button
-     (List : access Languages_List_Record; Language : String)
-      return Gtk.Check_Button.Gtk_Check_Button;
-   --  Return the check button representing Language
+   procedure Changed (List : access Languages_List_Record);
+   --  Emits the "changed" signal on List
 
    -------------
    -- Signals --
@@ -70,12 +67,9 @@ package Languages_Lists is
 
 
 private
-   type Widget_Array is array (Natural range <>) of Gtk.Widget.Gtk_Widget;
-   type Widget_Array_Access is access Widget_Array;
-
    type Languages_List_Record is new Gtk.Frame.Gtk_Frame_Record with record
       Kernel    : Glide_Kernel.Kernel_Handle;
-      Languages : Widget_Array_Access;
+      Languages : Gtk.Tree_Store.Gtk_Tree_Store;
    end record;
 
 end Languages_Lists;

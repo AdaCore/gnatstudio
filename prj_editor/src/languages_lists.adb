@@ -18,53 +18,42 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Unchecked_Deallocation;
-with Basic_Types;      use Basic_Types;
-with GNAT.OS_Lib;      use GNAT.OS_Lib;
-with Glide_Intl;       use Glide_Intl;
-with Glide_Kernel;     use Glide_Kernel;
-with Gtkada.Handlers;  use Gtkada.Handlers;
-with Glib;             use Glib;
-with Gtk.Box;          use Gtk.Box;
-with Gtk.Check_Button; use Gtk.Check_Button;
-with Gtk.Frame;        use Gtk.Frame;
-with Gtk.Object;       use Gtk.Object;
-with Gtk.Widget;       use Gtk.Widget;
-with Interfaces.C.Strings; use Interfaces.C.Strings;
-with Language_Handlers; use Language_Handlers;
-with Projects;         use Projects;
-with String_Utils;     use String_Utils;
+with Basic_Types;              use Basic_Types;
+with GNAT.OS_Lib;              use GNAT.OS_Lib;
+with Glib.Values;              use Glib.Values;
+with Glib;                     use Glib;
+with Glide_Intl;               use Glide_Intl;
+with Glide_Kernel;             use Glide_Kernel;
+with Gtk.Cell_Renderer_Text;   use Gtk.Cell_Renderer_Text;
+with Gtk.Cell_Renderer_Toggle; use Gtk.Cell_Renderer_Toggle;
+with Gtk.Enums;                use Gtk.Enums;
+with Gtk.Frame;                use Gtk.Frame;
+with Gtk.Object;               use Gtk.Object;
+with Gtk.Scrolled_Window;      use Gtk.Scrolled_Window;
+with Gtk.Tree_Model;           use Gtk.Tree_Model;
+with Gtk.Tree_Store;           use Gtk.Tree_Store;
+with Gtk.Tree_View;            use Gtk.Tree_View;
+with Gtk.Tree_View_Column;     use Gtk.Tree_View_Column;
+with Gtk.Widget;               use Gtk.Widget;
+with Gtkada.Handlers;          use Gtkada.Handlers;
+with Interfaces.C.Strings;     use Interfaces.C.Strings;
+with Language_Handlers;        use Language_Handlers;
+with Projects;                 use Projects;
+with String_Utils;             use String_Utils;
 
 package body Languages_Lists is
 
-   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-     (Widget_Array, Widget_Array_Access);
-
-   procedure Destroyed (List : access Gtk_Widget_Record'Class);
-   --  Called when the languages editor is destroyed
-
-   procedure Changed (List : access Gtk_Widget_Record'Class);
+   procedure Changed
+     (List   : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues);
    --  Emits the "changed" signal
 
    List_Class_Record        : Gtk.Object.GObject_Class :=
      Gtk.Object.Uninitialized_Class;
    List_Signals : constant chars_ptr_array := (1 => New_String ("changed"));
 
-   type Language_Check_Button_Record (Length : Natural)
-      is new Gtk_Check_Button_Record
-   with record
-      Language : String (1 .. Length);
-   end record;
-   type Language_Check_Button is access all Language_Check_Button_Record'Class;
-
-   ---------------
-   -- Destroyed --
-   ---------------
-
-   procedure Destroyed (List : access Gtk_Widget_Record'Class) is
-   begin
-      Unchecked_Free (Languages_List (List).Languages);
-   end Destroyed;
+   Language_Column : constant := 0;
+   Selected_Column : constant := 1;
 
    -------------
    -- Gtk_New --
@@ -79,8 +68,14 @@ package body Languages_Lists is
         (1 => (1 => GType_None));
       Languages : Argument_List := Known_Languages
         (Get_Language_Handler (Kernel));
-      Check : Language_Check_Button;
-      Box  : Gtk_Box;
+      View : Gtk_Tree_View;
+      Col  : Gtk_Tree_View_Column;
+      Toggle : Gtk_Cell_Renderer_Toggle;
+      Text   : Gtk_Cell_Renderer_Text;
+      Col_Number : Gint;
+      pragma Unreferenced (Col_Number);
+      Iter   : Gtk_Tree_Iter;
+      Scrolled : Gtk_Scrolled_Window;
    begin
       List := new Languages_List_Record;
       Initialize (List, -"Languages");
@@ -93,49 +88,62 @@ package body Languages_Lists is
          Type_Name    => "LanguagesList",
          Parameters   => Signal_Parameters);
 
-      Gtk_New_Vbox (Box, Homogeneous => True);
-      Add (List, Box);
+      Gtk_New (Scrolled);
+      Set_Policy (Scrolled, Policy_Automatic, Policy_Automatic);
+      Add (List, Scrolled);
+
+      Gtk_New (List.Languages,
+               (Language_Column => GType_String,
+                Selected_Column => GType_Boolean));
+      Gtk_New (View, List.Languages);
+      Set_Headers_Visible (View, False);
+      Add (Scrolled, View);
+
+      Gtk_New (Toggle);
+      Widget_Callback.Object_Connect (Toggle, "toggled", Changed'Access, List);
+
+      Gtk_New (Text);
+
+      Gtk_New (Col);
+      Col_Number := Append_Column (View, Col);
+      Pack_Start (Col, Toggle, False);
+      Add_Attribute (Col, Toggle, "active", Selected_Column);
+
+      Pack_Start (Col, Text, True);
+      Add_Attribute (Col, Text, "text", Language_Column);
+      Set_Sort_Column_Id (Col, Language_Column);
+      Clicked (Col);
 
       List.Kernel    := Kernel_Handle (Kernel);
-      List.Languages := new Widget_Array (Languages'Range);
 
       for L in Languages'Range loop
          declare
             S : String := Languages (L).all;
          begin
             Mixed_Case (S);
-            Check := new Language_Check_Button_Record (S'Length);
-            Gtk.Check_Button.Initialize (Check, S);
-            Check.Language := Languages (L).all;
-            Set_Active (Check, S = "Ada");
+
+            Append (List.Languages, Iter, Null_Iter);
+            Set (List.Languages, Iter, Language_Column, S);
+            Set (List.Languages, Iter, Selected_Column, S = "Ada");
          end;
-         Pack_Start (Box, Check);
-
-         List.Languages (L) := Gtk_Widget (Check);
-
-         Widget_Callback.Object_Connect
-           (Check, "toggled",
-            Widget_Callback.To_Marshaller (Changed'Access),
-            List);
       end loop;
 
       if Project /= No_Project then
          declare
             Project_Languages : Argument_List :=  Get_Languages (Project);
          begin
-            for L in Languages'Range loop
-               Set_Active
-                 (Gtk_Check_Button (List.Languages (L)), Contains
-                  (Project_Languages, Languages (L).all,
-                   Case_Sensitive => False));
+            Iter := Get_Iter_First (List.Languages);
+            while Iter /= Null_Iter loop
+               Set (List.Languages, Iter, Selected_Column,
+                    Contains
+                      (Project_Languages,
+                       Get_String (List.Languages, Iter, Language_Column),
+                       Case_Sensitive => False));
+               Next (List.Languages, Iter);
             end loop;
-
             Free (Project_Languages);
          end;
       end if;
-
-      Widget_Callback.Connect
-        (List, "destroy", Widget_Callback.To_Marshaller (Destroyed'Access));
 
       Free (Languages);
    end Gtk_New;
@@ -144,9 +152,27 @@ package body Languages_Lists is
    -- Changed --
    -------------
 
-   procedure Changed (List : access Gtk_Widget_Record'Class) is
+   procedure Changed (List : access Languages_List_Record) is
    begin
       Widget_Callback.Emit_By_Name (List, "changed");
+   end Changed;
+
+   -------------
+   -- Changed --
+   -------------
+
+   procedure Changed
+     (List : access Gtk_Widget_Record'Class;
+      Params : Glib.Values.GValues)
+   is
+      L    : constant Languages_List := Languages_List (List);
+      Path : constant String := Get_String (Nth (Params, 1));
+      Iter : constant Gtk_Tree_Iter :=
+        Get_Iter_From_String (L.Languages, Path);
+   begin
+      Set (L.Languages, Iter, Selected_Column,
+           not Get_Boolean (L.Languages, Iter, Selected_Column));
+      Changed (L);
    end Changed;
 
    -------------------
@@ -156,21 +182,34 @@ package body Languages_Lists is
    function Get_Languages
      (List : access Languages_List_Record) return GNAT.OS_Lib.Argument_List
    is
-      New_Languages : Argument_List (List.Languages'Range);
-      Num_Languages : Natural := New_Languages'First;
-      Check         : Language_Check_Button;
+      Num_Languages : Natural := 0;
+      Iter          : Gtk_Tree_Iter;
 
    begin
-      for J in List.Languages'Range loop
-         Check := Language_Check_Button (List.Languages (J));
-
-         if Get_Active (Check) then
-            New_Languages (Num_Languages) := new String'(Check.Language);
+      Iter := Get_Iter_First (List.Languages);
+      while Iter /= Null_Iter loop
+         if Get_Boolean (List.Languages, Iter, Selected_Column) then
             Num_Languages := Num_Languages + 1;
          end if;
+         Next (List.Languages, Iter);
       end loop;
 
-      return New_Languages (New_Languages'First .. Num_Languages - 1);
+      declare
+         New_Languages : Argument_List (1 .. Num_Languages);
+      begin
+         Num_Languages := New_Languages'First;
+
+         Iter := Get_Iter_First (List.Languages);
+         while Iter /= Null_Iter loop
+            if Get_Boolean (List.Languages, Iter, Selected_Column) then
+               New_Languages (Num_Languages) := new String'
+                 (Get_String (List.Languages, Iter, Language_Column));
+               Num_Languages := Num_Languages + 1;
+            end if;
+            Next (List.Languages, Iter);
+         end loop;
+         return New_Languages;
+      end;
    end Get_Languages;
 
    -----------------
@@ -181,29 +220,18 @@ package body Languages_Lists is
      (List : access Languages_List_Record; Language : String)
       return Boolean
    is
-      Check : constant Gtk_Check_Button := Get_Check_Button
-        (List, Language);
+      Iter : Gtk_Tree_Iter := Get_Iter_First (List.Languages);
    begin
-      return Check  /= null and then Get_Active (Check);
-   end Is_Selected;
-
-   ----------------------
-   -- Get_Check_Button --
-   ----------------------
-
-   function Get_Check_Button
-     (List : access Languages_List_Record; Language : String)
-      return Gtk.Check_Button.Gtk_Check_Button
-   is
-      Check : Language_Check_Button;
-   begin
-      for L in List.Languages'Range loop
-         Check := Language_Check_Button (List.Languages (L));
-         if Check.Language = Language then
-            return Gtk_Check_Button (Check);
+      while Iter /= Null_Iter loop
+         if Case_Insensitive_Equal
+           (Get_String (List.Languages, Iter, Language_Column), Language)
+         then
+            return Get_Boolean (List.Languages, Iter, Selected_Column);
          end if;
+
+         Next (List.Languages, Iter);
       end loop;
-      return null;
-   end Get_Check_Button;
+      return False;
+   end Is_Selected;
 
 end Languages_Lists;
