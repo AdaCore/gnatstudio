@@ -269,8 +269,7 @@ private
       Current_Directory    : String_Access := new String' ("");
       Current_Directory_Id : Dir_Type_Access := new Dir_Type;
       --  The directory that is currently being explored.
-      --  Current_Directory must always be a Normalized path, ending with
-      --  a directory separator.
+      --  Current_Directory must always end with a Directory_Separator.
 
       Current_Directory_Is_Open : Boolean := False;
       --  Tells whether the current directory is being read.
