@@ -912,36 +912,20 @@ begin
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator25);
    Set_Right_Justify (Main_Debug_Window.Separator25, False);
 
-   Gtk_New (Main_Debug_Window.Detect_Aliases1, -"Detect Aliases");
-   Add_Accelerator (Main_Debug_Window.Detect_Aliases1, "activate",
-     The_Accel_Group, GDK_A, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Check_Menu_Item_Callback.Connect
-     (Main_Debug_Window.Detect_Aliases1, "activate",
-      Check_Menu_Item_Callback.To_Marshaller (On_Detect_Aliases1_Activate'Access));
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Detect_Aliases1);
-   Set_Active (Main_Debug_Window.Detect_Aliases1, False);
-   Set_Always_Show_Toggle (Main_Debug_Window.Detect_Aliases1, False);
-
-   Gtk_New (Main_Debug_Window.Separator26);
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator26);
-   Set_Right_Justify (Main_Debug_Window.Separator26, False);
-
    Gtk_New (Main_Debug_Window.Display_Local_Variables1, -"Display Local Variables");
    Add_Accelerator (Main_Debug_Window.Display_Local_Variables1, "activate",
      The_Accel_Group, GDK_L, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Check_Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Display_Local_Variables1, "activate",
-      Check_Menu_Item_Callback.To_Marshaller (On_Display_Local_Variables1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Display_Local_Variables1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Local_Variables1);
-   Set_Active (Main_Debug_Window.Display_Local_Variables1, False);
-   Set_Always_Show_Toggle (Main_Debug_Window.Display_Local_Variables1, False);
 
    Gtk_New (Main_Debug_Window.Display_Arguments1, -"Display Arguments");
    Add_Accelerator (Main_Debug_Window.Display_Arguments1, "activate",
      The_Accel_Group, GDK_U, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
+   Widget_Callback.Object_Connect
      (Main_Debug_Window.Display_Arguments1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Display_Arguments1_Activate'Access));
+      Widget_Callback.To_Marshaller (On_Display_Arguments1_Activate'Access), Main_Debug_Window);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Display_Arguments1);
    Set_Right_Justify (Main_Debug_Window.Display_Arguments1, False);
 
@@ -956,15 +940,6 @@ begin
    Gtk_New (Main_Debug_Window.Separator27);
    Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Separator27);
    Set_Right_Justify (Main_Debug_Window.Separator27, False);
-
-   Gtk_New (Main_Debug_Window.Align_On_Grid1, -"Align on Grid");
-   Add_Accelerator (Main_Debug_Window.Align_On_Grid1, "activate",
-     The_Accel_Group, GDK_G, Gdk.Types.Mod1_Mask, Accel_Visible);
-   Menu_Item_Callback.Connect
-     (Main_Debug_Window.Align_On_Grid1, "activate",
-      Menu_Item_Callback.To_Marshaller (On_Align_On_Grid1_Activate'Access));
-   Add (Main_Debug_Window.Data1_Menu, Main_Debug_Window.Align_On_Grid1);
-   Set_Right_Justify (Main_Debug_Window.Align_On_Grid1, False);
 
    Gtk_New (Main_Debug_Window.Rotate_Graph1, -"Rotate Graph");
    Set_Sensitive (Main_Debug_Window.Rotate_Graph1, False);
