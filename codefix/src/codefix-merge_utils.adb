@@ -75,6 +75,8 @@ package body Codefix.Merge_Utils is
                   Success,
                   Chronologic_Changes);
 
+               Set_Merge_Info (New_Unit, Unit_Modified);
+
                if Success then
                   Append (Result, New_Unit);
                elsif Chronologic_Changes then
@@ -293,7 +295,7 @@ package body Codefix.Merge_Utils is
    begin
       if Len > Value'Length then
          Modify (This, Start, Value);
-         Delete (This, Start + Len, Len - Value'Length);
+         Delete (This, Start + Value'Length, Len - Value'Length);
       elsif Len < Value'Length then
          Modify (This, Start, Value (Value'First .. Value'First + Len - 1));
          Insert (This, Start + Len, Value (Value'First + Len .. Value'Last));
@@ -455,8 +457,27 @@ package body Codefix.Merge_Utils is
    ---------
 
    function "<" (Left, Right : String_Iterator) return Boolean is
+
+      function Real_Position
+        (This : Mergable_String; Pos : Natural) return Natural;
+
+      function Real_Position
+        (This : Mergable_String; Pos : Natural) return Natural
+      is
+         Total : Natural := 0;
+      begin
+         for J in This.Infos'First .. Pos loop
+            if This.Infos (J) /= Unit_Created then
+               Total := Total + 1;
+            end if;
+         end loop;
+
+         return Total;
+      end Real_Position;
+
    begin
-      return Left.Position < Right.Position;
+      return Real_Position (Left.Object, Left.Position) <
+        Real_Position (Right.Object, Right.Position);
    end "<";
 
    --------------------
@@ -468,6 +489,15 @@ package body Codefix.Merge_Utils is
       return This.Info;
    end Get_Merge_Info;
 
+   --------------------
+   -- Set_Merge_Info --
+   --------------------
+
+   procedure Set_Merge_Info (This : in out String_Char; Value : Merge_Info) is
+   begin
+      This.Info := Value;
+   end Set_Merge_Info;
+
    ------------
    -- Append --
    ------------
@@ -476,11 +506,16 @@ package body Codefix.Merge_Utils is
       Garbage_Str   : Dynamic_String := This.Str;
       Garbage_Infos : Ptr_Merge_Array := This.Infos;
    begin
-      This.Str := new String'(This.Str.all & Object.Char);
-      This.Infos := new Merge_Array'(This.Infos.all & Object.Info);
+      if This.Str = null then
+         This.Str := new String'(1 => Object.Char);
+         This.Infos := new Merge_Array'(1 => Object.Info);
+      else
+         This.Str := new String'(This.Str.all & Object.Char);
+         This.Infos := new Merge_Array'(This.Infos.all & Object.Info);
 
-      Free (Garbage_Str);
-      Free (Garbage_Infos);
+         Free (Garbage_Str);
+         Free (Garbage_Infos);
+      end if;
    end Append;
 
    -----------
