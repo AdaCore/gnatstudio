@@ -1,9 +1,9 @@
 with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
+with Gtk.Label; use Gtk.Label;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Viewport; use Gtk.Viewport;
 with Gtk.List; use Gtk.List;
-with Gtk.Label; use Gtk.Label;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Separator; use Gtk.Separator;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
@@ -15,6 +15,7 @@ package Open_Session_Pkg is
       Vbox17 : Gtk_Vbox;
       Hbox7 : Gtk_Hbox;
       Vbox18 : Gtk_Vbox;
+      Label94 : Gtk_Label;
       Scrolledwindow10 : Gtk_Scrolled_Window;
       Viewport1 : Gtk_Viewport;
       List : Gtk_List;

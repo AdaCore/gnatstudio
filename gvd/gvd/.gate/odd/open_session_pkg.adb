@@ -33,6 +33,13 @@ begin
    Gtk_New_Vbox (Open_Session.Vbox18, False, 0);
    Pack_Start (Open_Session.Hbox7, Open_Session.Vbox18, True, True, 0);
 
+   Gtk_New (Open_Session.Label94, -("Session List"));
+   Pack_Start (Open_Session.Vbox18, Open_Session.Label94, False, False, 0);
+   Set_Alignment (Open_Session.Label94, 0.5, 0.5);
+   Set_Padding (Open_Session.Label94, 0, 0);
+   Set_Justify (Open_Session.Label94, Justify_Center);
+   Set_Line_Wrap (Open_Session.Label94, False);
+
    Gtk_New (Open_Session.Scrolledwindow10);
    Pack_Start (Open_Session.Vbox18, Open_Session.Scrolledwindow10, True, True, 0);
    Set_Policy (Open_Session.Scrolledwindow10, Policy_Automatic, Policy_Automatic);
