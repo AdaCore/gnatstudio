@@ -171,9 +171,15 @@ package body Codefix_Window_Pkg.Callbacks is
    procedure On_Refresh_Clicked
      (Object : access Gtk_Widget_Record'Class)
    is
-      pragma Unreferenced (Object);
+      Graphic_Codefix : constant Graphic_Codefix_Access :=
+        Graphic_Codefix_Access (Object);
+      Success_Load    : Boolean;
    begin
-      null;
+      Load_Error (Graphic_Codefix, Success_Load);
+      --  ??? What may I do when the fix is no longer pertinent ?
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Refresh_Clicked;
 
    -------------------------------
