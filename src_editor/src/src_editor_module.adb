@@ -778,25 +778,29 @@ package body Src_Editor_Module is
             begin
                Free (Filename);
 
-               if Mark_Record.Mark = null
-                 or else Mark_Record.Child = null
-               then
+               if Mark_Record.File = null then
                   return -"Mark not found.";
                else
                   if Command = "get_line" then
-                     return
-                       Image
-                         (Get_Line
-                              (Source_Box
-                                   (Get_Widget (Mark_Record.Child)).Editor,
-                               Mark_Record.Mark));
+                     if Mark_Record.Child /= null then
+                        return Image
+                          (Get_Line
+                             (Source_Box
+                                (Get_Widget (Mark_Record.Child)).Editor,
+                              Mark_Record.Mark));
+                     else
+                        return Image (Mark_Record.Line);
+                     end if;
                   elsif Command = "get_column" then
-                     return
-                       Image
-                         (Get_Column
-                              (Source_Box
-                                   (Get_Widget (Mark_Record.Child)).Editor,
-                               Mark_Record.Mark));
+                     if Mark_Record.Child /= null then
+                        return Image
+                          (Get_Column
+                             (Source_Box
+                                (Get_Widget (Mark_Record.Child)).Editor,
+                              Mark_Record.Mark));
+                     else
+                        return Image (Mark_Record.Column);
+                     end if;
                   else
                      if Mark_Record.File = null then
                         return "";
