@@ -1915,16 +1915,16 @@ so that you can reopen them easily.
 @cindex save
 Save the current source editor if needed.
 
+@item Save As...
+@cindex save as
+Same current file under a different name, using the file selector dialog.
+@xref{The File Selector}.
+
 @item Save...
 @cindex save
 Give access to extra save capabilities.
 
 @table @i
-@item File As...
-@cindex save as
-Same current file under a different name, using the file selector dialog.
-@xref{The File Selector}.
-
 @c @item All Editors
 @c Save all modified source editors.
 
@@ -4247,7 +4247,7 @@ The VCS Explorer provides an overview of source files and their status.
 
 The easiest way to bring up the VCS Explorer is through the menu
 @code{VCS->Explorer}. The Explorer can also be brought up using the
-contextual menu @code{Version Control->Query Status} on files,
+contextual menu @code{Version Control->Query status} on files,
 directories and projects in the file and project views, and on file
 editors. @xref{The Version Control Contextual Menu}.
 
@@ -4345,46 +4345,6 @@ Query the status of all files in the project and all imported subprojects.
 @anchor{Update}
 Update the currently selected item (file, directory or project).
 
-@item Start Editing
-@anchor{Start Editing}
-Open the currently selected file for writing. On some VCS systems,
-this is a necessary operation, and on other systems it is not.
-
-@item View revision history
-@anchor{View revision history}
-Show the revision logs for all previous revisions of this file.
-
-@item Compare
-@cindex compare
-@anchor{Compare}
-
-@table @i
-@item Against head revision
-Show a visual comparison between the local file and the most recent
-version of that file in the repository.
-
-@item Against working revision
-Show a visual comparison between the local file and the corresponding
-version of that file in the repository.
-
-@item Working revision against head revision
-Show a visual comparison between the corresponding version of the
-file in the repository and the most recent version of that file.
-
-@end table
-
-@item Annotate
-@anchor{Annotate}
-Display the annotations for the file, i.e. the information for each
-line of the file showing the revision corresponding to that file, and
-additional information depending on the VCS system.
-
-@item Remove annotations
-Remove the annotations from the selected file.
-
-@item Edit revision log
-Edit the current revision log for the selected file.
-
 @item Commit
 @anchor{Commit}
 Submits the changes made to the file to the repository, and queries
@@ -4402,6 +4362,44 @@ It is also possible to check the changelog of a file before commit, by
 specifying a @code{Log checker} in the project properties dialog. This
 works on changelog files in the same way as the @code{File checker} works on
 source files.
+
+@item Start Editing
+@anchor{Start Editing}
+Open the currently selected file for writing. On some VCS systems,
+this is a necessary operation, and on other systems it is not.
+
+@item View revision history
+@anchor{View revision history}
+Show the revision logs for all previous revisions of this file.
+
+@item Compare against head rev.
+@cindex compare
+@anchor{Compare against head}
+
+Show a visual comparison between the local file and the most recent
+version of that file in the repository.
+
+@item Compare against working rev.
+@anchor{Compare against working}
+Show a visual comparison between the local file and the corresponding
+version of that file in the repository.
+
+@item Compare working against head rev.
+@anchor{Compare working against head}
+Show a visual comparison between the corresponding version of the
+file in the repository and the most recent version of that file.
+
+@item Annotate
+@anchor{Annotate}
+Display the annotations for the file, i.e. the information for each
+line of the file showing the revision corresponding to that file, and
+additional information depending on the VCS system.
+
+@item Remove annotations
+Remove the annotations from the selected file.
+
+@item Edit revision log
+Edit the current revision log for the selected file.
 
 @c @item Revert
 @item Add to repository
@@ -4430,15 +4428,26 @@ Query the status of the selected item. Brings up the VCS Explorer.
 @item Update
 Update the selected item. @xref{Update}.
 
+@item Commit via revision log
+This menu item is titled @i{Commit} when a revision log has already been
+created.
+@xref{Commit}.
+
 @item Start editing
 Open the selected file for editing. @xref{Start Editing}.
 
 @item View revision history
 View the revision history for the selected file. @xref{View revision history}.
 
-@item Compare
+@item Compare against head rev.
 @cindex compare
-Compare selected files. @xref{Compare}.
+Compare selected files. @xref{Compare against head}.
+
+@item Compare against working rev.
+Compare selected files. @xref{Compare against working}.
+
+@item Compare working against head rev.
+Compare selected files. @xref{Compare working against head}.
 
 @item Annotate
 @cindex annotate
@@ -4450,11 +4459,6 @@ Remove annotations for the selected files.
 
 @item Edit revision log
 Edit the revision log file corresponding to the selected files.
-
-@item Commit via revision log
-This menu item is titled @i{Commit} when a revision log has already been
-created.
-@xref{Commit}.
 
 @item Remove revision log
 Deletes the revision log file corresponding to the selected files.
