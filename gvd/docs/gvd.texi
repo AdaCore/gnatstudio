@@ -181,6 +181,14 @@ executable to debug, by either using the @ref{open program menu}, or
 by specifying the name of the executable on the command line (@pxref{Command
 Line Options}).
 
+   @item Add Symbols...
+Add the symbols from a given file/module. This corresponds to the gdb
+command @i{add-symbol-file}. This menu is particularly useful under VxWorks
+targets, where the modules can be loaded independently of the debugger.
+For instance, if a module is loaded on the target while GVD is running,
+it is absolutely required to use this functionality, otherwise GVD/gdb won't 
+be able to work properly.
+
    @item Edit Source
 Launches an external editor that will open the file currently displayed
 in the source window (see @ref{The Source Window}). You can specify the name of
