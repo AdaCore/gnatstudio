@@ -23,6 +23,7 @@ with Gtk.Extra.Combo_Box; use Gtk.Extra.Combo_Box;
 with Gdk.Color;           use Gdk.Color;
 with Gtk.Handlers;        use Gtk.Handlers;
 pragma Elaborate_All (Gtk.Handlers);
+with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gtk.Color_Selection; use Gtk.Color_Selection;
 with Gtk.Widget;          use Gtk.Widget;
 with Gdk.Drawable;        use Gdk.Drawable;
@@ -34,10 +35,17 @@ with Gdk.Bitmap;          use Gdk.Bitmap;
 with Pixmaps_IDE;         use Pixmaps_IDE;
 with Gtk.Frame;           use Gtk.Frame;
 with Gtk.Button;          use Gtk.Button;
-
+with Gtk.Object;          use Gtk.Object;
+with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+with Interfaces.C.Strings; use Interfaces.C.Strings;
 with Gdk.Window;          use Gdk.Window;
 
 package body GVD.Color_Combo is
+
+   Combo_Class_Record : GObject_Class := Uninitialized_Class;
+   Combo_Signals : constant chars_ptr_array :=
+     (1 => New_String ("color_changed"));
+
 
    --  ??? Should implement a destroy callback
 
@@ -72,8 +80,17 @@ package body GVD.Color_Combo is
    ----------------
 
    procedure Initialize (Combo : access Gvd_Color_Combo_Record'Class) is
+      Signal_Parameters : constant Signal_Parameter_Types :=
+        (1 => (1 => GType_None));
    begin
       Gtk.Extra.Combo_Box.Initialize (Combo);
+
+      Initialize_Class_Record
+        (Combo,
+         Signals      => Combo_Signals,
+         Class_Record => Combo_Class_Record,
+         Type_Name    => "GvdColorCombo",
+         Parameters   => Signal_Parameters);
 
       Gtk_New (Combo.Selection);
       Add (Get_Frame (Combo), Combo.Selection);
@@ -94,6 +111,15 @@ package body GVD.Color_Combo is
          Combo);
       Show (Combo.Selection);
    end Initialize;
+
+   -------------------
+   -- Color_Changed --
+   -------------------
+
+   procedure Color_Changed (Combo : access Gvd_Color_Combo_Record'Class) is
+   begin
+      Widget_Callback.Emit_By_Name (Combo, "color_changed");
+   end Color_Changed;
 
    ---------------
    -- Set_Color --
@@ -125,6 +151,46 @@ package body GVD.Color_Combo is
       return Combo.Color;
    end Get_Color;
 
+   ---------------
+   -- Get_Color --
+   ---------------
+
+   function Get_Color (Combo : access Gvd_Color_Combo_Record)
+      return String
+   is
+      function Normalize (V : Gcolor_Int) return String;
+
+      function Normalize (V : Gcolor_Int) return String is
+         S : String (1 .. 8);  --  "16#....#" or "16#.#", ....
+         O : String (1 .. 4) := "0000";
+         Index : Natural := S'Last;
+         O_Index : Natural := O'Last;
+
+      begin
+         Put (S, Integer (V), 16);
+
+         while S (Index) /= '#' loop
+            Index := Index - 1;
+         end loop;
+
+         Index := Index - 1;
+
+         while S (Index) /= '#' loop
+            O (O_Index) := S (Index);
+            Index := Index - 1;
+            O_Index := O_Index - 1;
+         end loop;
+
+         return O;
+      end Normalize;
+
+   begin
+      return '#'
+        & Normalize (Red (Combo.Color))
+        & Normalize (Green (Combo.Color))
+        & Normalize (Blue (Combo.Color));
+   end Get_Color;
+
    --------------------
    -- Color_Selected --
    --------------------
@@ -143,6 +209,7 @@ package body GVD.Color_Combo is
       Alloc (Gtk.Widget.Get_Default_Colormap, Color);
       Combo.Color := Color;
       Display_Button (Combo);
+      Color_Changed (Combo);
    end Color_Selected;
 
    --------------------

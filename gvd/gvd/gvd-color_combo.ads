@@ -36,6 +36,27 @@ package GVD.Color_Combo is
 
    function Get_Color (Combo : access Gvd_Color_Combo_Record)
       return Gdk.Color.Gdk_Color;
+   --  Return the selected color as a preallocated color.
+
+   function Get_Color (Combo : access Gvd_Color_Combo_Record)
+      return String;
+   --  Return the selected color as a string
+
+   -------------
+   -- Signals --
+   -------------
+
+   --  <signals>
+   --  The following new signals are defined for this widget:
+   --
+   --  - "color_changed"
+   --    procedure Handler (Combo : access Gvd_Color_Combo_Record'Class);
+   --
+   --    Emitted when the selected color has changed.
+   --  </signals>
+
+   procedure Color_Changed (Combo : access Gvd_Color_Combo_Record'Class);
+   --  Emit the "color_changed" signal.
 
 private
    type Gvd_Color_Combo_Record is new Gtk_Combo_Box_Record with record
