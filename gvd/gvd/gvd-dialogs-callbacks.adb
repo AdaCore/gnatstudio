@@ -91,6 +91,9 @@ package body GVD.Dialogs.Callbacks is
 
       Matched       : Match_Array (0 .. 0);
 
+      Info          : PD_Information_Array (1 .. Max_PD);
+      Len           : Natural;
+
    begin
       if Top = GVD_Dialog (Main_Window.Thread_Dialog) then
          Match ("[0-9]+", Str, Matched);
@@ -102,6 +105,23 @@ package body GVD.Dialogs.Callbacks is
       elsif Top = GVD_Dialog (Main_Window.Task_Dialog) then
          Task_Switch
            (Process.Debugger, Natural (Index) + 1, Mode => GVD.Types.Visible);
+
+      elsif Top = GVD_Dialog (Main_Window.PD_Dialog) then
+         Match ("[0-9]+", Str, Matched);
+         PD_Switch
+           (Process.Debugger,
+            Natural'Value (Str (Matched (0).First .. Matched (0).Last)),
+            Mode => GVD.Types.Visible);
+
+         --  After switching to a new protection domain, we want the
+         --  PD dialog to reflect that change immediately
+         Info_PD (Process.Debugger, Info, Len);
+         Freeze (Gtk_Clist (Object));
+         Update_PD (Main_Window.PD_Dialog, Info (1..Len));
+         Handler_Block (Object, Main_Window.PD_Dialog.Select_Row_Id);
+         Select_Row (Gtk_Clist (Object), Index, 0);
+         Handler_Unblock (Object, Main_Window.PD_Dialog.Select_Row_Id);
+         Thaw (Gtk_Clist (Object));
       else
          raise Program_Error;
       end if;
