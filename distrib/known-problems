@@ -1,5 +1,12 @@
 Known Problems fixed in GPS 1.2.0
 
+- C105-001, C127-015, C202-001 Mismatch between files and VCS logs.
+  Problem:    In some cases, the VCS log files do not correspond to the right
+              files, or GPS cannot read the mapping file, and therefore
+              cannot start.
+  Workaround: Remove all the files in the log_files subdirectory in the GPS
+              directory.
+
 - Last line of file not saved properly
   Problem:    In some cases when saving a file, the last character is
               truncated.
