@@ -1990,7 +1990,7 @@ package body Browsers.Canvas is
       Num_In_Line : Natural;
 
       procedure Display (Text : String; Line : Xref_Line);
-      --  Display the slice First .. Last - 1
+      --  Display Text on Item.
 
       procedure Display (Text : String; Line : Xref_Line) is
       begin
