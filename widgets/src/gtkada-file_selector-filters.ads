@@ -65,9 +65,6 @@ private
       Mask      : out Gdk.Bitmap.Gdk_Bitmap;
       Text      : out GNAT.OS_Lib.String_Access);
 
-
-   type Project_File_Filter_Record is new File_Filter_Record
-     (new String' ("Glide project files"))
-   with null record;
+   type Project_File_Filter_Record is new File_Filter_Record with null record;
 
 end Gtkada.File_Selector.Filters;

@@ -38,6 +38,8 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with Prj;               use Prj;
 
+with Glide_Intl;        use Glide_Intl;
+
 package body Gtkada.File_Selector.Filters is
 
    ----------------------
@@ -60,6 +62,7 @@ package body Gtkada.File_Selector.Filters is
       end if;
 
       Global_Prj_File_Filter := new Project_File_Filter_Record;
+      Global_Prj_File_Filter.Label := new String'(-"Glide project files");
    end Create_Filters;
 
    ---------------------
