@@ -1224,19 +1224,25 @@ package body Glide_Kernel.Modules is
    ---------------
 
    procedure Open_Html
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Filename       : String)
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Enable_Navigation : Boolean := True)
    is
-      Value : GValue_Array (1 .. 1);
+      Value : GValue_Array (1 .. 2);
    begin
       Init (Value (1), Glib.GType_String);
       Set_String (Value (1), Filename);
+
+      Init (Value (2), Glib.GType_Boolean);
+      Set_Boolean (Value (2), Enable_Navigation);
 
       if not Mime_Action (Kernel, Mime_Html_File, Value) then
          Trace (Me, "No html viewer was registered");
       end if;
 
-      Unset (Value (1));
+      for J in Value'Range loop
+         Unset (Value (J));
+      end loop;
    end Open_Html;
 
    -------------------------
