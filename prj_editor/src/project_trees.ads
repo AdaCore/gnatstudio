@@ -36,6 +36,8 @@ package Project_Trees is
    --  if Project is the same that was already loaded, and since the list of
    --  withed projects can not changed, the open/close status of all the
    --  project nodes is kept.
+   --  !!WARNING: this assumes that the hierarchy of projects can not change
+   --  when the project_view is changed.
 
    ---------------
    -- Selection --
