@@ -53,6 +53,12 @@ package VCS_View_API is
    --  Launch a visual comparison for the selected files and their
    --  work revisions.
 
+   procedure View_Work_Head_Diff
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Launch a visual comparison for the selected files between their
+   --  working and head revisions.
+
    procedure View_Log
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
