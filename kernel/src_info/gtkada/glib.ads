@@ -35,6 +35,7 @@
 --  </description>
 
 with Interfaces.C;
+with System;
 
 package Glib is
    pragma Preelaborate;
@@ -73,4 +74,18 @@ package Glib is
    type Guint64 is mod 2 ** 64;
 
    type Gunichar is new Guint32;
+
+   type GType is new Integer;
+   GType_None : constant GType := 0;
+
+   type Boxed_Copy is access
+      function (Boxed : System.Address) return System.Address;
+   pragma Convention (C, Boxed_Copy);
+   type Boxed_Free is access procedure (Boxed : System.Address);
+   pragma Convention (C, Boxed_Free);
+
+   function Boxed_Type_Register_Static
+     (Name : String;
+      Copy : Boxed_Copy;
+      Free : Boxed_Free) return GType;
 end Glib;
