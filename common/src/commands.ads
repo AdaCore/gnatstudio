@@ -208,6 +208,8 @@ package Commands is
    --  then return.
    --  If Wait is non-null, delay Wait milliseconds between each execution.
    --  Launching a command this way does not free memory associated to Command.
+   --  WARNING: It is not possible to execute through Launch_Synchronous a
+   --  command that causes its own destruction.
 
 private
 
