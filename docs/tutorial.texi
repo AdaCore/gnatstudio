@@ -109,7 +109,7 @@ several areas:
 @item a menu bar at the top
 @item a tool bar under the menu bar
 @item a project explorer under the tool bar, on the left side
-@item a working area on the right of the search area and project explorer
+@item a working area on the right of the project explorer
 @item a messages window under the working area
 @item a status bar at the bottom left
 @item a progress bar at the bottom right
@@ -573,7 +573,7 @@ button to close the properties window.
 @section Variable editor
 @noindent
 
-You have probably noticed the @code{Build} label between the search area and the
+You have probably noticed the @code{Build} label located on top of the
 project explorer. This is a configuration variable. With GPS and the GNAT
 project facility, you can define as many configuration variables as you want,
 and modify any project settings (e.g switches, sources, ...) based on the
