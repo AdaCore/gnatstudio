@@ -41,14 +41,18 @@ with Gtk.Hbutton_Box;     use Gtk.Hbutton_Box;
 with Gtk.Image;           use Gtk.Image;
 with Gtk.Menu;            use Gtk.Menu;
 with Gtk.Menu_Item;       use Gtk.Menu_Item;
+with Gdk.Rectangle;       use Gdk.Rectangle;
 with Gtk.Scrolled_Window; use Gtk.Scrolled_Window;
 with Gtk.Stock;           use Gtk.Stock;
 with Gtk.Style;           use Gtk.Style;
 with Gtk.Widget;          use Gtk.Widget;
 with Pango.Layout;        use Pango.Layout;
+with Pango.Context;       use Pango.Context;
+with Pango.Font;          use Pango.Font;
 
 with Ada.Exceptions;      use Ada.Exceptions;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;        use GNAT.Strings;
 
 with Glide_Kernel;              use Glide_Kernel;
 with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
@@ -131,6 +135,18 @@ package body Browsers.Canvas is
    procedure Dump
      (Me : Debug_Handle; Tree : Active_Area_Tree; Indent : Natural := 0);
    --  For debugging purposes, dump the tree to Me.
+
+   procedure Highlight_Item_And_Siblings
+     (Browser : access General_Browser_Record'Class;
+      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
+      Old     : Gtkada.Canvas.Canvas_Item := null);
+   --  Call Highlight on Item and all its siblings. If the selection status has
+   --  changed, this will result in a change of background color for these
+   --  items.
+   --  If Old is not null, then it is also refreshed along with all its
+   --  siblings. This subprogram is optimized so that the items are refreshed
+   --  only once.
+   --  The item is not selected.
 
    ----------------
    -- Initialize --
@@ -619,7 +635,7 @@ package body Browsers.Canvas is
    ---------------------------------
 
    procedure Highlight_Item_And_Siblings
-     (Browser : access General_Browser_Record;
+     (Browser : access General_Browser_Record'Class;
       Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
       Old     : Gtkada.Canvas.Canvas_Item := null)
    is
@@ -627,19 +643,19 @@ package body Browsers.Canvas is
       It  : Canvas_Item;
    begin
       if Old /= null then
-         Refresh (Browser_Item (Old));
+         Highlight (Browser_Item (Old));
 
          Iter := Start (Browser.Canvas, Old);
          loop
             It := Get (Iter);
             exit when It = null;
-            Refresh (Browser_Item (It));
+            Highlight (Browser_Item (It));
             Next (Iter);
          end loop;
       end if;
 
       if Canvas_Item (Item) /= Old then
-         Refresh (Browser_Item (Item));
+         Highlight (Browser_Item (Item));
       end if;
 
       Iter := Start (Browser.Canvas, Canvas_Item (Item));
@@ -652,7 +668,7 @@ package body Browsers.Canvas is
            or else (not Has_Link (Browser.Canvas, It, Old)
                     and then not Has_Link (Browser.Canvas, Old, It))
          then
-            Refresh (Browser_Item (It));
+            Highlight (Browser_Item (It));
          end if;
 
          Next (Iter);
@@ -663,6 +679,15 @@ package body Browsers.Canvas is
       --  problem since gtk+ will coalesce the two events anyway.
       Refresh_Canvas (Browser.Canvas);
    end Highlight_Item_And_Siblings;
+
+   ---------------
+   -- Highlight --
+   ---------------
+
+   procedure Highlight (Item : access Browser_Item_Record) is
+   begin
+      Refresh (Browser_Item (Item));
+   end Highlight;
 
    -----------------
    -- Select_Item --
@@ -676,7 +701,7 @@ package body Browsers.Canvas is
    begin
       Browser.Selected_Item := Canvas_Item (Item);
       if Canvas_Item (Item) /= Old then
-         Highlight_Item_And_Siblings (General_Browser (Browser), Item, Old);
+         Highlight_Item_And_Siblings (Browser, Item, Old);
       end if;
    end Select_Item;
 
@@ -704,7 +729,7 @@ package body Browsers.Canvas is
    begin
       Browser.Selected_Item := null;
       if Old /= null then
-         Highlight_Item_And_Siblings (General_Browser (Browser), Old);
+         Highlight_Item_And_Siblings (Browser, Old);
       end if;
    end Unselect_All;
 
@@ -938,6 +963,7 @@ package body Browsers.Canvas is
       X : constant Gint := Get_Coord (Item).Width
         - (Num + 1) * (Margin + Button_Width);
       Y, W, H : Gint;
+      Thick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
    begin
       --  No title ? Don't draw any button
       if Item.Title_Layout = null then
@@ -945,7 +971,7 @@ package body Browsers.Canvas is
       end if;
 
       Get_Pixel_Size (Item.Title_Layout, W, H);
-      Y := (H - Button_Height) / 2;
+      Y := (H - Button_Height) / 2 + Thick;
 
       Draw_Shadow
         (Style       => Get_Style (Item.Browser),
@@ -975,6 +1001,46 @@ package body Browsers.Canvas is
          Cb);
    end Draw_Title_Bar_Button;
 
+   ----------------------
+   -- Redraw_Title_Bar --
+   ----------------------
+
+   procedure Redraw_Title_Bar (Item : access Browser_Item_Record) is
+      W, H : Gint;
+      XThick : constant Gint := X_Thickness (Get_Style (Item.Browser.Canvas));
+      YThick : constant Gint := Y_Thickness (Get_Style (Item.Browser.Canvas));
+   begin
+      if Item.Title_Layout /= null then
+         Get_Pixel_Size (Item.Title_Layout, W, H);
+         Draw_Rectangle
+           (Pixmap (Item),
+            GC     => Get_Title_Background_GC (Browser_Item (Item)),
+            Filled => True,
+            X      => XThick,
+            Y      => YThick,
+            Width  => Get_Coord (Item).Width - 2 * XThick,
+            Height => H);
+         Draw_Layout
+           (Drawable => Pixmap (Item),
+            GC       => Get_Black_GC (Get_Style (Item.Browser)),
+            X        => Margin + XThick,
+            Y        => YThick,
+            Layout   => Item.Title_Layout);
+         Draw_Line
+           (Pixmap (Item),
+            Gc     => Get_Black_GC (Get_Style (Item.Browser)),
+            X1     => XThick,
+            Y1     => H + YThick,
+            X2     => Get_Coord (Item).Width - XThick - 1,
+            Y2     => H + YThick);
+         Draw_Title_Bar_Button
+           (Item   => Item,
+            Num    => 0,
+            Pixbuf => Item.Browser.Close_Pixmap,
+            Cb     => Build (Close_Item'Access, Item));
+      end if;
+   end Redraw_Title_Bar;
+
    ----------------------------
    -- Get_Last_Button_Number --
    ----------------------------
@@ -986,6 +1052,16 @@ package body Browsers.Canvas is
    begin
       return 0;
    end Get_Last_Button_Number;
+
+   -----------------------------
+   -- Get_Title_Background_GC --
+   -----------------------------
+
+   function Get_Title_Background_GC
+     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Item.Browser.Title_GC;
+   end Get_Title_Background_GC;
 
    -----------------------
    -- Get_Background_GC --
@@ -1023,6 +1099,7 @@ package body Browsers.Canvas is
       Width_Offset, Height_Offset : Glib.Gint;
       Xoffset, Yoffset : in out Glib.Gint)
    is
+      pragma Unreferenced (Xoffset);
       Num_Buttons   : constant Gint := 1 + Get_Last_Button_Number
         (Browser_Item (Item));  --  dispatching call
       Button_Width  : constant Gint := Get_Width (Item.Browser.Close_Pixmap);
@@ -1034,7 +1111,8 @@ package body Browsers.Canvas is
          Get_Pixel_Size (Item.Title_Layout, W, Layout_H);
          W := Gint'Max
            (W + 2 * Margin + Num_Buttons * (Margin + Button_Width), Width);
-         H := Layout_H + Height;
+         H := Layout_H + Height
+           + 2 * Y_Thickness (Get_Style (Item.Browser.Canvas));
       else
          W := Width;
          H := Height;
@@ -1052,41 +1130,9 @@ package body Browsers.Canvas is
          GC     => Bg_GC,
          Filled => True,
          X      => 0,
-         Y      => 0,
+         Y      => Layout_H,
          Width  => W,
-         Height => H);
-
-      if Item.Title_Layout /= null then
-         Draw_Rectangle
-           (Pixmap (Item),
-            GC     => Item.Browser.Title_GC,
-            Filled => True,
-            X      => 0,
-            Y      => 0,
-            Width  => W,
-            Height => Layout_H);
-         Draw_Layout
-           (Drawable => Pixmap (Item),
-            GC       => Get_Black_GC (Get_Style (Item.Browser)),
-            X        => Xoffset + Margin,
-            Y        => Yoffset,
-            Layout   => Item.Title_Layout);
-         Draw_Line
-           (Pixmap (Item),
-            Gc     => Get_Black_GC (Get_Style (Item.Browser)),
-            X1     => 0,
-            Y1     => Layout_H,
-            X2     => W,
-            Y2     => Layout_H);
-
-         Draw_Title_Bar_Button
-           (Item   => Item,
-            Num    => 0,
-            Pixbuf => Item.Browser.Close_Pixmap,
-            Cb     => Build (Close_Item'Access, Item));
-
-         Yoffset := Yoffset + Layout_H;
-      end if;
+         Height => H - Layout_H);
 
       Draw_Shadow
         (Style       => Get_Style (Item.Browser.Canvas),
@@ -1097,6 +1143,10 @@ package body Browsers.Canvas is
          Y           => 0,
          Width       => W,
          Height      => H);
+
+      if Item.Title_Layout /= null then
+         Yoffset := Yoffset + Layout_H;
+      end if;
    end Resize_And_Draw;
 
    ---------------------
@@ -1574,6 +1624,7 @@ package body Browsers.Canvas is
       Xoffset, Yoffset : Gint := 0;
    begin
       Resize_And_Draw (Item, 0, 0, 0, 0, Xoffset, Yoffset);
+      Redraw_Title_Bar (Item);
    end Refresh;
 
    ------------
@@ -1600,5 +1651,259 @@ package body Browsers.Canvas is
    begin
       return Browser.Default_Item_GC;
    end Get_Default_Item_Background_GC;
+
+   --------------------------
+   -- Get_Selected_Item_GC --
+   --------------------------
+
+   function Get_Selected_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Selected_Item_GC;
+   end Get_Selected_Item_GC;
+
+   -------------------------------
+   -- Get_Parent_Linked_Item_GC --
+   -------------------------------
+
+   function Get_Parent_Linked_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Parent_Linked_Item_GC;
+   end Get_Parent_Linked_Item_GC;
+
+   ------------------------------
+   -- Get_Child_Linked_Item_GC --
+   ------------------------------
+
+   function Get_Child_Linked_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC is
+   begin
+      return Browser.Child_Linked_Item_GC;
+   end Get_Child_Linked_Item_GC;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (List : in out Xref_List) is
+   begin
+      Free (List.Lines);
+      Unchecked_Free (List.Lengths);
+
+      if List.Callbacks /= null then
+         for A in List.Callbacks'Range loop
+            --  Do not actually destroy, since these are still used in the
+            --  callbacks.
+            Unchecked_Free (List.Callbacks (A));
+         end loop;
+         Unchecked_Free (List.Callbacks);
+      end if;
+   end Free;
+
+   --------------
+   -- Add_Line --
+   --------------
+
+   procedure Add_Line
+     (List     : in out Xref_List;
+      Str      : String;
+      Length1  : Natural        := Natural'Last;
+      Callback : Active_Area_Cb := null)
+   is
+      Tmp : GNAT.Strings.String_List_Access := List.Lines;
+      Cbs : Active_Area_Cb_Array_Access := List.Callbacks;
+      Tmp2 : Natural_Array_Access := List.Lengths;
+   begin
+      if Tmp /= null then
+         List.Lines :=
+           new GNAT.Strings.String_List'(Tmp.all & new String'(Str));
+         Unchecked_Free (Tmp);
+      else
+         List.Lines := new GNAT.Strings.String_List'(1 => new String'(Str));
+      end if;
+
+      if Cbs /= null then
+         List.Callbacks := new Active_Area_Cb_Array'(Cbs.all & Callback);
+         Unchecked_Free (Cbs);
+      else
+         List.Callbacks := new Active_Area_Cb_Array'(1 => Callback);
+      end if;
+
+      if Tmp2 /= null then
+         List.Lengths := new Natural_Array'(Tmp2.all & Length1);
+         Unchecked_Free (Tmp2);
+      else
+         List.Lengths := new Natural_Array'(1 => Length1);
+      end if;
+   end Add_Line;
+
+   --------------------
+   -- Get_Pixel_Size --
+   --------------------
+
+   procedure Get_Pixel_Size
+     (Browser   : access General_Browser_Record'Class;
+      List      : Xref_List;
+      W1, W2, H : out Gint;
+      Layout    : access Pango_Layout_Record'Class)
+   is
+      Descr : constant Pango_Font_Description :=
+        Get_Pref (Get_Kernel (Browser), Browsers_Link_Font);
+      Font  : Pango_Font;
+      Metrics : Pango_Font_Metrics;
+      Longest1, Longest2 : Gint := 0;
+      H2, W    : Gint;
+      Last : Natural;
+   begin
+      H := 0;
+
+      if List.Lines /= null then
+         Font := Load_Font (Get_Pango_Context (Browser), Descr);
+         Metrics := Get_Metrics (Font);
+
+         for L in List.Lines'Range loop
+            declare
+               Line : GNAT.Strings.String_Access renames List.Lines (L);
+            begin
+               Last := Natural'Min (List.Lengths (L), Line'Length);
+
+               --  First column
+               declare
+                  Str   : String (1 .. Last);
+                  Index : Natural := Str'First;
+               begin
+                  for S in Line'First .. Line'First + Last - 1 loop
+                     if Line (S) /= '@' then
+                        Str (Index) := Line (S);
+                        Index := Index + 1;
+                     end if;
+                  end loop;
+                  Set_Text (Layout, Str (Str'First .. Index - 1));
+                  Get_Pixel_Size (Layout, W, H2);
+                  H := H + H2;
+                  Longest1 := Gint'Max (Longest1, W);
+               end;
+
+               --  Second column
+               if L < Line'Length then
+                  declare
+                     Str   : String (1 .. Line'Length - Last);
+                     Index : Natural := Str'First;
+                  begin
+                     for S in Line'First + Last .. Line'Last loop
+                        if Line (S) /= '@' then
+                           Str (Index) := Line (S);
+                           Index := Index + 1;
+                        end if;
+                     end loop;
+
+                     Set_Text (Layout, Str (Str'First .. Index - 1));
+                     Get_Pixel_Size (Layout, W, H2);
+                     Longest2 := Gint'Max (Longest2, W);
+                  end;
+               end if;
+            end;
+         end loop;
+
+         Unref (Metrics);
+         Unref (Font);
+      end if;
+
+      W1 := Longest1;
+      W2 := Longest2;
+   end Get_Pixel_Size;
+
+   -------------------
+   -- Display_Lines --
+   -------------------
+
+   procedure Display_Lines
+     (Item          : access Browser_Item_Record'Class;
+      List          : Xref_List;
+      X             : Gint;
+      Y             : in out Gint;
+      Second_Column : Gint;
+      Layout        : access Pango_Layout_Record'Class)
+   is
+      Browser : constant General_Browser := Get_Browser (Item);
+      X2     : Gint;
+      First, Last : Integer;
+      In_Xref : Boolean;
+      GC     : Gdk_GC;
+      W, H   : Gint;
+
+      procedure Display (L : Natural);
+      --  Display the slice First .. Last - 1
+
+      procedure Display (L : Natural) is
+      begin
+         if First <= Last - 1 then
+            Set_Text (Layout, List.Lines (L)(First .. Last - 1));
+
+            if In_Xref then
+               GC := Get_Text_GC (Browser);
+            else
+               GC := Get_Black_GC (Get_Style (Browser));
+            end if;
+
+            Draw_Layout
+              (Drawable => Pixmap (Item),
+               GC       => GC,
+               X        => X2,
+               Y        => Y,
+               Layout   => Pango_Layout (Layout));
+
+            Get_Pixel_Size (Layout, W, H);
+
+            if In_Xref then
+               Draw_Line (Pixmap (Item), GC, X2, Y + H, X2 + W, Y + H);
+
+               if List.Callbacks (L) /= null then
+                  Add_Active_Area
+                    (Item,
+                     Gdk_Rectangle'(X2, Y, W, H),
+                     List.Callbacks (L).all);
+               end if;
+            end if;
+
+            X2 := X2 + W;
+         end if;
+      end Display;
+
+   begin
+      if List.Lines = null then
+         return;
+      end if;
+
+      for L in List.Lines'Range loop
+         First := List.Lines (L)'First;
+         Last := First;
+         X2   := X;
+         In_Xref := False;
+
+         while Last <= List.Lines (L)'Last loop
+            if Last - List.Lines (L)'First = List.Lengths (L) then
+               Display (L);
+               First   := Last;
+               X2      := X + Second_Column;
+            end if;
+
+            if List.Lines (L)(Last) = '@' then
+               Display (L);
+               First   := Last + 1;
+               In_Xref := not In_Xref;
+            end if;
+
+            Last := Last + 1;
+         end loop;
+
+         Display (L);
+
+         --  No need to query the size again, we just did
+
+         Y := Y + H;
+      end loop;
+   end Display_Lines;
 
 end Browsers.Canvas;

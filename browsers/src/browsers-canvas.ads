@@ -34,10 +34,11 @@ with Gtk.Menu;
 with Gtk.Widget;
 with Pango.Layout;
 with Ada.Unchecked_Deallocation;
+with GNAT.Strings;
 
 package Browsers.Canvas is
 
-   Margin : constant := 2;
+   Margin : constant := 5;
    --  Margin used when drawing the items, to leave space around the arrows and
    --  the actual contents of the item
 
@@ -92,23 +93,6 @@ package Browsers.Canvas is
 
    procedure Unselect_All (Browser : access General_Browser_Record);
    --  Unselect all items
-
-   procedure Highlight_Item_And_Siblings
-     (Browser : access General_Browser_Record;
-      Item    : access Gtkada.Canvas.Canvas_Item_Record'Class;
-      Old     : Gtkada.Canvas.Canvas_Item := null);
-   --  Call Refresh on Item and all its siblings. If the selection status has
-   --  changed, this will result in a change of background color for these
-   --  items.
-   --  If Old is not null, then it is also refreshed along with all its
-   --  siblings. This subprogram is optimized so that the items are refreshed
-   --  only once.
-   --  The item is not selected.
-   --  This subprogram should be overriden if the items should not appear
-   --  differently when they are selected. You also need to make sure that if
-   --  the item is refreshed later on, it isn't drawn with a different
-   --  background. Overriding Highlight_Item_And_Siblings is just for
-   --  efficiency.
 
    procedure Layout
      (Browser : access General_Browser_Record;
@@ -182,16 +166,28 @@ package Browsers.Canvas is
    --  a null menu, which is the case when creating a current context for
    --  Glide_Kernel.Get_Current_Context.
 
-   procedure Refresh (Item : access Browser_Item_Record'Class);
+   procedure Refresh
+     (Item           : access Browser_Item_Record'Class);
    --  Non dispatching variant of the Resize_And_Draw.
    --  You need to refresh the screen by calling either Item_Updated or
    --  Refresh_Canvas.
+
+   procedure Highlight (Item : access Browser_Item_Record);
+   --  Highlight the item, based on its selection status. This method is
+   --  automatically called when the selection status has changed.
+   --  The default is simply to redraw the item with a different background
+   --  (from Get_Background_GC). It doesn't need to call Item_Updated or
+   --  Refresh_Canvas, this is done automatically.
 
    function Get_Background_GC
      (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC;
    --  Return the graphic context to use for the background of the item. This
    --  can be used to draw the selected item with a different color for
    --  instance (the default behavior)
+
+   function Get_Title_Background_GC
+     (Item : access Browser_Item_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context to use for the background of the title bar.
 
    procedure Resize_And_Draw
      (Item                        : access Browser_Item_Record;
@@ -221,7 +217,8 @@ package Browsers.Canvas is
    --     ultimately resize the item.
    --   - Draw the item at coordinates Xoffset, Yoffset in the double-buffer.
    --   - Modify Xoffset, Yoffset to the position that a child of item should
-   --     be drawn at.
+   --     be drawn at. However, it shouldn't redraw the title bar buttons,
+   --     which are handled through Redraw_Title_Bar.
 
    procedure Draw_Title_Bar_Button
      (Item   : access Browser_Item_Record;
@@ -251,6 +248,10 @@ package Browsers.Canvas is
    --  Return the last number of the button set by this item. This function is
    --  used to make sure that no two items set the same button.
 
+   procedure Redraw_Title_Bar (Item : access Browser_Item_Record);
+   --  This function should redraw the title bar buttons, after calling the
+   --  inherited subprogram.
+
    procedure Reset
      (Browser : access General_Browser_Record'Class;
       Item : access Browser_Item_Record;
@@ -265,11 +266,6 @@ package Browsers.Canvas is
    function Get_Browser (Item : access Browser_Item_Record'Class)
       return General_Browser;
    --  Return the browser associated with this item
-
-   procedure On_Button_Click
-     (Item  : access Browser_Item_Record;
-      Event : Gdk.Event.Gdk_Event_Button);
-   --  See doc for inherited subprogram
 
    procedure Add_Active_Area
      (Item      : access Browser_Item_Record;
@@ -288,6 +284,60 @@ package Browsers.Canvas is
 
    procedure Reset_Active_Areas (Item : in out Browser_Item_Record);
    --  Remove all active areas in Item
+
+   -----------------
+   -- Xrefs lists --
+   -----------------
+   --  This type comes as an addition to the active areas. These are a simple
+   --  way to prepare a the lines to display in an item, along with hyper
+   --  links. The recommended use is to use in Resize_And_Draw subprograms:
+   --  First pass is to prepare the lines through these Xref lists, then
+   --  compute the total size of the item, call the parent's Resize_And_Draw,
+   --  and finally draw the xrefs list on the item.
+
+   type Xref_List is private;
+
+   procedure Add_Line
+     (List     : in out Xref_List;
+      Str      : String;
+      Length1  : Natural        := Natural'Last;
+      Callback : Active_Area_Cb := null);
+   --  Add a new line that will be displayed in a layout.
+   --  Str can contain one substring delimited by @...@. When the user
+   --  clicks on that zone, Callback will be called.
+   --  Length1 is the number of characters in the first column. The first
+   --  character in the second column will always be aligned. Set to
+   --  Natural'Last if there is only one column.
+
+   procedure Display_Lines
+     (Item          : access Browser_Item_Record'Class;
+      List          : Xref_List;
+      X             : Glib.Gint;
+      Y             : in out Glib.Gint;
+      Second_Column : Glib.Gint;
+      Layout        : access Pango.Layout.Pango_Layout_Record'Class);
+   --  Display the lines from List into Pixmap, starting at X, Y, and setup
+   --  appropriate callbacks.
+   --  Layout is used while drawing the strings. It has to be provided for
+   --  efficiency reasons, so that it doesn't need to be recreated every time.
+   --  The first characters of the second column (if any) will all be displayed
+   --  at X coordinate (Second_Column + X).
+
+   procedure Free (List : in out Xref_List);
+   --  Free the data in List.
+   --  This doesn't free any of the callbacks, since these are still in use for
+   --  the hyper links. They will be freed when Reset_Active_Areas is called.
+
+   procedure Get_Pixel_Size
+     (Browser   : access General_Browser_Record'Class;
+      List      : Xref_List;
+      W1, W2, H : out Glib.Gint;
+      Layout    : access Pango.Layout.Pango_Layout_Record'Class);
+   --  Compute the approximate pixels size for List.
+   --  W1, W2 are the widths of the two columns (depending on how each line was
+   --  split).
+   --  Layout is used while computing the length, and has to be provided for
+   --  efficiency issues, to avoid recreating it every time.
 
    ---------------
    -- Item area --
@@ -393,6 +443,20 @@ package Browsers.Canvas is
    --  Return the default graphic context to use for unselected items'
    --  background.
 
+   function Get_Selected_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context for the background of selected items
+
+   function Get_Parent_Linked_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context for the background of items that are parent
+   --  of the selectd item.
+
+   function Get_Child_Linked_Item_GC
+     (Browser : access General_Browser_Record) return Gdk.GC.Gdk_GC;
+   --  Return the graphic context for the background of items that are children
+   --  of the selectd item.
+
    ----------------------
    -- Contextual menus --
    ----------------------
@@ -442,6 +506,9 @@ private
    end record;
 
    procedure Destroy (Item : in out Browser_Item_Record);
+   procedure On_Button_Click
+     (Item  : access Browser_Item_Record;
+      Event : Gdk.Event.Gdk_Event_Button);
    --  See doc for inherited subprograms
 
    type Browser_Item_Record is new Gtkada.Canvas.Buffered_Item_Record
@@ -496,6 +563,24 @@ private
    function Call (Callback : Item_Active_Area_Callback;
                   Event    : Gdk.Event.Gdk_Event) return Boolean;
    --  See doc for inherited Call
+
+   type Active_Area_Cb_Array is array (Natural range <>) of Active_Area_Cb;
+   type Active_Area_Cb_Array_Access is access Active_Area_Cb_Array;
+   type Natural_Array is array (Natural range <>) of Natural;
+   type Natural_Array_Access is access Natural_Array;
+
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Active_Area_Cb_Array, Active_Area_Cb_Array_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (GNAT.Strings.String_List, GNAT.Strings.String_List_Access);
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Natural_Array, Natural_Array_Access);
+
+   type Xref_List is record
+      Lines      : GNAT.Strings.String_List_Access;
+      Callbacks  : Active_Area_Cb_Array_Access;
+      Lengths    : Natural_Array_Access;
+   end record;
 
    pragma Inline (Get_Canvas);
 end Browsers.Canvas;
