@@ -29,6 +29,8 @@ with Prj.Tree;                use Prj.Tree;
 with Language_Handlers.Glide; use Language_Handlers.Glide;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
+
 with Prj_API;                 use Prj_API;
 with Basic_Types;             use Basic_Types;
 
@@ -81,6 +83,7 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
+      Check_References : Boolean := True;
       Proximity       : in out Integer;
       Entity_Decl     : in out E_Declaration_Info;
       Ref             : in out E_Reference_List;
@@ -88,6 +91,10 @@ package body Src_Info.Queries is
    --  Same as Internal_Find_Declaration_Or_Body, but for a specific
    --  declaration list.  Entity_Name must be all lower-cases if the language
    --  is case insensitive.
+   --  If Check_References, (Line, Column) is only searched in the list of
+   --  declarations, not in the list of references.
+   --  If Entity_Name is the empty string, no matching is done on the name,
+   --  only on the line and column
    --
    --  Status is not reset.
    --
@@ -134,6 +141,7 @@ package body Src_Info.Queries is
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
+      Check_References : Boolean := True;
       Decl          : out E_Declaration_Info;
       Ref           : out E_Reference_List;
       Status        : out Find_Decl_Or_Body_Query_Status);
@@ -144,6 +152,10 @@ package body Src_Info.Queries is
    --  asked to choose.
    --  Ref points to the E_Reference in the list of Decl that corresponds to
    --  Line, Column.
+   --  If Check_References, (Line, Column) is only searched in the list of
+   --  declarations, not in the list of references.
+   --  If Entity_Name is the empty string, no matching is done on the name,
+   --  only on the line and column
 
    -------------------------
    -- Search_Is_Completed --
@@ -249,6 +261,7 @@ package body Src_Info.Queries is
       Entity_Name     : String;
       Line            : Positive;
       Column          : Positive;
+      Check_References : Boolean := True;
       Proximity       : in out Integer;
       Entity_Decl     : in out E_Declaration_Info;
       Ref             : in out E_Reference_List;
@@ -263,7 +276,9 @@ package body Src_Info.Queries is
       while Current_Decl /= null loop
          --  Check the entity name to limit a bit the search in the
          --  Xref lists
-         if Current_Decl.Value.Declaration.Name.all = Entity_Name then
+         if Entity_Name = ""
+           or else Current_Decl.Value.Declaration.Name.all = Entity_Name
+         then
             --  Check if the location corresponds to the declaration,
             --  in which case we need to jump to the first body.
             Prox := Location_Matches
@@ -285,30 +300,36 @@ package body Src_Info.Queries is
             end if;
 
             --  Search in the list of references.
-            Current_Ref := Current_Decl.Value.References;
-            Ref_Loop :
-            while Current_Ref /= null loop
-               Prox := Location_Matches
-                 (Current_Ref.Value.Location, File_Name, Line, Column);
+            if Check_References then
+               Current_Ref := Current_Decl.Value.References;
+               Ref_Loop :
+               while Current_Ref /= null loop
+                  Prox := Location_Matches
+                    (Current_Ref.Value.Location, File_Name, Line, Column);
 
-               if Prox = 0 then
-                  Entity_Decl := Current_Decl.Value;
-                  Ref         := Current_Ref;
-                  Status      := Success;
-                  return;
+                  if Prox = 0 then
+                     Entity_Decl := Current_Decl.Value;
+                     Ref         := Current_Ref;
+                     Status      := Success;
+                     return;
 
-               elsif abs (Prox) < abs (Proximity) then
-                  Entity_Decl := Current_Decl.Value;
-                  Ref         := Current_Ref;
-                  Status      := Fuzzy_Match;
-                  Proximity   := Prox;
-               end if;
+                  elsif abs (Prox) < abs (Proximity) then
+                     Entity_Decl := Current_Decl.Value;
+                     Ref         := Current_Ref;
+                     Status      := Fuzzy_Match;
+                     Proximity   := Prox;
+                  end if;
 
-               Current_Ref := Current_Ref.Next;
-            end loop Ref_Loop;
+                  Current_Ref := Current_Ref.Next;
+               end loop Ref_Loop;
+            end if;
          end if;
          Current_Decl := Current_Decl.Next;
       end loop Decl_Loop;
+
+      Entity_Decl := (No_Declaration, null);
+      Ref         := null;
+      Status      := Entity_Not_Found;
    end Find_Spec_Or_Body;
 
    ---------------------------------------
@@ -321,6 +342,7 @@ package body Src_Info.Queries is
       Entity_Name   : String;
       Line          : Positive;
       Column        : Positive;
+      Check_References : Boolean := True;
       Decl          : out E_Declaration_Info;
       Ref           : out E_Reference_List;
       Status        : out Find_Decl_Or_Body_Query_Status)
@@ -348,7 +370,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Spec_Info.Declarations,
-            File_Name, E_Name, Line, Column,
+            File_Name, E_Name, Line, Column, Check_References,
             Proximity, Decl, Ref, Status);
       end if;
 
@@ -359,7 +381,7 @@ package body Src_Info.Queries is
       then
          Find_Spec_Or_Body
            (Lib_Info.LI.Body_Info.Declarations,
-            File_Name, E_Name, Line, Column,
+            File_Name, E_Name, Line, Column, Check_References,
             Proximity, Decl, Ref, Status);
       end if;
 
@@ -370,7 +392,7 @@ package body Src_Info.Queries is
             if Current_Sep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Sep.Value.Declarations,
-                  File_Name, E_Name, Line, Column,
+                  File_Name, E_Name, Line, Column, Check_References,
                   Proximity, Decl, Ref, Status);
 
                exit when Search_Is_Completed (Status);
@@ -387,7 +409,7 @@ package body Src_Info.Queries is
             if Current_Dep.Value.Declarations /= null then
                Find_Spec_Or_Body
                  (Current_Dep.Value.Declarations,
-                  File_Name, E_Name, Line, Column,
+                  File_Name, E_Name, Line, Column, Check_References,
                   Proximity, Decl, Ref, Status);
                if Search_Is_Completed (Status) then
                   exit;
@@ -416,14 +438,15 @@ package body Src_Info.Queries is
       Decl        : E_Declaration_Info;
    begin
       Internal_Find_Declaration_Or_Body
-        (Lib_Info    => Lib_Info,
-         File_Name   => File_Name,
-         Entity_Name => Entity_Name,
-         Line        => Line,
-         Column      => Column,
-         Decl        => Decl,
-         Ref         => Ref,
-         Status      => Status);
+        (Lib_Info         => Lib_Info,
+         File_Name        => File_Name,
+         Entity_Name      => Entity_Name,
+         Line             => Line,
+         Column           => Column,
+         Check_References => True,
+         Decl             => Decl,
+         Ref              => Ref,
+         Status           => Status);
 
       if Status = Success or else Status = Fuzzy_Match then
          if Decl.Declaration.Kind /= Overloaded_Entity then
@@ -475,14 +498,15 @@ package body Src_Info.Queries is
       --  LI file that really defines the entity, or we won't find the body.
 
       Internal_Find_Declaration_Or_Body
-        (Lib_Info    => Lib_Info,
-         File_Name   => File_Name,
-         Entity_Name => Entity_Name,
-         Line        => Line,
-         Column      => Column,
-         Decl        => Decl,
-         Ref         => Ref,
-         Status      => Status);
+        (Lib_Info         => Lib_Info,
+         File_Name        => File_Name,
+         Entity_Name      => Entity_Name,
+         Line             => Line,
+         Column           => Column,
+         Check_References => True,
+         Decl             => Decl,
+         Ref              => Ref,
+         Status           => Status);
 
       if (Status = Success or else Status = Fuzzy_Match)
         and then Decl.Declaration.Kind = Overloaded_Entity
@@ -513,14 +537,15 @@ package body Src_Info.Queries is
                Predefined_Object_Path => Predefined_Object_Path);
 
             Internal_Find_Declaration_Or_Body
-              (Lib_Info    => Body_LI,
-               File_Name   => Get_Declaration_File_Of (Entity),
-               Entity_Name => Entity_Name,
-               Line        => Get_Declaration_Line_Of (Entity),
-               Column      => Get_Declaration_Column_Of (Entity),
-               Decl        => Decl,
-               Ref         => Ref,
-               Status      => Status);
+              (Lib_Info         => Body_LI,
+               File_Name        => Get_Declaration_File_Of (Entity),
+               Entity_Name      => Entity_Name,
+               Line             => Get_Declaration_Line_Of (Entity),
+               Column           => Get_Declaration_Column_Of (Entity),
+               Check_References => True,
+               Decl             => Decl,
+               Ref              => Ref,
+               Status           => Status);
             Destroy (Entity);
          end if;
       end if;
@@ -1598,9 +1623,10 @@ package body Src_Info.Queries is
       Separator : String      := ".") return String
    is
       Tree : Scope_Tree;
-      Node, Tmp : Scope_Tree_Node;
-      Depth  : Natural := 0;
-      Length : Natural := 0;
+      Node, Tmp, Tmp2 : Scope_Tree_Node;
+      Full_Name : Unbounded_String;
+      T, T2 : Entity_Information;
+
    begin
       if Decl_File = null then
          return Get_Name (Entity);
@@ -1621,47 +1647,34 @@ package body Src_Info.Queries is
       Tmp := Node;
       while Tmp /= Null_Scope_Tree_Node loop
          if not Is_Label (Tmp) then
-            Depth := Depth + 1;
+            T := Get_Entity (Tmp);
+            Full_Name := Get_Name (T) & Separator & Full_Name;
+
+            Tmp2 := Get_Parent (Tmp);
+
+            --  If there is no more parent node in the tree, we still need to
+            --  look for possible parent packages
+            if Tmp2 = Null_Scope_Tree_Node then
+               loop
+                  T2 := Get_Parent_Package (Decl_File, T);
+                  exit when T2 = No_Entity_Information;
+
+                  Full_Name := Get_Name (T2) & Separator & Full_Name;
+
+                  Destroy (T);
+                  T := T2;
+               end loop;
+            end if;
+
+            Destroy (T);
+            Tmp := Tmp2;
+
+         else
+            Tmp := Get_Parent (Tmp);
          end if;
-         Tmp := Get_Parent (Tmp);
       end loop;
 
-      declare
-         type Entity_Array is array (1 .. Depth) of Entity_Information;
-         Entities : Entity_Array;
-      begin
-         Depth := Entities'First;
-         Tmp   := Node;
-
-         while Tmp /= Null_Scope_Tree_Node loop
-            if not Is_Label (Tmp) then
-               Entities (Depth) := Get_Entity (Tmp);
-               Length := Length + Get_Name (Entities (Depth))'Length
-                 + Separator'Length;
-               Depth := Depth + 1;
-            end if;
-            Tmp := Get_Parent (Tmp);
-         end loop;
-
-         Free (Tree);
-
-         declare
-            Str : String (1 .. Length);
-            Index : Natural := Str'First;
-         begin
-            for E in reverse Entities'Range loop
-               Str (Index .. Index + Get_Name (Entities (E))'Length - 1) :=
-                 Get_Name (Entities (E));
-               Index := Index + Get_Name (Entities (E))'Length;
-               Str (Index .. Index + Separator'Length - 1) := Separator;
-               Index := Index + Separator'Length;
-
-               Destroy (Entities (E));
-            end loop;
-
-            return Str (Str'First .. Str'Last - Separator'Length);
-         end;
-      end;
+      return To_String (Full_Name);
    end Get_Full_Name;
 
    -------------
@@ -2732,5 +2745,65 @@ package body Src_Info.Queries is
    begin
       null;
    end Free_Boolean;
+
+   ------------------------
+   -- Get_Parent_Package --
+   ------------------------
+
+   function Get_Parent_Package
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Entity_Information
+   is
+      Decl   : E_Declaration_Info;
+      Ref    : E_Reference_List;
+      Status : Find_Decl_Or_Body_Query_Status;
+   begin
+      Internal_Find_Declaration_Or_Body
+        (Lib_Info         => Lib_Info,
+         File_Name        => Get_Declaration_File_Of (Entity),
+         Entity_Name      => Get_Name (Entity),
+         Line             => Get_Declaration_Line_Of (Entity),
+         Column           => Get_Declaration_Column_Of (Entity),
+         Check_References => False,
+         Decl             => Decl,
+         Ref              => Ref,
+         Status           => Status);
+
+      if Status = Success then
+         Ref := Decl.References;
+         while Ref /= null loop
+            if Ref.Value.Kind = Parent_Package then
+
+               Internal_Find_Declaration_Or_Body
+                 (Lib_Info         => Lib_Info,
+                  File_Name        => Get_File (Ref.Value.Location),
+                  Entity_Name      => "",
+                  Line             => Get_Line (Ref.Value.Location),
+                  Column           => Get_Column (Ref.Value.Location),
+                  Check_References => False,
+                  Decl             => Decl,
+                  Ref              => Ref,
+                  Status           => Status);
+
+               if Status /= Success then
+                  return No_Entity_Information;
+
+               else
+                  return Create
+                    (File   => Get_File (Decl.Declaration.Location),
+                     Line   => Get_Line (Decl.Declaration.Location),
+                     Column => Get_Column (Decl.Declaration.Location),
+                     Name   => Decl.Declaration.Name.all,
+                     Scope  => Decl.Declaration.Scope,
+                     Kind   => Decl.Declaration.Kind);
+               end if;
+            end if;
+
+            Ref := Ref.Next;
+         end loop;
+      end if;
+
+      return No_Entity_Information;
+   end Get_Parent_Package;
 
 end Src_Info.Queries;

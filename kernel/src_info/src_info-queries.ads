@@ -287,6 +287,22 @@ package Src_Info.Queries is
    procedure Destroy (Iterator : in out Entity_Reference_Iterator_Access);
    --  Free the memory occupied by the iterator.
 
+   --------------
+   -- Packages --
+   --------------
+
+   function Get_Parent_Package
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information) return Entity_Information;
+   --  Return the parent package of Entity.
+   --  For instance, if we are in package A.B.C, and Entity is "C", this
+   --  returns "B". You then need to call this function again for "B", with the
+   --  same Lib_Info to get to "A".
+   --  No_Entity_Information is returned if Entity is not a package or doesn't
+   --  have a parent package.
+   --
+   --  The returned entity must be freed by the user.
+
    ---------------------------
    -- Dependencies requests --
    ---------------------------
