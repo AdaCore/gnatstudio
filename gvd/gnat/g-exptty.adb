@@ -1,6 +1,6 @@
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
-package body GNAT.Expect.Tty is
+package body GNAT.Expect.TTY is
 
    ---------------
    -- Interrupt --
@@ -69,4 +69,4 @@ package body GNAT.Expect.Tty is
       Internal (Pid.Process, Args);
    end Set_Up_Child_Communications;
 
-end GNAT.Expect.Tty;
+end GNAT.Expect.TTY;

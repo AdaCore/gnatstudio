@@ -1,4 +1,4 @@
-CFLAGS = -g -O2
+CFLAGS = -g -O0
 
 all:
 	$(MAKE) CFLAGS="$(CFLAGS)" -C pixmaps

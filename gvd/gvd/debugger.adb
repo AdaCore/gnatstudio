@@ -32,7 +32,7 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Preferences;
 
-with GNAT.Expect.Tty;   use GNAT.Expect.Tty;
+with GNAT.Expect.TTY;   use GNAT.Expect.TTY;
 
 package body Debugger is
 
@@ -168,7 +168,7 @@ package body Debugger is
    begin
 
       if Odd.Preferences.Use_Ptys then
-         Descriptor := new Tty_Process_Descriptor;
+         Descriptor := new TTY_Process_Descriptor;
       else
          Descriptor := new Process_Descriptor;
       end if;

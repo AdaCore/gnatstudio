@@ -1,7 +1,7 @@
 with GNAT.Expect; use GNAT.Expect;
 with System;
 
-package GNAT.Expect.Tty is
+package GNAT.Expect.TTY is
 
    ------------------
    --  TTY_Process --
@@ -42,4 +42,4 @@ private
    type TTY_Process_Descriptor is new Process_Descriptor with record
       Process    : System.Address;  --  Underlying structure used in C.
    end record;
-end GNAT.Expect.Tty;
+end GNAT.Expect.TTY;
