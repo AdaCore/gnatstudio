@@ -705,6 +705,7 @@ package body Python.GUI is
             PyErr_Clear;
          end if;
 
+
          if Interpreter.Use_Secondary_Prompt then
             Tmp := Interpreter.Buffer;
             Interpreter.Buffer := new String'
