@@ -47,12 +47,14 @@ package Glide_Kernel.Editor is
    --  new editor will be opened only for different files.
 
    procedure Go_To
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : String;
-      Line   : Natural := 0;
-      Column : Natural := 0);
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File      : String;
+      Line      : Natural := 0;
+      Column    : Natural := 0;
+      Highlight : Boolean := False);
    --  Go to the specified file at Line:Column
    --  Depending on the preferences, this may or may not open a new editor.
+   --  If Highlight is True, Line will be highlighted.
 
    procedure Save_To_File
      (Kernel  : access Kernel_Handle_Record'Class;

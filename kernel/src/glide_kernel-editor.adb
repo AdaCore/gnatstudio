@@ -211,16 +211,20 @@ package body Glide_Kernel.Editor is
    -----------
 
    procedure Go_To
-     (Kernel : access Kernel_Handle_Record'Class;
-      File   : String;
-      Line   : Natural := 0;
-      Column : Natural := 0)
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File      : String;
+      Line      : Natural := 0;
+      Column    : Natural := 0;
+      Highlight : Boolean := False)
    is
       Edit : Source_Editor_Box;
    begin
       Edit := Open_File (Kernel, File);
       Set_Cursor_Location (Edit, Line, Column);
-      Highlight_Line (Edit, Line);
+
+      if Highlight then
+         Highlight_Line (Edit, Line);
+      end if;
    end Go_To;
 
    ------------------
