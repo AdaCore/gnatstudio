@@ -34,7 +34,6 @@ with GNAT.Expect; use GNAT.Expect;
 with Ada.Command_Line; use Ada.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Text_IO; use Ada.Text_IO;
-with Open_Program_Pkg; use Open_Program_Pkg;
 with Language.Debugger.Ada; use Language.Debugger.Ada;
 with Language.Debugger.C;   use Language.Debugger.C;
 with Language;              use Language;
@@ -52,7 +51,6 @@ procedure Odd_Main is
    Dir               : String_Access;
    Remote_Host       : String_Access;
    Skip_Argument     : Boolean := False;
-   Program           : Program_Descriptor;
 
    procedure Init;
    --  Set up environment for Odd.
@@ -68,6 +66,7 @@ procedure Odd_Main is
    --  Display help on the standard output.
 
    procedure Init is
+      Dir_Created : Boolean := False;
    begin
       Root := Getenv ("GVD_ROOT");
       Home := Getenv ("HOME");
@@ -87,9 +86,21 @@ procedure Odd_Main is
                Make_Dir (Dir.all);
                Button := Message_Dialog
                  ((-"Created config directory ") & Dir.all,
-                  Information, Button_OK,
-                  Justification => Justify_Left);
+                  Information, Button_OK, Justification => Justify_Left);
+               Dir_Created := True;
             end if;
+
+            if not Is_Directory (Dir.all & Directory_Separator & "sessions")
+            then
+               Make_Dir (Dir.all & Directory_Separator & "sessions");
+               if not Dir_Created then
+                  Button := Message_Dialog
+                    ((-"Created config directory ")
+                     & Dir.all & Directory_Separator & "sessions",
+                     Information, Button_OK, Justification => Justify_Left);
+               end if;
+            end if;
+
          exception
             when Directory_Error =>
                Button := Message_Dialog
@@ -231,43 +242,34 @@ begin
    --  ??? Should set the executable here, so that we can use Set_Executable
    --  and get initialization for free.
 
-   Program.Debugger := Debug_Type;
-
    if Remote_Host = null then
-      Process_Tab := Create_Debugger
-        (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
 
       --  ??? The following lines imply that program file is necessarily
       --  the last argument on the command line.
 
-      --  if Argument_Count /= 0 then
-      --     Program.Program := new String' (List (Argument_Count).all);
-      --  else
-      --     Program.Program := new String' ("");
-      --  end if;
-
-      Program.Remote_Host := new String' ("");
-      Program.Remote_Target := new String' ("");
-      Program.Protocol := new String' ("");
-      Program.Debugger_Name := new String' ("");
-      Process_Tab.Descriptor := Program;
-
-   else
-      Process_Tab := Create_Debugger
-        (Main_Debug_Window, Debug_Type, "", List (1 .. Index),
-         Remote_Host => Remote_Host.all);
-
       if Argument_Count /= 0 then
-         Program.Program := new String' (List (Argument_Count).all);
+         Process_Tab := Create_Debugger
+           (Main_Debug_Window,
+            Debug_Type,
+            (Get_Current_Dir & List (Argument_Count).all),
+            List (1 .. Index));
       else
-         Program.Program := new String' ("");
+         Process_Tab := Create_Debugger
+           (Main_Debug_Window, Debug_Type, "", List (1 .. Index));
       end if;
-
-      Program.Remote_Host := new String' (Remote_Host.all);
-      Program.Remote_Target := new String' ("");
-      Program.Protocol := new String' ("");
-      Program.Debugger_Name := new String' ("");
-      Process_Tab.Descriptor := Program;
+   else
+      if Argument_Count /= 0 then
+         Process_Tab := Create_Debugger
+           (Main_Debug_Window,
+            Debug_Type,
+            List (Argument_Count).all,
+            List (1 .. Index),
+            Remote_Host => Remote_Host.all);
+      else
+         Process_Tab := Create_Debugger
+           (Main_Debug_Window, Debug_Type, "", List (1 .. Index),
+            Remote_Host => Remote_Host.all);
+      end if;
    end if;
 
    Show_All (Main_Debug_Window);
