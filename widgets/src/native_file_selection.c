@@ -64,6 +64,7 @@ NativeWin32FileSelection
   static char         l_Result [MAX_PATH];
   int                 l_index = 0;
   char*               res;
+  BOOL                ret;
 
   static POINT        position;
   RECT                aw_rect;
@@ -147,9 +148,12 @@ NativeWin32FileSelection
   ofn.lpTemplateName    = NULL;
 
   if (kind == 1)
-    GetSaveFileName (&ofn);
+    ret = GetSaveFileName (&ofn);
   else
-    GetOpenFileName (&ofn);
+    ret = GetOpenFileName (&ofn);
+
+  if (!ret)
+    l_Result [0] = '\0';
 
   /* copy the result into a well sized string */
 
