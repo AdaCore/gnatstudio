@@ -685,8 +685,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
    procedure On_Command_History1_Activate
      (Object : access Gtk_Widget_Record'Class)
    is
+      Top  : constant Main_Debug_Window_Access :=
+        Main_Debug_Window_Access (Get_Toplevel (Object));
+      Page : Gtk_Widget :=
+        Get_Nth_Page
+          (Top.Process_Notebook, Get_Current_Page (Top.Process_Notebook));
+      Tab  : constant Debugger_Process_Tab := Process_User_Data.Get (Page);
+
+      use String_History;
+
    begin
-      null;
+      if Top.History_Dialog = null then
+         Gtk_New (Top.History_Dialog, Gtk_Window (Top));
+      end if;
+
+      Show_All (Top.History_Dialog);
+      Update (Top.History_Dialog, Tab);
    end On_Command_History1_Activate;
 
    -------------------------------
@@ -1135,7 +1149,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
---        Arg1 : Address := To_Address (Params, 1);
+      --  Arg1 : Address := To_Address (Params, 1);
       Arg2 : Guint := To_Guint (Params, 2);
       --  Number of the page that will be displayed
 
