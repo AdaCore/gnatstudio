@@ -41,7 +41,6 @@ with Language_Handlers.Glide; use Language_Handlers.Glide;
 with Prj_API;                 use Prj_API;
 with Prj;                     use Prj;
 with Src_Info;                use Src_Info;
-with Namet;                   use Namet;
 
 with Glide_Main_Window;       use Glide_Main_Window;
 
@@ -502,7 +501,7 @@ package body Builder_Module is
    is
       Handler      : Glide_Language_Handler :=
         Glide_Language_Handler (Get_Language_Handler (D.Kernel));
-      Num_Handlers : constant Natural := Languages_Count (Handler);
+      Num_Handlers : constant Natural := LI_Handlers_Count (Handler);
       Finished     : Boolean;
       LI           : LI_Handler;
       New_Handler  : Boolean := False;
@@ -525,27 +524,20 @@ package body Builder_Module is
 
          LI := Get_Nth_Handler (Handler, D.LI);
          if LI /= null then
-            declare
-               L : constant String := Get_Nth_Language (Handler, D.LI);
-            begin
-               Name_Len := L'Length;
-               Name_Buffer (1 .. Name_Len) := L;
-               New_Handler := True;
-               D.Iter.all := new LI_Handler_Iterator'Class'
-                 (Generate_LI_For_Project
-                    (Handler      => LI,
-                     Root_Project => Get_Project_View (D.Kernel),
-                     Project      => Get_Project_View (D.Kernel),
-                     Language     => Name_Find,
-                     Recursive    => True));
-               Continue (D.Iter.all.all, Finished);
-            end;
+            New_Handler := True;
+            D.Iter.all := new LI_Handler_Iterator'Class'
+              (Generate_LI_For_Project
+                 (Handler      => LI,
+                  Root_Project => Get_Project_View (D.Kernel),
+                  Project      => Get_Project_View (D.Kernel),
+                  Recursive    => True));
+            Continue (D.Iter.all.all, Finished);
          end if;
       end loop;
 
       if New_Handler then
          Insert (D.Kernel, "Parsing source files for "
-                 & Get_Nth_Language (Handler, D.LI));
+                 & Get_LI_Name (Handler, D.LI));
       end if;
 
       return True;
