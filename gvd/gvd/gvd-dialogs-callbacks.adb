@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -38,50 +38,17 @@ package body Odd.Dialogs.Callbacks is
    use Odd;
    use Gtk.Arguments;
 
-   ----------------------------------
-   -- On_Backtrace_List_Select_Row --
-   ----------------------------------
+   ------------------------------
+   -- On_Stack_Process_Stopped --
+   ------------------------------
 
-   procedure On_Backtrace_List_Select_Row
+   procedure On_Stack_Process_Stopped
      (Object : access Gtk_Widget_Record'Class;
       Params : Gtk.Arguments.Gtk_Args)
    is
-      Frame       : constant Gint         := To_Gint (Params, 1) + 1;
-
-      --  Get the process notebook from the main window which is associated
-      --  with the task dialog (toplevel (object)).
-
-      Main_Window : constant Gtk_Window   :=
-        Backtrace_Dialog_Access (Get_Toplevel (Object)).Main_Window;
-      Notebook    : constant Gtk_Notebook :=
-        Main_Debug_Window_Access (Main_Window).Process_Notebook;
-
-      --  Get the current page in the process notebook.
-
-      Process     : constant Debugger_Process_Tab :=
-        Process_User_Data.Get (Get_Nth_Page
-          (Notebook, Get_Current_Page (Notebook)));
-
    begin
-      Stack_Frame (Process.Debugger, Positive (Frame), Odd.Types.Visible);
-      Context_Changed (Process);
-   end On_Backtrace_List_Select_Row;
-
-   ----------------------------------
-   -- On_Backtrace_Process_Stopped --
-   ----------------------------------
-
-   procedure On_Backtrace_Process_Stopped
-     (Object : access Gtk_Widget_Record'Class;
-      Params : Gtk.Arguments.Gtk_Args)
-   is
-      Dialog   : constant Backtrace_Dialog_Access :=
-        Debugger_Process_Tab (Object).Window.Backtrace_Dialog;
-   begin
-      if Visible_Is_Set (Dialog) then
-         Update (Dialog, Object);
-      end if;
-   end On_Backtrace_Process_Stopped;
+      Update (Object);
+   end On_Stack_Process_Stopped;
 
    -----------------------------
    -- On_Task_List_Select_Row --

@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -51,10 +51,6 @@ package body Odd.Dialogs is
 
    Question_Titles : constant Chars_Ptr_Array := "" + "Choice";
    --  ??? Should be translatable.
-
-   Backtrace_Titles : constant Chars_Ptr_Array :=
-     "PC" + "Subprogram" + "Source";
-   --  ???  Should be translated through odd.Intl
 
    type Simple_Entry_Dialog_Record is new Gtk_Dialog_Record with record
       Entry_Field  : Gtk_Combo;
@@ -127,14 +123,6 @@ package body Odd.Dialogs is
    begin
       Task_Dialog := new Task_Dialog_Record;
       Initialize (Task_Dialog, Main_Window);
-   end Gtk_New;
-
-   procedure Gtk_New
-     (Backtrace_Dialog : out Backtrace_Dialog_Access;
-      Main_Window      : Gtk_Window) is
-   begin
-      Backtrace_Dialog := new Backtrace_Dialog_Record;
-      Initialize (Backtrace_Dialog, Main_Window);
    end Gtk_New;
 
    procedure Gtk_New
@@ -216,27 +204,31 @@ package body Odd.Dialogs is
    end Update;
 
    procedure Update
-     (Backtrace_Dialog : access Backtrace_Dialog_Record;
-      Debugger    : access Gtk.Widget.Gtk_Widget_Record'Class)
+     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
-      Temp : Chars_Ptr_Array (0 .. 2);
-      Row  : Gint;
+      Temp     : Chars_Ptr_Array (0 .. 2);
+      Row      : Gint;
       Bt       : Backtrace_Array (1 .. Max_Frame);
       Len      : Natural;
-      Process  : Process_Proxy_Access :=
+      Process  : constant Process_Proxy_Access :=
         Get_Process (Debugger_Process_Tab (Debugger).Debugger);
-   begin
-      if not Visible_Is_Set (Backtrace_Dialog) then
-         return;
-      end if;
+      List     : Gtk_CList;
+      Columns  : Gint;
 
-      Freeze (Backtrace_Dialog.List);
-      Clear (Backtrace_Dialog.List);
+   begin
+      --  if not Visible_Is_Set (Stack_Dialog) then
+      --     return;
+      --  end if;
+      List := Debugger_Process_Tab (Debugger).Stack_List;
+      Columns := Get_Columns (List);
+
+      Freeze (List);
+      Clear (List);
 
       --  If the debugger was killed, no need to refresh
 
       if Process = null then
-         Thaw (Backtrace_Dialog.List);
+         Thaw (List);
          return;
       end if;
 
@@ -248,28 +240,24 @@ package body Odd.Dialogs is
 
       if Len > 0 then
          for J in 1 .. Len loop
-            Temp (0) := Strings.New_String (Bt (J).Program_Counter.all);
+            if Columns = 1 then
+               Temp (0) := Strings.New_String (Bt (J).Subprogram.all);
+            else
+               Temp (0) := Strings.New_String (Bt (J).Program_Counter.all);
+            end if;
+
             Temp (1) := Strings.New_String (Bt (J).Subprogram.all);
             Temp (2) := Strings.New_String (Bt (J).Source_Location.all);
-            Row := Append (Backtrace_Dialog.List, Temp);
+
+            Row := Append (List, Temp);
             Free (Temp);
          end loop;
 
-         Row := Columns_Autosize (Backtrace_Dialog.List);
-
-         --  Prevent huge windows
-
-         for J in Gint range 0 .. 2 loop
-            if Optimal_Column_Width (Backtrace_Dialog.List, J) >
-              Max_Column_Width
-            then
-               Set_Column_Width (Backtrace_Dialog.List, J, Max_Column_Width);
-            end if;
-         end loop;
+         Row := Columns_Autosize (List);
       end if;
 
       Free (Bt (1 .. Len));
-      Thaw (Backtrace_Dialog.List);
+      Thaw (List);
    end Update;
 
    procedure Update
@@ -325,17 +313,17 @@ package body Odd.Dialogs is
       Update (Tab.Window.Task_Dialog, Tab);
    end On_Task_Process_Stopped;
 
-   ----------------------------------
-   -- On_Backtrace_Process_Stopped --
-   ----------------------------------
+   ------------------------------
+   -- On_Stack_Process_Stopped --
+   ------------------------------
 
-   procedure On_Backtrace_Process_Stopped
+   procedure On_Stack_Process_Stopped
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Tab : constant Debugger_Process_Tab := Debugger_Process_Tab (Widget);
    begin
-      Update (Tab.Window.Backtrace_Dialog, Tab);
-   end On_Backtrace_Process_Stopped;
+      Update (Tab);
+   end On_Stack_Process_Stopped;
 
    ----------------
    -- Initialize --
@@ -398,31 +386,6 @@ package body Odd.Dialogs is
 
       --  We can't create the clist here, since we don't know yet how many
       --  columns there will be. This will be done on the first call to update
-   end Initialize;
-
-   procedure Initialize
-     (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
-      Main_Window      : Gtk_Window) is
-   begin
-      Initialize (Backtrace_Dialog, -"Call Stack", Main_Window);
-      Button_Callback.Connect
-        (Backtrace_Dialog.Close_Button, "clicked",
-         Button_Callback.To_Marshaller (On_Close_Button_Clicked'Access));
-
-      Set_Default_Size (Backtrace_Dialog, 400, 200);
-      Gtk_New (Backtrace_Dialog.Scrolledwindow1);
-      Pack_Start
-        (Backtrace_Dialog.Vbox1, Backtrace_Dialog.Scrolledwindow1,
-         True, True, 0);
-      Set_Policy
-        (Backtrace_Dialog.Scrolledwindow1, Policy_Automatic,
-         Policy_Automatic);
-
-      Gtk_New (Backtrace_Dialog.List, 3, Backtrace_Titles);
-      Widget_Callback.Connect
-        (Backtrace_Dialog.List, "select_row",
-         On_Backtrace_List_Select_Row'Access);
-      Add (Backtrace_Dialog.Scrolledwindow1, Backtrace_Dialog.List);
    end Initialize;
 
    procedure Initialize

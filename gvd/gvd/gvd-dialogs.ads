@@ -1,10 +1,10 @@
 -----------------------------------------------------------------------
---                 Odd - The Other Display Debugger                  --
+--                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
 --                         Copyright (C) 2000                        --
 --                 Emmanuel Briot and Arnaud Charlet                 --
 --                                                                   --
--- Odd is free  software;  you can redistribute it and/or modify  it --
+-- GVD is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -38,9 +38,6 @@ package Odd.Dialogs is
 
    type Task_Dialog_Record is new Odd_Dialog_Record with private;
    type Task_Dialog_Access is access all Task_Dialog_Record'Class;
-
-   type Backtrace_Dialog_Record is new Odd_Dialog_Record with private;
-   type Backtrace_Dialog_Access is access all Backtrace_Dialog_Record'Class;
 
    type Question_Dialog_Record is new Odd_Dialog_Record with private;
    type Question_Dialog_Access is access all Question_Dialog_Record'Class;
@@ -84,25 +81,13 @@ package Odd.Dialogs is
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the task window associated with a given tab.
 
-   procedure Gtk_New
-     (Backtrace_Dialog : out Backtrace_Dialog_Access;
-      Main_Window      : Gtk_Window);
-   --  Create an empty backtrace dialog.
-   --  No information will be displayed until you call Update.
-
-   procedure Initialize
-     (Backtrace_Dialog : access Backtrace_Dialog_Record'Class;
-      Main_Window      : Gtk_Window);
-   --  Internal initialization function
-
    procedure Update
-     (Backtrace_Dialog : access Backtrace_Dialog_Record;
-      Debugger         : access Gtk.Widget.Gtk_Widget_Record'Class);
-   --  Update the contents of the backtrace dialog.
+     (Debugger : access Gtk.Widget.Gtk_Widget_Record'Class);
+   --  Update the contents of the call stack window.
    --  The information is read from Debugger (which is in fact a
    --  Debugger_Process_Tab).
 
-   procedure On_Backtrace_Process_Stopped
+   procedure On_Stack_Process_Stopped
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class);
    --  Callback function connected to the "process_stopped" signal.
    --  It will update the call stack window associated with a given tab.
@@ -189,7 +174,6 @@ private
    --  instead of having to convert in the callbacks ?
 
    type Task_Dialog_Record is new Odd_Dialog_Record with null record;
-   type Backtrace_Dialog_Record is new Odd_Dialog_Record with null record;
 
    type Question_Dialog_Record is new Odd_Dialog_Record with record
       Debugger        : Debugger_Access;
