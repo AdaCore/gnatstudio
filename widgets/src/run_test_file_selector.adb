@@ -43,7 +43,7 @@ begin
    Create_From_Xpm_D
      (Filter_B.Spec_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter_B.Spec_Bitmap,
       Transparent => Null_Color,
       Data => box_xpm);
@@ -51,7 +51,7 @@ begin
    Create_From_Xpm_D
      (Filter_B.Body_Pixmap,
       Window => null,
-      Colormap => Get_System,
+      Colormap => Get_Default_Colormap,
       Mask => Filter_B.Body_Bitmap,
       Transparent => Null_Color,
       Data => package_xpm);

@@ -228,14 +228,14 @@ package body Directory_Tree is
       Create_From_Xpm_D
         (Tree.Ofolder_Pix,
          Window      => null,
-         Colormap    => Get_System,
+         Colormap    => Get_Default_Colormap,
          Mask        => Tree.Ofolder_Mask,
          Transparent => Null_Color,
          Data        => mini_ofolder_xpm);
       Create_From_Xpm_D
         (Tree.Folder_Pix,
          Window      => null,
-         Colormap    => Get_System,
+         Colormap    => Get_Default_Colormap,
          Mask        => Tree.Folder_Mask,
          Transparent => Null_Color,
          Data        => mini_folder_xpm);
