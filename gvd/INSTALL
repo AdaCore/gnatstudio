@@ -3,7 +3,7 @@ Building GVD
 
 Prerequisites:
 - GNAT 3.13 or higher
-- GtkAda 1.2.10
+- GtkAda 1.2.12
 
 To build GVD, you first need to install GNAT and GtkAda, then
 do the following:
