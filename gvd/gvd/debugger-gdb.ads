@@ -205,6 +205,14 @@ package Debugger.Gdb is
 
 private
 
+   function Send
+     (Debugger        : access Gdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True)
+     return String;
+
    type Gdb_Debugger is new Debugger.Debugger_Root with record
       Executable     : GNAT.OS_Lib.String_Access;
       Remote_Target  : Boolean;
@@ -215,9 +223,9 @@ private
      (Lang       : access Language.Debugger.Language_Debugger'Class;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive;
-      Parent     : Generic_Values.Generic_Type_Access);
+      Parent     : Items.Generic_Type_Access);
    --  Internal function used to parse the value.
    --  The parameters are the same as for Parse_Value, plus Parent that is
    --  the item that contains Result.

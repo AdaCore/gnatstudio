@@ -183,6 +183,15 @@ package Debugger.Jdb is
       Cmd      : String);
 
 private
+
+   function Send
+     (Debugger        : access Jdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True)
+     return String;
+
    type Jdb_Debugger is new Debugger.Debugger_Root with record
       Main_Class : GNAT.OS_Lib.String_Access;
       Frame      : Natural := 1;

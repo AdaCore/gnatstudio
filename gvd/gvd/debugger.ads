@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Language;
-with Generic_Values;
+with Items;
 with GNAT.OS_Lib;
 with Process_Proxies;
 with GNAT.Regpat;
@@ -113,6 +113,17 @@ package Debugger is
    --  Send_Completed is called right after the command is sent to the
    --  debugger. Call Wait_Prompt before exiting if Wait_For_Prompt is True.
 
+   function Send
+     (Debugger        : access Debugger_Root;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True)
+     return String
+     is abstract;
+   --  Same as above, but also returns the output of the debugger.
+   --  The empty string is returned if Wait_For_Prompt is False.
+
    procedure Send_Completed
      (Debugger : access Debugger_Root;
       Cmd      : String);
@@ -146,14 +157,14 @@ package Debugger is
 
    function Parse_Type
      (Debugger : access Debugger_Root'Class;
-      Entity   : String) return Generic_Values.Generic_Type_Access;
+      Entity   : String) return Items.Generic_Type_Access;
    --  Parse the type definition for Entity, and return a
    --  tree as explained in Generic_Values.
 
    procedure Parse_Value
      (Debugger    : access Debugger_Root'Class;
       Entity      : String;
-      Value       : in out Generic_Values.Generic_Type_Access;
+      Value       : in out Items.Generic_Type_Access;
       Value_Found : out Boolean);
    --  Parse the value of Entity.
    --  Value should contain the result of Parse_Type when this procedure is

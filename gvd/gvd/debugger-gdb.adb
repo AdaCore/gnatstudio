@@ -35,9 +35,13 @@ with Odd.Strings;       use Odd.Strings;
 with Gtk.Window;        use Gtk.Window;
 with Odd.Dialogs;       use Odd.Dialogs;
 with Language.Debugger; use Language.Debugger;
-with Generic_Values;    use Generic_Values;
+with Items;             use Items;
 with Ada.Tags;          use Ada.Tags;
 with Odd.Types;         use Odd.Types;
+with Items.Simples; use Items.Simples;
+with Items.Arrays;  use Items.Arrays;
+with Items.Records; use Items.Records;
+with Items.Classes; use Items.Classes;
 
 package body Debugger.Gdb is
 
@@ -228,26 +232,51 @@ package body Debugger.Gdb is
       end if;
    end Question_Filter;
 
+   ----------
+   -- Send --
+   ----------
+
+   function Send
+     (Debugger        : access Gdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True)
+     return String
+   is
+   begin
+      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt);
+      if Wait_For_Prompt then
+         declare
+            S : String := Expect_Out (Get_Process (Debugger));
+         begin
+            if S'Length > Prompt_Length then
+               return S (S'First .. S'Last - Prompt_Length - 1);
+            else
+               return "";
+            end if;
+         end;
+      else
+         return "";
+      end if;
+   end Send;
+
    -------------
    -- Type_Of --
    -------------
 
    function Type_Of
-     (Debugger : access Gdb_Debugger; Entity : String) return String is
+     (Debugger : access Gdb_Debugger; Entity : String) return String
+   is
+      S : String := Send (Debugger, "ptype " & Entity);
    begin
-      Send (Debugger, "ptype " & Entity);
-
-      declare
-         S : String := Expect_Out (Get_Process (Debugger));
-      begin
-         if S'Length > Prompt_Length
-           and then S (S'First .. S'First + 5) = "type ="
-         then
-            return S (S'First + 7 .. S'Last - Prompt_Length);
-         else
-            return "";
-         end if;
-      end;
+      if S'Length > 6
+        and then S (S'First .. S'First + 5) = "type ="
+      then
+         return S (S'First + 7 .. S'Last);
+      else
+         return "";
+      end if;
    end Type_Of;
 
    --------------
@@ -257,27 +286,22 @@ package body Debugger.Gdb is
    function Value_Of
      (Debugger : access Gdb_Debugger;
       Entity   : String;
-      Format   : Value_Format := Decimal) return String is
+      Format   : Value_Format := Decimal) return String
+   is
+      S : String := Send (Debugger, "print " & Entity);
+      Index : Natural := S'First;
    begin
-      Send (Debugger, "print " & Entity);
+      --  The value is valid only if it starts with '$'
 
-      declare
-         S : String := Expect_Out (Get_Process (Debugger));
-         Index : Natural := S'First;
-      begin
+      if S (S'First) /= '$' then
+         return "";
+      end if;
 
-         --  The value is valid only if it starts with '$'
+      --  Skip the '$nn =' part
+      Skip_To_Char (S, Index, '=');
+      Index := Index + 1;
 
-         if S (S'First) /= '$' then
-            return "";
-         end if;
-
-         --  Skip the '$nn =' part
-         Skip_To_Char (S, Index, '=');
-         Index := Index + 1;
-
-         return S (Index + 1 .. S'Last - Prompt_Length);
-      end;
+      return S (Index + 1 .. S'Last);
    end Value_Of;
 
    -----------------
@@ -289,20 +313,14 @@ package body Debugger.Gdb is
       Entity   : String)
      return String
    is
-   begin
       --  ??? Probably, this should be language-dependent.
-
-      Send (debugger, "print &(" & Entity & ")");
-
-      declare
-         S       : String := Expect_Out (Get_Process (Debugger));
-         Matched : Match_Array (0 .. 1);
-      begin
-         Match (" (0x[0-9a-zA-Z]+)", S, Matched);
-         if Matched (1) /= No_Match then
-            return S (Matched (1).First .. Matched (1).Last);
-         end if;
-      end;
+      S : String := Send (debugger, "print &(" & Entity & ")");
+      Matched : Match_Array (0 .. 1);
+   begin
+      Match (" (0x[0-9a-zA-Z]+)", S, Matched);
+      if Matched (1) /= No_Match then
+         return S (Matched (1).First .. Matched (1).Last);
+      end if;
       return "";
    end Get_Uniq_Id;
 
@@ -852,18 +870,13 @@ package body Debugger.Gdb is
 
    function Info_Threads
      (Debugger : access Gdb_Debugger)
-      return Language.Thread_Information_Array is
+     return Language.Thread_Information_Array
+   is
+      S : String :=  Send
+        (Debugger, Thread_List (Get_Language (Debugger)));
    begin
-      Send
-        (Debugger,
-         Thread_List (Get_Language (Debugger)));
-
-      declare
-         S : String := Expect_Out (Get_Process (Debugger));
-      begin
-         return Parse_Thread_List
-           (Get_Language (Debugger), S (S'First .. S'Last - Prompt_Length));
-      end;
+      return Parse_Thread_List
+        (Get_Language (Debugger), S (S'First .. S'Last));
    end Info_Threads;
 
    ------------------------
@@ -963,65 +976,61 @@ package body Debugger.Gdb is
    -----------------------
 
    function Source_Files_List
-     (Debugger : access Gdb_Debugger) return Odd.Types.String_Array is
+     (Debugger : access Gdb_Debugger) return Odd.Types.String_Array
+   is
+      S : String := Send (Debugger, "info sources");
+      Num_Files : Natural := 0;
    begin
-      Send (Debugger, "info sources");
+      --  Count the number of files
+      for J in S'Range loop
+         if S (J) = ',' then
+            Num_Files := Num_Files + 1;
+         end if;
+      end loop;
+
+      --  Add two, since there are in fact two lists of files (already
+      --  read, and to be read), that do not end with ','
+
+      Num_Files := Num_Files + 2;
 
       declare
-         S : String := Expect_Out (Get_Process (Debugger));
-         Num_Files : Natural := 0;
+         Result : Odd.Types.String_Array (1 .. Num_Files);
+         Num    : Natural := 1;
+         Index  : Positive := S'First;
+         Start  : Positive;
       begin
-         --  Count the number of files
-         for J in S'Range loop
-            if S (J) = ',' then
-               Num_Files := Num_Files + 1;
+         --  Parse first list (starts with ':')
+         Skip_To_Char (S, Index, ':');
+         Index := Index + 1;
+         Skip_Blanks (S, Index);
+
+         while Index <= S'Last loop
+            --  Parse each file
+            Start := Index;
+            while Index <= S'Last
+              and then S (Index) /= ','
+              and then S (Index) /= ' '
+              and then S (Index) /= ASCII.LF
+            loop
+               Index := Index + 1;
+            end loop;
+
+            if Index <= S'Last then
+               Result (Num) := new String'(S (Start .. Index - 1));
+               Num := Num + 1;
+
+               --  End of list ?
+               if S (Index) /= ',' then
+                  Skip_To_Char (S, Index, ':');
+                  Index := Index + 1;
+               else
+                  Index := Index + 1;
+               end if;
+
+               Skip_Blanks (S, Index);
             end if;
          end loop;
-
-         --  Add two, since there are in fact two lists of files (already
-         --  read, and to be read), that do not end with ','
-
-         Num_Files := Num_Files + 2;
-
-         declare
-            Result : Odd.Types.String_Array (1 .. Num_Files);
-            Num    : Natural := 1;
-            Index  : Positive := S'First;
-            Start  : Positive;
-         begin
-            --  Parse first list (starts with ':')
-            Skip_To_Char (S, Index, ':');
-            Index := Index + 1;
-            Skip_Blanks (S, Index);
-
-            while Index <= S'Last loop
-               --  Parse each file
-               Start := Index;
-               while Index <= S'Last
-                 and then S (Index) /= ','
-                 and then S (Index) /= ' '
-                 and then S (Index) /= ASCII.LF
-               loop
-                  Index := Index + 1;
-               end loop;
-
-               if Index <= S'Last then
-                  Result (Num) := new String'(S (Start .. Index - 1));
-                  Num := Num + 1;
-
-                  --  End of list ?
-                  if S (Index) /= ',' then
-                     Skip_To_Char (S, Index, ':');
-                     Index := Index + 1;
-                  else
-                  Index := Index + 1;
-                  end if;
-
-                  Skip_Blanks (S, Index);
-               end if;
-            end loop;
-            return Result (1 .. Num - 1);
-         end;
+         return Result (1 .. Num - 1);
       end;
    end Source_Files_List;
 
@@ -1033,9 +1042,9 @@ package body Debugger.Gdb is
      (Lang       : access Language.Debugger.Language_Debugger'Class;
       Type_Str   : String;
       Index      : in out Natural;
-      Result     : in out Generic_Values.Generic_Type_Access;
+      Result     : in out Items.Generic_Type_Access;
       Repeat_Num : out Positive;
-      Parent     : Generic_Values.Generic_Type_Access)
+      Parent     : Items.Generic_Type_Access)
    is
       Context : constant Language_Context := Get_Language_Context (Lang);
    begin

@@ -56,17 +56,13 @@ package body Debugger.Jdb is
    -------------
 
    function Type_Of
-     (Debugger : access Jdb_Debugger; Entity : String) return String is
+     (Debugger : access Jdb_Debugger; Entity : String) return String
+   is
+      S : String := Send (Debugger, "fields " & Entity);
+      Matches : Match_Array (0 .. 0);
    begin
-      Send (Debugger, "fields " & Entity);
-
-      declare
-         S       : String := Expect_Out (Get_Process (Debugger));
-         Matches : Match_Array (0 .. 0);
-      begin
-         Match (Prompt_Regexp, S, Matches);
-         return S (S'First .. Matches (0).First - 1);
-      end;
+      Match (Prompt_Regexp, S, Matches);
+      return S (S'First .. Matches (0).First - 1);
    end Type_Of;
 
    --------------
@@ -79,26 +75,20 @@ package body Debugger.Jdb is
       Format   : Value_Format := Decimal) return String
    is
       Matches : Match_Array (0 .. 0);
+      S : String := Send (Debugger, "dump " & Entity);
+      Index : Natural := S'First;
    begin
-      Send (Debugger, "dump " & Entity);
-
-      declare
-         S : String := Expect_Out (Get_Process (Debugger));
-         Index : Natural := S'First;
-      begin
-
-         --  Skip the 'var =' part
-         while Index <= S'Last
-           and then S (Index) /= '='
-         loop
-            Index := Index + 1;
-         end loop;
-
+      --  Skip the 'var =' part
+      while Index <= S'Last
+        and then S (Index) /= '='
+      loop
          Index := Index + 1;
+      end loop;
 
-         Match (Prompt_Regexp, S, Matches);
-         return S (Index + 1 .. Matches (0).First - 1);
-      end;
+      Index := Index + 1;
+
+      Match (Prompt_Regexp, S, Matches);
+      return S (Index + 1 .. Matches (0).First - 1);
    end Value_Of;
 
    -----------
@@ -519,18 +509,15 @@ package body Debugger.Jdb is
 
    function Info_Threads
      (Debugger : access Jdb_Debugger)
-      return Language.Thread_Information_Array is
+     return Language.Thread_Information_Array
+   is
+      S : String :=
+        Send (Debugger, Thread_List (Get_Language (Debugger)), True);
+      Matches : Match_Array (0 .. 0);
    begin
-      Send (Debugger, Thread_List (Get_Language (Debugger)), True);
-
-      declare
-         S       : String := Expect_Out (Get_Process (Debugger));
-         Matches : Match_Array (0 .. 0);
-      begin
-         Match (Prompt_Regexp, S, Matches);
-         return Parse_Thread_List
-           (Get_Language (Debugger), S (S'First .. Matches (0).First - 1));
-      end;
+      Match (Prompt_Regexp, S, Matches);
+      return Parse_Thread_List
+        (Get_Language (Debugger), S (S'First .. Matches (0).First - 1));
    end Info_Threads;
 
    --------------------------
@@ -619,5 +606,37 @@ package body Debugger.Jdb is
    begin
       null;
    end Remove_Breakpoint;
+
+   ----------
+   -- Send --
+   ----------
+
+   function Send
+     (Debugger        : access Jdb_Debugger;
+      Cmd             : String;
+      Display         : Boolean := False;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True)
+     return String
+   is
+   begin
+      Send (Debugger, Cmd, Display, Empty_Buffer, Wait_For_Prompt);
+
+      if Wait_For_Prompt then
+         declare
+            S : String := Expect_Out (Get_Process (Debugger));
+            Index : Positive := S'Last;
+         begin
+            while Index >= S'First
+              and then S (Index) /= ASCII.LF
+            loop
+               Index := Index - 1;
+            end loop;
+            return S (S'First .. Index - 1);
+         end;
+      else
+         return "";
+      end if;
+   end Send;
 
 end Debugger.Jdb;
