@@ -50,6 +50,7 @@ with Gtk.Widget;                  use Gtk.Widget;
 with Gtk.Window;                  use Gtk.Window;
 with Gtk.Tooltips;                use Gtk.Tooltips;
 with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.Dialogs;              use Gtkada.Dialogs;
 with Gtkada.MDI;                  use Gtkada.MDI;
 with System;                      use System;
 with Prj.Attr;                    use Prj.Attr;
@@ -463,8 +464,9 @@ package body Glide_Kernel is
       procedure Add_Child_If_Needed (Child : MDI_Child);
       --  Add the child to the model if we should ask for its saving
 
-      procedure Save_Child (Child : MDI_Child);
-      --  Save a specific child
+      function Save_Child (Child : MDI_Child) return Boolean;
+      --  Save a specific child.
+      --  Return True if the child was successfully saved
 
       -------------------------
       -- Add_Child_If_Needed --
@@ -495,24 +497,26 @@ package body Glide_Kernel is
       -- Save_Child --
       ----------------
 
-      procedure Save_Child (Child : MDI_Child) is
+      function Save_Child (Child : MDI_Child) return Boolean is
          Module : constant Module_ID := Get_Module_From_Child (Child);
-         Tmp    : Boolean;
-         pragma Unreferenced (Tmp);
-
       begin
          if Module /= null
            and then Module.Info.Save_Function /= null
          then
-            Tmp := Module.Info.Save_Function
+            return Module.Info.Save_Function
               (Handle, Get_Widget (Child), Mode => Action);
+         else
+            return True;
          end if;
       end Save_Child;
 
+      Tmp  : Boolean;
+      Tmp2 : Message_Dialog_Buttons;
+      pragma Unreferenced (Tmp, Tmp2);
    begin
       if Force then
          if Project_Modified (Get_Project (Handle), Recursive => True) then
-            Save_Project
+            Tmp := Save_Project
               (Kernel    => Handle,
                Project   => Get_Project (Handle),
                Recursive => True);
@@ -521,7 +525,7 @@ package body Glide_Kernel is
          if Children /= No_Children then
             for C in Children'Range loop
                if Children (C) /= null then
-                  Save_Child (Children (C));
+                  Tmp := Save_Child (Children (C));
                end if;
             end loop;
 
@@ -531,7 +535,7 @@ package body Glide_Kernel is
             loop
                Child := Get (Iter);
                exit when Child = null;
-               Save_Child (Child);
+               Tmp := Save_Child (Child);
                Next (Iter);
             end loop;
          end if;
@@ -654,14 +658,29 @@ package body Glide_Kernel is
                      Name : constant String := Get_String (Model, It, 1);
                   begin
                      if Name = Project_Description then
-                        Save_Project
+                        if not Save_Project
                           (Kernel    => Handle,
                            Project   => Get_Project (Handle),
-                           Recursive => True);
+                           Recursive => True)
+                        then
+                           Destroy (Dialog);
+                           Tmp2 := Message_Dialog
+                             (Msg     => -"Couldn't save the project",
+                              Buttons => Button_OK,
+                              Parent  => Get_Current_Window (Handle));
+                           return False;
+                        end if;
                      else
                         Child := Find_MDI_Child_By_Name
                           (Get_MDI (Handle), Name);
-                        Save_Child (Child);
+                        if not Save_Child (Child) then
+                           Destroy (Dialog);
+                           Tmp2 := Message_Dialog
+                             (Msg     => -"Couldn't save " & Name,
+                              Buttons => Button_OK,
+                              Parent  => Get_Current_Window (Handle));
+                           return False;
+                        end if;
                      end if;
                   end;
                end if;
