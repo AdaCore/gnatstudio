@@ -49,6 +49,7 @@ with Ada.Text_IO;              use Ada.Text_IO;
 with GNAT.Regpat; use GNAT.Regpat;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 
+with Odd_Intl;                  use Odd_Intl;
 with Process_Tab_Pkg;           use Process_Tab_Pkg;
 with Display_Items;             use Display_Items;
 with Debugger.Gdb;              use Debugger.Gdb;
@@ -130,47 +131,23 @@ package body GVD.Process is
    --------------------
    -- Post processes --
    --------------------
-   --  For reliability reasons, it is not recommended to directly load
-   --  a file in Text_Output_Handler as soon as a file indication is found
-   --  in the output of the debugger.
-   --  Instead, we register a "post command", to be executed when the current
+   --  Some commands cannot be done until the debugger command is terminated.
+   --  Therefore, we register a "post command", to be executed when the current
    --  call to Wait or Wait_Prompt is finished.
-   --  There are a number of such functions, defined below, and that all use
-   --  the same type of User_Data.
 
-   type Load_File_Data is record
-      Process   : Debugger_Process_Tab;
-      File_Name : GVD.Types.String_Access;
-      Line      : Natural;
-      Addr      : GVD.Types.String_Access;
-      Frame     : Integer;
-   end record;
-   type Load_File_Data_Access is access Load_File_Data;
-   function Convert is new Unchecked_Conversion
-     (System.Address, Load_File_Data_Access);
-   function Convert is new Unchecked_Conversion
-     (Load_File_Data_Access, System.Address);
+   function To_Process is new
+     Unchecked_Conversion (System.Address, Debugger_Process_Tab);
 
-   procedure Load_File_Post_Process (User_Data : System.Address);
-   --  Load a file, whose name was found while we were previously waiting for
-   --  a prompt.
-
-   procedure Set_Line_Post_Process (User_Data : System.Address);
-   --  Set a line, whose name was found while we were previously waiting for
-   --  a prompt.
-
-   procedure Set_Addr_Post_Process (User_Data : System.Address);
-   --  Set an address, whose name was found while we were previously waiting
-   --  for a prompt.
-
-   procedure Set_Frame_Post_Process (User_Data : System.Address);
-   --  Set the current stack frame (in the stack_list window)
+   procedure Final_Post_Process (User_Data : System.Address);
+   --  Final post processing.
+   --  Call the appropriate filters and reset Current_Output.
+   --  User_Data is a debugger process tab.
 
    -----------------------
    -- Local Subprograms --
    -----------------------
 
-   procedure Text_Output_Handler
+   procedure Text_Output_Filter
      (Descriptor : GNAT.Expect.Process_Descriptor'Class;
       Str        : String;
       Window     : System.Address);
@@ -252,14 +229,14 @@ package body GVD.Process is
                       Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
-   -------------------------
-   -- Text_Output_Handler --
-   -------------------------
+   -----------------
+   -- Output_Text --
+   -----------------
 
-   procedure Text_Output_Handler
-     (Process : Debugger_Process_Tab;
-      Str     : String;
-      Is_Command : Boolean := False;
+   procedure Output_Text
+     (Process      : Debugger_Process_Tab;
+      Str          : String;
+      Is_Command   : Boolean := False;
       Set_Position : Boolean := False)
    is
       Matched : GNAT.Regpat.Match_Array (0 .. 0);
@@ -326,87 +303,14 @@ package body GVD.Process is
          Gtk.Text.Set_Position
            (Process.Debugger_Text, Gint (Process.Edit_Pos));
       end if;
-   end Text_Output_Handler;
+   end Output_Text;
 
-   ----------------------------
-   -- Load_File_Post_Process --
-   ----------------------------
+   ------------------------
+   -- Final_Post_Process --
+   ------------------------
 
-   procedure Load_File_Post_Process (User_Data : System.Address) is
-      Data : Load_File_Data_Access := Convert (User_Data);
-   begin
-      --  Override the language currently defined in the editor.
-      --  Since the text file has been given by the debugger, the language
-      --  to use is the one currently defined by the debugger.
-
-      Set_Current_Language
-        (Data.Process.Editor_Text, Get_Language (Data.Process.Debugger));
-
-      --  Display the file
-
-      --  Update the list of breakpoints in the editor.
-      --  If there is no breakpoint defined, we force an update (in fact,
-      --  "start" will always define such a breakpoint, and this is used to
-      --  initialize the list).
-
-      if Data.Process.Breakpoints /= null
-        and then Data.Process.Breakpoints'Length > 0
-      then
-         Update_Breakpoints
-           (Data.Process.Editor_Text, Data.Process.Breakpoints.all);
-      else
-         Update_Breakpoints (Data.Process, Force => True);
-      end if;
-
-      Load_File (Data.Process.Editor_Text, Data.File_Name.all);
-
-      --  Free unused memory
-      Free (Data.File_Name);
-   end Load_File_Post_Process;
-
-   ---------------------------
-   -- Set_Line_Post_Process --
-   ---------------------------
-
-   procedure Set_Line_Post_Process (User_Data : System.Address) is
-      Data : Load_File_Data_Access := Convert (User_Data);
-   begin
-      Set_Line (Data.Process.Editor_Text, Data.Line);
-   end Set_Line_Post_Process;
-
-   ---------------------------
-   -- Set_Addr_Post_Process --
-   ---------------------------
-
-   procedure Set_Addr_Post_Process (User_Data : System.Address) is
-      Data : Load_File_Data_Access := Convert (User_Data);
-   begin
-      Set_Address (Data.Process.Editor_Text, Data.Addr.all);
-      Free (Data.Addr);
-   end Set_Addr_Post_Process;
-
-   ----------------------------
-   -- Set_Frame_Post_Process --
-   ----------------------------
-
-   procedure Set_Frame_Post_Process (User_Data : System.Address) is
-      Data : Load_File_Data_Access := Convert (User_Data);
-   begin
-      Highlight_Stack_Frame (Data.Process, Data.Frame);
-   end Set_Frame_Post_Process;
-
-   -------------------------
-   -- Text_Output_Handler --
-   -------------------------
-
-   procedure Text_Output_Handler
-     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
-      Str        : String;
-      Window     : System.Address)
-   is
-      Process     : constant Debugger_Process_Tab :=
-        Convert (To_Main_Debug_Window (Window), Descriptor);
-
+   procedure Final_Post_Process (User_Data : System.Address) is
+      Process     : constant Debugger_Process_Tab := To_Process (User_Data);
       File_First  : Natural := 0;
       File_Last   : Positive;
       Line        : Natural := 0;
@@ -415,32 +319,23 @@ package body GVD.Process is
       Addr_Last   : Natural;
 
    begin
+      if Process.Current_Output = null then
+         return;
+      end if;
+
+      Process.Post_Processing := True;
+
       if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
          Found_File_Name
            (Process.Debugger,
-            Str, File_First, File_Last, First, Last, Line,
+            Process.Current_Output.all,
+            File_First, File_Last, First, Last, Line,
             Addr_First, Addr_Last);
       end if;
 
-      --  Do not show the output if we have an internal or hidden command
-
-      case Get_Command_Mode (Get_Process (Process.Debugger)) is
-         when User | GVD.Types.Visible =>
-            if First = 0 then
-               Text_Output_Handler (Process, Str, Set_Position => True);
-            else
-               Text_Output_Handler (Process, Str (Str'First .. First - 1));
-               Text_Output_Handler
-                 (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
-            end if;
-
-         when Hidden | Internal =>
-            null;
-      end case;
-
       --  Do we have a file name or line number indication: if yes, do not
       --  process them immediatly, but wait for the current command to be
-      --  fully processed (since Text_Output_Handler is called while a
+      --  fully processed (since Text_Output_Filter is called while a
       --  call to Wait or Wait_Prompt is being processed).
       --  The memory allocated for Load_File_Data is freed in
       --  process_proxies.adb:Process_Post_Processes. ??? Check this comment
@@ -448,57 +343,104 @@ package body GVD.Process is
       --  Load_File_Post_Process.
 
       if File_First /= 0 then
-         Register_Post_Cmd
-           (Get_Process (Process.Debugger),
-            Load_File_Post_Process'Access,
-            Convert (new Load_File_Data'
-                     (Process => Process,
-                      File_Name => new String' (Str (File_First .. File_Last)),
-                      Line      => 1,
-                      Addr      => null,
-                      Frame     => 1)));
+         --  Override the language currently defined in the editor.
+         --  Since the text file has been given by the debugger, the language
+         --  to use is the one currently defined by the debugger.
+
+         Set_Current_Language
+           (Process.Editor_Text, Get_Language (Process.Debugger));
+
+         --  Display the file
+
+         --  Update the list of breakpoints in the editor.
+         --  If there is no breakpoint defined, we force an update (in fact,
+         --  "start" will always define such a breakpoint, and this is used to
+         --  initialize the list).
+
+         if Process.Breakpoints /= null
+           and then Process.Breakpoints'Length > 0
+         then
+            Update_Breakpoints
+              (Process.Editor_Text, Process.Breakpoints.all);
+         else
+            Update_Breakpoints (Process, Force => True);
+         end if;
+
+         Load_File
+           (Process.Editor_Text,
+            Process.Current_Output (File_First .. File_Last));
       end if;
 
       if Line /= 0 then
-         Register_Post_Cmd
-           (Get_Process (Process.Debugger),
-            Set_Line_Post_Process'Access,
-            Convert (new Load_File_Data'
-                     (Process   => Process,
-                      File_Name => null,
-                      Line      => Line,
-                      Addr      => null,
-                      Frame     => 1)));
+         Set_Line (Process.Editor_Text, Line);
       end if;
 
       if Addr_First /= 0 then
-         Register_Post_Cmd
-           (Get_Process (Process.Debugger),
-            Set_Addr_Post_Process'Access,
-            Convert
-              (new Load_File_Data'
-                (Process   => Process,
-                 File_Name => null,
-                 Line      => 1,
-                 Addr      => new String' (Str (Addr_First .. Addr_Last)),
-                 Frame     => 1)));
+         Set_Address
+           (Process.Editor_Text,
+            Process.Current_Output (Addr_First .. Addr_Last));
       end if;
 
       if Visible_Is_Set (Process.Stack_List) then
-         Found_Frame_Info (Process.Debugger, Str, First, Last);
+         Found_Frame_Info
+           (Process.Debugger, Process.Current_Output.all, First, Last);
+
          if First /= 0 then
-            Register_Post_Cmd
-              (Get_Process (Process.Debugger),
-               Set_Frame_Post_Process'Access,
-               Convert (new Load_File_Data'
-                        (Process   => Process,
-                         File_Name => null,
-                         Line      => 1,
-                         Addr      => null,
-                         Frame     => Integer'Value (Str (First .. Last)))));
+            Highlight_Stack_Frame
+              (Process,
+               Integer'Value (Process.Current_Output (First .. Last)));
          end if;
       end if;
-   end Text_Output_Handler;
+
+      Process.Post_Processing := False;
+      Free (Process.Current_Output);
+   end Final_Post_Process;
+
+   ------------------------
+   -- Text_Output_Filter --
+   ------------------------
+
+   procedure Text_Output_Filter
+     (Descriptor : GNAT.Expect.Process_Descriptor'Class;
+      Str        : String;
+      Window     : System.Address)
+   is
+      Process     : constant Debugger_Process_Tab :=
+        Convert (To_Main_Debug_Window (Window), Descriptor);
+      Tmp_Str     : GNAT.OS_Lib.String_Access;
+
+   begin
+      --  Concatenate current output
+
+      if Process.Current_Output = null then
+         Process.Current_Output := new String' (Str);
+      else
+         --  ??? Consider optimizing this by using the GNAT.Table approach
+         Tmp_Str := Process.Current_Output;
+         Process.Current_Output :=
+           new String' (Process.Current_Output.all & Str);
+         Free (Tmp_Str);
+      end if;
+
+      --  Do not show the output if we have an internal or hidden command
+
+      case Get_Command_Mode (Get_Process (Process.Debugger)) is
+         when User | GVD.Types.Visible =>
+            Output_Text (Process, Str, Set_Position => True);
+
+            --  Currently we output everything with the new scheme???
+            --  if First = 0 then
+            --     Output_Text (Process, Str, Set_Position => True);
+            --  else
+            --     Output_Text (Process, Str (Str'First .. First - 1));
+            --     Output_Text
+            --     (Process, Str (Last + 1 .. Str'Last), Set_Position => True);
+            --  end if;
+
+         when Hidden | Internal =>
+            null;
+      end case;
+   end Text_Output_Filter;
 
    ---------------------------
    -- Debugger_Button_Press --
@@ -513,6 +455,7 @@ package body GVD.Process is
                 Button        => Get_Button (Event),
                 Activate_Time => Get_Time (Event));
          Emit_Stop_By_Name (Process.Debugger_Text, "button_press_event");
+
          return True;
       end if;
 
@@ -629,23 +572,17 @@ package body GVD.Process is
             Debugger_Name);
       else
          Spawn
-           (Process.Debugger,
-            "",
-            Params,
-            new Gui_Process_Proxy,
-            Window.all'Access,
-            Remote_Host,
-            Remote_Target,
-            Remote_Protocol,
-            Debugger_Name);
-         Print_Message (Window.Statusbar1,
-                        Error,
-                        " Could not find file : " & Executable);
+           (Process.Debugger, "", Params, new Gui_Process_Proxy,
+            Window.all'Access, Remote_Host, Remote_Target,
+            Remote_Protocol, Debugger_Name);
+         Print_Message
+           (Window.Statusbar1, Error,
+            (-" Could not find file: ") & Executable);
       end if;
 
       --  Add a new page to the notebook
 
-      Gtk_New (Label, "");
+      Gtk_New (Label);
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
@@ -690,14 +627,11 @@ package body GVD.Process is
       Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
-      --  window. This filter must be inserted after all the other filters,
-      --  so that for instance the language detection takes place before we
-      --  try to detect any reference to a file/line.
+      --  window.
 
       Add_Filter
         (Get_Descriptor (Get_Process (Process.Debugger)).all,
-         Text_Output_Handler'Access, Output, Window.all'Address,
-         After => True);
+         Text_Output_Filter'Access, Output, Window.all'Address);
 
       if Window.First_Debugger = null then
          Process.Debugger_Num := Debugger_Num;
@@ -746,17 +680,17 @@ package body GVD.Process is
    ------------------------
 
    procedure Executable_Changed
-     (Debugger : access Debugger_Process_Tab_Record'Class;
+     (Debugger        : access Debugger_Process_Tab_Record'Class;
       Executable_Name : String)
    is
       Debug : constant String :=
         Debugger_Type'Image (Debugger.Descriptor.Debugger);
       Label : Gtk_Widget;
+
    begin
+      --  Change the title of the tab for that debugger
 
-      --  Changes the title of the tab for that debugger
-
-      Label :=  Get_Tab_Label
+      Label := Get_Tab_Label
         (Debugger.Window.Process_Notebook, Debugger.Process_Paned);
       Set_Text (Gtk_Label (Label),
                 Debug (1 .. Debug'Last - 5) & " - "
@@ -1057,8 +991,7 @@ package body GVD.Process is
 
    begin
       if Output_Command then
-         Text_Output_Handler
-           (Debugger, Command & ASCII.LF, Is_Command => True);
+         Output_Text (Debugger, Command & ASCII.LF, Is_Command => True);
       end if;
 
       --  ??? Should forbid commands that modify the configuration of the
@@ -1305,5 +1238,19 @@ package body GVD.Process is
    begin
       return Gint (Tab.Debugger_Num);
    end Get_Num;
+
+   ---------------
+   -- Send_Init --
+   ---------------
+
+   procedure Send_Init (Process : access Debugger_Process_Tab_Record'Class) is
+   begin
+      if not Process.Post_Processing then
+         Register_Post_Cmd
+           (Get_Process (Process.Debugger),
+            Final_Post_Process'Access,
+            Process.all'Address);
+      end if;
+   end Send_Init;
 
 end GVD.Process;

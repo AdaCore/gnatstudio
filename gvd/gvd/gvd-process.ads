@@ -103,49 +103,57 @@ package GVD.Process is
    type Debugger_Process_Tab_Record is new
      Process_Tab_Pkg.Process_Tab_Record with
    record
-      Debugger_Num : Natural;
+      Debugger_Num            : Natural;
       --  The number identifying the debugger.
 
-      Debugger : Debugger_Access;
+      Debugger                : Debugger_Access;
       --  The underlying debugger process.
 
-      Window   : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
+      Window                  : Main_Debug_Window_Pkg.Main_Debug_Window_Access;
       --  The associated main window.
 
-      Edit_Pos : Glib.Guint;
+      Edit_Pos                : Glib.Guint;
       --  The last position in the text window of the debugger where text
       --  was inserted. This is used to find what was typed by the user.
 
       Debugger_Text_Highlight_Color : Gdk.Color.Gdk_Color;
       --  Color used for highlighting in the debugger window.
 
-      Debugger_Text_Font : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
+      Debugger_Text_Font      : Gdk.Font.Gdk_Font := Gdk.Font.Null_Font;
       --  Font used in the debugger window.
 
-      Selected_Item      : Gtkada.Canvas.Canvas_Item := null;
-      Selected_Component : Items.Generic_Type_Access := null;
+      Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
+      Selected_Component      : Items.Generic_Type_Access := null;
       --  The currently selected item, and its specific component.
 
-      Registered_Dialog : Gtk.Dialog.Gtk_Dialog := null;
+      Registered_Dialog       : Gtk.Dialog.Gtk_Dialog := null;
       --  Currently displayed dialog that should be deleted on next user input.
       --  This is mostly used for question dialogs, since the user can also
       --  type its input directly in the command window.
 
-      Breakpoints : GVD.Types.Breakpoint_Array_Ptr;
+      Breakpoints             : GVD.Types.Breakpoint_Array_Ptr;
       --  The list of breakpoints and watchpoints currently defined.
 
       Has_Temporary_Breakpoint : Boolean := True;
       --  Whether there exists a temporary breakpoint in Breakpoints.
 
-      Descriptor : GVD.Types.Program_Descriptor;
+      Descriptor              : GVD.Types.Program_Descriptor;
       --  This is used to store the launching method.
       --  (Added to handle sessions)
 
-      Input_Id : Glib.Gint := 0;
+      Input_Id                : Glib.Gint := 0;
       --  Input callback Id when one has been set up for this process.
 
-      Running_Command : String_Access;
-      --  Command currently running in the underlying debugger.
+      Current_Command         : String_Access;
+      --  Async command currently running in the underlying debugger, if any.
+
+      Current_Output          : String_Access;
+      --  Complete output received in the underlying debugger for the current
+      --  command. This is needed to buffer the output before calling the
+      --  various filters.
+
+      Post_Processing         : Boolean := False;
+      --  True if the debugger is handling post processing of a command.
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
 
@@ -192,24 +200,29 @@ package GVD.Process is
      (Main_Debug_Window : access
         Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class;
       Descriptor : GNAT.Expect.Process_Descriptor'Class)
-     return Debugger_Process_Tab;
+      return Debugger_Process_Tab;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
 
    function Convert
      (Text : access GVD.Code_Editors.Code_Editor_Record'Class)
-     return Debugger_Process_Tab;
+      return Debugger_Process_Tab;
    --  Conversion function, from the code editor to the process tab.
    --  Note that there is a single such editor per process, even if there are
    --  multiple threads/tasks.
 
    function Convert
      (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
-      Debugger : access Debugger_Root'Class)
-     return Debugger_Process_Tab;
+      Debugger          : access Debugger_Root'Class)
+      return Debugger_Process_Tab;
    --  Conversion function.
    --  Main_Debug_Window should be the window in which the debugger is
    --  displayed.
+
+   procedure Send_Init (Process : access Debugger_Process_Tab_Record'Class);
+   --  Call this procedure before each command sent to the debugger.
+   --  This will take care of setting up appropriate data to handle filters
+   --  properly.
 
    procedure Set_Busy_Cursor
      (Debugger : access Debugger_Process_Tab_Record'Class;
@@ -263,7 +276,7 @@ package GVD.Process is
    --  This is useful in particular when handling batches of command,
    --  e.g when replaying sessions or a set of user commands.
 
-   procedure Text_Output_Handler
+   procedure Output_Text
      (Process      : Debugger_Process_Tab;
       Str          : String;
       Is_Command   : Boolean := False;
@@ -271,8 +284,7 @@ package GVD.Process is
    --  Insert Str in the debugger window.
    --  Note that this function does not change the Edit_Pos for the record,
    --  so this should be used only for temporary output.
-   --  This also does some highlighting if the debugger has been defined to
-   --  support highlighting.
+   --  This also does some highlighting if the debugger supports highlighting.
    --  If Is_Command is True, then the string is displayed in the highlighting
    --  color, used for user commands.
    --  If Set_Position is True, then the cursor position after the text has
