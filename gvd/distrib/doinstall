@@ -20,11 +20,11 @@ current_dir=`/bin/pwd`
 ## Sets the variable  $basedir
 ask_basedir() {
    clear
-   default_base_dir=`type gnatmake | cut -d' ' -f5 2>/dev/null`
+   default_base_dir=`type gnatmake | cut -d' ' -f3 2>/dev/null`
    if [ "$default_base_dir " != " " ]; then
       default_base_dir=`cd \`dirname $default_base_dir\`/..; pwd`
       cat <<EOF
-   
+
   GNAT has been found in $default_base_dir.
   Do you want to install GVD there too? Hit RETURN if yes or enter
   the name of the directory in which GVD should be installed:
@@ -38,7 +38,7 @@ EOF
    fi
 
    while [ "$basedir " = " " ]; do
-      echo -n "[$default_base_dir] "
+      printf "[$default_base_dir] "
       read basedir
       if [ " $basedir" = " " ]; then
          basedir="$default_base_dir"
