@@ -47,6 +47,7 @@ with Glide_Kernel;
 with Src_Editor_Buffer;
 with Src_Editor_View;
 with Src_Info;
+with Src_Info.Queries;
 
 package Src_Editor_Box is
 
@@ -351,7 +352,8 @@ package Src_Editor_Box is
       Start_Line   : out Positive;
       Start_Column : out Positive;
       End_Line     : out Positive;
-      End_Column   : out Positive);
+      End_Column   : out Positive;
+      Status       : out Src_Info.Queries.Query_Status);
    --  Return the location of the declaration of the entity located at the
    --  given position. If either Line or Column is equal to 0, then the current
    --  insert cursor position is used instead. If the position is already

@@ -1010,7 +1010,8 @@ package body Src_Editor_Box is
       Start_Line   : out Positive;
       Start_Column : out Positive;
       End_Line     : out Positive;
-      End_Column   : out Positive)
+      End_Column   : out Positive;
+      Status       : out Src_Info.Queries.Query_Status)
    is
       Tmp_Line   : Natural := Line;
       Tmp_Col    : Natural := Column;
@@ -1040,15 +1041,13 @@ package body Src_Editor_Box is
          Src_Info.Queries.Find_Declaration_Or_Body
            (Lib_Info, Base_File_Name (Editor.Filename.all),
             Entity_Name, Tmp_Line, Tmp_Col,
-            Filename, Start_Line, Start_Column, End_Line, End_Column);
+            Filename, Start_Line, Start_Column, End_Line, End_Column, Status);
       end;
 
-      --  If the query failed, then abort.
-      if Filename = null then
-         return;
+      --  If a filename is returned, then prepend the path to this filename.
+      if Filename /= null then
+         Prepend_Source_Directory (Editor.Kernel, Filename);
       end if;
-
-      Prepend_Source_Directory (Editor.Kernel, Filename);
    end Find_Declaration_Or_Body;
 
 end Src_Editor_Box;
