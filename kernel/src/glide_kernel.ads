@@ -320,7 +320,7 @@ package Glide_Kernel is
    --  Note that implementations of this subprogram should always call the
    --  parent's Destroy subprogram as well
 
-   procedure Ref (Context : in out Selection_Context_Access);
+   procedure Ref (Context : Selection_Context_Access);
    --  Increments the reference counter for the context
 
    procedure Unref (Context : in out Selection_Context_Access);

@@ -1060,7 +1060,7 @@ package body Glide_Kernel is
    -- Ref --
    ---------
 
-   procedure Ref (Context : in out Selection_Context_Access) is
+   procedure Ref (Context : Selection_Context_Access) is
    begin
       if Context /= null then
          Context.Ref_Count := Context.Ref_Count + 1;
