@@ -3024,8 +3024,7 @@ package body Projects.Editor is
       --  Replace all the with_clauses in the project hierarchy that points to
       --  Project.
 
-      Iterator := Find_All_Projects_Importing
-        (Root_Project, Project, Direct_Only => False);
+      Iterator := Find_All_Projects_Importing (Project, Direct_Only => False);
 
       loop
          Imported := Current (Iterator);
