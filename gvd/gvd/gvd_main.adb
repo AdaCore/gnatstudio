@@ -30,7 +30,11 @@ with Odd.Process; use Odd.Process;
 with Odd.Types;
 with GNAT.OS_Lib; use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+
+pragma Warnings (Off);
 with GNAT.Expect; use GNAT.Expect;
+pragma Warnings (On);
+
 with Ada.Command_Line; use Ada.Command_Line;
 with GNAT.Command_Line; use GNAT.Command_Line;
 with Ada.Exceptions; use Ada.Exceptions;
