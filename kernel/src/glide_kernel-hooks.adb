@@ -258,26 +258,35 @@ package body Glide_Kernel.Hooks is
       Is_Hook_Type    : Boolean := False)
       return Hook_Description_Access
    is
-      Info : Hook_Description_Access :=
-        Hook_Description_Access (Get (Kernel.Hooks, Name));
-      Descr : String_Access;
-   begin
-      if Info = null then
+      function Get_Description return String_Access;
+      --  Return the description to use for this hook
+
+      function Get_Description return String_Access is
+      begin
          if not Is_Hook_Type then
             if Type_Name = "" then
-               Descr := new String'
+               return new String'
                  (Description & ASCII.LF
                   & (-"This hook doesn't take any argument"));
             else
-               Descr := new String'
+               return new String'
                  (Description & ASCII.LF
                   & (-"This hook is of type """) & Type_Name
                   & (-""" -- see describe_hook_type"));
             end if;
          elsif Description /= "" then
-            Descr := new String'(Description);
+            return new String'(Description);
          end if;
 
+         return null;
+      end Get_Description;
+
+      Info : Hook_Description_Access :=
+        Hook_Description_Access (Get (Kernel.Hooks, Name));
+      Descr : String_Access;
+   begin
+      if Info = null then
+         Descr := Get_Description;
          Info := new Hook_Description'
            (Funcs           => Null_List,
             Description     => Descr,
@@ -298,8 +307,18 @@ package body Glide_Kernel.Hooks is
          else
             Set (Kernel.Hooks, Name, Hook_Description_Base_Access (Info));
          end if;
+
       elsif Info.Profile = Unknown then
          Info.Profile := Profile;
+
+         if Description /= "" then
+            Free (Info.Description);
+            Info.Description := Get_Description;
+         end if;
+
+      elsif Description /= "" then
+         Free (Info.Description);
+         Info.Description := Get_Description;
       end if;
 
       return Info;
