@@ -10173,12 +10173,15 @@ in the shell itself, although this could be more conveniently done in
 a separate customization file.
 
 @smallexample
-parse_xml """<action name="on_edition"><shell>echo "File edited"</shell></action>"""
+parse_xml """<action name="on_edition">
+             <shell>echo "File edited"</shell></action>"""
 Hook "file_edited"
 Hook.add %1 "on_edition"
 @end smallexample
 
 @ifset python
+
+@item Python
 
 Python of course has its own notion of subprogram, and GPS is fully compatible
 with it. As a result, the syntax is much more natural than in the GPS shell.
@@ -10191,7 +10194,7 @@ def on_edition(self, *arg):
 GPS.Hook ("file_edited").add (on_edition)
 @end smallexample
 
-Matter are in fact slightly more complex if you want to pass methods
+Things are in fact slightly more complex if you want to pass methods
 are arguments. Python has basically three notions of callable
 subprograms, detailed below. The following examples all create a combo
 box in the toolbar, which calls a subprogram whenever its value is
@@ -10211,6 +10214,7 @@ Here is the description of the various subprograms:
 
 @itemize @bullet
 @item Global subprograms
+
 These are standard subprograms, found outside class definitions. There
 is no implicit parameter in this case. However, if you need to pass
 data to such a subprogram, you need to use global variables
@@ -10232,6 +10236,7 @@ combo.data = "My own data"
 
 
 @item Unbound methods
+
 These are methods of a class. You do not specify, when you pass the
 method in parameter to the combo box, what instance should be passed
 as its first parameter. Therefore, there is no extra parameter either.
@@ -10286,6 +10291,7 @@ MyClass()
 @end smallexample
 
 @item Bound methods
+
 The last example works as expected, but is not convenient to use. The
 solution here is to use a bound method, which is a method for a
 specific instance of a class. Such a method always has an extra first
