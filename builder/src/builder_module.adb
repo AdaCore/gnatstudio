@@ -770,6 +770,7 @@ package body Builder_Module is
          Title    => -"Custom Execution",
          Message  => -"Enter the command to execute:",
          Position => Gtk.Enums.Win_Pos_Mouse,
+         History  => Get_History (Kernel),
          Key      => "gps_custom_command");
 
    begin
