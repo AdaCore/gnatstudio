@@ -54,10 +54,5 @@ package body Glide_Kernel.Project is
       Prj.Pars.Parse (Kernel.Project, Project);
    end Load_Project;
 
-begin
-   Namet.Initialize;
-   Csets.Initialize;
-   Snames.Initialize;
-   Prj.Initialize;
 end Glide_Kernel.Project;
 
