@@ -20,7 +20,7 @@
 */
 
 #include <string.h>
-#include <libart_lgpl/art_rect.h>
+#include "art_rect.h"
 
 #include "htmlentity.h"
 
@@ -65,7 +65,7 @@ static void finalize(GtkObject *object) {
 	if (painter->pixmap != NULL)
 		gdk_pixmap_unref(painter->pixmap);
 
-	(* GTK_OBJECT_CLASS(parent_class)->finalize) (object);
+	(* G_OBJECT_CLASS(parent_class)->finalize) (object);
 }
 
 static void
@@ -873,7 +873,7 @@ static void class_init(GtkObjectClass *object_class) {
 
 	painter_class = HTML_PAINTER_CLASS(object_class);
 
-	object_class->finalize = finalize;
+	G_OBJECT_CLASS(object_class)->finalize = finalize;
 
 	painter_class->begin = begin;
 	painter_class->end = end;
