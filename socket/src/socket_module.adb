@@ -214,7 +214,7 @@ package body Socket_Module is
                         pragma Unreferenced (Result);
 
                      begin
-                        if Data.Buffer (1 .. Data.Index - 1) = "exit" then
+                        if Data.Buffer (1 .. Data.Index - 1) = "logout" then
                            return False;
                         end if;
 
