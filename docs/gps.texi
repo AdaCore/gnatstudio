@@ -2158,6 +2158,12 @@ This editor works exactly like vim, but uses the standard @code{vi}
 command instead of @code{vim}.
 
 
+@item custom
+@cindex custom editor
+You can specify any external editor by choosing this item. The full
+command line used to call the editor can be specified in the
+preferences (see @ref{custom editor command}).
+
 @item none
 No external editor is used, and the contextual menus simply won't
 appear.
@@ -2174,14 +2180,15 @@ project, you should kill any running Emacs, so that a new one is spawned
 by GPS with the appropriate project.
 
 @cindex menu
-Of course, you can alternatively reload explicitly the project from
+Alternatively, you can reload explicitly the project from
 Emacs itself by using the menu @code{Project->Load}
 
 
 @cindex preferences
-In the preferences, there are two settings that allow you to select
+In the preferences, there are three settings that allow you to select
 the external editor (if left to an empty string, GPS will
-automatically select the first editor available on your system) and
+automatically select the first editor available on your system), to
+specify the custom editor command, in case you've selector this item, and
 whether this editor should always be used every time you double-click
 on a file, or whether you need to explicitly select the contextual
 menu to open the external editor.
@@ -4976,6 +4983,38 @@ The column number to highlight and draw in the editors. 0 if none.
 @item External editor
 @cindex external editor
 The default external editor to use.
+
+@item Custom editor command
+@anchor{custom editor command}
+Specify the command line for launching a custom editor.
+It is assumed that the command will create a new window/terminal as needed.
+If the editor itself does not provide this capability (such as vi or pico),
+you can use an external terminal command, e.g:
+
+@smallexample
+xterm -geometry 80x50 -exec vi +%l %f
+@end smallexample
+
+The following substitutions are provided:
+@table @code
+@item %l
+line to display
+
+@item %c
+column to display
+
+@item %f
+full pathname of file to edit
+
+@item %e
+extended lisp command
+
+@item %p
+top level project file name
+
+@item %%
+percent sign ('%')
+@end table
 
 @item Always use external editor
 True if all editions should be done with the external editor. This will
