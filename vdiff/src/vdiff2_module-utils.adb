@@ -520,6 +520,7 @@ package body Vdiff2_Module.Utils is
         Gdk_New_From_Xpm_Data (green_button_xpm);
       Red_Button_Pixbuf   : constant Gdk_Pixbuf :=
         Gdk_New_From_Xpm_Data (red_button_xpm);
+      Line : Natural := VRange (Pos).First - 1;
 
    begin
       if VStyle (Pos).all /= Default_Style then
@@ -529,14 +530,17 @@ package body Vdiff2_Module.Utils is
             VFile (Pos), VRange (Pos).First,
             Action);
 
-         if not Conflict then
-            Info (Pos)(VRange (Pos).First - 1).Image := Green_Button_Pixbuf;
-         else
-            Info (Pos)(VRange (Pos).First - 1).Image := Red_Button_Pixbuf;
+         if Line <= 0 then
+            Line := 1;
          end if;
 
-         Info (Pos)
-          (VRange (Pos).First - 1).Associated_Command := Command_Access (Cmd);
+         if not Conflict then
+            Info (Pos)(Line).Image := Green_Button_Pixbuf;
+         else
+            Info (Pos)(Line).Image := Red_Button_Pixbuf;
+         end if;
+
+         Info (Pos)(Line).Associated_Command := Command_Access (Cmd);
       end if;
    end Put_Button;
 
