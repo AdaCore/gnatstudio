@@ -133,6 +133,7 @@ package body KeyManager_Module is
    type Keymap_Record is record
       Table : Key_Htable.HTable;
    end record;
+   for Keymap_Record'Alignment use Integer'Min (8, Standard'Maximum_Alignment);
 
    procedure Unchecked_Free is new Ada.Unchecked_Deallocation
      (Keymap_Record, Keymap_Access);
