@@ -63,4 +63,6 @@ package Codefix_Module is
 
    function Create_Submenu (Error : Error_Id) return Gtk_Menu;
 
+   Compilation_Category : constant String := "Builder Results";
+
 end Codefix_Module;
