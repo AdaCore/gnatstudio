@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001-2002                    --
+--                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -112,9 +112,6 @@ package body Line_Sweep is
 
       function Slope (S : Edge_Index) return Float;
       --  Return the slope of the edge
-
-      function Sign (X : Float) return Integer;
-      --  Return -1 if X is negative, 1 if positive, 0 if null.
 
       procedure Insert
         (Line      : in out Line_Status;
@@ -479,21 +476,6 @@ package body Line_Sweep is
             return X = X2 (S);
          end if;
       end Is_Source;
-
-      ----------
-      -- Sign --
-      ----------
-
-      function Sign (X : Float) return Integer is
-      begin
-         if X < 0.0 then
-            return -1;
-         elsif X > 0.0 then
-            return 1;
-         else
-            return 0;
-         end if;
-      end Sign;
 
       ------------------
       -- Intersection --
