@@ -63,6 +63,95 @@ package body VCS_View_API is
    -- Local subprograms --
    -----------------------
 
+   procedure List_Project_Files
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
+   --  List the files contained in the project relative to Context, if any.
+   --  If recursive is True, files in imported subprojects will be listed
+   --  as well.
+
+   procedure Get_Status_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
+   --  Display the status for the files contained in the project relative
+   --  to Context, if any.
+   --  If recursive is True, files in imported subprojects will be listed
+   --  as well.
+
+   procedure Update_Project
+     (Context   : Selection_Context_Access;
+      Recursive : Boolean);
+   --  Update the files contained in the project relative to Context, if any.
+   --  If recursive is True, files in imported subprojects will be listed
+   --  as well.
+
+   procedure Query_Project_Files
+     (Explorer   : VCS_View_Access;
+      Kernel     : Kernel_Handle;
+      Project    : Project_Id;
+      Real_Query : Boolean;
+      Recursive  : Boolean);
+   --  Query/List the status of files belonging to Project.
+   --  If Recursive is True, files from sub-projects will also be queried.
+   --  If Real_Query is True, a real VCS query will be made, otherwise
+   --  the files will simply be listed.
+   --  Calling this does NOT open the VCS Explorer.
+
+   procedure Change_Context
+     (Explorer : VCS_View_Access;
+      Context  : Selection_Context_Access);
+   --  Fill the explorer with files that correspond to Context
+
+   procedure On_Context_Changed
+     (Object  : access Gtk_Widget_Record'Class;
+      Args    : Gtk_Args);
+   --  Called when the current context has changed.
+
+   function Check_Handler
+     (Kernel : Kernel_Handle;
+      Head   : String_List.List;
+      List   : String_List.List) return Boolean;
+   --  Display Head in the console, then return True if List is not
+   --  empty, otherwise display List in the console and return False.
+
+   procedure Commit_Files
+     (Kernel : Kernel_Handle;
+      Ref    : VCS_Access;
+      Files  : String_List.List);
+   --  Commit the list of files, assuming that they are all checked-in through
+   --  the VCS system identified by Ref.
+   --  This subprogram will do all the necessary file/log checks before
+   --  committing.
+
+   function Get_Files_In_Project
+     (Project_View : Prj.Project_Id;
+      Recursive    : Boolean := True) return String_List.List;
+   --  Return the list of source files in Project.
+   --  If Recursive is True, then source files from all included
+   --  subprojects will be returned as well.
+
+   function Get_Dirs_In_Project
+     (Kernel : Kernel_Handle) return String_List.List;
+   --  Return the source directories contained in the root project.
+
+   function String_Array_To_String_List
+     (S : String_Id_Array) return String_List.List;
+   --  Convenience function to make a string_list out of a String_Id_Array.
+
+   function Get_Current_Ref
+     (Kernel : Kernel_Handle)
+     return VCS_Access;
+   --  Return the VCS reference corresponding to the current context in Kernel.
+
+   function Get_Current_Ref
+     (Project : Project_Id)
+     return VCS_Access;
+   --  Return the VCS reference registered in Project.
+
+   -------------------------------
+   -- Contextual menu callbacks --
+   -------------------------------
+
    procedure On_Menu_Open
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -111,10 +200,6 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
-   procedure List_Project_Files
-     (Context   : Selection_Context_Access;
-      Recursive : Boolean);
-
    procedure On_Menu_List_Project_Files
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -122,10 +207,6 @@ package body VCS_View_API is
    procedure On_Menu_List_Project_Files_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-
-   procedure Get_Status_Project
-     (Context   : Selection_Context_Access;
-      Recursive : Boolean);
 
    procedure On_Menu_Get_Status_Project
      (Widget  : access GObject_Record'Class;
@@ -135,10 +216,6 @@ package body VCS_View_API is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
 
-   procedure Update_Project
-     (Context   : Selection_Context_Access;
-      Recursive : Boolean);
-
    procedure On_Menu_Update_Project
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
@@ -146,62 +223,6 @@ package body VCS_View_API is
    procedure On_Menu_Update_Project_Recursive
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access);
-
-   procedure Query_Project_Files
-     (Explorer   : VCS_View_Access;
-      Kernel     : Kernel_Handle;
-      Project    : Project_Id;
-      Real_Query : Boolean;
-      Recursive  : Boolean);
-   --  Query/List the status of files belonging to Project.
-   --  If Recursive is True, files from sub-projects will also be queried.
-   --  If Real_Query is True, a real VCS query will be made, otherwise
-   --  the files will simply be listed.
-   --  Calling this does NOT open the VCS Explorer.
-
-   procedure Change_Context
-     (Explorer : VCS_View_Access;
-      Context  : Selection_Context_Access);
-   --  Fill the explorer with files that correspond to Context
-
-   procedure On_Context_Changed
-     (Object  : access Gtk_Widget_Record'Class;
-      Args    : Gtk_Args);
-   --  Called when the current context has changed.
-
-   function Check_Handler
-     (Kernel : Kernel_Handle;
-      Head   : String_List.List;
-      List   : String_List.List) return Boolean;
-   --  Display Head in the console, then return True if List is not
-   --  empty, otherwise display List in the console and return False.
-
-   procedure Commit_Files
-     (Kernel : Kernel_Handle;
-      Ref    : VCS_Access;
-      Files  : String_List.List);
-   --  ???
-
-   function Get_Files_In_Project
-     (Project_View : Prj.Project_Id;
-      Recursive    : Boolean := True) return String_List.List;
-
-   function Get_Dirs_In_Project
-     (Kernel : Kernel_Handle) return String_List.List;
-
-   function String_Array_To_String_List
-     (S : String_Id_Array) return String_List.List;
-   --  Convenience function to make a string_list out of a String_Id_Array.
-
-   function Get_Current_Ref
-     (Kernel : Kernel_Handle)
-     return VCS_Access;
-   --  Return the VCS reference corresponding to the current context in Kernel.
-
-   function Get_Current_Ref
-     (Project : Project_Id)
-     return VCS_Access;
-   --  Return the VCS reference registered in Project.
 
    ---------------------
    -- Get_Current_Ref --
