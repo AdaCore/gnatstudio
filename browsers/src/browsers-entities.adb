@@ -1059,7 +1059,7 @@ package body Browsers.Entities is
          Sort (Arr);
 
          for A in Arr'First + 1 .. Arr'Last loop
-            if Is_Subprogram (Arr (A)) then
+            if Is_Container (Arr (A)) then
                Add_Subprogram (Meth_List, Item, Arr (A));
 
             elsif Get_Kind (Arr (A)).Is_Type then
@@ -1131,7 +1131,7 @@ package body Browsers.Entities is
             --  Hide discriminants (already displayed) and subprograms (would
             --  happen in C++, but these are primitive operations in this case)
             if not Is_Discriminant (Field, Lib_Info, Item.Entity)
-              and then not Is_Subprogram (Field)
+              and then not Is_Container (Field)
             then
                if Is_Enum then
                   Add_Line (List, Get_Name (Field));
