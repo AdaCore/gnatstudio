@@ -2293,7 +2293,9 @@ package body Glide_Kernel.Scripts is
 
    function Create_Context
      (Script  : access Scripting_Language_Record'Class;
-      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance is
+      Context : Glide_Kernel.Selection_Context_Access) return Class_Instance
+   is
+      Inst : Class_Instance;
    begin
       if Context.all in Entity_Selection_Context'Class then
          return Create_Entity_Context
@@ -2303,7 +2305,10 @@ package body Glide_Kernel.Scripts is
            (Script, File_Selection_Context_Access (Context));
       else
          Trace (Me, "Context type is not supported by GPS");
-         return null;
+         Inst :=
+           New_Instance (Script, Get_Context_Class (Get_Kernel (Script)));
+         Set_Data (Inst, Context);
+         return Inst;
       end if;
    end Create_Context;
 
@@ -2376,7 +2381,7 @@ package body Glide_Kernel.Scripts is
    is
       Script : constant Scripting_Language := Get_Script (Instance);
       Class  : constant Class_Type :=
-        Get_File_Context_Class (Get_Kernel (Script));
+        Get_Context_Class (Get_Kernel (Script));
    begin
       if not Is_Subclass (Script, Instance, Class) then
          raise Invalid_Data;
