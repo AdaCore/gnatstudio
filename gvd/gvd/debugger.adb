@@ -530,7 +530,7 @@ package body Debugger is
                --  All commands, except the last, are synchronous, and must
                --  wait for the prompt
 
-               if Last - 1 /= Cmd'Last then
+               if not Async_Commands or else Last - 1 /= Cmd'Last then
                   Wait_Prompt (Debugger);
                   Send_Internal_Post (Debugger, Cmd (First .. Last - 1), Mode);
 
@@ -546,6 +546,7 @@ package body Debugger is
                      Output_Available'Access,
                      My_Input.Data_Access (Process));
                end if;
+
                Last := Last + 1;
             end loop;
       end case;
