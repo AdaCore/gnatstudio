@@ -119,11 +119,6 @@ package body Python.GUI is
      (Interpreter : access Python_Interpreter_Record'Class);
    --  Move the prompt_end mark to the end of the console.
 
-   function Run_Command_Get_Result
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Command     : String) return PyObject;
-   --  Run a command and return its result. Nothing is printed in the console.
-
    -------------
    -- Destroy --
    -------------
@@ -539,38 +534,6 @@ package body Python.GUI is
       return 0;
    end Trace;
 
-   ----------------------------
-   -- Run_Command_Get_Result --
-   ----------------------------
-
-   function Run_Command_Get_Result
-     (Interpreter : access Python_Interpreter_Record'Class;
-      Command     : String) return PyObject
-   is
-      Code         : PyCodeObject;
-      Obj, Builtin : PyObject;
-   begin
-      Trace (Me, "Running command: " & Command);
-      Interpreter.In_Process := True;
-      Interpreter.Hide_Output := True;
-
-      Code := Py_CompileString (Command, "<stdin>", Py_Single_Input);
-      if Code /= null then
-         Builtin := PyImport_ImportModule ("__builtin__");
-         Obj := PyEval_EvalCode
-           (Code, Interpreter.Globals, Interpreter.Globals);
-
-         Py_DECREF (PyObject (Code));
-
-         if Obj /= null then
-            Py_DECREF (Obj);
-            return PyObject_GetAttrString (Builtin, "_");
-         end if;
-      end if;
-
-      return null;
-   end Run_Command_Get_Result;
-
    -----------------
    -- Run_Command --
    -----------------
@@ -580,12 +543,16 @@ package body Python.GUI is
       Command     : String;
       Console     : Interactive_Console := null;
       Hide_Output : Boolean := False;
-      Errors      : access Boolean) return String is
+      Errors      : access Boolean) return String
+   is
+      Result : PyObject;
+      pragma Unreferenced (Result);
    begin
       Interpreter.Save_Output := True;
       Interpreter.Current_Output := new String'("");
 
-      Run_Command (Interpreter, Command, Console, Hide_Output, Errors.all);
+      Result :=
+        Run_Command (Interpreter, Command, Console, Hide_Output, Errors);
 
       declare
          Output : constant String := Interpreter.Current_Output.all;
@@ -600,13 +567,14 @@ package body Python.GUI is
    -- Run_Command --
    -----------------
 
-   procedure Run_Command
+   function Run_Command
      (Interpreter : access Python_Interpreter_Record'Class;
       Command     : String;
       Console     : Interactive_Consoles.Interactive_Console := null;
       Hide_Output : Boolean := False;
-      Errors      : out Boolean)
+      Errors      : access Boolean) return PyObject
    is
+      Result, Builtin : PyObject := null;
       Obj            : PyObject;
       Code           : PyCodeObject;
       Tmp            : String_Access;
@@ -622,16 +590,17 @@ package body Python.GUI is
       Default_Console : constant Gtk_Text_View := Interpreter.Console;
 
    begin
+      Trace (Me, "Running command: " & Command);
+
       Interpreter.Hide_Output := Hide_Output;
-      Errors := False;
+      Errors.all := False;
 
       if Cmd = "" & ASCII.LF then
          if not Hide_Output and then Console = null then
             Display_Prompt (Interpreter);
          end if;
-         return;
+         return null;
       end if;
-
 
       if Console /= null then
          if Default_Console /= null then
@@ -639,13 +608,8 @@ package body Python.GUI is
          end if;
 
          Set_Console (Interpreter, Get_View (Console));
-         Interpreter.Save_Output := True;
-      else
---         Set_Console (Interpreter, null);
-         Interpreter.Save_Output := False;
       end if;
 
-      Trace (Me, "Running command: " & Command);
       Interpreter.In_Process := True;
 
       Code := Py_CompileString (Cmd, "<stdin>", Py_Single_Input);
@@ -667,6 +631,7 @@ package body Python.GUI is
             end if;
          end if;
 
+         Builtin := PyImport_ImportModule ("__builtin__");
          Obj := PyEval_EvalCode
            (Code, Interpreter.Globals, Interpreter.Globals);
          Py_DECREF (PyObject (Code));
@@ -681,8 +646,15 @@ package body Python.GUI is
 
          if Obj = null then
             PyErr_Print;
-            Errors := True;
+            Errors.all := True;
          else
+            --  No other python command between this one and the previous
+            --  call to PyEval_EvalCode
+            if PyObject_HasAttrString (Builtin, "_") then
+               Result := PyObject_GetAttrString (Builtin, "_");
+            else
+               Result := null;
+            end if;
             Py_DECREF (Obj);
          end if;
 
@@ -720,7 +692,7 @@ package body Python.GUI is
                   if not Interpreter.Use_Secondary_Prompt then
                      PyErr_Restore (Typ, Occurrence, Traceback);
                      PyErr_Print;
-                     Errors := True;
+                     Errors.all := True;
                   else
                      PyErr_Clear;
                   end if;
@@ -756,12 +728,14 @@ package body Python.GUI is
          end if;
       end if;
 
+      return Result;
+
    exception
       when E : others =>
          Trace (Me, "Unexpected exception " & Exception_Information (E));
          Interpreter.In_Process := False;
          Interpreter.Hide_Output := False;
-         Errors := True;
+         Errors.all := True;
 
          if Console /= null then
             Set_Console (Interpreter, Default_Console);
@@ -771,6 +745,7 @@ package body Python.GUI is
             end if;
          end if;
 
+         return Result;
    end Run_Command;
 
    --------------------
@@ -854,6 +829,7 @@ package body Python.GUI is
          Start       : Natural := Input'First - 1;
          Last        : Natural := Input'Last + 1;
          Obj, Item   : PyObject;
+         Errors      : aliased Boolean;
 
       begin
          for N in reverse Input'Range loop
@@ -868,9 +844,10 @@ package body Python.GUI is
          if Start >= Input'Last then
             return Null_List;
          else
-            Obj := Run_Command_Get_Result
+            Obj := Run_Command
               (Interpreter,
-               "__builtins__.dir(" & Input (Start + 1 .. Last - 1) & ")");
+               "__builtins__.dir(" & Input (Start + 1 .. Last - 1) & ")",
+               Hide_Output => True, Errors => Errors'Unrestricted_Access);
 
             if Obj = null then
                return Null_List;
@@ -905,7 +882,7 @@ package body Python.GUI is
       Key       : constant Gdk_Key_Type    := Get_Key_Val (Event);
       Iter, Prompt_End : Gtk_Text_Iter;
       Success : Boolean;
-      Errors  : Boolean;
+      Errors  : aliased Boolean;
 
    begin
       case Key is
@@ -988,9 +965,14 @@ package body Python.GUI is
                   Get_Slice (Buffer, Prompt_End, Iter));
                Interpreter.History_Position := -1;
 
-               Run_Command
-                 (Interpreter, Get_Slice (Buffer, Prompt_End, Iter),
-                  null, False, Errors);
+               declare
+                  Result : PyObject;
+                  pragma Unreferenced (Result);
+               begin
+                  Result := Run_Command
+                    (Interpreter, Get_Slice (Buffer, Prompt_End, Iter),
+                     null, False, Errors'Unrestricted_Access);
+               end;
 
                --  Preserve the focus on the console after interactive
                --  execution
