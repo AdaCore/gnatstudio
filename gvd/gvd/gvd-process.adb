@@ -69,6 +69,7 @@ with GVD.Main_Window;            use GVD.Main_Window;
 with Breakpoints_Editor;         use Breakpoints_Editor;
 with GVD.Canvas;                 use GVD.Canvas;
 with GVD.Dialogs;                use GVD.Dialogs;
+with GVD.Explorer;               use GVD.Explorer;
 with Pixmaps_IDE;                use Pixmaps_IDE;
 with String_Utils;               use String_Utils;
 with GVD.Types;                  use GVD.Types;
@@ -785,6 +786,12 @@ package body GVD.Process is
          Widget_Callback.To_Marshaller
            (GVD.Canvas.Preferences_Changed'Access),
          Process.Data_Canvas);
+
+      Widget_Callback.Object_Connect
+        (Process.Window, "preferences_changed",
+         Widget_Callback.To_Marshaller
+           (GVD.Explorer.Preferences_Changed'Access),
+         Get_Explorer (Process.Editor_Text));
 
       --  Set up the command window for the contextual menus
 
