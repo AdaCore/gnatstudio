@@ -1718,8 +1718,7 @@ package body VCS.ClearCase is
         (Module                  => Module_ID (VCS_ClearCase_Module_ID),
          Kernel                  => Kernel,
          Module_Name             => VCS_ClearCase_Module_Name,
-         Priority                => Default_Priority,
-         Contextual_Menu_Handler => null);
+         Priority                => Default_Priority);
 
       VCS_ClearCase_Module_ID.ClearCase_Reference := new ClearCase_Record;
       VCS_ClearCase_Module_ID.ClearCase_Reference.Kernel

@@ -1452,8 +1452,7 @@ package body VCS.Generic_VCS is
          Kernel                  => Kernel,
          Module_Name             => VCS_Generic_Module_Name,
          Priority                => Default_Priority,
-         Customization_Handler   => Customize'Access,
-         Contextual_Menu_Handler => null);
+         Customization_Handler   => Customize'Access);
    end Register_Module;
 
    ----------
