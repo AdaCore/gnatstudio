@@ -661,7 +661,7 @@ package body VCS.CVS is
             F := Create (Full_Filename => New_Dir & Buffer (2 .. Index - 1));
             File_Timestamp := File_Time_Stamp (F);
 
-            if File_Timestamp > Entries_Timestamp then
+            if File_Timestamp /= Entries_Timestamp then
                Current_Status.Status := Modified;
             end if;
 
