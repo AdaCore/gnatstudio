@@ -864,16 +864,7 @@ package body Project_Explorers is
       Set (Explorer.Tree.Model, N, Absolute_Name_Column,
            Name_As_Directory (Directory));
 
-      if Object_Directory then
-         Set (Explorer.Tree.Model, N, Icon_Column,
-              C_Proxy (Close_Pixbufs (Obj_Directory_Node)));
-      else
-         Set (Explorer.Tree.Model, N, Icon_Column,
-              C_Proxy (Close_Pixbufs (Directory_Node)));
-      end if;
-
-      Set (Explorer.Tree.Model, N, Node_Type_Column,
-           Gint (Node_Types'Pos (Directory_Node)));
+      Set_Node_Type (Explorer.Tree.Model, N, Node_Type, False);
       Set (Explorer.Tree.Model, N, Up_To_Date_Column, False);
 
       Free (Node_Text);
@@ -937,6 +928,21 @@ package body Project_Explorers is
       procedure Add_Directories is
       begin
          if Get_Pref (Explorer.Kernel, Show_Directories) then
+            --  Object directory
+
+            Start_String;
+            Store_String_Chars
+              (Get_String (Projects.Table (Project).Object_Directory));
+
+            N := Add_Directory_Node
+              (Explorer         => Explorer,
+               Directory        =>
+                 Get_String (Projects.Table (Project).Object_Directory),
+               Project          => Project,
+               Parent_Node      => Node,
+               Files_In_Project => null,
+               Object_Directory => True);
+
             --  Source directories
             --  ??? Should show only first-level directories
 
@@ -984,21 +990,6 @@ package body Project_Explorers is
             end loop;
 
             Free (Dirs);
-
-            --  Object directory
-
-            Start_String;
-            Store_String_Chars
-              (Get_String (Projects.Table (Project).Object_Directory));
-
-            N := Add_Directory_Node
-              (Explorer         => Explorer,
-               Directory        =>
-                 Get_String (Projects.Table (Project).Object_Directory),
-               Project          => Project,
-               Parent_Node      => Node,
-               Files_In_Project => null,
-               Object_Directory => True);
          end if;
 
       end Add_Directories;
@@ -1341,6 +1332,23 @@ package body Project_Explorers is
          use String_List_Utils.String_List;
 
       begin
+         --  Object directory
+
+         Start_String;
+         Store_String_Chars
+           (Get_String (Projects.Table (Project).Object_Directory));
+
+         N := Add_Directory_Node
+           (Explorer         => Explorer,
+            Directory        =>
+              Get_String (Projects.Table (Project).Object_Directory),
+            Project          => Project,
+            Parent_Node      => Node,
+            Files_In_Project => null,
+            Object_Directory => True);
+
+         --  Sources directory
+
          for J in Sources'Range loop
             if Sources (J) /= No_String then
                String_To_Name_Buffer (Sources (J));
@@ -1385,21 +1393,6 @@ package body Project_Explorers is
          end loop;
 
          Free (Dirs);
-
-         --  Object directory
-
-         Start_String;
-         Store_String_Chars
-           (Get_String (Projects.Table (Project).Object_Directory));
-
-         N := Add_Directory_Node
-           (Explorer         => Explorer,
-            Directory        =>
-              Get_String (Projects.Table (Project).Object_Directory),
-            Project          => Project,
-            Parent_Node      => Node,
-            Files_In_Project => null,
-            Object_Directory => True);
       end Add_Directories;
 
       procedure Add_Projects is
