@@ -73,6 +73,7 @@ EOF
         echo "Aborting the installation process"
 	exit
      fi
+     mkdir -p $basedir
    fi
 }
 
@@ -91,7 +92,6 @@ install_binaries() {
 
   (cd $current_dir; tar cf - bin) | tar xf -
   (cd $current_dir; tar cf - doc) | tar xf -
-  (cd $current_dir; tar cf - po)  | tar xf -
 
   if [ -d $current_dir/lib ]; then
      (cd $current_dir; tar cf - lib) | tar xf -
