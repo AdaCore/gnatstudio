@@ -1,38 +1,28 @@
 project Shared is
 
-   type Os_Type is
-      ("unix", "Windows_NT");
-   Os : Os_Type := external ("OS", "unix");
-   type Build_Type is
-      ("Debug", "Production");
-   Build : Build_Type := external ("Build", "Debug");
+   type OS_Type is ("unix", "Windows_NT");
+   OS : OS_Type := External ("OS", "unix");
+
+   type Build_Type is ("Debug", "Production");
+   Build : Build_Type := External ("Build", "Debug");
+
    for Source_Dirs use ();
 
+   package IDE is
+      for VCS_Kind use "cvs";
+      for VCS_Log_Check use "log_check";
+      for VCS_File_Check use "ci_check";
+   end IDE;
+
    package Compiler is
-
       case Build is
-
-         when "Production" =>
-            for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatws");
-
          when "Debug" =>
-
-            case Os is
-
-               when "Windows_NT" =>
-                  for Default_Switches ("ada") use ("-g", "-O", "-gnata", "-gnatVa", "-gnatQ", "-gnaty", "-gnatwjmeurk", "-Wall");
-
-               when "unix" =>
-                  for Default_Switches ("ada") use ("-O1", "-g", "-gnata", "-gnatwejkmru", "-gnatVa", "-gnaty", "-gnatQ", "-Wall");
-            end case;
+            for Default_Switches ("Ada") use
+              ("-g", "-O", "-gnata", "-gnatVa", "-gnatQ", "-gnaty",
+               "-gnatwjmeurk", "-Wall");
+         when "Production" =>
+            for Default_Switches ("Ada") use ("-O2", "-gnatn", "-gnatws");
       end case;
    end Compiler;
 
-   package Ide is
-      for Vcs_Kind use "cvs";
-      for Vcs_Log_Check use "log_check";
-      for Vcs_File_Check use "ci_check";
-   end Ide;
-
 end Shared;
-
