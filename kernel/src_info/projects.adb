@@ -227,6 +227,16 @@ package body Projects is
       if not Is_Regular_File (Project_Path (Project))
         or else Project_Modified (Project)
       then
+         if Is_Regular_File (Project_Path (Project))
+           and then not Is_Writable_File (Project_Path (Project))
+         then
+            if Report_Error /= null then
+               Report_Error ("The file " & Project_Path (Project)
+                             & " is not writable. Project not saved");
+            end if;
+            Trace (Me, "Project file not writable: " & Project_Path (Project));
+         end if;
+
          declare
             Filename : constant String := Project_Path (Project);
             Dirname  : constant String := Dir_Name (Filename);
