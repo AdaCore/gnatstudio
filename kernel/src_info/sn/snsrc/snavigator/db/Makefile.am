@@ -46,12 +46,12 @@ install-data-local:
 
 dbcp_SOURCES = dbcp.c
 dbcp_LDADD = -L../dbutils -ldbutils $(DB_LIBDIR)/libdb.a
-dbcp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a
+dbcp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a ../dbutils/libdbutils.a
 
 dbdump_SOURCES = dbdump.c
 dbdump_LDADD = -L../dbutils -ldbutils $(DB_LIBDIR)/libdb.a \
 		$(top_builddir)/misc/libutils/libutils.a $(TCL_BUILD_LIB_SPEC) $(TCL_LIBS)
-dbdump_DEPENDENCIES = $(DB_LIBDIR)/libdb.a \
+dbdump_DEPENDENCIES = $(DB_LIBDIR)/libdb.a ../dbutils/libdbutils.a \
 		$(top_builddir)/misc/libutils/libutils.a
 
 dbimp_SOURCES = dbimp.c
@@ -64,7 +64,7 @@ dbimp_LDADD = -L$(CPPLibDir) -lcpp2  -L../dbutils -ldbutils -L$(DB_LIBDIR) -ldb 
 		$(top_builddir)/misc/libutils/libutils.a \
 		$(TCL_BUILD_LIB_SPEC) $(TCL_LIBS) @SOCKLIB@
 endif
-dbimp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a \
+dbimp_DEPENDENCIES = $(DB_LIBDIR)/libdb.a ../dbutils/libdbutils.a \
 		$(top_builddir)/misc/libutils/libutils.a
 
 
