@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --               GtkAda - Ada95 binding for Gtk+/Gnome               --
 --                                                                   --
---                   Copyright (C) 2001 ACT-Europe                   --
+--                 Copyright (C) 2001-2002 ACT-Europe                --
 --                                                                   --
 -- This library is free software; you can redistribute it and/or     --
 -- modify it under the terms of the GNU General Public               --
@@ -114,7 +114,7 @@ package body Gtkada.MDI is
    --  Should be set to False when debugging, so that pointer grabs are not
    --  done.
 
-   Min_Width : constant Gint := 40;
+   Min_Width  : constant Gint := 40;
    Min_Height : constant Gint := 2 * Border_Thickness + Title_Bar_Height;
    --  Minimal size for all windows
 
@@ -497,7 +497,6 @@ package body Gtkada.MDI is
             Gdk.Window.Show (M.Handles (J));
          end if;
       end loop;
-
 
       --  Destroy the window attribute and the cursor
 
@@ -1949,7 +1948,7 @@ package body Gtkada.MDI is
       Gtk_New_Hbox (Box2, Homogeneous => False);
       Pack_Start (Box, Box2, Expand => False, Fill => False);
 
-      Set_Border_Width (Box, Border_Thickness);
+      Set_Border_Width (Box, Guint (Border_Thickness));
       Set_USize (Box2, -1, Title_Bar_Height);
 
       Gdk.Pixmap.Create_From_Xpm_D
