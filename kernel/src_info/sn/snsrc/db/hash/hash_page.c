@@ -911,14 +911,14 @@ open_temp(hashp)
 	HTAB *hashp;
 {
 	static char namestr[] = "_hashXXXXXX";
-#ifndef __MSVC__
+#ifdef CYGWIN32
 	if ((hashp->fp = mkstemp(namestr)) != -1) {
 		(void)unlink(namestr);
 	}
-#else /* __MSVC__ */
+#else /* CYGWIN32 */
 	if ((hashp->fp = _open(_mktemp(namestr),_O_RDWR|_O_BINARY)) != -1)
 		(void)unlink(namestr);
-#endif /* __MSVC__ */
+#endif /* CYGWIN32 */
 
 	return (hashp->fp != -1 ? 0 : -1);
 }
