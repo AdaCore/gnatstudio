@@ -7,16 +7,6 @@
       User can also add their own knowledge database
   -->
 
-<!--  Known bug:
-      - static methods are incorrectly implemented in python, and there is no
-        way to find the name of the class from the static method object. As
-        a result, the fully qualified name doesn't include the class. For
-        instance:   GPS.HTML.browse is searced as GPS.browse in fact
-
-        To account for this, the shell_doc tag accepts a real_name attribute
-        which should contain the fully qualified name
--->
-
 <docs>
   <!--#################################################################
     ####   Top level functions
@@ -651,8 +641,7 @@ Related hooks:
       <see_also name="GPS.Project.name"/>
   </shell_doc>
 
-  <shell_doc name="GPS.root"
-             real_name="GPS.Project.root">
+  <shell_doc name="GPS.Project.root">
       <return>An instance of GPS.Project</return>
       <description>Return the root project currently loaded in GPS</description>
       <example lang="python">
@@ -661,16 +650,14 @@ Related hooks:
       </example>
   </shell_doc>
 
-  <shell_doc name="GPS.recompute"
-             real_name="GPS.Project.recompute">
+  <shell_doc name="GPS.Project.recompute">
        <description>Recompute the contents of a project, including the list of source files that are automatically loaded from the source directories. The project file is not reloaded from the disk, and this should only be used if you have created new source files outside of GPS for instance</description>
        <example lang="python">
             GPS.Project.recompute()
        </example>
   </shell_doc>
 
-  <shell_doc name="GPS.load"
-             real_name="GPS.Project.load">
+  <shell_doc name="GPS.Project.load">
        <param name="filename">A string, the full path to a project file</param>
        <param name="force" default="False">A boolean</param>
        <return>An instance of GPS.Project</return>
@@ -809,8 +796,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
        <see_also name="GPS.Project.get_tool_switches_as_list()"/>
   </shell_doc>
 
-  <shell_doc name="GPS.scenario_variables"
-             real_name="GPS.Project.scenario_variables">
+  <shell_doc name="GPS.Project.scenario_variables">
      <return>hash table associating variable names and values</return>
      <description>Return the list of scenario variables for the current project hierarchy, and their current value. These variables are visible at the top of the Project View in the GPS window. The initial value for these variables is set from the environment variables' value when GPS is started. However, changing the value of the environment variable later on doesn't change the value of the scenario variable.</description>
      <example lang="python">
@@ -820,16 +806,14 @@ If the attribute value is stored as a simple string, a list with a single elemen
      <see_also name="GPS.Project.set_scenario_variable()" />
   </shell_doc>
 
-  <shell_doc name="GPS.set_scenario_variable"
-             real_name="GPS.Project.set_scenario_variable">
+  <shell_doc name="GPS.Project.set_scenario_variable">
       <param name="name">A string</param>
       <param name="value">A string</param>
       <description>Change the value of a scenario variable. You need to call GPS.Project.recompute() to activate this change (so that multiple changes to the project can be grouped</description>
       <see_also name="GPS.Project.scenario_variables()" />
   </shell_doc>
 
-  <shell_doc name="GPS.scenario_variables_cmd_line"
-             real_name="GPS.Project.scenario_variables_cmd_line">
+  <shell_doc name="GPS.Project.scenario_variables_cmd_line">
      <param name="prefix" default="">String to print before each variable in the output</param>
      <return>a string</return>
      <description>Return a concatenation of VARIABLE=VALUE, each preceded by the given prefix. This string will generally be used when calling external tools, for instance make or GNAT</description>
@@ -864,8 +848,7 @@ If the attribute value is stored as a simple string, a list with a single elemen
       <see_also name="GPS.Project.remove_dependency()" />
   </shell_doc>
 
-  <shell_doc name="GPS.add_predefined_paths"
-             real_name="GPS.Project.add_predefined_paths">
+  <shell_doc name="GPS.Project.add_predefined_paths">
        <param name="sources" default="">A list of directories separated by the appropriate separator (':' or ';' depending on the system</param>
        <param name="objects" default="">As above</param>
        <description>Add some predefined directories to the source path or the objects path. These will be searched when GPS needs to open a file by its base name, in particular from the File->Open From Project dialog.
@@ -960,7 +943,7 @@ The new paths are added in front, so that they have priorities over previously d
       <description>Interface to all editor-related commands</description>
   </shell_doc>
 
-  <shell_doc name="GPS.edit" real_name="GPS.Editor.edit">
+  <shell_doc name="GPS.Editor.edit">
       <param name="filename">A string</param>
       <param name="line" default="1">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -975,7 +958,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
 </description>
   </shell_doc>
 
-  <shell_doc name="GPS.create_mark" real_name="GPS.Editor.create_mark">
+  <shell_doc name="GPS.Editor.create_mark">
       <param name="filename">A string</param>
       <param name="line" default="1">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -986,7 +969,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <see_also name="GPS.Editor.delete_mark()"/>
   </shell_doc>
 
-  <shell_doc name="GPS.highlight" real_name="GPS.Editor.highlight">
+  <shell_doc name="GPS.Editor.highlight">
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -994,7 +977,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <see_also name="GPS.Editor.unhighlight()"/>
   </shell_doc>
 
-  <shell_doc name="GPS.add_blank_lines" real_name="GPS.Editor.add_blank_lines">
+  <shell_doc name="GPS.Editor.add_blank_lines">
       <param name="file">A string</param>
       <param name="start_line">An integer</param>
       <param name="number_of_lines">An integer</param>
@@ -1002,26 +985,25 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <description>Adds number_of_lines non-editable lines to the buffer editing file, starting at line start_line. If category is specified, use it for highlighting. Create a mark at beginning of block and return its ID</description>
   </shell_doc>
 
-  <shell_doc name="GPS.remove_blank_lines"
-             real_name="GPS.Editor.remove_blank_lines">
+  <shell_doc name="GPS.Editor.remove_blank_lines">
       <param name="mark">A string</param>
       <param name="number" default="0">An integer</param>
       <description>Remove blank lines located at mark. If number is specified, remove only the number first lines</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_fold" real_name="GPS.Editor.block_fold">
+  <shell_doc name="GPS.Editor.block_fold">
       <param name="file">A string</param>
       <param name="line" default="">An integer</param>
       <description>Fold the block around line. If line is not specified, fold all blocks in the file.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_unfold" real_name="GPS.Editor.block_unfold">
+  <shell_doc name="GPS.Editor.block_unfold">
       <param name="file">A string</param>
       <param name="line" default="">An integer</param>
       <description>Unfold the block around line. If line is not specified, unfold all blocks in the file.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.unhighlight" real_name="GPS.Editor.unhighlight">
+  <shell_doc name="GPS.Editor.unhighlight">
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1029,8 +1011,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <see_also name="GPS.Editor.highlight()"/>
   </shell_doc>
 
-  <shell_doc name="GPS.highlight_range"
-             real_name="GPS.Editor.highlight_range">
+  <shell_doc name="GPS.Editor.highlight_range">
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1039,8 +1020,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <description>Highlights a portion of a line in a file with the given category</description>
   </shell_doc>
 
-  <shell_doc name="GPS.unhighlight_range"
-             real_name="GPS.Editor.unhighlight_range">
+  <shell_doc name="GPS.Editor.unhighlight_range">
       <param name="file">A string</param>
       <param name="category">A string</param>
       <param name="line" default="0">An integer</param>
@@ -1049,34 +1029,32 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <description>Remove highlights for a portion of a line in a file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.register_highlighting"
-             real_name="GPS.Editor.register_highlighting">
+  <shell_doc name="GPS.Editor.register_highlighting">
       <param name="category">A string</param>
       <param name="color">A string</param>
       <param name="speedbar" default="False">A boolean</param>
       <description>Create a new highlighting category with the given color. The format for color is "#RRGGBB". If speedbar is true, then a mark will be inserted in the speedbar to the left of the editor to give a fast overview to the user of where the highlighted lines are.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.set_background_color"
-             real_name="GPS.Editor.set_background_color">
+  <shell_doc name="GPS.Editor.set_background_color">
       <param name="file">A string</param>
       <param name="color">A string</param>
       <description>Set the background color for the editors for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.goto_mark" real_name="GPS.Editor.goto_mark">
+  <shell_doc name="GPS.Editor.goto_mark">
       <param name="identifier">A string</param>
       <description>Jump to the location of the mark corresponding to identifier</description>
       <see_also name="GPS.Editor.create_mark"/>
   </shell_doc>
 
-  <shell_doc name="GPS.delete_mark" real_name="GPS.Editor.delete_mark">
+  <shell_doc name="GPS.Editor.delete_mark">
       <param name="identifier">A string</param>
       <description>Delete the mark corresponding to identifier</description>
       <see_also name="GPS.Editor.create_mark"/>
   </shell_doc>
 
-  <shell_doc name="GPS.get_chars" real_name="GPS.Editor.get_chars">
+  <shell_doc name="GPS.Editor.get_chars">
       <param name="filename">A string</param>
       <param name="line" default="0">An integer</param>
       <param name="column" default="1">An integer</param>
@@ -1087,121 +1065,108 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
 If the line and column are not specified, then the current selection is returned, or the empty string if there is no selection</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_line" real_name="GPS.Editor.get_line">
+  <shell_doc name="GPS.Editor.get_line">
       <param name="mark">An identifier</param>
       <return>An integer</return>
       <description>Returns the current line of mark</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_column" real_name="GPS.Editor.get_column">
+  <shell_doc name="GPS.Editor.get_column">
       <param name="mark">An identifier</param>
       <return>An integer</return>
       <description>Returns the current column of mark</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_file" real_name="GPS.Editor.get_file">
+  <shell_doc name="GPS.Editor.get_file">
       <param name="mark">An identifier</param>
       <return>A file</return>
       <description>Returns the current file of mark</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_last_line" real_name="GPS.Editor.get_last_line">
+  <shell_doc name="GPS.Editor.get_last_line">
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns the number of the last line in file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_get_start"
-             real_name="GPS.Editor.block_get_start">
+  <shell_doc name="GPS.Editor.block_get_start">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
       <description>Returns ending line number for block enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_get_end"
-             real_name="GPS.Editor.block_get_end">
+  <shell_doc name="GPS.Editor.block_get_end">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
       <description>Returns ending line number for block enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_get_name"
-             real_name="GPS.Editor.block_get_name">
+  <shell_doc name="GPS.Editor.block_get_name">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
       <description>Returns name for block enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_get_type"
-             real_name="GPS.Editor.block_get_type">
+  <shell_doc name="GPS.Editor.block_get_type">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
       <description>Returns type for block enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.block_get_level"
-             real_name="GPS.Editor.block_get_level">
+  <shell_doc name="GPS.Editor.block_get_level">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>An integer</return>
       <description>Returns nested level for block enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.subprogram_name"
-             real_name="GPS.Editor.subprogram_name">
+  <shell_doc name="GPS.Editor.subprogram_name">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <return>A string</return>
       <description>Returns the name of the subprogram enclosing line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cursor_get_line"
-             real_name="GPS.Editor.cursor_get_line">
+  <shell_doc name="GPS.Editor.cursor_get_line">
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor line number</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cursor_get_column"
-             real_name="GPS.Editor.cursor_get_column">
+  <shell_doc name="GPS.Editor.cursor_get_column">
       <param name="file">A string</param>
       <return>An integer</return>
       <description>Returns current cursor column number</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cursor_set_position"
-             real_name="GPS.Editor.cursor_set_position">
+  <shell_doc name="GPS.Editor.cursor_set_position">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <param name="column" default="1">An integer</param>
       <description>Set cursor to position line/column in buffer file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cursor_center"
-             real_name="GPS.Editor.cursor_center">
+  <shell_doc name="GPS.Editor.cursor_center">
       <param name="file">A string</param>
       <description>Scroll the view to center cursor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_buffer"
-             real_name="GPS.Editor.get_buffer">
+  <shell_doc name="GPS.Editor.get_buffer">
       <param name="file">A string</param>
       <description>Returns the text contained in the current buffer for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.save_buffer"
-             real_name="GPS.Editor.save_buffer">
+  <shell_doc name="GPS.Editor.save_buffer">
       <param name="file">A string</param>
       <param name="to_file" default="">A string</param>
       <description>Saves the text contained in the current buffer for file. If to_file is specified, the file will be saved as to_file, and the buffer status will not be modified</description>
   </shell_doc>
 
-  <shell_doc name="GPS.replace_text"
-             real_name="GPS.Editor.replace_text">
+  <shell_doc name="GPS.Editor.replace_text">
       <param name="file">A string</param>
       <param name="line">An integer</param>
       <param name="column">An integer</param>
@@ -1211,37 +1176,36 @@ If the line and column are not specified, then the current selection is returned
       <description>Replace the characters around a certain position. "before" characters before (line, column), and up to "after" characters after are removed, and the new text is inserted instead. If "before" or "after" is omitted, the bounds will be at the beginning and/or the end of the line</description>
   </shell_doc>
 
-  <shell_doc name="GPS.indent"
-             real_name="GPS.Editor.indent">
+  <shell_doc name="GPS.Editor.indent">
       <param name="current_line_only" default="False">A boolean</param>
       <description>Indent the selection (or the current line if requested) in current editor. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.indent_buffer" real_name="GPS.Editor.indent_buffer">
+  <shell_doc name="GPS.Editor.indent_buffer">
       <description>Indent the current editor. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.refill" real_name="GPS.Editor.refill">
+  <shell_doc name="GPS.Editor.refill">
       <description>Refill selected (or current) editor lines. Do nothing if the current GPS window is not an editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.cut" real_name="GPS.Editor.cut">
+  <shell_doc name="GPS.Editor.cut">
       <description>Cut the selection in the current editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.copy" real_name="GPS.Editor.copy">
+  <shell_doc name="GPS.Editor.copy">
       <description>Copy the selection in the current editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.paste" real_name="GPS.Editor.paste">
+  <shell_doc name="GPS.Editor.paste">
       <description>Paste the selection in the current editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.select_all" real_name="GPS.Editor.select_all">
+  <shell_doc name="GPS.Editor.select_all">
       <description>Select the whole editor contents</description>
   </shell_doc>
 
-  <shell_doc name="GPS.select_text" real_name="GPS.Editor.select_text">
+  <shell_doc name="GPS.Editor.select_text">
       <param name="first_line">An integer</param>
       <param name="last_line">An integer</param>
       <param name="start_column" default="1">An integer</param>
@@ -1249,54 +1213,51 @@ If the line and column are not specified, then the current selection is returned
       <description>Select a block in the current editor</description>
   </shell_doc>
 
-  <shell_doc name="GPS.insert_text" real_name="GPS.Editor.insert_text">
+  <shell_doc name="GPS.Editor.insert_text">
       <param name="text">A string</param>
       <description>Insert a text in the current editor at the cursor position</description>
   </shell_doc>
 
-  <shell_doc name="GPS.undo" real_name="GPS.Editor.undo">
+  <shell_doc name="GPS.Editor.undo">
       <param name="file">A string</param>
       <description>Undo the last edition command for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.redo" real_name="GPS.Editor.redo">
+  <shell_doc name="GPS.Editor.redo">
       <param name="file">A string</param>
       <description>Redo the last undone edition command for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.close" real_name="GPS.Editor.close">
+  <shell_doc name="GPS.Editor.close">
       <param name="file">A string</param>
       <description>Close all file editors for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.set_writable" real_name="GPS.Editor.set_writable">
+  <shell_doc name="GPS.Editor.set_writable">
       <param name="file">A string</param>
       <param name="writable">A boolean</param>
       <description>Change the Writable status for the editors for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.save" real_name="GPS.Editor.save">
+  <shell_doc name="GPS.Editor.save">
       <param name="interactive" default="True">A boolean</param>
       <param name="all" default="True">A boolean</param>
       <description>Save current or all files. If interactive is true, then prompt before each save. If all is true, then all files are saved</description>
   </shell_doc>
 
-  <shell_doc name="GPS.set_synchronized_scrolling"
-             real_name="GPS.Editor.set_synchronized_scrolling">
+  <shell_doc name="GPS.Editor.set_synchronized_scrolling">
        <param name="file1">A string</param>
        <param name="file2">A string</param>
        <param name="file3" default="">A string</param>
        <description>Synchronize the scrolling between multiple editors</description>
   </shell_doc>
 
-  <shell_doc name="GPS.add_case_exception"
-             real_name="GPS.Editor.add_case_exception">
+  <shell_doc name="GPS.Editor.add_case_exception">
        <param name="name">A string</param>
        <description>Add name into the case exception dictionary</description>
   </shell_doc>
 
-  <shell_doc name="GPS.remove_case_exception"
-             real_name="GPS.Editor.remove_case_exception">
+  <shell_doc name="GPS.Editor.remove_case_exception">
        <param name="name">A string</param>
        <description>Remove name from the case exception dictionary</description>
   </shell_doc>
@@ -1309,63 +1270,53 @@ If the line and column are not specified, then the current selection is returned
      <description>General interface to version control systems</description>
   </shell_doc>
 
-  <shell_doc name="GPS.supported_systems"
-             real_name="GPS.VCS.supported_systems">
+  <shell_doc name="GPS.VCS.supported_systems">
       <return>List of strings</return>
       <description>Show the list of supported VCS systems</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_status"
-             real_name="GPS.VCS.get_status">
+  <shell_doc name="GPS.VCS.get_status">
       <param name="file">A string</param>
       <description>Query the status for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.update"
-             real_name="GPS.VCS.update">
+  <shell_doc name="GPS.VCS.update">
       <param name="file">A string</param>
       <description>Update file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.commit"
-             real_name="GPS.VCS.commit">
+  <shell_doc name="GPS.VCS.commit">
       <param name="file">A string</param>
       <description>Commit file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.diff_head"
-             real_name="GPS.VCS.diff_head">
+  <shell_doc name="GPS.VCS.diff_head">
       <param name="file">A string</param>
       <description>Show differences between local file and the head revision</description>
   </shell_doc>
 
-  <shell_doc name="GPS.diff_working"
-             real_name="GPS.VCS.diff_working">
+  <shell_doc name="GPS.VCS.diff_working">
       <param name="file">A string</param>
       <description>Show differences between local file and the working revision</description>
   </shell_doc>
 
-  <shell_doc name="GPS.annotate"
-             real_name="GPS.VCS.annotate">
+  <shell_doc name="GPS.VCS.annotate">
       <param name="file">A string</param>
       <description>Display the annotations for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.remove_annotations"
-             real_name="GPS.VCS.remove_annotations">
+  <shell_doc name="GPS.VCS.remove_annotations">
       <param name="file">A string</param>
       <description>Remove the annotations for file</description>
   </shell_doc>
 
-  <shell_doc name="GPS.log"
-             real_name="GPS.VCS.log">
+  <shell_doc name="GPS.VCS.log">
       <param name="file">A string</param>
       <param name="revision">A string</param>
       <description>Get the revision changelog for file. If revision is specified, query the changelog for this specific revision, otherwise query the entire changelog</description>
   </shell_doc>
 
-  <shell_doc name="GPS.status_parse"
-             real_name="GPS.VCS.status_parse">
+  <shell_doc name="GPS.VCS.status_parse">
       <param name="vcs_identifier">A string</param>
       <param name="string">A string</param>
       <param name="clear_logs">A boolean</param>
@@ -1378,8 +1329,7 @@ If the line and column are not specified, then the current selection is returned
  Parameter dir indicates the directory in which the files matched in string are located.</description>
   </shell_doc>
 
-  <shell_doc name="GPS.annotation_parse"
-             real_name="GPS.VCS.annotation_parse">
+  <shell_doc name="GPS.VCS.annotation_parse">
       <param name="vcs_identifier">A string</param>
       <param name="file">A string</param>
       <param name="string">A string</param>
@@ -1540,15 +1490,14 @@ The first word after '%' is the language of the shell command, the rest of the t
      <description>This class gives access to the help system of GPS, as well as to the integrated browser</description>
   </shell_doc>
 
-  <shell_doc name="GPS.add_doc_directory"
-             real_name="GPS.HTML.add_doc_directory">
+  <shell_doc name="GPS.HTML.add_doc_directory">
      <param name="directory">Directory that contains the documentation</param>
      <description>Add a new directory to the GPS_DOC_PATH environment variable. This directory is searched for documentation files. If this directory contains a gps_index.xml file, it is parsed to find the list of documentation files to
 add to the Help menu. See the GPS documentation for more information on the
 format of the gps_index.xml files</description>
   </shell_doc>
 
-  <shell_doc name="GPS.browse" real_name="GPS.HTML.browse" >
+  <shell_doc name="GPS.HTML.browse">
      <param name="URL">Name of the file to browse</param>
      <param name="anchor" default="">Location in the file where to jump to</param>
      <param name="navigation" default="True">A boolean</param>
@@ -1579,8 +1528,7 @@ where protocol is one of the recognized protocols (http, ftp,.. see the GPS docu
       <see_also name="GPS.Codefix.__init__()" />
   </shell_doc>
 
-  <shell_doc name="GPS.parse"
-             real_name="GPS.Codefix.parse">
+  <shell_doc name="GPS.Codefix.parse">
       <param name="category">A string</param>
       <param name="output">A string</param>
       <param name="regexp" default="">A string</param>
@@ -1607,7 +1555,7 @@ Access the various suggested fixes through the methods of the Codefix class</des
       <description>List the fixable errors in that session</description>
   </shell_doc>
 
-  <shell_doc name="GPS.sessions" real_name="GPS.Codefix.sessions">
+  <shell_doc name="GPS.Codefix.sessions">
       <return>A list of strings</return>
       <description>List all the existing Codefix sessions. The returned values can all be used to create a new instance of Codefix through its constructor.</description>
       <example lang="python">
@@ -2109,14 +2057,14 @@ The specific list depends on the hook type</param>
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.register" real_name="GPS.Hook.register">
+  <shell_doc name="GPS.Hook.register">
       <param name="name">A string, the name of the hook to create</param>
       <param name="description">A string, the description of the hook</param>
       <param name="type" default="">A string, the type of the hook. See GPS.Hook.list_types()</param>
       <description>Defines a new hook. This hook can take any number of parameters, the default is none. The type and number of parameters is called the type of the hook, and this is described by the" optional third parameter. The value of this parameter should be either the empty string for a hook that doesn't take any parameter. Or it could be one of the predefined types exported by GPS itself (see list_hook_types). Finally, it could be the word ""generic"" if this is a new type of hook purely defined for this scripting language</description>
   </shell_doc>
 
-  <shell_doc name="GPS.list" real_name="GPS.Hook.list">
+  <shell_doc name="GPS.Hook.list">
       <return>A list of strings</return>
       <description>List all defined hooks. See also run_hook, register_hook and add_hook</description>
       <see_also name="GPS.Hook.list_types" />
@@ -2134,13 +2082,13 @@ The specific list depends on the hook type</param>
       <description>List all the functions that are executed when the hook is executed. The returned list might contain &lt;internal&gt; strings, which indicate that some Ada function is connected to this hook</description>
   </shell_doc>
 
-  <shell_doc name="GPS.list_types" real_name="GPS.Hook.list_types">
+  <shell_doc name="GPS.Hook.list_types">
      <return>A list of strings</return>
      <description>List all defined type hooks</description>
      <see_also name="GPS.Hook.register"/>
   </shell_doc>
 
-  <shell_doc name="GPS.describe_type" real_name="GPS.Hook.describe_type">
+  <shell_doc name="GPS.Hook.describe_type">
      <param name="name">A string, the name of the hook type</param>
      <return>A string</return>
      <description>Describe a hook type and what are the expected arguments. Remember that all hooks get the hook name as the first parameter, in addition to the parameters described by this function.</description>
@@ -2155,34 +2103,29 @@ The specific list depends on the hook type</param>
     <see_also name="GPS.MDIWindow" />
   </shell_doc>
 
-  <shell_doc name="GPS.tile" real_name="GPS.MDI.tile">
-     <param name="vertically" default="True">A boolean</param>
-     <description>Tile the windows in the central area either horizontally or vertically</description>
-  </shell_doc>
-
-  <shell_doc name="GPS.get" real_name="GPS.MDI.get">
+  <shell_doc name="GPS.MDI.get">
      <param name="name">A string</param>
      <return>An instance of GPS.MDIWindow</return>
      <description>Return the window whose name is name. If there is no such window, None is returned</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get_by_child" real_name="GPS.MDI.get_by_child">
+  <shell_doc name="GPS.MDI.get_by_child">
      <param name="child">An instance of GPS.GUI</param>
      <return>An instance of GPS.MDIWindow</return>
      <description>Return the window that contains child, or raise an error if there is none</description>
   </shell_doc>
 
-  <shell_doc name="GPS.current" real_name="GPS.MDI.current">
+  <shell_doc name="GPS.MDI.current">
      <return>An instance of GPS.MDIWindow</return>
      <description>Return the window that currently has the focus, or raise an error if there is none</description>
   </shell_doc>
 
-  <shell_doc name="GPS.dialog" real_name="GPS.MDI.dialog">
+  <shell_doc name="GPS.MDI.dialog">
      <param name="msg">A string</param>
      <description>Display a modal dialog to report information to a user. This blocks the interpreter until the dialog is closed</description>
   </shell_doc>
 
-  <shell_doc name="GPS.yes_no_dialog" real_name="GPS.MDI.yes_no_dialog">
+  <shell_doc name="GPS.MDI.yes_no_dialog">
      <param name="msg">A string</param>
      <return>A boolean</return>
      <description>Display a modal dialog to ask a question to the user. This blocks the interpreter until the dialog is closed. The dialog has two buttons Yes and No, and the selected button is returned to the caller</description>
@@ -2192,7 +2135,7 @@ The specific list depends on the hook type</param>
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.input_dialog" real_name="GPS.MDI.input_dialog">
+  <shell_doc name="GPS.MDI.input_dialog">
      <param name="msg">A string</param>
      <param name="...">Any number of strings</param>
      <return>A list of strings</return>
@@ -2204,13 +2147,13 @@ An empty list is returned if the user presses Cancel</description>
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.save_all" real_name="GPS.MDI.save_all">
+  <shell_doc name="GPS.MDI.save_all">
      <param name="force" default="false">A boolean</param>
      <description>Save all currently unsaved windows. This includes open editors, the project, and any other window that has registered some save callbacks.
 If the force parameter is false, then a confirmation dialog is displayed so that the user can select which windows to save</description>
   </shell_doc>
 
-  <shell_doc name="GPS.exit" real_name="GPS.MDI.exit">
+  <shell_doc name="GPS.MDI.exit">
       <param name="force" default="false">A boolean</param>
       <description>Exit GPS. If there are unsaved changes, a dialog is first displayed to ask whether these should be saved. If the user cancels the operation through the dialog, GPS will not exit. If force is true, then no dialog is open, and nothing is saved</description>
   </shell_doc>
@@ -2282,7 +2225,7 @@ Windows acts as containers for other widgets</description>
      <description>General interface to the locations window</description>
   </shell_doc>
 
-  <shell_doc name="GPS.parse" real_name="GPS.Locations.parse">
+  <shell_doc name="GPS.Locations.parse">
      <param name="output">A string</param>
      <param name="category">A string</param>
      <param name="regexp" default="">A string</param>
@@ -2301,7 +2244,7 @@ highlight_category, style_category and warning_category reference the colors to 
       <see_also name="GPS.Editor.register_highlighting()" />
   </shell_doc>
 
-  <shell_doc name="GPS.add" real_name="GPS.Locations.add">
+  <shell_doc name="GPS.Locations.add">
      <param name="category">A string</param>
      <param name="file">An instance of GPS.File</param>
      <param name="line">An integer</param>
@@ -2321,7 +2264,7 @@ highlight_category, style_category and warning_category reference the colors to 
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.remove_category" real_name="GPS.Locations.remove_category">
+  <shell_doc name="GPS.Locations.remove_category">
      <param name="category">A string</param>
      <description>Remove a category from the location window. This removes all associated files</description>
   </shell_doc>
@@ -2485,7 +2428,7 @@ highlight_category, style_category and warning_category reference the colors to 
      <description>Closes the socket. The client that was connected to that socket will be notified by the system that the socket was closed, and react as needed</description>
   </shell_doc>
 
-  <shell_doc name="GPS.list" real_name="GPS.Socket.list">
+  <shell_doc name="GPS.Socket.list">
      <return>List of strings</return>
      <description>Return a list of all the registered socket identifiers. These strings can be used to instanciate GPS.Socket.</description>
    </shell_doc>
@@ -2507,7 +2450,7 @@ you are refering to a given menu in GPS, and so that you can store your own
 specific data with the menu</description>
   </shell_doc>
 
-  <shell_doc name="GPS.get" real_name="GPS.Menu.get">
+  <shell_doc name="GPS.Menu.get">
      <param name="path">A string</param>
      <return>The instance of GPS.Menu</return>
      <description>Return the menu found at the given path. Path is similar to what one finds on a hard disk, starting with the main GPS menu ('/'), down to each submenus. For instance, '/VCS/Directory/Update Directory' refers to the
@@ -2519,7 +2462,7 @@ submenu 'Update Directory' of the submenu 'Directory' of the menu 'VCS'. Path is
      </example>
   </shell_doc>
 
-  <shell_doc name="GPS.create" real_name="GPS.Menu.create">
+  <shell_doc name="GPS.Menu.create">
      <param name="path">A string</param>
      <param name="on_activate" default="">A subprogram, see the GPS documentation on subprogram parameters</param>
      <param name="ref" default="">A string</param>
