@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -116,9 +116,10 @@ package Glide_Kernel.Modules is
       Mime_Handler            : Module_Mime_Handler := null;
       MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
       Default_Context_Factory : Module_Default_Context_Factory := null;
-      Save_Function           : Module_Save_Function := null)
+      Save_Function           : Module_Save_Function := null;
+      Tooltip_Handler         : Module_Tooltip_Handler := null)
       return Module_ID;
-   --  Register a new module into Glide.
+   --  Register a new module into GPS.
    --  Module_Name can be used by other modules to check whether they want to
    --  interact with this module.
    --  See the general description for this package for explanation on
@@ -127,9 +128,16 @@ package Glide_Kernel.Modules is
    --  MDI_Child_Tag is used to associated a given MDI child with a specific
    --  module. It should be the name of the widget inserted directly in the
    --  MDI. It is then used in conjunction with Default_Context_Factory to
-   --  generate a selection context that can be used for the glide menubar
-   --  items. Note that Kernel_Handle_Record'Tag is used as a default,
-   --  non-significant value for MDI_Child_Tag.
+   --  generate a selection context that can be used for the menubar items.
+   --  Note that Kernel_Handle_Record'Tag is used as a default, non-significant
+   --  value for MDI_Child_Tag.
+   --
+   --  Save_Function is an optional callback that will handle the saving of
+   --  the given module.
+   --
+   --  Tooltip_Handler is an optional callback used to display tooltips.
+   --  See description of Module_Tooltip_Handler in Glide_Kernel and procedure
+   --  Compute_Tooltip below for more details.
 
    function Module_Name (ID : Module_ID) return String;
    --  Return the name of the module registered as ID.
@@ -169,10 +177,26 @@ package Glide_Kernel.Modules is
    --     - it asks Widget, through Context_Func, the exact context for the
    --       menu (selected file, ....)
    --     - it then asks each of the registered modules whether it wants to
-   --       add new items to the menu, and let is do so (through the
+   --       add new items to the menu, and let it do so (through the
    --       Contextual_Menu_Handler provided in Register_Module)
    --     - it then displays the menu
    --     - it finally cleans up the memory when the menu is hidden
+
+   --------------
+   -- Tooltips --
+   --------------
+
+   procedure Compute_Tooltip
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context_Access;
+      Pixmap  : out Gdk.Gdk_Pixmap;
+      Width   : out Glib.Gint;
+      Height  : out Glib.Gint);
+   --  Given a context, pointing to e.g an entity, the kernel will ask
+   --  each of the registered modules whether it wants to display a tooltip.
+   --  The first module to set Pixmap will stop the process.
+   --  If no module wants to display a tooltip, Pixmap is set to null, and
+   --  Width and Height are set to 0.
 
    -----------
    -- Menus --
@@ -404,7 +428,8 @@ package Glide_Kernel.Modules is
       return Language.Language_Category;
    --  Return the category for the entity
 
-   function Get_Entity (Context : access Entity_Selection_Context)
+   function Get_Entity
+     (Context : access Entity_Selection_Context)
       return Src_Info.Queries.Entity_Information;
    --  Return the location of the declaration for the entity in Context.
    --  This information is automatically cached in the context, in case several
@@ -439,16 +464,16 @@ private
         Src_Info.Queries.No_Entity_Information;
    end record;
 
-   pragma Inline (Has_Project_Information,
-                  Has_Directory_Information,
-                  Has_Importing_Project_Information,
-                  Importing_Project_Information,
-                  Project_Information,
-                  Has_File_Information,
-                  Has_Entity_Name_Information,
-                  Entity_Name_Information,
-                  Has_Line_Information,
-                  Line_Information,
-                  Has_Column_Information,
-                  Column_Information);
+   pragma Inline (Has_Project_Information);
+   pragma Inline (Has_Directory_Information);
+   pragma Inline (Has_Importing_Project_Information);
+   pragma Inline (Importing_Project_Information);
+   pragma Inline (Project_Information);
+   pragma Inline (Has_File_Information);
+   pragma Inline (Has_Entity_Name_Information);
+   pragma Inline (Entity_Name_Information);
+   pragma Inline (Has_Line_Information);
+   pragma Inline (Line_Information);
+   pragma Inline (Has_Column_Information);
+   pragma Inline (Column_Information);
 end Glide_Kernel.Modules;

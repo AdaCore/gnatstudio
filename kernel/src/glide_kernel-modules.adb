@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -86,6 +86,45 @@ package body Glide_Kernel.Modules is
    --  if the latter is null.
 
    ---------------------
+   -- Compute_Tooltip --
+   ---------------------
+
+   procedure Compute_Tooltip
+     (Kernel  : access Kernel_Handle_Record'Class;
+      Context : Selection_Context_Access;
+      Pixmap  : out Gdk.Gdk_Pixmap;
+      Width   : out Gint;
+      Height  : out Gint)
+   is
+      Current : Module_List.List_Node :=
+        Module_List.First (Kernel.Modules_List);
+
+      use type Module_List.List_Node;
+      use type Gdk.Gdk_Pixmap;
+
+   begin
+      Pixmap := null;
+      Width  := 0;
+      Height := 0;
+
+      while Current /= Module_List.Null_Node loop
+         if Module_List.Data (Current).Tooltip_Handler /= null then
+            Module_List.Data (Current).Tooltip_Handler
+              (Context => Context,
+               Pixmap  => Pixmap,
+               Width   => Width,
+               Height  => Height);
+
+            if Pixmap /= null then
+               return;
+            end if;
+         end if;
+
+         Current := Module_List.Next (Current);
+      end loop;
+   end Compute_Tooltip;
+
+   ---------------------
    -- Register_Module --
    ---------------------
 
@@ -97,7 +136,8 @@ package body Glide_Kernel.Modules is
       Mime_Handler            : Module_Mime_Handler := null;
       MDI_Child_Tag           : Ada.Tags.Tag := Kernel_Handle_Record'Tag;
       Default_Context_Factory : Module_Default_Context_Factory := null;
-      Save_Function           : Module_Save_Function := null)
+      Save_Function           : Module_Save_Function := null;
+      Tooltip_Handler         : Module_Tooltip_Handler := null)
       return Module_ID
    is
       ID      : Module_ID;
@@ -120,6 +160,7 @@ package body Glide_Kernel.Modules is
                Mime_Handler    => Mime_Handler,
                Default_Factory => Default_Context_Factory,
                Save_Function   => Save_Function,
+               Tooltip_Handler => Tooltip_Handler,
                Child_Tag       => MDI_Child_Tag);
             Module_List.Append (Kernel.Modules_List, Prev, ID);
 
@@ -138,6 +179,7 @@ package body Glide_Kernel.Modules is
          Mime_Handler    => Mime_Handler,
          Default_Factory => Default_Context_Factory,
          Save_Function   => Save_Function,
+         Tooltip_Handler => Tooltip_Handler,
          Child_Tag       => MDI_Child_Tag);
       Module_List.Append (Kernel.Modules_List, ID);
       return ID;
