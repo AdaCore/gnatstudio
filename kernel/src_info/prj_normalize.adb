@@ -77,12 +77,6 @@ package body Prj_Normalize is
    --  case_item(s) in In_Case, given the current values for all variables as
    --  given in Var_values.
 
-   procedure Add_At_End
-     (Expr : Project_Node_Id;
-      Parent, Decl_Item : in out Project_Node_Id);
-   --  Add expression at the end of the declarative_item list in Parent.
-   --  Decl_Item must point to the last declarative_item in the list.
-
    procedure For_Each_Matching_Item
      (In_Case    : Project_Node_Id;
       Var_Values : Literal_String_Array;
@@ -91,26 +85,6 @@ package body Prj_Normalize is
    --  each that matches Var_Values, calls Action.
    --  A No_String value in Var_Values matches any possible value for the
    --  variable
-
-   ----------------
-   -- Add_At_End --
-   ----------------
-
-   procedure Add_At_End
-     (Expr : Project_Node_Id;
-      Parent, Decl_Item : in out Project_Node_Id) is
-   begin
-      if Decl_Item = Empty_Node then
-         Decl_Item := Default_Project_Node (N_Declarative_Item);
-         Set_First_Declarative_Item_Of (Parent, Decl_Item);
-      else
-         Set_Next_Declarative_Item
-           (Decl_Item, Default_Project_Node (N_Declarative_Item));
-         Decl_Item := Next_Declarative_Item (Decl_Item);
-      end if;
-
-      Set_Current_Item_Node (Decl_Item, Expr);
-   end Add_At_End;
 
    ----------------
    -- Clone_Node --
@@ -412,8 +386,7 @@ package body Prj_Normalize is
                when N_String_Type_Declaration =>
                   --  Note: this always happens only in N_Project, not in
                   --  package declaration.
-                  Add_At_End
-                    (Current_Item_Node (Decl_Item), Parent, Decl_Item_Out);
+                  Add_At_End (Parent, Current_Item_Node (Decl_Item));
 
                when N_Typed_Variable_Declaration =>
                   if Kind_Of (Parent) = N_Package_Declaration
@@ -422,12 +395,10 @@ package body Prj_Normalize is
                   then
                      --  A scenario variable: add its declaration in the
                      --  enclosing project, not in the package
-                     Add_At_End
-                       (Current_Item_Node (Decl_Item), Decl2, Decl_Item2);
+                     Add_At_End (Decl2, Current_Item_Node (Decl_Item));
 
                   else
-                     Add_At_End
-                       (Current_Item_Node (Decl_Item), Parent, Decl_Item_Out);
+                     Add_At_End (Parent, Current_Item_Node (Decl_Item));
                   end if;
 
                when others =>
@@ -442,8 +413,7 @@ package body Prj_Normalize is
                   end loop;
 
                   if J > Var_Values'Last then
-                     Add_At_End
-                       (Current_Item_Node (Decl_Item), Parent, Decl_Item_Out);
+                     Add_At_End (Parent, Current_Item_Node (Decl_Item));
                   else
                      if To_Case = Empty_Node then
                         To_Case := Create_Nested_Case (Scenario_Variables);
@@ -474,19 +444,22 @@ package body Prj_Normalize is
       while Pkg /= Empty_Node loop
          Pkg_Decl_Item := Empty_Node;
          Pkg_Nested_Case := Empty_Node;
-         Recurse (First_Declarative_Item_Of (Pkg), Pkg_Nested_Case,
+         Decl := First_Declarative_Item_Of (Pkg);
+         Set_First_Declarative_Item_Of (Pkg, Empty_Node);
+
+         Recurse (Decl, Pkg_Nested_Case,
                   Pkg, Pkg_Decl_Item);
          if Pkg_Nested_Case /= Empty_Node then
-            Add_At_End (Pkg_Nested_Case, Pkg, Pkg_Decl_Item);
+            Add_At_End (Pkg, Pkg_Nested_Case);
          end if;
 
-         Add_At_End (Pkg, Decl2, Decl_Item2);
+         Add_At_End (Decl2, Pkg);
 
          Pkg := Next_Package_In_Project (Pkg);
       end loop;
 
       if Project_Nested_Case /= Empty_Node then
-         Add_At_End (Project_Nested_Case, Decl2, Decl_Item2);
+         Add_At_End (Decl2, Project_Nested_Case);
       end if;
 
       --  Directly replace in the table, so that all references to this project
@@ -577,7 +550,7 @@ package body Prj_Normalize is
          else
             Decl_Item := Pkg;
          end if;
-         Add_At_End (Nested_Case, Decl_Item, Previous_Decl);
+         Add_At_End (Decl_Item, Nested_Case);
       end if;
 
       --  Get the current value of all the variables
