@@ -285,6 +285,9 @@ package Debugger.Jdb is
      (Debugger  : access Jdb_Debugger;
       Variable  : in String) return String;
 
+   function Get_Endian_Type
+     (Debugger : access Jdb_Debugger) return Endian_Type;
+
 private
 
    function Send

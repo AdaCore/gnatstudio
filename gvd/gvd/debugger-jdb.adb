@@ -980,4 +980,15 @@ package body Debugger.Jdb is
       --  ??? Must implement this function !
    end Get_Variable_Address;
 
+   ---------------------
+   -- Get_Endian_Type --
+   ---------------------
+
+   function Get_Endian_Type
+     (Debugger : access Jdb_Debugger) return Endian_Type is
+   begin
+      return Big_Endian;
+      --  ??? Must implement this function !
+   end Get_Endian_Type;
+
 end Debugger.Jdb;

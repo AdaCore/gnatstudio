@@ -314,6 +314,9 @@ package Debugger.Gdb is
      (Debugger  : access Gdb_Debugger;
       Variable  : in String) return String;
 
+   function Get_Endian_Type
+     (Debugger : access Gdb_Debugger) return Endian_Type;
+
    procedure Switch_Language
      (Debugger : access Gdb_Debugger;
       Language : in String);

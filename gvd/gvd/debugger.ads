@@ -762,6 +762,11 @@ package Debugger is
    --  The returned adress should be "0x" followed by an hexadecimal number.
    --  Alternatively, it returns "" if no such variable is found.
 
+   type Endian_Type is (Little_Endian, Big_Endian);
+   function Get_Endian_Type
+     (Debugger : access Debugger_Root) return Endian_Type is abstract;
+   --  Get the endianness of the target.
+
 private
 
    type Debugger_Root is abstract tagged record

@@ -2353,6 +2353,26 @@ package body Debugger.Gdb is
    end Get_Variable_Address;
 
    ---------------------
+   -- Get_Endian_Type --
+   ---------------------
+
+   function Get_Endian_Type
+     (Debugger : access Gdb_Debugger) return Endian_Type
+   is
+      S             : constant String := Send
+        (Debugger, "show endian", Mode => Internal);
+      Little        : constant String := "little endian";
+      S_Index       : Integer := S'First;
+   begin
+      Skip_To_String (S, S_Index, Little);
+      if S_Index <= S'Last - Little'Length + 1 then
+         return Little_Endian;
+      else
+         return Big_Endian;
+      end if;
+   end Get_Endian_Type;
+
+   ---------------------
    -- Switch_Language --
    ---------------------
 
