@@ -2310,15 +2310,10 @@ package body Project_Viewers is
       Switches : Switches_Editors.Switches_Edit;
    begin
       Gtk_New (Switches);
-      Show_All (Get_Window (Switches));
+      Show_All (Switches);
+      Set_Switches (Switches, Project_View);
 
-      if Project_View /= No_Project then
-         Set_Switches (Switches, Project_View);
-      else
-         Set_Switches (Switches, Gnatmake, Default_Builder_Switches);
-      end if;
-
-      return Get_Window (Switches);
+      return Gtk_Widget (Switches);
    end Widget_Factory;
 
    --------------------
@@ -2338,7 +2333,7 @@ package body Project_Viewers is
       pragma Unreferenced (Kernel, Page, Ref_Project);
    begin
       return Generate_Project
-        (Switches           => From_Window (Widget),
+        (Switches           => Switches_Edit (Widget),
          Project            => Project,
          Scenario_Variables => Scenario_Variables,
          Project_View       => Project_View,
@@ -2357,7 +2352,7 @@ package body Project_Viewers is
    is
       pragma Unreferenced (Page, Project_View);
    begin
-      Set_Visible_Pages (From_Window (Widget), Languages);
+      Set_Visible_Pages (Switches_Edit (Widget), Languages);
    end Refresh;
 
    --------------------
