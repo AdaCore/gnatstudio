@@ -304,7 +304,7 @@ package body VCS_View_API is
 
       while List_Temp /= Null_Node loop
          declare
-            S : String := Data (List_Temp);
+            S : constant String := Data (List_Temp);
          begin
             Push_Message (Kernel, Error, S);
             Length := Length + S'Length;
@@ -322,7 +322,7 @@ package body VCS_View_API is
 
             while List_Temp /= Null_Node loop
                declare
-                  D : String := Data (List_Temp);
+                  D : constant String := Data (List_Temp);
                begin
                   S (Length .. Length - 1 + D'Length) := D;
                   Length := Length + D'Length;
