@@ -1,0 +1,186 @@
+-----------------------------------------------------------------------
+--                               G P S                               --
+--                                                                   --
+--                        Copyright (C) 2004                         --
+--                            ACT-Europe                             --
+--                                                                   --
+-- GPS is free  software; you can  redistribute it and/or modify  it --
+-- under the terms of the GNU General Public License as published by --
+-- the Free Software Foundation; either version 2 of the License, or --
+-- (at your option) any later version.                               --
+--                                                                   --
+-- This program is  distributed in the hope that it will be  useful, --
+-- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
+-- General Public License for more details. You should have received --
+-- a copy of the GNU General Public License along with this library; --
+-- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
+-- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
+-----------------------------------------------------------------------
+
+with Glib;                      use Glib;
+with Gtk.Main;                  use Gtk.Main;
+with Glide_Intl;                use Glide_Intl;
+with Glide_Kernel;              use Glide_Kernel;
+with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
+with Traces;                    use Traces;
+with Custom_Module;             use Custom_Module;
+
+with System;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;            use Ada.Exceptions;
+
+package body Custom_Timeout is
+
+   Timeout_Cst         : aliased constant String := "timeout";
+   Action_Cst          : aliased constant String := "action";
+   Constructor_Args    : constant Cst_Argument_List :=
+     (Timeout_Cst'Access, Action_Cst'Access);
+
+   type Custom_Timeout is record
+      Handler : Timeout_Handler_Id;
+      Action  : Glide_Kernel.Scripts.Subprogram_Type;
+   end record;
+
+   type Custom_Timeout_Access is access Custom_Timeout;
+   procedure Unchecked_Free is new Ada.Unchecked_Deallocation
+     (Custom_Timeout, Custom_Timeout_Access);
+
+   package Action_Timeout is new Timeout (Custom_Timeout_Access);
+
+   -----------------------
+   -- Local subprograms --
+   -----------------------
+
+   procedure Custom_Timeout_Handler
+     (Data    : in out Callback_Data'Class; Command : String);
+   --  Handle the custom timeout commands.
+
+   function Callback (D : in Custom_Timeout_Access) return Boolean;
+   --  Generic timeout callback.
+
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access;
+   --  Get or store some data in an instance of GPS.Process
+
+   function Convert is new Ada.Unchecked_Conversion
+     (System.Address, Custom_Timeout_Access);
+
+   procedure Free (X : in out Custom_Timeout_Access);
+   --  Free memory associated to X.
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (X : in out Custom_Timeout_Access) is
+   begin
+      Free (X.Action);
+      Unchecked_Free (X);
+   end Free;
+
+   --------------
+   -- Get_Data --
+   --------------
+
+   function Get_Data
+     (Data : Callback_Data'Class; N : Positive) return Custom_Timeout_Access
+   is
+      Timeout_Class : constant Class_Type :=
+        New_Class (Get_Kernel (Data), "Timeout");
+      Value : constant System.Address := Nth_Arg_Data
+        (Data, N, Timeout_Class);
+   begin
+      return Convert (Value);
+   end Get_Data;
+
+   --------------
+   -- Callback --
+   --------------
+
+   function Callback (D : in Custom_Timeout_Access) return Boolean is
+      C : Callback_Data'Class := Create
+        (Get_Script (D.Action.all), Arguments_Count => 0);
+
+      Tmp : Boolean;
+      pragma Unreferenced (Tmp);
+   begin
+      Tmp := Execute (D.Action, C);
+      Free (C);
+      return True;
+   exception
+      when E : others =>
+         Trace (Exception_Handle,
+                "Unexpected exception: " & Exception_Information (E));
+      return True;
+   end Callback;
+
+   ----------------------------
+   -- Custom_Timeout_Handler --
+   ----------------------------
+
+   procedure Custom_Timeout_Handler
+     (Data    : in out Callback_Data'Class; Command : String)
+   is
+      Kernel : constant Kernel_Handle := Custom_Module_ID.Kernel;
+      Timeout_Class : constant Class_Type := New_Class (Kernel, "Timeout");
+      D             : Custom_Timeout_Access;
+   begin
+      if Command = Constructor_Method then
+         Name_Parameters (Data, Constructor_Args);
+
+         declare
+            Inst    : constant Class_Instance :=
+              Nth_Arg (Data, 1, Timeout_Class);
+            Timeout : constant Integer := Nth_Arg (Data, 2, 0);
+            Act     : constant Subprogram_Type := Nth_Arg (Data, 3, null);
+         begin
+            if Act = null then
+               Set_Error_Msg
+                 (Data,
+                  -"Could not find action """ & Nth_Arg (Data, 3) & """");
+               return;
+            end if;
+
+            if Timeout = 0 then
+               Set_Error_Msg (Data, -"Cannot register a timeout for 0 ms.");
+               return;
+            end if;
+
+            D := new Custom_Timeout;
+            D.Action := Act;
+
+            D.Handler := Action_Timeout.Add
+              (Guint32 (Timeout), Callback'Access, D);
+
+            Set_Data (Inst, Timeout_Class, D.all'Address);
+         end;
+
+      elsif Command = "remove" then
+         D := Get_Data (Data, 1);
+         Timeout_Remove (D.Handler);
+         Free (D);
+      end if;
+   end Custom_Timeout_Handler;
+
+   -----------------------
+   -- Register_Commands --
+   -----------------------
+
+   procedure Register_Commands (Kernel : access Kernel_Handle_Record'Class) is
+      Timeout_Class : constant Class_Type := New_Class (Kernel, "Timeout");
+   begin
+      Register_Command
+        (Kernel, Constructor_Method,
+         Minimum_Args  => 2,
+         Maximum_Args  => 2,
+         Class         => Timeout_Class,
+         Handler       => Custom_Timeout_Handler'Access);
+      Register_Command
+        (Kernel, "remove",
+         Class         => Timeout_Class,
+         Handler       => Custom_Timeout_Handler'Access);
+   end Register_Commands;
+
+end Custom_Timeout;
