@@ -1806,7 +1806,8 @@ package body Builder_Module is
 
       --  No main program ?
 
-      Gtk_New (Mitem, -Current_Make_Suffix);
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -Current_Make_Suffix);
       Append (Menu1, Mitem);
       Set_Accel_Path
         (Mitem, -Make_Menu_Prefix & (-Current_Make_Suffix), Group);
@@ -1825,7 +1826,8 @@ package body Builder_Module is
          Builder_Module.Build_Item := Mitem;
       end if;
 
-      Gtk_New (Mitem, -Custom_Make_Suffix);
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu1, Mitem);
       --  ??? F9 key binding is no longer taken into account if the following
       --  line is commented out:
@@ -1839,7 +1841,8 @@ package body Builder_Module is
 
       --  Should be able to run any program
 
-      Gtk_New (Mitem, -Custom_Make_Suffix);
+      Mitem := new Dynamic_Menu_Item_Record;
+      Gtk.Menu_Item.Initialize (Mitem, -Custom_Make_Suffix);
       Append (Menu2, Mitem);
                Set_Accel_Path
                  (Mitem, -(Run_Menu_Prefix) & (-Custom_Make_Suffix), Group);
