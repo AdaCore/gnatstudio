@@ -51,11 +51,6 @@ package GVD.Text_Box.Source_Editor is
 
    function Get_Current_File
      (Editor : access Source_Editor_Record) return VFS.Virtual_File;
-   --  Return the name of the currently edited file.
-   --  "" is returned if there is no current file.
-
-   function Get_Debugger_Current_File
-     (Editor : access Source_Editor_Record) return VFS.Virtual_File;
    --  Return the name of the file at which the debugger is stopped.
    --  "" is returned if there is no current debugger file.
 
@@ -66,16 +61,13 @@ package GVD.Text_Box.Source_Editor is
    --  This deletes the currently displayed file.
 
    procedure Load_File
-     (Editor      : access Source_Editor_Record;
-      File_Name   : VFS.Virtual_File;
-      Set_Current : Boolean := True;
-      Force       : Boolean := False) is abstract;
+     (Editor    : access Source_Editor_Record;
+      File_Name : VFS.Virtual_File) is abstract;
    --  Load and append a file in the editor.
    --  The contents is highlighted based on the current language.
    --  Debugger is used to calculate which lines should get icons on the side.
-   --  If Set_Current is True, then File_Name becomes the current file for the
+   --  File_Name becomes the current file for the
    --  debugger (ie the one that contains the current execution line).
-   --  If the file is already displayed, nothing is done unless Force is True.
 
    procedure Highlight_Current_Line
      (Editor : access Source_Editor_Record) is abstract;
@@ -95,14 +87,10 @@ package GVD.Text_Box.Source_Editor is
    --  redisplayed with the new setup.
 
    procedure Set_Line
-     (Editor      : access Source_Editor_Record;
-      Line        : Natural;
-      Set_Current : Boolean := True;
-      Process     : Glib.Object.GObject) is abstract;
+     (Editor  : access Source_Editor_Record;
+      Line    : Natural;
+      Process : Glib.Object.GObject) is abstract;
    --  Set the current line (and draw the button on the side).
-   --  If Set_Current is True, then the line becomes the current line (ie the
-   --  one on which the debugger is stopped). Otherwise, Line is simply the
-   --  line that we want to display in the editor.
    --  Process is the Visual_Debugger which corresponds to the debugger
    --  that is stopped.
 
@@ -116,19 +104,10 @@ package GVD.Text_Box.Source_Editor is
    --  WARNING: do not add or remove this widget in a container.
    --  Instead, use the Attach/Detach routines provided in this package.
 
-   type View_Mode is (Source, Asm, Source_Asm);
-   --  Describe what kind of source GVD should display.
-
-   procedure Apply_Mode
-     (Editor : access Source_Editor_Record; Mode : View_Mode) is abstract;
-   --  Apply mode changes to the editor.
-
 private
    type Source_Editor_Record is abstract tagged record
       Widget       : Gtk.Widget.Gtk_Widget;
       Current_File : VFS.Virtual_File;
-
-      Debugger_Current_File : VFS.Virtual_File;
       --  The file/line on which the debugger is stopped (ie these were set
       --  when the Set_Current parameter is True for Set_line and Load_File)
 

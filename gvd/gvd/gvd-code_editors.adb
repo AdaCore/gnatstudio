@@ -86,24 +86,21 @@ package body GVD.Code_Editors is
    --------------
 
    procedure Set_Line
-     (Editor      : access Code_Editor_Record;
-      Line        : Natural;
-      Set_Current : Boolean := True;
-      Process     : Glib.Object.GObject) is
+     (Editor  : access Code_Editor_Record;
+      Line    : Natural;
+      Process : Glib.Object.GObject) is
    begin
       Editor.Source_Line := Line;
-      Set_Line (Editor.Source, Line, Set_Current, Process);
+      Set_Line (Editor.Source, Line, Process);
 
-      if Set_Current then
-         --  Highlight the background of the current source line
-         Highlight_Current_Line (Editor.Source);
+      --  Highlight the background of the current source line
+      Highlight_Current_Line (Editor.Source);
 
-         --  If the assembly code is displayed, highlight the code for the
-         --  current line
+      --  If the assembly code is displayed, highlight the code for the
+      --  current line
 
-         if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
-            Highlight_Address_Range (Editor.Asm, Line);
-         end if;
+      if Editor.Mode = Asm or else Editor.Mode = Source_Asm then
+         Highlight_Address_Range (Editor.Asm, Line);
       end if;
    end Set_Line;
 
@@ -197,11 +194,9 @@ package body GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : VFS.Virtual_File;
-      Set_Current : Boolean := True;
-      Force       : Boolean := False) is
+      File_Name   : VFS.Virtual_File) is
    begin
-      Load_File (Editor.Source, File_Name, Set_Current, Force);
+      Load_File (Editor.Source, File_Name);
    end Load_File;
 
    ------------------------

@@ -55,10 +55,8 @@ package GVD.Text_Box.Source_Editor.GPS is
    --  This deletes the currently displayed file.
 
    procedure Load_File
-     (Editor      : access GEdit_Record;
-      File_Name   : VFS.Virtual_File;
-      Set_Current : Boolean := True;
-      Force       : Boolean := False);
+     (Editor    : access GEdit_Record;
+      File_Name : VFS.Virtual_File);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    procedure Highlight_Current_Line (Editor : access GEdit_Record);
@@ -75,7 +73,6 @@ package GVD.Text_Box.Source_Editor.GPS is
    procedure Set_Line
      (Editor      : access GEdit_Record;
       Line        : Natural;
-      Set_Current : Boolean := True;
       Process     : Glib.Object.GObject);
    --  See GVD.Text_Box.Source_Editor for more information.
 
@@ -85,10 +82,6 @@ package GVD.Text_Box.Source_Editor.GPS is
    procedure Free_Debug_Info (Editor : access GEdit_Record);
    --  Free dynamic memory associated to Editor, relative to debugger
    --  information.
-
-   procedure Apply_Mode
-     (Editor : access GEdit_Record; Mode : View_Mode);
-   --  See GVD.Text_Boxes.Source_Editor for more information.
 
 private
 

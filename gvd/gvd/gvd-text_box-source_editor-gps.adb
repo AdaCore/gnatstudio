@@ -2,7 +2,7 @@
 --                               G P S                               --
 --                                                                   --
 --                     Copyright (C) 2001-2005                       --
---                              AdaCore                              --
+--                             AdaCore                               --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -19,23 +19,17 @@
 -----------------------------------------------------------------------
 
 with Gdk.Pixbuf;
-with Gtkada.MDI;                use Gtkada.MDI;
 with Basic_Types;               use Basic_Types;
 with GPS.Kernel;                use GPS.Kernel;
 with GPS.Kernel.Console;        use GPS.Kernel.Console;
 with GPS.Kernel.Scripts;        use GPS.Kernel.Scripts;
-with GPS.Kernel.MDI;            use GPS.Kernel.MDI;
 with GPS.Kernel.Standard_Hooks; use GPS.Kernel.Standard_Hooks;
 
 with GVD.Process;               use GVD.Process;
-with GVD.Code_Editors;          use GVD.Code_Editors;
 with GVD.Types;                 use GVD.Types;
-with GVD_Module;                use GVD_Module;
 with Debugger_Pixmaps;          use Debugger_Pixmaps;
 with String_List_Utils;         use String_List_Utils;
 with VFS;                       use VFS;
-
-with GVD.Text_Box.Asm_Editor;   use GVD.Text_Box;
 
 with Commands;                  use Commands;
 with Commands.Debugger;         use Commands.Debugger;
@@ -51,32 +45,6 @@ package body GVD.Text_Box.Source_Editor.GPS is
    Highlight_Category : constant String := "Debugger Highlight";
 
    use String_List_Utils.String_List;
-
-   ----------------
-   -- Apply_Mode --
-   ----------------
-
-   procedure Apply_Mode (Editor : access GEdit_Record; Mode : View_Mode) is
-      Main_Window : constant GPS_Window := GPS_Window (Editor.Window);
-      Kernel      : constant Kernel_Handle := Main_Window.Kernel;
-      Process     : constant Visual_Debugger :=
-        Get_Current_Process (Main_Window);
-      Edit        : constant Code_Editor  := Process.Editor_Text;
-      Assembly    : constant Asm_Editor.Asm_Editor := Get_Asm (Edit);
-
-   begin
-      if Mode = Get_Mode (Edit) then
-         return;
-      end if;
-
-      case Mode is
-         when Source =>
-            Gtkada.MDI.Close (Get_MDI (Kernel), Assembly);
-
-         when Asm | Source_Asm =>
-            On_Assembly (Kernel, Kernel);
-      end case;
-   end Apply_Mode;
 
    --------------
    -- Get_Line --
@@ -106,13 +74,13 @@ package body GVD.Text_Box.Source_Editor.GPS is
    procedure Highlight_Current_Line (Editor : access GEdit_Record) is
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
    begin
-      if Editor.Debugger_Current_File = VFS.No_File then
+      if Editor.Current_File = VFS.No_File then
          return;
       end if;
 
       Open_File_Editor
         (Kernel,
-         Editor.Debugger_Current_File,
+         Editor.Current_File,
          Editor.Line,
          1,
          Enable_Navigation => False,
@@ -121,7 +89,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
+           (1 => new String'(Full_Name (Editor.Current_File).all),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
@@ -134,7 +102,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
       if Editor.Line /= 0 then
          declare
             Args : GNAT.OS_Lib.Argument_List (1 .. 3) :=
-              (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
+              (1 => new String'(Full_Name (Editor.Current_File).all),
                2 => new String'(Highlight_Category),
                3 => new String'(Editor.Line'Img));
          begin
@@ -148,7 +116,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
 
       Add_Unique_Sorted
         (Editor.Highlighted_Files,
-         Full_Name (Editor.Debugger_Current_File).all);
+         Full_Name (Editor.Current_File).all);
    end Highlight_Current_Line;
 
    ------------------------------
@@ -164,14 +132,14 @@ package body GVD.Text_Box.Source_Editor.GPS is
                  Get_Current_Source_Line (Visual_Debugger (Process));
 
    begin
-      if Editor.Debugger_Current_File = VFS.No_File then
+      if Editor.Current_File = VFS.No_File then
          return;
       end if;
 
       if Line /= 0 then
          Add_Line_Information
            (Kernel,
-            Editor.Debugger_Current_File,
+            Editor.Current_File,
             "Current Line",
             --  ??? we should get that from elsewhere.
             new Line_Information_Array'
@@ -183,7 +151,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
 
       declare
          Args : GNAT.OS_Lib.Argument_List (1 .. 2) :=
-           (1 => new String'(Full_Name (Editor.Debugger_Current_File).all),
+           (1 => new String'(Full_Name (Editor.Current_File).all),
             2 => new String'(Highlight_Category));
       begin
          Execute_GPS_Shell_Command (Kernel, "Editor.unhighlight", Args);
@@ -223,21 +191,13 @@ package body GVD.Text_Box.Source_Editor.GPS is
    ---------------
 
    procedure Load_File
-     (Editor      : access GEdit_Record;
-      File_Name   : VFS.Virtual_File;
-      Set_Current : Boolean := True;
-      Force       : Boolean := False)
+     (Editor    : access GEdit_Record;
+      File_Name : VFS.Virtual_File)
    is
-      pragma Unreferenced (Force);
       Kernel : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
-
    begin
       if Editor.Current_File /= File_Name then
          Editor.Current_File := File_Name;
-
-         if Set_Current then
-            Editor.Debugger_Current_File := File_Name;
-         end if;
 
          if File_Name /= VFS.No_File then
             Open_File_Editor
@@ -266,7 +226,6 @@ package body GVD.Text_Box.Source_Editor.GPS is
    procedure Set_Line
      (Editor      : access GEdit_Record;
       Line        : Natural;
-      Set_Current : Boolean := True;
       Process     : Glib.Object.GObject)
    is
       Kernel  : constant Kernel_Handle := GPS_Window (Editor.Window).Kernel;
@@ -277,9 +236,7 @@ package body GVD.Text_Box.Source_Editor.GPS is
         Get_Current_Source_File (Tab);
 
    begin
-      if Set_Current
-        and then Prev_Current_Line /= 0
-      then
+      if Prev_Current_Line /= 0 then
          Add_Line_Information
            (Kernel,
             Prev_File,
@@ -305,22 +262,19 @@ package body GVD.Text_Box.Source_Editor.GPS is
          New_File => False,
          Focus    => False);
       Append (Editor.Highlighted_Files,
-              Full_Name (Editor.Debugger_Current_File).all);
+              Full_Name (Editor.Current_File).all);
 
-      if Set_Current then
-         Add_Line_Information
-           (Kernel,
-            Editor.Current_File,
-            "Current Line",
-            --  ??? we should get that from elsewhere.
-            new Line_Information_Array'
-              (Line => Line_Information_Record'
-                (Text  => null,
-                 Image => Current_Line_Pixbuf,
-                 Associated_Command => null)));
-
-         Set_Current_Source_Location (Tab, Editor.Current_File, Line);
-      end if;
+      Add_Line_Information
+        (Kernel,
+         Editor.Current_File,
+         "Current Line",
+         --  ??? we should get that from elsewhere.
+         new Line_Information_Array'
+           (Line => Line_Information_Record'
+              (Text  => null,
+               Image => Current_Line_Pixbuf,
+               Associated_Command => null)));
+      Set_Current_Source_Location (Tab, Editor.Current_File, Line);
    end Set_Line;
 
    ------------------

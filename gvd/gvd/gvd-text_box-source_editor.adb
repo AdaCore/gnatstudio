@@ -47,16 +47,6 @@ package body GVD.Text_Box.Source_Editor is
       return Editor.Current_File;
    end Get_Current_File;
 
-   -------------------------------
-   -- Get_Debugger_Current_File --
-   -------------------------------
-
-   function Get_Debugger_Current_File
-     (Editor : access Source_Editor_Record) return VFS.Virtual_File is
-   begin
-      return Editor.Debugger_Current_File;
-   end Get_Debugger_Current_File;
-
    ----------------
    -- Get_Widget --
    ----------------

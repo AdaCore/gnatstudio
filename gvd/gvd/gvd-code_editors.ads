@@ -73,23 +73,16 @@ package GVD.Code_Editors is
 
    procedure Load_File
      (Editor      : access Code_Editor_Record;
-      File_Name   : VFS.Virtual_File;
-      Set_Current : Boolean := True;
-      Force       : Boolean := False);
+      File_Name   : VFS.Virtual_File);
    --  Load and append a file in the editor.
-   --  If Set_Current is True, then File_Name becomes the current file for the
+   --  File_Name becomes the current file for the
    --  debugger (ie the one that contains the current execution line).
-   --  If the file is already displayed, nothing is done unless Force is True.
 
    procedure Set_Line
-     (Editor      : access Code_Editor_Record;
-      Line        : Natural;
-      Set_Current : Boolean := True;
-      Process     : Glib.Object.GObject);
+     (Editor  : access Code_Editor_Record;
+      Line    : Natural;
+      Process : Glib.Object.GObject);
    --  Set the current line (and draw the button on the side).
-   --  If Set_Current is True, then the line becomes the current line (ie the
-   --  one on which the debugger is stopped). Otherwise, Line is simply the
-   --  line that we want to display in the editor.
    --  Process is the Visual_Debugger which corresponds to the debugger
    --  that is stopped.
 
@@ -126,13 +119,15 @@ package GVD.Code_Editors is
    function Get_Line (Editor : access Code_Editor_Record) return Natural;
    --  Return the current line.
 
-   procedure Set_Mode (Editor : access Code_Editor_Record;
-                       Mode   : GVD.Text_Box.Source_Editor.View_Mode);
+   type View_Mode is (Source, Asm, Source_Asm);
+   --  Describe what kind of source is displayed by the code editor.
+
+   procedure Set_Mode
+     (Editor : access Code_Editor_Record;
+      Mode   : View_Mode);
    --  Set the current view mode of Editor.
 
-   function Get_Mode
-     (Editor : access Code_Editor_Record)
-      return GVD.Text_Box.Source_Editor.View_Mode;
+   function Get_Mode (Editor : access Code_Editor_Record) return View_Mode;
    --  Return the current view mode of Editor.
 
    function Get_Process
@@ -188,14 +183,13 @@ private
       Asm              : GVD.Text_Box.Asm_Editor.Asm_Editor;
       Source_Asm_Pane  : Gtk.Paned.Gtk_Paned;
 
-      Mode             : GVD.Text_Box.Source_Editor.View_Mode :=
-        GVD.Text_Box.Source_Editor.Source;
+      Mode             : View_Mode := GVD.Code_Editors.Source;
 
       Source_Line      : Natural;
       Asm_Address      : Basic_Types.String_Access;
 
       Process          : Glib.Object.GObject;
-      --  The process tab in which the editor is found.
+      --  The visual debugger associated with the editor
    end record;
 
 end GVD.Code_Editors;
