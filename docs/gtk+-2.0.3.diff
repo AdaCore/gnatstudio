@@ -46,3 +46,30 @@
       STATIC_LIB_DEPS="$STATIC_LIB_DEPS $LIBPNG"
     fi
   else
+*** modules/input/Makefile.in.old	Thu May 23 23:38:10 2002
+--- modules/input/Makefile.in	Wed Jun 12 18:25:59 2002
+***************
+*** 782,792 ****
+  install-data-local:
+  	if [ -z "$(DESTDIR)" ] ; then \
+  	  $(mkinstalldirs) $(DESTDIR)$(sysconfdir)/gtk-2.0 ; \
+! 	  $(top_builddir)/gtk/gtk-query-immodules-2.0 > $(DESTDIR)$(sysconfdir)/gtk-2.0/gtk.immodules ; \
+          fi
+  
+  gtk.immodules: Makefile.am $(module_LTLIBRARIES)
+! 	$(top_builddir)/gtk/gtk-query-immodules-2.0 *.la > gtk.immodules
+  
+  all-local: gtk.immodules
+  
+--- 782,792 ----
+  install-data-local:
+  	if [ -z "$(DESTDIR)" ] ; then \
+  	  $(mkinstalldirs) $(DESTDIR)$(sysconfdir)/gtk-2.0 ; \
+! 	  touch $(DESTDIR)$(sysconfdir)/gtk-2.0/gtk.immodules ; \
+          fi
+  
+  gtk.immodules: Makefile.am $(module_LTLIBRARIES)
+! 	touch $(DESTDIR)$(sysconfdir)/gtk-2.0/gtk.immodules ; \
+  
+  all-local: gtk.immodules
+  
