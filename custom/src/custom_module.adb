@@ -401,7 +401,10 @@ package body Custom_Module is
             Child := Child.Next;
          end loop;
 
-         Create (Command, Kernel_Handle (Kernel), Node.Child,
+         Create (Command,
+                 Name           => Name,
+                 Kernel         => Kernel_Handle (Kernel),
+                 Command        => Node.Child,
                  Default_Output => Get_Attribute
                    (Node, "output", Console_Output),
                  Show_Command => To_Lower
