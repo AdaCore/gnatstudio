@@ -46,22 +46,20 @@ package body Debugger.Gdb.C is
       return "";
    end Break_Exception;
 
-   ----------------
-   -- Parse_Type --
-   ----------------
+   -----------------------------
+   -- C_Detect_Composite_Type --
+   -----------------------------
 
-   procedure Parse_Type
-     (Lang     : access Gdb_C_Language;
+   procedure C_Detect_Composite_Type
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Generic_Type_Access)
+      Result   : out Items.Generic_Type_Access)
    is
       Tmp  : Natural := Index;
-      Save : Natural;
+      Save : Natural := Index;
       Last : Natural := Type_Str'Last;
-      Context : constant Language_Debugger_Context :=
-        Get_Language_Debugger_Context (Lang);
 
    begin
       --  First: Skip the type itself, to check whether we have in fact an
@@ -73,29 +71,11 @@ package body Debugger.Gdb.C is
       --     struct foo a;
       --     struct foo *a;  --  need to see the access type!
       --  Thus we have to skip even several words
-      --
-      --  For unions and structs, we skip on the last word of the type
-      --  declaration, ie after the closing bracket if there is any, or
-      --  after the type name.
-
-      if Looking_At (Type_Str, Index, "struct ")
-        or else Looking_At (Type_Str, Index, "union ")
-      then
-         Skip_Word (Type_Str, Index);
-         Index := Index + 1;
-         Skip_Word (Type_Str, Index);
-         Index := Index + 1;
-         if Type_Str (Index) = Context.Record_Start then
-            Skip_To_Char (Type_Str, Index, Context.Record_End);
-            Index := Index + 1;
-         end if;
-      end if;
 
       --  Skip to the right-most access or array definition
       --  For instance, when looking at 'int* [4]' we should detect an array
       --  type, not an access type.
 
-      Save := Index;
       while Index <= Last loop
          --  Access type ?
          if Type_Str (Index) = '*' then
@@ -111,6 +91,22 @@ package body Debugger.Gdb.C is
             end if;
             Skip_To_Char (Type_Str, Index, ']');
             Index := Index + 1;
+
+         --  Begin of union or struct => skip to the end
+         elsif Type_Str (Index) = '{' then
+            declare
+               Num : Natural := 1;
+            begin
+               Index := Index + 1;
+               while Num /= 0 loop
+                  if Type_Str (Index) = '}' then
+                     Num := Num - 1;
+                  elsif Type_Str (Index) = '{' then
+                     Num := Num + 1;
+                  end if;
+                  Index := Index + 1;
+               end loop;
+            end;
 
          --  Access to subprogram
          elsif Type_Str (Index) = '(' then
@@ -164,20 +160,43 @@ package body Debugger.Gdb.C is
            (Result,
             Unknown_Type_Prefix & Entity & ASCII.LF
             & Type_Str (Type_Str'First .. Index - 1));
-         return;
-      end if;
 
       --  An array type ?
 
-      if Index < Type_Str'Last and then Type_Str (Index) = '[' then
+      elsif Index < Type_Str'Last and then Type_Str (Index) = '[' then
          Parse_Array_Type (Lang, Type_Str, Entity, Tmp, Index, Result);
          Index := Tmp;
+
+      else
+         Result := null;
+         Index := Tmp;
+      end if;
+   end C_Detect_Composite_Type;
+
+   ------------------
+   -- C_Parse_Type --
+   ------------------
+
+   procedure C_Parse_Type
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Items.Generic_Type_Access)
+   is
+      Context : constant Language_Debugger_Context :=
+        Get_Language_Debugger_Context (Lang);
+      Tmp     : Natural := Index;
+
+   begin
+      C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
+
+      --  Do we have an access or array type ?
+      if Result /= null then
          return;
       end if;
 
       --  Else a simple type
-
-      Index := Tmp;
 
       case Type_Str (Index) is
          when 'e' =>
@@ -266,19 +285,44 @@ package body Debugger.Gdb.C is
       end if;
 
       --  Else ask for more information
+      --  This is needed when Type_Str didn't start with a known keyword,
+      --  like "__time_t" for instance
+      --  ??? It is also called when Type_Str is "int " or "long int", when
+      --  debugging parse_c. This could probably be optimized somewhat
 
       Index := Tmp;
       Skip_Word (Type_Str, Index);
+      Skip_Blanks (Type_Str, Index);
 
       declare
-         T : constant String :=
-           Type_Of (Get_Debugger (Lang), Type_Str (Tmp .. Index - 1));
+         Ent : constant String := Type_Str (Tmp .. Index - 1);
+         T : constant String := Type_Of (Get_Debugger (Lang), Ent);
          J : Natural := T'First;
       begin
-         Parse_Type
-           (Lang, T, Type_Str (Tmp .. Index - 1), J, Result);
+         --  In some cases, T might have a null length (for instance if we
+         --  had a C++ class, since Ent="class" and T="" in that case).
+         if T'Length /= 0 then
+            Parse_Type (Lang, T, Ent, J, Result);
+         else
+            Result := null;
+         end if;
          Index := Type_Str'Last;
       end;
+   end C_Parse_Type;
+
+   ----------------
+   -- Parse_Type --
+   ----------------
+
+   procedure Parse_Type
+     (Lang     : access Gdb_C_Language;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Generic_Type_Access)
+   is
+   begin
+      C_Parse_Type (Lang, Type_Str, Entity, Index, Result);
    end Parse_Type;
 
    -----------------
@@ -296,17 +340,17 @@ package body Debugger.Gdb.C is
         (Lang, Type_Str, Index, Result, Repeat_Num, Parent => null);
    end Parse_Value;
 
-   ----------------------
-   -- Parse_Array_Type --
-   ----------------------
+   ------------------------
+   -- C_Parse_Array_Type --
+   ------------------------
 
-   procedure Parse_Array_Type
-     (Lang      : access Gdb_C_Language;
-      Type_Str  : String;
-      Entity    : String;
-      Index     : in out Natural;
+   procedure C_Parse_Array_Type
+     (Lang         : access Language.Debugger.Language_Debugger'Class;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Generic_Type_Access)
+      Result       : out Items.Generic_Type_Access)
    is
       Num_Dim   : Integer := 0;
       Initial   : Natural := Index;
@@ -357,19 +401,113 @@ package body Debugger.Gdb.C is
          Initial,
          Item_Type);
       Set_Item_Type (R.all, Item_Type);
-   end Parse_Array_Type;
+   end C_Parse_Array_Type;
 
-   -----------------------
-   -- Parse_Record_Type --
-   -----------------------
+   ----------------------
+   -- Parse_Array_Type --
+   ----------------------
 
-   procedure Parse_Record_Type
+   procedure Parse_Array_Type
      (Lang      : access Gdb_C_Language;
       Type_Str  : String;
       Entity    : String;
       Index     : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result    : out Generic_Type_Access)
+   is
+   begin
+      C_Parse_Array_Type (Lang, Type_Str, Entity, Index, Start_Of_Dim, Result);
+   end Parse_Array_Type;
+
+   ------------------
+   -- C_Field_Name --
+   ------------------
+
+   procedure C_Field_Name
+     (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Entity     : String;
+      Type_Str   : String;
+      Index      : Natural;
+      Name_Start : out Natural;
+      Name_End   : out Natural;
+      Field_End  : out Natural;
+      Result     : out Items.Generic_Type_Access)
+   is
+      Tmp : Natural := Index;
+
+   begin
+      --  Get the field name (last word before ;)
+      --  There is a small exception here for access-to-subprograms fields,
+      --  which look like "void (*field1[2])();"
+      --  gdb seems to ignore all the parameters to the function, so
+      --  we take the simplest way and consider there is always '()' for
+      --  the parameter list.
+
+      Skip_To_Char (Type_Str, Tmp, ';');
+      Field_End := Tmp;
+      Tmp := Tmp - 1;
+
+      if Type_Str (Tmp) = ')' then
+         Tmp := Tmp - 2;
+         Skip_To_Char (Type_Str, Tmp, '(', Step => -1);
+         Tmp := Tmp + 1;
+         Name_End := Tmp + 2;
+         Skip_Word (Type_Str, Name_End);
+         Name_End := Name_End - 1;
+
+      else
+         Name_End := Field_End - 1;
+
+         --  Skip array definition as in
+         --  "  GdkColor fg[5];"
+
+         while Type_Str (Tmp) = ']' loop
+            Skip_To_Char (Type_Str, Tmp, '[', Step => -1);
+            Tmp := Tmp - 1;
+            Name_End := Tmp;
+         end loop;
+
+         --  The size of the field can optionally be indicated between the
+         --  name and the semicolon, as in "__time_t tv_sec : 32;".
+         --  We simply ignore the size.
+
+         Skip_Word (Type_Str, Tmp, Step => -1);
+         if Type_Str (Tmp - 1) = ':' then
+            Tmp := Tmp - 3;
+            Name_End := Tmp;
+            Skip_Word (Type_Str, Tmp, Step => -1);
+         end if;
+      end if;
+      Name_Start := Tmp + 1;
+
+      --  Avoid some calls to ptype if possible. Note that we have to get
+      --  rid of the field's name before calling Is_Simple_Type, since
+      --  otherwise "int a" is not recognized as a simple type.
+
+      if Is_Simple_Type (Lang, Type_Str (Index .. Name_Start - 2)) then
+         Result := New_Simple_Type;
+         Set_Type_Name (Result, Type_Str (Index .. Field_End - 1));
+      else
+         Tmp := Index;
+         Parse_Type
+           (Lang, Type_Str (Index .. Field_End - 1),
+            Record_Field_Name
+            (Lang, Entity, Type_Str (Name_Start .. Name_End)),
+            Tmp, Result);
+      end if;
+   end C_Field_Name;
+
+   -------------------------
+   -- C_Parse_Record_Type --
+   -------------------------
+
+   procedure C_Parse_Record_Type
+     (Lang      : access Language.Debugger.Language_Debugger'Class;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
       Is_Union  : Boolean;
-      Result    : out Generic_Type_Access;
+      Result    : out Items.Generic_Type_Access;
       End_On    : String)
    is
       Num_Fields : Natural := 0;
@@ -377,9 +515,8 @@ package body Debugger.Gdb.C is
       Initial    : constant Natural := Index;
       R          : Record_Type_Access;
       Field_Value : Generic_Type_Access;
-      Tmp,
-      Save,
-      End_Of_Name : Natural;
+      Tmp         : Natural;
+      End_Of_Name, Save : Natural;
 
    begin
       --  Count the number of fields
@@ -410,74 +547,33 @@ package body Debugger.Gdb.C is
 
       while Field <= Num_Fields loop
          Skip_Blanks (Type_Str, Index);
-
-         --  Get the field name (last word before ;)
-         --  There is a small exception here for access-to-subprograms fields,
-         --  which look like "void (*field1[2])();"
-         --  gdb seems to ignore all the parameters to the function, so
-         --  we take the simplest way and consider there is always '()' for
-         --  the parameter list.
-
-         Tmp := Index;
-         Skip_To_Char (Type_Str, Index, ';');
-         Save := Index;
-         Index := Index - 1;
-
-         if Type_Str (Index) = ')' then
-            Index := Index - 2;
-            Skip_To_Char (Type_Str, Index, '(', Step => -1);
-            Index := Index + 1;
-            End_Of_Name := Index + 2;
-            Skip_Word (Type_Str, End_Of_Name);
-
-         else
-            End_Of_Name := Save;
-
-            --  Skip array definition as in
-            --  "  GdkColor fg[5];"
-
-            while Type_Str (Index) = ']' loop
-               Skip_To_Char (Type_Str, Index, '[', Step => -1);
-               Index := Index - 1;
-               End_Of_Name := Index + 1;
-            end loop;
-
-            --  The size of the field can optionally be indicated between the
-            --  name and the semicolon, as in "__time_t tv_sec : 32;".
-            --  We simply ignore the size.
-
-            Skip_Word (Type_Str, Index, Step => -1);
-            if Type_Str (Index - 1) = ':' then
-               Index := Index - 3;
-               End_Of_Name := Index + 1;
-               Skip_Word (Type_Str, Index, Step => -1);
-            end if;
-         end if;
-
-         --  Create the field now that we have all the information.
-         Set_Field_Name (R.all, Field, Type_Str (Index + 1 .. End_Of_Name - 1),
-                         Variant_Parts => 0);
-
-         --  Avoid some calls to ptype if possible. Note that we have to get
-         --  rid of the field's name before calling Is_Simple_Type, since
-         --  otherwise "int a" is not recognized as a simple type.
-
-         if Is_Simple_Type (Lang, Type_Str (Tmp .. Index - 1)) then
-            Field_Value := New_Simple_Type;
-            Set_Type_Name (Field_Value, Type_Str (Tmp .. Save - 1));
-         else
-            Parse_Type
-              (Lang, Type_Str (Tmp .. Save - 1),
-               Record_Field_Name
-               (Lang, Entity, Type_Str (Index + 1 .. End_Of_Name - 1)),
-               Tmp,
-               Field_Value);
-         end if;
-
+         C_Field_Name
+           (Lang, Entity,
+            Type_Str, Index, Tmp, End_Of_Name, Save, Field_Value);
+         Set_Field_Name
+           (R.all, Field, Type_Str (Tmp .. End_Of_Name), Variant_Parts => 0);
          Set_Value (R.all, Field_Value, Field);
          Index := Save + 1;
          Field := Field + 1;
       end loop;
+   end C_Parse_Record_Type;
+
+   -----------------------
+   -- Parse_Record_Type --
+   -----------------------
+
+   procedure Parse_Record_Type
+     (Lang      : access Gdb_C_Language;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Generic_Type_Access;
+      End_On    : String)
+   is
+   begin
+      C_Parse_Record_Type
+        (Lang, Type_Str, Entity, Index, Is_Union, Result, End_On);
    end Parse_Record_Type;
 
    -----------------------

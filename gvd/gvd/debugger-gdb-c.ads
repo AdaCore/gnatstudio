@@ -95,6 +95,63 @@ package Debugger.Gdb.C is
      (Lang : access Gdb_C_Language)
       return Language.Debugger.Language_Debugger_Context;
 
+   procedure C_Field_Name
+     (Lang       : access Language.Debugger.Language_Debugger'Class;
+      Entity     : String;
+      Type_Str   : String;
+      Index      : Natural;
+      Name_Start : out Natural;
+      Name_End   : out Natural;
+      Field_End  : out Natural;
+      Result     : out Items.Generic_Type_Access);
+   --  Parse the field of a struct or union in C.
+   --  Index should point at the first word of the field.
+   --  The name of the field is at indexes Name_Start .. Name_End.
+   --  Field_End is set to point to the closing semicolon (';').
+   --  This also parses the field itself and return it in Result.
+
+   procedure C_Parse_Type
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Items.Generic_Type_Access);
+   --  Generic function to parse the type information for C-related
+   --  languages.
+
+   procedure C_Detect_Composite_Type
+     (Lang     : access Language.Debugger.Language_Debugger'Class;
+      Type_Str : String;
+      Entity   : String;
+      Index    : in out Natural;
+      Result   : out Items.Generic_Type_Access);
+   --  Return a non null value in Result if the type definition pointed to
+   --  by Index is in fact an array or access type (this is tricky in C since
+   --  we have to skip the whole struct definition to check this, or even to
+   --  handle pointers to functions). In that case, Index is left after the
+   --  type definition.
+   --  null is returned if we have neither an access type nor an array. In that
+   --  case, Index is left at the beginning of the type definition.
+
+   procedure C_Parse_Array_Type
+     (Lang         : access Language.Debugger.Language_Debugger'Class;
+      Type_Str     : String;
+      Entity       : String;
+      Index        : in out Natural;
+      Start_Of_Dim : in Natural;
+      Result       : out Items.Generic_Type_Access);
+   --  Generic function to parse arrays for C-related languages.
+
+   procedure C_Parse_Record_Type
+     (Lang      : access Language.Debugger.Language_Debugger'Class;
+      Type_Str  : String;
+      Entity    : String;
+      Index     : in out Natural;
+      Is_Union  : Boolean;
+      Result    : out Items.Generic_Type_Access;
+      End_On    : String);
+   --  Generic function to parse records for C-related languages.
+
 private
 
    type Gdb_C_Language is new
