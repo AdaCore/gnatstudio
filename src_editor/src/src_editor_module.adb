@@ -688,9 +688,9 @@ package body Src_Editor_Module is
    function Location_Callback (D : Location_Idle_Data) return Boolean is
    begin
       if Is_Valid_Location (D.Edit, D.Line, D.Column) then
-         Set_Cursor_Location (D.Edit, D.Line, D.Column);
+         Set_Cursor_Location (D.Edit, D.Line, D.Column, Force_Focus => False);
       elsif Is_Valid_Location (D.Edit, D.Line) then
-         Set_Cursor_Location (D.Edit, D.Line);
+         Set_Cursor_Location (D.Edit, D.Line, Force_Focus => False);
       end if;
 
       return False;
@@ -1233,6 +1233,8 @@ package body Src_Editor_Module is
                --  this in an idle callback ensures that all the proper
                --  events and initializations have taken place before we try
                --  to scroll the editor.
+
+               Grab_Focus (Edit);
 
                Id := Location_Idle.Add
                  (Location_Callback'Access,
