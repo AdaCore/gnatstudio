@@ -229,14 +229,13 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
-      Current_Dir      : String;
       Directory_String : String_Id;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node;
    --  Add a new directory node in the tree, for Directory.
-   --  Current_Dir is used to resolve Directory to an absolute directory if
-   --  required.  Directory_String should be specified for source directories
-   --  only, and is not required for object directories.
+   --  Directory is expected to be an absolute path name.
+   --  Directory_String should be specified for source directories only, and is
+   --  not required for object directories.
 
    function Add_File_Node
      (Explorer    : access Project_Explorer_Record'Class;
@@ -1772,13 +1771,13 @@ package body Project_Explorers is
    function Has_Entries
      (Directory : String; Files : String_Array_Access) return Boolean
    is
-      Dir : constant String := Name_As_Directory (Directory);
+      --  Dir : constant String := Normalize_Pathname (Directory);
    begin
       if Files /= null then
          --  We check in the project itself whether there are some files in the
          --  directory.
          for F in Files'Range loop
-            if Dir_Name (Files (F).all) = Dir then
+            if Dir_Name (Files (F).all) = Directory then
                return True;
             end if;
          end loop;
@@ -1795,7 +1794,6 @@ package body Project_Explorers is
      (Explorer         : access Project_Explorer_Record'Class;
       Directory        : String;
       Parent_Node      : Gtk_Ctree_Node := null;
-      Current_Dir      : String;
       Directory_String : String_Id;
       Files_In_Project : String_Array_Access;
       Object_Directory : Boolean := False) return Gtk_Ctree_Node
@@ -1803,8 +1801,8 @@ package body Project_Explorers is
       N         : Gtk_Ctree_Node;
       Is_Leaf   : Boolean;
       Node_Type : Node_Types := Directory_Node;
-      Node_Text : String_Access;
       Text      : Tree_Chars_Ptr_Array;
+      Node_Text : String_Access;
 
    begin
       pragma Assert (Object_Directory or else Directory_String /= No_String);
@@ -1815,17 +1813,16 @@ package body Project_Explorers is
 
       --  Compute the absolute directory
 
-      if not Is_Absolute_Path (Directory)
-        and then Get_Pref (Explorer.Kernel, Absolute_Directories)
-      then
+      if Get_Pref (Explorer.Kernel, Normalized_Directories) then
          Node_Text := new String'
-           (Normalize_Pathname (Current_Dir & Directory));
+           (Name_As_Directory (Normalize_Pathname (Directory)));
       else
-         Node_Text := new String' (Normalize_Pathname (Directory));
+         Node_Text := new String' (Name_As_Directory (Directory));
       end if;
 
       Is_Leaf := Node_Type = Obj_Directory_Node
-        or else not Has_Entries (Node_Text.all, Files_In_Project);
+        or else not Has_Entries
+          (Name_As_Directory (Directory), Files_In_Project);
 
       Text := Create_Line_Text (Node_Text.all);
       N := Insert_Node
@@ -2015,9 +2012,8 @@ package body Project_Explorers is
         Get_Project_View_From_Name (Data.Name);
       N           : Gtk_Ctree_Node := null;
       Dir         : String_List_Id;
-      Current_Dir : constant String := String (Get_Current_Dir);
       Files       : String_Array_Access := Get_Source_Files
-        (Project, Recursive => False, Full_Path => True);
+        (Project, Recursive => False, Full_Path => True, Normalized => False);
 
    begin
       Push_State (Explorer.Kernel, Busy);
@@ -2049,7 +2045,6 @@ package body Project_Explorers is
               (Explorer         => Explorer,
                Directory        => Name_Buffer (1 .. Name_Len),
                Parent_Node      => Node,
-               Current_Dir      => Current_Dir,
                Files_In_Project => Files,
                Directory_String => String_Elements.Table (Dir).Value);
             Dir := String_Elements.Table (Dir).Next;
@@ -2066,7 +2061,6 @@ package body Project_Explorers is
             Directory        =>
               Get_Name_String (Projects.Table (Project).Object_Directory),
             Parent_Node      => Node,
-            Current_Dir      => Current_Dir,
             Directory_String => End_String,
             Files_In_Project => null,
             Object_Directory => True);
@@ -2440,7 +2434,6 @@ package body Project_Explorers is
 
       Index : Natural;
       N, N2, Tmp : Gtk_Ctree_Node;
-      Current_Dir : constant String := String (Get_Current_Dir);
       Project : constant Project_Id := Get_Project_From_Node (Explorer, Node);
       Sources : String_Id_Array := Source_Dirs (Project);
       Imported : Project_Id_Array := Imported_Projects (Project);
@@ -2494,7 +2487,6 @@ package body Project_Explorers is
                      Directory   => Get_Name_String
                      (Projects.Table (Prj).Object_Directory),
                      Parent_Node => Node,
-                     Current_Dir => Current_Dir,
                      Directory_String => Obj,
                      Files_In_Project => null,
                      Object_Directory => True);
@@ -2555,7 +2547,6 @@ package body Project_Explorers is
               (Explorer         => Explorer,
                Directory        => Name_Buffer (1 .. Name_Len),
                Parent_Node      => Node,
-               Current_Dir      => Current_Dir,
                Directory_String => Sources (J),
                Files_In_Project => Files,
                Object_Directory => False);
@@ -2648,7 +2639,7 @@ package body Project_Explorers is
    begin
       if Files = null then
          Files := Get_Source_Files
-           (Prj, Recursive => False, Full_Path => True);
+           (Prj, Recursive => False, Full_Path => True, Normalized => False);
       end if;
 
       --  If the information about the node hasn't been computed before,
