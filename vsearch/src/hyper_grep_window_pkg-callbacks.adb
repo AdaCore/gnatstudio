@@ -47,11 +47,13 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    procedure On_Browse_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      S : constant String := File_Selection_Dialog
-                               ("Select a directory",
-                                "." & GNAT.Os_Lib.Directory_Separator,
-                                Dir_Only   => True,
-                                Must_Exist => True);
+      S : constant String :=
+        File_Selection_Dialog
+         ("Select a directory",
+          "." & GNAT.Os_Lib.Directory_Separator,
+          Dir_Only   => True,
+          Must_Exist => True);
+
    begin
       if S /= "" then
          Set_Text (Hyper_Grep_Window.Directory_Entry, S);
@@ -76,7 +78,7 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    procedure On_Start_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
-      S : Code_Search;
+      S  : Code_Search;
       RE : Regexp;
 
       use Gtk.Editable;
@@ -112,11 +114,8 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
       end if;
 
       Abort_Search (False);
-
       Do_Search (S, Callback'Access);
-
       Put_Line ("====== End of search");
-
       Free (S);
 
    exception
