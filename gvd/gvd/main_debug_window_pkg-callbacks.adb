@@ -893,6 +893,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
         Main_Debug_Window_Access (Object);
    begin
       Show_All (Top.Memory_View);
+      Gdk_Raise (Get_Window (Top.Memory_View));
    end On_Examine_Memory1_Activate;
 
    ------------------------------------------
