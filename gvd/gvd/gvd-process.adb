@@ -88,10 +88,6 @@ with Language_Handlers;          use Language_Handlers;
 
 package body GVD.Process is
 
-   Enable_Block_Search    : constant Boolean := False;
-   --  Whether we should try to find the block of a variable when printing
-   --  it, and memorize it with the item.
-
    Process_User_Data_Name : constant String := "gvd_editor_to_process";
    --  User data string.
    --  ??? Should use some quarks, which would be just a little bit faster.
@@ -1827,29 +1823,12 @@ package body GVD.Process is
             --  If we don't want any link:
 
             if Dependent_On_First = Natural'Last then
-               if Enable_Block_Search then
-                  Gtk_New
-                    (Item,
-                     Variable_Name =>
-                       Variable_Name_With_Frame
-                         (Process.Debugger, Cmd (First .. Last)),
-                     Debugger      => Process,
-                     Auto_Refresh  =>
-                       Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
-               end if;
-
-               --  If we could not get the variable with the block, try
-               --  without, since some debuggers (gdb most notably) can have
-               --  more efficient algorithms to find the variable.
-
-               if Item = null then
-                  Gtk_New
-                    (Item,
-                     Variable_Name => Cmd (First .. Last),
-                     Debugger      => Process,
-                     Auto_Refresh  =>
-                       Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
-               end if;
+               Gtk_New
+                 (Item,
+                  Variable_Name => Cmd (First .. Last),
+                  Debugger      => Process,
+                  Auto_Refresh  =>
+                    Cmd (Matched (Graph_Cmd_Type_Paren).First) = 'd');
 
                if Item /= null then
                   Put (Process.Data_Canvas, Item);
@@ -1865,26 +1844,13 @@ package body GVD.Process is
                   Link_Name := new String' (Cmd (First .. Last));
                end if;
 
-               if Enable_Block_Search then
-                  Gtk_New
-                    (Item,
-                     Variable_Name => Variable_Name_With_Frame
-                     (Process.Debugger, Cmd (First .. Last)),
-                     Debugger      => Process,
-                     Auto_Refresh  => Enable,
-                     Link_From     => Link_From,
-                     Link_Name     => Link_Name.all);
-               end if;
-
-               if Item = null then
-                  Gtk_New
-                    (Item,
-                     Variable_Name => Cmd (First .. Last),
-                     Debugger      => Process,
-                     Auto_Refresh  => Enable,
-                     Link_From     => Link_From,
-                     Link_Name     => Link_Name.all);
-               end if;
+               Gtk_New
+                 (Item,
+                  Variable_Name => Cmd (First .. Last),
+                  Debugger      => Process,
+                  Auto_Refresh  => Enable,
+                  Link_From     => Link_From,
+                  Link_Name     => Link_Name.all);
 
                if Item /= null then
                   Show_Item (Process.Data_Canvas, Item);
