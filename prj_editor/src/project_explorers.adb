@@ -87,6 +87,8 @@ package body Project_Explorers is
 
    Show_Absolute_Paths : constant History_Key :=
      "explorer-show-absolute-paths";
+   Show_Flat_View : constant History_Key :=
+     "explorer-show-flat-view";
 
    Normalized_Directories : constant Boolean := True;
    --  <preference> True if directories should be fully normalized, eg links
@@ -180,6 +182,10 @@ package body Project_Explorers is
    ------------------
    -- Adding nodes --
    ------------------
+
+   procedure Add_Or_Update_Flat_View_Root_Node
+     (Explorer     : access Project_Explorer_Record'Class);
+   --  Add the root node for the flat view.
 
    function Add_Project_Node
      (Explorer     : access Project_Explorer_Record'Class;
@@ -289,6 +295,10 @@ package body Project_Explorers is
    --  Update the text for all directory nodes in the tree, mostly after the
    --  "show absolute path" setting has changed.
 
+   procedure Update_Flat_View
+     (Explorer : access Gtk_Widget_Record'Class);
+   --  Update the tree when "show flat view" setting has changed.
+
    ----------------------------
    -- Retrieving information --
    ----------------------------
@@ -397,9 +407,14 @@ package body Project_Explorers is
    --  Parse all the LI information contained in the object directory of the
    --  current selection.
 
-   function Get_Imported_Projects (Project : Project_Type)
+   function Get_Imported_Projects
+     (Project         : Project_Type;
+      Direct_Only     : Boolean := True;
+      Include_Project : Boolean := False)
       return Project_Type_Array;
-   --  Return the list of imported projects as an array
+   --  Return the list of imported projects as an array.
+   --  If Include_Project is False, then Project itself will not be included in
+   --  the returned array
 
    ----------------------
    -- Set_Column_Types --
@@ -710,6 +725,15 @@ package body Project_Explorers is
            (Check, "toggled",
             Widget_Callback.To_Marshaller (Update_Absolute_Paths'Access),
             Slot_Object => T);
+
+         Gtk_New (Check, Label => -"Show flat view");
+         Associate
+           (Get_History (Kernel).all, Show_Flat_View, Check);
+         Append (Menu, Check);
+         Widget_Callback.Object_Connect
+           (Check, "toggled",
+            Widget_Callback.To_Marshaller (Update_Flat_View'Access),
+            Slot_Object => T);
       end if;
 
       if Node_Type = Obj_Directory_Node
@@ -895,6 +919,19 @@ package body Project_Explorers is
         (Get_Iter_First (Exp.Tree.Model), Get_Project (Exp.Kernel));
    end Update_Absolute_Paths;
 
+   ----------------------
+   -- Update_Flat_View --
+   ----------------------
+
+   procedure Update_Flat_View
+     (Explorer : access Gtk_Widget_Record'Class)
+   is
+      Tree : constant Project_Explorer := Project_Explorer (Explorer);
+   begin
+      Clear (Tree.Tree.Model);
+      Refresh (Explorer);
+   end Update_Flat_View;
+
    ------------------------
    -- Add_Directory_Node --
    ------------------------
@@ -988,29 +1025,34 @@ package body Project_Explorers is
       --  Add the source directories to the project
 
       procedure Add_Projects is
-         Iter : Imported_Project_Iterator :=
-           Start (Project, Recursive => True, Direct_Only => True);
+         Iter : Imported_Project_Iterator;
          P    : Project_Type;
          N    : Gtk_Tree_Iter;
          pragma Unreferenced (N);
       begin
-         --  The modified project, if any, is always first
+         if not Get_History
+           (Get_History (Explorer.Kernel).all, Show_Flat_View)
+         then
+            Iter := Start (Project, Recursive => True, Direct_Only => True);
+            --  The modified project, if any, is always first
 
-         if Parent_Project (Project) /= No_Project then
-            N := Add_Project_Node (Explorer, Parent_Project (Project), Node);
-         end if;
-
-         --  Imported projects
-
-         loop
-            P := Current (Iter);
-            exit when P = No_Project;
-
-            if P /= Project and then Parent_Project (Project) /= P then
-               N := Add_Project_Node (Explorer, P, Node);
+            if Parent_Project (Project) /= No_Project then
+               N := Add_Project_Node
+                 (Explorer, Parent_Project (Project), Node);
             end if;
-            Next (Iter);
-         end loop;
+
+            --  Imported projects
+
+            loop
+               P := Current (Iter);
+               exit when P = No_Project;
+
+               if P /= Project and then Parent_Project (Project) /= P then
+                  N := Add_Project_Node (Explorer, P, Node);
+               end if;
+               Next (Iter);
+            end loop;
+         end if;
       end Add_Projects;
 
       procedure Add_Source_Directories is
@@ -1339,12 +1381,15 @@ package body Project_Explorers is
    -- Get_Imported_Projects --
    ---------------------------
 
-   function Get_Imported_Projects (Project : Project_Type)
+   function Get_Imported_Projects
+     (Project         : Project_Type;
+      Direct_Only     : Boolean := True;
+      Include_Project : Boolean := False)
       return Project_Type_Array
    is
       Count : Natural := 0;
       Iter  : Imported_Project_Iterator := Start
-        (Project, Recursive => True, Direct_Only => True);
+        (Project, Recursive => True, Direct_Only => Direct_Only);
    begin
       while Current (Iter) /= No_Project loop
          Count := Count + 1;
@@ -1355,13 +1400,14 @@ package body Project_Explorers is
          Imported : Project_Type_Array (1 .. Count);
          Index    : Natural := Imported'First;
       begin
-         Iter := Start (Project, Recursive => True, Direct_Only => True);
+         Iter := Start
+           (Project, Recursive => True, Direct_Only => Direct_Only);
          while Current (Iter) /= No_Project loop
             --  In some cases, we get the project itself in the list of its
             --  dependencies (???). For instance, doing a search in the
             --  explorer if we didn't have this test would duplicate the
             --  project node.
-            if Current (Iter) /= Project then
+            if Include_Project or else Current (Iter) /= Project then
                Imported (Index) := Current (Iter);
                Index := Index + 1;
             end if;
@@ -1465,12 +1511,16 @@ package body Project_Explorers is
          N : Gtk_Tree_Iter;
          pragma Unreferenced (N);
       begin
-         for P in Imported'Range loop
-            if Imported (P) /= No_Project then
-               N := Add_Project_Node
-                 (Explorer, Project => Imported (P), Parent_Node => Node);
-            end if;
-         end loop;
+         if not Get_History
+           (Get_History (Explorer.Kernel).all, Show_Flat_View)
+         then
+            for P in Imported'Range loop
+               if Imported (P) /= No_Project then
+                  N := Add_Project_Node
+                    (Explorer, Project => Imported (P), Parent_Node => Node);
+               end if;
+            end loop;
+         end if;
       end Add_Projects;
 
       Index : Natural;
@@ -1756,6 +1806,55 @@ package body Project_Explorers is
       end if;
    end Update_Node;
 
+   ---------------------------------------
+   -- Add_Or_Update_Flat_View_Root_Node --
+   ---------------------------------------
+
+   procedure Add_Or_Update_Flat_View_Root_Node
+     (Explorer     : access Project_Explorer_Record'Class)
+   is
+      Iter2    : Gtk_Tree_Iter;
+      Imported : Project_Type_Array := Get_Imported_Projects
+        (Get_Project (Explorer.Kernel),
+         Direct_Only     => False,
+         Include_Project => True);
+      Name     : Name_Id;
+      Found    : Boolean;
+      Id       : Gint;
+      pragma Unreferenced (Id);
+   begin
+      Iter2 := Get_Iter_First (Explorer.Tree.Model);
+      while Iter2 /= Null_Iter loop
+         Name := Name_Id
+           (Get_Int (Explorer.Tree.Model, Iter2, Project_Column));
+         Found := False;
+
+         for Im in Imported'Range loop
+            if Imported (Im) /= No_Project
+              and then Project_Name (Imported (Im)) = Name
+            then
+               Imported (Im) := No_Project;
+               Found := True;
+            end if;
+         end loop;
+
+         if not Found then
+            Remove (Explorer.Tree.Model, Iter2);
+         end if;
+
+         Next (Explorer.Tree.Model, Iter2);
+      end loop;
+
+      for Im in Imported'Range loop
+         if Imported (Im) /= No_Project then
+            Iter2 := Add_Project_Node (Explorer, Imported (Im), Null_Iter);
+         end if;
+      end loop;
+
+      Thaw_Sort (Explorer.Tree.Model, Base_Name_Column);
+      Id := Freeze_Sort (Explorer.Tree.Model);
+   end Add_Or_Update_Flat_View_Root_Node;
+
    -------------
    -- Refresh --
    -------------
@@ -1776,10 +1875,15 @@ package body Project_Explorers is
          return;
       end if;
 
+      --  For a flat view
+
+      if Get_History (Get_History (T.Kernel).all, Show_Flat_View) then
+         Add_Or_Update_Flat_View_Root_Node (T);
+
       --  If the tree is empty, this simply means we never created it, so we
       --  need to do it now
 
-      if Get_Iter_First (T.Tree.Model) = Null_Iter then
+      elsif Get_Iter_First (T.Tree.Model) = Null_Iter then
          Iter := Add_Project_Node (T, Get_Project (T.Kernel));
          Path := Get_Path (T.Tree.Model, Iter);
          Dummy := Expand_Row (T.Tree, Path, False);
