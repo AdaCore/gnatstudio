@@ -41,7 +41,6 @@ with Process_Tab_Pkg;
 with Items;
 with Odd.Code_Editors;
 with Odd.Types;
-with Open_Program_Pkg; use Open_Program_Pkg;
 with Odd.Types;
 
 package Odd.Process is

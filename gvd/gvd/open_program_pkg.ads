@@ -28,7 +28,6 @@ with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Button; use Gtk.Button;
 with Gtk.Label; use Gtk.Label;
 with Gtk.Hbutton_Box; use Gtk.Hbutton_Box;
-with GNAT.OS_Lib; use GNAT.OS_Lib;
 with Odd.Types; use Odd.Types;
 
 package Open_Program_Pkg is
