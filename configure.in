@@ -1,5 +1,5 @@
 ADC_REVISION($Revision$)
-AC_INIT(common/src/sdefault.adb.in)
+AC_INIT(glide/src/gps.adb)
 
 AC_CANONICAL_SYSTEM
 
@@ -243,4 +243,4 @@ echo "--------- Summary --------------"
 echo "       python: $PYTHON_BASE"
 echo ""
 
-AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets common/src/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr)
+AC_OUTPUT(Makefile Makefile.common widgets/Makefile.widgets gnat/sdefault/sdefault.adb docs/Makefile po/Makefile gvd/Makefile.gvd_common gvd/gvd/gvd.ads python/Makefile.python python/python.gpr gtkada/gtkada.gpr)
