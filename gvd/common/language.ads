@@ -53,6 +53,11 @@ package Language is
    --  The entities found in a language, and that can have a different scheme
    --  for colors highlighting.
 
+   subtype Standout_Language_Entity is Language_Entity
+     range Keyword_Text .. String_Text;
+   --  All the entities that have a special significance. Used for syntax
+   --  highlighting for example.
+
    procedure Looking_At
      (Lang      : access Language_Root;
       Buffer    : String;
