@@ -8,7 +8,7 @@
   </action>
   <menu action="build-clean-root-project"
         after="Make">
-    <title>/Build/C_lean/_Current Project</title>
+    <title>/Build/C_lean/_Root Project</title>
   </menu>
   <action name="build-clean-all-root-project">
     <external>gnatclean -r "%PPs"</external>
@@ -22,7 +22,10 @@
   </menu>
 
   <action name="build-clean-subproject">
-    <external>gnatclean %PPs</external>
+    <external>gnatclean "%pps"</external>
+    <shell output="none">Console "Messages"</shell>
+    <shell output="none">MDI.get_by_child %1</shell>
+    <shell output="none">MDIWindow.raise_window %1</shell>
     <filter id="Explorer_Project_Node"/>
   </action>
 
