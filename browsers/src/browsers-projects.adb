@@ -188,6 +188,11 @@ package body Browsers.Projects is
      (Item : access Arrow_Item_Record'Class);
    --  Callbacks for the button in the title bar
 
+   procedure Add_Link_If_Not_Present
+     (Browser : access Project_Browser_Record'Class;
+      Src, Dest : Browser_Project_Vertex_Access);
+   --  Add a link between the two items
+
    ----------------
    -- Project_Of --
    ----------------
@@ -239,6 +244,32 @@ package body Browsers.Projects is
       return V;
    end Add_Project_If_Not_Present;
 
+   -----------------------------
+   -- Add_Link_If_Not_Present --
+   -----------------------------
+
+   procedure Add_Link_If_Not_Present
+     (Browser : access Project_Browser_Record'Class;
+      Src, Dest : Browser_Project_Vertex_Access)
+   is
+      L : Browser_Link;
+      P1, P2 : Project_Type;
+   begin
+      if not Has_Link (Get_Canvas (Browser), Src, Dest) then
+         L := new Browser_Link_Record;
+
+         P1 := Project_Of (Src);
+         P2 := Project_Of (Dest);
+
+         if Parent_Project (P1) = P2 then
+            Add_Link
+              (Get_Canvas (Browser), L, Src, Dest, Descr => -"extending");
+         else
+            Add_Link (Get_Canvas (Browser), L, Src, Dest);
+         end if;
+      end if;
+   end Add_Link_If_Not_Present;
+
    -------------
    -- Gtk_New --
    -------------
@@ -281,7 +312,6 @@ package body Browsers.Projects is
       procedure Process_Project
         (Local : Project_Type; Src : Browser_Project_Vertex_Access)
       is
-         L           : Browser_Link;
          Dest        : Browser_Project_Vertex_Access;
          Iter        : Imported_Project_Iterator;
       begin
@@ -298,11 +328,7 @@ package body Browsers.Projects is
 
          while Current (Iter) /= No_Project loop
             Dest := Add_Project_If_Not_Present (Browser, Current (Iter));
-
-            if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-               L := new Browser_Link_Record;
-               Add_Link (Get_Canvas (Browser), L, Src, Dest);
-            end if;
+            Add_Link_If_Not_Present (Browser, Src, Dest);
 
             --  ??? Could be more efficient if we could use Direct_Only =>
             --  False in the call to Start.
@@ -368,7 +394,6 @@ package body Browsers.Projects is
    is
       Kernel      : constant Kernel_Handle := Get_Kernel (Browser);
       Src, Dest   : Browser_Project_Vertex_Access;
-      L           : Browser_Link;
       Iter        : Imported_Project_Iterator;
    begin
       Trace (Me, "Examine_Ancestor_Project_Hierarchy for "
@@ -386,11 +411,7 @@ package body Browsers.Projects is
 
       while Current (Iter) /= No_Project loop
          Src := Add_Project_If_Not_Present (Browser, Current (Iter));
-
-         if not Has_Link (Get_Canvas (Browser), Src, Dest) then
-            L := new Browser_Link_Record;
-            Add_Link (Get_Canvas (Browser), L, Src, Dest);
-         end if;
+         Add_Link_If_Not_Present (Browser, Src, Dest);
 
          Next (Iter);
       end loop;
