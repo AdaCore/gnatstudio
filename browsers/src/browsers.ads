@@ -20,20 +20,4 @@
 
 package Browsers is
 
-   type Browser_Type_Mask is mod 256;
-   Dependency_Browser : constant Browser_Type_Mask;
-   Class_Browser      : constant Browser_Type_Mask;
-   Project_Browser    : constant Browser_Type_Mask;
-   Any_Browser        : constant Browser_Type_Mask;
-   --  The various types of browsers supported in Glide2. Note that a specific
-   --  browser might include objects from several types (if for instance it
-   --  acts both as a class_browser and a dependency_browser).
-
-private
-   Dependency_Browser : constant Browser_Type_Mask := 1;
-   Class_Browser      : constant Browser_Type_Mask := 2;
-   Project_Browser    : constant Browser_Type_Mask := 4;
-   Any_Browser        : constant Browser_Type_Mask :=
-     Dependency_Browser or Class_Browser or Project_Browser;
-
 end Browsers;
