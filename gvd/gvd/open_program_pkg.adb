@@ -276,7 +276,7 @@ begin
    Set_Text (Open_Program.Debugger_Entry, -"");
    Set_Visibility (Open_Program.Debugger_Entry, True);
 
-   Gtk_New (Open_Program.Replace_Check, -"Replace Current Debugger");
+   Gtk_New (Open_Program.Replace_Check, -"Replace Current Debug Session");
    Set_Active (Open_Program.Replace_Check, True);
    Attach (Open_Program.Table7, Open_Program.Replace_Check, 0, 7, 5, 6,
      Fill, 0,
