@@ -289,9 +289,8 @@ package body Src_Editor_Buffer is
 
       Free_Queue (Buffer.Queue);
 
-      if Buffer.Current_Command /= null then
-         Destroy (Buffer.Current_Command);
-      end if;
+      --  We do not free memory associated to Buffer.Current_Command, since
+      --  this command is already freed when freeing Buffer.Queue.
 
       if Buffer.Filename /= null then
          File_Closed (Buffer.Kernel, Buffer.Filename.all);
@@ -510,7 +509,6 @@ package body Src_Editor_Buffer is
          if Length = 1
            and then (Text (1) = ASCII.LF or else Text (1) = ' ')
          then
-
             End_Action (Buffer);
             Create
               (Command,
@@ -2684,6 +2682,8 @@ package body Src_Editor_Buffer is
          end if;
 
          Set_Text (Command, Text.all);
+
+         Buffer.Current_Command := Command_Access (Command);
       end if;
 
       GNAT.OS_Lib.Free (Text);
