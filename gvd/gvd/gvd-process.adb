@@ -1728,7 +1728,11 @@ package body GVD.Process is
       if Looking_At (Lowered_Command, First, "graph") then
          Pre_User_Command;
          Process_Graph_Cmd (Debugger, Command);
-         Display_Prompt (Debugger.Debugger);
+
+         if not Command_In_Process (Get_Process (Debugger.Debugger)) then
+            Display_Prompt (Debugger.Debugger);
+         end if;
+
          Set_Busy (Debugger, False);
 
       elsif Lowered_Command'Length <= Quit_String'Length
