@@ -192,11 +192,11 @@ package Ada_Analyzer is
       Ident_Len     : Natural := 0;
       --  Actual length of Indentifier
 
-      Profile_Start : Natural;
+      Profile_Start : Natural := 0;
       --  Position in the buffer where the profile of the current subprogram
       --  starts.
 
-      Profile_End   : Natural;
+      Profile_End   : Natural := 0;
       --  Position in the buffer where the profile of the current subprogram
       --  ends.
 
