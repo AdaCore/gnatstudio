@@ -2820,4 +2820,14 @@ package body Src_Editor_Box is
       return Editor.Source_View;
    end Get_View;
 
+   ----------------
+   -- Get_Buffer --
+   ----------------
+
+   function Get_Buffer (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_Buffer.Source_Buffer is
+   begin
+      return Editor.Source_Buffer;
+   end Get_Buffer;
+
 end Src_Editor_Box;

@@ -97,6 +97,10 @@ package Src_Editor_Box is
       return Src_Editor_View.Source_View;
    --  Return the source view associated with the box
 
+   function Get_Buffer (Editor : access Source_Editor_Box_Record)
+      return Src_Editor_Buffer.Source_Buffer;
+   --  Return the source buffer associated with the box
+
    ------------------------------------
    -- Source_Buffer related services --
    ------------------------------------
