@@ -1230,8 +1230,9 @@ db_remove_file_xfer_using_keys(int softdel, char *key_files)
 
 	if (!dbp_by)
 	{
-		dbp_by = create_table(PAF_CROSS_REF_BY,O_RDWR,
-			db_cross_cachesize);		/* Open the table ! */
+		/* Pavel: we do not need .by table */
+		/* dbp_by = create_table(PAF_CROSS_REF_BY,O_RDWR,
+			db_cross_cachesize);*/		/* Open the table ! */
 	}
 
 	for (last_del_fname[0] = '\0', line_cou = 1; file_del_key.fgets(&file_del_key, fp); line_cou++)
@@ -1534,6 +1535,8 @@ db_insert_entry(int type,char *key_buf,char *data_buf)
 
 	tmp.split (&tmp,key.data, key.size -1, FALSE, DB_FLDSEP_CHR, -1);
 
+	/* Pavel: we do not need .by table */
+#if 0
 	if (tmp.field_value[5][0] != SN_symbol_types[PAF_REF_TO_LOCAL_VAR][0] ||
 		tmp.field_value[5][1] != SN_symbol_types[PAF_REF_TO_LOCAL_VAR][1])
 	{
@@ -1590,6 +1593,7 @@ db_insert_entry(int type,char *key_buf,char *data_buf)
 			Paf_panic(PAF_PANIC_EMERGENCY);
 		}
 	}
+#endif
 	xref_data_fields.free(&xref_data_fields);
 	xref_data.free(&xref_data);
 	xref.free(&xref);
