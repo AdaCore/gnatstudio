@@ -20,10 +20,9 @@
 
 --  This package contains commands related to the debugger.
 
-with Glide_Kernel;          use Glide_Kernel;
-with Basic_Types;           use Basic_Types;
-with Debugger;              use Debugger;
-with GVD.Types;             use GVD.Types;
+with Glide_Kernel; use Glide_Kernel;
+with Basic_Types;  use Basic_Types;
+with GVD.Process;  use GVD.Process;
 
 package Commands.Debugger is
 
@@ -37,11 +36,10 @@ package Commands.Debugger is
    procedure Create
      (Item           : out Set_Breakpoint_Command_Access;
       Kernel         : Kernel_Handle;
-      Debugger       : Debugger_Access;
+      Debugger       : Visual_Debugger;
       Mode           : Breakpoint_Command_Mode;
       File           : String;
-      Line           : Positive;
-      Identifier     : Breakpoint_Identifier := 0);
+      Line           : Positive);
 
    function Execute
      (Command : access Set_Breakpoint_Command) return Command_Return_Type;
@@ -56,8 +54,7 @@ private
       Kernel   : Kernel_Handle;
       Line     : Positive;
       BMode    : Breakpoint_Command_Mode;
-      Debugger : Debugger_Access;
-      BP       : GVD.Types.Breakpoint_Identifier;
+      Debugger : Visual_Debugger;
    end record;
 
 end Commands.Debugger;
