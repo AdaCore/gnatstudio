@@ -27,7 +27,7 @@ with Gdk.GC;
 with Glib;
 with Language;
 with Glib;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 with GVD.Types;
 
 package Items is
@@ -370,7 +370,7 @@ private
       --  not need to query extra information every time.
    end record;
 
-   procedure Free_Internal is new Unchecked_Deallocation
+   procedure Free_Internal is new Ada.Unchecked_Deallocation
      (Generic_Type'Class, Generic_Type_Access);
 
    type Generic_Iterator is tagged null record;

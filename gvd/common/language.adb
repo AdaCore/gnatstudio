@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 with GVD.Types;    use GVD.Types;
 with GNAT.Regpat;  use GNAT.Regpat;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
@@ -52,7 +52,7 @@ package body Language is
       Tmp         : Language_Detection_Access;
       T           : String_Access;
 
-      procedure Free is new Unchecked_Deallocation
+      procedure Free is new Ada.Unchecked_Deallocation
         (Language_Detection_Array, Language_Detection_Access);
 
    begin
@@ -176,7 +176,7 @@ package body Language is
    ----------
 
    procedure Free (Lang : in out Language_Access) is
-      procedure Internal is new Unchecked_Deallocation
+      procedure Internal is new Ada.Unchecked_Deallocation
         (Language_Root'Class, Language_Access);
    begin
       Internal (Lang);

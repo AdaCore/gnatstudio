@@ -37,7 +37,7 @@ with GVD.Process; use GVD.Process;
 with GVD.Strings; use GVD.Strings;
 with Main_Debug_Window_Pkg; use Main_Debug_Window_Pkg;
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body Open_Session_Pkg is
 
@@ -564,10 +564,9 @@ end Create_Buttons;
 -- Remove_All_Buttons --
 ------------------------
 
-procedure Remove_All_Buttons
-  (Open : access Open_Session_Record'Class)
-is
-   procedure Free is new Unchecked_Deallocation (Button_Node, Button_Link);
+procedure Remove_All_Buttons (Open : access Open_Session_Record'Class) is
+   procedure Free is new
+     Ada.Unchecked_Deallocation (Button_Node, Button_Link);
    Buffer   : Button_Link := Open.First_Button;
    Previous : Button_Link;
 

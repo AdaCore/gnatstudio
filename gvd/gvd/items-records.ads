@@ -22,7 +22,7 @@
 --  See the package Items for more information on all the private subprograms.
 
 with GVD.Types;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package Items.Records is
 
@@ -163,7 +163,7 @@ private
    --  a Natural.
 
    type Record_Type_Array is array (Positive range <>) of Record_Type_Access;
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Record_Type_Array, Record_Type_Array_Access);
 
    procedure Print (Value : Record_Type; Indent : Natural := 0);

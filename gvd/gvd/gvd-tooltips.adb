@@ -29,7 +29,7 @@ with Gdk.Types;       use Gdk.Types;
 with Gdk.Event;       use Gdk.Event;
 with Gdk.Visual;      use Gdk.Visual;
 with Gdk.Window_Attr; use Gdk.Window_Attr;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body GVD.Tooltips is
 
@@ -53,12 +53,12 @@ package body GVD.Tooltips is
    procedure Remove_Tooltip (Tooltip : Tooltips);
    --  Cancel timeout countdown.
 
-   procedure Free_User_Type is new Unchecked_Deallocation
+   procedure Free_User_Type is new Ada.Unchecked_Deallocation
      (User_Type, User_Type_Access);
    --  Free memory used by user data.
 
    procedure Free_Tooltips is new
-     Unchecked_Deallocation (Tooltips_Record, Tooltips);
+     Ada.Unchecked_Deallocation (Tooltips_Record, Tooltips);
    --  Free memory used by tooltip.
 
    --------------------

@@ -20,7 +20,7 @@
 
 with System; use System;
 with Ada.Characters.Handling; use Ada.Characters.Handling;
-with Unchecked_Conversion;
+with Ada.Unchecked_Conversion;
 
 with Glib;                  use Glib;
 with Gdk.Types;             use Gdk.Types;
@@ -135,7 +135,8 @@ package body Process_Tab_Pkg.Callbacks is
       Top  : constant Debugger_Process_Tab := Debugger_Process_Tab (Object);
 
       type Guint_Ptr is access all Guint;
-      function To_Guint_Ptr is new Unchecked_Conversion (Address, Guint_Ptr);
+      function To_Guint_Ptr is new
+        Ada.Unchecked_Conversion (Address, Guint_Ptr);
 
       use GVD.Process;
 

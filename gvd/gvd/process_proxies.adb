@@ -27,8 +27,8 @@ with Gtk.Main;              use Gtk.Main;
 with GNAT.Regpat;           use GNAT.Regpat;
 with GNAT.IO;               use GNAT.IO;
 with System;                use System;
-with Unchecked_Conversion;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 with GVD.Types;             use GVD.Types;
 
 package body Process_Proxies is
@@ -45,12 +45,12 @@ package body Process_Proxies is
    ----------
 
    procedure Free (Proxy : in out Process_Proxy_Access) is
-      procedure Free_Internal is new Unchecked_Deallocation
+      procedure Free_Internal is new Ada.Unchecked_Deallocation
         (Process_Proxy'Class, Process_Proxy_Access);
-      procedure Free_Internal is new Unchecked_Deallocation
+      procedure Free_Internal is new Ada.Unchecked_Deallocation
         (GNAT.Expect.Process_Descriptor'Class,
          GNAT.Expect.Process_Descriptor_Access);
-      procedure Free_Internal is new Unchecked_Deallocation
+      procedure Free_Internal is new Ada.Unchecked_Deallocation
         (Boolean, Boolean_Access);
 
    begin
@@ -352,7 +352,7 @@ package body Process_Proxies is
       Str        : String;
       Proxy      : System.Address)
    is
-      function To_Proxy is new Unchecked_Conversion
+      function To_Proxy is new Ada.Unchecked_Conversion
         (System.Address, Process_Proxy_Access);
    begin
       if Get_Command_Mode (To_Proxy (Proxy)) /= Internal then
@@ -394,7 +394,7 @@ package body Process_Proxies is
    ----------
 
    procedure Free (Post_Processes : in out Post_Process_Access) is
-      procedure Free_Internal is new Unchecked_Deallocation
+      procedure Free_Internal is new Ada.Unchecked_Deallocation
         (Post_Process_Record, Post_Process_Access);
 
       Tmp : Post_Process_Access;
@@ -447,13 +447,13 @@ package body Process_Proxies is
       end record;
       type Internal_Data_Access is access all Internal_Data;
 
-      function Convert is new Unchecked_Conversion
+      function Convert is new Ada.Unchecked_Conversion
         (Internal_Data_Access, System.Address);
-      function Convert is new Unchecked_Conversion
+      function Convert is new Ada.Unchecked_Conversion
         (System.Address, Internal_Data_Access);
       procedure Free is new
-        Unchecked_Deallocation (Internal_Data, Internal_Data_Access);
-      procedure Free is new Unchecked_Deallocation (Data, Data_Access);
+        Ada.Unchecked_Deallocation (Internal_Data, Internal_Data_Access);
+      procedure Free is new Ada.Unchecked_Deallocation (Data, Data_Access);
 
       procedure Internal_Callback (S : System.Address);
       --  Internal function used as a post command.

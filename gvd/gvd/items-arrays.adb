@@ -28,7 +28,6 @@ with Gdk.GC;       use Gdk.GC;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
 with Language;     use Language;
-with Unchecked_Deallocation;
 
 with GVD.Types;       use GVD.Types;
 with GVD.Preferences; use GVD.Preferences;

@@ -32,8 +32,6 @@ with Language;        use Language;
 with GVD.Types;       use GVD.Types;
 with GVD.Preferences; use GVD.Preferences;
 
-with Unchecked_Deallocation;
-
 package body Items.Records is
 
    ---------------------

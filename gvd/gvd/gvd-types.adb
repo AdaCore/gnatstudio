@@ -19,7 +19,6 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Types;
-with Unchecked_Deallocation;
 
 package body GVD.Types is
 
@@ -63,7 +62,7 @@ package body GVD.Types is
    ----------
 
    procedure Free (Br_Access : in out Breakpoint_Array_Ptr) is
-      procedure Internal_Free is new Unchecked_Deallocation
+      procedure Internal_Free is new Ada.Unchecked_Deallocation
         (Breakpoint_Array, Breakpoint_Array_Ptr);
    begin
       if Br_Access /= null then

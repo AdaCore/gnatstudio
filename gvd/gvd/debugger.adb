@@ -27,7 +27,7 @@ with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GNAT.IO;           use GNAT.IO;
 with Ada.Strings;       use Ada.Strings;
 with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Unchecked_Conversion;
+with Ada.Unchecked_Conversion;
 
 with Glib;              use Glib;
 with Gtk.Main;          use Gtk.Main;
@@ -56,7 +56,7 @@ package body Debugger is
 
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
 
-   function To_Gint is new Unchecked_Conversion (File_Descriptor, Gint);
+   function To_Gint is new Ada.Unchecked_Conversion (File_Descriptor, Gint);
 
    procedure Output_Available
      (Process   : My_Input.Data_Access;

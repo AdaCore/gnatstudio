@@ -21,7 +21,7 @@
 --  Items used for array types
 --  See the package Items for more information on all the private subprograms.
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package Items.Arrays is
 
@@ -134,7 +134,7 @@ private
    --  of values as the array, starting from 0 as in C.
 
    type Array_Item_Array_Access is access Array_Item_Array;
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Array_Item_Array, Array_Item_Array_Access);
 
    type Array_Type (Num_Dimensions : Positive) is new Generic_Type with record

@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtkada.Types;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package GVD.Types is
 
@@ -27,7 +27,7 @@ package GVD.Types is
    type Pixmap_Access is access all Pixmap_Array;
 
    type String_Access is access all String;
-   procedure Free is new Unchecked_Deallocation (String, String_Access);
+   procedure Free is new Ada.Unchecked_Deallocation (String, String_Access);
 
    type String_Array is array (Natural range <>) of String_Access;
    procedure Free (Ar : in out String_Array);
@@ -147,7 +147,7 @@ package GVD.Types is
    pragma Pack (Packed_Boolean_Array);
    type Packed_Boolean_Access is access Packed_Boolean_Array;
 
-   procedure Free is new Unchecked_Deallocation
+   procedure Free is new Ada.Unchecked_Deallocation
      (Packed_Boolean_Array, Packed_Boolean_Access);
 
    type File_Cache;
@@ -178,7 +178,8 @@ package GVD.Types is
    --  This array is freed once the parsing has been finished (and in the
    --  case Current_Line points to the last line with a breakpoint.
 
-   procedure Free is new Unchecked_Deallocation (File_Cache, File_Cache_List);
+   procedure Free is new
+     Ada.Unchecked_Deallocation (File_Cache, File_Cache_List);
 
    ------------------------
    -- Program_Descriptor --

@@ -53,8 +53,8 @@ with Items.Arrays;      use Items.Arrays;
 with Items.Records;     use Items.Records;
 with Items.Classes;     use Items.Classes;
 
-with Unchecked_Conversion;
-with Unchecked_Deallocation;
+with Ada.Unchecked_Conversion;
+with Ada.Unchecked_Deallocation;
 
 package body Debugger.Gdb is
 
@@ -168,8 +168,8 @@ package body Debugger.Gdb is
       Mode      : Command_Type := Hidden);
    --  Set the debuggee arguments to Arguments.
 
-   function To_Main_Debug_Window is new
-     Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+   function To_Main_Debug_Window is new Standard.Ada.Unchecked_Conversion
+     (System.Address, Main_Debug_Window_Access);
 
    ---------------------
    -- Language_Filter --
@@ -465,8 +465,8 @@ package body Debugger.Gdb is
       Local_Arguments : Argument_List
                           (1 .. Debugger_Args'Length + Num_Options);
 
-      procedure Free is new
-        Unchecked_Deallocation (Argument_List, Argument_List_Access);
+      procedure Free is new Standard.Ada.Unchecked_Deallocation
+        (Argument_List, Argument_List_Access);
 
    begin
       Debugger.Window := Window;

@@ -82,7 +82,7 @@ with GVD.Utils;                  use GVD.Utils;
 with GVD.Trace;                  use GVD.Trace;
 
 with System;
-with Unchecked_Conversion;
+with Ada.Unchecked_Conversion;
 
 pragma Warnings (Off, Debugger.Jdb);
 
@@ -108,7 +108,7 @@ package body GVD.Process is
      (Debugger_Process_Tab_Record, Boolean);
 
    function To_Main_Debug_Window is new
-     Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+     Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
    --  This pointer will keep a pointer to the C 'class record' for
    --  gtk. To avoid allocating memory for each widget, this may be done
@@ -155,7 +155,7 @@ package body GVD.Process is
    --  call to Wait or Wait_Prompt is finished.
 
    function To_Process is new
-     Unchecked_Conversion (System.Address, Debugger_Process_Tab);
+     Ada.Unchecked_Conversion (System.Address, Debugger_Process_Tab);
 
    procedure Final_Post_Process (User_Data : System.Address);
    --  Final post processing.

@@ -24,7 +24,7 @@ with GVD.Types; use GVD.Types;
 with Process_Proxies; use Process_Proxies;
 with Debugger; use Debugger;
 with System;
-with Unchecked_Conversion;
+with Ada.Unchecked_Conversion;
 
 package body GVD.Trace is
 
@@ -36,7 +36,7 @@ package body GVD.Trace is
    Verbose_HT    : aliased constant String := "\t";
 
    function To_Main_Window is new
-     Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
+     Ada.Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
    --------------------
    -- Output_Message --

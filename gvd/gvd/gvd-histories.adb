@@ -18,7 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation;
 
 package body GVD.Histories is
 
@@ -77,10 +77,9 @@ package body GVD.Histories is
    -- Set_Current --
    -----------------
 
-   procedure Set_Current (History : History_List; Data : in Data_Type)
-   is
-      procedure Free_Data_Pointer is new Unchecked_Deallocation
-        (Data_Type, Data_Pointer);
+   procedure Set_Current (History : History_List; Data : in Data_Type) is
+      procedure Free_Data_Pointer is new
+        Ada.Unchecked_Deallocation (Data_Type, Data_Pointer);
    begin
       if History.Current /= null
         and then History.Position = Inside_History
@@ -183,10 +182,11 @@ package body GVD.Histories is
    ----------
 
    procedure Free (History : in out History_List) is
-      procedure Free_Data_Pointer is new Unchecked_Deallocation
-        (Data_Type, Data_Pointer);
-      procedure Free_Hlist is new Unchecked_Deallocation
-        (Hlist, Hlist_Link);
+      procedure Free_Data_Pointer is new
+        Ada.Unchecked_Deallocation (Data_Type, Data_Pointer);
+      procedure Free_Hlist is new
+        Ada.Unchecked_Deallocation (Hlist, Hlist_Link);
+
    begin
       if History.First /= null then
          History.Current := History.First;
