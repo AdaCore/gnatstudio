@@ -32,6 +32,7 @@ with GVD.Code_Editors;     use GVD.Code_Editors;
 with GVD.Types;            use GVD.Types;
 with GVD_Module;           use GVD_Module;
 with Debugger_Pixmaps;     use Debugger_Pixmaps;
+with String_Utils;         use String_Utils;
 
 with GVD.Text_Box.Asm_Editor; use GVD.Text_Box;
 
@@ -175,23 +176,23 @@ package body GVD.Text_Box.Source_Editor.Glide is
    is
       pragma Unreferenced (Force);
       Kernel : constant Kernel_Handle := Glide_Window (Editor.Window).Kernel;
+      File   : constant String := To_Host_Pathname
+        (GNAT.OS_Lib.Normalize_Pathname (File_Name));
 
    begin
       if Editor.Current_File = null
-        or else Editor.Current_File.all /= File_Name
+        or else Editor.Current_File.all /= File
       then
          Free (Editor.Current_File);
-         Editor.Current_File := new String'
-           (GNAT.OS_Lib.Normalize_Pathname (File_Name));
+         Editor.Current_File := new String'(File);
 
          if Set_Current then
             Free (Editor.Debugger_Current_File);
-            Editor.Debugger_Current_File := new String'
-              (Editor.Current_File.all);
+            Editor.Debugger_Current_File := new String'(File);
          end if;
 
          Open_File_Editor
-           (Kernel, Editor.Current_File.all, New_File => False,
+           (Kernel, File, New_File => False,
             Enable_Navigation => False,
             From_Path => False);
       end if;
