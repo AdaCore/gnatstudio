@@ -18,15 +18,19 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtk; use Gtk;
-with Glib;            use Glib;
-with Gtk.Enums;       use Gtk.Enums;
-with GPS.Intl; use GPS.Intl;
+with Gtk;          use Gtk;
+with Glib;         use Glib;
+with Gtk.Enums;    use Gtk.Enums;
+with GPS.Intl;     use GPS.Intl;
 with Gtk.Tooltips; use Gtk.Tooltips;
-with GPS.Kernel; use GPS.Kernel;
+with GPS.Kernel;   use GPS.Kernel;
 with Gtk.Frame;    use Gtk.Frame;
 
 package body Vsearch_Pkg is
+
+   -------------
+   -- Gtk_New --
+   -------------
 
    procedure Gtk_New
      (Vsearch : out Vsearch_Access;
@@ -36,13 +40,17 @@ package body Vsearch_Pkg is
       Vsearch_Pkg.Initialize (Vsearch, Handle);
    end Gtk_New;
 
+   ----------------
+   -- Initialize --
+   ----------------
+
    procedure Initialize
      (Vsearch : access Vsearch_Record'Class;
       Handle  : access GPS.Kernel.Kernel_Handle_Record'Class)
    is
       pragma Suppress (All_Checks);
       Tooltips : Gtk_Tooltips;
-      Frame      : Gtk_Frame;
+      Frame    : Gtk_Frame;
    begin
       Initialize_Vbox (Vsearch, False, 0);
 
