@@ -37,6 +37,10 @@ project Prj_Editor is
       for Switches ("foreign_naming_scheme_editor_pkg.adb") use ("-g", "-O2");
    end Compiler;
 
+   package Binder is
+      for Default_Switches ("Ada") use ("-E");
+   end Binder;
+
    package IDE renames Shared.IDE;
 
 end Prj_Editor;
