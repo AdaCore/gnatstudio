@@ -18,19 +18,18 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gtkada.Dialogs;                    use Gtkada.Dialogs;
-with GPS.Kernel.Contexts;             use GPS.Kernel.Contexts;
-with GPS.Kernel.MDI;                  use GPS.Kernel.MDI;
-with GPS.Kernel.Scripts;              use GPS.Kernel.Scripts;
-with GPS.Intl;                        use GPS.Intl;
-with Basic_Types;                       use Basic_Types;
-with GNAT.OS_Lib;                       use GNAT.OS_Lib;
-with Diff_Utils2;                       use Diff_Utils2;
-with Vdiff2_Module.Utils;               use Vdiff2_Module.Utils;
-with Vdiff2_Module;                     use Vdiff2_Module;
-with Traces;                            use Traces;
-with VFS;                               use VFS;
-
+with Gtkada.Dialogs;      use Gtkada.Dialogs;
+with GPS.Kernel.Contexts; use GPS.Kernel.Contexts;
+with GPS.Kernel.MDI;      use GPS.Kernel.MDI;
+with GPS.Kernel.Scripts;  use GPS.Kernel.Scripts;
+with GPS.Intl;            use GPS.Intl;
+with Basic_Types;         use Basic_Types;
+with GNAT.OS_Lib;         use GNAT.OS_Lib;
+with Diff_Utils2;         use Diff_Utils2;
+with Vdiff2_Module.Utils; use Vdiff2_Module.Utils;
+with Vdiff2_Module;       use Vdiff2_Module;
+with Traces;              use Traces;
+with VFS;                 use VFS;
 
 package body Vdiff2_Command_Block is
 
@@ -185,7 +184,6 @@ package body Vdiff2_Command_Block is
       Item.Current_Node := First (Item.List);
       Modify_Differences (Kernel, Item, Id);
    end Reload_Difference;
-
 
    ----------------------
    -- Close_Difference --
