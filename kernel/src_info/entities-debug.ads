@@ -7,4 +7,10 @@ package Entities.Debug is
    procedure Dump (File   : Source_File);
    procedure Dump (Loc    : File_Location);
 
+
+   procedure Set_Show_Timestamp (Show : Boolean := True);
+   --  Whether timestamps should be displayed by the various dump subprograms.
+   --  This should be set to False for the testsuites to get consistent
+   --  results.
+
 end Entities.Debug;
