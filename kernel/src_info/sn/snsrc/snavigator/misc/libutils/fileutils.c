@@ -42,7 +42,7 @@ MA 02111-1307, USA.
 #include "mxdefine.h"
 #include "fileutils.h"
 
-#ifndef _WINDOWS
+#ifndef WIN32
 
 #undef USE_TCLGETCWD
 #ifdef USE_TCLGETCWD
@@ -124,7 +124,7 @@ absolutepath (char *rpath, char *fullpath, char *pwd)
 }
 #endif
 
-#if _WINDOWS
+#ifdef WIN32
 #ifndef __MSVC__
 /* Get the realpath() from Cygwin.*/
 int
@@ -199,7 +199,7 @@ win32_realpath(char* p,char *realnm)
 
 #endif /* __MSVC__ */
 
-#endif /* _WINDOWS */
+#endif /* WIN32 */
 
 char * file_lastroot (char *path)
 {
@@ -288,7 +288,7 @@ sn_append_option_to_command_line (char*cmd, char *arg)
  */
 int native_compare_paths (char *path1, char*path2, int path1len)
 {
-#if _WINDOWS
+#if WIN32
 	char *p = path1, *q = path2;
 	int ret;
 	int len = path1len;
@@ -329,4 +329,3 @@ int native_compare_paths (char *path1, char*path2, int path1len)
 	}
 #endif
 }
-

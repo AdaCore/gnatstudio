@@ -29,7 +29,7 @@ MA 02111-1307, USA.
 #ifndef FILEUTILS_H
 #define FILEUTILS_H
 
-#if _WINDOWS
+#ifdef WIN32
 #define IS_ROOT(c) ((c) == '/' || (c) == '\\')
 #else
 #define IS_ROOT(c) ((c) == '/')
@@ -54,4 +54,3 @@ int  absolutepath (char *rpath, char *fullpath, char *pwd);
 int  native_compare_paths (char *path1, char*path2, int path1len);
 
 #endif /* FILEUTILS_H */
-
