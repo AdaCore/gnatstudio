@@ -27,14 +27,16 @@ pragma Warnings (On);
 with GNAT.OS_Lib;              use GNAT.OS_Lib;
 with Glib;                     use Glib;
 with Glib.Object;              use Glib.Object;
-with Glib.Values;              use Glib.Values;
 with Glide_Intl;               use Glide_Intl;
 with Glide_Kernel.Console;     use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;    use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;       use Glide_Kernel.Hooks;
 with Glide_Kernel.Modules;     use Glide_Kernel.Modules;
 with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;     use Glide_Kernel.Project;
 with Glide_Kernel;             use Glide_Kernel;
 with Glide_Kernel.Timeout;     use Glide_Kernel.Timeout;
+with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
 with Gtk.Main;                 use Gtk.Main;
 with Gtk.Menu;                 use Gtk.Menu;
 with Gtk.Menu_Item;            use Gtk.Menu_Item;
@@ -268,11 +270,9 @@ package body External_Editor_Module is
       Context : Selection_Context_Access);
    --  Edit the file described in the context
 
-   function Mime_Action
+   function Open_File_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean;
+      Data      : Hooks_Data'Class) return Boolean;
    --  Handle an edition request
 
    procedure Spawn_New_Process
@@ -295,8 +295,7 @@ package body External_Editor_Module is
    --  Spawn a new process, and waits for its termination. It hides both its
    --  standard output and standard error.
 
-   procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle);
+   procedure Preferences_Changed (Kernel : access Kernel_Handle_Record'Class);
    --  Called when the preferences have changed.
 
    -------------------
@@ -789,54 +788,42 @@ package body External_Editor_Module is
       end if;
    end External_Editor_Contextual;
 
-   -----------------
-   -- Mime_Action --
-   -----------------
+   --------------------
+   -- Open_File_Hook --
+   --------------------
 
-   function Mime_Action
+   function Open_File_Hook
      (Kernel    : access Kernel_Handle_Record'Class;
-      Mime_Type : String;
-      Data      : GValue_Array;
-      Mode      : Mime_Mode := Read_Write) return Boolean
+      Data      : Hooks_Data'Class) return Boolean
    is
-      pragma Unreferenced (Mode);
+      D : Source_File_Hooks_Args := Source_File_Hooks_Args (Data);
    begin
       if External_Editor_Module_Id.Client /= Auto
         and then Get_Pref (Kernel, Always_Use_External_Editor)
-        and then Mime_Type = Mime_Source_File
       then
-         declare
-            File   : constant Virtual_File := Get_File (Data (Data'First));
-            Line   : constant Gint   := Get_Int (Data (Data'First + 1));
-            Column : constant Gint   := Get_Int (Data (Data'First + 2));
+         if Is_Regular_File (D.File) then
+            Push_State (Kernel_Handle (Kernel), Processing);
+            --  ??? Incorrect handling of remote files
+            Client_Command
+              (Kernel => Kernel,
+               File   => Full_Name (D.File).all,
+               Line   => Natural (D.Line),
+               Column => Natural (D.Column));
+            Pop_State (Kernel_Handle (Kernel));
 
-         begin
-            if Is_Regular_File (File) then
-               Push_State (Kernel_Handle (Kernel), Processing);
-               --  ??? Incorrect handling of remote files
-               Client_Command
-                 (Kernel => Kernel,
-                  File   => Full_Name (File).all,
-                  Line   => Natural (Line),
-                  Column => Natural (Column));
-               Pop_State (Kernel_Handle (Kernel));
-
-               return True;
-            end if;
-         end;
+            return True;
+         end if;
       end if;
 
       return False;
-   end Mime_Action;
+   end Open_File_Hook;
 
    -------------------------
    -- Preferences_Changed --
    -------------------------
 
    procedure Preferences_Changed
-     (K : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (K);
+     (Kernel : access Kernel_Handle_Record'Class) is
    begin
       Select_Client (Kernel);
    end Preferences_Changed;
@@ -887,13 +874,10 @@ package body External_Editor_Module is
          Kernel                  => Kernel,
          Module_Name             => External_Editor_Module_Name,
          Priority                => Default_Priority + 1,
-         Contextual_Menu_Handler => External_Editor_Contextual'Access,
-         Mime_Handler            => Mime_Action'Access);
+         Contextual_Menu_Handler => External_Editor_Contextual'Access);
+      Add_Hook (Kernel, Open_File_Action_Hook, Open_File_Hook'Access);
 
-      Kernel_Callback.Connect
-        (Kernel, Preferences_Changed_Signal,
-         Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
-         User_Data   => Kernel_Handle (Kernel));
+      Add_Hook (Kernel, Preferences_Changed_Hook, Preferences_Changed'Access);
    end Register_Module;
 
 end External_Editor_Module;
