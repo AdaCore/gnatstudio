@@ -431,7 +431,7 @@ procedure GPS is
          begin
             exit when S = "";
 
-            Open_File_Editor (GPS.Kernel, S, From_Path => True);
+            Open_File_Editor (GPS.Kernel, S, 1, 1, From_Path => True);
             File_Opened := True;
          end;
       end loop;
@@ -545,11 +545,11 @@ begin
    if Splash = null then
       Timeout_Id := Process_Timeout.Add
         (1, Finish_Setup'Unrestricted_Access,
-         (GPS.Kernel, null, null, null));
+         (GPS.Kernel, null, null, null, null));
    else
       Timeout_Id := Process_Timeout.Add
         (1000, Finish_Setup'Unrestricted_Access,
-         (GPS.Kernel, null, null, null));
+         (GPS.Kernel, null, null, null, null));
    end if;
 
    begin
