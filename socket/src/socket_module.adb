@@ -4,7 +4,7 @@
 --                     Copyright (C) 2001-2002                       --
 --                            ACT-Europe                             --
 --                                                                   --
--- GPS is free  software; you can  redistribute it and/or modify  it --
+-- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
 -- the Free Software Foundation; either version 2 of the License, or --
 -- (at your option) any later version.                               --
@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -38,6 +38,9 @@ with Ada.Unchecked_Deallocation;
 package body Socket_Module is
 
    Me : constant Debug_Handle := Create ("Socket_Module");
+
+   GPS_Port : constant := 50000;
+   --  <preferences>
 
    Max_Number_Of_Reads : constant := 128;
 
@@ -97,6 +100,9 @@ package body Socket_Module is
 
    function Idle_Accept return Boolean;
    --  Accept new connections on the Server socket.
+
+   function Idle_Read (Data : Read_Data_Access) return Boolean;
+   --  ???
 
    -------------
    -- Destroy --
@@ -161,9 +167,7 @@ package body Socket_Module is
    -- Idle_Read --
    ---------------
 
-   function Idle_Read (Data : in Read_Data_Access) return Boolean;
-
-   function Idle_Read (Data : in Read_Data_Access) return Boolean is
+   function Idle_Read (Data : Read_Data_Access) return Boolean is
       C               : Character;
       Status          : Selector_Status;
       Number_Of_Reads : Integer := 0;
@@ -202,11 +206,11 @@ package body Socket_Module is
                else
                   if Data.Index /= 1 then
                      declare
-                        Command : Socket_Command_Access;
+                        Command     : Socket_Command_Access;
+                        Module_Data : constant Socket_Module :=
+                          Socket_Module (Socket_Module_ID);
+                        Success     : Boolean;
 
-                        Module_Data : Socket_Module
-                          := Socket_Module (Socket_Module_ID);
-                        Success : Boolean;
                      begin
                         if Data.Buffer (1 .. Data.Index - 1) = "exit" then
                            return False;
@@ -245,8 +249,7 @@ package body Socket_Module is
    -----------------
 
    function Idle_Accept return Boolean is
-      Module_Data : Socket_Module
-        := Socket_Module (Socket_Module_ID);
+      Module_Data : constant Socket_Module := Socket_Module (Socket_Module_ID);
       Status      : Selector_Status;
    begin
       Set (Module_Data.R_Set.all, Module_Data.Server);
@@ -303,23 +306,20 @@ package body Socket_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
    is
-      T    : Timeout_Handler_Id;
+      T : Timeout_Handler_Id;
    begin
-
       Socket_Module_ID := new Socket_Module_Record;
-      Socket_Module (Socket_Module_ID).Kernel
-        := Kernel_Handle (Kernel);
+      Socket_Module (Socket_Module_ID).Kernel := Kernel_Handle (Kernel);
 
-      Socket_Module (Socket_Module_ID).Timeout_Handler
-        := Timeout_Add (100, Timeout_Process_Commands'Access);
+      Socket_Module (Socket_Module_ID).Timeout_Handler :=
+        Timeout_Add (100, Timeout_Process_Commands'Access);
 
-
-      Socket_Module (Socket_Module_ID).Address.Addr
-        := Addresses (Get_Host_By_Name (Host_Name), 1);
+      Socket_Module (Socket_Module_ID).Address.Addr :=
+        Addresses (Get_Host_By_Name (Host_Name), 1);
 
       --  Get a socket address that is an Internet address and a port
 
-      Socket_Module (Socket_Module_ID).Address.Port := 50000;
+      Socket_Module (Socket_Module_ID).Address.Port := GPS_Port;
 
       --  Create the server socket.
       Create_Socket (Socket_Module (Socket_Module_ID).Server);
