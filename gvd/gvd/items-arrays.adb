@@ -67,7 +67,11 @@ package body Items.Arrays is
                return Index_String (Item, Index / Length, Dim_Num - 1)
                  & "," & Dim (Dim'First + 1 .. Dim'Last);
             else
-               return Dim (Dim'First + 1 .. Dim'Last);
+               if Dim (Dim'First) = '-' then
+                  return Dim (Dim'First .. Dim'Last);
+               else
+                  return Dim (Dim'First + 1 .. Dim'Last);
+               end if;
             end if;
          end;
       end if;
