@@ -1,0 +1,8 @@
+
+----------------
+-- Find_Utils --
+----------------
+
+  * [Yeti] Handling context
+    Ensure basic extensions are recognized to select a context (*.ad?, *.[ch]).
+
