@@ -259,12 +259,14 @@ extern Boolean_t f_CompoundStatement( char *types, char *names, char* positions,
             types_beg = types_end + 1;
             names_beg = names_end + 1;
             pos_beg = pos_end + 1;
+            type_pos_beg = type_pos_end + 1;
          }
       }
 
       ckfree( my_names );
       ckfree( my_types );
       ckfree( my_pos );
+      ckfree( my_type_pos );
    }
 
    retval = compound_statement();
