@@ -44,7 +44,7 @@ with Gdk.Window;
 --  user could insert a pointer to that widget within his data type.
 --
 --  (For an example showing the use of that package, please see
---  GVD.Source_Editors)
+--  GVD.Text_Box.Source_Editor.Builtin)
 
 generic
    type User_Type (<>) is private;
