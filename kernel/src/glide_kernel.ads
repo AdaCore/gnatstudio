@@ -829,9 +829,12 @@ package Glide_Kernel is
    --  Runs the "file_changed_on_disk" hook
 
    procedure Compilation_Finished
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File);
+     (Handle   : access Kernel_Handle_Record;
+      File     : VFS.Virtual_File;
+      Category : String);
    --  Runs the "compilation_finished" hook
+   --  The Category corresponds to the location/highlighting category that
+   --  contains the compilation output.
 
    --  Hooks with no arguments
    Preferences_Changed_Hook      : constant String := "preferences_changed";

@@ -757,11 +757,18 @@ package body Glide_Kernel is
    --------------------------
 
    procedure Compilation_Finished
-     (Handle  : access Kernel_Handle_Record;
-      File    : VFS.Virtual_File) is
+     (Handle   : access Kernel_Handle_Record;
+      File     : VFS.Virtual_File;
+      Category : String) is
    begin
-      Run_Hook (Handle, Compilation_Finished_Hook,
-                File_Hooks_Args'(Hooks_Data with File => File));
+      Run_Hook
+        (Handle,
+         Compilation_Finished_Hook,
+         Compilation_Hooks_Args'
+           (Hooks_Data with
+            Category_Length => Category'Length,
+            File            => File,
+            Category        => Category));
    end Compilation_Finished;
 
    -------------
