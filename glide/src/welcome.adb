@@ -104,7 +104,7 @@ package body Welcome is
          Parent     => null,
          Title_Font => Get_Pref (Kernel, Wizard_Title_Font));
 
-      Set_Default_Size (Screen, 500, 350);
+      Set_Default_Size (Screen, 600, 350);
 
       Screen.Kernel := Kernel_Handle (Kernel);
 
