@@ -2,10 +2,10 @@ with "../common/common";
 with "../gtkada/gtkada";
 with "../gvd/gvd";
 with "../kernel/kernel";
-with "../aunit/aunit";
 with "../vsearch/vsearch";
 with "../prj_editor/prj_editor";
 with "../src_editor/src_editor";
+with "../aunit/aunit";
 with "../vdiff/vdiff";
 with "../browsers/browsers";
 
@@ -23,9 +23,11 @@ project Glide is
    package Compiler is
       case Build is
          when "Debug" => 
-            for Default_Switches ("Ada") use ("-g");
+            for Default_Switches ("Ada") use
+              ("-g", "-O2", "-gnaty", "-gnatwue");
          when others =>
-            for Default_Switches ("Ada") use ("-O2");
+            for Default_Switches ("Ada") use
+              ("-O2", "-gnaty", "-gnatwue");
       end case;
    end Compiler;
 
