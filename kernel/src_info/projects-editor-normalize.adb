@@ -845,7 +845,7 @@ package body Projects.Editor.Normalize is
       Var_Type      : Project_Node_Id)
       return Project_Node_Id
    is
-      Construct, Str, S : Project_Node_Id;
+      Construct, Str : Project_Node_Id;
       Item : Project_Node_Id := Empty_Node;
       Ref : Name_Id;
       Decl : Project_Node_Id;
@@ -901,15 +901,7 @@ package body Projects.Editor.Normalize is
 
       Str := First_Literal_String (Var_Type);
       while Str /= Empty_Node loop
-         --  Construct the case item, and add it to the list of
-         --  case items
-         Item := Default_Project_Node (N_Case_Item);
-         S := Default_Project_Node (N_Literal_String);
-         Set_String_Value_Of (S, String_Value_Of (Str));
-         Set_First_Choice_Of (Item, S);
-         Set_Next_Case_Item (Item, First_Case_Item_Of (Construct));
-         Set_First_Case_Item_Of (Construct, Item);
-
+         Add_Case_Item (Construct, String_Value_Of (Str));
          Str := Next_Literal_String (Str);
       end loop;
 
