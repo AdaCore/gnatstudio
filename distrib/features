@@ -55,9 +55,11 @@ New features in GPS 1.4.0
 
 - C722-011 Recursive aliases expansion is now available
 
-- C306-012 Double-click in the editor now takes underscores into account
-
 - C612-001 New preference: auto jump to first location
+
+- C402-013 Improved pretty printer integration
+
+- C306-012 Double-click in the editor now takes underscores into account
 
 - MDI's central area can be split through drag-and-drop
 
