@@ -1527,7 +1527,7 @@ package body Src_Info.ALI is
             E_Ref.Location :=
                (File   => Copy (Current_Sfile),
                 Line   => Positive (Current_Xref.Line),
-                Column => Positive (Current_Xref.Col));
+                Column => Natural (Current_Xref.Col));
 
             --  Insert the new Xref at the head of the References table
             --  (except if it is an end reference, in which case it is stored
