@@ -96,7 +96,7 @@ package body Display_Items is
    Value_Font_Size : constant Gint := 10;
    --  Size of the font used to display the value of the item.
 
-   Type_Font_Size : constant Gint := 9;
+   Type_Font_Size : constant Gint := 10;
    --  Size of the font used to display the type of the item..
 
    Num_Buttons : constant := 2;
