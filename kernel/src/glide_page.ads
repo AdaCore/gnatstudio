@@ -30,7 +30,7 @@ package Glide_Page is
    record
       Console : Glide_Consoles.Glide_Console;
       Interactive_Console :
-         Glide_Interactive_Consoles.Glide_Interactive_Console;
+        Glide_Interactive_Consoles.Glide_Interactive_Console;
    end record;
    type Glide_Page is access all Glide_Page_Record'Class;
 

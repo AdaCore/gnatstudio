@@ -727,11 +727,10 @@ package body Src_Editor_Buffer is
                C := Get_Char (Current);
 
                if C = Delimiters (Delimiter, Closing) then
-                     Stack := Stack + 1;
+                  Stack := Stack + 1;
 
                elsif C = Delimiters (Delimiter, Opening) then
                   Stack := Stack - 1;
-
                end if;
 
                if Stack = 0 then
