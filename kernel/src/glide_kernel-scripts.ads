@@ -383,6 +383,14 @@ package Glide_Kernel.Scripts is
    --  boolean. This is different from the version returning a string, in that
    --  only the return value is considered, not the full output.
 
+   function Execute_Command
+     (Script  : access Scripting_Language_Record;
+      Command : String;
+      Args    : Callback_Data'Class) return Boolean is abstract;
+   --  Execute a command, the argument of which are specified separately in
+   --  Args.
+   --  Returns the value returned by the command itself.
+
    function Execute_Command_With_Args
      (Script             : access Scripting_Language_Record;
       Command            : String;
