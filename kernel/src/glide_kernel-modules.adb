@@ -1041,6 +1041,10 @@ package body Glide_Kernel.Modules is
       pragma Unreferenced (Widget, Dummy);
    begin
       Dummy := Execute (Command);
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception " & Exception_Information (E));
    end Execute_Command;
 
    -------------------
@@ -1061,7 +1065,7 @@ package body Glide_Kernel.Modules is
       Sensitive   : Boolean := True)
      return Gtk_Menu_Item
    is
-
+      use type Kernel_Callback.Marshallers.Void_Marshaller.Handler;
       function Cleanup (Path : String) return String;
 
       -------------
@@ -1113,10 +1117,13 @@ package body Glide_Kernel.Modules is
       end if;
 
       Register_Menu (Kernel, Parent_Path, Item, Ref_Item, Add_Before);
-      Kernel_Callback.Connect
-        (Item, "activate",
-         Kernel_Callback.To_Marshaller (Callback),
-         Kernel_Handle (Kernel));
+
+      if Callback /= null then
+         Kernel_Callback.Connect
+           (Item, "activate",
+            Kernel_Callback.To_Marshaller (Callback),
+            Kernel_Handle (Kernel));
+      end if;
 
       if Command /= null then
          Command_Callback.Connect

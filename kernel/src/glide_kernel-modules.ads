@@ -349,7 +349,8 @@ package Glide_Kernel.Modules is
    --  Same as the above, but creates the menu item directly, and connects the
    --  appropriate callback.
    --  If Command is not null, then a callback will be created to launch
-   --  this command when the menu is activated.
+   --  this command when the menu is activated. In this case, both Callback
+   --  and Command will be called.
    --  Sensitive indicates whether the menu item is created sensitive or not.
 
    function Register_Menu
