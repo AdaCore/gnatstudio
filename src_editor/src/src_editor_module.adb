@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -18,69 +18,69 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Ada.Exceptions;            use Ada.Exceptions;
-with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Glib.Xml_Int;              use Glib.Xml_Int;
-with Glib.Convert;              use Glib.Convert;
-with Gdk;                       use Gdk;
-with Gdk.Color;                 use Gdk.Color;
-with Gdk.GC;                    use Gdk.GC;
-with Gdk.Types;                 use Gdk.Types;
-with Gdk.Types.Keysyms;         use Gdk.Types.Keysyms;
-with Glib;                      use Glib;
-with Glib.Object;               use Glib.Object;
-with Glib.Values;               use Glib.Values;
-with Glide_Intl;                use Glide_Intl;
-with Glide_Kernel;              use Glide_Kernel;
-with Glide_Kernel.Actions;      use Glide_Kernel.Actions;
-with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Contexts;     use Glide_Kernel.Contexts;
-with Glide_Kernel.Hooks;        use Glide_Kernel.Hooks;
-with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
-with Glide_Kernel.Project;      use Glide_Kernel.Project;
-with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
-with Glide_Kernel.Timeout;      use Glide_Kernel.Timeout;
+with Ada.Exceptions;              use Ada.Exceptions;
+with GNAT.Directory_Operations;   use GNAT.Directory_Operations;
+with GNAT.OS_Lib;                 use GNAT.OS_Lib;
+with Glib.Xml_Int;                use Glib.Xml_Int;
+with Glib.Convert;                use Glib.Convert;
+with Gdk;                         use Gdk;
+with Gdk.Color;                   use Gdk.Color;
+with Gdk.GC;                      use Gdk.GC;
+with Gdk.Types;                   use Gdk.Types;
+with Gdk.Types.Keysyms;           use Gdk.Types.Keysyms;
+with Glib;                        use Glib;
+with Glib.Object;                 use Glib.Object;
+with Glib.Values;                 use Glib.Values;
+with Glide_Intl;                  use Glide_Intl;
+with Glide_Kernel;                use Glide_Kernel;
+with Glide_Kernel.Actions;        use Glide_Kernel.Actions;
+with Glide_Kernel.Console;        use Glide_Kernel.Console;
+with Glide_Kernel.Contexts;       use Glide_Kernel.Contexts;
+with Glide_Kernel.Hooks;          use Glide_Kernel.Hooks;
+with Glide_Kernel.Modules;        use Glide_Kernel.Modules;
+with Glide_Kernel.Preferences;    use Glide_Kernel.Preferences;
+with Glide_Kernel.Project;        use Glide_Kernel.Project;
+with Glide_Kernel.Scripts;        use Glide_Kernel.Scripts;
+with Glide_Kernel.Timeout;        use Glide_Kernel.Timeout;
 with Glide_Kernel.Standard_Hooks; use Glide_Kernel.Standard_Hooks;
-with Language;                  use Language;
-with Language_Handlers;         use Language_Handlers;
-with Basic_Types;               use Basic_Types;
-with Gtk.Box;                   use Gtk.Box;
-with Gtk.Button;                use Gtk.Button;
-with Gtk.Dialog;                use Gtk.Dialog;
-with Gtk.Enums;                 use Gtk.Enums;
-with Gtk.GEntry;                use Gtk.GEntry;
+with Language;                    use Language;
+with Language_Handlers;           use Language_Handlers;
+with Basic_Types;                 use Basic_Types;
+with Gtk.Box;                     use Gtk.Box;
+with Gtk.Button;                  use Gtk.Button;
+with Gtk.Dialog;                  use Gtk.Dialog;
+with Gtk.Enums;                   use Gtk.Enums;
+with Gtk.GEntry;                  use Gtk.GEntry;
 with Gtk.Handlers;
-with Gtk.Label;                 use Gtk.Label;
-with Gtk.Menu;                  use Gtk.Menu;
-with Gtk.Menu_Item;             use Gtk.Menu_Item;
-with Gtk.Main;                  use Gtk.Main;
-with Gtk.Stock;                 use Gtk.Stock;
-with Gtk.Toolbar;               use Gtk.Toolbar;
-with Gtk.Widget;                use Gtk.Widget;
-with Gtk.Text_Mark;             use Gtk.Text_Mark;
-with Gtkada.Entry_Completion;   use Gtkada.Entry_Completion;
-with Gtkada.Handlers;           use Gtkada.Handlers;
-with Gtkada.MDI;                use Gtkada.MDI;
-with Gtkada.File_Selector;      use Gtkada.File_Selector;
-with Src_Editor_Box;            use Src_Editor_Box;
-with Src_Editor_Buffer;         use Src_Editor_Buffer;
-with Src_Editor_View;           use Src_Editor_View;
-with Src_Editor_View.Commands;  use Src_Editor_View.Commands;
-with String_List_Utils;         use String_List_Utils;
-with String_Utils;              use String_Utils;
-with Traces;                    use Traces;
-with Projects.Registry;         use Projects, Projects.Registry;
-with Src_Contexts;              use Src_Contexts;
-with Find_Utils;                use Find_Utils;
-with Histories;                 use Histories;
-with Aliases_Module;            use Aliases_Module;
-with Commands.Interactive;      use Commands, Commands.Interactive;
-with VFS;                       use VFS;
+with Gtk.Label;                   use Gtk.Label;
+with Gtk.Menu;                    use Gtk.Menu;
+with Gtk.Menu_Item;               use Gtk.Menu_Item;
+with Gtk.Main;                    use Gtk.Main;
+with Gtk.Stock;                   use Gtk.Stock;
+with Gtk.Toolbar;                 use Gtk.Toolbar;
+with Gtk.Widget;                  use Gtk.Widget;
+with Gtk.Text_Mark;               use Gtk.Text_Mark;
+with Gtkada.Entry_Completion;     use Gtkada.Entry_Completion;
+with Gtkada.Handlers;             use Gtkada.Handlers;
+with Gtkada.MDI;                  use Gtkada.MDI;
+with Gtkada.File_Selector;        use Gtkada.File_Selector;
+with Src_Editor_Box;              use Src_Editor_Box;
+with Src_Editor_Buffer;           use Src_Editor_Buffer;
+with Src_Editor_View;             use Src_Editor_View;
+with Src_Editor_View.Commands;    use Src_Editor_View.Commands;
+with String_List_Utils;           use String_List_Utils;
+with String_Utils;                use String_Utils;
+with Traces;                      use Traces;
+with Projects.Registry;           use Projects, Projects.Registry;
+with Src_Contexts;                use Src_Contexts;
+with Find_Utils;                  use Find_Utils;
+with Histories;                   use Histories;
+with Aliases_Module;              use Aliases_Module;
+with Commands.Interactive;        use Commands, Commands.Interactive;
+with VFS;                         use VFS;
 
-with Gtkada.Types;              use Gtkada.Types;
-with Gdk.Pixbuf;                use Gdk.Pixbuf;
+with Gtkada.Types;                use Gtkada.Types;
+with Gdk.Pixbuf;                  use Gdk.Pixbuf;
 
 with Generic_List;
 with GVD.Preferences; use GVD.Preferences;
@@ -4189,10 +4189,13 @@ package body Src_Editor_Module is
    procedure Preferences_Changed
      (Kernel : access Kernel_Handle_Record'Class)
    is
-      Id                        : Source_Editor_Module :=
-        Source_Editor_Module (Src_Editor_Module_Id);
-      Pref_Display_Line_Numbers : constant Boolean :=
+      Pref_Display_Line_Numbers    : constant Boolean :=
         Get_Pref (Kernel, Display_Line_Numbers);
+      Pref_Display_Subprogram_Name : constant Boolean :=
+        Get_Pref (Kernel, Display_Subprogram_Name);
+
+      Id : Source_Editor_Module :=
+        Source_Editor_Module (Src_Editor_Module_Id);
 
       Color   : Gdk_Color;
       GC      : Gdk.GC.Gdk_GC;
@@ -4210,6 +4213,24 @@ package body Src_Editor_Module is
       end if;
 
       Line_Highlighting.Add_Category (Search_Result_Highlighting, GC, Color);
+
+      if not Pref_Display_Subprogram_Name then
+         --  clear the subprogram name labels for all files opened
+
+         declare
+            Files : constant VFS.File_Array := Open_Files (Kernel);
+         begin
+            for Node in Files'Range loop
+               declare
+                  Box : constant Source_Editor_Box :=
+                    Get_Source_Box_From_MDI
+                      (Find_Editor (Kernel, Files (Node)));
+               begin
+                  Clear_Subprogram_Name (Box);
+               end;
+            end loop;
+         end;
+      end if;
 
       if Pref_Display_Line_Numbers = Id.Display_Line_Numbers then
          return;
