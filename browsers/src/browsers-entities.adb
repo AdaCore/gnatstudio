@@ -467,9 +467,30 @@ package body Browsers.Entities is
          Return_Value => "list",
          Description  =>
            -("Return the list of fields for entity. This is a list of entities"
-             & ", if the type has no field. This applies to Ada record and"
-             & " tagged"
+             & ". This applies to Ada record and tagged"
              & " types, or C structs for instance."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "parameters",
+         Return_Value => "list",
+         Description  =>
+           -("Return the list of parameters for entity. This is a list of"
+             & " entities. This applies to subprograms."),
+         Minimum_Args => 0,
+         Maximum_Args => 0,
+         Class        => Get_Entity_Class (Kernel),
+         Handler      => Show_Entity_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "return_type",
+         Return_Value => "Entity",
+         Description  =>
+           -("Return the return type for entity. This applies to"
+             & " subprograms."),
          Minimum_Args => 0,
          Maximum_Args => 0,
          Class        => Get_Entity_Class (Kernel),
@@ -517,6 +538,41 @@ package body Browsers.Entities is
                   Destroy (Discr);
                   Next (Discriminants);
                end loop;
+            end;
+
+         elsif Command = "parameters" then
+            declare
+               Lib_Info : constant LI_File_Ptr :=
+                 Locate_From_Source_And_Complete
+                   (Kernel, Get_Declaration_File_Of (Entity));
+               Subs : Subprogram_Iterator := Get_Subprogram_Parameters
+                 (Lib_Info   => Lib_Info, Subprogram => Entity);
+               Param : Entity_Information;
+            begin
+               Set_Return_Value_As_List (Data);
+               loop
+                  Param := Get (Subs);
+                  exit when Param = No_Entity_Information;
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Param));
+                  Destroy (Param);
+                  Next (Subs);
+               end loop;
+            end;
+
+         elsif Command = "return_type" then
+            declare
+               Lib_Info : constant LI_File_Ptr :=
+                 Locate_From_Source_And_Complete
+                   (Kernel, Get_Declaration_File_Of (Entity));
+               Returned : Entity_Information := Returned_Type
+                 (Lib_Info, Entity);
+            begin
+               if Returned /= No_Entity_Information then
+                  Set_Return_Value
+                    (Data, Create_Entity (Get_Script (Data), Returned));
+                  Destroy (Returned);
+               end if;
             end;
 
          elsif Command = "fields" then
@@ -874,7 +930,7 @@ package body Browsers.Entities is
       Subs : Subprogram_Iterator := Get_Subprogram_Parameters
         (Lib_Info   => Lib_Info, Subprogram => Item.Entity);
       Typ, Parameter : Entity_Information;
-      Returned : constant Entity_Information := Returned_Type
+      Returned : Entity_Information := Returned_Type
         (Lib_Info, Item.Entity);
    begin
       loop
@@ -915,6 +971,7 @@ package body Browsers.Entities is
             Length1 => 7,
             Callback => Build (Item, Returned));
          --  Do not free Returned, it is needed for calbacks.
+         Destroy (Returned);
       end if;
    end Add_Parameters;
 
@@ -1287,6 +1344,7 @@ package body Browsers.Entities is
       Layout (Data.Browser, Force => False);
       Destroy (Data.Iter);
       Pop_State (Data.Kernel);
+      Refresh_Canvas (Get_Canvas (Data.Browser));
       Data.Browser.Idle_Id := 0;
    end Destroy_Idle;
 
