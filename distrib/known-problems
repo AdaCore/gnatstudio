@@ -1,5 +1,11 @@
 Known Problems fixed in GPS 2.0.0
 
+- Block folding not compatible with extended character sets.
+  Problem:    When a block contains extended characters, folding this block
+              causes loss of text.
+  Workaround: Do not use block folding on source files which contain
+              extended characters.
+
 - C915-006 Incorrect refresh of line numbers
   Problem:    Sometimes scrolling source editors up and down using the
               scrollbar cause line numbers to be incorrectly displayed.
