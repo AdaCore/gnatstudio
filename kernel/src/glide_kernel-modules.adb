@@ -24,9 +24,11 @@ pragma Warnings (Off, Gtk.Image_Menu_Item);
 
 with GNAT.OS_Lib;       use GNAT.OS_Lib;
 with GUI_Utils;         use GUI_Utils;
+with Gdk.Dnd;           use Gdk.Dnd;
 with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with Glib;              use Glib;
+with Glib.Convert;      use Glib.Convert;
 with Glib.Module;       use Glib.Module;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
@@ -34,6 +36,7 @@ with Glide_Main_Window; use Glide_Main_Window;
 with Gtk.Image_Menu_Item; use Gtk.Image_Menu_Item;
 with Gtk.Accel_Map;     use Gtk.Accel_Map;
 with Gtk.Button;        use Gtk.Button;
+with Gtk.Dnd;           use Gtk.Dnd;
 with Gtk.Enums;         use Gtk.Enums;
 with Gtk.Image;         use Gtk.Image;
 with Gtk.Label;         use Gtk.Label;
@@ -41,6 +44,7 @@ with Gtk.Menu;          use Gtk.Menu;
 with Gtk.Menu_Bar;      use Gtk.Menu_Bar;
 with Gtk.Menu_Item;     use Gtk.Menu_Item;
 with Gtk.Menu_Shell;    use Gtk.Menu_Shell;
+with Gtk.Selection;     use Gtk.Selection;
 with Gtk.Toolbar;       use Gtk.Toolbar;
 with Gtk.Widget;        use Gtk.Widget;
 with Gtkada.MDI;        use Gtkada.MDI;
@@ -1663,5 +1667,68 @@ package body Glide_Kernel.Modules is
    begin
       return Kernel.Modules_List;
    end List_Of_Modules;
+
+   ------------------------
+   -- Drag_Data_Received --
+   ------------------------
+
+   procedure Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : Glide_Kernel.Kernel_Handle)
+   is
+      pragma Unreferenced (Object);
+
+      Context : constant Drag_Context :=
+        Drag_Context (Get_Proxy (Nth (Args, 1)));
+      Data    : constant Selection_Data :=
+        Selection_Data (Get_Proxy (Nth (Args, 4)));
+      Time    : constant Guint32 := Guint32 (Get_Uint (Nth (Args, 6)));
+      File    : Virtual_File;
+      First   : Natural;
+      Last    : Natural;
+
+   begin
+      if Get_Length (Data) >= 0
+        and then Get_Format (Data) = 8
+      then
+         declare
+            Files : constant String := Strip_CR (Get_Data_As_String (Data));
+         begin
+            First := Files'First;
+            Last  := First;
+
+            loop
+               exit when First > Files'Last;
+
+               Skip_To_Char (Files, Last, ASCII.LF);
+
+               if First + 7 < Last
+                 and then Files (First .. First + 7) = "file:///"
+               then
+                  File := Create
+                    (Locale_To_UTF8 (Files (First + 8 .. Last - 1)));
+
+                  if Is_Regular_File (File) then
+                     if File_Extension (File) = Project_File_Extension then
+                        Load_Project (Kernel, Full_Name (File).all);
+                     else
+                        Open_File_Editor (Kernel, File, New_File => False);
+                     end if;
+                  end if;
+               end if;
+
+               First := Last + 1;
+               Last  := First;
+            end loop;
+         end;
+
+         Gtk.Dnd.Finish (Context, Success => True, Del => False, Time => Time);
+
+      else
+         Gtk.Dnd.Finish
+           (Context, Success => False, Del => False, Time => Time);
+      end if;
+   end Drag_Data_Received;
 
 end Glide_Kernel.Modules;

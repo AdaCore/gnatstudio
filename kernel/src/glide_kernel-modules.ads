@@ -126,11 +126,13 @@
 
 with Gdk.Event;
 with Glib.Object;
+with Glib.Values;
 with Gdk.Types;
 with Gdk.Pixbuf;
 with Gtk.Image;
 with Gtk.Handlers;
 with Gtk.Menu_Item;
+with Gtk.Selection;
 with Gtk.Widget;
 with Gtkada.MDI;
 with Src_Info;
@@ -139,6 +141,7 @@ with Commands; use Commands;
 with Src_Info.Queries;  use Src_Info.Queries;
 with VFS;
 
+with Interfaces.C.Strings;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
 
@@ -792,6 +795,23 @@ package Glide_Kernel.Modules is
 
    procedure Destroy (Context : in out Entity_Selection_Context);
    --  Destroy the memory associated with the entity
+
+   -------------------------
+   -- Drag'n'drop support --
+   -------------------------
+
+   My_Target_Url    : constant Guint := 0;
+   Target_Table_Url : constant Gtk.Selection.Target_Entry_Array :=
+     (1 => (Interfaces.C.Strings.New_String ("text/uri-list"),
+            Gtk.Selection.Target_No_Constraint, My_Target_Url));
+
+   procedure Drag_Data_Received
+     (Object : access Glib.Object.GObject_Record'Class;
+      Args   : Glib.Values.GValues;
+      Kernel : Glide_Kernel.Kernel_Handle);
+   --  Handle text/uri-list drop events by loading the corresponding projects
+   --  or files. Assume the selection data contains a string representing a LF
+   --  or CR/LF separated list of files.
 
 private
 
