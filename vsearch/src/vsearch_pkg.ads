@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -49,6 +49,7 @@ package Vsearch_Pkg is
       Search_All_Check : Gtk_Check_Button;
       Case_Check : Gtk_Check_Button;
       Whole_Word_Check : Gtk_Check_Button;
+      Auto_Hide_Check : Gtk_Check_Button;
       Regexp_Check : Gtk_Check_Button;
    end record;
    type Vsearch_Access is access all Vsearch_Record'Class;
