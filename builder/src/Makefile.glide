@@ -1,0 +1,177 @@
+# This is the generic part of the support for multi-language
+# in Glide.
+
+vpath %$(C_EXT) $(SRC_DIRS)
+vpath %$(CXX_EXT) $(SRC_DIRS)
+vpath %$(OBJ_EXT) $(OBJ_DIR)
+
+all: compile link
+
+# Set C/C++ linker command & target
+
+ifeq ($(filter c++,$(LANGUAGES)),c++)
+   LINKER = $(CXX)
+
+   ifeq ($(filter ada,$(LANGUAGES)),ada)
+      # C++ and Ada mixed
+      LINKER = $(OBJ_DIR)/c++linker
+      LARGS = --LINK=$(LINKER)
+
+      ifeq ($(strip $(filter-out %gcc %g++ %c++,$(CXX))),)
+         # Case of GNU C++ and GNAT
+
+$(LINKER): Makefile
+	@echo \#!/bin/sh > $(LINKER)
+	@echo unset BINUTILS_ROOT >> $(LINKER)
+	@echo unset GCC_ROOT >> $(LINKER)
+	@echo $(CXX) $$\* >> $(LINKER)
+	@chmod +x $(LINKER)
+
+      else
+$(LINKER): Makefile
+	@echo \#!/bin/sh > $(LINKER)
+	@echo $(CXX) $$\* $(shell gcc -print-libgcc-file-name) >> $(LINKER)
+	@chmod +x $(LINKER)
+      endif
+   endif
+else
+   ifeq ($(strip $(LANGUAGES)),c)
+      # Case of C only
+      LINKER = $(CC)
+   endif
+endif
+
+C_INCLUDES := $(foreach name,$(SRC_DIRS),-I$(name))
+ALL_CFLAGS = $(CFLAGS) $(C_INCLUDES)
+ALL_CXXFLAGS = $(CXXFLAGS) $(C_INCLUDES)
+
+# Compute list of objects based on languages
+
+ifeq ($(strip $(filter c,$(LANGUAGES))),c)
+   ifndef C_SRCS
+      C_SRCS := \
+        $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(C_EXT))))
+   endif
+
+   OBJECTS += $(C_SRCS:$(C_EXT)=$(OBJ_EXT))
+endif
+
+ifeq ($(strip $(filter c++,$(LANGUAGES))),c++)
+   ifndef CXX_SRCS
+      CXX_SRCS := \
+        $(foreach name,$(SRC_DIRS),$(notdir $(wildcard $(name)/*$(CXX_EXT))))
+   endif
+
+   OBJECTS += $(CXX_SRCS:$(CXX_EXT)=$(OBJ_EXT))
+endif
+
+OBJ_FILES := $(foreach name,$(OBJECTS),$(OBJ_DIR)/$(name))
+
+ifeq ($(strip $(filter ada,$(LANGUAGES))),ada)
+   OBJECTS += $(ADA_SOURCES)
+endif
+
+DEP_FILES := $(OBJ_FILES:$(OBJ_EXT)=.d)
+
+compile: $(OBJECTS)
+
+# Linking rules
+
+ifeq ($(strip $(filter-out c c++,$(LANGUAGES))),)
+# link with C/C++
+link: $(OBJ_DIR)/$(EXEC)
+$(OBJ_DIR)/$(EXEC): $(OBJ_FILES)
+	$(LINKER) $(OBJ_FILES) -o $(OBJ_DIR)/$(EXEC) $(LDFLAGS)
+
+else
+ifeq ($(strip $(filter-out c c++ ada,$(LANGUAGES))),)
+# link with Ada/C/C++
+
+ifeq ($(MAIN),ada)
+# Ada main
+link: $(LINKER) force
+	$(GNATMAKE) -P$(PROJECT_FILE) $(ADA_SOURCES) \
+		    -largs $(OBJ_FILES) $(LARGS)
+else
+# C/C++ main
+# The trick here is to force gnatmake to bind/link, even if there is no
+# Ada main program. To achieve this effect, we use the -z switch, which is
+# close enough to our needs, and the usual -n gnatbind switch and --LINK= 
+# gnatlink switch.
+
+link: $(LINKER) force
+	$(GNATMAKE) -o $(OBJ_DIR)/$(EXEC) -z -P$(PROJECT_FILE) $(ADA_SOURCES) \
+		 -bargs -n -largs $(LARGS) \
+		 $(OBJ_FILES)
+endif
+
+else
+# unknown set of languages, fail
+link:
+	@echo do not know how to link with the following languages: $(LANGUAGES)
+	exit 1
+endif
+endif
+
+# Automatic handling of dependencies
+
+ifeq ($(CC),gcc)
+   DEP_FLAGS := -MM
+else
+   DEP_FLAGS := -M
+endif
+
+ifeq ($(strip $(filter-out %sh,$(SHELL))),)
+$(OBJ_DIR)/%.d: %$(C_EXT)
+	@echo updating dependencies for $<
+	@$(SHELL) -ec '$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
+	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
+	[ -s $@ ] || rm -f $@'
+
+$(OBJ_DIR)/%.d: %$(CXX_EXT)
+	@echo updating dependencies for $<
+	@$(SHELL) -ec '$(CXX) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
+	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
+	[ -s $@ ] || rm -f $@'
+else
+$(OBJ_DIR)/%.d: %$(C_EXT)
+	@echo updating dependencies for $<
+	@$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
+	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
+
+$(OBJ_DIR)/%.d: %$(CXX_EXT)
+	@echo updating dependencies for $<
+	@$(CC) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
+	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
+endif
+
+-include $(DEP_FILES)
+
+# Compilation rules
+
+.SUFFIXES: $(C_EXT) $(CXX_EXT)
+
+%$(OBJ_EXT) : %$(C_EXT)
+	$(CC) -c $(ALL_CFLAGS) $< -o $(OBJ_DIR)/$@
+
+%$(OBJ_EXT) : %$(CXX_EXT)
+	$(CXX) -c $(ALL_CXXFLAGS) $< -o $(OBJ_DIR)/$@
+
+%.adb : force
+	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
+
+%.ads : force
+	$(GNATMAKE) -c -P$(PROJECT_FILE) $@
+
+.PHONY: clean all force
+
+clean:
+	$(RM) $(OBJ_DIR)/*$(OBJ_EXT)
+	$(RM) $(OBJ_DIR)/*.ali
+	$(RM) $(OBJ_DIR)/b~*
+	$(RM) $(OBJ_DIR)/b_*
+	$(RM) $(OBJ_DIR)/$(EXEC)
+	$(RM) $(DEP_FILES)
+
+force:
+
