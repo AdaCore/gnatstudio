@@ -146,23 +146,24 @@ package body Commands is
      (Action  : access Root_Command;
       Success : Boolean)
    is
-      Queue             : Command_Queue renames Action.Queue;
-      Next_Command_Temp : List_Node;
+      Queue : Command_Queue renames Action.Queue;
+      Node  : List_Node;
 
    begin
       Queue.Command_In_Progress := False;
 
       if Success then
-         Next_Command_Temp := First (Action.Next_Commands);
+         Node := First (Action.Next_Commands);
 
-         while Next_Command_Temp /= Null_Node loop
-            Enqueue (Queue, Data (Next_Command_Temp), True);
-            Next_Command_Temp := Next (Next_Command_Temp);
+         while Node /= Null_Node loop
+            Enqueue (Queue, Data (Node), True);
+            Node := Next (Node);
          end loop;
 
          --  ??? There is a memory leak here.
          --  Pointers allocated to Action.Next_Commands are dangling.
          Action.Next_Commands := Null_List;
+
       else
          Free (Action.Next_Commands);
       end if;
