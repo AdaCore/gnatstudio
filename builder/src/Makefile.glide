@@ -213,34 +213,35 @@ endif
 
 # Automatic handling of dependencies
 
-ifeq ($(CC),gcc)
-   DEP_FLAGS := -MM
+ifeq ($(strip $(filter-out %gcc,$(CC))),)
+# Compiler is GCC, take avantage of the preprocessor option -MD
+DEP_CFLAGS = -Wp,-MD,$(OBJ_DIR)/$(*F).d
+
 else
-   DEP_FLAGS := -M
-endif
+# Compiler unknown, use a more general approach based on the output of $(CC) -M
+
+DEP_FLAGS  = -M
+DEP_CFLAGS =
 
 ifeq ($(strip $(filter-out %sh,$(SHELL))),)
 $(OBJ_DIR)/%.d: %$(C_EXT)
-	@echo updating dependencies for $(notdir $<)
 	@$(SHELL) -ec '$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
 	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
 	[ -s $@ ] || rm -f $@'
 
 $(OBJ_DIR)/%.d: %$(CXX_EXT)
-	@echo updating dependencies for $(notdir $<)
 	@$(SHELL) -ec '$(CXX) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
 	| sed '\''s/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g'\'' > $@; \
 	[ -s $@ ] || rm -f $@'
 else
 $(OBJ_DIR)/%.d: %$(C_EXT)
-	@echo updating dependencies for $(notdir $<)
 	@$(CC) $(DEP_FLAGS) $(ALL_CFLAGS) $< \
 	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
 
 $(OBJ_DIR)/%.d: %$(CXX_EXT)
-	@echo updating dependencies for $(notdir $<)
 	@$(CC) $(DEP_FLAGS) $(ALL_CXXFLAGS) $< \
 	| sed 's/\($*\)\$(OBJ_EXT)[ :]*/\1$(OBJ_EXT) $(notdir $@) : /g' > $@
+endif
 endif
 
 -include $(DEP_FILES)
@@ -253,11 +254,11 @@ endif
 
 # Compile C files individually
 %$(OBJ_EXT) : %$(C_EXT)
-	$(CC) -c $(ALL_CFLAGS) $< -o $(OBJ_DIR)/$@
+	$(CC) -c $(ALL_CFLAGS) $(DEP_CFLAGS) $< -o $(OBJ_DIR)/$@
 
 # Compile C++ files individually
 %$(OBJ_EXT) : %$(CXX_EXT)
-	$(CXX) -c $(ALL_CXXFLAGS) $< -o $(OBJ_DIR)/$@
+	$(CXX) -c $(ALL_CXXFLAGS) $(DEP_CFLAGS) $< -o $(OBJ_DIR)/$@
 
 # Compile Ada body files individually
 %.adb : force
@@ -279,7 +280,7 @@ c : $(C_OBJECTS)
 # Compile all C++ files in the project
 c++ : $(CXX_OBJECTS)
 
-.PHONY: clean all force ada
+.PHONY: clean force ada c c++
 
 clean:
 	$(RM) $(OBJ_DIR)/*$(OBJ_EXT)
@@ -288,7 +289,7 @@ clean:
 	$(RM) $(OBJ_DIR)/b_*
 	$(RM) $(OBJ_DIR)/*$(AR_EXT)
 	$(RM) $(OBJ_DIR)/$(EXEC)
-	$(RM) $(DEP_FILES)
+	$(RM) $(OBJ_DIR)/*.d
 
 force:
 
