@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                        Copyright (C) 2002-2003                    --
+--                        Copyright (C) 2002-2004                    --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -36,6 +36,7 @@ with Gtk.Widget;                use Gtk.Widget;
 with Traces;                    use Traces;
 with Glide_Kernel.Scripts;      use Glide_Kernel.Scripts;
 with VFS;                       use VFS;
+with OS_Utils;
 
 package body VFS_Module is
 
@@ -203,6 +204,23 @@ package body VFS_Module is
                  (Data, -"error in regexp: " & Nth_Arg (Data, 1));
                return;
          end;
+
+      elsif Command = "dump" then
+         declare
+            Temp_File : constant String := OS_Utils.Create_Tmp_File;
+            Writable  : Writable_File;
+         begin
+            Writable := Write_File (Create (Temp_File));
+
+            if Nth_Arg (Data, 2, Default => False) then
+               Write (Writable, Nth_Arg (Data, 1) & ASCII.LF);
+            else
+               Write (Writable, Nth_Arg (Data, 1));
+            end if;
+
+            Close (Writable);
+            Set_Return_Value (Data, Temp_File);
+         end;
       end if;
    end VFS_Command_Handler;
 
@@ -352,6 +370,17 @@ package body VFS_Module is
            -"list files following pattern (all files by default).",
          Minimum_Args => 0,
          Maximum_Args => 1,
+         Handler      => VFS_Command_Handler'Access);
+      Register_Command
+        (Kernel,
+         Command      => "dump",
+         Params       => "(string)",
+         Return_Value => "string [add_lf]",
+         Description  =>
+         -("Dump string to a temporary file. Return the name of the file."
+             & " If add_lf is TRUE, append a line feed at end of file."),
+         Minimum_Args => 1,
+         Maximum_Args => 2,
          Handler      => VFS_Command_Handler'Access);
    end Register_Module;
 
