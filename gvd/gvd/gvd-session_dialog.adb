@@ -13,7 +13,7 @@
 -- but  WITHOUT ANY WARRANTY;  without even the  implied warranty of --
 -- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU --
 -- General Public License for more details. You should have received --
--- a copy of the GNU General Public License along with this library; --
+-- a copy of the GNU General Public License along with this program; --
 -- if not,  write to the  Free Software Foundation, Inc.,  59 Temple --
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
@@ -36,6 +36,7 @@ with GVD.Process.Standalone;    use GVD.Process.Standalone;
 with String_Utils;              use String_Utils;
 with GVD.Types;                 use GVD.Types;
 with GVD.Main_Window;           use GVD.Main_Window;
+with Odd_Intl;                  use Odd_Intl;
 
 with Ada.Unchecked_Deallocation;
 
@@ -81,7 +82,7 @@ package body GVD.Session_Dialog is
          Open.Sessions_Dir := new String' (Dir);
       end if;
 
-      Set_Title (Open, "Save Session");
+      Set_Title (Open, -"Save Session");
       Grab_Focus (Open.Entry1);
       Open.Lock_Buttons := True;
       Show_All (Open);
@@ -108,7 +109,7 @@ package body GVD.Session_Dialog is
            Debugger_Process_Tab (Debugger_List.Debugger).Descriptor.Program;
 
          if Program.all = "" then
-            Append_Button (Open, "<no executable>");
+            Append_Button (Open, -"<no executable>");
          else
             Append_Button (Open, Program.all);
          end if;
@@ -238,7 +239,7 @@ package body GVD.Session_Dialog is
          Open.Sessions_Dir := new String' (Dir);
       end if;
 
-      Set_Title (Open, "Open Session");
+      Set_Title (Open, -"Open Session");
       Grab_Focus (Open.Entry1);
       Open.Lock_Buttons := False;
       Show_All (Open);
