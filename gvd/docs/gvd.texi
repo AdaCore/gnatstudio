@@ -4,7 +4,7 @@
 @settitle Using the GNU Visual Debugger
 @syncodeindex fn cp
 
-@set GVDVersion 1.1.0
+@set GVDVersion 1.2.0
 
 @titlepage
 
