@@ -33,7 +33,6 @@ with VCS_View_Pkg;              use VCS_View_Pkg;
 with Glide_Intl;                use Glide_Intl;
 with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Glide_Kernel.Console;      use Glide_Kernel.Console;
-with Glide_Kernel.Preferences;  use Glide_Kernel.Preferences;
 with Glide_Kernel.Project;      use Glide_Kernel.Project;
 
 with String_List_Utils;         use String_List_Utils;
@@ -847,30 +846,27 @@ package body VCS_View_API is
    is
       use String_List;
 
-      List_Length        : Integer := Length (Files);
       Logs               : String_List.List;
       Files_Temp         : List_Node := First (Files);
 
       Commit_Command     : Commit_Command_Access;
       Get_Status_Command : Get_Status_Command_Access;
 
-      Command            : String_List.List;
-      Args               : String_List.List;
+      File_Command       : String_List.List;
+      File_Args          : String_List.List;
+      Log_Command        : String_List.List;
+      Log_Args           : String_List.List;
+      Head_List          : String_List.List;
 
-      File_Check_Script  : constant String :=
-        Get_Pref (Kernel, VCS_Commit_File_Check);
-
-      Log_Check_Script   : constant String :=
-        Get_Pref (Kernel, VCS_Commit_Log_Check);
+      Project            : Project_Id;
 
       Child              : MDI_Child;
       Success            : Boolean;
 
-      Log_Checks         : array (1 .. List_Length) of External_Command_Access;
-      File_Checks        : array (1 .. List_Length) of External_Command_Access;
+      Log_Checks         : External_Command_Access;
+      File_Checks        : External_Command_Access;
 
-      First_Check        : Command_Access := null;
-      Counter            : Integer;
+      First_Check, Last_Check : Command_Access := null;
 
    begin
       while Files_Temp /= Null_Node loop
@@ -888,7 +884,6 @@ package body VCS_View_API is
          Files_Temp := Next (Files_Temp);
       end loop;
 
-
       --  Create the Commit command.
       Create (Commit_Command, Ref, Files, Logs);
 
@@ -899,102 +894,88 @@ package body VCS_View_API is
         (Command_Access (Commit_Command),
          Command_Access (Get_Status_Command));
 
+      First_Check := Command_Access (Commit_Command);
+
       --  Create the file checks.
-      if File_Check_Script /= "" then
-         Files_Temp := First (Files);
-         Counter := 1;
+      Files_Temp := First (Files);
 
-         while Files_Temp /= Null_Node loop
-            Append (Command, File_Check_Script);
-            Append (Args, Data (Files_Temp));
+      while Files_Temp /= Null_Node loop
+         Project := Get_Project_From_File
+           (Get_Project_View (Kernel), Data (Files_Temp));
 
-            Create (File_Checks (Counter),
-                    Kernel,
-                    Command,
-                    Null_List,
-                    Args,
-                    Null_List,
-                    Check_Handler'Access);
+         if Project /= No_Project then
+            declare
+               File_Check_Script : constant String := Get_Attribute_Value
+                 (Project, Vcs_File_Check, Ide_Package);
+               Log_Check_Script  : constant String := Get_Attribute_Value
+                 (Project, Vcs_Log_Check, Ide_Package);
+               Log_File  : constant String :=
+                 Get_Log_From_File (Kernel, Data (Files_Temp));
+            begin
+               if File_Check_Script /= "" then
+                  Append (File_Command, File_Check_Script);
+                  Append (File_Args, Data (Files_Temp));
+               end if;
 
-            Files_Temp := Next (Files_Temp);
-            Counter := Counter + 1;
-         end loop;
+               if Log_Check_Script /= "" then
+                  Append (Log_Command, Log_Check_Script);
+                  Append (Log_Args, Log_File);
+                  Append
+                    (Head_List, -"File: " & Head (Files) & ASCII.LF
+                     & (-"The changelog provided does not pass the checks."));
+               end if;
+            end;
+         end if;
 
-         --  If file checks exist, enqueue each check as a consequence of the
-         --  previous.
+         Files_Temp := Next (Files_Temp);
+      end loop;
 
-         for J in 2 .. List_Length loop
-            Add_Consequence_Action
-              (Command_Access (File_Checks (J - 1)),
-               Command_Access (File_Checks (J)));
-         end loop;
-
-         --  Keep track of the first command
-         First_Check := Command_Access (File_Checks (1));
+      if File_Command /= Null_List then
+         Create (File_Checks,
+                 Kernel,
+                 File_Command,
+                 Null_List,
+                 File_Args,
+                 Null_List,
+                 Check_Handler'Access);
+         First_Check := Command_Access (File_Checks);
+         Last_Check  := Command_Access (File_Checks);
       end if;
 
-      --  Create the logs checks.
-      if Log_Check_Script /= "" then
-         Files_Temp := First (Files);
-         Counter := 1;
+      if Log_Command /= Null_List then
+         Create
+           (Log_Checks,
+            Kernel,
+            Log_Command,
+            Null_List,
+            Log_Args,
+            Head_List,
+            Check_Handler'Access);
 
-         while Files_Temp /= Null_Node loop
-            declare
-               Log_File  : constant String
-                 := Get_Log_From_File (Kernel, Data (Files_Temp));
-               Head_List : String_List.List;
-            begin
-               Free (Command);
-               Append (Command, Log_Check_Script);
+         Last_Check  := Command_Access (Log_Checks);
 
-               Free (Args);
-               Append (Args, Log_File);
-
-               Append (Head_List, -"File: " & Head (Files));
-               Append (Head_List,
-                       -"The changelog provided does not pass the checks.");
-
-               Create
-                 (Log_Checks (Counter),
-                  Kernel,
-                  Command,
-                  Null_List,
-                  Args,
-                  Head_List,
-                  Check_Handler'Access);
-            end;
-
-            Files_Temp := Next (Files_Temp);
-            Counter := Counter + 1;
-         end loop;
-
-         --  Enqueue each check as a consequence of the
-         --  previous.
-         for J in 2 .. List_Length loop
-            Add_Consequence_Action
-              (Command_Access (Log_Checks (J - 1)),
-               Command_Access (Log_Checks (J)));
-         end loop;
-
-         --  Keep track of the first command
-         if First_Check = null then
-            First_Check := Command_Access (Log_Checks (1));
+         if File_Command /= Null_List then
+            --  Test all the logs after checking all the files
+            Add_Consequence_Action (File_Checks, Log_Checks);
          else
-            Add_Consequence_Action
-              (Command_Access (File_Checks (List_Length)),
-               Command_Access (Log_Checks (1)));
+            First_Check := Command_Access (Log_Checks);
          end if;
       end if;
 
-      if First_Check = null then
-         First_Check := Command_Access (Commit_Command);
+      --  Execute the commit command after the last file check or log check
+      --  command.
+      if Last_Check /= null then
+         Add_Consequence_Action (Last_Check, Commit_Command);
       end if;
 
       Enqueue (Get_Queue (Ref), First_Check);
 
       Free (Logs);
-      Free (Command);
-      Free (Args);
+      Free (File_Command);
+      Free (Log_Command);
+      Free (File_Args);
+      Free (Log_Args);
+      Free (Head_List);
    end Commit_Files;
 
    ---------------------
