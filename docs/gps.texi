@@ -6175,10 +6175,12 @@ GPS.
 @noindent
 The GPS menu bar can be customized through XML files. These files are found
 through three possible mechanisms, described here in the order in which they
-are searched. Files found through @code{GPS_CUSTOM_PATH} or the user's
-directory can override any setup found in the system directory. Likewise,
-files found in the user's directory can override any file found in the
-@code{GPS_CUSTOM_PATH} directories.
+are searched. Files with the @file{.xml} extension found through
+@code{GPS_CUSTOM_PATH} or the user's directory can override any setup found in
+the system directory. Likewise, files found in the user's directory can
+override any file found in the @code{GPS_CUSTOM_PATH} directories.
+
+Note that only files with the @file{.xml} extension are considered.
 
 @itemize @bullet
 @item System wide customization
@@ -6186,7 +6188,7 @@ files found in the user's directory can override any file found in the
 The @file{INSTALL/share/gps/customize} directory, where
 @file{INSTALL} is the name of the GPS installation directory, should contain
 the files that will always be loaded whenever GPS is loaded, by any user on
-the system
+the system.
 
 @item @code{GPS_CUSTOM_PATH}
 
@@ -7671,11 +7673,11 @@ file name, and displays each in the Messages window.
 
 @noindent
 The output of external commands is send by default to the GPS console window.
-However, this is not always appropriate, and finer control can be exercised
-through the @code{output} attribute of the @code{<external>} tag.
+In addition, finer control can be exercised using the @code{output} attribute
+of the @code{<external>} tag.
 
-This attribute is a string. Two values have specific meanings, although any
-value can be specified.
+This attribute is a string that may take any value. Two values have specific
+meanings:
 
 @table @code
 @item "none"
