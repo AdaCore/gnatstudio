@@ -36,7 +36,7 @@ with Gtk.Widget;    use Gtk.Widget;
 with Gtk.Toggle_Button; use Gtk.Toggle_Button;
 with Traces;        use Traces;
 with GUI_Utils;     use GUI_Utils;
-with String_Utils;  use String_Utils;
+with File_Utils;    use File_Utils;
 
 package body Histories is
 
