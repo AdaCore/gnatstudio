@@ -657,6 +657,10 @@ package body Directory_Tree is
 
          Close (Handle);
       end if;
+
+   exception
+      when Directory_Error =>
+         null;
    end Add_Directory;
 
    ----------------------
@@ -665,19 +669,22 @@ package body Directory_Tree is
 
    procedure Add_Directory_Cb (W : access Gtk_Widget_Record'Class) is
       Selector : Directory_Selector := Directory_Selector (W);
+      Dir : constant String := Get_Selection (Selector.Directory);
    begin
       pragma Assert
         (Selector.List /= null, "Not a multiple-directory selector");
-      Freeze (Selector.List);
-      Unselect_All (Selector.List);
-      Add_Directory (Selector, Get_Selection (Selector.Directory), True);
-      Sort (Selector.List);
-      Thaw (Selector.List);
+      if Dir /= "" then
+         Freeze (Selector.List);
+         Unselect_All (Selector.List);
+         Add_Directory (Selector, Dir, True);
+         Sort (Selector.List);
+         Thaw (Selector.List);
 
-      --  Show the first selected item
-      Moveto (Selector.List,
-              Gint_List.Get_Data (Get_Selection (Selector.Directory)),
-              0, 0.0, 0.2);
+         --  Show the first selected item
+         Moveto (Selector.List,
+                 Gint_List.Get_Data (Get_Selection (Selector.Directory)),
+                 0, 0.0, 0.2);
+      end if;
    end Add_Directory_Cb;
 
    ----------------------
