@@ -1735,9 +1735,9 @@ package body Projects.Registry is
 
    procedure Compute_Predefined_Paths
      (Registry     : in out Project_Registry;
+      GNAT_Version : access GNAT.OS_Lib.String_Access;
       Gnatls_Path  : String;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
-      GNAT_Version : out GNAT.OS_Lib.String_Access)
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access)
    is
       Current : GNAT.OS_Lib.String_Access := new String'("");
 
@@ -1769,8 +1769,8 @@ package body Projects.Registry is
          end if;
       end Add_Directory;
 
-      Fd          : TTY_Process_Descriptor;
-      Result      : Expect_Match;
+      Fd     : TTY_Process_Descriptor;
+      Result : Expect_Match;
 
    begin
       Non_Blocking_Spawn
@@ -1783,7 +1783,7 @@ package body Projects.Registry is
       declare
          S : constant String := Expect_Out_Match (Fd);
       begin
-         GNAT_Version := new String'(S (S'First + 7 .. S'Last));
+         GNAT_Version.all := new String'(S (S'First + 7 .. S'Last));
       end;
 
       Expect (Fd, Result, "Source Search Path:", Timeout => -1);

@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2002-2003                       --
+--                     Copyright (C) 2002-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
@@ -61,11 +61,13 @@ package Projects.Registry is
 
    procedure Compute_Predefined_Paths
      (Registry     : in out Project_Registry;
+      GNAT_Version : access GNAT.OS_Lib.String_Access;
       Gnatls_Path  : String;
-      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access;
-      GNAT_Version : out GNAT.OS_Lib.String_Access);
+      Gnatls_Args  : GNAT.OS_Lib.Argument_List_Access);
    --  Compute the predefined paths for the GNAT runtime, and return the
    --  GNAT version that is used.
+   --  ??? GNAT_Version is an access parameter rather than 'out' because
+   --  of a bug in GNAT 3.17/GCC 2.8.1
 
    function Get_Predefined_Source_Path
      (Registry : Project_Registry) return String;
