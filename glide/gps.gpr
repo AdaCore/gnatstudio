@@ -23,6 +23,7 @@ with "../shared";
 with "../python/python";
 with "../shell/shell";
 with "../keymanager/keymanager";
+with "../theme_manager/theme_manager";
 
 project GPS is
 
