@@ -22,11 +22,8 @@ with Glib; use Glib;
 
 with Gdk.Input;
 with Gdk.Types;
-with Gdk.Cursor;   use Gdk.Cursor;
 with Gdk.Color;    use Gdk.Color;
-with Gdk.Cursor;   use Gdk.Cursor;
 with Gdk.Types;    use Gdk.Types;
-with Gdk.Window;   use Gdk.Window;
 with Gdk.Event;    use Gdk.Event;
 
 with Gtk;          use Gtk;
@@ -67,6 +64,7 @@ with Odd.Types;                 use Odd.Types;
 with Odd.Code_Editors;          use Odd.Code_Editors;
 with Odd.Menus;                 use Odd.Menus;
 with Odd.Preferences;           use Odd.Preferences;
+with Odd.Utils;                 use Odd.Utils;
 
 with System;
 with Unchecked_Conversion;
@@ -1246,18 +1244,9 @@ package body Odd.Process is
 
    procedure Set_Busy_Cursor
      (Debugger : access Debugger_Process_Tab_Record'Class;
-      Busy     : Boolean := True)
-   is
-      Cursor   : Gdk_Cursor;
+      Busy     : Boolean := True) is
    begin
-      if Busy then
-         Gdk_New (Cursor, Gdk.Types.Watch);
-      else
-         Gdk_New (Cursor, Gdk.Types.Left_Ptr);
-      end if;
-
-      Set_Cursor (Get_Window (Debugger.Window), Cursor);
-      Destroy (Cursor);
+      Set_Busy_Cursor (Get_Window (Debugger.Window), Busy);
    end Set_Busy_Cursor;
 
    -------------
