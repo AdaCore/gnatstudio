@@ -9219,9 +9219,10 @@ GPS.Hook ("open_file_action_hook").run \
 
 @ifclear python
 GPS> Hook "project_changed"
-GPS> run %1
+GPS> Hook.run %1
 GPS> Hook "open_file_action_hook"
-GPS> run %1 %1 100 1 0 true true true
+GPS> File "test.adb"
+GPS> Hook.run %2 %1 100 1 0 true true true
 @end ifclear
 
 @c --------------------------------------------------------------------
