@@ -331,7 +331,6 @@ package body Glide_Menu is
 
          Gtk_New (Tools & (-"_Profile"), "", null),
          Gtk_New (Tools & (-"_Memory Analyzer"), "", null),
-         Gtk_New (Tools & (-"_Generate API doc"), "", null),
 
          Gtk_New (Window));
    end Glide_Menu_Items;
