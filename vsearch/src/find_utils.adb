@@ -28,6 +28,7 @@ with Osint;                   use Osint;
 with Prj_API;                 use Prj_API;
 with Basic_Types;             use Basic_Types;
 with Boyer_Moore;             use Boyer_Moore;
+with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Project;    use Glide_Kernel.Project;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 with String_Utils;            use String_Utils;
@@ -49,6 +50,9 @@ package body Find_Utils is
    procedure Free_Match_Array is new Unchecked_Deallocation
      (Match_Array, Match_Array_Access);
 
+   procedure Unchecked_Free is new Unchecked_Deallocation
+     (Match_Result_Array, Match_Result_Array_Access);
+
    type Recognized_Lexical_States is
      (Statements, Strings, Mono_Comments, Multi_Comments);
    --  Current lexical state of the currently parsed file.
@@ -58,14 +62,8 @@ package body Find_Utils is
    --  Mono_Comments   end of line terminated comments
    --  Multi_Comments  (possibly) multi-line comments
 
-   type Location is record
-      Index, Line, Column : Natural;
-   end record;
-
-   No_Location : constant Location := (0, 0, 0);
-
-   type Scan_Callback is access procedure (Loc : Location; Line : String);
-   --  Callback for a match in a file
+   type Scan_Callback is access procedure (Match : Match_Result);
+   --  Callback for a match in a buffer
 
    procedure Scan_Buffer
      (Buffer         : String;
@@ -88,6 +86,23 @@ package body Find_Utils is
    --  Search Context in the file Name, searching only in the appropriate
    --  scope.
 
+   function Scan_File_And_Store
+     (Context  : access Search_Context'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Name : String)
+     return Match_Result_Array_Access;
+   --  Same as above, but behaves as if there was a default callback that
+   --  prints the result in the Glide console.
+   --  It returns the list of matches that were found in the file, or null if
+   --  no match was found. It is the responsability of the caller to free the
+   --  returned array.
+
+   procedure Highlight_Result
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : String;
+      Match     : Match_Result);
+   --  Print the result of the search in the glide console
+
    function End_Of_Line (Buffer : String; Pos : Natural) return Integer;
    pragma Inline (End_Of_Line);
    --  Return the index for the end of the line containing Pos
@@ -95,6 +110,25 @@ package body Find_Utils is
    function Is_Word_Delimiter (C : Character) return Boolean;
    pragma Inline (Is_Word_Delimiter);
    --  Return True if C is a character which can't be in a word.
+
+   procedure Free (Result : in out Match_Result_Array_Access);
+   --  Free Result and its components
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Result : in out Match_Result_Array_Access) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Match_Result, Match_Result_Access);
+   begin
+      if Result /= null then
+         for R in Result'Range loop
+            Unchecked_Free (Result (R));
+         end loop;
+         Unchecked_Free (Result);
+      end if;
+   end Free;
 
    -----------------------
    -- Is_Word_Delimiter --
@@ -179,9 +213,17 @@ package body Find_Utils is
             Pos := Context.Sub_Matches (0).First;
 
             To_Line_Column (Pos);
-            Callback
-              ((Pos, Ref_Line, Ref_Column),
-               Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)));
+            declare
+               Line : constant String :=
+                 Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
+            begin
+               Callback
+                 (Match_Result' (Length => Line'Length,
+                                 Index  => Pos,
+                                 Line   => Ref_Line,
+                                 Column => Ref_Column,
+                                 Text   => Line));
+            end;
 
             Pos := Pos + 1;
          end loop;
@@ -216,9 +258,18 @@ package body Find_Utils is
                 (Buffer (Pos + Context.Look_For'Length))))
             then
                To_Line_Column (Pos);
-               Callback
-                 ((Pos, Ref_Line, Ref_Column),
-                  Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos)));
+
+               declare
+                  Line : constant String :=
+                    Buffer (Last_Line_Start .. End_Of_Line (Buffer, Pos));
+               begin
+                  Callback
+                    (Match_Result' (Length => Line'Length,
+                                    Index  => Pos,
+                                    Line   => Ref_Line,
+                                    Column => Ref_Column,
+                                    Text   => Line));
+               end;
             end if;
 
             Pos := Pos + 1;
@@ -480,6 +531,66 @@ package body Find_Utils is
          Close (FD);
    end Scan_File;
 
+   ----------------------
+   -- Highlight_Result --
+   ----------------------
+
+   procedure Highlight_Result
+     (Kernel    : access Kernel_Handle_Record'Class;
+      File_Name : String;
+      Match     : Match_Result) is
+   begin
+      Insert (Kernel,
+              File_Name
+              & ":" & Image (Match.Line)
+              & ":" & Image (Match.Column)
+              & " " & Match.Text);
+   end Highlight_Result;
+
+   -------------------------
+   -- Scan_File_And_Store --
+   -------------------------
+
+   function Scan_File_And_Store
+     (Context  : access Search_Context'Class;
+      Kernel   : access Kernel_Handle_Record'Class;
+      Name : String)
+      return Match_Result_Array_Access
+   is
+      Result : Match_Result_Array_Access := null;
+      Count  : Natural := 0;
+
+      procedure Callback (Match : Match_Result);
+      --  Save Match in the result array.
+
+      procedure Callback (Match : Match_Result) is
+         Tmp : Match_Result_Array_Access;
+         Size : Natural := 0;
+      begin
+         Count := Count + 1;
+         if Result = null then
+            Size := 10;
+         elsif Count > Result'Last then
+            Size := Result'Last * 2;
+         end if;
+
+         if Size /= 0 then
+            Tmp := Result;
+            Result := new Match_Result_Array (1 .. Size);
+            if Tmp /= null then
+               Result (1 .. Tmp'Last) := Tmp.all;
+               Unchecked_Free (Tmp);
+            end if;
+         end if;
+
+         Result (Count) := new Match_Result' (Match);
+      end Callback;
+
+   begin
+      Scan_File (Context, Name, Callback'Unrestricted_Access);
+      return Result;
+   end Scan_File_And_Store;
+
    -----------------------
    -- Context_As_String --
    -----------------------
@@ -589,6 +700,8 @@ package body Find_Utils is
    begin
       Directory_List.Free (Context.Dirs);
       Free (Context.Directory);
+      Free (Context.Current_File);
+      Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
 
@@ -611,6 +724,7 @@ package body Find_Utils is
    procedure Free (Context : in out Files_Project_Context) is
    begin
       Free (Context.Files);
+      Free (Context.Next_Matches_In_File);
       Free (Search_Context (Context));
    end Free;
 
@@ -623,6 +737,7 @@ package body Find_Utils is
       Files   : Basic_Types.String_Array_Access) is
    begin
       Free (Context.Files);
+      Free (Context.Next_Matches_In_File);
       Context.Files := Files;
       Context.Current_File := Context.Files'First;
    end Set_File_List;
@@ -638,6 +753,7 @@ package body Find_Utils is
       Recurse       : Boolean := False) is
    begin
       Free (Context.Directory);
+      Free (Context.Next_Matches_In_File);
       Context.Files_Pattern := Files_Pattern;
       Context.Recurse := Recurse;
 
@@ -737,37 +853,44 @@ package body Find_Utils is
    is
       C : Files_Project_Context_Access := Files_Project_Context_Access
         (Context);
-      Count : Natural := 0;
-
-      procedure Callback (Loc : Location; Line : String);
-      --  Print the result of the search on standard output
-
-      procedure Callback (Loc : Location; Line : String) is
-      begin
-         Count := Count + 1;
-         Insert (Kernel,
-                 C.Files (C.Current_File).all
-                 & ":" & Image (Loc.Line)
-                 & ":" & Image (Loc.Column)
-                 & " " & Line);
-      end Callback;
 
    begin
+      --  IF there are still some matches in the current file that we haven't
+      --  returned , do it now.
+      if C.Next_Matches_In_File /= null then
+         C.Last_Match_Returned := C.Last_Match_Returned + 1;
+         if C.Last_Match_Returned <= C.Next_Matches_In_File'Last
+           and then C.Next_Matches_In_File (C.Last_Match_Returned) /= null
+         then
+            Highlight_Result
+              (Kernel, C.Files (C.Current_File).all,
+               C.Next_Matches_In_File (C.Last_Match_Returned).all);
+            return True;
+         else
+            Free (C.Next_Matches_In_File);
+         end if;
+      end if;
+
       if C.Files = null then
          return False;
       end if;
 
       --  Loop until at least one match
-      while Count = 0  loop
+      loop
          if C.Current_File > C.Files'Last then
             return False;
          end if;
 
-         Scan_File
-           (C, C.Files (C.Current_File).all, Callback'Unrestricted_Access);
+         C.Next_Matches_In_File := Scan_File_And_Store
+           (C, Kernel, C.Files (C.Current_File).all);
+         exit when C.Next_Matches_In_File /= null;
+
          C.Current_File := C.Current_File + 1;
       end loop;
 
+      C.Last_Match_Returned := C.Next_Matches_In_File'First;
+      Highlight_Result (Kernel, C.Files (C.Current_File).all,
+                        C.Next_Matches_In_File (C.Last_Match_Returned).all);
       return True;
    end Search_Files_From_Project;
 
@@ -785,22 +908,24 @@ package body Find_Utils is
       C : Files_Context_Access := Files_Context_Access (Context);
       File_Name : String (1 .. Max_Path_Len);
       Last      : Natural;
-      Count     : Natural := 0;
-
-      procedure Callback (Loc : Location; Line : String);
-      --  Print the result of the search on standard output
-
-      procedure Callback (Loc : Location; Line : String) is
-      begin
-         Count := Count + 1;
-         Insert (Kernel,
-                 Head (C.Dirs).Name.all & File_Name (1 .. Last)
-                 & ":" & Image (Loc.Line)
-                 & ":" & Image (Loc.Column)
-                 & " " & Line);
-      end Callback;
 
    begin
+      --  IF there are still some matches in the current file that we haven't
+      --  returned , do it now.
+      if C.Next_Matches_In_File /= null then
+         C.Last_Match_Returned := C.Last_Match_Returned + 1;
+         if C.Last_Match_Returned <= C.Next_Matches_In_File'Last
+           and then C.Next_Matches_In_File (C.Last_Match_Returned) /= null
+         then
+            Highlight_Result
+              (Kernel, C.Current_File.all,
+               C.Next_Matches_In_File (C.Last_Match_Returned).all);
+            return True;
+         else
+            Free (C.Next_Matches_In_File);
+         end if;
+      end if;
+
       if C.Directory = null then
          return False;
       end if;
@@ -811,7 +936,7 @@ package body Find_Utils is
          Open (Head (C.Dirs).Dir, C.Directory.all);
       end if;
 
-      while Count = 0 loop
+      while C.Next_Matches_In_File = null loop
          Read (Head (C.Dirs).Dir, File_Name, Last);
 
          if Last = 0 then
@@ -825,7 +950,6 @@ package body Find_Utils is
                Full_Name : constant String :=
                  Head (C.Dirs).Name.all & File_Name (1 .. Last);
             begin
-               Trace (Me, Full_Name);
                if Is_Directory (Full_Name) then
                   if C.Recurse
                     and then File_Name (1 .. Last) /= "."
@@ -839,12 +963,21 @@ package body Find_Utils is
 
                --  ??? Should check that we have a text file
                elsif Match (File_Name (1 .. Last), C.Files_Pattern) then
-                  Scan_File (C, Full_Name, Callback'Unrestricted_Access);
+                  C.Next_Matches_In_File :=
+                    Scan_File_And_Store (C, Kernel, Full_Name);
+
+                  if C.Next_Matches_In_File /= null then
+                     Free (C.Current_File);
+                     C.Current_File := new String' (Full_Name);
+                  end if;
                end if;
             end;
          end if;
       end loop;
 
+      C.Last_Match_Returned := C.Next_Matches_In_File'First;
+      Highlight_Result (Kernel, C.Current_File.all,
+                        C.Next_Matches_In_File (C.Last_Match_Returned).all);
       return True;
 
    exception

@@ -264,6 +264,19 @@ private
 
    type Match_Array_Access is access GNAT.Regpat.Match_Array;
 
+   type Match_Result (Length : Natural) is record
+      Index, Line, Column : Natural;
+      Text : String (1 .. Length);
+   end record;
+   --  The result of a match. This is a discriminated type so that we don't
+   --  have to worry who is responsible to free it.
+
+   No_Result : constant Match_Result := (0, 0, 0, 0, "");
+
+   type Match_Result_Access is access Match_Result;
+   type Match_Result_Array is array (Positive range <>) of Match_Result_Access;
+   type Match_Result_Array_Access is access all Match_Result_Array;
+
    type Search_Context is tagged limited record
       Options        : Search_Options;
       Look_For       : GNAT.OS_Lib.String_Access := null;
@@ -288,11 +301,26 @@ private
       Directory     : GNAT.OS_Lib.String_Access := null;
       Recurse       : Boolean := False;
       Dirs          : Directory_List.List;
+
+      Current_File         : GNAT.OS_Lib.String_Access;
+      Next_Matches_In_File : Match_Result_Array_Access := null;
+      Last_Match_Returned  : Natural := 0;
+      --  The last two fields are used to memorize the list of matches in the
+      --  current file. It is always faster to search the whole file at once,
+      --  and memorize the matches so that each call to Search_Files only
+      --  returns one match.
    end record;
 
    type Files_Project_Context is new Search_Context with record
       Files         : Basic_Types.String_Array_Access := null;
       Current_File  : Natural;
+
+      Next_Matches_In_File : Match_Result_Array_Access := null;
+      Last_Match_Returned  : Natural := 0;
+      --  The last two fields are used to memorize the list of matches in the
+      --  current file. It is always faster to search the whole file at once,
+      --  and memorize the matches so that each call to Search_Files only
+      --  returns one match.
    end record;
 
 end Find_Utils;
