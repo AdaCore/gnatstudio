@@ -177,7 +177,11 @@ package body Src_Editor_Module is
 
    procedure On_Generate_Body
      (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
-   --  Tools->Generate Body menu
+   --  Edit->Generate Body menu
+
+   procedure On_Pretty_Print
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle);
+   --  Edit->Pretty Print menu
 
    procedure On_Edit_File
      (Widget : access Gtk_Widget_Record'Class;
@@ -687,10 +691,12 @@ package body Src_Editor_Module is
       -------------
 
       procedure Refresh is
-         Dead : Boolean;
+         Dead  : Boolean;
+         Count : Integer := 0;
       begin
-         while Gtk.Main.Events_Pending loop
+         while Gtk.Main.Events_Pending and then Count <= 30 loop
             Dead := Main_Iteration;
+            Count := Count + 1;
          end loop;
       end Refresh;
 
@@ -716,17 +722,35 @@ package body Src_Editor_Module is
 
    begin
       if Title /= "" then
+         Set_Busy (Kernel);
          Gnatstub (Title, Success);
 
          if Success then
             Open_File_Editor (Kernel, Body_Name (Title));
          end if;
+
+         Set_Busy (Kernel, False);
       end if;
 
    exception
       when E : others =>
+         Set_Busy (Kernel, False);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Generate_Body;
+
+   ---------------------
+   -- On_Pretty_Print --
+   ---------------------
+
+   procedure On_Pretty_Print
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      Title : constant String := Get_Editor_Filename (Kernel);
+   begin
+      Set_Busy (Kernel);
+      Trace (Me, "pretty printing " & Title);
+      Set_Busy (Kernel, False);
+   end On_Pretty_Print;
 
    -----------------
    -- Mime_Action --
@@ -831,7 +855,6 @@ package body Src_Editor_Module is
       File    : constant String := '/' & (-"File") & '/';
       Edit    : constant String := '/' & (-"Edit") & '/';
       Gotom   : constant String := '/' & (-"Navigate") & '/';
-      Tools   : constant String := '/' & (-"Tools") & '/';
       Mitem   : Gtk_Menu_Item;
       Button  : Gtk_Button;
       Toolbar : constant Gtk_Toolbar := Get_Toolbar (Kernel);
@@ -853,13 +876,13 @@ package body Src_Editor_Module is
                      Ref_Item => -"Open...");
 
       Register_Menu (Kernel, File, -"Save",  Stock_Save, On_Save'Access,
-                     Ref_Item => -"Close");
+                     GDK_S, Control_Mask, Ref_Item => -"Close");
       Register_Menu (Kernel, File, -"Save As...",  Stock_Save_As,
                      On_Save_As'Access, Ref_Item => -"Close");
 
       Register_Menu (Kernel, Edit, -"Undo",  Stock_Undo,
                      On_Undo'Access, Ref_Item => -"Preferences");
-      Register_Menu (Kernel, Edit, -"Redo",  Stock_Undo,
+      Register_Menu (Kernel, Edit, -"Redo",  Stock_Redo,
                      On_Redo'Access, Ref_Item => -"Preferences");
 
       Gtk_New (Mitem, "");
@@ -882,11 +905,14 @@ package body Src_Editor_Module is
       Gtk_New (Mitem, "");
       Register_Menu (Kernel, Edit, Mitem, Ref_Item => -"Preferences");
 
+      Register_Menu (Kernel, Edit, -"Generate Body", "",
+                     On_Generate_Body'Access);
+      Register_Menu (Kernel, Edit, -"Pretty Print", "",
+                     On_Pretty_Print'Access);
+
       Register_Menu (Kernel, Gotom, -"Goto Declaration<->Body", Stock_Home,
                      On_Goto_Declaration_Or_Body'Access,
                      Ref_Item => -"Goto Line...");
-      Register_Menu (Kernel, Tools, -"Generate Body", "",
-                     On_Generate_Body'Access);
 
       --  Toolbars
 
