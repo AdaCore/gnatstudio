@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you  can redistribute it and/or modify  it --
@@ -20,6 +20,8 @@
 
 with Commands;                  use Commands;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
+with Glide_Kernel.Console;      use Glide_Kernel.Console;
+with Glide_Intl;                use Glide_Intl;
 
 package body Glide_Kernel.Actions is
 
@@ -31,7 +33,10 @@ package body Glide_Kernel.Actions is
 
    procedure Free (Action : in out Action_Record) is
    begin
-      Commands.Destroy (Command_Access (Action.Command));
+      --  Do not free Action.Command itself, since some menus might still
+      --  be referring to it. It will be freed when the whole htable is
+      --  reset
+
       Free (Action.Description);
    end Free;
 
@@ -44,11 +49,21 @@ package body Glide_Kernel.Actions is
       Name        : String;
       Command     : access Commands.Interactive.Interactive_Command'Class;
       Description : String := "";
-      Filter      : Action_Filter := null) is
+      Filter      : Action_Filter := null)
+   is
+      Old : constant Action_Record := Lookup_Action (Kernel, Name);
    begin
       --  Initialize the kernel actions table.
       if Kernel.Actions = null then
          Kernel.Actions := new Actions_Htable_Record;
+      end if;
+
+      if Old /= No_Action then
+         Insert (Kernel,
+                 -("Action """ & Name & """ is defined several times. Future "
+                   & " references to this action will execute the last"
+                   & " definition encountered"),
+                 Mode => Error);
       end if;
 
       Set (Actions_Htable_Access (Kernel.Actions).Table,
@@ -108,7 +123,11 @@ package body Glide_Kernel.Actions is
      (Kernel : access Kernel_Handle_Record'Class;
       Name   : String) return Action_Record is
    begin
-      return Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
+      if Kernel.Actions = null then
+         return No_Action;
+      else
+         return Get (Actions_Htable_Access (Kernel.Actions).Table, Name);
+      end if;
    end Lookup_Action;
 
    -----------
@@ -116,7 +135,19 @@ package body Glide_Kernel.Actions is
    -----------
 
    procedure Reset (X : access Actions_Htable_Record) is
+      Iter   : Iterator;
+      Action : Action_Record;
    begin
+      --  Free all the commands
+      Get_First (X.Table, Iter);
+      loop
+         Action := Get_Element (Iter);
+         exit when Action = No_Action;
+
+         Commands.Destroy (Command_Access (Action.Command));
+         Get_Next (X.Table, Iter);
+      end loop;
+
       Reset (X.Table);
    end Reset;
 
