@@ -413,7 +413,7 @@ package body VCS_View_Pkg is
             end if;
 
             Clear (Page.Model);
-            Free (Page.Stored_Status);
+            Status_Hash.Reset (Page.Stored_Status);
          end loop;
       end if;
    end Clear;
@@ -450,7 +450,7 @@ package body VCS_View_Pkg is
          Page := VCS_Page_Access
            (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
 
-         Free (Page.Stored_Status);
+         Status_Hash.Reset (Page.Stored_Status);
          Status_Hash.Reset (Page.Cached_Status);
          Destroy_Tooltip (Page.Tooltip);
       end loop;
@@ -466,7 +466,9 @@ package body VCS_View_Pkg is
    -------------
 
    procedure Refresh (Explorer : VCS_View_Access) is
-      L        : List_Node;
+      use Status_Hash;
+
+      L        : Iterator;
       Iter     : Gtk_Tree_Iter;
       Success  : Boolean;
       Page     : VCS_Page_Access;
@@ -482,17 +484,16 @@ package body VCS_View_Pkg is
       Clear (Page.Model);
       Sort_Col := Freeze_Sort (Page.Model);
 
-      L := First (Page.Stored_Status);
+      Get_First (Page.Stored_Status, L);
 
-      --  ??? Should avoid this costly double loop by caching the status index
-      --  in the cache lines.
-
-      while L /= Null_Node loop
+      while Get_Element (L) /= No_Element loop
          for J in Page.Status'Range loop
-            if Page.Status (J).Status = Data (L).Status.Status then
+            if Page.Status (J).Status =
+              Get_Element (L).Line.Status.Status
+            then
                if Page.Status (J).Display then
                   Append (Page.Model, Iter, Null_Iter);
-                  Fill_Info (Page, Iter, Data (L), Success);
+                  Fill_Info (Page, Iter, Get_Element (L).Line, Success);
 
                   if not Success then
                      Remove (Page.Model, Iter);
@@ -503,7 +504,7 @@ package body VCS_View_Pkg is
             end if;
          end loop;
 
-         L := Next (L);
+         Get_Next (Page.Stored_Status, L);
       end loop;
 
       Thaw_Sort (Page.Model, Sort_Col);
@@ -575,11 +576,11 @@ package body VCS_View_Pkg is
       Line          : Line_Record;
       Sort_Id       : Gint;
 
+      use Status_Hash;
+
       Up_To_Date_Status : File_Status;
       Registered_Status : constant Status_Array :=
                             Get_Registered_Status (VCS_Identifier);
-
-      No_Files_Displayed : Boolean := False;
 
       use type File_Status_List.List_Node;
    begin
@@ -644,12 +645,6 @@ package body VCS_View_Pkg is
       Push_State (Kernel, Busy);
       Sort_Id := Freeze_Sort (Page.Model);
 
-      if Display then
-         No_Files_Displayed := Is_Empty (Page.Stored_Status);
-         --  If no files are to be displayed when displaying the status,
-         --  optimize by not comparing the status to the inserted status.
-      end if;
-
       while Status_Temp /= File_Status_List.Null_Node loop
          declare
             File : constant Virtual_File :=
@@ -677,32 +672,30 @@ package body VCS_View_Pkg is
                New_Status         : constant Line_Record := Copy (Line);
                New_File           : constant Virtual_File :=
                                       New_Status.Status.File;
-               Temp_Stored_Status : List_Node := First (Page.Stored_Status);
+               Temp_Stored_Status : Iterator;
+               E                  : Element;
                Iter               : Gtk_Tree_Iter := Null_Iter;
                Success            : Boolean;
             begin
+               Get_First (Page.Stored_Status, Temp_Stored_Status);
                Found := False;
 
-               if No_Files_Displayed then
-                  Prepend (Page.Stored_Status, New_Status);
+               if Get_Element (Temp_Stored_Status) = No_Element then
+                  Set (Page.Stored_Status, New_File, (Line => New_Status));
                else
-                  while not Found
-                    and then Temp_Stored_Status /= Null_Node
-                  loop
-                     if New_File = Data (Temp_Stored_Status).Status.File then
-                        Found := True;
-                        Set_Data (Temp_Stored_Status, New_Status);
-                        Iter := Get_Iter_From_Name
-                          (Page, New_Status.Status.File);
-                     end if;
+                  E := Get (Page.Stored_Status, New_File);
 
-                     Temp_Stored_Status := Next (Temp_Stored_Status);
-                  end loop;
+                  if E /= No_Element then
+                     Found := True;
+                     Set (Page.Stored_Status, New_File, (Line => New_Status));
+                     Iter := Get_Iter_From_Name
+                       (Page, New_Status.Status.File);
+                  end if;
 
                   if not Found
                     and then Force_Display
                   then
-                     Prepend (Page.Stored_Status, New_Status);
+                     Set (Page.Stored_Status, New_File, (Line => New_Status));
                   end if;
                end if;
 
@@ -1279,7 +1272,8 @@ package body VCS_View_Pkg is
             File        : constant Virtual_File :=
               Get_File_From_Log (Kernel, D.File);
             Page        : VCS_Page_Access;
-            Stored_Node : List_Node;
+            use Status_Hash;
+            E           : Element;
          begin
             Browse_Files :
             for J in 1 .. Hook.Explorer.Number_Of_Pages loop
@@ -1292,19 +1286,15 @@ package body VCS_View_Pkg is
                   Set_Cached_Data (Page, File, (Line.Status, True));
                end if;
 
-               Stored_Node := First (Page.Stored_Status);
+               E := Get (Page.Stored_Status, File);
 
-               while Stored_Node /= Null_Node loop
-                  if File = Data (Stored_Node).Status.File then
-                     Set_Data (Stored_Node,
-                               (Copy_File_Status (Line.Status),
-                                True));
-                     Refresh (Hook.Explorer);
-                     return;
-                  end if;
-
-                  Stored_Node := Next (Stored_Node);
-               end loop;
+               if E /= No_Element then
+                  Set (Page.Stored_Status, File,
+                       (Line => (Copy_File_Status (Line.Status),
+                                 True)));
+                  Refresh (Hook.Explorer);
+                  return;
+               end if;
             end loop Browse_Files;
          end;
       end if;
