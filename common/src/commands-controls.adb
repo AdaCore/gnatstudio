@@ -18,6 +18,7 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Glib;            use Glib;
 with Glib.Values;     use Glib.Values;
 with Gtk.Widget;      use Gtk.Widget;
 with Gtk.Handlers;    use Gtk.Handlers;
@@ -188,14 +189,16 @@ package body Commands.Controls is
 
       if The_Command.all in Queue_Change_Command'Class then
          Command := Queue_Change_Access (The_Command);
-         Disconnect
-           (Command.Undo_Button, Command.Undo_Button_Handler_ID);
-         Disconnect
-           (Command.Redo_Button, Command.Redo_Button_Handler_ID);
-         Disconnect
-           (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
-         Disconnect
-           (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
+
+         if Command.Undo_Button_Handler_ID.Signal /= Null_Signal_Id then
+            Disconnect (Command.Undo_Button, Command.Undo_Button_Handler_ID);
+            Disconnect (Command.Redo_Button, Command.Redo_Button_Handler_ID);
+            Disconnect
+              (Command.Undo_Menu_Item, Command.Undo_Menu_Item_Handler_ID);
+            Disconnect
+              (Command.Redo_Menu_Item, Command.Redo_Menu_Item_Handler_ID);
+            Command.Undo_Button_Handler_ID.Signal := Null_Signal_Id;
+         end if;
 
          if Command.Undo_Button /= null then
             Set_Sensitive (Command.Undo_Button, False);
