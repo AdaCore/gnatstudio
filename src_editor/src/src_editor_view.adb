@@ -917,6 +917,8 @@ package body Src_Editor_View is
 
       Set_Border_Window_Size (View, Enums.Text_Window_Left, 1);
 
+      Set_Left_Margin (View, 4);
+
       Preferences_Changed (View, Kernel_Handle (Kernel));
 
       Widget_Callback.Connect
@@ -1259,10 +1261,10 @@ package body Src_Editor_View is
             Column_Index       : Integer := -1;
             Button_X, Button_Y : Gint;
             X, Y               : Gint;
-            Dummy_Boolean      : Boolean;
-            pragma Unreferenced (Dummy_Boolean);
-
             Info               : Line_Info_Width;
+
+            Dummy              : Command_Return_Type;
+            pragma Unreferenced (Dummy);
 
          begin
             --  Get the coordinates of the click.
@@ -1298,7 +1300,7 @@ package body Src_Editor_View is
             if Info.Info /= null
               and then Info.Info.Associated_Command /= null
             then
-               Dummy_Boolean := Execute (Info.Info.Associated_Command);
+               Dummy := Execute (Info.Info.Associated_Command);
             end if;
          end;
       end if;
