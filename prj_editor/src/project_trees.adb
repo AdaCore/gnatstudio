@@ -333,7 +333,7 @@ package body Project_Trees is
         (Modified_Project_Node, project_modified_xpm, project_closed_xpm);
       Create_Pixmaps (Directory_Node, mini_ofolder_xpm, mini_folder_xpm);
       Create_Pixmaps
-        (Obj_Directory_Node, mini_ofolder_xpm, mini_folder_xpm);
+        (Obj_Directory_Node, mini_ofolder_xpm, mini_folder_object_xpm);
       Create_Pixmaps (File_Node, var_xpm, var_xpm);
       Create_Pixmaps (Category_Node, subprogram_xpm, subprogram_xpm);
 --      Create_Pixmaps (Entity_Node, mini_ofolder_xpm, mini_folder_xpm);
