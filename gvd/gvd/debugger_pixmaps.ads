@@ -22,9 +22,10 @@ with Gdk.Pixbuf;      use Gdk.Pixbuf;
 
 package Debugger_Pixmaps is
 
-   Line_Has_Code_Pixbuf       : Gdk_Pixbuf := Null_Pixbuf;
-   Line_Has_Breakpoint_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
-   Current_Line_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
+   Line_Has_Code_Pixbuf        : Gdk_Pixbuf := Null_Pixbuf;
+   Line_Might_Have_Code_Pixbuf : Gdk_Pixbuf := Null_Pixbuf;
+   Line_Has_Breakpoint_Pixbuf  : Gdk_Pixbuf := Null_Pixbuf;
+   Current_Line_Pixbuf         : Gdk_Pixbuf := Null_Pixbuf;
 
    procedure Init_Graphics;
    --  Initialize the pixbufs.
