@@ -171,9 +171,6 @@ package body Src_Info.Queries is
    function Dump (L : Scope_List) return String;
    --  Return a string representation of L
 
-   procedure Free (Scope : in out Scope_List);
-   --  Free the memory occupied by Scope.
-
    function Find_Entity_Scope
      (Scope : Scope_List; Entity : Entity_Information) return Scope_Tree_Node;
    --  Find the declaration for Name in Scope.
@@ -916,39 +913,47 @@ package body Src_Info.Queries is
       end loop;
    end Trace_Dump;
 
-   ----------------
-   -- Trace_Dump --
-   ----------------
+   ---------------------
+   -- Trace_Tree_Dump --
+   ---------------------
 
-   procedure Trace_Dump
+   procedure Trace_Tree_Dump
      (Handler              : Traces.Debug_Handle;
-      Tree                 : Scope_Tree;
+      Lib_Info             : in out LI_File_Ptr;
       Node                 : Scope_Tree_Node := Null_Scope_Tree_Node;
-      Subprograms_Pkg_Only : Boolean := True) is
-   begin
-      if Tree /= Null_Scope_Tree then
-         Trace (Handler, "Scope tree for " & Base_Name (Tree.LI_Filename));
-         if Node = Null_Scope_Tree_Node then
-            Trace (Handler, "Part= BODY");
-            Trace_Dump (Handler, Tree.Body_Tree, "",
-                        Subprograms_Pkg_Only);
-            Trace (Handler, "Part= SPEC");
-            Trace_Dump (Handler, Tree.Spec_Tree, "",
-                        Subprograms_Pkg_Only);
-            for P in Tree.Separate_Trees'Range loop
-               Trace (Handler, "Part=" & P'Img);
-               Trace_Dump (Handler, Tree.Separate_Trees (P), "",
-                           Subprograms_Pkg_Only);
-            end loop;
-         else
-            Trace_Dump
-              (Handler, Scope_List (Node), "",
-               Subprograms_Pkg_Only, Display_Siblings => False);
+      Subprograms_Pkg_Only : Boolean := True)
+   is
+      procedure Dump (File : in out File_Info_Ptr; Prefix : String);
+      --  Dump the scope tree for a specific file
+
+      procedure Dump (File : in out File_Info_Ptr; Prefix : String) is
+      begin
+         if File /= null then
+            Trace (Handler, Prefix);
+            Trace_Dump (Handler, File.Scope_Tree, "", Subprograms_Pkg_Only);
          end if;
+      end Dump;
+
+      File : File_Info_Ptr_List := Lib_Info.LI.Separate_Info;
+   begin
+      Create_Tree (Lib_Info);
+
+      if Node = Null_Scope_Tree_Node then
+         Trace (Handler, "Scope tree for "
+                & Base_Name (Get_LI_Filename (Lib_Info)));
+         Dump (Lib_Info.LI.Body_Info, "Part= BODY");
+         Dump (Lib_Info.LI.Spec_Info, "Part= SPEC");
+
+         while File /= null loop
+            Dump (File.Value, "Part= SEPARATE");
+            File := File.Next;
+         end loop;
       else
-         Trace (Handler, "Null scope tree");
+         Trace_Dump
+           (Handler, Scope_List (Node), "",
+            Subprograms_Pkg_Only, Display_Siblings => False);
       end if;
-   end Trace_Dump;
+   end Trace_Tree_Dump;
 
    -------------------
    -- Is_Subprogram --
@@ -988,70 +993,29 @@ package body Src_Info.Queries is
       return Node.Decl.Kind;
    end Get_Kind;
 
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Scope : in out Scope_List) is
-      procedure Unchecked_Free is new Unchecked_Deallocation
-        (Scope_Node, Scope_List);
-      L : Scope_List;
-   begin
-      while Scope /= null loop
-         L     := Scope;
-         Scope := Scope.Sibling;
-
-         if L.Typ = Declaration then
-            Free (L.Contents);
-         end if;
-
-         Unchecked_Free (L);
-      end loop;
-   end Free;
-
-   ----------
-   -- Free --
-   ----------
-
-   procedure Free (Tree : in out Scope_Tree) is
-   begin
-      Free (Tree.Body_Tree);
-      Free (Tree.Spec_Tree);
-
-      if Tree.Separate_Trees /= null then
-         for P in Tree.Separate_Trees'Range loop
-            Free (Tree.Separate_Trees (P));
-         end loop;
-
-         Free (Tree.Separate_Trees);
-      end if;
-   end Free;
-
    -----------------
    -- Create_Tree --
    -----------------
 
-   function Create_Tree
-     (Lib_Info : LI_File_Ptr; Declarations_Only : Boolean := False)
-      return Scope_Tree
-   is
+   procedure Create_Tree (Lib_Info : LI_File_Ptr) is
+      Declarations_Only : constant Boolean := False;
+      --  Whether the tree should only contain declarations.
+      --  We no longer use this constant, but it is kept in case we need to
+      --  reuse that part of the code.
 
-      procedure Add_Declarations
-        (Decl : E_Declaration_Info_List; T : in out Scope_Tree);
+      procedure Add_Declarations (Decl : E_Declaration_Info_List);
       --  Add the declarations from Decl into L.
 
       procedure Add_Single_Entity
         (Decl   : in out Scope_List;
          Node   : in out Scope_List;
          Parent : Scope_List);
-      procedure Add_Single_Entity
-        (Decl : in out Scope_List; T : in out Scope_Tree);
+      procedure Add_Single_Entity (Decl : in out Scope_List);
       --  Add a single reference in the tree (either starting at the top-level
       --  of the tree if Node is null, or at Node otherwise).
 
       procedure Add_References
         (Decl       : E_Declaration_Info;
-         T          : in out Scope_Tree;
          Decl_Start : File_Location);
       --  Add all the references to the entity declared in Decl.
       --  Decl_Start is the starting location of the scope for the entity.
@@ -1355,10 +1319,11 @@ package body Src_Info.Queries is
          Add_In_List (Node, Previous, Parent, Decl);
       end Add_Single_Entity;
 
-      procedure Add_Single_Entity
-        (Decl   : in out Scope_List;
-         T      : in out Scope_Tree)
-      is
+      -----------------------
+      -- Add_Single_Entity --
+      -----------------------
+
+      procedure Add_Single_Entity (Decl   : in out Scope_List) is
          P               : Unit_Part;
          File_List       : File_Info_Ptr_List;
          Num             : Positive := 1;
@@ -1387,10 +1352,12 @@ package body Src_Info.Queries is
 
          case P is
             when Unit_Body =>
-               Add_Single_Entity (Decl, T.Body_Tree, null);
+               Add_Single_Entity
+                 (Decl, Lib_Info.LI.Body_Info.Scope_Tree, null);
 
             when Unit_Spec =>
-               Add_Single_Entity (Decl, T.Spec_Tree, null);
+               Add_Single_Entity
+                 (Decl, Lib_Info.LI.Spec_Info.Scope_Tree, null);
 
             when Unit_Separate =>
                File_List := Lib_Info.LI.Separate_Info;
@@ -1403,8 +1370,8 @@ package body Src_Info.Queries is
                   File_List := File_List.Next;
                end loop;
 
-               if Num <= T.Separate_Trees'Last then
-                  Add_Single_Entity (Decl, T.Separate_Trees (Num), null);
+               if File_List /= null then
+                  Add_Single_Entity (Decl, File_List.Value.Scope_Tree, null);
                end if;
          end case;
       end Add_Single_Entity;
@@ -1415,7 +1382,6 @@ package body Src_Info.Queries is
 
       procedure Add_References
         (Decl : E_Declaration_Info;
-         T : in out Scope_Tree;
          Decl_Start : File_Location)
       is
          R : E_Reference_List := Decl.References;
@@ -1437,7 +1403,7 @@ package body Src_Info.Queries is
                   Parent      => null,
                   Decl        => Decl.Declaration'Unrestricted_Access,
                   Ref         => R.Value'Unrestricted_Access);
-               Add_Single_Entity (New_Item, T);
+               Add_Single_Entity (New_Item);
             end if;
 
             R := R.Next;
@@ -1448,9 +1414,7 @@ package body Src_Info.Queries is
       -- Add_Declarations --
       ----------------------
 
-      procedure Add_Declarations
-        (Decl : E_Declaration_Info_List; T : in out Scope_Tree)
-      is
+      procedure Add_Declarations (Decl : E_Declaration_Info_List) is
          List     : E_Declaration_Info_List := Decl;
          New_Item : Scope_List;
 
@@ -1477,10 +1441,10 @@ package body Src_Info.Queries is
                --  might actually delete New_Item if the declaration doesn't
                --  fit in the tree.
 
-               Add_Single_Entity (New_Item, T);
+               Add_Single_Entity (New_Item);
 
                if not Declarations_Only then
-                  Add_References (List.Value, T, Start_Of_Scope);
+                  Add_References (List.Value, Start_Of_Scope);
                end if;
 
                --  If the entity has an End_Of_Spec reference, and is a package
@@ -1504,7 +1468,7 @@ package body Src_Info.Queries is
                      End_Of_Scope => End_Of_Spec_Scope (List.Value.References),
                      Parent      => null,
                      Sibling     => null);
-                  Add_Single_Entity (New_Item, T);
+                  Add_Single_Entity (New_Item);
                end if;
             end;
 
@@ -1512,59 +1476,52 @@ package body Src_Info.Queries is
          end loop;
       end Add_Declarations;
 
-      T             : Scope_Tree;
       File_List     : File_Info_Ptr_List;
       Dep           : Dependency_File_Info_List;
-      Num_Separates : Natural := 0;
 
    begin
       Assert (Me, Lib_Info /= null, "Create_Tree: LI file is null");
       Assert (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file wasn't parsed");
 
+      if (Lib_Info.LI.Spec_Info /= null
+          and then Lib_Info.LI.Spec_Info.Scope_Tree /= null)
+        or else
+          (Lib_Info.LI.Body_Info /= null
+           and then Lib_Info.LI.Body_Info.Scope_Tree /= null)
+      then
+         Trace (Me, "Scope tree already parsed for "
+                  & Base_Name (Get_LI_Filename (Lib_Info)));
+         return;
+      end if;
+
       File_List := Lib_Info.LI.Separate_Info;
 
-      while File_List /= null loop
-         Num_Separates := Num_Separates + 1;
-         File_List := File_List.Next;
-      end loop;
-
-      T := (Lib_Info    => Lib_Info,
-            LI_Filename => Lib_Info.LI.LI_Filename,
-            Time_Stamp  => VFS.No_Time,
-            Body_Tree   => null,
-            Spec_Tree   => null,
-            Separate_Trees => new Scope_List_Array (1 .. Num_Separates));
-
       if Lib_Info.LI.Spec_Info /= null then
-         Add_Declarations (Lib_Info.LI.Spec_Info.Declarations, T);
+         Add_Declarations (Lib_Info.LI.Spec_Info.Declarations);
       end if;
 
       if Lib_Info.LI.Body_Info /= null then
-         Add_Declarations (Lib_Info.LI.Body_Info.Declarations, T);
+         Add_Declarations (Lib_Info.LI.Body_Info.Declarations);
       end if;
 
       File_List := Lib_Info.LI.Separate_Info;
 
       while File_List /= null loop
-         Add_Declarations (File_List.Value.Declarations, T);
+         Add_Declarations (File_List.Value.Declarations);
          File_List := File_List.Next;
       end loop;
 
       Dep := Lib_Info.LI.Dependencies_Info;
 
       while Dep /= null loop
-         Add_Declarations (Dep.Value.Declarations, T);
+         Add_Declarations (Dep.Value.Declarations);
          Dep := Dep.Next;
       end loop;
-
-      return T;
 
    exception
       when E : Constraint_Error | Assert_Failure =>
          Assert (Me, False, "Unexpected exception in Create_Tree: "
                 & Exception_Information (E));
-         Free (T);
-         return Null_Scope_Tree;
    end Create_Tree;
 
    -----------------------
@@ -1599,22 +1556,34 @@ package body Src_Info.Queries is
    -----------------------
 
    function Find_Entity_Scope
-     (Tree : Scope_Tree; Entity : Entity_Information)
+     (Lib_Info : LI_File_Ptr; Entity : Entity_Information)
       return Scope_Tree_Node
    is
       Result : Scope_Tree_Node;
+      File   : File_Info_Ptr_List;
    begin
-      Result := Find_Entity_Scope (Tree.Body_Tree, Entity);
-      if Result = null then
-         Result := Find_Entity_Scope (Tree.Spec_Tree, Entity);
+      Create_Tree (Lib_Info);
 
-         if Result = null then
-            for P in Tree.Separate_Trees'Range loop
-               Result := Find_Entity_Scope
-                 (Tree.Separate_Trees (P), Entity);
-               exit when Result /= null;
-            end loop;
-         end if;
+      if Lib_Info.LI.Body_Info /= null then
+         Result := Find_Entity_Scope
+           (Lib_Info.LI.Body_Info.Scope_Tree, Entity);
+      end if;
+
+      if Result = null
+        and then Lib_Info.LI.Spec_Info /= null
+      then
+         Result := Find_Entity_Scope
+           (Lib_Info.LI.Spec_Info.Scope_Tree, Entity);
+      end if;
+
+      if Result = null then
+         File := Lib_Info.LI.Separate_Info;
+         while File /= null loop
+            Result := Find_Entity_Scope (File.Value.Scope_Tree, Entity);
+            exit when Result /= null;
+
+            File := File.Next;
+         end loop;
       end if;
 
       return Result;
@@ -1625,7 +1594,7 @@ package body Src_Info.Queries is
    ----------------------------
 
    procedure Find_Entity_References
-     (Node     : Scope_List;
+     (Node   : Scope_List;
       Entity : Entity_Information;
       Callback : Node_Callback)
    is
@@ -1655,14 +1624,27 @@ package body Src_Info.Queries is
    ----------------------------
 
    procedure Find_Entity_References
-     (Tree : Scope_Tree;
-      Entity : Entity_Information;
-      Callback : Node_Callback) is
+     (Lib_Info : LI_File_Ptr;
+      Entity   : Entity_Information;
+      Callback : Node_Callback)
+   is
+      L : File_Info_Ptr_List := Lib_Info.LI.Separate_Info;
    begin
-      Find_Entity_References (Tree.Body_Tree, Entity, Callback);
-      Find_Entity_References (Tree.Spec_Tree, Entity, Callback);
-      for P in Tree.Separate_Trees'Range loop
-         Find_Entity_References (Tree.Separate_Trees (P), Entity, Callback);
+      Create_Tree (Lib_Info);
+
+      if Lib_Info.LI.Body_Info /= null then
+         Find_Entity_References
+           (Lib_Info.LI.Body_Info.Scope_Tree, Entity, Callback);
+      end if;
+
+      if Lib_Info.LI.Spec_Info /= null then
+         Find_Entity_References
+           (Lib_Info.LI.Spec_Info.Scope_Tree, Entity, Callback);
+      end if;
+
+      while L /= null loop
+         Find_Entity_References (L.Value.Scope_Tree, Entity, Callback);
+         L := L.Next;
       end loop;
    end Find_Entity_References;
 
@@ -1860,10 +1842,8 @@ package body Src_Info.Queries is
    function Get_Full_Name
      (Entity    : Entity_Information;
       Decl_File : LI_File_Ptr;
-      Separator : String := ".";
-      Scope     : Scope_Tree := Null_Scope_Tree) return String
+      Separator : String := ".") return String
    is
-      Tree            : Scope_Tree;
       Node, Tmp, Tmp2 : Scope_Tree_Node;
       Full_Name       : Unbounded_String;
       T, T2           : Entity_Information;
@@ -1873,23 +1853,9 @@ package body Src_Info.Queries is
          return Get_Name (Entity);
       end if;
 
-      if Scope = Null_Scope_Tree then
-         Tree := Create_Tree (Decl_File);
-      else
-         Tree := Scope;
-      end if;
-
-      if Tree = Null_Scope_Tree then
-         return Get_Name (Entity);
-      end if;
-
-      Node := Find_Entity_Scope (Tree, Entity);
+      Node := Find_Entity_Scope (Decl_File, Entity);
 
       if Node = Null_Scope_Tree_Node then
-         if Scope = Null_Scope_Tree then
-            Free (Tree);
-         end if;
-
          return Get_Name (Entity);
       end if;
 
@@ -1932,10 +1898,6 @@ package body Src_Info.Queries is
             Tmp := Get_Parent (Tmp);
          end if;
       end loop;
-
-      if Scope = Null_Scope_Tree then
-         Free (Tree);
-      end if;
 
       return To_String (Full_Name);
    end Get_Full_Name;
