@@ -112,10 +112,10 @@ package body Docgen.Work_On_File is
       Private_Tagged_Types_List     : Type_List_Tagged_Element.List;
       All_Tagged_Types_List         : List_Entity_Handle.List;
       Unused                        : List_Reference_In_File.List;
-      Unused_Bis                    : Type_Entity_List.List;
       Doc_Directory_Root            : constant String :=
         Get_Doc_Directory (B, Kernel_Handle (Kernel));
       Still_Warned                  : Boolean;
+      Level                         : Natural := 1;
 
       function Find_Next_Package
         (Package_Nr : Natural) return String;
@@ -244,7 +244,6 @@ package body Docgen.Work_On_File is
             J := J + 1;
 
             Close (Doc_File);
-
             Free (Next_Package);
             Free (Prev_Package);
          end;
@@ -252,7 +251,6 @@ package body Docgen.Work_On_File is
 
       --  Sort the type index list and the subprogram index list first (both
       --  for private and public lists)
-
       Sort_List_Name (Subprogram_Index_List);
       Sort_List_Name (Type_Index_List);
       Sort_List_Name (Private_Subprogram_Index_List);
@@ -260,24 +258,21 @@ package body Docgen.Work_On_File is
 
       --  Create the index doc files for the packages
       Process_Unit_Index
-        (B, Kernel, Source_File_List, Unused_Bis, Unused, Options, Converter,
-           Doc_Directory_Root, Doc_Suffix);
+        (B, Kernel, Source_File_List, Unused, Options, Converter,
+           Doc_Directory_Root, Doc_Suffix, Level);
       Process_Subprogram_Index
         (B, Kernel, Subprogram_Index_List, Private_Subprogram_Index_List,
-         Unused_Bis, Unused, Options,
-         Converter, Doc_Directory_Root, Doc_Suffix);
+         Unused, Options, Converter, Doc_Directory_Root, Doc_Suffix, Level);
       Process_Type_Index
         (B, Kernel, Type_Index_List, Private_Type_Index_List,
-         Unused_Bis, Unused,  Options, Converter,
-         Doc_Directory_Root, Doc_Suffix);
+         Unused,  Options, Converter, Doc_Directory_Root, Doc_Suffix, Level);
 
       if Options.Tagged_Types then
          Sort_List_Name (Tagged_Types_List);
          Process_Tagged_Type_Index
            (B, Kernel, Tagged_Types_List, Private_Tagged_Types_List,
-            Unused_Bis, Unused,
-            Source_File_List, Options, Converter, Doc_Directory_Root,
-            Doc_Suffix);
+            Unused, Source_File_List, Options, Converter, Doc_Directory_Root,
+            Doc_Suffix, Level);
       end if;
 
       TEL.Free (Subprogram_Index_List);
@@ -328,13 +323,13 @@ package body Docgen.Work_On_File is
       Ent_Handle       : Entity_Handle := null;
       Status           : Find_Decl_Or_Body_Query_Status;
 
-
       Field            : Entity_Information;
       Entity_Complete  : Entity_List_Information_Handle;
       Found_Private    : Boolean;
-      Tree_Field : Scope_Tree;
-      Node_Field : Scope_Tree_Node;
-      Iter_Field : Scope_Tree_Node_Iterator;
+      Tree_Field       : Scope_Tree;
+      Node_Field       : Scope_Tree_Node;
+      Iter_Field       : Scope_Tree_Node_Iterator;
+      --  The 6 variables above are used for private field of public types
 
       Me_Info          : Entity_Handle;
       Son_Info         : Entity_Handle;
@@ -346,8 +341,12 @@ package body Docgen.Work_On_File is
       Tag_Elem_Me      : Tagged_Element_Handle;
       Tag_Elem_Parent  : Tagged_Element_Handle;
       Tag_Elem_Child   : Tagged_Element_Handle;
-      --  The variables above are used to find tagged types, their children
+      --  The 10 variables above are used to find tagged types, their children
       --  and their parents
+
+      Level : Natural;
+      --  Stores the level of the current package in which we are
+      --  processing types, subprograms...
 
       procedure Process_Subprogram
         (Source_Filename : Virtual_File;
@@ -600,6 +599,7 @@ package body Docgen.Work_On_File is
 
    begin
       LI_Unit := Locate_From_Source_And_Complete (Kernel, Source_Filename);
+      Level := 1;
 
       Trace (Me, "File name: " & Base_Name (Source_Filename));
       --  All references of the current file are put in a list.
@@ -653,12 +653,15 @@ package body Docgen.Work_On_File is
                Package_Name,
                Entity_List,
                List_Ref_In_File,
+               Tagged_Types_List,
+               Private_Tagged_Types_List,
                Process_Body_File,
                LI_Unit,
                Options,
                Converter,
                Doc_Directory,
-               Doc_Suffix);
+               Doc_Suffix,
+               Level);
          else
             Trace (Me, "LI file not found");  --  later Exception?
          end if;
@@ -671,7 +674,7 @@ package body Docgen.Work_On_File is
          if LI_Unit /= No_LI_File then
             Entity_Iter :=
               Find_All_References_In_File (LI_Unit, Source_Filename);
-            Tree := Create_Tree (LI_Unit);
+            Tree         := Create_Tree (LI_Unit);
 
             loop
                Ref_In_File := Get (Entity_Iter);
@@ -686,6 +689,7 @@ package body Docgen.Work_On_File is
                   List_Entity_In_File.Append (List_Ent_In_File, Info);
 
                   Entity_Node.Is_Private := Get_Scope (Info) /= Global_Scope;
+                  Entity_Node.Public_Declaration := No_Entity_Information;
 
                   Find_Next_Body
                     (Kernel, LI_Unit,
@@ -822,6 +826,8 @@ package body Docgen.Work_On_File is
                                                      LI_Unit, ".", Tree));
                                     Entity_Complete.Kind := Type_Entity;
                                     Entity_Complete.Is_Private := True;
+                                    Entity_Complete.Public_Declaration :=
+                                      Copy (Entity_Node.Entity);
                                     Entity_Complete.Line_In_Body
                                       := Entity_Node.Line_In_Body;
                                     Entity_Complete.Called_List
@@ -829,7 +835,7 @@ package body Docgen.Work_On_File is
                                     Entity_Complete.Calls_List
                                       := TRL.Null_List;
 
-                                    Type_Entity_List.Append
+                                    Type_Entity_List.Prepend
                                       (Entity_List, Entity_Complete.all);
 
                                     if Is_Spec_File (Kernel, Source_Filename)
@@ -844,7 +850,6 @@ package body Docgen.Work_On_File is
                                        --  index list. For the future, it
                                        --  would be better to add the fields
                                        --  in the private part.
-
                                        Type_Entity_List.Append
                                          (Private_Type_Index_List,
                                           Clone (Entity_Complete.all, False));
@@ -1283,13 +1288,15 @@ package body Docgen.Work_On_File is
                Package_Name,
                Entity_List,
                List_Ref_In_File,
+               Tagged_Types_List,
+               Private_Tagged_Types_List,
                Process_Body_File,
                LI_Unit,
                Options,
                Converter,
                Doc_Directory,
-               Doc_Suffix);
-
+               Doc_Suffix,
+               Level);
          else
             Trace (Me, "LI file not found: "
                    & Base_Name (Source_Filename));  --  later Exception?
@@ -1300,7 +1307,6 @@ package body Docgen.Work_On_File is
          if not Options.Process_Body_Files then
             TEL.Free (Entity_List);
          end if;
-
       end if;
 
       List_Entity_In_File.Free (List_Ent_In_File, True);
