@@ -326,6 +326,7 @@ package body Items is
 
    function Start (Item : access Generic_Type) return Generic_Iterator'Class is
       pragma Unreferenced (Item);
+
       Iter : Generic_Iterator;
    begin
       return Iter;

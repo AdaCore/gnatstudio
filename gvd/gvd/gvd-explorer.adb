@@ -376,6 +376,7 @@ package body GVD.Explorer is
       File_Name : String)
    is
       pragma Unreferenced (File_Name);
+
       Matches      : Match_Array (0 .. 10);
       Categories   : constant Explorer_Categories :=
         Explorer_Regexps (Lang);
@@ -875,6 +876,7 @@ package body GVD.Explorer is
      return Gtk.Menu.Gtk_Menu
    is
       pragma Unreferenced (Event);
+
       Exp : Explorer_Access := Explorer_Access (Explorer);
       --  Check : Gtk_Check_Menu_Item;
       Mitem : Gtk_Menu_Item;

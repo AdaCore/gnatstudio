@@ -255,6 +255,7 @@ package body GVD.Memory_View is
       Trunc_At : Integer) return String
    is
       pragma Unreferenced (Size);
+
       Long  : Long_Long_Integer;
       Test  : Integer := S'First;
       Dummy : constant String := "------------------------";

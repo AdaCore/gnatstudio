@@ -345,8 +345,10 @@ package body Process_Proxies is
       Proxy      : System.Address)
    is
       pragma Unreferenced (Descriptor);
+
       function To_Proxy is new Ada.Unchecked_Conversion
         (System.Address, Process_Proxy_Access);
+
    begin
       if Get_Command_Mode (To_Proxy (Proxy)) /= Internal then
          Put (Str);

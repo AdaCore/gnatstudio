@@ -196,6 +196,7 @@ package body Items.Simples is
       Hide_Big_Items : Boolean := False)
    is
       pragma Unreferenced (Hide_Big_Items);
+
       Unknown_Height : Glib.Gint;
       Unknown_Width  : Glib.Gint;
    begin

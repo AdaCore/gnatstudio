@@ -55,7 +55,6 @@ package body Debugger is
 
    Timeout : constant Guint32 := 50;
    --  Timeout in millisecond to check input from the underlying debugger.
-   --  <preferences>
 
    package Debugger_Timeout is new Gtk.Main.Timeout (Debugger_Process_Tab);
 
@@ -729,6 +728,7 @@ package body Debugger is
      (Debugger : access Debugger_Root) return Exception_Array
    is
       pragma Unreferenced (Debugger);
+
       Arr : Exception_Array (1 .. 0);
    begin
       return Arr;

@@ -18,46 +18,47 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glib;                  use Glib;
-with Gdk.Types;             use Gdk.Types;
-with Gtk.Main;              use Gtk.Main;
-with Gtk;                   use Gtk;
-with Gtk.Enums;             use Gtk.Enums;
-with Gtk.List;              use Gtk.List;
-with Gtk.List_Item;         use Gtk.List_Item;
-with Gtk.Combo;             use Gtk.Combo;
-with Gtk.GEntry;            use Gtk.GEntry;
-with Gtk.Widget;            use Gtk.Widget;
-with Gtk.Notebook;          use Gtk.Notebook;
-with Gtk.Rc;                use Gtk.Rc;
-with Gtkada.Intl;           use Gtkada.Intl;
-with Gtkada.Dialogs;        use Gtkada.Dialogs;
-with Gtkada.Toolbar;        use Gtkada.Toolbar;
+with Glib;                      use Glib;
+with Gdk.Types;                 use Gdk.Types;
+with Gtk.Main;                  use Gtk.Main;
+with Gtk;                       use Gtk;
+with Gtk.Enums;                 use Gtk.Enums;
+with Gtk.List;                  use Gtk.List;
+with Gtk.List_Item;             use Gtk.List_Item;
+with Gtk.Combo;                 use Gtk.Combo;
+with Gtk.GEntry;                use Gtk.GEntry;
+with Gtk.Widget;                use Gtk.Widget;
+with Gtk.Notebook;              use Gtk.Notebook;
+with Gtk.Rc;                    use Gtk.Rc;
+with Gtkada.Intl;               use Gtkada.Intl;
+with Gtkada.Dialogs;            use Gtkada.Dialogs;
+with Gtkada.Toolbar;            use Gtkada.Toolbar;
 
-with GVD.Main_Window;       use GVD.Main_Window;
-with GVD.Menu;              use GVD.Menu;
+with GVD.Main_Window;           use GVD.Main_Window;
+with GVD.Menu.Standalone;       use GVD.Menu.Standalone;
 with Debugger;
 with Process_Proxies;
-with OS_Utils;              use OS_Utils;
-with GVD.Process;           use GVD.Process;
-with GVD.Trace;             use GVD.Trace;
-with GVD.Types;             use GVD.Types;
-with GVD.Preferences;       use GVD.Preferences;
-with GVD.Window_Settings;   use GVD.Window_Settings;
-with GVD.Code_Editors;      use GVD.Code_Editors;
-with GVD.Toolbar;           use GVD.Toolbar;
+with OS_Utils;                  use OS_Utils;
+with GVD.Process;               use GVD.Process;
+with GVD.Process.Standalone;    use GVD.Process.Standalone;
+with GVD.Trace;                 use GVD.Trace;
+with GVD.Types;                 use GVD.Types;
+with GVD.Preferences;           use GVD.Preferences;
+with GVD.Window_Settings;       use GVD.Window_Settings;
+with GVD.Code_Editors;          use GVD.Code_Editors;
+with GVD.Toolbar;               use GVD.Toolbar;
 
-with GVD.Open_Program_Dialog; use GVD.Open_Program_Dialog;
+with GVD.Open_Program_Dialog;   use GVD.Open_Program_Dialog;
 
-with GNAT.OS_Lib;           use GNAT.OS_Lib;
+with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
-with GNAT.Command_Line; use GNAT.Command_Line;
-with GNAT.Expect; use GNAT.Expect;
+with GNAT.Command_Line;         use GNAT.Command_Line;
+with GNAT.Expect;               use GNAT.Expect;
 
-with Ada.Command_Line;  use Ada.Command_Line;
-with Ada.Strings.Fixed; use Ada.Strings.Fixed;
-with Ada.Exceptions;    use Ada.Exceptions;
-with GNAT.IO;           use GNAT.IO;
+with Ada.Command_Line;          use Ada.Command_Line;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
+with Ada.Exceptions;            use Ada.Exceptions;
+with GNAT.IO;                   use GNAT.IO;
 
 procedure GVD_Main is
 

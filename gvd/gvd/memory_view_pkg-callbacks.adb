@@ -59,6 +59,7 @@ package body Memory_View_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
+
       View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
    begin
       Update_Display (View);
@@ -203,6 +204,7 @@ package body Memory_View_Pkg.Callbacks is
       Params : Gtk.Arguments.Gtk_Args) return Boolean
    is
       pragma Unreferenced (Params);
+
       View : GVD_Memory_View := GVD_Memory_View (Get_Toplevel (Object));
       use type Glib.Gint;
       use type Glib.Guint;

@@ -118,6 +118,7 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
+
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -149,6 +150,7 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
+
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
@@ -180,6 +182,7 @@ package body GVD.Dialogs.Callbacks is
       Params : Gtk.Arguments.Gtk_Args)
    is
       pragma Unreferenced (Params);
+
       use type Gint_List.Glist;
 
       Dialog    : constant Question_Dialog_Access :=
