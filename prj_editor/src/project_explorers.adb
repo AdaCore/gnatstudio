@@ -2449,7 +2449,7 @@ package body Project_Explorers is
             Result := Start;
             Finish := True;
 
-         elsif Get (C.Matches, Name'Unrestricted_Access) >= Search_Match then
+         elsif Get (C.Matches, Name) >= Search_Match then
             Compute_Children (Explorer, Start);
             Result := Row_Get_Children (Node_Get_Row (Start));
             Finish := False;
@@ -2472,7 +2472,7 @@ package body Project_Explorers is
            (Explorer.Tree, Start, 0);
          Status : Search_Status;
       begin
-         Status := Get (C.Matches, N'Unrestricted_Access);
+         Status := Get (C.Matches, N);
          if C.Include_Entities then
             --  The file was already parsed, and we know it matched
             if Status >= Search_Match then
@@ -2487,7 +2487,7 @@ package body Project_Explorers is
                  (Get_Directory_From_Node (Explorer, Start) & N,
                   Get_Project_From_Node (Explorer, Start))
                then
-                  Set (C.Matches, new String'(N), Search_Match);
+                  Set (C.Matches, N, Search_Match);
                   Compute_Children (Explorer, Start);
                   Result := Row_Get_Children (Node_Get_Row (Start));
                   Finish := False;
@@ -2567,9 +2567,7 @@ package body Project_Explorers is
 
                   when Entity_Node =>
                      if C.Current /= Start_Node
-                       and then Get
-                         (C.Matches, User.Entity_Name'Unrestricted_Access)
-                       /= No_Match
+                       and then Get (C.Matches, User.Entity_Name)  /= No_Match
                      then
                         return Start_Node;
                      else
@@ -2618,12 +2616,10 @@ package body Project_Explorers is
             then
                Status := True;
 
-               if Get (C.Matches, Constructs.Current.Name.all'Access) /=
+               if Get (C.Matches, Constructs.Current.Name.all) /=
                  Search_Match
                then
-                  Set (C.Matches,
-                       new String'(Constructs.Current.Name.all),
-                       Search_Match);
+                  Set (C.Matches, Constructs.Current.Name.all, Search_Match);
                end if;
             end if;
 
@@ -2652,16 +2648,15 @@ package body Project_Explorers is
             Full_Name'Last - Base'Length - 1);
 
       begin
-         Set (C.Matches, new String'(Base), Mark_File);
+         Set (C.Matches, Base, Mark_File);
 
          --  Mark the number of entries in the directory, so that if a file
          --  doesn't match we can decrease it later, and finally no longer
          --  examine the directory
-         if Get (C.Matches, Dir'Unrestricted_Access) /= No_Match then
-            Set (C.Matches, new String'(Dir),
-                 Get (C.Matches, Dir'Unrestricted_Access) + Increment);
+         if Get (C.Matches, Dir) /= No_Match then
+            Set (C.Matches, Dir, Get (C.Matches, Dir) + Increment);
          elsif Increment > 0 then
-            Set (C.Matches, new String'(Dir), 1);
+            Set (C.Matches, Dir, 1);
          end if;
 
          if not Project_Marked then
@@ -2671,8 +2666,7 @@ package body Project_Explorers is
             declare
                N : constant String := Project_Name (Project);
             begin
-               Set (C.Matches, new String'(N),
-                    Get (C.Matches, N'Unrestricted_Access) + Increment);
+               Set (C.Matches, N, Get (C.Matches, N) + Increment);
             end;
 
             declare
@@ -2684,8 +2678,7 @@ package body Project_Explorers is
                   declare
                      N : constant String := Project_Name (Prjs (P));
                   begin
-                     Set (C.Matches, new String'(N),
-                          Get (C.Matches, N'Unrestricted_Access) + Increment);
+                     Set (C.Matches, N, Get (C.Matches, N) + Increment);
                   end;
                end loop;
             end;
@@ -2705,7 +2698,7 @@ package body Project_Explorers is
             if not C.Include_Entities
               and then Match (C, Project_Name (Current (Iter))) /= -1
             then
-               Set (C.Matches, new String'(Project_Name (Current (Iter))),
+               Set (C.Matches, Project_Name (Current (Iter)),
                     Search_Match);
             end if;
 
