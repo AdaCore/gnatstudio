@@ -20,6 +20,7 @@
 
 with Unchecked_Deallocation;
 with Traces; use Traces;
+with GNAT.OS_Lib; use GNAT.OS_Lib;
 
 package body Src_Info.Queries is
 
@@ -80,6 +81,18 @@ package body Src_Info.Queries is
 
    procedure Destroy (Dep : in out Dependency);
    --  Deallocates the memory associated with the given Dependency record.
+
+   procedure Trace_Dump
+     (Handler : Debug_Handle; Scope : Scope_List; Prefix : String);
+   --  Dump Scope to Handler, printing Prefix at the beginning of each line
+
+   procedure Free (Scope : in out Scope_List);
+   --  Free the memory occupied by Scope.
+
+   function Find_Entity_Declaration
+     (Scope : Scope_List; Name : String; Line, Column : Integer)
+      return Scope_Tree_Node;
+   --  Find the declaration for Name in Scope.
 
    -------------------------
    -- Search_Is_Completed --
@@ -483,5 +496,491 @@ package body Src_Info.Queries is
    begin
       return Dep.Dep;
    end Dependency_Information;
+
+   ----------------
+   -- Trace_Dump --
+   ----------------
+
+   procedure Trace_Dump
+     (Handler : Debug_Handle; Scope : Scope_List; Prefix : String)
+   is
+      L : Scope_List := Scope;
+   begin
+      while L /= null loop
+         case L.Typ is
+            when Declaration =>
+               if L.Decl.Kind = Generic_Function_Or_Operator
+                  --  or else L.Decl.Kind = Generic_Package
+                 or else L.Decl.Kind = Generic_Procedure
+                 or else L.Decl.Kind = Non_Generic_Function_Or_Operator
+                  --  or else L.Decl.Kind = Non_Generic_Package
+                 or else L.Decl.Kind = Non_Generic_Procedure
+               then
+                  Trace (Handler, Prefix & "Decl: " & L.Decl.Name.all
+                         & " range=" & L.Start_Of_Scope.Line'Img
+                         & L.Decl.End_Of_Scope.Location.Line'Img
+                         & "," & L.Decl.End_Of_Scope.Location.Column'Img);
+                  Trace_Dump (Handler, L.Contents, Prefix & "  ");
+               end if;
+
+            when Reference =>
+               if L.Entity_Decl.Kind = Generic_Function_Or_Operator
+                  --  or else L.Entity_Decl.Kind = Generic_Package
+                 or else L.Entity_Decl.Kind = Generic_Procedure
+                 or else L.Entity_Decl.Kind = Non_Generic_Function_Or_Operator
+                  --  or else L.Entity_Decl.Kind = Non_Generic_Package
+                 or else L.Entity_Decl.Kind = Non_Generic_Procedure
+               then
+                  Trace (Handler, Prefix & "Ref: " & L.Entity_Decl.Name.all
+                         & " line=" & L.Ref.Location.Line'Img
+                         & " col=" & L.Ref.Location.Column'Img);
+               end if;
+         end case;
+         L := L.Sibling;
+      end loop;
+   end Trace_Dump;
+
+   ----------------
+   -- Trace_Dump --
+   ----------------
+
+   procedure Trace_Dump (Handler : Traces.Debug_Handle; Tree : Scope_Tree) is
+   begin
+      if Tree /= Null_Scope_Tree then
+         Trace (Handler, "Scope tree for " & Tree.LI_Filename.all);
+         Trace_Dump (Handler, Tree.Body_Tree, "");
+      else
+         Trace (Handler, "Null scope tree");
+      end if;
+   end Trace_Dump;
+
+   -------------------
+   -- Is_Subprogram --
+   -------------------
+
+   function Is_Subprogram (Node : Scope_Tree_Node) return Boolean is
+      K : E_Kind;
+   begin
+      case Node.Typ is
+         when Declaration => K := Node.Decl.Kind;
+         when Reference   => K := Node.Entity_Decl.Kind;
+      end case;
+
+      return K = Generic_Function_Or_Operator
+        or else K = Generic_Procedure
+        or else K = Non_Generic_Function_Or_Operator
+        or else K = Non_Generic_Procedure;
+   end Is_Subprogram;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Scope : in out Scope_List) is
+      procedure Unchecked_Free is new Unchecked_Deallocation
+        (Scope_Node, Scope_List);
+      L : Scope_List;
+   begin
+      while Scope /= null loop
+         L := Scope;
+         Scope := Scope.Sibling;
+         if L.Typ = Declaration then
+            Free (L.Contents);
+         end if;
+         Unchecked_Free (L);
+      end loop;
+   end Free;
+
+   ----------
+   -- Free --
+   ----------
+
+   procedure Free (Tree : in out Scope_Tree) is
+   begin
+      Free (Tree.LI_Filename);
+      Free (Tree.Body_Tree);
+   end Free;
+
+   -----------------
+   -- Create_Tree --
+   -----------------
+
+   function Create_Tree (Lib_Info : LI_File_Ptr) return Scope_Tree is
+
+      procedure Add_Declarations
+        (Decl : E_Declaration_Info_List; L : in out Scope_List);
+      --  Add the declarations from Decl into L.
+
+      procedure Add_Single_Entity
+        (Decl : in out Scope_List; L : in out Scope_List);
+      --  Add a single reference in the tree
+
+      procedure Add_References
+        (Decl : E_Declaration_Info;
+         L : in out Scope_List;
+         Decl_Start : File_Location);
+      --  Add all the references to the entity declared in Decl.
+      --  Decl_Start is the starting location of the scope for the entity.
+
+      function In_Range (Decl : Scope_List; Loc : Scope_List) return Integer;
+      --  True if Loc is in the range of Decl.
+      --  -1 is returned if Decl is before Loc, 0 if within, 1 if after.
+      --  It returns -2 if the positions could not be compared (invalid file,
+      --  Decl is not a range,...)
+
+      procedure Add_In_List
+        (L        : in out Scope_List;
+         Previous : in out Scope_List;
+         New_Item : Scope_List);
+      --  Add New_Item in the list L, after Previous (or at the beginning if
+      --  Previous is null.
+
+      procedure Compute_Scope (L : in out Scope_List; Ref : E_Reference_List);
+      --  Compute the beginning and end of scope for the declaration in L.
+
+      -------------------
+      -- Compute_Scope --
+      -------------------
+
+      procedure Compute_Scope
+        (L : in out Scope_List; Ref : E_Reference_List)
+      is
+         R : E_Reference_List := Ref;
+      begin
+         L.Start_Of_Scope := L.Decl.Location;
+
+         while R /= null loop
+            if Is_Start_Reference (R.Value.Kind) then
+               L.Start_Of_Scope := R.Value.Location;
+               return;
+            end if;
+            R := R.Next;
+         end loop;
+      end Compute_Scope;
+
+      --------------
+      -- In_Range --
+      --------------
+
+      function In_Range
+        (Decl : Scope_List; Loc : Scope_List) return Integer
+      is
+         L : File_Location;
+      begin
+         case Loc.Typ is
+            when Declaration =>
+               L := Loc.Decl.Location;
+            when Reference =>
+               L := Loc.Ref.Location;
+         end case;
+
+         if L.File.LI /= Lib_Info
+           or else L.File.Part /= Unit_Body
+         then
+            return -2;
+
+         elsif Decl.Typ = Declaration then
+            if Decl.Start_Of_Scope.Line > L.Line
+              or else (L.Line = Decl.Start_Of_Scope.Line
+                       and then Decl.Start_Of_Scope.Column > L.Column)
+            then
+               return 1;
+
+            elsif Decl.Decl.End_Of_Scope = No_Reference then
+               return -1;
+
+            elsif Decl.Decl.End_Of_Scope.Location.Line < L.Line
+              or else
+              (L.Line = Decl.Decl.End_Of_Scope.Location.Line
+               and then Decl.Decl.End_Of_Scope.Location.Column < L.Column)
+            then
+               return -1;
+
+            else
+               return 0;
+            end if;
+
+         elsif Decl.Ref.Location.Line < L.Line
+           or else (Decl.Ref.Location.Line = L.Line
+                    and then Decl.Ref.Location.Column < L.Column)
+         then
+            return -1;
+         else
+            return 1;
+         end if;
+      end In_Range;
+
+      -----------------
+      -- Add_In_List --
+      -----------------
+
+      procedure Add_In_List
+        (L        : in out Scope_List;
+         Previous : in out Scope_List;
+         New_Item : Scope_List)
+      is
+         T : Scope_List;
+      begin
+         if Previous = null then
+            T := L;
+            L := New_Item;
+            L.Sibling := T;
+         else
+            T := Previous.Sibling;
+            Previous.Sibling := New_Item;
+            Previous.Sibling.Sibling := T;
+         end if;
+      end Add_In_List;
+
+      -----------------------
+      -- Add_Single_Entity --
+      -----------------------
+
+      procedure Add_Single_Entity
+        (Decl : in out Scope_List; L : in out Scope_List)
+      is
+         Pos : Integer;
+         List : Scope_List := L;
+         Previous : Scope_List := null;
+         Save : Scope_List;
+      begin
+         while List /= null loop
+            case List.Typ is
+               when Declaration =>
+                  Pos := In_Range (List, Decl);
+                  if Pos = 0 then
+                     Add_Single_Entity (Decl, List.Contents);
+                     return;
+
+                  elsif Pos = -2 then
+                     Free (Decl);
+                     return;
+
+                  elsif Pos = -1 then
+                     null;
+
+                  else
+                     Add_In_List (L, Previous, Decl);
+
+                     --  If in fact the new declaration englobs Loc.
+                     if Decl.Typ = Declaration then
+                        while List /= null
+                          and then In_Range (Decl, List) = 0
+                        loop
+                           Save := List.Sibling;
+                           Add_Single_Entity (List, Decl.Contents);
+                           Decl.Sibling := Save;
+                           List := Save;
+                        end loop;
+                     end if;
+
+                     return;
+                  end if;
+
+               when Reference =>
+                  if In_Range (List, Decl) = 1 then
+                     Add_In_List (L, Previous, Decl);
+                     return;
+                  end if;
+
+            end case;
+            Previous := List;
+            List := List.Sibling;
+         end loop;
+
+         Add_In_List (L, Previous, Decl);
+      end Add_Single_Entity;
+
+      --------------------
+      -- Add_References --
+      --------------------
+
+      procedure Add_References
+        (Decl : E_Declaration_Info;
+         L : in out Scope_List;
+         Decl_Start : File_Location)
+      is
+         R : E_Reference_List := Decl.References;
+         New_Item : Scope_List;
+      begin
+         while R /= null loop
+            if R.Value.Location /= Decl_Start
+              and then R.Value.Location /=
+              Decl.Declaration.End_Of_Scope.Location
+            then
+               New_Item := new Scope_Node'
+                 (Typ         => Reference,
+                  Sibling     => null,
+                  Entity_Decl => Decl.Declaration'Unrestricted_Access,
+                  Ref         => R.Value'Unrestricted_Access);
+               Add_Single_Entity (New_Item, L);
+            end if;
+            R := R.Next;
+         end loop;
+      end Add_References;
+
+      ----------------------
+      -- Add_Declarations --
+      ----------------------
+
+      procedure Add_Declarations
+        (Decl : E_Declaration_Info_List; L : in out Scope_List)
+      is
+         List : E_Declaration_Info_List := Decl;
+         New_Item : Scope_List;
+         Start_Of_Scope : File_Location;
+      begin
+         while List /= null loop
+            New_Item := new Scope_Node'
+              (Typ            => Declaration,
+               Decl           => List.Value.Declaration'Unrestricted_Access,
+               Contents       => null,
+               Start_Of_Scope => Null_File_Location,
+               Sibling        => null);
+            Compute_Scope (New_Item, List.Value.References);
+            Start_Of_Scope := New_Item.Start_Of_Scope;
+
+            --  Try to insert the declaration in the tree. Note that this might
+            --  actually delete New_Item if the declaration doesn't fit in the
+            --  tree.
+            Add_Single_Entity (New_Item, L);
+
+            Add_References (List.Value, L, Start_Of_Scope);
+            List := List.Next;
+         end loop;
+      end Add_Declarations;
+
+      T : Scope_Tree;
+      L : Scope_List;
+      File_List : File_Info_Ptr_List;
+      Dep : Dependency_File_Info_List;
+   begin
+      Assert
+        (Me, Lib_Info.LI.Parsed, "Create_Tree: LI file hasn't been parsed");
+
+      --  ??? Should make sure that Lib_Info is parsed.
+      --  ??? Parse Lib_Info.Dependencies_Info (Dependency_File_Info_List)
+
+      if Lib_Info.LI.Spec_Info /= null then
+         Add_Declarations (Lib_Info.LI.Spec_Info.Declarations, L);
+      end if;
+
+      if Lib_Info.LI.Body_Info /= null then
+         Add_Declarations (Lib_Info.LI.Body_Info.Declarations, L);
+      end if;
+
+      File_List := Lib_Info.LI.Separate_Info;
+      while File_List /= null loop
+         Add_Declarations (File_List.Value.Declarations, L);
+         File_List := File_List.Next;
+      end loop;
+
+      Dep := Lib_Info.LI.Dependencies_Info;
+      while Dep /= null loop
+         Add_Declarations (Dep.Value.Declarations, L);
+         Dep := Dep.Next;
+      end loop;
+
+      T := (Lib_Info    => Lib_Info,
+            LI_Filename => new String' (Lib_Info.LI.LI_Filename.all),
+            Time_Stamp  => 0,
+            Body_Tree   => L);
+      return T;
+   end Create_Tree;
+
+   -----------------------------
+   -- Find_Entity_Declaration --
+   -----------------------------
+
+   function Find_Entity_Declaration
+     (Scope : Scope_List; Name : String; Line, Column : Integer)
+      return Scope_Tree_Node
+   is
+      L : Scope_List := Scope;
+      Result : Scope_Tree_Node;
+   begin
+      while L /= null loop
+         if L.Typ = Declaration then
+            if L.Decl.Name.all = Name
+              and then L.Decl.Location.Line = Line
+              and then L.Decl.Location.Column = Column
+            then
+               return Scope_Tree_Node (L);
+            end if;
+
+            if L.Decl.Name.all = Name then
+               Trace (Me, "Entity found : "
+                      & L.Decl.Name.all
+                      & L.Decl.Location.Line'Img
+                      & L.Decl.Location.Column'Img);
+            end if;
+
+            Result := Find_Entity_Declaration
+              (L.Contents, Name, Line, Column);
+            if Result /= null then
+               return Result;
+            end if;
+         end if;
+
+         L := L.Sibling;
+      end loop;
+      return null;
+   end Find_Entity_Declaration;
+
+   -----------------------------
+   -- Find_Entity_Declaration --
+   -----------------------------
+
+   function Find_Entity_Declaration
+     (Tree : Scope_Tree; Name : String; Line, Column : Integer)
+      return Scope_Tree_Node is
+   begin
+      return Find_Entity_Declaration
+        (Tree.Body_Tree, Name, Line, Column);
+   end Find_Entity_Declaration;
+
+   -----------
+   -- Start --
+   -----------
+
+   function Start (Node : Scope_Tree_Node) return Scope_Tree_Node_Iterator is
+   begin
+      return Scope_Tree_Node_Iterator (Node.Contents);
+   end Start;
+
+   ----------
+   -- Next --
+   ----------
+
+   procedure Next (Iter : in out Scope_Tree_Node_Iterator) is
+   begin
+      if Iter /= null then
+         Iter := Scope_Tree_Node_Iterator (Iter.Sibling);
+      end if;
+   end Next;
+
+   ---------
+   -- Get --
+   ---------
+
+   function Get (Iter : Scope_Tree_Node_Iterator) return Scope_Tree_Node is
+   begin
+      return Scope_Tree_Node (Iter);
+   end Get;
+
+   ---------------------
+   -- Get_Entity_Name --
+   ---------------------
+
+   function Get_Entity_Name (Node : Scope_Tree_Node) return String is
+   begin
+      case Node.Typ is
+         when Declaration =>
+            return Node.Decl.Name.all;
+
+         when Reference =>
+            return Node.Entity_Decl.Name.all;
+      end case;
+   end Get_Entity_Name;
 
 end Src_Info.Queries;
