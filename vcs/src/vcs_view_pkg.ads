@@ -30,11 +30,10 @@ with GNAT.OS_Lib;     use GNAT.OS_Lib;
 with Glide_Kernel;            use Glide_Kernel;
 with Glide_Kernel.Console;    use Glide_Kernel.Console;
 
+with String_List;
 with VCS; use VCS;
 
 package VCS_View_Pkg is
-
-   use VCS.String_List;
 
    type VCS_View_Record;
    type VCS_View_Access is access all VCS_View_Record'Class;
@@ -89,14 +88,13 @@ package VCS_View_Pkg is
    --  User must free it afterwards.
 
    function Get_Selected_Files
-     (Explorer : VCS_View_Access)
-     return VCS.String_List.List;
+     (Explorer : VCS_View_Access) return String_List.List;
    --  Return the list of files that are selected.
 
    procedure Open_Files
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : List;
+      Files    : String_List.List;
       Ref      : VCS_Access);
    --  Open a list of files.
    --  User must free Files afterwards.
@@ -104,7 +102,7 @@ package VCS_View_Pkg is
    procedure Commit
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : List;
+      Files    : String_List.List;
       Log      : String;
       Ref      : VCS_Access);
    --  Commit a list of files with a given log.
@@ -113,7 +111,7 @@ package VCS_View_Pkg is
    procedure Edit_Log
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : List;
+      Files    : String_List.List;
       Ref      : VCS_Access);
    --  Launch log editors for these files.
    --  User must free Files afterwards.
@@ -121,7 +119,7 @@ package VCS_View_Pkg is
    procedure Diff_Files
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : List;
+      Files    : String_List.List;
       Ref      : VCS_Access);
    --  View differences between Files and the head revision.
    --  User must free Files afterwards.
@@ -129,7 +127,7 @@ package VCS_View_Pkg is
    procedure Update_File_List
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      Files    : List;
+      Files    : String_List.List;
       Ref      : VCS_Access);
    --  Updates a list of files.
    --  User must free Files afterwards.
@@ -144,7 +142,7 @@ package VCS_View_Pkg is
    procedure Display_String_List
      (Explorer : VCS_View_Access;
       Kernel   : Kernel_Handle;
-      List     : VCS.String_List.List;
+      List     : String_List.List;
       M_Type   : Message_Type := Verbose);
    --  Convenience procedure to output a String_List.List.
    --  One of Explorer or Kernel can be Null.
