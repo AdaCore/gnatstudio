@@ -20,11 +20,19 @@
 
 --  New Visual Diff module.
 
-with Glide_Kernel;
+with Glide_Kernel;             use Glide_Kernel;
 with Glib.Properties.Creation; use Glib.Properties.Creation;
-with Default_Preferences; use Default_Preferences;
+with Default_Preferences;      use Default_Preferences;
+with Diff_Utils2;              use Diff_Utils2;
+with Vdiff2_Command;           use Vdiff2_Command;
+with Gtk.Handlers;             use Gtk.Handlers;
+with Glib;                     use Glib;
 
 package Vdiff2_Module is
+   use Diff_Head_List;
+   use Diff_Chunk_List;
+
+   type VDiff2_Module_Record is private;
    Vdiff_Module_ID        : Glide_Kernel.Module_ID;
    Vdiff_Module_Name  : constant String := "Visual_Diff2";
    Diff3_Cmd                : Param_Spec_String;
@@ -38,5 +46,23 @@ package Vdiff2_Module is
    procedure Register_Module
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Register the module in the list
+
+private
+
+   No_Handler : constant Handler_Id := (Null_Signal_Id, null);
+
+   type VDiff2_Module_Record is new Module_ID_Record with record
+      Kernel              : Kernel_Handle;
+      Is_Active           : Boolean := False;
+      Number_active       : Natural := 0;
+      List_Diff           : Diff_Head_List_Access;
+      Command_Prev        : Diff_Command_Access;
+      Command_Next        : Diff_Command_Access;
+      Command_First       : Diff_Command_Access;
+      Command_Last        : Diff_Command_Access;
+      File_Closed_Id      : Handler_Id := No_Handler;
+   end record;
+   type VDiff2_Module is access all VDiff2_Module_Record'Class;
+   procedure Destroy (Id : in out VDiff2_Module_Record);
 
 end Vdiff2_Module;
