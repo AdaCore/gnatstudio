@@ -141,14 +141,12 @@ package body Glide_Kernel.Editor is
             Success : Boolean;
          begin
             Parse_ALI_File
-              (ALI_Filename, Get_Project_View (Kernel), Kernel.Source_Path.all,
+              (ALI_Filename, Get_Project_View (Kernel),
+               Get_Source_Path (Kernel), Get_Object_Path (Kernel),
                Kernel.Source_Info_List, Source_Info, Success);
-            --  ??? Define functions to access the source path and use it
-            --  ??? to access this function. The idea is that they can hide
-            --  ??? some caching mechnism.
             if not Success then
                Console.Insert
-                 (Kernel, "Could not find associated ALI file.",
+                 (Kernel, "Failed to find or parse ALI file " & ALI_Filename,
                   Highlight_Sloc => False);
                Status := Failure;
             end if;
@@ -500,10 +498,11 @@ package body Glide_Kernel.Editor is
    ------------------------------
 
    procedure Goto_Declaration_Or_Body
-     (Kernel : access Kernel_Handle_Record'Class)
+     (Kernel : access Kernel_Handle_Record'Class;
+      Line   : Natural := 0;
+      Column : Natural := 0)
    is
-      Source        : constant Source_Editor_Box :=
-        Get_Current_Editor (Kernel);
+      Source        : Source_Editor_Box := Get_Current_Editor (Kernel);
       Source_Info   : LI_File_Ptr;
       Filename      : String_Access;
       Start_Line    : Positive;
@@ -527,8 +526,17 @@ package body Glide_Kernel.Editor is
       Update_LI_File_If_Necessary
         (Kernel, Source_Info, Get_Filename (Source), Update_Status);
 
+      --  Abort if we could not locate the associated Source_Info.
+      --  Probably means that we either could not locate the ALI file,
+      --  or it could also be that we failed to parse it. Either way,
+      --  a message should have already been printed. So, just abort.
+      if Source_Info = No_LI_File then
+         return;
+      end if;
+
       Find_Declaration_Or_Body
-        (Editor => Source, Lib_Info => Source_Info, Filename => Filename,
+        (Editor => Source, Line => Line, Column => Column,
+         Lib_Info => Source_Info, Filename => Filename,
          Start_Line => Start_Line, Start_Column => Start_Column,
          End_Line => End_Line, End_Column => End_Column, Status => Status);
 
@@ -576,6 +584,9 @@ package body Glide_Kernel.Editor is
          return;
       end if;
 
+      --  Get the source box that was just opened/raised, and highlight
+      --  the target entity.
+      Source := Get_Current_Editor (Kernel);
       Unhighlight_All (Source);
       Highlight_Region
         (Source, Start_Line, Start_Column, End_Line, End_Column);
