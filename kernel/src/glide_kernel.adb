@@ -343,50 +343,52 @@ package body Glide_Kernel is
    end Project_View_Changed;
 
    ------------------
-   -- Save_Session --
+   -- Save_Desktop --
    ------------------
 
-   procedure Save_Session
+   procedure Save_Desktop
      (Handle : access Kernel_Handle_Record)
    is
-      MDI : constant MDI_Window := Glide_Page.Glide_Page
+      MDI  : constant MDI_Window := Glide_Page.Glide_Page
         (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
       File : File_Type;
+
    begin
       Create
         (File,
          Mode => Out_File,
-         Name => Get_Home_Directory & Directory_Separator & "save.config");
+         Name => Get_Home_Directory & Directory_Separator & "desktop");
       Set_Output (File);
 
-      Print (Glide_Kernel.Kernel_Sessions.Save_Session (MDI));
+      Print (Glide_Kernel.Kernel_Desktop.Save_Desktop (MDI));
 
       Set_Output (Standard_Output);
       Close (File);
-   end Save_Session;
+   end Save_Desktop;
 
    ------------------
-   -- Load_Session --
+   -- Load_Desktop --
    ------------------
 
-   function Load_Session
+   function Load_Desktop
      (Handle : access Kernel_Handle_Record) return Boolean
    is
-      MDI : constant MDI_Window := Glide_Page.Glide_Page
+      MDI  : constant MDI_Window := Glide_Page.Glide_Page
         (Get_Current_Process (Handle.Main_Window)).Process_Mdi;
       Node : Node_Ptr;
       File : constant String :=
-        Get_Home_Directory & Directory_Separator & "save.config";
+        Get_Home_Directory & Directory_Separator & "desktop";
+
    begin
       if Is_Regular_File (File) then
          Node := Parse (File);
          pragma Assert (Node.Tag.all = "MDI");
 
-         Kernel_Sessions.Restore_Session (MDI, Node, Kernel_Handle (Handle));
+         Kernel_Desktop.Restore_Desktop (MDI, Node, Kernel_Handle (Handle));
          return True;
       else
          return False;
       end if;
-   end Load_Session;
+   end Load_Desktop;
 
 end Glide_Kernel;

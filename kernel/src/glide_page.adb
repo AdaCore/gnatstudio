@@ -41,7 +41,7 @@ package body Glide_Page is
    begin
       GVD.Process.Initialize (Page, Window);
 
-      if Load_Session (Window.Kernel) then
+      if Load_Desktop (Window.Kernel) then
          Iter := First_Child (Page.Process_Mdi);
          loop
             Child := Get (Iter);

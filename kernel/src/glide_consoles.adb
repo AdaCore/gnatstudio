@@ -53,12 +53,12 @@ package body Glide_Consoles is
       Event  : Gdk_Event) return Boolean;
    --  Handler for "button_press_event" signal
 
-   function Load_Session
+   function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget;
    --  Save the status of the console to an XML tree
 
-   function Save_Session
+   function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
       return Node_Ptr;
    --  Restore the status of the console from a saved XML tree.
@@ -146,7 +146,8 @@ package body Glide_Consoles is
                  (Console.Text,
                   Fore => Highlight,
                   Chars => New_Text (Matched (1).First .. Last));
-               Insert (Console.Text, Chars => New_Text (Last + 1 .. New_Text'Last));
+               Insert
+                 (Console.Text, Chars => New_Text (Last + 1 .. New_Text'Last));
 
                Free (New_Text);
                return;
@@ -221,10 +222,10 @@ package body Glide_Consoles is
    end On_Button_Release;
 
    ------------------
-   -- Load_Session --
+   -- Load_Desktop --
    ------------------
 
-   function Load_Session
+   function Load_Desktop
      (Node : Gint_Xml.Node_Ptr; User : Kernel_Handle)
       return Gtk_Widget
    is
@@ -236,16 +237,17 @@ package body Glide_Consoles is
          Gtk_New (Console, User);
          return Gtk_Widget (Console);
       end if;
+
       return null;
-   end Load_Session;
+   end Load_Desktop;
 
    ------------------
-   -- Save_Session --
+   -- Save_Desktop --
    ------------------
 
-   function Save_Session
+   function Save_Desktop
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class)
-     return Node_Ptr
+      return Node_Ptr
    is
       N : Node_Ptr;
    begin
@@ -254,11 +256,12 @@ package body Glide_Consoles is
          N.Tag := new String' ("Console");
          return N;
       end if;
+
       return null;
-   end Save_Session;
+   end Save_Desktop;
 
 
 begin
-   Glide_Kernel.Kernel_Sessions.Register_Session_Functions
-     (Save_Session'Access, Load_Session'Access);
+   Glide_Kernel.Kernel_Desktop.Register_Desktop_Functions
+     (Save_Desktop'Access, Load_Desktop'Access);
 end Glide_Consoles;
