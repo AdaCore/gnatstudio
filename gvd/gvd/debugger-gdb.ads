@@ -399,6 +399,13 @@ private
       Mode            : GVD.Types.Invisible_Command := GVD.Types.Hidden)
       return String;
 
+   procedure Send
+     (Debugger        : access Gdb_Debugger;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden);
+
    type Gdb_Debugger is new Debugger.Debugger_Root with record
       Executable       : GNAT.OS_Lib.String_Access;
       Executable_Args  : GNAT.OS_Lib.String_Access;

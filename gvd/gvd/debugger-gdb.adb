@@ -441,7 +441,6 @@ package body Debugger.Gdb is
    is
       S   : constant String := Send_Full (Debugger, Cmd, Mode);
       Pos : Integer := S'Last - Prompt_Length;
-
    begin
       if S'Length <= Prompt_Length then
          return "";
@@ -452,6 +451,43 @@ package body Debugger.Gdb is
       end if;
 
       return S (S'First .. Pos);
+   end Send;
+
+   procedure Send
+     (Debugger        : access Gdb_Debugger;
+      Cmd             : String;
+      Empty_Buffer    : Boolean := True;
+      Wait_For_Prompt : Boolean := True;
+      Mode            : GVD.Types.Command_Type := GVD.Types.Hidden)
+   is
+      J, K : Integer;
+   begin
+      --  Override Send to recognize some commands such as "target"
+
+      if Cmd'Length > 10
+        and then Cmd (Cmd'First .. Cmd'First + 6) = "target "
+      then
+         J := Cmd'First + 7;
+         Skip_Blanks (Cmd, J);
+         K := J + 1;
+         Skip_To_Blank (Cmd, K);
+
+         if K < Cmd'Last then
+            Free (Debugger.Remote_Protocol);
+            Debugger.Remote_Protocol := new String'(Cmd (J .. K - 1));
+
+            J := K + 1;
+            Skip_Blanks (Cmd, J);
+            Free (Debugger.Remote_Target);
+            Debugger.Remote_Target := new String'(Cmd (J .. Cmd'Last));
+         end if;
+      end if;
+
+      --  Call the Parent procedure
+
+      Send
+        (Debugger_Root (Debugger.all)'Access, Cmd,
+         Empty_Buffer, Wait_For_Prompt, Mode);
    end Send;
 
    -------------
@@ -897,10 +933,6 @@ package body Debugger.Gdb is
       Mode     : Command_Type := Hidden) is
    begin
       Send (Debugger, "target " & Protocol & " " & Target, Mode => Mode);
-      Free (Debugger.Remote_Target);
-      Free (Debugger.Remote_Protocol);
-      Debugger.Remote_Target := new String'(Target);
-      Debugger.Remote_Protocol := new String'(Protocol);
    end Connect_To_Target;
 
    --------------
