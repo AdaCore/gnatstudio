@@ -356,7 +356,7 @@ package body Switches_Editors is
                   Set_Active (Editor.Make_Multiprocessing, True);
                   if Switches (J)'Length > 2 then
                      Set_Value
-                       (Editor.Num_Processes, Gfloat'Value (Switches (J)
+                       (Editor.Num_Processes, Grange_Float'Value (Switches (J)
                          (Switches (J)'First + 2 .. Switches  (J)'Last)));
                   else
                      Set_Value (Editor.Num_Processes, 0.0);
@@ -502,16 +502,18 @@ package body Switches_Editors is
       end case;
 
       declare
-         Str : constant String := Get_Chars (Cmd_Line);
+         Str : constant String := Get_Text (Cmd_Line);
          Arr : Argument_List := Get_Switches (Editor, Tool);
          Current : Argument_List_Access;
       begin
          if Str'Length = 0 then
             Current := new Argument_List (1 .. 0);
          else
-            Current := Argument_String_To_List (Get_Chars (Cmd_Line));
+            Current := Argument_String_To_List (Get_Text (Cmd_Line));
          end if;
-         Delete_Text (Cmd_Line);
+
+         Set_Text (Cmd_Line, "");
+
          for J in Arr'Range loop
             Append_Text (Cmd_Line, Arr (J).all & " ");
          end loop;

@@ -175,6 +175,9 @@ package body Creation_Wizard is
       Pix  : Gdk_Pixmap;
       Mask : Gdk_Bitmap;
       Font : Gdk_Font;
+
+      use Gdk;
+
    begin
       Wizards.Initialize (Wiz, "Project setup", "#0476bc");
       Set_USize (Wiz, 640, -1);
@@ -296,7 +299,7 @@ package body Creation_Wizard is
 
       Gtk_New (Bbox);
       Set_Layout (Bbox, Buttonbox_Spread);
-      Set_Child_Size_Default (Arrow_Buttons_Width, Arrow_Buttons_Height);
+      --  Set_Child_Size_Default (Arrow_Buttons_Width, Arrow_Buttons_Height);
       Pack_Start (Box, Bbox, Expand => False, Fill => False);
 
       Gtk_New (Button);
@@ -788,8 +791,8 @@ package body Creation_Wizard is
       Num_Src_Dir : constant Gint := Get_Rows (Wiz.Src_Dir_List);
    begin
       Project := Create_Project
-        (Name => Get_Chars (Wiz.Project_Name),
-         Path => Get_Chars (Wiz.Project_Location));
+        (Name => Get_Text (Wiz.Project_Name),
+         Path => Get_Text (Wiz.Project_Location));
 
       --  Append the source directories
       Var := Get_Or_Create_Attribute (Project, "source_dirs", Kind => List);
