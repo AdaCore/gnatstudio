@@ -901,6 +901,7 @@ html_image_pointer_destroy (HTMLImagePointer *ip)
 
 	g_free (ip->url);
 	if (ip->loader) {
+		gdk_pixbuf_loader_close (ip->loader, NULL);
 		g_object_unref (G_OBJECT (ip->loader));
 	}
 	if (ip->animation) {
