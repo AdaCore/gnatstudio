@@ -1355,16 +1355,16 @@ package body GVD.Process is
       Widget_Callback.Object_Connect
         (Process.Window, "preferences_changed",
          Widget_Callback.To_Marshaller
-           (GVD.Code_Editors.Preferences_Changed'Access),
-         Process.Editor_Text);
-
-      Widget_Callback.Object_Connect
-        (Process.Window, "preferences_changed",
-         Widget_Callback.To_Marshaller
            (GVD.Process.Preferences_Changed'Access),
          Process);
 
       if Process.Window.Standalone then
+         Widget_Callback.Object_Connect
+           (Process.Window, "preferences_changed",
+            Widget_Callback.To_Marshaller
+            (GVD.Code_Editors.Preferences_Changed'Access),
+            Process.Editor_Text);
+
          Widget_Callback.Object_Connect
            (Process,
             "executable_changed",
@@ -2249,7 +2249,6 @@ package body GVD.Process is
      (Editor : access Gtk.Widget.Gtk_Widget_Record'Class)
    is
       Process : constant Debugger_Process_Tab := Debugger_Process_Tab (Editor);
-      Str     : constant String := Get_Chars (Process.Debugger_Text);
       F       : constant Gdk_Font := From_Description
         (Get_Pref (GVD_Prefs, Debugger_Font));
       C       : constant Gdk_Color :=
@@ -2257,27 +2256,33 @@ package body GVD.Process is
 
       use Gdk;
    begin
-      if F /= Process.Debugger_Text_Font
-        or else Process.Debugger_Text_Highlight_Color /= C
+      if Process.Window.Standalone
+        and then (F /= Process.Debugger_Text_Font
+                  or else Process.Debugger_Text_Highlight_Color /= C)
       then
-         Process.Debugger_Text_Font := F;
-         Process.Debugger_Text_Highlight_Color := C;
+         declare
+            Str : constant String := Get_Chars (Process.Debugger_Text);
+         begin
+            Process.Debugger_Text_Font := F;
+            Process.Debugger_Text_Highlight_Color := C;
 
-         --  Redraw the text. Note that we are loosing the colors in any case,
-         --  since there is no way with the current Gtk_Text to get that
-         --  information.
-         Freeze (Process.Debugger_Text);
-         Handler_Block (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
-         Delete_Text (Process.Debugger_Text);
-         Handler_Unblock
-           (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
-         Insert
-           (Process.Debugger_Text,
-            Process.Debugger_Text_Font,
-            Black (Get_System),
-            Null_Color,
-            Str);
-         Thaw (Process.Debugger_Text);
+            --  Redraw the text. Note that we are loosing the colors in any
+            --  case, since there is no way with the current Gtk_Text to get
+            --  that information.
+            Freeze (Process.Debugger_Text);
+            Handler_Block
+              (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
+            Delete_Text (Process.Debugger_Text);
+            Handler_Unblock
+              (Process.Debugger_Text, Process.Delete_Text_Handler_Id);
+            Insert
+              (Process.Debugger_Text,
+               Process.Debugger_Text_Font,
+               Black (Get_System),
+               Null_Color,
+               Str);
+            Thaw (Process.Debugger_Text);
+         end;
       end if;
    end Preferences_Changed;
 
