@@ -1864,7 +1864,7 @@ package body Builder_Module is
          Module_Name  => Builder_Module_Name,
          Priority     => Default_Priority);
 
-      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Debug");
+      Register_Menu (Kernel, "/_" & (-"Build"), Ref_Item => -"Tools");
       Register_Menu (Kernel, Build, -"Check _Syntax", "",
                      On_Check_Syntax'Access);
       Register_Menu (Kernel, Build, -"_Compile File", "",
