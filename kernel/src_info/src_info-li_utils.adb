@@ -37,10 +37,10 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File                    : out LI_File_Ptr;
+      List                    : in out LI_File_List;
       Xref_Filename           : in String;
       --  Full (!) path to the xref file
       Handler                 : in LI_Handler;
-      Source_Filename         : in String;
       Parsed                  : in Boolean);
    --  Creates an empty LI_File structure
 
@@ -85,23 +85,16 @@ package body Src_Info.LI_Utils is
       if File = No_LI_File then
          Create_LI_File
            (Handler           => Handler,
+            List              => List,
             File              => File,
             Xref_Filename     => Xref_Filename,
-            Source_Filename   => Source_Filename,
             Parsed            => True);
       else
          --  Check that we parsed the correct file.
-
-         --  ??? MANU: using Base_Name here is a hack, we should really keep
-         --  the directory specified in the sources for #include "dir/file.h"
-         --  Taras: This assert is commented out to implement
-         --  new behaviour with xref-names as LI_Filenames
-         --  Assert (Me, Base_Name (File.LI.LI_Filename.all) =
-         --        Base_Name (Source_Filename),
-         --        "Invalid Source Filename");
          Assert (Me, LI_Handler (Handler) = File.LI.Handler,
                  "Invalid Handler");
       end if;
+
       if File.LI.Body_Info = null then
          Create_File_Info
            (Fi_Ptr        => File.LI.Body_Info,
@@ -148,22 +141,20 @@ package body Src_Info.LI_Utils is
       File                    : in out LI_File_Ptr;
       Xref_Filename           : in String;
       List                    : in out LI_File_List;
-      Source_Filename         : in String;
       Referred_Filename       : in String;
       Referred_Xref_Filename  : in String)
    is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
       Tmp_LI_File_Ptr : LI_File_Ptr;
-      Success : Boolean;
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
          Create_LI_File
            (File            => File,
+            List            => List,
             Xref_Filename   => Xref_Filename,
             Handler         => Handler,
-            Source_Filename => Source_Filename,
             Parsed          => True);
       else
          Assert (Me,
@@ -192,17 +183,13 @@ package body Src_Info.LI_Utils is
       if Tmp_LI_File_Ptr = No_LI_File then
          Create_LI_File
            (File              => Tmp_LI_File_Ptr,
+            List              => List,
             Xref_Filename     => Referred_Xref_Filename,
             Handler           => Handler,
-            Source_Filename   => Referred_Filename,
             Parsed            => True);
          Create_File_Info
            (FI_Ptr          => Tmp_LI_File_Ptr.LI.Body_Info,
             Full_Filename   => Referred_Filename);
-         Add (List.Table, Tmp_LI_File_Ptr, Success);
-         Assert (Me, Success,
-                 "unable to insert new LI_File into the common LI_File_List",
-                 Raise_Exception => True);
          --  Tmp_LI_File_Ptr := No_LI_File;
       end if;
 
@@ -265,7 +252,6 @@ package body Src_Info.LI_Utils is
       Symbol_Name             : in String;
       Referred_Filename       : in String;
       Referred_Xref_Filename  : in String;
-      Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
       Parent_Location         : in Point := Invalid_Point;
@@ -280,15 +266,14 @@ package body Src_Info.LI_Utils is
       Dep_Ptr : Dependency_File_Info_List;
       Tmp_LI_File : LI_File;
       Tmp_LI_File_Ptr : LI_File_Ptr;
-      Success : Boolean;
    begin
       --  checking existance of given LI_File and create new one if necessary
       if File = No_LI_File then
          Create_LI_File
            (File => File,
+            List          => List,
             Xref_Filename => Xref_Filename,
             Handler => Handler,
-            Source_Filename => Source_Filename,
             Parsed => True);
       else
          pragma Assert (LI_Handler (Handler) = File.LI.Handler,
@@ -313,6 +298,7 @@ package body Src_Info.LI_Utils is
       --  are no such symbol declared in the found file then
       --  we are inserting new declaration
       Tmp_LI_File_Ptr := Get (List.Table, Base_Name (Referred_Xref_Filename));
+
       if Tmp_LI_File_Ptr = No_LI_File then
          Insert_Declaration
            (Handler            => Handler,
@@ -329,9 +315,6 @@ package body Src_Info.LI_Utils is
             End_Of_Scope_Location => End_Of_Scope_Location,
             Rename_Filename    => Rename_Filename,
             Declaration_Info   => Tmp_Ptr);
-         Add (List.Table, Tmp_LI_File_Ptr, Success);
-         pragma Assert (Success,
-               "unable to insert new LI_File into the common LI_File_List");
       else
          begin
             D_Ptr := Find_Declaration
@@ -785,13 +768,14 @@ package body Src_Info.LI_Utils is
 
    procedure Create_LI_File
      (File                    : out LI_File_Ptr;
+      List                    : in out LI_File_List;
       Xref_Filename           : in String;
       Handler                 : in LI_Handler;
-      Source_Filename         : in String;
-      Parsed                  : in Boolean) is
-      pragma Unreferenced (Source_Filename);
+      Parsed                  : in Boolean)
+   is
+      Success : Boolean;
    begin
-      if (Parsed) then
+      if Parsed then
          File := new LI_File_Constrained'
            (LI => (Parsed => True,
                    Handler => LI_Handler (Handler),
@@ -814,6 +798,10 @@ package body Src_Info.LI_Utils is
                     LI_Timestamp => To_Timestamp
                       (File_Time_Stamp (Xref_Filename))));
       end if;
+
+      Add (List.Table, File, Success);
+      pragma Assert
+        (Success, "unable to insert new LI_File into the common LI_File_List");
    end Create_LI_File;
 
    ------------------------

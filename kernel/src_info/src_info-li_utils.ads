@@ -54,7 +54,6 @@ private package Src_Info.LI_Utils is
       --  Full (!) path of the xref file.
       --  The base name of this path will be assigned to the LI_File
       List                    : in out LI_File_List;
-      Source_Filename         : in String;
       Referred_Filename       : in String;
       Referred_Xref_Filename  : in String);
    --  Insert file-level dependency
@@ -69,7 +68,6 @@ private package Src_Info.LI_Utils is
       Symbol_Name             : in String;
       Referred_Filename       : in String;
       Referred_Xref_Filename  : in String;
-      Source_Filename         : in String;
       Location                : in Point;
       Parent_Filename         : in String := "";
       --  this filename is the Base Name of the Xref filename of the parent
