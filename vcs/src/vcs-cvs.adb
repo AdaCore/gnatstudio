@@ -261,7 +261,7 @@ package body VCS.CVS is
          Args,
          Null_List,
          Error_Output_Handler'Access,
-         -"CVS: basic query");
+         -"CVS: Basic query");
 
       Launch_Background_Command
         (Rep.Kernel, Command_Access (C), False, CVS_Identifier);
@@ -887,7 +887,7 @@ package body VCS.CVS is
                Arguments,
                Head,
                Checkin_Handler'Access,
-               -"CVS: committing");
+               -"CVS: Committing");
 
             Launch_Background_Command
               (Rep.Kernel,
