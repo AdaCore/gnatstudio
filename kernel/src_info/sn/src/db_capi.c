@@ -31,13 +31,14 @@ key pattern */
 typedef struct DB_File_struct {
   int dbc;                    /* number of database files - 1 */
   DB **db;                    /* database handlers */
-  char **fname;    		/* file names (copies) */
-  int last_errno;		/* 0 or last error number */
-  char *key_p;		/* key pattern */
-  int exact_match;		/* 1/0, if exact key match needed/not needed */
-  int pos;			/* starting cursor position */
-  int saved_pos;		/* saved starting cursor position */
-  int dbi;			/* index of current database handler */
+  char **fname;    	      /* file names (copies) */
+  int last_errno;	      /* 0 or last error number */
+  char *key_p;		      /* key pattern */
+  int key_size;               /* key pattern size */
+  int exact_match;	      /* 1/0, if exact key match needed/not needed */
+  int pos;		      /* starting cursor position */
+  int saved_pos;	      /* saved starting cursor position */
+  int dbi;		      /* index of current database handler */
 } DB_File;
 
 #define CSF_MAX_FIELDS 15	/* maximum of fields in csf */
@@ -57,7 +58,9 @@ typedef struct CSF_struct {
 
 typedef struct DB_Pair_struct {
   char* key;
+  int key_size;
   char* data;
+  int data_size;
   int dbi;
 } DB_Pair;
 
@@ -206,12 +209,12 @@ void ada_db_close(DB_File * file)
 
   file->last_errno = 0;
   if (file->key_p) {
-    free(file->key_p);
+    free (file->key_p);
   }
 
   for (i = file->dbc; i >= 0; i--) {
     if (file->fname[i]) {
-      free(file->fname[i]);
+      free (file->fname[i]);
     }
     if (file->db[i]) {
       if (file->db[i]->close(file->db[i]) != 0)
@@ -227,7 +230,7 @@ void ada_db_close(DB_File * file)
  ** ada_db_set_cursor
  *************************************************************************/
 
-void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
+void ada_db_set_cursor(DB_File * file, int pos, char *key_p, int key_size,
 		       int exact_match)
 {
   file->last_errno = 0;
@@ -241,9 +244,10 @@ void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
 #ifdef RESTRICTED_CURSOR
       file->last_errno = EINPROGRESS;
 #endif
-      free(file->key_p);
+      free (file->key_p);
     }
-    file->key_p = strdup(key_p);
+    file->key_p = strdup (key_p);
+    file->key_size = key_size;
     file->exact_match = exact_match;
   }
   file->pos = pos;
@@ -257,7 +261,7 @@ void ada_db_set_cursor(DB_File * file, int pos, char *key_p,
 void ada_db_free_cursor(DB_File * file)
 {
   if (file->key_p) {
-    free(file->key_p);
+    free (file->key_p);
     file->key_p = 0;
   }
   file->dbi = -1;
@@ -301,7 +305,7 @@ void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
       flag = R_CURSOR;
       file->saved_pos = R_CURSOR;
       key.data = file->key_p;
-      key.size = strlen(file->key_p) + 1;
+      key.size = file->key_size;
       break;
     case MOVE_PREV:
       flag = R_PREV;
@@ -334,7 +338,7 @@ void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
     if (next_file) {
       if (file->saved_pos == R_CURSOR) {
 	key.data = file->key_p;
-	key.size = strlen(file->key_p) + 1;
+	key.size = file->key_size;
       }
       result = file->db[file->dbi]->seq(file->db[file->dbi], &key, &data, file->saved_pos);
     } else {
@@ -349,7 +353,7 @@ void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
       }
     } else if (move == MOVE_BY_KEY) {
       /* check if retrieved key is matched */
-      len = strlen(file->key_p);
+      len = file->key_size - 1;
       if (strncmp(key.data, file->key_p, len) != 0) {
 	/* not matched */
 	result = 1;
@@ -384,8 +388,10 @@ void ada_db_get_pair (DB_File * file, int move, DB_Pair * output) {
 
   /* here result == 0 */
 
-  output->key  = key.data;
-  output->data = data.data;
+  output->key       = key.data;
+  output->key_size  = key.size;
+  output->data      = data.data;
+  output->data_size = data.size;
 
   output->dbi = file->dbi;
 
