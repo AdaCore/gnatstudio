@@ -3,7 +3,7 @@ AC_INIT(common/src/sdefault.adb.in)
 
 AC_CANONICAL_SYSTEM
 
-GPS_VERSION=1.0.0
+GPS_VERSION=1.0.1
 GVD_VERSION=$GPS_VERSION
 STRIP_CR=False
 CAN_OUTPUT=True
@@ -11,6 +11,7 @@ TARGET_CFLAGS=""
 TARGET_LFLAGS=""
 COLOR_SELECTION="#000000"
 EXEC_COMMAND="sh -c"
+DEFAULT_FONT="sans 9"
 DEFAULT_PS="ps x 2> /dev/null || ps -u \$USER 2> /dev/null || ps"
 HTML_BROWSER="netscape"
 
@@ -169,6 +170,7 @@ case "${host}" in
 	COLOR_SELECTION="#BEBEBE"
 	EXEC_COMMAND="cmd /c"
 	DEFAULT_PS="winps"
+	DEFAULT_FONT="tahoma 8"
 	HTML_BROWSER="c:\progra~1\intern~1\iexplore"
 	;;
       ## Otherwise, we'll fall through to the generic opsys code at the bottom.
@@ -205,6 +207,7 @@ AC_SUBST(TARGET_LFLAGS)
 AC_SUBST(TARGET)
 AC_SUBST(EXEC_COMMAND)
 AC_SUBST(DEFAULT_PS)
+AC_SUBST(DEFAULT_FONT)
 AC_SUBST(HTML_BROWSER)
 AC_SUBST(DVIPS)
 AC_SUBST(MAKEINFO)
