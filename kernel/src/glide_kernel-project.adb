@@ -277,6 +277,8 @@ package body Glide_Kernel.Project is
          end;
       end loop;
 
+      Compute_Predefined_Paths (Handle);
+
       --  Report the change to every listener
       Project_View_Changed (Handle);
    end Recompute_View;
