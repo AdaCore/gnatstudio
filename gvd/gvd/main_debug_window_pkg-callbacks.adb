@@ -170,8 +170,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
      (Object : access Gtk_Widget_Record'Class)
    is
       function Substitute
-        (Name : String; File : String; Line : Natural)
-        return String;
+        (Name : String; File : String; Line : Natural) return String;
       --  Substitute %f and %l in Name by the file name and the line number.
 
       ----------------
@@ -179,8 +178,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
       ----------------
 
       function Substitute
-        (Name : String; File : String; Line : Natural)
-        return String
+        (Name : String; File : String; Line : Natural) return String
       is
          Index : Natural := Name'First;
       begin
@@ -206,20 +204,22 @@ package body Main_Debug_Window_Pkg.Callbacks is
 
             Index := Index + 1;
          end loop;
+
          return Name;
       end Substitute;
 
       procedure Free is new Unchecked_Deallocation
         (Argument_List, Argument_List_Access);
 
-      Tab : constant Debugger_Process_Tab := Get_Current_Process (Object);
+      Tab    : constant Debugger_Process_Tab := Get_Current_Process (Object);
       Editor : constant String := Substitute
         (Odd.Preferences.External_Editor,
          Get_Current_File (Tab.Editor_Text),
          Get_Line (Tab.Editor_Text));
-      Args : Argument_List_Access;
-      Pid : GNAT.OS_Lib.Process_Id;
-      Prog : GNAT.OS_Lib.String_Access;
+      Args   : Argument_List_Access;
+      Pid    : GNAT.OS_Lib.Process_Id;
+      Prog   : GNAT.OS_Lib.String_Access;
+
    begin
       Text_Output_Handler (Tab, Editor, Is_Command => True);
 
@@ -236,6 +236,7 @@ package body Main_Debug_Window_Pkg.Callbacks is
          for J in Args'Range loop
             Free (Args (J));
          end loop;
+
          Free (Args);
       end if;
    end On_Edit_Source1_Activate;
@@ -705,7 +706,8 @@ package body Main_Debug_Window_Pkg.Callbacks is
       --  is already waiting for the prompt, and we don't need to do it.
       --  Otherwise, we need to do it ourselves, so that the new prompt
       --  appears as well.
-      Display_Prompt (Tab.Debugger,
+      Display_Prompt
+        (Tab.Debugger,
          Wait_For_Prompt =>
            not Command_In_Process (Get_Process (Tab.Debugger)));
    end On_Interrupt1_Activate;
