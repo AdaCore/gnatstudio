@@ -818,6 +818,9 @@ package body Debugger.Gdb.Ada is
       Lengths : array (1 ..  Num_Dimensions (Result.all)) of Long_Integer;
       --  The number of items in each dimension.
 
+      Previous_Index : Integer;
+      Previous_Dim   : Natural;
+
       procedure Parse_Item;
       --  Parse the value of a single item, and add it to the contents of
       --  Result.
@@ -908,6 +911,9 @@ package body Debugger.Gdb.Ada is
 
    begin
       loop
+         Previous_Dim := Dim;
+         Previous_Index := Index;
+
          case Type_Str (Index) is
             when ')' =>
                --  If we have an array with a dynamic range (ie not known
@@ -961,6 +967,16 @@ package body Debugger.Gdb.Ada is
          end case;
 
          exit when Dim = 0;
+
+         --  If the loop exit condition did not change, do not attempt to parse
+         --  the item as an array.
+
+         if Dim = Previous_Dim
+           and then Index = Previous_Index
+         then
+            Set_Valid (Result, False);
+            return;
+         end if;
       end loop;
 
       --  Shrink the table of values.
