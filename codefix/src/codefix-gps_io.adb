@@ -119,6 +119,7 @@ package body Codefix.GPS_Io is
       Garbage := new String'
         (Interpret_Command
            (This.Kernel, "edit_undo " & Get_File_Name (This)));
+      Free (Garbage);
    end Undo;
 
    ---------
