@@ -286,6 +286,15 @@ package body Src_Info.Prj_Utils is
       end if;
    end Get_Source_Filename;
 
+   function Get_Source_Filename
+     (Unit_Name : String;
+      Project   : Prj.Project_Id) return String is
+   begin
+      Name_Len := Unit_Name'Length;
+      Name_Buffer (1 .. Name_Len) := Unit_Name;
+      return Get_Source_Filename (Name_Find, Project);
+   end Get_Source_Filename;
+
    -----------------------
    -- Get_Spec_Filename --
    -----------------------

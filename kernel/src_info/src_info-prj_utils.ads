@@ -63,6 +63,11 @@ package Src_Info.Prj_Utils is
    --  lines of the GNAT ALI files (the encoding is used to determine the unit
    --  part).
 
+   function Get_Source_Filename
+     (Unit_Name : String;
+      Project   : Prj.Project_Id) return String;
+   --  Same as function above, on a string.
+
    function Get_Spec_Filename
      (Unit_Name : Unit_Name_Type;
       Naming    : Prj.Naming_Data)
