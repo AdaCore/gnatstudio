@@ -73,6 +73,7 @@ package body Src_Info.CPP is
    procedure Sym_EC_Handler      (Sym : FIL_Table);
    procedure Sym_T_Handler       (Sym : FIL_Table);
    procedure Sym_CL_Handler      (Sym : FIL_Table);
+   procedure Sym_UN_Handler      (Sym : FIL_Table);
    procedure Sym_IV_Handler      (Sym : FIL_Table);
    procedure Sym_MA_Handler      (Sym : FIL_Table);
 
@@ -88,6 +89,7 @@ package body Src_Info.CPP is
       EC     => Sym_EC_Handler'Access,
       T      => Sym_T_Handler'Access,
       CL     => Sym_CL_Handler'Access,
+      UN     => Sym_UN_Handler'Access,
       MA     => Sym_MA_Handler'Access,
       IV     => Sym_IV_Handler'Access,
       others => Sym_Default_Handler'Access);
@@ -139,6 +141,7 @@ package body Src_Info.CPP is
       EC     => Ext ("ec"),
       TO     => Ext ("to"),
       IV     => Ext ("iv"),
+      UN     => Ext ("un"),
       others => Ext (""));
 
    type Type_To_Object_Array is array (E_Kind) of E_Kind;
@@ -436,6 +439,15 @@ package body Src_Info.CPP is
    --  Desc and Class_Def arguments
    --  Success returns error status
 
+   procedure Find_Union
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Union_Def : out UN_Table;
+      Success   : out Boolean);
+   --  Finds union and stores information about it in the
+   --  Desc and Union_Def arguments
+   --  Success returns error status
+
    -----------------------
    -- Type_Name_To_Kind --
    -----------------------
@@ -533,6 +545,19 @@ package body Src_Info.CPP is
             Find_Class (Type_Name, Desc, Class_Def, Success);
             if Success then
                Free (Class_Def);
+               return;
+            end if;
+         end;
+      end if;
+
+      --  look in unions
+      if Is_Open (SN_Table (UN)) then
+         declare
+            Union_Def  : UN_Table;
+         begin
+            Find_Union (Type_Name, Desc, Union_Def, Success);
+            if Success then
+               Free (Union_Def);
                return;
             end if;
          end;
@@ -659,6 +684,45 @@ package body Src_Info.CPP is
          null;
    end Find_Class;
 
+   ----------------
+   -- Find_Union --
+   ----------------
+   procedure Find_Union
+     (Type_Name : in String;
+      Desc      : in out CType_Description;
+      Union_Def : out UN_Table;
+      Success   : out Boolean)
+   is
+      Matches      : Match_Array (0 .. 1);
+   begin
+      Success := False;
+      Match (Template_Type_Pat, Type_Name, Matches);
+      if Matches (0) /= No_Match then
+         Union_Def := Find (SN_Table (UN), Type_Name
+            (Matches (1).First .. Matches (1).Last));
+         Desc.IsTemplate := True;
+      else
+         Union_Def := Find (SN_Table (UN), Type_Name);
+      end if;
+
+      Desc.Parent_Point    := Union_Def.Start_Position;
+      Desc.Parent_Filename := new String' (Union_Def.Buffer (
+                    Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+
+      if Desc.Ancestor_Point = Invalid_Point then -- was not set yet
+         Desc.Ancestor_Point    := Union_Def.Start_Position;
+         Desc.Ancestor_Filename := new String' (Union_Def.Buffer (
+                       Union_Def.File_Name.First .. Union_Def.File_Name.Last));
+      end if;
+
+      Desc.Kind := Record_Type;
+      Success := True;
+   exception
+      when  DB_Error | -- non-existent table
+            Not_Found => -- missed, fall thru'
+         null;
+   end Find_Union;
+
    ----------
    -- Free --
    ----------
@@ -744,6 +808,7 @@ package body Src_Info.CPP is
    procedure Sym_CL_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_MA_Handler      (Sym : FIL_Table) is separate;
    procedure Sym_IV_Handler      (Sym : FIL_Table) is separate;
+   procedure Sym_UN_Handler      (Sym : FIL_Table) is separate;
 
    procedure Fu_To_Gv_Handler    (Ref : TO_Table) is separate;
 
