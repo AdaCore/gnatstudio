@@ -18,11 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
---  The default implementation of some of these subprograms raises
---  Program_Error since they require a debugger session. However, since we
---  need to be able to declare some instances of Language_Debugger_Ada, for
---  instance, we need non-abstract subprograms.
-
 with Debugger; use Debugger;
 with Items;
 with Items.Arrays;
@@ -46,24 +41,20 @@ package Language.Debugger is
       Type_Str : String;
       Entity   : String;
       Index    : in out Natural;
-      Result   : out Items.Generic_Type_Access);
+      Result   : out Items.Generic_Type_Access) is abstract;
    --  Parse the type of Entity.
    --  Type_Str should contain the type as returned by the debugger.
    --  Entity is used to get the type of the fields or array items.
-   --
-   --  The default implementation raises Program_Error (See comment above)
 
    procedure Parse_Value
      (Lang       : access Language_Debugger;
       Type_Str   : String;
       Index      : in out Natural;
       Result     : in out Items.Generic_Type_Access;
-      Repeat_Num : out Positive);
+      Repeat_Num : out Positive) is abstract;
    --  Parse the value of an entity, for the Ada language.
    --  Type_Str should contain the value, as returned by the debugger itself.
    --  Repeat_Num is the number of times the item is repeated in the output.
-   --
-   --  The default implementation raises Program_Error (See comment above)
 
    procedure Parse_Array_Type
      (Lang      : access Language_Debugger;
@@ -71,14 +62,12 @@ package Language.Debugger is
       Entity    : String;
       Index     : in out Natural;
       Start_Of_Dim : in Natural;
-      Result    : out Items.Generic_Type_Access);
+      Result    : out Items.Generic_Type_Access) is abstract;
    --  Parse the description of an array type.
    --  Index should point at the opening character of the array in Type_Str
    --  (ie "array " in gdb Ada, or "int [4]" in gdb C).
    --  Start_Of_Dim should point to the beginning of the definition of the
    --  dimensions ("[4]" in the above example)
-   --
-   --  The default implementation raises Program_Error (See comment above)
 
    procedure Parse_Record_Type
      (Lang      : access Language_Debugger;
@@ -87,30 +76,25 @@ package Language.Debugger is
       Index     : in out Natural;
       Is_Union  : Boolean;
       Result    : out Items.Generic_Type_Access;
-      End_On    : String);
+      End_On    : String) is abstract;
    --  Parse the type describing a record.
    --  Index should pointer after the initial "record ", and the record is
    --  assumed to end on a string like End_On.
    --  This function is also used to parse the variant part of a record.
    --  If Is_Union is True, then a union type is created instead of a record
    --  type.
-   --
-   --  The default implementation raises Program_Error (See comment above)
 
    procedure Parse_Array_Value
      (Lang     : access Language_Debugger;
       Type_Str : String;
       Index    : in out Natural;
-      Result   : in out Items.Arrays.Array_Type_Access);
+      Result   : in out Items.Arrays.Array_Type_Access) is abstract;
    --  Parse the value of an array.
-   --
-   --  The default implementation raises Program_Error (See comment above)
 
    function Set_Variable
      (Lang     : access Language_Debugger;
       Var_Name : String;
-      Value    : String)
-     return String;
+      Value    : String) return String is abstract;
    --  Return the command to use to set a variable, depending on a language
    --  specific language.
 
@@ -138,9 +122,9 @@ package Language.Debugger is
    --  since the fields depend on the debugger.
 
    function Get_Language_Debugger_Context
-     (Lang : access Language_Debugger) return Language_Debugger_Context;
+     (Lang : access Language_Debugger)
+      return Language_Debugger_Context is abstract;
    --  Return the language/Debugger context.
-   --  The default implementation raises Program_Error (See comment above)
 
    ------------------------
    -- Exception Handling --
@@ -159,7 +143,8 @@ package Language.Debugger is
    -- Special commands --
    ----------------------
 
-   function Start (Debugger  : access Language_Debugger) return String;
+   function Start
+     (Debugger : access Language_Debugger) return String is abstract;
    --  Return the command used in the current debugger to start the program
    --  and stop on the first line of user's code.
    --  The resulting string can be either null (in which case this function
