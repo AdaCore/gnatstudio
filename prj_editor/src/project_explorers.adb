@@ -1120,6 +1120,11 @@ package body Project_Explorers is
       Get_Path_At_Pos
         (Data.Tree, X, Y, Path, Column, Cell_X, Cell_Y, Row_Found);
 
+      --  ??? temporarily disable explorer tooltips, since there are remaining
+      --  issues to be solved (e.g. tooltips appearing in other windows).
+
+      Row_Found := False;
+
       if not Row_Found then
          return;
       end if;
