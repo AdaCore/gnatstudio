@@ -39,6 +39,8 @@ with Glide_Kernel;
 with Src_Editor_Buffer;
 with Gtk.Text_Mark; use Gtk.Text_Mark;
 
+with Glide_Kernel.Preferences; use Glide_Kernel.Preferences;
+
 package Src_Editor_View is
 
    type Source_View_Record is new Gtk.Text_View.Gtk_Text_View_Record
@@ -189,6 +191,9 @@ private
 
       Speed_Column_Buffer  : Gdk.Pixmap.Gdk_Pixmap;
       --  Cache for avoiding to redraw the speed column too often.
+
+      Speed_Column_Mode    : Speed_Column_Policies := Automatic;
+      --  The display policy for the speed column.
 
       Scroll_Timeout       : Gtk.Main.Timeout_Handler_Id := 0;
       Scroll_To_Value      : Gdouble := 0.0;
