@@ -51,7 +51,7 @@ package Project_Explorers is
       Kernel   : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal initialization procedure.
 
-   Explorer_Module_ID   : Glide_Kernel.Module_ID := null;
+   Explorer_Module_ID : Glide_Kernel.Module_ID := null;
    --  Id for the explorer module
 
    procedure Register_Module
@@ -85,16 +85,16 @@ private
       Draw_Tooltip => Draw_Tooltip);
 
    type Project_Explorer_Record is new Gtk.Box.Gtk_Box_Record with record
-      Scenario      : Scenario_Views.Scenario_View;
-      Tree          : Gtkada.Tree_View.Tree_View;
+      Scenario  : Scenario_Views.Scenario_View;
+      Tree      : Gtkada.Tree_View.Tree_View;
 
-      Kernel        : Glide_Kernel.Kernel_Handle;
-      Expand_Id     : Gtk.Handlers.Handler_Id;
+      Kernel    : Glide_Kernel.Kernel_Handle;
+      Expand_Id : Gtk.Handlers.Handler_Id;
       --  The signal for the expansion of nodes in the project view
 
-      Expanding     : Boolean := False;
+      Expanding : Boolean := False;
 
-      Tooltip       : Project_Explorer_Tooltips.Tooltips;
+      Tooltip   : Project_Explorer_Tooltips.Tooltips;
    end record;
 
 end Project_Explorers;
