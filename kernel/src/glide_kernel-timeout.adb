@@ -151,21 +151,25 @@ package body Glide_Kernel.Timeout is
 
    exception
       when Process_Died =>
-         if Data.D.Callback /= null then
-            Data.D.Callback (Data.D, Strip_CR (Expect_Out (Fd.all)));
-         end if;
-
-         if Data.Console /= null then
-            --  Capture all remaining output
-            Insert
-              (Data.Console, Strip_CR (Expect_Out (Fd.all)), Add_LF => False);
-            Highlight_Child
-              (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
-
-            if Data.Console /= Get_Console (Data.D.Kernel) then
-               Enable_Prompt_Display (Data.Console, False);
+         declare
+            Output : constant String := Strip_CR (Expect_Out (Fd.all));
+         begin
+            if Data.D.Callback /= null then
+               Data.D.Callback (Data.D, Output);
             end if;
-         end if;
+
+            if Data.Console /= null then
+               --  Display all remaining output
+
+               Insert (Data.Console, Output, Add_LF => False);
+               Highlight_Child
+                 (Find_MDI_Child (Get_MDI (Data.D.Kernel), Data.Console));
+
+               if Data.Console /= Get_Console (Data.D.Kernel) then
+                  Enable_Prompt_Display (Data.Console, False);
+               end if;
+            end if;
+         end;
 
          if Data.Delete_Id.Signal /= Null_Signal_Id then
             Gtk.Handlers.Disconnect (Data.Console, Data.Delete_Id);
