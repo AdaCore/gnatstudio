@@ -2989,16 +2989,19 @@ package body CPP_Parser is
      (System_Dir : String;
       Handler    : access Entities.LI_Handler_Record'Class) return String
    is
-      H : constant CPP_Handler := CPP_Handler (Handler);
+      H           : constant CPP_Handler := CPP_Handler (Handler);
+      Exec_Suffix : String_Access := Get_Executable_Suffix;
    begin
       Free (H.DBIMP_Path);
       Free (H.CBrowser_Path);
 
       H.DBIMP_Path := new String'
-        (Name_As_Directory (System_Dir) & "bin" & Directory_Separator & DBIMP);
+        (Name_As_Directory (System_Dir) & "bin" &
+         Directory_Separator & DBIMP & Exec_Suffix.all);
       H.CBrowser_Path := new String'
         (Name_As_Directory (System_Dir) & "bin"
-         & Directory_Separator & CBrowser);
+         & Directory_Separator & CBrowser & Exec_Suffix.all);
+      Free (Exec_Suffix);
 
       if not Is_Regular_File (H.DBIMP_Path.all) then
          Free (H.DBIMP_Path);
