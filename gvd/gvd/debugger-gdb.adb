@@ -1362,6 +1362,10 @@ package body Debugger.Gdb is
    begin
       Len := 0;
 
+      if Output = "The program is not being run." then
+         return;
+      end if;
+
       while Index < Output'Last loop
          Len := Len + 1;
          EOL := Index;
@@ -1382,6 +1386,14 @@ package body Debugger.Gdb is
               ));
          Index := EOL + 1;
       end loop;
+
+      exception
+         when Constraint_Error =>
+            --  A parsing error occured when filling Info (Len)
+
+            if Len > 0 then
+               Len := Len - 1;
+            end if;
    end Info_Tasks;
 
    ------------------
