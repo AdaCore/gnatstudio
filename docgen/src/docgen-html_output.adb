@@ -117,6 +117,11 @@ package body Docgen.Html_Output is
       Info   : Doc_Info);
    --  Add the header of a package to the documentation
 
+   procedure Doc_HTML_Header_Private
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+
    procedure Doc_HTML_Footer
      (File   : in Ada.Text_IO.File_Type;
       Info   : Doc_Info;
@@ -152,16 +157,26 @@ package body Docgen.Html_Output is
    --  Add an item (a tagged type or its parent/child) to the tagged types
    --  index
 
+   procedure Doc_HTML_Index_End
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Close the index file
+
    procedure Doc_HTML_Index_Item
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
    --  Add an item to an index, used for 3 index types: units, types and
    --  subprograms index
 
-   procedure Doc_HTML_Index_End
+   procedure Doc_HTML_Private_Index
      (File   : Ada.Text_IO.File_Type;
       Info   : Doc_Info);
-   --  Add the footer to the index, used for all 4 index files
+   --  Set the title "Private" in the index file
+
+   procedure Doc_HTML_Public_Index
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info);
+   --  Set the title "Public" in the index file
 
    procedure Doc_HTML_Body
      (B      : access Backend_HTML;
@@ -197,6 +212,8 @@ package body Docgen.Html_Output is
          when Open_Info             => Doc_HTML_Open (File, Info);
          when Close_Info            => Doc_HTML_Close (File, Info);
          when Header_Info           => Doc_HTML_Header (Kernel, File, Info);
+         when Header_Private_Info   =>
+            Doc_HTML_Header_Private (Kernel, File, Info);
          when Footer_Info           => Doc_HTML_Footer (File, Info, Kernel);
          when Subtitle_Info         => Doc_HTML_Subtitle (File, Info);
          when Package_Desc_Info     => Doc_HTML_Pack_Desc (File, Info);
@@ -243,7 +260,10 @@ package body Docgen.Html_Output is
 
          when Index_Tagged_Type_Item =>
             Doc_HTML_Tagged_Type_Item (File, Info);
-
+         when Private_Index_Info =>
+            Doc_HTML_Private_Index (File, Info);
+         when Public_Index_Info =>
+            Doc_HTML_Public_Index (File, Info);
          when Index_Item_Info       => Doc_HTML_Index_Item (File, Info);
          when End_Of_Index_Info     => Doc_HTML_Index_End  (File, Info);
          when Body_Line_Info        =>
@@ -327,10 +347,6 @@ package body Docgen.Html_Output is
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
-      if Info.Package_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
-
       Format_File
         (B,
          Kernel,
@@ -409,10 +425,6 @@ package body Docgen.Html_Output is
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
-      if Info.Var_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
-
       Format_File
         (B,
          Kernel,
@@ -454,10 +466,6 @@ package body Docgen.Html_Output is
 
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
-
-      if Info.Exception_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
 
       Format_File
         (B,
@@ -501,10 +509,6 @@ package body Docgen.Html_Output is
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
-      if Info.Type_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
-
       Format_File
         (B,
          Kernel,
@@ -547,10 +551,6 @@ package body Docgen.Html_Output is
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
 
-      if Info.Entry_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
-
       Format_File
         (B,
          Kernel,
@@ -591,10 +591,6 @@ package body Docgen.Html_Output is
          & """></A>  <BR> ");
       Put_Line
         (File, "<TABLE BGCOLOR=""#DDDDDD"" WIDTH=""100%""><TR><TD> <PRE>");
-
-      if Info.Subprogram_Entity.Is_Private then
-         Put_Line (File, "<I> private: </I>" & ASCII.LF);
-      end if;
 
       Format_File
         (B,
@@ -639,6 +635,8 @@ package body Docgen.Html_Output is
    begin
       Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
       Put_Line (File, " <H1>  Package <I>");
+      Put_Line (File, " <A NAME=""" & Image (First_File_Line) & """>");
+      --  Static anchor used by the unit index file
       Put_Line (File, " <A NAME=""" & Image (Info.Header_Line) & """>");
 
       --  check if should set a link to the body file
@@ -656,6 +654,21 @@ package body Docgen.Html_Output is
       Put_Line (File, "<PRE>");
       Put_Line (File, "<HR>");
    end Doc_HTML_Header;
+
+   -------------------------------
+   --  Doc_HTML_Header_Private  --
+   -------------------------------
+
+   procedure Doc_HTML_Header_Private
+     (Kernel : access Kernel_Handle_Record'Class;
+      File   : in Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+      pragma Unreferenced (Kernel);
+   begin
+      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
+      Put_Line (File, " <H1> " & Info.Header_Title.all & "</H1>");
+      Put_Line (File, "</TD></TR></TABLE>");
+   end Doc_HTML_Header_Private;
 
    ---------------------
    -- Doc_HTML_Footer --
@@ -950,6 +963,32 @@ package body Docgen.Html_Output is
       Put_Line (File, "<BR>");
       New_Line (File);
    end Doc_HTML_Index_Item;
+
+   ------------------------------
+   --  Doc_HTML_Private_Index  --
+   ------------------------------
+
+   procedure Doc_HTML_Private_Index
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+   begin
+      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
+      Put_Line (File, " <BR><b> " & Info.Private_Index_Title.all & "</b><BR>");
+      Put_Line (File, "</TD></TR></TABLE>");
+   end Doc_HTML_Private_Index;
+
+   ------------------------------
+   --  Doc_HTML_Public_Index  --
+   ------------------------------
+
+   procedure Doc_HTML_Public_Index
+     (File   : Ada.Text_IO.File_Type;
+      Info   : Doc_Info) is
+   begin
+      Put_Line (File, "<TABLE BGCOLOR=""#9999FF"" WIDTH=""100%""><TR><TD>");
+      Put_Line (File, " <BR><b> " & Info.Public_Index_Title.all & "</b><BR>");
+      Put_Line (File, "</TD></TR></TABLE>");
+   end Doc_HTML_Public_Index;
 
    ------------------------
    -- Doc_HTML_Index_End --
