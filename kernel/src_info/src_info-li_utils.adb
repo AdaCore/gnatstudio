@@ -111,6 +111,13 @@ package body Src_Info.LI_Utils is
       if Declaration_Info = null then
          --  ??? what should we do if Declaration_Info is null?
          return;
+
+      elsif Kind = Primitive_Operation then
+         R_Ptr := new E_Reference_Node;
+         R_Ptr.Next :=
+           Declaration_Info.Value.Declaration.Primitive_Subprograms;
+         Declaration_Info.Value.Declaration.Primitive_Subprograms := R_Ptr;
+
       elsif Declaration_Info.Value.References = null then
          Declaration_Info.Value.References := new E_Reference_Node;
          Declaration_Info.Value.References.Next := null;
