@@ -71,6 +71,7 @@ package body Commands is
    begin
       if X /= null then
          Free (X.Next_Commands);
+         Free (X.Alternate_Commands);
          Destroy (X);
       end if;
    end Free;
