@@ -801,6 +801,8 @@ package body Project_Viewers is
             Project_Information (File),
             Dir_Name (File_Information (File)).all,
             File_Information (File));
+      else
+         Update_Contents (Viewer, Get_Project (Viewer.Kernel));
       end if;
 
    exception
