@@ -375,6 +375,7 @@ package body Src_Editor_Buffer is
         Get_String (Nth (Params, 2), Length => Length);
       Command     : Editor_Command := Editor_Command (Buffer.Current_Command);
       Indented    : Boolean := False;
+      Success     : Boolean;
 
    begin
       if Buffer.Inserting then
@@ -444,7 +445,7 @@ package body Src_Editor_Buffer is
 
                Next_Indentation
                  (Buffer.Lang, Slice (1 .. Slice_Length),
-                  Indent, Next_Indent);
+                  Success, Indent, Next_Indent);
 
                --  Stop propagation of this signal, since we will completely
                --  replace the current line in the call to Replace_Slice
@@ -1255,7 +1256,9 @@ package body Src_Editor_Buffer is
    is
       Iter : Gtk_Text_Iter;
    begin
-      pragma Assert (Is_Valid_Position (Buffer, Line, Column));
+      Assert (Me, Is_Valid_Position (Buffer, Line, Column),
+              "Invalid position for Set_Cursor_Position "
+              & Get_Filename (Buffer) & Line'Img & Column'Img);
 
       --  At this point, we know that the (Line, Column) position is
       --  valid, so we can safely get the iterator at this position.
