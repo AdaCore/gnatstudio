@@ -2440,7 +2440,10 @@ package body Src_Info.Queries is
 
       procedure Next_Decl is
       begin
-         Iterator.Current_Decl := Iterator.Current_Decl.Next;
+         if Iterator.Current_Decl /= null then
+            Iterator.Current_Decl := Iterator.Current_Decl.Next;
+         end if;
+
          Iterator.Reference    := null;
          Iterator.New_Decl     := True;
 
