@@ -1219,12 +1219,13 @@ package body Project_Viewers is
       pragma Unreferenced (Command);
       File : constant File_Selection_Context_Access :=
         File_Selection_Context_Access (Context.Context);
-      Wiz  : Creation_Wizard.Full.Prj_Wizard;
+      Wiz  : Creation_Wizard.Project_Wizard;
    begin
-      Gtk_New (Wiz, Get_Kernel (File));
+      Creation_Wizard.Gtk_New (Wiz, Get_Kernel (File));
+      Add_Full_Wizard_Pages (Wiz);
 
       declare
-         Name : constant String := Run (Wiz);
+         Name : constant String := Creation_Wizard.Run (Wiz);
       begin
          if Name /= "" then
             Add_Dependency_Internal

@@ -125,40 +125,26 @@ package body Creation_Wizard.Full is
       Free (Languages);
    end Generate_Project;
 
-   -------------
-   -- Gtk_New --
-   -------------
+   ---------------------------
+   -- Add_Full_Wizard_Pages --
+   ---------------------------
 
-   procedure Gtk_New
-     (Wiz    : out Prj_Wizard;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class) is
-   begin
-      Wiz := new Prj_Wizard_Record;
-      Creation_Wizard.Full.Initialize (Wiz, Kernel);
-   end Gtk_New;
-
-   ----------------
-   -- Initialize --
-   ----------------
-
-   procedure Initialize
-     (Wiz    : access Prj_Wizard_Record'Class;
-      Kernel : access Glide_Kernel.Kernel_Handle_Record'Class)
+   procedure Add_Full_Wizard_Pages
+     (Wiz : access Project_Wizard_Record'Class)
    is
       P          : Project_Editor_Page;
       Attr_Count : constant Natural := Attribute_Editors_Page_Count;
-      Count : constant Natural := Project_Editor_Pages_Count (Kernel);
+      Count      : constant Natural :=
+        Project_Editor_Pages_Count (Get_Kernel (Wiz));
       Page       : Project_Wizard_Page;
 
    begin
-      Creation_Wizard.Initialize (Wiz, Kernel);
-
       --  "+1" here is for the "General" page, which is omitted in the result
       --  of Attribute_Editors_Page_Count
 
       for E in 1 .. Attr_Count + 1 loop
          Page := Attribute_Editors_Page_Box
-           (Kernel            => Kernel,
+           (Kernel            => Get_Kernel (Wiz),
             Project           => No_Project,
             Path_Widget       => Get_Path_Widget (Wiz.Name_And_Location),
             Nth_Page          => E,
@@ -172,7 +158,7 @@ package body Creation_Wizard.Full is
       end loop;
 
       for E in 1 .. Count loop
-         P := Get_Nth_Project_Editor_Page (Kernel, E);
+         P := Get_Nth_Project_Editor_Page (Get_Kernel (Wiz), E);
          Page := new Project_Editor_Page_Wrapper'
            (Project_Wizard_Page_Record with
             Page => P,
@@ -182,6 +168,6 @@ package body Creation_Wizard.Full is
                    Description => Get_Title (P),
                    Toc         => Get_Toc (P));
       end loop;
-   end Initialize;
+   end Add_Full_Wizard_Pages;
 
 end Creation_Wizard.Full;

@@ -18,26 +18,10 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Glide_Kernel;
-
 package Creation_Wizard.Full is
-
-   type Prj_Wizard_Record is new Project_Wizard_Record with private;
-   type Prj_Wizard is access all Prj_Wizard_Record'Class;
-
-   procedure Gtk_New
-     (Wiz               : out Prj_Wizard;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Create a new project wizard.
-   --  New pages can be added at will with Add_Page and through XML files.
-   --  Default values for the various pages are taken from the project
-   --  currently loaded in Kernel.
-
-   procedure Initialize
-     (Wiz               : access Prj_Wizard_Record'Class;
-      Kernel            : access Glide_Kernel.Kernel_Handle_Record'Class);
-   --  Internal function for the creation of a new wizard
-
-private
-   type Prj_Wizard_Record is new Project_Wizard_Record with null record;
+   procedure Add_Full_Wizard_Pages
+     (Wiz : access Project_Wizard_Record'Class);
+   --  Add the required pages to allow wizard to edit all the properties of
+   --  a project.
+   --  New pages can be registered through XML pages.
 end Creation_Wizard.Full;

@@ -240,38 +240,31 @@ package body Creation_Wizard.Selector is
       Show_All (Dialog);
 
       if Run (Dialog) = Gtk_Response_OK then
+         Gtk_New (Wizard, Kernel, Show_Toc => True);
+
          if Iter_Is_Selected
            (Get_Selection (Dialog.View), From_Sources_Iter)
          then
-            Gtk_New (Wizard, Kernel, Show_Toc => True);
             Add_Simple_Wizard_Pages (Wizard);
 
          elsif Iter_Is_Selected
            (Get_Selection (Dialog.View), From_Adp_Iter)
          then
-            Gtk_New (Wizard, Kernel, Show_Toc => True);
             Add_Adp_Wizard_Pages (Wizard);
 
          else
-            declare
-               Wiz : Creation_Wizard.Full.Prj_Wizard;
-            begin
-               Gtk_New (Wiz, Kernel);
-               Wizard := Project_Wizard (Wiz);
-            end;
+            Add_Full_Wizard_Pages (Wizard);
          end if;
 
          Destroy (Dialog);
-         if Wizard /= null then
-            declare
-               Name : constant String := Run (Wizard);
-            begin
-               if Name /= "" then
-                  Load_Project (Kernel, Name);
-                  return True;
-               end if;
-            end;
-         end if;
+         declare
+            Name : constant String := Run (Wizard);
+         begin
+            if Name /= "" then
+               Load_Project (Kernel, Name);
+               return True;
+            end if;
+         end;
 
          return False;
       else
