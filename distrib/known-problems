@@ -1,5 +1,14 @@
 Known Problems fixed in GPS 1.3.0
 
+- C627-007 Exec directory settings lost when editing project properties
+  Problem:    If you have specified a relative path for the executables
+              directory and you edit the project properties, it can happen
+              that the executables directory is corrupted if the current
+              directory has changed.
+  Workaround: Either use absolute paths for the executables directory, or
+              make sure the current directory is the one containing the
+              project file before you edit the project properties.
+
 - C305-012 Removed files are not displayed in the VCS Explorer.
   Problem:    When querying the status of files in a directory, the removed
               files do not appear in the VCS Explorer.
