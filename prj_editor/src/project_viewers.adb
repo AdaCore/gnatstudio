@@ -966,13 +966,14 @@ package body Project_Viewers is
       if Context /= null
         and then Context.all in File_Selection_Context'Class
         and then Has_Project_Information
-        (File_Selection_Context_Access (Context))
+          (File_Selection_Context_Access (Context))
       then
          Edit_Properties
            (Project_Information (File_Selection_Context_Access (Context)),
             Kernel);
       else
-         Insert (Kernel, -"No selected project!");
+         Console.Insert (Kernel, -"No project selected",
+                         Mode => Console.Error);
       end if;
 
    exception
@@ -999,17 +1000,17 @@ package body Project_Viewers is
          Console.Insert (Kernel, Msg);
       end Report_Error;
 
-
       Dialog : Gtk_Dialog;
       Label  : Gtk_Label;
       Text   : Gtk_Entry;
       Widget : Gtk_Widget;
       View   : constant Project_Id := Get_Project_View_From_Project (Project);
    begin
-      Gtk_New (Dialog,
-               Title  => -"Select name for project",
-               Parent => Get_Main_Window (Kernel),
-               Flags  => Modal or Destroy_With_Parent);
+      Gtk_New
+        (Dialog,
+         Title  => -"Select name for project",
+         Parent => Get_Main_Window (Kernel),
+         Flags  => Modal or Destroy_With_Parent);
       Widget := Add_Button (Dialog, Stock_Ok, Gtk_Response_OK);
 
       Gtk_New (Label, -"Enter name of project:");
