@@ -2984,7 +2984,7 @@ package body Gtkada.MDI is
       Tmp : Widget_List.Glist;
    begin
       if Child.Menu_Item = null
-        and then Child.Title.all
+        and then Child.Title.all /= ""
       then
 
          --  Find the group to which the radio menu items should belong. We
