@@ -521,6 +521,24 @@ package body Shell is
    is
       Args    : Argument_List (1 .. 3);
       Command : String_Access;
+
+      procedure Interpret_No_Output
+        (Kernel  : access Kernel_Handle_Record'Class;
+         Command : String;
+         Args    : Argument_List);
+      --  Same as Interpret_Command, but discard the output.
+
+      procedure Interpret_No_Output
+        (Kernel  : access Kernel_Handle_Record'Class;
+         Command : String;
+         Args    : Argument_List)
+      is
+         S : constant String := Interpret_Command (Kernel, Command, Args);
+         pragma Unreferenced (S);
+      begin
+         null;
+      end Interpret_No_Output;
+
    begin
       Args (1) := new String'(Filename);
       Args (2) := new String'(Line'Img);
@@ -534,9 +552,9 @@ package body Shell is
       end if;
 
       if Line = 0 then
-         Interpret_Command (Kernel, Command.all, Args (1) & Args (3));
+         Interpret_No_Output (Kernel, Command.all, Args (1) & Args (3));
       else
-         Interpret_Command (Kernel, Command.all, Args);
+         Interpret_No_Output (Kernel, Command.all, Args);
       end if;
 
       for J in Args'Range loop
