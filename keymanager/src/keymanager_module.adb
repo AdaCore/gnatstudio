@@ -37,6 +37,7 @@ with GUI_Utils;                 use GUI_Utils;
 with System;                    use System;
 with System.Assertions;         use System.Assertions;
 with Ada.Exceptions;            use Ada.Exceptions;
+with Ada.Strings.Fixed;         use Ada.Strings.Fixed;
 with Gtk.Cell_Renderer_Text;    use Gtk.Cell_Renderer_Text;
 with Gtk.Dialog;                use Gtk.Dialog;
 with Gtk.Tree_View;             use Gtk.Tree_View;
@@ -314,7 +315,8 @@ package body KeyManager_Module is
       Parent  : Gtk_Tree_Iter;
       Descr   : String;
       Changed : Boolean := False;
-      Key     : String := "") return Gtk_Tree_Iter;
+      Key     : String := "";
+      Accel_Path : String := "") return Gtk_Tree_Iter;
    --  Add a new line into the model
 
    procedure Lookup_Command_By_Name
@@ -360,9 +362,14 @@ package body KeyManager_Module is
       Level  : Customization_Level);
    --  Called when new customization files are parsed
 
-   Action_Column  : constant := 0;
-   Key_Column     : constant := 1;
-   Changed_Column : constant := 2;
+   function Lookup_Key_From_Action
+     (Handler : Key_Manager_Access; Action : String) return String;
+   --  Return the key binding set for a specific action
+
+   Action_Column     : constant := 0;
+   Key_Column        : constant := 1;
+   Changed_Column    : constant := 2;
+   Accel_Path_Column : constant := 3;
 
    -------------
    -- Destroy --
@@ -1053,13 +1060,15 @@ package body KeyManager_Module is
       Parent  : Gtk_Tree_Iter;
       Descr   : String;
       Changed : Boolean := False;
-      Key     : String := "") return Gtk_Tree_Iter
+      Key     : String := "";
+      Accel_Path : String := "") return Gtk_Tree_Iter
    is
       procedure Internal
         (Tree, Iter : System.Address;
          Col1  : Gint; Value1 : String;
          Col2  : Gint; Value2 : String;
          Col3  : Gint; Value3 : Gboolean;
+         Col4  : Gint; Value4 : String;
          Final : Gint := -1);
       pragma Import (C, Internal, "gtk_tree_store_set");
 
@@ -1068,11 +1077,67 @@ package body KeyManager_Module is
       Append (Model, Iter, Parent);
       Internal
         (Get_Object (Model), Iter'Address,
-         Col1 => Action_Column,  Value1 => Descr & ASCII.NUL,
-         Col2 => Key_Column,     Value2 => Key & ASCII.NUL,
-         Col3 => Changed_Column, Value3 => Boolean'Pos (Changed));
+         Col1 => Action_Column,     Value1 => Descr & ASCII.NUL,
+         Col2 => Key_Column,        Value2 => Key & ASCII.NUL,
+         Col3 => Changed_Column,    Value3 => Boolean'Pos (Changed),
+         Col4 => Accel_Path_Column, Value4 => Accel_Path & ASCII.NUL);
       return Iter;
    end Set;
+
+   ----------------------------
+   -- Lookup_Key_From_Action --
+   ----------------------------
+
+   function Lookup_Key_From_Action
+     (Handler : Key_Manager_Access; Action : String) return String
+   is
+      function Process_Table
+        (Table : Key_Htable.HTable; Prefix : String) return String;
+      --  Process a specific binding table
+
+      -------------------
+      -- Process_Table --
+      -------------------
+
+      function Process_Table
+        (Table : Key_Htable.HTable; Prefix : String) return String
+      is
+         Iter    : Key_Htable.Iterator;
+         Binding : Key_Description_List;
+      begin
+         Get_First (Table, Iter);
+         loop
+            Binding := Get_Element (Iter);
+            exit when Binding = No_Key;
+
+            while Binding /= null loop
+               if Binding.Action = null then
+                  declare
+                     Sub : constant String := Process_Table
+                       (Get_Keymap (Binding).Table,
+                        Prefix
+                        & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier)
+                        & ' ');
+                  begin
+                     if Sub /= "" then
+                        return Sub;
+                     end if;
+                  end;
+               elsif Binding.Action.all = Action then
+                  return Prefix
+                    & Image (Get_Key (Iter).Key, Get_Key (Iter).Modifier);
+               end if;
+
+               Binding := Next (Binding);
+            end loop;
+
+            Get_Next (Table, Iter);
+         end loop;
+         return "";
+      end Process_Table;
+   begin
+      return Process_Table (Handler.Table, "");
+   end Lookup_Key_From_Action;
 
    -----------------
    -- Fill_Editor --
@@ -1108,29 +1173,31 @@ package body KeyManager_Module is
       is
          Iter : Gtk_Tree_Iter;
          pragma Unreferenced (Data, Changed, Iter);
-         First : constant Natural := Accel_Path'First;
+         First : Natural := Accel_Path'First;
       begin
---  Temporarily commented out, we'll show the leading <gps> prefix anyway.
---  We need it to update the menus dynamically on exit, and GPS uses both
---  <gps> and <gtkada>. An extra column should be added to store this prefix
---           while First <= Accel_Path'Last
---             and then Accel_Path (First) /= '/'
---           loop
---              First := First + 1;
---           end loop;
+         while First <= Accel_Path'Last
+           and then Accel_Path (First) /= '/'
+         loop
+            First := First + 1;
+         end loop;
 
          if Accel_Key /= 0 then
-            Iter := Set (Model  => Editor.Model,
-                         Parent => Menu_Iter,
-                         Descr  => Accel_Path (First .. Accel_Path'Last),
-                         Changed => False,
-                         Key    => Image (Accel_Key, Accel_Mods));
+            Iter := Set
+              (Model      => Editor.Model,
+               Parent     => Menu_Iter,
+               Descr      => Accel_Path (First .. Accel_Path'Last),
+               Changed    => False,
+               Accel_Path => Accel_Path (Accel_Path'First .. First - 1),
+               Key        => Image (Accel_Key, Accel_Mods));
          else
-            Iter := Set (Model  => Editor.Model,
-                         Parent => Menu_Iter,
-                         Descr  => Accel_Path (First .. Accel_Path'Last),
-                         Changed => False,
-                         Key    => -Disabled_String);
+            Iter := Set
+              (Model      => Editor.Model,
+               Parent     => Menu_Iter,
+               Descr      => Accel_Path (First .. Accel_Path'Last),
+               Changed    => True,
+               Accel_Path => Accel_Path (Accel_Path'First .. First - 1),
+               Key        => Lookup_Key_From_Action
+                 (Handler, Accel_Path (First .. Accel_Path'Last)));
          end if;
       end Process_Menu_Binding;
 
@@ -1159,7 +1226,9 @@ package body KeyManager_Module is
                      & Image (Get_Key (Iter).Key,
                               Get_Key (Iter).Modifier) & ' ');
 
-               else
+               --  Hide actions associated with menus, since they are only
+               --  internal details
+               elsif Binding.Action (Binding.Action'First) /= '/' then
                   Action := Lookup_Action (Handler.Kernel, Binding.Action.all);
                   if Action /= null then
                      Parent := Find_Parent (Editor.Model, Action.Filter);
@@ -1262,22 +1331,38 @@ package body KeyManager_Module is
                declare
                   Str : constant String :=
                     Get_String (Editor.Model, Child, Key_Column);
+                  Short_Keybinding : constant Boolean :=
+                    Str /= -Disabled_String
+                    and then Ada.Strings.Fixed.Index (Str, " ") < Str'First;
+                  Name : constant String :=
+                    Get_String (Editor.Model, Child, Accel_Path_Column)
+                    & Get_String (Editor.Model, Child, Action_Column);
                begin
-                  if Str /= -Disabled_String then
+                  if Short_Keybinding then
                      Value (Str, Key, Modif);
                      Change_Entry
-                       (Accel_Path =>
-                          Get_String (Editor.Model, Child, Action_Column),
+                       (Accel_Path => Name,
                         Accel_Key  => Key,
                         Accel_Mods => Modif,
                         Replace    => True);
                   else
                      Change_Entry
-                       (Accel_Path =>
-                          Get_String (Editor.Model, Child, Action_Column),
+                       (Accel_Path => Name,
                         Accel_Key  => 0,
                         Accel_Mods => 0,
                         Replace    => True);
+
+                     --  A long key binding ? => Create an action to wrap the
+                     --  menu
+                     if Str /= -Disabled_String then
+                        Bind_Default_Key_Internal
+                          (Handler,
+                           Action      =>
+                             Get_String (Editor.Model, Child, Action_Column),
+                           Default_Key => Str,
+                           Changed     => Get_Boolean
+                             (Editor.Model, Child, Changed_Column));
+                     end if;
                   end if;
                end;
                Next (Editor.Model, Child);
@@ -1398,12 +1483,8 @@ package body KeyManager_Module is
          Handler.Active := False;
 
          declare
-            Is_Menu : constant Boolean := Get_String
-              (Model, Parent (Model, Iter), Action_Column) =
-              -Menu_Context_Name;
             Key     : constant String := Grab_Multiple_Key
-              (Ed.View, Allow_Multiple => not Is_Menu);
-
+              (Ed.View, Allow_Multiple => True);
          begin
             if Key /= "" then
                Set (Ed.Model, Iter, Key_Column, Key);
@@ -1529,9 +1610,10 @@ package body KeyManager_Module is
 
       Gtk_New
         (Editor.Model,
-         (Action_Column  => GType_String,
-          Key_Column     => GType_String,
-          Changed_Column => GType_Boolean));
+         (Action_Column     => GType_String,
+          Key_Column        => GType_String,
+          Changed_Column    => GType_Boolean,
+          Accel_Path_Column => GType_String));
       Gtk_New (Editor.View, Editor.Model);
       Add (Scrolled, Editor.View);
 
