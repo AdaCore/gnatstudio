@@ -23,6 +23,8 @@ with Glide_Intl;                        use Glide_Intl;
 with Glide_Kernel.Modules;              use Glide_Kernel.Modules;
 
 with GNAT.OS_Lib;                       use GNAT.OS_Lib;
+with Gtkada.MDI;                        use Gtkada.MDI;
+with Gtk.Enums;                         use Gtk.Enums;
 
 with Vdiff2_Module.Utils.Shell_Command; use Vdiff2_Module.Utils.Shell_Command;
 with Vdiff2_Module.Utils.Text;          use Vdiff2_Module.Utils.Text;
@@ -582,8 +584,12 @@ package body Vdiff2_Module.Utils is
          Ref := 1;
       end if;
 
+      --  Make sure there is only one maximized window in the MDI, and split
+      --  it so that all editors are displayed side by side
+      Single_Window (Get_MDI (Kernel));
       Edit (Kernel, Item.File1);
       Edit (Kernel, Item.File2);
+      Split (Get_MDI (Kernel), Orientation_Horizontal);
 
       Create_Line_Information_Column
         (Kernel, Item.File1, Id_Col_Vdiff, True, True, True);
@@ -707,9 +713,14 @@ package body Vdiff2_Module.Utils is
 
       Trace (Me, "Show_Differences3");
 
-      Edit (Kernel, Item.File1);
+      --  Make sure there is only one maximized window in the MDI, and split
+      --  it so that all editors are displayed side by side
+      Single_Window (Get_MDI (Kernel));
       Edit (Kernel, Item.File2);
+      Edit (Kernel, Item.File1);
+      Split (Get_MDI (Kernel), Orientation_Horizontal);
       Edit (Kernel, Item.File3);
+      Split (Get_MDI (Kernel), Orientation_Horizontal);
 
       Info (1) := new Line_Information_Array
         (1 .. Get_File_Last_Line (Kernel, Item.File1));
