@@ -1215,34 +1215,35 @@ package body Browsers.Call_Graph is
       if Context.all in Entity_Selection_Context'Class then
          Entity_Context := Entity_Selection_Context_Access (Context);
 
-         if Has_Entity_Name_Information (Entity_Context)
-           and then ((Has_Category_Information (Entity_Context)
-                      and then Category_Information (Entity_Context)
-                        in Subprogram_Category)
-                      or else not Has_Category_Information (Entity_Context))
-         then
+         if Has_Entity_Name_Information (Entity_Context) then
+
             Gtk_New (Item, Label => -"References");
             Gtk_New (Submenu);
             Set_Submenu (Item, Gtk_Widget (Submenu));
             Append (Menu, Item);
 
-            Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
-                     & (-" calls..."));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Edit_Entity_Call_Graph_From_Contextual'Access),
-               Selection_Context_Access (Context));
+            if not Has_Category_Information (Entity_Context)
+              or else Category_Information (Entity_Context) in
+                Subprogram_Category
+            then
+               Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+                        & (-" calls..."));
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Edit_Entity_Call_Graph_From_Contextual'Access),
+                  Selection_Context_Access (Context));
 
-            Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
-                     & (-" is called by..."));
-            Append (Submenu, Item);
-            Context_Callback.Connect
-              (Item, "activate",
-               Context_Callback.To_Marshaller
-                 (Edit_Ancestors_Call_Graph_From_Contextual'Access),
-               Selection_Context_Access (Context));
+               Gtk_New (Item, Label => Entity_Name_Information (Entity_Context)
+                        & (-" is called by..."));
+               Append (Submenu, Item);
+               Context_Callback.Connect
+                 (Item, "activate",
+                  Context_Callback.To_Marshaller
+                  (Edit_Ancestors_Call_Graph_From_Contextual'Access),
+                  Selection_Context_Access (Context));
+            end if;
 
             Gtk_New (Item, Label => (-"Find all references to ") &
                      Entity_Name_Information (Entity_Context));
