@@ -1256,6 +1256,7 @@ package body Project_Properties is
                            if Project_Editor
                              (Ed, Current (Prj_Iter),
                               Kernel, Editor.Pages (P),
+                              Languages,
                               Vars,
                               Ref_Project => Project)
                            then
