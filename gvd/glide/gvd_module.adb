@@ -1058,7 +1058,8 @@ package body GVD_Module is
 
             Create_Pixmap_From_Text
               (Text       => Value.all,
-               Font       => Get_Pref (GVD_Prefs, Value_Font),
+               Font       =>
+                 Get_Pref (Kernel, Glide_Kernel.Preferences.Default_Font),
                Bg_Color   => White (Get_Default_Colormap),
                Widget     => Get_Main_Window (Kernel),
                Pixmap     => Pixmap,
@@ -1348,7 +1349,7 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      Entity    : constant Entity_Selection_Context_Access :=
+      Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
@@ -1375,7 +1376,7 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      Entity    : constant Entity_Selection_Context_Access :=
+      Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
@@ -1401,7 +1402,7 @@ package body GVD_Module is
      (Widget  : access GObject_Record'Class;
       Context : Selection_Context_Access)
    is
-      Entity    : constant Entity_Selection_Context_Access :=
+      Entity   : constant Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Debugger : constant Debugger_Access :=
         Get_Current_Process (Get_Main_Window (Get_Kernel (Context))).Debugger;
