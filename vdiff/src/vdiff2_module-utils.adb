@@ -1167,11 +1167,11 @@ package body Vdiff2_Module.Utils is
 
       Item :=
         (List         => Result,
-         File1        => New_File,
-         File2        => Orig_File,
+         File1        => Orig_File,
+         File2        => New_File,
          File3        => VFS.No_File,
          Current_Node => First (Result),
-         Ref_File     => 2,
+         Ref_File     => 1,
          Tmp_File     => Tmp_File);
       Process_Differences (Id.Kernel, Item, Id.List_Diff);
       return True;
