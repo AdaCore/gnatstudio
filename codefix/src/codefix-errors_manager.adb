@@ -92,8 +92,25 @@ package body Codefix.Errors_Manager is
          Get_Message (This, Current_Text, This.Preview);
       end if;
 
+      Free (Preview);
       Preview := This.Preview;
    end Get_Preview;
+
+   ------------------
+   -- Skip_Message --
+   ------------------
+
+   procedure Skip_Message (This : in out Errors_Interface'Class) is
+      Garbage : Error_Message;
+   begin
+      if This.Preview /= Invalid_Error_Message then
+         This.Preview := Invalid_Error_Message;
+         return;
+      end if;
+
+      Get_Direct_Message (This, Garbage);
+      Free (Garbage);
+   end Skip_Message;
 
    ----------------------------------------------------------------------------
    --  type Correction_Manager
