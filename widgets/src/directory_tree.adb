@@ -306,6 +306,7 @@ package body Directory_Tree is
       --  Skip the first '/'
       First := Directory'First + 1;
       Last := First;
+
       while Last <= Directory'Last
         and then Directory (Last) /= '/'
         and then Directory (Last) /= Directory_Separator
@@ -314,12 +315,14 @@ package body Directory_Tree is
       end loop;
 
       Children := Row_Get_Children (Node_Get_Row (Current));
+
       while Children /= null loop
          if Node_Get_Text (Tree, Children, 0) = Directory (First .. Last) then
             Current := Children;
             Children := Row_Get_Children (Node_Get_Row (Current));
             First := Last + 1;
             Last := First;
+
             while Last <= Directory'Last
               and then Directory (Last) /= '/'
               and then Directory (Last) /= Directory_Separator
