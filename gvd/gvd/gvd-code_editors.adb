@@ -328,7 +328,7 @@ package body GVD.Code_Editors is
      (Item : access Gtk_Radio_Menu_Item_Record'Class;
       Data : Editor_Mode_Data)
    is
-      Process : Debugger_Process_Tab :=
+      Process : constant Debugger_Process_Tab :=
         Debugger_Process_Tab (Data.Editor.Process);
    begin
       if Get_Active (Item) and then Data.Editor.Mode /= Data.Mode then
