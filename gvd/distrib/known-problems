@@ -1,5 +1,10 @@
 Known Problems fixed in GVD 1.0.2
 
+- [8325-005] Interrupt button does not work under Windows
+  Problem:    Hitting the 'Interrupt' button does nothing under windows
+              systems.
+  Workaround: Use breakpoints instead to stop the underlying process.
+
 - Cancel in File->Open Program does not work properly
   Problem:    Hitting the 'Cancel' button causes GVD to ask the debugger
               to open the '' program. One symptom is, when a program was
