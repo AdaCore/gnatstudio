@@ -32,10 +32,10 @@ with Prj;                     use Prj;
 package body Src_Info.Prj_Utils is
 
    function Get_Filename
-     (Unit_Name_Id       : Name_Id;
-      Dot_Replacement_Id : Name_Id;
-      Casing             : Casing_Type;
-      Extension_Id       : Name_Id)
+     (Unit_Name_Id    : Name_Id;
+      Dot_Replacement : String;
+      Casing          : Casing_Type;
+      Extension       : String)
       return File_Name_Type;
    --  Return the filename for the given Unit_Name using the Dot_Replacement,
    --  Casing and Extension rules.
@@ -45,15 +45,13 @@ package body Src_Info.Prj_Utils is
    ------------------
 
    function Get_Filename
-     (Unit_Name_Id       : Name_Id;
-      Dot_Replacement_Id : Name_Id;
-      Casing             : Casing_Type;
-      Extension_Id       : Name_Id)
+     (Unit_Name_Id    : Name_Id;
+      Dot_Replacement : String;
+      Casing          : Casing_Type;
+      Extension       : String)
       return File_Name_Type
    is
       Unit_Name : constant String := Get_Name_String (Unit_Name_Id);
-      Dot_Repl  : constant String := Get_Name_String (Dot_Replacement_Id);
-      Extension : constant String := Get_Name_String (Extension_Id);
       Dot       : constant Character := '.';
 
       Index : Positive;
@@ -66,8 +64,9 @@ package body Src_Info.Prj_Utils is
       Index := 1;
       for C in Unit_Name'Range loop
          if Unit_Name (C) = Dot then
-            Name_Buffer (Index .. Index + Dot_Repl'Length - 1) := Dot_Repl;
-            Index := Index + Dot_Repl'Length;
+            Name_Buffer (Index .. Index + Dot_Replacement'Length - 1) :=
+              Dot_Replacement;
+            Index := Index + Dot_Replacement'Length;
          else
             Namet.Name_Buffer (Index) := Unit_Name (C);
             Index := Index + 1;
@@ -243,7 +242,6 @@ package body Src_Info.Prj_Utils is
 
       Part_Marker_Len : constant := 2; --  It is either '%s' or '%b'
       Result : Name_Id := No_Name;
-      D, S : Name_Id;
 
    begin
       --  ??? This should be implemented with mapping files instead. See
@@ -252,7 +250,7 @@ package body Src_Info.Prj_Utils is
       Namet.Get_Name_String (Unit_Name);
 
       --  Check that the '%' marker is there
-      if Namet.Name_Len <= Part_Marker_Len + 1
+      if Namet.Name_Len < Part_Marker_Len + 1
         or else Namet.Name_Buffer (Namet.Name_Len - 1) /= '%'
       then
          return "";
@@ -276,22 +274,13 @@ package body Src_Info.Prj_Utils is
          --  Special handling for the runtime files
          --  ??? Could be simplified if we have direct access to the default
          --  ??? naming scheme.
-
-         Name_Len := 1;
-         Name_Buffer (1 .. Name_Len) := "-";
-         D := Name_Find;
-
-         Name_Len := 4;
-
          if Part = Unit_Body then
-            Name_Buffer (1 .. Name_Len) := ".adb";
+            return Get_Name_String
+              (Get_Filename (Short_Uname, "-", All_Lower_Case, ".adb"));
          else
-            Name_Buffer (1 .. Name_Len) := ".ads";
+            return Get_Name_String
+              (Get_Filename (Short_Uname, "-", All_Lower_Case, ".ads"));
          end if;
-
-         S := Name_Find;
-         return Get_Name_String
-           (Get_Filename (Short_Uname, D, All_Lower_Case, S));
       else
          return Get_Name_String (Result);
       end if;
@@ -307,11 +296,11 @@ package body Src_Info.Prj_Utils is
       return File_Name_Type is
    begin
       --  ??? This currently assumes we are using Ada
-      return
-        Get_Filename
-          (Unit_Name, Naming.Dot_Replacement,
-           Naming.Casing,
-           Value_Of (Snames.Name_Ada, Naming.Specification_Suffix));
+      return Get_Filename
+        (Unit_Name, Get_Name_String (Naming.Dot_Replacement),
+         Naming.Casing,
+         Get_Name_String
+           (Value_Of (Snames.Name_Ada, Naming.Specification_Suffix)));
    end Get_Spec_Filename;
 
    -----------------------
@@ -324,11 +313,11 @@ package body Src_Info.Prj_Utils is
       return File_Name_Type is
    begin
       --  ??? This currently assumes we are using Ada
-      return
-        Get_Filename
-          (Unit_Name, Naming.Dot_Replacement,
-           Naming.Casing,
-           Value_Of (Snames.Name_Ada, Naming.Implementation_Suffix));
+      return Get_Filename
+        (Unit_Name, Get_Name_String (Naming.Dot_Replacement),
+         Naming.Casing,
+         Get_Name_String
+           (Value_Of (Snames.Name_Ada, Naming.Implementation_Suffix)));
    end Get_Body_Filename;
 
    -------------------
