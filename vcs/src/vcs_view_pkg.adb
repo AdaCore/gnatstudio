@@ -22,8 +22,12 @@ with Glib;        use Glib;
 with Glib.Object; use Glib.Object;
 with Glib.Values; use Glib.Values;
 
+with Gdk;
+with Gdk.Color;  use Gdk.Color;
 with Gdk.Event;  use Gdk.Event;
 with Gdk.Pixbuf; use Gdk.Pixbuf;
+with Gdk.Types;  use Gdk.Types;
+with Gdk.Window; use Gdk.Window;
 
 with Gtk;                       use Gtk;
 with Gtk.Box;                   use Gtk.Box;
@@ -66,7 +70,11 @@ with Glide_Intl;                use Glide_Intl;
 with Basic_Types;               use Basic_Types;
 with Traces;                    use Traces;
 
+with GUI_Utils;                 use GUI_Utils;
+
 package body VCS_View_Pkg is
+
+   use VCS_Explorer_Tooltips;
 
    Me : constant Debug_Handle := Create ("VCS_INTERFACE");
 
@@ -98,6 +106,7 @@ package body VCS_View_Pkg is
    Status_Description_Column : constant := 4;
    Status_Pixbuf_Column      : constant := 5;
    Log_Column                : constant := 6;
+   Has_Log_Column            : constant := 7;
 
    -------------------
    -- Columns_Types --
@@ -110,9 +119,10 @@ package body VCS_View_Pkg is
          Base_Name_Column          => GType_String,
          Local_Rev_Column          => GType_String,
          Rep_Rev_Column            => GType_String,
-         Status_Description_Column => GType_String,
+         Status_Description_Column => GType_Int,
          Status_Pixbuf_Column      => Gdk.Pixbuf.Get_Type,
-         Log_Column                => Gdk.Pixbuf.Get_Type);
+         Log_Column                => Gdk.Pixbuf.Get_Type,
+         Has_Log_Column            => GType_Boolean);
    end Columns_Types;
 
    -----------------------
@@ -158,6 +168,9 @@ package body VCS_View_Pkg is
    function Copy (X : Line_Record) return Line_Record;
    --  Return a deep copy of X.
 
+   procedure On_Selected (Explorer : access Gtk_Widget_Record'Class);
+   --  Give the focus to the current page tree.
+
    ---------------
    -- Callbacks --
    ---------------
@@ -187,6 +200,93 @@ package body VCS_View_Pkg is
       Args    : GValues;
       Kernel  : Kernel_Handle);
    --  Callback for the "file_edited" signal.
+
+   -----------------
+   -- On_Selected --
+   -----------------
+
+   procedure On_Selected (Explorer : access Gtk_Widget_Record'Class) is
+      View : constant VCS_View_Access := VCS_View_Access (Explorer);
+      Page : VCS_Page_Access;
+   begin
+      Page := VCS_Page_Access
+        (Get_Nth_Page (View.Notebook, Get_Current_Page (View.Notebook)));
+      Grab_Focus (Page.Tree);
+   end On_Selected;
+
+   ------------------
+   -- Draw_Tooltip --
+   ------------------
+
+   procedure Draw_Tooltip
+     (Widget : access Gtk_Tree_View_Record'Class;
+      Data   : in out VCS_Page_Access;
+      Pixmap : out Gdk.Pixmap.Gdk_Pixmap;
+      Width  : out Glib.Gint;
+      Height : out Glib.Gint;
+      Area   : out Gdk.Rectangle.Gdk_Rectangle)
+   is
+      Window : Gdk.Window.Gdk_Window;
+      New_Window : Gdk_Window;
+      Mask : Gdk_Modifier_Type;
+
+      X, Y      : Gint;
+      Path      : Gtk_Tree_Path;
+      Column    : Gtk_Tree_View_Column;
+      Cell_X,
+      Cell_Y    : Gint;
+      Row_Found : Boolean;
+      Iter      : Gtk_Tree_Iter;
+      Status    : File_Status;
+
+      Text      : String_Access;
+   begin
+      Width := 0;
+      Height := 0;
+
+      Window := Get_Bin_Window (Data.Tree);
+      Get_Pointer
+        (Window, X, Y, Mask, New_Window);
+
+      Get_Path_At_Pos
+        (Data.Tree,
+         X, Y,
+         Path, Column,
+         Cell_X, Cell_Y,
+         Row_Found);
+
+      if not Row_Found then
+         return;
+      end if;
+
+      Get_Cell_Area (Data.Tree, Path, Column, Area);
+      Iter := Get_Iter (Data.Model, Path);
+
+      if Column = Data.Status_Column then
+         Status := File_Status'Val
+           (Get_Int (Data.Model, Iter, Status_Description_Column));
+         Text := new String'(-"Status: " & Get_Status_Name (Status));
+
+      elsif Column = Data.Log_Column then
+         if Get_Boolean (Data.Model, Iter, Has_Log_Column) then
+            Text := new String'(-"A revision log exists for this file");
+         else
+            Text := new String'(-"No revision log exists for this file");
+         end if;
+      end if;
+
+      if Text /= null then
+         Create_Pixmap_From_Text
+           (Text.all,
+            Get_Pref (Data.Kernel, Tooltip_Font),
+            White (Get_Default_Colormap),
+            Widget,
+            Pixmap,
+            Width,
+            Height);
+         Free (Text);
+      end if;
+   end Draw_Tooltip;
 
    ----------
    -- Free --
@@ -245,6 +345,7 @@ package body VCS_View_Pkg is
          Page := VCS_Page_Access
            (Get_Nth_Page (The_View.Notebook, Gint (J - 1)));
 
+         Destroy_Tooltip (Page.Tooltip);
          Free (Page.Stored_Status);
          Free (Page.Cached_Status);
       end loop;
@@ -610,10 +711,14 @@ package body VCS_View_Pkg is
          return;
       end if;
 
+      --  ??? We might want to use other pixmaps for the log column.
+
       if Line_Info.Log then
+         Set (Explorer.Model, Iter, Has_Log_Column, True);
          Set (Explorer.Model, Iter, Log_Column,
               C_Proxy (Status_Up_To_Date_Pixbuf));
       else
+         Set (Explorer.Model, Iter, Has_Log_Column, False);
          Set (Explorer.Model, Iter, Log_Column,
               C_Proxy (Status_Not_Registered_Pixbuf));
       end if;
@@ -663,7 +768,7 @@ package body VCS_View_Pkg is
       end case;
 
       Set (Explorer.Model, Iter, Status_Description_Column,
-           File_Status'Image (Line_Info.Status.Status));
+           Gint (File_Status'Pos (Line_Info.Status.Status)));
    end Fill_Info;
 
    ------------------------
@@ -760,20 +865,21 @@ package body VCS_View_Pkg is
 
       Set_Rules_Hint (Explorer.Tree, True);
 
-      Gtk_New (Col);
-      Set_Title (Col, -"Status");
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
-      Set_Clickable (Col, True);
-      Set_Sort_Column_Id (Col, Status_Description_Column);
-      Dummy := Append_Column (Explorer.Tree, Col);
+      Gtk_New (Explorer.Status_Column);
+      Set_Title (Explorer.Status_Column, -"Status");
+      Pack_Start (Explorer.Status_Column, Pixbuf_Rend, False);
+      Add_Attribute
+        (Explorer.Status_Column, Pixbuf_Rend, "pixbuf", Status_Pixbuf_Column);
+      Set_Clickable (Explorer.Status_Column, True);
+      Set_Sort_Column_Id (Explorer.Status_Column, Status_Description_Column);
+      Dummy := Append_Column (Explorer.Tree, Explorer.Status_Column);
 
-      Gtk_New (Col);
-      Set_Title (Col, -"Log");
-      Pack_Start (Col, Pixbuf_Rend, False);
-      Add_Attribute (Col, Pixbuf_Rend, "pixbuf", Log_Column);
-      Set_Clickable (Col, False);
-      Dummy := Append_Column (Explorer.Tree, Col);
+      Gtk_New (Explorer.Log_Column);
+      Set_Title (Explorer.Log_Column, -"Log");
+      Pack_Start (Explorer.Log_Column, Pixbuf_Rend, False);
+      Add_Attribute (Explorer.Log_Column, Pixbuf_Rend, "pixbuf", Log_Column);
+      Set_Clickable (Explorer.Log_Column, False);
+      Dummy := Append_Column (Explorer.Tree, Explorer.Log_Column);
 
       Gtk_New (Explorer.File_Column);
       Set_Title (Explorer.File_Column, -"File name");
@@ -1074,6 +1180,7 @@ package body VCS_View_Pkg is
    is
       Vbox1 : Gtk_Vbox;
       Page  : VCS_Page_Access;
+      pragma Unreferenced (Page);
 
    begin
       Init_Graphics;
@@ -1105,11 +1212,6 @@ package body VCS_View_Pkg is
          for J in VCS_List'Range loop
             Page := Get_Page_For_Identifier
               (VCS_View, Get_VCS_From_Id (VCS_List (J).all));
-
-            --  Emit a "clicked" signal on the file column to sort it.
-            Object_Callback.Emit_By_Name
-              (Page.File_Column,
-               "clicked");
          end loop;
       end;
 
@@ -1119,6 +1221,11 @@ package body VCS_View_Pkg is
          File_Edited_Cb'Access,
          VCS_View,
          Kernel);
+
+      Widget_Callback.Connect
+        (VCS_View, "grab_focus",
+         Widget_Callback.To_Marshaller (On_Selected'Access),
+         After => True);
    end Initialize;
 
    -----------------------------
@@ -1152,6 +1259,7 @@ package body VCS_View_Pkg is
       Page := new VCS_Page_Record;
       Initialize_Hbox (Page);
 
+      Page.Kernel    := Explorer.Kernel;
       Page.Reference := Identifier;
 
       Create_Model (Page);
@@ -1182,6 +1290,13 @@ package body VCS_View_Pkg is
       Gtk_New (Label, Name (Identifier));
 
       Append_Page (Explorer.Notebook, Page, Label);
+
+      New_Tooltip (Page.Tree, Page, Page.Tooltip);
+
+      --  Emit a "clicked" signal on the file column to sort it.
+      Object_Callback.Emit_By_Name
+        (Page.File_Column,
+         "clicked");
 
       return Page;
    end Get_Page_For_Identifier;
