@@ -39,7 +39,7 @@ package Creation_Wizard is
    --  currently loaded in Kernel.
 
    procedure Initialize
-     (Wiz : out Prj_Wizard;
+     (Wiz    : access Prj_Wizard_Record'Class;
       Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
    --  Internal function for the creation of a new wizard
 
