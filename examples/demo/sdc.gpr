@@ -22,6 +22,8 @@ project Sdc is
          when "PRODUCTION" =>
             for Default_Switches ("ada") use
               ("-O2", "-gnatN", "-gnatwe", "-gnaty", "-gnatp");
+            for Default_Switches ("C") use
+              ("-O2");
       end case;
    end Compiler;
 
