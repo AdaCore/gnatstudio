@@ -67,17 +67,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Free (This.Stop);
    end Free;
 
-   --------------------
-   -- Unchecked_Free --
-   --------------------
-
-   procedure Unchecked_Free (This : in out Ada_Instruction) is
-   begin
-      Unchecked_Free (Extract (This));
-      This.Start := Null_File_Cursor;
-      This.Stop := Null_File_Cursor;
-   end Unchecked_Free;
-
    -----------
    -- Clone --
    -----------
@@ -230,17 +219,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
       Free (This.Elements_List);
       Free (This.Back);
    end Free;
-
-   --------------------
-   -- Unchecked_Free --
-   --------------------
-
-   procedure Unchecked_Free (This : in out Ada_List) is
-   begin
-      Unchecked_Free (Ada_Instruction (This));
-      This.Elements_List := Tokens_List.Null_List;
-      This.Back := null;
-   end Unchecked_Free;
 
    -----------
    -- Clone --

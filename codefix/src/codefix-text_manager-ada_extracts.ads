@@ -27,10 +27,6 @@ package Codefix.Text_Manager.Ada_Extracts is
    procedure Free (This : in out Ada_Instruction);
    --  Free the memory associated to an Ada_Instruction.
 
-   procedure Unchecked_Free (This : in out Ada_Instruction);
-   --  Disconnect all elements connected to the Extract without freeing anyting
-   --  in the pool.
-
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
       Position     : File_Cursor'Class;
@@ -55,10 +51,6 @@ package Codefix.Text_Manager.Ada_Extracts is
 
    procedure Free (This : in out Ada_List);
    --  Free the memory associated to an Ada_List.
-
-   procedure Unchecked_Free (This : in out Ada_List);
-   --  Disconnect all elements connected to the Extract without freeing anyting
-   --  in the pool.
 
    procedure Get_Unit
      (Current_Text : Text_Navigator_Abstr'Class;
