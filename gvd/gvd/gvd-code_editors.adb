@@ -1464,9 +1464,13 @@ package body Odd.Code_Editors is
       Line_Max : Integer;
       Found    : Boolean := False;
    begin
-      if Command_In_Process (Get_Process (Debug))
-        or else Editor.Current_File_Cache.Line_Parsed = null
-      then
+      --  If we already reached the end, cancel the Idle loop
+      if Editor.Current_File_Cache.Line_Parsed = null then
+         Editor.Idle_Id := 0;
+         return False;
+      end if;
+
+      if Command_In_Process (Get_Process (Debug)) then
          return True;
       end if;
 
