@@ -79,7 +79,11 @@ package body Debugger.Gdb.Cpp is
       Name      : String  := "";
       Unhandled : Boolean := False) return String is
    begin
-      return "";
+      if Name = "" then
+         return "break __raise_exception";
+      else
+         return "catch " & Name;
+      end if;
    end Break_Exception;
 
    ----------------
@@ -93,10 +97,10 @@ package body Debugger.Gdb.Cpp is
       Index    : in out Natural;
       Result   : out Generic_Type_Access)
    is
-      Tmp    : constant Natural := Index;
-
+      Tmp : constant Natural := Index;
    begin
       --  First check whether we have an access or array type.
+
       C_Detect_Composite_Type (Lang, Type_Str, Entity, Index, Result);
       if Result /= null then
          return;
@@ -147,7 +151,6 @@ package body Debugger.Gdb.Cpp is
       --   var4 = 7}"
 
       if Result'Tag = Class_Type'Tag then
-
          if Type_Str (Index) = '{' then
             Index := Index + 1;
          end if;
@@ -325,13 +328,15 @@ package body Debugger.Gdb.Cpp is
                  Type_Str (Ancestor_Start .. Tmp - 1);
                Ancestor_Type : constant String :=
                  Type_Of (Get_Debugger (Lang), Ancestor_Name);
-               Tmp2 : Natural := Ancestor_Type'First;
-               Parent : Generic_Type_Access;
+               Tmp2          : Natural := Ancestor_Type'First;
+               Parent        : Generic_Type_Access;
+
             begin
                Parse_Type
                  (Lang, Ancestor_Type, Ancestor_Name, Tmp2, Parent);
-               Add_Ancestor (Class_Type (Result.all), Ancestor,
-                             Class_Type_Access (Parent));
+               Add_Ancestor
+                 (Class_Type (Result.all), Ancestor,
+                  Class_Type_Access (Parent));
                Set_Type_Name (Parent, Type_Str (Visibility .. Tmp - 1));
                Ancestor := Ancestor + 1;
             end;
@@ -340,6 +345,7 @@ package body Debugger.Gdb.Cpp is
          if Type_Str (Tmp) = ':' or else Type_Str (Tmp) = ',' then
             Tmp := Tmp + 2;
             Visibility := Tmp;
+
             if Looking_At (Type_Str, Tmp, "public") then
                Tmp := Tmp + 7;
             elsif Looking_At (Type_Str, Tmp, "protected") then
@@ -347,7 +353,9 @@ package body Debugger.Gdb.Cpp is
             elsif Looking_At (Type_Str, Tmp, "private") then
                Tmp := Tmp + 8;
             end if;
+
             Ancestor_Start := Tmp;
+
          else
             Tmp := Tmp + 1;
          end if;
@@ -390,7 +398,7 @@ package body Debugger.Gdb.Cpp is
 
    function Thread_List (Lang : access Gdb_Cpp_Language) return String is
    begin
-      return "";
+      return "info threads";
    end Thread_List;
 
    -------------------
@@ -401,7 +409,7 @@ package body Debugger.Gdb.Cpp is
      (Lang   : access Gdb_Cpp_Language;
       Thread : Natural) return String is
    begin
-      return "";
+      return "thread" & Natural'Image (Thread);
    end Thread_Switch;
 
    -----------------------
