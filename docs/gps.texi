@@ -119,6 +119,7 @@ Editing Files
 * Using the Clipboard::
 * Saving Files::
 * Remote Files::
+* Contextual Menus for Editing Files::
 
 Source Navigation
 * Support for Cross-References::
@@ -1495,6 +1496,7 @@ location, and a second view is created at the new location.
 * Using the Clipboard::
 * Saving Files::
 * Remote Files::
+* Contextual Menus for Editing Files::
 @end menu
 
 @c --------------------------------------------------------------------------
@@ -2446,6 +2448,33 @@ anonymous ftp connection.
 To use this protocol, substitute the word "ftp" to "protocol" in the example
 above.
 
+@end table
+
+@c --------------------------------------------------------------------
+@node Contextual Menus for Editing Files
+@section Contextual Menus for Editing Files
+@cindex case exceptions
+@c --------------------------------------------------------------------
+
+GPS keeps a set of case exceptions that is used by all non
+case-sensitive languages. When editing or reformatting a buffer for
+such a language the case exception dictionary will be checked
+first. If an exception is found for this word, it will be used
+otherwise the specified casing for keywords or identifiers is used.
+
+Note that this feature is not activated for entities (keywords or
+identifiers) for which the casing is set to @code{Unchanged}. See 
+@pxref{The Preferences Dialog}.
+
+A contextual menu named @b{Casing} is accessible for non
+case-sensitive languages:
+
+@table @b
+@item Add exception for ...
+Add the current entity into the case exception dictionary.
+
+@item Remove exception for ...
+Remove the current entity from the case exception dictionary.
 @end table
 
 @c --------------------------------------------------------------------
