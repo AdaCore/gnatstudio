@@ -18,16 +18,34 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+--  This package provided with the entity lists from the package
+--  Docgen.Work_On_File will parse the source files in order to get
+--  the missing information, like the entity headers and their
+--  descriptions.
+
+--  The three procedures Process_Unit_Index, Process_Subprogram_Index,
+--  and Process_Type_Index will generate the index doc pages by calling for
+--  each entity the subprogram from an output package (like Docgen.Html_Output
+--  or Docgen.Texi_Output).
+
+--  The procedure Process_Source provided with all the list for the current
+--  source file, will call some private procedures of this package to
+--  create the documentation of each entity type. It is here, where the
+--  order of the entity types in the final documentation is set. The output
+--  formats creating one doc file for each source file (like HTML) and
+--  the ones creating only one file for all source files must be process
+--  differently. There is also a different manner of processing spec files
+--  and body files. The private functions used will call the subprogram from
+--  an output package (like Docgen.Html_Output or Docgen.Texi_Output).
+
 with Ada.Text_IO;               use Ada.Text_IO;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
-with Ada.Strings.Unbounded;     use Ada.Strings.Unbounded;
 with Doc_Types;                 use Doc_Types;
 with Language;                  use Language;
 
 package Work_On_Source is
 
    package GOL renames GNAT.OS_Lib;
-   package ASU renames Ada.Strings.Unbounded;
 
    type Grecord is (a, b);
 
@@ -62,12 +80,6 @@ package Work_On_Source is
       Options          : All_Options);
    --  creates the index file for the types
 
-   function Get_Line_From_File
-     (File_Name : String;
-      Line      : Natural) return String;
-   --  returns the Line in the file
-
-
    function Get_Doc_File_Name
      (Source_Filename : String;
       Source_Path     : String;
@@ -85,25 +97,34 @@ private
       Entity_List        : Type_Entity_List.List;
       File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options);
+   --  will pass the information about the body file to the output
+   --  subprogram. This is the only subprogram working on the contents
+   --  of the body source files.
 
    procedure Process_Open_File
      (Doc_File         : File_Type;
       Package_File     : String;
       Source_File_List : in out Type_Source_File_List.List;
       Options          : All_Options);
+   --  is always the first subprogram to be called, as it creates the
+   --  very beginning of the documentation by calling the output
+   --  subprogram
 
    procedure Process_Close_File
      (Doc_File      : File_Type;
       Options       : All_Options);
+   --  is always the last subprogram to be called, as it creates the
+   --  very end of the documentation by calling the output subprogram
 
    procedure Process_Package_Description
      (Doc_File        : File_Type;
-      Source_Filename : String;
       Package_Name    : String;
       Text            : String;
       Options         : All_Options);
-   --  processes a body file: will take each line from the source file
-   --  and give it to the output procedure
+   --  extracts all the comment lines of the source file which are at the
+   --  beginning of it. Empty lines are ignored, the procedure stops when
+   --  first command is found. This information will be passed to the
+   --  output subprogram
 
    procedure Process_With_Clause
      (Doc_File        : File_Type;
@@ -113,8 +134,8 @@ private
       Parsed_List     : Construct_List;
       File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
-   --  will process the lines at the beginning of the file
-   --  starting with "with"
+   --  will process the lines at the beginning of the source file
+   --  starting with "with" and pass them to the output subprogram
 
    procedure Process_Packages
      (Doc_File        : File_Type;
@@ -124,7 +145,8 @@ private
       Parsed_List     : Construct_List;
       File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
-   --  well process renamed and instantiated packages
+   --  will process renamed and instantiated packages and pass
+   --  them to the output subprogram
 
    procedure Process_Vars
      (Doc_File        : File_Type;
@@ -135,7 +157,7 @@ private
       File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
    --  called by Process_Source to work on the constants
-   --  and named numbers
+   --  and named numbers and pass each of them to the output subprogram
 
    procedure Process_Exceptions
      (Doc_File        : File_Type;
@@ -145,7 +167,8 @@ private
       Parsed_List     : Construct_List;
       File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
-   --  called by Process_Source to work on the exceptions
+   --  called by Process_Source to work on the exceptions and
+   --  pass each of them to the output subprogram
 
    procedure Process_Subprograms
      (Doc_File           : File_Type;
@@ -156,7 +179,8 @@ private
       Parsed_List        : Construct_List;
       File_Text          : GNAT.OS_Lib.String_Access;
       Options            : All_Options);
-   --  called by Process_Source to work on the subprograms
+   --  called by Process_Source to work on the subprograms and
+   --  pass each of them to the output subprogram
 
    procedure Process_Types
      (Doc_File        : File_Type;
@@ -166,7 +190,8 @@ private
       Parsed_List     : Construct_List;
       File_Text       : GNAT.OS_Lib.String_Access;
       Options         : All_Options);
-   --  called by Process_Source to work on the types
+   --  called by Process_Source to work on the types and
+   --  pass each of them to the output subprogram
 
    procedure Process_Header
      (Doc_File           : File_Type;
@@ -177,30 +202,34 @@ private
       Package_File       : String;
       Process_Body_File  : Boolean;
       Options            : All_Options);
+   --  will call the output subprogram to create the header of
+   --  the package. This is NOT the same as Process_Open_File,
+   --  if TexInfo doc is created, the file is opened only once,
+   --  but the Header has to be set in front of each package.
 
    procedure Process_Footer
      (Doc_File      : File_Type;
       Package_File  : String;
       Options       : All_Options);
+   --  will call the output subprogram to create the footer of
+   --  the package. This is NOT the same as Process_Close_File,
+   --  if TexInfo doc is created, the file is closed only once,
+   --  but the Footer has to be set behind each package.
 
    function Extract_Comment
-     (File_Name           : String;
+     (File_Text           : String;
       Line                : Natural;
       Header_Lines        : Natural;
       Package_Description : Boolean;
-      Options             : All_Options) return String;
-   --  get the doc comments from the source file
-
-   function Exception_Renames
-     (File_Name : String;
-      Line      : Natural) return Unbounded_String;
-   --  check if the exception renames another one, in that case
-   --  return the rest of the line
-
-   procedure Go_To_Line
-     (File : File_Type;
-      Line : Natural);
-   --  a primitive procedure to move some lines forward in the opened file
+      Options             : All_Options) return GNAT.OS_Lib.String_Access;
+   --  get the doc comments from the source file. The File_Text gives the
+   --  String where to search, Line is the line number of the entity and
+   --  Header_Lines says how many lines takes the header of the entity.
+   --  Within Options it can be chosen, if the comments are placed
+   --  below or above the entity header.
+   --  If Package_Description is set, empty lines between the comment lines
+   --  will be ignored, the direction of the processing is always the same
+   --  and it stops when the first command is found.
 
    function Line_Is_Comment
      (Line : String) return Boolean;
@@ -213,6 +242,7 @@ private
    function Is_Ignorable_Comment
      (Comment_Line : String) return Boolean;
    --  returns true, if the comment line starts with a "--!"
+   --  It must be sure, that Comment_List is a comment line!
 
    function Kill_Prefix
      (Comment_Line : String) return String;
@@ -228,6 +258,6 @@ private
    function Get_Line_From_String
      (Text    : String;
       Line_Nr : Natural) return String;
-   --  returns the Line from the String consisting of several lines
+   --  returns the wished Line from the String
 
 end Work_On_Source;
