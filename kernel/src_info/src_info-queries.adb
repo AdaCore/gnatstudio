@@ -2437,11 +2437,12 @@ package body Src_Info.Queries is
          end loop;
 
          if Dep /= null then
-            if Dep.Value.Dep_Info.Depends_From_Body then
-               Iterator.Current_Part := Unit_Body;
-            else
+            --  Order is important here. Check the specs first
+            if Dep.Value.Dep_Info.Depends_From_Spec then
                Iterator.Current_Part := Unit_Spec;
                --  body will be checked on next call to Next
+            else
+               Iterator.Current_Part := Unit_Body;
             end if;
          end if;
 
