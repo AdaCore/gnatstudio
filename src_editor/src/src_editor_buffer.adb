@@ -341,6 +341,31 @@ package body Src_Editor_Buffer is
       Line   : Editable_Line_Type) return GNAT.OS_Lib.String_Access;
    --  Return the text up to line Line.
 
+   procedure Free_Column_Info
+     (Column_Info : in out Columns_Config_Access);
+   --  Free the info contained in Column_Info;
+
+   ----------------------
+   -- Free_Column_Info --
+   ----------------------
+
+   procedure Free_Column_Info
+     (Column_Info : in out Columns_Config_Access) is
+   begin
+      if Column_Info /= null then
+         if Column_Info.all /= null then
+            for J in Column_Info.all'Range loop
+               Free (Column_Info.all (J).Identifier);
+               Unchecked_Free (Column_Info.all (J));
+            end loop;
+
+            Unchecked_Free (Column_Info.all);
+         end if;
+
+         Column_Info.all := null;
+      end if;
+   end Free_Column_Info;
+
    ----------
    -- Free --
    ----------
@@ -667,8 +692,6 @@ package body Src_Editor_Buffer is
 
    procedure Buffer_Destroy (Buffer : access Source_Buffer_Record'Class) is
       Result : Boolean;
-      procedure Unchecked_Free is new Ada.Unchecked_Deallocation
-        (Line_Info_Display_Array, Line_Info_Display_Array_Access);
    begin
 
       --  We do not free memory associated to Buffer.Current_Command, since
@@ -697,24 +720,9 @@ package body Src_Editor_Buffer is
 
       Free_Queue (Buffer.Queue);
 
-      if Buffer.Buffer_Line_Info_Columns.all /= null then
-         for J in Buffer.Buffer_Line_Info_Columns.all'Range loop
-            Free (Buffer.Buffer_Line_Info_Columns.all (J).Identifier);
-         end loop;
-
-         Unchecked_Free (Buffer.Buffer_Line_Info_Columns.all);
-      end if;
-
+      Free_Column_Info (Buffer.Buffer_Line_Info_Columns);
       Unchecked_Free (Buffer.Buffer_Line_Info_Columns);
-
-      if Buffer.Editable_Line_Info_Columns.all /= null then
-         for J in Buffer.Editable_Line_Info_Columns.all'Range loop
-            Free (Buffer.Editable_Line_Info_Columns.all (J).Identifier);
-         end loop;
-
-         Unchecked_Free (Buffer.Editable_Line_Info_Columns.all);
-      end if;
-
+      Free_Column_Info (Buffer.Editable_Line_Info_Columns);
       Unchecked_Free (Buffer.Editable_Line_Info_Columns);
 
       if Buffer.Editable_Lines /= null then
@@ -1954,6 +1962,8 @@ package body Src_Editor_Buffer is
       Last     : Natural;
       CR_Found : Boolean := False;
 
+      File_Is_New : constant Boolean := not Buffer.Original_Text_Inserted;
+
    begin
       Success := True;
       Contents := Read_File (Filename);
@@ -1965,7 +1975,70 @@ package body Src_Editor_Buffer is
          return;
       end if;
 
-      Clear (Buffer);
+      if not File_Is_New then
+         --  Clear the buffer.
+
+         Clear (Buffer);
+
+         --  Clear the side column information.
+
+         Buffer.Original_Text_Inserted := False;
+
+         Free_Column_Info (Buffer.Buffer_Line_Info_Columns);
+         Free_Column_Info (Buffer.Editable_Line_Info_Columns);
+
+         if Buffer.Editable_Lines /= null then
+            for J in Buffer.Editable_Lines'Range loop
+               if Buffer.Editable_Lines (J).Where = In_Mark then
+                  Free (Buffer.Editable_Lines (J).Text);
+               end if;
+            end loop;
+
+            Unchecked_Free (Buffer.Editable_Lines);
+         end if;
+
+         for J in Buffer.Line_Data'Range loop
+            if Buffer.Line_Data (J).Enabled_Highlights /= null then
+               Unchecked_Free (Buffer.Line_Data (J).Enabled_Highlights);
+            end if;
+         end loop;
+
+         Unchecked_Free (Buffer.Line_Data);
+
+         Buffer.Editable_Lines := new Editable_Line_Array (1 .. 1);
+         Buffer.Editable_Lines (1) :=
+           (Where          => In_Buffer,
+            Buffer_Line    => 1,
+            Side_Info_Data => null);
+
+         Buffer.Line_Data := new Line_Data_Array (1 .. 1);
+         Buffer.Line_Data (1) := New_Line_Data;
+         Buffer.Line_Data (1).Editable_Line := 1;
+
+         Block_List.Free (Buffer.Blocks);
+
+         Buffer.First_Removed_Line := 0;
+         Buffer.Last_Removed_Line := 0;
+         Buffer.Last_Editable_Line := 1;
+
+         --  Unregister the blocks timeout.
+
+         if Buffer.Blocks_Timeout_Registered then
+            Timeout_Remove (Buffer.Blocks_Timeout);
+            Buffer.Blocks_Timeout_Registered := False;
+         end if;
+
+         Buffer.Blank_Lines := 0;
+         Buffer.Hidden_Lines := 0;
+         Buffer.Block_Highlighting_Column := -1;
+
+         --  Request the new blocks.
+
+         Request_Blocks (Buffer);
+      end if;
+
+      --  Insert the new text.
+
       Buffer.Inserting := True;
 
       if Lang_Autodetect then
@@ -1973,8 +2046,6 @@ package body Src_Editor_Buffer is
            (Buffer, Get_Language_From_File
             (Get_Language_Handler (Buffer.Kernel), Filename));
       end if;
-
-      --  ??? This is not compatible with files with "CR" as line terminator.
 
       Strip_CR (Contents.all, Last, CR_Found);
 
@@ -2012,6 +2083,15 @@ package body Src_Editor_Buffer is
       Empty_Queue (Buffer.Queue);
       Buffer.Current_Command := null;
 
+      --  If the file was not new (ie the file was re-loaded from disk after
+      --  some edition, this typically happens when editing with another file
+      --  editor and choosing to "revert" the file), we need to emit a
+      --  File_Edited signal at this point, to force a re-display of line
+      --  information.
+
+      if not File_Is_New then
+         File_Edited (Buffer.Kernel, Filename);
+      end if;
    exception
       when E : others =>
          Success := False;
