@@ -160,6 +160,28 @@ package Odd.Preferences is
    Debugger_Font_Size : constant Gint := 12;
    --  Size of the font used in the debugger text window.
 
+   -------------------
+   -- Memory Window --
+   -------------------
+
+   Memory_View_Font_Name    : constant String := "Courier";
+   --  Font use in the memory view window.
+
+   Memory_View_Font_Size    : constant Gint := 12;
+   --  Size of the font used in the memory view window.
+
+   Memory_View_Color        : constant String := "#333399";
+   --  Color used by default in the memory view window.
+
+   Memory_Highlighted_Color : constant String := "#DDDDDD";
+   --  Color used for highlighted items in the memory view.
+
+   Memory_Selected_Color    : constant String := "#00009c";
+   --  Color used for selected items in the memory view.
+
+   Memory_Modified_Color    : constant String := "#FF0000";
+   --  Color used for modified items in the memory view.
+
    -------------
    -- Helpers --
    -------------
