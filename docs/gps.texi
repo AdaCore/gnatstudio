@@ -28,6 +28,8 @@ unmodified in any copy.
 
 @end titlepage
 
+@contents
+
 @ifinfo
 @node Top, Introduction, (dir), (dir)
 @top Using the GNAT Programming System
@@ -3583,7 +3585,8 @@ no file is selected.
 
 If errors or warnings occur during the compilation, the corresponding locations
 will appear in the Locations Tree. If the corresponding Preference is set, the
-source lines will be highlighted in the editors (@xref{The Preferences Dialog}).
+source lines will be highlighted in the editors (see
+@ref{The Preferences Dialog}).
 To remove the highlighting on these lines, remove the files from the Locations
 Tree.
 
@@ -6432,8 +6435,5 @@ directory (see @ref{Files}) to start from a fresh set up.
 @c --------------------------------------------------------------------
 @unnumbered Index
 @printindex cp
-
-@c --------------------------------------------------------------------
-@contents
 
 @bye
