@@ -12,7 +12,7 @@ maintainer_clean_subdirs=${subdirs:%=maintainer_clean_%}
 
 all: ${subdirs}
 ${subdirs}: force
-	$(MAKE) CFLAGS="$(CFLAGS)" -C $@;
+	$(MAKE) CFLAGS="$(CFLAGS)" -C $@
 
 install: ${install_subdirs}
 ${install_subdirs}: force
