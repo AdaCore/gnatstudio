@@ -67,8 +67,9 @@ package GVD.API is
      (Window          : Main_Debug_Window;
       Kind            : Debugger_Type;
       Executable      : chars_ptr;
-      Params          : System.Address;
-      N_Params        : Integer;
+      Debugger_Args   : System.Address;
+      N_Args          : Integer;
+      Executable_Args : chars_ptr;
       Remote_Host     : chars_ptr;
       Remote_Target   : chars_ptr;
       Remote_Protocol : chars_ptr;
@@ -77,8 +78,9 @@ package GVD.API is
    --    (main_debug_window window,
    --     debugger_type     kind,
    --     char *            executable,
-   --     char **           params,
-   --     int               n_params,
+   --     char **           debugger_args,
+   --     int               n_args,
+   --     char *            executable_args,
    --     char *            remote_host,
    --     char *            remote_target,
    --     char *            remote_protocol,

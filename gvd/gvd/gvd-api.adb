@@ -186,8 +186,9 @@ package body GVD.API is
      (Window          : Main_Debug_Window;
       Kind            : Debugger_Type;
       Executable      : chars_ptr;
-      Params          : System.Address;
-      N_Params        : Integer;
+      Debugger_Args   : System.Address;
+      N_Args          : Integer;
+      Executable_Args : chars_ptr;
       Remote_Host     : chars_ptr;
       Remote_Target   : chars_ptr;
       Remote_Protocol : chars_ptr;
@@ -197,9 +198,9 @@ package body GVD.API is
       use Interfaces.C;
 
       Debugger     : Debugger_Process_Tab;
-      Local_Params : Argument_List (1 .. N_Params);
-      C_Params     : chars_ptr_array (1 .. size_t (N_Params));
-      for C_Params'Address use Params;
+      Local_Params : Argument_List (1 .. N_Args);
+      C_Params     : chars_ptr_array (1 .. size_t (N_Args));
+      for C_Params'Address use Debugger_Args;
       pragma Import (Ada, C_Params);
 
       function Str (S : chars_ptr) return String;
@@ -222,6 +223,7 @@ package body GVD.API is
          GVD.Types.Debugger_Type'Val (Debugger_Type'Pos (Kind)),
          Str (Executable),
          Local_Params,
+         Str (Executable_Args),
          Str (Remote_Host),
          Str (Remote_Target),
          Str (Remote_Protocol),
