@@ -146,24 +146,6 @@ package body Creation_Wizard is
             Grab_Focus (Page.Project_Name);
             return False;
          end if;
-
-         for J in reverse Project'First .. Project'Last - 4 loop
-            if Project (J) = '.' then
-               Display_Message
-                 (Wiz,
-                  -("Child projects must import or extend their parent"
-                    & " project. This is not done automatically by GPS,"
-                    & " and you will have to edit the project by hand to"
-                    & " make it valid."),
-                 As_Error => True);
-               Grab_Focus (Page.Project_Name);
-               exit;
-            elsif Project (J) = '/'
-              or else Project (J) = Directory_Separator
-            then
-               exit;
-            end if;
-         end loop;
       end;
 
       if Get_Text (Page.Project_Location) = "" then
@@ -295,7 +277,10 @@ package body Creation_Wizard is
       Relative_Paths : constant Boolean :=
         Page.Relative_Paths = null or else Get_Active (Page.Relative_Paths);
       Tmp            : Boolean;
-      pragma Unreferenced (Tmp, Scenario_Variables);
+      Error          : Import_Project_Error;
+      Result         : Message_Dialog_Buttons;
+      Parent         : Project_Type;
+      pragma Unreferenced (Tmp, Scenario_Variables, Result);
 
       Project_Name : constant String := Get_Text (Page.Project_Name);
       Prj_File     : constant String := To_File_Name (Project_Name);
@@ -306,7 +291,7 @@ package body Creation_Wizard is
            (Msg         => Location & Prj_File & Project_File_Extension
                & (-" already exists. Do you want to overwrite ?"),
             Title       => -"File exists",
-            Dialog_Type => Error,
+            Dialog_Type => Gtkada.Dialogs.Error,
             Buttons     => Button_Yes or Button_No) = Button_No
          then
             raise Invalid_Project_Page;
@@ -346,6 +331,41 @@ package body Creation_Wizard is
       else
          Set_Paths_Type (Project, Absolute);
       end if;
+
+      for J in reverse Name'First .. Name'Last - 4 loop
+         if Name (J) = '.' then
+            Parent := Get_Project_From_Name
+              (Registry => Get_Registry (Kernel).all,
+               Name     => Get_String (Name (Name'First .. J - 1)));
+
+            if Parent /= No_Project then
+               Error := Add_Imported_Project
+                 (Root_Project       => Get_Project (Kernel),
+                  Project            => Project,
+                  Imported_Project   => Parent,
+                  Use_Relative_Path  => True);
+            else
+               Error := Add_Imported_Project
+                 (Root_Project => Get_Project (Kernel),
+                  Project      => Project,
+                  Imported_Project_Location => Name (Name'First .. J - 1),
+                  Use_Relative_Path => True);
+            end if;
+
+            if Error /= Success then
+               Result := Message_Dialog
+                 (Msg => -("You have created a child project of "
+                           & Name (Name'First .. J - 1) & ASCII.LF
+                           & "However, the parent project couldn't be found,"
+                           & ASCII.LF
+                           & "and a dependency to it couldn't be added."
+                           & ASCII.LF
+                           & "Please fix the project manually"),
+                  Buttons => Button_OK);
+            end if;
+            exit;
+         end if;
+      end loop;
 
       Changed := True;
    end Generate_Project;
