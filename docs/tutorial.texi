@@ -72,7 +72,7 @@ of the GNAT Programming System by working on a code example: sdc, a simple
 desktop calculator.
 
 It is important to realize that the features that you are about to
-experiment are available on multiple platforms, using the same user
+experiment with are available on multiple platforms, using the same user
 interface and capabilities, providing a user-friendly environment
 with a tight integration between the tools.
 
@@ -144,16 +144,16 @@ Now, double click on @file{sdc.adb}: this will open a source editor on this
 file. You will notice that the source code is syntax-highlighted
 (keywords, comments, strings have different colors).
 
-As many other properties, colors are configurable in GPS:
+As with many other properties, colors are configurable in GPS:
 
-Select the menu @code{Edit->Preferences}, this will open a preferences
+Select the menu @code{Edit->Preferences}. This will open a preferences
 dialog window.
 
 Select the @code{Editor} page by clicking on the tab named @code{Editor}.
 Similarly, select the @code{Fonts & Colors} page.
 
 As you go over the various lines and labels, you will notice that by
-letting the mouse over a label, a tooltip pops up display on-line help
+holding the mouse over a label, a tooltip pops up displaying on-line help
 about the selected item.
 
 Change the @code{Keyword color} by clicking on the down arrow on the right
@@ -179,8 +179,8 @@ Select the menu @code{Build->Make->sdc.adb}: this will launch a complete
 build of the @i{sdc} application. You may also notice that a key binding
 is associated with this menu item (@key{F4}).
 
-If you look at the progress bar, you will notice while the build is in
-progress that the state of the compilation is displayed, giving you
+If you look at the progress bar, you will notice that while the build is in
+progress the state of the compilation is displayed, giving you
 the current number of files compiled, and the number of remaining files.
 
 The build has generated a number of errors in the messages window, which
@@ -192,9 +192,9 @@ click on the first error message (@i{sdc.adb:28:06: (style) bad indentation})
 to jump to the @file{sdc.adb} source editor,
 at the line (28) and column (06) of the error.
 
-Fix the error by hand, by inserting a space.
+Fix the error by hand by inserting a space.
 
-Now, you can fix the next error by moving the cursor to the line 30 (press
+Now you can fix the next error by moving the cursor to the line 30 (press
 the @key{down} arrow twice), and by using @key{Ctrl-Tab} (press first the
 @key{Control} key, and then the @key{Tab} key on your keyboard): this key
 combination asks the source editor to automatically re-indent the current
@@ -219,7 +219,7 @@ This should now report a successful build.
 
 @noindent
 
-Let's now try to understand a little bit how the program is working by
+Now let's try to understand a little bit about how the program is working by
 looking at the @file{sdc.adb} editor: there's a loop, the main processing is
 done by the functions Process and Next (at line 30).
 
@@ -241,13 +241,13 @@ then click on @code{Goto declaration of Next}: we're now in the package
 
 @noindent
 
-Click in the @code{Search for:} text entry, type @file{tokens.ads}. Then
+Click in the @code{Search for:} text entry. Type @file{tokens.ads}. Then
 select @code{Project explorer} in the @code{Look in:} area. The search
 area provides an easy way to search for text or regular expressions in
 several contexts including the current file, the project explorer, the help
 window, ...
 
-Now click on @code{Find}: @file{tokens.ads}, in directory @code{struct}
+Now click on @code{Find}. The file @file{tokens.ads}, in directory @code{struct}
 is highlighted.
 
 @c --------------------------------------------------------------------
@@ -259,7 +259,7 @@ is highlighted.
 Click on the @code{[+]} sign to open @file{tokens.ads} entities.
 When you click on a file in the explorer, you get
 language sensitive information about the file, such as
-for @code{Ada}: @code{packages}, @code{subprograms}, @code{tasks}, ...
+@code{packages}, @code{subprograms}, @code{tasks}, ... for @code{Ada}.
 
 Open the @code{subprogram} category, click on @code{Process}: this
 will open @file{tokens.ads} and move the cursor on the first line
@@ -295,7 +295,7 @@ undo/redo capability in the source editor.
 
 @noindent
 It is now time to run the application: select the menu
-@code{Build->Run->sdc}, this will open a dialog window.
+@code{Build->Run->sdc}, which will open a dialog window.
 Type @code{input.txt} in the text entry: this is the name of a text
 file that will be passed as argument to the @i{sdc} program.
 
@@ -310,10 +310,10 @@ That's a good opportunity to use the integrated debugger.
 
 @noindent
 
-Open the preferences dialog (menu @code{Edit->Preferences}), and
+Open the preferences dialog (menu @code{Edit->Preferences}) and
 click on the @code{Debugger} tab on the left; set the button
 @code{Break on exceptions} to @i{True}: this will enable by default a special
-breakpoint on all exceptions raised. Click on @code{OK} to confirm your
+breakpoint every time an exception is raised. Click on @code{OK} to confirm your
 change.
 
 Now select the menu @code{Debug->Initialize->sdc}: two new windows are
@@ -322,9 +322,10 @@ You can also look at the various debug menu item and toolbar buttons which are
 now activated.
 
 Use the menu @code{Debug->Data->Call Stack}: this opens a new area in
-the data window. If you select the contextual menu in the call stack, you will
-notice that various information can be displayed or removed in the call stack.
-From this contextual, remove the @code{Parameters} info by clicking on it.
+the data window. If you select the contextual menu in the call stack,
+you will notice that various pieces of information can be displayed or
+removed in the call stack.  From this contextual, remove the
+@code{Parameters} info by clicking on it.
 
 Now select the menu @code{Debug->Run...}, type @code{input.txt} in the
 arguments text entry, click on @code{OK}: the debugger stops on an exception
@@ -348,14 +349,15 @@ Special colors are used in the data display: blue for pointers that can be
 dereferenced by a double-click (double click on @code{T.val}); red for fields that
 have been modified since last step.
 
-On @code{T}, contextual menu, select @code{View memory at &T}: the
+In the contextual menu that pops up when you hold the mouse over @code{T}.
+select @code{View memory at &T}: the
 memory view is opened.
 Use the @code{up} and @code{down} arrows to visit memory.
 
-Click in the memory dump, and modify it by typing numbers, notice the
+Click in the memory dump, and modify it by typing numbers. Notice the
 red color for modified values;
-Click on @code{Undo Changes} to cancel the modifications;
-Click on @code{Close} to close the memory window.
+click on @code{Undo Changes} to cancel the modifications;
+click on @code{Close} to close the memory window.
 
 In the call stack, go back to @code{stack.push} frame.
 Fix the current line to @code{Last := Last + 1;}
@@ -379,11 +381,11 @@ Now go back to the file @file{sdc.adb}, move the mouse over the procedure
 Double click on the right arrow of @code{Process} (one of the first items on
 the right). Also double click on the right arrow of @code{error_msg}.
 
-Select @code{Orthogonal links} in contextual menu of the graph to change the
+Select @code{Orthogonal links} in the contextual menu of the graph to change the
 way links are displayed in the graph.
 Click on the canvas, then play with the zoom (@key{=} and @key{-} keys).
 
-Now, if you select @code{Hide links} from @code{error_msg} contextual menu, this
+If you select @code{Hide links} from @code{error_msg} contextual menu, this
 will hide all the links that are related to this item: the link between the
 callers and callees of @code{error_msg} are no longer displayed. This can
 be useful when the graph becomes complex, to hide some parts. If you go back to
@@ -409,7 +411,7 @@ so we're now going to remove this procedure.
 @c --------------------------------------------------------------------
 
 @noindent
-From @i{view}, contextual menu @code{Go to spec};
+From @i{view}, select the contextual menu @code{Go to spec};
 then from the source editor (file @file{stack.ads}), @code{Go to body of View}.
 Remove @i{View} body by e.g selecting it, and pressing the @key{Delete} key,
 then save the file (@key{Ctrl-S}).
@@ -483,7 +485,7 @@ project we've used in this tutorial.
 @section Project Wizard
 @noindent
 
-@b{WARNING}: while in the project wizard, you will not be able to scroll the
+@b{WARNING}: while in the project wizard, you will not be able to scroll through the
 tutorial if you are reading it within GPS. You may want to resize the window
 now so that the entire section on the wizard is visible, or reopen the tutorial
 in another browser.
@@ -492,7 +494,7 @@ Go to the menu @code{Project->New...}: this is a standard wizard, with various
 steps listed on the left area of the window.
 
 Type @i{sdc2} in the project name field.
-It is possible to create a multi-language project by selecting e.g the C or C++
+It is possible to create a multi-language project by selecting the C or C++
 check box.
 
 Click on @code{Forward}: we are now on the @code{VCS page}. @i{VCS} stands
@@ -541,7 +543,7 @@ Unselect it, and select @code{Warning=Error} again.
 Click on @code{Forward}: this is the naming scheme editor.
 GNAT is very flexible and can use any kind of naming scheme for Ada files.
 In particular, you can easily set the default file
-extensions (e.g by using one of the predefined schemes), and you
+extensions (e.g by using one of the predefined schemes) and you
 can also specify exceptions that use non standard file names.
 
 Click on @code{Forward}: voila, we've created a project similar to the one
@@ -572,14 +574,14 @@ and modify any project settings (e.g switches, sources, ...) based on the
 values of configuration variables. These variables can also take any
 number of different values.
 
-The @code{Build} variable shows a typical @code{Debug/Production} configuration,
+The @code{Build} variable shows a typical @code{Debug/Production} configuration
 where we've set different switches for the two modes.
 
-Click on the arrow at the right of the @code{Build DEBUG} entry, and look at
+Click on the arrow at the right of the @code{Build DEBUG} entry and look at
 the two values defined.
 
 Now click on the button at the left (@code{Edit variable properties}): this
-is the variable editor, where values can be added, renamed.
+is the variable editor, where values can be added or renamed.
 Close the variable editor by clicking on the @code{Cancel} button.
 
 Now, let's take a look at the switches set in the project.
@@ -590,9 +592,9 @@ Now, let's take a look at the switches set in the project.
 
 Select the menu item @code{Project->Edit switches}: a global
 switch editor is displayed in the working area.
-This editor lists the switches associated with each file,
+This editor lists the switches associated with each file and
 the gray area shows the default (global) switches; you will also notice
-that output.adb has specific switches, which are highlighted using a
+that @file{output.adb} has specific switches, which are highlighted using a
 different font.
 
 Switch between @code{Debug} and @code{Production} mode in the @code{Build}
@@ -604,7 +606,7 @@ Back to our project, let's now examine the dependencies between sources.
 @section Source dependencies
 @noindent
 
-Select @file{sdc.adb} in the explorer, then the contextual menu item
+Select @file{sdc.adb} in the explorer and then the contextual menu item
 @code{Examine dependencies for sdc.adb}: this will open a new graph showing
 the dependencies between sources of the project.
 
