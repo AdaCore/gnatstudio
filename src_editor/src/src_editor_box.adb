@@ -41,6 +41,7 @@ with Gtk.Box;                    use Gtk.Box;
 with Gtk.Clipboard;              use Gtk.Clipboard;
 with Gtk.Container;              use Gtk.Container;
 with Gtk.Enums;                  use Gtk.Enums;
+with Gtk.Event_Box;              use Gtk.Event_Box;
 with Gtk.Frame;                  use Gtk.Frame;
 with Gtk.Handlers;               use Gtk.Handlers;
 with Gtk.Label;                  use Gtk.Label;
@@ -179,6 +180,10 @@ package body Src_Editor_Box is
 
    function Key_Press (Box : access GObject_Record'Class) return Boolean;
    --  Check whether the file has been modified on disk
+
+   function On_Read_Only_Pressed
+     (Box : access GObject_Record'Class) return Boolean;
+   --  Toggle read-only/writable state of a given box.
 
    procedure Box_Scrolled
      (Adj : access Glib.Object.GObject_Record'Class;
@@ -895,6 +900,7 @@ package body Src_Editor_Box is
    is
       Frame          : Gtk_Frame;
       Hbox           : Gtk_Box;
+      Event_Box      : Gtk_Event_Box;
       Scrolling_Area : Gtk_Scrolled_Window;
       Data           : Editor_Tooltip_Data;
       Command        : Check_Modified_State;
@@ -950,8 +956,14 @@ package body Src_Editor_Box is
       Gtk_New (Frame);
       Set_Shadow_Type (Frame, Shadow_In);
       Pack_Start (Hbox, Frame, Expand => False, Fill => True);
+      Gtk_New (Event_Box);
+      Add (Frame, Event_Box);
       Gtk_New (Box.Read_Only_Label);
-      Add (Frame, Box.Read_Only_Label);
+      Add (Event_Box, Box.Read_Only_Label);
+      Object_Return_Callback.Object_Connect
+        (Event_Box, "button_press_event",
+         Object_Return_Callback.To_Marshaller (On_Read_Only_Pressed'Access),
+         Box);
 
       --  Modified file area...
       Gtk_New (Frame);
@@ -1093,6 +1105,36 @@ package body Src_Editor_Box is
 
          return False;
    end Key_Press;
+
+   --------------------------
+   -- On_Read_Only_Pressed --
+   --------------------------
+
+   function On_Read_Only_Pressed
+     (Box : access GObject_Record'Class) return Boolean
+   is
+      Editor : constant Source_Editor_Box := Source_Editor_Box (Box);
+   begin
+      Editor.Writable := not Editor.Writable;
+      --  ??? This is not sufficient: the automatic indentation
+      --  (and completion) overrides this setting.
+
+      Set_Editable (Editor.Source_View, Editor.Writable);
+
+      if Editor.Writable then
+         Set_Text (Editor.Read_Only_Label, -"Writable");
+      else
+         Set_Text (Editor.Read_Only_Label, -"Read Only");
+      end if;
+
+      return False;
+
+   exception
+      when E : others =>
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
+
+         return False;
+   end On_Read_Only_Pressed;
 
    --------------------------
    -- Check_Timestamp_Idle --
