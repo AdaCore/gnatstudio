@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                          G L I D E  I I                           --
 --                                                                   --
---                        Copyright (C) 2001                         --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GLIDE is free software; you can redistribute it and/or modify  it --
@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Gtk.Arguments; use Gtk.Arguments;
-with Gtk.Widget; use Gtk.Widget;
+with Gtk.Widget;    use Gtk.Widget;
 
 package Make_Test_Window_Pkg.Callbacks is
    --  Handle callbacks from "AUnit_Make_Test" main window.  Generated
