@@ -1,3 +1,11 @@
+Known Problems fixed in GVD 1.3.0
+
+- File extensions not properly recognized
+  Problem:    When opening a file with the last extension defined in
+              Preferences/Ada,C,C++ (by default .dg, .h and .H), no syntax
+              highlighting is performed.
+  Workaround: Add an extra semicolon to the list of extensions, e.g .c;.h;
+
 Known Problems fixed in GVD 1.2.0
 
 - Question dialogs are off by one character
