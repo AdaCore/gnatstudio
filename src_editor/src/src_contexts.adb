@@ -57,6 +57,7 @@ with GUI_Utils;                 use GUI_Utils;
 with VFS;                       use VFS;
 
 with Src_Editor_Box;            use Src_Editor_Box;
+with Src_Editor_View;           use Src_Editor_View;
 with Src_Editor_Buffer;         use Src_Editor_Buffer;
 with Src_Editor_Module;         use Src_Editor_Module;
 
@@ -1214,8 +1215,6 @@ package body Src_Contexts is
 
          Unchecked_Free (Match);
 
-         Set_Cursor_Location
-           (Editor, Context.Begin_Line, Context.Begin_Column);
          Select_Region
            (Get_Buffer (Editor),
             Context.Begin_Line,
@@ -1223,6 +1222,8 @@ package body Src_Contexts is
             Context.End_Line,
             Context.End_Column,
             False);
+         Center_Cursor (Get_View (Editor));
+
          return True;
 
       else
