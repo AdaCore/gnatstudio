@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                              G P S                                --
 --                                                                   --
---                     Copyright (C) 2001-2003                       --
+--                     Copyright (C) 2001-2004                       --
 --                            ACT-Europe                             --
 --                                                                   --
 -- GPS is free  software; you can  redistribute it and/or modify  it --
@@ -98,9 +98,8 @@ package body Src_Editor_Buffer.Blocks is
       Current := Constructs.First;
 
       while Current /= null loop
-         if Buffer.Block_Highlighting
-           and then (Current.Category in Construct_Category
-                     or else Current.Category in Enclosing_Entity_Category)
+         if Current.Category in Construct_Category
+           or else Current.Category in Enclosing_Entity_Category
          then
             Line_Start := Editable_Line_Type (Current.Sloc_Start.Line);
             Line_End   := Editable_Line_Type (Current.Sloc_End.Line);
