@@ -18,11 +18,14 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Generic_Values; use Generic_Values;
-with System;         use System;
-with GNAT.Regpat;    use GNAT.Regpat;
-with GNAT.Expect;    use GNAT.Expect;
-with GNAT.OS_Lib;    use GNAT.OS_Lib;
+with Generic_Values;    use Generic_Values;
+with System;            use System;
+with GNAT.Regpat;       use GNAT.Regpat;
+with GNAT.Expect;       use GNAT.Expect;
+with GNAT.OS_Lib;       use GNAT.OS_Lib;
+with Language;          use Language;
+with Language.Debugger; use Language.Debugger;
+with Debugger.Gdb.Ada;  use Debugger.Gdb.Ada;
 
 package body Debugger.Gdb is
 
@@ -138,27 +141,59 @@ package body Debugger.Gdb is
    -- Initialize --
    ----------------
 
-   procedure Initialize (Debugger : in out Gdb_Debugger) is
-      Null_List : GNAT.OS_Lib.Argument_List (1 .. 0);
+   procedure Initialize (Debugger : access Gdb_Debugger) is
+      Result    : Expect_Match;
+      Matched   : GNAT.Regpat.Match_Array (0 .. 2);
+   
    begin
       --  Start the external debugger.
       --  Note that there is no limitation on the buffer size, since we can
       --  not control the length of what gdb will return...
 
       Debugger.Process :=
-        new Pipes_Id' (Non_Blocking_Spawn ("gdb", Null_List, 0, True));
+        new Pipes_Id' (Non_Blocking_Spawn
+          ("sh", (new String' ("-c"), new String' ("gdb")), 0, True));
+      --  ("sh", (new String' ("-c"), new String' ("rsh rome gdb")), 0, True));
 
 --        Add_Output_Filter (Debugger.Process.all, Trace_Filter'Access);
 --        Add_Input_Filter (Debugger.Process.all, Trace_Filter'Access);
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "set prompt (gdb) ");
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "set width 0");
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "set height 0");
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger.all);
       Send (Debugger.Process.all, "set annotate 1");
-      Wait_Prompt (Debugger);
+      Wait_Prompt (Debugger.all);
+      Send (Debugger.Process.all, "show lang");
+      Expect (Debugger.Process.all, Result,
+        Regexp_Array' (1 => +("The current source language is """ &
+          "(auto; currently )?(.+)""")), Matched);
+
+      declare
+         S        : constant String := Expect_Out (Debugger.Process.all);
+         Lang     : String := S (Matched (2).First .. Matched (2).Last);
+         Language : Language_Access;
+      begin
+         if Lang = "ada" then
+            Language := new Gdb_Ada_Language;
+         elsif Lang = "c" then
+            Language := new Gdb_Ada_Language;
+         else
+            pragma Assert (False, "Language not currently supported");
+            raise Program_Error;
+         end if;
+
+         Set_Language (Debugger.all, Language);
+         Set_Debugger
+           (Language_Debugger (Language.all), Debugger.all'Access);
+      end;
+
+      --  Send a no op to gdb to clean the previous command
+
+      Send (Debugger.Process.all, " ");
+      Wait_Prompt (Debugger.all);
    end Initialize;
 
    -----------
@@ -199,6 +234,35 @@ package body Debugger.Gdb is
    begin
       Send (Debugger.Process.all, "run");
    end Run;
+
+   -----------
+   -- Start --
+   -----------
+
+   procedure Start (Debugger : Gdb_Debugger) is
+   begin
+      Send (Debugger.Process.all, "begin");
+   end Start;
+
+   ---------------
+   -- Step_Into --
+   ---------------
+
+   procedure Step_Into (Debugger : Gdb_Debugger) is
+   begin
+      Send (Debugger.Process.all, "step");
+      Wait_Prompt (Debugger);
+   end Step_Into;
+
+   ---------------
+   -- Step_Over --
+   ---------------
+
+   procedure Step_Over (Debugger : Gdb_Debugger) is
+   begin
+      Send (Debugger.Process.all, "next");
+      Wait_Prompt (Debugger);
+   end Step_Over;
 
    ---------------------
    -- Break_Exception --
