@@ -376,9 +376,10 @@ private
       --  A tag used when highlighting regions
 
       Insert_Mark   : Gtk.Text_Mark.Gtk_Text_Mark;
-      --  This is a copy of the "insert" mark. This could be easily looked-up
-      --  when needed, but having a copy is helping performance-wise, since a
-      --  lot of subprograms use it.
+      --  This is a copy of the "insert" mark or the "gtk_drag_target" mark.
+      --  This could be easily looked-up when needed, but having a copy is
+      --  helping performance-wise, since a  lot of subprograms use it.
+      --  This must always be a valid text mark.
 
       Inserting     : Boolean := False;
       --  Used to avoid recursion, when
