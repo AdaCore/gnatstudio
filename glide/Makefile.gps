@@ -105,7 +105,7 @@ ifeq ($(GLIDE_ROOT),True)
 	  $(LN) ../gnat_src/$(f) ../gnat > /dev/null 2>&1 ;)
 
    gpslink: force
-	cd $(GLIDE_OBJ_DIR); gnatmake -q ../src/gpslink
+	cd $(GLIDE_OBJ_DIR); gnatmake -q -a ../src/gpslink
 
    include ../Makefile.gnat
    include ../builder/src/Makefile.generic
