@@ -513,6 +513,8 @@ package Glide_Kernel.Modules is
    --  Request to display a html file
    --  There are multiple data associated with this type:
    --     first  : full name of the html file to open (use Get_String)
+   --     second : True if the location should be stored for navigation
+   --              with Back/Forward.
 
    Mime_Diff_File : constant String := "application/diff";
    --  There are multiple data associated with this type:
@@ -567,9 +569,12 @@ package Glide_Kernel.Modules is
    --  Filename must be an absolute file name.
 
    procedure Open_Html
-     (Kernel         : access Kernel_Handle_Record'Class;
-      Filename       : String);
+     (Kernel            : access Kernel_Handle_Record'Class;
+      Filename          : String;
+      Enable_Navigation : Boolean := True);
    --  Open, or create, an html viewer for Filename (Mime_Html_File type)
+   --  If Enable_Navigation is True, then the location visited will be
+   --  stored in the history for Back/Forward navigation.
 
    procedure Display_Differences
      (Kernel         : access Kernel_Handle_Record'Class;
