@@ -19,7 +19,7 @@
 -----------------------------------------------------------------------
 
 with Prj.PP;   use Prj.PP;
-with Projects; use Projects;
+with Projects.Registry; use Projects, Projects.Registry;
 with Traces;   use Traces;
 
 package body Projects.Traces is
@@ -73,7 +73,7 @@ package body Projects.Traces is
    begin
       if Active (Handle) then
          Pretty_Print
-           (Project                          => Project.Node,
+           (Project                          => Project,
             Increment                        => 3,
             Eliminate_Empty_Case_Constructions => False,
             Minimize_Empty_Lines             => True,

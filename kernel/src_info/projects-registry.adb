@@ -27,6 +27,12 @@ package body Projects.Registry is
 
    Me : constant Debug_Handle := Create ("Projects.Registry");
 
+   Project_Backward_Compatibility : constant Boolean := True;
+   --  Should be set to true if saved project should be compatible with GNAT
+   --  3.15a1, False if they only need to be compatible with GNAT 3.16 >=
+   --  20021024
+
+
    procedure Do_Nothing (Project : in out Project_Type);
    --  Do not free the project (in the hash tables), since it shared by several
    --  entries and several htables
@@ -713,7 +719,8 @@ package body Projects.Registry is
          Increment,
          Eliminate_Empty_Case_Constructions,
          Minimize_Empty_Lines,
-         W_Char, W_Eol, W_Str);
+         W_Char, W_Eol, W_Str,
+         Backward_Compatibility => Project_Backward_Compatibility);
    end Pretty_Print;
 
    ----------------
