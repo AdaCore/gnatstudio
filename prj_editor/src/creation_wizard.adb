@@ -204,7 +204,7 @@ package body Creation_Wizard is
                Result := Message_Dialog
                  (Msg =>
                     -("Invalid name for the project (only lower case letters"
-                      & ", digits and underscores"),
+                      & ", digits and underscores)"),
                   Title => -"Invalid name",
                   Dialog_Type => Error,
                   Buttons => Button_OK);

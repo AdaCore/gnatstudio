@@ -980,7 +980,7 @@ package body Project_Properties is
          if not Is_Valid_Project_Name (Get_Text (Editor.Name)) then
             Response2 := Message_Dialog
               (Msg     => -("Invalid name for the project (only lower"
-                            & " case letters, digits and underscores"),
+                            & " case letters, digits and underscores)"),
                Buttons => Button_OK,
                Dialog_Type => Error,
                Title   => -"Error",
