@@ -41,8 +41,11 @@ with Gtkada.MDI;                use Gtkada.MDI;
 with Glide_Intl;                use Glide_Intl;
 with GNAT.OS_Lib;               use GNAT.OS_Lib;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with Traces;                    use Traces;
 
 package body Glide_Main_Window is
+
+   Me : constant Debug_Handle := Create ("Glide_Main_Window");
 
    function Delete_Callback
      (Widget : access Gtk_Widget_Record'Class;
@@ -242,6 +245,7 @@ package body Glide_Main_Window is
             Get_Pref (Main_Window.Kernel, Animated_Image));
       begin
          if Is_Regular_File (File) then
+            Trace (Me, "Loading animation " & File);
             Gtk_New (Main_Window.Animation_Frame);
             Set_Shadow_Type (Main_Window.Animation_Frame, Shadow_In);
             Pack_End (Box1, Main_Window.Animation_Frame, False, False);
