@@ -12,12 +12,14 @@ with Search_Callback;       use Search_Callback;
 with Find_Utils;            use Find_Utils;
 
 with GNAT.Regexp;           use GNAT.Regexp;
---  with GNAT.Os_Lib;
+--
+with GNAT.Os_Lib;
 
 with Ada.Text_IO;           use Ada.Text_IO;
 with Ada.Exceptions;        use Ada.Exceptions;
 
---  with Gtkada.File_Selection; use Gtkada.File_Selection;
+--
+with Gtkada.File_Selection; use Gtkada.File_Selection;
 
 package body Hyper_Grep_Window_Pkg.Callbacks is
 
@@ -44,21 +46,21 @@ package body Hyper_Grep_Window_Pkg.Callbacks is
    procedure On_Browse_Button_Clicked
      (Object : access Gtk_Button_Record'Class)
    is
---        use GNAT.Os_Lib;
---
---        S : String_Access;
+      use GNAT.Os_Lib;
+
+      S : String_Access;
    begin
       null;
---        S := new String '(File_Selection_Dialog
---                            ("Select a directory",
---                             "." & Directory_Separator,
---                             Dir_Only => True,
---                             Must_Exist => True));
---        if S.all /= "" then
---           Set_Text (Hyper_Grep_Window.Directory_Entry, S.all);
---        end if;
---
---        Free (S);
+      S := new String '(File_Selection_Dialog
+                          ("Select a directory",
+                           "." & Directory_Separator,
+                           Dir_Only => True,
+                           Must_Exist => True));
+      if S.all /= "" then
+         Set_Text (Hyper_Grep_Window.Directory_Entry, S.all);
+      end if;
+
+      Free (S);
    end On_Browse_Button_Clicked;
 
    -----------------------------------
