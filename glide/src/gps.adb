@@ -400,11 +400,19 @@ procedure GPS is
 
             if File_Extension (Str (1 .. Last)) = Project_File_Extension then
                Load_Project (GPS.Kernel, Str (1 .. Last));
+               Project_Loaded := True;
                exit;
             end if;
          end loop;
 
          Close (Directory);
+      end if;
+
+      --  If we are still using the default project, we need to compute its
+      --  view now.
+
+      if not Project_Loaded then
+         Recompute_View (GPS.Kernel);
       end if;
 
       --  Call Show_All before displaying the help so that the help window will
