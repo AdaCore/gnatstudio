@@ -710,22 +710,15 @@ package body Src_Editor_Box is
             return;
          end if;
 
-         declare
-            Color : Gdk.Color.Gdk_Color := Parse ("#FFFFFF");
-         begin
-            Alloc (Get_Default_Colormap, Color);
-
-            Create_Pixmap_From_Text
-              (Text     => File.all & ':' & Image (L),
-               Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
-               Bg_Color => Color,
-               Window   => Get_Window (Widget, Text_Window_Text),
-               Pixmap   => Pixmap,
-               Width    => Width,
-               Height   => Height);
-
-            Free (File);
-         end;
+         Create_Pixmap_From_Text
+           (Text     => File.all & ':' & Image (L),
+            Font     => Get_Pref (Data.Box.Kernel, Tooltip_Font),
+            Bg_Color => White (Get_Default_Colormap),
+            Window   => Get_Window (Widget, Text_Window_Text),
+            Pixmap   => Pixmap,
+            Width    => Width,
+            Height   => Height);
+         Free (File);
       end;
 
    exception
