@@ -38,7 +38,7 @@ __gnat_set_writable (char *name)
 
   if (__gnat_stat (name, &statbuf) == 0)
   {
-    statbuf.st_mode = statbuf.st_mode | W_IWUSR;
+    statbuf.st_mode = statbuf.st_mode | S_IWUSR;
     chmod (name, statbuf.st_mode);
   }
 }
