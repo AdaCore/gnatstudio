@@ -61,6 +61,9 @@
                      slave-switch="-fprofile-arcs"
                      master-status="off" slave-status="off" />
 
+         <check label="Always generate ALI file" switch="-gnatQ"
+                tip="Don't quit, write ali/tree file even if compile errors" />
+
          <check label="Full errors" switch="-gnatf" line="2" column="1" 
                 tip="Full Errors. Multiple errors per line, all undefined references" />
          <popup label="Warnings" line="2" column="1">
@@ -202,13 +205,15 @@
           <check label="Enable assertions" switch="-gnata" line="2" column="2"
                  tip="Assertions enabled. Pragma Assert and pragma Debug are activated" />
           <check label="Debug expanded code" switch="-gnatD" line="2" column="2"
-                 tip="Output expanded source files for source level debugging" />
+                 tip="Output expanded source files for low level debugging" />
 
           <check label="Language extensions" switch="-gnatX" line="3" column="2"
                  tip="Activates various GNAT-specific extensions to the language"
                  />
           <check label="Ada 83 mode" switch="-gnat83" line="3" column="2"
                  tip="Enforces Ada 83 restrictions" />
+          <check label="Ada 05 mode" switch="-gnat05" line="3" column="2"
+                 tip="Activates Ada 2005 language features" />
       </switches>
    </tool>
 
