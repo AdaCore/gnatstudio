@@ -32,7 +32,9 @@
 --  many functionalities related to source code editing.
 --  </description>
 
+with Glib; use Glib;
 with Gdk.GC;
+with Gdk.Event;
 with Gdk.Font;
 with Gtk.Text_Mark;
 with Gtk.Text_View;
@@ -85,6 +87,16 @@ package Src_Editor_View is
    procedure Scroll_To_Cursor_Location (View : access Source_View_Record);
    --  Scroll the Source View if the position of the insert cursor is not
    --  within the part of the text currently visible.
+
+   procedure Event_To_Buffer_Coords
+     (View     : access Source_View_Record;
+      Event    : Gdk.Event.Gdk_Event;
+      Line     : out Gint;
+      Column   : out Gint);
+   --  Translate the window coordinates of the Event into a Line/Column
+   --  position in the buffer of the given Source_View_Record. Return
+   --  -1,-1 if the window coordinates are outside of the area where
+   --  some text is written.
 
 private
 

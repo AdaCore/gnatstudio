@@ -41,6 +41,7 @@ with Gtk.Handlers;                use Gtk.Handlers;
 with Gtk.Text_Buffer;             use Gtk.Text_Buffer;
 with Gtk.Text_Iter;               use Gtk.Text_Iter;
 with Gtk.Text_Mark;               use Gtk.Text_Mark;
+with Gtk.Text_View;               use Gtk.Text_View;
 with Gtk.Widget;                  use Gtk.Widget;
 with Src_Editor_Buffer;           use Src_Editor_Buffer;
 with Src_Editor_Defaults;         use Src_Editor_Defaults;
@@ -503,5 +504,64 @@ package body Src_Editor_View is
         (View, Insert_Mark, Use_Align => True,
          Within_Margin => 0.0, Xalign => 0.5, Yalign => 0.5);
    end Scroll_To_Cursor_Location;
+
+   ----------------------------
+   -- Event_To_Buffer_Coords --
+   ----------------------------
+
+   procedure Event_To_Buffer_Coords
+     (View     : access Source_View_Record;
+      Event    : Gdk_Event;
+      Line     : out Gint;
+      Column   : out Gint)
+   is
+      Event_X       : constant Gint := Gint (Get_X (Event));
+      Event_Y       : constant Gint := Gint (Get_Y (Event));
+      Buffer_X      : Gint;
+      Buffer_Y      : Gint;
+
+      Iter          : Gtk_Text_Iter;
+      Iter_Location : Gdk_Rectangle;
+      Line_Height   : Gint;
+      Unused        : Gint;
+   begin
+      Window_To_Buffer_Coords
+        (View, Text_Window_Text,
+         Window_X => Event_X, Window_Y => Event_Y,
+         Buffer_X => Buffer_X, Buffer_Y => Buffer_Y);
+      Get_Iter_At_Location (View, Iter, Buffer_X, Buffer_Y);
+      Line := Get_Line (Iter);
+      Column := Get_Line_Offset (Iter);
+
+      --  Get_Iter_At_Location does not behave quite exactly like I wished it
+      --  did: The iterator returned is always located in a valid position,
+      --  even if the user clicked outside of the the areas where there is some
+      --  text. In our case, we don't want that, so we need to add some extra
+      --  logic in order to detect these cases, and return -1,-1 to signal it.
+      --
+      --  We use the following algorithm to detect such cases:
+      --     + Get the X window coordinate of the last insert position
+      --       in line Line. If the X window coordinate of the event
+      --       exceeds this position, we were beyond the end of the line,
+      --       and hence should return -1,-1.
+      --     + Get the Y window coordinates of the bottom of line Line
+      --       (computed by getting the window coordinates of the top
+      --       of line Line, plus the line height). If the Y window
+      --       coordinates of the event exceed this position, we were
+      --       beyond the end of the last line, in which case we also
+      --       return -1,-1.
+
+      Src_Editor_Buffer.Forward_To_Line_End (Iter);
+      Get_Iter_Location (View, Iter, Iter_Location);
+      Get_Line_Yrange (View, Iter, Unused, Line_Height);
+
+      if Buffer_X > Iter_Location.X
+       or else Event_Y > Iter_Location.Y + Line_Height
+      then
+         Line   := -1;
+         Column := -1;
+      end if;
+
+   end Event_To_Buffer_Coords;
 
 end Src_Editor_View;
