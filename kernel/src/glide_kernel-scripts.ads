@@ -124,6 +124,8 @@ package Glide_Kernel.Scripts is
      (Data : Callback_Data; N : Positive; Value : Boolean) is abstract;
    procedure Set_Nth_Arg
      (Data : Callback_Data; N : Positive; Value : Class_Instance) is abstract;
+   procedure Set_Nth_Arg
+     (Data : Callback_Data; N : Positive; Value : Subprogram_Type) is abstract;
    --  Set the nth argument of Data
    --  For the last case (Class_Instance), Value needs to be freed explicitely
    --  by the user, since a copy is stored in Data.
@@ -231,6 +233,10 @@ package Glide_Kernel.Scripts is
       Class      : Class_Type;
       Default    : System.Address;
       Allow_Null : Boolean := False) return System.Address;
+   function Nth_Arg
+     (Data    : Callback_Data;
+      N       : Positive;
+      Default : Subprogram_Type) return Subprogram_Type;
    --  Same as above, except that if there are not enough parameters, Default
    --  is returned.
 

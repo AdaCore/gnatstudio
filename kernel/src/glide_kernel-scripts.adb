@@ -1679,11 +1679,26 @@ package body Glide_Kernel.Scripts is
       Default    : System.Address;
       Allow_Null : Boolean := False) return System.Address is
    begin
-      return Nth_Arg_Data (Data, N, Class, Allow_Null);
+      return Nth_Arg_Data (Callback_Data'Class (Data), N, Class, Allow_Null);
    exception
       when No_Such_Parameter =>
          return Default;
    end Nth_Arg_Data;
+
+   -------------
+   -- Nth_Arg --
+   -------------
+
+   function Nth_Arg
+     (Data    : Callback_Data;
+      N       : Positive;
+      Default : Subprogram_Type) return Subprogram_Type is
+   begin
+      return Nth_Arg (Callback_Data'Class (Data), N);
+   exception
+      when No_Such_Parameter =>
+         return Default;
+   end Nth_Arg;
 
    -------------
    -- Nth_Arg --
