@@ -3472,8 +3472,6 @@ package body Src_Editor_Module is
 
       Undo_Redo_Data.Set (Kernel, Undo_Redo, Undo_Redo_Id);
 
-      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
-
       Kernel_Callback.Connect
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),

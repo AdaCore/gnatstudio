@@ -890,8 +890,6 @@ package body External_Editor_Module is
          Contextual_Menu_Handler => External_Editor_Contextual'Access,
          Mime_Handler            => Mime_Action'Access);
 
-      Preferences_Changed (Kernel, Kernel_Handle (Kernel));
-
       Kernel_Callback.Connect
         (Kernel, Preferences_Changed_Signal,
          Kernel_Callback.To_Marshaller (Preferences_Changed'Access),
