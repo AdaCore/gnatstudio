@@ -2137,17 +2137,18 @@ package body Aliases_Module is
       Expand : String_Ptr;
       P      : Param_Access;
       Old    : Alias_Record;
+      N      : Node_Ptr := Node;
    begin
-      if Node /= null and then Node.Tag.all = "alias" then
+      while N /= null and then N.Tag.all /= "alias" loop
          declare
-            Name : constant String := Get_Attribute (Node, "name");
+            Name : constant String := Get_Attribute (N, "name");
             Must_Reindent : constant Boolean :=
-              Get_Attribute (Node, "indent", "false") = "true";
+              Get_Attribute (N, "indent", "false") = "true";
          begin
             Expand := null;
             P := null;
 
-            if Node.Tag.all /= "alias"
+            if N.Tag.all /= "alias"
               or else Name = ""
             then
                Insert
@@ -2155,7 +2156,7 @@ package body Aliases_Module is
                   Mode => Error);
             end if;
 
-            Child := Node.Child;
+            Child := N.Child;
             while Child /= null loop
                if Child.Tag.all = "text" then
                   Expand := Child.Value;
@@ -2203,7 +2204,9 @@ package body Aliases_Module is
                Free (P);
             end if;
          end;
-      end if;
+
+         N := N.Next;
+      end loop;
    end Customize;
 
    ---------------------
