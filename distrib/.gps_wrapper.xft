@@ -13,6 +13,11 @@ LD_LIBRARY_PATH=$root/lib:$LD_LIBRARY_PATH
 GTK_DATA_PREFIX=$root
 FONTCONFIG_FILE=$root/share/fonts/fonts.conf
 
+if [ "$GDK_USE_XFT" = "" -a "$DISPLAY" != ":0.0" ]; then
+  GDK_USE_XFT=0
+  export GDK_USE_XFT
+fi
+
 if [ "$GPS_DOC_PATH" = "" ]; then
    GPS_DOC_PATH=$root/doc/gnat/html:$root/doc/gnat-cross/html
 else
