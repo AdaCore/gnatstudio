@@ -42,7 +42,8 @@ New features in GPS 1.4.0
 - C724-010 New customization directories can be specified through
   GPS_CUSTOM_PATH
 
-- New customization tag: <vsearch-patterns>, <tool>, <switches>
+- New customization tag: <vsearch-patterns>, <tool>, <switches>, <filter>,
+  <filter_and>, <filter_or>
 
 - The keyshortcut editor now shows all available macros on the first screen
 
