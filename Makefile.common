@@ -111,11 +111,18 @@ check_gvd: force
 ###################
 
 ifneq (,$(findstring common,$(MODULES)))
-MODULE_INCLUDE+=-I../../common
+
+# Location of common sources. See the README file at the top-level for
+# information on how to setup the required links
+COMMON_SRC=../../common
+
+MODULE_INCLUDE+=-aI${COMMON_SRC}/src -aO${COMMON_SRC}/obj
 endif
 
 .PHONY: check_common
 check_common: force
+	@[ -f ${COMMON_SRC}/src/make_common.ads ] || \
+	   (echo "common sources not found in ${COMMON_SRC}, see README"; false)
 
 ###################
 ## GTKADA module ##
