@@ -128,17 +128,16 @@ package body Browsers.Module is
          Raise_Child (Child);
       else
          Gtk_New (Browser, Browser_Type, Kernel);
-         Child := Put (Get_MDI (Kernel), Browser);
-         Set_Size_Request
-           (Browser, Default_Browser_Width, Default_Browser_Height);
-         Set_Title (Child, "<browser>");
-
          Register_Contextual_Menu
            (Kernel          => Kernel,
             Event_On_Widget => Browser,
             Object          => Browser,
             ID              => Dependency_Browser_Module_ID,
             Context_Func    => Browser_Context_Factory'Access);
+         Child := Put (Get_MDI (Kernel), Browser);
+         Set_Size_Request
+           (Browser, Default_Browser_Width, Default_Browser_Height);
+         Set_Title (Child, "<browser>");
       end if;
 
       return Child;
@@ -442,14 +441,16 @@ package body Browsers.Module is
       if Context.all in File_Selection_Context'Class then
          File_Context := File_Selection_Context_Access (Context);
 
-         Gtk_New (Item, Label => File_Information (File_Context)
-                  & (-" depends on..."));
-         Append (Menu, Item);
-         Context_Callback.Connect
-           (Item, "activate",
-            Context_Callback.To_Marshaller
-            (Edit_Dependencies_From_Contextual'Access),
-            Selection_Context_Access (Context));
+         if Has_File_Information (File_Context) then
+            Gtk_New (Item, Label => File_Information (File_Context)
+                     & (-" depends on..."));
+            Append (Menu, Item);
+            Context_Callback.Connect
+              (Item, "activate",
+               Context_Callback.To_Marshaller
+               (Edit_Dependencies_From_Contextual'Access),
+               Selection_Context_Access (Context));
+         end if;
       end if;
    end Browser_Contextual_Menu;
 
