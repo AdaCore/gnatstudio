@@ -30,6 +30,7 @@
 
 with Prj;
 with Prj.Tree;
+with Prj_API;
 with Glib.Object;
 with GNAT.OS_Lib;
 with Gtk.Handlers;
@@ -188,6 +189,11 @@ private
 
       Current_Editor : Gtkada.MDI.MDI_Child;
       --  The last editor that had the focus
+
+      Scenario_Variables : Prj_API.Project_Node_Array_Access := null;
+      --  The (cached) list of scenario variables for the current project. Note
+      --  that this list depends on which project was loaded in Glide, and
+      --  might change when new dependencies are added.
    end record;
 
 end Glide_Kernel;

@@ -54,6 +54,7 @@
 
 with Basic_Types;
 with Prj;
+with Prj_API;
 with Prj.Tree;
 
 package Glide_Kernel.Project is
@@ -84,6 +85,13 @@ package Glide_Kernel.Project is
       return String;
    --  This is the equivalent function of Find_Source_File for object files.
    --  This also works for ali files.
+
+   function Scenario_Variables (Kernel : access Kernel_Handle_Record'Class)
+      return Prj_API.Project_Node_Array;
+   --  Return a list of all the scenario variables. This list is cached, so
+   --  that future calls are fast.
+   --  ??? This should be independent from any actual node, since the nodes
+   --  ??? might be freed at some point.
 
    procedure Load_Project
      (Kernel : access Kernel_Handle_Record'Class; Project : String);
