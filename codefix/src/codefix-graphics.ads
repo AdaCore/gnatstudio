@@ -44,7 +44,7 @@ package Codefix.Graphics is
 
    type Graphic_Codefix_Record is new Codefix_Window_Record with record
       Current_Text      : Ptr_Text_Navigator;
-      Corrector         : Correction_Manager;
+      Corrector         : Ptr_Correction_Manager;
       Successful_Update : Boolean;
       Nb_Tabs           : Integer := 0;
       Current_Error     : Error_Id := Null_Error_Id;
@@ -59,12 +59,14 @@ package Codefix.Graphics is
    procedure Gtk_New
      (Graphic_Codefix : out Graphic_Codefix_Access;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator);
+      Current_Text    : Ptr_Text_Navigator;
+      Corrector       : Ptr_Correction_Manager);
 
    procedure Initialize
      (Graphic_Codefix : access Graphic_Codefix_Record'Class;
       Kernel          : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Current_Text    : Ptr_Text_Navigator);
+      Current_Text    : Ptr_Text_Navigator;
+      Corrector       : Ptr_Correction_Manager);
 
    procedure Free (Graphic_Codefix : access Graphic_Codefix_Record'Class);
    --  Free the memory associated to a Graphic_Codefix.
