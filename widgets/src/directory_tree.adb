@@ -431,14 +431,17 @@ package body Directory_Tree is
    procedure Expand_Tree_Cb
      (Widget : access Gtk.Widget.Gtk_Widget_Record'Class; Args : Gtk_Args)
    is
+      Tree : constant Dir_Tree := Dir_Tree (Widget);
       Node : constant Gtk_Ctree_Node := Gtk_Ctree_Node (To_C_Proxy (Args, 1));
       Win  : constant Gdk_Window := Get_Window (Widget);
+
    begin
       if Win /= null then
          Set_Busy_Cursor (Win, True, True);
       end if;
 
-      Add_Sub_Directories (Dir_Tree (Widget), Node);
+      Add_Sub_Directories (Tree, Node);
+      Node_Moveto (Tree, Node, 0, 0.1, 0.2);
 
       if Win /= null then
          Set_Busy_Cursor (Win, False);
