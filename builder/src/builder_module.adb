@@ -305,9 +305,6 @@ package body Builder_Module is
       Project_Str    : constant String := Project_Path (Project);
       Result         : Argument_List_Access;
       Vars           : Argument_List_Access;
-      Build_Progress : constant Boolean :=
-        Get_Pref (Kernel, Show_Build_Progress);
-      File_Arg       : String_Access;
 
    begin
       case Syntax is
@@ -321,16 +318,17 @@ package body Builder_Module is
                R_Tmp : Argument_List (1 .. 3);
                K     : Natural := 0;
             begin
-               if Build_Progress then
-                  K := K + 1;
-                  R_Tmp (K) := new String'("-d");
-               end if;
+               K := K + 1;
+               R_Tmp (K) := new String'("-d");
 
                K := K + 1;
                R_Tmp (K) := new String'("-P" & Project_Str);
 
-               if File /= VFS.No_File then
-                  K := K + 1;
+               K := K + 1;
+
+               if File = VFS.No_File then
+                  R_Tmp (K) := new String'("-u");
+               else
                   R_Tmp (K) := new String'(Full_Name (File).all);
                end if;
 
@@ -376,22 +374,16 @@ package body Builder_Module is
                      --  supported languages.
 
                      if File = VFS.No_File then
-                        File_Arg := new String'("");
-                     else
-                        File_Arg :=
-                          new String'("ADA_SOURCES=" & Base);
-                     end if;
-
-                     if Build_Progress then
                         Result := new Argument_List'
                           (List &
                            new String'("build") &
-                           File_Arg &
-                           new String'("ADAFLAGS=-d"));
-
+                           new String'("ADAFLAGS=-d -u"));
                      else
                         Result := new Argument_List'
-                          (List & new String'("build") & File_Arg);
+                          (List &
+                           new String'("build") &
+                           new String'("ADA_SOURCES=" & Base) &
+                           new String'("ADAFLAGS=-d"));
                      end if;
 
                   else
