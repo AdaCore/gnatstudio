@@ -6,6 +6,9 @@ New features in GPS 2.2.0
 - New "clean" Menu items  for in "Build" for cleaning up artifacts of
   compilation.
 
+- DA19-003 It is now possible to add a <dependency> between a field switch and a
+  check button switch when defining tool switches
+
 New features in GPS 2.1.0
 
 - New shell commands, to ease writing of GPS scripts. See 'help' in the
