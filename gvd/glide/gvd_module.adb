@@ -1383,8 +1383,7 @@ package body GVD_Module is
    -- On_Executable_Changed --
    ---------------------------
 
-   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class)
-   is
+   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class) is
       Top  : constant Glide_Window := Glide_Window (Object);
    begin
       --  Re-create all debugger columns.
