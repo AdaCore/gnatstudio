@@ -62,6 +62,12 @@ package VCS_View_API is
    --  Launch a visual comparison for the selected files between their
    --  working and head revisions.
 
+   procedure View_Specific_Diff
+     (Widget : access GObject_Record'Class;
+      Kernel : Kernel_Handle);
+   --  Launch a visual comparison for the selected file for a specified
+   --  revision.
+
    procedure View_Log
      (Widget  : access GObject_Record'Class;
       Kernel  : Kernel_Handle);
