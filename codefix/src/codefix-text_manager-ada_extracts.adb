@@ -18,6 +18,8 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with String_Utils; use String_Utils;
 
 package body Codefix.Text_Manager.Ada_Extracts is
@@ -253,7 +255,6 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Get_Token --
    ---------------
 
-   --  Maybe without Buffer ???
    procedure Get_Token
      (Line      : Ptr_Extract_Line;
       Col       : in out Integer;
@@ -388,9 +389,10 @@ package body Codefix.Text_Manager.Ada_Extracts is
          exit when Current_Token.Content (1) = ':'
            or else Current_Token.Content (1) = ';';
 
-         --  ??? Make the same tests without case problems
-         if Without_Last_Blanks (Current_Token.Content.all) /= "with"
-           and then Without_Last_Blanks (Current_Token.Content.all) /= "use"
+         if To_Lower
+           (Without_Last_Blanks (Current_Token.Content.all)) /= "with"
+           and then To_Lower
+             (Without_Last_Blanks (Current_Token.Content.all)) /= "use"
          then
             Append (Destination.Elements_List, Current_Token);
          else
@@ -593,10 +595,18 @@ package body Codefix.Text_Manager.Ada_Extracts is
    -- Get_Element --
    -----------------
 
-   function Get_Element (This : Ada_List; Num : Natural) return String is
-      pragma Unreferenced (This, Num);
+   function Get_Element (This : Ada_List; Num : Natural) return Word_Cursor is
+      Node   : Tokens_List.List_Node := First (This.Elements_List);
    begin
-      return "";
+      for I in 1 .. Num - 1 loop
+         Node := Next (Node);
+      end loop;
+
+      return (Col          => Data (Node).First_Col,
+              Line         => Data (Node).Line.Cursor.Line,
+              File_Name    => Clone (Data (Node).Line.Cursor.File_Name),
+              String_Match => Clone (Data (Node).Content),
+              Mode         => Text_Ascii);
    end Get_Element;
 
    ---------------------
