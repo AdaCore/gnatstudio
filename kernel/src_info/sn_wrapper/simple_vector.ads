@@ -35,22 +35,22 @@ package Simple_Vector is
 
    -------------------------------------------------------------------------
 
-   procedure Append (Item : in Element_Type; Root : in out Node_Access);
+   procedure Append (Item : Element_Type; Root : in out Node_Access);
    --  Appends new item at the beginning of the list. If root is null then
    --  a new list is created.
 
-   procedure Append (Root : in out Node_Access; Item : in Element_Type);
+   procedure Append (Root : in out Node_Access; Item : Element_Type);
    --  Appends new item to the end of the list. If root is null then a new
    --  list is created.
 
-   function Get_Element_At (Root : in Node_Access; Index : in Integer)
-         return Element_Type;
+   function Get_Element_At
+     (Root : Node_Access; Index : Integer) return Element_Type;
    --  Returns element with specified Index. If such element is not
    --  available then exception is raised. Starting index is 1 for the
    --  first element.
 
-   function Size (Root : in Node_Access) return Integer;
-   --  Returns size of the Vector
+   function Size (Root : Node_Access) return Integer;
+   --  Returns size of the Vector.
 
    procedure Release_Vector (Root : in out Node_Access);
 

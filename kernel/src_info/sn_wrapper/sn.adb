@@ -39,9 +39,9 @@ package body SN is
    -- Length --
    ------------
 
-   function Length (s : Segment) return Integer is
+   function Length (S : Segment) return Integer is
    begin
-      return (s.Last - s.First + 1);
+      return S.Last - S.First + 1;
    end Length;
 
    ---------------

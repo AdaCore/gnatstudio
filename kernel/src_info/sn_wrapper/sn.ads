@@ -56,13 +56,13 @@ package SN is
    Max_Src_Line_Length : constant Integer := 4096;
    --  Specifies the maximum line length for arbitrary source file.
 
-   type Point is
-      record
-         Line : Integer;
-         Column : Integer;
-      end record;
+   type Point is record
+      Line   : Integer;
+      Column : Integer;
+   end record;
    --  Position between symbols in source
-   Invalid_Point : constant Point := (-1, -1);
+
+   Invalid_Point    : constant Point := (-1, -1);
    Predefined_Point : constant Point := (Integer'Last, Integer'Last);
 
    Invalid_String  : constant String := "";
@@ -70,15 +70,15 @@ package SN is
    function "<" (P1, P2 : Point) return Boolean;
    --  LessThan operation for operands of Point type
 
-   type Segment is
-      record
-         First : Integer;
-         Last : Integer;
-      end record;
+   type Segment is record
+      First : Integer;
+      Last  : Integer;
+   end record;
+
    Invalid_Segment : constant Segment := (-1, -1);
    Empty_Segment   : constant Segment := (1, 0);
 
-   function Length (s : Segment) return Integer;
+   function Length (S : Segment) return Integer;
 
    function To_String
      (Buffer : GNAT.OS_Lib.String_Access; Seg : Segment) return String;
