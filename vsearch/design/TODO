@@ -11,7 +11,7 @@
 ----------
 
   * [Yeti] Storage_Error with Browse
-    I haven't a precise scenario for this, but try this: type a directory, and
-    overwrite it with Browse, start the search. This raises SE.
-    Also found when not changing directory nor selecting Browse.
-    Never reappeared, may not be related to Browse.
+    Found a scenario: when Hypergrep is just started, unselect the checkbox
+    "Scan Only Project Files", click Browse button, select a dir with mouse
+    (don't type a directory !), click OK, select the directory with the mouse
+    in the combobox, overwrite it by typing "f", click Start.
