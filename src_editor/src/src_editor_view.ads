@@ -106,7 +106,7 @@ private
 
    type Line_Info_Width is record
       Info  : Line_Information_Access;
-      Width : Integer;
+      Width : Integer := 0;
    end record;
 
    type Line_Info_Width_Array is array (Natural range <>) of Line_Info_Width;
@@ -153,11 +153,8 @@ private
       Font                : Gdk.Font.Gdk_Font;
       Side_Column_GC      : Gdk.GC.Gdk_GC;
 
-      Top_Line            : Natural := 0;
+      Top_Line            : Natural := 1;
       Bottom_Line         : Natural := 0;
-
-      Min_Top_Line        : Natural := 0;
-      Max_Bottom_Line     : Natural := 0;
 
       Line_Info           : Line_Info_Display_Array_Access;
       --  The information that should be displayed in the left window.
