@@ -604,7 +604,6 @@
 		<last_modification_time>Sun, 25 Jun 2000 02:35:15 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -620,7 +619,6 @@
 		<last_modification_time>Wed, 07 Mar 2001 04:50:45 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -635,7 +633,6 @@
 		<last_modification_time>Sun, 25 Jun 2000 02:35:58 GMT</last_modification_time>
 	      </signal>
 	      <label>Advanced...</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -788,7 +785,6 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 02:37:18 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -804,7 +800,6 @@ read or written
 		<last_modification_time>Wed, 07 Mar 2001 04:52:25 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -819,7 +814,6 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 02:37:52 GMT</last_modification_time>
 	      </signal>
 	      <label>Advanced...</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -921,7 +915,6 @@ read or written
 		  <last_modification_time>Sun, 08 Oct 2000 15:52:12 GMT</last_modification_time>
 		</signal>
 		<label>Load List</label>
-		<relief>GTK_RELIEF_NORMAL</relief>
 		<child>
 		  <padding>0</padding>
 		  <expand>False</expand>
@@ -1031,7 +1024,6 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 02:38:34 GMT</last_modification_time>
 	      </signal>
 	      <label>Add</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1047,7 +1039,6 @@ read or written
 		<last_modification_time>Wed, 07 Mar 2001 04:53:31 GMT</last_modification_time>
 	      </signal>
 	      <label>Update</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1062,7 +1053,6 @@ read or written
 		<last_modification_time>Sun, 25 Jun 2000 04:22:09 GMT</last_modification_time>
 	      </signal>
 	      <label>Advanced...</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -1195,7 +1185,6 @@ read or written
 		<last_modification_time>Sun, 02 Jul 2000 17:52:13 GMT</last_modification_time>
 	      </signal>
 	      <label>Remove</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 
 	    <widget>
@@ -1210,7 +1199,6 @@ read or written
 		<last_modification_time>Sun, 02 Jul 2000 17:52:21 GMT</last_modification_time>
 	      </signal>
 	      <label>View</label>
-	      <relief>GTK_RELIEF_NORMAL</relief>
 	    </widget>
 	  </widget>
 	</widget>
@@ -1243,7 +1231,6 @@ read or written
 	    <last_modification_time>Sun, 04 Jun 2000 13:48:33 GMT</last_modification_time>
 	  </signal>
 	  <label>Close</label>
-	  <relief>GTK_RELIEF_NORMAL</relief>
 	</widget>
       </widget>
     </widget>
@@ -1481,7 +1468,6 @@ read or written
 	      <last_modification_time>Sun, 04 Jun 2000 13:52:41 GMT</last_modification_time>
 	    </signal>
 	    <label>Record</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 
 	  <widget>
@@ -1495,7 +1481,6 @@ read or written
 	      <last_modification_time>Sun, 04 Jun 2000 13:52:24 GMT</last_modification_time>
 	    </signal>
 	    <label>Stop recording</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 	</widget>
       </widget>
@@ -1758,7 +1743,6 @@ read or written
 	    <last_modification_time>Sat, 27 May 2000 15:51:14 GMT</last_modification_time>
 	  </signal>
 	  <label>...</label>
-	  <relief>GTK_RELIEF_NORMAL</relief>
 	  <child>
 	    <left_attach>6</left_attach>
 	    <right_attach>7</right_attach>
@@ -2129,7 +2113,6 @@ remote
 	  <last_modification_time>Sat, 27 May 2000 16:05:36 GMT</last_modification_time>
 	</signal>
 	<label>OK</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2143,7 +2126,6 @@ remote
 	  <last_modification_time>Sat, 27 May 2000 16:05:47 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
   </widget>
@@ -2359,7 +2341,6 @@ remote
 	      <last_modification_time>Tue, 05 Sep 2000 20:04:58 GMT</last_modification_time>
 	    </signal>
 	    <label>Select All</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 
 	  <widget>
@@ -2373,7 +2354,6 @@ remote
 	      <last_modification_time>Tue, 05 Sep 2000 20:05:04 GMT</last_modification_time>
 	    </signal>
 	    <label>Unselect All</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 	</widget>
       </widget>
@@ -2416,7 +2396,6 @@ remote
 	  <last_modification_time>Tue, 22 Aug 2000 20:50:12 GMT</last_modification_time>
 	</signal>
 	<label>OK</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2430,7 +2409,6 @@ remote
 	  <last_modification_time>Tue, 22 Aug 2000 20:41:31 GMT</last_modification_time>
 	</signal>
 	<label>Cancel</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
   </widget>
@@ -2614,7 +2592,6 @@ remote
 	      <last_modification_time>Thu, 21 Sep 2000 20:53:15 GMT</last_modification_time>
 	    </signal>
 	    <label>View</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 
 	  <widget>
@@ -2624,7 +2601,6 @@ remote
 	    <can_default>True</can_default>
 	    <can_focus>True</can_focus>
 	    <label>Search</label>
-	    <relief>GTK_RELIEF_NORMAL</relief>
 	  </widget>
 	</widget>
       </widget>
@@ -2825,7 +2801,6 @@ ASCII
 	  <handler>on_pgup_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:53:53 GMT</last_modification_time>
 	</signal>
-	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -2854,7 +2829,6 @@ ASCII
 	  <handler>on_pgdn_clicked</handler>
 	  <last_modification_time>Thu, 21 Sep 2000 12:53:58 GMT</last_modification_time>
 	</signal>
-	<relief>GTK_RELIEF_NORMAL</relief>
 	<child>
 	  <padding>0</padding>
 	  <expand>True</expand>
@@ -2912,11 +2886,6 @@ ASCII
 	    <handler>on_view_button_release_event</handler>
 	    <last_modification_time>Sun, 24 Sep 2000 01:41:24 GMT</last_modification_time>
 	  </signal>
-	  <signal>
-	    <name>button_press_event</name>
-	    <handler>on_view_button_press_event</handler>
-	    <last_modification_time>Sun, 24 Sep 2000 19:48:49 GMT</last_modification_time>
-	  </signal>
 	  <editable>True</editable>
 	  <text></text>
 	</widget>
@@ -2959,7 +2928,6 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:48 GMT</last_modification_time>
 	</signal>
 	<label>Undo changes</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2973,7 +2941,6 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:53 GMT</last_modification_time>
 	</signal>
 	<label>Submit changes</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
 
       <widget>
@@ -2987,7 +2954,6 @@ ASCII
 	  <last_modification_time>Thu, 21 Sep 2000 12:54:43 GMT</last_modification_time>
 	</signal>
 	<label>Close</label>
-	<relief>GTK_RELIEF_NORMAL</relief>
       </widget>
     </widget>
 
