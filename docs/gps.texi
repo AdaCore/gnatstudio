@@ -81,7 +81,8 @@ Description of the main windows
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
-* The Project Explorer::
+* The Project View::
+* The File View::
 * The Outline View::
 * The Messages Window::
 @ifset python
@@ -125,7 +126,7 @@ Project Handling
 * Description of the Projects::
 * Supported Languages::
 * Scenarios and Configuration Variables::
-* The Project Explorer (Editing Projects)::
+* The Project Explorer::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -289,7 +290,8 @@ GPS also integrates with existing editors such as Emacs and Vi, see
 * The Menu Bar::
 * The Tool Bar::
 * The Work Space::
-* The Project Explorer::
+* The Project View::
+* The File View::
 * The Outline View::
 * The Messages Window::
 
@@ -487,33 +489,23 @@ The whole work space is based on a multiple document interface,
 @xref{Multiple Document Interface}.
 
 @c --------------------------------------------------------------------
-@node The Project Explorer
-@section The Project Explorer
+@node The Project View
+@section The Project View
 @cindex project explorer
+@cindex project view
 @cindex project
 @c --------------------------------------------------------------------
 
 @noindent
-The project explorer is composed of multiple views which can be accessed
-by default by clicking on the corresponding pages, or if they are not shown
-by using the @code{Project} menu items.
-
-@subsection The explorer views
-@cindex explorer views
-
-@noindent
-The explorer views are
-initially displayed on the left side of the GPS window. Their goal is to
-show a full view of the various components of your projects. These
-various components are presented below.
+The project explorer provides a view of the various components of your project
+hierarchy, as listed below.
+It is displayed by default on the left side of the main window, and can
+be selected by using the @code{Project->Project View} menu item.
 
 @cindex drag-n-drop
 Under Windows, it is possible to drop files (coming e.g. from the Explorer)
-in any of these views with the following behavior: a project file dropped
-will be loaded; any other file will open a source editor on this file.
-
-The following screen-shot displays the two pages side-by-side: on the
-left, the @code{Project View}, and on the right the @code{File View}.
+in the project explorer with the following behavior: a project file dropped
+will be loaded; any other file will be opened in a new source editor.
 
 @iftex
 @cindex screen shot
@@ -526,7 +518,8 @@ left, the @code{Project View}, and on the right the @code{File View}.
 @end ifhtml
 
 @cindex interactive search
-Each view provides an interactive search capability allowing you to quickly
+The project explorer, as well as the file and outline view provide an
+interactive search capability allowing you to quickly
 search in the information currently displayed. The default key
 to start an interactive search is @key{Ctrl-i}.
 @anchor{Interactive Search}
@@ -536,13 +529,12 @@ The first matching name in the tree will be selected while you type it.
 You can then also use the @key{up} and @key{down} keys to navigate through
 all the items matching the current text.
 
-The various components that are displayed in these explorers are the
-following:
+The various components that are displayed are:
 
 @table @b
 @item projects
 @cindex project view
-As mentioned before, all the sources you are working with are put under
+All the sources you are working with are put under
 control of projects. These projects are a way to store the switches to
 use for the various tools, as well as a number of other properties.
 
@@ -552,11 +544,10 @@ can import other projects, with their own set of sources.
 Initially, a default project is created, that includes all the sources
 in the current directory.
 
-The @code{Project View} page of the explorer displays this project
-hierarchy: the top node in this view is the root project of your
-application (generally, this is where the source file that contains
-the main subprogram will be located). Then a node is displayed for
-each imported project, and recursively for their own imported
+The @code{Project View} displays this project hierarchy: the top node
+is the root project of your application (generally, this is where the
+source file that contains the main subprogram will be located). Then a node
+is displayed for each imported project, and recursively for their own imported
 projects.
 
 A given project might appear multiple times in the
@@ -574,22 +565,20 @@ This display is activated through the contextual menu entry
 A special icon with an exclamation mark is displayed if the project
 was modified, but not saved yet. You can choose to save it at any time
 by right-clicking on it. GPS will remind you to save it before any
-compilation.
+compilation, or save it automatically, if the corresponding preference
+is saved.
 
 @item directories
 @cindex directory
 @cindex Windows
 The files inside a project can be organized into several physical
 directories on the disk. These directories are displayed under each
-project node in the @code{Project View}, or directly mimicking their
-physical organization on the disk (including Windows drives) in the
-@code{File View}.
+project node in the @code{Project View}
 
 @cindex Show absolute paths
-In the @code{Project View}, you can chose whether you want to see the
-absolute path names for the directories or paths relative to the
-location of the project. This is done through the @code{Show absolute
-paths} contextual menu.
+You can chose whether you want to see the absolute path names for the
+directories or paths relative to the location of the project. This is done
+through the @code{Show absolute paths} contextual menu.
 
 Special nodes are created for object and executables directories. No
 files are shown for these.
@@ -598,18 +587,11 @@ files are shown for these.
 @cindex file
 @cindex file view
 The source files themselves are stored in the directories, and
-displayed under the corresponding nodes. Note that in the
-@code{Project View}, only the source files that actually belong to the
+displayed under the corresponding nodes. Note that
+only the source files that actually belong to the
 project (i.e. are written in a language supported by that project and
 follow its naming scheme) are actually visible.
 For more information on supported languages, @xref{Supported Languages}.
-
-
-@cindex Show files from project only
-The @code{File View} will display all the files that actually exist
-on the disk. Filters can be set through the contextual menu to only
-show the files and directories that belong to the project
-hierarchy. See the menu @code{Show files from project only}.
 
 A given file might appear multiple times in the @code{Project View},
 if the project it belongs to is imported by several other projects.
@@ -628,33 +610,34 @@ Double-clicking on a file, or simple clicking on any entity will open
 a source editor and display respectively the first line in this file
 or the line on which the entity is defined.
 
-Moving the mouse over the different components displayed on the
-project explorer view will open tooltips with some more information
-depending on the type of component:
+@c ??? Following is currently disabled
+@c Moving the mouse over the different components displayed on the
+@c project explorer view will open tooltips with some more information
+@c depending on the type of component:
 
-@table @b
-@item projects
-The tooltip contains the project full pathname.
+@c @table @b
+@c @item projects
+@c The tooltip contains the project full pathname.
 
-@item directories
-The tooltip contains the directory full pathname and the project name in
-which it is defined.
+@c @item directories
+@c The tooltip contains the directory full pathname and the project name in
+@c which it is defined.
 
-@item files
-The tooltip contains the base filename and the project name in
-which it is defined.
+@c @item files
+@c The tooltip contains the base filename and the project name in
+@c which it is defined.
 
-@item entities
-The tooltip contains the entity name and parameters for routines followed
-by the location in the form filename:line where it is declared.
-@end table
+@c @item entities
+@c The tooltip contains the entity name and parameters for routines followed
+@c by the location in the form filename:line where it is declared.
+@c @end table
 
 @cindex search
 @cindex find
 If you open the search dialog through the @code{Navigate->Find...}
 menu, you have the possibility to search for anything in the explorer,
-either a file or an entity. Note that searching for an entity might be
-a little slow if you have lots of files.
+either a file or an entity. Note that searching for an entity can be slow
+if you have lots of files, and/or big files.
 
 @cindex explorer
 @cindex locate in explorer
@@ -690,9 +673,9 @@ be set simply by selecting it from the pop-down window that appears
 when you click on the arrow on the right of the variable name
 
 @cindex project view
-New variables can be added through the contextual menu @code{Add
-Configuration Variable} in the @code{Project View}. The list of
-possible values for a variable can be changed by clicking on the
+New variables can be added through the contextual menu
+@code{Edit Project->Add Configuration Variable} in the @code{Project View}.
+The list of possible values for a variable can be changed by clicking on the
 button on the left of the variable's name.
 
 Whenever you change the value of one of the variables, the project is
@@ -701,6 +684,27 @@ is changed dynamically to reflect the new status of the
 project. Starting a new compilation at that point will use the new
 switches, and all the aspects of GPS are immediately affected
 according to the new setup.
+
+@c --------------------------------------------------------------------
+@node The File View
+@section The File View
+@cindex File View
+@c --------------------------------------------------------------------
+
+@noindent
+In addition to the @code{Project View}, GPS also provides a
+@code{File View} through the @code{Tools->file View} menu.
+
+In this view, directories are displayed exactly as they are organized
+physically on the disk (including Windows drives).
+
+By default, the @code{File View} will display all the files that exist
+on the disk. Filters can be set through the contextual menu to only
+show the files and directories that belong to the project
+hierarchy by using the contextual menu @code{Show files from project only}.
+
+Each source file can also be explored as described in
+@ref{The Project View}.
 
 @c --------------------------------------------------------------------
 @node The Outline View
@@ -2027,8 +2031,8 @@ Menu entries include the following categories:
 @item Entity browsing
 @xref{Entity Browser}.
 
-@item Project explorer
-@xref{The Project Explorer}.
+@item Project view
+@xref{The Project View}.
 
 @item Version control
 @xref{The Version Control Contextual Menu}.
@@ -2675,8 +2679,8 @@ See @ref{Find All References} for more details.
 @c --------------------------------------------------------------------
 
 @noindent
-@cindex project explorer
-The section on the project explorer (@ref{The Project Explorer}) has
+@cindex project view
+The section on the project view (@ref{The Project View}) has
 already given a brief overview of what the projects are, and the
 information they contain.
 
@@ -2687,7 +2691,7 @@ how such projects can be created and maintained.
 * Description of the Projects::
 * Supported Languages::
 * Scenarios and Configuration Variables::
-* The Project Explorer (Editing Projects)::
+* The Project Explorer::
 * Disabling Project Edition Features::
 * The Project Menu::
 * The Project Wizard::
@@ -3067,14 +3071,14 @@ remove the variable, and from now on act as if the variable always had
 the value it had when it was deleted.
 
 @c -------------------------------------------------------------------
-@node The Project Explorer (Editing Projects)
+@node The Project Explorer
 @section The Project Explorer
 @cindex project explorer
 @c -------------------------------------------------------------------
 
 @noindent
 The project explorer, as mentioned in the general description of the
-GPS window, is one of the two explorers found by default on the left
+GPS window, is one of the explorers found by default on the left
 of the window. It shows in a tree structure the project hierarchy,
 along with all the source files belonging to the project, and the
 entities declared in the source files.
@@ -3304,9 +3308,9 @@ This isn't needed for modifications made through GPS. Note also that
 this doesn't re-parse the physical project file on disk. Instead, you can
 reopen the project if you have done manual modifications to it.
 
-@item File View and Project View
-These two menus will open (or raise if they are already open) the
-explorers on the left side of the GPS window.
+@item Project View
+Open (or raise if it is already open) the project explorer on the left side
+of the GPS window.
 
 @end table
 
@@ -3775,7 +3779,7 @@ The contextual menu obtained by right-clicking on a project item
 contains several items. Most of them are added by the project editor,
 and gives direct access to editing the properties of the project,
 adding dependencies@dots{}
-@xref{The Project Explorer (Editing Projects)}.
+@xref{The Project Explorer}.
 
 @iftex
 @cindex screen shot
@@ -5745,8 +5749,6 @@ See @ref{Editing Files} for more details.
 The debugger engine included in GPS corresponds to GVD version 2.0.
 In effect, GPS @i{is} the new version of GVD.
 
-@item Integrated help, see @ref{Integrated Help} for more details.
-
 @item Better look and feel.
 GPS uses the new version of the graphical toolkit used by GVD, which
 provides a modern look and feel and a more stable interface under Windows
@@ -5998,7 +6000,7 @@ Control Contextual Menu}.
 Basic VCS operations can be accessed through the VCS menu. Most of
 these functions act on the current selection, i.e. on the selected items
 in the VCS Explorer if it is present, or on the currently selected
-file editor, or on the currently selected item in the Tool/File View.
+file editor, or on the currently selected item in the @code{Tools->File View}.
 In most cases, the VCS contextual menu offers more control on
 VCS operations. @xref{The Version Control Contextual Menu}.
 
@@ -6265,9 +6267,12 @@ currently disabled, meaning that these are planned tools not yet available.
 The list of active items includes:
 
 @table @b
-@item Shell Console
+@item GPS Shell Console
 @cindex shell
-Open a shell console at the bottom are of GPS.
+Open a shell console at the bottom area of GPS. Note that this not an OS
+shell console, but a GPS shell console, where you can type GPS specific
+commands such as @code{help}.
+
 @ifset python
 @xref{The Shell and Python Windows}.
 @end ifset
@@ -6283,6 +6288,14 @@ Open a shell console at the bottom are of GPS.
 
 @item Entity Browser
 @xref{Entity Browser}.
+
+@item File View
+Open a file system explorer on the left area.
+@xref{The File View}.
+
+@item Outline View
+Open a view of the current source editor.
+@xref{The Outline View}.
 
 @item Compare
 @xref{Visual Comparison}.
@@ -12697,8 +12710,7 @@ under Windows) if GPS_HOME is not set, or to $GPS_HOME/.gps (respectively
 
    @item GPS_DOC_PATH
 @cindex GPS_DOC_PATH
-Set the search path for the documentation. See @ref{Integrated Help} for
-more details.
+Set the search path for the documentation. @xref{Adding New Help Files}.
 
    @item GPS_CUSTOM_PATH
 @cindex GPS_CUSTOM_PATH
