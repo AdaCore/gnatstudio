@@ -63,13 +63,13 @@ package body Debugger.Gdb is
    -- Constants --
    ---------------
 
-   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gvd\) ");
+   Prompt_Regexp : constant Pattern_Matcher := Compile ("\(gdb\) ");
    --  Regular expressions used to recognize the prompt.
    --  Note that this regexp needs to be as simple as possible, since it will
    --  be used several times when receiving long results from commands.
 
    Prompt_Length : constant := 6;
-   --  Length of the prompt ("(gvd) ").
+   --  Length of the prompt ("(gdb) ").
 
    Gdb_Command   : constant String := "gdb";
    --  Name of the command to launch gdb.
@@ -78,7 +78,7 @@ package body Debugger.Gdb is
    --  Options always passed to gdb.
 
    Highlight_Pattern : constant Pattern_Matcher :=
-     Compile ("^\(gvd\) ", Multiple_Lines);
+     Compile ("^\(gdb\) ", Multiple_Lines);
    --  Matches everything that should be highlighted in the debugger window.
 
    File_Name_Pattern : constant Pattern_Matcher :=
@@ -564,7 +564,7 @@ package body Debugger.Gdb is
       Wait (Get_Process (Debugger), Num, "\(.+\).*$", Timeout => -1);
 
       --  Make sure that the prompt is what we are expecting.
-      Send (Debugger, "set prompt (gvd) ", Mode => Internal);
+      Send (Debugger, "set prompt (gdb) ", Mode => Internal);
       Send (Debugger, "set width 0", Mode => Internal);
       Send (Debugger, "set height 0", Mode => Internal);
       Send (Debugger, "set annotate 1", Mode => Internal);
