@@ -8874,12 +8874,18 @@ file in which they are defined. For instance if a file @file{mystartup.py}
 is copied to the startup directory, and defines the function @code{func},
 then the latter will be accessible in GPS through @code{mystartup.func}.
 
+The standard python mechanism for loading scripts on startup is still
+available. As usual, python can automatically load a script on startup.
+You can do this by setting an environment variable named
+@code{PYTHONSTARTUP} to the name of a file containing your start-up commands.
+
+
 If you are writing a set of python scripts that other people will use,
 you need to provide several things:
 
 @itemize
 @item The python files themselves. This is a set of @file{.py} files, which
- the user should install either in his @file{python_startup} directory.
+ the user should install in his @file{python_startup} directory.
 
 @item An XML file with the format described in the customization section
  of this documentation. This XML file should create a series of actions,
