@@ -3038,7 +3038,7 @@ of your projects. It is accessible through the menu
 View or the Project Browser.
 
 If there was an error loading the project (invalid syntax,
-non-existing directories,...), a warning dialog is displayed when you
+non-existing directories, @dots{}), a warning dialog is displayed when you
 select the menu. This reminds you that the project might be only
 partially loaded, and editing it might result in the loss of data. In
 such cases, it is recommended that you edit the project file manually,
