@@ -39,12 +39,35 @@ package SN.DB_Structures is
    Buffer_String_Size : constant := 2_048;
    --  Maximum size for the buffer string
 
-   type Buffer_String is array (1 .. Buffer_String_Size) of Character;
+   subtype Buffer_String is String (1 .. Buffer_String_Size);
    --  Used to record a copy of the dbm key and data objects.
    --  Internal C offsets (starting at 0) are changed to match 'First for this
    --  array.
 
    Null_Buffer : constant Buffer_String := (others => ' ');
+
+   type Entity_Key is record
+      Name           : Segment;
+      File_Name      : Segment;
+      Start_Position : Point;
+      Key            : Buffer_String;
+   end record;
+
+   type Entity_Class_Key is record
+      Class          : Segment;
+      Name           : Segment;
+      File_Name      : Segment;
+      Start_Position : Point;
+      Key            : Buffer_String;
+   end record;
+
+   type Entity_Function_Key is record
+      Function_Name  : Segment;
+      Name           : Segment;
+      File_Name      : Segment;
+      Start_Position : Point;
+      Key            : Buffer_String;
+   end record;
 
    type CL_Table is record
       Name                : Segment;
@@ -205,7 +228,7 @@ package SN.DB_Structures is
       Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
-      --  Arg_Names            : Segment_Vector.Node_Access;
+      Arg_Names                : Segment;
       Comments                 : Segment;
       Template_Parameters      : Segment;
       Data                     : Buffer_String;
@@ -361,7 +384,7 @@ package SN.DB_Structures is
       Attributes               : SN_Attributes;
       Return_Type              : Segment;
       Arg_Types                : Segment;
-      --  Arg_Names            : Segment_Vector.Node_Access;
+      Arg_Names                : Segment;
       Template_Parameters      : Segment;
       Comments                 : Segment;
       Data                     : Buffer_String;
@@ -383,9 +406,9 @@ package SN.DB_Structures is
 
       End_Position             : Point;
       Attributes               : SN_Attributes;
-      Original                 : Segment;
+      Original                 : Segment; -- either "type" or "A::type"
       Comments                 : Segment;
-      Class_Name               : Segment; -- name of enclosed class
+      Class_Name               : Segment; -- name of enclosing class for Name
       Data                     : Buffer_String;
 
       DBI                      : Integer;
@@ -428,10 +451,10 @@ package SN.DB_Structures is
       Referred_Symbol_Name    : Segment;
       Referred_Symbol         : Symbol_Type;
       Access_Type             : Segment;
-      Key                     : Buffer_String;
-
       File_Name               : Segment;
       Position                : Point;
+      Key                     : Buffer_String;
+
       Caller_Argument_Types   : Segment;
       Referred_Argument_Types : Segment;
       Data                    : Buffer_String;
@@ -448,6 +471,15 @@ package SN.DB_Structures is
    subtype UN_Table is CL_Table;
    --  Interface to the ".un" tables.
    --  This is used to describe unions
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Key);
+   --  Only applicable to CL, CON, E, EC, FD, FT, GV, MA, T, UN
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Class_Key);
+   --  Only applicable to IV, FU, MD, MI
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Function_Key);
+   --  Only applicable to LV
 
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CL_Table);
    procedure Parse_Pair (Key_Data_Pair : Pair; Tab : out CON_Table);

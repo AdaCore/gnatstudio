@@ -21,8 +21,11 @@
 with Ada.Strings.Fixed;
 with Interfaces.C.Strings;
 with System;               use System;
+with Traces;               use Traces;
 
 package body SN.DB_Structures is
+
+   Me : constant Debug_Handle := Create ("DB_Structs");
 
    Bad_Input : exception;
    --  Raised by internal procedures in the case of bad input data
@@ -139,6 +142,8 @@ package body SN.DB_Structures is
                   if Seg.Last = Seg.First + 1 then
                      return CL;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -148,6 +153,8 @@ package body SN.DB_Structures is
                         if Seg.Last = Seg.First + 2 then
                            return COM;
                         else
+                           Trace (Me, "Unknown symbol: "
+                                  & Buffer (Seg.First .. Seg.Last));
                            return Undef;
                         end if;
 
@@ -155,6 +162,8 @@ package body SN.DB_Structures is
                         if Seg.Last = Seg.First + 2 then
                            return CON;
                         else
+                           Trace (Me, "Unknown symbol: "
+                                  & Buffer (Seg.First .. Seg.Last));
                            return Undef;
                         end if;
 
@@ -162,14 +171,20 @@ package body SN.DB_Structures is
                         if Seg.Last = Seg.First + 2 then
                            return COV;
                         else
+                           Trace (Me, "Unknown symbol: "
+                                  & Buffer (Seg.First .. Seg.Last));
                            return Undef;
                         end if;
 
                      when others =>
+                        Trace (Me, "Unknown symbol: "
+                               & Buffer (Seg.First .. Seg.Last));
                         return Undef;
                   end case;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -181,6 +196,8 @@ package body SN.DB_Structures is
             then
                return EC;
             else
+               Trace (Me, "Unknown symbol: "
+                      & Buffer (Seg.First .. Seg.Last));
                return Undef;
             end if;
 
@@ -190,6 +207,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return FD;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -197,6 +216,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return FR;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -204,10 +225,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return FU;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -217,10 +242,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return GV;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -230,6 +259,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return SN_IN;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -237,6 +268,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return IU;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -244,10 +277,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return IV;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -257,10 +294,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return LV;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -270,6 +311,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return MA;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -277,6 +320,8 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return MD;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
@@ -284,10 +329,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return MI;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -297,10 +346,14 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return SU;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
@@ -308,6 +361,8 @@ package body SN.DB_Structures is
             if Seg.First = Seg.Last then
                return T;
             else
+               Trace (Me, "Unknown symbol: "
+                      & Buffer (Seg.First .. Seg.Last));
                return Undef;
             end if;
 
@@ -317,14 +372,29 @@ package body SN.DB_Structures is
                   if Seg.First + 1 = Seg.Last then
                      return UN;
                   else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
+                     return Undef;
+                  end if;
+
+               when 'd' =>
+                  if Seg.First + 1 = Seg.Last then
+                     return UD;
+                  else
+                     Trace (Me, "Unknown symbol: "
+                            & Buffer (Seg.First .. Seg.Last));
                      return Undef;
                   end if;
 
                when others =>
+                  Trace (Me, "Unknown symbol: "
+                         & Buffer (Seg.First .. Seg.Last));
                   return Undef;
             end case;
 
          when others =>
+            Trace (Me, "Unknown symbol: "
+                   & Buffer (Seg.First .. Seg.Last));
             return Undef;
       end case;
    end Get_Symbol;
@@ -543,6 +613,7 @@ package body SN.DB_Structures is
       Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
+      Get_No_Brackets (Data, 5, Tab.Arg_Names);
       Get_No_Brackets (Data, 6, Tab.Comments);
       Tab.Template_Parameters := Get_Segment_From_Comment
         (Tab.Data, Tab.Comments, "template_args=");
@@ -696,6 +767,7 @@ package body SN.DB_Structures is
       Get_Hex         (Data, 2, Tab.Data, Tab.Attributes);
       Get_No_Brackets (Data, 3, Tab.Return_Type);
       Get_No_Brackets (Data, 4, Tab.Arg_Types);
+      Get_No_Brackets (Data, 5, Tab.Arg_Names);
       Get_No_Brackets (Data, 6, Tab.Comments);
       Tab.Template_Parameters :=
         Get_Segment_From_Comment (Tab.Data, Tab.Comments, "template_args=");
@@ -945,5 +1017,46 @@ package body SN.DB_Structures is
          return String (Key (Seg.First .. Seg.Last));
       end if;
    end Get_Class_Name;
+
+   ---------------
+   -- Parse_Key --
+   ---------------
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Key) is
+      Data : CSF;
+   begin
+      CSF_Init  (Key_Data_Pair.Key, Data);
+      Copy      (Key.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Parse_Key (Data, Key.Key, Key.Name, Key.File_Name, Key.Start_Position);
+   end Parse_Key;
+
+   ---------------
+   -- Parse_Key --
+   ---------------
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Class_Key) is
+      Data : CSF;
+   begin
+      CSF_Init  (Key_Data_Pair.Key, Data);
+      Copy      (Key.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+      Parse_Key
+        (Data, Key.Key, Key.Name, Key.File_Name, Key.Start_Position, 2);
+      Get_Field (Data, 1, Key.Class);
+   end Parse_Key;
+
+   ---------------
+   -- Parse_Key --
+   ---------------
+
+   procedure Parse_Key (Key_Data_Pair : Pair; Key : out Entity_Function_Key) is
+      Data : CSF;
+   begin
+      CSF_Init (Key_Data_Pair.Key, Data);
+      Copy     (Key.Key, Key_Data_Pair.Key, Key_Data_Pair.Key_Size);
+
+      Parse_Key
+        (Data, Key.Key, Key.Name, Key.File_Name, Key.Start_Position, 2);
+      Get_Field (Data,  1, Key.Function_Name);
+   end Parse_Key;
 
 end SN.DB_Structures;
