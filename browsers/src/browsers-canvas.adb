@@ -33,6 +33,7 @@ with Gtkada.Canvas;       use Gtkada.Canvas;
 with Gtkada.Handlers;     use Gtkada.Handlers;
 with Gdk.Event;           use Gdk.Event;
 with Gdk.Types.Keysyms;   use Gdk.Types.Keysyms;
+with Gdk.Window;          use Gdk.Window;
 with Gtk.Accel_Group;     use Gtk.Accel_Group;
 with Gtk.Enums;           use Gtk.Enums;
 with Gtk.Handlers;        use Gtk.Handlers;
@@ -47,6 +48,7 @@ with Glide_Kernel.Modules;      use Glide_Kernel.Modules;
 with Browsers.Dependency_Items; use Browsers.Dependency_Items;
 with Browsers.Module;           use Browsers.Module;
 with Layouts;                   use Layouts;
+with Src_Info;                  use Src_Info;
 
 package body Browsers.Canvas is
 
@@ -195,70 +197,94 @@ package body Browsers.Canvas is
       return Glide_Kernel.Selection_Context_Access
    is
       B          : Glide_Browser := Glide_Browser (Object);
-      Context    : Browser_Selection_Context_Access :=
-        new Browser_Selection_Context;
+      Context    : Selection_Context_Access;
       Mitem      : Gtk_Menu_Item;
       Check      : Gtk_Check_Menu_Item;
       Zooms_Menu : Gtk_Menu;
+      Item       : Canvas_Item;
+      Src        : Src_Info.Internal_File;
+      Xr, Yr     : Gint;
+      Success    : Boolean;
 
    begin
-      Unlock (Gtk.Accel_Group.Get_Default);
+      --  Click on an item: this is a file selection
 
-      Gtk_New (Mitem, Label => "Open file...");
-      Append (Menu, Mitem);
-      Context_Callback.Object_Connect
-        (Mitem, "activate",
-         Context_Callback.To_Marshaller (Open_File'Access),
-         Slot_Object => B,
-         User_Data   => Selection_Context_Access (Context));
+      Get_Origin (Get_Window (B.Canvas), Xr, Yr, Success);
+      Set_X (Event, Get_X_Root (Event) - Gdouble (Xr));
+      Set_Y (Event, Get_Y_Root (Event) - Gdouble (Yr));
 
-      Gtk_New (Check, Label => "Hide system files");
-      Set_Active (Check, True);
-      Set_Sensitive (Check, False);
-      Append (Menu, Check);
+      Item := Item_At_Coordinates (B.Canvas, Event);
 
-      Gtk_New (Check, Label => "Hide implicit dependencies");
-      Set_Active (Check, True);
-      Set_Sensitive (Check, False);
-      Append (Menu, Check);
+      if Item /= null then
+         Context := new File_Selection_Context;
+         Src := Get_Source (File_Item (Item));
 
-      Gtk_New (Mitem, Label => "Zoom in");
-      Append (Menu, Mitem);
-      Widget_Callback.Object_Connect
-        (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Zoom_In'Access), B);
-      Add_Accelerator
-        (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+         Set_File_Information
+           (File_Selection_Context_Access (Context),
+            File_Name => Get_Source_Filename (Src));
 
-      Gtk_New (Mitem, Label => "Zoom out");
-      Append (Menu, Mitem);
-      Widget_Callback.Object_Connect
-        (Mitem, "activate",
-         Widget_Callback.To_Marshaller (Zoom_Out'Access), B);
-      Add_Accelerator
-        (Mitem, "activate",
-         Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+      --  Else, a general browser selection
+      else
+         Unlock (Gtk.Accel_Group.Get_Default);
 
-      Gtk_New (Zooms_Menu);
+         Context := new Selection_Context;
 
-      for J in Zoom_Levels'Range loop
-         Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
-         Append (Zooms_Menu, Mitem);
-         Contextual_Cb.Connect
+         Gtk_New (Mitem, Label => "Open file...");
+         Append (Menu, Mitem);
+         Context_Callback.Object_Connect
            (Mitem, "activate",
-            Contextual_Cb.To_Marshaller (Zoom_Level'Access),
-            (Browser => B,
-             Zoom    => Zoom_Levels (J)));
-      end loop;
+            Context_Callback.To_Marshaller (Open_File'Access),
+            Slot_Object => B,
+            User_Data   => Selection_Context_Access (Context));
 
-      Gtk_New (Mitem, Label => "Zoom");
-      Append (Menu, Mitem);
-      Set_Submenu (Mitem, Zooms_Menu);
+         Gtk_New (Check, Label => "Hide system files");
+         Set_Active (Check, True);
+         Set_Sensitive (Check, False);
+         Append (Menu, Check);
 
-      Lock (Gtk.Accel_Group.Get_Default);
+         Gtk_New (Check, Label => "Hide implicit dependencies");
+         Set_Active (Check, True);
+         Set_Sensitive (Check, False);
+         Append (Menu, Check);
 
-      return Selection_Context_Access (Context);
+         Gtk_New (Mitem, Label => "Zoom in");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (Zoom_In'Access), B);
+         Add_Accelerator
+           (Mitem, "activate",
+            Gtk.Accel_Group.Get_Default, GDK_equal, 0, Accel_Visible);
+
+         Gtk_New (Mitem, Label => "Zoom out");
+         Append (Menu, Mitem);
+         Widget_Callback.Object_Connect
+           (Mitem, "activate",
+            Widget_Callback.To_Marshaller (Zoom_Out'Access), B);
+         Add_Accelerator
+           (Mitem, "activate",
+            Gtk.Accel_Group.Get_Default, GDK_minus, 0, Accel_Visible);
+
+         Gtk_New (Zooms_Menu);
+
+         for J in Zoom_Levels'Range loop
+            Gtk_New (Mitem, Label => Guint'Image (Zoom_Levels (J)) & '%');
+            Append (Zooms_Menu, Mitem);
+            Contextual_Cb.Connect
+              (Mitem, "activate",
+               Contextual_Cb.To_Marshaller (Zoom_Level'Access),
+               (Browser => B,
+                Zoom    => Zoom_Levels (J)));
+         end loop;
+
+         Gtk_New (Mitem, Label => "Zoom");
+         Append (Menu, Mitem);
+         Set_Submenu (Mitem, Zooms_Menu);
+
+         Lock (Gtk.Accel_Group.Get_Default);
+      end if;
+
+      return Context;
    end Browser_Context_Factory;
 
    -------------

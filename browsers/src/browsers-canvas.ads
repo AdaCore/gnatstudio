@@ -104,12 +104,6 @@ package Browsers.Canvas is
    -- Contextual menus --
    ----------------------
 
-   type Browser_Selection_Context is new Glide_Kernel.Selection_Context
-     with private;
-   type Browser_Selection_Context_Access is access all
-     Browser_Selection_Context'Class;
-   --  The type of context returned by the browser
-
    function Browser_Context_Factory
      (Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Event_Widget : access Gtk.Widget.Gtk_Widget_Record'Class;
@@ -133,9 +127,6 @@ private
 
          Selected_Item : Gtkada.Canvas.Canvas_Item;
       end record;
-
-   type Browser_Selection_Context is new Glide_Kernel.Selection_Context
-     with null record;
 
    pragma Inline (Get_Mask);
    pragma Inline (Get_Canvas);
