@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2002                      --
+--                      Copyright (C) 2000-2003                      --
 --                              ACT-Europe                           --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -482,7 +482,7 @@ package body GVD.Preferences is
           Nick    => -"Print command",
           Blurb   => -"Program used to print files",
           Flags   => External_Flags,
-          Default => "a2ps"));
+          Default => GVD.Default_Print_Cmd));
       Register_Property (Prefs, Param_Spec (Print_Command), Helpers);
 
       Selected_Item_Color := Param_Spec_Color (Gnew_Color
