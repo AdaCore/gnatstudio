@@ -221,7 +221,7 @@ endif
 
 .PHONY: check_aunit
 check_aunit: force
-	@[ -f ${AUNIT_SRC}/src/aunit_make_harness.adb ] || \
+	@[ -f ${AUNIT_SRC}/src/aunit_gui.adb ] || \
 	   (echo "AUnit sources not found in ${AUNIT_SRC}, see README"; false)
 
 ###################
