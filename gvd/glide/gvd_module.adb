@@ -34,6 +34,7 @@ with Gtk.Main;                use Gtk.Main;
 with Gtk.Menu;                use Gtk.Menu;
 with Gtk.Menu_Item;           use Gtk.Menu_Item;
 with Gtk.Pixmap;              use Gtk.Pixmap;
+with Gtk.Scrolled_Window;     use Gtk.Scrolled_Window;
 with Gtk.Stock;               use Gtk.Stock;
 with Gtk.Toolbar;             use Gtk.Toolbar;
 with Gtk.Widget;              use Gtk.Widget;
@@ -43,6 +44,7 @@ with Gtkada.MDI;              use Gtkada.MDI;
 with Factory_Data;            use Factory_Data;
 
 with Display_Items;           use Display_Items;
+with Dock_Paned;              use Dock_Paned;
 with Items;                   use Items;
 with GVD.Canvas;              use GVD.Canvas;
 with GVD.Dialogs;             use GVD.Dialogs;
@@ -837,8 +839,15 @@ package body GVD_Module is
          Push_State (Kernel, Busy);
          Close (Page.Debugger);
          Page.Debugger := null;
-         Close (MDI, Page.Command_Scrolledwindow);
-         Close (MDI, Page.Data_Paned);
+
+         --  This might have been closed by the user
+         if Page.Command_Scrolledwindow /= null then
+            Close (MDI, Page.Command_Scrolledwindow);
+         end if;
+
+         if Page.Data_Paned /= null then
+            Close (MDI, Page.Data_Paned);
+         end if;
          Set_Sensitive (Kernel, False);
          Pop_State (Kernel);
       end if;
