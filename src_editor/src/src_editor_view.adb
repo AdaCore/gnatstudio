@@ -429,7 +429,6 @@ package body Src_Editor_View is
         Get_Window_Type (View, Window);
       Line_Info   : constant Line_Info_Display_Array_Access :=
         Get_Line_Info (Buffer);
-      Real_Lines  : Natural_Array_Access := Get_Real_Lines (Buffer);
       X, Y, Width, Height, Depth : Gint;
 
    begin
@@ -461,20 +460,6 @@ package body Src_Editor_View is
 
             Get_Line_At_Y (View, Iter, Bottom_In_Buffer, Dummy_Gint);
             Bottom_Line := Natural (Get_Line (Iter) + 1);
-
-            if Real_Lines'Last < Bottom_Line then
-               declare
-                  A : constant Natural_Array := Real_Lines.all;
-               begin
-                  Unchecked_Free (Real_Lines);
-                  Real_Lines := new Natural_Array (1 .. Bottom_Line * 2);
-                  Real_Lines (A'Range) := A;
-                  Real_Lines (A'Last + 1 .. Real_Lines'Last)
-                    := (others => 0);
-                  Set_Real_Lines
-                    (Source_Buffer (Get_Buffer (View)), Real_Lines);
-               end;
-            end if;
 
             --  If one of the values hadn't been initialized, display the
             --  whole range of lines.
