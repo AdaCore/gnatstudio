@@ -530,8 +530,12 @@ package body Source_Analyzer is
       end Handle_Two_Chars;
 
    begin
-      End_Of_Line     := Line_End (Buffer, P);
-      Start_Of_Line   := Line_Start (Buffer, P);
+      if Buffer (P) = ASCII.LF then
+         Line_Count := Line_Count + 1;
+      end if;
+
+      Start_Of_Line := Line_Start (Buffer, P);
+      End_Of_Line   := Line_End (Buffer, Start_Of_Line);
 
       if New_Buffer.Current.Line'First = Start_Of_Line then
          Padding := New_Buffer.Current.Line'Length - New_Buffer.Current.Len;
@@ -542,8 +546,8 @@ package body Source_Analyzer is
 
       loop
          if P > End_Of_Line then
-            End_Of_Line   := Line_End (Buffer, P);
             Start_Of_Line := Line_Start (Buffer, P);
+            End_Of_Line   := Line_End (Buffer, Start_Of_Line);
             Line_Count    := Line_Count + 1;
             Padding       := 0;
             Indent_Done := False;
@@ -593,8 +597,15 @@ package body Source_Analyzer is
 
             when ')' =>
                Prev_Token := Tok_Right_Paren;
-               Pop (Indents);
-               Num_Parens := Num_Parens - 1;
+
+               if Indents = null then
+                  --  Syntax error
+                  null;
+               else
+                  Pop (Indents);
+                  Num_Parens := Num_Parens - 1;
+               end if;
+
 
             when '"' =>
                declare
@@ -1184,6 +1195,11 @@ package body Source_Analyzer is
          end if;
 
          Prev_Reserved := Reserved;
+
+      exception
+         when Token_Stack.Stack_Empty =>
+            Syntax_Error := True;
+            Prev_Reserved := Reserved;
       end Handle_Reserved_Word;
 
    begin  --  Format_Ada
