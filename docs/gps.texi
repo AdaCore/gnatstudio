@@ -1,15 +1,15 @@
 \input texiplus   @c -*-texinfo-*-
 @c %**start of header
 @setfilename gvd.info
-@settitle Using Glide 2
+@settitle Using GPS
 @syncodeindex fn cp
 
-@set GlideVersion 0.5
+@set GPSVersion 0.5
 
 @titlepage
 
-@title Using Glide 2
-@subtitle Version @value{GlideVersion}
+@title Using GPS
+@subtitle Version @value{GPSVersion}
 @subtitle Document revision level $Revision$
 @subtitle Date: $Date$
 @author ACT-Europe
@@ -27,13 +27,13 @@ unmodified in any copy.
 
 @ifinfo
 @node Top, Introduction, (dir), (dir)
-@top Using Glide 2
+@top Using GPS
 
-Using Glide 2
+Using GPS
 
-Glide 2, the GNU Integrated Development Environment
+GPS, the GNU Integrated Development Environment
 
-Version @value{GlideVersion}
+Version @value{GPSVersion}
 
 Date: $Date$
 
@@ -49,7 +49,7 @@ unmodified in any copy.
 * Editing File::
 * Source Navigation::
 * Source Browsing::
-* Debugging with Glide 2::
+* Debugging with GPS::
 * Preferences/Settings::
 * Customization::
 * Environment::
@@ -83,7 +83,7 @@ Source Browsing
 
 * General Issues::
 
-Debugging with Glide 2
+Debugging with GPS
 
 Preferences/Settings
 
@@ -110,7 +110,7 @@ Environment
 @c --------------------------------------------------------------------
 
 @noindent
-Glide 2 is a complete integrated development environment that gives access
+GPS is a complete integrated development environment that gives access
 to a wide range of tools. blah blah blah...
 
 @c --------------------------------------------------------------------
@@ -334,8 +334,8 @@ Toggle overwrite mode
 @noindent
 
 @c --------------------------------------------------------------------
-@node Debugging with Glide 2
-@chapter Debugging with Glide 2
+@node Debugging with GPS
+@chapter Debugging with GPS
 @c --------------------------------------------------------------------
 
 @c --------------------------------------------------------------------
@@ -366,14 +366,14 @@ Toggle overwrite mode
 @section Changing the Colors, Fonts and Pixmaps
 @noindent
 
-Glide can be configured through the usual gtk+ mechanisms of @file{rc
+GPS can be configured through the usual gtk+ mechanisms of @file{rc
 files}. The trick is to create a text file called @file{gtkrc} in the
 glide home directory (@file{~/.glide} on Unix systems). This file
 contains the usual configuration description.
 
 For instance, the following will set the default font for all widgets
 in the interface. Note that this font is sometimes overridden by
-Glide's own preferences, most notably in the source editor.
+GPS's own preferences, most notably in the source editor.
 
 @smallexample
 style "default" @{
@@ -444,18 +444,18 @@ Usage:
 
 @noindent
 The following environment variables can be set to override some default
-settings in Glide 2:
+settings in GPS:
 
 @table @samp
    @item GLIDE_ROOT.
-Override the default root directory specified when Glide 2
+Override the default root directory specified when GPS
 is built (during the @i{configure} process, see the file @code{INSTALL} in
-the Glide sources for more details) to access information such as the location
+the GPS sources for more details) to access information such as the location
 of the translation files.
 
    @item GLIDE_HOME.
 Override the variable HOME if present. All the configuration files and
-directories used by Glide are either relative to $HOME/.glide (%HOME%\.glide
+directories used by GPS are either relative to $HOME/.glide (%HOME%\.glide
 under Windows) if GLIDE_HOME is not set, or to $GLIDE_HOME/.glide (respectively
 %GLIDE_HOME%\.glide) if set.
 
@@ -473,7 +473,7 @@ under Windows) if GLIDE_HOME is not set, or to $GLIDE_HOME/.glide (respectively
 GVD state directory
    @item $HOME/.glide/log
 @anchor{log file}
-Log file created automatically by Glide
+Log file created automatically by GPS
 
    @item $HOME/.glide/preferences
 Contains all the preferences in XML format, as specified in the
@@ -482,7 +482,7 @@ preferences menu.
    @item $HOME/.glide/window_settings
 Contains all the settings of the windows (window sizes, pane
 offset) in XML format. These settings are saved automatically when quitting
-Glide, and loaded automatically at start up. To reset the settings, simply
+GPS, and loaded automatically at start up. To reset the settings, simply
 remove this file.
 
    @item $HOME/.glide/sessions
@@ -500,7 +500,7 @@ saved by the user.
 @c --------------------------------------------------------------------
 
 @noindent
-If you encounter a bug in Glide, you can report it to
+If you encounter a bug in GPS, you can report it to
 @uref{mailto:report@@gnat.com} if you are a supported user (to become a
 supported user, contact @uref{mailto:sales@@gnat.com}), or to the
 public glide development list (@uref{mailto:glide-devel@@lists.act-europe.fr}).
