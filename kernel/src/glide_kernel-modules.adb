@@ -28,6 +28,7 @@ with Gdk.Event;         use Gdk.Event;
 with Gdk.Types;         use Gdk.Types;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
 with Glib;              use Glib;
+with Glib.Module;       use Glib.Module;
 with Glib.Object;       use Glib.Object;
 with Glib.Values;       use Glib.Values;
 with Glide_Main_Window; use Glide_Main_Window;
@@ -110,11 +111,11 @@ package body Glide_Kernel.Modules is
    procedure Unchecked_Free is new Unchecked_Deallocation
      (Search_Regexps_Array, Search_Regexps_Array_Access);
 
-   function Help_Command
+   function Module_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
       Args    : String_List_Utils.String_List.List) return String;
-   --  Command handler for the "help" and "echo" commands.
+   --  Command handler for the module commands.
 
    ---------------------
    -- Compute_Tooltip --
@@ -193,8 +194,12 @@ package body Glide_Kernel.Modules is
          Child_Tag       => MDI_Child_Tag);
 
       while Current /= Module_List.Null_Node loop
-         Assert (Me, Module_List.Data (Current).Info.Name /= Module_Name,
-                 "Module already registered: " & Module_Name);
+         if Module_List.Data (Current).Info.Name = Module_Name then
+            Console.Insert
+              (Kernel,
+               (-"module already registered: ") & Module_Name, Mode => Error);
+            return;
+         end if;
 
          if Module_List.Data (Current).Info.Priority < Priority then
             Module_List.Append (Kernel.Modules_List, Prev, Module);
@@ -207,6 +212,64 @@ package body Glide_Kernel.Modules is
 
       Module_List.Append (Kernel.Modules_List, Module);
    end Register_Module;
+
+   -----------------------------
+   -- Dynamic_Register_Module --
+   -----------------------------
+
+   procedure Dynamic_Register_Module
+     (Kernel      : access Kernel_Handle_Record'Class;
+      Shared_Lib  : String;
+      Module_Name : String;
+      Success     : out Boolean)
+   is
+      type Register_Module_Access is access procedure
+        (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class);
+
+      type Init_Proc is access procedure;
+
+      Dyn_Module   : G_Module;
+      Dyn_Register : Register_Module_Access;
+      Init         : Init_Proc;
+
+      procedure Get_Symbol is new
+        Generic_Module_Symbol (Register_Module_Access);
+
+      procedure Get_Symbol is new
+        Generic_Module_Symbol (Init_Proc);
+
+   begin
+      Dyn_Module := Module_Open (Module_Build_Path ("", Shared_Lib));
+
+      if Dyn_Module = null then
+         Dyn_Module := Module_Open (Shared_Lib);
+      end if;
+
+      if Dyn_Module = null then
+         Trace (Me, "Couldn't open shared lib: " & Shared_Lib);
+         Success := False;
+      else
+         Get_Symbol (Dyn_Module, Module_Name & "_init", Init, Success);
+
+         if Success then
+            Init.all;
+
+            Get_Symbol
+              (Dyn_Module, Module_Name & "__register_module",
+               Dyn_Register, Success);
+
+            if Success then
+               Trace (Me, "Registering module: " & Module_Name);
+               Dyn_Register (Kernel);
+            else
+               Trace (Me, "Couldn't find register_module symbol");
+            end if;
+
+         else
+            Trace (Me, "Couldn't find _init symbol");
+         end if;
+      end if;
+   end Dynamic_Register_Module;
 
    ------------------
    -- Get_Priority --
@@ -1864,22 +1927,25 @@ package body Glide_Kernel.Modules is
         (Kernel.Modules_Data).Search_Regexps (Num).Regexp.all;
    end Get_Nth_Search_Regexp;
 
-   ------------------
-   -- Help_Command --
-   ------------------
+   ----------------------------
+   -- Module_Command_Handler --
+   ----------------------------
 
-   function Help_Command
+   function Module_Command_Handler
      (Kernel  : access Kernel_Handle_Record'Class;
       Command : String;
       Args    : String_List_Utils.String_List.List) return String
    is
       use String_List_Utils.String_List;
       use type Command_List.List_Node;
+      use type Module_List.List_Node;
 
       Command_Node : Command_List.List_Node;
       Args_Node    : List_Node;
+      Success      : Boolean;
+      Result       : GNAT.OS_Lib.String_Access;
+      Current      : Module_List.List_Node;
 
-      Result : GNAT.OS_Lib.String_Access;
       procedure Insert (S : String);
       --  Appends S & ASCII.LF to Result.
       --  Result must not be set to Null when calling this subprogram.
@@ -1890,6 +1956,7 @@ package body Glide_Kernel.Modules is
          Free (Result);
          Result := new String'(R);
       end Insert;
+
    begin
       Result := new String'("");
 
@@ -1918,8 +1985,8 @@ package body Glide_Kernel.Modules is
          end loop;
 
          if Is_Empty (Args) then
-            Insert ("Type ""help <command>"" to" &
-                    " get help about a specific command.");
+            Insert (
+              -"Type ""help <cmd>"" to get help about a specific command.");
          end if;
 
       elsif Command = "echo" then
@@ -1929,6 +1996,28 @@ package body Glide_Kernel.Modules is
             Insert (Data (Args_Node));
             Args_Node := Next (Args_Node);
          end loop;
+
+      elsif Command = "insmod" then
+         if Length (Args) /= 2 then
+            return (-"Wrong number of arguments.") & ASCII.LF;
+         end if;
+
+         Dynamic_Register_Module
+           (Kernel, Data (First (Args)), Data (Next (First (Args))), Success);
+
+         if Success then
+            return (-"Module successfully loaded.") & ASCII.LF;
+         else
+            return (-"Couldn't load module.") & ASCII.LF;
+         end if;
+
+      elsif Command = "lsmod" then
+         Current := Module_List.First (Kernel.Modules_List);
+
+         while Current /= Module_List.Null_Node loop
+            Insert (Module_List.Data (Current).Info.Name);
+            Current := Module_List.Next (Current);
+         end loop;
       end if;
 
       declare
@@ -1937,7 +2026,7 @@ package body Glide_Kernel.Modules is
          Free (Result);
          return R;
       end;
-   end Help_Command;
+   end Module_Command_Handler;
 
    ----------------
    -- Initialize --
@@ -1952,14 +2041,28 @@ package body Glide_Kernel.Modules is
       Register_Command
         (Kernel,
          "help",
-         "Brings up the list of recognized commands.",
-         Help_Command'Access);
+         -"Lists recognized commands.",
+         Module_Command_Handler'Access);
 
       Register_Command
         (Kernel,
          "echo",
-         "Display a line of text.",
-         Help_Command'Access);
+         -"Display a line of text.",
+         Module_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "insmod",
+         Help    => -"Usage:" & ASCII.LF
+           & "  insmod shared-lib module" & ASCII.LF
+           & (-"Dynamically register from shared-lib a new module."),
+         Handler => Module_Command_Handler'Access);
+
+      Register_Command
+        (Kernel,
+         Command => "lsmod",
+         Help    => -"List modules currently loaded.",
+         Handler => Module_Command_Handler'Access);
    end Initialize;
 
    ----------------------
@@ -2070,7 +2173,7 @@ package body Glide_Kernel.Modules is
          Free (Result);
 
          if not Command_Found then
-            return -"Command not recognized" & ASCII.LF;
+            return -"command not recognized";
          else
             return R;
          end if;
