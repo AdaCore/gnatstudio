@@ -1,5 +1,8 @@
 <?xml version="1.0" ?>
-<Root>
+
+<!--  This file adds support for C and C++ (GCC) switches and aliases  -->
+
+<C>
    <tool name="C" package="Compiler" index="C" >
       <language>C</language>
       <switches lines="2" columns="2">
@@ -141,4 +144,4 @@
      <regexp>\b(\w+)\s*-&gt;\s*\w+\s*\(</regexp>
    </vsearch-pattern>
 
-</Root>
+</C>

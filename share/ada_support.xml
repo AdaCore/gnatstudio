@@ -1,5 +1,8 @@
 <?xml version="1.0" ?>
-<Root>
+
+<!--  This file adds support for Ada (GNAT) switches and aliases  -->
+
+<Ada>
    <tool name="Make" package="Builder" index="Ada">
       <language>Ada</language>
       <switches columns="2">
@@ -440,4 +443,4 @@ end if;</text>
    %_
 end;</text>
   </alias>
-</Root> 
+</Ada> 

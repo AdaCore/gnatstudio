@@ -1,5 +1,8 @@
 <?xml version="1.0"?>
-<Custom>
+
+<!--  This file adds support for editing GPS Project Files (.gpr) -->
+
+<gpr>
   <Language>
     <Name>Project File</Name>
     <Parent>Ada</Parent>
@@ -15,4 +18,4 @@
       <Case_Sensitive>False</Case_Sensitive>
     </Context>
   </Language>
-</Custom>
+</gpr>
