@@ -454,6 +454,11 @@ package body Vsearch_Ext is
       Store_Position (Vsearch);
       Close (Get_MDI (Vsearch.Kernel), Search, Force => True);
 
+      --  Give the focus back to the main Window, since this is not always
+      --  done by the window manager (e.g. under Windows)
+
+      Gdk_Raise (Get_Window (Get_Main_Window (Vsearch.Kernel)));
+
    exception
       when E : others =>
          Trace (Exception_Handle,
