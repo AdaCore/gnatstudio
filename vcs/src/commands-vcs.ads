@@ -26,8 +26,8 @@ with Commands.Interactive; use Commands.Interactive;
 
 package Commands.VCS is
 
-   type Commit_Command_Type is new Root_Command with private;
-   type Commit_Command_Access is access all Commit_Command_Type;
+   type Log_Action_Command_Type is new Root_Command with private;
+   type Log_Action_Command_Access is access all Log_Action_Command_Type;
 
    type Get_Status_Command_Type is new Root_Command with private;
    type Get_Status_Command_Access is access all Get_Status_Command_Type;
@@ -48,17 +48,18 @@ package Commands.VCS is
    --  Create a new Generic_Kernel_Command.
 
    procedure Create
-     (Item      : out Commit_Command_Access;
+     (Item      : out Log_Action_Command_Access;
       Rep       : VCS_Access;
+      Action    : VCS_Action;
       Filenames : String_List.List;
       Logs      : String_List.List);
-   --  Create a new Commit_Command.
+   --  Create a new Log_Action_Command.
    --  The user must free Filenames and Logs after calling Create.
    --  The log files for files that are up-to-date will be erased
    --  after this command completes.
 
    function Execute
-     (Command : access Commit_Command_Type) return Command_Return_Type;
+     (Command : access Log_Action_Command_Type) return Command_Return_Type;
 
    procedure Create
      (Item      : out Get_Status_Command_Access;
@@ -82,12 +83,12 @@ package Commands.VCS is
      (Command : access Generic_Kernel_Command;
       Context : Interactive_Command_Context) return Command_Return_Type;
 
-   function Name (X : access Commit_Command_Type) return String;
+   function Name (X : access Log_Action_Command_Type) return String;
    function Name (X : access Get_Status_Command_Type) return String;
    function Name (X : access Update_Files_Command_Type) return String;
    function Name (X : access Generic_Kernel_Command) return String;
 
-   procedure Free (X : in out Commit_Command_Type);
+   procedure Free (X : in out Log_Action_Command_Type);
    procedure Free (X : in out Get_Status_Command_Type);
    procedure Free (X : in out Update_Files_Command_Type);
    procedure Free (X : in out Generic_Kernel_Command);
@@ -104,8 +105,9 @@ private
       Filenames : String_List.List;
    end record;
 
-   type Commit_Command_Type is new Root_Command with record
+   type Log_Action_Command_Type is new Root_Command with record
       Rep       : VCS_Access;
+      Action    : VCS_Action;
       Filenames : String_List.List;
       Logs      : String_List.List;
    end record;
