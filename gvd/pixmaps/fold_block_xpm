@@ -1,5 +1,5 @@
 /* XPM */
-char * unfold_block_xpm[] = {
+char * fold_block_xpm[] = {
 "10 10 3 1",
 " 	c None",
 ".	c #2A94EA",
