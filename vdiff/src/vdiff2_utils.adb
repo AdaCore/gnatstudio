@@ -59,14 +59,12 @@ package body Vdiff2_Utils is
       VStyle  : T_VStr;
       Ref     : T_Loc;
       Loc     : T_Loc);
-   --  Hightlight the Chunk Curr_Chunk where action is Append
-   --  ??? What is Curr_Chunk
+   --  Hightlight the Current Chunk Curr_Chunk where action is Append
 
    procedure Show_Diff_Chunk
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
       Item   : Diff_Head; Curr_Chunk : Diff_Chunk_Access);
-   --  Hightlight the Chunk Curr_Chunk
-   --  ??? What is Curr_Chunk
+   --  Hightlight the Current Chunk Curr_Chunk
 
    function Add_Line
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
@@ -489,9 +487,14 @@ package body Vdiff2_Utils is
 
    procedure Hide_Differences
      (Kernel : access Glide_Kernel.Kernel_Handle_Record'Class;
-      Item   : Diff_Head) is
+      Item   : Diff_Head)
+   is
+--        Args : Argument_List := (1 => new String'(Item.File1.all));
    begin
       if Item.File1 /= null then
+--           Execute_GPS_Shell_Command (Kernel, "close", Args);
+--           Execute_GPS_Shell_Command (Kernel, "edit", Args);
+--           Free (Args (1));
          Unhighlight_Line (Kernel, Item.File1.all, 0, Default_Style);
          Unhighlight_Line (Kernel, Item.File1.all, 0, Old_Style);
          Unhighlight_Line (Kernel, Item.File1.all, 0, Append_Style);
@@ -500,14 +503,21 @@ package body Vdiff2_Utils is
       end if;
 
       if Item.File2 /= null then
+--           Args := (1 => new String'(Item.File1.all));
+--           Execute_GPS_Shell_Command (Kernel, "close", Args);
+--           Execute_GPS_Shell_Command (Kernel, "edit", Args);
+--           Free (Args (1));
          Unhighlight_Line (Kernel, Item.File2.all, 0, Default_Style);
          Unhighlight_Line (Kernel, Item.File2.all, 0, Old_Style);
          Unhighlight_Line (Kernel, Item.File2.all, 0, Append_Style);
          Unhighlight_Line (Kernel, Item.File2.all, 0, Remove_Style);
          Unhighlight_Line (Kernel, Item.File2.all, 0, Change_Style);
       end if;
-
       if Item.File3 /= null then
+--           Args := (1 => new String'(Item.File1.all));
+--           Execute_GPS_Shell_Command (Kernel, "close", Args);
+--           Execute_GPS_Shell_Command (Kernel, "edit", Args);
+--           Free (Args (1));
          Unhighlight_Line (Kernel, Item.File3.all, 0, Default_Style);
          Unhighlight_Line (Kernel, Item.File3.all, 0, Old_Style);
          Unhighlight_Line (Kernel, Item.File3.all, 0, Append_Style);
