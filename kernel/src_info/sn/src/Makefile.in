@@ -8,18 +8,16 @@ DEVCLEAN=
 
 -include Makefile.dev
 
-.PHONY: all clean distclean install
+.PHONY: all clean distclean
 
-all : db_capi.o $(DEVALL)
+all : ../lib/db_capi.o $(DEVALL)
 
-db_capi.o : db_capi.c
-	$(CC) $(INCLUDES) -c $<
+../lib/db_capi.o : db_capi.c
+	$(CC) $(INCLUDES) -c $< -o $@
 
 clean :
-	$(RM) *.o $(DEVCLEAN)
+	$(RM) ../lib/db_capi.o $(DEVCLEAN)
 
 distclean : clean
 	$(RM) Makefile
 
-install :
-	cp db_capi.o ../lib
