@@ -147,7 +147,7 @@ package body Builder_Module is
         Glide_Window (Get_Main_Window (Kernel));
       Fd      : Process_Descriptor_Access;
       Args    : Argument_List_Access;
-      Title   : String_Access;
+      File    : String_Access;
       Project : String_Access;
       Cmd     : String_Access;
       Id      : Timeout_Handler_Id;
@@ -157,14 +157,18 @@ package body Builder_Module is
       if Context /= null
         and then Context.all in File_Name_Selection_Context'Class
       then
-         Title := new String'
+         File := new String'
            (File_Information (File_Name_Selection_Context_Access (Context)));
-         Project := new String' (Get_Subproject_Name (Kernel, Title.all));
+         Project := new String' (Get_Subproject_Name (Kernel, File.all));
          Cmd := new String'
            ("gnatmake -P" & Project.all & " " &
             Scenario_Variables_Cmd_Line (Kernel) & " ");
 
       else
+         return;
+      end if;
+
+      if File.all = "" then
          return;
       end if;
 
@@ -177,15 +181,15 @@ package body Builder_Module is
       if Project.all = "" then
          --  This is the default internal project
 
-         Args := Argument_String_To_List ("gnatmake -d " & Title.all);
-         Console.Insert (Kernel, "gnatmake " & Title.all, False);
+         Args := Argument_String_To_List ("gnatmake -d " & File.all);
+         Console.Insert (Kernel, "gnatmake " & File.all, False);
 
       else
-         Args := Argument_String_To_List (Cmd.all & Title.all & " -d");
-         Console.Insert (Kernel, Cmd.all & Title.all, False);
+         Args := Argument_String_To_List (Cmd.all & File.all & " -d");
+         Console.Insert (Kernel, Cmd.all & File.all, False);
       end if;
 
-      Free (Title);
+      Free (File);
       Free (Project);
       Free (Cmd);
       Top.Interrupted := False;
@@ -228,14 +232,18 @@ package body Builder_Module is
          File_Context : constant File_Name_Selection_Context_Access :=
            File_Name_Selection_Context_Access (Context);
 
-         Cmd  : constant String := "gnatmake -q -u -gnats " &
-           Directory_Information (File_Context) &
+         File : constant String := Directory_Information (File_Context) &
            File_Information (File_Context);
+         Cmd  : constant String := "gnatmake -q -u -gnats " & File;
          Fd   : Process_Descriptor_Access;
          Args : Argument_List_Access;
          Id   : Timeout_Handler_Id;
 
       begin
+         if File = "" then
+            return;
+         end if;
+
          Trace (Me, "On_Check_Syntax: " & Cmd);
          --  ??? Ask for saving sources/projects before building
          Push_State (Kernel, Processing);
@@ -289,6 +297,10 @@ package body Builder_Module is
          Id      : Timeout_Handler_Id;
 
       begin
+         if File = "" then
+            return;
+         end if;
+
          --  ??? Ask for saving sources/projects before building
          Push_State (Kernel, Processing);
          Console.Clear (Kernel);
@@ -516,14 +528,16 @@ package body Builder_Module is
       Register_Menu (Kernel, Build, -"Make", "", On_Build'Access);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
-      Register_Menu
-        (Kernel, Build, -"Execute...", Stock_Execute, On_Run'Access);
+      Set_Sensitive
+        (Register_Menu
+          (Kernel, Build, -"Run...", Stock_Execute, On_Run'Access),
+         False);
       Gtk_New (Mitem);
       Register_Menu (Kernel, Build, Mitem);
-      Register_Menu
-        (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access);
-      Set_Sensitive (Find_Menu_Item
-        (Kernel, Build & (-"Stop Build")), False);
+      Set_Sensitive
+        (Register_Menu
+          (Kernel, Build, -"Stop Build", Stock_Stop, On_Stop_Build'Access),
+         False);
    end Register_Module;
 
 end Builder_Module;
