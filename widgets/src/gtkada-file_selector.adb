@@ -632,7 +632,9 @@ package body Gtkada.File_Selector is
          --  in the Explorer_Tree, then update the Explorer_Tree.
 
          if Dir /= Get_Selection (Win.Explorer_Tree) then
-            Show_Directory (Win.Explorer_Tree, Dir, Get_Window (Win));
+            Show_Directory (Win.Explorer_Tree,
+                            Normalize_Pathname (Dir),
+                            Get_Window (Win));
          end if;
 
          if Win.File_List = null then
@@ -1110,9 +1112,9 @@ package body Gtkada.File_Selector is
 
             if S'Length >= 1 and then Is_Absolute_Path (S) then
                Sep := Index (S, (1 => Directory_Separator));
-               Change_Directory (Win, S (S'First .. Sep));
                Set_Text (Win.Selection_Entry, S (Sep + 1 .. S'Last));
                Set_Position (Win.Selection_Entry, Gint (S'Last - Sep));
+               Change_Directory (Win, S (S'First .. Sep));
                return On_Selection_Entry_Key_Press_Event (Object, Params);
             end if;
 
@@ -1427,7 +1429,8 @@ package body Gtkada.File_Selector is
       Set_Column_Width (File_Selector_Window.Explorer_Tree, 2, 80);
       Widget_Callback.Connect
         (File_Selector_Window.Explorer_Tree, "tree_select_row",
-         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access));
+         Widget_Callback.To_Marshaller (On_Explorer_Tree_Select_Row'Access),
+         After => True);
       Add (File_Selector_Window.Explorer_Tree_Scrolledwindow,
            File_Selector_Window.Explorer_Tree);
 
