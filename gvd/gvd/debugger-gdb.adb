@@ -1258,7 +1258,6 @@ package body Debugger.Gdb is
             Start := Index;
             while Index <= S'Last
               and then S (Index) /= ','
-              and then S (Index) /= ' '
               and then S (Index) /= ASCII.LF
             loop
                Index := Index + 1;
