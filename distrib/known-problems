@@ -1,5 +1,10 @@
 Known Problems fixed in GPS 1.3.0
 
+- C312-002 Code correction error
+  Problem:    When using automatic code correction, sometimes the correction is
+              wrong.
+  Workaround: Save the files in "UNIX" mode.
+
 - Infinite loop in search dialog
   Problem:    In some cases, it might happen that looking for a constant string
               results in an infinite loop in GPS.
