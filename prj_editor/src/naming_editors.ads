@@ -21,6 +21,7 @@
 with Gtk.Notebook;
 with Foreign_Naming_Editors;
 with Ada_Naming_Editors;
+with Glide_Kernel;
 with GNAT.OS_Lib;
 with Prj.Tree;
 with Prj_API;
@@ -33,6 +34,7 @@ package Naming_Editors is
 
    procedure Gtk_New
      (Editor    : out Naming_Editor;
+      Kernel    : access Glide_Kernel.Kernel_Handle_Record'Class;
       Languages : GNAT.OS_Lib.Argument_List);
    --  Create a new naming scheme editor, that supports the edition of all the
    --  languages in Languages.
@@ -40,6 +42,7 @@ package Naming_Editors is
 
    procedure Gtk_New
      (Editor       : out Naming_Editor;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project_View : Prj.Project_Id);
    --  Create a new naming scheme editor, that edits the languages supported by
    --  Project_View.
@@ -59,6 +62,7 @@ package Naming_Editors is
 
    procedure Show_Project_Settings
      (Editor             : access Naming_Editor_Record;
+      Kernel             : access Glide_Kernel.Kernel_Handle_Record'Class;
       Project_View       : Prj.Project_Id;
       Display_Exceptions : Boolean := True);
    --  Show the settings used for Project_View.
@@ -70,6 +74,7 @@ package Naming_Editors is
 
    procedure Set_Visible_Pages
      (Editor       : access Naming_Editor_Record;
+      Kernel       : access Glide_Kernel.Kernel_Handle_Record'Class;
       Languages    : GNAT.OS_Lib.Argument_List;
       Project_View : Prj.Project_Id);
    --  Change the visible pages in editor, based on languages
