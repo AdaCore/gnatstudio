@@ -196,6 +196,7 @@ package body DDE is
    exception
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
+         return 1;
    end DDE_Callback;
 
    -------------------------
