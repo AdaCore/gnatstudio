@@ -179,11 +179,11 @@ package body Codefix.File_Io is
       Close (Current_File);
    end Update;
 
-   -----------------
-   -- Get_Message --
-   -----------------
+   ------------------------
+   -- Get_Direct_Message --
+   ------------------------
 
-   procedure Get_Message
+   procedure Get_Direct_Message
      (This    : in out Errors_File;
       Current : out Error_Message) is
 
@@ -197,7 +197,7 @@ package body Codefix.File_Io is
          Close (This.File.all);
          This.Is_Open := False;
       end if;
-   end Get_Message;
+   end Get_Direct_Message;
 
    ----------------------
    -- No_More_Messages --
