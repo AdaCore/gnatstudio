@@ -22,10 +22,10 @@ with Gtk.Window; use Gtk.Window;
 with Gtk.Box; use Gtk.Box;
 with Gtk.Table; use Gtk.Table;
 with Gtk.Label; use Gtk.Label;
-with Gtk.Frame; use Gtk.Frame;
 with Gtk.Combo; use Gtk.Combo;
 with Gtk.GEntry; use Gtk.GEntry;
 with Gtk.Tooltips; use Gtk.Tooltips;
+with Gtk.Frame; use Gtk.Frame;
 with Gtk.Check_Button; use Gtk.Check_Button;
 with Gtk.Button; use Gtk.Button;
 package Vsearch_Pkg is
@@ -36,16 +36,6 @@ package Vsearch_Pkg is
       Replace_Label : Gtk_Label;
       Search_For_Label : Gtk_Label;
       Search_In_Label : Gtk_Label;
-      Files_Frame : Gtk_Frame;
-      Files_Table : Gtk_Table;
-      Files_Label : Gtk_Label;
-      Directory_Label : Gtk_Label;
-      Files_Combo : Gtk_Combo;
-      Files_Entry : Gtk_Entry;
-      Directory_Combo : Gtk_Combo;
-      Directory_Entry : Gtk_Entry;
-      Subdirs_Check : Gtk_Check_Button;
-      Browse_Button : Gtk_Button;
       Replace_Combo : Gtk_Combo;
       Replace_Entry : Gtk_Entry;
       Context_Combo : Gtk_Combo;
