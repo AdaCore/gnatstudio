@@ -1,7 +1,7 @@
 -----------------------------------------------------------------------
 --                   GVD - The GNU Visual Debugger                   --
 --                                                                   --
---                      Copyright (C) 2000-2001                      --
+--                      Copyright (C) 2000-2002                      --
 --                             ACT-Europe                            --
 --                                                                   --
 -- GVD is free  software;  you can redistribute it and/or modify  it --
@@ -23,6 +23,7 @@
 
 with Gdk.Color;
 with Gdk.Event;
+with Gtk.Menu_Item;
 with Gdk.Window;
 with Glib.Object;
 with Glib;                     use Glib;
@@ -118,10 +119,35 @@ package GUI_Utils is
    --  Set the renderer as editable, and make sure that its text is updated
    --  when the user has finished editing it.
 
+   -------------------------
+   -- Full_Path_Menu_Item --
+   -------------------------
+
+   --  This widget is used to associate strings to menu items.
+
+   type Full_Path_Menu_Item_Record (Length : Natural) is
+     new Gtk.Menu_Item.Gtk_Menu_Item_Record with private;
+   type Full_Path_Menu_Item is access all Full_Path_Menu_Item_Record'Class;
+
+   procedure Gtk_New
+     (Menu_Item : out Full_Path_Menu_Item;
+      Label     : String := "";
+      Path      : String := "");
+   --  Create a new menu item with the given Path as associated string.
+
+   procedure Initialize
+     (Menu_Item : access Full_Path_Menu_Item_Record'Class;
+      Label     : String;
+      Path      : String);
+   --  Internal initialization function.
+
+   function Get_Path
+     (Menu_Item : access Full_Path_Menu_Item_Record) return String;
+   --  Return the string associated with Menu_Item.
+
    --------------
    -- Tooltips --
    --------------
-
 
    procedure Create_Pixmap_From_Text
      (Text       : String;
@@ -203,5 +229,13 @@ package GUI_Utils is
    --  Same as the procedure Register_Contextual_Menu, but the callbacks for
    --  the menu creation takes any type as input.
    --  This package must be instantiated as library level.
+
+private
+
+   type Full_Path_Menu_Item_Record (Length : Natural) is
+     new Gtk.Menu_Item.Gtk_Menu_Item_Record
+   with record
+      Full_Path : String (1 .. Length);
+   end record;
 
 end GUI_Utils;
