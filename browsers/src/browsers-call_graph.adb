@@ -29,7 +29,9 @@ with Gtk.Main;         use Gtk.Main;
 with Gtk.Menu;         use Gtk.Menu;
 with Gtk.Menu_Item;    use Gtk.Menu_Item;
 with Gtk.Stock;        use Gtk.Stock;
+with Gtk.Widget;       use Gtk.Widget;
 with Gtkada.Canvas;    use Gtkada.Canvas;
+with Gtkada.Handlers;  use Gtkada.Handlers;
 with Gtkada.MDI;       use Gtkada.MDI;
 
 with Src_Info;                 use Src_Info;
@@ -144,6 +146,12 @@ package body Browsers.Call_Graph is
       Node : Scope_Tree_Node) return Entity_Item;
    --  Add a new entity to the browser, if not already there.
 
+   procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data);
+   --  Called when the idle loop is destroyed.
+
+   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class);
+   --  Called when the browser is destroyed
+
    -------------
    -- Gtk_New --
    -------------
@@ -246,8 +254,19 @@ package body Browsers.Call_Graph is
             Alpha           => Alpha_Full,
             Alpha_Threshold => 128);
       end if;
-
    end Refresh;
+
+   ----------------
+   -- On_Destroy --
+   ----------------
+
+   procedure On_Destroy (Browser : access Gtk_Widget_Record'Class) is
+      B : Call_Graph_Browser := Call_Graph_Browser (Browser);
+   begin
+      if B.Idle_Id /= 0 then
+         Idle_Remove (B.Idle_Id);
+      end if;
+   end On_Destroy;
 
    -------------------------------
    -- Create_Call_Graph_Browser --
@@ -272,6 +291,10 @@ package body Browsers.Call_Graph is
         (Browser, Stock_Go_Back, Icon_Size_Menu);
       Browser.Right_Arrow := Render_Icon
         (Browser, Stock_Go_Forward, Icon_Size_Menu);
+
+      Widget_Callback.Connect
+        (Browser, "destroy",
+         Widget_Callback.To_Marshaller (On_Destroy'Access));
 
       Set_Size_Request
         (Browser,
@@ -461,6 +484,18 @@ package body Browsers.Call_Graph is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Examine_Entity_Call_Graph;
 
+   ------------------
+   -- Destroy_Idle --
+   ------------------
+
+   procedure Destroy_Idle (Data : in out Examine_Ancestors_Idle_Data) is
+   begin
+      Data.Browser.Idle_Id := 0;
+      Destroy (Data.Iter);
+      Destroy (Data.Entity);
+      Pop_State (Get_Kernel (Data.Browser));
+   end Destroy_Idle;
+
    ---------------------------------------
    -- Examine_Ancestors_Call_Graph_Idle --
    ---------------------------------------
@@ -495,16 +530,8 @@ package body Browsers.Call_Graph is
       end Add_Item;
 
       Tree : Scope_Tree;
-      It : Entity_Reference_Iterator_Access;
-      Ent : Entity_Information;
    begin
       if Get (Data.Iter.all) = No_Reference then
-         It := Data.Iter;
-         Destroy (It);
-
-         Ent := Data.Entity;
-         Destroy (Ent);
-
          Set_Auto_Layout (Get_Canvas (Data.Browser), True);
          Layout (Get_Canvas (Data.Browser),
                  Force => False,
@@ -512,8 +539,6 @@ package body Browsers.Call_Graph is
                    Get_Pref (Get_Kernel (Data.Browser),
                              Browsers_Vertical_Layout));
          Refresh_Canvas (Get_Canvas (Data.Browser));
-
-         Pop_State (Kernel_Handle (Get_Kernel (Data.Browser)));
          return False;
 
       else
@@ -533,7 +558,7 @@ package body Browsers.Call_Graph is
                Trace (Me, "Unexpected exception: "
                       & Exception_Information (E));
                Free (Tree);
-               return True;
+               return False;
          end;
       end if;
    end Examine_Ancestors_Call_Graph_Idle;
@@ -550,7 +575,6 @@ package body Browsers.Call_Graph is
       Item          : Entity_Item;
       Child_Browser : MDI_Child;
       Data          : Examine_Ancestors_Idle_Data;
-      Id            : Idle_Handler_Id;
    begin
       Push_State (Kernel_Handle (Kernel), Busy);
 
@@ -579,12 +603,11 @@ package body Browsers.Call_Graph is
                Item    => Item);
       Find_All_References (Kernel, Entity, Data.Iter.all, LI_Once => True);
 
-      --  ??? Id should be kept and possibly removed if the browser is
-      --  destroyed
-      Id := Examine_Ancestors_Idle.Add
+      Browser.Idle_Id := Examine_Ancestors_Idle.Add
         (Cb       => Examine_Ancestors_Call_Graph_Idle'Access,
          D        => Data,
-         Priority => Priority_Low_Idle);
+         Priority => Priority_Low_Idle,
+         Destroy  => Destroy_Idle'Access);
 
       --  All memory is freed at the end of Examine_Ancestors_Call_Graph_Idle
 
@@ -746,9 +769,9 @@ package body Browsers.Call_Graph is
       Entity   : Entity_Selection_Context_Access :=
         Entity_Selection_Context_Access (Context);
       Decl     : E_Declaration_Info;
-      Idle     : Idle_Handler_Id;
       Data     : Entity_Idle_Data;
       Info     : Entity_Information;
+      Idle_Id  : Idle_Handler_Id;
    begin
       Push_State (Get_Kernel (Entity), Busy);
       Decl := Get_Declaration (Entity);
@@ -772,9 +795,7 @@ package body Browsers.Call_Graph is
             Find_All_References (Get_Kernel (Entity), Info, Data.Iter.all);
             Destroy (Info);
 
-            --  ??? Idle should be kept and possibly removed if the browser is
-            --  destroyed
-            Idle := Entity_Iterator_Idle.Add
+            Idle_Id := Entity_Iterator_Idle.Add
               (Find_Next_Reference'Access, Data, Priority_Low_Idle);
          exception
             when others =>

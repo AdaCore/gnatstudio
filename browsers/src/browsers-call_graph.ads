@@ -20,6 +20,7 @@
 
 with Gdk.Event;
 with Gdk.Pixbuf;
+with Gtk.Main;
 with Gtk.Menu;
 with Glide_Kernel;
 with Browsers.Canvas;
@@ -91,6 +92,7 @@ private
 
    type Call_Graph_Browser_Record is new Browsers.Canvas.Glide_Browser_Record
      with record
+        Idle_Id                 : Gtk.Main.Idle_Handler_Id;
         Left_Arrow, Right_Arrow : Gdk.Pixbuf.Gdk_Pixbuf;
      end record;
 end Browsers.Call_Graph;
