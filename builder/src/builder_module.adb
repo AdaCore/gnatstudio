@@ -1442,10 +1442,7 @@ package body Builder_Module is
            (Kernel,
             Builder_Module_ID_Access (Builder_Module_ID).Last_Command);
       else
-         Console.Insert
-           (Kernel,
-            -"No build to interrupt",
-            Mode => Info);
+         Console.Insert (Kernel, -"No build to interrupt", Mode => Info);
       end if;
    end On_Stop_Build;
 

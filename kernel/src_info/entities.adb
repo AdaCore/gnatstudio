@@ -2326,12 +2326,14 @@ package body Entities is
       end if;
 
       --  If not found, check the comment just before the body
+
       if Beginning = 0  then
          if Must_Free_Buffer then
             Free (Buffer);
          end if;
 
          Find_Next_Body (Entity, Location => Location);
+
          if Location /= No_File_Location
            and then Location /= Get_Declaration_Of (Entity)
          then
