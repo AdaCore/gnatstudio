@@ -3712,9 +3712,9 @@ package body Src_Editor_Buffer is
 
       Result := Do_Indentation (Buffer, Lang, Iter, New_Line);
 
-   --  Special case if we are adding a new line, otherwise the cursor
-   --  is left on the first non-blank character of the line after the newly
-   --  inserted one.
+      --  Special case if we are adding a new line, otherwise the cursor
+      --  is left on the first non-blank character of the line after the newly
+      --  inserted one.
 
       if not New_Line then
          --  If the cursor was set in the middle of a line, restore its
