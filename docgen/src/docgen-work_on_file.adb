@@ -721,40 +721,42 @@ package body Docgen.Work_On_File is
          Found_Global     : in out Boolean;
          Iter             : in out Entity_Reference_Iterator;
          Info             : in Entity_Information;
-         LI_Unit          : in LI_File_Ptr) is
+         LI_Unit          : in LI_File_Ptr)
+      is
+         Kind : constant E_Kind := Get_Kind (Info);
       begin
-         if Get_Kind (Info).Is_Type
+         Entity_Is_Tagged := False;
+
+         if Kind.Is_Type
            and then
-             (Get_Kind (Info).Kind = Record_Kind
+             (Kind.Kind = Record_Kind
                --  In Ada, tagged type are classified as Record
                --  The only way to distinguish them to classic
                --  record is to search for parent and children.
                --  ??? tagged types without child and without
                --  parent don't appear in the list
-              or else Get_Kind (Info).Kind = Class
-              or else Get_Kind (Info).Kind = Class_Wide)
+              or else Kind.Kind = Class
+              or else Kind.Kind = Class_Wide)
          then
-
             Global_Children (Found_Global, Iter);
 
-            if Get (Get_Parent_Types (LI_Unit, Info))
-              /= No_Entity_Information
-              or else
-                Get (Get_Children_Types (LI_Unit, Info))
-              /= No_Entity_Information
-              or else
-                Found_Global
+            if Kind.Kind = Class
+              or else Kind.Kind = Class_Wide
+              or else Found_Global
+              or else Get (Get_Parent_Types (LI_Unit, Info)) /=
+                No_Entity_Information
+              or else Get (Get_Children_Types (LI_Unit, Info)) /=
+                No_Entity_Information
             then
                Entity_Is_Tagged := True;
-            else
-               Entity_Is_Tagged := False;
             end if;
-         else
-            Entity_Is_Tagged := False;
          end if;
       end Is_Tagged_Type;
 
-   begin
+   begin  -- Process_One_File
+      --  ??? This procedure is huge and contains too many nested ifs and
+      --  loops. It should be split into smaller subprograms for clarity.
+
       Trace (Me, "File name: " & Base_Name (Source_Filename));
       LI_Unit := Locate_From_Source_And_Complete
         (Kernel, Source_Filename, Check_Timestamp => False);
@@ -821,17 +823,13 @@ package body Docgen.Work_On_File is
                      --  In fact, it seems that Parse_Entity doesn't return
                      --  them as identifiers. So, if we add them in the
                      --  references list, they won't be matched and as a
-                     --  concequence all the following references also.
+                     --  consequence all the following references also.
                      --  NB: for spec file, there isn't this problem because
                      --  we must search in the whole list of references: so
                      --  no link is lost (we only have "too much" reference
                      --  nodes).
                      --  If there's some operators missing in the test above
                      --  it will explain the lost of links for body files
-                     --  Bug of GNAT: in src_info-queries.adb, a reference
-                     --  "finalize" is returned instead of "Full_Name" line
-                     --  1907: after this point, all links are lost for the
-                     --  reason seen before.
 
                      List_Reference_In_File.Append
                        (List_Ref_In_File,
@@ -1322,10 +1320,10 @@ package body Docgen.Work_On_File is
                                  Next (Child);
                               end loop;
 
-                              --  Search for all chidren (those who don't
+                              --  Search for all children (those who don't
                               --  appear in current file)
-                              if Found_Global then
 
+                              if Found_Global then
                                  while Get (Children_Iter) /= No_Reference loop
                                     LI := Get_LI (Children_Iter);
 
@@ -1466,8 +1464,8 @@ package body Docgen.Work_On_File is
 
                               if Source_File_In_List
                                 (Source_File_List,
-                                 Get_Declaration_File_Of
-                                   (Me_Info.all))then
+                                 Get_Declaration_File_Of (Me_Info.all))
+                              then
                                  --  If this tagged type is declared, we
                                  --  indicate that we must print it in
                                  --  the doc file
@@ -1647,7 +1645,7 @@ package body Docgen.Work_On_File is
                                     --  We don't need to indicate now
                                     --  information about the father of this
                                     --  child (in fact, Me_Info is one)
-                                    --  because this field will be update
+                                    --  because this field will be updated
                                     --  when the child will be studied as
                                     --  main tagged type (not as a son or
                                     --  parent)
@@ -1687,10 +1685,10 @@ package body Docgen.Work_On_File is
                                  Next (Child);
                               end loop;
 
-                              --  Search for all chidren (those who don't
+                              --  Search for all children (those who don't
                               --  appear in current file)
-                              if Found_Global then
 
+                              if Found_Global then
                                  while Get (Children_Iter) /= No_Reference loop
                                     LI := Get_LI (Children_Iter);
 
