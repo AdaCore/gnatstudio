@@ -403,6 +403,9 @@ package body GVD_Module is
    procedure On_Destroy_Window (Object : access Gtk_Widget_Record'Class);
    --  Callback for the "destroy" signal to clean up the debugger.
 
+   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class);
+   --  Callback for the "executable_changed" signal on the debugger process.
+
    procedure File_Edited_Cb
      (Widget  : access Gtk_Widget_Record'Class;
       Args    : GValues);
@@ -1133,6 +1136,11 @@ package body GVD_Module is
            (Top, "destroy",
             Widget_Callback.To_Marshaller (On_Destroy_Window'Access),
             Page);
+
+         Widget_Callback.Object_Connect
+           (Page, "executable_changed",
+            Widget_Callback.To_Marshaller (On_Executable_Changed'Access),
+            Top);
       end if;
 
       --  Add columns for debugging information to all the files that
@@ -1417,6 +1425,19 @@ package body GVD_Module is
       when E : others =>
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Start_Continue;
+
+   ---------------------------
+   -- On_Executable_Changed --
+   ---------------------------
+
+   procedure On_Executable_Changed (Object : access Gtk_Widget_Record'Class)
+   is
+      Top  : constant Glide_Window := Glide_Window (Object);
+   begin
+      --  Re-create all debugger columns.
+      Remove_Debugger_Columns (Top.Kernel, "");
+      Create_Debugger_Columns (Top.Kernel, "");
+   end On_Executable_Changed;
 
    -----------------------
    -- On_Destroy_Window --
