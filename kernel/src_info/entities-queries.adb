@@ -31,6 +31,7 @@ with GNAT.OS_Lib;             use GNAT.OS_Lib;
 
 package body Entities.Queries is
    Me : constant Debug_Handle := Create ("Entities.Queries", Off);
+   Ref_Me : constant Debug_Handle := Create ("Entities.Ref", Off);
 
    Find_Deps_File_Granularity : constant Debug_Handle :=
      Create ("Entities.Queries_File_Granularity", On);
@@ -1624,6 +1625,9 @@ package body Entities.Queries is
                   EL.Table (E).Caller_At_Declaration := Caller;
 
                   if Caller /= null then
+                     Trace (Ref_Me, "Ref " & Caller.Name.all
+                            & " since caller_at_declaration");
+                     Ref (Caller);
                      Add (Caller.Called_Entities,
                           EL.Table (E),
                           Check_Duplicates => True);
@@ -1664,6 +1668,10 @@ package body Entities.Queries is
                Refs.Table (R).Caller := Caller;
 
                if Caller /= null then
+                  Trace (Ref_Me, "Ref " & Caller.Name.all
+                         & " since caller for a location");
+                  Ref (Caller);
+
                   Add (Caller.Called_Entities,
                        Entity,
                        Check_Duplicates => True);
