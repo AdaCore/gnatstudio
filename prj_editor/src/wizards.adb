@@ -1,8 +1,8 @@
 -----------------------------------------------------------------------
 --                               G P S                               --
 --                                                                   --
---                     Copyright (C) 2001-2002                       --
---                            ACT-Europe                             --
+--                     Copyright (C) 2001-2005                       --
+--                              AdaCore                              --
 --                                                                   --
 -- GPS is free  software;  you can redistribute it and/or modify  it --
 -- under the terms of the GNU General Public License as published by --
@@ -18,7 +18,6 @@
 -- Place - Suite 330, Boston, MA 02111-1307, USA.                    --
 -----------------------------------------------------------------------
 
-with Gdk.Color;          use Gdk.Color;
 with Glib;               use Glib;
 with Gtk.Box;            use Gtk.Box;
 with Gtk.Button;         use Gtk.Button;
@@ -29,6 +28,8 @@ with Gtk.Stock;          use Gtk.Stock;
 with Gtk.Style;          use Gtk.Style;
 with Gtk.Widget;         use Gtk.Widget;
 with Gtkada.Handlers;    use Gtkada.Handlers;
+with Pango.Enums;        use Pango.Enums;
+with Pango.Font;         use Pango.Font;
 with Ada.Unchecked_Deallocation;
 
 with Logo_Boxes;               use Logo_Boxes;
@@ -121,7 +122,9 @@ package body Wizards is
      (Wiz       : access Wizard_Record'Class;
       Kernel    : access Kernel_Handle_Record'Class;
       Title     : String;
-      Show_Toc  : Boolean := True) is
+      Show_Toc  : Boolean := True)
+   is
+      Highlight_Font : Pango_Font_Description;
    begin
       Logo_Boxes.Initialize
         (Win        => Wiz,
@@ -157,13 +160,10 @@ package body Wizards is
       Widget_Callback.Connect (Wiz, "destroy", On_Destroy'Access);
 
       Wiz.Normal_Style := Copy (Get_Style (Wiz));
-      Set_Foreground
-        (Wiz.Normal_Style, State_Normal, White (Get_Default_Colormap));
-
       Wiz.Highlight_Style := Copy (Get_Style (Wiz));
-      Set_Foreground
-        (Wiz.Highlight_Style, State_Normal,
-         Get_Pref (Kernel, Wizard_Toc_Highlight_Color));
+      Highlight_Font := Get_Font_Description (Wiz.Highlight_Style);
+      Set_Weight (Highlight_Font, Pango_Weight_Bold);
+      Set_Font_Description (Wiz.Highlight_Style, Highlight_Font);
 
       Wiz.Pages := null;
       Wiz.Current_Page := 1;
@@ -203,6 +203,7 @@ package body Wizards is
       else
          Gtk_New (Page.Toc, Toc);
       end if;
+
       Show_All (Page.Toc);
       Set_Justify (Page.Toc, Justify_Left);
       Set_Alignment (Page.Toc, 0.0, 0.0);
@@ -210,6 +211,7 @@ package body Wizards is
       Set_Style (Page.Toc, Wiz.Normal_Style);
 
       Size_Request (Page.Toc, Req);
+
       if Req.Width < Min_Toc_Width then
          Set_Size_Request (Page.Toc, Min_Toc_Width, Req.Height);
       end if;
