@@ -6322,6 +6322,14 @@ If specified, this attribute indicates where the output of the commands will
 be sent by default. This can be overriden by each command, using the same
 attribute for @code{<shell>} and @code{<external>} tags,
 @xref{Redirecting the command output}.
+
+@item show-command (optional)
+If specified, this attribute indicates whether the text of the command itself
+should be displayed at the same location as its output. Neither will be
+displayed if the output is hidden. The default is to show the command along
+with its output.
+
+This attribute can be overriden for each command.
 @end table
 
 The @code{<action>} can have one or
@@ -6348,6 +6356,9 @@ Thus, the @code{external} tag would look like:
 </action>
 @end smallexample
 
+This tag supports the same @code{show-command} and @code{output} attributes
+as the @code{<action>} tag.
+
 
 @cindex shell
 @cindex shell
@@ -6356,6 +6367,10 @@ Thus, the @code{external} tag would look like:
 As well as external commands, you can use custom menu items to invoke GPS
 commands using the @code{shell} tag. These are command written in one of the
 shell scripts supported by GPS.
+
+This tag supports the same @code{show-command} and @code{output} attributes
+as the @code{<action>} tag.
+
 The following example shows how to
 create two actions to invoke the @code{help} interactive command and to open
 the file @file{main.c}.
