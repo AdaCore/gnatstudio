@@ -959,8 +959,10 @@ package body Interactive_Consoles is
             End_At := Text'Last;
          end if;
 
+         --  Do not leave blank spaces at the beginning of the line, since
+         --  they might be relevant in some contexts (for instance python)
          Command := new String'
-           (Trim (Text (Start_At .. End_At), Ada.Strings.Both));
+           (Trim (Text (Start_At .. End_At), Ada.Strings.Right));
 
          Start_At := End_At + 1;
       end Get_Next_Command;
@@ -973,19 +975,17 @@ package body Interactive_Consoles is
       while Start_At <= Text'Last loop
          Get_Next_Command (Text, Start_At, Command);
 
-         --  Ignore empty lines
+         --  We also execute empty commands, since they might be relevant
+         --  in some contexts (python for instance)
          if Command /= null
            and then Command.all /= ""
-           and then Command (Command'First) /= ASCII.LF
          then
             Get_End_Iter (Console.Buffer, Last_Iter);
             Insert (Console.Buffer, Last_Iter, Command.all);
 
-            --  Execute only if Command ends with a Line Feed
+            --  Execute only if Command ends with a Line Feed.
 
-            if Console.Handler /= null
-              and then Command (Command'Last) = ASCII.LF
-            then
+            if Console.Handler /= null then
                Execute_Command
                  (Console,
                   Command (Command'First .. Command'Last - 1));
