@@ -695,30 +695,14 @@ package body Src_Info is
    procedure Compute_Sources
      (Iterator  : in out LI_Handler_Iterator'Class;
       Project   : Projects.Project_Type;
-      Recursive : Boolean;
-      Languages : Projects.Name_Id_Array)
+      Recursive : Boolean)
    is
       use type Basic_Types.String_Access;
    begin
       Unchecked_Free (Iterator.Source_Files);
       Iterator.Source_Files := Get_Source_Files
         (Project            => Project,
-         Recursive          => Recursive,
-         Full_Path          => True,
-         Matching_Languages => Languages);
-      Iterator.Current_File := Iterator.Source_Files'First;
-   end Compute_Sources;
-
-   ---------------------
-   -- Compute_Sources --
-   ---------------------
-
-   procedure Compute_Sources
-     (Iterator    : in out LI_Handler_Iterator'Class;
-      Source_File : VFS.Virtual_File) is
-   begin
-      Unchecked_Free (Iterator.Source_Files);
-      Iterator.Source_Files := new File_Array'(1 => Source_File);
+         Recursive          => Recursive);
       Iterator.Current_File := Iterator.Source_Files'First;
    end Compute_Sources;
 

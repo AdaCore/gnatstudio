@@ -1077,19 +1077,12 @@ private
    procedure Compute_Sources
      (Iterator  : in out LI_Handler_Iterator'Class;
       Project   : Projects.Project_Type;
-      Recursive : Boolean;
-      Languages : Projects.Name_Id_Array);
+      Recursive : Boolean);
    --  Compute the list of source files that will need to be analyzed by the
    --  iterator. Elements from this list can be read using
-   --  Current_Source_File. Only the files belonging to Language will be
-   --  parsed.
+   --  Current_Source_File.
    --
    --  This subprogram is provided as a help when writting your own iterators.
-
-   procedure Compute_Sources
-     (Iterator    : in out LI_Handler_Iterator'Class;
-      Source_File : VFS.Virtual_File);
-   --  The list of files will be a single file.
 
    function Current_Source_File
      (Iterator : LI_Handler_Iterator'Class) return VFS.Virtual_File;
