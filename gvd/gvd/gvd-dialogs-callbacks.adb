@@ -155,6 +155,37 @@ package body Odd.Dialogs.Callbacks is
    end On_Task_List_Select_Row;
 
    -----------------------------
+   -- On_Task_Process_Stopped --
+   -----------------------------
+
+   procedure On_Task_Process_Stopped
+     (Object : access Gtk_Widget_Record'Class;
+      Params : Gtk.Arguments.Gtk_Args)
+   is
+      Dialog   : Task_Dialog_Access :=
+        Debugger_Process_Tab (Object).Window.Task_Dialog;
+      Process  : Process_Proxy_Access;
+      Internal : Boolean;
+
+   begin
+      if Visible_Is_Set (Dialog) then
+         Process := Get_Process (Debugger_Process_Tab (Object).Debugger);
+         Internal := Is_Internal_Command (Process);
+         Set_Internal_Command (Process, True);
+
+         declare
+            Info : Thread_Information_Array :=
+              Info_Threads (Debugger_Process_Tab (Object).Debugger);
+         begin
+            Update (Dialog, Info);
+            Free (Info);
+         end;
+
+         Set_Internal_Command (Process, Internal);
+      end if;
+   end On_Task_Process_Stopped;
+
+   -----------------------------
    -- On_Close_Button_Clicked --
    -----------------------------
 
