@@ -145,10 +145,6 @@ package GVD.Process is
       Debuggee_Id             : Gtk.Main.Timeout_Handler_Id := 0;
       Cleanup_TTY             : Boolean := False;
 
-      Edit_Pos                : Glib.Guint;
-      --  The last position in the text window of the debugger where text
-      --  was inserted. This is used to find what was typed by the user.
-
       Selected_Item           : Gtkada.Canvas.Canvas_Item := null;
       Selected_Component      : Items.Generic_Type_Access := null;
       --  The currently selected item, and its specific component.
@@ -198,9 +194,6 @@ package GVD.Process is
 
       Contextual_Menu         : Gtk.Menu.Gtk_Menu;
 
-      Separate_Data           : Boolean;
-      --  Store current value of the Separate_Data preference.
-
       Current_File            : VFS.Virtual_File;
       --  The file containing the current location.
 
@@ -217,7 +210,7 @@ package GVD.Process is
      (Process : out Visual_Debugger;
       Window  : access GPS.Main_Window.GPS_Window_Record'Class;
       Source  : GVD.Text_Box.Source_Editor.Source_Editor);
-   --  Create a new debugger page and add it to Window.
+   --  Create a new visual debugger and add it to Window.
 
    procedure Initialize
      (Process : access Visual_Debugger_Record'Class;
@@ -237,9 +230,9 @@ package GVD.Process is
       Remote_Protocol : String := "";
       Debugger_Name   : String := "";
       Success         : out Boolean);
-   --  Configure a process tab.
+   --  Configure a visual debugger.
    --  Kind specifies which debugger should be launched.
-   --  Currently, only gdb and jdb are supported.
+   --  Currently, only gdb is supported.
    --
    --  Executable is the name of the executable module to debug.
    --  This function returns a Process_Tab_Access.
