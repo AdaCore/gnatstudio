@@ -31,5 +31,8 @@ package String_List_Utils is
      (S : in String_List.List) return String_List.List;
    --  Return a deep copy of S.
 
+   procedure Sort (L : in out String_List.List);
+   --  Sort L alphabetically.
+
 end String_List_Utils;
 
