@@ -285,6 +285,8 @@ package body Src_Editor_Buffer is
       Line   : Gint;
       Column : Gint);
    --  Return the iter at position (Line, Column), tab expansion included.
+   --  ??? This function should be removed in the long term, replaced by
+   --  the version of Get_Iter_At_Screen_Position that supports blank lines.
 
    procedure Clear (Buffer : access Source_Buffer_Record);
    --  Delete all characters from the given buffer, leaving an empty buffer.
@@ -2554,6 +2556,30 @@ package body Src_Editor_Buffer is
 
          Forward_Char (Iter, Result);
       end loop;
+   end Get_Iter_At_Screen_Position;
+
+   ---------------------------------
+   -- Get_Iter_At_Screen_Position --
+   ---------------------------------
+
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Positive)
+   is
+      Buffer_Line : Buffer_Line_Type;
+   begin
+      Buffer_Line := Get_Buffer_Line (Buffer, Line);
+
+      if Buffer_Line /= 0 then
+         Get_Iter_At_Screen_Position
+           (Buffer, Iter,
+            Gint (Buffer_Line - 1),
+            Gint (Column - 1));
+      else
+         Get_Iter_At_Line_Offset (Buffer, Iter, 0, 0);
+      end if;
    end Get_Iter_At_Screen_Position;
 
    -------------------------

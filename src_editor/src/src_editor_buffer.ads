@@ -197,6 +197,14 @@ package Src_Editor_Buffer is
       Column : out Gint);
    --  Same as above, for the cursor position
 
+   procedure Get_Iter_At_Screen_Position
+     (Buffer : access Source_Buffer_Record;
+      Iter   : out Gtk.Text_Iter.Gtk_Text_Iter;
+      Line   : Editable_Line_Type;
+      Column : Positive);
+   --  Return the iter at position (Line, Column), tab expansion included.
+   --  If Line is not in the text, return the Iter at beginning of text.
+
    procedure Get_Selection_Bounds
      (Buffer       : access Source_Buffer_Record;
       Start_Line   : out Gint;
