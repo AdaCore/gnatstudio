@@ -285,6 +285,8 @@ package body Src_Editor_View is
                   View.Real_Lines (A'Range) := A;
                   View.Real_Lines (A'Last + 1 .. View.Real_Lines'Last)
                     := (others => 0);
+                  --  ??? Should free the old array A.
+                  --  ??? Where is View.Real_Lines itself freed ?
                end;
             end if;
 
@@ -418,6 +420,8 @@ package body Src_Editor_View is
       --  Initialize the Source_View. Some of the fields can not be initialized
       --  until the widget is realize or mapped. Their initialization is thus
       --  done at that point.
+
+      pragma Assert (Buffer /= null);
 
       Gtk.Text_View.Initialize (View, Gtk_Text_Buffer (Buffer));
 
@@ -1023,6 +1027,8 @@ package body Src_Editor_View is
          View.Original_Text_Inserted := True;
       end if;
 
+      --  ??? Loop needs comment, and could be implemented more efficiently
+      --  ??? through the use of aggregates.
       for J in reverse Start + 1 .. View.Real_Lines.all'Last loop
          if J <= View.Real_Lines.all'First - 1 + Number then
             View.Real_Lines (J) := 0;
@@ -1031,11 +1037,10 @@ package body Src_Editor_View is
          end if;
       end loop;
 
-      for J in Start + 1 .. Start + Number loop
-         if Start + Number <= View.Real_Lines'Last then
-            View.Real_Lines (J) := 0;
-         end if;
-      end loop;
+      --  Reset the last lines.
+      View.Real_Lines
+        (Start + 1 .. Integer'Min (Start + Number, View.Real_Lines'Last)) :=
+        (others => 0);
    end Add_Lines;
 
    ------------------
@@ -1051,17 +1056,13 @@ package body Src_Editor_View is
          return;
       end if;
 
-      for J in Start_Line + 1
-        .. View.Real_Lines.all'Last + Start_Line - End_Line
-      loop
-         View.Real_Lines (J) := View.Real_Lines (J + End_Line - Start_Line);
-      end loop;
+      View.Real_Lines
+        (Start_Line + 1 .. View.Real_Lines'Last + Start_Line - End_Line) :=
+        View.Real_Lines (End_Line + 1 .. View.Real_Lines'Last);
 
-      for J in View.Real_Lines.all'Last + Start_Line - End_Line + 1
-        .. View.Real_Lines.all'Last
-      loop
-         View.Real_Lines (J) := 0;
-      end loop;
+      View.Real_Lines
+        (View.Real_Lines'Last + Start_Line - End_Line + 1
+           .. View.Real_Lines'Last) := (others => 0);
    end Remove_Lines;
 
    ----------
