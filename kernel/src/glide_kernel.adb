@@ -77,6 +77,11 @@ package body Glide_Kernel is
    --  Return the home directory in which glide's user files should be stored
    --  (preferences, log, ...)
 
+   procedure Reset_Source_Info_List
+     (Handle : access Kernel_Handle_Record'Class);
+   --  Re-initialize the Source Info structure.
+   --  ??? Needs more comments.
+
    ----------------------------
    -- Create_Default_Project --
    ----------------------------
@@ -330,7 +335,7 @@ package body Glide_Kernel is
    ----------------------------
 
    procedure Reset_Source_Info_List
-     (Handle : access Kernel_Handle_Record) is
+     (Handle : access Kernel_Handle_Record'Class) is
    begin
       Src_Info.Reset (Handle.Source_Info_List);
    end Reset_Source_Info_List;
@@ -429,5 +434,33 @@ package body Glide_Kernel is
          Extra_Object_Path => Get_Object_Path (Handle),
          Unit_Name         => Unit_Name);
    end Get_Unit_Name;
+
+   ---------------------------------
+   -- Complete_Ali_File_If_Needed --
+   ---------------------------------
+
+   procedure Complete_Ali_File_If_Needed
+     (Handle      : access Kernel_Handle_Record;
+      LI_File     : in out Src_Info.LI_File_Ptr)
+   is
+      Parse_Success : Boolean;
+   begin
+      if Is_Incomplete (LI_File) then
+         declare
+            LI_Name : constant String :=
+              Find_Object_File (Handle, Get_Li_Filename (LI_File));
+         begin
+            --  ??? Should we have another version of Parse_ALI_File that takes
+            --  ??? directly a LI_File_Ptr that needs to be completed.
+            Parse_ALI_File
+              (Handle       => Handle,
+               ALI_Filename => LI_Name,
+               Unit         => LI_File,
+               Success      => Parse_Success);
+
+            --  ??? What do we do if Parse_Success is False ?
+         end;
+      end if;
+   end Complete_Ali_File_If_Needed;
 
 end Glide_Kernel;
