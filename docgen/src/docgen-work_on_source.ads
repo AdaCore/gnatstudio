@@ -68,10 +68,23 @@ package Docgen.Work_On_Source is
    --  create the Strings for the output.
    --  The order of the procedure calls can't be changed here
    --  without changing the order in texi_output!
-   --  Change also: Doc_TEXI_Subtitle !!!
-   --  Level is the level of the current package. By default, the level of the
-   --  package file is 1, then this level is increased by 1 at each inner
-   --  package
+   --  Change also Doc_TEXI_Subtitle !!!
+   --  Source_File_List : list of all files that must be processed by docgen.
+   --  Source_Filename  : current file processed.
+   --  Package_Name     : name of the current package. For this subprogram,
+   --  it's always the name of the main package which is defined.
+   --  Entity_List      : list of entities in the current file.
+   --  List_Ref_In_File : list of references in the current file.
+   --  Tagged_Types_List: list of public tagged types.
+   --  Private_Tagged_Types_List: list of private tagged types.
+   --  Options          : options set by the preferences.
+   --  Process_Body_File: indicate if bofy files must be processed.
+   --  ???  This last parameter is redondant because Options indicate it.
+   --  Converter        : used to indicate the subprogram used in order to
+   --  start making the output (currently, it's Launch_Doc_Create).
+   --  Level            : the level of the current package. By default, the
+   --  level of the package file is 1, then this level is increased by 1 at
+   --  each inner package
 
    procedure Process_Unit_Index
      (B                : Backend_Handle;
@@ -98,6 +111,8 @@ package Docgen.Work_On_Source is
       Doc_Suffix                    : String;
       Level                         : in out Natural);
    --  Create the index file for the subprograms
+   --  Subprogram_Index_List         : list of public subprograms.
+   --  Private_Subprogram_Index_List : list of private subprograms.
 
    procedure Process_Type_Index
      (B                       : Backend_Handle;
@@ -110,7 +125,9 @@ package Docgen.Work_On_Source is
       Doc_Directory           : String;
       Doc_Suffix              : String;
       Level                   : in out Natural);
-   --  Create the index file for the types
+   --  Create the index file for the types.
+   --  Type_Index_List         : list of public types.
+   --  Private_Type_Index_List : list of private types.
 
    procedure Process_Tagged_Type_Index
      (B                         : Backend_Handle;
@@ -125,6 +142,8 @@ package Docgen.Work_On_Source is
       Doc_Directory             : String;
       Doc_Suffix                : String;
       Level                     : in out Natural);
-   --  Create the index file for the tagged types
+   --  Create the index file for the tagged types.
+   --  Tagged_Type_Index_List    : list of public tagged types.
+   --  Private_Tagged_Types_List : list of private tagged types.
 
 end Docgen.Work_On_Source;
