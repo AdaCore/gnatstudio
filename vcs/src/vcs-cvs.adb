@@ -935,8 +935,6 @@ package body VCS.CVS is
          Free (Arguments);
          Free (Head);
          Free (Dir);
-
-         Filenames_Temp := Next (Filenames_Temp);
       end loop;
 
       Free (Sorted_Files);
