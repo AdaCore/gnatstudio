@@ -176,20 +176,90 @@ package body Glide_Kernel is
       end if;
    end Get_Predefined_Object_Path;
 
+   ----------------
+   -- Save_Child --
+   ----------------
+
+   function Save_Child
+     (Handle : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child;
+      Force  : Boolean := True) return Boolean
+   is
+      Module : Module_ID;
+   begin
+      Module := Get_Module_From_Child (Handle, Child);
+
+      if Module /= null
+        and then Module.Save_Function /= null
+      then
+         return
+           Module.Save_Function
+             (Handle,
+              Get_Widget (Child),
+              Force);
+      end if;
+
+      return True;
+   end Save_Child;
+
+   ---------------------
+   -- Get_File_Editor --
+   ---------------------
+
+   function Get_File_Editor
+     (Handle : access Kernel_Handle_Record;
+      File   : String) return Gtkada.MDI.MDI_Child
+   is
+      MDI   : MDI_Window := Get_MDI (Handle);
+   begin
+      --  ??? the following implementation assumes that the file editors
+      --  are MDI childs that have corresponding file names for title, and
+      --  that they are the only MDI childs that do so.
+      --  ??? We might improve a little by checking the Tag of the child
+      --  against that of the source editor module. The ID for that module
+      --  needs to be moved to glide_kernel.ads.
+      return Find_MDI_Child_By_Name (MDI, File);
+   end Get_File_Editor;
+
+   ---------------------------
+   -- Get_Module_From_Child --
+   ---------------------------
+
+   function Get_Module_From_Child
+     (Handle : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child) return Module_ID
+   is
+      use type Module_List.List_Node;
+      Module : Module_List.List_Node;
+
+   begin
+      Module := Module_List.First (Handle.Modules_List);
+
+      while Module /= Module_List.Null_Node loop
+         if Module_List.Data (Module).Child_Tag =
+           Get_Widget (Child)'Tag
+         then
+            return Module_List.Data (Module);
+         end if;
+
+         Module := Module_List.Next (Module);
+      end loop;
+
+      return null;
+   end Get_Module_From_Child;
+
    ---------------------------
    -- Save_All_MDI_Children --
    ---------------------------
 
    function Save_All_MDI_Children
-     (Handle : access Kernel_Handle_Record) return Boolean
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean := False) return Boolean
    is
-      MDI   : MDI_Window := Get_MDI (Handle);
-      Iter  : Child_Iterator;
-      Child : MDI_Child;
-
-      use type Module_List.List_Node;
-      Module : Module_List.List_Node;
-
+      MDI    : MDI_Window := Get_MDI (Handle);
+      Iter   : Child_Iterator;
+      Child  : MDI_Child;
+      Module : Module_ID;
    begin
       Iter := First_Child (MDI);
       Child := Get (Iter);
@@ -198,26 +268,11 @@ package body Glide_Kernel is
 
       while Child /= null loop
          --  Find the module associated to Child.
-         Module := Module_List.First (Handle.Modules_List);
+         Module := Get_Module_From_Child (Handle, Child);
 
-         while Module /= Module_List.Null_Node loop
-            if Module_List.Data (Module).Child_Tag =
-              Get_Widget (Child)'Tag
-            then
-               if Module_List.Data (Module).Save_Function /= null
-                 and then not Module_List.Data (Module).Save_Function
-                                (Handle,
-                                 Get_Widget (Child),
-                                 False)
-               then
-                  return False;
-               end if;
-
-               exit;
-            end if;
-
-            Module := Module_List.Next (Module);
-         end loop;
+         if not Save_Child (Handle, Child, Force) then
+            return False;
+         end if;
 
          Next (Iter);
          Child := Get (Iter);
@@ -225,6 +280,38 @@ package body Glide_Kernel is
 
       return True;
    end Save_All_MDI_Children;
+
+   ----------------------
+   -- Save_All_Editors --
+   ----------------------
+
+   function Save_All_Editors
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean) return Boolean
+   is
+      pragma Unreferenced (Force);
+      pragma Unreferenced (Handle);
+   begin
+      --  ??? not implemented yet.
+      raise Program_Error;
+      return False;
+   end Save_All_Editors;
+
+   --------------------------
+   -- Save_Current_Project --
+   --------------------------
+
+   function Save_Current_Project
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean) return Boolean
+   is
+      pragma Unreferenced (Force);
+      pragma Unreferenced (Handle);
+   begin
+      --  ??? not implemented yet.
+      raise Program_Error;
+      return False;
+   end Save_Current_Project;
 
    -------------------------------------
    -- Locate_From_Source_And_Complete --

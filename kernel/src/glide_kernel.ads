@@ -153,13 +153,6 @@ package Glide_Kernel is
    --  Return the predefined Source_Path associated to the given Kernel Handle.
    --  Return the current directory if no source path has been set yet.
 
-   function Save_All_MDI_Children
-     (Handle : access Kernel_Handle_Record) return Boolean;
-   --  Ask the user if he wants to save all open MDI children.
-   --  If at any time the user answers "no", the function stops asking
-   --  the children and returns False.
-   --  Return True otherwise.
-
    -------------
    -- Queries --
    -------------
@@ -360,6 +353,54 @@ package Glide_Kernel is
    --  ask the user first.
    --  If the user has refused to save the widget, return False,
    --  otherwise return True.
+
+   ------------
+   -- Saving --
+   ------------
+
+   function Get_Module_From_Child
+     (Handle : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child) return Module_ID;
+   --  Return the module that created Child, or null if no module was found.
+
+   function Get_File_Editor
+     (Handle : access Kernel_Handle_Record;
+      File   : String) return Gtkada.MDI.MDI_Child;
+   --  Return the first MDI child associated to an editor for File.
+   --  Return null if no such editor was found.
+
+   function Save_Child
+     (Handle : access Kernel_Handle_Record;
+      Child  : Gtkada.MDI.MDI_Child;
+      Force  : Boolean := True) return Boolean;
+   --  Save the given Child.
+   --  If Force is False, then ask the user first.
+   --  Return False if the action has been canceled.
+
+   function Save_All_MDI_Children
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean := False) return Boolean;
+   --  Save all the MDI children.
+   --  If Force is False, ask the user first.
+   --  If at any time the user answers "no", the function stops asking
+   --  the children and returns False.
+   --  Return True otherwise.
+
+   function Save_All_Editors
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean) return Boolean;
+   --  Save all open file editors.
+   --  If Force is False, ask the user first.
+   --  If at any time the user answers "no", the function stops asking
+   --  the children and returns False.
+   --  Return True otherwise.
+
+   function Save_Current_Project
+     (Handle : access Kernel_Handle_Record;
+      Force  : Boolean) return Boolean;
+   --  Save the current project.
+   --  If Force is False, then ask the user first.
+   --  Return False if the action has been canceled.
 
    ---------------------
    -- Signal emission --
