@@ -305,6 +305,15 @@ package body Glide_Kernel.Preferences is
         (Kernel.Preferences, Param_Spec (Default_Keyword_Color),
          -"Editor:Fonts & Colors");
 
+      Current_Line_Color := Param_Spec_Color (Gnew_Color
+        (Name    => "Src-Editor-Current-Line-Color",
+         Default => "white",
+         Blurb   => -"Color for highlighting the current line",
+         Nick    => -"Current line color"));
+      Register_Property
+        (Kernel.Preferences, Param_Spec (Current_Line_Color),
+           -"Editor:Fonts & Colors");
+
       Default_Comment_Color := Param_Spec_Color (Gnew_Color
         (Name    => "Src-Editor-Comment-Color",
          Default => "blue",
