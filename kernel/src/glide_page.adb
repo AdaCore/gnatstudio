@@ -158,8 +158,8 @@ package body Glide_Page is
                         (Contents (Matched (3).First .. Matched (3).Last));
          end if;
 
-         Set_Cursor_Location (Edit, Line, Column, Success);
-         Highlight_Line (Edit, Line, Success);
+         Set_Cursor_Location (Edit, Line, Column);
+         Highlight_Line (Edit, Line);
       end if;
 
       return False;
