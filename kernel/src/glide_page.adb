@@ -89,7 +89,9 @@ package body Glide_Page is
    procedure Set_Busy
      (Page          : access Glide_Page_Record;
       Busy          : Boolean := True;
-      Force_Refresh : Boolean := False) is
+      Force_Refresh : Boolean := False)
+   is
+      pragma Unreferenced (Force_Refresh);
    begin
       if Busy then
          Push_State (Glide_Window (Page.Window).Kernel, Processing);

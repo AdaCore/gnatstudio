@@ -426,7 +426,9 @@ package body Glide_Kernel.Modules is
 
    procedure Destroy_Contextual_Menu
      (User : Contextual_Menu_User_Data;
-      Menu : Gtk_Menu) is
+      Menu : Gtk_Menu)
+   is
+      pragma Unreferenced (User);
    begin
       Destroy (Menu);
    end Destroy_Contextual_Menu;
