@@ -375,7 +375,6 @@ package Src_Editor_Box is
    procedure Create_Line_Information_Column
      (Editor        : access Source_Editor_Box_Record;
       Identifier    : String;
-      Stick_To_Data : Boolean;
       Every_Line    : Boolean);
    --  See Glide_Kernel.Modules for more information.
 
@@ -498,7 +497,7 @@ private
       --  and another editor becomes Primary.
       --  This attribute is used mainly for determining whether the user
       --  should be prompted for saving the contents.
-      
+
       Check_Timestamp_Registered : Boolean := False;
       Check_Timestamp_Id         : Gtk.Main.Idle_Handler_Id;
       --  Used to protect the idle handler from being called after the box is
