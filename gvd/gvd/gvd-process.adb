@@ -27,12 +27,15 @@ with Gdk.Color;    use Gdk.Color;
 with Gdk.Cursor;   use Gdk.Cursor;
 with Gdk.Types;    use Gdk.Types;
 with Gdk.Window;   use Gdk.Window;
+with Gdk.Event;    use Gdk.Event;
 
 with Gtk.Text;     use Gtk.Text;
 with Gtk.Main;     use Gtk.Main;
+with Gtk.Menu;     use Gtk.Menu;
 with Gtk.Widget;   use Gtk.Widget;
 with Gtk.Notebook; use Gtk.Notebook;
 with Gtk.Label;    use Gtk.Label;
+with Gtk.Object;   use Gtk.Object;
 
 with Gtk.Extra.PsFont; use Gtk.Extra.PsFont;
 
@@ -48,6 +51,8 @@ with Odd.Strings;     use Odd.Strings;
 with Process_Proxies; use Process_Proxies;
 with Gtkada.Code_Editors; use Gtkada.Code_Editors;
 with GNAT.Regpat;     use GNAT.Regpat;
+with Gtk.Handlers;    use Gtk.Handlers;
+with Odd.Menus;       use Odd.Menus;
 
 with Main_Debug_Window_Pkg;  use Main_Debug_Window_Pkg;
 with System;
@@ -57,7 +62,17 @@ pragma Warnings (Off, Debugger.Jdb);
 
 package body Odd.Process is
 
+   Process_User_Data_Name : constant String := "odd_editor_to_process";
+   --  User data string.
+   --  ??? Should use some quarks, which would be just a little bit faster.
+
+   package Canvas_Event_Handler is new Gtk.Handlers.Return_Callback
+     (Debugger_Process_Tab_Record, Boolean);
+
    package My_Input is new Gdk.Input.Input_Add (Debugger_Process_Tab_Record);
+
+   function To_Main_Debug_Window is new
+     Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
 
    -----------------------
    -- Local Subprograms --
@@ -77,8 +92,7 @@ package body Odd.Process is
      (Descriptor : GNAT.Expect.Process_Descriptor;
       Str        : String;
       Window     : System.Address);
-   --  Standard handler to add gdb's input and output to the debugger
-   --  window.
+   --  Standard handler to add gdb's output to the debugger window.
 
    -------------
    -- Convert --
@@ -114,6 +128,32 @@ package body Odd.Process is
       end loop;
 
       raise Debugger_Not_Found;
+   end Convert;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert
+     (Text : access Gtkada.Code_Editors.Code_Editor_Record'Class)
+     return Debugger_Process_Tab
+   is
+   begin
+      return Process_User_Data.Get (Text, Process_User_Data_Name);
+   end Convert;
+
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert
+     (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
+      Debugger : access Debugger_Root'Class)
+     return Debugger_Process_Tab
+   is
+   begin
+      return Convert (Main_Debug_Window_Access (Main_Debug_Window),
+                      Get_Descriptor (Get_Process (Debugger)).all);
    end Convert;
 
    -------------------------
@@ -175,6 +215,10 @@ package body Odd.Process is
       end if;
 
       Thaw (Process.Debugger_Text);
+
+      --  Note: we can not modify Process.Edit_Pos in this function, since
+      --  otherwise the history (up and down keys in the command window) will
+      --  not work properly.
    end Text_Output_Handler;
 
    -------------------------
@@ -186,21 +230,21 @@ package body Odd.Process is
       Str        : String;
       Window     : System.Address)
    is
-      function To_Main_Debug_Window is new
-        Unchecked_Conversion (System.Address, Main_Debug_Window_Access);
       Process     : constant Debugger_Process_Tab :=
         Convert (To_Main_Debug_Window (Window), Descriptor);
 
-      File_First  : Natural;
+      File_First  : Natural := 0;
       File_Last   : Positive;
-      Line        : Natural;
+      Line        : Natural := 0;
       First, Last : Natural;
       Initial_Internal_Command : Boolean;
 
    begin
-      Found_File_Name
-        (Process.Debugger,
-         Str, File_First, File_Last, First, Last, Line);
+      if Get_Parse_File_Name (Get_Process (Process.Debugger)) then
+         Found_File_Name
+           (Process.Debugger,
+            Str, File_First, File_Last, First, Last, Line);
+      end if;
 
       --  Do not show the output if we have an internal command
 
@@ -213,7 +257,6 @@ package body Odd.Process is
             Text_Output_Handler (Process, Str (Str'First .. First - 1));
             Text_Output_Handler (Process, Str (Last + 1 .. Str'Last));
          end if;
-
          Process.Edit_Pos := Get_Length (Process.Debugger_Text);
          Set_Point (Process.Debugger_Text, Process.Edit_Pos);
          Set_Position (Process.Debugger_Text, Gint (Process.Edit_Pos));
@@ -240,8 +283,7 @@ package body Odd.Process is
          Set_Internal_Command (Get_Process (Process.Debugger), True);
          Load_File
            (Process.Editor_Text,
-            Str (File_First .. File_Last),
-            Process.Debugger);
+            Str (File_First .. File_Last));
 
          --  Restore the initial status of the process. We can not force it to
          --  False, since, at least with gdb, the "info line" command used in
@@ -282,6 +324,26 @@ package body Odd.Process is
       end if;
    end Output_Available;
 
+   ---------------------------
+   -- Debugger_Button_Press --
+   ---------------------------
+
+   function Debugger_Button_Press
+     (Process : access Debugger_Process_Tab_Record'Class;
+      Event    : Gdk.Event.Gdk_Event)
+     return Boolean
+   is
+   begin
+      if Get_Button (Event) = 3 then
+         Popup (Debugger_Contextual_Menu (Process),
+                Button            => Get_Button (Event),
+                Activate_Time     => Get_Time (Event));
+         Emit_Stop_By_Name (Process.Debugger_Text, "button_press_event");
+         return True;
+      end if;
+      return False;
+   end Debugger_Button_Press;
+
    ---------------------
    -- Create_Debugger --
    ---------------------
@@ -306,6 +368,18 @@ package body Odd.Process is
       Process := new Debugger_Process_Tab_Record;
       Process.Window := Window.all'Access;
       Initialize (Process);
+
+      Canvas_Handler.Connect
+        (Process.Data_Canvas, "background_click",
+         Canvas_Handler.To_Marshaller (On_Background_Click'Access));
+
+      --  Set up the command window for the contextual menus
+
+      Add_Events (Process.Debugger_Text, Button_Press_Mask);
+      Canvas_Event_Handler.Object_Connect
+        (Process.Debugger_Text, "button_press_event",
+         Canvas_Event_Handler.To_Marshaller (Debugger_Button_Press'Access),
+         Process);
 
       --  Allocate the colors for highlighting. This needs to be done before
       --  Initializing the debugger, since some file name might be output at
@@ -360,7 +434,6 @@ package body Odd.Process is
       Append_Page (Window.Process_Notebook, Process.Process_Paned, Label);
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
-      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -372,8 +445,16 @@ package body Odd.Process is
                  dot_xpm, arrow_xpm,
                  Comments_Color    => Comments_Color,
                  Strings_Color     => Strings_Color,
-                 Keywords_Color    => Keywords_Color,
-                 Show_Line_Numbers => Editor_Show_Line_Nums);
+                 Keywords_Color    => Keywords_Color);
+      Set_Show_Line_Nums (Process.Editor_Text, Editor_Show_Line_Nums);
+      Set_Show_Lines_With_Code
+        (Process.Editor_Text, Editor_Show_Line_With_Code);
+
+      --  Set the user data, so that we can easily convert afterwards.
+
+      Process_User_Data.Set
+        (Process.Editor_Text, Process, Process_User_Data_Name);
+      Process_User_Data.Set (Process.Process_Paned, Process.all'Access);
 
       --  Set the output filter, so that we output everything in the Gtk_Text
       --  window.
@@ -408,6 +489,8 @@ package body Odd.Process is
       First    : Natural := Command2'First;
       Cursor   : Gdk_Cursor;
    begin
+
+      Append (Debugger.Command_History, Command);
 
       Gdk_New (Cursor, Gdk.Types.Watch);
       Set_Cursor (Get_Window (Debugger.Window), Cursor);

@@ -28,14 +28,21 @@ with Gdk.Font;
 with Gdk.Input;
 with Gdk.Types;
 with Gtk.Object; use Gtk.Object;
+with Gtk.Handlers;
+with Gtk.Window;
 with Gtkada.Canvas;
 
 with Debugger; use Debugger;
 with Main_Debug_Window_Pkg;
 with Process_Tab_Pkg;
 with Generic_Values;
+with Gtkada.Code_Editors;
+with Odd.Histories;
 
 package Odd.Process is
+
+   package Canvas_Handler is new Gtk.Handlers.Callback
+     (Gtkada.Canvas.Interactive_Canvas_Record);
 
    package Standard_Input_Package is new Gdk.Input.Input_Add
      (Main_Debug_Window_Pkg.Main_Debug_Window_Record'Class);
@@ -51,6 +58,16 @@ package Odd.Process is
    --  command (line read from Source) using Process_User_Command.
    --  Note that this handler currently assumes that Source is the standard
    --  input file descriptor.
+
+
+   Default_Command_History_Size : constant := 100;
+   --  Number of items in the command history list.
+
+   Command_History_Collapse_Entries : constant Boolean := True;
+   --  Whether we should collapse entries in the history list.
+
+   package String_History is new Odd.Histories (String);
+   use String_History;
 
    ---------------------------
    -- Debugger_Process_Tab --
@@ -86,6 +103,10 @@ package Odd.Process is
       Selected_Item      : Gtkada.Canvas.Canvas_Item := null;
       Selected_Component : Generic_Values.Generic_Type_Access := null;
        --  The currently selected item, and its specific component.
+
+      Command_History : String_History.History_List
+        (Default_Command_History_Size, Command_History_Collapse_Entries);
+       --  The history of commands for this process.
 
    end record;
    type Debugger_Process_Tab is access all Debugger_Process_Tab_Record'Class;
@@ -135,6 +156,21 @@ package Odd.Process is
       Descriptor : GNAT.Expect.Process_Descriptor) return Debugger_Process_Tab;
    --  Return the debugger_descriptor associated with a Process_Descriptor.
    --  If no such page is found, an exception Debugger_Not_Found is raised.
+
+   function Convert
+     (Text : access Gtkada.Code_Editors.Code_Editor_Record'Class)
+     return Debugger_Process_Tab;
+   --  Conversion function, from the code editor to the process tab.
+   --  Note that there is a single such editor per process, even if there are
+   --  multiple threads/tasks.
+
+   function Convert
+     (Main_Debug_Window : access Gtk.Window.Gtk_Window_Record'Class;
+      Debugger : access Debugger_Root'Class)
+     return Debugger_Process_Tab;
+   --  Conversion function.
+   --  Main_Debug_Window should be the window in which the debugger is
+   --  displayed.
 
    procedure Process_User_Command
      (Debugger : Debugger_Process_Tab;
