@@ -301,8 +301,60 @@ package Language is
    type Construct_Information;
    type Construct_Access is access Construct_Information;
 
+   type Language_Category is
+     (Cat_Unknown,
+
+      -------------
+      -- Classes --
+      -------------
+
+      Cat_Package,
+      Cat_Procedure,
+      Cat_Function,
+      Cat_Task,
+      Cat_Protected,
+      Cat_Entry,
+      Cat_Namespace,
+      Cat_Class,
+      Cat_Method,
+
+      ----------------
+      -- Data/Types --
+      ----------------
+
+      Cat_Structure,
+      Cat_Variable,
+
+      ----------------
+      -- Dependency --
+      ----------------
+
+      Cat_With,
+      Cat_Use,
+      Cat_Include,
+
+      ----------------
+      -- Constructs --
+      ----------------
+
+      Cat_Loop,
+      Cat_If,
+      Cat_Switch,
+      Cat_Select,
+      Cat_Accept,
+      Cat_Declare,
+      Cat_Begin,
+      Cat_Exception_Block);
+
    type Generic_Token_Type is new Integer;
    --  Generic token type.
+
+   function Get_Name
+     (Lang     : access Language_Root;
+      Token    : Generic_Token_Type;
+      Category : access Language_Category) return String;
+   --  Return a printable string for a given token and language.
+   --  Category is set to the appropriate language category.
 
    type Construct_Information is record
       Token           : Generic_Token_Type;
@@ -311,14 +363,17 @@ package Language is
       Name            : Basic_Types.String_Access;
       --  Name of the enclosing token
 
+      Profile         : Basic_Types.String_Access;
+      --  Profile (if relevant) of the construct, e.g parameters for a function
+
       Sloc_Start      : Source_Location;
       --  Location of beginning of the construct
 
       Sloc_End        : Source_Location;
       --  Location of end of the construct
 
-      Subprogram_Spec : Boolean;
-      --  Is this a subprogram specification ?
+      Is_Declaration  : Boolean;
+      --  Is this a declaration (e.g function specification) ?
 
       Prev, Next      : Construct_Access;
       --  Links to the previous and the next construct info
@@ -339,7 +394,7 @@ package Language is
       Indent_Params    : Indent_Parameters := Default_Indent_Parameters;
       Reserved_Casing  : Casing_Type       := Lower;
       Ident_Casing     : Casing_Type       := Mixed;
-      Format_Operators : Boolean           := True) is abstract;
+      Format_Operators : Boolean           := True);
    --  Format Buffer and output the result on standard output.
    --  Reserved_Casing specifies the casing for reserved words.
    --  Ident_Casing specifies the casing for identifiers.
@@ -353,8 +408,7 @@ package Language is
       Result          : out Construct_List;
       Indent          : out Natural;
       Next_Indent     : out Natural;
-      Indent_Params   : Indent_Parameters := Default_Indent_Parameters)
-      is abstract;
+      Indent_Params   : Indent_Parameters := Default_Indent_Parameters);
    --  Parse the constructs contained in Buffer and store all the language
    --  constructs with their source location in Result.
    --  As a bonus (since it is computed anyway), store the current and
@@ -366,8 +420,7 @@ package Language is
       Buffer_Length : Natural;
       Indent        : out Natural;
       Next_Indent   : out Natural;
-      Indent_Params : Indent_Parameters := Default_Indent_Parameters)
-      is abstract;
+      Indent_Params : Indent_Parameters := Default_Indent_Parameters);
    --  Given a Buffer, return the indentation level for the last character
    --  in the buffer and for the next line.
 
