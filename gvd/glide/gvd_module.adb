@@ -70,6 +70,7 @@ with GUI_Utils;                 use GUI_Utils;
 with Prj_API;                   use Prj_API;
 with Prj;                       use Prj;
 with GNAT.Directory_Operations; use GNAT.Directory_Operations;
+with GNAT.Expect;
 with GNAT.OS_Lib;
 
 with Glide_Page;                use Glide_Page;
@@ -206,6 +207,9 @@ package body GVD_Module is
    procedure Preferences_Changed
      (Kernel : access GObject_Record'Class; User : GObject);
    --  Called when the preferences are changed in the GPS kernel
+
+   procedure Debug_Terminate (Kernel : Kernel_Handle);
+   --  Terminate the debugging session
 
    ---------------------------
    -- Generic_Debug_Command --
@@ -1098,7 +1102,7 @@ package body GVD_Module is
 
             if not Success then
                Pop_State (K);
-               Free (Proxy);
+               Debug_Terminate (K);
                return;
             end if;
          end;
@@ -1115,6 +1119,13 @@ package body GVD_Module is
             Top);
       end if;
 
+      --  Add columns information for not currently opened files.
+
+      Widget_Callback.Object_Connect
+        (K, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
+      Widget_Callback.Object_Connect
+        (K, File_Edited_Signal, File_Edited_Cb'Access, Top);
+
       --  Add columns for debugging information to all the files that
       --  are currently open.
 
@@ -1127,15 +1138,11 @@ package body GVD_Module is
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_Debug_Init;
 
-   ------------------------
-   -- On_Debug_Terminate --
-   ------------------------
+   ---------------------
+   -- Debug_Terminate --
+   ---------------------
 
-   procedure On_Debug_Terminate
-     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
-   is
-      pragma Unreferenced (Widget);
-
+   procedure Debug_Terminate (Kernel : Kernel_Handle) is
       Top   : constant Glide_Window := Glide_Window (Get_Main_Window (Kernel));
       Page  : constant Glide_Page.Glide_Page :=
         Glide_Page.Glide_Page (Get_Current_Process (Top));
@@ -1149,8 +1156,15 @@ package body GVD_Module is
 
       Push_State (Kernel, Busy);
       Page.Exiting := True;
+
       Gtk.Handlers.Disconnect (Top, Page.Destroy_Id);
-      Close (Page.Debugger);
+
+      if Page.Debugger /= null
+        and then Get_Process (Page.Debugger) /= null
+      then
+         Close (Page.Debugger);
+      end if;
+
       Page.Debugger := null;
 
       --  This might have been closed by the user
@@ -1192,6 +1206,19 @@ package body GVD_Module is
       Page.Exiting := False;
       Set_Sensitive (Kernel, Debug_None);
       Pop_State (Kernel);
+   end Debug_Terminate;
+
+   ------------------------
+   -- On_Debug_Terminate --
+   ------------------------
+
+   procedure On_Debug_Terminate
+     (Widget : access GObject_Record'Class; Kernel : Kernel_Handle)
+   is
+      pragma Unreferenced (Widget);
+
+   begin
+      Debug_Terminate (Kernel);
 
    exception
       when E : others =>
@@ -1442,6 +1469,8 @@ package body GVD_Module is
    begin
       if File_Line_List.Is_Empty
         (GVD_Module (GVD_Module_ID).Unexplored_Lines)
+        or else Debugger = null
+        or else Get_Process (Debugger) = null
       then
          return False;
 
@@ -1527,7 +1556,14 @@ package body GVD_Module is
       return True;
 
    exception
+      when E : GNAT.Expect.Process_Died =>
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Trace (Me, "Debugger died unexpectedly: "
+                  & Exception_Information (E));
+         return False;
+
       when E : others =>
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
          return False;
    end Idle_Reveal_Lines;
@@ -1544,6 +1580,11 @@ package body GVD_Module is
       File : constant String := Get_String (Nth (Args, 1));
    begin
       Create_Debugger_Columns (Top.Kernel, File);
+
+   exception
+      when E : others =>
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end File_Edited_Cb;
 
    -----------------------
@@ -1600,6 +1641,11 @@ package body GVD_Module is
             end loop;
          end;
       end if;
+
+   exception
+      when E : others =>
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
+         Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end Lines_Revealed_Cb;
 
    ---------------------
@@ -1663,6 +1709,7 @@ package body GVD_Module is
 
    exception
       when E : others =>
+         Debug_Terminate (GVD_Module (GVD_Module_ID).Kernel);
          Trace (Me, "Unexpected exception: " & Exception_Information (E));
    end On_View_Changed;
 
@@ -1861,15 +1908,18 @@ package body GVD_Module is
 
       Set_Sensitive (Kernel_Handle (Kernel), Debug_None);
 
-      Widget_Callback.Object_Connect
-        (Kernel, Source_Lines_Revealed_Signal, Lines_Revealed_Cb'Access, Top);
-      Widget_Callback.Object_Connect
-        (Kernel, File_Edited_Signal, File_Edited_Cb'Access, Top);
       Object_User_Callback.Connect
         (Kernel,
          Preferences_Changed_Signal,
          Object_User_Callback.To_Marshaller (Preferences_Changed'Access),
          GObject (Kernel));
+
+      Kernel_Callback.Connect
+        (Get_Current_Process (Get_Main_Window (Kernel)),
+         "debugger_closed",
+         Kernel_Callback.To_Marshaller (On_Debug_Terminate'Access),
+         Kernel_Handle (Kernel));
+
       Init_Graphics;
    end Register_Module;
 
@@ -1888,7 +1938,7 @@ package body GVD_Module is
 
    procedure Destroy (Id : in out GVD_Module_Record) is
    begin
-      On_Debug_Terminate (Id.Kernel, Id.Kernel);
+      Debug_Terminate (Id.Kernel);
    end Destroy;
 
 end GVD_Module;
