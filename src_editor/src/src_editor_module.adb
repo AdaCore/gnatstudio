@@ -69,6 +69,7 @@ with Src_Contexts;              use Src_Contexts;
 with Find_Utils;                use Find_Utils;
 with GUI_Utils;                 use GUI_Utils;
 with Histories;                 use Histories;
+with OS_Utils;                  use OS_Utils;
 
 with Generic_List;
 
@@ -806,11 +807,37 @@ package body Src_Editor_Module is
                Child : constant MDI_Child := Find_Editor
                  (Kernel, Filename.all);
             begin
-               Free (Filename);
                if Child = null then
-                  return -"File not found or not open.";
+                  declare
+                     A : GNAT.OS_Lib.String_Access
+                       := Read_File (Filename.all);
+                     N : Natural := 0;
+                  begin
+                     Free (Filename);
+
+                     if A /= null then
+                        for J in A'Range loop
+                           if A (J) = ASCII.LF then
+                              N := N + 1;
+                           end if;
+                        end loop;
+
+                        Free (A);
+
+                        if N = 0 then
+                           N := 1;
+                        end if;
+
+                        return Image (N);
+                     else
+                        return -"File not found or not open.";
+
+                     end if;
+                  end;
 
                else
+                  Free (Filename);
+
                   return Image
                     (Get_Last_Line
                        (Source_Box (Get_Widget (Child)).Editor));
@@ -840,10 +867,31 @@ package body Src_Editor_Module is
                 := Find_Editor (Kernel, Filename.all);
             begin
                if Child /= null then
+                  Free (Filename);
                   return Get_Buffer (Source_Box (Get_Widget (Child)).Editor);
 
                else
-                  return -"File not found or not open.";
+                  --  The buffer is not currently open,
+                  --  read directly from disk.
+
+                  declare
+                     A : GNAT.OS_Lib.String_Access
+                       := Read_File (Filename.all);
+                  begin
+                     Free (Filename);
+
+                     if A /= null then
+                        declare
+                           S : constant String := A.all;
+                        begin
+                           Free (A);
+                           return S;
+                        end;
+
+                     else
+                        return -"File not found.";
+                     end if;
+                  end;
                end if;
             end;
          else
