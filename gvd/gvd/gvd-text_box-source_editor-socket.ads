@@ -20,6 +20,7 @@
 
 with Glib; use Glib;
 with Gtk.Container;
+with Gtk.Widget;
 with Gtk.Window;
 with Basic_Types;
 with GVD.Types;
@@ -88,7 +89,7 @@ package GVD.Text_Box.Source_Editor.Socket is
      (Editor      : access Socket_Record;
       Line        : Natural;
       Set_Current : Boolean := True;
-      Process     : Gtk_Widget);
+      Process     : Gtk.Widget.Gtk_Widget);
    --  See GVD.Text_Box.Source_Editor for more information.
 
    function Get_Line (Editor : access Socket_Record) return Natural;
