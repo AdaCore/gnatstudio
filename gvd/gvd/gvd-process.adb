@@ -626,10 +626,9 @@ package body Odd.Process is
       Show_All (Window.Process_Notebook);
       Set_Page (Window.Process_Notebook, -1);
 
-      --  ??? Not suitable for Gnome
-      --  if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
-      --     Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
-      --  end if;
+      if Page_List.Length (Get_Children (Window.Process_Notebook)) > 0 then
+         Set_Sensitive (Gtk_Widget (Window.Open_Program1), True);
+      end if;
 
       --  Initialize the code editor.
       --  This should be done before initializing the debugger, in case the
@@ -1000,11 +999,10 @@ package body Odd.Process is
 
       --  If the last notebook page was destroyed, disable "Open Program"
       --  in the menu.
-      --  Does not work with Gnome menus ???
 
-      --  if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
-      --     Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
-      --  end if;
+      if Page_List.Length (Get_Children (Top.Process_Notebook)) = 0 then
+         Set_Sensitive (Gtk_Widget (Top.Open_Program1), False);
+      end if;
    end Close_Debugger;
 
    --------------------------
