@@ -12,7 +12,7 @@
       <!-- Generate and load the body -->
       <shell>save_windows</shell>
       <shell>scenario_variables_cmd_line -X</shell>
-      <external output="" >gnat stub -P%pp %1 %F %d</external>
+      <external output="" >gnat stub %pps %1 %F %d</external>
       <shell>File %F</shell>
       <shell>File.other_file %1</shell>
       <shell>File.name %1</shell>
