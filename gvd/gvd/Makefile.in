@@ -18,7 +18,9 @@ GTK_STATIC_LIBS = @GTK_STATIC_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 TARGET_CFLAGS = @TARGET_CFLAGS@
 TARGET_LFLAGS = @TARGET_LFLAGS@
-ALL_CFLAGS = $(CFLAGS) -gnata -gnatwuwe $(GTK_CFLAGS) $(TARGET_CFLAGS) -I../gnat
+SOURCE_PATH = $(GTK_CFLAGS) -I../gnat
+GNAT_FLAGS = -gnata -gnatwuwe
+ALL_CFLAGS = $(CFLAGS) $(GNAT_FLAGS) $(SOURCE_PATH) $(TARGET_CFLAGS)
 LINK_FLAGS = $(C_OBJECTS) $(TARGET_LFLAGS) $(GTK_LIBS)
 ADALIB = $(strip $(shell gnatls -v | grep adalib))
 GNATMAKE_FLAGS =
@@ -48,8 +50,9 @@ static:
 	make GTK_LIBS="$(GTK_STATIC_LIBS)" $(EXEC)
 
 elim: $(EXEC)
-	make GNATMAKE_FLAGS="-f -c -gnatt $(GNATMAKE_FLAGS)" $(EXEC)
-	gnatelim $(ALL_CFLAGS) $(MAIN) > gnat.adc
+	make GNATMAKE_FLAGS="-f -c -gnatc -gnatt $(GNATMAKE_FLAGS)" \
+	     GNAT_FLAGS="-gnata" $(EXEC)
+	gnatelim $(MAIN) > gnat.adc
 
 gvd-proc_utils-builtin.adb: gvd-proc_utils-builtin_${BUILTIN_PS}.adb Makefile
 	$(CP) gvd-proc_utils-builtin_${BUILTIN_PS}.adb \
