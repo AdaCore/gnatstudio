@@ -534,11 +534,15 @@ package body Language.C is
       pragma Suppress (All_Checks);
       --  For efficiency
 
-      First       : Natural;
-      Index       : Natural := Buffer'First;
-      Token       : Token_Type;
-      Curly_Level : Integer := 0;
-      Paren_Level : Integer := 0;
+      First        : Natural;
+      Index        : Natural := Buffer'First;
+      Token        : Token_Type;
+      Curly_Level  : Integer := 0;
+      Paren_Level  : Integer := 0;
+      Line         : Natural := 1;
+      Line_Start   : Natural;
+      Char_In_Line : Natural := 1;
+      Start_Char   : Natural;
 
    begin
       No_Contents := True;
@@ -546,10 +550,12 @@ package body Language.C is
 
       while Index < Buffer'Last loop
          case Buffer (Index) is
-            when ASCII.NUL .. ' ' =>
-               if Buffer (Index) = ASCII.LF then
-                  No_Contents := True;
-               end if;
+            when ASCII.LF =>
+               No_Contents := True;
+
+            when ASCII.NUL .. Character'Pred (ASCII.LF)
+              | Character'Succ (ASCII.LF) .. ' ' =>
+               null;
 
             when '{' =>
                Curly_Level := Curly_Level + 1;
@@ -573,7 +579,9 @@ package body Language.C is
                --  Skip string
 
                First := Index;
+               Start_Char := Char_In_Line;
                Index := Index + 1;
+               Char_In_Line := Char_In_Line + 1;
 
                while Index < Buffer'Last
                  and then (Buffer (Index) /= '"'
@@ -581,11 +589,13 @@ package body Language.C is
                  and then Buffer (Index) /= ASCII.LF
                loop
                   Index := Index + 1;
+                  Char_In_Line := Char_In_Line + 1;
                end loop;
 
                if Callback /= null then
                   exit when Callback
-                    (String_Text, (0, 0, First), (0, 0, Index), False);
+                    (String_Text, (Line, Start_Char, First),
+                     (Line, Char_In_Line, Index), False);
                end if;
 
             when ''' =>
@@ -595,6 +605,8 @@ package body Language.C is
 
                First := Index;
                Index := Index + 1;
+               Start_Char   := Char_In_Line;
+               Char_In_Line := Char_In_Line + 1;
 
                while Index < Buffer'Last
                  and then (Buffer (Index) /= '''
@@ -602,11 +614,13 @@ package body Language.C is
                  and then Buffer (Index) /= ASCII.LF
                loop
                   Index := Index + 1;
+                  Char_In_Line := Char_In_Line + 1;
                end loop;
 
                if Callback /= null then
                   exit when Callback
-                    (Character_Text, (0, 0, First), (0, 0, Index), False);
+                    (Character_Text, (Line, Start_Char, First),
+                     (Line, Char_In_Line, Index), False);
                end if;
 
             when '/' =>
@@ -620,34 +634,48 @@ package body Language.C is
                   --  C++ style comment, skip whole line
 
                   Index := Index + 1;
+                  Start_Char := Char_In_Line;
+                  Char_In_Line := Char_In_Line + 1;
 
                   while Index <= Buffer'Last
                     and then Buffer (Index + 1) /= ASCII.LF
                   loop
                      Index := Index + 1;
+                     Char_In_Line := Char_In_Line + 1;
                   end loop;
 
                   if Callback /= null then
                      exit when Callback
-                       (Comment_Text, (0, 0, First), (0, 0, Index), False);
+                       (Comment_Text, (Line, Start_Char, First),
+                        (Line, Char_In_Line, Index), False);
                   end if;
 
                elsif Buffer (Index + 1) = '*' then
                   --  Skip comment
 
                   Index := Index + 3;
+                  Start_Char := Char_In_Line;
+                  Char_In_Line := Char_In_Line + 3;
+                  Line_Start := Line;
 
                   while Index < Buffer'Last
                     and then (Buffer (Index - 1) /= '*'
                       or else Buffer (Index) /= '/')
                   loop
+                     if Buffer (Index) = ASCII.LF then
+                        Line := Line + 1;
+                        Char_In_Line := 1;
+                     end if;
+
                      Index := Index + 1;
+                     Char_In_Line := Char_In_Line + 1;
                   end loop;
 
                   if Callback /= null then
                      exit when Callback
                        (Comment_Text,
-                        (0, 0, First), (0, 0, Index),
+                        (Line_Start, Start_Char, First),
+                        (Line, Char_In_Line, Index),
                         Buffer (Index) /= '/');
                   end if;
                end if;
@@ -658,26 +686,30 @@ package body Language.C is
                --  Skip identifier or reserved word
 
                First := Index;
+               Start_Char := Char_In_Line;
 
                while Index <= Buffer'Last
                  and then Is_Entity_Letter
-                   (UTF8_Get_Char (Buffer (Index + 1 .. Buffer'Last)))
+                   (UTF8_Get_Char (Buffer (Index .. Buffer'Last)))
                loop
                   Index := UTF8_Find_Next_Char (Buffer, Index);
+                  Char_In_Line := Char_In_Line + 1;
                end loop;
 
-               Token := Get_Token (Buffer (First .. Index));
+               Token := Get_Token (Buffer (First .. Index - 1));
 
                if Callback /= null then
                   if Token = Tok_Identifier then
                      exit when Callback
                        (Identifier_Text,
-                        (0, 0, First), (0, 0, Index), False);
+                        (Line, Start_Char, First),
+                        (Line, Char_In_Line, Index), False);
                   elsif Enable_Cpp
                     or else Token not in Cpp_Token
                   then
                      exit when Callback
-                       (Keyword_Text, (0, 0, First), (0, 0, Index), False);
+                       (Keyword_Text, (Line, Start_Char, First),
+                        (Line, Char_In_Line, Index), False);
                   end if;
                end if;
 
@@ -685,7 +717,13 @@ package body Language.C is
                No_Contents := False;
          end case;
 
+         if Buffer (Index) = ASCII.LF then
+            Line := Line + 1;
+            Char_In_Line := 0;
+         end if;
+
          Index := Index + 1;
+         Char_In_Line := Char_In_Line + 1;
       end loop;
 
    exception
