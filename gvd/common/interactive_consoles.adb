@@ -368,7 +368,7 @@ package body Interactive_Consoles is
             end if;
             return True;
 
-         when GDK_Tab =>
+         when GDK_Tab | GDK_KP_Tab =>
             if Console.Completion = null then
                return False;
             end if;
@@ -383,53 +383,20 @@ package body Interactive_Consoles is
                  Get_Slice (Console.Buffer, Prompt_Iter, Last_Iter);
                Completions : List :=
                  Console.Completion (Text, Console.User_Data);
-               Node        : List_Node := First (Completions);
-               First_S     : constant String := Data (Node);
-               Length      : Integer := Text'Length;
+               Prefix      : constant String := Longest_Prefix (Completions);
+               Node        : List_Node;
                Line        : Gint;
                Offset      : Gint;
-               Number      : Integer := 0;
+               More_Than_One : constant Boolean :=
+                 Completions /= Null_List
+                 and then Next (First (Completions)) /= Null_Node;
                Success     : Boolean;
                Prompt_Iter : Gtk_Text_Iter;
                Prev_Begin  : Gtk_Text_Iter;
                Prev_Last   : Gtk_Text_Iter;
                Pos         : Gtk_Text_Iter;
             begin
-               --  Determine the biggest suffix length.
-
-               Node := First (Completions);
-               Console.Internal_Insert := True;
-
-               if Text'Length > 0 then
-                  while Node /= Null_Node loop
-                     Number := Number + 1;
-
-                     if Number = 1 then
-                        Length := Data (Node)'Length;
-                     else
-                        declare
-                           Data_S  : constant String := Data (Node);
-                           Current : Integer := Text'Length;
-                        begin
-                           while Current <= Length
-                             and then Current <= Data_S'Length
-                             and then Data_S (Data_S'First - 1 + Current)
-                             = First_S (First_S'First - 1 + Current)
-                           loop
-                              Current := Current + 1;
-                           end loop;
-
-                           Length := Current - 1;
-                        end;
-                     end if;
-
-                     Node := Next (Node);
-                  end loop;
-               end if;
-
-               --  Insert the list of completions, if any.
-
-               if Number > 1 then
+               if More_Than_One then
                   Node := First (Completions);
 
                   --  Get the range copy the current line.
@@ -478,13 +445,13 @@ package body Interactive_Consoles is
                   Scroll_Mark_Onscreen (Console.View, Console.Prompt_Mark);
                end if;
 
-               --  Insert the completion, if needed.
+               --  Insert the completion, if any.
                Get_End_Iter (Console.Buffer, Pos);
-               Insert
-                 (Console.Buffer,
-                  Pos,
-                  First_S (First_S'First + Text'Length
-                             .. First_S'First - 1 + Length));
+
+               if Prefix'Length > Text'Length then
+                  Insert (Console.Buffer, Pos,
+                          Prefix (Prefix'First + Text'Length .. Prefix'Last));
+               end if;
 
                Console.Internal_Insert := False;
 
