@@ -1072,7 +1072,7 @@ package body Codefix.Errors_Parser is
         (new Pattern_Matcher'
            (Compile ("(procedure) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
-           (Compile ("(function) ""([\w]+)"" is not referenced")),
+           (Compile ("(function) ""(""?[^""]+""?)"" is not referenced")),
          new Pattern_Matcher'
            (Compile ("(variable) ""([\w]+)"" is not referenced")),
          new Pattern_Matcher'
@@ -1115,7 +1115,7 @@ package body Codefix.Errors_Parser is
            (Current_Text,
             Message,
             Category,
-            Get_Message (Message) (Matches (1).First .. Matches (1).Last)));
+            Get_Message (Message) (Matches (2).First .. Matches (2).Last)));
    end Fix;
 
    -----------------------
