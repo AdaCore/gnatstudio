@@ -402,7 +402,7 @@ package body Language is
    -----------------------------
 
    procedure Parse_File_Constructs
-     (Lang      : access Language_Root;
+     (Lang      : access Language_Root'Class;
       File_Name : String;
       Result    : out Construct_List)
    is

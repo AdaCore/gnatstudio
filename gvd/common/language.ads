@@ -338,10 +338,12 @@ package Language is
    --  constructs with their source location in Result.
 
    procedure Parse_File_Constructs
-     (Lang      : access Language_Root;
+     (Lang      : access Language_Root'Class;
       File_Name : String;
       Result    : out Construct_List);
-   --  Same as Parse_Constructs, but works on a given file
+   --  Same as Parse_Constructs, but works on a given file.
+   --  Since Parse_File_Constructs calls Parse_Constructs, this function does
+   --  not need to be dispatching.
 
    function Can_Indent (Lang : access Language_Root) return Boolean;
    --  Return whether the given language supports indentation
