@@ -455,9 +455,9 @@ package body Debugger is
       --  Not an internal command, not in text mode (for testing purposes...)
 
       if Debugger.Window /= null then
-         if Mode /= Internal then
-            Process := Convert (Debugger.Window, Debugger);
+         Process := Convert (Debugger.Window, Debugger);
 
+         if Mode /= Internal then
             --  Postprocessing (e.g handling of auto-update).
 
             if Is_Context_Command (Debugger, Cmd) then
