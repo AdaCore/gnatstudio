@@ -218,16 +218,6 @@ package body Src_Editor_Buffer is
    --  Signal the new cursor position by emitting the "cursor_position_changed"
    --  signal.
 
-   procedure Highlight_Slice
-     (Buffer     : access Source_Buffer_Record'Class;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter);
-   --  Re-compute the highlighting for at least the given region.
-   --  If the text creates non-closed comments or string regions, then
-   --  the re-highlighted area is automatically extended to the right.
-   --  When the re-highlighted area is extended to the right, the extension
-   --  is computed in a semi-intelligent fashion.
-
    procedure Kill_Highlighting
      (Buffer : access Source_Buffer_Record'Class;
       From   : Gtk_Text_Iter;
@@ -824,6 +814,10 @@ package body Src_Editor_Buffer is
 
       Tags : Highlighting_Tags renames Buffer.Syntax_Tags;
    begin
+      if not Buffer.Modifying_Editable_Lines then
+         return;
+      end if;
+
       --  Set the Start_Iter to the begining of the inserted text,
       --  and set the End_Iter.
 
@@ -1523,8 +1517,8 @@ package body Src_Editor_Buffer is
 
    procedure Highlight_Slice
      (Buffer     : access Source_Buffer_Record'Class;
-      Start_Iter : Gtk_Text_Iter;
-      End_Iter   : Gtk_Text_Iter)
+      Start_Iter : Gtk.Text_Iter.Gtk_Text_Iter;
+      End_Iter   : Gtk.Text_Iter.Gtk_Text_Iter)
    is
       Highlight_Complete : Boolean := False;
       Entity_Start       : Gtk_Text_Iter;
@@ -2612,6 +2606,30 @@ package body Src_Editor_Buffer is
       Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
       Line   := Get_Line (Iter);
       Column := Get_Line_Offset (Iter);
+   end Get_Cursor_Position;
+
+   -------------------------
+   -- Get_Cursor_Position --
+   -------------------------
+
+   procedure Get_Cursor_Position
+     (Buffer : access Source_Buffer_Record;
+      Line   : out Editable_Line_Type;
+      Column : out Positive)
+   is
+      Iter : Gtk_Text_Iter;
+   begin
+      Get_Iter_At_Mark (Buffer, Iter, Buffer.Insert_Mark);
+      Line   := Get_Editable_Line
+        (Buffer, Buffer_Line_Type (Get_Line (Iter) + 1));
+
+      --  Default the Line to 1.
+
+      if Line = 0 then
+         Line := 1;
+      end if;
+
+      Column := Positive (Get_Line_Offset (Iter) + 1);
    end Get_Cursor_Position;
 
    --------------------------
